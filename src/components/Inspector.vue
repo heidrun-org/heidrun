@@ -5,12 +5,15 @@ import AccountUsage from "./AccountUsage.vue";
 import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
+  allPanes,
   askAgentToFix,
   closePane,
   contextFor,
+  selectPane,
   selectedPane,
   sendKeys,
   state,
+  tabLabel,
   workspaceLabel,
   workspacePanes,
 } from "../stores/session";
@@ -18,7 +21,25 @@ import { STATUS_LABEL, clockTime, compactTokens, gaugeLevel, paneName, shortPath
 
 const p = selectedPane;
 const ctx = computed(() => (p.value ? contextFor(p.value) : null));
-const activity = computed(() => (p.value ? state.activity[p.value.pane_id] ?? [] : []));
+// Activity: all agents by default, or only the selected pane.
+const activityScope = ref<"all" | "pane">("all");
+const activity = computed(() =>
+  state.activity
+    .filter((a) => activityScope.value === "all" || a.paneId === p.value?.pane_id)
+    .slice(0, 20)
+    .map((a) => {
+      // Live names (renames show up at once); the stored ones if the pane is gone.
+      const pane = allPanes.value.find((x) => x.pane_id === a.paneId);
+      return {
+        ...a,
+        pane,
+        name: pane ? paneName(pane) : a.name,
+        where: [pane ? workspaceLabel(pane.workspace_id) : a.workspace, pane ? tabLabel(pane.tab_id) : a.tab]
+          .filter(Boolean)
+          .join(" · "),
+      };
+    }),
+);
 const watches = computed(() => state.watches.filter((w) => w.paneId === p.value?.pane_id));
 const provider = computed<"claude" | "codex" | null>(() => {
   const a = p.value?.agent ?? "";
@@ -126,13 +147,35 @@ const statusText = computed(() => {
         </form>
       </div>
 
-      <div v-if="activity.length" class="block">
-        <div class="eyebrow">Activité</div>
-        <div v-for="(a, i) in activity" :key="i" class="act">
-          <span :class="'t-' + a.status">●</span>
-          <span class="grow">{{ STATUS_LABEL[a.status] }}</span>
-          <span class="muted">{{ clockTime(a.at / 1000) }}</span>
+      <div v-if="state.activity.length" class="block">
+        <div class="act-head">
+          <span class="eyebrow">Activité</span>
+          <span class="seg" role="group" aria-label="Activité affichée">
+            <button type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">Tous</button>
+            <button type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">Ce panneau</button>
+          </span>
         </div>
+        <button
+          v-for="a in activity"
+          :key="a.at + a.paneId + a.status"
+          type="button"
+          class="act"
+          :class="{ current: a.paneId === p.pane_id, gone: !a.pane }"
+          :disabled="!a.pane"
+          :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
+          @click="a.pane && selectPane(a.pane)"
+        >
+          <span class="dot-s" :class="'t-' + a.status">●</span>
+          <span class="act-main">
+            <span class="act-line">
+              <span class="act-name">{{ a.name }}</span>
+              <span class="act-status" :class="'t-' + a.status">{{ STATUS_LABEL[a.status] }}</span>
+            </span>
+            <span v-if="a.where" class="act-where">{{ a.where }}</span>
+          </span>
+          <span class="muted mono">{{ clockTime(a.at / 1000) }}</span>
+        </button>
+        <div v-if="!activity.length" class="muted">Rien pour ce panneau depuis l’ouverture de l’app.</div>
       </div>
 
       <div class="spacer"></div>
@@ -168,7 +211,26 @@ const statusText = computed(() => {
   flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong);
   background: var(--field); outline: none; font-size: 12px;
 }
-.act { display: flex; gap: 10px; font-size: 12px; }
+.act-head { display: flex; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--field); }
+.seg button {
+  border: none; background: transparent; color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 5px;
+}
+.seg button.on { background: var(--hover); color: var(--text); }
+.act {
+  display: flex; align-items: flex-start; gap: 8px; width: 100%; padding: 5px 6px; margin: 0 -6px;
+  border: none; border-radius: 7px; background: transparent; color: var(--text); text-align: left; font-size: 12px;
+}
+.act:hover:not(:disabled) { background: var(--hover); }
+.act.current { background: rgba(110, 168, 254, 0.07); }
+.act.gone { opacity: 0.55; }
+.dot-s { line-height: 18px; }
+.act-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.act-line { display: flex; gap: 6px; align-items: baseline; min-width: 0; }
+.act-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act-status { white-space: nowrap; font-size: 11px; }
+.act-where { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act .mono { line-height: 18px; }
 .grow { flex: 1; }
 .spacer { flex: 1; }
 .link { align-self: flex-start; font-size: 12px; padding: 0 8px; height: 26px; }

@@ -18,6 +18,11 @@ import type {
 export interface ActivityEntry {
   at: number;
   status: AgentStatus;
+  paneId: string;
+  /** Names at the time of the event, used if the pane has been closed since. */
+  name: string;
+  workspace: string;
+  tab: string;
 }
 
 export interface OutputWatch {
@@ -47,7 +52,8 @@ export const state = reactive({
   paletteOpen: false,
   /** Panes that just turned blocked: they pulse once. */
   pulse: {} as Record<string, number>,
-  activity: {} as Record<string, ActivityEntry[]>,
+  /** Status changes of all agents, most recent first. */
+  activity: [] as ActivityEntry[],
   /** When each pane entered its current status (local clock). */
   since: {} as Record<string, number>,
   watches: [] as OutputWatch[],
@@ -305,12 +311,19 @@ function applySnapshot(snap: SessionSnapshot) {
     if (before === after) continue;
     state.since[pane.pane_id] = now;
     if (!pane.agent) continue;
-    const log = (state.activity[pane.pane_id] ??= []);
-    log.unshift({ at: now, status: after });
-    log.splice(12);
     if (before === undefined) continue; // first sight, not a transition
     const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
     const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
+    const t = snap.tabs.find((x) => x.tab_id === pane.tab_id);
+    state.activity.unshift({
+      at: now,
+      status: after,
+      paneId: pane.pane_id,
+      name: paneName(view),
+      workspace: ws,
+      tab: t ? t.label || `onglet ${t.number}` : "",
+    });
+    state.activity.splice(40);
     if (after === "blocked") {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
