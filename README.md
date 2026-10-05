@@ -2,7 +2,7 @@
 
 Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les terminaux de ta session Herdr, dans une fenêtre de travail.
 
-- **Sidebar** : file « À traiter » (agents bloqués ou terminés), workspaces, panneaux.
+- **Sidebar** : workspaces, panneaux, puis la file « À traiter » (agents bloqués ou terminés) en bas, pour ne pas décaler la liste.
 - **Vrais terminaux** : chaque panneau est affiché avec `herdr terminal attach`, donc le rendu est identique à Herdr (TUI de Claude Code, Codex, couleurs…).
 - **Barre de saisie** : une consigne pour un agent, ou une commande pour un terminal.
 - **Inspecteur** : Autoriser / Refuser, contexte de l’agent, « Demander à un agent de corriger », surveillance de motifs.
@@ -63,6 +63,8 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 ```
 
 `forge` force GitHub ou GitLab (un hôte inconnu est traité comme un GitLab auto-hébergé), `repo` remplace le remote, `tickets` active les tickets du type `ABC-123` (désactivés sans URL).
+
+**Actions au survol** : dans un terminal, survoler une référence affiche « ↗ Ouvrir », une commande de Claude Code citée par l’agent (`/fin-tache`, `/compact`…) affiche « ▷ Lancer », et un point d’une liste numérotée (« 1. Ouvrir une issue… ») affiche « ▷ Faire le point 1 », qui envoie la consigne à l’agent. ⌘-clic sur le texte fait la même chose. Seules les commandes qui existent vraiment sont proposées (intégrées, `~/.claude/commands`, `.claude/commands` du projet, skills et plugins), jamais un chemin comme `/tmp`.
 
 **Panneau de droite** : en haut, la **Session** du panneau sélectionné (workspace · onglet, état, contexte, coût, Remote Control) ; en dessous, **Tous les agents** : quotas du compte Claude et Codex, partagés par toutes les sessions, et le fil **Activité** (workspace · onglet, puis l’agent ; clic pour y aller).
 

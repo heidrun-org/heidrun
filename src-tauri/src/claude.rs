@@ -232,3 +232,89 @@ mod tests {
         let _ = std::fs::remove_dir_all(&home);
     }
 }
+
+// ---- Slash commands -------------------------------------------------------
+
+/// Built-in Claude Code commands, recognized in the agent's output.
+const BUILTIN_COMMANDS: &[&str] = &[
+    "add-dir", "agents", "bashes", "bug", "clear", "compact", "config", "context", "cost", "doctor",
+    "export", "help", "hooks", "ide", "init", "install-github-app", "login", "logout", "mcp", "memory",
+    "model", "output-style", "permissions", "plugin", "pr-comments", "privacy-settings", "release-notes",
+    "remote-control", "resume", "review", "rewind", "sandbox", "security-review", "status", "statusline",
+    "terminal-setup", "todos", "upgrade", "usage", "vim",
+];
+
+/// `commands/**/*.md` → "name" or "sub:name"; `skills/<name>/SKILL.md` → "name".
+fn collect(dir: &std::path::Path, out: &mut Vec<String>, prefix: Option<&str>) {
+    fn walk(base: &std::path::Path, dir: &std::path::Path, out: &mut Vec<String>, prefix: Option<&str>, depth: u8) {
+        let Ok(entries) = std::fs::read_dir(dir) else { return };
+        for e in entries.flatten() {
+            let p = e.path();
+            if p.is_dir() && depth < 4 {
+                walk(base, &p, out, prefix, depth + 1);
+            } else if p.extension().is_some_and(|x| x == "md") {
+                let rel = p.strip_prefix(base).unwrap_or(&p).with_extension("");
+                let name = rel.to_string_lossy().replace(['/', '\\'], ":");
+                push(out, prefix, name);
+            }
+        }
+    }
+    fn push(out: &mut Vec<String>, prefix: Option<&str>, name: String) {
+        if let Some(pre) = prefix {
+            out.push(format!("{pre}:{name}"));
+        }
+        out.push(name);
+    }
+    walk(&dir.join("commands"), &dir.join("commands"), out, prefix, 0);
+    if let Ok(entries) = std::fs::read_dir(dir.join("skills")) {
+        for e in entries.flatten() {
+            if e.path().join("SKILL.md").exists() {
+                push(out, prefix, e.file_name().to_string_lossy().into_owned());
+            }
+        }
+    }
+}
+
+/// Plugins: any folder holding `.claude-plugin/` under ~/.claude/plugins.
+fn collect_plugins(dir: &std::path::Path, out: &mut Vec<String>, depth: u8) {
+    if dir.join(".claude-plugin").is_dir() {
+        let name = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        collect(dir, out, Some(&name));
+        return;
+    }
+    if depth >= 5 {
+        return;
+    }
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for e in entries.flatten() {
+            let p = e.path();
+            if p.is_dir() && !e.file_name().to_string_lossy().starts_with('.') {
+                collect_plugins(&p, out, depth + 1);
+            }
+        }
+    }
+}
+
+/// The slash commands Claude Code knows in this folder: built-ins, user and
+/// project commands and skills, plugins. Lets the terminal offer "run /fin-tache"
+/// only for real commands, not for paths like /tmp.
+#[tauri::command]
+pub fn claude_commands(cwd: Option<String>) -> Vec<String> {
+    let mut out: Vec<String> = BUILTIN_COMMANDS.iter().map(|s| s.to_string()).collect();
+    let home = dirs::home_dir().unwrap_or_default();
+    collect(&claude_dir(), &mut out, None);
+    collect_plugins(&claude_dir().join("plugins"), &mut out, 0);
+    if let Some(cwd) = cwd {
+        let mut dir = Some(std::path::Path::new(&cwd));
+        while let Some(d) = dir {
+            if d == home {
+                break;
+            }
+            collect(&d.join(".claude"), &mut out, None);
+            dir = d.parent();
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}

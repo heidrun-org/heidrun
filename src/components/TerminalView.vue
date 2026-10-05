@@ -4,7 +4,17 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { Terminal, type IBufferLine, type IDecoration, type IMarker } from "@xterm/xterm";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { EMPTY_CONTEXT, REF_COLORS, findRefs, refContext, type RefContext } from "../lib/refs";
+import {
+  EMPTY_CONTEXT,
+  REF_COLORS,
+  claudeCommands,
+  findCommands,
+  findRefs,
+  findStep,
+  refContext,
+  type RefContext,
+} from "../lib/refs";
+import { sendPrompt } from "../stores/session";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -12,7 +22,14 @@ import { copy, osc52Provider } from "../lib/clipboard";
 import { fontStack, settings } from "../stores/settings";
 import { selectionReaders } from "../stores/notes";
 
-const props = defineProps<{ terminalId: string; paneId: string; focused: boolean; cwd?: string | null }>();
+const props = defineProps<{
+  terminalId: string;
+  paneId: string;
+  focused: boolean;
+  cwd?: string | null;
+  /** Agent running in the pane ("claude", "codex"…), if any. */
+  agent?: string | null;
+}>();
 const emit = defineEmits<{ pin: [text: string] }>();
 
 const hasSelection = ref(false);
@@ -96,27 +113,60 @@ onMounted(async () => {
       if (e.metaKey) openUrl(uri).catch(() => {});
     }),
   );
+  // References, slash commands and numbered steps: hovering shows a small action
+  // chip (open, run, ask the agent); ⌘-click does the same directly.
   term.registerLinkProvider({
     provideLinks(y, callback) {
       const line = term?.buffer.active.getLine(y - 1);
-      if (!line || !refCtx.base && !refCtx.ticketUrl) return callback(undefined);
+      if (!line) return callback(undefined);
       const { text, col, width } = lineText(line);
-      const links = findRefs(text, refCtx)
-        .filter((r) => r.url)
-        .map((r) => ({
-          text: text.slice(r.start, r.end),
-          range: { start: { x: col[r.start] + 1, y }, end: { x: col[r.end - 1] + width[r.end - 1], y } },
-          decorations: { underline: true, pointerCursor: true },
-          activate: (e: MouseEvent) => {
-            if (e.metaKey) openUrl(r.url!).catch(() => {});
-          },
-          hover: () => {
-            if (el.value) el.value.title = `⌘-clic pour ouvrir ${r.url}`;
-          },
-          leave: () => {
-            if (el.value) el.value.title = "";
-          },
-        }));
+      const range = (s: number, e: number) => ({
+        start: { x: col[s] + 1, y },
+        end: { x: col[e - 1] + width[e - 1], y },
+      });
+      const items: { s: number; e: number; label: string; run: () => void; underline: boolean }[] = [];
+      for (const r of findRefs(text, refCtx)) {
+        if (!r.url) continue;
+        const what = text.slice(r.start, r.end);
+        items.push({ s: r.start, e: r.end, label: `↗ Ouvrir ${what}`, run: () => openUrl(r.url!).catch(() => {}), underline: true });
+      }
+      if (isClaude()) {
+        for (const c of findCommands(text, commands)) {
+          if (items.some((i) => c.start < i.e && c.end > i.s)) continue;
+          items.push({ s: c.start, e: c.end, label: `▷ Lancer ${c.command}`, run: () => sendPrompt(props.paneId, c.command), underline: true });
+        }
+      }
+      if (props.agent) {
+        const step = findStep(text);
+        if (step) {
+          // The step's hover zone stops before any other link on the line.
+          const firstOther = Math.min(step.end, ...items.filter((i) => i.s > step.start).map((i) => i.s));
+          const end = text.slice(0, firstOther).trimEnd().length;
+          if (end > step.start && !items.some((i) => i.s <= step.start && i.e > step.start)) {
+            const snippet = step.text.length > 90 ? `${step.text.slice(0, 90)}…` : step.text;
+            items.push({
+              s: step.start,
+              e: end,
+              label: `▷ Faire le point ${step.number}`,
+              run: () => sendPrompt(props.paneId, `Vas-y pour le point ${step.number} : « ${snippet} »`),
+              underline: false,
+            });
+          }
+        }
+      }
+      const links = items.map((i) => ({
+        text: text.slice(i.s, i.e),
+        range: range(i.s, i.e),
+        decorations: { underline: i.underline, pointerCursor: i.underline },
+        activate: (e: MouseEvent) => {
+          if (e.metaKey) {
+            hideChip(true);
+            i.run();
+          }
+        },
+        hover: () => showChip(range(i.s, i.e).start, i.label, i.run),
+        leave: () => hideChip(),
+      }));
       callback(links.length ? links : undefined);
     },
   });
@@ -202,14 +252,55 @@ onMounted(async () => {
 // ---- References: #12, !34, PR #5, ABC-123, commits ------------------------
 
 let refCtx: RefContext = EMPTY_CONTEXT;
+let commands = new Set<string>();
+const isClaude = () => (props.agent ?? "").includes("claude");
 watch(
-  () => props.cwd,
-  async (cwd) => {
+  () => [props.cwd, props.agent] as const,
+  async ([cwd]) => {
     refCtx = await refContext(cwd);
+    if (isClaude()) commands = await claudeCommands(cwd);
     scheduleRefs();
   },
   { immediate: true },
 );
+
+// ---- Hover chip -------------------------------------------------------------
+
+const wrapEl = ref<HTMLDivElement>();
+const chip = ref<{ left: number; top: number; label: string; run: () => void } | null>(null);
+let chipTimer = 0;
+
+function showChip(at: { x: number; y: number }, label: string, run: () => void) {
+  window.clearTimeout(chipTimer);
+  const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
+  if (!term || !screen || !wrapEl.value) return;
+  const s = screen.getBoundingClientRect();
+  const w = wrapEl.value.getBoundingClientRect();
+  const cellW = s.width / term.cols;
+  const cellH = s.height / term.rows;
+  const row = at.y - 1 - term.buffer.active.viewportY;
+  let top = s.top - w.top + row * cellH - 26;
+  if (top < 2) top = s.top - w.top + (row + 1) * cellH + 2; // first line: below it
+  const left = Math.max(4, Math.min(s.left - w.left + (at.x - 1) * cellW, w.width - 220));
+  chip.value = { left, top, label, run };
+}
+
+function hideChip(now = false) {
+  window.clearTimeout(chipTimer);
+  if (now) chip.value = null;
+  else chipTimer = window.setTimeout(() => (chip.value = null), 350);
+}
+
+function clearChipTimer() {
+  window.clearTimeout(chipTimer);
+}
+
+function runChip() {
+  const c = chip.value;
+  hideChip(true);
+  c?.run();
+  term?.focus();
+}
 
 /** The text of a buffer line, with the cell column of each character (wide chars, emoji). */
 function lineText(line: IBufferLine): { text: string; col: number[]; width: number[] } {
@@ -390,6 +481,7 @@ function pinSelection() {
 
 onBeforeUnmount(() => {
   window.clearTimeout(refsTimer);
+  window.clearTimeout(chipTimer);
   for (const y of [...rows.keys()]) clearRow(y);
   el.value?.removeEventListener("wheel", onWheel, { capture: true });
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
@@ -401,8 +493,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="wrap">
+  <div ref="wrapEl" class="wrap">
     <div ref="el" class="term"></div>
+    <button
+      v-if="chip"
+      class="chip"
+      type="button"
+      :style="{ left: `${chip.left}px`, top: `${chip.top}px` }"
+      title="⌘-clic sur le texte fait la même chose"
+      @mouseenter="clearChipTimer()"
+      @mouseleave="hideChip()"
+      @mousedown.stop.prevent
+      @click="runChip"
+    >
+      {{ chip.label }}
+    </button>
     <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
       <button class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
       <button class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
@@ -432,5 +537,11 @@ onBeforeUnmount(() => {
   border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 .sel-bar .btn { background: var(--field); }
+.chip {
+  position: absolute; z-index: 6; height: 22px; padding: 0 9px; border-radius: 6px;
+  border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
+  white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
+}
+.chip:hover { background: #24406a; border-color: #3d6aa8; }
 :deep(.xterm-viewport) { background: transparent !important; }
 </style>

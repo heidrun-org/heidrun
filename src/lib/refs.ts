@@ -190,3 +190,54 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
 
   return out.sort((a, b) => a.start - b.start);
 }
+
+// ---- Things the agent suggests doing: slash commands and numbered steps ------
+
+const commandCache = new Map<string, Promise<Set<string>>>();
+
+/** Slash commands Claude Code knows in this folder (built-ins, user, project, plugins). */
+export function claudeCommands(cwd: string | null | undefined): Promise<Set<string>> {
+  const key = cwd || "";
+  let p = commandCache.get(key);
+  if (!p) {
+    p = invoke<string[]>("claude_commands", { cwd: cwd || null })
+      .then((list) => new Set(list.map((c) => c.toLowerCase())))
+      .catch(() => new Set<string>());
+    commandCache.set(key, p);
+    window.setTimeout(() => commandCache.delete(key), 2 * 60_000);
+  }
+  return p;
+}
+
+export interface CommandMatch {
+  start: number;
+  end: number;
+  command: string; // "/fin-tache"
+}
+
+/** "/fin-tache", "/compact"… but only real commands, never paths like /tmp/x. */
+export function findCommands(line: string, known: Set<string>): CommandMatch[] {
+  if (!known.size || !line.includes("/")) return [];
+  const out: CommandMatch[] = [];
+  const re = /(?<![\w/.~:-])\/([a-z][\w:-]*\w)(?![\w/]|\.\w)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line))) {
+    if (known.has(m[1].toLowerCase())) out.push({ start: m.index, end: m.index + m[0].length, command: m[0] });
+  }
+  return out;
+}
+
+export interface StepMatch {
+  start: number; // the "1." marker
+  end: number;
+  number: number;
+  text: string; // first line of the item, for the prompt
+}
+
+/** "  1. Ouvrir une issue…", "2) Committer…": an item of a numbered list. */
+export function findStep(line: string): StepMatch | null {
+  const m = /^(\s{0,8})(\d{1,2})[.)]\s+(\S.*?)\s*$/.exec(line);
+  if (!m || m[3].length < 4) return null;
+  const start = m[1].length;
+  return { start, end: line.length - (line.length - line.trimEnd().length), number: Number(m[2]), text: m[3] };
+}

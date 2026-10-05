@@ -48,23 +48,6 @@ async function createWorkspace() {
 
 <template>
   <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
-    <section v-if="attention.length" class="group">
-      <div class="eyebrow pad">À traiter</div>
-      <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
-        <button class="card-main" @click="selectPane(p)">
-          <span class="row">
-            <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
-            <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
-          </span>
-          <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
-          <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
-        </button>
-        <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
-          <Icon name="close" />
-        </button>
-      </div>
-    </section>
-
     <section class="group tight">
       <div class="eyebrow pad">Workspaces</div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
@@ -138,6 +121,23 @@ async function createWorkspace() {
         </button>
       </template>
     </section>
+    <!-- At the bottom: cards come and go without moving the workspaces list. -->
+    <section v-if="attention.length" class="group attention">
+      <div class="eyebrow pad">À traiter</div>
+      <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
+        <button class="card-main" @click="selectPane(p)">
+          <span class="row">
+            <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
+            <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+          </span>
+          <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
+          <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
+        </button>
+        <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
+          <Icon name="close" />
+        </button>
+      </div>
+    </section>
   </aside>
 </template>
 
@@ -148,6 +148,7 @@ async function createWorkspace() {
 }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .group.tight { gap: 2px; }
+.group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: #121821; }
 .card-main {
