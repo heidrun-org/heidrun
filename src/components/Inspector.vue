@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
+import AccountUsage from "./AccountUsage.vue";
 import {
   addWatch,
   askAgentToFix,
@@ -18,6 +19,17 @@ const p = selectedPane;
 const ctx = computed(() => (p.value ? contextFor(p.value) : null));
 const activity = computed(() => (p.value ? state.activity[p.value.pane_id] ?? [] : []));
 const watches = computed(() => state.watches.filter((w) => w.paneId === p.value?.pane_id));
+const provider = computed<"claude" | "codex" | null>(() => {
+  const a = p.value?.agent ?? "";
+  if (a.includes("claude")) return "claude";
+  if (a.includes("codex")) return "codex";
+  return null;
+});
+const sessionCost = computed(() => {
+  const v = Number(p.value?.tokens?.hd_cost);
+  return Number.isFinite(v) && p.value?.tokens?.hd_cost ? v : null;
+});
+
 const isClaude = computed(() => p.value?.agent === "claude");
 
 // The agent that will receive "fix it" requests: an available one first.
@@ -89,6 +101,13 @@ const statusText = computed(() => {
         <div class="gauge big" :class="gaugeLevel(ctx.percent)"><span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span></div>
         <div v-if="ctx.percent >= 80" class="hint">Proche de la limite — pense à /compact</div>
       </div>
+
+      <div v-if="p.agent && sessionCost != null" class="line small">
+        <span class="muted">Coût estimé de la session</span>
+        <span class="mono">{{ sessionCost.toFixed(2).replace(".", ",") }} $</span>
+      </div>
+
+      <AccountUsage v-if="provider" :provider="provider" />
 
       <div v-if="!p.agent" class="block">
         <div class="eyebrow">Surveillances</div>

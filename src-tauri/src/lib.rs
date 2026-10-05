@@ -1,3 +1,4 @@
+mod claude;
 mod herdr;
 mod project;
 mod pty;
@@ -101,6 +102,9 @@ pub fn run() {
             usage::codex_usage,
             project::project_load,
             project::project_save,
+            claude::claude_statusline_state,
+            claude::claude_statusline_install,
+            claude::claude_statusline_uninstall,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");

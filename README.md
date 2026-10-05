@@ -86,22 +86,13 @@ Glisse `Herdr Desk.app` dans `/Applications`.
 
 ### Claude Code
 
-Le script `scripts/claude-statusline.sh` sert de status line à Claude Code. Il affiche une ligne compacte et, quand Claude tourne dans un panneau Herdr, envoie les chiffres à Herdr (`herdr pane report-metadata`). Herdr Desk les lit ensuite.
+Claude Code transmet le contexte et les quotas (5 h, semaine) à sa status line. Herdr Desk s’y branche : clique sur **« Activer le suivi Claude »** (panneau de droite d’un agent Claude, ou barre du bas). L’app :
 
-Dans `~/.claude/settings.json` :
+- copie `scripts/claude-statusline.sh` dans `~/.config/herdr-desk/` ;
+- garde ta status line actuelle dans `~/.config/herdr-desk/claude-statusline-next`, qui continue d’être affichée telle quelle dans le terminal ;
+- pointe `statusLine.command` de `~/.claude/settings.json` vers le script (sauvegarde : `settings.json.herdr-desk-backup`).
 
-```json
-{
-  "statusLine": {
-    "type": "command",
-    "command": "~/Projects/HerdrDesk/scripts/claude-statusline.sh"
-  }
-}
-```
-
-Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Si tu as déjà une status line, garde la tienne et ajoute seulement le bloc « Report to Herdr » du script.
-
-Les quotas 5 h et semaine n’apparaissent qu’avec un abonnement Pro ou Max, après la première réponse de la session.
+Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la réponse suivante. « Désactiver le suivi Claude » rétablit ta status line d’origine. Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Les quotas n’existent qu’avec un abonnement Pro ou Max.
 
 ### Codex
 

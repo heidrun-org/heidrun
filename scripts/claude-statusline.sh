@@ -5,8 +5,10 @@
 # 2. When Claude runs inside a Herdr pane, reports the same numbers to Herdr as
 #    pane tokens, which Herdr Desk (and Herdr's own sidebar) can display.
 #
-# Install: in ~/.claude/settings.json
-#   "statusLine": { "type": "command", "command": "~/Projects/HerdrDesk/scripts/claude-statusline.sh" }
+# Installed by Herdr Desk (Panneau → « Activer le suivi Claude ») as
+# ~/.config/herdr-desk/claude-statusline.sh. If you already had a status line, its
+# command is saved in ~/.config/herdr-desk/claude-statusline-next and still drives
+# what Claude Code displays: this script only adds the report to Herdr.
 # Requires jq (shipped with macOS 15+, otherwise `brew install jq`).
 
 input=$(cat)
@@ -46,6 +48,13 @@ if [ -n "$HERDR_PANE_ID" ]; then
 fi
 
 # ---- The line shown in Claude Code -----------------------------------------
+# Your own status line, if you had one, keeps the display.
+next_file="${HERDR_DESK_DIR:-$HOME/.config/herdr-desk}/claude-statusline-next"
+if [ -s "$next_file" ]; then
+  printf '%s' "$input" | sh -c "$(cat "$next_file")"
+  exit $?
+fi
+
 line=""
 [ -n "$model" ] && line="$model"
 [ -n "$ctx" ] && line="$line · contexte $(round "$ctx")%"

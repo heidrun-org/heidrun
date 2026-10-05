@@ -112,6 +112,7 @@ export interface ContextUsage {
 
 /** Quota block in the status bar. */
 export interface QuotaBlock {
+  provider: "claude" | "codex";
   label: string;
   windows: { name: string; percent: number; resetsAt?: number }[];
   cost?: number;

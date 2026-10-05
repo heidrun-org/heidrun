@@ -187,7 +187,7 @@ export const quotas = computed<QuotaBlock[]>(() => {
     if (num(t.hd_q5h) != null) windows.push({ name: "Session 5 h", percent: num(t.hd_q5h)!, resetsAt: num(t.hd_q5h_reset) });
     if (num(t.hd_q7d) != null) windows.push({ name: "Semaine", percent: num(t.hd_q7d)!, resetsAt: num(t.hd_q7d_reset) });
     const cost = allPanes.value.reduce((sum, p) => sum + (num(p.tokens?.hd_cost) ?? 0), 0);
-    blocks.push({ label: "Claude", windows, cost: cost || undefined, updatedAt: num(t.hd_ts) });
+    blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt: num(t.hd_ts) });
   }
 
   const c = state.codex;
@@ -195,7 +195,7 @@ export const quotas = computed<QuotaBlock[]>(() => {
     const windows: QuotaBlock["windows"] = [];
     if (c.primary) windows.push({ name: "Session 5 h", percent: c.primary.used_percent, resetsAt: c.primary.resets_at ?? undefined });
     if (c.secondary) windows.push({ name: "Semaine", percent: c.secondary.used_percent, resetsAt: c.secondary.resets_at ?? undefined });
-    blocks.push({ label: c.plan ? `Codex · ${c.plan}` : "Codex", windows, updatedAt: c.updated_at ?? undefined });
+    blocks.push({ provider: "codex", label: c.plan ? `Codex · ${c.plan}` : "Codex", windows, updatedAt: c.updated_at ?? undefined });
   }
   return blocks;
 });

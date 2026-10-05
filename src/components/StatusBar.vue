@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { quotas, state } from "../stores/session";
+import { claudeLink, enableClaudeLink } from "../stores/claude";
 import { clockTime, gaugeLevel } from "../lib/format";
 </script>
 
@@ -16,9 +17,15 @@ import { clockTime, gaugeLevel } from "../lib/format";
       <span v-if="q.cost" class="muted">coût estimé <span class="mono val">{{ q.cost.toFixed(2).replace(".", ",") }} $</span></span>
       <span class="sep"></span>
     </template>
-    <span v-if="!quotas.length" class="muted">
-      Quotas : configure la status line Claude (voir README) ou lance Codex une fois.
-    </span>
+    <button
+      v-if="!quotas.some((q) => q.provider === 'claude') && claudeLink.loaded && !claudeLink.installed"
+      class="link"
+      :disabled="claudeLink.busy"
+      @click="enableClaudeLink"
+    >
+      Claude : activer le suivi des quotas
+    </button>
+    <span v-else-if="!quotas.some((q) => q.provider === 'claude')" class="muted">Claude : en attente de données</span>
     <span class="grow"></span>
     <span class="muted">{{ state.connected ? "connecté" : "hors ligne" }}</span>
   </footer>
@@ -36,6 +43,8 @@ import { clockTime, gaugeLevel } from "../lib/format";
 .muted { color: var(--muted); }
 .sep { width: 1px; height: 14px; background: var(--line-strong); }
 .grow { flex: 1; }
+.link { border: none; background: none; padding: 0; color: var(--done); font-size: 11.5px; }
+.link:hover { text-decoration: underline; }
 .lvl-ok { color: var(--text-2); }
 .lvl-warn { color: var(--blocked); }
 .lvl-crit { color: var(--fail); }
