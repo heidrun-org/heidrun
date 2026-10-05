@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, ref } from "vue";
 import {
   allPanes,
+  closePane,
+  closeTab,
   newTerminal,
   recentCommands,
   runInNewPane,
@@ -13,6 +15,7 @@ import {
   workspaceLabel,
 } from "../stores/session";
 import { STATUS_LABEL, paneName } from "../lib/format";
+import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
 
 interface Item {
   section: string;
@@ -56,12 +59,21 @@ const items = computed<Item[]>(() => {
     });
   }
 
+  const sel = selectedPane.value;
   const actions: Item[] = [
     { section: "Terminaux", label: "Nouveau terminal", hint: "⌘T", run: () => newTerminal() },
-    { section: "Terminaux", label: "Diviser le panneau courant", hint: "⌘D", run: () => splitPane("right") },
-    { section: "Terminaux", label: "Diviser vers le bas", hint: "⇧⌘D", run: () => splitPane("down") },
+    { section: "Terminaux", label: "Diviser à droite", hint: "⌘D", run: () => splitPane("right") },
+    { section: "Terminaux", label: "Diviser en bas", hint: "⇧⌘D", run: () => splitPane("down") },
+    ...(sel ? [{ section: "Terminaux", label: `Fermer le panneau ${paneName(sel)}`, hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
+    ...(state.selectedTabId ? [{ section: "Terminaux", label: "Fermer l’onglet courant", run: () => closeTab(state.selectedTabId!) }] : []),
+    { section: "Affichage", label: "Agrandir la police", hint: "⌘+", run: () => zoom(0.5) },
+    { section: "Affichage", label: "Réduire la police", hint: "⌘−", run: () => zoom(-0.5) },
+    { section: "Affichage", label: "Taille de police par défaut", hint: "⌘0", run: () => resetZoom() },
+    { section: "Affichage", label: "Barre latérale gauche", hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
+    { section: "Affichage", label: "Panneau de droite", hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
+    ...FONTS.map((f) => ({ section: "Affichage", label: `Police : ${f.label}`, hint: f.id === settings.fontId ? "✓" : undefined, run: () => (settings.fontId = f.id) })),
   ];
-  list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower) || !!q));
+  list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower)));
   return list;
 });
 

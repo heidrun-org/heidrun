@@ -3,6 +3,7 @@ mod pty;
 mod usage;
 
 use serde_json::{json, Value};
+use tauri::menu::{Menu, MenuBuilder, SubmenuBuilder};
 use tauri::{AppHandle, State};
 
 /// Generic socket call: the frontend passes the raw method and params.
@@ -43,6 +44,38 @@ fn herdr_paths() -> Value {
     })
 }
 
+/// Custom menu: the default macOS menu binds ⌘W to "Close Window", which would
+/// close the app instead of reaching our "close pane" shortcut.
+fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let app_menu = SubmenuBuilder::new(app, "Herdr Desk")
+        .about(None)
+        .separator()
+        .services()
+        .separator()
+        .hide()
+        .hide_others()
+        .show_all()
+        .separator()
+        .quit()
+        .build()?;
+    let edit = SubmenuBuilder::new(app, "Édition")
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+    let window = SubmenuBuilder::new(app, "Fenêtre")
+        .minimize()
+        .maximize()
+        .separator()
+        .fullscreen()
+        .build()?;
+    MenuBuilder::new(app).items(&[&app_menu, &edit, &window]).build()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -50,6 +83,7 @@ pub fn run() {
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .setup(|app| {
+            app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             Ok(())
         })

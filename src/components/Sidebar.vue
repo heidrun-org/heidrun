@@ -3,6 +3,7 @@ import { ref } from "vue";
 import {
   allPanes,
   attention,
+  dismiss,
   newWorkspace,
   selectPane,
   selectWorkspace,
@@ -12,6 +13,7 @@ import {
   workspaces,
 } from "../stores/session";
 import { STATUS_LABEL, ago, paneName } from "../lib/format";
+import Icon from "./Icon.vue";
 import type { AgentInfo } from "../lib/types";
 
 function summary(p: AgentInfo): string {
@@ -38,20 +40,19 @@ async function createWorkspace() {
   <aside class="side">
     <section v-if="attention.length" class="group">
       <div class="eyebrow pad">À traiter</div>
-      <button
-        v-for="p in attention"
-        :key="p.pane_id"
-        class="card"
-        :class="p.agent_status"
-        @click="selectPane(p)"
-      >
-        <span class="row">
-          <span class="name">{{ paneName(p) }}</span>
-          <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
-        </span>
-        <span class="desc">{{ workspaceLabel(p.workspace_id) }} · {{ summary(p) }}</span>
-        <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
-      </button>
+      <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
+        <button class="card-main" @click="selectPane(p)">
+          <span class="row">
+            <span class="name">{{ paneName(p) }}</span>
+            <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+          </span>
+          <span class="desc">{{ workspaceLabel(p.workspace_id) }} · {{ summary(p) }}</span>
+          <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
+        </button>
+        <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
+          <Icon name="close" />
+        </button>
+      </div>
     </section>
 
     <section class="group tight">
@@ -101,12 +102,18 @@ async function createWorkspace() {
 .group { display: flex; flex-direction: column; gap: 8px; }
 .group.tight { gap: 2px; }
 .pad { padding: 0 8px 6px; }
-.card {
-  text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px;
-  border: 1px solid #22344f; background: #121821;
+.card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: #121821; }
+.card-main {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
+  border: none; background: transparent; border-radius: 10px;
 }
+.card-x {
+  position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
+  background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.card-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 .card.blocked { border-color: #4a3a1e; background: #1e1912; }
-.card .row { display: flex; justify-content: space-between; align-items: center; }
+.card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .name { font-size: 13px; font-weight: 600; }
 .badge { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; }
 .desc { font-size: 12px; color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

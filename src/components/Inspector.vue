@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import ConfirmButton from "./ConfirmButton.vue";
 import {
   addWatch,
   askAgentToFix,
@@ -112,7 +113,7 @@ const statusText = computed(() => {
       </div>
 
       <div class="spacer"></div>
-      <button class="link" @click="closePane(p.pane_id)">Fermer ce panneau</button>
+      <ConfirmButton class="link" label="Fermer ce panneau" armed-label="Cliquer encore pour fermer" aria-label="Fermer ce panneau" @confirm="closePane(p.pane_id)" />
     </template>
     <div v-else class="muted">Sélectionne un panneau.</div>
   </aside>
@@ -152,7 +153,7 @@ const statusText = computed(() => {
 .act { display: flex; gap: 10px; font-size: 12px; }
 .grow { flex: 1; }
 .spacer { flex: 1; }
-.link { align-self: flex-start; border: none; background: none; padding: 0; color: var(--muted); font-size: 12px; }
+.link { align-self: flex-start; font-size: 12px; padding: 0 8px; height: 26px; }
 .link:hover { color: var(--fail); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

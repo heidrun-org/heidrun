@@ -56,6 +56,10 @@ export function closePane(paneId: string) {
   return request("pane.close", { pane_id: paneId });
 }
 
+export function closeTab(tabId: string) {
+  return request("tab.close", { tab_id: tabId });
+}
+
 // ---- Input ----------------------------------------------------------------
 
 export function prompt(target: string, text: string) {

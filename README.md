@@ -7,7 +7,21 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 - **Barre de saisie** : une consigne pour un agent, ou une commande pour un terminal.
 - **Inspecteur** : Autoriser / Refuser, contexte de l’agent, « Demander à un agent de corriger », surveillance de motifs.
 - **Status bar** : quotas Claude (5 h, semaine) et Codex.
-- **Palette ⌘K**, **⌘T** nouveau terminal, **⌘D** / **⇧⌘D** diviser.
+- **Palette ⌘K** pour toutes les actions.
+- Police du terminal au choix (Geist Mono, SF Mono, JetBrains Mono, Fira Code, Menlo, Monaco), réglable dans le bouton « A » de la barre du haut.
+
+## Raccourcis
+
+| Raccourci | Action |
+| --- | --- |
+| ⌘K | Palette de commandes |
+| ⌘T | Nouveau terminal (nouvel onglet) |
+| ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
+| ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
+| ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
+| ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
+
+Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.
 - Notifications macOS quand un agent passe en bloqué ou termine.
 
 Tout passe par le serveur Herdr : fermer l’app n’arrête rien, et tu retrouves les mêmes agents depuis l’iPhone en SSH.

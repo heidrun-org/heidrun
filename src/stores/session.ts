@@ -40,6 +40,8 @@ export const state = reactive({
   /** When each pane entered its current status (local clock). */
   since: {} as Record<string, number>,
   watches: [] as OutputWatch[],
+  /** "À traiter" cards closed by the user, until the pane changes state again. */
+  dismissed: {} as Record<string, string>,
   toast: "" as string,
 });
 
@@ -85,9 +87,18 @@ export const tabPanes = computed(() => allPanes.value.filter((p) => p.tab_id ===
 export const selectedPane = computed(() => allPanes.value.find((p) => p.pane_id === state.selectedPaneId) ?? null);
 
 /** Agents waiting on the user, blocked first, then most recent first. */
+export function attentionKey(p: AgentInfo): string {
+  return `${p.agent_status}:${p.state_change_seq ?? 0}`;
+}
+
+export function dismiss(p: AgentInfo) {
+  state.dismissed[p.pane_id] = attentionKey(p);
+}
+
 export const attention = computed(() =>
   allPanes.value
     .filter((p) => p.agent && (p.agent_status === "blocked" || p.agent_status === "done"))
+    .filter((p) => state.dismissed[p.pane_id] !== attentionKey(p))
     .sort((a, b) => {
       if (a.agent_status !== b.agent_status) return a.agent_status === "blocked" ? -1 : 1;
       return (b.state_change_seq ?? 0) - (a.state_change_seq ?? 0);
@@ -325,8 +336,8 @@ export function newTerminal() {
   });
 }
 
-export function splitPane(direction: "right" | "down" = "right") {
-  const p = selectedPane.value;
+export function splitPane(direction: "right" | "down" = "right", paneId?: string) {
+  const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : selectedPane.value;
   if (!p) return newTerminal();
   return guard(async () => {
     const pane = await api.split(p.pane_id, direction, p.cwd);
@@ -346,6 +357,10 @@ export async function newWorkspace(cwd: string | null, label: string | null) {
 
 export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
+}
+
+export function closeTab(tabId: string) {
+  return guard(() => api.closeTab(tabId));
 }
 
 export function sendPrompt(paneId: string, text: string) {

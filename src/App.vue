@@ -9,20 +9,56 @@ import Inspector from "./components/Inspector.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
-import { newTerminal, splitPane, start, state } from "./stores/session";
+import { closePane, newTerminal, splitPane, start, state, toast } from "./stores/session";
+import { resetZoom, settings, zoom } from "./stores/settings";
+
+let armedClose: string | null = null;
+let armedAt = 0;
 
 // Capture phase: our shortcuts win over xterm, which otherwise swallows the keys.
+// e.code is used because ⌥ changes e.key on macOS (⌥B gives "∫").
 function onKey(e: KeyboardEvent) {
-  if (!e.metaKey || e.ctrlKey || e.altKey) return;
-  const k = e.key.toLowerCase();
-  let handled = true;
-  if (k === "k") state.paletteOpen = !state.paletteOpen;
-  else if (k === "t") newTerminal();
-  else if (k === "d") splitPane(e.shiftKey ? "down" : "right");
-  else handled = false;
-  if (handled) {
+  if (!e.metaKey || e.ctrlKey) return;
+  const run = (fn: () => unknown) => {
     e.preventDefault();
     e.stopPropagation();
+    fn();
+  };
+  switch (e.code) {
+    case "KeyK":
+      return run(() => (state.paletteOpen = !state.paletteOpen));
+    case "KeyT":
+      return run(() => newTerminal());
+    case "KeyD":
+      return run(() => splitPane(e.shiftKey ? "down" : "right"));
+    case "KeyW":
+      // Closing ends the process in the pane: ask for a second ⌘W within 2 s.
+      return run(() => {
+        const id = state.selectedPaneId;
+        if (!id) return;
+        if (armedClose === id && Date.now() - armedAt < 2000) {
+          armedClose = null;
+          closePane(id);
+        } else {
+          armedClose = id;
+          armedAt = Date.now();
+          toast("⌘W encore une fois pour fermer ce panneau");
+        }
+      });
+    case "KeyB":
+      return run(() => {
+        if (e.altKey) settings.rightOpen = !settings.rightOpen;
+        else settings.leftOpen = !settings.leftOpen;
+      });
+    case "Equal":
+    case "NumpadAdd":
+      return run(() => zoom(0.5));
+    case "Minus":
+    case "NumpadSubtract":
+      return run(() => zoom(-0.5));
+    case "Digit0":
+    case "Numpad0":
+      return run(() => resetZoom());
   }
 }
 
@@ -37,7 +73,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
   <div class="app">
     <TopBar />
     <div class="body">
-      <Sidebar />
+      <Sidebar v-if="settings.leftOpen" />
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
@@ -46,7 +82,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </template>
         <Offline v-else />
       </main>
-      <Inspector v-if="state.snapshot" />
+      <Inspector v-if="state.snapshot && settings.rightOpen" />
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />

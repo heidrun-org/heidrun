@@ -1,0 +1,67 @@
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from "vue";
+import Icon from "./Icon.vue";
+import { FONTS, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../stores/settings";
+
+const open = ref(false);
+const root = ref<HTMLElement>();
+
+function onDocClick(e: MouseEvent) {
+  if (open.value && root.value && !root.value.contains(e.target as Node)) open.value = false;
+}
+onMounted(() => document.addEventListener("mousedown", onDocClick));
+onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
+</script>
+
+<template>
+  <div ref="root" class="wrap">
+    <button class="icon-btn" :class="{ on: open }" aria-label="Police du terminal" title="Police du terminal" @click="open = !open">
+      <Icon name="text" />
+    </button>
+    <div v-if="open" class="menu" role="dialog" aria-label="Police du terminal">
+      <div class="eyebrow">Police du terminal</div>
+      <label class="sr" for="font-family">Police</label>
+      <select id="font-family" v-model="settings.fontId">
+        <option v-for="f in FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
+      </select>
+      <div class="size">
+        <button class="btn" aria-label="Réduire la police" :disabled="settings.fontSize <= FONT_MIN" @click="zoom(-0.5)">A−</button>
+        <span class="mono val">{{ settings.fontSize }} px</span>
+        <button class="btn" aria-label="Agrandir la police" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
+        <button class="btn" @click="resetZoom()">Réinitialiser</button>
+      </div>
+      <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${settings.fontSize}px` }">
+        ❯ flutter test → 12 passed
+      </div>
+      <div class="keys"><kbd>⌘+</kbd> agrandir · <kbd>⌘−</kbd> réduire · <kbd>⌘0</kbd> par défaut</div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.wrap { position: relative; }
+.icon-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field);
+  color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.icon-btn:hover, .icon-btn.on { background: var(--hover); color: var(--text); }
+.menu {
+  position: absolute; right: 0; top: 38px; width: 300px; z-index: 30; padding: 14px; border-radius: 12px;
+  border: 1px solid #33383e; background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  display: flex; flex-direction: column; gap: 10px;
+}
+select {
+  height: 34px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text);
+  padding: 0 10px; font-size: 13px;
+}
+.size { display: flex; align-items: center; gap: 6px; }
+.size .btn:disabled { opacity: 0.4; cursor: default; }
+.val { min-width: 52px; text-align: center; color: var(--text); font-size: 12px; }
+.preview {
+  padding: 10px 12px; border-radius: 8px; background: var(--bg); color: var(--text-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.keys { font-size: 11px; color: var(--muted); }
+kbd { font-family: var(--mono); color: var(--text-2); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>

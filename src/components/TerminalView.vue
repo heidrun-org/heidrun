@@ -5,6 +5,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { fontStack, settings } from "../stores/settings";
 
 const props = defineProps<{ terminalId: string; focused: boolean }>();
 
@@ -37,8 +38,8 @@ async function attach(takeover = false) {
 
 onMounted(async () => {
   term = new Terminal({
-    fontFamily: '"Geist Mono", "SF Mono", Menlo, monospace',
-    fontSize: 12.5,
+    fontFamily: fontStack(),
+    fontSize: settings.fontSize,
     lineHeight: 1.25,
     cursorBlink: true,
     macOptionIsMeta: true,
@@ -67,6 +68,11 @@ onMounted(async () => {
       brightWhite: "#e8e6e1",
     },
   });
+  try {
+    await document.fonts.load(`${settings.fontSize}px ${fontStack()}`);
+  } catch {
+    /* ignore */
+  }
   fit = new FitAddon();
   term.loadAddon(fit);
   term.loadAddon(new WebLinksAddon());
@@ -92,6 +98,24 @@ onMounted(async () => {
   await attach(false);
   if (props.focused) term.focus();
 });
+
+// Font changes: wait for the font to load so xterm measures the right cell size,
+// then refit; the new cols/rows reach Herdr through onResize.
+watch(
+  () => [settings.fontId, settings.fontSize] as const,
+  async () => {
+    if (!term) return;
+    const stack = fontStack();
+    try {
+      await document.fonts.load(`${settings.fontSize}px ${stack}`);
+    } catch {
+      /* fall back to whatever is available */
+    }
+    term.options.fontFamily = stack;
+    term.options.fontSize = settings.fontSize;
+    fit?.fit();
+  },
+);
 
 watch(
   () => props.focused,

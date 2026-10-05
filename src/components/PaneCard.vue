@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import TerminalView from "./TerminalView.vue";
-import { contextFor, selectPane, state } from "../stores/session";
+import ConfirmButton from "./ConfirmButton.vue";
+import Icon from "./Icon.vue";
+import { closePane, contextFor, selectPane, splitPane, state } from "../stores/session";
 import { gaugeLevel, paneName } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
 
@@ -37,6 +39,15 @@ const subtitle = computed(() => {
         </span>
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
       </template>
+      <span class="tools">
+        <button class="tool" aria-label="Diviser à droite" title="Diviser à droite (⌘D)" @mousedown.stop @click="splitPane('right', pane.pane_id)">
+          <Icon name="split-right" />
+        </button>
+        <button class="tool" aria-label="Diviser en bas" title="Diviser en bas (⇧⌘D)" @mousedown.stop @click="splitPane('down', pane.pane_id)">
+          <Icon name="split-down" />
+        </button>
+        <ConfirmButton label="×" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
+      </span>
     </header>
     <TerminalView :key="pane.terminal_id" :terminal-id="pane.terminal_id" :focused="selected" />
   </section>
@@ -64,4 +75,11 @@ const subtitle = computed(() => {
 .pct { color: var(--text-2); }
 .lvl-warn { color: var(--blocked); }
 .lvl-crit { color: var(--fail); }
+.tools { display: flex; align-items: center; gap: 2px; margin-left: 6px; opacity: 0.55; transition: opacity 0.15s; }
+.pane:hover .tools, .pane.selected .tools { opacity: 1; }
+.tool {
+  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.tool:hover { background: var(--hover); color: var(--text); }
 </style>
