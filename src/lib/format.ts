@@ -11,9 +11,9 @@ export const STATUS_LABEL: Record<AgentStatus, string> = {
 export function paneName(p: PaneInfo | AgentInfo): string {
   const name = (p as AgentInfo).name;
   return (
+    p.label ||
     name ||
     p.display_agent ||
-    p.label ||
     (p.agent ? p.agent : "") ||
     p.terminal_title_stripped ||
     "shell"

@@ -52,6 +52,8 @@ Une carte « À traiter » fermée avec × reste fermée, même après un redém
 
 **Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.
 
+**Renommer** : double-clic sur un workspace, un onglet, ou un panneau (dans la liste « Panneaux » ou dans son en-tête). Pour un panneau, un nom vide rend le nom automatique (agent ou titre du terminal). Les noms sont enregistrés dans Herdr.
+
 **Réorganiser** : glisser-déposer les workspaces dans la barre de gauche et les onglets dans la barre d’onglets. L’ordre est enregistré dans Herdr.
 
 Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.

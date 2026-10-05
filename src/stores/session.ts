@@ -491,7 +491,7 @@ export async function finishRename(kind: "ws" | "tab" | "pane", id: string, labe
   if (label === null && kind !== "pane") return;
   if (kind === "ws") await guard(() => api.renameWorkspace(id, label!));
   else if (kind === "tab") await guard(() => api.renameTab(id, label!));
-  else await guard(() => api.renamePane(id, label));
+  else await guard(() => api.renamePane(id, label ? label : null));
 }
 
 export function moveWorkspace(workspaceId: string, insertIndex: number) {

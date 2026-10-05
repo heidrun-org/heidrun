@@ -109,19 +109,32 @@ async function createWorkspace() {
 
     <section class="group tight">
       <div class="eyebrow pad">Panneaux · {{ state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }}</div>
-      <button
-        v-for="p in workspacePanes"
-        :key="p.pane_id"
-        class="item small"
-        :class="{ active: p.pane_id === state.selectedPaneId }"
-        @click="selectPane(p)"
-      >
-        <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
-        <span class="grow">{{ paneName(p) }}</span>
-        <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
-          {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
-        </span>
-      </button>
+      <template v-for="p in workspacePanes" :key="p.pane_id">
+        <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
+          <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
+          <InlineRename
+            :value="p.label || paneName(p)"
+            label="Nouveau nom du panneau (vide pour revenir au nom automatique)"
+            allow-empty
+            @save="(v) => finishRename('pane', p.pane_id, v)"
+            @cancel="state.renaming = null"
+          />
+        </div>
+        <button
+          v-else
+          class="item small"
+          :class="{ active: p.pane_id === state.selectedPaneId }"
+          :title="`${p.terminal_title_stripped || p.agent || 'terminal'} · double-clic pour renommer`"
+          @click="selectPane(p)"
+          @dblclick="startRename('pane', p.pane_id)"
+        >
+          <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
+          <span class="grow">{{ paneName(p) }}</span>
+          <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
+            {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
+          </span>
+        </button>
+      </template>
     </section>
   </aside>
 </template>

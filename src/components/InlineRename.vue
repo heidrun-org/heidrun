@@ -3,7 +3,7 @@ import { nextTick, onMounted, ref } from "vue";
 
 // Text field that replaces a label while it is being renamed.
 // Enter or leaving the field saves, Esc cancels.
-const props = defineProps<{ value: string; label: string }>();
+const props = defineProps<{ value: string; label: string; allowEmpty?: boolean }>();
 const emit = defineEmits<{ save: [value: string]; cancel: [] }>();
 
 const text = ref(props.value);
@@ -15,6 +15,7 @@ function save() {
   done = true;
   const v = text.value.trim();
   if (v && v !== props.value) emit("save", v);
+  else if (!v && props.allowEmpty) emit("save", "");
   else emit("cancel");
 }
 

@@ -35,7 +35,8 @@ const subtitle = computed(() => {
         v-if="state.renaming === `pane:${pane.pane_id}`"
         class="pane-rename"
         :value="pane.label || paneName(pane)"
-        label="Nouveau nom du panneau"
+        label="Nouveau nom du panneau (vide pour revenir au nom automatique)"
+        allow-empty
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
