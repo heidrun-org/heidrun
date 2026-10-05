@@ -8,6 +8,7 @@ import InputBar from "./components/InputBar.vue";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
+import RcModal from "./components/RcModal.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
@@ -28,7 +29,7 @@ import {
 import { resetZoom, settings, zoom } from "./stores/settings";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
-import { loadClaudeLink, startRemoteWatch } from "./stores/claude";
+import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
 let armedClose: string | null = null;
 let armedAt = 0;
@@ -143,6 +144,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
     <NoteModal v-if="notes.openId" />
+    <RcModal v-if="remote.openFor" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
     </Transition>

@@ -64,6 +64,8 @@ export type RcState = "active" | "failed" | "off";
 export const remote = reactive({
   byPane: {} as Record<string, RcState>,
   urls: {} as Record<string, string>,
+  /** Pane whose session link is shown in the QR code window. */
+  openFor: null as string | null,
   atStartup: null as boolean | null,
 });
 

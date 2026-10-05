@@ -31,14 +31,15 @@ const busy = computed(() => props.pane.agent_status === "blocked");
       <template v-if="state === 'active'">Session ouverte sur claude.ai/code et l’app Claude (iPhone, iPad).</template>
       <template v-else>Reprends cette session depuis claude.ai/code ou l’app Claude sur ton téléphone.</template>
     </p>
-    <button class="btn" :disabled="busy" :title="busy ? 'L’agent attend une décision' : ''" @click="toggleRemoteControl(pane.pane_id)">
-      {{ state === "active" ? "Afficher l’URL et le QR code" : state === "failed" ? "Reconnecter" : "Activer Remote Control" }}
+    <button v-if="state === 'active' && url" class="btn" @click="remote.openFor = pane.pane_id">Afficher l’URL et le QR code</button>
+    <button v-else class="btn" :disabled="busy" :title="busy ? 'L’agent attend une décision' : ''" @click="toggleRemoteControl(pane.pane_id)">
+      {{ state === "failed" ? "Reconnecter" : state === "active" ? "Ouvrir le panneau Remote Control" : "Activer Remote Control" }}
     </button>
     <div v-if="state === 'active' && url" class="url">
       <span class="mono">{{ url.replace("https://", "") }}</span>
       <button class="btn small" @click="copyUrl">Copier</button>
     </div>
-    <p v-if="state === 'active'" class="hint">Le panneau s’ouvre dans le terminal ; il permet aussi de déconnecter.</p>
+
     <label class="check">
       <input type="checkbox" :checked="remote.atStartup === true" @change="(e) => setRcStartup((e.target as HTMLInputElement).checked)" />
       Activer pour toutes les nouvelles sessions Claude

@@ -103,7 +103,7 @@ Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la répo
 
 ### Remote Control (Claude Code)
 
-Dans le panneau de droite d’un agent Claude, le bloc **Remote Control** indique si la session est connectée (badge **RC** dans la liste des panneaux) et propose **Activer Remote Control**, qui envoie `/remote-control` à l’agent. Une fois connecté, le même bouton affiche l’URL et le QR code dans le terminal. La case « Activer pour toutes les nouvelles sessions Claude » écrit `remoteControlAtStartup: true` dans `~/.claude/settings.json`. L’état est lu dans l’indicateur `/rc active` que Claude Code affiche sous la zone de saisie ; il n’apparaît pas si le terminal est trop étroit. Abonnement Pro, Max, Team ou Enterprise requis.
+Dans le panneau de droite d’un agent Claude, le bloc **Remote Control** indique si la session est connectée (badge **RC** dans la liste des panneaux) et propose **Activer Remote Control**, qui envoie `/remote-control` à l’agent. Une fois connecté, **Afficher l’URL et le QR code** ouvre une fenêtre avec le lien de la session (copier, ouvrir dans le navigateur) et un QR code à scanner avec le téléphone, généré localement par l’app. La case « Activer pour toutes les nouvelles sessions Claude » écrit `remoteControlAtStartup: true` dans `~/.claude/settings.json`. L’état est lu dans l’indicateur `/rc active` que Claude Code affiche sous la zone de saisie ; il n’apparaît pas si le terminal est trop étroit. Abonnement Pro, Max, Team ou Enterprise requis.
 
 ### Codex
 
