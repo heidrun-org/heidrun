@@ -354,3 +354,19 @@ export function agentListState(lineAt: (i: number) => string | null, rows: numbe
   }
   return null;
 }
+
+/**
+ * Is screen line `y` inside Claude Code's prompt box (between the two ─── rules,
+ * the first line starting with ❯)? Returns the box's first and last lines.
+ */
+export function promptBoxAt(lineAt: (i: number) => string | null, y: number): { first: number; last: number } | null {
+  const rule = (i: number) => /^\s*[─━]{8,}/.test(lineAt(i) ?? "");
+  if (rule(y)) return null;
+  let top = y - 1;
+  while (top >= 0 && y - top <= 12 && !rule(top)) top--;
+  let bottom = y + 1;
+  while (lineAt(bottom) != null && bottom - y <= 12 && !rule(bottom)) bottom++;
+  if (!rule(top) || !rule(bottom)) return null;
+  if (!/^\s*[❯›>]/.test(lineAt(top + 1) ?? "")) return null;
+  return { first: top + 1, last: bottom - 1 };
+}

@@ -10,6 +10,7 @@ import {
   claudeCommands,
   agentListState,
   findAgentRow,
+  promptBoxAt,
   findCommands,
   findRefs,
   findShellBlock,
@@ -136,6 +137,28 @@ onMounted(async () => {
           const l = i >= 0 && i < term!.rows ? buf.getLine(buf.viewportY + i) : undefined;
           return l ? lineText(l).text : null;
         };
+        // Selection in the agent list: a click in the prompt box gives the focus back
+        // to the text input (↑ until past the first row), to type again.
+        const row0 = y - 1 - buf.viewportY;
+        if (promptBoxAt(at, row0)) {
+          const list = agentListState(at, term!.rows);
+          if (list && list.selected !== null) {
+            const steps = list.selected + 1;
+            return callback([
+              {
+                text,
+                range: { start: { x: 1, y }, end: { x: term!.cols, y } },
+                decorations: { underline: false, pointerCursor: true },
+                activate: () => {
+                  hideChip(true);
+                  backToPrompt(steps);
+                },
+                hover: () => showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps)),
+                leave: () => hideChip(),
+              },
+            ]);
+          }
+        }
         // Agent list under the prompt: a click switches to that agent (↓ to reach the
         // list, ↓ to the row, Enter), instead of walking there with the arrow keys.
         const agentRow = findAgentRow(at, y - 1 - buf.viewportY, term!.rows);
@@ -352,6 +375,13 @@ async function pressKeys(keys: string[]) {
     await invoke("pty_write", { id, data: k }).catch(() => {});
     await new Promise((r) => window.setTimeout(r, 45));
   }
+}
+
+async function backToPrompt(steps: number) {
+  if (!term) return;
+  const up = term.modes.applicationCursorKeysMode ? "\x1bOA" : "\x1b[A";
+  term.focus();
+  await pressKeys(Array(steps).fill(up));
 }
 
 function screenLine(i: number): string | null {
