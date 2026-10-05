@@ -195,7 +195,7 @@ onMounted(async () => {
               i.run();
             }
           },
-          hover: () => showChip(range(i.s, i.e).start, i.label, i.run),
+          hover: () => showChip(range(i.s, i.e), i.label, i.run),
           leave: () => hideChip(),
         };
       }
@@ -298,10 +298,14 @@ watch(
 // ---- Hover chip -------------------------------------------------------------
 
 const wrapEl = ref<HTMLDivElement>();
-const chip = ref<{ left: number; top: number; label: string; run: () => void } | null>(null);
+const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void } | null>(null);
 let chipTimer = 0;
 
-function showChip(at: { x: number; y: number }, label: string, run: () => void) {
+/**
+ * The chip sits on the hovered line itself, just after the text: reaching it never
+ * crosses another line (and another link that would replace it).
+ */
+function showChip(r: { start: { x: number; y: number }; end: { x: number; y: number } }, label: string, run: () => void) {
   window.clearTimeout(chipTimer);
   const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
   if (!term || !screen || !wrapEl.value) return;
@@ -309,11 +313,12 @@ function showChip(at: { x: number; y: number }, label: string, run: () => void) 
   const w = wrapEl.value.getBoundingClientRect();
   const cellW = s.width / term.cols;
   const cellH = s.height / term.rows;
-  const row = at.y - 1 - term.buffer.active.viewportY;
-  let top = s.top - w.top + row * cellH - 26;
-  if (top < 2) top = s.top - w.top + (row + 1) * cellH + 2; // first line: below it
-  const left = Math.max(4, Math.min(s.left - w.left + (at.x - 1) * cellW, w.width - 220));
-  chip.value = { left, top, label, run };
+  const row = r.end.y - 1 - term.buffer.active.viewportY;
+  const top = s.top - w.top + row * cellH + (cellH - 22) / 2;
+  const left = s.left - w.left + r.end.x * cellW + 8;
+  // No room after the text: pinned to the right edge, on the same line.
+  const roomy = left + 280 < w.width;
+  chip.value = { left: roomy ? left : null, right: roomy ? null : 10, top, label, run };
 }
 
 function hideChip(now = false) {
@@ -530,7 +535,11 @@ onBeforeUnmount(() => {
       v-if="chip"
       class="chip"
       type="button"
-      :style="{ left: `${chip.left}px`, top: `${chip.top}px` }"
+      :style="{
+        top: `${chip.top}px`,
+        left: chip.left != null ? `${chip.left}px` : 'auto',
+        right: chip.right != null ? `${chip.right}px` : 'auto',
+      }"
       title="⌘-clic sur le texte fait la même chose"
       @mouseenter="clearChipTimer()"
       @mouseleave="hideChip()"
@@ -572,6 +581,7 @@ onBeforeUnmount(() => {
   position: absolute; z-index: 6; height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
+  max-width: 60%; overflow: hidden; text-overflow: ellipsis;
 }
 .chip:hover { background: #24406a; border-color: #3d6aa8; }
 :deep(.xterm-viewport) { background: transparent !important; }
