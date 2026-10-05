@@ -74,7 +74,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <div class="actions">
           <button class="btn primary" @click="copyUrl">Copier le lien</button>
           <button class="btn" @click="openInBrowser">Ouvrir dans le navigateur</button>
-          <span class="grow"></span>
           <button class="btn" title="Ouvre le panneau de Claude Code dans le terminal (déconnexion…)" @click="manage">Gérer dans le terminal</button>
         </div>
       </template>
@@ -86,7 +85,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 .scrim { position: fixed; inset: 0; z-index: 46; background: rgba(5, 6, 7, 0.55); display: flex; align-items: center; justify-content: center; }
 .win {
-  width: min(440px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px;
+  width: min(600px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px;
   border-radius: 14px; border: 1px solid #33383e; background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
 }
 header { display: flex; align-items: flex-start; justify-content: space-between; }
@@ -100,7 +99,10 @@ h2 { margin: 4px 0 0; font-size: 16px; font-weight: 600; }
 .qr :deep(svg) { width: 100%; height: 100%; display: block; }
 .hint { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; text-align: center; }
 .url { padding: 10px 12px; border-radius: 9px; background: var(--bg); }
-.url .mono { font-size: 11.5px; color: var(--text-2); word-break: break-all; user-select: text; }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.grow { flex: 1; }
+.url .mono {
+  display: block; font-size: 12px; color: var(--text-2); white-space: nowrap; overflow-x: auto;
+  user-select: text; text-align: center;
+}
+.actions { display: flex; gap: 8px; justify-content: space-between; }
+.actions .btn { flex: 1; justify-content: center; white-space: nowrap; }
 </style>
