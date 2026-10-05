@@ -4,9 +4,9 @@ import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
 import { moveNote, notes, removeNote, renameNote, type Note } from "../stores/notes";
 import { useReorder } from "../lib/reorder";
-import { allPanes, sendPrompt, state, toast } from "../stores/session";
+import { agentGroups, allPanes, paneFullName, sendPrompt, state, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
-import { ago, paneName } from "../lib/format";
+import { ago } from "../lib/format";
 
 const list = computed(() =>
   notes.showAll ? notes.list : notes.list.filter((n) => n.workspaceId === state.selectedWorkspaceId),
@@ -30,7 +30,7 @@ function sendTo(n: Note, paneId: string) {
   if (!paneId) return;
   sendPrompt(paneId, `${n.title}\n\n\`\`\`\n${n.text}\n\`\`\``);
   const agent = agents.value.find((a) => a.pane_id === paneId);
-  if (agent) toast(`Note envoyée à ${paneName(agent)}`);
+  if (agent) toast(`Note envoyée à ${paneFullName(agent)}`);
 }
 </script>
 
@@ -90,7 +90,9 @@ function sendTo(n: Note, paneId: string) {
           @change="(e) => { sendTo(n, (e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
         >
           <option value="">Envoyer à…</option>
-          <option v-for="a in agents" :key="a.pane_id" :value="a.pane_id">{{ paneName(a) }}</option>
+          <optgroup v-for="g in agentGroups" :key="g.workspace" :label="g.workspace">
+            <option v-for="a in g.items" :key="a.pane.pane_id" :value="a.pane.pane_id">{{ a.label }}</option>
+          </optgroup>
         </select>
       </div>
     </article>

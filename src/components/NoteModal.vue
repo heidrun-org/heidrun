@@ -3,10 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
 import { notes, removeNote, renameNote, updateNoteText } from "../stores/notes";
-import { allPanes, sendPrompt, toast } from "../stores/session";
+import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { copy } from "../lib/clipboard";
-import { ago, paneName } from "../lib/format";
+import { ago } from "../lib/format";
 
 const note = computed(() => notes.list.find((n) => n.id === notes.openId) ?? null);
 const agents = computed(() => allPanes.value.filter((p) => p.agent));
@@ -103,7 +103,7 @@ function sendTo(paneId: string) {
   if (!n || !paneId) return;
   sendPrompt(paneId, `${n.title}\n\n\`\`\`\n${n.text}\n\`\`\``);
   const agent = agents.value.find((a) => a.pane_id === paneId);
-  if (agent) toast(`Note envoyée à ${paneName(agent)}`);
+  if (agent) toast(`Note envoyée à ${paneFullName(agent)}`);
 }
 
 function remove() {
@@ -157,7 +157,9 @@ function remove() {
             @change="(e) => { sendTo((e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
           >
             <option value="">Envoyer à un agent…</option>
-            <option v-for="a in agents" :key="a.pane_id" :value="a.pane_id">{{ paneName(a) }}</option>
+            <optgroup v-for="g in agentGroups" :key="g.workspace" :label="g.workspace">
+              <option v-for="a in g.items" :key="a.pane.pane_id" :value="a.pane.pane_id">{{ a.label }}</option>
+            </optgroup>
           </select>
           <span class="grow"></span>
           <ConfirmButton label="Supprimer" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="remove" />

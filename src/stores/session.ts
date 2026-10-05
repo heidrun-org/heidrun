@@ -171,6 +171,37 @@ export function workspaceLabel(id: string): string {
   return workspaces.value.find((w) => w.workspace_id === id)?.label ?? id;
 }
 
+/**
+ * How to name a pane in a picker: its tab, the agent kind when the tab does not
+ * already say it, and the custom name if there is one. "Notes · Claude", "Refacto · Codex".
+ */
+export function paneTarget(p: AgentInfo): string {
+  const tab = tabLabel(p.tab_id);
+  const kind = p.agent ? agentKind(p) : "";
+  const name = paneName(p);
+  const parts = [tab];
+  if (kind && tab.toLowerCase() !== kind.toLowerCase()) parts.push(kind);
+  if (name && ![tab, kind, p.agent ?? ""].some((x) => x.toLowerCase() === name.toLowerCase())) parts.push(name);
+  return parts.filter(Boolean).join(" · ");
+}
+
+/** "Workspace · Onglet…", for toasts and titles. */
+export function paneFullName(p: AgentInfo): string {
+  return `${workspaceLabel(p.workspace_id)} · ${paneTarget(p)}`;
+}
+
+/** Agents grouped by workspace, in sidebar order: for "send to…" pickers. */
+export const agentGroups = computed(() =>
+  workspaces.value
+    .map((w) => ({
+      workspace: w.label,
+      items: allPanes.value
+        .filter((p) => p.agent && p.workspace_id === w.workspace_id)
+        .map((p) => ({ pane: p, label: paneTarget(p) })),
+    }))
+    .filter((g) => g.items.length),
+);
+
 // ---- Context and quotas ---------------------------------------------------
 
 // Last values seen, so gauges never blink out between two reports.

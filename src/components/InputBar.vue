@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { runInNewPane, runInPane, selectedPane, sendPrompt, state, workspacePanes } from "../stores/session";
+import { paneTarget, runInNewPane, runInPane, selectedPane, sendPrompt, state, workspacePanes } from "../stores/session";
 import { paneName } from "../lib/format";
 
 const text = ref("");
@@ -70,7 +70,7 @@ async function submit() {
     <label class="sr" for="target">Destinataire</label>
     <select id="target" v-model="target" class="target">
       <optgroup v-if="agents.length" label="Agents">
-        <option v-for="a in agents" :key="a.pane_id" :value="a.pane_id">{{ paneName(a) }}</option>
+        <option v-for="a in agents" :key="a.pane_id" :value="a.pane_id">{{ paneTarget(a) }}</option>
       </optgroup>
       <optgroup v-if="terminals.length" label="Terminaux">
         <option v-for="t in terminals" :key="t.pane_id" :value="t.pane_id">{{ paneName(t) }} ({{ t.pane_id }})</option>
@@ -84,7 +84,7 @@ async function submit() {
       v-model="text"
       rows="1"
       :class="{ mono: mode === 'command' }"
-      :placeholder="mode === 'agent' ? `Envoyer une consigne à ${targetPane ? paneName(targetPane) : 'l’agent'}…  (⇧↵ nouvelle ligne)` : 'Lancer une commande…  (⇧↵ nouvelle ligne)'"
+      :placeholder="mode === 'agent' ? `Envoyer une consigne à ${targetPane ? paneTarget(targetPane) : 'l’agent'}…  (⇧↵ nouvelle ligne)` : 'Lancer une commande…  (⇧↵ nouvelle ligne)'"
       autocomplete="off"
       spellcheck="false"
       @keydown="onKeydown"
