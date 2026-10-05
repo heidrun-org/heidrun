@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { remote, setRcStartup, toggleRemoteControl } from "../stores/claude";
+import { copy } from "../lib/clipboard";
+import { toast } from "../stores/session";
 import type { AgentInfo } from "../lib/types";
 
 // Claude Code's Remote Control: follow this session from claude.ai/code or the Claude app.
@@ -8,6 +10,14 @@ const props = defineProps<{ pane: AgentInfo }>();
 
 const state = computed(() => remote.byPane[props.pane.pane_id] ?? "off");
 const label = computed(() => ({ active: "Connecté", failed: "Connexion échouée", off: "Non connecté" })[state.value]);
+const url = computed(() => remote.urls[props.pane.pane_id]);
+
+async function copyUrl() {
+  if (!url.value) return;
+  await copy(url.value);
+  toast("Lien de la session copié");
+}
+
 const busy = computed(() => props.pane.agent_status === "blocked");
 </script>
 
@@ -24,6 +34,10 @@ const busy = computed(() => props.pane.agent_status === "blocked");
     <button class="btn" :disabled="busy" :title="busy ? 'L’agent attend une décision' : ''" @click="toggleRemoteControl(pane.pane_id)">
       {{ state === "active" ? "Afficher l’URL et le QR code" : state === "failed" ? "Reconnecter" : "Activer Remote Control" }}
     </button>
+    <div v-if="state === 'active' && url" class="url">
+      <span class="mono">{{ url.replace("https://", "") }}</span>
+      <button class="btn small" @click="copyUrl">Copier</button>
+    </div>
     <p v-if="state === 'active'" class="hint">Le panneau s’ouvre dans le terminal ; il permet aussi de déconnecter.</p>
     <label class="check">
       <input type="checkbox" :checked="remote.atStartup === true" @change="(e) => setRcStartup((e.target as HTMLInputElement).checked)" />
@@ -44,6 +58,9 @@ const busy = computed(() => props.pane.agent_status === "blocked");
 .hint { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
 .btn { align-self: flex-start; }
 .btn:disabled { opacity: 0.5; }
+.url { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--field); }
+.url .mono { flex: 1; min-width: 0; font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+.btn.small { height: 24px; padding: 0 8px; font-size: 11px; }
 .check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
 .check input { accent-color: var(--done); width: 14px; height: 14px; }
 </style>
