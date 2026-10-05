@@ -15,6 +15,8 @@ import {
   cycleWorkspace,
   newTerminal,
   selectWorkspaceAt,
+  shiftTab,
+  shiftWorkspace,
   splitPane,
   start,
   state,
@@ -35,6 +37,13 @@ function onKey(e: KeyboardEvent) {
     fn();
   };
   // ⌥⌘ + arrows: ←/→ tabs, ↑/↓ workspaces.
+  // ⇧⌥⌘ + arrows: move the selected tab / workspace.
+  if (e.altKey && e.shiftKey) {
+    if (e.code === "ArrowLeft") return run(() => shiftTab(-1));
+    if (e.code === "ArrowRight") return run(() => shiftTab(1));
+    if (e.code === "ArrowUp") return run(() => shiftWorkspace(-1));
+    if (e.code === "ArrowDown") return run(() => shiftWorkspace(1));
+  }
   if (e.altKey) {
     if (e.code === "ArrowLeft") return run(() => cycleTab(-1));
     if (e.code === "ArrowRight") return run(() => cycleTab(1));

@@ -2,16 +2,29 @@
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
-import { closeTab, finishRename, newTerminal, selectTab, splitPane, startRename, state, tabs } from "../stores/session";
+import { useReorder } from "../lib/reorder";
+import { closeTab, finishRename, moveTab, newTerminal, selectTab, splitPane, startRename, state, tabs } from "../stores/session";
+
+const tr = useReorder("x", (id, at) => moveTab(id, at));
 </script>
 
 <template>
   <div class="tabs">
     <div
-      v-for="t in tabs"
+      v-for="(t, ti) in tabs"
       :key="t.tab_id"
       class="tab"
-      :class="{ active: t.tab_id === state.selectedTabId }"
+      :class="{
+        active: t.tab_id === state.selectedTabId,
+        dragging: tr.dragging.value === t.tab_id,
+        'drop-before': tr.gap.value === ti,
+        'drop-after': tr.gap.value === ti + 1 && ti === tabs.length - 1,
+      }"
+      :draggable="state.renaming !== `tab:${t.tab_id}`"
+      @dragstart="tr.onDragStart($event, t.tab_id)"
+      @dragover="tr.onDragOver($event, ti)"
+      @drop="tr.onDrop($event, tabs.map((x) => x.tab_id))"
+      @dragend="tr.onDragEnd()"
     >
       <InlineRename
         v-if="state.renaming === `tab:${t.tab_id}`"
@@ -24,7 +37,7 @@ import { closeTab, finishRename, newTerminal, selectTab, splitPane, startRename,
       <button
         v-else
         class="tab-main"
-        title="Double-clic pour renommer · ⌥⌘← / ⌥⌘→ pour changer d’onglet"
+        title="Double-clic pour renommer · glisser pour déplacer · ⌥⌘← / ⌥⌘→ pour changer d’onglet"
         @click="selectTab(t.tab_id)"
         @dblclick="startRename('tab', t.tab_id)"
       >
@@ -51,7 +64,13 @@ import { closeTab, finishRename, newTerminal, selectTab, splitPane, startRename,
   height: 44px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 16px;
   border-bottom: 1px solid var(--line); overflow-x: auto;
 }
-.tab { display: flex; align-items: center; border-radius: 7px; color: #9aa0a6; }
+.tab { position: relative; display: flex; align-items: center; border-radius: 7px; color: #9aa0a6; }
+.tab.dragging { opacity: 0.4; }
+.tab.drop-before::before, .tab.drop-after::after {
+  content: ""; position: absolute; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--done);
+}
+.tab.drop-before::before { left: -3px; }
+.tab.drop-after::after { right: -3px; }
 .tab:hover { color: var(--text-2); background: #16191c; }
 .tab.active { background: var(--hover); color: var(--text); }
 .tab-main {

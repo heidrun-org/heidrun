@@ -69,6 +69,14 @@ export function renamePane(paneId: string, label: string | null) {
   return request("pane.rename", { pane_id: paneId, label });
 }
 
+export function moveWorkspace(workspaceId: string, insertIndex: number) {
+  return request("workspace.move", { workspace_id: workspaceId, insert_index: insertIndex });
+}
+
+export function moveTab(tabId: string, insertIndex: number) {
+  return request("tab.move", { tab_id: tabId, insert_index: insertIndex });
+}
+
 export function closeTab(tabId: string) {
   return request("tab.close", { tab_id: tabId });
 }

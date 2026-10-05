@@ -404,6 +404,32 @@ export async function finishRename(kind: "ws" | "tab" | "pane", id: string, labe
   else await guard(() => api.renamePane(id, label));
 }
 
+export function moveWorkspace(workspaceId: string, insertIndex: number) {
+  return guard(() => api.moveWorkspace(workspaceId, insertIndex));
+}
+
+export function moveTab(tabId: string, insertIndex: number) {
+  return guard(() => api.moveTab(tabId, insertIndex));
+}
+
+/** Keyboard reordering: moves the selected workspace up (-1) or down (+1). */
+export function shiftWorkspace(delta: -1 | 1) {
+  const list = workspaces.value;
+  const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  const target = i + delta;
+  if (i === -1 || target < 0 || target >= list.length) return;
+  return moveWorkspace(list[i].workspace_id, delta > 0 ? target + 1 : target);
+}
+
+/** Keyboard reordering: moves the selected tab left (-1) or right (+1). */
+export function shiftTab(delta: -1 | 1) {
+  const list = tabs.value;
+  const i = list.findIndex((t) => t.tab_id === state.selectedTabId);
+  const target = i + delta;
+  if (i === -1 || target < 0 || target >= list.length) return;
+  return moveTab(list[i].tab_id, delta > 0 ? target + 1 : target);
+}
+
 export function closeTab(tabId: string) {
   return guard(() => api.closeTab(tabId));
 }

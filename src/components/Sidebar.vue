@@ -5,6 +5,7 @@ import {
   attention,
   dismiss,
   finishRename,
+  moveWorkspace,
   newWorkspace,
   selectPane,
   selectWorkspace,
@@ -18,6 +19,7 @@ import {
 import { STATUS_LABEL, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import { useReorder } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 
 function summary(p: AgentInfo): string {
@@ -28,6 +30,8 @@ function summary(p: AgentInfo): string {
 function paneCount(wsId: string) {
   return allPanes.value.filter((p) => p.workspace_id === wsId).length;
 }
+
+const ws = useReorder("y", (id, at) => moveWorkspace(id, at));
 
 const creating = ref(false);
 const newPath = ref("");
@@ -74,8 +78,18 @@ async function createWorkspace() {
         <button
           v-else
           class="item"
-          :class="{ active: w.workspace_id === state.selectedWorkspaceId }"
-          title="Double-clic pour renommer"
+          :class="{
+            active: w.workspace_id === state.selectedWorkspaceId,
+            dragging: ws.dragging.value === w.workspace_id,
+            'drop-before': ws.gap.value === wi,
+            'drop-after': ws.gap.value === wi + 1 && wi === workspaces.length - 1,
+          }"
+          draggable="true"
+          title="Double-clic pour renommer · glisser pour déplacer"
+          @dragstart="ws.onDragStart($event, w.workspace_id)"
+          @dragover="ws.onDragOver($event, wi)"
+          @drop="ws.onDrop($event, workspaces.map((x) => x.workspace_id))"
+          @dragend="ws.onDragEnd()"
           @click="selectWorkspace(w.workspace_id)"
           @dblclick="startRename('ws', w.workspace_id)"
         >
@@ -142,6 +156,13 @@ async function createWorkspace() {
   border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
 }
 .item.small { height: 34px; font-weight: 400; }
+.item { position: relative; }
+.item.dragging { opacity: 0.4; }
+.item.drop-before::before, .item.drop-after::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 1px; background: var(--done);
+}
+.item.drop-before::before { top: -1px; }
+.item.drop-after::after { bottom: -1px; }
 .item.editing { background: var(--hover); padding-right: 4px; }
 .item:hover { background: #181b1e; }
 .item.active { background: var(--hover); color: var(--text); }

@@ -19,12 +19,16 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | ⌥⌘← / ⌥⌘→ | Onglet précédent / suivant |
 | ⌥⌘↑ / ⌥⌘↓ | Workspace précédent / suivant |
 | ⌘1 … ⌘9 | Aller au workspace n° 1 à 9 (ordre de la barre latérale) |
+| ⇧⌥⌘← / ⇧⌥⌘→ | Déplacer l’onglet à gauche / à droite |
+| ⇧⌥⌘↑ / ⇧⌥⌘↓ | Monter / descendre le workspace |
 | ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
 | ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
 
-**Copier du texte** : un simple glisser sélectionne dans Herdr, qui copie automatiquement dans le presse-papiers macOS. **⌥ + glisser** fait une sélection locale, à copier avec ⌘C. ⌘V colle.
+**Copier du texte** : par défaut, glisser sélectionne et **⌘C** copie (⌘V colle). Dans le menu « A » de la barre du haut, l’option « Souris pour l’app » renvoie la molette et les clics à Herdr et aux agents ; dans ce mode, **⌥ + glisser** sélectionne toujours.
+
+**Réorganiser** : glisser-déposer les workspaces dans la barre de gauche et les onglets dans la barre d’onglets. L’ordre est enregistré dans Herdr.
 
 Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.
 - Notifications macOS quand un agent passe en bloqué ou termine.

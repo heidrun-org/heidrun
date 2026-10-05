@@ -15,11 +15,11 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <template>
   <div ref="root" class="wrap">
-    <button class="icon-btn" :class="{ on: open }" aria-label="Police du terminal" title="Police du terminal" @click="open = !open">
+    <button class="icon-btn" :class="{ on: open }" aria-label="Réglages du terminal" title="Police et souris du terminal" @click="open = !open">
       <Icon name="text" />
     </button>
     <div v-if="open" class="menu" role="dialog" aria-label="Police du terminal">
-      <div class="eyebrow">Police du terminal</div>
+      <div class="eyebrow">Terminal</div>
       <label class="sr" for="font-family">Police</label>
       <select id="font-family" v-model="settings.fontId">
         <option v-for="f in FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
@@ -34,6 +34,15 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         ❯ flutter test → 12 passed
       </div>
       <div class="keys"><kbd>⌘+</kbd> agrandir · <kbd>⌘−</kbd> réduire · <kbd>⌘0</kbd> par défaut</div>
+      <div class="eyebrow sep">Souris</div>
+      <div class="seg" role="radiogroup" aria-label="Comportement de la souris">
+        <button role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">Sélectionner du texte</button>
+        <button role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">Souris pour l’app</button>
+      </div>
+      <div class="keys">
+        <template v-if="settings.mouseMode === 'select'">Glisser sélectionne, <kbd>⌘C</kbd> copie. La molette et les clics ne vont plus à Herdr.</template>
+        <template v-else>Molette et clics vont à Herdr et aux agents. <kbd>⌥</kbd> + glisser pour sélectionner.</template>
+      </div>
     </div>
   </div>
 </template>
@@ -61,7 +70,14 @@ select {
   padding: 10px 12px; border-radius: 8px; background: var(--bg); color: var(--text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.keys { font-size: 11px; color: var(--muted); }
+.keys { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.sep { margin-top: 6px; }
+.seg { display: flex; padding: 3px; border-radius: 9px; background: var(--bg); gap: 3px; }
+.seg button {
+  flex: 1; height: 30px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
+  font-size: 12px; font-weight: 500;
+}
+.seg button.on { background: var(--hover); color: var(--text); }
 kbd { font-family: var(--mono); color: var(--text-2); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

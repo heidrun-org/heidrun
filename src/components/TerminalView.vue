@@ -18,6 +18,8 @@ const id = crypto.randomUUID();
 let term: Terminal | null = null;
 let fit: FitAddon | null = null;
 let observer: ResizeObserver | null = null;
+const MOUSE_MODES = new Set([9, 1000, 1001, 1002, 1003, 1005, 1006, 1015, 1016]);
+const requestedMouse = new Set<number>();
 const unlisten: UnlistenFn[] = [];
 
 function decode(b64: string): Uint8Array {
@@ -45,8 +47,7 @@ onMounted(async () => {
     lineHeight: 1.25,
     cursorBlink: true,
     macOptionIsMeta: true,
-    // Herdr captures the mouse, so a plain drag goes to Herdr (which copies via OSC 52).
-    // ⌥ + drag forces a local xterm selection instead.
+    // In "app" mouse mode, ⌥ + drag still forces a local selection.
     macOptionClickForcesSelection: true,
     scrollback: 0, // Herdr owns the scrollback; the attach client redraws the screen.
     allowProposedApi: true,
@@ -82,6 +83,23 @@ onMounted(async () => {
   term.loadAddon(fit);
   term.loadAddon(new WebLinksAddon());
   term.loadAddon(new ClipboardAddon(osc52Provider));
+
+  // Mouse reporting: Herdr's attach client asks for it, which turns every drag into
+  // mouse events and makes text selection impossible. In "select" mode we drop those
+  // requests (and remember them, to restore them if the user switches back to "app").
+  term.parser.registerCsiHandler({ prefix: "?", final: "h" }, (params) => {
+    const modes = params.flat() as number[];
+    const mouse = modes.filter((m) => MOUSE_MODES.has(m));
+    mouse.forEach((m) => requestedMouse.add(m));
+    if (settings.mouseMode === "app" || !mouse.length) return false;
+    const rest = modes.filter((m) => !MOUSE_MODES.has(m));
+    if (rest.length) term!.write(`\x1b[?${rest.join(";")}h`);
+    return true;
+  });
+  term.parser.registerCsiHandler({ prefix: "?", final: "l" }, (params) => {
+    (params.flat() as number[]).forEach((m) => requestedMouse.delete(m));
+    return false;
+  });
 
   // ⌘C copies the local selection; without one it falls through to the terminal.
   term.attachCustomKeyEventHandler((e) => {
@@ -130,6 +148,21 @@ watch(
     term.options.fontFamily = stack;
     term.options.fontSize = settings.fontSize;
     fit?.fit();
+  },
+);
+
+// Switching modes live: turn local mouse reporting off, or give back what the app asked for.
+watch(
+  () => settings.mouseMode,
+  (mode) => {
+    if (!term) return;
+    if (mode === "select") {
+      term.write("\x1b[?9l\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?1015l\x1b[?1016l");
+    } else if (requestedMouse.size) {
+      const modes = [...requestedMouse];
+      requestedMouse.clear(); // re-added by the handler as the sequence goes through
+      term.write(`\x1b[?${modes.join(";")}h`);
+    }
   },
 );
 

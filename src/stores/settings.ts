@@ -29,6 +29,11 @@ const defaults = {
   fontSize: FONT_DEFAULT,
   leftOpen: true,
   rightOpen: true,
+  /**
+   * "select": dragging selects text in the terminal (⌘C to copy).
+   * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
+   */
+  mouseMode: "select" as "select" | "app",
 };
 
 function load(): typeof defaults {
