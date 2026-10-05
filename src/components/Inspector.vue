@@ -7,8 +7,10 @@ import {
   addWatch,
   allPanes,
   askAgentToFix,
+  clearFinishedRuns,
   closePane,
   contextFor,
+  dismissRun,
   selectPane,
   selectedPane,
   sendKeys,
@@ -50,6 +52,8 @@ const activity = computed(() =>
       };
     }),
 );
+const hasFinished = computed(() => state.activity.some((a) => a.end !== null));
+
 // Ticks so "depuis 3 min" stays current.
 const now = ref(Date.now());
 const ticker = window.setInterval(() => (now.value = Date.now()), 30_000);
@@ -199,35 +203,45 @@ const statusText = computed(() => {
       <div v-if="state.activity.length" class="block">
         <div class="act-head">
           <span class="eyebrow">Activité</span>
+          <button v-if="hasFinished" type="button" class="clear" title="Retirer les travaux terminés" @click="clearFinishedRuns()">Effacer terminés</button>
+          <span class="grow"></span>
           <span v-if="p" class="seg" role="group" aria-label="Activité affichée">
             <button type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">Tous</button>
             <button type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">Ce panneau</button>
           </span>
         </div>
-        <button
-          v-for="a in activity"
-          :key="a.id"
-          type="button"
-          class="act"
-          :class="{ current: a.paneId === p?.pane_id, gone: !a.pane }"
-          :disabled="!a.pane"
-          :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
-          @click="a.pane && selectPane(a.pane)"
-        >
-          <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">●</span>
-          <span class="act-main">
-            <span class="act-where">{{ a.where || "—" }}</span>
-            <span class="act-who">
-              <span class="act-kind">{{ a.kind }}</span>
-              <span v-if="a.name" class="act-name">{{ a.name }}</span>
-              <span class="act-status" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">{{ a.state }}</span>
+        <div v-for="a in activity" :key="a.id" class="act-row">
+          <button
+            type="button"
+            class="act"
+            :class="{ current: a.paneId === p?.pane_id, gone: !a.pane }"
+            :disabled="!a.pane"
+            :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
+            @click="a.pane && selectPane(a.pane)"
+          >
+            <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">●</span>
+            <span class="act-main">
+              <span class="act-where">{{ a.where || "—" }}</span>
+              <span class="act-who">
+                <span class="act-kind">{{ a.kind }}</span>
+                <span v-if="a.name" class="act-name">{{ a.name }}</span>
+                <span class="act-status" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">{{ a.state }}</span>
+              </span>
             </span>
-          </span>
-          <span class="act-time mono">
-            <template v-if="a.end && !a.startUnknown">{{ clockTime(a.start / 1000) }}–{{ clockTime(a.end / 1000) }}</template>
-            <template v-else>{{ clockTime((a.end ?? a.start) / 1000) }}</template>
-          </span>
-        </button>
+            <span class="act-time mono">
+              <template v-if="a.end && !a.startUnknown">{{ clockTime(a.start / 1000) }}–{{ clockTime(a.end / 1000) }}</template>
+              <template v-else>{{ clockTime((a.end ?? a.start) / 1000) }}</template>
+            </span>
+          </button>
+          <button
+            v-if="a.end"
+            type="button"
+            class="act-x"
+            :aria-label="`Retirer ${a.where || a.kind} de la liste`"
+            title="Retirer de la liste"
+            @click="dismissRun(a.id)"
+          >×</button>
+        </div>
         <div v-if="!activity.length" class="muted">Ce panneau n’a pas travaillé depuis l’ouverture de l’app.</div>
       </div>
     </section>
@@ -264,7 +278,17 @@ const statusText = computed(() => {
 .sec.global { padding-top: 18px; border-top: 1px solid var(--line); }
 .sec-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .sec-where { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.act-head { display: flex; align-items: center; justify-content: space-between; }
+.act-head { display: flex; align-items: center; gap: 10px; }
+.clear { border: none; background: none; padding: 0; font-size: 11px; color: var(--faint); }
+.clear:hover { color: var(--text-2); }
+.act-row { position: relative; }
+.act-x {
+  position: absolute; bottom: 5px; right: 0; width: 22px; height: 22px; border: none; border-radius: 6px;
+  background: var(--panel); color: var(--muted); font-size: 15px; line-height: 1; padding: 0;
+  display: none; align-items: center; justify-content: center;
+}
+.act-row:hover .act-x { display: inline-flex; }
+.act-x:hover { background: var(--hover); color: var(--text); }
 .seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--field); }
 .seg button {
   border: none; background: transparent; color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 5px;

@@ -351,6 +351,16 @@ export async function refresh() {
   }
 }
 
+/** Removes a finished run from the Activité list. */
+export function dismissRun(id: number) {
+  state.activity = state.activity.filter((r) => r.id !== id || r.end === null);
+}
+
+/** Removes every finished run; running ones stay. */
+export function clearFinishedRuns() {
+  state.activity = state.activity.filter((r) => r.end === null);
+}
+
 let runSeq = 0;
 const ACTIVE = new Set<AgentStatus>(["working", "blocked"]);
 
