@@ -29,6 +29,8 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 
 **Jauges** : vert jusqu’à 60 %, orange de 60 à 80 %, rouge au-delà (contexte, session 5 h, semaine). Les dernières valeurs connues restent affichées entre deux réponses.
 
+**Molette** : fait défiler l’historique du panneau (remonter dans la conversation d’un agent). **⌥ + molette** envoie ↑/↓ à la place, pour parcourir les dernières commandes ou consignes.
+
 **Copier du texte** : par défaut, glisser sélectionne et **⌘C** copie (⌘V colle). Dans le menu « A » de la barre du haut, l’option « Souris pour l’app » renvoie la molette et les clics à Herdr et aux agents ; dans ce mode, **⌥ + glisser** sélectionne toujours.
 
 **Notes épinglées** : sélectionne du texte dans un terminal, puis « Épingler » (ou ⇧⌘P). La note apparaît dans l’onglet **Notes** du panneau de droite, avec sa provenance ; tu peux la renommer (double-clic), la copier ou l’envoyer à un agent. Le bouton ⤢ (ou un double-clic sur le texte) l’ouvre dans une fenêtre centrale qu’on peut déplacer par son titre, redimensionner par le coin bas-droit et modifier ; sa taille est mémorisée. Les notes restent sur ce Mac, jamais dans le repo : une sortie de terminal peut contenir des secrets.

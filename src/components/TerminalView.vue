@@ -135,6 +135,12 @@ onMounted(async () => {
   term.onData((data) => invoke("pty_write", { id, data }).catch(() => {}));
   term.onResize(({ cols, rows }) => invoke("pty_resize", { id, cols, rows }).catch(() => {}));
 
+  // Mouse wheel. In "select" mode xterm no longer reports the mouse, so it would turn
+  // the wheel into ↑/↓ keys (shell or prompt history). Instead we send real wheel
+  // events to Herdr, which scrolls the pane's history as it does in its own UI.
+  // ⌥ + wheel does the opposite: ↑/↓ keys, to walk through previous commands.
+  el.value!.addEventListener("wheel", onWheel, { capture: true, passive: false });
+
   observer = new ResizeObserver(() => fit?.fit());
   observer.observe(el.value!);
 
@@ -180,6 +186,57 @@ watch(
   (f) => f && term?.focus(),
 );
 
+let wheelRest = 0;
+
+function cellAt(e: WheelEvent): { col: number; row: number } {
+  const screen = el.value!.querySelector(".xterm-screen") as HTMLElement | null;
+  const rect = (screen ?? el.value!).getBoundingClientRect();
+  const cols = term!.cols;
+  const rows = term!.rows;
+  const col = Math.min(cols, Math.max(1, Math.floor(((e.clientX - rect.left) / rect.width) * cols) + 1));
+  const row = Math.min(rows, Math.max(1, Math.floor(((e.clientY - rect.top) / rect.height) * rows) + 1));
+  return { col, row };
+}
+
+function onWheel(e: WheelEvent) {
+  if (!term || e.deltaY === 0) return;
+  const appMode = settings.mouseMode === "app";
+  // App mode without ⌥: xterm already forwards the wheel to Herdr.
+  if (appMode && !e.altKey) return;
+  // Select mode with ⌥: keep xterm's default (↑/↓ keys).
+  if (!appMode && e.altKey) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Trackpads send many small deltas: turn them into whole lines.
+  const unit = e.deltaMode === 1 ? 1 : e.deltaMode === 2 ? term.rows : 1 / 40;
+  wheelRest += e.deltaY * unit;
+  const lines = Math.trunc(wheelRest);
+  if (!lines) return;
+  wheelRest -= lines;
+  const up = lines < 0;
+  const count = Math.min(Math.abs(lines), 10);
+  let seq = "";
+
+  if (appMode) {
+    // ⌥ + wheel in app mode: history keys.
+    const app = term.modes.applicationCursorKeysMode;
+    seq = (up ? (app ? "\x1bOA" : "\x1b[A") : app ? "\x1bOB" : "\x1b[B").repeat(count);
+  } else {
+    const { col, row } = cellAt(e);
+    const button = up ? 64 : 65;
+    if (requestedMouse.has(1006)) {
+      seq = `\x1b[<${button};${col};${row}M`.repeat(count);
+    } else if (requestedMouse.size) {
+      seq = (`\x1b[M` + String.fromCharCode(32 + button, 32 + Math.min(col, 223), 32 + Math.min(row, 223))).repeat(count);
+    } else {
+      // The program did not ask for the mouse at all: plain arrow keys, like a normal terminal.
+      seq = (up ? "\x1b[A" : "\x1b[B").repeat(count);
+    }
+  }
+  invoke("pty_write", { id, data: seq }).catch(() => {});
+}
+
 function copySelection() {
   if (!term) return;
   copy(term.getSelection());
@@ -193,6 +250,7 @@ function pinSelection() {
 }
 
 onBeforeUnmount(() => {
+  el.value?.removeEventListener("wheel", onWheel, { capture: true });
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
   observer?.disconnect();
   unlisten.forEach((u) => u());
