@@ -18,7 +18,7 @@ import {
   refContext,
   type RefContext,
 } from "../lib/refs";
-import { sendPrompt } from "../stores/session";
+import { sendPrompt, toast } from "../stores/session";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -153,8 +153,14 @@ onMounted(async () => {
                   hideChip(true);
                   backToPrompt(steps);
                 },
-                hover: () => showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps)),
-                leave: () => hideChip(),
+                hover: () => {
+                  overLink = true;
+                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps));
+                },
+                leave: () => {
+                  overLink = false;
+                  hideChip();
+                },
               },
             ]);
           }
@@ -237,8 +243,14 @@ onMounted(async () => {
               i.run();
             }
           },
-          hover: () => showChip(range(i.s, i.e), i.label, i.run),
-          leave: () => hideChip(),
+          hover: () => {
+            overLink = true;
+            showChip(range(i.s, i.e), i.label, i.run);
+          },
+          leave: () => {
+            overLink = false;
+            hideChip();
+          },
         };
       }
     },
@@ -314,6 +326,8 @@ onMounted(async () => {
   // events to Herdr, which scrolls the pane's history as it does in its own UI.
   // ⌥ + wheel does the opposite: ↑/↓ keys, to walk through previous commands.
   el.value!.addEventListener("wheel", onWheel, { capture: true, passive: false });
+  el.value!.addEventListener("mousedown", onDown, true);
+  el.value!.addEventListener("mouseup", onUp, true);
 
   observer = new ResizeObserver(() => fit?.fit());
   observer.observe(el.value!);
@@ -407,7 +421,15 @@ async function switchToAgent(name: string) {
   if (list.selected === null) {
     await pressKeys([down]);
     await wait(180);
-    list = agentListState(screenLine, term.rows) ?? list;
+    const after = agentListState(screenLine, term.rows);
+    // The ↓ went somewhere else (another footer item, a menu…): undo it and stop
+    // rather than pressing Enter on something unknown.
+    if (!after || after.selected === null) {
+      await pressKeys([up]);
+      toast("Impossible d’atteindre la liste des agents : utilise ↓ puis Entrée");
+      return;
+    }
+    list = after;
   }
   const target = list.names.indexOf(name);
   if (target === -1) return;
@@ -553,6 +575,34 @@ function cellAt(e: WheelEvent): { col: number; row: number } {
   return { col, row };
 }
 
+// ---- Clicks for the program, in "select" mode -------------------------------
+// Dragging selects text, but a simple click (no drag, no modifier) still reaches
+// the program when it asked for the mouse: buttons and × in Claude Code's panels,
+// menus in Herdr… Clicks on our own links are left alone.
+let overLink = false;
+let down: { x: number; y: number } | null = null;
+
+function onDown(e: MouseEvent) {
+  down = e.button === 0 && !e.metaKey && !e.altKey && !e.ctrlKey && !e.shiftKey ? { x: e.clientX, y: e.clientY } : null;
+}
+
+function onUp(e: MouseEvent) {
+  const start = down;
+  down = null;
+  if (!term || !start || settings.mouseMode !== "select" || overLink) return;
+  if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 3) return; // a drag: selection
+  if (![1000, 1002, 1003].some((m) => requestedMouse.has(m))) return;
+  const { col, row } = cellAt(e as unknown as WheelEvent);
+  let seq: string;
+  if (requestedMouse.has(1006)) {
+    seq = `\x1b[<0;${col};${row}M\x1b[<0;${col};${row}m`;
+  } else {
+    const c = (n: number) => String.fromCharCode(32 + Math.min(n, 223));
+    seq = `\x1b[M${c(0)}${c(col)}${c(row)}\x1b[M${c(3)}${c(col)}${c(row)}`;
+  }
+  invoke("pty_write", { id, data: seq }).catch(() => {});
+}
+
 function onWheel(e: WheelEvent) {
   if (!term || e.deltaY === 0) return;
   const appMode = settings.mouseMode === "app";
@@ -609,6 +659,8 @@ onBeforeUnmount(() => {
   window.clearTimeout(chipTimer);
   for (const y of [...rows.keys()]) clearRow(y);
   el.value?.removeEventListener("wheel", onWheel, { capture: true });
+  el.value?.removeEventListener("mousedown", onDown, true);
+  el.value?.removeEventListener("mouseup", onUp, true);
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
   observer?.disconnect();
   unlisten.forEach((u) => u());
