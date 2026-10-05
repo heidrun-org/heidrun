@@ -8,8 +8,12 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
 import { fontStack, settings } from "../stores/settings";
+import { selectionReaders } from "../stores/notes";
 
-const props = defineProps<{ terminalId: string; focused: boolean }>();
+const props = defineProps<{ terminalId: string; paneId: string; focused: boolean }>();
+const emit = defineEmits<{ pin: [text: string] }>();
+
+const hasSelection = ref(false);
 
 const el = ref<HTMLDivElement>();
 const exited = ref(false);
@@ -113,6 +117,11 @@ onMounted(async () => {
   term.open(el.value!);
   fit.fit();
 
+  term.onSelectionChange(() => {
+    hasSelection.value = !!term?.hasSelection();
+  });
+  selectionReaders.set(props.paneId, () => term?.getSelection() ?? "");
+
   // Listen before spawning so no early output is lost.
   unlisten.push(
     await listen<{ id: string; data: string }>("pty://data", (e) => {
@@ -171,7 +180,20 @@ watch(
   (f) => f && term?.focus(),
 );
 
+function copySelection() {
+  if (!term) return;
+  copy(term.getSelection());
+  term.clearSelection();
+}
+
+function pinSelection() {
+  if (!term) return;
+  emit("pin", term.getSelection());
+  term.clearSelection();
+}
+
 onBeforeUnmount(() => {
+  if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
   observer?.disconnect();
   unlisten.forEach((u) => u());
   invoke("pty_kill", { id }).catch(() => {});
@@ -182,6 +204,10 @@ onBeforeUnmount(() => {
 <template>
   <div class="wrap">
     <div ref="el" class="term"></div>
+    <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
+      <button class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
+      <button class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
+    </div>
     <div v-if="exited" class="overlay">
       <p>Terminal détaché.</p>
       <div class="actions">
@@ -202,5 +228,10 @@ onBeforeUnmount(() => {
 .overlay p { margin: 0; }
 .actions { display: flex; gap: 8px; }
 :deep(.xterm) { height: 100%; }
+.sel-bar {
+  position: absolute; right: 12px; bottom: 12px; z-index: 5; display: flex; gap: 6px; padding: 6px;
+  border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+}
+.sel-bar .btn { background: var(--field); }
 :deep(.xterm-viewport) { background: transparent !important; }
 </style>

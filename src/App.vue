@@ -5,7 +5,7 @@ import Sidebar from "./components/Sidebar.vue";
 import TabBar from "./components/TabBar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
 import InputBar from "./components/InputBar.vue";
-import Inspector from "./components/Inspector.vue";
+import RightPanel from "./components/RightPanel.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
@@ -15,6 +15,7 @@ import {
   cycleWorkspace,
   newTerminal,
   selectWorkspaceAt,
+  selectedPane,
   shiftTab,
   shiftWorkspace,
   splitPane,
@@ -23,6 +24,8 @@ import {
   toast,
 } from "./stores/session";
 import { resetZoom, settings, zoom } from "./stores/settings";
+import { pinText, selectionReaders } from "./stores/notes";
+import { startProjects } from "./stores/project";
 
 let armedClose: string | null = null;
 let armedAt = 0;
@@ -55,6 +58,17 @@ function onKey(e: KeyboardEvent) {
   if (digit && !e.altKey && !e.shiftKey) return run(() => selectWorkspaceAt(Number(digit[1]) - 1));
 
   switch (e.code) {
+    case "KeyP":
+      if (!e.shiftKey) return;
+      return run(() => {
+        const pane = selectedPane.value;
+        const text = pane ? selectionReaders.get(pane.pane_id)?.() : "";
+        if (pane && text) {
+          pinText(text, pane);
+          settings.rightOpen = true;
+          settings.rightTab = "notes";
+        } else toast("Sélectionne d’abord du texte dans un terminal");
+      });
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
@@ -95,6 +109,7 @@ function onKey(e: KeyboardEvent) {
 onMounted(() => {
   window.addEventListener("keydown", onKey, true);
   start();
+  startProjects();
 });
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>
@@ -112,7 +127,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </template>
         <Offline v-else />
       </main>
-      <Inspector v-if="state.snapshot && settings.rightOpen" />
+      <RightPanel v-if="state.snapshot && settings.rightOpen" />
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />

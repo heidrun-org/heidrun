@@ -41,7 +41,7 @@ const statusText = computed(() => {
 </script>
 
 <template>
-  <aside class="insp">
+  <div class="insp">
     <template v-if="p">
       <div class="block">
         <div class="eyebrow">{{ p.agent ? "Agent sélectionné" : "Terminal sélectionné" }}</div>
@@ -116,14 +116,11 @@ const statusText = computed(() => {
       <ConfirmButton class="link" label="Fermer ce panneau" armed-label="Cliquer encore pour fermer" aria-label="Fermer ce panneau" @confirm="closePane(p.pane_id)" />
     </template>
     <div v-else class="muted">Sélectionne un panneau.</div>
-  </aside>
+  </div>
 </template>
 
 <style scoped>
-.insp {
-  width: 300px; flex-shrink: 0; border-left: 1px solid var(--line); background: var(--panel);
-  padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
-}
+.insp { flex: 1; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
 .block { display: flex; flex-direction: column; gap: 8px; }
 .title { font-size: 20px; font-weight: 600; word-break: break-word; }
 .chip {

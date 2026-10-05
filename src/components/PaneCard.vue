@@ -6,6 +6,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { closePane, contextFor, finishRename, selectPane, splitPane, startRename, state } from "../stores/session";
 import { gaugeLevel, paneName } from "../lib/format";
+import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 
 const props = defineProps<{ pane: AgentInfo }>();
@@ -58,7 +59,13 @@ const subtitle = computed(() => {
         <ConfirmButton label="×" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
       </span>
     </header>
-    <TerminalView :key="pane.terminal_id" :terminal-id="pane.terminal_id" :focused="selected" />
+    <TerminalView
+      :key="pane.terminal_id"
+      :terminal-id="pane.terminal_id"
+      :pane-id="pane.pane_id"
+      :focused="selected"
+      @pin="(text) => pinText(text, pane)"
+    />
   </section>
 </template>
 

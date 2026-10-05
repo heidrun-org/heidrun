@@ -21,6 +21,7 @@ import {
 } from "../stores/session";
 import { STATUS_LABEL, paneName } from "../lib/format";
 import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
+import { currentProject, runAction } from "../stores/project";
 
 interface Item {
   section: string;
@@ -65,6 +66,13 @@ const items = computed<Item[]>(() => {
   }
 
   const sel = selectedPane.value;
+  const wsId = state.selectedWorkspaceId;
+  const proj = currentProject.value;
+  if (wsId && proj) {
+    for (const a of proj.config.actions.filter((x) => !lower || x.label.toLowerCase().includes(lower) || x.command.toLowerCase().includes(lower))) {
+      list.push({ section: "Actions du projet", label: a.label, hint: a.command, run: () => runAction(wsId, a) });
+    }
+  }
   const actions: Item[] = [
     { section: "Terminaux", label: "Nouveau terminal", hint: "⌘T", run: () => newTerminal() },
     { section: "Terminaux", label: "Diviser à droite", hint: "⌘D", run: () => splitPane("right") },

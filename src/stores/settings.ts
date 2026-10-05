@@ -34,6 +34,8 @@ const defaults = {
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
    */
   mouseMode: "select" as "select" | "app",
+  /** Right panel section. */
+  rightTab: "pane" as "pane" | "actions" | "notes",
 };
 
 function load(): typeof defaults {

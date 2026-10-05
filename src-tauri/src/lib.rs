@@ -1,4 +1,5 @@
 mod herdr;
+mod project;
 mod pty;
 mod usage;
 
@@ -98,6 +99,8 @@ pub fn run() {
             pty::pty_resize,
             pty::pty_kill,
             usage::codex_usage,
+            project::project_load,
+            project::project_save,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");
