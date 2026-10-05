@@ -420,16 +420,23 @@ async function switchToAgent(name: string) {
   if (!list) return;
   if (list.selected === null) {
     await pressKeys([down]);
-    await wait(180);
-    const after = agentListState(screenLine, term.rows);
-    // The ↓ went somewhere else (another footer item, a menu…): undo it and stop
-    // rather than pressing Enter on something unknown.
-    if (!after || after.selected === null) {
+    // Claude marks the selected row with ❯, but not always right away (or not at
+    // all, depending on the version): wait a little for it, and without it assume
+    // the first row, as the ↓ from the prompt lands there.
+    let after = null as ReturnType<typeof agentListState>;
+    for (let i = 0; i < 5; i++) {
+      await wait(i ? 120 : 160);
+      after = agentListState(screenLine, term.rows);
+      if (!after || after.selected !== null) break;
+    }
+    // The list is gone: the ↓ opened something else. Undo it and stop rather than
+    // pressing Enter on something unknown.
+    if (!after) {
       await pressKeys([up]);
       toast("Impossible d’atteindre la liste des agents : utilise ↓ puis Entrée");
       return;
     }
-    list = after;
+    list = { names: after.names, selected: after.selected ?? 0 };
   }
   const target = list.names.indexOf(name);
   if (target === -1) return;
