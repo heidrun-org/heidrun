@@ -58,3 +58,11 @@ export function gaugeLevel(percent: number): "ok" | "warn" | "crit" {
   if (percent >= 60) return "warn";
   return "ok";
 }
+
+/** "Claude", "Codex"… : the kind of agent, whatever the pane is called. */
+export function agentKind(p: Pick<PaneInfo, "agent" | "display_agent">): string {
+  const a = (p.agent ?? "").toLowerCase();
+  if (a.includes("claude")) return "Claude";
+  if (a.includes("codex")) return "Codex";
+  return p.display_agent || p.agent || "Terminal";
+}

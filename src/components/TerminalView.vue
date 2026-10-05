@@ -2,7 +2,9 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { Terminal } from "@xterm/xterm";
+import { Terminal, type IBufferLine, type IDecoration, type IMarker } from "@xterm/xterm";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { EMPTY_CONTEXT, REF_COLORS, findRefs, refContext, type RefContext } from "../lib/refs";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -10,7 +12,7 @@ import { copy, osc52Provider } from "../lib/clipboard";
 import { fontStack, settings } from "../stores/settings";
 import { selectionReaders } from "../stores/notes";
 
-const props = defineProps<{ terminalId: string; paneId: string; focused: boolean }>();
+const props = defineProps<{ terminalId: string; paneId: string; focused: boolean; cwd?: string | null }>();
 const emit = defineEmits<{ pin: [text: string] }>();
 
 const hasSelection = ref(false);
@@ -23,6 +25,9 @@ let term: Terminal | null = null;
 let fit: FitAddon | null = null;
 let observer: ResizeObserver | null = null;
 const MOUSE_MODES = new Set([9, 1000, 1001, 1002, 1003, 1005, 1006, 1015, 1016]);
+// Alternate screen: ignored. Herdr redraws the whole pane anyway and there is no
+// scrollback here, but xterm only allows decorations (reference colors) on the normal screen.
+const ALT_MODES = new Set([47, 1047, 1049]);
 const requestedMouse = new Set<number>();
 const unlisten: UnlistenFn[] = [];
 
@@ -85,7 +90,36 @@ onMounted(async () => {
   }
   fit = new FitAddon();
   term.loadAddon(fit);
-  term.loadAddon(new WebLinksAddon());
+  // URLs and references open with ⌘-click, like in iTerm (a plain click stays a click).
+  term.loadAddon(
+    new WebLinksAddon((e, uri) => {
+      if (e.metaKey) openUrl(uri).catch(() => {});
+    }),
+  );
+  term.registerLinkProvider({
+    provideLinks(y, callback) {
+      const line = term?.buffer.active.getLine(y - 1);
+      if (!line || !refCtx.base && !refCtx.ticketUrl) return callback(undefined);
+      const { text, col, width } = lineText(line);
+      const links = findRefs(text, refCtx)
+        .filter((r) => r.url)
+        .map((r) => ({
+          text: text.slice(r.start, r.end),
+          range: { start: { x: col[r.start] + 1, y }, end: { x: col[r.end - 1] + width[r.end - 1], y } },
+          decorations: { underline: true, pointerCursor: true },
+          activate: (e: MouseEvent) => {
+            if (e.metaKey) openUrl(r.url!).catch(() => {});
+          },
+          hover: () => {
+            if (el.value) el.value.title = `⌘-clic pour ouvrir ${r.url}`;
+          },
+          leave: () => {
+            if (el.value) el.value.title = "";
+          },
+        }));
+      callback(links.length ? links : undefined);
+    },
+  });
   term.loadAddon(new ClipboardAddon(osc52Provider));
 
   // Mouse reporting: Herdr's attach client asks for it, which turns every drag into
@@ -95,14 +129,20 @@ onMounted(async () => {
     const modes = params.flat() as number[];
     const mouse = modes.filter((m) => MOUSE_MODES.has(m));
     mouse.forEach((m) => requestedMouse.add(m));
-    if (settings.mouseMode === "app" || !mouse.length) return false;
-    const rest = modes.filter((m) => !MOUSE_MODES.has(m));
+    const dropMouse = settings.mouseMode === "select" && mouse.length > 0;
+    const dropAlt = modes.some((m) => ALT_MODES.has(m));
+    if (!dropMouse && !dropAlt) return false;
+    const rest = modes.filter((m) => !ALT_MODES.has(m) && !(dropMouse && MOUSE_MODES.has(m)));
     if (rest.length) term!.write(`\x1b[?${rest.join(";")}h`);
     return true;
   });
   term.parser.registerCsiHandler({ prefix: "?", final: "l" }, (params) => {
-    (params.flat() as number[]).forEach((m) => requestedMouse.delete(m));
-    return false;
+    const modes = params.flat() as number[];
+    modes.forEach((m) => requestedMouse.delete(m));
+    if (!modes.some((m) => ALT_MODES.has(m))) return false;
+    const rest = modes.filter((m) => !ALT_MODES.has(m));
+    if (rest.length) term!.write(`\x1b[?${rest.join(";")}l`);
+    return true;
   });
 
   // ⌘C copies the local selection; without one it falls through to the terminal.
@@ -141,6 +181,8 @@ onMounted(async () => {
     }),
   );
 
+  term.onWriteParsed(scheduleRefs);
+  term.onResize(scheduleRefs);
   term.onData((data) => invoke("pty_write", { id, data }).catch(() => {}));
   term.onResize(({ cols, rows }) => invoke("pty_resize", { id, cols, rows }).catch(() => {}));
 
@@ -156,6 +198,94 @@ onMounted(async () => {
   await attach(false);
   if (props.focused) term.focus();
 });
+
+// ---- References: #12, !34, PR #5, ABC-123, commits ------------------------
+
+let refCtx: RefContext = EMPTY_CONTEXT;
+watch(
+  () => props.cwd,
+  async (cwd) => {
+    refCtx = await refContext(cwd);
+    scheduleRefs();
+  },
+  { immediate: true },
+);
+
+/** The text of a buffer line, with the cell column of each character (wide chars, emoji). */
+function lineText(line: IBufferLine): { text: string; col: number[]; width: number[] } {
+  let text = "";
+  const col: number[] = [];
+  const width: number[] = [];
+  for (let x = 0; x < line.length; x++) {
+    const cell = line.getCell(x);
+    if (!cell) break;
+    const w = cell.getWidth();
+    if (w === 0) continue; // second half of a wide char
+    const chars = cell.getChars() || " ";
+    for (let i = 0; i < chars.length; i++) {
+      col.push(x);
+      width.push(w);
+    }
+    text += chars;
+  }
+  return { text, col, width };
+}
+
+// Colors are decorations on top of the cells: the stream itself is never modified,
+// so the agent's TUI keeps drawing exactly as it wants. Rows are recomputed only
+// when their text changed (or moved), a short while after output settles.
+interface RowRefs {
+  text: string;
+  marker: IMarker | null;
+  decorations: IDecoration[];
+}
+const rows = new Map<number, RowRefs>();
+let refsTimer = 0;
+
+function scheduleRefs() {
+  if (refsTimer) return;
+  refsTimer = window.setTimeout(() => {
+    refsTimer = 0;
+    paintRefs();
+  }, 120);
+}
+
+function clearRow(y: number) {
+  const r = rows.get(y);
+  if (!r) return;
+  r.decorations.forEach((d) => d.dispose());
+  r.marker?.dispose();
+  rows.delete(y);
+}
+
+function paintRefs() {
+  if (!term) return;
+  const buf = term.buffer.active;
+  if (buf.type !== "normal") return;
+  for (const y of [...rows.keys()]) if (y >= term.rows) clearRow(y);
+  for (let y = 0; y < term.rows; y++) {
+    const line = buf.getLine(buf.baseY + y);
+    if (!line) continue;
+    const { text, col, width } = lineText(line);
+    const prev = rows.get(y);
+    if (prev && prev.text === text && (!prev.marker || (!prev.marker.isDisposed && prev.marker.line === buf.baseY + y))) continue;
+    clearRow(y);
+    const refs = findRefs(text, refCtx);
+    if (!refs.length) {
+      rows.set(y, { text, marker: null, decorations: [] });
+      continue;
+    }
+    const marker = term.registerMarker(buf.baseY + y - (buf.baseY + buf.cursorY));
+    const decorations: IDecoration[] = [];
+    for (const r of refs) {
+      const x = col[r.start];
+      const end = col[r.end - 1] + width[r.end - 1];
+      const d = term.registerDecoration({ marker, x, width: end - x, foregroundColor: REF_COLORS[r.kind], layer: "top" });
+      if (d) decorations.push(d);
+    }
+    rows.set(y, { text, marker, decorations });
+  }
+}
 
 // Font changes: wait for the font to load so xterm measures the right cell size,
 // then refit; the new cols/rows reach Herdr through onResize.
@@ -259,6 +389,8 @@ function pinSelection() {
 }
 
 onBeforeUnmount(() => {
+  window.clearTimeout(refsTimer);
+  for (const y of [...rows.keys()]) clearRow(y);
   el.value?.removeEventListener("wheel", onWheel, { capture: true });
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
   observer?.disconnect();

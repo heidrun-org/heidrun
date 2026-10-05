@@ -51,6 +51,21 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 
 Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelques commandes Flutter, Cargo ou Symfony sont proposés en suggestions. Les commandes lancées récemment apparaissent dans **Récentes**, entre les actions et les suggestions. Actions, suggestions et notes se réordonnent par glisser-déposer (l’ordre des actions est écrit dans `.herdr-desk.json`, celui des suggestions et l’historique restent sur ce Mac).
 
+**Références colorées** : dans les terminaux, les issues (`#12`), merge requests et pull requests (`!34`, `MR !34`, `PR #5`, `groupe/app#7`) et les commits (`abc1234`) sont colorés ; **⌘-clic** les ouvre sur GitLab ou GitHub, d’après le `git remote` du dossier du panneau (les URL s’ouvrent aussi au ⌘-clic). Le texte envoyé par l’agent n’est pas modifié : la couleur est posée par-dessus. Réglages facultatifs dans `.herdr-desk.json` :
+
+```json
+"references": {
+  "forge": "gitlab",
+  "repo": "https://gitlab.example.com/groupe/app",
+  "tickets": { "url": "https://acme.atlassian.net/browse/{key}", "prefixes": ["ABC", "OPS"] },
+  "enabled": true
+}
+```
+
+`forge` force GitHub ou GitLab (un hôte inconnu est traité comme un GitLab auto-hébergé), `repo` remplace le remote, `tickets` active les tickets du type `ABC-123` (désactivés sans URL).
+
+**Panneau de droite** : en haut, la **Session** du panneau sélectionné (workspace · onglet, état, contexte, coût, Remote Control) ; en dessous, **Tous les agents** : quotas du compte Claude et Codex, partagés par toutes les sessions, et le fil **Activité** (workspace · onglet, puis l’agent ; clic pour y aller).
+
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
 
 **Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.

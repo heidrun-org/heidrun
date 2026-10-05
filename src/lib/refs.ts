@@ -1,0 +1,192 @@
+// Issue / MR / PR / ticket / commit references in terminal output:
+// found per screen line, then colored (decorations) and made clickable (link provider).
+import { invoke } from "@tauri-apps/api/core";
+
+export type RefKind = "issue" | "mr" | "ticket" | "commit";
+export type Forge = "github" | "gitlab";
+
+export interface RefMatch {
+  start: number; // index in the line text
+  end: number; // exclusive
+  kind: RefKind;
+  url: string | null;
+}
+
+export interface RefContext {
+  /** Web URL of the repository, e.g. https://gitlab.com/group/app */
+  base: string | null;
+  /** Web origin, e.g. https://gitlab.com (for `group/app#12`) */
+  origin: string | null;
+  forge: Forge | null;
+  /** Ticket URL template with {key}, e.g. https://acme.atlassian.net/browse/{key} */
+  ticketUrl: string | null;
+  /** Restricts tickets to these prefixes (["ABC", "OPS"]); all if empty. */
+  ticketPrefixes: string[];
+  enabled: boolean;
+}
+
+export const REF_COLORS: Record<RefKind, string> = {
+  issue: "#79b8ff",
+  mr: "#c29bf0",
+  ticket: "#6fd0c8",
+  commit: "#e0b080",
+};
+
+export const EMPTY_CONTEXT: RefContext = {
+  base: null,
+  origin: null,
+  forge: null,
+  ticketUrl: null,
+  ticketPrefixes: [],
+  enabled: true,
+};
+
+/** git@host:group/app.git, ssh://git@host:22/group/app, https://user@host/group/app.git → https://host/group/app */
+export function remoteToWeb(remote: string): { base: string; origin: string; host: string } | null {
+  let r = remote.trim();
+  let host = "";
+  let path = "";
+  let m = /^[\w.-]+@([^:/]+):(?!\d+\/)(.+)$/.exec(r); // scp-like
+  if (m) {
+    host = m[1];
+    path = m[2];
+  } else {
+    m = /^(?:ssh|git|https?):\/\/(?:[^@/]+@)?([^/:]+)(?::\d+)?\/(.+)$/.exec(r);
+    if (!m) return null;
+    host = m[1];
+    path = m[2];
+  }
+  path = path.replace(/\.git\/?$/, "").replace(/\/+$/, "");
+  if (!host || !path) return null;
+  return { base: `https://${host}/${path}`, origin: `https://${host}`, host };
+}
+
+const cache = new Map<string, Promise<RefContext>>();
+
+/** Context for a pane's folder; cached per folder. */
+export function refContext(cwd: string | null | undefined): Promise<RefContext> {
+  const key = cwd || "";
+  if (!key) return Promise.resolve(EMPTY_CONTEXT);
+  let p = cache.get(key);
+  if (!p) {
+    p = load(key);
+    cache.set(key, p);
+    // Remotes rarely change, but a new clone in the same folder should be picked up.
+    window.setTimeout(() => cache.delete(key), 5 * 60_000);
+  }
+  return p;
+}
+
+async function load(cwd: string): Promise<RefContext> {
+  try {
+    const r = await invoke<{ root: string; remote: string | null; references: Record<string, unknown> | null }>(
+      "project_refs",
+      { cwd },
+    );
+    const conf = (r.references ?? {}) as {
+      enabled?: boolean;
+      forge?: Forge;
+      repo?: string;
+      tickets?: string | { url?: string; prefixes?: string[] };
+    };
+    // "repo" in .herdr-desk.json overrides the git remote (any form git accepts, or the web URL).
+    const source = conf.repo ?? r.remote;
+    const web = source ? remoteToWeb(source) : null;
+    // Unknown hosts are most often self-hosted GitLab; GitHub is github.com.
+    const forge: Forge | null = conf.forge ?? (web ? (web.host.includes("github") ? "github" : "gitlab") : null);
+    const tickets = typeof conf.tickets === "string" ? { url: conf.tickets } : conf.tickets ?? {};
+    return {
+      base: web?.base ?? null,
+      origin: web?.origin ?? null,
+      forge,
+      ticketUrl: tickets.url ?? null,
+      ticketPrefixes: (tickets.prefixes ?? []).map((x) => x.toUpperCase()),
+      enabled: conf.enabled !== false,
+    };
+  } catch {
+    return EMPTY_CONTEXT;
+  }
+}
+
+function issueUrl(base: string | null, forge: Forge | null, n: string): string | null {
+  if (!base) return null;
+  return forge === "github" ? `${base}/issues/${n}` : `${base}/-/issues/${n}`;
+}
+
+function mrUrl(base: string | null, forge: Forge | null, n: string): string | null {
+  if (!base) return null;
+  return forge === "github" ? `${base}/pull/${n}` : `${base}/-/merge_requests/${n}`;
+}
+
+// Words that look like tickets but are not (UTF-8, SHA-256…), when no prefix list is set.
+const NOT_TICKETS = new Set(["UTF", "ISO", "SHA", "RFC", "CVE", "GPT", "MD", "HTTP", "TLS", "SSL", "ES", "IPV", "X", "COVID", "MP", "AES", "RSA"]);
+
+/** All references in one line of text, without overlaps. */
+export function findRefs(line: string, ctx: RefContext): RefMatch[] {
+  if (!ctx.enabled || line.trim().length < 2) return [];
+  const out: RefMatch[] = [];
+  const taken = (s: number, e: number) => out.some((m) => s < m.end && e > m.start);
+  const add = (s: number, e: number, kind: RefKind, url: string | null) => {
+    if (!taken(s, e)) out.push({ start: s, end: e, kind, url });
+  };
+  let m: RegExpExecArray | null;
+
+  // Skip URLs: the web links addon handles them, and "#123" inside one is not ours.
+  const urls: [number, number][] = [];
+  const urlRe = /\bhttps?:\/\/[^\s"'<>)\]]+/g;
+  while ((m = urlRe.exec(line))) urls.push([m.index, m.index + m[0].length]);
+  const inUrl = (i: number) => urls.some(([s, e]) => i >= s && i < e);
+
+  // 1. "PR #12", "MR !34", "merge request 34", "pull request #5"
+  const explicit = /\b(PR|MR|pull request|merge request)\s?([#!]?)(\d+)\b/gi;
+  while ((m = explicit.exec(line))) {
+    if (inUrl(m.index)) continue;
+    add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[3]));
+  }
+
+  // 2. "group/app#12", "group/app!34" (another repository on the same forge)
+  const cross = /(?<![\w/.:-])([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)([#!])(\d+)\b/g;
+  while ((m = cross.exec(line))) {
+    if (inUrl(m.index)) continue;
+    const base = ctx.origin ? `${ctx.origin}/${m[1]}` : null;
+    const isMr = m[2] === "!";
+    add(m.index, m.index + m[0].length, isMr ? "mr" : "issue", isMr ? mrUrl(base, ctx.forge, m[3]) : issueUrl(base, ctx.forge, m[3]));
+  }
+
+  // 3. "!34": GitLab merge request
+  if (ctx.forge !== "github") {
+    const bang = /(?<![\w!])!(\d+)\b/g;
+    while ((m = bang.exec(line))) {
+      if (inUrl(m.index)) continue;
+      add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[1]));
+    }
+  }
+
+  // 4. "#12": issue (GitHub redirects to the PR when it is one)
+  const hash = /(?<![\w&#/])#(\d+)\b/g;
+  while ((m = hash.exec(line))) {
+    if (inUrl(m.index)) continue;
+    add(m.index, m.index + m[0].length, "issue", issueUrl(ctx.base, ctx.forge, m[1]));
+  }
+
+  // 5. Tickets "ABC-123": only when the project sets a ticket URL.
+  if (ctx.ticketUrl) {
+    const ticket = /\b([A-Z][A-Z0-9]{1,9})-(\d+)\b/g;
+    while ((m = ticket.exec(line))) {
+      if (inUrl(m.index)) continue;
+      const prefix = m[1];
+      if (ctx.ticketPrefixes.length ? !ctx.ticketPrefixes.includes(prefix) : NOT_TICKETS.has(prefix)) continue;
+      add(m.index, m.index + m[0].length, "ticket", ctx.ticketUrl.replace("{key}", m[0]));
+    }
+  }
+
+  // 6. Commit hashes: 7–40 hex chars with both letters and digits.
+  const sha = /(?<![\w-])[0-9a-f]{7,40}(?![\w-])/g;
+  while ((m = sha.exec(line))) {
+    const h = m[0];
+    if (inUrl(m.index) || !/[a-f]/.test(h) || !/\d/.test(h)) continue;
+    add(m.index, m.index + h.length, "commit", ctx.base ? (ctx.forge === "github" ? `${ctx.base}/commit/${h}` : `${ctx.base}/-/commit/${h}`) : null);
+  }
+
+  return out.sort((a, b) => a.start - b.start);
+}

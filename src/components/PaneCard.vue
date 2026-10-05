@@ -64,6 +64,7 @@ const subtitle = computed(() => {
       :key="pane.terminal_id"
       :terminal-id="pane.terminal_id"
       :pane-id="pane.pane_id"
+      :cwd="pane.foreground_cwd || pane.cwd"
       :focused="selected"
       @pin="(text) => pinText(text, pane)"
     />

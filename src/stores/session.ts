@@ -4,7 +4,7 @@ import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
 import { notify } from "../lib/notify";
 import { settings } from "./settings";
-import { paneName } from "../lib/format";
+import { agentKind, paneName } from "../lib/format";
 import type {
   AgentInfo,
   AgentStatus,
@@ -21,6 +21,7 @@ export interface ActivityEntry {
   paneId: string;
   /** Names at the time of the event, used if the pane has been closed since. */
   name: string;
+  kind: string;
   workspace: string;
   tab: string;
 }
@@ -320,6 +321,7 @@ function applySnapshot(snap: SessionSnapshot) {
       status: after,
       paneId: pane.pane_id,
       name: paneName(view),
+      kind: agentKind(view),
       workspace: ws,
       tab: t ? t.label || `onglet ${t.number}` : "",
     });

@@ -139,6 +139,7 @@ pub fn run() {
             usage::codex_usage,
             project::project_load,
             project::project_save,
+            project::project_refs,
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
