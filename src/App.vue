@@ -6,6 +6,7 @@ import TabBar from "./components/TabBar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
 import InputBar from "./components/InputBar.vue";
 import RightPanel from "./components/RightPanel.vue";
+import NoteModal from "./components/NoteModal.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
@@ -24,7 +25,7 @@ import {
   toast,
 } from "./stores/session";
 import { resetZoom, settings, zoom } from "./stores/settings";
-import { pinText, selectionReaders } from "./stores/notes";
+import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 
 let armedClose: string | null = null;
@@ -131,6 +132,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
+    <NoteModal v-if="notes.openId" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
     </Transition>

@@ -29,7 +29,7 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 
 **Copier du texte** : par défaut, glisser sélectionne et **⌘C** copie (⌘V colle). Dans le menu « A » de la barre du haut, l’option « Souris pour l’app » renvoie la molette et les clics à Herdr et aux agents ; dans ce mode, **⌥ + glisser** sélectionne toujours.
 
-**Notes épinglées** : sélectionne du texte dans un terminal, puis « Épingler » (ou ⇧⌘P). La note apparaît dans l’onglet **Notes** du panneau de droite, avec sa provenance ; tu peux la renommer (double-clic), la copier ou l’envoyer à un agent. Les notes restent sur ce Mac, jamais dans le repo : une sortie de terminal peut contenir des secrets.
+**Notes épinglées** : sélectionne du texte dans un terminal, puis « Épingler » (ou ⇧⌘P). La note apparaît dans l’onglet **Notes** du panneau de droite, avec sa provenance ; tu peux la renommer (double-clic), la copier ou l’envoyer à un agent. Le bouton ⤢ (ou un double-clic sur le texte) l’ouvre dans une fenêtre centrale qu’on peut déplacer par son titre, redimensionner par le coin bas-droit et modifier ; sa taille est mémorisée. Les notes restent sur ce Mac, jamais dans le repo : une sortie de terminal peut contenir des secrets.
 
 **Actions** : l’onglet **Actions** du panneau de droite liste les commandes du projet (`make dev`, `npm install`, `ngrok http 3000`…). Un clic ouvre un onglet Herdr à leur nom et lance la commande ; le bouton indique « en cours » tant qu’elle tourne, et un second clic ramène à son onglet. Les actions sont enregistrées dans `.herdr-desk.json` à la racine du repo, à versionner avec le code :
 

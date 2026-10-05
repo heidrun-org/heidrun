@@ -51,10 +51,15 @@ function sendTo(n: Note, paneId: string) {
           @cancel="renaming = null"
         />
         <h3 v-else title="Double-clic pour renommer" @dblclick="renaming = n.id">{{ n.title }}</h3>
+        <button class="tool" aria-label="Ouvrir en grand" title="Ouvrir en grand" @click="notes.openId = n.id">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9"></path>
+          </svg>
+        </button>
         <ConfirmButton label="×" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="removeNote(n.id)" />
       </header>
       <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
-      <pre class="mono" :class="{ open: expanded[n.id] }" @click="expanded[n.id] = !expanded[n.id]">{{ n.text }}</pre>
+      <pre class="mono" :class="{ open: expanded[n.id] }" title="Clic : déplier · double-clic : ouvrir en grand" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>
       <div class="actions">
         <button class="btn" @click="copyNote(n)">Copier</button>
         <label class="sr" :for="`send-${n.id}`">Envoyer à un agent</label>
@@ -83,6 +88,11 @@ kbd { font-family: var(--mono); color: var(--text-2); }
 .note header { display: flex; align-items: center; gap: 6px; }
 h3 { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
 .origin { font-size: 11px; color: var(--muted); }
+.tool {
+  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.tool:hover { background: var(--hover); color: var(--text); }
 pre {
   margin: 0; padding: 8px 10px; border-radius: 7px; background: var(--bg); color: var(--text-2);
   font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;

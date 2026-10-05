@@ -36,6 +36,9 @@ const defaults = {
   mouseMode: "select" as "select" | "app",
   /** Right panel section. */
   rightTab: "pane" as "pane" | "actions" | "notes",
+  /** Last size of the note window, in px. */
+  noteWidth: 760,
+  noteHeight: 520,
 };
 
 function load(): typeof defaults {

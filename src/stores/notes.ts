@@ -23,7 +23,7 @@ function load(): Note[] {
   }
 }
 
-export const notes = reactive({ list: load(), showAll: false });
+export const notes = reactive({ list: load(), showAll: false, openId: null as string | null });
 
 watch(
   () => notes.list,
@@ -61,6 +61,11 @@ export function pinText(text: string, pane: AgentInfo) {
 
 export function removeNote(id: string) {
   notes.list = notes.list.filter((n) => n.id !== id);
+}
+
+export function updateNoteText(id: string, text: string) {
+  const n = notes.list.find((x) => x.id === id);
+  if (n) n.text = text;
 }
 
 export function renameNote(id: string, title: string) {
