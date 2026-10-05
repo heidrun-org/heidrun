@@ -1,4 +1,4 @@
-import { computed, reactive } from "vue";
+import { computed, reactive, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
@@ -522,16 +522,40 @@ export async function refreshCodex() {
 
 // ---- Selection ------------------------------------------------------------
 
+// Last tab used in each workspace and last pane used in each tab: coming back to a
+// workspace opens where you left it. Kept across restarts.
+const LAST_KEY = "herdr-desk.last-selection";
+const last: { tab: Record<string, string>; pane: Record<string, string> } = (() => {
+  try {
+    return { tab: {}, pane: {}, ...JSON.parse(localStorage.getItem(LAST_KEY) ?? "{}") };
+  } catch {
+    return { tab: {}, pane: {} };
+  }
+})();
+watch(
+  () => [state.selectedWorkspaceId, state.selectedTabId, state.selectedPaneId] as const,
+  ([ws, tab, pane]) => {
+    if (ws && tab) last.tab[ws] = tab;
+    if (tab && pane) last.pane[tab] = pane;
+    try {
+      localStorage.setItem(LAST_KEY, JSON.stringify(last));
+    } catch {
+      /* ignore */
+    }
+  },
+);
+
 export function selectWorkspace(id: string) {
   state.selectedWorkspaceId = id;
-  state.selectedTabId = null;
-  state.selectedPaneId = null;
+  state.selectedTabId = last.tab[id] ?? null;
+  state.selectedPaneId = state.selectedTabId ? last.pane[state.selectedTabId] ?? null : null;
+  // Gone since (closed tab or pane): fixSelection falls back to Herdr's active one.
   if (state.snapshot) fixSelection(state.snapshot);
 }
 
 export function selectTab(id: string) {
   state.selectedTabId = id;
-  state.selectedPaneId = null;
+  state.selectedPaneId = last.pane[id] ?? null;
   if (state.snapshot) fixSelection(state.snapshot);
 }
 
