@@ -38,6 +38,9 @@ const defaults = {
   rightTab: "pane" as "pane" | "actions" | "notes",
   /** Last size of the note window, in px. */
   noteWidth: 760,
+  /** Side columns, in px (drag the borders; double-click resets). */
+  leftWidth: 280,
+  rightWidth: 320,
   noteHeight: 520,
 };
 

@@ -48,6 +48,8 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
 
+**Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.
+
 **Réorganiser** : glisser-déposer les workspaces dans la barre de gauche et les onglets dans la barre d’onglets. L’ordre est enregistré dans Herdr.
 
 Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.

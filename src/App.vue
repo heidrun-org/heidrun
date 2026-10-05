@@ -7,6 +7,7 @@ import PaneGrid from "./components/PaneGrid.vue";
 import InputBar from "./components/InputBar.vue";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
+import Resizer from "./components/Resizer.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
@@ -121,7 +122,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
   <div class="app">
     <TopBar />
     <div class="body">
-      <Sidebar v-if="settings.leftOpen" />
+      <template v-if="settings.leftOpen">
+        <Sidebar />
+        <Resizer v-model:width="settings.leftWidth" side="left" :min="200" :max="520" :default-width="280" :reserve="settings.rightOpen ? settings.rightWidth : 0" />
+      </template>
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
@@ -130,7 +134,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </template>
         <Offline v-else />
       </main>
-      <RightPanel v-if="state.snapshot && settings.rightOpen" />
+      <template v-if="state.snapshot && settings.rightOpen">
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="260" :max="720" :default-width="320" :reserve="settings.leftOpen ? settings.leftWidth : 0" />
+        <RightPanel />
+      </template>
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />

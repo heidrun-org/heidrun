@@ -19,6 +19,7 @@ import {
 import { STATUS_LABEL, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import { settings } from "../stores/settings";
 import { useReorder } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 
@@ -45,7 +46,7 @@ async function createWorkspace() {
 </script>
 
 <template>
-  <aside class="side">
+  <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
     <section v-if="attention.length" class="group">
       <div class="eyebrow pad">À traiter</div>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
@@ -127,7 +128,7 @@ async function createWorkspace() {
 
 <style scoped>
 .side {
-  width: 280px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel);
+  flex-shrink: 0; min-width: 0; border-right: 1px solid var(--line); background: var(--panel);
   display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
 }
 .group { display: flex; flex-direction: column; gap: 8px; }

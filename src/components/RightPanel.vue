@@ -23,7 +23,7 @@ const tabs = computed(() => [
 </script>
 
 <template>
-  <aside class="right">
+  <aside class="right" :style="{ width: `${settings.rightWidth}px` }">
     <div class="seg" role="tablist" aria-label="Panneau de droite">
       <button
         v-for="t in tabs"
@@ -44,7 +44,7 @@ const tabs = computed(() => [
 
 <style scoped>
 .right {
-  width: 320px; flex-shrink: 0; border-left: 1px solid var(--line); background: var(--panel);
+  flex-shrink: 0; min-width: 0; border-left: 1px solid var(--line); background: var(--panel);
   display: flex; flex-direction: column; min-height: 0;
 }
 .seg { display: flex; gap: 3px; margin: 14px 16px 0; padding: 3px; border-radius: 9px; background: var(--bg); }
