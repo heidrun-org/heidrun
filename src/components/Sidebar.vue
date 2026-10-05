@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import {
   allPanes,
   attention,
   dismiss,
   finishRename,
-  moveWorkspace,
+  moveWorkspaceInView,
   newWorkspace,
   selectPane,
   selectWorkspace,
@@ -14,7 +14,7 @@ import {
   tabLabel,
   workspaceLabel,
   workspacePanes,
-  workspaces,
+  sidebarWorkspaces as workspaces,
 } from "../stores/session";
 import { STATUS_LABEL, agentKind, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
@@ -44,7 +44,10 @@ function agentsIn(wsId: string) {
   return [...counts].map(([kind, n]) => ({ kind, n }));
 }
 
-const ws = useReorder("y", (id, at) => moveWorkspace(id, at));
+/** Index of the first workspace without an agent, where the divider goes. */
+const firstQuiet = computed(() => workspaces.value.findIndex((w) => !agentsIn(w.workspace_id).length));
+
+const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
 
 const creating = ref(false);
 const newPath = ref("");
@@ -62,6 +65,7 @@ async function createWorkspace() {
     <section class="group tight">
       <div class="eyebrow pad">Workspaces</div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
+        <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" aria-label="Workspaces sans agent"></div>
         <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <InlineRename
@@ -210,13 +214,14 @@ async function createWorkspace() {
 }
 .count, .status { font-size: 11px; color: var(--muted); }
 /* Workspaces with an agent session vs. plain shells or nothing running. */
+.ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
 .agent-tag {
   flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
   display: inline-flex; align-items: center; background: #1e2329; color: var(--text-2); letter-spacing: 0.2px;
 }
 .agent-tag.claude { background: rgba(217, 119, 87, 0.14); color: #e3a083; }
 .agent-tag.codex { background: rgba(110, 168, 254, 0.13); color: #9cc3ff; }
-.item.quiet .grow { color: var(--muted); }
+.item.quiet:not(.active) .grow { color: var(--muted); }
 .item.quiet .dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
 .key { font: 400 10.5px var(--mono); color: var(--faint); opacity: 0; transition: opacity 0.15s; }
 .item:hover .key, .item.active .key { opacity: 1; }

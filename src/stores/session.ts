@@ -108,6 +108,32 @@ export function paneView(p: PaneInfo): AgentInfo {
 
 export const allPanes = computed(() => (state.snapshot?.panes ?? []).map(paneView));
 
+const hasAgent = (wsId: string) => allPanes.value.some((p) => p.workspace_id === wsId && p.agent);
+
+/**
+ * Sidebar order: workspaces with an agent session first, then the others, each group
+ * keeping Herdr's order. Starting an agent lifts a workspace back to its place among
+ * the active ones; stopping it puts it back among the others.
+ */
+export const sidebarWorkspaces = computed(() => {
+  const list = workspaces.value;
+  return [...list.filter((w) => hasAgent(w.workspace_id)), ...list.filter((w) => !hasAgent(w.workspace_id))];
+});
+
+/** Drag-and-drop in the sidebar: a gap in the displayed list → Herdr's insert_index. */
+export function moveWorkspaceInView(id: string, gap: number) {
+  const view = sidebarWorkspaces.value;
+  const full = workspaces.value;
+  const group = hasAgent(id);
+  const before = view[gap - 1];
+  const after = view[gap];
+  let insert: number;
+  if (before && hasAgent(before.workspace_id) === group) insert = full.indexOf(before) + 1;
+  else if (after && hasAgent(after.workspace_id) === group) insert = full.indexOf(after);
+  else insert = after ? full.indexOf(after) : full.length;
+  return moveWorkspace(id, insert);
+}
+
 export const workspacePanes = computed(() =>
   allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId),
 );
@@ -192,7 +218,7 @@ export function paneFullName(p: AgentInfo): string {
 
 /** Agents grouped by workspace, in sidebar order: for "send to…" pickers. */
 export const agentGroups = computed(() =>
-  workspaces.value
+  sidebarWorkspaces.value
     .map((w) => ({
       workspace: w.label,
       items: allPanes.value
@@ -519,7 +545,7 @@ export function cycleTab(delta: number) {
 
 /** Next / previous workspace, wrapping around. */
 export function cycleWorkspace(delta: number) {
-  const list = workspaces.value;
+  const list = sidebarWorkspaces.value;
   if (!list.length) return;
   const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
   selectWorkspace(list[(i + delta + list.length) % list.length].workspace_id);
@@ -527,7 +553,7 @@ export function cycleWorkspace(delta: number) {
 
 /** ⌘1 … ⌘9: workspace by position in the sidebar. */
 export function selectWorkspaceAt(index: number) {
-  const w = workspaces.value[index];
+  const w = sidebarWorkspaces.value[index];
   if (w) selectWorkspace(w.workspace_id);
 }
 
@@ -622,11 +648,14 @@ export function moveTab(tabId: string, insertIndex: number) {
 
 /** Keyboard reordering: moves the selected workspace up (-1) or down (+1). */
 export function shiftWorkspace(delta: -1 | 1) {
-  const list = workspaces.value;
-  const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
-  const target = i + delta;
-  if (i === -1 || target < 0 || target >= list.length) return;
-  return moveWorkspace(list[i].workspace_id, delta > 0 ? target + 1 : target);
+  // Moves past the neighbor shown in the sidebar, within its group (with / without agent).
+  const view = sidebarWorkspaces.value;
+  const full = workspaces.value;
+  const i = view.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  const neighbor = view[i + delta];
+  if (i === -1 || !neighbor || hasAgent(neighbor.workspace_id) !== hasAgent(view[i].workspace_id)) return;
+  const at = full.indexOf(neighbor);
+  return moveWorkspace(view[i].workspace_id, delta > 0 ? at + 1 : at);
 }
 
 /** Keyboard reordering: moves the selected tab left (-1) or right (+1). */
