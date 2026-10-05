@@ -9,7 +9,17 @@ import Inspector from "./components/Inspector.vue";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
-import { closePane, newTerminal, splitPane, start, state, toast } from "./stores/session";
+import {
+  closePane,
+  cycleTab,
+  cycleWorkspace,
+  newTerminal,
+  selectWorkspaceAt,
+  splitPane,
+  start,
+  state,
+  toast,
+} from "./stores/session";
 import { resetZoom, settings, zoom } from "./stores/settings";
 
 let armedClose: string | null = null;
@@ -24,6 +34,17 @@ function onKey(e: KeyboardEvent) {
     e.stopPropagation();
     fn();
   };
+  // ⌥⌘ + arrows: ←/→ tabs, ↑/↓ workspaces.
+  if (e.altKey) {
+    if (e.code === "ArrowLeft") return run(() => cycleTab(-1));
+    if (e.code === "ArrowRight") return run(() => cycleTab(1));
+    if (e.code === "ArrowUp") return run(() => cycleWorkspace(-1));
+    if (e.code === "ArrowDown") return run(() => cycleWorkspace(1));
+  }
+  // ⌘1 … ⌘9: workspace by position.
+  const digit = /^Digit([1-9])$/.exec(e.code);
+  if (digit && !e.altKey && !e.shiftKey) return run(() => selectWorkspaceAt(Number(digit[1]) - 1));
+
   switch (e.code) {
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));

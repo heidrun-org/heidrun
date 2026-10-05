@@ -24,7 +24,7 @@ import { closeTab, finishRename, newTerminal, selectTab, splitPane, startRename,
       <button
         v-else
         class="tab-main"
-        title="Double-clic pour renommer"
+        title="Double-clic pour renommer · ⌥⌘← / ⌥⌘→ pour changer d’onglet"
         @click="selectTab(t.tab_id)"
         @dblclick="startRename('tab', t.tab_id)"
       >

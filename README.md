@@ -16,6 +16,9 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | --- | --- |
 | ⌘K | Palette de commandes |
 | ⌘T | Nouveau terminal (nouvel onglet) |
+| ⌥⌘← / ⌥⌘→ | Onglet précédent / suivant |
+| ⌥⌘↑ / ⌥⌘↓ | Workspace précédent / suivant |
+| ⌘1 … ⌘9 | Aller au workspace n° 1 à 9 (ordre de la barre latérale) |
 | ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
 | ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |

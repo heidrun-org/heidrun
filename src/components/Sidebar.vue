@@ -61,7 +61,7 @@ async function createWorkspace() {
 
     <section class="group tight">
       <div class="eyebrow pad">Workspaces</div>
-      <template v-for="w in workspaces" :key="w.workspace_id">
+      <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
         <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <InlineRename
@@ -81,6 +81,7 @@ async function createWorkspace() {
         >
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <span class="grow">{{ w.label }}</span>
+          <span v-if="wi < 9" class="key">⌘{{ wi + 1 }}</span>
           <span class="count">{{ paneCount(w.workspace_id) }}</span>
         </button>
       </template>
@@ -147,6 +148,8 @@ async function createWorkspace() {
 .item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: #9aa0a6; font-size: 12px; }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .count, .status { font-size: 11px; color: var(--muted); }
+.key { font: 400 10.5px var(--mono); color: var(--faint); opacity: 0; transition: opacity 0.15s; }
+.item:hover .key, .item.active .key { opacity: 1; }
 .create input {
   width: 100%; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong);
   background: var(--field); outline: none; font-size: 12px;

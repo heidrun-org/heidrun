@@ -301,6 +301,28 @@ export function selectTab(id: string) {
   if (state.snapshot) fixSelection(state.snapshot);
 }
 
+/** Next / previous tab of the current workspace, wrapping around. */
+export function cycleTab(delta: number) {
+  const list = tabs.value;
+  if (!list.length) return;
+  const i = list.findIndex((t) => t.tab_id === state.selectedTabId);
+  selectTab(list[(i + delta + list.length) % list.length].tab_id);
+}
+
+/** Next / previous workspace, wrapping around. */
+export function cycleWorkspace(delta: number) {
+  const list = workspaces.value;
+  if (!list.length) return;
+  const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  selectWorkspace(list[(i + delta + list.length) % list.length].workspace_id);
+}
+
+/** ⌘1 … ⌘9: workspace by position in the sidebar. */
+export function selectWorkspaceAt(index: number) {
+  const w = workspaces.value[index];
+  if (w) selectWorkspace(w.workspace_id);
+}
+
 export function selectPane(p: PaneInfo) {
   state.selectedWorkspaceId = p.workspace_id;
   state.selectedTabId = p.tab_id;
