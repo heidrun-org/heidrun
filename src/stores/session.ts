@@ -154,15 +154,26 @@ export function workspaceLabel(id: string): string {
 
 // ---- Context and quotas ---------------------------------------------------
 
-// Last values seen, so gauges never blink out between two reports. Persisted for the
-// account quotas (they are the same for every session and survive a restart).
-const QUOTA_KEY = "herdr-desk.claude-quotas";
+// Last values seen, so gauges never blink out between two reports.
 const lastContext = new Map<string, ContextUsage>();
-let lastClaude: Record<string, string> | null = (() => {
+
+/**
+ * Claude account limits, one entry per window. Several Claude sessions report them,
+ * each at its own pace, and a session that has not talked to the API yet reports
+ * nothing: every window keeps the most recent reading from any session, by the time
+ * that reading was taken. Persisted so a restart starts from the last known state.
+ */
+interface WindowReading {
+  percent: number;
+  resetsAt?: number;
+  at: number;
+}
+const QUOTA_KEY = "herdr-desk.claude-windows";
+const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
   try {
-    return JSON.parse(localStorage.getItem(QUOTA_KEY) ?? "null");
+    return { q5h: undefined, q7d: undefined, ...JSON.parse(localStorage.getItem(QUOTA_KEY) ?? "{}") };
   } catch {
-    return null;
+    return { q5h: undefined, q7d: undefined };
   }
 })();
 
@@ -201,28 +212,41 @@ export const quotas = computed<QuotaBlock[]>(() => {
   const blocks: QuotaBlock[] = [];
 
   // Claude: the status line script reports the account limits as tokens on its pane.
-  const reporters = allPanes.value
-    .filter((p) => p.tokens?.hd_q5h != null || p.tokens?.hd_q7d != null)
-    .sort((a, b) => (num(b.tokens?.hd_ts) ?? 0) - (num(a.tokens?.hd_ts) ?? 0));
-  const latest = reporters[0];
-  if (latest?.tokens && (num(latest.tokens.hd_ts) ?? 0) >= (num(lastClaude?.hd_ts) ?? 0)) {
-    lastClaude = { ...latest.tokens };
+  let changed = false;
+  for (const p of allPanes.value) {
+    const t = p.tokens;
+    if (!t) continue;
+    for (const key of ["q5h", "q7d"] as const) {
+      const percent = num(t[`hd_${key}`]);
+      if (percent == null) continue;
+      const prev = claudeWindows[key];
+      // Per-window timestamp from the current script. Older copies only had hd_ts,
+      // which also moves when the window is missing: trust it only to seed a value.
+      const own = num(t[`hd_${key}_ts`]);
+      const at = own ?? (prev ? 0 : num(t.hd_ts) ?? 0);
+      if (!prev || at > prev.at) {
+        claudeWindows[key] = { percent, resetsAt: num(t[`hd_${key}_reset`]), at };
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
     try {
-      localStorage.setItem(QUOTA_KEY, JSON.stringify(lastClaude));
+      localStorage.setItem(QUOTA_KEY, JSON.stringify(claudeWindows));
     } catch {
       /* ignore */
     }
   }
-  if (lastClaude) {
-    const t = lastClaude;
+  if (claudeWindows.q5h || claudeWindows.q7d) {
     const now = Date.now() / 1000;
-    // A window whose reset time has passed is back to 0 %, not "unknown".
-    const pct = (v?: string, reset?: string) => (num(reset) && num(reset)! < now ? 0 : num(v));
+    // Once a window's reset time has passed it is back to 0 %, until the next report.
+    const value = (w: WindowReading) => (w.resetsAt && w.resetsAt < now ? 0 : w.percent);
     const windows: QuotaBlock["windows"] = [];
-    if (num(t.hd_q5h) != null) windows.push({ name: "Session 5 h", percent: pct(t.hd_q5h, t.hd_q5h_reset)!, resetsAt: num(t.hd_q5h_reset) });
-    if (num(t.hd_q7d) != null) windows.push({ name: "Semaine", percent: pct(t.hd_q7d, t.hd_q7d_reset)!, resetsAt: num(t.hd_q7d_reset) });
+    if (claudeWindows.q5h) windows.push({ name: "Session 5 h", percent: value(claudeWindows.q5h), resetsAt: claudeWindows.q5h.resetsAt });
+    if (claudeWindows.q7d) windows.push({ name: "Semaine", percent: value(claudeWindows.q7d), resetsAt: claudeWindows.q7d.resetsAt });
     const cost = allPanes.value.reduce((sum, p) => sum + (num(p.tokens?.hd_cost) ?? 0), 0);
-    blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt: num(t.hd_ts) });
+    const updatedAt = Math.max(claudeWindows.q5h?.at ?? 0, claudeWindows.q7d?.at ?? 0) || undefined;
+    blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt });
   }
 
   const c = state.codex;

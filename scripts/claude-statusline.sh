@@ -38,9 +38,12 @@ if [ -n "$HERDR_PANE_ID" ]; then
     [ -n "$model" ] && set -- "$@" --token "hd_model=$model"
     [ -n "$ctx" ] && set -- "$@" --token "hd_ctx=$(round "$ctx")"
     [ -n "$ctx_size" ] && set -- "$@" --token "hd_ctx_size=$ctx_size"
-    [ -n "$q5" ] && set -- "$@" --token "hd_q5h=$(round "$q5")"
+    # Each window carries the time it was read, so the app can tell a fresh value
+    # from one left over by an earlier report of the same session.
+    now=$(date +%s)
+    [ -n "$q5" ] && set -- "$@" --token "hd_q5h=$(round "$q5")" --token "hd_q5h_ts=$now"
     [ -n "$q5_reset" ] && set -- "$@" --token "hd_q5h_reset=$q5_reset"
-    [ -n "$q7" ] && set -- "$@" --token "hd_q7d=$(round "$q7")"
+    [ -n "$q7" ] && set -- "$@" --token "hd_q7d=$(round "$q7")" --token "hd_q7d_ts=$now"
     [ -n "$q7_reset" ] && set -- "$@" --token "hd_q7d_reset=$q7_reset"
     [ -n "$cost" ] && set -- "$@" --token "hd_cost=$cost"
     ("$herdr_bin" pane report-metadata "$HERDR_PANE_ID" "$@" >/dev/null 2>&1 &)
