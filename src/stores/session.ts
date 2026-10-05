@@ -198,7 +198,15 @@ const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
 
 const num = (v?: string) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : undefined);
 
+// Session id seen with each pane's last reading: a new one (/clear, /resume) drops it.
+const lastSession = new Map<string, string>();
+
 export function contextFor(p: AgentInfo): ContextUsage | null {
+  const sid = p.tokens?.hd_sid;
+  if (sid && lastSession.get(p.pane_id) !== sid) {
+    lastSession.set(p.pane_id, sid);
+    lastContext.delete(p.pane_id);
+  }
   const fresh = readContext(p);
   if (fresh) {
     lastContext.set(p.pane_id, fresh);

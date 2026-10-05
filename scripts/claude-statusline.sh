@@ -18,7 +18,11 @@ get() {
 }
 
 model=$(get '.model.display_name')
-ctx=$(get '.context_window.used_percentage')
+# used_percentage is null until the first answer of a session (right after /clear
+# for instance): that is an empty context, not "unknown", so it reports 0 instead of
+# leaving the previous session's figure in place.
+ctx=$(get '.context_window.used_percentage // (if .context_window then 0 else empty end)')
+sid=$(get '.session_id')
 ctx_size=$(get '.context_window.context_window_size')
 q5=$(get '.rate_limits.five_hour.used_percentage')
 q5_reset=$(get '.rate_limits.five_hour.resets_at')
@@ -36,6 +40,7 @@ if [ -n "$HERDR_PANE_ID" ]; then
   if command -v "$herdr_bin" >/dev/null 2>&1; then
     set -- --source user:herdr-desk --token "hd_ts=$(date +%s)"
     [ -n "$model" ] && set -- "$@" --token "hd_model=$model"
+    [ -n "$sid" ] && set -- "$@" --token "hd_sid=$sid"
     [ -n "$ctx" ] && set -- "$@" --token "hd_ctx=$(round "$ctx")"
     [ -n "$ctx_size" ] && set -- "$@" --token "hd_ctx_size=$ctx_size"
     # Each window carries the time it was read, so the app can tell a fresh value
