@@ -15,10 +15,21 @@ import type {
   SessionSnapshot,
 } from "../lib/types";
 
+/**
+ * One work run of an agent: from the moment it starts working to the moment it
+ * finishes. Intermediate states (blocked, then working again after an approval)
+ * update the same run instead of adding lines.
+ */
 export interface ActivityEntry {
-  at: number;
-  status: AgentStatus;
+  id: number;
   paneId: string;
+  start: number;
+  /** Set when the run is over. */
+  end: number | null;
+  /** "working" or "blocked" while it runs, "done" once finished, "closed" if the pane went away. */
+  status: "working" | "blocked" | "done" | "closed";
+  /** The run was already going when the app saw the pane for the first time. */
+  startUnknown: boolean;
   /** Names at the time of the event, used if the pane has been closed since. */
   name: string;
   kind: string;
@@ -301,6 +312,45 @@ export async function refresh() {
   }
 }
 
+let runSeq = 0;
+const ACTIVE = new Set<AgentStatus>(["working", "blocked"]);
+
+/**
+ * Turns status changes into work runs. Only real work is recorded: an agent going
+ * idle after being "done" (Herdr does that once the result has been seen) or
+ * passing through "unknown" is not activity.
+ */
+function trackRun(
+  paneId: string,
+  before: AgentStatus | undefined,
+  after: AgentStatus,
+  now: number,
+  names: Pick<ActivityEntry, "name" | "kind" | "workspace" | "tab">,
+) {
+  const open = state.activity.find((r) => r.paneId === paneId && r.end === null);
+  if (ACTIVE.has(after)) {
+    if (open) {
+      open.status = after as "working" | "blocked";
+      Object.assign(open, names);
+      return;
+    }
+    state.activity.unshift({
+      id: ++runSeq,
+      paneId,
+      start: now,
+      end: null,
+      status: after as "working" | "blocked",
+      startUnknown: before === undefined,
+      ...names,
+    });
+    state.activity.splice(40);
+  } else if (open && (after === "done" || after === "idle")) {
+    open.end = now;
+    open.status = "done";
+    Object.assign(open, names);
+  }
+}
+
 function applySnapshot(snap: SessionSnapshot) {
   const previous = new Map((state.snapshot?.panes ?? []).map((p) => [p.pane_id, p.agent_status]));
   const agents = new Map(snap.agents.map((a) => [a.pane_id, a]));
@@ -312,20 +362,16 @@ function applySnapshot(snap: SessionSnapshot) {
     if (before === after) continue;
     state.since[pane.pane_id] = now;
     if (!pane.agent) continue;
-    if (before === undefined) continue; // first sight, not a transition
     const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
     const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
     const t = snap.tabs.find((x) => x.tab_id === pane.tab_id);
-    state.activity.unshift({
-      at: now,
-      status: after,
-      paneId: pane.pane_id,
+    trackRun(pane.pane_id, before, after, now, {
       name: paneName(view),
       kind: agentKind(view),
       workspace: ws,
       tab: t ? t.label || `onglet ${t.number}` : "",
     });
-    state.activity.splice(40);
+    if (before === undefined) continue; // first sight, not a transition
     if (after === "blocked") {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
@@ -336,6 +382,14 @@ function applySnapshot(snap: SessionSnapshot) {
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
         notify(`${paneName(view)} a terminé`, ws);
       }
+    }
+  }
+
+  const alive = new Set(snap.panes.map((p) => p.pane_id));
+  for (const r of state.activity) {
+    if (r.end === null && !alive.has(r.paneId)) {
+      r.end = now;
+      r.status = "closed";
     }
   }
 

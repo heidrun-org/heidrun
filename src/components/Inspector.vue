@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
 import RemoteControl from "./RemoteControl.vue";
@@ -17,7 +17,7 @@ import {
   workspaceLabel,
   workspacePanes,
 } from "../stores/session";
-import { STATUS_LABEL, agentKind, clockTime, compactTokens, gaugeLevel, paneName, shortPath } from "../lib/format";
+import { STATUS_LABEL, agentKind, clockTime, compactTokens, duration, gaugeLevel, paneName, shortPath } from "../lib/format";
 
 const p = selectedPane;
 const ctx = computed(() => (p.value ? contextFor(p.value) : null));
@@ -34,16 +34,30 @@ const activity = computed(() =>
       const tab = pane ? tabLabel(pane.tab_id) : a.tab;
       const kind = pane ? agentKind(pane) : a.kind;
       const name = pane ? paneName(pane) : a.name;
+      const same = (x: string) => !x || x.toLowerCase() === kind.toLowerCase() || x === pane?.agent;
       return {
         ...a,
         pane,
-        where: [ws, tab].filter(Boolean).join(" · "),
+        // An automatic tab name ("Claude") says nothing more than the agent kind.
+        where: [ws, same(tab) ? "" : tab].filter(Boolean).join(" · "),
         kind,
-        // The custom name, when it says more than the agent kind.
-        name: name.toLowerCase() === kind.toLowerCase() || name === pane?.agent ? "" : name,
+        name: same(name) || name === tab ? "" : name,
+        state: runLabel(a),
       };
     }),
 );
+// Ticks so "depuis 3 min" stays current.
+const now = ref(Date.now());
+const ticker = window.setInterval(() => (now.value = Date.now()), 30_000);
+onBeforeUnmount(() => window.clearInterval(ticker));
+
+function runLabel(a: (typeof state.activity)[number]): string {
+  if (a.status === "blocked") return "attend une décision";
+  if (a.status === "working") return a.startUnknown ? "en cours" : `en cours · ${duration(now.value - a.start)}`;
+  const took = a.end && !a.startUnknown ? ` · ${duration(a.end - a.start)}` : "";
+  return (a.status === "closed" ? "fermé" : "terminé") + took;
+}
+
 const watches = computed(() => state.watches.filter((w) => w.paneId === p.value?.pane_id));
 const provider = computed<"claude" | "codex" | null>(() => {
   const a = p.value?.agent ?? "";
@@ -188,7 +202,7 @@ const statusText = computed(() => {
         </div>
         <button
           v-for="a in activity"
-          :key="a.at + a.paneId + a.status"
+          :key="a.id"
           type="button"
           class="act"
           :class="{ current: a.paneId === p?.pane_id, gone: !a.pane }"
@@ -196,18 +210,21 @@ const statusText = computed(() => {
           :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
           @click="a.pane && selectPane(a.pane)"
         >
-          <span class="dot-s" :class="'t-' + a.status">●</span>
+          <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">●</span>
           <span class="act-main">
             <span class="act-where">{{ a.where || "—" }}</span>
             <span class="act-who">
               <span class="act-kind">{{ a.kind }}</span>
               <span v-if="a.name" class="act-name">{{ a.name }}</span>
-              <span class="act-status" :class="'t-' + a.status">{{ STATUS_LABEL[a.status] }}</span>
+              <span class="act-status" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">{{ a.state }}</span>
             </span>
           </span>
-          <span class="act-time mono">{{ clockTime(a.at / 1000) }}</span>
+          <span class="act-time mono">
+            <template v-if="a.end && !a.startUnknown">{{ clockTime(a.start / 1000) }}–{{ clockTime(a.end / 1000) }}</template>
+            <template v-else>{{ clockTime((a.end ?? a.start) / 1000) }}</template>
+          </span>
         </button>
-        <div v-if="!activity.length" class="muted">Rien pour ce panneau depuis l’ouverture de l’app.</div>
+        <div v-if="!activity.length" class="muted">Ce panneau n’a pas travaillé depuis l’ouverture de l’app.</div>
       </div>
     </section>
   </div>
@@ -263,7 +280,7 @@ const statusText = computed(() => {
 .act-kind { white-space: nowrap; }
 .act-name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .act-status { white-space: nowrap; margin-left: auto; padding-left: 6px; }
-.act-time { font-size: 11px; color: var(--muted); line-height: 18px; }
+.act-time { font-size: 11px; color: var(--muted); line-height: 18px; white-space: nowrap; }
 .grow { flex: 1; }
 .link { align-self: flex-start; font-size: 12px; padding: 0 8px; height: 26px; }
 .link:hover { color: var(--fail); }

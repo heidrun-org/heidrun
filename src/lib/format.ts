@@ -66,3 +66,11 @@ export function agentKind(p: Pick<PaneInfo, "agent" | "display_agent">): string 
   if (a.includes("codex")) return "Codex";
   return p.display_agent || p.agent || "Terminal";
 }
+
+/** 45 s → "< 1 min", 7 min, 1 h 05 */
+export function duration(ms: number): string {
+  const min = Math.floor(ms / 60_000);
+  if (min < 1) return "< 1 min";
+  if (min < 60) return `${min} min`;
+  return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+}
