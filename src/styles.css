@@ -1,0 +1,95 @@
+:root {
+  --bg: #0b0c0e;
+  --panel: #0f1113;
+  --bar: #111316;
+  --field: #16181b;
+  --hover: #1d2024;
+  --line: #22262a;
+  --line-strong: #2a2e33;
+  --text: #e8e6e1;
+  --text-2: #c9cdd1;
+  --muted: #8e949a;
+  --faint: #6b7177;
+
+  --working: #3fb8af;
+  --blocked: #f2a93b;
+  --done: #6ea8fe;
+  --idle: #5a6066;
+  --fail: #e58a8a;
+  --ok: #7ec699;
+
+  --accent: var(--blocked);
+  --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: "Geist Mono", "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 13px/1.4 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+input { font: inherit; color: inherit; user-select: text; }
+:focus-visible { outline: 2px solid var(--done); outline-offset: 1px; }
+
+.eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+}
+.mono { font-family: var(--mono); }
+
+/* Status dots ------------------------------------------------------------ */
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--idle); }
+.dot.working { background: var(--working); animation: breathe 2.2s ease-in-out infinite; }
+.dot.blocked { background: var(--blocked); }
+.dot.done { background: var(--done); }
+.dot.unknown { background: var(--muted); }
+.dot.process { background: var(--idle); }
+.dot.pulse { animation: pulse-once 1.2s ease-out 1; }
+
+.t-working { color: var(--working); }
+.t-blocked { color: var(--blocked); }
+.t-done { color: var(--done); }
+.t-idle, .t-unknown { color: var(--muted); }
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63, 184, 175, 0.55); }
+  50% { opacity: 0.55; box-shadow: 0 0 0 5px rgba(63, 184, 175, 0); }
+}
+@keyframes pulse-once {
+  0% { box-shadow: 0 0 0 0 rgba(242, 169, 59, 0.8); transform: scale(1.35); }
+  100% { box-shadow: 0 0 0 10px rgba(242, 169, 59, 0); transform: scale(1); }
+}
+@keyframes sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Gauges ------------------------------------------------------------------ */
+.gauge { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.gauge > span { display: block; height: 100%; background: var(--working); transition: width 0.4s; }
+.gauge.warn > span { background: var(--blocked); }
+.gauge.crit > span { background: var(--fail); }
+
+/* Buttons ----------------------------------------------------------------- */
+.btn {
+  height: 30px; padding: 0 12px; border-radius: 7px;
+  border: 1px solid var(--line-strong); background: transparent;
+  color: var(--text-2); font-weight: 500; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--hover); }
+.btn kbd { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+.btn.lg { height: 40px; border-radius: 10px; font-size: 13px; justify-content: center; }
+.btn.primary { background: var(--accent); border-color: transparent; color: #111316; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

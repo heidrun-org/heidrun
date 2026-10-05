@@ -1,0 +1,129 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import {
+  allPanes,
+  attention,
+  newWorkspace,
+  selectPane,
+  selectWorkspace,
+  state,
+  workspaceLabel,
+  workspacePanes,
+  workspaces,
+} from "../stores/session";
+import { STATUS_LABEL, ago, paneName } from "../lib/format";
+import type { AgentInfo } from "../lib/types";
+
+function summary(p: AgentInfo): string {
+  if (p.agent_status === "blocked") return p.state_labels?.blocked || p.title || "attend une décision";
+  return p.title || p.terminal_title_stripped || "travail terminé, à relire";
+}
+
+function paneCount(wsId: string) {
+  return allPanes.value.filter((p) => p.workspace_id === wsId).length;
+}
+
+const creating = ref(false);
+const newPath = ref("");
+async function createWorkspace() {
+  const path = newPath.value.trim();
+  const label = path ? path.split("/").filter(Boolean).pop() ?? null : null;
+  await newWorkspace(path || null, label);
+  creating.value = false;
+  newPath.value = "";
+}
+</script>
+
+<template>
+  <aside class="side">
+    <section v-if="attention.length" class="group">
+      <div class="eyebrow pad">À traiter</div>
+      <button
+        v-for="p in attention"
+        :key="p.pane_id"
+        class="card"
+        :class="p.agent_status"
+        @click="selectPane(p)"
+      >
+        <span class="row">
+          <span class="name">{{ paneName(p) }}</span>
+          <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+        </span>
+        <span class="desc">{{ workspaceLabel(p.workspace_id) }} · {{ summary(p) }}</span>
+        <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
+      </button>
+    </section>
+
+    <section class="group tight">
+      <div class="eyebrow pad">Workspaces</div>
+      <button
+        v-for="w in workspaces"
+        :key="w.workspace_id"
+        class="item"
+        :class="{ active: w.workspace_id === state.selectedWorkspaceId }"
+        @click="selectWorkspace(w.workspace_id)"
+      >
+        <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
+        <span class="grow">{{ w.label }}</span>
+        <span class="count">{{ paneCount(w.workspace_id) }}</span>
+      </button>
+      <form v-if="creating" class="create" @submit.prevent="createWorkspace">
+        <label class="sr" for="ws-path">Dossier du workspace</label>
+        <input id="ws-path" v-model="newPath" class="mono" placeholder="~/Projects/…" autofocus @keydown.esc="creating = false" />
+      </form>
+      <button v-else class="item dashed" @click="creating = true">+ Nouveau workspace</button>
+    </section>
+
+    <section class="group tight">
+      <div class="eyebrow pad">Panneaux · {{ state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }}</div>
+      <button
+        v-for="p in workspacePanes"
+        :key="p.pane_id"
+        class="item small"
+        :class="{ active: p.pane_id === state.selectedPaneId }"
+        @click="selectPane(p)"
+      >
+        <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
+        <span class="grow">{{ paneName(p) }}</span>
+        <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
+          {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
+        </span>
+      </button>
+    </section>
+  </aside>
+</template>
+
+<style scoped>
+.side {
+  width: 280px; flex-shrink: 0; border-right: 1px solid var(--line); background: var(--panel);
+  display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
+}
+.group { display: flex; flex-direction: column; gap: 8px; }
+.group.tight { gap: 2px; }
+.pad { padding: 0 8px 6px; }
+.card {
+  text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px;
+  border: 1px solid #22344f; background: #121821;
+}
+.card.blocked { border-color: #4a3a1e; background: #1e1912; }
+.card .row { display: flex; justify-content: space-between; align-items: center; }
+.name { font-size: 13px; font-weight: 600; }
+.badge { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; }
+.desc { font-size: 12px; color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.when { font-size: 11px; color: var(--muted); }
+.item {
+  display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px;
+  border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
+}
+.item.small { height: 34px; font-weight: 400; }
+.item:hover { background: #181b1e; }
+.item.active { background: var(--hover); color: var(--text); }
+.item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: #9aa0a6; font-size: 12px; }
+.grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.count, .status { font-size: 11px; color: var(--muted); }
+.create input {
+  width: 100%; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong);
+  background: var(--field); outline: none; font-size: 12px;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
