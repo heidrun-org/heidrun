@@ -26,6 +26,10 @@ const activityScope = ref<"all" | "pane">("all");
 const activity = computed(() =>
   state.activity
     .filter((a) => activityScope.value === "all" || a.paneId === p.value?.pane_id)
+    // Running first (blocked ones on top: they wait for you), then finished, newest first.
+    .map((a, i) => ({ a, i, rank: a.status === "blocked" ? 0 : a.status === "working" ? 1 : 2 }))
+    .sort((x, y) => x.rank - y.rank || x.i - y.i)
+    .map((x) => x.a)
     .slice(0, 20)
     .map((a) => {
       // Live names (renames show up at once); the stored ones if the pane is gone.
