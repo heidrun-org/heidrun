@@ -303,7 +303,9 @@ export function findShellBlock(lineAt: (i: number) => string | null, y: number, 
 
 // ---- Claude Code's agent list under the prompt ("● main", "○ jerome-645 …") -----
 
-const AGENT_ROW = /^(\s{0,8})([●○◉◯◎])\s+(\S+)(?:\s{2,}\S.*)?\s*$/;
+// Filled marker = the agent shown; hollow = the others. Several glyphs, depending on
+// the Claude Code version and the font.
+const AGENT_ROW = /^(\s{0,12}(?:[❯›>▸▶]\s*)?)([●○◉◯◎⬤⏺•◦∘⦿])\s+([\w.@:/-]+)(?:\s{2,}\S.*)?\s*$/u;
 
 export interface AgentRow {
   /** Position in the list (0 = first row, usually "main"). */
@@ -319,7 +321,7 @@ export interface AgentRow {
  * Only near the bottom of the screen, as a block of at least two rows.
  */
 export function findAgentRow(lineAt: (i: number) => string | null, y: number, rows: number): AgentRow | null {
-  if (y < rows - 16) return null;
+  if (y < rows - 24) return null;
   const line = lineAt(y);
   const m = line != null ? AGENT_ROW.exec(line) : null;
   if (!m) return null;
@@ -328,5 +330,5 @@ export function findAgentRow(lineAt: (i: number) => string | null, y: number, ro
   let last = y;
   while (AGENT_ROW.test(lineAt(last + 1) ?? "")) last++;
   if (last - first < 1) return null;
-  return { index: y - first, name: m[3], start: m[1].length, current: m[2] === "●" || m[2] === "◉" };
+  return { index: y - first, name: m[3], start: m[1].length, current: "●◉⬤⏺•⦿".includes(m[2]) };
 }
