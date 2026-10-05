@@ -241,3 +241,62 @@ export function findStep(line: string): StepMatch | null {
   const start = m[1].length;
   return { start, end: line.length - (line.length - line.trimEnd().length), number: Number(m[2]), text: m[3] };
 }
+
+// ---- Shell commands for Claude's "!" mode ------------------------------------
+
+export interface ShellBlock {
+  /** First and last screen lines of the command (0-based). */
+  first: number;
+  last: number;
+  /** Where the "!" sits on the first line (index in its text). */
+  start: number;
+  /** The command as one line, without the "!". */
+  command: string;
+}
+
+const NEW_ITEM = /^\s*(?:[!•⏺⎿>❯$#*-]|\d{1,2}[.)]\s)/;
+const BANG = /^(\s*)!\s*(\S.*)$/;
+const indentOf = (s: string) => s.length - s.trimStart().length;
+
+/**
+ * "! docker builder prune -af && docker image prune -af", possibly spread over
+ * several screen lines (wrapped by the agent, or continued with \, &&, |).
+ * `lineAt(i)` returns the text of screen line i (or null past the end).
+ */
+export function findShellBlock(lineAt: (i: number) => string | null, y: number, cols: number): ShellBlock | null {
+  // The hovered line may be a continuation: look a few lines up for the "!".
+  for (let first = y; first >= Math.max(0, y - 8); first--) {
+    const head = lineAt(first);
+    if (head == null) break;
+    const m = BANG.exec(head);
+    if (!m || /^!\w/.test(m[2])) {
+      if (!head.trim()) break; // a blank line ends any block
+      continue;
+    }
+    const bangIndent = m[1].length;
+    const parts = [m[2].trimEnd()];
+    let last = first;
+    let prev = head.trimEnd();
+    for (let i = first + 1; i < first + 12; i++) {
+      const line = lineAt(i);
+      if (line == null || !line.trim()) break;
+      const indent = indentOf(line);
+      const continued = /(\\|&&|\|\||\||;)$/.test(prev);
+      const wrapped = prev.length >= cols - 12; // the previous line ran to the edge
+      if (indent < bangIndent || (!continued && NEW_ITEM.test(line))) break;
+      if (!continued && !wrapped && indent <= bangIndent) break;
+      parts.push(line.trim());
+      prev = line.trimEnd();
+      last = i;
+    }
+    if (y > last) return null;
+    const command = parts
+      .map((p) => p.replace(/\s*\\$/, ""))
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (command.length < 2) return null;
+    return { first, last, start: bangIndent, command };
+  }
+  return null;
+}

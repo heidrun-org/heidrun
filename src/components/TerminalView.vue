@@ -10,6 +10,7 @@ import {
   claudeCommands,
   findCommands,
   findRefs,
+  findShellBlock,
   findStep,
   refContext,
   type RefContext,
@@ -125,6 +126,32 @@ onMounted(async () => {
         end: { x: col[e - 1] + width[e - 1], y },
       });
       const items: { s: number; e: number; label: string; run: () => void; underline: boolean }[] = [];
+      // "! command" suggested by Claude (its shell mode): the whole command, joined on
+      // one line even when it spans several, is sent to the prompt and run.
+      if (isClaude()) {
+        const buf = term!.buffer.active;
+        const at = (i: number) => {
+          const l = i >= 0 && i < term!.rows ? buf.getLine(buf.viewportY + i) : undefined;
+          return l ? lineText(l).text : null;
+        };
+        const block = findShellBlock(at, y - 1 - buf.viewportY, term!.cols);
+        if (block) {
+          const row = y - 1 - buf.viewportY;
+          const s0 = row === block.first ? block.start : text.length - text.trimStart().length;
+          const e0 = text.trimEnd().length;
+          if (e0 > s0) {
+            const short = block.command.length > 48 ? `${block.command.slice(0, 48)}…` : block.command;
+            const link = {
+              s: s0,
+              e: e0,
+              label: `▷ Exécuter ${short}`,
+              run: () => sendPrompt(props.paneId, `! ${block.command}`),
+              underline: true,
+            };
+            return callback([toLink(link)]);
+          }
+        }
+      }
       for (const r of findRefs(text, refCtx)) {
         if (!r.url) continue;
         const what = text.slice(r.start, r.end);
@@ -154,20 +181,24 @@ onMounted(async () => {
           }
         }
       }
-      const links = items.map((i) => ({
-        text: text.slice(i.s, i.e),
-        range: range(i.s, i.e),
-        decorations: { underline: i.underline, pointerCursor: i.underline },
-        activate: (e: MouseEvent) => {
-          if (e.metaKey) {
-            hideChip(true);
-            i.run();
-          }
-        },
-        hover: () => showChip(range(i.s, i.e).start, i.label, i.run),
-        leave: () => hideChip(),
-      }));
+      const links = items.map(toLink);
       callback(links.length ? links : undefined);
+
+      function toLink(i: (typeof items)[number]) {
+        return {
+          text: text.slice(i.s, i.e),
+          range: range(i.s, i.e),
+          decorations: { underline: i.underline, pointerCursor: i.underline },
+          activate: (e: MouseEvent) => {
+            if (e.metaKey) {
+              hideChip(true);
+              i.run();
+            }
+          },
+          hover: () => showChip(range(i.s, i.e).start, i.label, i.run),
+          leave: () => hideChip(),
+        };
+      }
     },
   });
   term.loadAddon(new ClipboardAddon(osc52Provider));
