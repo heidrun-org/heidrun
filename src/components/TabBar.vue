@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
-import { closeTab, newTerminal, selectTab, splitPane, state, tabs } from "../stores/session";
+import InlineRename from "./InlineRename.vue";
+import { closeTab, finishRename, newTerminal, selectTab, splitPane, startRename, state, tabs } from "../stores/session";
 </script>
 
 <template>
@@ -12,7 +13,21 @@ import { closeTab, newTerminal, selectTab, splitPane, state, tabs } from "../sto
       class="tab"
       :class="{ active: t.tab_id === state.selectedTabId }"
     >
-      <button class="tab-main" @click="selectTab(t.tab_id)">
+      <InlineRename
+        v-if="state.renaming === `tab:${t.tab_id}`"
+        class="tab-rename"
+        :value="t.label"
+        label="Nouveau nom de l’onglet"
+        @save="(v) => finishRename('tab', t.tab_id, v)"
+        @cancel="state.renaming = null"
+      />
+      <button
+        v-else
+        class="tab-main"
+        title="Double-clic pour renommer"
+        @click="selectTab(t.tab_id)"
+        @dblclick="startRename('tab', t.tab_id)"
+      >
         <span v-if="t.agent_status !== 'idle'" class="dot" :class="t.agent_status"></span>
         {{ t.label || `onglet ${t.number}` }}
       </button>
@@ -43,6 +58,7 @@ import { closeTab, newTerminal, selectTab, splitPane, state, tabs } from "../sto
   height: 30px; padding: 0 4px 0 12px; border: none; background: transparent; color: inherit;
   font-weight: 500; display: flex; align-items: center; gap: 8px; white-space: nowrap;
 }
+.tab-rename { width: 140px; margin: 0 4px; }
 .tab-close { margin-right: 4px; opacity: 0; }
 .tab:hover .tab-close, .tab.active .tab-close, .tab-close.armed, .tab-close:focus-visible { opacity: 1; }
 .tab-add {

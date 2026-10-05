@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
 import { notify } from "../lib/notify";
+import { settings } from "./settings";
 import { paneName } from "../lib/format";
 import type {
   AgentInfo,
@@ -42,6 +43,8 @@ export const state = reactive({
   watches: [] as OutputWatch[],
   /** "À traiter" cards closed by the user, until the pane changes state again. */
   dismissed: {} as Record<string, string>,
+  /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
+  renaming: null as string | null,
   toast: "" as string,
 });
 
@@ -115,6 +118,11 @@ export const counts = computed(() => {
   }
   return c;
 });
+
+export function tabLabel(id: string): string {
+  const t = state.snapshot?.tabs.find((x) => x.tab_id === id);
+  return t ? t.label || `onglet ${t.number}` : "";
+}
 
 export function workspaceLabel(id: string): string {
   return workspaces.value.find((w) => w.workspace_id === id)?.label ?? id;
@@ -357,6 +365,21 @@ export async function newWorkspace(cwd: string | null, label: string | null) {
 
 export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
+}
+
+export function startRename(kind: "ws" | "tab" | "pane", id: string) {
+  if (kind === "ws") selectWorkspace(id);
+  if (kind === "tab") selectTab(id);
+  state.renaming = `${kind}:${id}`;
+  if (kind === "ws") settings.leftOpen = true;
+}
+
+export async function finishRename(kind: "ws" | "tab" | "pane", id: string, label: string | null) {
+  state.renaming = null;
+  if (label === null && kind !== "pane") return;
+  if (kind === "ws") await guard(() => api.renameWorkspace(id, label!));
+  else if (kind === "tab") await guard(() => api.renameTab(id, label!));
+  else await guard(() => api.renamePane(id, label));
 }
 
 export function closeTab(tabId: string) {

@@ -4,16 +4,20 @@ import {
   allPanes,
   attention,
   dismiss,
+  finishRename,
   newWorkspace,
   selectPane,
   selectWorkspace,
+  startRename,
   state,
+  tabLabel,
   workspaceLabel,
   workspacePanes,
   workspaces,
 } from "../stores/session";
 import { STATUS_LABEL, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
+import InlineRename from "./InlineRename.vue";
 import type { AgentInfo } from "../lib/types";
 
 function summary(p: AgentInfo): string {
@@ -43,10 +47,10 @@ async function createWorkspace() {
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
         <button class="card-main" @click="selectPane(p)">
           <span class="row">
-            <span class="name">{{ paneName(p) }}</span>
+            <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
             <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
           </span>
-          <span class="desc">{{ workspaceLabel(p.workspace_id) }} · {{ summary(p) }}</span>
+          <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
           <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
         </button>
         <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
@@ -57,17 +61,29 @@ async function createWorkspace() {
 
     <section class="group tight">
       <div class="eyebrow pad">Workspaces</div>
-      <button
-        v-for="w in workspaces"
-        :key="w.workspace_id"
-        class="item"
-        :class="{ active: w.workspace_id === state.selectedWorkspaceId }"
-        @click="selectWorkspace(w.workspace_id)"
-      >
-        <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
-        <span class="grow">{{ w.label }}</span>
-        <span class="count">{{ paneCount(w.workspace_id) }}</span>
-      </button>
+      <template v-for="w in workspaces" :key="w.workspace_id">
+        <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
+          <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
+          <InlineRename
+            :value="w.label"
+            label="Nouveau nom du workspace"
+            @save="(v) => finishRename('ws', w.workspace_id, v)"
+            @cancel="state.renaming = null"
+          />
+        </div>
+        <button
+          v-else
+          class="item"
+          :class="{ active: w.workspace_id === state.selectedWorkspaceId }"
+          title="Double-clic pour renommer"
+          @click="selectWorkspace(w.workspace_id)"
+          @dblclick="startRename('ws', w.workspace_id)"
+        >
+          <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
+          <span class="grow">{{ w.label }}</span>
+          <span class="count">{{ paneCount(w.workspace_id) }}</span>
+        </button>
+      </template>
       <form v-if="creating" class="create" @submit.prevent="createWorkspace">
         <label class="sr" for="ws-path">Dossier du workspace</label>
         <input id="ws-path" v-model="newPath" class="mono" placeholder="~/Projects/…" autofocus @keydown.esc="creating = false" />
@@ -114,7 +130,9 @@ async function createWorkspace() {
 .card-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 .card.blocked { border-color: #4a3a1e; background: #1e1912; }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.name { font-size: 13px; font-weight: 600; }
+.name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { flex-shrink: 0; }
+.who { color: var(--text); font-weight: 500; }
 .badge { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; }
 .desc { font-size: 12px; color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .when { font-size: 11px; color: var(--muted); }
@@ -123,6 +141,7 @@ async function createWorkspace() {
   border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
 }
 .item.small { height: 34px; font-weight: 400; }
+.item.editing { background: var(--hover); padding-right: 4px; }
 .item:hover { background: #181b1e; }
 .item.active { background: var(--hover); color: var(--text); }
 .item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: #9aa0a6; font-size: 12px; }

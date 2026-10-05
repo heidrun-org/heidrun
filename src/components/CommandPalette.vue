@@ -11,6 +11,7 @@ import {
   selectPane,
   selectedPane,
   splitPane,
+  startRename,
   state,
   workspaceLabel,
 } from "../stores/session";
@@ -66,6 +67,9 @@ const items = computed<Item[]>(() => {
     { section: "Terminaux", label: "Diviser en bas", hint: "⇧⌘D", run: () => splitPane("down") },
     ...(sel ? [{ section: "Terminaux", label: `Fermer le panneau ${paneName(sel)}`, hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
     ...(state.selectedTabId ? [{ section: "Terminaux", label: "Fermer l’onglet courant", run: () => closeTab(state.selectedTabId!) }] : []),
+    ...(state.selectedWorkspaceId ? [{ section: "Renommer", label: "Renommer le workspace", run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
+    ...(state.selectedTabId ? [{ section: "Renommer", label: "Renommer l’onglet", run: () => startRename("tab", state.selectedTabId!) }] : []),
+    ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
     { section: "Affichage", label: "Agrandir la police", hint: "⌘+", run: () => zoom(0.5) },
     { section: "Affichage", label: "Réduire la police", hint: "⌘−", run: () => zoom(-0.5) },
     { section: "Affichage", label: "Taille de police par défaut", hint: "⌘0", run: () => resetZoom() },

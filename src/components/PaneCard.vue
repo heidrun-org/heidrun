@@ -3,7 +3,8 @@ import { computed } from "vue";
 import TerminalView from "./TerminalView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
-import { closePane, contextFor, selectPane, splitPane, state } from "../stores/session";
+import InlineRename from "./InlineRename.vue";
+import { closePane, contextFor, finishRename, selectPane, splitPane, startRename, state } from "../stores/session";
 import { gaugeLevel, paneName } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
 
@@ -29,7 +30,15 @@ const subtitle = computed(() => {
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
     <header class="head">
       <span class="dot" :class="[status, state.pulse[pane.pane_id] ? 'pulse' : '']"></span>
-      <span class="name">{{ paneName(pane) }}</span>
+      <InlineRename
+        v-if="state.renaming === `pane:${pane.pane_id}`"
+        class="pane-rename"
+        :value="pane.label || paneName(pane)"
+        label="Nouveau nom du panneau"
+        @save="(v) => finishRename('pane', pane.pane_id, v)"
+        @cancel="state.renaming = null"
+      />
+      <span v-else class="name" title="Double-clic pour renommer" @dblclick="startRename('pane', pane.pane_id)">{{ paneName(pane) }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <template v-if="ctx">
@@ -69,7 +78,8 @@ const subtitle = computed(() => {
   border-bottom: 1px solid #1a1d20; font-size: 12px;
 }
 .pane.blocked .head { background: #15120d; border-bottom-color: #2b2418; }
-.name { font-weight: 600; white-space: nowrap; }
+.name { font-weight: 600; white-space: nowrap; cursor: default; }
+.pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
 .pct { color: var(--text-2); }

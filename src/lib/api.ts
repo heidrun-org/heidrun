@@ -56,6 +56,19 @@ export function closePane(paneId: string) {
   return request("pane.close", { pane_id: paneId });
 }
 
+export function renameWorkspace(workspaceId: string, label: string) {
+  return request("workspace.rename", { workspace_id: workspaceId, label });
+}
+
+export function renameTab(tabId: string, label: string) {
+  return request("tab.rename", { tab_id: tabId, label });
+}
+
+/** `null` clears the custom label and goes back to the automatic name. */
+export function renamePane(paneId: string, label: string | null) {
+  return request("pane.rename", { pane_id: paneId, label });
+}
+
 export function closeTab(tabId: string) {
   return request("tab.close", { tab_id: tabId });
 }
