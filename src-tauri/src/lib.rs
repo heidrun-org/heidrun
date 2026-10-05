@@ -105,6 +105,7 @@ pub fn run() {
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
+            claude::claude_statusline_set_hidden,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");

@@ -82,7 +82,9 @@ export const agentsByPane = computed(() => {
 
 /** Pane enriched with its agent record when there is one. */
 export function paneView(p: PaneInfo): AgentInfo {
-  return { ...p, ...(agentsByPane.value.get(p.pane_id) ?? {}) };
+  const a = agentsByPane.value.get(p.pane_id);
+  if (!a) return { ...p };
+  return { ...p, ...a, tokens: { ...(p.tokens ?? {}), ...(a.tokens ?? {}) } };
 }
 
 export const allPanes = computed(() => (state.snapshot?.panes ?? []).map(paneView));
@@ -152,9 +154,31 @@ export function workspaceLabel(id: string): string {
 
 // ---- Context and quotas ---------------------------------------------------
 
+// Last values seen, so gauges never blink out between two reports. Persisted for the
+// account quotas (they are the same for every session and survive a restart).
+const QUOTA_KEY = "herdr-desk.claude-quotas";
+const lastContext = new Map<string, ContextUsage>();
+let lastClaude: Record<string, string> | null = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(QUOTA_KEY) ?? "null");
+  } catch {
+    return null;
+  }
+})();
+
 const num = (v?: string) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : undefined);
 
 export function contextFor(p: AgentInfo): ContextUsage | null {
+  const fresh = readContext(p);
+  if (fresh) {
+    lastContext.set(p.pane_id, fresh);
+    return fresh;
+  }
+  // Same agent still in the pane: keep showing its last reading.
+  return p.agent ? lastContext.get(p.pane_id) ?? null : null;
+}
+
+function readContext(p: AgentInfo): ContextUsage | null {
   const t = p.tokens ?? {};
   const claude = num(t.hd_ctx);
   if (claude != null) {
@@ -181,11 +205,22 @@ export const quotas = computed<QuotaBlock[]>(() => {
     .filter((p) => p.tokens?.hd_q5h != null || p.tokens?.hd_q7d != null)
     .sort((a, b) => (num(b.tokens?.hd_ts) ?? 0) - (num(a.tokens?.hd_ts) ?? 0));
   const latest = reporters[0];
-  if (latest?.tokens) {
-    const t = latest.tokens;
+  if (latest?.tokens && (num(latest.tokens.hd_ts) ?? 0) >= (num(lastClaude?.hd_ts) ?? 0)) {
+    lastClaude = { ...latest.tokens };
+    try {
+      localStorage.setItem(QUOTA_KEY, JSON.stringify(lastClaude));
+    } catch {
+      /* ignore */
+    }
+  }
+  if (lastClaude) {
+    const t = lastClaude;
+    const now = Date.now() / 1000;
+    // A window whose reset time has passed is back to 0 %, not "unknown".
+    const pct = (v?: string, reset?: string) => (num(reset) && num(reset)! < now ? 0 : num(v));
     const windows: QuotaBlock["windows"] = [];
-    if (num(t.hd_q5h) != null) windows.push({ name: "Session 5 h", percent: num(t.hd_q5h)!, resetsAt: num(t.hd_q5h_reset) });
-    if (num(t.hd_q7d) != null) windows.push({ name: "Semaine", percent: num(t.hd_q7d)!, resetsAt: num(t.hd_q7d_reset) });
+    if (num(t.hd_q5h) != null) windows.push({ name: "Session 5 h", percent: pct(t.hd_q5h, t.hd_q5h_reset)!, resetsAt: num(t.hd_q5h_reset) });
+    if (num(t.hd_q7d) != null) windows.push({ name: "Semaine", percent: pct(t.hd_q7d, t.hd_q7d_reset)!, resetsAt: num(t.hd_q7d_reset) });
     const cost = allPanes.value.reduce((sum, p) => sum + (num(p.tokens?.hd_cost) ?? 0), 0);
     blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt: num(t.hd_ts) });
   }
@@ -302,7 +337,15 @@ export async function refreshCodex() {
       .filter((p) => p.agent === "codex" || p.agent_session?.agent === "codex")
       .map((p) => p.agent_session?.value ?? "")
       .filter(Boolean);
-    state.codex = await api.codexUsage(ids);
+    const next = await api.codexUsage(ids);
+    const prev = state.codex;
+    if (prev && !next.primary && !next.secondary) {
+      next.primary = prev.primary;
+      next.secondary = prev.secondary;
+      next.plan = prev.plan;
+      next.updated_at = prev.updated_at;
+    }
+    state.codex = next;
   } catch {
     /* ignore */
   }

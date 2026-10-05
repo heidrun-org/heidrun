@@ -44,7 +44,7 @@ const subtitle = computed(() => {
       <span class="spacer"></span>
       <template v-if="ctx">
         <span class="sub">contexte</span>
-        <span class="gauge" :class="gaugeLevel(ctx.percent)" style="width: 72px">
+        <span class="gauge" :class="gaugeLevel(ctx.percent)" style="width: 110px">
           <span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span>
         </span>
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
@@ -90,8 +90,6 @@ const subtitle = computed(() => {
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
 .pct { color: var(--text-2); }
-.lvl-warn { color: var(--blocked); }
-.lvl-crit { color: var(--fail); }
 .tools { display: flex; align-items: center; gap: 2px; margin-left: 6px; opacity: 0.55; transition: opacity 0.15s; }
 .pane:hover .tools, .pane.selected .tools { opacity: 1; }
 .tool {

@@ -36,12 +36,18 @@ fn next_path() -> PathBuf {
     desk_dir().join("claude-statusline-next")
 }
 
+fn hidden_path() -> PathBuf {
+    desk_dir().join("claude-statusline-hidden")
+}
+
 #[derive(Serialize)]
 pub struct StatuslineState {
     pub installed: bool,
     pub settings_path: String,
     /// The user's own status line, kept for display.
     pub chained: Option<String>,
+    /// Nothing is printed in the terminal; the numbers only go to the app.
+    pub hidden: bool,
 }
 
 fn read_settings() -> Result<Map<String, Value>, String> {
@@ -77,8 +83,22 @@ fn is_ours(cmd: &str) -> bool {
 pub fn claude_statusline_state() -> Result<StatuslineState, String> {
     let m = read_settings()?;
     let installed = current_command(&m).map(|c| is_ours(&c)).unwrap_or(false);
+    // Keep the installed copy in step with this version of the app.
+    if installed && std::fs::read_to_string(script_path()).ok().as_deref() != Some(SCRIPT) {
+        let _ = std::fs::write(script_path(), SCRIPT);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(script_path(), std::fs::Permissions::from_mode(0o755));
+        }
+    }
     let chained = std::fs::read_to_string(next_path()).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
-    Ok(StatuslineState { installed, settings_path: settings_path().display().to_string(), chained })
+    Ok(StatuslineState {
+        installed,
+        settings_path: settings_path().display().to_string(),
+        chained,
+        hidden: hidden_path().exists(),
+    })
 }
 
 #[tauri::command]
@@ -121,6 +141,18 @@ pub fn claude_statusline_install() -> Result<StatuslineState, String> {
     claude_statusline_state()
 }
 
+/// Hides (or shows again) the status line row in Claude Code; reporting continues.
+#[tauri::command]
+pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, String> {
+    std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
+    if hidden {
+        std::fs::write(hidden_path(), "1\n").map_err(|e| e.to_string())?;
+    } else {
+        let _ = std::fs::remove_file(hidden_path());
+    }
+    claude_statusline_state()
+}
+
 /// Puts the user's own status line back (or removes ours if there was none).
 #[tauri::command]
 pub fn claude_statusline_uninstall() -> Result<StatuslineState, String> {
@@ -138,6 +170,7 @@ pub fn claude_statusline_uninstall() -> Result<StatuslineState, String> {
     }
     write_settings(&m)?;
     let _ = std::fs::remove_file(next_path());
+    let _ = std::fs::remove_file(hidden_path());
     claude_statusline_state()
 }
 

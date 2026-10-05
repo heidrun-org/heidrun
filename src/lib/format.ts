@@ -54,7 +54,7 @@ export function compactTokens(n?: number | null): string {
 
 /** Colour level of a gauge: calm, watch, critical. */
 export function gaugeLevel(percent: number): "ok" | "warn" | "crit" {
-  if (percent >= 90) return "crit";
-  if (percent >= 70) return "warn";
+  if (percent > 80) return "crit";
+  if (percent >= 60) return "warn";
   return "ok";
 }

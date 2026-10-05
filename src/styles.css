@@ -72,10 +72,24 @@ input { font: inherit; color: inherit; user-select: text; }
 }
 
 /* Gauges ------------------------------------------------------------------ */
-.gauge { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-.gauge > span { display: block; height: 100%; background: var(--working); transition: width 0.4s; }
-.gauge.warn > span { background: var(--blocked); }
-.gauge.crit > span { background: var(--fail); }
+/* Usage gauges: green up to 60 %, orange to 80 %, red beyond. Ticks mark both thresholds. */
+.gauge {
+  --g-ok: #5fbf7a; --g-warn: #f0a63a; --g-crit: #ea6a5f;
+  position: relative; height: 8px; border-radius: 4px; background: #23272c; overflow: hidden;
+}
+.gauge > span { display: block; height: 100%; border-radius: 4px; background: var(--g-ok); transition: width 0.4s, background 0.4s; }
+.gauge.warn > span { background: var(--g-warn); }
+.gauge.crit > span { background: var(--g-crit); }
+.gauge::before, .gauge::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(11, 12, 14, 0.85); z-index: 1;
+}
+.gauge::before { left: 60%; }
+.gauge::after { left: 80%; }
+.gauge.lg { height: 10px; border-radius: 5px; }
+.gauge.lg > span { border-radius: 5px; }
+.lvl-ok { color: #7fd197; }
+.lvl-warn { color: #f4b75a; }
+.lvl-crit { color: #f07f75; }
 
 /* Buttons ----------------------------------------------------------------- */
 .btn {

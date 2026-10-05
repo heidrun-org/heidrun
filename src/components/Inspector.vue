@@ -98,8 +98,9 @@ const statusText = computed(() => {
             <template v-else>{{ Math.round(ctx.percent) }} %</template>
           </span>
         </div>
-        <div class="gauge big" :class="gaugeLevel(ctx.percent)"><span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span></div>
-        <div v-if="ctx.percent >= 80" class="hint">Proche de la limite — pense à /compact</div>
+        <div class="gauge lg" :class="gaugeLevel(ctx.percent)"><span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span></div>
+        <div v-if="ctx.percent > 80" class="hint lvl-crit">Proche de la limite — pense à /compact</div>
+        <div v-else-if="ctx.percent >= 60" class="hint">Plus de la moitié utilisée</div>
       </div>
 
       <div v-if="p.agent && sessionCost != null" class="line small">
@@ -158,8 +159,6 @@ const statusText = computed(() => {
 .line { display: flex; justify-content: space-between; font-size: 12px; }
 .gauge.big { height: 8px; border-radius: 4px; }
 .hint, .muted { font-size: 11px; color: var(--muted); }
-.lvl-warn { color: var(--blocked); }
-.lvl-crit { color: var(--fail); }
 .watch { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); font-size: 12px; }
 .watch-form { display: flex; gap: 6px; }
 .watch-form input {

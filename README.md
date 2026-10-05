@@ -27,6 +27,8 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
 | ⇧⌘P | Épingler le texte sélectionné dans une note |
 
+**Jauges** : vert jusqu’à 60 %, orange de 60 à 80 %, rouge au-delà (contexte, session 5 h, semaine). Les dernières valeurs connues restent affichées entre deux réponses.
+
 **Copier du texte** : par défaut, glisser sélectionne et **⌘C** copie (⌘V colle). Dans le menu « A » de la barre du haut, l’option « Souris pour l’app » renvoie la molette et les clics à Herdr et aux agents ; dans ce mode, **⌥ + glisser** sélectionne toujours.
 
 **Notes épinglées** : sélectionne du texte dans un terminal, puis « Épingler » (ou ⇧⌘P). La note apparaît dans l’onglet **Notes** du panneau de droite, avec sa provenance ; tu peux la renommer (double-clic), la copier ou l’envoyer à un agent. Le bouton ⤢ (ou un double-clic sur le texte) l’ouvre dans une fenêtre centrale qu’on peut déplacer par son titre, redimensionner par le coin bas-droit et modifier ; sa taille est mémorisée. Les notes restent sur ce Mac, jamais dans le repo : une sortie de terminal peut contenir des secrets.
@@ -94,7 +96,7 @@ Claude Code transmet le contexte et les quotas (5 h, semaine) à sa status line.
 - garde ta status line actuelle dans `~/.config/herdr-desk/claude-statusline-next`, qui continue d’être affichée telle quelle dans le terminal ;
 - pointe `statusLine.command` de `~/.claude/settings.json` vers le script (sauvegarde : `settings.json.herdr-desk-backup`).
 
-Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la réponse suivante. « Désactiver le suivi Claude » rétablit ta status line d’origine. Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Les quotas n’existent qu’avec un abonnement Pro ou Max.
+Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la réponse suivante. Pour gagner une ligne dans le terminal, décoche **« Afficher aussi la status line dans le terminal »** : le script n’affiche plus rien, mais continue d’envoyer les chiffres à l’app. « Désactiver le suivi Claude » rétablit ta status line d’origine. Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Les quotas n’existent qu’avec un abonnement Pro ou Max.
 
 ### Codex
 

@@ -48,8 +48,13 @@ if [ -n "$HERDR_PANE_ID" ]; then
 fi
 
 # ---- The line shown in Claude Code -----------------------------------------
+desk_dir="${HERDR_DESK_DIR:-$HOME/.config/herdr-desk}"
+# "Masquer dans le terminal" in Herdr Desk: print nothing, the app shows the numbers.
+if [ -e "$desk_dir/claude-statusline-hidden" ]; then
+  exit 0
+fi
 # Your own status line, if you had one, keeps the display.
-next_file="${HERDR_DESK_DIR:-$HOME/.config/herdr-desk}/claude-statusline-next"
+next_file="$desk_dir/claude-statusline-next"
 if [ -s "$next_file" ]; then
   printf '%s' "$input" | sh -c "$(cat "$next_file")"
   exit $?
