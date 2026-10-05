@@ -1,5 +1,6 @@
 import { reactive, watch } from "vue";
 import { paneName } from "../lib/format";
+import { reorderSubset } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 import { tabLabel, toast, workspaceLabel } from "./session";
 
@@ -57,6 +58,11 @@ export function pinText(text: string, pane: AgentInfo) {
     createdAt: Date.now(),
   });
   toast("Note épinglée");
+}
+
+/** Drag and drop within the visible notes (current workspace or all). */
+export function moveNote(visibleIds: string[], id: string, at: number) {
+  notes.list = reorderSubset(notes.list, (n) => n.id, visibleIds, id, at);
 }
 
 export function removeNote(id: string) {

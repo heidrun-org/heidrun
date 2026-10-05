@@ -45,3 +45,24 @@ export function useReorder(axis: "x" | "y", drop: (id: string, insertIndex: numb
 
   return { dragging, gap, onDragStart, onDragOver, onDrop, onDragEnd: reset };
 }
+
+/** Moves `id` to the gap `at` (0…length) of `ids`; returns the new order. */
+export function moveId(ids: string[], id: string, at: number): string[] {
+  const from = ids.indexOf(id);
+  if (from === -1) return ids;
+  const out = ids.filter((x) => x !== id);
+  out.splice(from < at ? at - 1 : at, 0, id);
+  return out;
+}
+
+/**
+ * Reorders the items of `list` whose keys are in `visible` (a filtered view) and
+ * leaves the others where they were.
+ */
+export function reorderSubset<T>(list: T[], key: (t: T) => string, visible: string[], id: string, at: number): T[] {
+  const order = moveId(visible, id, at);
+  const visibleSet = new Set(visible);
+  const byKey = new Map(list.map((t) => [key(t), t]));
+  let i = 0;
+  return list.map((t) => (visibleSet.has(key(t)) ? byKey.get(order[i++])! : t));
+}

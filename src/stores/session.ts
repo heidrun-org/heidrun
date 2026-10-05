@@ -26,6 +26,16 @@ export interface OutputWatch {
   regex: string;
 }
 
+const DISMISSED_KEY = "herdr-desk.dismissed";
+
+function loadDismissed(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
 export const state = reactive({
   snapshot: null as SessionSnapshot | null,
   connected: false,
@@ -42,7 +52,7 @@ export const state = reactive({
   since: {} as Record<string, number>,
   watches: [] as OutputWatch[],
   /** "À traiter" cards closed by the user, until the pane changes state again. */
-  dismissed: {} as Record<string, string>,
+  dismissed: loadDismissed(),
   /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
   renaming: null as string | null,
   toast: "" as string,
@@ -96,6 +106,18 @@ export function attentionKey(p: AgentInfo): string {
 
 export function dismiss(p: AgentInfo) {
   state.dismissed[p.pane_id] = attentionKey(p);
+  saveDismissed();
+}
+
+function saveDismissed() {
+  // Forget panes that no longer exist so the map does not grow forever.
+  const live = new Set((state.snapshot?.panes ?? []).map((p) => p.pane_id));
+  for (const id of Object.keys(state.dismissed)) if (state.snapshot && !live.has(id)) delete state.dismissed[id];
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(state.dismissed));
+  } catch {
+    /* ignore */
+  }
 }
 
 export const attention = computed(() =>

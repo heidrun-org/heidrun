@@ -1,6 +1,7 @@
 import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
+import { moveId } from "../lib/reorder";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaces } from "./session";
 
 export interface Action {
@@ -31,6 +32,43 @@ interface Project {
 }
 
 export type ActionStatus = "idle" | "running" | "finished";
+
+export interface RecentRun {
+  label: string;
+  command: string;
+  at: number;
+}
+
+// History and suggestion order are personal: kept on this Mac, not in the repo.
+// Keyed by project root, so they follow the project rather than a workspace id.
+const LOCAL_KEY = "herdr-desk.project-local";
+
+interface LocalData {
+  recent: Record<string, RecentRun[]>;
+  suggestionOrder: Record<string, string[]>;
+}
+
+function loadLocal(): LocalData {
+  try {
+    return { recent: {}, suggestionOrder: {}, ...JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "{}") };
+  } catch {
+    return { recent: {}, suggestionOrder: {} };
+  }
+}
+
+export const local = reactive<LocalData>(loadLocal());
+
+watch(
+  () => local,
+  (v) => {
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  },
+  { deep: true },
+);
 
 export const project = reactive({
   byWorkspace: {} as Record<string, Project | undefined>,
@@ -80,8 +118,51 @@ export const suggestions = computed(() => {
   const p = currentProject.value;
   if (!p) return [];
   const taken = new Set(p.config.actions.map((a) => a.command));
-  return p.detected.filter((d) => !taken.has(d.command));
+  const order = local.suggestionOrder[p.root] ?? [];
+  const rank = (c: string) => {
+    const i = order.indexOf(c);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  // User order first, then detection order for anything new.
+  return p.detected
+    .filter((d) => !taken.has(d.command))
+    .map((d, i) => ({ d, i }))
+    .sort((a, b) => rank(a.d.command) - rank(b.d.command) || a.i - b.i)
+    .map((x) => x.d);
 });
+
+export const recentRuns = computed(() => {
+  const p = currentProject.value;
+  return p ? local.recent[p.root] ?? [] : [];
+});
+
+function recordRun(workspaceId: string, label: string, command: string) {
+  const p = project.byWorkspace[workspaceId];
+  if (!p) return;
+  const list = (local.recent[p.root] ?? []).filter((r) => r.command !== command);
+  list.unshift({ label, command, at: Date.now() });
+  local.recent[p.root] = list.slice(0, 8);
+}
+
+export function clearRecent(workspaceId: string) {
+  const p = project.byWorkspace[workspaceId];
+  if (p) delete local.recent[p.root];
+}
+
+/** Drag and drop in the saved actions: the order is written to .herdr-desk.json. */
+export async function moveAction(workspaceId: string, id: string, at: number) {
+  const p = project.byWorkspace[workspaceId];
+  if (!p) return;
+  const byId = new Map(p.config.actions.map((a) => [a.id, a]));
+  p.config.actions = moveId(p.config.actions.map((a) => a.id), id, at).map((x) => byId.get(x)!);
+  await save(workspaceId);
+}
+
+export function moveSuggestion(workspaceId: string, command: string, at: number) {
+  const p = project.byWorkspace[workspaceId];
+  if (!p) return;
+  local.suggestionOrder[p.root] = moveId(suggestions.value.map((d) => d.command), command, at);
+}
 
 function slug(label: string): string {
   const base = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "action";
@@ -129,6 +210,7 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = actionPane(workspaceId, action);
+  if (!existing || rerun) recordRun(workspaceId, action.label, action.command);
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);
@@ -154,9 +236,10 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   }
 }
 
-/** Runs a detected command once, without saving it as an action. */
-export function runDetected(workspaceId: string, d: Detected) {
-  return runAction(workspaceId, { id: `detected-${d.command}`, label: d.label, command: d.command });
+/** Runs a command once without saving it (suggestions, history); reuses a saved action if any. */
+export function runDetected(workspaceId: string, d: { label: string; command: string }) {
+  const saved = project.byWorkspace[workspaceId]?.config.actions.find((a) => a.command === d.command);
+  return runAction(workspaceId, saved ?? { id: `once-${d.command}`, label: d.label, command: d.command });
 }
 
 export async function stopAction(workspaceId: string, action: Action) {

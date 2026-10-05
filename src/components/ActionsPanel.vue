@@ -5,6 +5,10 @@ import InlineRename from "./InlineRename.vue";
 import {
   actionStatus,
   addAction,
+  clearRecent,
+  moveAction,
+  moveSuggestion,
+  recentRuns,
   currentProject,
   loadProject,
   project,
@@ -17,7 +21,8 @@ import {
   type Action,
 } from "../stores/project";
 import { state, workspaceLabel } from "../stores/session";
-import { shortPath } from "../lib/format";
+import { ago, shortPath } from "../lib/format";
+import { useReorder } from "../lib/reorder";
 
 const ws = computed(() => state.selectedWorkspaceId);
 const p = currentProject;
@@ -25,6 +30,9 @@ const error = computed(() => (ws.value ? project.errors[ws.value] : undefined));
 
 // Load (or reload) the project file whenever the workspace changes.
 watch(ws, (id) => id && loadProject(id), { immediate: true });
+
+const actionsDrag = useReorder("y", (id, at) => ws.value && moveAction(ws.value, id, at));
+const suggDrag = useReorder("y", (id, at) => ws.value && moveSuggestion(ws.value, id, at));
 
 const adding = ref(false);
 const label = ref("");
@@ -63,7 +71,24 @@ function status(a: Action) {
         Aucune action pour ce projet. Ajoute une commande ou choisis une suggestion ci-dessous.
       </div>
 
-      <div v-for="a in p.config.actions" :key="a.id" class="action" :class="status(a)">
+      <div
+        v-for="(a, ai) in p.config.actions"
+        :key="a.id"
+        class="action"
+        :class="[
+          status(a),
+          {
+            dragging: actionsDrag.dragging.value === a.id,
+            'drop-before': actionsDrag.gap.value === ai,
+            'drop-after': actionsDrag.gap.value === ai + 1 && ai === p.config.actions.length - 1,
+          },
+        ]"
+        :draggable="renaming !== a.id"
+        @dragstart="actionsDrag.onDragStart($event, a.id)"
+        @dragover="actionsDrag.onDragOver($event, ai)"
+        @drop="actionsDrag.onDrop($event, p.config.actions.map((x) => x.id))"
+        @dragend="actionsDrag.onDragEnd()"
+      >
         <button class="main" :title="status(a) === 'idle' ? `Lancer dans un nouvel onglet` : `Aller à l’onglet`" @click="runAction(ws, a)">
           <span class="dot" :class="status(a) === 'running' ? 'working' : status(a) === 'finished' ? 'done' : ''"></span>
           <span class="text">
@@ -98,9 +123,46 @@ function status(a: Action) {
       </form>
       <button v-else class="btn dashed" @click="adding = true">+ Ajouter une action</button>
 
+      <template v-if="recentRuns.length">
+        <div class="sub-head">
+          <div class="eyebrow">Récentes</div>
+          <button class="link small" @click="clearRecent(ws)">Effacer</button>
+        </div>
+        <div v-for="r in recentRuns" :key="r.command" class="sugg">
+          <span class="grow">
+            <span class="mono">{{ r.command }}</span>
+            <span class="src">{{ ago(r.at) }}</span>
+          </span>
+          <button class="tool" :aria-label="`Relancer ${r.command}`" title="Relancer" @click="runDetected(ws, r)">▶</button>
+          <button
+            v-if="!p.config.actions.some((a) => a.command === r.command)"
+            class="tool"
+            :aria-label="`Ajouter ${r.command} aux actions`"
+            title="Ajouter aux actions"
+            @click="addAction(ws, r.label, r.command)"
+          >+</button>
+        </div>
+      </template>
+
       <template v-if="suggestions.length">
         <div class="eyebrow sub">Suggestions</div>
-        <div v-for="d in visibleSuggestions" :key="d.command" class="sugg">
+        <div
+          v-for="(d, di) in visibleSuggestions"
+          :key="d.command"
+          class="sugg"
+          :class="{
+            dragging: suggDrag.dragging.value === d.command,
+            'drop-before': suggDrag.gap.value === di,
+            'drop-after': suggDrag.gap.value === di + 1 && di === visibleSuggestions.length - 1,
+          }"
+          draggable="true"
+          title="Glisser pour réordonner"
+          @dragstart="suggDrag.onDragStart($event, d.command)"
+          @dragover="suggDrag.onDragOver($event, di)"
+          @drop="suggDrag.onDrop($event, visibleSuggestions.map((x) => x.command))"
+          @dragend="suggDrag.onDragEnd()"
+        >
+          <span class="grip" aria-hidden="true">⋮⋮</span>
           <span class="grow">
             <span class="mono">{{ d.command }}</span>
             <span class="src">{{ d.source }}</span>
@@ -151,6 +213,17 @@ function status(a: Action) {
 .row { display: flex; justify-content: flex-end; gap: 6px; }
 .dashed { border-style: dashed; justify-content: center; height: 34px; }
 .sub { margin-top: 14px; }
+.sub-head { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.link.small { padding: 0; font-size: 11px; }
+.dragging { opacity: 0.4; }
+.drop-before, .drop-after { position: relative; }
+.drop-before::before, .drop-after::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 1px; background: var(--done);
+}
+.drop-before::before { top: -5px; }
+.drop-after::after { bottom: -5px; }
+.grip { color: var(--faint); cursor: grab; font-size: 11px; letter-spacing: -2px; padding: 0 2px; user-select: none; }
+
 .sugg { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 8px; }
 .sugg:hover { background: #16191c; }
 .grow { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 12px; overflow: hidden; }

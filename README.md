@@ -44,7 +44,9 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 }
 ```
 
-Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelques commandes Flutter, Cargo ou Symfony sont proposés en suggestions.
+Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelques commandes Flutter, Cargo ou Symfony sont proposés en suggestions. Les commandes lancées récemment apparaissent dans **Récentes**, entre les actions et les suggestions. Actions, suggestions et notes se réordonnent par glisser-déposer (l’ordre des actions est écrit dans `.herdr-desk.json`, celui des suggestions et l’historique restent sur ce Mac).
+
+Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
 
 **Réorganiser** : glisser-déposer les workspaces dans la barre de gauche et les onglets dans la barre d’onglets. L’ordre est enregistré dans Herdr.
 

@@ -2,7 +2,8 @@
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
-import { notes, removeNote, renameNote, type Note } from "../stores/notes";
+import { moveNote, notes, removeNote, renameNote, type Note } from "../stores/notes";
+import { useReorder } from "../lib/reorder";
 import { allPanes, sendPrompt, state, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
 import { ago, paneName } from "../lib/format";
@@ -11,6 +12,10 @@ const list = computed(() =>
   notes.showAll ? notes.list : notes.list.filter((n) => n.workspaceId === state.selectedWorkspaceId),
 );
 const others = computed(() => notes.list.length - list.value.length);
+
+// Only the grip starts a drag, so text in the note stays selectable.
+const armed = ref<string | null>(null);
+const drag = useReorder("y", (id, at) => moveNote(list.value.map((n) => n.id), id, at));
 
 const agents = computed(() => allPanes.value.filter((p) => p.agent));
 const renaming = ref<string | null>(null);
@@ -41,8 +46,23 @@ function sendTo(n: Note, paneId: string) {
       <template v-if="others">({{ others }} note{{ others > 1 ? "s" : "" }} dans d’autres workspaces.)</template>
     </p>
 
-    <article v-for="n in list" :key="n.id" class="note">
+    <article
+      v-for="(n, ni) in list"
+      :key="n.id"
+      class="note"
+      :class="{
+        dragging: drag.dragging.value === n.id,
+        'drop-before': drag.gap.value === ni,
+        'drop-after': drag.gap.value === ni + 1 && ni === list.length - 1,
+      }"
+      :draggable="armed === n.id"
+      @dragstart="drag.onDragStart($event, n.id)"
+      @dragover="drag.onDragOver($event, ni)"
+      @drop="drag.onDrop($event, list.map((x) => x.id))"
+      @dragend="drag.onDragEnd(); armed = null"
+    >
       <header>
+        <span class="grip" aria-hidden="true" title="Glisser pour réordonner" @mousedown="armed = n.id" @mouseup="armed = null">⋮⋮</span>
         <InlineRename
           v-if="renaming === n.id"
           :value="n.title"
@@ -104,5 +124,13 @@ pre.open { max-height: none; }
   flex: 1; height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: transparent;
   color: var(--text-2); font-size: 12px; padding: 0 8px;
 }
+.dragging { opacity: 0.4; }
+.drop-before, .drop-after { position: relative; }
+.drop-before::before, .drop-after::after {
+  content: ""; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 1px; background: var(--done);
+}
+.drop-before::before { top: -5px; }
+.drop-after::after { bottom: -5px; }
+.grip { color: var(--faint); cursor: grab; font-size: 11px; letter-spacing: -2px; padding: 0 2px; user-select: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
