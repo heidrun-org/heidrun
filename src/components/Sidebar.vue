@@ -16,7 +16,7 @@ import {
   workspacePanes,
   workspaces,
 } from "../stores/session";
-import { STATUS_LABEL, ago, paneName } from "../lib/format";
+import { STATUS_LABEL, agentKind, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
@@ -31,6 +31,17 @@ function summary(p: AgentInfo): string {
 
 function paneCount(wsId: string) {
   return allPanes.value.filter((p) => p.workspace_id === wsId).length;
+}
+
+/** Agents running in a workspace, by kind: [{ kind: "Claude", n: 2 }, …]. */
+function agentsIn(wsId: string) {
+  const counts = new Map<string, number>();
+  for (const p of allPanes.value) {
+    if (p.workspace_id !== wsId || !p.agent) continue;
+    const k = agentKind(p);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return [...counts].map(([kind, n]) => ({ kind, n }));
 }
 
 const ws = useReorder("y", (id, at) => moveWorkspace(id, at));
@@ -64,6 +75,7 @@ async function createWorkspace() {
           v-else
           class="item"
           :class="{
+            quiet: !agentsIn(w.workspace_id).length,
             active: w.workspace_id === state.selectedWorkspaceId,
             dragging: ws.dragging.value === w.workspace_id,
             'drop-before': ws.gap.value === wi,
@@ -81,6 +93,13 @@ async function createWorkspace() {
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <span class="grow">{{ w.label }}</span>
           <span v-if="wi < 9" class="key">⌘{{ wi + 1 }}</span>
+          <span
+            v-for="a in agentsIn(w.workspace_id)"
+            :key="a.kind"
+            class="agent-tag"
+            :class="a.kind.toLowerCase()"
+            :title="`${a.n} session${a.n > 1 ? 's' : ''} ${a.kind}`"
+          >{{ a.kind }}<template v-if="a.n > 1"> {{ a.n }}</template></span>
           <span class="count">{{ paneCount(w.workspace_id) }}</span>
         </button>
       </template>
@@ -190,6 +209,15 @@ async function createWorkspace() {
   background: #13282a; color: var(--working);
 }
 .count, .status { font-size: 11px; color: var(--muted); }
+/* Workspaces with an agent session vs. plain shells or nothing running. */
+.agent-tag {
+  flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
+  display: inline-flex; align-items: center; background: #1e2329; color: var(--text-2); letter-spacing: 0.2px;
+}
+.agent-tag.claude { background: rgba(217, 119, 87, 0.14); color: #e3a083; }
+.agent-tag.codex { background: rgba(110, 168, 254, 0.13); color: #9cc3ff; }
+.item.quiet .grow { color: var(--muted); }
+.item.quiet .dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
 .key { font: 400 10.5px var(--mono); color: var(--faint); opacity: 0; transition: opacity 0.15s; }
 .item:hover .key, .item.active .key { opacity: 1; }
 .create input {
