@@ -76,10 +76,10 @@ export const selectedWorkspace = computed(() =>
   workspaces.value.find((w) => w.workspace_id === state.selectedWorkspaceId) ?? null,
 );
 
+// Herdr lists tabs in display order. `number` is a stable id that does not change
+// when a tab is moved, so sorting on it would undo every reordering.
 export const tabs = computed(() =>
-  (state.snapshot?.tabs ?? [])
-    .filter((t) => t.workspace_id === state.selectedWorkspaceId)
-    .sort((a, b) => a.number - b.number),
+  (state.snapshot?.tabs ?? []).filter((t) => t.workspace_id === state.selectedWorkspaceId),
 );
 
 export const agentsByPane = computed(() => {

@@ -9,7 +9,12 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
 </script>
 
 <template>
-  <div class="tabs">
+  <!-- Also accepts drops in the small gaps between tabs (last marker shown wins). -->
+  <div
+    class="tabs"
+    @dragover="tr.dragging.value && $event.preventDefault()"
+    @drop="tr.onDrop($event, tabs.map((x) => x.tab_id))"
+  >
     <div
       v-for="(t, ti) in tabs"
       :key="t.tab_id"
