@@ -21,6 +21,8 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
 
+**Copier du texte** : un simple glisser sélectionne dans Herdr, qui copie automatiquement dans le presse-papiers macOS. **⌥ + glisser** fait une sélection locale, à copier avec ⌘C. ⌘V colle.
+
 Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.
 - Notifications macOS quand un agent passe en bloqué ou termine.
 

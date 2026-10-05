@@ -5,6 +5,8 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
+import { ClipboardAddon } from "@xterm/addon-clipboard";
+import { copy, osc52Provider } from "../lib/clipboard";
 import { fontStack, settings } from "../stores/settings";
 
 const props = defineProps<{ terminalId: string; focused: boolean }>();
@@ -43,6 +45,9 @@ onMounted(async () => {
     lineHeight: 1.25,
     cursorBlink: true,
     macOptionIsMeta: true,
+    // Herdr captures the mouse, so a plain drag goes to Herdr (which copies via OSC 52).
+    // ⌥ + drag forces a local xterm selection instead.
+    macOptionClickForcesSelection: true,
     scrollback: 0, // Herdr owns the scrollback; the attach client redraws the screen.
     allowProposedApi: true,
     theme: {
@@ -76,6 +81,17 @@ onMounted(async () => {
   fit = new FitAddon();
   term.loadAddon(fit);
   term.loadAddon(new WebLinksAddon());
+  term.loadAddon(new ClipboardAddon(osc52Provider));
+
+  // ⌘C copies the local selection; without one it falls through to the terminal.
+  term.attachCustomKeyEventHandler((e) => {
+    if (e.type === "keydown" && e.metaKey && !e.ctrlKey && e.code === "KeyC" && term?.hasSelection()) {
+      copy(term.getSelection());
+      term.clearSelection();
+      return false;
+    }
+    return true;
+  });
   term.open(el.value!);
   fit.fit();
 
