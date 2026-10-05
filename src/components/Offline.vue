@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import * as api from "../lib/api";
-import { refresh, state } from "../stores/session";
+import { refresh, startHerdr, state } from "../stores/session";
+import { settings } from "../stores/settings";
 
 const paths = ref<Awaited<ReturnType<typeof api.paths>> | null>(null);
 onMounted(async () => {
@@ -17,10 +18,16 @@ onMounted(async () => {
   <div class="offline">
     <div class="card">
       <div class="eyebrow">Connexion</div>
-      <h1>Herdr ne répond pas</h1>
-      <p>Herdr Desk se connecte au serveur Herdr local. Lance-le une fois dans un terminal :</p>
-      <pre class="mono">herdr</pre>
-      <p>Tu peux ensuite te détacher (<span class="mono">ctrl+b</span> puis <span class="mono">q</span>) : le serveur reste actif.</p>
+      <h1>{{ state.starting ? "Démarrage de Herdr…" : "Herdr ne répond pas" }}</h1>
+      <p>
+        Herdr Desk peut démarrer le serveur Herdr en arrière-plan, sans terminal. Il continue de tourner
+        quand tu fermes l’app, jusqu’à <span class="mono">herdr server stop</span> ou au redémarrage du Mac.
+      </p>
+      <div class="row">
+        <button class="btn lg primary" :disabled="state.starting" @click="startHerdr()">Démarrer Herdr</button>
+        <button class="btn lg" :disabled="state.starting" @click="refresh()">Réessayer</button>
+      </div>
+      <label class="check"><input v-model="settings.autoStartHerdr" type="checkbox" />Démarrer Herdr automatiquement à l’ouverture de l’app</label>
       <dl v-if="paths">
         <dt>Socket</dt>
         <dd class="mono">{{ paths.socket }} <span :class="paths.socket_exists ? 'ok' : 'ko'">{{ paths.socket_exists ? "trouvé" : "absent" }}</span></dd>
@@ -28,7 +35,6 @@ onMounted(async () => {
         <dd class="mono">{{ paths.bin }} <span :class="paths.bin_exists ? 'ok' : 'ko'">{{ paths.bin_exists ? "trouvé" : "absent" }}</span></dd>
       </dl>
       <p v-if="state.error" class="err mono">{{ state.error }}</p>
-      <button class="btn lg primary" @click="refresh()">Réessayer</button>
     </div>
   </div>
 </template>
@@ -45,5 +51,9 @@ dd { margin: 0; word-break: break-all; }
 .ok { color: var(--working); }
 .ko { color: var(--fail); }
 .err { color: var(--fail); font-size: 12px; }
-.btn { align-self: flex-start; padding: 0 20px; }
+.row { display: flex; gap: 8px; }
+.row .btn { padding: 0 20px; }
+.btn:disabled { opacity: 0.5; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.check input { accent-color: var(--done); }
 </style>

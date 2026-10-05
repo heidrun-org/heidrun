@@ -40,6 +40,8 @@ const defaults = {
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */
   leftWidth: 280,
+  /** Start the Herdr server in the background when it is not running. */
+  autoStartHerdr: true,
   rightWidth: 320,
   noteHeight: 520,
 };

@@ -22,6 +22,10 @@ export function paths(): Promise<{ socket: string; socket_exists: boolean; bin: 
   return invoke("herdr_paths");
 }
 
+export function startServer(): Promise<string> {
+  return invoke("herdr_server_start");
+}
+
 export function codexUsage(sessionIds: string[]): Promise<CodexUsage> {
   return invoke("codex_usage", { sessionIds });
 }

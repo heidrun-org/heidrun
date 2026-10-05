@@ -55,6 +55,7 @@ export const state = reactive({
   dismissed: loadDismissed(),
   /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
   renaming: null as string | null,
+  starting: false,
   toast: "" as string,
 });
 
@@ -605,6 +606,19 @@ function rememberCommand(cmd: string) {
 
 // ---- Boot -----------------------------------------------------------------
 
+/** Starts the Herdr server in the background (no terminal needed), then connects. */
+export async function startHerdr() {
+  state.starting = true;
+  try {
+    await api.startServer();
+    await refresh();
+  } catch (e) {
+    state.error = String(e);
+  } finally {
+    state.starting = false;
+  }
+}
+
 export async function start() {
   await listen("herdr://event", () => scheduleRefresh());
   await listen("herdr://connected", () => refresh());
@@ -614,6 +628,9 @@ export async function start() {
     state.error = e.payload;
   });
   await refresh();
+  if (!state.connected && settings.autoStartHerdr && state.error.includes("herdr_unreachable")) {
+    await startHerdr();
+  }
   // Safety net: events invalidate the cache, a slow poll catches anything missed.
   window.setInterval(() => scheduleRefresh(0), 5000);
   window.setInterval(refreshCodex, 10_000);

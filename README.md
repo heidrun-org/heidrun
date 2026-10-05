@@ -73,9 +73,10 @@ xcode-select --install   # outils de compilation Apple, si besoin
 ```sh
 cd ~/Projects/HerdrDesk
 npm install
-herdr                    # démarre le serveur si besoin, puis ctrl+b q pour te détacher
 npm run tauri dev
 ```
+
+Pas besoin d’ouvrir `herdr` dans un terminal : si le serveur ne tourne pas, l’app le démarre en arrière-plan (option « Démarrer Herdr automatiquement »). Il reste actif quand tu fermes l’app, jusqu’à `herdr server stop` ou au redémarrage du Mac.
 
 ## Construire l’app
 

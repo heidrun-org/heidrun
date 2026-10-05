@@ -34,6 +34,41 @@ fn herdr_watch_panes(app: AppHandle, watcher: State<'_, herdr::StatusWatcher>, p
     watcher.watch(app, pane_ids);
 }
 
+/// Starts the Herdr server in the background, without any terminal window.
+/// It goes through the login shell so panes get the same PATH as in Terminal
+/// (an app opened from the Finder only has a minimal one).
+#[tauri::command]
+async fn herdr_server_start() -> Result<String, String> {
+    if herdr::request("ping", json!({})).await.is_ok() {
+        return Ok("already_running".into());
+    }
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
+    let bin = herdr::herdr_bin();
+    let mut cmd = std::process::Command::new(shell);
+    cmd.arg("-lc")
+        .arg(format!("exec '{}' server", bin.display().to_string().replace('\'', "'\\''")))
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    if let Some(home) = dirs::home_dir() {
+        cmd.current_dir(home);
+    }
+    #[cfg(unix)]
+    {
+        // Own process group: the server outlives Herdr Desk, like `herdr` does.
+        use std::os::unix::process::CommandExt;
+        cmd.process_group(0);
+    }
+    cmd.spawn().map_err(|e| format!("herdr_start_failed: {e}"))?;
+    for _ in 0..50 {
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        if herdr::request("ping", json!({})).await.is_ok() {
+            return Ok("started".into());
+        }
+    }
+    Err("herdr_start_timeout: le serveur Herdr n’a pas répondu en 5 s".into())
+}
+
 #[tauri::command]
 fn herdr_paths() -> Value {
     let socket = herdr::socket_path();
@@ -95,6 +130,7 @@ pub fn run() {
             herdr_cli,
             herdr_watch_panes,
             herdr_paths,
+            herdr_server_start,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,
