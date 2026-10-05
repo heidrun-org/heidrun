@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
+import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
   askAgentToFix,
@@ -109,6 +110,8 @@ const statusText = computed(() => {
       </div>
 
       <AccountUsage v-if="provider" :provider="provider" />
+
+      <RemoteControl v-if="provider === 'claude'" :pane="p" />
 
       <div v-if="!p.agent" class="block">
         <div class="eyebrow">Surveillances</div>

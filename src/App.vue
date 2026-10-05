@@ -28,7 +28,7 @@ import {
 import { resetZoom, settings, zoom } from "./stores/settings";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
-import { loadClaudeLink } from "./stores/claude";
+import { loadClaudeLink, startRemoteWatch } from "./stores/claude";
 
 let armedClose: string | null = null;
 let armedAt = 0;
@@ -114,6 +114,7 @@ onMounted(() => {
   start();
   startProjects();
   loadClaudeLink();
+  startRemoteWatch();
 });
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>

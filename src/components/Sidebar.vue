@@ -20,6 +20,7 @@ import { STATUS_LABEL, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
+import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 
@@ -130,6 +131,7 @@ async function createWorkspace() {
         >
           <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
           <span class="grow">{{ paneName(p) }}</span>
+          <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" title="Remote Control connecté">RC</span>
           <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
             {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
           </span>
@@ -182,6 +184,10 @@ async function createWorkspace() {
 .item.active { background: var(--hover); color: var(--text); }
 .item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: #9aa0a6; font-size: 12px; }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc {
+  font: 600 9.5px var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
+  background: #13282a; color: var(--working);
+}
 .count, .status { font-size: 11px; color: var(--muted); }
 .key { font: 400 10.5px var(--mono); color: var(--faint); opacity: 0; transition: opacity 0.15s; }
 .item:hover .key, .item.active .key { opacity: 1; }

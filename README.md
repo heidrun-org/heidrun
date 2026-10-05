@@ -101,6 +101,10 @@ Claude Code transmet le contexte et les quotas (5 h, semaine) à sa status line.
 
 Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la réponse suivante. Pour gagner une ligne dans le terminal, décoche **« Afficher aussi la status line dans le terminal »** : le script n’affiche plus rien, mais continue d’envoyer les chiffres à l’app. « Désactiver le suivi Claude » rétablit ta status line d’origine. Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Les quotas n’existent qu’avec un abonnement Pro ou Max.
 
+### Remote Control (Claude Code)
+
+Dans le panneau de droite d’un agent Claude, le bloc **Remote Control** indique si la session est connectée (badge **RC** dans la liste des panneaux) et propose **Activer Remote Control**, qui envoie `/remote-control` à l’agent. Une fois connecté, le même bouton affiche l’URL et le QR code dans le terminal. La case « Activer pour toutes les nouvelles sessions Claude » écrit `remoteControlAtStartup: true` dans `~/.claude/settings.json`. L’état est lu dans l’indicateur `/rc active` que Claude Code affiche sous la zone de saisie ; il n’apparaît pas si le terminal est trop étroit. Abonnement Pro, Max, Team ou Enterprise requis.
+
 ### Codex
 
 Rien à configurer : Herdr Desk lit les journaux `~/.codex/sessions/**/rollout-*.jsonl` (dernier événement `token_count`). Pour relier un journal au bon panneau, installe l’intégration Herdr :

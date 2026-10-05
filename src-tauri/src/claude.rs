@@ -141,6 +141,29 @@ pub fn claude_statusline_install() -> Result<StatuslineState, String> {
     claude_statusline_state()
 }
 
+/// `remoteControlAtStartup` in the user settings: true / false, or absent (default).
+#[tauri::command]
+pub fn claude_rc_startup() -> Result<Option<bool>, String> {
+    Ok(read_settings()?.get("remoteControlAtStartup").and_then(Value::as_bool))
+}
+
+#[tauri::command]
+pub fn claude_set_rc_startup(enabled: bool) -> Result<Option<bool>, String> {
+    let mut m = read_settings()?;
+    let backup = claude_dir().join("settings.json.herdr-desk-backup");
+    if settings_path().exists() && !backup.exists() {
+        let _ = std::fs::copy(settings_path(), &backup);
+    }
+    if enabled {
+        m.insert("remoteControlAtStartup".into(), json!(true));
+    } else {
+        // Back to Claude Code's default rather than forcing "false".
+        m.remove("remoteControlAtStartup");
+    }
+    write_settings(&m)?;
+    claude_rc_startup()
+}
+
 /// Hides (or shows again) the status line row in Claude Code; reporting continues.
 #[tauri::command]
 pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, String> {
