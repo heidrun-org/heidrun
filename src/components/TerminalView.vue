@@ -8,6 +8,7 @@ import {
   EMPTY_CONTEXT,
   REF_COLORS,
   claudeCommands,
+  agentListState,
   findAgentRow,
   findCommands,
   findRefs,
@@ -147,7 +148,7 @@ onMounted(async () => {
             s: agentRow.start,
             e: e0,
             label: agentRow.current ? `● ${agentRow.name} (affiché)` : `▷ Voir ${agentRow.name}`,
-            run: () => switchToAgent(agentRow.index),
+            run: () => switchToAgent(agentRow.name),
             underline: true,
           };
           return callback([toLink(link)]);
@@ -353,12 +354,36 @@ async function pressKeys(keys: string[]) {
   }
 }
 
-function switchToAgent(index: number) {
+function screenLine(i: number): string | null {
+  if (!term || i < 0 || i >= term.rows) return null;
+  const l = term.buffer.active.getLine(term.buffer.active.viewportY + i);
+  return l ? lineText(l).text : null;
+}
+
+/**
+ * Moves Claude Code's agent selection to `name` and opens it. The selection may
+ * still be in the prompt (first ↓ enters the list) or already on a row (❯), for
+ * instance while another agent is shown: the screen is read again after each step.
+ */
+async function switchToAgent(name: string) {
   if (!term) return;
-  const down = term.modes.applicationCursorKeysMode ? "\x1bOB" : "\x1b[B";
-  // From the prompt, the first ↓ enters the list on its first row.
-  pressKeys([...Array(index + 1).fill(down), "\r"]);
+  const app = term.modes.applicationCursorKeysMode;
+  const down = app ? "\x1bOB" : "\x1b[B";
+  const up = app ? "\x1bOA" : "\x1b[A";
+  const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
   term.focus();
+  let list = agentListState(screenLine, term.rows);
+  if (!list) return;
+  if (list.selected === null) {
+    await pressKeys([down]);
+    await wait(180);
+    list = agentListState(screenLine, term.rows) ?? list;
+  }
+  const target = list.names.indexOf(name);
+  if (target === -1) return;
+  const from = list.selected ?? 0;
+  const steps = target - from;
+  await pressKeys([...Array(Math.abs(steps)).fill(steps > 0 ? down : up), "\r"]);
 }
 
 function clearChipTimer() {
