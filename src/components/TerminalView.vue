@@ -139,7 +139,10 @@ onMounted(async () => {
         // list, ↓ to the row, Enter), instead of walking there with the arrow keys.
         const agentRow = findAgentRow(at, y - 1 - buf.viewportY, term!.rows);
         if (agentRow) {
-          const e0 = text.trimEnd().length;
+          // Stop at the end of the description: the elapsed time is pushed to the
+          // right edge after a wide gap ("…availability          29m 5s · ↓").
+          const gap = /\s{4,}\S/.exec(text.slice(agentRow.start));
+          const e0 = gap ? agentRow.start + gap.index : text.trimEnd().length;
           const link = {
             s: agentRow.start,
             e: e0,
