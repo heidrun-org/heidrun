@@ -8,6 +8,7 @@ import {
   EMPTY_CONTEXT,
   REF_COLORS,
   claudeCommands,
+  findAgentRow,
   findCommands,
   findRefs,
   findShellBlock,
@@ -134,6 +135,20 @@ onMounted(async () => {
           const l = i >= 0 && i < term!.rows ? buf.getLine(buf.viewportY + i) : undefined;
           return l ? lineText(l).text : null;
         };
+        // Agent list under the prompt: a click switches to that agent (↓ to reach the
+        // list, ↓ to the row, Enter), instead of walking there with the arrow keys.
+        const agentRow = findAgentRow(at, y - 1 - buf.viewportY, term!.rows);
+        if (agentRow) {
+          const e0 = text.trimEnd().length;
+          const link = {
+            s: agentRow.start,
+            e: e0,
+            label: agentRow.current ? `● ${agentRow.name} (affiché)` : `▷ Voir ${agentRow.name}`,
+            run: () => switchToAgent(agentRow.index),
+            underline: true,
+          };
+          return callback([toLink(link)]);
+        }
         const block = findShellBlock(at, y - 1 - buf.viewportY, term!.cols);
         if (block) {
           const row = y - 1 - buf.viewportY;
@@ -325,6 +340,22 @@ function hideChip(now = false) {
   window.clearTimeout(chipTimer);
   if (now) chip.value = null;
   else chipTimer = window.setTimeout(() => (chip.value = null), 350);
+}
+
+/** Keys, one at a time: Claude Code's TUI reads them as separate presses. */
+async function pressKeys(keys: string[]) {
+  for (const k of keys) {
+    await invoke("pty_write", { id, data: k }).catch(() => {});
+    await new Promise((r) => window.setTimeout(r, 45));
+  }
+}
+
+function switchToAgent(index: number) {
+  if (!term) return;
+  const down = term.modes.applicationCursorKeysMode ? "\x1bOB" : "\x1b[B";
+  // From the prompt, the first ↓ enters the list on its first row.
+  pressKeys([...Array(index + 1).fill(down), "\r"]);
+  term.focus();
 }
 
 function clearChipTimer() {

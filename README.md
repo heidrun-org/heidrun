@@ -66,6 +66,8 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 **Actions au survol** : dans un terminal, survoler une référence affiche « ↗ Ouvrir », une commande de Claude Code citée par l’agent (`/fin-tache`, `/compact`…) affiche « ▷ Lancer », et un point d’une liste numérotée (« 1. Ouvrir une issue… ») affiche « ▷ Faire le point 1 », qui envoie la consigne à l’agent. Une commande proposée par Claude en mode shell (`! docker builder prune -af && …`) affiche « ▷ Exécuter » : elle est remise sur une seule ligne si elle s’étale sur plusieurs (retour à la ligne, `\`, `&&`, `|`), puis envoyée dans la zone de saisie de Claude avec Entrée. ⌘-clic sur le texte fait la même chose. Seules les commandes qui existent vraiment sont proposées (intégrées, `~/.claude/commands`, `.claude/commands` du projet, skills et plugins), jamais un chemin comme `/tmp`.
 
+**Agents de Claude** : la liste affichée sous la zone de saisie (`● main`, `○ jerome-645 …`) est cliquable : « ▷ Voir jerome-645 » envoie à Claude ↓ jusqu’à la ligne puis Entrée, comme si tu y allais avec les flèches. Cliquer sur `main` ramène à la conversation principale.
+
 **Panneau de droite** : en haut, la **Session** du panneau sélectionné (workspace · onglet, état, contexte, coût, Remote Control) ; en dessous, **Tous les agents** : quotas du compte Claude et Codex, partagés par toutes les sessions, et le fil **Activité** (workspace · onglet, puis l’agent ; clic pour y aller).
 
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
