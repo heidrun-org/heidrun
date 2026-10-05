@@ -106,10 +106,19 @@ onMounted(async () => {
   });
 
   // ⌘C copies the local selection; without one it falls through to the terminal.
+  // ⇧↵ / ⌥↵ insert a new line instead of sending: ESC + CR, the sequence Claude Code,
+  // Codex and zsh read as "newline" (what Option+Enter sends in Terminal/iTerm).
   term.attachCustomKeyEventHandler((e) => {
     if (e.type === "keydown" && e.metaKey && !e.ctrlKey && e.code === "KeyC" && term?.hasSelection()) {
       copy(term.getSelection());
       term.clearSelection();
+      return false;
+    }
+    if ((e.key === "Enter" || e.code === "NumpadEnter") && (e.shiftKey || e.altKey) && !e.metaKey && !e.ctrlKey) {
+      if (e.type === "keydown" && !e.isComposing) {
+        e.preventDefault();
+        invoke("pty_write", { id, data: "\x1b\r" }).catch(() => {});
+      }
       return false;
     }
     return true;

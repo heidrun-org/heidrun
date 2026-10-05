@@ -26,6 +26,7 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
 | ⇧⌘P | Épingler le texte sélectionné dans une note |
+| ⇧↵ / ⌥↵ | Nouvelle ligne (dans le terminal comme dans la barre de saisie) ; ↵ envoie |
 
 **Jauges** : vert jusqu’à 60 %, orange de 60 à 80 %, rouge au-delà (contexte, session 5 h, semaine). Les dernières valeurs connues restent affichées entre deux réponses.
 
