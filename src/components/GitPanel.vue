@@ -54,10 +54,7 @@ async function askReview(ref: string, url: string, title: string) {
       <section class="block">
         <header class="head">
           <span class="eyebrow">Dépôt</span>
-          <span class="head-tools">
-            <button class="link" title="Ouvrir en grand : fichiers, diff, code" @click="openGitModal()">Agrandir ⤢</button>
-            <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
-          </span>
+          <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
         </header>
         <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} ↗</button>
         <div v-else class="repo plain">{{ repoName }}</div>
@@ -80,7 +77,10 @@ async function askReview(ref: string, url: string, title: string) {
       </section>
 
       <section class="block">
-        <div class="eyebrow">Modifications <span class="count">{{ st.changed + st.untracked }}</span></div>
+        <header class="head">
+          <span class="eyebrow">Modifications <span class="count">{{ st.changed + st.untracked }}</span></span>
+          <button v-if="st.files.length" class="link" title="Ouvrir en grand : fichiers, diff, code" @click="openGitModal()">Agrandir ⤢</button>
+        </header>
         <div v-if="!st.files.length" class="muted">Aucune modification locale.</div>
         <ul v-else class="files">
           <li v-for="f in st.files.slice(0, 14)" :key="f.path">
