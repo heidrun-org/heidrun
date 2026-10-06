@@ -51,7 +51,7 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 
 Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelques commandes Flutter, Cargo ou Symfony sont proposés en suggestions. Les commandes lancées récemment apparaissent dans **Récentes**, entre les actions et les suggestions. Actions, suggestions et notes se réordonnent par glisser-déposer (l’ordre des actions est écrit dans `.herdr-desk.json`, celui des suggestions et l’historique restent sur ce Mac).
 
-**Références colorées** : dans les terminaux, les issues (`#12`), merge requests et pull requests (`!34`, `MR !34`, `PR #5`, `groupe/app#7`) et les commits (`abc1234`) sont colorés ; **⌘-clic** les ouvre sur GitLab ou GitHub, d’après le `git remote` du dossier du panneau (les URL s’ouvrent aussi au ⌘-clic). Le texte envoyé par l’agent n’est pas modifié : la couleur est posée par-dessus. Réglages facultatifs dans `.herdr-desk.json` :
+**Références colorées** : dans les terminaux, les issues (`#12`), merge requests et pull requests (`!34`, `MR !34`, `PR #5`, `groupe/app#7`) et les commits (`abc1234`) sont colorés ; **⌘-clic** sur une issue, une MR ou une PR l’ouvre dans une fenêtre de l’app (description et commentaires rendus en Markdown, Centré / Pleine largeur, ⌘+/− pour la taille, « Ouvrir sur GitLab/GitHub ↗ ») ; au survol, « ↗ Ouvrir » l’ouvre dans le navigateur et « ⧉ Aperçu » dans l’app. Les commits s’ouvrent sur GitLab ou GitHub, d’après le `git remote` du dossier du panneau (les URL s’ouvrent aussi au ⌘-clic). Le texte envoyé par l’agent n’est pas modifié : la couleur est posée par-dessus. Réglages facultatifs dans `.herdr-desk.json` :
 
 ```json
 "references": {

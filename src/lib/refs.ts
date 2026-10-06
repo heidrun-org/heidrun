@@ -10,6 +10,8 @@ export interface RefMatch {
   end: number; // exclusive
   kind: RefKind;
   url: string | null;
+  /** Issue / MR that the app can show itself (in-app preview). */
+  target?: { type: "issue" | "mr"; number: number; project?: string };
 }
 
 export interface RefContext {
@@ -126,8 +128,8 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
   if (!ctx.enabled || line.trim().length < 2) return [];
   const out: RefMatch[] = [];
   const taken = (s: number, e: number) => out.some((m) => s < m.end && e > m.start);
-  const add = (s: number, e: number, kind: RefKind, url: string | null) => {
-    if (!taken(s, e)) out.push({ start: s, end: e, kind, url });
+  const add = (s: number, e: number, kind: RefKind, url: string | null, target?: RefMatch["target"]) => {
+    if (!taken(s, e)) out.push({ start: s, end: e, kind, url, target });
   };
   let m: RegExpExecArray | null;
 
@@ -141,7 +143,7 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
   const explicit = /\b(PR|MR|pull request|merge request)\s?([#!]?)(\d+)\b/gi;
   while ((m = explicit.exec(line))) {
     if (inUrl(m.index)) continue;
-    add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[3]));
+    add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[3]), { type: "mr", number: Number(m[3]) });
   }
 
   // 2. "group/app#12", "group/app!34" (another repository on the same forge)
@@ -150,7 +152,11 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
     if (inUrl(m.index)) continue;
     const base = ctx.origin ? `${ctx.origin}/${m[1]}` : null;
     const isMr = m[2] === "!";
-    add(m.index, m.index + m[0].length, isMr ? "mr" : "issue", isMr ? mrUrl(base, ctx.forge, m[3]) : issueUrl(base, ctx.forge, m[3]));
+    add(m.index, m.index + m[0].length, isMr ? "mr" : "issue", isMr ? mrUrl(base, ctx.forge, m[3]) : issueUrl(base, ctx.forge, m[3]), {
+      type: isMr ? "mr" : "issue",
+      number: Number(m[3]),
+      project: m[1],
+    });
   }
 
   // 3. "!34": GitLab merge request
@@ -158,7 +164,7 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
     const bang = /(?<![\w!])!(\d+)\b/g;
     while ((m = bang.exec(line))) {
       if (inUrl(m.index)) continue;
-      add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[1]));
+      add(m.index, m.index + m[0].length, "mr", mrUrl(ctx.base, ctx.forge, m[1]), { type: "mr", number: Number(m[1]) });
     }
   }
 
@@ -166,7 +172,7 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
   const hash = /(?<![\w&#/])#(\d+)\b/g;
   while ((m = hash.exec(line))) {
     if (inUrl(m.index)) continue;
-    add(m.index, m.index + m[0].length, "issue", issueUrl(ctx.base, ctx.forge, m[1]));
+    add(m.index, m.index + m[0].length, "issue", issueUrl(ctx.base, ctx.forge, m[1]), { type: "issue", number: Number(m[1]) });
   }
 
   // 5. Tickets "ABC-123": only when the project sets a ticket URL.

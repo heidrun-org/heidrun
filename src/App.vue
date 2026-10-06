@@ -13,6 +13,8 @@ import DangerModal from "./components/DangerModal.vue";
 import GitModal from "./components/GitModal.vue";
 import { git, merging } from "./stores/git";
 import MergeModal from "./components/MergeModal.vue";
+import IssueModal from "./components/IssueModal.vue";
+import { issueView } from "./stores/issues";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -120,13 +122,13 @@ function onKey(e: KeyboardEvent) {
     // With the Git window open, ⌘+ / ⌘− / ⌘0 size its code, not the terminals.
     case "Equal":
     case "NumpadAdd":
-      return run(() => (git.modal.open ? codeZoom(1) : zoom(0.5)));
+      return run(() => (git.modal.open || issueView.open ? codeZoom(1) : zoom(0.5)));
     case "Minus":
     case "NumpadSubtract":
-      return run(() => (git.modal.open ? codeZoom(-1) : zoom(-0.5)));
+      return run(() => (git.modal.open || issueView.open ? codeZoom(-1) : zoom(-0.5)));
     case "Digit0":
     case "Numpad0":
-      return run(() => (git.modal.open ? (settings.codeFontSize = 12.5) : resetZoom()));
+      return run(() => (git.modal.open || issueView.open ? (settings.codeFontSize = 12.5) : resetZoom()));
   }
 }
 
@@ -169,6 +171,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
     <MergeModal v-if="merging.open && merging.req" />
+    <IssueModal v-if="issueView.open" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

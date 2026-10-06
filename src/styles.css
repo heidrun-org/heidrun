@@ -133,3 +133,28 @@ input { font: inherit; color: inherit; user-select: text; }
 .code .hljs-meta, .code .hljs-name, .code .hljs-tag { color: var(--m); }
 .code .hljs-addition { color: var(--a); } .code .hljs-deletion { color: var(--k); }
 .code .hljs-emphasis { font-style: italic; } .code .hljs-strong { font-weight: 700; }
+
+/* ---- Rendered Markdown (issue preview) ---------------------------------------- */
+.md-doc { max-width: 860px; margin: 0 auto; font: 15px/1.7 var(--sans); color: var(--text); user-select: text; }
+.md-doc.full { max-width: none; }
+.md-doc h1, .md-doc h2 { padding-bottom: 0.3em; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+.md-doc h1 { font-size: 1.7em; margin: 0.2em 0 0.7em; }
+.md-doc h2 { font-size: 1.35em; margin: 1.5em 0 0.6em; }
+.md-doc h3 { font-size: 1.15em; margin: 1.3em 0 0.5em; }
+.md-doc h4, .md-doc h5, .md-doc h6 { font-size: 1em; margin: 1.1em 0 0.4em; }
+.md-doc p, .md-doc ul, .md-doc ol, .md-doc blockquote, .md-doc table, .md-doc pre { margin: 0 0 1em; }
+.md-doc ul, .md-doc ol { padding-left: 1.6em; }
+.md-doc li { margin: 0.2em 0; }
+.md-doc li input[type="checkbox"] { margin-right: 0.4em; accent-color: var(--done); }
+.md-doc a { color: #58a6ff; text-decoration: none; }
+.md-doc a:hover { text-decoration: underline; }
+.md-doc code { font-family: var(--mono); font-size: 0.86em; padding: 0.15em 0.4em; border-radius: 5px; background: rgba(255, 255, 255, 0.08); }
+.md-doc pre.md-code { padding: 14px 16px; border-radius: 8px; background: rgba(0, 0, 0, 0.3); overflow: auto; font-size: 0.82em; line-height: 1.55; }
+.md-doc pre.md-code code { padding: 0; background: none; font-size: inherit; }
+.md-doc blockquote { padding: 0.2em 1em; border-left: 3px solid rgba(255, 255, 255, 0.2); color: var(--muted); }
+.md-doc table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 0.92em; }
+.md-doc.full table { display: table; width: 100%; }
+.md-doc th, .md-doc td { padding: 6px 12px; border: 1px solid rgba(255, 255, 255, 0.12); }
+.md-doc th { background: rgba(255, 255, 255, 0.05); font-weight: 600; }
+.md-doc hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 2em 0; }
+.md-doc img { max-width: 100%; }

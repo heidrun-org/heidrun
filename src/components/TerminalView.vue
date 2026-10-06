@@ -19,6 +19,7 @@ import {
   type RefContext,
 } from "../lib/refs";
 import { sendPrompt, toast } from "../stores/session";
+import { openIssue } from "../stores/issues";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -139,7 +140,7 @@ onMounted(async () => {
         start: { x: col[s] + 1, y },
         end: { x: col[e - 1] + width[e - 1], y },
       });
-      const items: { s: number; e: number; label: string; run: () => void; underline: boolean }[] = [];
+      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void }[] = [];
       // "! command" suggested by Claude (its shell mode): the whole command, joined on
       // one line even when it spans several, is sent to the prompt and run.
       if (isClaude()) {
@@ -214,7 +215,18 @@ onMounted(async () => {
       for (const r of findRefs(text, refCtx)) {
         if (!r.url) continue;
         const what = text.slice(r.start, r.end);
-        items.push({ s: r.start, e: r.end, label: `↗ Ouvrir ${what}`, run: () => openUrl(r.url!).catch(() => {}), underline: true });
+        const target = r.target;
+        const preview = target ? () => openIssue(props.cwd, target, r.url) : undefined;
+        items.push({
+          s: r.start,
+          e: r.end,
+          label: `↗ Ouvrir ${what}`,
+          run: () => openUrl(r.url!).catch(() => {}),
+          underline: true,
+          // Issues and MR: also previewed in the app; ⌘-click goes straight there.
+          alt: preview ? { label: "⧉ Aperçu", run: preview } : undefined,
+          meta: preview,
+        });
       }
       if (isClaude()) {
         for (const c of findCommands(text, commands)) {
@@ -251,12 +263,12 @@ onMounted(async () => {
           activate: (e: MouseEvent) => {
             if (e.metaKey) {
               hideChip(true);
-              i.run();
+              (i.meta ?? i.run)();
             }
           },
           hover: () => {
             overLink = true;
-            showChip(range(i.s, i.e), i.label, i.run);
+            showChip(range(i.s, i.e), i.label, i.run, i.alt);
           },
           leave: () => {
             overLink = false;
@@ -380,14 +392,18 @@ watch(
 // ---- Hover chip -------------------------------------------------------------
 
 const wrapEl = ref<HTMLDivElement>();
-const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void } | null>(null);
+interface ChipAction {
+  label: string;
+  run: () => void;
+}
+const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void; alt?: ChipAction } | null>(null);
 let chipTimer = 0;
 
 /**
  * The chip sits on the hovered line itself, just after the text: reaching it never
  * crosses another line (and another link that would replace it).
  */
-function showChip(r: { start: { x: number; y: number }; end: { x: number; y: number } }, label: string, run: () => void) {
+function showChip(r: { start: { x: number; y: number }; end: { x: number; y: number } }, label: string, run: () => void, alt?: ChipAction) {
   window.clearTimeout(chipTimer);
   const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
   if (!term || !screen || !wrapEl.value) return;
@@ -400,7 +416,7 @@ function showChip(r: { start: { x: number; y: number }; end: { x: number; y: num
   const left = s.left - w.left + r.end.x * cellW + 8;
   // No room after the text: pinned to the right edge, on the same line.
   const roomy = left + 280 < w.width;
-  chip.value = { left: roomy ? left : null, right: roomy ? null : 10, top, label, run };
+  chip.value = { left: roomy ? left : null, right: roomy ? null : 10, top, label, run, alt };
 }
 
 function hideChip(now = false) {
@@ -475,10 +491,11 @@ function clearChipTimer() {
   window.clearTimeout(chipTimer);
 }
 
-function runChip() {
+function runChip(alt = false) {
   const c = chip.value;
   hideChip(true);
-  c?.run();
+  if (alt) c?.alt?.run();
+  else c?.run();
   term?.focus();
 }
 
@@ -705,23 +722,21 @@ onBeforeUnmount(() => {
 <template>
   <div ref="wrapEl" class="wrap">
     <div ref="el" class="term"></div>
-    <button
+    <div
       v-if="chip"
-      class="chip"
-      type="button"
+      class="chips"
       :style="{
         top: `${chip.top}px`,
         left: chip.left != null ? `${chip.left}px` : 'auto',
         right: chip.right != null ? `${chip.right}px` : 'auto',
       }"
-      title="⌘-clic sur le texte fait la même chose"
       @mouseenter="clearChipTimer()"
       @mouseleave="hideChip()"
       @mousedown.stop.prevent
-      @click="runChip"
     >
-      {{ chip.label }}
-    </button>
+      <button class="chip" type="button" :title="chip.alt ? '' : '⌘-clic sur le texte fait la même chose'" @click="runChip(false)">{{ chip.label }}</button>
+      <button v-if="chip.alt" class="chip" type="button" title="Aperçu dans l’app (⌘-clic sur le texte)" @click="runChip(true)">{{ chip.alt.label }}</button>
+    </div>
     <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
       <button class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
       <button class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
@@ -751,11 +766,11 @@ onBeforeUnmount(() => {
   border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 .sel-bar .btn { background: var(--field); }
-.chip {
-  position: absolute; z-index: 6; height: 22px; padding: 0 9px; border-radius: 6px;
+.chips { position: absolute; z-index: 6; display: flex; gap: 4px; }
+.chip { height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
-  max-width: 60%; overflow: hidden; text-overflow: ellipsis;
+  max-width: 360px; overflow: hidden; text-overflow: ellipsis;
 }
 .chip:hover { background: #24406a; border-color: #3d6aa8; }
 :deep(.xterm-viewport) { background: transparent !important; }

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { askMerge, currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
+import { openIssue } from "../stores/issues";
 import { selectedPane, sendPrompt, state, toast, workspaceLabel, workspacePanes } from "../stores/session";
 import { ago, paneName } from "../lib/format";
 
@@ -112,6 +113,7 @@ async function askReview(ref: string, url: string, title: string) {
             <span class="muted mono">{{ r.branch }}<template v-if="r.author"> · {{ r.author }}</template></span>
           </button>
           <span class="req-actions">
+            <button class="link" title="Description et commentaires, dans l’app" @click="openIssue(st.root, { type: 'mr', number: r.number }, r.url)">Aperçu</button>
             <button
               v-if="reviewer"
               class="link"

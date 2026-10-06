@@ -236,9 +236,12 @@ fn allowed(tool: &str, args: &[String]) -> bool {
                 && a[1].starts_with("projects/")
         }
         "gh" => {
-            let read_only = matches!(a.get(..2), Some(["pr", "list"]) | Some(["run", "list"]));
+            let read_only = matches!(
+                a.get(..2),
+                Some(["pr", "list"]) | Some(["run", "list"]) | Some(["issue", "view"]) | Some(["pr", "view"])
+            );
             let flags_ok = a.iter().skip(2).all(|x| {
-                !x.starts_with('-') || matches!(*x, "--json" | "--limit" | "--branch" | "--state")
+                !x.starts_with('-') || matches!(*x, "--json" | "--limit" | "--branch" | "--state" | "--repo")
             });
             read_only && flags_ok
         }
@@ -375,6 +378,9 @@ mod tests {
         assert!(allowed("gh", &v(&["run", "list", "--branch", "x", "--limit", "1", "--json", "status"])));
         assert!(!allowed("gh", &v(&["alias", "set", "--shell", "x", "rm -rf ~"])));
         assert!(!allowed("gh", &v(&["pr", "merge", "1"])));
+        assert!(allowed("gh", &v(&["issue", "view", "12", "--json", "title,body", "--repo", "o/r"])));
+        assert!(!allowed("gh", &v(&["issue", "close", "12"])));
+        assert!(!allowed("gh", &v(&["issue", "view", "12", "--web"])));
         assert!(!allowed("gh", &v(&["api", "-X", "DELETE", "repos/x"])));
         assert!(!allowed("sh", &v(&["-c", "id"])));
     }
