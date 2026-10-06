@@ -28,7 +28,9 @@ cd "$(dirname "$0")/.."
 run() { if [ "$DRY" = 1 ]; then echo "  [simulation] $*"; else "$@"; fi; }
 
 command -v glab >/dev/null || { echo "glab introuvable : brew install glab" >&2; exit 1; }
-glab auth status >/dev/null 2>&1 || { echo "glab n'est pas connecté : glab auth login --hostname gitlab.com" >&2; exit 1; }
+# Only gitlab.com matters here: another configured instance (a self-hosted GitLab
+# that is unreachable right now) must not block the script.
+glab auth status --hostname gitlab.com >/dev/null 2>&1 || { echo "glab n'est pas connecté à gitlab.com : glab auth login --hostname gitlab.com" >&2; exit 1; }
 
 # ---- 1. Projet et push --------------------------------------------------------
 if [ "$CREATE" = 1 ]; then
