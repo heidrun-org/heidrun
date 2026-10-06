@@ -36,6 +36,10 @@ import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
+function codeZoom(dir: 1 | -1) {
+  settings.codeFontSize = Math.min(24, Math.max(9, Math.round((settings.codeFontSize + dir) * 2) / 2));
+}
+
 let armedClose: string | null = null;
 let armedAt = 0;
 
@@ -111,15 +115,16 @@ function onKey(e: KeyboardEvent) {
         if (e.altKey) settings.rightOpen = !settings.rightOpen;
         else settings.leftOpen = !settings.leftOpen;
       });
+    // With the Git window open, ⌘+ / ⌘− / ⌘0 size its code, not the terminals.
     case "Equal":
     case "NumpadAdd":
-      return run(() => zoom(0.5));
+      return run(() => (git.modal.open ? codeZoom(1) : zoom(0.5)));
     case "Minus":
     case "NumpadSubtract":
-      return run(() => zoom(-0.5));
+      return run(() => (git.modal.open ? codeZoom(-1) : zoom(-0.5)));
     case "Digit0":
     case "Numpad0":
-      return run(() => resetZoom());
+      return run(() => (git.modal.open ? (settings.codeFontSize = 12.5) : resetZoom()));
   }
 }
 

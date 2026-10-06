@@ -45,7 +45,10 @@ const defaults = {
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Git viewer: "unified" | "split" diff, or the whole "file". */
-  diffMode: "unified" as "unified" | "split" | "file",
+  diffMode: "unified" as "unified" | "split" | "file" | "read",
+  /** Git window: code size (⌘+ / ⌘− while it is open) and file list width. */
+  codeFontSize: 12.5,
+  gitListWidth: 340,
   codeTheme: "github-dark",
   codeWrap: false,
   rightWidth: 320,
