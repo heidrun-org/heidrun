@@ -41,6 +41,39 @@ async fn git(cwd: &str, args: &[&str]) -> Option<String> {
     out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
+/// Names with quotes or control characters are still C-quoted by git, even with
+/// core.quotepath=off: strip the quotes and the simple escapes.
+fn unquote(p: &str) -> String {
+    if p.len() >= 2 && p.starts_with('"') && p.ends_with('"') {
+        p[1..p.len() - 1].replace("\\\"", "\"").replace("\\t", "\t").replace("\\\\", "\\")
+    } else {
+        p.to_string()
+    }
+}
+
+/// Roots returned by git_status: the only ones git_diff / git_file accept, so the
+/// webview cannot point them at an arbitrary folder.
+static ROOTS: std::sync::OnceLock<std::sync::Mutex<std::collections::HashSet<String>>> = std::sync::OnceLock::new();
+
+fn remember_root(root: &str) {
+    ROOTS.get_or_init(Default::default).lock().unwrap().insert(root.to_string());
+}
+
+fn known_root(root: &str) -> Result<(), String> {
+    if ROOTS.get_or_init(Default::default).lock().unwrap().contains(root) {
+        Ok(())
+    } else {
+        Err("dépôt inconnu".into())
+    }
+}
+
+/// git for diff / show, with paths taken literally (no globs, no pathspec magic).
+fn git_literal(root: &str) -> Command {
+    let mut c = Command::new("git");
+    c.arg("-C").arg(root).env("GIT_LITERAL_PATHSPECS", "1").kill_on_drop(true);
+    c
+}
+
 /// Parses `git status --porcelain=v2 --branch`.
 fn parse_status(text: &str, st: &mut GitStatus) {
     for line in text.lines() {
@@ -60,8 +93,8 @@ fn parse_status(text: &str, st: &mut GitStatus) {
             }
         } else if let Some(path) = line.strip_prefix("? ") {
             st.untracked += 1;
-            if st.files.len() < 40 {
-                st.files.push(GitFile { status: "??".into(), path: path.to_string() });
+            if st.files.len() < 500 {
+                st.files.push(GitFile { status: "??".into(), path: unquote(path) });
             }
         } else if line.starts_with("1 ") || line.starts_with("2 ") || line.starts_with("u ") {
             st.changed += 1;
@@ -71,8 +104,8 @@ fn parse_status(text: &str, st: &mut GitStatus) {
             // Fields before the path: 1 → 6 more, 2 → 7 more (+ "orig\tpath"), u → 8 more.
             let skip = match kind { "1" => 6, "2" => 7, _ => 8 };
             let path: String = parts.skip(skip).collect::<Vec<_>>().join(" ");
-            let path = path.split('\t').next().unwrap_or("").to_string();
-            if st.files.len() < 40 {
+            let path = unquote(path.split('\t').next().unwrap_or(""));
+            if st.files.len() < 500 {
                 st.files.push(GitFile { status: xy, path });
             }
         }
@@ -85,7 +118,8 @@ fn parse_status(text: &str, st: &mut GitStatus) {
 pub async fn git_status(cwd: String) -> Option<GitStatus> {
     let root = git(&cwd, &["rev-parse", "--show-toplevel"]).await?.trim().to_string();
     let mut st = GitStatus { root: root.clone(), ..Default::default() };
-    if let Some(text) = git(&root, &["status", "--porcelain=v2", "--branch"]).await {
+    remember_root(&root);
+    if let Some(text) = git(&root, &["-c", "core.quotepath=off", "status", "--porcelain=v2", "--branch", "--untracked-files=all"]).await {
         parse_status(&text, &mut st);
     }
     if let Some(log) = git(&root, &["log", "-1", "--format=%h%x1f%s%x1f%ct"]).await {
@@ -96,6 +130,98 @@ pub async fn git_status(cwd: String) -> Option<GitStatus> {
     }
     st.remote = git(&root, &["config", "--get", "remote.origin.url"]).await.map(|s| s.trim().to_string());
     Some(st)
+}
+
+/// A path inside the repository, as git prints it (relative, no "..").
+fn safe_rel(path: &str) -> Result<&str, String> {
+    let p = std::path::Path::new(path);
+    if path.is_empty() || p.is_absolute() || p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+        return Err("chemin refusé".into());
+    }
+    Ok(path)
+}
+
+const MAX_TEXT: usize = 1_500_000;
+
+fn as_text(bytes: Vec<u8>) -> Result<String, String> {
+    if bytes.len() > MAX_TEXT {
+        return Err(format!("fichier trop gros pour l’aperçu ({} Ko)", bytes.len() / 1024));
+    }
+    if bytes.iter().take(8000).any(|b| *b == 0) {
+        return Err("fichier binaire".into());
+    }
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+/// Unified diff of one file against HEAD (staged and unstaged changes together).
+/// A file that is not in HEAD (new, untracked) is shown as entirely added.
+#[tauri::command]
+pub async fn git_diff(root: String, path: String) -> Result<String, String> {
+    known_root(&root)?;
+    let rel = safe_rel(&path)?;
+    let spec = format!("HEAD:{rel}");
+    let in_head = git_literal(&root).args(["cat-file", "-e", &spec]).output().await.map(|o| o.status.success()).unwrap_or(false);
+    let mut cmd = git_literal(&root);
+    cmd.args(["-c", "core.quotepath=off", "diff", "--no-color", "--no-ext-diff", "-U3"]);
+    if in_head {
+        cmd.args(["HEAD", "--", rel]);
+    } else {
+        cmd.args(["--no-index", "--", "/dev/null", rel]);
+    }
+    let out = tokio::time::timeout(Duration::from_secs(8), cmd.output())
+        .await
+        .map_err(|_| "git diff : pas de réponse".to_string())?
+        .map_err(|e| e.to_string())?;
+    // `--no-index` exits with 1 when the files differ; anything else is an error.
+    let code = out.status.code().unwrap_or(-1);
+    if code != 0 && !(code == 1 && !in_head) {
+        let err = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        return Err(if err.is_empty() { format!("git diff a échoué ({code})") } else { err });
+    }
+    as_text(out.stdout)
+}
+
+/// Content of a file: the working copy, or `rev` ("HEAD") from git.
+#[tauri::command]
+pub async fn git_file(root: String, path: String, rev: Option<String>) -> Result<String, String> {
+    known_root(&root)?;
+    let rel = safe_rel(&path)?;
+    match rev.as_deref() {
+        None => {
+            let base = std::fs::canonicalize(&root).map_err(|e| e.to_string())?;
+            let full = base.join(rel);
+            // No symlinks: one could point anywhere on the disk (~/.ssh…).
+            let meta = std::fs::symlink_metadata(&full).map_err(|_| "fichier supprimé ou introuvable".to_string())?;
+            if meta.file_type().is_symlink() {
+                return Err("lien symbolique : contenu non affiché".into());
+            }
+            let real = std::fs::canonicalize(&full).map_err(|e| e.to_string())?;
+            if !real.starts_with(&base) {
+                return Err("chemin hors du dépôt".into());
+            }
+            if meta.len() as usize > MAX_TEXT {
+                return Err(format!("fichier trop gros pour l’aperçu ({} Ko)", meta.len() / 1024));
+            }
+            as_text(std::fs::read(real).map_err(|e| e.to_string())?)
+        }
+        Some("HEAD") => {
+            let spec = format!("HEAD:{rel}");
+            let size = git_literal(&root).args(["cat-file", "-s", &spec]).output().await.map_err(|e| e.to_string())?;
+            if !size.status.success() {
+                return Err("absent de HEAD (nouveau fichier)".into());
+            }
+            let n: usize = String::from_utf8_lossy(&size.stdout).trim().parse().unwrap_or(0);
+            if n > MAX_TEXT {
+                return Err(format!("fichier trop gros pour l’aperçu ({} Ko)", n / 1024));
+            }
+            let out = tokio::time::timeout(Duration::from_secs(8), git_literal(&root).args(["show", &spec]).output())
+                .await
+                .map_err(|_| "git show : pas de réponse".to_string())?
+                .map_err(|e| e.to_string())?;
+            as_text(out.stdout)
+        }
+        Some(_) => Err("révision non prise en charge".into()),
+    }
 }
 
 /// Read-only calls the app makes, and nothing else: `glab api <path>` (GET only)

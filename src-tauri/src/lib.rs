@@ -143,6 +143,8 @@ pub fn run() {
             project::project_refs,
             git::git_status,
             git::forge_cli,
+            git::git_diff,
+            git::git_file,
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,

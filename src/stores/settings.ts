@@ -44,6 +44,10 @@ const defaults = {
   autoStartHerdr: true,
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Git viewer: "unified" | "split" diff, or the whole "file". */
+  diffMode: "unified" as "unified" | "split" | "file",
+  codeTheme: "github-dark",
+  codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
 };

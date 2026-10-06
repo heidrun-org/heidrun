@@ -110,3 +110,26 @@ input { font: inherit; color: inherit; user-select: text; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---- Code themes (diff and file viewer) -------------------------------------- */
+.code { --c-bg: #0d1117; --c-fg: #c9d1d9; --c-gutter: #6e7681; --c-add: rgba(46, 160, 67, 0.16); --c-add-strong: rgba(46, 160, 67, 0.4);
+  --c-del: rgba(248, 81, 73, 0.14); --c-del-strong: rgba(248, 81, 73, 0.4); --c-hunk: rgba(56, 139, 253, 0.12); --c-hunk-fg: #8b949e;
+  --k: #ff7b72; --s: #a5d6ff; --c: #8b949e; --n: #79c0ff; --f: #d2a8ff; --t: #ffa657; --a: #7ee787; --v: #ffa657; --m: #79c0ff;
+  background: var(--c-bg); color: var(--c-fg); }
+.code.one-dark { --c-bg: #282c34; --c-fg: #abb2bf; --c-gutter: #636d83; --c-hunk-fg: #7f848e;
+  --k: #c678dd; --s: #98c379; --c: #7f848e; --n: #d19a66; --f: #61afef; --t: #e5c07b; --a: #e06c75; --v: #e06c75; --m: #56b6c2; }
+.code.dracula { --c-bg: #22212c; --c-fg: #f8f8f2; --c-gutter: #6272a4; --c-hunk-fg: #6272a4;
+  --k: #ff79c6; --s: #f1fa8c; --c: #6272a4; --n: #bd93f9; --f: #50fa7b; --t: #8be9fd; --a: #50fa7b; --v: #ffb86c; --m: #8be9fd; }
+.code.solarized { --c-bg: #002b36; --c-fg: #93a1a1; --c-gutter: #586e75; --c-hunk-fg: #657b83;
+  --k: #859900; --s: #2aa198; --c: #586e75; --n: #d33682; --f: #268bd2; --t: #b58900; --a: #b58900; --v: #cb4b16; --m: #6c71c4; }
+.code .hljs-keyword, .code .hljs-selector-tag, .code .hljs-literal, .code .hljs-doctag, .code .hljs-meta .hljs-keyword { color: var(--k); }
+.code .hljs-string, .code .hljs-regexp, .code .hljs-meta .hljs-string, .code .hljs-template-string { color: var(--s); }
+.code .hljs-comment, .code .hljs-quote { color: var(--c); font-style: italic; }
+.code .hljs-number, .code .hljs-symbol, .code .hljs-bullet { color: var(--n); }
+.code .hljs-title, .code .hljs-title.function_, .code .hljs-section { color: var(--f); }
+.code .hljs-type, .code .hljs-built_in, .code .hljs-title.class_, .code .hljs-class .hljs-title { color: var(--t); }
+.code .hljs-attr, .code .hljs-attribute, .code .hljs-selector-attr, .code .hljs-selector-class, .code .hljs-selector-id { color: var(--a); }
+.code .hljs-variable, .code .hljs-template-variable, .code .hljs-params { color: var(--v); }
+.code .hljs-meta, .code .hljs-name, .code .hljs-tag { color: var(--m); }
+.code .hljs-addition { color: var(--a); } .code .hljs-deletion { color: var(--k); }
+.code .hljs-emphasis { font-style: italic; } .code .hljs-strong { font-weight: 700; }

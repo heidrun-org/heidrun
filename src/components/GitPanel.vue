@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { currentForge, currentGit, git, refreshGit } from "../stores/git";
+import { currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
 import { selectedPane, sendPrompt, state, toast, workspaceLabel, workspacePanes } from "../stores/session";
 import { ago, paneName } from "../lib/format";
 
@@ -54,7 +54,10 @@ async function askReview(ref: string, url: string, title: string) {
       <section class="block">
         <header class="head">
           <span class="eyebrow">Dépôt</span>
-          <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
+          <span class="head-tools">
+            <button class="link" title="Ouvrir en grand : fichiers, diff, code" @click="openGitModal()">Agrandir ⤢</button>
+            <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
+          </span>
         </header>
         <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} ↗</button>
         <div v-else class="repo plain">{{ repoName }}</div>
@@ -80,11 +83,15 @@ async function askReview(ref: string, url: string, title: string) {
         <div class="eyebrow">Modifications <span class="count">{{ st.changed + st.untracked }}</span></div>
         <div v-if="!st.files.length" class="muted">Aucune modification locale.</div>
         <ul v-else class="files">
-          <li v-for="f in st.files.slice(0, 14)" :key="f.path" :title="f.path">
-            <span class="st" :class="statusClass(f.status)">{{ statusLetter(f.status) }}</span>
-            <span class="mono path">{{ f.path }}</span>
+          <li v-for="f in st.files.slice(0, 14)" :key="f.path">
+            <button class="file" :title="`Voir le diff de ${f.path}`" @click="openGitModal(f.path)">
+              <span class="st" :class="statusClass(f.status)">{{ statusLetter(f.status) }}</span>
+              <span class="mono path">{{ f.path }}</span>
+            </button>
           </li>
-          <li v-if="st.files.length > 14" class="muted">… et {{ st.changed + st.untracked - 14 }} autres</li>
+          <li v-if="st.files.length > 14">
+            <button class="link more" @click="openGitModal()">… et {{ st.changed + st.untracked - 14 }} autres : tout voir</button>
+          </li>
         </ul>
       </section>
 
@@ -99,6 +106,7 @@ async function askReview(ref: string, url: string, title: string) {
             <span class="req-top">
               <span class="mono ref">{{ r.ref }}</span>
               <span class="chip sm" :class="r.level">{{ r.state }}</span>
+              <span v-if="r.review" class="chip sm" :class="r.review.level">{{ r.review.label }}</span>
             </span>
             <span class="req-title">{{ r.title }}</span>
             <span class="muted mono">{{ r.branch }}<template v-if="r.author"> · {{ r.author }}</template></span>
@@ -110,6 +118,15 @@ async function askReview(ref: string, url: string, title: string) {
             @click="askReview(r.ref, r.url, r.title)"
           >Demander une revue</button>
         </div>
+        <template v-if="fg && fg.recent.length">
+          <div class="eyebrow recent-h">Fusionnées / fermées (7 jours)</div>
+          <button v-for="r in fg.recent" :key="r.ref" class="recent" :title="`Ouvrir ${r.ref} sur ${forgeLabel}`" @click="open(r.url)">
+            <span class="mono ref">{{ r.ref }}</span>
+            <span class="chip sm" :class="r.status === 'merged' ? 'merged' : 'muted'">{{ r.state }}</span>
+            <span class="recent-t">{{ r.title }}</span>
+            <span v-if="r.at" class="muted when">{{ ago(r.at) }}</span>
+          </button>
+        </template>
         <div v-if="fg && !fg.error" class="muted foot">{{ forgeLabel }} · mis à jour {{ ago(fg.at) }} · {{ workspaceLabel(state.selectedWorkspaceId) }}</div>
       </section>
     </template>
@@ -139,12 +156,23 @@ async function askReview(ref: string, url: string, title: string) {
 .chip.crit { background: #301817; color: var(--blocked); }
 .chip.pending { background: #13282a; color: var(--working); }
 .chip.muted { color: var(--muted); }
+.chip.merged { background: #24193a; color: #c29bf0; }
+.req-top { flex-wrap: wrap; }
+.recent-h { margin-top: 10px; }
+.recent { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; margin: 0 -6px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: 12px; }
+.recent:hover { background: var(--hover); }
+.recent-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.when { flex-shrink: 0; font-size: 11px; }
 button.chip { cursor: pointer; }
 .last { display: flex; gap: 8px; font-size: 12px; align-items: baseline; min-width: 0; }
 .subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .count { color: var(--muted); margin-left: 4px; }
 .files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
-.files li { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.files li { display: flex; min-width: 0; }
+.file { display: flex; gap: 8px; align-items: center; min-width: 0; width: 100%; border: none; background: none; padding: 2px 4px; margin: 0 -4px; border-radius: 5px; text-align: left; color: inherit; }
+.file:hover { background: var(--hover); }
+.head-tools { display: flex; gap: 12px; }
+.more { font-size: 12px; color: var(--done); }
 .st { width: 16px; flex-shrink: 0; font: 600 11px var(--mono); text-align: center; }
 .st.mod { color: #f2a93b; } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked); } .st.ren { color: var(--done); } .st.conf { color: var(--blocked); }
 .path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }

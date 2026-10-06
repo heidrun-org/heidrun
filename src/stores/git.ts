@@ -30,12 +30,20 @@ export interface Request {
   draft: boolean;
   state: string; // human label
   level: Level;
+  /** Review: approved, changes requested, waiting… */
+  review: { label: string; level: Level } | null;
+  /** "open", or "merged" / "closed" for the recent ones. */
+  status: "open" | "merged" | "closed";
+  /** When it was merged / closed / last updated (ms). */
+  at: number | null;
 }
 
 export interface ForgeInfo {
   forge: Forge;
   base: string | null;
   requests: Request[];
+  /** Merged or closed in the last days. */
+  recent: Request[];
   ci: { label: string; level: Level; url: string | null } | null;
   error: string | null;
   at: number;
@@ -46,7 +54,14 @@ export const git = reactive({
   status: {} as Record<string, GitStatus | null>,
   forge: {} as Record<string, ForgeInfo | undefined>,
   loading: false,
+  /** Large Git window: open, and the file shown. */
+  modal: { open: false, path: null as string | null },
 });
+
+export function openGitModal(path: string | null = null) {
+  git.modal.path = path;
+  git.modal.open = true;
+}
 
 /** Folder of a workspace: the selected pane if it is in it, else its first pane. */
 export function workspaceCwd(wsId: string): string | null {
@@ -109,33 +124,90 @@ const PIPE: Record<string, [string, Level]> = {
   manual: ["CI manuelle", "warn"],
 };
 
-async function loadGitlab(cwd: string, branch: string | null): Promise<Pick<ForgeInfo, "requests" | "ci">> {
-  const raw = await cli(cwd, "glab", ["api", "projects/:fullpath/merge_requests?state=opened&per_page=20&order_by=updated_at"]);
-  const list = JSON.parse(raw) as {
-    iid: number;
-    title: string;
-    web_url: string;
-    author?: { username?: string };
-    source_branch: string;
-    draft?: boolean;
-    detailed_merge_status?: string;
-    has_conflicts?: boolean;
-  }[];
-  const requests = list.map((m) => {
-    const [state, level] = m.has_conflicts
-      ? GL_STATUS.conflict
-      : GL_STATUS[m.detailed_merge_status ?? ""] ?? [m.detailed_merge_status ?? "ouverte", "muted" as Level];
-    return {
-      ref: `!${m.iid}`,
-      title: m.title,
-      url: m.web_url,
-      author: m.author?.username ?? "",
-      branch: m.source_branch,
-      draft: !!m.draft,
-      state,
-      level,
-    };
-  });
+type GlMr = {
+  iid: number;
+  title: string;
+  web_url: string;
+  author?: { username?: string };
+  source_branch: string;
+  draft?: boolean;
+  detailed_merge_status?: string;
+  has_conflicts?: boolean;
+  state?: string;
+  merged_at?: string | null;
+  closed_at?: string | null;
+  updated_at?: string | null;
+};
+
+const time = (s?: string | null) => (s ? Date.parse(s) || null : null);
+
+function glRequest(m: GlMr, status: Request["status"]): Request {
+  const [state, level] =
+    status === "merged"
+      ? (["fusionnée", "ok"] as [string, Level])
+      : status === "closed"
+        ? (["fermée", "muted"] as [string, Level])
+        : m.has_conflicts
+          ? GL_STATUS.conflict
+          : GL_STATUS[m.detailed_merge_status ?? ""] ?? [m.detailed_merge_status ?? "ouverte", "muted" as Level];
+  return {
+    ref: `!${m.iid}`,
+    title: m.title,
+    url: m.web_url,
+    author: m.author?.username ?? "",
+    branch: m.source_branch,
+    draft: !!m.draft,
+    state,
+    level,
+    review: m.detailed_merge_status === "requested_changes" ? { label: "changements demandés", level: "crit" } : null,
+    status,
+    at: time(m.merged_at) ?? time(m.closed_at) ?? time(m.updated_at),
+  };
+}
+
+async function loadGitlab(cwd: string, branch: string | null): Promise<Pick<ForgeInfo, "requests" | "recent" | "ci">> {
+  const list = JSON.parse(
+    await cli(cwd, "glab", ["api", "projects/:fullpath/merge_requests?state=opened&per_page=20&order_by=updated_at"]),
+  ) as GlMr[];
+  const requests = list.map((m) => glRequest(m, "open"));
+  // Approvals: one small call per open MR (at most 15, four at a time).
+  const queue = requests.slice(0, 15);
+  const worker = async () => {
+    for (let r = queue.shift(); r; r = queue.shift()) await approvals(r);
+  };
+  const approvals = async (r: Request) => {
+      if (r.review) return;
+      try {
+        const a = JSON.parse(await cli(cwd, "glab", ["api", `projects/:fullpath/merge_requests/${r.ref.slice(1)}/approvals`])) as {
+          approved?: boolean;
+          approvals_left?: number;
+          approved_by?: { user?: { username?: string } }[];
+        };
+        const by = a.approved_by ?? [];
+        const who = by.map((x) => x.user?.username).filter(Boolean).join(", ");
+        // "approved" is also true when the project has no approval rule: only count real approvals.
+        if (by.length && !a.approvals_left) r.review = { label: `approuvée · ${who}`, level: "ok" };
+        else if (by.length) r.review = { label: `${by.length} approbation(s), ${a.approvals_left} restante(s)`, level: "pending" };
+        else if (!r.draft) r.review = { label: "en attente de revue", level: "warn" };
+      } catch {
+        /* approvals not available on this plan / project */
+      }
+  };
+  await Promise.all([worker(), worker(), worker(), worker()]);
+  let recent: Request[] = [];
+  try {
+    const since = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const done = JSON.parse(
+      await cli(cwd, "glab", ["api", `projects/:fullpath/merge_requests?state=all&updated_after=${encodeURIComponent(since)}&per_page=30&order_by=updated_at`]),
+    ) as GlMr[];
+    const week = Date.now() - 7 * 86_400_000;
+    recent = done
+      .filter((m) => (m.state === "merged" || m.state === "closed") && (time(m.merged_at) ?? time(m.closed_at) ?? 0) >= week)
+      .map((m) => glRequest(m, m.state === "merged" ? "merged" : "closed"))
+      .slice(0, 12);
+  } catch {
+    /* ignore */
+  }
   let ci: ForgeInfo["ci"] = null;
   if (branch) {
     try {
@@ -150,49 +222,77 @@ async function loadGitlab(cwd: string, branch: string | null): Promise<Pick<Forg
       /* no CI on this project */
     }
   }
-  return { requests, ci };
+  return { requests, recent, ci };
 }
 
-async function loadGithub(cwd: string, branch: string | null): Promise<Pick<ForgeInfo, "requests" | "ci">> {
-  const raw = await cli(cwd, "gh", [
-    "pr", "list", "--limit", "20",
-    "--json", "number,title,url,author,headRefName,isDraft,reviewDecision,mergeable,statusCheckRollup",
-  ]);
-  const list = JSON.parse(raw) as {
-    number: number;
-    title: string;
-    url: string;
-    author?: { login?: string };
-    headRefName: string;
-    isDraft: boolean;
-    reviewDecision?: string;
-    mergeable?: string;
-    statusCheckRollup?: { conclusion?: string; status?: string; state?: string }[];
-  }[];
-  const requests = list.map((p) => {
-    const checks = p.statusCheckRollup ?? [];
-    const failed = checks.some((c) => ["FAILURE", "ERROR", "TIMED_OUT"].includes((c.conclusion || c.state || "").toUpperCase()));
-    const running = checks.some((c) => ["IN_PROGRESS", "QUEUED", "PENDING"].includes((c.status || c.state || "").toUpperCase()));
-    let state = "ouverte";
-    let level: Level = "muted";
-    if (p.isDraft) [state, level] = ["brouillon", "muted"];
-    else if (p.mergeable === "CONFLICTING") [state, level] = ["conflit", "crit"];
-    else if (failed) [state, level] = ["CI en échec", "crit"];
-    else if (running) [state, level] = ["CI en cours", "pending"];
-    else if (p.reviewDecision === "CHANGES_REQUESTED") [state, level] = ["changements demandés", "crit"];
-    else if (p.reviewDecision === "REVIEW_REQUIRED") [state, level] = ["à approuver", "warn"];
-    else if (p.reviewDecision === "APPROVED" || p.mergeable === "MERGEABLE") [state, level] = ["prête à fusionner", "ok"];
-    return {
-      ref: `#${p.number}`,
-      title: p.title,
-      url: p.url,
-      author: p.author?.login ?? "",
-      branch: p.headRefName,
-      draft: p.isDraft,
-      state,
-      level,
-    };
-  });
+type GhPr = {
+  number: number;
+  title: string;
+  url: string;
+  author?: { login?: string };
+  headRefName: string;
+  isDraft: boolean;
+  reviewDecision?: string;
+  mergeable?: string;
+  statusCheckRollup?: { conclusion?: string; status?: string; state?: string }[];
+  state?: string;
+  mergedAt?: string | null;
+  closedAt?: string | null;
+  updatedAt?: string | null;
+};
+
+const GH_REVIEW: Record<string, { label: string; level: Level }> = {
+  APPROVED: { label: "approuvée", level: "ok" },
+  CHANGES_REQUESTED: { label: "changements demandés", level: "crit" },
+  REVIEW_REQUIRED: { label: "en attente de revue", level: "warn" },
+};
+
+function ghRequest(p: GhPr, status: Request["status"]): Request {
+  const checks = p.statusCheckRollup ?? [];
+  const failed = checks.some((c) => ["FAILURE", "ERROR", "TIMED_OUT"].includes((c.conclusion || c.state || "").toUpperCase()));
+  const running = checks.some((c) => ["IN_PROGRESS", "QUEUED", "PENDING"].includes((c.status || c.state || "").toUpperCase()));
+  let state = "ouverte";
+  let level: Level = "muted";
+  if (status === "merged") [state, level] = ["fusionnée", "ok"];
+  else if (status === "closed") [state, level] = ["fermée", "muted"];
+  else if (p.isDraft) [state, level] = ["brouillon", "muted"];
+  else if (p.mergeable === "CONFLICTING") [state, level] = ["conflit", "crit"];
+  else if (failed) [state, level] = ["CI en échec", "crit"];
+  else if (running) [state, level] = ["CI en cours", "pending"];
+  else if (p.mergeable === "MERGEABLE") [state, level] = ["prête à fusionner", "ok"];
+  return {
+    ref: `#${p.number}`,
+    title: p.title,
+    url: p.url,
+    author: p.author?.login ?? "",
+    branch: p.headRefName,
+    draft: p.isDraft,
+    state,
+    level,
+    review: status === "open" ? GH_REVIEW[p.reviewDecision ?? ""] ?? null : null,
+    status,
+    at: time(p.mergedAt) ?? time(p.closedAt) ?? time(p.updatedAt),
+  };
+}
+
+const GH_FIELDS = "number,title,url,author,headRefName,isDraft,reviewDecision,mergeable,statusCheckRollup,state,mergedAt,closedAt,updatedAt";
+
+async function loadGithub(cwd: string, branch: string | null): Promise<Pick<ForgeInfo, "requests" | "recent" | "ci">> {
+  const list = JSON.parse(await cli(cwd, "gh", ["pr", "list", "--limit", "20", "--json", GH_FIELDS])) as GhPr[];
+  const requests = list.map((p) => ghRequest(p, "open"));
+  let recent: Request[] = [];
+  try {
+    const week = Date.now() - 7 * 86_400_000;
+    const merged = JSON.parse(await cli(cwd, "gh", ["pr", "list", "--state", "merged", "--limit", "10", "--json", GH_FIELDS])) as GhPr[];
+    const closed = JSON.parse(await cli(cwd, "gh", ["pr", "list", "--state", "closed", "--limit", "10", "--json", GH_FIELDS])) as GhPr[];
+    const seen = new Set<number>();
+    recent = [...merged.map((p) => ghRequest(p, "merged")), ...closed.filter((p) => !p.mergedAt).map((p) => ghRequest(p, "closed"))]
+      .filter((r) => !seen.has(Number(r.ref.slice(1))) && seen.add(Number(r.ref.slice(1))) && (r.at ?? 0) >= week)
+      .sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
+      .slice(0, 12);
+  } catch {
+    /* ignore */
+  }
   let ci: ForgeInfo["ci"] = null;
   if (branch) {
     try {
@@ -208,7 +308,7 @@ async function loadGithub(cwd: string, branch: string | null): Promise<Pick<Forg
       /* no Actions */
     }
   }
-  return { requests, ci };
+  return { requests, recent, ci };
 }
 
 function explain(e: unknown, tool: string): string {
@@ -237,7 +337,7 @@ async function loadForge(wsId: string) {
     const r = forge === "github" ? await loadGithub(cwd, st.branch) : await loadGitlab(cwd, st.branch);
     if (seq === forgeSeq[wsId]) git.forge[wsId] = { forge, base: ctx.base, ...r, error: null, at: Date.now() };
   } catch (e) {
-    if (seq === forgeSeq[wsId]) git.forge[wsId] = { forge, base: ctx.base, requests: [], ci: null, error: explain(e, tool), at: Date.now() };
+    if (seq === forgeSeq[wsId]) git.forge[wsId] = { forge, base: ctx.base, requests: [], recent: [], ci: null, error: explain(e, tool), at: Date.now() };
   }
 }
 
