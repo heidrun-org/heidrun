@@ -59,9 +59,20 @@ function decode(b64: string): Uint8Array {
   return out;
 }
 
-async function attach(takeover = false) {
+// Herdr refuses an attach while it is reading the same terminal for someone else
+// (the app's own pane.read polling, another client…): "has a read in progress; retry".
+// That is transient: retry quietly a few times before showing "Terminal détaché".
+let spawnedAt = 0;
+let retries = 0;
+let lastOutput = "";
+const textDecoder = new TextDecoder();
+
+async function attach(takeover = false, quiet = false) {
   if (!term) return;
   exited.value = false;
+  if (!quiet) retries = 0;
+  spawnedAt = Date.now();
+  lastOutput = "";
   try {
     await invoke("pty_spawn", { id, terminalId: props.terminalId, cols: term.cols, rows: term.rows, takeover });
   } catch (e) {
@@ -309,10 +320,25 @@ onMounted(async () => {
   // Listen before spawning so no early output is lost.
   unlisten.push(
     await listen<{ id: string; data: string }>("pty://data", (e) => {
-      if (e.payload.id === id) term?.write(decode(e.payload.data));
+      if (e.payload.id !== id) return;
+      const bytes = decode(e.payload.data);
+      // Keep the start of the output, to recognize an attach refused by Herdr.
+      if (Date.now() - spawnedAt < 4000 && lastOutput.length < 600) lastOutput += textDecoder.decode(bytes, { stream: true });
+      term?.write(bytes);
     }),
     await listen<{ id: string }>("pty://exit", (e) => {
-      if (e.payload.id === id) exited.value = true;
+      if (e.payload.id !== id) return;
+      const early = Date.now() - spawnedAt < 4000;
+      const busy = /read in progress|retry/i.test(lastOutput);
+      if ((busy || early) && retries < 6) {
+        retries++;
+        window.setTimeout(() => {
+          term?.reset();
+          attach(false, true);
+        }, 250 * retries);
+        return;
+      }
+      exited.value = true;
     }),
   );
 
