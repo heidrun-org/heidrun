@@ -42,6 +42,8 @@ const defaults = {
   leftWidth: 280,
   /** Start the Herdr server in the background when it is not running. */
   autoStartHerdr: true,
+  /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
+  finishedTtl: 15,
   rightWidth: 320,
   noteHeight: 520,
 };

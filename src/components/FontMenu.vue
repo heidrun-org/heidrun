@@ -1,4 +1,10 @@
 <script setup lang="ts">
+const TTL_OPTIONS = [
+  { v: 5, label: "5 min" },
+  { v: 15, label: "15 min" },
+  { v: 60, label: "1 h" },
+  { v: 0, label: "Jamais" },
+];
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { FONTS, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../stores/settings";
@@ -43,6 +49,18 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         <template v-if="settings.mouseMode === 'select'">Glisser sélectionne, <kbd>⌘C</kbd> copie. La molette et les clics ne vont plus à Herdr.</template>
         <template v-else>Molette et clics vont à Herdr et aux agents. <kbd>⌥</kbd> + glisser pour sélectionner.</template>
       </div>
+      <div class="eyebrow sep">Éléments terminés</div>
+      <div class="seg" role="radiogroup" aria-label="Masquer les éléments terminés après">
+        <button
+          v-for="o in TTL_OPTIONS"
+          :key="o.v"
+          role="radio"
+          :aria-checked="settings.finishedTtl === o.v"
+          :class="{ on: settings.finishedTtl === o.v }"
+          @click="settings.finishedTtl = o.v"
+        >{{ o.label }}</button>
+      </div>
+      <div class="keys">Les travaux terminés (Activité, cartes « À traiter ») disparaissent après ce délai. Les agents bloqués restent.</div>
     </div>
   </div>
 </template>

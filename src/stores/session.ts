@@ -1,4 +1,4 @@
-import { computed, reactive, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
@@ -167,10 +167,37 @@ function saveDismissed() {
   }
 }
 
+// Clock for things that expire (finished items), ticking every 30 s.
+export const now = ref(Date.now());
+window.setInterval(() => {
+  now.value = Date.now();
+  pruneFinished();
+}, 30_000);
+
+const ttlMs = () => (settings.finishedTtl > 0 ? settings.finishedTtl * 60_000 : Infinity);
+
+/** "Terminé" for longer than the chosen delay: hidden. Blocked agents always stay. */
+function expired(p: AgentInfo): boolean {
+  if (p.agent_status !== "done") return false;
+  const since = state.since[p.pane_id];
+  return since != null && now.value - since > ttlMs();
+}
+
+function pruneFinished() {
+  const limit = ttlMs();
+  if (limit === Infinity) return;
+  const t = Date.now();
+  if (state.activity.some((r) => r.end !== null && t - r.end > limit)) {
+    state.activity = state.activity.filter((r) => r.end === null || t - r.end <= limit);
+  }
+}
+watch(() => settings.finishedTtl, pruneFinished);
+
 export const attention = computed(() =>
   allPanes.value
     .filter((p) => p.agent && (p.agent_status === "blocked" || p.agent_status === "done"))
     .filter((p) => state.dismissed[p.pane_id] !== attentionKey(p))
+    .filter((p) => !expired(p))
     .sort((a, b) => {
       if (a.agent_status !== b.agent_status) return a.agent_status === "blocked" ? -1 : 1;
       return (b.state_change_seq ?? 0) - (a.state_change_seq ?? 0);
