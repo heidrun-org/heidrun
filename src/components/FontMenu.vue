@@ -36,8 +36,12 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         <button class="btn" aria-label="Agrandir la police" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
         <button class="btn" @click="resetZoom()">Réinitialiser</button>
       </div>
+      <div v-if="settings.fontId === 'inconsolata-powerline'" class="keys">
+        Police à installer sur le Mac (<span class="mono">brew install --cask font-inconsolata-for-powerline</span>
+        ou la version Nerd Font). Sans elle, l’app prend Inconsolata, sans les symboles Powerline.
+      </div>
       <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${settings.fontSize}px` }">
-        ❯ flutter test → 12 passed
+        ❯ flutter test → 12 passed <template v-if="settings.fontId === 'inconsolata-powerline'">  main </template>
       </div>
       <div class="keys"><kbd>⌘+</kbd> agrandir · <kbd>⌘−</kbd> réduire · <kbd>⌘0</kbd> par défaut</div>
       <div class="eyebrow sep">Souris</div>

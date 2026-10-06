@@ -7,13 +7,20 @@ export interface FontOption {
   stack: string;
 }
 
-// Geist Mono, JetBrains Mono and Fira Code are loaded from Google Fonts (index.html);
-// the others ship with macOS.
+// Geist Mono, JetBrains Mono, Fira Code and Inconsolata are loaded from Google Fonts
+// (index.html); the others ship with macOS or are installed by the user.
 export const FONTS: FontOption[] = [
   { id: "geist", label: "Geist Mono", stack: '"Geist Mono", ui-monospace, Menlo, monospace' },
   { id: "sf", label: "SF Mono", stack: 'ui-monospace, "SF Mono", Menlo, monospace' },
   { id: "jetbrains", label: "JetBrains Mono", stack: '"JetBrains Mono", ui-monospace, Menlo, monospace' },
   { id: "fira", label: "Fira Code", stack: '"Fira Code", ui-monospace, Menlo, monospace' },
+  // Installed locally (powerline/fonts or Nerd Fonts); Google's Inconsolata as a
+  // fallback, without the powerline glyphs.
+  {
+    id: "inconsolata-powerline",
+    label: "Inconsolata for Powerline",
+    stack: '"Inconsolata for Powerline", "Inconsolata Nerd Font Mono", "Inconsolata Nerd Font", "InconsolataGo Nerd Font", Inconsolata, ui-monospace, monospace',
+  },
   { id: "menlo", label: "Menlo", stack: "Menlo, monospace" },
   { id: "monaco", label: "Monaco", stack: "Monaco, Menlo, monospace" },
 ];
