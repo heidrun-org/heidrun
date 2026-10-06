@@ -370,3 +370,40 @@ export function promptBoxAt(lineAt: (i: number) => string | null, y: number): { 
   if (!/^\s*[❯›>]/.test(lineAt(top + 1) ?? "")) return null;
   return { first: top + 1, last: bottom - 1 };
 }
+
+// ---- Questions asked by the agent in its answer -------------------------------
+
+/**
+ * The question that ends the agent's last message, if any: « Veux-tu que je
+ * m'attaque à #44 ? », « On fusionne ? »… The prompt box and the footer under it
+ * are ignored; only the last message (after the last ● / ⏺) is considered.
+ */
+export function findQuestion(screen: string): string | null {
+  const lines = screen.replace(/\r/g, "").split("\n");
+  const rule = (l: string) => /^\s*[─━]{8,}/.test(l);
+  // Cut at the top of the prompt box (second-to-last rule), when there is one.
+  const rules = lines.map((l, i) => (rule(l) ? i : -1)).filter((i) => i >= 0);
+  const end = rules.length >= 2 ? rules[rules.length - 2] : rules.length === 1 ? rules[0] : lines.length;
+  const body = lines.slice(0, end);
+  // Last message of the agent.
+  let start = -1;
+  for (let i = body.length - 1; i >= 0 && i >= body.length - 80; i--) {
+    if (/^\s{0,2}[●⏺]\s/.test(body[i])) {
+      start = i;
+      break;
+    }
+  }
+  if (start === -1) return null;
+  const msg = body
+    .slice(start)
+    .filter((l) => !/^\s*[✻✶✳✢·*]\s+\S+…/.test(l)) // spinner lines ("✻ Pondering…")
+    .map((l) => l.replace(/^\s{0,2}[●⏺]\s/, "").trim())
+    .filter(Boolean);
+  if (!msg.length) return null;
+  // The question must be at the very end of the message (last 3 lines).
+  const tail = msg.slice(-3).join(" ").replace(/\s+/g, " ").trim();
+  if (!/\?\s*[)»"”]*\s*$/.test(tail)) return null;
+  const sentences = tail.split(/(?<=[.!?:])\s+(?=[A-ZÀ-ÖØ-Ý«"(\d])/);
+  const q = sentences[sentences.length - 1].trim();
+  return q.length > 220 ? `…${q.slice(-220)}` : q;
+}

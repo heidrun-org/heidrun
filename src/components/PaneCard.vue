@@ -74,9 +74,9 @@ const subtitle = computed(() => {
 
 <style scoped>
 .pane { height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; }
-.pane.blocked { box-shadow: inset 0 0 0 1px #4a3a1e; }
+.pane.blocked { box-shadow: inset 0 0 0 1px #5c2826; }
 .pane.selected { box-shadow: inset 0 0 0 1px #33506f; }
-.pane.blocked.selected { box-shadow: inset 0 0 0 1px #6b5226; }
+.pane.blocked.selected { box-shadow: inset 0 0 0 1px #7d3330; }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;
@@ -87,7 +87,7 @@ const subtitle = computed(() => {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   border-bottom: 1px solid #1a1d20; font-size: 12px;
 }
-.pane.blocked .head { background: #15120d; border-bottom-color: #2b2418; }
+.pane.blocked .head { background: #170f0f; border-bottom-color: #2f1b1a; }
 .name { font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -12,13 +12,15 @@
   --faint: #6b7177;
 
   --working: #3fb8af;
-  --blocked: #f2a93b;
+  --blocked: #f0645f;
+  /* Agent asking a question in its answer (not a blocking prompt). */
+  --question: #c29bf0;
   --done: #6ea8fe;
   --idle: #5a6066;
   --fail: #e58a8a;
   --ok: #7ec699;
 
-  --accent: var(--blocked);
+  --accent: #f2a93b;
   --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --mono: "Geist Mono", "SF Mono", Menlo, monospace;
   color-scheme: dark;
@@ -55,6 +57,7 @@ input { font: inherit; color: inherit; user-select: text; }
 
 .t-working { color: var(--working); }
 .t-blocked { color: var(--blocked); }
+.t-question { color: var(--question); }
 .t-done { color: var(--done); }
 .t-idle, .t-unknown { color: var(--muted); }
 

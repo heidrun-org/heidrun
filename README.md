@@ -72,6 +72,8 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 Les éléments **terminés** (fil Activité, cartes « À traiter » terminées) disparaissent tout seuls après 15 min par défaut ; le délai se règle dans le menu « A » (5 min, 15 min, 1 h, jamais). Les agents bloqués restent affichés.
 
+**Questions de l'agent** : quand un agent termine sa réponse par une question (« Veux-tu que je m'attaque à #44 ? »), l'app la repère, même si l'onglet n'est pas affiché. Une carte violette **QUESTION** apparaît dans « À traiter », avec la question, et une notification « … te pose une question » remplace « a terminé ». La carte reste jusqu'à ta réponse ou jusqu'à ce que tu la fermes. Les agents **bloqués** (menu d'autorisation) sont en rouge.
+
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
 
 **Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.

@@ -25,6 +25,8 @@ import { useReorder } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 
 function summary(p: AgentInfo): string {
+  const q = state.questions[p.pane_id];
+  if (q && p.agent_status !== "blocked") return q.text;
   if (p.agent_status === "blocked") return p.state_labels?.blocked || p.title || "attend une décision";
   return p.title || p.terminal_title_stripped || "travail terminé, à relire";
 }
@@ -147,11 +149,12 @@ async function createWorkspace() {
     <!-- At the bottom: cards come and go without moving the workspaces list. -->
     <section v-if="attention.length" class="group attention">
       <div class="eyebrow pad">À traiter</div>
-      <div v-for="p in attention" :key="p.pane_id" class="card" :class="p.agent_status">
+      <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
         <button class="card-main" @click="selectPane(p)">
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
-            <span class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">QUESTION</span>
+            <span v-else class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
           </span>
           <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
           <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
@@ -183,7 +186,8 @@ async function createWorkspace() {
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
-.card.blocked { border-color: #4a3a1e; background: #1e1912; }
+.card.blocked { border-color: #5c2826; background: #201313; }
+.card.question { border-color: #4a3866; background: #1a1622; }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { flex-shrink: 0; }

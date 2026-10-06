@@ -5,6 +5,7 @@ import * as api from "../lib/api";
 import { notify } from "../lib/notify";
 import { settings } from "./settings";
 import { agentKind, paneName } from "../lib/format";
+import { findQuestion } from "../lib/refs";
 import type {
   AgentInfo,
   AgentStatus,
@@ -68,6 +69,8 @@ export const state = reactive({
   activity: [] as ActivityEntry[],
   /** When each pane entered its current status (local clock). */
   since: {} as Record<string, number>,
+  /** Question ending the agent's last answer, while it waits for the next consigne. */
+  questions: {} as Record<string, { text: string; at: number }>,
   watches: [] as OutputWatch[],
   /** "À traiter" cards closed by the user, until the pane changes state again. */
   dismissed: loadDismissed(),
@@ -152,6 +155,7 @@ export function attentionKey(p: AgentInfo): string {
 }
 
 export function dismiss(p: AgentInfo) {
+  delete state.questions[p.pane_id];
   state.dismissed[p.pane_id] = attentionKey(p);
   saveDismissed();
 }
@@ -195,12 +199,13 @@ watch(() => settings.finishedTtl, pruneFinished);
 
 export const attention = computed(() =>
   allPanes.value
-    .filter((p) => p.agent && (p.agent_status === "blocked" || p.agent_status === "done"))
+    .filter((p) => p.agent && (p.agent_status === "blocked" || p.agent_status === "done" || state.questions[p.pane_id]))
     .filter((p) => state.dismissed[p.pane_id] !== attentionKey(p))
-    .filter((p) => !expired(p))
+    .filter((p) => state.questions[p.pane_id] || !expired(p))
     .sort((a, b) => {
-      if (a.agent_status !== b.agent_status) return a.agent_status === "blocked" ? -1 : 1;
-      return (b.state_change_seq ?? 0) - (a.state_change_seq ?? 0);
+      // Blocked first, then questions, then finished work.
+      const rank = (p: AgentInfo) => (p.agent_status === "blocked" ? 0 : state.questions[p.pane_id] ? 1 : 2);
+      return rank(a) - rank(b) || (b.state_change_seq ?? 0) - (a.state_change_seq ?? 0);
     }),
 );
 
@@ -453,6 +458,37 @@ function trackRun(
   }
 }
 
+/**
+ * Reads the end of the agent's output after it finished. A question there
+ * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
+ * shows in « À traiter » and gets its own notification.
+ */
+async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false) {
+  // Let the agent finish drawing its answer.
+  await new Promise((r) => window.setTimeout(r, 700));
+  let question: string | null = null;
+  for (let attempt = 0; attempt < 3 && question === null; attempt++) {
+    try {
+      question = findQuestion(await api.read(paneId, 120));
+      break;
+    } catch {
+      // "read in progress": another read of this terminal, try again shortly.
+      await new Promise((r) => window.setTimeout(r, 400));
+    }
+  }
+  const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+  if (!pane || pane.agent_status === "working" || pane.agent_status === "blocked") return;
+  if (question) {
+    state.questions[paneId] = { text: question, at: Date.now() };
+    // Shown again even if an earlier "terminé" card was closed.
+    delete state.dismissed[paneId];
+    if (notifyQuestion) notify(`${name} te pose une question`, `${ws ? `${ws} · ` : ""}${question}`);
+  } else {
+    delete state.questions[paneId];
+    if (notifyDone) notify(`${name} a terminé`, ws);
+  }
+}
+
 function applySnapshot(snap: SessionSnapshot) {
   const previous = new Map((state.snapshot?.panes ?? []).map((p) => [p.pane_id, p.agent_status]));
   const agents = new Map(snap.agents.map((a) => [a.pane_id, a]));
@@ -473,17 +509,22 @@ function applySnapshot(snap: SessionSnapshot) {
       workspace: ws,
       tab: t ? t.label || `onglet ${t.number}` : "",
     });
-    if (before === undefined) continue; // first sight, not a transition
+    if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
+    if (before === undefined) {
+      // First sight: an agent already done may have ended on a question.
+      if (after === "done") checkQuestion(pane.pane_id, paneName(view), ws, false);
+      continue;
+    }
     if (after === "blocked") {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
         notify(`${paneName(view)} attend une décision`, ws);
       }
-    } else if (after === "done" && before === "working") {
-      if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
-        notify(`${paneName(view)} a terminé`, ws);
-      }
+    } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
+      // Finished: look at how the answer ends before notifying ("a terminé" or the question).
+      const away = !document.hasFocus() || state.selectedPaneId !== pane.pane_id;
+      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away);
     }
   }
 

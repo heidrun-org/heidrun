@@ -55,7 +55,7 @@ const busy = computed(() => props.pane.agent_status === "blocked");
   background: #1d2024; color: var(--text-2); font-size: 12px; font-weight: 600;
 }
 .chip.active { background: #13282a; color: var(--working); }
-.chip.failed { background: #2b2213; color: var(--blocked); }
+.chip.failed { background: #301817; color: var(--blocked); }
 .hint { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
 .btn { align-self: flex-start; }
 .btn:disabled { opacity: 0.5; }
