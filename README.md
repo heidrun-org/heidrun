@@ -87,6 +87,16 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 
 **Onglet Git** (panneau de droite) : pour le workspace sélectionné, branche, avance / retard sur le remote, fichiers modifiés, dernier commit, état de la CI de la branche, et la liste des **MR (GitLab) ou PR (GitHub)** ouvertes avec leur état (prête, CI en cours, à approuver, conflit…). Un clic ouvre la MR ; « Demander une revue » l'envoie à l'agent du workspace. L'hébergeur est déduit du remote (`references.forge` pour le forcer). L'app passe par `glab` et `gh` déjà connectés sur le Mac, en lecture seule : aucun jeton n'est stocké. Dans la barre latérale, `↑2` signale des commits pas encore poussés.
 
+**Modèles de consignes** : le bouton ☰ de la barre de saisie liste tes modèles (« Revue de la MR », « Note de reprise »…) et ceux du projet. Un clic insère le texte, modifiable avant l'envoi ; « Enregistrer la saisie comme modèle » en crée un, sur ce Mac ou dans le projet. Ils sont aussi dans la palette ⌘K (section Consignes). Variables remplacées à l'insertion : `{workspace}`, `{onglet}`, `{agent}`, `{branche}`, `{selection}` (texte sélectionné dans un terminal), `{presse-papiers}`. Modèles du projet dans `.herdr-desk.json` :
+
+```json
+"prompts": [{ "id": "revue", "label": "Revue de la MR", "text": "Fais la revue de la MR de {branche}" }]
+```
+
+**Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
+
+**Notifications** (menu « A ») : rappel quand un agent reste bloqué (5 min par défaut), contexte d'un agent au-delà de 80 %, quota Claude au-delà de 80 % puis 95 %, résumé de la journée à l'heure choisie (travaux terminés par workspace), heures calmes sans notification (par ex. 20:00 → 08:00, alertes reportées après).
+
 **Questions de l'agent** : quand un agent termine sa réponse par une question (« Veux-tu que je m'attaque à #44 ? »), l'app la repère, même si l'onglet n'est pas affiché. Une carte violette **QUESTION** apparaît dans « À traiter », avec la question, et une notification « … te pose une question » remplace « a terminé ». La carte reste jusqu'à ta réponse ou jusqu'à ce que tu la fermes. Les agents **bloqués** (menu d'autorisation) sont en rouge.
 
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.

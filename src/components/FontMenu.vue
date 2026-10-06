@@ -65,12 +65,36 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         >{{ o.label }}</button>
       </div>
       <div class="keys">Les travaux terminés (Activité, cartes « À traiter ») disparaissent après ce délai. Les agents bloqués restent.</div>
+      <div class="eyebrow sep">Notifications</div>
+      <label class="nrow">
+        <span>Rappel si un agent reste bloqué</span>
+        <select v-model.number="settings.notifBlockedMin">
+          <option :value="0">jamais</option>
+          <option :value="2">2 min</option>
+          <option :value="5">5 min</option>
+          <option :value="10">10 min</option>
+          <option :value="30">30 min</option>
+        </select>
+      </label>
+      <label class="nrow"><span>Contexte d’un agent au-delà de 80 %</span><input v-model="settings.notifContext" type="checkbox" /></label>
+      <label class="nrow"><span>Quota Claude au-delà de 80 % puis 95 %</span><input v-model="settings.notifQuota" type="checkbox" /></label>
+      <label class="nrow"><span>Résumé de la journée à</span><input v-model.lazy="settings.notifEvening" class="time" placeholder="18:30" /></label>
+      <label class="nrow">
+        <span>Heures calmes</span>
+        <span class="range"><input v-model.lazy="settings.quietFrom" class="time" placeholder="20:00" /> → <input v-model.lazy="settings.quietTo" class="time" placeholder="08:00" /></span>
+      </label>
+      <div class="keys">Pendant les heures calmes, aucune notification n’est envoyée. Laisse vide pour désactiver.</div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .wrap { position: relative; }
+.nrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--text-2); }
+.nrow select, .nrow .time { height: 26px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); font-size: 12px; padding: 0 6px; }
+.nrow .time { width: 58px; text-align: center; font-family: var(--mono); }
+.nrow input[type="checkbox"] { accent-color: var(--done); }
+.range { display: flex; align-items: center; gap: 4px; }
 .icon-btn {
   width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field);
   color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; padding: 0;
@@ -79,7 +103,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 .menu {
   position: absolute; right: 0; top: 38px; width: 300px; z-index: 30; padding: 14px; border-radius: 12px;
   border: 1px solid #33383e; background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 80px); overflow-y: auto;
 }
 select {
   height: 34px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text);

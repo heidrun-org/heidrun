@@ -22,6 +22,8 @@ import {
 import { STATUS_LABEL, paneName } from "../lib/format";
 import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
+import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
+import { fillInput } from "../stores/input";
 
 interface Item {
   section: string;
@@ -50,6 +52,16 @@ const items = computed<Item[]>(() => {
     list.push({ section: "Lancer", label: `Lancer « ${q} » dans un nouveau panneau`, hint: "↵", run: () => runInNewPane(q) });
     if (shell) list.push({ section: "Lancer", label: `Lancer dans ${paneName(shell)}`, hint: "⌥↵", run: () => runInPane(shell.pane_id, q) });
     list.push({ section: "Lancer", label: "Lancer et me notifier à la fin", hint: "⇧↵", run: () => runInNewPane(q, "passed|failed|error|Error|✓|✗|done|Done") });
+  }
+
+  // Consigne templates: fill the input bar (editable before sending).
+  for (const t of [...projectPrompts.value, ...prompts.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
+    list.push({
+      section: "Consignes",
+      label: t.label,
+      hint: "dans la saisie",
+      run: async () => fillInput(await resolvePrompt(t.text, selectedPane.value?.pane_id ?? null)),
+    });
   }
 
   for (const cmd of recent.filter((c) => !lower || c.toLowerCase().includes(lower)).slice(0, 5)) {

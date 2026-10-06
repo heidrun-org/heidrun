@@ -35,6 +35,7 @@ import { resetZoom, settings, zoom } from "./stores/settings";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
+import { startAlerts } from "./stores/alerts";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
 function codeZoom(dir: 1 | -1) {
@@ -134,6 +135,7 @@ onMounted(() => {
   start();
   startProjects();
   startGit();
+  startAlerts();
   loadClaudeLink();
   startRemoteWatch();
 });

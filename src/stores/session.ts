@@ -853,6 +853,55 @@ export async function sendPrompt(paneId: string, text: string) {
   return guard(() => api.prompt(paneId, text));
 }
 
+/**
+ * Same consigne to several agents. A blocked agent is not forced (it waits for a
+ * decision); the others get it one after the other.
+ */
+export async function broadcastPrompt(
+  paneIds: string[],
+  text: string,
+  /** Template variables ({agent}, {branche}…) resolved for each recipient. */
+  resolve?: (text: string, paneId: string) => Promise<string>,
+): Promise<{ sent: string[]; skipped: string[]; failed: string[] }> {
+  const res = { sent: [] as string[], skipped: [] as string[], failed: [] as string[] };
+  // "! command": checked against each project's own rules (one window per project).
+  const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
+  const refused = new Set<string>();
+  if (shell) {
+    const byCwd = new Map<string, string[]>();
+    for (const id of paneIds) {
+      const w = whereOf(id);
+      const k = w.cwd ?? "";
+      byCwd.set(k, [...(byCwd.get(k) ?? []), id]);
+    }
+    for (const [cwd, ids] of byCwd) {
+      const label = ids.length > 1 ? `${ids.length} agents · ${whereOf(ids[0]).where}` : whereOf(ids[0]).where;
+      if (!(await allowCommand(shell[1], cwd || null, label))) ids.forEach((id) => refused.add(id));
+    }
+    if (refused.size === paneIds.length) return res;
+  }
+  for (const id of paneIds) {
+    if (refused.has(id)) {
+      res.skipped.push(id);
+      continue;
+    }
+    const p = allPanes.value.find((x) => x.pane_id === id);
+    if (!p) continue;
+    if (p.agent_status === "blocked") {
+      res.skipped.push(id);
+      continue;
+    }
+    try {
+      await api.prompt(id, resolve ? await resolve(text, id) : text);
+      res.sent.push(id);
+    } catch {
+      res.failed.push(id);
+    }
+  }
+  scheduleRefresh();
+  return res;
+}
+
 export function sendKeys(paneId: string, keys: string[]) {
   return guard(() => api.sendKeys(paneId, keys));
 }

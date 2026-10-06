@@ -51,10 +51,19 @@ const defaults = {
   autoStartHerdr: true,
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Notifications. */
+  notifBlockedMin: 5, // remind once when an agent stays blocked this long (0 = off)
+  notifContext: true, // an agent's context goes past 80 %
+  notifQuota: true, // Claude 5 h / week quota past 80 % then 95 %
+  notifEvening: "", // "18:30": summary of the day's finished work ("" = off)
+  quietFrom: "", // "20:00" … "08:00": no notification in between ("" = never quiet)
+  quietTo: "",
   /** Git viewer: "unified" | "split" diff, or the whole "file". */
   diffMode: "unified" as "unified" | "split" | "file" | "read",
   /** Git window: code size (⌘+ / ⌘− while it is open) and file list width. */
   codeFontSize: 12.5,
+  /** Side-by-side diff: share of the width for the old version (0.5 = middle). */
+  splitRatio: 0.5,
   gitListWidth: 340,
   codeTheme: "github-dark",
   codeWrap: false,

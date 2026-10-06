@@ -122,6 +122,30 @@ function move(delta: number) {
   nextTick(() => listEl.value?.querySelector(".file.on")?.scrollIntoView({ block: "nearest" }));
 }
 const modalEl = ref<HTMLElement>();
+
+// Divider of the side-by-side view.
+const splitEl = ref<HTMLElement>();
+function startSplit(e: PointerEvent) {
+  const el = splitEl.value;
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const bar = e.target as HTMLElement;
+  bar.setPointerCapture(e.pointerId);
+  const move = (ev: PointerEvent) => {
+    settings.splitRatio = Math.min(0.85, Math.max(0.15, (ev.clientX - rect.left) / rect.width));
+  };
+  const end = () => {
+    bar.removeEventListener("pointermove", move);
+    bar.removeEventListener("pointerup", end);
+    bar.removeEventListener("pointercancel", end);
+    bar.removeEventListener("lostpointercapture", end);
+  };
+  bar.addEventListener("pointermove", move);
+  bar.addEventListener("pointerup", end);
+  bar.addEventListener("pointercancel", end);
+  bar.addEventListener("lostpointercapture", end);
+  e.preventDefault();
+}
 function onKey(e: KeyboardEvent) {
   if (e.altKey || e.metaKey || e.ctrlKey) return;
   const t = e.target as HTMLElement | null;
@@ -250,16 +274,57 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               </tbody>
             </table>
 
-            <!-- Side by side -->
-            <table v-else-if="mode === 'split'" class="tbl split">
+            <!-- Side by side: two columns split where you want (drag the bar, double-click = middle).
+                 Without wrapping each side scrolls sideways on its own; rows stay aligned. -->
+            <div
+              v-else-if="mode === 'split' && !settings.codeWrap"
+              ref="splitEl"
+              class="split2"
+              :style="{ gridTemplateColumns: `minmax(0, ${settings.splitRatio}fr) 6px minmax(0, ${1 - settings.splitRatio}fr)` }"
+            >
+              <div class="side">
+                <table class="tbl">
+                  <tbody>
+                    <tr v-for="(r, i) in split" :key="i">
+                      <td v-if="r.hunk" colspan="2" class="hunk mono">{{ r.hunk }}</td>
+                      <template v-else>
+                        <td class="no" :class="r.left?.kind">{{ r.left?.old ?? "" }}</td>
+                        <td class="src" :class="r.left ? r.left.kind : 'none'" v-html="hl(r.left) || '&#8203;'"></td>
+                      </template>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="split-bar" title="Glisser pour redimensionner · double-clic : au centre" @pointerdown="startSplit" @dblclick="settings.splitRatio = 0.5"></div>
+              <div class="side">
+                <table class="tbl">
+                  <tbody>
+                    <tr v-for="(r, i) in split" :key="i">
+                      <td v-if="r.hunk" colspan="2" class="hunk mono">&#8203;</td>
+                      <template v-else>
+                        <td class="no" :class="r.right?.kind">{{ r.right?.new ?? "" }}</td>
+                        <td class="src" :class="r.right ? r.right.kind : 'none'" v-html="hl(r.right) || '&#8203;'"></td>
+                      </template>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <table v-else-if="mode === 'split'" class="tbl split fixed">
+              <colgroup>
+                <col class="c-no" />
+                <col :style="{ width: `${settings.splitRatio * 100}%` }" />
+                <col class="c-no" />
+                <col :style="{ width: `${(1 - settings.splitRatio) * 100}%` }" />
+              </colgroup>
               <tbody>
                 <tr v-for="(r, i) in split" :key="i">
                   <template v-if="r.hunk"><td colspan="4" class="hunk mono">{{ r.hunk }}</td></template>
                   <template v-else>
                     <td class="no" :class="r.left?.kind">{{ r.left?.old ?? "" }}</td>
-                    <td class="src half" :class="r.left ? r.left.kind : 'none'" v-html="hl(r.left)"></td>
+                    <td class="src" :class="r.left ? r.left.kind : 'none'" v-html="hl(r.left)"></td>
                     <td class="no sepl" :class="r.right?.kind">{{ r.right?.new ?? "" }}</td>
-                    <td class="src half" :class="r.right ? r.right.kind : 'none'" v-html="hl(r.right)"></td>
+                    <td class="src" :class="r.right ? r.right.kind : 'none'" v-html="hl(r.right)"></td>
                   </template>
                 </tr>
               </tbody>
@@ -367,7 +432,13 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .mark { color: var(--ok); }
 .src { white-space: pre; user-select: text; }
 .code.wrap .src { white-space: pre-wrap; word-break: break-all; }
-.half { width: 49%; }
+.split2 { display: grid; min-width: 0; align-items: start; }
+.side { min-width: 0; overflow-x: auto; }
+.side .tbl { width: max-content; min-width: 100%; }
+.split-bar { align-self: stretch; cursor: col-resize; background: rgba(255, 255, 255, 0.06); }
+.split-bar:hover { background: rgba(110, 168, 254, 0.45); }
+.tbl.fixed { table-layout: fixed; }
+.c-no { width: 52px; }
 .sepl { border-left: 1px solid rgba(255, 255, 255, 0.06); }
 tr.add > td, td.add { background: var(--c-add); }
 tr.del > td, td.del { background: var(--c-del); }

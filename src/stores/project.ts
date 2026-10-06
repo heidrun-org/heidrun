@@ -101,13 +101,15 @@ export async function loadProject(workspaceId: string) {
   }
 }
 
-async function save(workspaceId: string) {
+export async function saveProject(workspaceId: string): Promise<boolean> {
   const p = project.byWorkspace[workspaceId];
-  if (!p) return;
+  if (!p) return false;
   try {
     await invoke("project_save", { root: p.root, config: p.config });
+    return true;
   } catch (e) {
     toast(String(e));
+    return false;
   }
 }
 
@@ -156,7 +158,7 @@ export async function moveAction(workspaceId: string, id: string, at: number) {
   if (!p) return;
   const byId = new Map(p.config.actions.map((a) => [a.id, a]));
   p.config.actions = moveId(p.config.actions.map((a) => a.id), id, at).map((x) => byId.get(x)!);
-  await save(workspaceId);
+  await saveProject(workspaceId);
 }
 
 export function moveSuggestion(workspaceId: string, command: string, at: number) {
@@ -174,7 +176,7 @@ export async function addAction(workspaceId: string, label: string, command: str
   const p = project.byWorkspace[workspaceId];
   if (!p || !command.trim()) return;
   p.config.actions.push({ id: slug(label || command), label: (label || command).trim(), command: command.trim() });
-  await save(workspaceId);
+  await saveProject(workspaceId);
 }
 
 export async function removeAction(workspaceId: string, id: string) {
@@ -182,14 +184,14 @@ export async function removeAction(workspaceId: string, id: string) {
   if (!p) return;
   p.config.actions = p.config.actions.filter((a) => a.id !== id);
   delete project.panes[`${workspaceId}:${id}`];
-  await save(workspaceId);
+  await saveProject(workspaceId);
 }
 
 export async function renameAction(workspaceId: string, id: string, label: string) {
   const a = project.byWorkspace[workspaceId]?.config.actions.find((x) => x.id === id);
   if (!a) return;
   a.label = label;
-  await save(workspaceId);
+  await saveProject(workspaceId);
 }
 
 export function actionPane(workspaceId: string, action: Action) {
