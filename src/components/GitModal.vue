@@ -201,7 +201,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
       </header>
 
       <div class="body">
-        <aside class="left" :style="{ width: `${settings.gitListWidth}px` }">
+        <aside v-show="!settings.gitListHidden" class="left" :style="{ width: `${settings.gitListWidth}px` }">
           <input v-model="filter" class="filter" placeholder="Filtrer les fichiers…" spellcheck="false" />
           <div class="eyebrow">Modifications <span class="count">{{ st ? st.changed + st.untracked : 0 }}</span></div>
           <div ref="listEl" class="files">
@@ -230,9 +230,15 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           </div>
         </aside>
 
-        <Resizer v-model:width="settings.gitListWidth" side="left" :min="220" :max="900" :default-width="340" />
+        <Resizer v-show="!settings.gitListHidden" v-model:width="settings.gitListWidth" side="left" :min="220" :max="900" :default-width="340" />
         <section class="viewer">
           <div class="bar">
+            <button
+              type="button"
+              class="icon"
+              :title="settings.gitListHidden ? 'Afficher la liste des fichiers' : 'Masquer la liste : plein écran'"
+              @click="settings.gitListHidden = !settings.gitListHidden"
+            >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
             <div class="path mono" :title="selected ?? ''">
               <template v-if="selected">{{ selected }}</template>
               <span v-if="selected && diff.length" class="stats"><span class="plus">+{{ stats.added }}</span> <span class="minus">−{{ stats.removed }}</span></span>
@@ -242,6 +248,10 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               <button :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">Côte à côte</button>
               <button :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">Fichier</button>
               <button v-if="md" :class="{ on: mode === 'read' }" title="Markdown mis en forme" @click="settings.diffMode = 'read'">Lecture</button>
+            </div>
+            <div v-if="mode === 'read'" class="seg" role="radiogroup" aria-label="Largeur de lecture">
+              <button :class="{ on: settings.mdWidth === 'center' }" title="Colonne centrée, confortable à lire" @click="settings.mdWidth = 'center'">Centré</button>
+              <button :class="{ on: settings.mdWidth === 'full' }" title="Toute la largeur (grands tableaux)" @click="settings.mdWidth = 'full'">Pleine largeur</button>
             </div>
             <label class="sr" for="code-theme">Thème</label>
             <select id="code-theme" v-model="settings.codeTheme" class="theme">
@@ -257,7 +267,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             <div v-else-if="loading && !diff.length && !fileLines.length" class="empty">Chargement…</div>
 
             <!-- Markdown, rendered -->
-            <article v-else-if="mode === 'read'" class="md" @click="onMdClick" v-html="rendered"></article>
+            <article v-else-if="mode === 'read'" class="md" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
 
             <!-- Unified diff -->
             <table v-else-if="mode === 'unified'" class="tbl">
@@ -404,6 +414,10 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .size { font-size: 11px; color: var(--muted); }
 /* Rendered Markdown: a reading column, GitHub-like. */
 .md { max-width: 860px; margin: 0 auto; padding: 28px 36px 60px; font: 15px/1.7 var(--sans); font-size: calc(1em + 2.5px); color: var(--c-fg); user-select: text; }
+.md.full { max-width: none; padding: 24px 40px 60px; }
+.md.full :deep(table) { display: table; width: 100%; }
+.icon { width: 28px; height: 28px; flex-shrink: 0; border: none; border-radius: 7px; background: transparent; color: var(--muted); font-size: 15px; }
+.icon:hover { background: var(--hover); color: var(--text); }
 .md :deep(h1), .md :deep(h2) { padding-bottom: 0.3em; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .md :deep(h1) { font-size: 1.9em; margin: 0.2em 0 0.7em; }
 .md :deep(h2) { font-size: 1.45em; margin: 1.6em 0 0.6em; }

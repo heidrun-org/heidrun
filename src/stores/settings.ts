@@ -64,6 +64,10 @@ const defaults = {
   codeFontSize: 12.5,
   /** Side-by-side diff: share of the width for the old version (0.5 = middle). */
   splitRatio: 0.5,
+  /** Markdown reading: centred column, or the whole width. */
+  mdWidth: "center" as "center" | "full",
+  /** Git window: file list hidden (the viewer takes the whole window). */
+  gitListHidden: false,
   gitListWidth: 340,
   codeTheme: "github-dark",
   codeWrap: false,
