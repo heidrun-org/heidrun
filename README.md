@@ -70,6 +70,8 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 **Panneau de droite** : en haut, la **Session** du panneau sélectionné (workspace · onglet, état, contexte, coût, Remote Control) ; en dessous, **Tous les agents** : quotas du compte Claude et Codex, partagés par toutes les sessions, et le fil **Activité** (workspace · onglet, puis l’agent ; clic pour y aller).
 
+Les éléments **terminés** (fil Activité, cartes « À traiter » terminées) disparaissent tout seuls après 15 min par défaut ; le délai se règle dans le menu « A » (5 min, 15 min, 1 h, jamais). Les agents bloqués restent affichés.
+
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
 
 **Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.
@@ -158,7 +160,14 @@ Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
 
 ## Pistes
 
-Idées notées pour plus tard, pas encore faites.
+Idées notées pour plus tard, pas encore faites. Chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
+
+```sh
+sh scripts/create-gitlab-issues.sh --dry-run          # aperçu
+sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-desk, pousse, ouvre les issues
+```
+
+Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
 
 1. **Vue multiple des panneaux Herdr** (à faire en premier : c'est la plus fiable). Un « Ouvrir à côté » sur un agent : le premier ouvert divise l'écran verticalement, chaque agent suivant divise horizontalement la colonne où sont déjà les agents ouverts, pour tous les voir travailler en même temps. Repose sur ce que Herdr sait déjà faire (`pane.split`, disposition de l'onglet lue par l'app).
 2. **Barre de saisie partagée, avec choix du destinataire.** En bas, un seul champ et un menu pour choisir l'agent (workspace · onglet). Envoi direct pour un panneau Herdr ; pour un sous-agent d'une session Claude, l'app bascule d'abord dessus avec les touches, puis envoie (petit délai, un seul sous-agent à la fois).
