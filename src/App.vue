@@ -11,7 +11,8 @@ import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
 import DangerModal from "./components/DangerModal.vue";
 import GitModal from "./components/GitModal.vue";
-import { git } from "./stores/git";
+import { git, merging } from "./stores/git";
+import MergeModal from "./components/MergeModal.vue";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -165,6 +166,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
+    <MergeModal v-if="merging.open && merging.req" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

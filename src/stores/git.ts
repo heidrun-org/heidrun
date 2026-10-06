@@ -36,6 +36,12 @@ export interface Request {
   status: "open" | "merged" | "closed";
   /** When it was merged / closed / last updated (ms). */
   at: number | null;
+  number: number;
+  /** Head commit when it was read: the merge is refused if it moved since. */
+  sha: string | null;
+  target: string;
+  squash: boolean;
+  removeBranch: boolean;
 }
 
 export interface ForgeInfo {
@@ -57,6 +63,61 @@ export const git = reactive({
   /** Large Git window: open, and the file shown. */
   modal: { open: false, path: null as string | null },
 });
+
+// ---- Merge, after confirmation ------------------------------------------------
+
+export const merging = reactive({
+  open: false,
+  req: null as Request | null,
+  wsId: "",
+  forge: "gitlab" as Forge,
+  method: "merge" as "merge" | "squash" | "rebase",
+  removeBranch: false,
+  busy: false,
+  error: "",
+  result: "",
+});
+
+export function askMerge(wsId: string, req: Request) {
+  const f = git.forge[wsId];
+  Object.assign(merging, {
+    open: true,
+    req,
+    wsId,
+    forge: f?.forge ?? "gitlab",
+    method: req.squash ? "squash" : "merge",
+    removeBranch: req.removeBranch,
+    busy: false,
+    error: "",
+  });
+}
+
+export async function confirmMerge(): Promise<boolean> {
+  const r = merging.req;
+  const root = git.status[merging.wsId]?.root;
+  if (!r || !root) return false;
+  merging.busy = true;
+  merging.error = "";
+  try {
+    merging.result = await invoke<string>("forge_merge", {
+      root,
+      forge: merging.forge,
+      number: r.number,
+      sha: r.sha,
+      method: merging.method,
+      deleteBranch: merging.removeBranch,
+      branch: r.branch,
+    });
+    merging.open = false;
+    await refreshGit(merging.wsId);
+    return true;
+  } catch (e) {
+    merging.error = String(e).split("\n").slice(0, 4).join("\n");
+    return false;
+  } finally {
+    merging.busy = false;
+  }
+}
 
 export function openGitModal(path: string | null = null) {
   git.modal.path = path;
@@ -134,6 +195,11 @@ type GlMr = {
   detailed_merge_status?: string;
   has_conflicts?: boolean;
   state?: string;
+  sha?: string;
+  target_branch?: string;
+  squash?: boolean;
+  force_remove_source_branch?: boolean;
+  should_remove_source_branch?: boolean | null;
   merged_at?: string | null;
   closed_at?: string | null;
   updated_at?: string | null;
@@ -162,6 +228,11 @@ function glRequest(m: GlMr, status: Request["status"]): Request {
     review: m.detailed_merge_status === "requested_changes" ? { label: "changements demandés", level: "crit" } : null,
     status,
     at: time(m.merged_at) ?? time(m.closed_at) ?? time(m.updated_at),
+    number: m.iid,
+    sha: m.sha ?? null,
+    target: m.target_branch ?? "",
+    squash: !!m.squash,
+    removeBranch: !!(m.force_remove_source_branch || m.should_remove_source_branch),
   };
 }
 
@@ -237,6 +308,8 @@ type GhPr = {
   statusCheckRollup?: { conclusion?: string; status?: string; state?: string }[];
   state?: string;
   mergedAt?: string | null;
+  headRefOid?: string;
+  baseRefName?: string;
   closedAt?: string | null;
   updatedAt?: string | null;
 };
@@ -272,10 +345,16 @@ function ghRequest(p: GhPr, status: Request["status"]): Request {
     review: status === "open" ? GH_REVIEW[p.reviewDecision ?? ""] ?? null : null,
     status,
     at: time(p.mergedAt) ?? time(p.closedAt) ?? time(p.updatedAt),
+    number: p.number,
+    sha: p.headRefOid ?? null,
+    target: p.baseRefName ?? "",
+    squash: false,
+    removeBranch: false,
   };
 }
 
-const GH_FIELDS = "number,title,url,author,headRefName,isDraft,reviewDecision,mergeable,statusCheckRollup,state,mergedAt,closedAt,updatedAt";
+const GH_FIELDS =
+  "number,title,url,author,headRefName,baseRefName,headRefOid,isDraft,reviewDecision,mergeable,statusCheckRollup,state,mergedAt,closedAt,updatedAt";
 
 async function loadGithub(cwd: string, branch: string | null): Promise<Pick<ForgeInfo, "requests" | "recent" | "ci">> {
   const list = JSON.parse(await cli(cwd, "gh", ["pr", "list", "--limit", "20", "--json", GH_FIELDS])) as GhPr[];

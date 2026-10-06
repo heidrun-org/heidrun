@@ -246,15 +246,10 @@ fn allowed(tool: &str, args: &[String]) -> bool {
     }
 }
 
-/// Runs a read-only `glab` / `gh` call in the repository, through the login
-/// shell (Homebrew PATH, accounts already connected).
-#[tauri::command]
-pub async fn forge_cli(cwd: String, tool: String, args: Vec<String>) -> Result<String, String> {
-    if !allowed(&tool, &args) {
-        return Err(format!("forge_cli : appel non autorisé ({tool} {})", args.join(" ")));
-    }
-    // `exec "$0" "$@"` passes arguments as is (never re-parsed). It needs a POSIX
-    // shell: fish and friends fall back to zsh, which still loads the login PATH.
+/// Runs `glab` / `gh` in the repository through the login shell (Homebrew PATH,
+/// accounts already connected). `exec "$0" "$@"` passes arguments as is.
+async fn run_forge(cwd: &str, tool: &str, args: &[String], timeout: u64) -> Result<String, String> {
+    // It needs a POSIX shell: fish and friends fall back to zsh (login PATH too).
     let user_shell = std::env::var("SHELL").unwrap_or_default();
     let shell = if user_shell.ends_with("/zsh") || user_shell.ends_with("/bash") || user_shell.ends_with("/sh") {
         user_shell
@@ -262,11 +257,11 @@ pub async fn forge_cli(cwd: String, tool: String, args: Vec<String>) -> Result<S
         "/bin/zsh".into()
     };
     let mut cmd = Command::new(shell);
-    cmd.arg("-lc").arg("exec \"$0\" \"$@\"").arg(&tool).args(&args).current_dir(&cwd).kill_on_drop(true);
+    cmd.arg("-lc").arg("exec \"$0\" \"$@\"").arg(tool).args(args).current_dir(cwd).kill_on_drop(true);
     cmd.env("NO_COLOR", "1").env("NO_PROMPT", "1").env("GLAB_NO_PROMPT", "1").env("GH_PROMPT_DISABLED", "1");
-    let out = tokio::time::timeout(Duration::from_secs(20), cmd.output())
+    let out = tokio::time::timeout(Duration::from_secs(timeout), cmd.output())
         .await
-        .map_err(|_| format!("{tool} : pas de réponse en 20 s"))?
+        .map_err(|_| format!("{tool} : pas de réponse en {timeout} s"))?
         .map_err(|e| format!("{tool} : {e}"))?;
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
@@ -274,6 +269,78 @@ pub async fn forge_cli(cwd: String, tool: String, args: Vec<String>) -> Result<S
         let err = String::from_utf8_lossy(&out.stderr).trim().to_string();
         Err(if err.is_empty() { format!("{tool} a échoué ({})", out.status) } else { err })
     }
+}
+
+/// Runs a read-only `glab` / `gh` call (see `allowed`).
+#[tauri::command]
+pub async fn forge_cli(cwd: String, tool: String, args: Vec<String>) -> Result<String, String> {
+    if !allowed(&tool, &args) {
+        return Err(format!("forge_cli : appel non autorisé ({tool} {})", args.join(" ")));
+    }
+    run_forge(&cwd, &tool, &args, 20).await
+}
+
+/// Merges a MR / PR, after the user confirmed it in the app. `sha` is the head
+/// commit the user saw: if someone pushed since, the forge refuses the merge.
+#[tauri::command]
+pub async fn forge_merge(
+    root: String,
+    forge: String,
+    number: u64,
+    sha: Option<String>,
+    method: String,
+    delete_branch: bool,
+    branch: Option<String>,
+) -> Result<String, String> {
+    known_root(&root)?;
+    // A branch name as git allows it, nothing that could be read as a path trick.
+    let branch = branch.filter(|b| !b.is_empty() && !b.contains("..") && b.chars().all(|c| c.is_ascii_alphanumeric() || "/._-".contains(c)));
+    let sha = sha.filter(|s| s.len() >= 7 && s.chars().all(|c| c.is_ascii_hexdigit()));
+    let mut args: Vec<String> = Vec::new();
+    let tool = match forge.as_str() {
+        "gitlab" => {
+            args.extend(["mr", "merge", &number.to_string(), "--yes"].map(String::from));
+            match method.as_str() {
+                "squash" => args.push("--squash".into()),
+                "rebase" => args.push("--rebase".into()),
+                _ => {}
+            }
+            if delete_branch {
+                args.push("--remove-source-branch".into());
+            }
+            if let Some(s) = &sha {
+                args.extend(["--sha".to_string(), s.clone()]);
+            }
+            "glab"
+        }
+        "github" => {
+            args.extend(["pr", "merge", &number.to_string()].map(String::from));
+            args.push(match method.as_str() {
+                "squash" => "--squash".into(),
+                "rebase" => "--rebase".into(),
+                _ => "--merge".into(),
+            });
+            // No --delete-branch: gh would also delete the local branch and switch
+            // the working copy, under the feet of the agent working in it. The remote
+            // branch is deleted through the API below instead.
+            if let Some(s) = &sha {
+                args.extend(["--match-head-commit".to_string(), s.clone()]);
+            }
+            "gh"
+        }
+        _ => return Err("hébergeur inconnu".into()),
+    };
+    let out = run_forge(&root, tool, &args, 60).await?;
+    if forge == "github" && delete_branch {
+        if let Some(b) = branch {
+            let path = format!("repos/{{owner}}/{{repo}}/git/refs/heads/{b}");
+            let del = ["api", "-X", "DELETE", &path].map(String::from);
+            if let Err(e) = run_forge(&root, "gh", &del, 20).await {
+                return Ok(format!("fusionnée, mais la branche distante n’a pas été supprimée : {e}"));
+            }
+        }
+    }
+    Ok(if out.trim().is_empty() { "ok".into() } else { out })
 }
 
 #[cfg(test)]

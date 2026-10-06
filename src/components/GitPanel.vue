@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
+import { askMerge, currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
 import { selectedPane, sendPrompt, state, toast, workspaceLabel, workspacePanes } from "../stores/session";
 import { ago, paneName } from "../lib/format";
 
@@ -111,12 +111,21 @@ async function askReview(ref: string, url: string, title: string) {
             <span class="req-title">{{ r.title }}</span>
             <span class="muted mono">{{ r.branch }}<template v-if="r.author"> · {{ r.author }}</template></span>
           </button>
-          <button
-            v-if="reviewer"
-            class="link review"
-            :title="`Demander une revue à ${paneName(reviewer)}`"
-            @click="askReview(r.ref, r.url, r.title)"
-          >Demander une revue</button>
+          <span class="req-actions">
+            <button
+              v-if="reviewer"
+              class="link"
+              :title="`Demander une revue à ${paneName(reviewer)}`"
+              @click="askReview(r.ref, r.url, r.title)"
+            >Demander une revue</button>
+            <button
+              v-if="!r.draft"
+              class="link merge"
+              :class="{ ready: r.level === 'ok' }"
+              :title="`Fusionner ${r.ref} (avec confirmation)`"
+              @click="askMerge(state.selectedWorkspaceId!, r)"
+            >Fusionner…</button>
+          </span>
         </div>
         <template v-if="fg && fg.recent.length">
           <div class="eyebrow recent-h">Fusionnées / fermées (7 jours)</div>
@@ -183,7 +192,9 @@ button.chip { cursor: pointer; }
 .ref { color: #c29bf0; font-size: 12px; }
 .req-title { font-size: 12.5px; font-weight: 500; }
 .req .muted { font-size: 11px; }
-.review { align-self: flex-start; }
+.req-actions { display: flex; gap: 14px; }
+.merge.ready { color: #c29bf0; }
+.merge.ready:hover { color: #d6b8f6; }
 .err { font-size: 12px; color: var(--fail); }
 .muted { font-size: 12px; color: var(--muted); }
 .foot { font-size: 11px; }
