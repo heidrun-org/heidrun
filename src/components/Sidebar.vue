@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import {
   allPanes,
+  answerChoice,
   attention,
   dismiss,
   finishRename,
@@ -22,6 +23,7 @@ import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
+import { git } from "../stores/git";
 import type { AgentInfo } from "../lib/types";
 
 function summary(p: AgentInfo): string {
@@ -100,6 +102,11 @@ async function createWorkspace() {
           <span class="grow">{{ w.label }}</span>
           <span v-if="wi < 9" class="key">⌘{{ wi + 1 }}</span>
           <span
+            v-if="git.status[w.workspace_id]?.ahead"
+            class="git-ahead"
+            :title="`${git.status[w.workspace_id]!.ahead} commit(s) pas encore poussé(s)`"
+          >↑{{ git.status[w.workspace_id]!.ahead }}</span>
+          <span
             v-for="a in agentsIn(w.workspace_id)"
             :key="a.kind"
             class="agent-tag"
@@ -159,6 +166,20 @@ async function createWorkspace() {
           <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
           <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
         </button>
+        <!-- The agent's own menu: answer without opening its tab. -->
+        <div v-if="p.agent_status === 'blocked' && state.choices[p.pane_id]" class="choices">
+          <pre v-if="state.choices[p.pane_id].detail" class="choice-d mono">{{ state.choices[p.pane_id].detail }}</pre>
+          <span v-if="state.choices[p.pane_id].question" class="choice-q">{{ state.choices[p.pane_id].question }}</span>
+          <button
+            v-for="o in state.choices[p.pane_id].options"
+            :key="o.n"
+            class="choice"
+            :title="o.label"
+            @click="answerChoice(p.pane_id, o.n)"
+          >
+            <span class="choice-n">{{ o.n }}</span><span class="choice-l">{{ o.label }}</span>
+          </button>
+        </div>
         <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
           <Icon name="close" />
         </button>
@@ -187,6 +208,20 @@ async function createWorkspace() {
 }
 .card-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
 .card.blocked { border-color: #5c2826; background: #201313; }
+.choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
+.choice-d {
+  margin: 0 0 2px; padding: 6px 8px; border-radius: 6px; background: #170f0f; color: var(--text-2);
+  font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 84px; overflow: hidden;
+}
+.choice-q { font-size: 11.5px; color: var(--text-2); margin: 0 2px 2px; }
+.choice {
+  display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 4px 8px; border-radius: 7px;
+  border: 1px solid #4a2523; background: #2a1514; color: var(--text); text-align: left; font-size: 12px;
+}
+.choice:hover { background: #3a1c1b; border-color: #7d3330; }
+.choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: #4a2523; color: var(--blocked);
+  font: 600 11px var(--mono); display: inline-flex; align-items: center; justify-content: center; }
+.choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card.question { border-color: #4a3866; background: #1a1622; }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -218,6 +253,7 @@ async function createWorkspace() {
 }
 .count, .status { font-size: 11px; color: var(--muted); }
 /* Workspaces with an agent session vs. plain shells or nothing running. */
+.git-ahead { flex-shrink: 0; font: 600 10.5px var(--mono); color: #f2a93b; }
 .ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
 .agent-tag {
   flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 5px; font-size: 10.5px; font-weight: 600;

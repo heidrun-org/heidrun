@@ -2,7 +2,8 @@ import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { moveId } from "../lib/reorder";
-import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaces } from "./session";
+import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
+import { allowCommand } from "./guards";
 
 export interface Action {
   id: string;
@@ -210,6 +211,9 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = actionPane(workspaceId, action);
+  // A click that will type the command: through the guards first.
+  const willType = !existing || (rerun && !project.busy[existing.pane_id]);
+  if (willType && !(await allowCommand(action.command, p.root, `${workspaceLabel(workspaceId)} · ${action.label}`))) return;
   if (!existing || rerun) recordRun(workspaceId, action.label, action.command);
   if (existing) {
     selectTab(existing.tab_id);

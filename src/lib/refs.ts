@@ -407,3 +407,79 @@ export function findQuestion(screen: string): string | null {
   const q = sentences[sentences.length - 1].trim();
   return q.length > 220 ? `…${q.slice(-220)}` : q;
 }
+
+// ---- Numbered menus of a blocked agent ("1. Yes / 2. … / 3. No") -------------
+
+export interface Choice {
+  n: number;
+  label: string;
+  selected: boolean;
+}
+
+export interface ChoiceMenu {
+  question: string;
+  /** Lines of the dialog above the question (the command or file concerned). */
+  detail: string;
+  options: Choice[];
+}
+
+const OPTION = /^\s*([❯›>▶]\s*)?(\d{1,2})[.)]\s+(\S.*?)\s*$/;
+
+/**
+ * The menu a blocked agent shows: the last run of options numbered 1, 2, 3…
+ * (wrapped labels allowed), and the question just above it.
+ */
+export function findChoices(screen: string): ChoiceMenu | null {
+  const raw = screen.replace(/\r/g, "").split("\n").slice(-60);
+  // Drop the dialog frame: "│ … │", "╭───╮".
+  const lines = raw.map((l) => l.replace(/^\s*[│┃|]\s?/, "").replace(/\s?[│┃|]\s*$/, ""));
+  let best: { start: number; end: number; options: Choice[] } | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const m = OPTION.exec(lines[i]);
+    if (!m || m[2] !== "1") continue;
+    const options: Choice[] = [{ n: 1, label: m[3], selected: !!m[1] }];
+    let labelCol = lines[i].indexOf(m[3]);
+    let lastOption = i;
+    let gap = 0;
+    for (let j = i + 1; j < lines.length && gap <= 2; j++) {
+      const o = OPTION.exec(lines[j]);
+      const indent = lines[j].search(/\S/);
+      if (o && Number(o[2]) === options.length + 1) {
+        options.push({ n: Number(o[2]), label: o[3], selected: !!o[1] });
+        labelCol = lines[j].indexOf(o[3]);
+        lastOption = j;
+        gap = 0;
+      } else if (indent >= 0 && indent >= labelCol && gap === 0) {
+        // Wrapped label: continues the previous option.
+        options[options.length - 1].label += ` ${lines[j].trim()}`;
+        lastOption = j;
+      } else {
+        gap++;
+      }
+    }
+    if (options.length >= 2) best = { start: i, end: lastOption, options };
+  }
+  if (!best) return null;
+  // A real menu is the last thing on screen (frame, hints like "Esc to cancel"
+  // aside) and has exactly one selected option: not a list in the agent's text.
+  const after = lines.slice(best.end + 1).filter((l) => l.trim() && !/^\s*[╰╭─━└┌]/.test(l));
+  if (after.length > 3) return null;
+  if (best.options.filter((o) => o.selected).length !== 1) return null;
+  let question = "";
+  let q = -1;
+  for (let k = best.start - 1; k >= Math.max(0, best.start - 4); k--) {
+    const t = lines[k].trim();
+    if (!t || /^[╭╰─━┌└]/.test(t)) continue;
+    question = t;
+    q = k;
+    break;
+  }
+  const detail = q > 0
+    ? lines
+        .slice(Math.max(0, q - 8), q)
+        .map((l) => l.trim())
+        .filter((l) => l && !/^[╭╰─━┌└]/.test(l))
+        .join("\n")
+    : "";
+  return { question, detail, options: best.options.map((o) => ({ ...o, label: o.label.length > 90 ? `${o.label.slice(0, 90)}…` : o.label })) };
+}

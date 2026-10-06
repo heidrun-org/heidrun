@@ -1,4 +1,5 @@
 mod claude;
+mod git;
 mod herdr;
 mod project;
 mod pty;
@@ -140,6 +141,8 @@ pub fn run() {
             project::project_load,
             project::project_save,
             project::project_refs,
+            git::git_status,
+            git::forge_cli,
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,

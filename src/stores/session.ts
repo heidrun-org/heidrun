@@ -5,7 +5,8 @@ import * as api from "../lib/api";
 import { notify } from "../lib/notify";
 import { settings } from "./settings";
 import { agentKind, paneName } from "../lib/format";
-import { findQuestion } from "../lib/refs";
+import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
+import { allowCommand } from "./guards";
 import type {
   AgentInfo,
   AgentStatus,
@@ -71,6 +72,8 @@ export const state = reactive({
   since: {} as Record<string, number>,
   /** Question ending the agent's last answer, while it waits for the next consigne. */
   questions: {} as Record<string, { text: string; at: number }>,
+  /** Numbered menu shown by a blocked agent (permission prompt, choice). */
+  choices: {} as Record<string, ChoiceMenu>,
   watches: [] as OutputWatch[],
   /** "À traiter" cards closed by the user, until the pane changes state again. */
   dismissed: loadDismissed(),
@@ -458,6 +461,75 @@ function trackRun(
   }
 }
 
+/** Reads the menu of a blocked agent, retrying while it is still being drawn. */
+async function readChoices(paneId: string, delays = [500, 900, 1600]) {
+  for (const delay of delays) {
+    await new Promise((r) => window.setTimeout(r, delay));
+    const before = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (!before || before.agent_status !== "blocked") return;
+    try {
+      const menu = findChoices(await api.read(paneId, 60));
+      // Still blocked once the read is back (it may have moved on meanwhile).
+      const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+      if (!pane || pane.agent_status !== "blocked") return;
+      if (menu) {
+        state.choices[paneId] = menu;
+        return;
+      }
+    } catch {
+      /* read in progress: next attempt */
+    }
+  }
+}
+
+const sameMenu = (a: ChoiceMenu, b: ChoiceMenu) =>
+  a.question === b.question && a.options.length === b.options.length && a.options.every((o, i) => o.label === b.options[i].label);
+
+const answering = new Set<string>();
+
+/**
+ * Picks option `n` of a blocked agent's menu with its number key (Claude Code
+ * and Codex accept it). Only when the very same menu is still there a moment
+ * later does it fall back to the arrows and Enter: never on a new dialog.
+ * An approval of a dangerous command goes through the guards first.
+ */
+export async function answerChoice(paneId: string, n: number) {
+  const menu = state.choices[paneId];
+  if (!menu || answering.has(paneId)) return;
+  const option = menu.options.find((o) => o.n === n);
+  const approves = !!option && /^(yes|oui|allow|autoriser|approve|proceed)\b/i.test(option.label);
+  if (approves && menu.detail) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(menu.detail, cwd, where))) return;
+  }
+  answering.add(paneId);
+  delete state.choices[paneId];
+  try {
+    await guard(() => api.sendKeys(paneId, [String(n)]));
+    await new Promise((r) => window.setTimeout(r, 700));
+    let pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (pane?.agent_status !== "blocked") return;
+    let again: ChoiceMenu | null = null;
+    try {
+      again = findChoices(await api.read(paneId, 60));
+    } catch {
+      return;
+    }
+    if (again && sameMenu(again, menu)) {
+      const from = again.options.findIndex((o) => o.selected);
+      const steps = n - 1 - (from === -1 ? 0 : from);
+      const keys = [...Array(Math.abs(steps)).fill(steps > 0 ? "down" : "up"), "enter"];
+      await guard(() => api.sendKeys(paneId, keys));
+      await new Promise((r) => window.setTimeout(r, 500));
+    }
+    // Next dialog (or the same one): show what is on screen now.
+    pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (pane?.agent_status === "blocked") readChoices(paneId, [300, 800]);
+  } finally {
+    answering.delete(paneId);
+  }
+}
+
 /**
  * Reads the end of the agent's output after it finished. A question there
  * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
@@ -510,6 +582,8 @@ function applySnapshot(snap: SessionSnapshot) {
       tab: t ? t.label || `onglet ${t.number}` : "",
     });
     if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
+    if (after !== "blocked") delete state.choices[pane.pane_id];
+    else readChoices(pane.pane_id);
     if (before === undefined) {
       // First sight: an agent already done may have ended on a question.
       if (after === "done") checkQuestion(pane.pane_id, paneName(view), ws, false);
@@ -763,7 +837,19 @@ export function closeTab(tabId: string) {
   return guard(() => api.closeTab(tabId));
 }
 
-export function sendPrompt(paneId: string, text: string) {
+/** Where a pane is, for the confirmation window: "Workspace · Onglet". */
+function whereOf(paneId: string | undefined): { cwd: string | null; where: string } {
+  const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : undefined;
+  return p ? { cwd: p.foreground_cwd || p.cwd || null, where: paneFullName(p) } : { cwd: null, where: "" };
+}
+
+export async function sendPrompt(paneId: string, text: string) {
+  // "! command": Claude's shell mode runs it as is, so it goes through the guards.
+  const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
+  if (shell) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(shell[1], cwd, where))) return undefined;
+  }
   return guard(() => api.prompt(paneId, text));
 }
 
@@ -771,16 +857,20 @@ export function sendKeys(paneId: string, keys: string[]) {
   return guard(() => api.sendKeys(paneId, keys));
 }
 
-export function runInPane(paneId: string, command: string) {
+export async function runInPane(paneId: string, command: string) {
+  const { cwd, where } = whereOf(paneId);
+  if (!(await allowCommand(command, cwd, where))) return undefined;
   rememberCommand(command);
   return guard(() => api.run(paneId, command));
 }
 
 export async function runInNewPane(command: string, watch?: string) {
-  rememberCommand(command);
   const base = selectedPane.value;
   const ws = selectedWorkspace.value;
   if (!ws) return;
+  const w = whereOf(base?.pane_id);
+  if (!(await allowCommand(command, w.cwd, w.where || ws.label))) return;
+  rememberCommand(command);
   const pane = await guard(async () =>
     base ? api.split(base.pane_id, "right", base.cwd) : api.newTab(ws.workspace_id, null),
   );

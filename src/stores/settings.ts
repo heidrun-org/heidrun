@@ -35,7 +35,7 @@ const defaults = {
    */
   mouseMode: "select" as "select" | "app",
   /** Right panel section. */
-  rightTab: "pane" as "pane" | "actions" | "notes",
+  rightTab: "pane" as "pane" | "actions" | "git" | "notes",
   /** Last size of the note window, in px. */
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */

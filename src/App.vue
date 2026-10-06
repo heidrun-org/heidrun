@@ -9,6 +9,8 @@ import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
+import DangerModal from "./components/DangerModal.vue";
+import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
@@ -29,6 +31,7 @@ import {
 import { resetZoom, settings, zoom } from "./stores/settings";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
+import { startGit } from "./stores/git";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
 let armedClose: string | null = null;
@@ -37,6 +40,14 @@ let armedAt = 0;
 // Capture phase: our shortcuts win over xterm, which otherwise swallows the keys.
 // e.code is used because ⌥ changes e.key on macOS (⌥B gives "∫").
 function onKey(e: KeyboardEvent) {
+  if (danger.open) {
+    // The confirmation window owns the keyboard: Esc cancels, nothing else runs behind it.
+    if (e.key === "Escape") {
+      e.preventDefault();
+      answerDanger(false);
+    } else if (e.metaKey) e.preventDefault();
+    return;
+  }
   if (!e.metaKey || e.ctrlKey) return;
   const run = (fn: () => unknown) => {
     e.preventDefault();
@@ -114,6 +125,7 @@ onMounted(() => {
   window.addEventListener("keydown", onKey, true);
   start();
   startProjects();
+  startGit();
   loadClaudeLink();
   startRemoteWatch();
 });
@@ -145,6 +157,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <CommandPalette v-if="state.paletteOpen" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
+    <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
     </Transition>

@@ -6,6 +6,7 @@ import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
   allPanes,
+  answerChoice,
   askAgentToFix,
   clearFinishedRuns,
   closePane,
@@ -126,7 +127,22 @@ const statusText = computed(() => {
         </div>
 
         <!-- Approval buttons: keys for Claude Code's menu; Codex accepts Enter / Esc too. -->
-        <div v-if="p.agent && p.agent_status === 'blocked'" class="block actions">
+        <div v-if="p.agent && p.agent_status === 'blocked' && state.choices[p.pane_id]" class="block actions">
+          <pre v-if="state.choices[p.pane_id].detail" class="detail mono">{{ state.choices[p.pane_id].detail }}</pre>
+          <div v-if="state.choices[p.pane_id].question" class="q">{{ state.choices[p.pane_id].question }}</div>
+          <button
+            v-for="o in state.choices[p.pane_id].options"
+            :key="o.n"
+            class="btn lg opt"
+            :class="{ primary: o.n === 1 }"
+            :title="o.label"
+            @click="answerChoice(p.pane_id, o.n)"
+          >
+            <span class="opt-n">{{ o.n }}</span><span class="opt-l">{{ o.label }}</span>
+          </button>
+          <button class="btn" @click="sendKeys(p.pane_id, ['esc'])">Échap</button>
+        </div>
+        <div v-else-if="p.agent && p.agent_status === 'blocked'" class="block actions">
           <button class="btn lg primary" @click="sendKeys(p.pane_id, ['enter'])">Autoriser</button>
           <div class="pair">
             <button v-if="isClaude" class="btn lg" @click="sendKeys(p.pane_id, ['2'])">Toujours</button>
@@ -260,6 +276,14 @@ const statusText = computed(() => {
 .chip.working { background: #13282a; color: var(--working); }
 .chip.done { background: #142033; color: var(--done); }
 .pair { display: flex; gap: 8px; }
+.q { font-size: 13px; color: var(--text); }
+.detail {
+  margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-strong);
+  font-size: 11.5px; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow: auto; user-select: text;
+}
+.btn.opt { justify-content: flex-start; gap: 10px; text-align: left; height: auto; min-height: 40px; padding: 8px 12px; }
+.opt-n { flex-shrink: 0; font: 600 12px var(--mono); opacity: 0.8; }
+.opt-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pair .btn { flex: 1; }
 .actions .btn.primary { width: 100%; }
 .facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: 12px; }

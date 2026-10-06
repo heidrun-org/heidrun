@@ -72,6 +72,21 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 Les éléments **terminés** (fil Activité, cartes « À traiter » terminées) disparaissent tout seuls après 15 min par défaut ; le délai se règle dans le menu « A » (5 min, 15 min, 1 h, jamais). Les agents bloqués restent affichés.
 
+**Répondre aux menus d'un agent bloqué** : quand Claude (ou Codex) affiche un menu numéroté (« 1. Yes / 2. Yes, and don't ask again… / 3. No »), ses options apparaissent en boutons sur la carte « À traiter » et dans le panneau de droite, avec la commande ou le fichier concerné. Un clic envoie le numéro de l'option. Si le même menu est encore là un instant plus tard, l'app passe par les flèches et Entrée ; elle n'agit jamais sur un nouveau dialogue sans que tu le voies.
+
+**Garde-fous** : avant d'envoyer une commande d'un clic (« ▷ Exécuter » sur un `!`, actions, barre de saisie, palette, réponse « Yes » à un menu d'autorisation), l'app la compare à une liste de motifs dangereux (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` sans `WHERE`, fusion de MR, actions sur la prod…). En cas de correspondance, une fenêtre affiche la commande complète et demande confirmation ; « Annuler » est sélectionné par défaut. Règles du projet dans `.herdr-desk.json` :
+
+```json
+"guards": {
+  "confirm": ["deploy", "make release"],
+  "block": ["make prod-reset"]
+}
+```
+
+`block` empêche l'envoi depuis l'app. Si le fichier est illisible, toutes les commandes demandent confirmation.
+
+**Onglet Git** (panneau de droite) : pour le workspace sélectionné, branche, avance / retard sur le remote, fichiers modifiés, dernier commit, état de la CI de la branche, et la liste des **MR (GitLab) ou PR (GitHub)** ouvertes avec leur état (prête, CI en cours, à approuver, conflit…). Un clic ouvre la MR ; « Demander une revue » l'envoie à l'agent du workspace. L'hébergeur est déduit du remote (`references.forge` pour le forcer). L'app passe par `glab` et `gh` déjà connectés sur le Mac, en lecture seule : aucun jeton n'est stocké. Dans la barre latérale, `↑2` signale des commits pas encore poussés.
+
 **Questions de l'agent** : quand un agent termine sa réponse par une question (« Veux-tu que je m'attaque à #44 ? »), l'app la repère, même si l'onglet n'est pas affiché. Une carte violette **QUESTION** apparaît dans « À traiter », avec la question, et une notification « … te pose une question » remplace « a terminé ». La carte reste jusqu'à ta réponse ou jusqu'à ce que tu la fermes. Les agents **bloqués** (menu d'autorisation) sont en rouge.
 
 Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.

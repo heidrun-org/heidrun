@@ -3,6 +3,8 @@ import { computed } from "vue";
 import Inspector from "./Inspector.vue";
 import ActionsPanel from "./ActionsPanel.vue";
 import NotesPanel from "./NotesPanel.vue";
+import GitPanel from "./GitPanel.vue";
+import { currentForge } from "../stores/git";
 import { settings } from "../stores/settings";
 import { notes } from "../stores/notes";
 import { actionStatus, currentProject } from "../stores/project";
@@ -18,6 +20,7 @@ const running = computed(() => {
 const tabs = computed(() => [
   { id: "pane" as const, label: "Panneau", badge: 0 },
   { id: "actions" as const, label: "Actions", badge: running.value },
+  { id: "git" as const, label: "Git", badge: currentForge.value?.requests.length ?? 0 },
   { id: "notes" as const, label: "Notes", badge: notes.list.length },
 ]);
 </script>
@@ -38,6 +41,7 @@ const tabs = computed(() => [
     </div>
     <Inspector v-if="settings.rightTab === 'pane'" />
     <ActionsPanel v-else-if="settings.rightTab === 'actions'" />
+    <GitPanel v-else-if="settings.rightTab === 'git'" />
     <NotesPanel v-else />
   </aside>
 </template>
