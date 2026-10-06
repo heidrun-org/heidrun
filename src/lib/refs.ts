@@ -384,22 +384,20 @@ export function findQuestion(screen: string): string | null {
   // Cut at the top of the prompt box (second-to-last rule), when there is one.
   const rules = lines.map((l, i) => (rule(l) ? i : -1)).filter((i) => i >= 0);
   const end = rules.length >= 2 ? rules[rules.length - 2] : rules.length === 1 ? rules[0] : lines.length;
+  // Status lines under the answer: "✻ Worked for 2m 3s", "* Waiting for 1 background
+  // agent", spinners, hints. They come after the text and must not hide its ending.
+  const status = (l: string) => /^\s*([✻✶✳✢✽✦·*⏺●]\s+(Worked|Cooked|Baked|Brewed|Churned|Waiting|Thinking|Running)|[✻✶✳✢✽✦·]\s|\*\s+\S.*…|⎿|⏵|▸▸|►►)/.test(l);
   const body = lines.slice(0, end);
-  // Last message of the agent.
-  let start = -1;
-  for (let i = body.length - 1; i >= 0 && i >= body.length - 80; i--) {
-    if (/^\s{0,2}[●⏺]\s/.test(body[i])) {
-      start = i;
-      break;
-    }
-  }
-  if (start === -1) return null;
-  const msg = body
-    .slice(start)
-    .filter((l) => !/^\s*[✻✶✳✢·*]\s+\S+…/.test(l)) // spinner lines ("✻ Pondering…")
-    .map((l) => l.replace(/^\s{0,2}[●⏺]\s/, "").trim())
-    .filter(Boolean);
-  if (!msg.length) return null;
+  let last = body.length - 1;
+  while (last >= 0 && (!body[last].trim() || status(body[last]))) last--;
+  if (last < 0) return null;
+  // The last paragraph of the answer (it may be long: no need to find its start).
+  let first = last;
+  while (first > 0 && body[first - 1].trim() && !status(body[first - 1]) && last - first < 12) first--;
+  const para = body.slice(first, last + 1);
+  // Your own prompt echoed back ("❯ …") is not a question from the agent.
+  if (/^\s*[❯>]/.test(para[0])) return null;
+  const msg = para.map((l) => l.replace(/^\s{0,2}[●⏺]\s/, "").trim()).filter(Boolean);
   // The question must be at the very end of the message (last 3 lines).
   const tail = msg.slice(-3).join(" ").replace(/\s+/g, " ").trim();
   if (!/\?\s*[)»"”]*\s*$/.test(tail)) return null;
