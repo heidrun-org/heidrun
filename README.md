@@ -156,6 +156,14 @@ Le front charge `session.snapshot` au démarrage, puis traite chaque événement
 
 Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
 
+## Pistes
+
+Idées notées pour plus tard, pas encore faites.
+
+1. **Vue multiple des panneaux Herdr** (à faire en premier : c'est la plus fiable). Un « Ouvrir à côté » sur un agent : le premier ouvert divise l'écran verticalement, chaque agent suivant divise horizontalement la colonne où sont déjà les agents ouverts, pour tous les voir travailler en même temps. Repose sur ce que Herdr sait déjà faire (`pane.split`, disposition de l'onglet lue par l'app).
+2. **Barre de saisie partagée, avec choix du destinataire.** En bas, un seul champ et un menu pour choisir l'agent (workspace · onglet). Envoi direct pour un panneau Herdr ; pour un sous-agent d'une session Claude, l'app bascule d'abord dessus avec les touches, puis envoie (petit délai, un seul sous-agent à la fois).
+3. **Mosaïque des sous-agents d'une session Claude** (main, Bruno, jerome-645…). Ils vivent dans un seul terminal et Claude Code n'en montre qu'un à la fois : pas de vrai terminal par sous-agent. À la place, un aperçu en lecture seule des dernières lignes de chacun, rafraîchi régulièrement ; un clic sur une case bascule le vrai terminal sur ce sous-agent.
+
 ## Limites connues
 
 - **Un seul serveur** : la machine locale. La connexion à un VPS viendra ensuite.
