@@ -398,12 +398,17 @@ interface ChipAction {
 }
 const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void; alt?: ChipAction } | null>(null);
 let chipTimer = 0;
+// Mouse on the chip: the chip is frozen. Claude redraws the screen all the time, and
+// xterm then re-reads the link under the last pointer position, which may be another
+// issue by now: without this, the chip would switch target or vanish under the mouse.
+let onChip = false;
 
 /**
  * The chip sits on the hovered line itself, just after the text: reaching it never
  * crosses another line (and another link that would replace it).
  */
 function showChip(r: { start: { x: number; y: number }; end: { x: number; y: number } }, label: string, run: () => void, alt?: ChipAction) {
+  if (onChip) return;
   window.clearTimeout(chipTimer);
   const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
   if (!term || !screen || !wrapEl.value) return;
@@ -413,7 +418,9 @@ function showChip(r: { start: { x: number; y: number }; end: { x: number; y: num
   const cellH = s.height / term.rows;
   const row = r.end.y - 1 - term.buffer.active.viewportY;
   const top = s.top - w.top + row * cellH + (cellH - 22) / 2;
-  const left = s.left - w.left + r.end.x * cellW + 8;
+  // Glued to the text (the chips' left padding is the visual gap): the pointer never
+  // goes back over the terminal on its way, so no other link can catch it.
+  const left = s.left - w.left + r.end.x * cellW;
   // No room after the text: pinned to the right edge, on the same line.
   const roomy = left + 280 < w.width;
   chip.value = { left: roomy ? left : null, right: roomy ? null : 10, top, label, run, alt };
@@ -421,7 +428,12 @@ function showChip(r: { start: { x: number; y: number }; end: { x: number; y: num
 
 function hideChip(now = false) {
   window.clearTimeout(chipTimer);
-  if (now) chip.value = null;
+  if (now) {
+    onChip = false;
+    chip.value = null;
+    return;
+  }
+  if (onChip) return;
   else chipTimer = window.setTimeout(() => (chip.value = null), 350);
 }
 
@@ -487,8 +499,13 @@ async function switchToAgent(name: string) {
   await pressKeys([...Array(Math.abs(steps)).fill(steps > 0 ? down : up), "\r"]);
 }
 
-function clearChipTimer() {
+function enterChip() {
+  onChip = true;
   window.clearTimeout(chipTimer);
+}
+function leaveChip() {
+  onChip = false;
+  hideChip();
 }
 
 function runChip(alt = false) {
@@ -730,8 +747,8 @@ onBeforeUnmount(() => {
         left: chip.left != null ? `${chip.left}px` : 'auto',
         right: chip.right != null ? `${chip.right}px` : 'auto',
       }"
-      @mouseenter="clearChipTimer()"
-      @mouseleave="hideChip()"
+      @mouseenter="enterChip()"
+      @mouseleave="leaveChip()"
       @mousedown.stop.prevent
     >
       <button class="chip" type="button" :title="chip.alt ? '' : '⌘-clic sur le texte fait la même chose'" @click="runChip(false)">{{ chip.label }}</button>
@@ -766,7 +783,7 @@ onBeforeUnmount(() => {
   border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 .sel-bar .btn { background: var(--field); }
-.chips { position: absolute; z-index: 6; display: flex; gap: 4px; }
+.chips { position: absolute; z-index: 6; display: flex; gap: 4px; padding: 0 4px 0 8px; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
