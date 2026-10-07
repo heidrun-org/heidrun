@@ -4,20 +4,34 @@ import TerminalView from "./TerminalView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
-import { closePane, contextFor, finishRename, selectPane, splitPane, startRename, state } from "../stores/session";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
+import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
 import { gaugeLevel, paneName } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 
-const props = defineProps<{ pane: AgentInfo }>();
+// `docked`: shown in the "à côté" column, outside its own tab.
+const props = defineProps<{ pane: AgentInfo; docked?: boolean }>();
 
-const selected = computed(() => state.selectedPaneId === props.pane.pane_id);
+const selected = computed(() =>
+  props.docked ? dockState.focus === props.pane.pane_id : state.selectedPaneId === props.pane.pane_id && !dockState.focus,
+);
+const pinned = computed(() => isDocked(props.pane.pane_id));
+// A click in a docked pane gives it the keyboard without leaving the current tab.
+function onDown() {
+  if (props.docked) dockState.focus = props.pane.pane_id;
+  else {
+    selectPane(props.pane);
+    dockState.focus = null;
+  }
+}
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
 const subtitle = computed(() => {
   const p = props.pane;
   const kind = p.agent ?? "shell";
   const extra = p.agent ? "" : p.terminal_title_stripped ? ` · ${p.terminal_title_stripped}` : "";
+  if (props.docked) return paneFullName(p);
   return `${kind} · ${p.pane_id}${extra}`;
 });
 </script>
@@ -25,8 +39,8 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected }]"
-    @mousedown="selectPane(pane)"
+    :class="[status, { selected, docked }]"
+    @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
     <header class="head">
@@ -51,6 +65,21 @@ const subtitle = computed(() => {
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
       </template>
       <span class="tools">
+        <template v-if="docked">
+          <button class="tool txt" title="Aller à son onglet" @mousedown.stop @click="selectPane(pane)">↗</button>
+          <button class="tool" aria-label="Retirer de la vue à côté" title="Retirer de la vue à côté (l’agent continue)" @mousedown.stop @click="undock(pane.pane_id)">
+            <Icon name="close" />
+          </button>
+        </template>
+        <template v-else>
+        <button
+          class="tool txt"
+          :class="{ on: pinned }"
+          :aria-pressed="pinned"
+          :title="pinned ? 'Ne plus garder à côté' : 'Garder à côté : reste visible quand tu changes d’onglet ou de workspace'"
+          @mousedown.stop
+          @click="toggleDock(pane.pane_id)"
+        >⊞</button>
         <button class="tool" aria-label="Diviser à droite" title="Diviser à droite (⌘D)" @mousedown.stop @click="splitPane('right', pane.pane_id)">
           <Icon name="split-right" />
         </button>
@@ -58,6 +87,7 @@ const subtitle = computed(() => {
           <Icon name="split-down" />
         </button>
         <ConfirmButton label="×" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
+        </template>
       </span>
     </header>
     <TerminalView
@@ -100,4 +130,7 @@ const subtitle = computed(() => {
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .tool:hover { background: var(--hover); color: var(--text); }
+.tool.txt { font-size: 13px; line-height: 1; }
+.tool.on { color: var(--accent); }
+.pane.docked .head { background: #101317; }
 </style>

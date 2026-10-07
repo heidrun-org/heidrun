@@ -73,6 +73,9 @@ const defaults = {
   codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
+  /** Agents kept "à côté" (pane ids), stacked in a column on the right of the tab. */
+  dockedPanes: [] as string[],
+  dockWidth: 560,
 };
 
 function load(): typeof defaults {

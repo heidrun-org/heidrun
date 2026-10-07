@@ -109,6 +109,12 @@ export async function read(paneId: string, lines = 80): Promise<string> {
   return r.read.text;
 }
 
+/** What is on screen right now (no scrollback). */
+export async function readVisible(paneId: string): Promise<string> {
+  const r = await request<{ read: { text: string } }>("pane.read", { pane_id: paneId, source: "visible" });
+  return r.read.text;
+}
+
 /** Resolves when a line of the pane matches the regex. */
 export async function waitForOutput(paneId: string, regex: string, timeoutMs = 3_600_000): Promise<string | null> {
   const r = await request<{ matched_line?: string | null }>("pane.wait_for_output", {

@@ -26,6 +26,7 @@ import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
 import { fillInput } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
+import { isDocked, toggleDock } from "../stores/dock";
 
 interface Item {
   section: string;
@@ -77,6 +78,13 @@ const items = computed<Item[]>(() => {
       hint: p.agent ? STATUS_LABEL[p.agent_status] : "terminal",
       run: () => selectPane(p),
     });
+    if (p.agent && p.tab_id !== state.selectedTabId)
+      list.push({
+        section: "Ouvrir à côté",
+        label: `${isDocked(p.pane_id) ? "Retirer d’à côté" : "Ouvrir à côté"} : ${paneName(p)} · ${workspaceLabel(p.workspace_id)}`,
+        hint: "⊞",
+        run: () => toggleDock(p.pane_id),
+      });
   }
 
   const sel = selectedPane.value;

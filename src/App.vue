@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import TabBar from "./components/TabBar.vue";
@@ -18,12 +18,15 @@ import { issueView } from "./stores/issues";
 import NewAgentModal from "./components/NewAgentModal.vue";
 import { newAgent } from "./stores/agents";
 import SearchModal from "./components/SearchModal.vue";
+import DockColumn from "./components/DockColumn.vue";
+import { activePaneId, dockVisible } from "./stores/dock";
 import { search } from "./stores/search";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
 import {
+  allPanes,
   closePane,
   cycleTab,
   cycleWorkspace,
@@ -47,6 +50,13 @@ import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 function codeZoom(dir: 1 | -1) {
   settings.codeFontSize = Math.min(24, Math.max(9, Math.round((settings.codeFontSize + dir) * 2) / 2));
 }
+
+// The docked column never squeezes the tab below 420 px, whatever the window size.
+const winW = ref(window.innerWidth);
+const onResize = () => (winW.value = window.innerWidth);
+const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
+const dockShown = computed(() => Math.max(240, Math.min(settings.dockWidth, winW.value - sides.value - 420)));
+const dockReserve = computed(() => (dockVisible.value.length ? dockShown.value : 0));
 
 let armedClose: string | null = null;
 let armedAt = 0;
@@ -90,7 +100,8 @@ function onKey(e: KeyboardEvent) {
     case "KeyP":
       if (!e.shiftKey) return;
       return run(() => {
-        const pane = selectedPane.value;
+        const id = activePaneId();
+        const pane = allPanes.value.find((p) => p.pane_id === id) ?? selectedPane.value;
         const text = pane ? selectionReaders.get(pane.pane_id)?.() : "";
         if (pane && text) {
           pinText(text, pane);
@@ -110,7 +121,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyW":
       // Closing ends the process in the pane: ask for a second ⌘W within 2 s.
       return run(() => {
-        const id = state.selectedPaneId;
+        const id = activePaneId();
         if (!id) return;
         if (armedClose === id && Date.now() - armedAt < 2000) {
           armedClose = null;
@@ -141,6 +152,7 @@ function onKey(e: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener("keydown", onKey, true);
+  window.addEventListener("resize", onResize);
   start();
   startProjects();
   startGit();
@@ -148,7 +160,10 @@ onMounted(() => {
   loadClaudeLink();
   startRemoteWatch();
 });
-onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKey, true);
+  window.removeEventListener("resize", onResize);
+});
 </script>
 
 <template>
@@ -157,18 +172,32 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <div class="body">
       <template v-if="settings.leftOpen">
         <Sidebar />
-        <Resizer v-model:width="settings.leftWidth" side="left" :min="200" :max="520" :default-width="280" :reserve="settings.rightOpen ? settings.rightWidth : 0" />
+        <Resizer v-model:width="settings.leftWidth" side="left" :min="200" :max="520" :default-width="280" :reserve="(settings.rightOpen ? settings.rightWidth : 0) + dockReserve" />
       </template>
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
-          <PaneGrid />
+          <div class="stage">
+            <PaneGrid />
+            <template v-if="dockVisible.length">
+              <Resizer
+                :width="dockShown"
+                @update:width="(v: number) => (settings.dockWidth = v)"
+                side="right"
+                :min="320"
+                :max="1400"
+                :default-width="560"
+                :reserve="(settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0)"
+              />
+              <DockColumn :style="{ width: `${dockShown}px` }" />
+            </template>
+          </div>
           <InputBar />
         </template>
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="260" :max="720" :default-width="320" :reserve="settings.leftOpen ? settings.leftWidth : 0" />
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="260" :max="720" :default-width="320" :reserve="(settings.leftOpen ? settings.leftWidth : 0) + dockReserve" />
         <RightPanel />
       </template>
     </div>
@@ -192,6 +221,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .app { height: 100%; display: flex; flex-direction: column; }
 .body { flex: 1; min-height: 0; display: flex; }
 .center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.stage { flex: 1; min-height: 0; display: flex; }
+.stage > :first-child { flex: 1; min-width: 0; }
 .toast {
   position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%);
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);

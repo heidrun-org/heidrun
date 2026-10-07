@@ -18,6 +18,8 @@ import { input } from "../stores/input";
 import { VARIABLES, addPrompt, projectPrompts, prompts, removePrompt, resolvePrompt, type PromptTemplate } from "../stores/prompts";
 import { currentProject } from "../stores/project";
 import { paneName } from "../lib/format";
+import { refreshSubagents, sendToSubagent, subagents } from "../stores/subagents";
+import { dockState } from "../stores/dock";
 
 const target = ref<string | null>(null);
 const newPane = ref(true);
@@ -65,9 +67,46 @@ watch(
   { immediate: true },
 );
 
-const targetPane = computed(() => workspacePanes.value.find((p) => p.pane_id === target.value) ?? selectedPane.value);
+// "sub:<pane>:<name>": a background agent of that Claude session.
+// Looked up rather than parsed: pane ids and agent names may hold ":".
+const subTargets = new Map<string, { paneId: string; name: string }>();
+function subKey(paneId: string, name: string) {
+  const k = `sub:${paneId}\u0000${name}`;
+  subTargets.set(k, { paneId, name });
+  return k;
+}
+const sub = computed(() => (target.value ? subTargets.get(target.value) ?? null : null));
+const backToMain = ref(true);
+// A click in a docked agent makes it the recipient too.
+watch(
+  () => dockState.focus,
+  (id) => {
+    if (id) target.value = id;
+  },
+);
+const targetPane = computed(
+  () => allPanes.value.find((p) => p.pane_id === (sub.value?.paneId ?? target.value)) ?? selectedPane.value,
+);
 const mode = computed<"agent" | "command">(() => (input.multi || targetPane.value?.agent ? "agent" : "command"));
 const agents = computed(() => workspacePanes.value.filter((p) => p.agent));
+// Other workspaces' agents too: write to one without going there first.
+const otherGroups = computed(() =>
+  agentGroups.value
+    .map((g) => ({ ...g, items: g.items.filter((a) => a.pane.workspace_id !== state.selectedWorkspaceId) }))
+    .filter((g) => g.items.length),
+);
+const subsOf = (paneId: string) => subagents.byPane[paneId] ?? [];
+// The session's agent list is read when the menu is about to open.
+let subsAt = 0;
+function loadSubs() {
+  // Reading every Claude pane is not free (Herdr serves one read at a time): not on every focus.
+  if (Date.now() - subsAt < 5000) return;
+  subsAt = Date.now();
+  refreshSubagents();
+}
+watch(target, () => {
+  if (target.value && !sub.value && targetPane.value?.agent?.includes("claude")) refreshSubagents([targetPane.value.pane_id]);
+});
 const terminals = computed(() => workspacePanes.value.filter((p) => !p.agent));
 
 // ---- Several recipients -------------------------------------------------------
@@ -106,6 +145,8 @@ function single() {
 async function submit() {
   const value = input.text.trim();
   if (!value) return;
+  // Arrow keys are being sent to a session: nothing else is typed meanwhile.
+  if (subagents.busy) return toast("Bascule vers un sous-agent en cours…");
   if (input.multi) {
     if (!chosen.value.length) return toast("Choisis au moins un agent");
     // Recap first: several agents at once deserve a second look.
@@ -114,6 +155,10 @@ async function submit() {
     return;
   }
   const pane = targetPane.value;
+  if (sub.value) {
+    if (await sendToSubagent(sub.value.paneId, sub.value.name, value, backToMain.value)) input.text = "";
+    return;
+  }
   if (mode.value === "agent" && pane) {
     await sendPrompt(pane.pane_id, value);
   } else if (newPane.value || !pane) {
@@ -244,9 +289,18 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
     </template>
     <template v-else>
       <label class="sr" for="target">Destinataire</label>
-      <select id="target" v-model="target" class="target">
+      <select id="target" v-model="target" class="target" @mousedown="loadSubs" @focus="loadSubs">
         <optgroup v-if="agents.length" label="Agents">
-          <option v-for="a in agents" :key="a.pane_id" :value="a.pane_id">{{ paneTarget(a) }}</option>
+          <template v-for="a in agents" :key="a.pane_id">
+            <option :value="a.pane_id">{{ paneTarget(a) }}</option>
+            <option v-for="n in subsOf(a.pane_id)" :key="a.pane_id + n" :value="subKey(a.pane_id, n)">&nbsp;&nbsp;↳ {{ n }}</option>
+          </template>
+        </optgroup>
+        <optgroup v-for="g in otherGroups" :key="g.workspace" :label="g.workspace">
+          <template v-for="a in g.items" :key="a.pane.pane_id">
+            <option :value="a.pane.pane_id">{{ a.label }}</option>
+            <option v-for="n in subsOf(a.pane.pane_id)" :key="a.pane.pane_id + n" :value="subKey(a.pane.pane_id, n)">&nbsp;&nbsp;↳ {{ n }}</option>
+          </template>
         </optgroup>
         <optgroup v-if="terminals.length" label="Terminaux">
           <option v-for="t in terminals" :key="t.pane_id" :value="t.pane_id">{{ paneName(t) }} ({{ t.pane_id }})</option>
@@ -269,18 +323,22 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
         input.multi
           ? `Consigne pour ${chosen.length} agents…  (⇧↵ nouvelle ligne)`
           : mode === 'agent'
-            ? `Envoyer une consigne à ${targetPane ? paneTarget(targetPane) : 'l’agent'}…  (⇧↵ nouvelle ligne)`
+            ? `Envoyer une consigne à ${sub ? sub.name : targetPane ? paneTarget(targetPane) : 'l’agent'}…  (⇧↵ nouvelle ligne)`
             : 'Lancer une commande…  (⇧↵ nouvelle ligne)'
       "
       autocomplete="off"
       spellcheck="false"
       @keydown="onKeydown"
+      @focus="loadSubs"
     ></textarea>
+    <label v-if="sub && sub.name !== 'main'" class="check" title="Après l’envoi, Claude réaffiche la conversation principale">
+      <input v-model="backToMain" type="checkbox" />Puis revenir sur main
+    </label>
     <template v-if="mode === 'command'">
       <label class="check"><input v-model="newPane" type="checkbox" />Nouveau panneau</label>
       <label class="check"><input v-model="notifyEnd" type="checkbox" :disabled="!newPane" />Me notifier</label>
     </template>
-    <button class="btn lg primary send" type="submit">{{ input.multi ? "Diffuser" : mode === "agent" ? "Envoyer" : "Lancer" }} ↵</button>
+    <button class="btn lg primary send" type="submit" :disabled="!!subagents.busy">{{ input.multi ? "Diffuser" : mode === "agent" ? "Envoyer" : "Lancer" }} ↵</button>
   </form>
 </template>
 

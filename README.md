@@ -99,6 +99,10 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 
 **Recherche globale** (⇧⌘F) : cherche dans ce que tous les terminaux ont affiché (les 3 000 dernières lignes de chaque panneau), sans tenir compte des majuscules ni des accents. Résultats groupés par workspace · onglet, le plus récent d'abord, avec la ligne d'avant et d'après. Filtres : ce workspace, agents seulement, expression régulière (`.*`). ↵ ou un clic ouvre le panneau et sélectionne le texte s'il est encore à l'écran.
 
+**Ouvrir à côté** : le bouton ⊞ dans l'en-tête d'un panneau, sur une carte « À traiter » ou dans la palette ⌘K garde l'agent dans une colonne à droite de l'onglet en cours, quel que soit son workspace : le premier divise l'écran en deux, les suivants s'empilent dans la colonne (4 au plus). Chaque case est un vrai terminal : un clic lui donne le clavier (et en fait le destinataire de la barre de saisie), ↗ ouvre son onglet, × le retire de la colonne sans arrêter l'agent. La colonne se redimensionne par sa bordure et est mémorisée ; un agent de l'onglet affiché n'y apparaît pas (il est déjà dans la grille).
+
+**Écrire à un sous-agent** : dans le menu destinataire de la barre de saisie, les agents de tous les workspaces sont listés et, sous chaque session Claude qui en a, ses sous-agents (`↳ jerome-645`). L'app bascule la session sur ce sous-agent avec les flèches, vérifie qu'il est bien affiché, envoie la consigne, puis revient sur `main` (case « Puis revenir sur main »). Si la liste n'est pas trouvée ou si l'agent attend une décision, rien n'est tapé.
+
 **Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
 
 **Notifications** (menu « A ») : rappel quand un agent reste bloqué (5 min par défaut), contexte d'un agent au-delà de 80 %, quota Claude au-delà de 80 % puis 95 %, résumé de la journée à l'heure choisie (travaux terminés par workspace), heures calmes sans notification (par ex. 20:00 → 08:00, alertes reportées après).
@@ -202,9 +206,7 @@ sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-d
 
 Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
 
-1. **Vue multiple des panneaux Herdr** (à faire en premier : c'est la plus fiable). Un « Ouvrir à côté » sur un agent : le premier ouvert divise l'écran verticalement, chaque agent suivant divise horizontalement la colonne où sont déjà les agents ouverts, pour tous les voir travailler en même temps. Repose sur ce que Herdr sait déjà faire (`pane.split`, disposition de l'onglet lue par l'app).
-2. **Barre de saisie partagée, avec choix du destinataire.** En bas, un seul champ et un menu pour choisir l'agent (workspace · onglet). Envoi direct pour un panneau Herdr ; pour un sous-agent d'une session Claude, l'app bascule d'abord dessus avec les touches, puis envoie (petit délai, un seul sous-agent à la fois).
-3. **Mosaïque des sous-agents d'une session Claude** (main, Bruno, jerome-645…). Ils vivent dans un seul terminal et Claude Code n'en montre qu'un à la fois : pas de vrai terminal par sous-agent. À la place, un aperçu en lecture seule des dernières lignes de chacun, rafraîchi régulièrement ; un clic sur une case bascule le vrai terminal sur ce sous-agent.
+1. **Mosaïque des sous-agents d'une session Claude** (main, Bruno, jerome-645…). Ils vivent dans un seul terminal et Claude Code n'en montre qu'un à la fois : pas de vrai terminal par sous-agent. À la place, un aperçu en lecture seule des dernières lignes de chacun, rafraîchi régulièrement ; un clic sur une case bascule le vrai terminal sur ce sous-agent.
 
 ## Limites connues
 

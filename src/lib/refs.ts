@@ -343,20 +343,26 @@ export function findAgentRow(lineAt: (i: number) => string | null, y: number, ro
  * The agent list as it is on screen now: names in order and the row the selection
  * pointer (❯) is on, or null when the focus is still in the prompt.
  */
-export function agentListState(lineAt: (i: number) => string | null, rows: number): { names: string[]; selected: number | null } | null {
+export function agentListState(
+  lineAt: (i: number) => string | null,
+  rows: number,
+): { names: string[]; selected: number | null; current?: number | null } | null {
   for (let y = rows - 1; y >= Math.max(0, rows - 24); y--) {
     const row = findAgentRow(lineAt, y, rows);
     if (!row) continue;
     const first = y - row.index;
     const names: string[] = [];
     let selected: number | null = null;
+    let current: number | null = null;
     for (let i = first; ; i++) {
       const m = AGENT_ROW.exec(lineAt(i) ?? "");
       if (!m) break;
       if (/[❯›>▸▶]/.test(m[1])) selected = names.length;
+      // ● marks the agent shown, ○ the others.
+      if ("●◉⬤⏺•⦿".includes(m[2])) current = names.length;
       names.push(m[3]);
     }
-    return { names, selected };
+    return { names, selected, current };
   }
   return null;
 }

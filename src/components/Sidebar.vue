@@ -25,6 +25,7 @@ import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
 import type { AgentInfo } from "../lib/types";
+import { isDocked, toggleDock } from "../stores/dock";
 
 function summary(p: AgentInfo): string {
   const q = state.questions[p.pane_id];
@@ -180,6 +181,13 @@ async function createWorkspace() {
             <span class="choice-n">{{ o.n }}</span><span class="choice-l">{{ o.label }}</span>
           </button>
         </div>
+        <button
+          class="card-dock"
+          :class="{ on: isDocked(p.pane_id) }"
+          :aria-label="`${isDocked(p.pane_id) ? 'Retirer d’à côté' : 'Ouvrir à côté'} ${paneName(p)}`"
+          :title="isDocked(p.pane_id) ? 'Retirer de la vue à côté' : 'Ouvrir à côté : le suivre sans quitter l’onglet en cours'"
+          @click="toggleDock(p.pane_id)"
+        >⊞</button>
         <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
           <Icon name="close" />
         </button>
@@ -206,7 +214,12 @@ async function createWorkspace() {
   position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
-.card-x:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.card-x:hover, .card-dock:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.card-dock {
+  position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: 13px;
+  background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.card-dock.on { color: var(--accent); }
 .card.blocked { border-color: #5c2826; background: #201313; }
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {
