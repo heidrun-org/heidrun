@@ -20,6 +20,7 @@ import {
 } from "../lib/refs";
 import { sendPrompt, toast } from "../stores/session";
 import { openIssue } from "../stores/issues";
+import { fold, search } from "../stores/search";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
@@ -628,6 +629,73 @@ watch(
 watch(
   () => props.focused,
   (f) => f && term?.focus(),
+);
+
+// Global search: once this pane is shown, select the found text if it is in the
+// terminal's buffer (the screen, mostly: older history stays in Herdr).
+/** Logical line (wrapped rows joined) with, for each character, its row and column. */
+function logicalLine(lastRow: number): { first: number; text: string; pos: { y: number; x: number }[] } {
+  const buf = term!.buffer.active;
+  let first = lastRow;
+  while (first > 0 && buf.getLine(first)?.isWrapped) first--;
+  let text = "";
+  const pos: { y: number; x: number }[] = [];
+  for (let y = first; y <= lastRow; y++) {
+    const l = buf.getLine(y);
+    if (!l) continue;
+    for (let x = 0; x < l.length; x++) {
+      const ch = l.getCell(x)?.getChars() ?? "";
+      if (!ch) continue; // second half of a wide character
+      // One entry per UTF-16 unit, like string indices.
+      text += ch;
+      for (let k = 0; k < ch.length; k++) pos.push({ y, x });
+    }
+  }
+  return { first, text: text.replace(/\s+$/, ""), pos };
+}
+
+watch(
+  () => search.jump,
+  async (j) => {
+    if (!j || j.paneId !== props.paneId) return;
+    const whole = fold(j.line.trim());
+    const lead = j.line.length - j.line.trimStart().length;
+    const needle = fold(j.line.slice(j.start, j.end));
+    if (!needle) return;
+    // A pane just opened is still attaching: give its screen a moment to arrive.
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await new Promise((r) => window.setTimeout(r, attempt ? 300 : 120));
+      if (!term || search.jump?.seq !== j.seq) return;
+      const buf = term.buffer.active;
+      // The very line clicked first; else the most recent line holding the match.
+      for (const exact of [true, false]) {
+        let y = buf.length - 1;
+        while (y >= 0) {
+          const ll = logicalLine(y);
+          const folded = fold(ll.text);
+          let at = -1;
+          if (exact) {
+            const i = whole ? folded.indexOf(whole) : -1;
+            if (i !== -1) at = i + (j.start - lead);
+          } else at = folded.indexOf(needle);
+          if (at >= 0 && at + needle.length <= ll.pos.length) {
+            const a = ll.pos[at];
+            const b = ll.pos[at + needle.length - 1];
+            const cols = term.cols;
+            term.scrollToLine(Math.max(0, a.y - Math.floor(term.rows / 2)));
+            term.select(a.x, a.y, (b.y - a.y) * cols + b.x - a.x + 1);
+            term.focus();
+            search.jump = null;
+            return;
+          }
+          y = ll.first - 1;
+        }
+      }
+    }
+    search.jump = null;
+    toast("Résultat plus haut dans l’historique : fais défiler le panneau pour le voir");
+  },
+  { immediate: true },
 );
 
 let wheelRest = 0;

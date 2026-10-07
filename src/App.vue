@@ -15,6 +15,10 @@ import { git, merging } from "./stores/git";
 import MergeModal from "./components/MergeModal.vue";
 import IssueModal from "./components/IssueModal.vue";
 import { issueView } from "./stores/issues";
+import NewAgentModal from "./components/NewAgentModal.vue";
+import { newAgent } from "./stores/agents";
+import SearchModal from "./components/SearchModal.vue";
+import { search } from "./stores/search";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -94,10 +98,13 @@ function onKey(e: KeyboardEvent) {
           settings.rightTab = "notes";
         } else toast("Sélectionne d’abord du texte dans un terminal");
       });
+    case "KeyF":
+      if (!e.shiftKey) return;
+      return run(() => (search.open = !search.open));
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
-      return run(() => newTerminal());
+      return run(() => (e.shiftKey ? (newAgent.open = true) : newTerminal()));
     case "KeyD":
       return run(() => splitPane(e.shiftKey ? "down" : "right"));
     case "KeyW":
@@ -172,6 +179,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <GitModal v-if="git.modal.open" />
     <MergeModal v-if="merging.open && merging.req" />
     <IssueModal v-if="issueView.open" />
+    <NewAgentModal v-if="newAgent.open" />
+    <SearchModal v-if="search.open" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

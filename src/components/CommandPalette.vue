@@ -24,6 +24,8 @@ import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
 import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
 import { fillInput } from "../stores/input";
+import { newAgent } from "../stores/agents";
+import { search } from "../stores/search";
 
 interface Item {
   section: string;
@@ -86,6 +88,7 @@ const items = computed<Item[]>(() => {
     }
   }
   const actions: Item[] = [
+    { section: "Terminaux", label: "Nouvel agent (Claude, Codex, agents du projet)…", hint: "⇧⌘T", run: () => (newAgent.open = true) },
     { section: "Terminaux", label: "Nouveau terminal", hint: "⌘T", run: () => newTerminal() },
     { section: "Terminaux", label: "Diviser à droite", hint: "⌘D", run: () => splitPane("right") },
     { section: "Terminaux", label: "Diviser en bas", hint: "⇧⌘D", run: () => splitPane("down") },
@@ -94,6 +97,7 @@ const items = computed<Item[]>(() => {
     ...(state.selectedWorkspaceId ? [{ section: "Renommer", label: "Renommer le workspace", run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
     ...(state.selectedTabId ? [{ section: "Renommer", label: "Renommer l’onglet", run: () => startRename("tab", state.selectedTabId!) }] : []),
     ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
+    { section: "Navigation", label: "Chercher dans tous les terminaux…", hint: "⇧⌘F", run: () => (search.open = true) },
     { section: "Navigation", label: "Onglet suivant", hint: "⌥⌘→", run: () => cycleTab(1) },
     { section: "Navigation", label: "Onglet précédent", hint: "⌥⌘←", run: () => cycleTab(-1) },
     { section: "Navigation", label: "Workspace suivant", hint: "⌥⌘↓", run: () => cycleWorkspace(1) },

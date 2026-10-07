@@ -3,6 +3,7 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { useReorder } from "../lib/reorder";
+import { newAgent } from "../stores/agents";
 import { closeTab, finishRename, moveTab, newTerminal, selectTab, splitPane, startRename, state, tabs } from "../stores/session";
 
 const tr = useReorder("x", (id, at) => moveTab(id, at));
@@ -58,6 +59,7 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
     </div>
     <button class="tab-add" aria-label="Nouvel onglet" title="Nouvel onglet (⌘T)" @click="newTerminal()">+</button>
     <div class="spacer"></div>
+    <button class="btn" title="Lancer Claude ou Codex dans un nouvel onglet, avec une consigne" @click="newAgent.open = true">Nouvel agent <kbd>⇧⌘T</kbd></button>
     <button class="btn" @click="newTerminal()">Nouveau terminal <kbd>⌘T</kbd></button>
     <button class="btn" title="Diviser à droite" @click="splitPane('right')"><Icon name="split-right" /> <kbd>⌘D</kbd></button>
     <button class="btn" title="Diviser en bas" @click="splitPane('down')"><Icon name="split-down" /> <kbd>⇧⌘D</kbd></button>

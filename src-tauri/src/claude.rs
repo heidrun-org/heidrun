@@ -318,3 +318,86 @@ pub fn claude_commands(cwd: Option<String>) -> Vec<String> {
     out.dedup();
     out
 }
+
+// ---- Agents ---------------------------------------------------------------
+
+#[derive(Serialize, Debug, PartialEq)]
+pub struct AgentDef {
+    pub name: String,
+    pub description: String,
+    pub model: Option<String>,
+    /// "projet" (.claude/agents of the folder or a parent) or "perso" (~/.claude/agents).
+    pub source: String,
+}
+
+/// `---\nname: x\ndescription: …\nmodel: sonnet\n---` → the three fields (simple YAML only).
+fn parse_agent(text: &str, fallback: &str, source: &str) -> Option<AgentDef> {
+    let rest = text.trim_start_matches('\u{feff}').strip_prefix("---")?;
+    let end = rest.find("\n---")?;
+    let (mut name, mut description, mut model) = (None, String::new(), None);
+    for line in rest[..end].lines() {
+        let Some((k, v)) = line.split_once(':') else { continue };
+        let v = v.trim().trim_matches(|c| c == '"' || c == '\'').to_string();
+        match k.trim() {
+            "name" if !v.is_empty() => name = Some(v),
+            "description" => description = v,
+            "model" if !v.is_empty() && v != "inherit" => model = Some(v),
+            _ => {}
+        }
+    }
+    let name = name.unwrap_or_else(|| fallback.to_string());
+    // Passed to `claude --agent`: anything else is not a name we launch.
+    if name.is_empty() || !name.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c)) {
+        return None;
+    }
+    Some(AgentDef { name, description: description.replace("\\n", " "), model, source: source.into() })
+}
+
+fn read_agents(dir: &std::path::Path, source: &str, out: &mut Vec<AgentDef>) {
+    let Ok(entries) = std::fs::read_dir(dir) else { return };
+    let mut files: Vec<_> = entries.flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|x| x == "md")).collect();
+    files.sort();
+    for p in files {
+        let stem = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+        if let Some(a) = std::fs::read_to_string(&p).ok().and_then(|t| parse_agent(&t, &stem, source)) {
+            if !out.iter().any(|x| x.name == a.name) {
+                out.push(a);
+            }
+        }
+    }
+}
+
+/// Subagents Claude Code knows in this folder: the project's first (nearest folder
+/// wins), then the user's own.
+#[tauri::command]
+pub fn claude_agents(cwd: Option<String>) -> Vec<AgentDef> {
+    let mut out = Vec::new();
+    let home = dirs::home_dir().unwrap_or_default();
+    if let Some(cwd) = cwd {
+        let mut dir = Some(std::path::Path::new(&cwd));
+        while let Some(d) = dir {
+            if d == home {
+                break;
+            }
+            read_agents(&d.join(".claude").join("agents"), "projet", &mut out);
+            dir = d.parent();
+        }
+    }
+    read_agents(&claude_dir().join("agents"), "perso", &mut out);
+    out
+}
+
+#[cfg(test)]
+mod agent_tests {
+    use super::*;
+
+    #[test]
+    fn parses_agent_frontmatter() {
+        let a = parse_agent("---\nname: bruno\ndescription: \"Revue de code\"\nmodel: sonnet\ntools: Read\n---\nTu es…", "x", "projet").unwrap();
+        assert_eq!(a, AgentDef { name: "bruno".into(), description: "Revue de code".into(), model: Some("sonnet".into()), source: "projet".into() });
+        let b = parse_agent("---\ndescription: d\nmodel: inherit\n---\n", "lohan", "perso").unwrap();
+        assert_eq!((b.name.as_str(), b.model), ("lohan", None));
+        assert!(parse_agent("pas de frontmatter", "x", "perso").is_none());
+        assert!(parse_agent("---\nname: a; rm -rf /\n---\n", "x", "perso").is_none());
+    }
+}

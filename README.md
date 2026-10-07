@@ -16,6 +16,8 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 | --- | --- |
 | ⌘K | Palette de commandes |
 | ⌘T | Nouveau terminal (nouvel onglet) |
+| ⇧⌘T | Nouvel agent (Claude, Codex, agents du projet) |
+| ⇧⌘F | Chercher dans la sortie de tous les terminaux |
 | ⌥⌘← / ⌥⌘→ | Onglet précédent / suivant |
 | ⌥⌘↑ / ⌥⌘↓ | Workspace précédent / suivant |
 | ⌘1 … ⌘9 | Aller au workspace n° 1 à 9 (ordre de la barre latérale) |
@@ -92,6 +94,10 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 ```json
 "prompts": [{ "id": "revue", "label": "Revue de la MR", "text": "Fais la revue de la MR de {branche}" }]
 ```
+
+**Nouvel agent** (⇧⌘T, bouton dans la barre d'onglets, palette ⌘K) : choisis Claude Code ou Codex, un agent du projet (`.claude/agents/*.md`, avec sa description et son modèle) ou de `~/.claude/agents`, ou un agent libre ; un modèle (`opus`, `sonnet`…) ; une consigne de départ, éventuellement tirée d'un modèle. L'app crée un onglet au nom de l'agent, lance `claude --agent … --model …` et envoie la consigne dès que l'agent est prêt (si Claude demande d'abord de faire confiance au dossier, elle attend ta réponse). Si la consigne n'a pas pu partir, elle est remise dans la barre de saisie.
+
+**Recherche globale** (⇧⌘F) : cherche dans ce que tous les terminaux ont affiché (les 3 000 dernières lignes de chaque panneau), sans tenir compte des majuscules ni des accents. Résultats groupés par workspace · onglet, le plus récent d'abord, avec la ligne d'avant et d'après. Filtres : ce workspace, agents seulement, expression régulière (`.*`). ↵ ou un clic ouvre le panneau et sélectionne le texte s'il est encore à l'écran.
 
 **Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
 
