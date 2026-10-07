@@ -141,7 +141,7 @@ onMounted(async () => {
         start: { x: col[s] + 1, y },
         end: { x: col[e - 1] + width[e - 1], y },
       });
-      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void }[] = [];
+      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void; after?: boolean }[] = [];
       // "! command" suggested by Claude (its shell mode): the whole command, joined on
       // one line even when it spans several, is sent to the prompt and run.
       if (isClaude()) {
@@ -168,7 +168,7 @@ onMounted(async () => {
                 },
                 hover: () => {
                   overLink = true;
-                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps));
+                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps), undefined, true);
                 },
                 leave: () => {
                   overLink = false;
@@ -192,6 +192,7 @@ onMounted(async () => {
             label: agentRow.current ? `● ${agentRow.name} (affiché)` : `▷ Voir ${agentRow.name}`,
             run: () => switchToAgent(agentRow.name),
             underline: true,
+            after: true,
           };
           return callback([toLink(link)]);
         }
@@ -269,7 +270,7 @@ onMounted(async () => {
           },
           hover: () => {
             overLink = true;
-            showChip(range(i.s, i.e), i.label, i.run, i.alt);
+            showChip(range(i.s, i.e), i.label, i.run, i.alt, i.after);
           },
           leave: () => {
             overLink = false;
@@ -403,12 +404,21 @@ let chipTimer = 0;
 // xterm then re-reads the link under the last pointer position, which may be another
 // issue by now: without this, the chip would switch target or vanish under the mouse.
 let onChip = false;
+const CHIP_H = 26;
 
 /**
- * The chip sits on the hovered line itself, just after the text: reaching it never
- * crosses another line (and another link that would replace it).
+ * The chip sits just above the hovered text, touching it: the pointer goes straight
+ * up into it without crossing anything, and the rest of the line (other #12, !34…)
+ * stays visible and reachable. On the first row, it goes just below instead.
  */
-function showChip(r: { start: { x: number; y: number }; end: { x: number; y: number } }, label: string, run: () => void, alt?: ChipAction) {
+function showChip(
+  r: { start: { x: number; y: number }; end: { x: number; y: number } },
+  label: string,
+  run: () => void,
+  alt?: ChipAction,
+  /** On the line itself, after the text (agent list rows: one link per line). */
+  after = false,
+) {
   if (onChip) return;
   window.clearTimeout(chipTimer);
   const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
@@ -417,14 +427,14 @@ function showChip(r: { start: { x: number; y: number }; end: { x: number; y: num
   const w = wrapEl.value.getBoundingClientRect();
   const cellW = s.width / term.cols;
   const cellH = s.height / term.rows;
-  const row = r.end.y - 1 - term.buffer.active.viewportY;
-  const top = s.top - w.top + row * cellH + (cellH - 22) / 2;
-  // Glued to the text (the chips' left padding is the visual gap): the pointer never
-  // goes back over the terminal on its way, so no other link can catch it.
-  const left = s.left - w.left + r.end.x * cellW;
-  // No room after the text: pinned to the right edge, on the same line.
-  const roomy = left + 280 < w.width;
-  chip.value = { left: roomy ? left : null, right: roomy ? null : 10, top, label, run, alt };
+  const row = r.start.y - 1 - term.buffer.active.viewportY;
+  const rowTop = s.top - w.top + row * cellH;
+  // 2 px of overlap with the text: no gap where the pointer would leave the link.
+  const top = after ? rowTop + (cellH - CHIP_H) / 2 : row > 0 ? rowTop - CHIP_H + 2 : rowTop + cellH - 2;
+  const left = after ? s.left - w.left + r.end.x * cellW : s.left - w.left + (r.start.x - 1) * cellW - 2;
+  const width = alt ? 230 : 180;
+  const roomy = left + width < w.width;
+  chip.value = { left: roomy ? Math.max(0, left) : null, right: roomy ? null : 10, top, label, run, alt };
 }
 
 function hideChip(now = false) {
@@ -851,7 +861,8 @@ onBeforeUnmount(() => {
   border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 .sel-bar .btn { background: var(--field); }
-.chips { position: absolute; z-index: 6; display: flex; gap: 4px; padding: 0 4px 0 8px; }
+/* The padding is part of the hover zone, and reaches down to the hovered text. */
+.chips { position: absolute; z-index: 6; height: 26px; display: flex; align-items: flex-start; gap: 4px; padding: 0 4px; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
