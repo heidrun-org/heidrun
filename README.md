@@ -12,23 +12,50 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 
 ## Raccourcis
 
+Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec un filtre.
+
+<!-- shortcuts:start -->
+<!-- Généré depuis src/lib/shortcuts.json : npm run docs:shortcuts -->
+
 | Raccourci | Action |
 | --- | --- |
+| **Fenêtres** | |
 | ⌘K | Palette de commandes |
+| ⌘/ | Cette liste des raccourcis |
+| ⇧⌘F | Chercher dans la sortie de tous les terminaux |
+| ⇧⌘P | Épingler le texte sélectionné dans une note |
+| Échap | Fermer la fenêtre ouverte |
+| **Terminaux et agents** | |
 | ⌘T | Nouveau terminal (nouvel onglet) |
 | ⇧⌘T | Nouvel agent (Claude, Codex, agents du projet) |
-| ⇧⌘F | Chercher dans la sortie de tous les terminaux |
+| ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
+| ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
+| **Navigation** | |
 | ⌥⌘← / ⌥⌘→ | Onglet précédent / suivant |
 | ⌥⌘↑ / ⌥⌘↓ | Workspace précédent / suivant |
 | ⌘1 … ⌘9 | Aller au workspace n° 1 à 9 (ordre de la barre latérale) |
 | ⇧⌥⌘← / ⇧⌥⌘→ | Déplacer l’onglet à gauche / à droite |
 | ⇧⌥⌘↑ / ⇧⌥⌘↓ | Monter / descendre le workspace |
-| ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
-| ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
+| **Saisie** | |
+| ↵ | Envoyer (barre de saisie) |
+| ⇧↵ / ⌥↵ | Nouvelle ligne, dans le terminal comme dans la barre de saisie |
+| ⌘↵ | Lancer (fenêtre Nouvel agent) |
+| ↑ / ↓ puis ↵ | Choisir un résultat (palette, recherche) |
+| **Affichage** | |
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
-| ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police |
-| ⇧⌘P | Épingler le texte sélectionné dans une note |
-| ⇧↵ / ⌥↵ | Nouvelle ligne (dans le terminal comme dans la barre de saisie) ; ↵ envoie |
+| ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police (le code dans les fenêtres Git et Aperçu) |
+| **Souris** | |
+| ⌘-clic | Sur #12 / !34 : aperçu de l’issue ou de la MR ; sur une URL ou un commit : l’ouvrir |
+| Survol | Boutons d’action : ↗ Ouvrir, ⧉ Aperçu, ▷ Lancer, ▷ Exécuter, ▷ Voir <agent> |
+| Molette | Faire défiler l’historique du panneau |
+| ⌥ + molette | Envoyer ↑ / ↓ (dernières commandes ou consignes) |
+| ⌥ + glisser | Sélectionner du texte, même en mode « Souris pour l’app » |
+| Double-clic | Renommer un workspace, un onglet ou un panneau |
+| Glisser-déposer | Réordonner les workspaces et les onglets |
+| ⊞ | Garder un agent à côté, visible quel que soit l’onglet |
+| Double-clic sur une bordure | Revenir à la largeur par défaut |
+
+<!-- shortcuts:end -->
 
 **Jauges** : vert jusqu’à 60 %, orange de 60 à 80 %, rouge au-delà (contexte, session 5 h, semaine). Les dernières valeurs connues restent affichées entre deux réponses.
 

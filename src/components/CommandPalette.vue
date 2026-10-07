@@ -106,6 +106,7 @@ const items = computed<Item[]>(() => {
     ...(state.selectedTabId ? [{ section: "Renommer", label: "Renommer l’onglet", run: () => startRename("tab", state.selectedTabId!) }] : []),
     ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
     { section: "Navigation", label: "Chercher dans tous les terminaux…", hint: "⇧⌘F", run: () => (search.open = true) },
+    { section: "Aide", label: "Raccourcis clavier et souris", hint: "⌘/", run: () => (state.shortcutsOpen = true) },
     { section: "Navigation", label: "Onglet suivant", hint: "⌥⌘→", run: () => cycleTab(1) },
     { section: "Navigation", label: "Onglet précédent", hint: "⌥⌘←", run: () => cycleTab(-1) },
     { section: "Navigation", label: "Workspace suivant", hint: "⌥⌘↓", run: () => cycleWorkspace(1) },

@@ -64,6 +64,7 @@ export const state = reactive({
   selectedPaneId: null as string | null,
   codex: null as CodexUsage | null,
   paletteOpen: false,
+  shortcutsOpen: false,
   /** Panes that just turned blocked: they pulse once. */
   pulse: {} as Record<string, number>,
   /** Status changes of all agents, most recent first. */

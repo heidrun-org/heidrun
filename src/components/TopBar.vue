@@ -33,6 +33,7 @@ import { settings } from "../stores/settings";
       <span><span class="dot working"></span>{{ counts.working }} en cours</span>
       <span><span class="dot done"></span>{{ counts.done }} terminé{{ counts.done > 1 ? "s" : "" }}</span>
     </div>
+    <button class="icon-btn help" aria-label="Raccourcis" title="Raccourcis (⌘/)" @click="state.shortcutsOpen = true">?</button>
     <FontMenu />
     <button
       class="icon-btn"
@@ -73,6 +74,7 @@ import { settings } from "../stores/settings";
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
+.icon-btn.help { font-size: 13px; font-weight: 600; }
 .icon-btn.on { color: var(--text-2); background: var(--field); }
 @media (max-width: 1180px) { .counts { display: none; } }
 </style>

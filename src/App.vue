@@ -19,6 +19,7 @@ import NewAgentModal from "./components/NewAgentModal.vue";
 import { newAgent } from "./stores/agents";
 import SearchModal from "./components/SearchModal.vue";
 import DockColumn from "./components/DockColumn.vue";
+import ShortcutsModal from "./components/ShortcutsModal.vue";
 import { activePaneId, dockVisible } from "./stores/dock";
 import { search } from "./stores/search";
 import { answerDanger, danger } from "./stores/guards";
@@ -92,6 +93,8 @@ function onKey(e: KeyboardEvent) {
     if (e.code === "ArrowUp") return run(() => cycleWorkspace(-1));
     if (e.code === "ArrowDown") return run(() => cycleWorkspace(1));
   }
+  // ⌘/ (⌘: on an AZERTY keyboard, where "/" needs ⇧): the shortcut list.
+  if (e.code === "Slash" || e.key === "/" || e.key === "?") return run(() => (state.shortcutsOpen = !state.shortcutsOpen));
   // ⌘1 … ⌘9: workspace by position.
   const digit = /^Digit([1-9])$/.exec(e.code);
   if (digit && !e.altKey && !e.shiftKey) return run(() => selectWorkspaceAt(Number(digit[1]) - 1));
@@ -210,6 +213,7 @@ onBeforeUnmount(() => {
     <IssueModal v-if="issueView.open" />
     <NewAgentModal v-if="newAgent.open" />
     <SearchModal v-if="search.open" />
+    <ShortcutsModal v-if="state.shortcutsOpen" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
