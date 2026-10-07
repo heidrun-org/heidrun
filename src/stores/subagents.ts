@@ -72,6 +72,36 @@ async function switchTo(paneId: string, name: string): Promise<boolean> {
   return false;
 }
 
+/** Shows `name` in the session's terminal (the mosaic's click). */
+export async function showSubagent(paneId: string, name: string): Promise<boolean> {
+  if (subagents.busy) return false;
+  const pane = allPanes.value.find((p) => p.pane_id === paneId);
+  if (pane?.agent_status === "blocked") {
+    toast("L’agent attend une décision : réponds-lui d’abord");
+    return false;
+  }
+  subagents.busy = paneId;
+  try {
+    const ok = await switchTo(paneId, name);
+    if (!ok) toast(`Impossible d’afficher ${name} : utilise ↓ puis Entrée dans le terminal`);
+    return ok;
+  } catch (e) {
+    toast(String(e));
+    return false;
+  } finally {
+    subagents.busy = null;
+  }
+}
+
+/** The agent list on screen now (names, the one shown). */
+export async function agentList(paneId: string) {
+  try {
+    return await listOf(paneId);
+  } catch {
+    return null;
+  }
+}
+
 /** After a failure: back on the first agent (main) if the session shows another one. */
 async function restore(paneId: string, name: string) {
   if (name === "main") return;

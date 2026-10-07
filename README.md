@@ -53,6 +53,7 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 | Double-clic | Renommer un workspace, un onglet ou un panneau |
 | Glisser-déposer | Réordonner les workspaces et les onglets |
 | ⊞ | Garder un agent à côté, visible quel que soit l’onglet |
+| ▦ | Mosaïque d’une session Claude : ce que fait chaque sous-agent |
 | Double-clic sur une bordure | Revenir à la largeur par défaut |
 
 <!-- shortcuts:end -->
@@ -129,6 +130,10 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 **Ouvrir à côté** : le bouton ⊞ dans l'en-tête d'un panneau, sur une carte « À traiter » ou dans la palette ⌘K garde l'agent dans une colonne à droite de l'onglet en cours, quel que soit son workspace : le premier divise l'écran en deux, les suivants s'empilent dans la colonne (4 au plus). Chaque case est un vrai terminal : un clic lui donne le clavier (et en fait le destinataire de la barre de saisie), ↗ ouvre son onglet, × le retire de la colonne sans arrêter l'agent. La colonne se redimensionne par sa bordure et est mémorisée ; un agent de l'onglet affiché n'y apparaît pas (il est déjà dans la grille).
 
 **Écrire à un sous-agent** : dans le menu destinataire de la barre de saisie, les agents de tous les workspaces sont listés et, sous chaque session Claude qui en a, ses sous-agents (`↳ jerome-645`). L'app bascule la session sur ce sous-agent avec les flèches, vérifie qu'il est bien affiché, envoie la consigne, puis revient sur `main` (case « Puis revenir sur main »). Si la liste n'est pas trouvée ou si l'agent attend une décision, rien n'est tapé.
+
+**Consommation par workspace** (panneau de droite, sous les quotas Claude) : coût de chaque workspace sur la fenêtre de 5 h en cours ou sur la journée, avec sa part du total, un petit graphique par quart d'heure et, au survol, le détail par agent. L'app relève l'augmentation du coût de chaque session Claude (status line) et la rattache au workspace du panneau ; la part du quota 5 h est une estimation au prorata du coût. Seules les dépenses vues pendant que l'app tourne sont comptées.
+
+**Mosaïque** (▦ dans l'en-tête d'un panneau Claude) : une case par agent de la session (main et sous-agents), avec ses dernières lignes, lues dans les journaux de Claude (`~/.claude/projects/…`), donc sans toucher au terminal. Rafraîchie toutes les 2 à 3 s ; un point vert signale un agent actif. Un clic sur une case affiche cet agent dans le terminal.
 
 **Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
 
@@ -233,7 +238,7 @@ sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-d
 
 Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
 
-1. **Mosaïque des sous-agents d'une session Claude** (main, Bruno, jerome-645…). Ils vivent dans un seul terminal et Claude Code n'en montre qu'un à la fois : pas de vrai terminal par sous-agent. À la place, un aperçu en lecture seule des dernières lignes de chacun, rafraîchi régulièrement ; un clic sur une case bascule le vrai terminal sur ce sous-agent.
+Restent dans `docs/issues/` : l'historique de l'activité (#7) et l'accès depuis l'iPhone / l'iPad (#13).
 
 ## Limites connues
 

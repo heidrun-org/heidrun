@@ -26,9 +26,24 @@ function onKey(e: KeyboardEvent) {
     close();
   }
 }
-// Each key of "⇧⌘T" in its own cap; words ("Molette", "puis") stay as they are.
-const caps = (keys: string) => keys.split(/(\s*\/\s*|\s+puis\s+|\s+\+\s+|\s…\s|\s+)/).filter((s) => s.trim());
-const isSep = (s: string) => /^(\/|puis|\+|…)$/.test(s.trim());
+// "⇧⌘T / ⌘D" → ⇧ ⌘ T, a "/" separator, ⌘ D. Words ("Double-clic sur une bordure",
+// "Molette") stay in one cap.
+function caps(keys: string): { t: string; sep: boolean }[] {
+  const out: { t: string; sep: boolean }[] = [];
+  const combo = (w: string) => {
+    const m = /^([⇧⌥⌃⌘]+)(\S+)$/.exec(w);
+    if (m) for (const c of [...m[1], m[2]]) out.push({ t: c, sep: false });
+    else out.push({ t: w, sep: false });
+  };
+  for (const part of keys.split(/(\s+\/\s+|\s+puis\s+|\s+\+\s+|\s+…\s+)/)) {
+    if (!part.trim()) continue;
+    if (/^\s+(\/|puis|\+|…)\s+$/.test(part)) out.push({ t: part.trim(), sep: true });
+    // "⌘W ⌘W": several key combos in a row.
+    else if (part.split(" ").every((w) => /^[⇧⌥⌃⌘]+\S+$/.test(w))) part.split(" ").forEach(combo);
+    else out.push({ t: part, sep: false });
+  }
+  return out;
+}
 </script>
 
 <template>
@@ -45,8 +60,8 @@ const isSep = (s: string) => /^(\/|puis|\+|…)$/.test(s.trim());
           <div v-for="i in g.items" :key="i.keys + i.action" class="row">
             <span class="keys">
               <template v-for="(c, k) in caps(i.keys)" :key="k">
-                <span v-if="isSep(c)" class="sep">{{ c.trim() }}</span>
-                <kbd v-else>{{ c }}</kbd>
+                <span v-if="c.sep" class="sep">{{ c.t }}</span>
+                <kbd v-else>{{ c.t }}</kbd>
               </template>
             </span>
             <span class="action">{{ i.action }}</span>

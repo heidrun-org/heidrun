@@ -154,6 +154,7 @@ pub fn run() {
             claude::claude_set_rc_startup,
             claude::claude_commands,
             claude::claude_agents,
+            claude::claude_session_agents,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");

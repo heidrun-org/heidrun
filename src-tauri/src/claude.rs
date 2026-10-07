@@ -401,3 +401,204 @@ mod agent_tests {
         assert!(parse_agent("---\nname: a; rm -rf /\n---\n", "x", "perso").is_none());
     }
 }
+
+// ---- Transcripts (mosaic of a session's agents) ------------------------------
+
+#[derive(Serialize, Debug)]
+pub struct AgentTranscript {
+    /// "main" for the session itself, else the subagent id from its file name.
+    pub id: String,
+    pub agent_type: Option<String>,
+    pub description: Option<String>,
+    /// Last write, in seconds since the epoch.
+    pub modified: u64,
+    /// Last lines, rendered roughly like Claude Code shows them.
+    pub lines: Vec<String>,
+}
+
+/// The end of a file (whole lines only), without reading a long transcript entirely.
+fn tail(path: &std::path::Path, max: u64) -> String {
+    use std::io::{Read, Seek, SeekFrom};
+    let Ok(mut f) = std::fs::File::open(path) else { return String::new() };
+    let len = f.metadata().map(|m| m.len()).unwrap_or(0);
+    let start = len.saturating_sub(max);
+    if f.seek(SeekFrom::Start(start)).is_err() {
+        return String::new();
+    }
+    let mut buf = Vec::new();
+    let _ = f.read_to_end(&mut buf);
+    let text = String::from_utf8_lossy(&buf).into_owned();
+    if start > 0 {
+        // The first line is cut: drop it.
+        text.split_once('\n').map(|(_, rest)| rest.to_string()).unwrap_or_default()
+    } else {
+        text
+    }
+}
+
+fn short(s: &str, n: usize) -> String {
+    let one = s.split_whitespace().collect::<Vec<_>>().join(" ");
+    if one.chars().count() > n {
+        format!("{}…", one.chars().take(n).collect::<String>())
+    } else {
+        one
+    }
+}
+
+/// One transcript line (JSON) → display lines.
+fn render_entry(v: &Value, out: &mut Vec<String>) {
+    let Some(msg) = v.get("message") else { return };
+    let role = msg.get("role").and_then(Value::as_str).unwrap_or("");
+    let content = msg.get("content");
+    fn push_text(out: &mut Vec<String>, prefix: &str, t: &str) {
+        let mut first = true;
+        for l in t.lines() {
+            if l.trim().is_empty() {
+                continue;
+            }
+            out.push(format!("{}{}", if first { prefix } else { "  " }, l));
+            first = false;
+        }
+    }
+    match content {
+        Some(Value::String(t)) if role == "user" => push_text(out, "> ", t),
+        Some(Value::String(t)) => push_text(out, "⏺ ", t),
+        Some(Value::Array(parts)) => {
+            for p in parts {
+                match p.get("type").and_then(Value::as_str) {
+                    Some("text") => {
+                        let t = p.get("text").and_then(Value::as_str).unwrap_or("");
+                        push_text(out, if role == "user" { "> " } else { "⏺ " }, t);
+                    }
+                    Some("tool_use") => {
+                        let name = p.get("name").and_then(Value::as_str).unwrap_or("tool");
+                        let input = p.get("input");
+                        // The most telling argument: command, file, pattern, description.
+                        let arg = ["command", "file_path", "path", "pattern", "description", "prompt", "url"]
+                            .iter()
+                            .find_map(|k| input.and_then(|i| i.get(*k)).and_then(Value::as_str))
+                            .unwrap_or("");
+                        out.push(format!("⏺ {name}({})", short(arg, 90)));
+                    }
+                    Some("tool_result") => {
+                        let text = match p.get("content") {
+                            Some(Value::String(s)) => s.clone(),
+                            Some(Value::Array(a)) => a.iter().filter_map(|x| x.get("text").and_then(Value::as_str)).collect::<Vec<_>>().join(" "),
+                            _ => String::new(),
+                        };
+                        let first = text.lines().find(|l| !l.trim().is_empty()).unwrap_or("");
+                        if !first.is_empty() {
+                            out.push(format!("  ⎿ {}", short(first, 100)));
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn transcript(path: &std::path::Path, id: String, meta: Option<&std::path::Path>, keep: usize) -> AgentTranscript {
+    let text = tail(path, 256 * 1024);
+    let mut lines = Vec::new();
+    for l in text.lines() {
+        if let Ok(v) = serde_json::from_str::<Value>(l) {
+            render_entry(&v, &mut lines);
+        }
+    }
+    let skip = lines.len().saturating_sub(keep);
+    let lines = lines.split_off(skip);
+    let modified = std::fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let meta: Option<Value> = meta.and_then(|m| std::fs::read_to_string(m).ok()).and_then(|t| serde_json::from_str(&t).ok());
+    let get = |k: &str| meta.as_ref().and_then(|m| m.get(k)).and_then(Value::as_str).map(String::from);
+    AgentTranscript { id, agent_type: get("agentType"), description: get("description"), modified, lines }
+}
+
+/// The session's own transcript and its subagents' (`<session>/subagents/agent-*.jsonl`),
+/// found under ~/.claude/projects/* by session id. Most recent first, at most 12.
+#[tauri::command]
+pub async fn claude_session_agents(session_id: String, lines: Option<usize>) -> Result<Vec<AgentTranscript>, String> {
+    // Off the main thread: the mosaic polls this every few seconds.
+    tauri::async_runtime::spawn_blocking(move || session_agents(&session_id, lines))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
+fn session_agents(session_id: &str, lines: Option<usize>) -> Result<Vec<AgentTranscript>, String> {
+    // Only an id: it becomes part of a path.
+    if session_id.is_empty() || !session_id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return Err("identifiant de session invalide".into());
+    }
+    let keep = lines.unwrap_or(40).clamp(5, 200);
+    let projects = claude_dir().join("projects");
+    let Ok(entries) = std::fs::read_dir(&projects) else { return Ok(vec![]) };
+    for e in entries.flatten() {
+        let dir = e.path();
+        let main = dir.join(format!("{session_id}.jsonl"));
+        let subs = dir.join(&session_id).join("subagents");
+        if !main.exists() && !subs.is_dir() {
+            continue;
+        }
+        let mut out = Vec::new();
+        if main.exists() {
+            out.push(transcript(&main, "main".into(), None, keep));
+        }
+        let mut files: Vec<std::path::PathBuf> = Vec::new();
+        let mut walk = |d: &std::path::Path| {
+            if let Ok(rd) = std::fs::read_dir(d) {
+                for f in rd.flatten() {
+                    let p = f.path();
+                    let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                    if name.starts_with("agent-") && name.ends_with(".jsonl") {
+                        files.push(p);
+                    }
+                }
+            }
+        };
+        walk(&subs);
+        if let Ok(rd) = std::fs::read_dir(subs.join("workflows")) {
+            for w in rd.flatten() {
+                walk(&w.path());
+            }
+        }
+        // Most recent first, and only those shown are read.
+        let mtime = |p: &std::path::PathBuf| std::fs::metadata(p).and_then(|m| m.modified()).ok();
+        files.sort_by_key(|p| std::cmp::Reverse(mtime(p)));
+        files.truncate(11);
+        let mut subs_out: Vec<AgentTranscript> = files
+            .iter()
+            .map(|p| {
+                let stem = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                let id = stem.trim_start_matches("agent-").to_string();
+                let meta = p.with_file_name(format!("{stem}.meta.json"));
+                transcript(p, id, Some(&meta), keep)
+            })
+            .collect();
+        subs_out.sort_by(|a, b| b.modified.cmp(&a.modified));
+        out.extend(subs_out);
+        return Ok(out);
+    }
+    Ok(vec![])
+}
+
+#[cfg(test)]
+mod transcript_tests {
+    use super::*;
+
+    #[test]
+    fn renders_transcript_lines() {
+        let mut out = Vec::new();
+        let v: Value = serde_json::from_str(r#"{"message":{"role":"assistant","content":[{"type":"text","text":"Je regarde.\n\nOK"},{"type":"tool_use","name":"Bash","input":{"command":"ls -la"}}]}}"#).unwrap();
+        render_entry(&v, &mut out);
+        let v: Value = serde_json::from_str(r#"{"message":{"role":"user","content":[{"type":"tool_result","content":"total 8\nfoo"}]}}"#).unwrap();
+        render_entry(&v, &mut out);
+        assert_eq!(out, vec!["⏺ Je regarde.", "  OK", "⏺ Bash(ls -la)", "  ⎿ total 8"]);
+        assert!(session_agents("../etc", None).is_err());
+    }
+}

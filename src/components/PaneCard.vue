@@ -6,6 +6,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
+import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneName } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
@@ -72,6 +73,14 @@ const subtitle = computed(() => {
           </button>
         </template>
         <template v-else>
+        <button
+          v-if="(pane.agent ?? '').includes('claude')"
+          class="tool txt"
+          title="Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)"
+          aria-label="Mosaïque des agents de la session"
+          @mousedown.stop
+          @click="mosaic.paneId = pane.pane_id"
+        >▦</button>
         <button
           class="tool txt"
           :class="{ on: pinned }"

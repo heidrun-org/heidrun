@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
+import SpendTable from "./SpendTable.vue";
 import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
@@ -215,6 +216,7 @@ const statusText = computed(() => {
       </header>
 
       <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
+      <SpendTable v-if="providers.includes('claude')" />
 
       <div v-if="state.activity.length" class="block">
         <div class="act-head">
