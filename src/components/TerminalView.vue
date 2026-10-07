@@ -14,6 +14,7 @@ import {
   findCommands,
   findRefs,
   findShellBlock,
+  findInlineShell,
   findStep,
   refContext,
   type RefContext,
@@ -214,8 +215,15 @@ onMounted(async () => {
           }
         }
       }
+      // "lance ! scripts/x.sh." inside a sentence: run it like a "!" block.
+      const inline = props.agent ? findInlineShell(text) : [];
+      for (const c of inline) {
+        const short = c.command.length > 48 ? `${c.command.slice(0, 48)}…` : c.command;
+        items.push({ s: c.start, e: c.end, label: `▷ Exécuter ${short}`, run: () => sendPrompt(props.paneId, `! ${c.command}`), underline: true });
+      }
+      const inCommand = (s: number, e: number) => inline.some((c) => s < c.end && e > c.start);
       for (const r of findRefs(text, refCtx)) {
-        if (!r.url) continue;
+        if (!r.url || inCommand(r.start, r.end)) continue;
         const what = text.slice(r.start, r.end);
         const target = r.target;
         const preview = target ? () => openIssue(props.cwd, target, r.url) : undefined;

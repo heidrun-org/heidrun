@@ -307,6 +307,48 @@ export function findShellBlock(lineAt: (i: number) => string | null, y: number, 
   return null;
 }
 
+const SHELL_TOOLS = new Set(
+  ("git npm pnpm yarn npx bun deno node python python3 pip pip3 uv docker podman make cargo rustc go ls cd cat less rm mv cp " +
+    "touch mkdir chmod chown ln curl wget brew gh glab kubectl helm ssh scp rsync sudo tail head grep rg find echo export " +
+    "env source sh bash zsh tauri flutter dart php composer symfony herdr claude codex open killall lsof ps kill pkill jq yq " +
+    "psql mysql redis-cli sqlite3 terraform ansible vercel wrangler supabase firebase gcloud aws az du df tar zip unzip " +
+    "sed awk sort uniq wc xargs watch time which diff patch tree code ngrok").split(" "),
+);
+
+/**
+ * "… lance ! scripts/identifier-jeton-pages.sh. Si la révocation…": a shell-mode
+ * command quoted inside a sentence. It ends at the end of the sentence (". " then
+ * a capital letter, or the end of the line), at a closing backtick, or at " ou " / " puis ".
+ */
+export function findInlineShell(text: string): { start: number; end: number; command: string }[] {
+  const out: { start: number; end: number; command: string }[] = [];
+  const re = /(^|[\s(«"“])(`?)!\s+(?=[\w./~$-])/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const start = m.index + m[1].length;
+    const from = re.lastIndex;
+    const rest = text.slice(from);
+    let len: number;
+    if (m[2]) {
+      const close = rest.indexOf("`");
+      if (close <= 0) continue;
+      len = close;
+    } else {
+      const stop = /(\.\s+(?=\p{Lu})|\.\s*$|,\s|;\s|\s+(ou|puis|or|then)\s|\s*»|\s*$)/u.exec(rest);
+      len = stop ? stop.index : rest.length;
+    }
+    const command = rest.slice(0, len).replace(/[.,;:]+$/, "").trim();
+    // "C'est super ! Bravo" is French punctuation, not a command: the first word
+    // must look like one (a path, a script, or a common tool).
+    const head = command.split(/\s+/)[0];
+    if (command.length < 2 || !(/[/.]/.test(head) || SHELL_TOOLS.has(head))) continue;
+    const end = from + rest.slice(0, len).replace(/[.,;:]+$/, "").length + (m[2] ? 1 : 0);
+    out.push({ start, end, command });
+    re.lastIndex = end;
+  }
+  return out;
+}
+
 // ---- Claude Code's agent list under the prompt ("● main", "○ jerome-645 …") -----
 
 // Filled marker = the agent shown; hollow = the others. Several glyphs, depending on
