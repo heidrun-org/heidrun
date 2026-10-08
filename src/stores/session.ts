@@ -548,14 +548,20 @@ const answering = new Set<string>();
  * later does it fall back to the arrows and Enter: never on a new dialog.
  * An approval of a dangerous command goes through the guards first.
  */
-export async function answerChoice(paneId: string, n: number) {
+/** Any option that is not a refusal approves something ("Always allow", "Continue", "Run"…). */
+export const REFUSAL = /^(no|non|deny|refuse|refuser|reject|rejeter|cancel|annuler|abort|stop)\b/i;
+
+export async function answerChoice(paneId: string, n: number, checked = false, expected?: ChoiceMenu): Promise<boolean> {
   const menu = state.choices[paneId];
-  if (!menu || answering.has(paneId)) return;
+  if (!menu || answering.has(paneId)) return false;
+  // Checked (on the phone) against this very menu: a new one is not answered blindly.
+  if (expected && menu !== expected) return false;
   const option = menu.options.find((o) => o.n === n);
-  const approves = !!option && /^(yes|oui|allow|autoriser|approve|proceed)\b/i.test(option.label);
-  if (approves && menu.detail) {
+  const approves = !!option && !REFUSAL.test(option.label);
+  // `checked`: the guards were already applied (and confirmed) on the phone.
+  if (approves && menu.detail && !checked) {
     const { cwd, where } = whereOf(paneId);
-    if (!(await allowCommand(menu.detail, cwd, where))) return;
+    if (!(await allowCommand(menu.detail, cwd, where))) return false;
   }
   answering.add(paneId);
   delete state.choices[paneId];
@@ -563,12 +569,12 @@ export async function answerChoice(paneId: string, n: number) {
     await guard(() => api.sendKeys(paneId, [String(n)]));
     await new Promise((r) => window.setTimeout(r, 700));
     let pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
-    if (pane?.agent_status !== "blocked") return;
+    if (pane?.agent_status !== "blocked") return true;
     let again: ChoiceMenu | null = null;
     try {
       again = findChoices(await api.read(paneId, 60));
     } catch {
-      return;
+      return true;
     }
     if (again && sameMenu(again, menu)) {
       const from = again.options.findIndex((o) => o.selected);
@@ -580,6 +586,7 @@ export async function answerChoice(paneId: string, n: number) {
     // Next dialog (or the same one): show what is on screen now.
     pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
     if (pane?.agent_status === "blocked") readChoices(paneId, [300, 800]);
+    return true;
   } finally {
     answering.delete(paneId);
   }

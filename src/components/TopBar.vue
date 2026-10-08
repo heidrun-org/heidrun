@@ -3,6 +3,7 @@ import FontMenu from "./FontMenu.vue";
 import Icon from "./Icon.vue";
 import { counts, state } from "../stores/session";
 import { settings } from "../stores/settings";
+import { mobile } from "../stores/mobile";
 </script>
 
 <template>
@@ -33,6 +34,15 @@ import { settings } from "../stores/settings";
       <span><span class="dot working"></span>{{ counts.working }} en cours</span>
       <span><span class="dot done"></span>{{ counts.done }} terminé{{ counts.done > 1 ? "s" : "" }}</span>
     </div>
+    <button
+      class="icon-btn help"
+      :class="{ on: mobile.status?.enabled }"
+      aria-label="Accès mobile"
+      :title="mobile.status?.enabled ? (mobile.status.running ? 'Accès mobile actif' : 'Accès mobile : erreur') : 'Accès mobile (iPhone, iPad)'"
+      @click="mobile.open = true"
+    >
+      <svg width="12" height="16" viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="10" height="14" rx="2" /><path d="M5 12.5h2" /></svg>
+    </button>
     <button class="icon-btn help" aria-label="Raccourcis" title="Raccourcis (⌘/)" @click="state.shortcutsOpen = true">?</button>
     <FontMenu />
     <button

@@ -27,6 +27,7 @@ import { fillInput } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
+import { mobile } from "../stores/mobile";
 
 interface Item {
   section: string;
@@ -107,6 +108,7 @@ const items = computed<Item[]>(() => {
     ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
     { section: "Navigation", label: "Chercher dans tous les terminaux…", hint: "⇧⌘F", run: () => (search.open = true) },
     { section: "Aide", label: "Raccourcis clavier et souris", hint: "⌘/", run: () => (state.shortcutsOpen = true) },
+    { section: "Affichage", label: "Accès mobile (iPhone, iPad)…", run: () => (mobile.open = true) },
     { section: "Navigation", label: "Onglet suivant", hint: "⌥⌘→", run: () => cycleTab(1) },
     { section: "Navigation", label: "Onglet précédent", hint: "⌥⌘←", run: () => cycleTab(-1) },
     { section: "Navigation", label: "Workspace suivant", hint: "⌥⌘↓", run: () => cycleWorkspace(1) },

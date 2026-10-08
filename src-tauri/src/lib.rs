@@ -2,6 +2,7 @@ mod claude;
 mod git;
 mod history;
 mod herdr;
+mod mobile;
 mod project;
 mod pty;
 mod usage;
@@ -123,9 +124,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
+        .manage(mobile::MobileState::default())
         .setup(|app| {
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
+            mobile::start_if_enabled(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -159,6 +162,11 @@ pub fn run() {
             history::history_append,
             history::history_read,
             history::history_export,
+            mobile::mobile_reply,
+            mobile::mobile_status,
+            mobile::mobile_enable,
+            mobile::mobile_disable,
+            mobile::mobile_revoke,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");

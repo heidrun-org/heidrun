@@ -52,6 +52,8 @@ import { startAlerts } from "./stores/alerts";
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
+import MobileModal from "./components/MobileModal.vue";
+import { mobile, startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
 function codeZoom(dir: 1 | -1) {
@@ -171,6 +173,7 @@ onMounted(() => {
   startGit();
   startAlerts();
   loadHistory();
+  startMobile();
   loadClaudeLink();
   startRemoteWatch();
 });
@@ -227,6 +230,7 @@ onBeforeUnmount(() => {
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
     <HistoryModal v-if="history.open" />
+    <MobileModal v-if="mobile.open" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

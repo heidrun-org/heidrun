@@ -138,6 +138,14 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 
 **Mosaïque** (▦ dans l'en-tête d'un panneau Claude) : une case par agent de la session (main et sous-agents), avec ses dernières lignes, lues dans les journaux de Claude (`~/.claude/projects/…`), donc sans toucher au terminal. Rafraîchie toutes les 2 à 3 s ; un point vert signale un agent actif. Un clic sur une case affiche cet agent dans le terminal.
 
+**Accès mobile (iPhone, iPad)** — bouton téléphone en haut, ou ⌘K « Accès mobile » : depuis le téléphone, voir ce qui est à traiter, répondre aux menus d'autorisation, envoyer une consigne, refuser ou interrompre, lire la fin de la sortie d'un agent. Désactivé par défaut.
+
+1. Installe **Tailscale** sur le Mac et sur l'iPhone / l'iPad (même compte : Google, Apple, Microsoft ou GitHub).
+2. Active l'accès mobile dans Herdr Desk (macOS peut demander d'autoriser les connexions entrantes : Autoriser).
+3. Scanne le QR code avec l'appareil photo, ouvre le lien dans Safari, puis Partager → « Sur l'écran d'accueil ».
+
+Sécurité : le serveur n'écoute que sur l'adresse Tailscale du Mac (100.x), jamais sur Internet ni sur le Wi-Fi ; chaque requête porte la clé d'appairage (64 caractères, dans `~/.config/herdr-desk/mobile.json`, lisible par toi seul) ; « Révoquer » change la clé et coupe immédiatement les appareils appairés. Seules cinq actions existent (état, lecture, réponse à un menu, consigne, refuser / interrompre) ; une commande dangereuse est montrée en entier sur le téléphone et demande une confirmation, et ce que le projet bloque reste bloqué. Herdr Desk doit être ouvert sur le Mac.
+
 **Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
 
 **Notifications** (menu « A ») : rappel quand un agent reste bloqué (5 min par défaut), contexte d'un agent au-delà de 80 %, quota Claude au-delà de 80 % puis 95 %, résumé de la journée à l'heure choisie (travaux terminés par workspace), heures calmes sans notification (par ex. 20:00 → 08:00, alertes reportées après).
@@ -232,7 +240,7 @@ Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
 
 ## Pistes
 
-Idées notées pour plus tard, pas encore faites. Chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
+Les 14 premières issues sont faites. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
 
 ```sh
 sh scripts/create-gitlab-issues.sh --dry-run          # aperçu
@@ -240,8 +248,6 @@ sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-d
 ```
 
 Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
-
-Reste dans `docs/issues/` : l'accès depuis l'iPhone / l'iPad (#13).
 
 ## Limites connues
 

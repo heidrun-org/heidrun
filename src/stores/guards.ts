@@ -32,6 +32,13 @@ function projectGuards(cwd: string | null | undefined): Promise<ProjectGuards | 
   return p;
 }
 
+/** The guard that a command hits, without asking anything (the phone asks on its side). */
+export async function guardHit(command: string, cwd: string | null | undefined) {
+  const g = await projectGuards(cwd);
+  if (g === "unreadable") return { level: "confirm" as const, why: ".herdr-desk.json illisible : ses règles ne peuvent pas être vérifiées" };
+  return checkCommand(command, g);
+}
+
 /**
  * Resolves to true when the command may be sent: harmless, or confirmed by the
  * user. A command the project blocks is never sent.
