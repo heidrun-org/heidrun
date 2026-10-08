@@ -42,6 +42,9 @@ export interface ActivityEntry {
   /** Time spent waiting for a decision (blocked), not counted as work. */
   blockedMs?: number;
   blockedAt?: number | null;
+  /** Consignes sent to the agent and decisions answered during this run. */
+  prompts?: number;
+  decisions?: number;
 }
 
 // Finished runs go to the history (stores/history.ts registers here).
@@ -67,6 +70,8 @@ function endRun(r: ActivityEntry, now: number) {
 export const lastPrompt: Record<string, { text: string; at: number }> = {};
 export function rememberPrompt(paneId: string, text: string) {
   lastPrompt[paneId] = { text: text.replace(/\s+/g, " ").trim().slice(0, 200), at: Date.now() };
+  const open = state.activity.find((r) => r.paneId === paneId && r.end === null);
+  if (open) open.prompts = (open.prompts ?? 0) + 1;
 }
 
 export interface OutputWatch {
@@ -473,6 +478,7 @@ function trackRun(
     if (open) {
       // Waiting for a decision is not work: blocked time is counted apart.
       if (after === "blocked" && open.status !== "blocked") open.blockedAt = now;
+      if (open.status === "blocked" && after !== "blocked") open.decisions = (open.decisions ?? 0) + 1;
       if (after === "working" && open.blockedAt) {
         open.blockedMs = (open.blockedMs ?? 0) + (now - open.blockedAt);
         open.blockedAt = null;
@@ -490,6 +496,9 @@ function trackRun(
       startUnknown: before === undefined,
       blockedMs: 0,
       blockedAt: after === "blocked" ? now : null,
+      // The consigne that started it was sent just before (counted then, no run was open).
+      prompts: lastPrompt[paneId] && now - lastPrompt[paneId].at < 120_000 ? 1 : 0,
+      decisions: 0,
       ...names,
     });
     // Only finished runs are trimmed: a long run must not vanish before it ends.
@@ -499,6 +508,7 @@ function trackRun(
       state.activity = state.activity.filter((r) => !drop.has(r.id));
     }
   } else if (open && (after === "done" || after === "idle")) {
+    if (open.status === "blocked") open.decisions = (open.decisions ?? 0) + 1;
     open.end = now;
     open.status = "done";
     Object.assign(open, names);

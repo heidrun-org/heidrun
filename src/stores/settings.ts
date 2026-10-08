@@ -75,6 +75,11 @@ const defaults = {
   noteHeight: 520,
   /** Agents kept "à côté" (pane ids), stacked in a column on the right of the tab. */
   dockedPanes: [] as string[],
+  /** History estimates: 1 h of agent work ≈ this many hours of a developer. */
+  histHumanFactor: 4,
+  /** Your own time: minutes per consigne written, per decision answered. */
+  histPromptMin: 3,
+  histDecisionMin: 0.5,
   dockWidth: 560,
 };
 

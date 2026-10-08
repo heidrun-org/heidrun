@@ -25,6 +25,8 @@ export interface HistoryRun {
   cost?: number;
   summary: string;
   closed: boolean;
+  prompts?: number;
+  decisions?: number;
   /** 2: cost measured per session (older lines may hold an inflated cost). */
   v?: number;
   /** Still running (shown live, not stored yet). */
@@ -84,6 +86,8 @@ onRunEnd((r: ActivityEntry) => {
     paneId: r.paneId,
     summary,
     closed: r.status === "closed",
+    prompts: r.prompts ?? 0,
+    decisions: r.decisions ?? 0,
   };
   // Shown right away: no gap between "en cours" and the recorded line.
   history.pending.unshift({ ...base, cost: paneSpend(r.paneId, r.start, end) || undefined, v: 2 });
@@ -138,6 +142,8 @@ export const liveRuns = computed<HistoryRun[]>(() => {
         cost: paneSpend(r.paneId, r.start, now) || undefined,
         closed: false,
         live: true,
+        prompts: r.prompts ?? 0,
+        decisions: (r.decisions ?? 0),
       };
     });
 });
@@ -159,12 +165,14 @@ export const todaySummary = computed(() => {
   const from = startOfDay(tick.value);
   const byWs = new Map<string, number>();
   let total = 0;
+  let cost = 0;
   for (const r of allRuns.value) {
     if (r.end < from) continue;
     total += r.activeMs;
+    cost += r.cost ?? 0;
     byWs.set(r.ws, (byWs.get(r.ws) ?? 0) + r.activeMs);
   }
-  return { total, top: [...byWs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3) };
+  return { total, cost, top: [...byWs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3) };
 });
 
 export function hm(ms: number): string {
@@ -191,7 +199,7 @@ export function toCsv(runs: HistoryRun[]): string {
     const d = new Date(t);
     return `${d2(d.getHours())}:${d2(d.getMinutes())}`;
   };
-  const head = ["Date", "Début", "Fin", "Durée active (min)", "Attente décision (min)", "Workspace", "Onglet", "Agent", "Type", "Branche", "Coût (USD)", "Résumé"];
+  const head = ["Date", "Début", "Fin", "Durée active (min)", "Attente décision (min)", "Workspace", "Onglet", "Agent", "Type", "Branche", "Coût (USD)", "Consignes", "Décisions", "Résumé"];
   const rows = runs.map((r) => [
     date(r.start),
     (r.startUnknown ? "≤ " : "") + time(r.start),
@@ -204,6 +212,8 @@ export function toCsv(runs: HistoryRun[]): string {
     r.kind,
     r.branch ?? "",
     r.cost != null ? r.cost.toFixed(2).replace(".", ",") : "",
+    r.prompts ?? "",
+    r.decisions ?? "",
     r.summary,
   ]);
   return [head, ...rows].map((l) => l.map(csvCell).join(";")).join("\n") + "\n";
@@ -217,4 +227,26 @@ export function daysAgo(days: number): number {
   return d.getTime();
 }
 
-export { startOfDay };
+export interface Kpis {
+  cost: number;
+  agentMs: number;
+  runs: number;
+  projects: number;
+  prompts: number;
+  decisions: number;
+  blockedMs: number;
+}
+
+export function kpis(list: HistoryRun[]): Kpis {
+  const k: Kpis = { cost: 0, agentMs: 0, runs: list.length, projects: new Set(list.map((r) => r.ws)).size, prompts: 0, decisions: 0, blockedMs: 0 };
+  for (const r of list) {
+    k.cost += r.cost ?? 0;
+    k.agentMs += r.activeMs;
+    k.prompts += r.prompts ?? 0;
+    k.decisions += r.decisions ?? 0;
+    k.blockedMs += r.blockedMs;
+  }
+  return k;
+}
+
+export { startOfDay, tick };

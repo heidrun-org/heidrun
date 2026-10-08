@@ -258,7 +258,7 @@ const statusText = computed(() => {
 
       <button type="button" class="hist-line" title="Historique, temps et coût par projet (⇧⌘H)" @click="history.open = true">
         <span class="muted">Aujourd’hui</span>
-        <strong v-if="todaySummary.total">{{ hm(todaySummary.total) }}</strong>
+        <strong v-if="todaySummary.total">{{ hm(todaySummary.total) }}<template v-if="todaySummary.cost"> · ${{ todaySummary.cost.toFixed(2) }}</template></strong>
         <!-- On one line: the workspaces end with "…" rather than wrapping. -->
         <span class="hist-ws" :title="todaySummary.top.map(([w, ms]) => `${w} ${hm(ms)}`).join(' · ')">
           <template v-if="todaySummary.total">{{ todaySummary.top.map(([w, ms]) => `· ${w} ${hm(ms)}`).join("  ") }}</template>

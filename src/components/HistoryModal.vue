@@ -2,13 +2,14 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { allRuns, daysAgo, history, hm, loadHistory, startOfDay, toCsv, type HistoryRun } from "../stores/history";
+import { allRuns, daysAgo, history, hm, kpis, loadHistory, startOfDay, tick, toCsv, type HistoryRun } from "../stores/history";
+import { settings } from "../stores/settings";
 import { allPanes, selectPane, toast } from "../stores/session";
 import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
 
 type Period = "today" | "7" | "30" | "90" | "365";
-const period = ref<Period>("7");
+const period = ref<Period>("today");
 const ws = ref("");
 const kind = ref("");
 const q = ref("");
@@ -53,6 +54,32 @@ const bars = computed(() => {
   const max = Math.max(1, ...vals);
   return { vals, max, step };
 });
+
+// ---- KPI cards (same filters as the list) -------------------------------------
+const span = computed(() => tick.value - from.value);
+/** The same stretch of time just before: today so far vs yesterday at this hour. */
+const prevRuns = computed(() =>
+  allRuns.value.filter((r) => r.end >= from.value - span.value && r.end < tick.value - span.value && (!ws.value || r.ws === ws.value) && matches(r)),
+);
+const k = computed(() => kpis(runs.value));
+const kp = computed(() => kpis(prevRuns.value));
+const humanMs = computed(() => k.value.agentMs * settings.histHumanFactor);
+const yourMs = computed(() => (k.value.prompts * settings.histPromptMin + k.value.decisions * settings.histDecisionMin) * 60_000);
+const leverage = computed(() => (yourMs.value > 0 ? humanMs.value / yourMs.value : null));
+/** "+20 %" vs the previous stretch (null when there is nothing to compare). */
+function delta(now: number, before: number): { txt: string; up: boolean } | null {
+  if (!before) return null;
+  const pct = Math.round(((now - before) / before) * 100);
+  return { txt: `${pct > 0 ? "+" : ""}${pct} %`, up: pct > 0 };
+}
+const prevLabel = computed(() => (period.value === "today" ? "vs hier à la même heure" : `vs les ${period.value} jours d’avant`));
+/** Cost over day / week / month, whatever the period chosen (same workspace and agent filters). */
+const costBy = computed(() => {
+  const sum = (since: number) =>
+    allRuns.value.filter((r) => r.end >= since && (!ws.value || r.ws === ws.value) && matches(r)).reduce((s, r) => s + (r.cost ?? 0), 0);
+  return { day: sum(startOfDay()), week: sum(daysAgo(6)), month: sum(daysAgo(29)) };
+});
+const showCalib = ref(false);
 
 const usd = (v: number) => (v >= 10 ? `$${v.toFixed(0)}` : `$${v.toFixed(2)}`);
 const d2 = (n: number) => String(n).padStart(2, "0");
@@ -122,7 +149,50 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <option v-for="k in kinds" :key="k" :value="k">{{ k }}</option>
         </select>
         <input v-model="q" placeholder="Rechercher dans les consignes, branches…" spellcheck="false" />
+        <button class="btn" :class="{ on: showCalib }" title="Hypothèses des estimations" @click="showCalib = !showCalib">⚙ Hypothèses</button>
         <button class="btn" :disabled="!runs.length" @click="exportCsv">Export CSV ⤓</button>
+      </div>
+
+      <div v-if="showCalib" class="calib">
+        <label>1 h d’agent ≈ <input v-model.number="settings.histHumanFactor" type="number" min="0.5" max="20" step="0.5" /> h de développeur</label>
+        <label>Une consigne écrite ≈ <input v-model.number="settings.histPromptMin" type="number" min="0" max="60" step="0.5" /> min de ton temps</label>
+        <label>Une décision (autoriser, choisir) ≈ <input v-model.number="settings.histDecisionMin" type="number" min="0" max="30" step="0.5" /> min</label>
+        <span class="hint">Estimations, à ajuster à ton expérience. « Ton temps » ne compte que l’écriture des consignes et les décisions, pas la relecture ni les tests faits à côté.</span>
+      </div>
+
+      <div class="cards" aria-label="Synthèse">
+        <div class="card">
+          <span class="c-label">Coût agents</span>
+          <span class="c-value">{{ usd(k.cost) }}</span>
+          <span v-if="delta(k.cost, kp.cost)" class="c-delta" :class="{ up: delta(k.cost, kp.cost)!.up }">{{ delta(k.cost, kp.cost)!.txt }} {{ prevLabel }}</span>
+          <span class="c-sub">jour {{ usd(costBy.day) }} · 7 j {{ usd(costBy.week) }} · 30 j {{ usd(costBy.month) }}</span>
+        </div>
+        <div class="card">
+          <span class="c-label">Temps agents</span>
+          <span class="c-value">{{ hm(k.agentMs) }}</span>
+          <span v-if="delta(k.agentMs, kp.agentMs)" class="c-delta neutral">{{ delta(k.agentMs, kp.agentMs)!.txt }} {{ prevLabel }}</span>
+          <span class="c-sub">{{ k.runs }} travau{{ k.runs > 1 ? "x" : "" }} · {{ k.projects }} projet{{ k.projects > 1 ? "s" : "" }}<template v-if="k.agentMs > 60_000"> · {{ usd(k.cost / (k.agentMs / 3_600_000)) }} / h</template></span>
+        </div>
+        <div class="card">
+          <span class="c-label">Temps homme estimé</span>
+          <span class="c-value">{{ hm(humanMs) }}</span>
+          <span class="c-sub">si un développeur l’avait fait seul · × {{ settings.histHumanFactor }}</span>
+        </div>
+        <div class="card">
+          <span class="c-label">Ton temps estimé</span>
+          <span class="c-value">{{ hm(yourMs) }}</span>
+          <span class="c-sub">{{ k.prompts }} consigne{{ k.prompts > 1 ? "s" : "" }} · {{ k.decisions }} décision{{ k.decisions > 1 ? "s" : "" }}</span>
+        </div>
+        <div class="card accent">
+          <span class="c-label">Effet de levier</span>
+          <span class="c-value">{{ leverage ? `× ${leverage >= 10 ? Math.round(leverage) : leverage.toFixed(1)}` : "—" }}</span>
+          <span class="c-sub">temps homme estimé / ton temps<template v-if="leverage"> · {{ hm(Math.max(0, humanMs - yourMs)) }} gagnées</template></span>
+        </div>
+        <div class="card" :class="{ warn: k.blockedMs > 0.2 * Math.max(1, k.agentMs + k.blockedMs) }">
+          <span class="c-label">Agents qui t’attendaient</span>
+          <span class="c-value">{{ hm(k.blockedMs) }}</span>
+          <span class="c-sub">en attente de ta décision<template v-if="k.agentMs + k.blockedMs > 0"> · {{ Math.round((k.blockedMs / (k.agentMs + k.blockedMs)) * 100) }} % du temps</template></span>
+        </div>
       </div>
 
       <div class="body">
@@ -188,6 +258,20 @@ h2 { margin: 0; font-size: 16px; font-weight: 600; }
 .filters { display: flex; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
 .filters select, .filters input { height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: 12.5px; padding: 0 9px; }
 .filters input { flex: 1; }
+.calib { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--bg); font-size: 12px; color: var(--text-2); }
+.calib input { width: 56px; height: 26px; margin: 0 4px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); text-align: right; padding: 0 6px; }
+.btn.on { border-color: var(--done); color: var(--text); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.card { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); min-width: 0; }
+.card.accent { border-color: color-mix(in srgb, var(--done) 45%, var(--line)); }
+.card.warn { border-color: color-mix(in srgb, var(--accent) 50%, var(--line)); }
+.card.warn .c-value { color: var(--accent); }
+.c-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.c-value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.c-delta { font-size: 11px; color: var(--ok); }
+.c-delta.up { color: var(--accent); }
+.c-delta.neutral { color: var(--text-2); }
+.c-sub { font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: 340px 1fr; }
 .side { border-right: 1px solid var(--line); padding: 14px 16px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
 .eyebrow { margin-bottom: 4px; }
