@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import type { GitStatus } from "../stores/git";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
 import SpendTable from "./SpendTable.vue";
@@ -60,6 +62,35 @@ const hasFinished = computed(() => state.activity.some((a) => a.end !== null));
 const now = ref(Date.now());
 const ticker = window.setInterval(() => (now.value = Date.now()), 30_000);
 onBeforeUnmount(() => window.clearInterval(ticker));
+
+// Git branch of the pane's folder, refreshed every few seconds while shown.
+const paneGit = ref<GitStatus | null>(null);
+let gitSeq = 0;
+async function loadPaneGit() {
+  const cwd = p.value?.foreground_cwd || p.value?.cwd;
+  const my = ++gitSeq;
+  if (!cwd) return (paneGit.value = null);
+  const st = await invoke<GitStatus | null>("git_status", { cwd }).catch(() => null);
+  if (my === gitSeq) paneGit.value = st;
+}
+watch(() => p.value?.foreground_cwd || p.value?.cwd, loadPaneGit, { immediate: true });
+const gitTicker = window.setInterval(loadPaneGit, 8000);
+onBeforeUnmount(() => window.clearInterval(gitTicker));
+
+/** Green: all committed and pushed. Orange: changes not committed. Blue: commits not pushed. */
+const branchState = computed(() => {
+  const g = paneGit.value;
+  if (!g) return { level: "", badge: "", title: "" };
+  const dirty = g.changed + g.untracked;
+  const parts: string[] = [];
+  if (dirty) parts.push(`${dirty} fichier${dirty > 1 ? "s" : ""} non commité${dirty > 1 ? "s" : ""}`);
+  if (g.ahead) parts.push(`${g.ahead} commit${g.ahead > 1 ? "s" : ""} à pousser`);
+  if (g.behind) parts.push(`${g.behind} en retard sur ${g.upstream ?? "le distant"}`);
+  if (!g.upstream) parts.push("pas de branche distante");
+  const level = dirty ? "dirty" : g.ahead || !g.upstream ? "ahead" : "clean";
+  const badge = [dirty ? `±${dirty}` : "", g.ahead ? `↑${g.ahead}` : "", g.behind ? `↓${g.behind}` : ""].filter(Boolean).join(" ");
+  return { level, badge, title: `${g.branch}${g.upstream ? ` → ${g.upstream}` : ""}\n${parts.length ? parts.join(" · ") : "Tout est commité et poussé"}` };
+});
 
 function runLabel(a: (typeof state.activity)[number]): string {
   if (a.status === "blocked") return "attend une décision";
@@ -165,8 +196,18 @@ const statusText = computed(() => {
 
         <dl class="facts">
           <template v-if="p.agent"><dt>Agent</dt><dd>{{ agentKind(p) }}<span v-if="p.tokens?.hd_model"> · {{ p.tokens.hd_model }}</span></dd></template>
-          <template v-else-if="p.terminal_title_stripped"><dt>Commande</dt><dd class="mono">{{ p.terminal_title_stripped }}</dd></template>
-          <dt>Dossier</dt><dd class="mono">{{ shortPath(p.foreground_cwd || p.cwd) }}</dd>
+          <template v-else-if="p.terminal_title_stripped">
+            <dt>Commande</dt>
+            <dd class="mono full" tabindex="0" :title="p.terminal_title_stripped">{{ p.terminal_title_stripped }}</dd>
+          </template>
+          <dt>Dossier</dt>
+          <dd class="mono full" tabindex="0" :title="p.foreground_cwd || p.cwd || ''">{{ shortPath(p.foreground_cwd || p.cwd) }}</dd>
+          <template v-if="paneGit?.branch">
+            <dt>Branche</dt>
+            <dd class="mono full branch" :class="branchState.level" tabindex="0" :title="branchState.title">
+              <span class="b-dot"></span>{{ paneGit.branch }}<span v-if="branchState.badge" class="b-badge">{{ branchState.badge }}</span>
+            </dd>
+          </template>
           <dt>Panneau</dt><dd class="mono">{{ p.pane_id }}</dd>
         </dl>
 
@@ -291,6 +332,16 @@ const statusText = computed(() => {
 .facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: 12px; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+/* Long command or path: shown whole on hover or focus. */
+.facts dd.full { border-radius: 4px; outline: none; }
+.facts dd.full:hover, .facts dd.full:focus { white-space: normal; word-break: break-all; overflow: visible; }
+.facts dd.full:focus-visible { box-shadow: 0 0 0 1px var(--line-strong); }
+.branch { display: flex; align-items: center; gap: 6px; }
+.b-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--muted); }
+.branch.clean { color: var(--ok); } .branch.clean .b-dot { background: var(--ok); }
+.branch.dirty { color: var(--accent); } .branch.dirty .b-dot { background: var(--accent); }
+.branch.ahead { color: var(--done); } .branch.ahead .b-dot { background: var(--done); }
+.b-badge { font-size: 10.5px; padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--text-2); }
 .line { display: flex; justify-content: space-between; font-size: 12px; }
 .gauge.big { height: 8px; border-radius: 4px; }
 .hint, .muted { font-size: 11px; color: var(--muted); }
