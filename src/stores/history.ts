@@ -35,10 +35,13 @@ export const history = reactive({
   open: false,
   loaded: false,
   runs: [] as HistoryRun[],
+  /** Finished, waiting the few seconds before being written (cost, branch). */
+  pending: [] as HistoryRun[],
 });
 
 export async function loadHistory() {
   try {
+    // Re-read from the file: what is shown is what is stored.
     const list = await invoke<HistoryRun[]>("history_read", { since: 0 });
     history.runs = list
       .filter((r) => r && typeof r.end === "number")
@@ -82,6 +85,8 @@ onRunEnd((r: ActivityEntry) => {
     summary,
     closed: r.status === "closed",
   };
+  // Shown right away: no gap between "en cours" and the recorded line.
+  history.pending.unshift({ ...base, cost: paneSpend(r.paneId, r.start, end) || undefined, v: 2 });
   window.setTimeout(async () => {
     const branch = cwd ? (await invoke<GitStatus | null>("git_status", { cwd }).catch(() => null))?.branch ?? null : null;
     // Up to the next run of the same pane, so that cost is never counted twice.
@@ -90,7 +95,8 @@ onRunEnd((r: ActivityEntry) => {
     const cost = paneSpend(r.paneId, r.start, to);
     const run: HistoryRun = { ...base, branch, cost: cost || undefined, v: 2 };
     await invoke("history_append", { entry: run }).catch(() => {});
-    if (history.loaded) {
+    history.pending = history.pending.filter((x) => x.id !== run.id);
+    if (history.loaded && !history.runs.some((x) => x.id === run.id)) {
       // Recorded 15 s late, possibly out of order: keep most recent first.
       const i = history.runs.findIndex((x) => x.end < run.end);
       history.runs.splice(i === -1 ? history.runs.length : i, 0, run);
@@ -137,7 +143,16 @@ export const liveRuns = computed<HistoryRun[]>(() => {
 });
 
 /** Finished and running, most recent first: what the window and the summary show. */
-export const allRuns = computed(() => [...liveRuns.value, ...history.runs]);
+export const allRuns = computed(() => {
+  const seen = new Set<string>();
+  const out: HistoryRun[] = [];
+  for (const r of [...liveRuns.value, ...history.pending, ...history.runs]) {
+    if (seen.has(r.id)) continue;
+    seen.add(r.id);
+    out.push(r);
+  }
+  return out;
+});
 
 /** Today, for the one-line summary of the right panel. */
 export const todaySummary = computed(() => {

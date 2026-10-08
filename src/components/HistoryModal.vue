@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { allRuns, daysAgo, history, hm, startOfDay, toCsv, type HistoryRun } from "../stores/history";
+import { allRuns, daysAgo, history, hm, loadHistory, startOfDay, toCsv, type HistoryRun } from "../stores/history";
 import { allPanes, selectPane, toast } from "../stores/session";
 import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
@@ -95,6 +95,7 @@ function onKey(e: KeyboardEvent) {
   }
 }
 onMounted(() => {
+  loadHistory();
   window.addEventListener("keydown", onKey, true);
   nextTick(() => el.value?.focus());
 });

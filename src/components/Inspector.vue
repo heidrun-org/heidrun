@@ -258,11 +258,12 @@ const statusText = computed(() => {
 
       <button type="button" class="hist-line" title="Historique, temps et coût par projet (⇧⌘H)" @click="history.open = true">
         <span class="muted">Aujourd’hui</span>
-        <template v-if="todaySummary.total">
-          <strong>{{ hm(todaySummary.total) }}</strong>
-          <span v-for="[w, ms] in todaySummary.top" :key="w" class="hist-ws">· {{ w }} {{ hm(ms) }}</span>
-        </template>
-        <span v-else class="muted">pas encore de travail</span>
+        <strong v-if="todaySummary.total">{{ hm(todaySummary.total) }}</strong>
+        <!-- On one line: the workspaces end with "…" rather than wrapping. -->
+        <span class="hist-ws" :title="todaySummary.top.map(([w, ms]) => `${w} ${hm(ms)}`).join(' · ')">
+          <template v-if="todaySummary.total">{{ todaySummary.top.map(([w, ms]) => `· ${w} ${hm(ms)}`).join("  ") }}</template>
+          <template v-else>pas encore de travail</template>
+        </span>
         <span class="hist-go">Historique ↗</span>
       </button>
 
@@ -340,12 +341,12 @@ const statusText = computed(() => {
 .pair .btn { flex: 1; }
 .actions .btn.primary { width: 100%; }
 .hist-line {
-  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-radius: 8px;
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; white-space: nowrap; min-width: 0; padding: 8px 10px; border-radius: 8px;
   border: 1px solid var(--line); background: transparent; text-align: left; font-size: 12px; color: var(--text);
 }
 .hist-line:hover { border-color: var(--line-strong); background: var(--hover); }
-.hist-ws { color: var(--text-2); }
-.hist-go { margin-left: auto; color: var(--done); font-size: 11.5px; }
+.hist-ws { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
+.hist-go { flex-shrink: 0; color: var(--done); font-size: 11.5px; }
 .facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: 12px; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
