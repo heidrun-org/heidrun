@@ -1,5 +1,6 @@
 mod claude;
 mod git;
+mod history;
 mod herdr;
 mod project;
 mod pty;
@@ -155,6 +156,9 @@ pub fn run() {
             claude::claude_commands,
             claude::claude_agents,
             claude::claude_session_agents,
+            history::history_append,
+            history::history_read,
+            history::history_export,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Herdr Desk");

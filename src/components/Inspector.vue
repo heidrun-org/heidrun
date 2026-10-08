@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { GitStatus } from "../stores/git";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
-import SpendTable from "./SpendTable.vue";
+import { history, hm, todaySummary } from "../stores/history";
 import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
@@ -257,7 +257,15 @@ const statusText = computed(() => {
       </header>
 
       <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
-      <SpendTable v-if="providers.includes('claude')" />
+      <button type="button" class="hist-line" title="Historique, temps et coût par projet (⇧⌘H)" @click="history.open = true">
+        <span class="muted">Aujourd’hui</span>
+        <template v-if="todaySummary.total">
+          <strong>{{ hm(todaySummary.total) }}</strong>
+          <span v-for="[w, ms] in todaySummary.top" :key="w" class="hist-ws">· {{ w }} {{ hm(ms) }}</span>
+        </template>
+        <span v-else class="muted">pas encore de travail terminé</span>
+        <span class="hist-go">Historique ↗</span>
+      </button>
 
       <div v-if="state.activity.length" class="block">
         <div class="act-head">
@@ -329,6 +337,13 @@ const statusText = computed(() => {
 .opt-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pair .btn { flex: 1; }
 .actions .btn.primary { width: 100%; }
+.hist-line {
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--line); text-align: left; font-size: 12px; color: var(--text);
+}
+.hist-line:hover { border-color: var(--line-strong); background: var(--hover); }
+.hist-ws { color: var(--text-2); }
+.hist-go { margin-left: auto; color: var(--done); font-size: 11.5px; }
 .facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: 12px; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }

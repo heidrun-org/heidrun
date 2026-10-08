@@ -9,6 +9,7 @@ interface Entry {
   ws: string; // workspace id
   wsLabel: string;
   who: string; // "onglet · agent"
+  pane?: string;
   cost: number; // USD spent since the previous reading
 }
 interface Seen {
@@ -76,7 +77,7 @@ watch(
         seen[p.pane_id] = { sid, cost };
       }
       if (delta > 0.00001) {
-        spend.entries.push({ at: now, ws: p.workspace_id, wsLabel: workspaceLabel(p.workspace_id), who: paneTarget(p), cost: delta });
+        spend.entries.push({ at: now, ws: p.workspace_id, wsLabel: workspaceLabel(p.workspace_id), who: paneTarget(p), pane: p.pane_id, cost: delta });
         changed = true;
       }
     }
@@ -141,6 +142,11 @@ const windowStart = computed(() => {
   if (reset && reset * 1000 > now) return reset * 1000 - 5 * 3600_000;
   return now - 5 * 3600_000;
 });
+
+/** Spent by one pane between two times (for the history of a run). */
+export function paneSpend(paneId: string, from: number, to: number): number {
+  return spend.entries.filter((e) => e.pane === paneId && e.at >= from && e.at <= to).reduce((s, e) => s + e.cost, 0);
+}
 
 export const spendToday = computed(() => rows(startOfDay()));
 export const spendWindow = computed(() => rows(windowStart.value, fiveHour.value?.percent));

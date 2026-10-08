@@ -23,6 +23,7 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 | ⌘K | Palette de commandes |
 | ⌘/ | Cette liste des raccourcis |
 | ⇧⌘F | Chercher dans la sortie de tous les terminaux |
+| ⇧⌘H | Historique : travaux des agents, temps et coût par projet, export CSV |
 | ⇧⌘P | Épingler le texte sélectionné dans une note |
 | Échap | Fermer la fenêtre ouverte |
 | **Terminaux et agents** | |
@@ -94,7 +95,7 @@ Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelqu
 
 `forge` force GitHub ou GitLab (un hôte inconnu est traité comme un GitLab auto-hébergé), `repo` remplace le remote, `tickets` active les tickets du type `ABC-123` (désactivés sans URL).
 
-**Actions au survol** : dans un terminal, survoler une référence affiche « ↗ Ouvrir », une commande de Claude Code citée par l’agent (`/fin-tache`, `/compact`…) affiche « ▷ Lancer », et un point d’une liste numérotée (« 1. Ouvrir une issue… ») affiche « ▷ Faire le point 1 », qui envoie la consigne à l’agent. Une commande proposée par Claude en mode shell (`! docker builder prune -af && …`) affiche « ▷ Exécuter » : elle est remise sur une seule ligne si elle s’étale sur plusieurs (retour à la ligne, `\`, `&&`, `|`), puis envoyée dans la zone de saisie de Claude avec Entrée. ⌘-clic sur le texte fait la même chose. Seules les commandes qui existent vraiment sont proposées (intégrées, `~/.claude/commands`, `.claude/commands` du projet, skills et plugins), jamais un chemin comme `/tmp`.
+**Actions au survol** : dans un terminal, survoler une référence affiche « ↗ Ouvrir », une commande de Claude Code citée par l’agent (`/fin-tache`, `/compact`…) affiche « ▷ Lancer », et un point d’une liste numérotée (« 1. Ouvrir une issue… ») affiche « ▷ Faire le point 1 », qui envoie la consigne à l’agent. Une commande proposée par Claude en mode shell (`! docker builder prune -af && …`) affiche « ▷ Exécuter » : elle est remise sur une seule ligne si elle s’étale sur plusieurs (retour à la ligne, `\`, `&&`, `|`), puis envoyée dans la zone de saisie de Claude avec Entrée. Ça marche aussi pour une commande citée dans une phrase (« Ensuite, lance ! scripts/verifier.sh. »), si elle commence par un chemin ou un outil connu (`git`, `npm`, `docker`…). ⌘-clic sur le texte fait la même chose. Seules les commandes qui existent vraiment sont proposées (intégrées, `~/.claude/commands`, `.claude/commands` du projet, skills et plugins), jamais un chemin comme `/tmp`.
 
 **Agents de Claude** : la liste affichée sous la zone de saisie (`● main`, `○ jerome-645 …`) est cliquable : « ▷ Voir jerome-645 » envoie à Claude ↓ jusqu’à la ligne puis Entrée, comme si tu y allais avec les flèches. Cliquer sur `main` ramène à la conversation principale.
 
@@ -131,7 +132,9 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 
 **Écrire à un sous-agent** : dans le menu destinataire de la barre de saisie, les agents de tous les workspaces sont listés et, sous chaque session Claude qui en a, ses sous-agents (`↳ jerome-645`). L'app bascule la session sur ce sous-agent avec les flèches, vérifie qu'il est bien affiché, envoie la consigne, puis revient sur `main` (case « Puis revenir sur main »). Si la liste n'est pas trouvée ou si l'agent attend une décision, rien n'est tapé.
 
-**Consommation par workspace** (panneau de droite, sous les quotas Claude) : coût de chaque workspace sur la fenêtre de 5 h en cours ou sur la journée, avec sa part du total, un petit graphique par quart d'heure et, au survol, le détail par agent. L'app relève l'augmentation du coût de chaque session Claude (status line) et la rattache au workspace du panneau ; la part du quota 5 h est une estimation au prorata du coût. Seules les dépenses vues pendant que l'app tourne sont comptées.
+**Historique** (⇧⌘H, ou la ligne « Aujourd'hui … Historique ↗ » du panneau de droite) : chaque travail terminé d'un agent est enregistré sur ce Mac (`~/.config/herdr-desk/history.jsonl`, jamais dans un repo) avec son workspace, son onglet, la branche, la consigne qui l'a lancé, son temps actif (sans les attentes de ta décision) et son coût. La fenêtre filtre par période (aujourd'hui à 1 an), workspace, agent ou texte, donne les totaux par workspace et un graphique par jour, et exporte la sélection en CSV (dans Téléchargements, lisible par Excel). Un clic sur un travail ouvre son panneau s'il existe encore.
+
+**Consommation par workspace** (dans la fenêtre Historique) : coût de chaque workspace sur la fenêtre de 5 h en cours, avec sa part du total, un petit graphique par quart d'heure et, au survol, le détail par agent. L'app relève l'augmentation du coût de chaque session Claude (status line) et la rattache au workspace du panneau ; la part du quota 5 h est une estimation au prorata du coût. Seules les dépenses vues pendant que l'app tourne sont comptées.
 
 **Mosaïque** (▦ dans l'en-tête d'un panneau Claude) : une case par agent de la session (main et sous-agents), avec ses dernières lignes, lues dans les journaux de Claude (`~/.claude/projects/…`), donc sans toucher au terminal. Rafraîchie toutes les 2 à 3 s ; un point vert signale un agent actif. Un clic sur une case affiche cet agent dans le terminal.
 
@@ -238,7 +241,7 @@ sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-d
 
 Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
 
-Restent dans `docs/issues/` : l'historique de l'activité (#7) et l'accès depuis l'iPhone / l'iPad (#13).
+Reste dans `docs/issues/` : l'accès depuis l'iPhone / l'iPad (#13).
 
 ## Limites connues
 

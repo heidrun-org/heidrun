@@ -3,7 +3,9 @@ import { computed, ref } from "vue";
 import { spendSlots, spendToday, spendWindow } from "../stores/spend";
 import { clockTime } from "../lib/format";
 
-const scope = ref<"window" | "today">("window");
+// `fixed`: always the 5 h window (in the history window), no toggle.
+const props = defineProps<{ fixed?: "window" }>();
+const scope = ref<"window" | "today">(props.fixed ?? "window");
 const data = computed(() => (scope.value === "window" ? spendWindow.value : spendToday.value));
 const usd = (v: number) => (v >= 10 ? `$${v.toFixed(0)}` : `$${v.toFixed(2)}`);
 
@@ -45,8 +47,8 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
 <template>
   <div class="block">
     <div class="head">
-      <span class="eyebrow">Consommation par workspace</span>
-      <span class="seg">
+      <span class="eyebrow">{{ fixed ? "Fenêtre 5 h en cours" : "Consommation par workspace" }}</span>
+      <span v-if="!fixed" class="seg">
         <button type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">5 h</button>
         <button type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">Aujourd’hui</button>
       </span>

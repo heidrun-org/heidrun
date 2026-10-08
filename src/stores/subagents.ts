@@ -3,7 +3,7 @@
 import { reactive } from "vue";
 import * as api from "../lib/api";
 import { agentListState } from "../lib/refs";
-import { allPanes, paneFullName, scheduleRefresh, toast } from "./session";
+import { allPanes, paneFullName, rememberPrompt, scheduleRefresh, toast } from "./session";
 import { allowCommand } from "./guards";
 
 export const subagents = reactive({
@@ -142,6 +142,7 @@ export async function sendToSubagent(paneId: string, name: string, text: string,
     }
     switched = true;
     await api.prompt(paneId, text);
+    rememberPrompt(paneId, `${name} : ${text}`);
     if (backToMain && name !== "main") {
       await wait(500);
       const first = (await listOf(paneId))?.names[0] ?? "main";

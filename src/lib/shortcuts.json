@@ -15,6 +15,10 @@
         "action": "Chercher dans la sortie de tous les terminaux"
       },
       {
+        "keys": "⇧⌘H",
+        "action": "Historique : travaux des agents, temps et coût par projet, export CSV"
+      },
+      {
         "keys": "⇧⌘P",
         "action": "Épingler le texte sélectionné dans une note"
       },

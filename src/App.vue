@@ -50,6 +50,8 @@ import { startGit } from "./stores/git";
 import { startAlerts } from "./stores/alerts";
 // Records Claude spend by workspace from the start, right panel open or not.
 import "./stores/spend";
+import { history, loadHistory } from "./stores/history";
+import HistoryModal from "./components/HistoryModal.vue";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
 function codeZoom(dir: 1 | -1) {
@@ -120,6 +122,9 @@ function onKey(e: KeyboardEvent) {
     case "KeyF":
       if (!e.shiftKey) return;
       return run(() => (search.open = !search.open));
+    case "KeyH":
+      if (!e.shiftKey) return;
+      return run(() => (history.open = !history.open));
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
@@ -165,6 +170,7 @@ onMounted(() => {
   startProjects();
   startGit();
   startAlerts();
+  loadHistory();
   loadClaudeLink();
   startRemoteWatch();
 });
@@ -220,6 +226,7 @@ onBeforeUnmount(() => {
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
+    <HistoryModal v-if="history.open" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

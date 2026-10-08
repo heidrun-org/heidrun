@@ -37,6 +37,36 @@ export interface ActivityEntry {
   kind: string;
   workspace: string;
   tab: string;
+  workspaceId?: string;
+  cwd?: string | null;
+  /** Time spent waiting for a decision (blocked), not counted as work. */
+  blockedMs?: number;
+  blockedAt?: number | null;
+}
+
+// Finished runs go to the history (stores/history.ts registers here).
+const runEndHandlers: ((r: ActivityEntry) => void)[] = [];
+export function onRunEnd(fn: (r: ActivityEntry) => void) {
+  runEndHandlers.push(fn);
+}
+function endRun(r: ActivityEntry, now: number) {
+  if (r.blockedAt) {
+    r.blockedMs = (r.blockedMs ?? 0) + (now - r.blockedAt);
+    r.blockedAt = null;
+  }
+  for (const fn of runEndHandlers) {
+    try {
+      fn(r);
+    } catch {
+      /* the history is best-effort */
+    }
+  }
+}
+
+/** Last consigne sent to each pane: the history's summary of the run. */
+export const lastPrompt: Record<string, { text: string; at: number }> = {};
+export function rememberPrompt(paneId: string, text: string) {
+  lastPrompt[paneId] = { text: text.replace(/\s+/g, " ").trim().slice(0, 200), at: Date.now() };
 }
 
 export interface OutputWatch {
@@ -436,11 +466,17 @@ function trackRun(
   before: AgentStatus | undefined,
   after: AgentStatus,
   now: number,
-  names: Pick<ActivityEntry, "name" | "kind" | "workspace" | "tab">,
+  names: Pick<ActivityEntry, "name" | "kind" | "workspace" | "tab" | "workspaceId" | "cwd">,
 ) {
   const open = state.activity.find((r) => r.paneId === paneId && r.end === null);
   if (ACTIVE.has(after)) {
     if (open) {
+      // Waiting for a decision is not work: blocked time is counted apart.
+      if (after === "blocked" && open.status !== "blocked") open.blockedAt = now;
+      if (after === "working" && open.blockedAt) {
+        open.blockedMs = (open.blockedMs ?? 0) + (now - open.blockedAt);
+        open.blockedAt = null;
+      }
       open.status = after as "working" | "blocked";
       Object.assign(open, names);
       return;
@@ -452,13 +488,21 @@ function trackRun(
       end: null,
       status: after as "working" | "blocked",
       startUnknown: before === undefined,
+      blockedMs: 0,
+      blockedAt: after === "blocked" ? now : null,
       ...names,
     });
-    state.activity.splice(40);
+    // Only finished runs are trimmed: a long run must not vanish before it ends.
+    const finished = state.activity.filter((r) => r.end !== null);
+    if (state.activity.length > 40 && finished.length) {
+      const drop = new Set(finished.slice(-(state.activity.length - 40)).map((r) => r.id));
+      state.activity = state.activity.filter((r) => !drop.has(r.id));
+    }
   } else if (open && (after === "done" || after === "idle")) {
     open.end = now;
     open.status = "done";
     Object.assign(open, names);
+    endRun(open, now);
   }
 }
 
@@ -581,6 +625,8 @@ function applySnapshot(snap: SessionSnapshot) {
       kind: agentKind(view),
       workspace: ws,
       tab: t ? t.label || `onglet ${t.number}` : "",
+      workspaceId: pane.workspace_id,
+      cwd: pane.foreground_cwd || pane.cwd || null,
     });
     if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
     if (after !== "blocked") delete state.choices[pane.pane_id];
@@ -608,6 +654,7 @@ function applySnapshot(snap: SessionSnapshot) {
     if (r.end === null && !alive.has(r.paneId)) {
       r.end = now;
       r.status = "closed";
+      endRun(r, now);
     }
   }
 
@@ -851,6 +898,7 @@ export async function sendPrompt(paneId: string, text: string) {
     const { cwd, where } = whereOf(paneId);
     if (!(await allowCommand(shell[1], cwd, where))) return undefined;
   }
+  rememberPrompt(paneId, text);
   return guard(() => api.prompt(paneId, text));
 }
 
@@ -893,7 +941,9 @@ export async function broadcastPrompt(
       continue;
     }
     try {
-      await api.prompt(id, resolve ? await resolve(text, id) : text);
+      const t = resolve ? await resolve(text, id) : text;
+      await api.prompt(id, t);
+      rememberPrompt(id, t);
       res.sent.push(id);
     } catch {
       res.failed.push(id);
