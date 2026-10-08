@@ -5,6 +5,7 @@ import type { GitStatus } from "../stores/git";
 import ConfirmButton from "./ConfirmButton.vue";
 import AccountUsage from "./AccountUsage.vue";
 import { history, hm, todaySummary } from "../stores/history";
+import { openFiles } from "../stores/files";
 import RemoteControl from "./RemoteControl.vue";
 import {
   addWatch,
@@ -201,7 +202,12 @@ const statusText = computed(() => {
             <dd class="mono full" tabindex="0" :title="p.terminal_title_stripped">{{ p.terminal_title_stripped }}</dd>
           </template>
           <dt>Dossier</dt>
-          <dd class="mono full" tabindex="0" :title="p.foreground_cwd || p.cwd || ''">{{ shortPath(p.foreground_cwd || p.cwd) }}</dd>
+          <dd class="mono full dir-dd" tabindex="0" :title="p.foreground_cwd || p.cwd || ''">
+            <span>{{ shortPath(p.foreground_cwd || p.cwd) }}</span>
+            <button type="button" class="dir-open" title="Fichiers du projet (⌘P pour chercher)" aria-label="Fichiers du projet" @click="openFiles(p.foreground_cwd || p.cwd)">
+              <svg width="15" height="13" viewBox="0 0 15 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3l1.5 1.6h5.5A1.5 1.5 0 0 1 14 4.1v6.4A1.5 1.5 0 0 1 12.5 12h-10A1.5 1.5 0 0 1 1 10.5z" /></svg>
+            </button>
+          </dd>
           <template v-if="paneGit?.branch">
             <dt>Branche</dt>
             <dd class="mono full branch" :class="branchState.level" tabindex="0" :title="branchState.title">
@@ -354,6 +360,11 @@ const statusText = computed(() => {
 .facts dd.full { border-radius: 4px; outline: none; }
 .facts dd.full:hover, .facts dd.full:focus { white-space: normal; word-break: break-all; overflow: visible; }
 .facts dd.full:focus-visible { box-shadow: 0 0 0 1px var(--line-strong); }
+.dir-dd { display: flex; align-items: flex-start; gap: 6px; }
+.dir-dd > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.facts dd.full.dir-dd:hover > span, .facts dd.full.dir-dd:focus > span { white-space: normal; word-break: break-all; }
+.dir-open { flex-shrink: 0; width: 24px; height: 20px; margin-top: -2px; border: 1px solid var(--line-strong); border-radius: 6px; background: transparent; color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+.dir-open:hover { background: var(--hover); color: var(--text); border-color: var(--done); }
 .branch { display: flex; align-items: center; gap: 6px; }
 .b-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--muted); }
 .branch.clean { color: var(--ok); } .branch.clean .b-dot { background: var(--ok); }

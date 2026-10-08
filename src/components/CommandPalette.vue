@@ -28,6 +28,7 @@ import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
 import { mobile } from "../stores/mobile";
+import { openFiles } from "../stores/files";
 
 interface Item {
   section: string;
@@ -107,6 +108,7 @@ const items = computed<Item[]>(() => {
     ...(state.selectedTabId ? [{ section: "Renommer", label: "Renommer l’onglet", run: () => startRename("tab", state.selectedTabId!) }] : []),
     ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
     { section: "Navigation", label: "Chercher dans tous les terminaux…", hint: "⇧⌘F", run: () => (search.open = true) },
+    { section: "Navigation", label: "Ouvrir un fichier du projet…", hint: "⌘P", run: () => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }) },
     { section: "Aide", label: "Raccourcis clavier et souris", hint: "⌘/", run: () => (state.shortcutsOpen = true) },
     { section: "Affichage", label: "Accès mobile (iPhone, iPad)…", run: () => (mobile.open = true) },
     { section: "Navigation", label: "Onglet suivant", hint: "⌥⌘→", run: () => cycleTab(1) },

@@ -15,12 +15,14 @@ import {
   findRefs,
   findShellBlock,
   findInlineShell,
+  findFileRefs,
   findStep,
   refContext,
   type RefContext,
 } from "../lib/refs";
 import { sendPrompt, toast } from "../stores/session";
 import { openIssue } from "../stores/issues";
+import { openFileRef } from "../stores/files";
 import { fold, search } from "../stores/search";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -237,6 +239,13 @@ onMounted(async () => {
           alt: preview ? { label: "⧉ Aperçu", run: preview } : undefined,
           meta: preview,
         });
+      }
+      // "src/app.ts:42" cited by the agent (or a compiler): opened in the file explorer.
+      for (const f of findFileRefs(text)) {
+        if (items.some((i) => f.start < i.e && f.end > i.s)) continue;
+        const name = f.path.split("/").pop() + (f.line ? `:${f.line}` : "");
+        const open = () => openFileRef(props.cwd, f.path, f.line);
+        items.push({ s: f.start, e: f.end, label: `📄 Ouvrir ${name}`, run: open, underline: true, meta: open });
       }
       if (isClaude()) {
         for (const c of findCommands(text, commands)) {

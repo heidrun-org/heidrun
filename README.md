@@ -22,6 +22,7 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 | **Fenêtres** | |
 | ⌘K | Palette de commandes |
 | ⌘/ | Cette liste des raccourcis |
+| ⌘P | Ouvrir un fichier du projet (recherche par nom) |
 | ⇧⌘F | Chercher dans la sortie de tous les terminaux |
 | ⇧⌘H | Historique : travaux des agents, temps et coût par projet, export CSV |
 | ⇧⌘P | Épingler le texte sélectionné dans une note |
@@ -47,6 +48,7 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police (le code dans les fenêtres Git et Aperçu) |
 | **Souris** | |
 | ⌘-clic | Sur #12 / !34 : aperçu de l’issue ou de la MR ; sur une URL ou un commit : l’ouvrir |
+| ⌘-clic | Sur src/app.ts:42 cité dans un terminal : le fichier à la ligne, dans l’explorateur |
 | Survol | Boutons d’action : ↗ Ouvrir, ⧉ Aperçu, ▷ Lancer, ▷ Exécuter, ▷ Voir <agent> |
 | Molette | Faire défiler l’historique du panneau |
 | ⌥ + molette | Envoyer ↑ / ↓ (dernières commandes ou consignes) |
@@ -137,6 +139,8 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 **Consommation par workspace** (dans la fenêtre Historique) : coût de chaque workspace sur la fenêtre de 5 h en cours, avec sa part du total, un petit graphique par quart d'heure et, au survol, le détail par agent. L'app relève l'augmentation du coût de chaque session Claude (status line) et la rattache au workspace du panneau ; la part du quota 5 h est une estimation au prorata du coût. Seules les dépenses vues pendant que l'app tourne sont comptées.
 
 **Mosaïque** (▦ dans l'en-tête d'un panneau Claude) : une case par agent de la session (main et sous-agents), avec ses dernières lignes, lues dans les journaux de Claude (`~/.claude/projects/…`), donc sans toucher au terminal. Rafraîchie toutes les 2 à 3 s ; un point vert signale un agent actif. Un clic sur une case affiche cet agent dans le terminal.
+
+**Fichiers du projet** (icône dossier à côté de « Dossier » dans le panneau, ou ⌘P) : l'arborescence du projet du panneau, comme dans VS Code, avec l'état git de chaque fichier (modifié, nouveau, supprimé ; un point sur les dossiers qui en contiennent) et les fichiers de `.gitignore` masqués (« Fichiers ignorés » pour les voir). ⌘P cherche un fichier par son nom (« comp/term » trouve `src/components/TerminalView.vue`). Le fichier s'affiche coloré, Markdown rendu ou en code, images en aperçu, avec onglets (⌘W pour en fermer un), fil d'Ariane, « Chemin » (⌥ : chemin absolu), Finder, VS Code et « → Agent » qui met `@chemin` dans la barre de saisie. Sélectionne des lignes : « Explique » ou « Corrige ces lignes » prépare la consigne. Dans les terminaux, `src/app.ts:42` cité par un agent ouvre le fichier à la ligne (survol ou ⌘-clic). Lecture seule pour l'instant.
 
 **Accès mobile (iPhone, iPad)** — bouton téléphone en haut, ou ⌘K « Accès mobile » : depuis le téléphone, voir ce qui est à traiter, répondre aux menus d'autorisation, envoyer une consigne, refuser ou interrompre, lire la fin de la sortie d'un agent. Désactivé par défaut.
 
@@ -240,7 +244,7 @@ Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
 
 ## Pistes
 
-Les 14 premières issues sont faites. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
+Les 14 premières issues sont faites ; #15 à #17 (explorateur, édition, recherche dans les fichiers) sont en cours. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
 
 ```sh
 sh scripts/create-gitlab-issues.sh --dry-run          # aperçu

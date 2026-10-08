@@ -53,6 +53,8 @@ import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
 import MobileModal from "./components/MobileModal.vue";
+import FilesModal from "./components/FilesModal.vue";
+import { files, openFiles } from "./stores/files";
 import { mobile, startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 
@@ -110,7 +112,11 @@ function onKey(e: KeyboardEvent) {
 
   switch (e.code) {
     case "KeyP":
-      if (!e.shiftKey) return;
+      // ⌘P: find a file of the selected pane's project (the explorer handles it once open).
+      if (!e.shiftKey) {
+        if (files.open) return;
+        return run(() => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }));
+      }
       return run(() => {
         const id = activePaneId();
         const pane = allPanes.value.find((p) => p.pane_id === id) ?? selectedPane.value;
@@ -134,6 +140,8 @@ function onKey(e: KeyboardEvent) {
     case "KeyD":
       return run(() => splitPane(e.shiftKey ? "down" : "right"));
     case "KeyW":
+      // The file explorer uses ⌘W for its own tabs.
+      if (files.open) return;
       // Closing ends the process in the pane: ask for a second ⌘W within 2 s.
       return run(() => {
         const id = activePaneId();
@@ -155,13 +163,13 @@ function onKey(e: KeyboardEvent) {
     // With the Git window open, ⌘+ / ⌘− / ⌘0 size its code, not the terminals.
     case "Equal":
     case "NumpadAdd":
-      return run(() => (git.modal.open || issueView.open ? codeZoom(1) : zoom(0.5)));
+      return run(() => (git.modal.open || issueView.open || files.open ? codeZoom(1) : zoom(0.5)));
     case "Minus":
     case "NumpadSubtract":
-      return run(() => (git.modal.open || issueView.open ? codeZoom(-1) : zoom(-0.5)));
+      return run(() => (git.modal.open || issueView.open || files.open ? codeZoom(-1) : zoom(-0.5)));
     case "Digit0":
     case "Numpad0":
-      return run(() => (git.modal.open || issueView.open ? (settings.codeFontSize = 12.5) : resetZoom()));
+      return run(() => (git.modal.open || issueView.open || files.open ? (settings.codeFontSize = 12.5) : resetZoom()));
   }
 }
 
@@ -231,6 +239,7 @@ onBeforeUnmount(() => {
     <MosaicModal v-if="mosaic.paneId" />
     <HistoryModal v-if="history.open" />
     <MobileModal v-if="mobile.open" />
+    <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

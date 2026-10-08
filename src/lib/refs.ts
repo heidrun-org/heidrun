@@ -349,6 +349,30 @@ export function findInlineShell(text: string): { start: number; end: number; com
   return out;
 }
 
+/**
+ * File paths cited in a terminal: "src/app.ts", "src/app.ts:42", "./lib/x.rs:10:5",
+ * or a bare name with a line ("app.ts:42"). A bare name without line is too vague.
+ */
+export function findFileRefs(text: string): { start: number; end: number; path: string; line: number | null }[] {
+  const out: { start: number; end: number; path: string; line: number | null }[] = [];
+  const re =
+    /(^|[\s([{"'`«])((?:\.{1,2}\/|~\/|\/)?(?:[\w@.+-]+\/)+[\w@+-][\w@.+-]*\.[A-Za-z][A-Za-z0-9]{0,9}|[\w@+-][\w@.+-]*\.[A-Za-z][A-Za-z0-9]{0,9}(?=:\d))(?::(\d{1,6})(?::\d{1,4})?)?(?=$|[\s)\]}"'`»,;.!?])/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const start = m.index + m[1].length;
+    const path = m[2];
+    // URLs are handled elsewhere ("https://x.io/a.js" has "//").
+    if (/^\/\//.test(path) || text.slice(Math.max(0, start - 3), start).endsWith(":/")) continue;
+    if (/^\d+(\.\d+)+$/.test(path)) continue; // a version, "1.2.3"
+    // Host names ("db.example.com:5432", "github.com/x/y.git"): not files.
+    const first = path.replace(/^(\.{1,2}\/|~\/|\/)/, "").split("/")[0];
+    if (/\.(com|net|org|io|dev|fr|eu|app|co|ai|cloud)$/i.test(first) && path.includes("/") || (!path.includes("/") && /\.(com|net|org|io|dev|fr|eu|app|co|ai|cloud)$/i.test(path))) continue;
+    const end = start + m[0].length - m[1].length;
+    out.push({ start, end, path, line: m[3] ? Number(m[3]) : null });
+  }
+  return out;
+}
+
 // ---- Claude Code's agent list under the prompt ("● main", "○ jerome-645 …") -----
 
 // Filled marker = the agent shown; hollow = the others. Several glyphs, depending on

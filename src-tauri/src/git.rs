@@ -55,11 +55,11 @@ fn unquote(p: &str) -> String {
 /// webview cannot point them at an arbitrary folder.
 static ROOTS: std::sync::OnceLock<std::sync::Mutex<std::collections::HashSet<String>>> = std::sync::OnceLock::new();
 
-fn remember_root(root: &str) {
+pub(crate) fn remember_root(root: &str) {
     ROOTS.get_or_init(Default::default).lock().unwrap().insert(root.to_string());
 }
 
-fn known_root(root: &str) -> Result<(), String> {
+pub(crate) fn known_root(root: &str) -> Result<(), String> {
     if ROOTS.get_or_init(Default::default).lock().unwrap().contains(root) {
         Ok(())
     } else {
@@ -133,7 +133,7 @@ pub async fn git_status(cwd: String) -> Option<GitStatus> {
 }
 
 /// A path inside the repository, as git prints it (relative, no "..").
-fn safe_rel(path: &str) -> Result<&str, String> {
+pub(crate) fn safe_rel(path: &str) -> Result<&str, String> {
     let p = std::path::Path::new(path);
     if path.is_empty() || p.is_absolute() || p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
         return Err("chemin refusé".into());

@@ -11,6 +11,10 @@
         "action": "Cette liste des raccourcis"
       },
       {
+        "keys": "⌘P",
+        "action": "Ouvrir un fichier du projet (recherche par nom)"
+      },
+      {
         "keys": "⇧⌘F",
         "action": "Chercher dans la sortie de tous les terminaux"
       },
@@ -114,6 +118,10 @@
       {
         "keys": "⌘-clic",
         "action": "Sur #12 / !34 : aperçu de l’issue ou de la MR ; sur une URL ou un commit : l’ouvrir"
+      },
+      {
+        "keys": "⌘-clic",
+        "action": "Sur src/app.ts:42 cité dans un terminal : le fichier à la ligne, dans l’explorateur"
       },
       {
         "keys": "Survol",
