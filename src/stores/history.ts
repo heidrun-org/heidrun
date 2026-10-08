@@ -249,4 +249,93 @@ export function kpis(list: HistoryRun[]): Kpis {
   return k;
 }
 
+// ---- Features, rework, hours, budgets -------------------------------------------
+
+/** "#54" from a branch like "54-fix-login", "feature/54-x", "fix/GL-54", or the consigne. */
+export function issueRef(r: Pick<HistoryRun, "branch" | "summary">): string | null {
+  const b = r.branch ?? "";
+  const m = /(?:^|[/_-])(\d{1,6})(?=[-_/]|$)/.exec(b);
+  if (m && !/^\d{4}-\d{2}/.test(b)) return `#${m[1]}`;
+  const s = /(?:^|[\s(])([#!]\d{1,6})\b/.exec(r.summary ?? "");
+  return s ? s[1] : null;
+}
+
+export interface FeatureRow {
+  key: string;
+  ws: string;
+  branch: string;
+  ref: string | null;
+  ms: number;
+  cost: number;
+  n: number;
+}
+
+/** Time and cost by branch (≈ by feature, issue or MR), within each workspace. */
+export function byFeature(list: HistoryRun[]): FeatureRow[] {
+  const m = new Map<string, FeatureRow>();
+  for (const r of list) {
+    const branch = r.branch || "sans branche";
+    const key = `${r.ws}\u0000${branch}`;
+    const row = m.get(key) ?? { key, ws: r.ws, branch, ref: null, ms: 0, cost: 0, n: 0 };
+    row.ms += r.activeMs;
+    row.cost += r.cost ?? 0;
+    row.n++;
+    row.ref ??= issueRef(r);
+    m.set(key, row);
+  }
+  return [...m.values()].sort((a, b) => b.cost - a.cost || b.ms - a.ms);
+}
+
+// A consigne that sends the agent back to fix what it just did.
+const REWORK =
+  /\b(corrig|répar|repar|fix|bug|erreur|error|ne marche|marche pas|fonctionne pas|régression|regression|revert|annule|toujours pas|pas bon|c'?est faux|oubli|mauvais|plante|crash|cass)/i;
+
+/** Runs followed, within the hour and on the same pane, by a consigne asking for a fix. */
+export function rework(list: HistoryRun[]): { reworked: number; total: number } {
+  const sorted = [...list].sort((a, b) => a.start - b.start);
+  let reworked = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const r = sorted[i];
+    const next = sorted.find((x, j) => j > i && x.paneId === r.paneId && x.start >= r.end - 1000);
+    if (next && next.start - r.end < 3_600_000 && REWORK.test(next.summary ?? "")) reworked++;
+  }
+  return { reworked, total: sorted.length };
+}
+
+/** Agent time and waiting time by hour of the day (0–23), in ms. */
+export function byHour(list: HistoryRun[]): { active: number[]; blocked: number[] } {
+  const active = Array.from({ length: 24 }, () => 0);
+  const blocked = Array.from({ length: 24 }, () => 0);
+  for (const r of list) {
+    const span = r.end - r.start;
+    if (span <= 0) continue;
+    const aRatio = Math.min(1, r.activeMs / span);
+    const bRatio = Math.min(1 - aRatio, r.blockedMs / span);
+    let t = r.start;
+    while (t < r.end) {
+      const d = new Date(t);
+      const next = new Date(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours() + 1).getTime();
+      const slice = Math.min(next, r.end) - t;
+      active[d.getHours()] += slice * aRatio;
+      blocked[d.getHours()] += slice * bRatio;
+      t = next;
+    }
+  }
+  return { active, blocked };
+}
+
+/** First day of the current month, local time. */
+export function monthStart(t = Date.now()): number {
+  const d = new Date(t);
+  return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+}
+
+/** Spent this calendar month, by workspace label. */
+export const monthSpend = computed(() => {
+  const from = monthStart(tick.value);
+  const m = new Map<string, number>();
+  for (const r of allRuns.value) if (r.end >= from && r.cost) m.set(r.ws, (m.get(r.ws) ?? 0) + r.cost);
+  return m;
+});
+
 export { startOfDay, tick };

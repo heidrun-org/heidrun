@@ -4,6 +4,7 @@ import { watch } from "vue";
 import { isQuiet, notify } from "../lib/notify";
 import { settings } from "./settings";
 import { allPanes, attentionKey, contextFor, paneFullName, quotas, state } from "./session";
+import { monthSpend } from "./history";
 
 const remindedBlocked = new Set<string>(); // attentionKey of the episode
 const contextWarned = new Set<string>(); // pane:session
@@ -66,6 +67,43 @@ function checkQuota() {
       }
       notify(`Quota Claude « ${w.name} » à ${Math.round(w.percent)} %`, w.resetsAt ? `Réinitialisé à ${new Date(w.resetsAt * 1000).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.` : "");
     }
+  }
+}
+
+// ---- Monthly budget per workspace ---------------------------------------------
+
+const BUDGET_KEY = "herdr-desk.budget-warned";
+const budgetWarned = new Set<string>(
+  (() => {
+    try {
+      return JSON.parse(localStorage.getItem(BUDGET_KEY) ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  })(),
+); // month:workspace:level
+
+function checkBudget() {
+  if (isQuiet()) return;
+  const d = new Date();
+  const month = `${d.getFullYear()}-${d.getMonth() + 1}`;
+  for (const [ws, budget] of Object.entries(settings.budgets ?? {})) {
+    if (!budget || budget <= 0) continue;
+    const spent = monthSpend.value.get(ws) ?? 0;
+    const level = spent >= budget ? 100 : spent >= budget * 0.8 ? 80 : 0;
+    if (!level) continue;
+    const key = `${month}:${ws}:${level}`;
+    if (budgetWarned.has(key)) continue;
+    budgetWarned.add(key);
+    try {
+      localStorage.setItem(BUDGET_KEY, JSON.stringify([...budgetWarned].slice(-100)));
+    } catch {
+      /* ignore */
+    }
+    notify(
+      level === 100 ? `${ws} : budget du mois dépassé` : `${ws} : 80 % du budget du mois`,
+      `$${spent.toFixed(2)} dépensés sur $${budget.toFixed(0)} ce mois-ci.`,
+    );
   }
 }
 
@@ -146,6 +184,7 @@ export function startAlerts() {
     checkBlocked(now.getTime());
     checkContext();
     checkQuota();
+    checkBudget();
     checkEvening(now);
   }, 30_000);
 }

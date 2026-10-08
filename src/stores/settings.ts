@@ -80,6 +80,8 @@ const defaults = {
   /** Your own time: minutes per consigne written, per decision answered. */
   histPromptMin: 3,
   histDecisionMin: 0.5,
+  /** Monthly budget per workspace (label → USD); alert at 80 % and 100 %. */
+  budgets: {} as Record<string, number>,
   dockWidth: 560,
 };
 

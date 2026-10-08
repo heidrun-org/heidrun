@@ -2,7 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { allRuns, daysAgo, history, hm, kpis, loadHistory, startOfDay, tick, toCsv, type HistoryRun } from "../stores/history";
+import { allRuns, byFeature, byHour, daysAgo, history, hm, kpis, loadHistory, monthSpend, rework, startOfDay, tick, toCsv, type HistoryRun } from "../stores/history";
+import { workspaces as liveWorkspaces } from "../stores/session";
 import { settings } from "../stores/settings";
 import { allPanes, selectPane, toast } from "../stores/session";
 import { fold } from "../stores/search";
@@ -80,6 +81,35 @@ const costBy = computed(() => {
   return { day: sum(startOfDay()), week: sum(daysAgo(6)), month: sum(daysAgo(29)) };
 });
 const showCalib = ref(false);
+
+// Left column: by workspace, or by feature (branch, with its issue / MR).
+const groupBy = ref<"ws" | "feature">("ws");
+const features = computed(() => byFeature(inPeriod.value.filter((r) => (!ws.value || r.ws === ws.value) && matches(r))));
+const featMax = computed(() => Math.max(1, ...features.value.map((f) => f.ms)));
+function pickFeature(branch: string) {
+  q.value = q.value === branch ? "" : branch === "sans branche" ? "" : branch;
+}
+
+const rw = computed(() => rework(runs.value));
+const hours = computed(() => byHour(runs.value));
+const hourMax = computed(() => Math.max(1, ...hours.value.active.map((a, i) => a + hours.value.blocked[i])));
+
+// Budgets: every workspace known (open now or in the history).
+const budgetNames = computed(() => [...new Set([...liveWorkspaces.value.map((w) => w.label), ...allRuns.value.map((r) => r.ws)].filter(Boolean))].sort());
+function setBudget(name: string, v: string) {
+  const n = Number(v.replace(",", "."));
+  const next = { ...settings.budgets };
+  if (!v.trim() || !Number.isFinite(n) || n <= 0) delete next[name];
+  else next[name] = n;
+  settings.budgets = next;
+}
+const budgetLevel = (name: string) => {
+  const b = settings.budgets[name];
+  if (!b) return "";
+  const p = (monthSpend.value.get(name) ?? 0) / b;
+  return p >= 1 ? "crit" : p >= 0.8 ? "warn" : "ok";
+};
+const showBudgets = ref(false);
 
 const usd = (v: number) => (v >= 10 ? `$${v.toFixed(0)}` : `$${v.toFixed(2)}`);
 const d2 = (n: number) => String(n).padStart(2, "0");
@@ -188,6 +218,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <span class="c-value">{{ leverage ? `× ${leverage >= 10 ? Math.round(leverage) : leverage.toFixed(1)}` : "—" }}</span>
           <span class="c-sub">temps homme estimé / ton temps<template v-if="leverage"> · {{ hm(Math.max(0, humanMs - yourMs)) }} gagnées</template></span>
         </div>
+        <div class="card" :class="{ warn: rw.total >= 5 && rw.reworked / rw.total > 0.25 }">
+          <span class="c-label">Taux de reprise</span>
+          <span class="c-value">{{ rw.total ? `${Math.round((rw.reworked / rw.total) * 100)} %` : "—" }}</span>
+          <span class="c-sub">{{ rw.reworked }} travau{{ rw.reworked > 1 ? "x" : "" }} suivi{{ rw.reworked > 1 ? "s" : "" }} d’une correction dans l’heure</span>
+        </div>
         <div class="card" :class="{ warn: k.blockedMs > 0.2 * Math.max(1, k.agentMs + k.blockedMs) }">
           <span class="c-label">Agents qui t’attendaient</span>
           <span class="c-value">{{ hm(k.blockedMs) }}</span>
@@ -197,7 +232,22 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
       <div class="body">
         <aside class="side">
-          <div class="eyebrow">Par workspace</div>
+          <div class="side-head">
+            <span class="seg small" role="radiogroup" aria-label="Regrouper">
+              <button :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">Par workspace</button>
+              <button :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">Par fonctionnalité</button>
+            </span>
+          </div>
+          <template v-if="groupBy === 'feature'">
+            <button v-for="f in features" :key="f.key" class="tot feat" :class="{ on: q === f.branch }" :title="`${f.ws} · ${f.branch} · ${f.n} travau${f.n > 1 ? 'x' : ''}`" @click="pickFeature(f.branch)">
+              <span class="t-name"><span v-if="f.ref" class="f-ref">{{ f.ref }}</span>{{ f.branch }}<span class="f-ws">{{ f.ws }}</span></span>
+              <span class="mono t-ms">{{ hm(f.ms) }}</span>
+              <span class="bar"><span :style="{ width: `${(f.ms / featMax) * 100}%` }"></span></span>
+              <span class="mono t-cost">{{ f.cost ? usd(f.cost) : "" }}</span>
+            </button>
+            <p v-if="!features.length" class="hint">Rien sur cette période.</p>
+          </template>
+          <template v-else>
           <button v-for="t in totals.list" :key="t.name" class="tot" :class="{ on: ws === t.name }" @click="ws = ws === t.name ? '' : t.name">
             <span class="t-name">{{ t.name || "—" }}</span>
             <span class="mono t-ms">{{ hm(t.ms) }}</span>
@@ -208,6 +258,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <span class="t-name">Total</span><span class="mono t-ms">{{ hm(totals.ms) }}</span><span></span>
             <span class="mono t-cost">{{ totals.cost ? usd(totals.cost) : "" }}</span>
           </div>
+          </template>
           <svg v-if="bars.vals.length > 1" class="chart" :viewBox="`0 0 ${bars.vals.length * 10} 40`" preserveAspectRatio="none" role="img" aria-label="Temps de travail par jour">
             <rect v-for="(v, i) in bars.vals" :key="i" :x="i * 10 + 1.5" :y="38 - (v / bars.max) * 36" width="7" :height="Math.max(0.6, (v / bars.max) * 36)" rx="1" fill="var(--done)">
               <title>{{ hm(v) }}</title>
@@ -215,6 +266,35 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           </svg>
           <div v-if="bars.vals.length > 1" class="hint">par {{ bars.step === 7 ? "semaine" : "jour" }}</div>
           <p class="hint">Temps où les agents travaillaient, sans les attentes de ta décision. Coût : sessions Claude suivies.</p>
+
+          <div class="eyebrow sub-h">Heures productives</div>
+          <svg class="chart hours" viewBox="0 0 240 44" preserveAspectRatio="none" role="img" aria-label="Temps des agents par heure de la journée">
+            <g v-for="h in 24" :key="h">
+              <title>{{ h - 1 }} h : {{ hm(hours.active[h - 1]) }} de travail, {{ hm(hours.blocked[h - 1]) }} d’attente</title>
+              <rect :x="(h - 1) * 10 + 1" y="0" width="8" height="44" fill="transparent" />
+              <rect :x="(h - 1) * 10 + 1" :y="40 - (hours.active[h - 1] / hourMax) * 38" width="8" :height="Math.max(0.5, (hours.active[h - 1] / hourMax) * 38)" fill="var(--done)" rx="1" />
+              <rect :x="(h - 1) * 10 + 1" :y="40 - ((hours.active[h - 1] + hours.blocked[h - 1]) / hourMax) * 38" width="8" :height="(hours.blocked[h - 1] / hourMax) * 38" fill="var(--accent)" rx="1" />
+            </g>
+          </svg>
+          <div class="hours-axis mono"><span>0 h</span><span>6 h</span><span>12 h</span><span>18 h</span><span>23 h</span></div>
+          <div class="hint"><span class="sw done"></span>travail <span class="sw wait"></span>en attente de ta décision</div>
+
+          <div class="eyebrow sub-h budget-h">
+            Budgets du mois
+            <button class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? "OK" : "Modifier" }}</button>
+          </div>
+          <div v-for="n in budgetNames.filter((x) => showBudgets || settings.budgets[x])" :key="n" class="budget" :class="budgetLevel(n)">
+            <span class="t-name">{{ n }}</span>
+            <template v-if="showBudgets">
+              <input :value="settings.budgets[n] ?? ''" placeholder="—" inputmode="decimal" @change="(e) => setBudget(n, (e.target as HTMLInputElement).value)" />
+              <span class="muted">$ / mois</span>
+            </template>
+            <template v-else>
+              <span class="bar"><span :style="{ width: `${Math.min(100, ((monthSpend.get(n) ?? 0) / settings.budgets[n]) * 100)}%` }"></span></span>
+              <span class="mono t-cost">{{ usd(monthSpend.get(n) ?? 0) }} / {{ usd(settings.budgets[n]) }}</span>
+            </template>
+          </div>
+          <p v-if="!showBudgets && !Object.keys(settings.budgets).length" class="hint">Aucun budget. « Modifier » pour en fixer un par workspace : notification à 80 % et à 100 %.</p>
           <div class="win"><SpendTable fixed="window" /></div>
         </aside>
 
@@ -284,6 +364,24 @@ button.tot:hover { background: var(--hover); }
 .bar { height: 5px; border-radius: 3px; background: var(--field); overflow: hidden; }
 .bar span { display: block; height: 100%; background: var(--done); border-radius: 3px; }
 .chart { width: 100%; height: 44px; margin-top: 10px; }
+.side-head { margin-bottom: 4px; }
+.seg.small { margin-left: 0; }
+.seg.small button { height: 24px; padding: 0 9px; font-size: 11px; }
+.feat .t-name { display: flex; align-items: baseline; gap: 6px; }
+.f-ref { font-size: 10.5px; padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--done); flex-shrink: 0; }
+.f-ws { font-size: 10.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.sub-h { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.chart.hours { height: 48px; margin-top: 6px; }
+.hours-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+.sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin: 0 3px 0 8px; vertical-align: middle; }
+.sw.done { background: var(--done); margin-left: 0; } .sw.wait { background: var(--accent); }
+.budget-h { display: flex; justify-content: space-between; align-items: center; }
+.budget-h .link { font-size: 11px; color: var(--done); text-transform: none; letter-spacing: 0; }
+.budget { display: grid; grid-template-columns: minmax(0, 1fr) 70px 96px; gap: 8px; align-items: center; padding: 4px 6px; font-size: 12.5px; }
+.budget input { height: 24px; width: 70px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); text-align: right; padding: 0 6px; }
+.budget.ok .bar span { background: var(--ok); }
+.budget.warn .bar span { background: var(--accent); } .budget.warn .t-cost { color: var(--accent); }
+.budget.crit .bar span { background: var(--blocked); } .budget.crit .t-cost { color: var(--blocked); }
 .hint { margin: 0; font-size: 11px; color: var(--muted); }
 .win { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .list { overflow: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
