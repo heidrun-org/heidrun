@@ -3,6 +3,7 @@ import { computed, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
 import {
+  actionPane,
   actionStatus,
   addAction,
   clearRecent,
@@ -17,6 +18,7 @@ import {
   runAction,
   runDetected,
   stopAction,
+  restartAction,
   suggestions,
   type Action,
 } from "../stores/project";
@@ -56,6 +58,10 @@ const STATUS_TEXT = { idle: "", running: "en cours", finished: "terminée" } as 
 
 function status(a: Action) {
   return ws.value ? actionStatus(ws.value, a) : "idle";
+}
+function isRestarting(a: Action) {
+  const pane = ws.value ? actionPane(ws.value, a) : null;
+  return !!pane && !!project.restarting[pane.pane_id];
 }
 </script>
 
@@ -105,6 +111,15 @@ function status(a: Action) {
           <span v-if="STATUS_TEXT[status(a)]" class="state" :class="status(a)">{{ STATUS_TEXT[status(a)] }}</span>
         </button>
         <div class="tools">
+          <button
+            v-if="status(a) === 'running' || isRestarting(a)"
+            class="tool"
+            :class="{ spin: isRestarting(a) }"
+            :disabled="isRestarting(a)"
+            aria-label="Relancer"
+            title="Relancer : ctrl+C, puis la même commande dans son onglet"
+            @click="restartAction(ws, a)"
+          >↻</button>
           <button v-if="status(a) === 'running'" class="tool" aria-label="Arrêter (ctrl+C)" title="Arrêter (ctrl+C)" @click="stopAction(ws, a)">■</button>
           <button v-else class="tool" aria-label="Lancer" :title="status(a) === 'finished' ? 'Relancer dans son onglet' : 'Lancer'" @click="runAction(ws, a, true)">▶</button>
           <ConfirmButton label="×" armed-label="Retirer ?" :aria-label="`Retirer l’action ${a.label}`" @confirm="removeAction(ws, a.id)" />
@@ -233,4 +248,6 @@ function status(a: Action) {
 .link:hover { color: var(--text); }
 .err { color: var(--fail); font-size: 12px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.tool.spin { animation: spin 1s linear infinite; opacity: 0.7; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>

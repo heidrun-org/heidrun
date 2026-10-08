@@ -78,6 +78,8 @@ export const project = reactive({
   panes: {} as Record<string, string>,
   /** pane id → is a command in the foreground. */
   busy: {} as Record<string, boolean>,
+  /** Panes being restarted (ctrl+C then the command again). */
+  restarting: {} as Record<string, boolean>,
 });
 
 /** Folder of a workspace: its worktree path, else the cwd of one of its panes. */
@@ -253,6 +255,56 @@ export async function stopAction(workspaceId: string, action: Action) {
   if (pane) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
 }
 
+/** Is a process other than the shell running in the pane? (null: unknown) */
+async function paneBusy(paneId: string): Promise<boolean | null> {
+  try {
+    const r = await api.request<{ process_info: { shell_pid?: number | null; foreground_processes?: { pid: number }[] } }>(
+      "pane.process_info",
+      { pane_id: paneId },
+    );
+    const info = r.process_info;
+    return (info.foreground_processes ?? []).some((proc) => proc.pid !== info.shell_pid);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Stops the running command (ctrl+C), waits for the shell to be back, then runs
+ * it again in the same tab: "make dev" restarted after a config change.
+ */
+export async function restartAction(workspaceId: string, action: Action) {
+  const p = project.byWorkspace[workspaceId];
+  const pane = actionPane(workspaceId, action);
+  if (!p || !pane) return runAction(workspaceId, action, true);
+  if (!(await allowCommand(action.command, p.root, `${workspaceLabel(workspaceId)} · ${action.label}`))) return;
+  project.restarting[pane.pane_id] = true;
+  try {
+    await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
+    // Some servers need a second ctrl+C, or a few seconds to shut down.
+    let stopped = false;
+    for (let i = 0; i < 40; i++) {
+      await new Promise((r) => setTimeout(r, 250));
+      if ((await paneBusy(pane.pane_id)) === false) {
+        stopped = true;
+        break;
+      }
+      if (i === 16) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
+    }
+    if (!stopped) {
+      toast(`${action.label} ne s’arrête pas : relance annulée (regarde son onglet)`);
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+    recordRun(workspaceId, action.label, action.command);
+    await api.run(pane.pane_id, action.command).catch((e) => toast(String(e)));
+    project.busy[pane.pane_id] = true;
+    toast(`${action.label} relancée`);
+  } finally {
+    delete project.restarting[pane.pane_id];
+  }
+}
+
 // ---- Status polling -------------------------------------------------------
 // A command is "running" while some process other than the shell owns the terminal.
 
@@ -265,12 +317,8 @@ async function pollBusy() {
       continue;
     }
     try {
-      const r = await api.request<{ process_info: { shell_pid?: number | null; foreground_processes?: { pid: number }[] } }>(
-        "pane.process_info",
-        { pane_id: paneId },
-      );
-      const info = r.process_info;
-      project.busy[paneId] = (info.foreground_processes ?? []).some((proc) => proc.pid !== info.shell_pid);
+      const busy = await paneBusy(paneId);
+      if (busy !== null) project.busy[paneId] = busy; // else: keep the last known state
     } catch {
       /* keep the last known state */
     }
