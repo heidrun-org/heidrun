@@ -256,16 +256,18 @@ const statusText = computed(() => {
         <span class="sec-where">quotas du compte et activité</span>
       </header>
 
-      <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
       <button type="button" class="hist-line" title="Historique, temps et coût par projet (⇧⌘H)" @click="history.open = true">
         <span class="muted">Aujourd’hui</span>
         <template v-if="todaySummary.total">
           <strong>{{ hm(todaySummary.total) }}</strong>
           <span v-for="[w, ms] in todaySummary.top" :key="w" class="hist-ws">· {{ w }} {{ hm(ms) }}</span>
         </template>
-        <span v-else class="muted">pas encore de travail terminé</span>
+        <span v-else class="muted">pas encore de travail</span>
         <span class="hist-go">Historique ↗</span>
       </button>
+
+      <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
+
 
       <div v-if="state.activity.length" class="block">
         <div class="act-head">
@@ -339,7 +341,7 @@ const statusText = computed(() => {
 .actions .btn.primary { width: 100%; }
 .hist-line {
   display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-radius: 8px;
-  border: 1px solid var(--line); text-align: left; font-size: 12px; color: var(--text);
+  border: 1px solid var(--line); background: transparent; text-align: left; font-size: 12px; color: var(--text);
 }
 .hist-line:hover { border-color: var(--line-strong); background: var(--hover); }
 .hist-ws { color: var(--text-2); }

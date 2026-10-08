@@ -17,7 +17,8 @@ interface Seen {
   cost: number;
 }
 
-const KEY = "herdr-desk.spend";
+// v2: per-session tracking; the first version could count a total several times.
+const KEY = "herdr-desk.spend.v2";
 const KEEP_MS = 8 * 24 * 3600_000;
 
 function load(): Entry[] {
@@ -53,6 +54,8 @@ const num = (v?: string) => (v != null && v !== "" && Number.isFinite(Number(v))
 // (a resumed session), so it only sets the baseline. A pane created afterwards
 // spends from 0.
 let startPanes: Set<string> | null = null;
+/** Under this, a session first seen is taken as just started (its cost is counted). */
+const FRESH = 0.5;
 
 watch(
   () => state.snapshot,
@@ -65,17 +68,17 @@ watch(
       const cost = num(p.tokens?.hd_cost);
       const sid = p.tokens?.hd_sid ?? "";
       if (cost == null) continue;
-      const prev = seen[p.pane_id];
+      // Per session, not per pane: several Claude sessions (background agents,
+      // /resume) can report to the same pane in turn, each with its own running
+      // total. Following the pane made every switch count a whole total again.
+      const key = `${p.pane_id}|${sid}`;
+      const prev = seen[key];
       let delta = 0;
-      if (prev) {
-        // Same process: the cost only grows. Lower: a new session started from 0.
-        delta = cost >= prev.cost ? cost - prev.cost : cost;
-        // A different session reported at the same total: nothing new.
-        if (prev.sid !== sid && cost === prev.cost) delta = 0;
-      } else if (!startPanes.has(p.pane_id)) delta = cost;
-      if (!prev || prev.cost !== cost || prev.sid !== sid) {
-        seen[p.pane_id] = { sid, cost };
-      }
+      if (prev) delta = cost > prev.cost ? cost - prev.cost : 0;
+      // A session seen for the first time: counted from 0 only when it really
+      // starts now. A resumed session (claude --resume) arrives with its old total.
+      else if (cost < FRESH || (!startPanes.has(p.pane_id) && cost < 5)) delta = cost;
+      if (!prev || cost > prev.cost) seen[key] = { sid, cost };
       if (delta > 0.00001) {
         spend.entries.push({ at: now, ws: p.workspace_id, wsLabel: workspaceLabel(p.workspace_id), who: paneTarget(p), pane: p.pane_id, cost: delta });
         changed = true;
@@ -83,7 +86,7 @@ watch(
     }
     // Old entries and closed panes go.
     const alive = new Set(snap.panes.map((p) => p.pane_id));
-    for (const id of Object.keys(seen)) if (!alive.has(id)) delete seen[id];
+    for (const k of Object.keys(seen)) if (!alive.has(k.split("|")[0])) delete seen[k];
     // Pruned only when the oldest entry has expired: no needless recomputation.
     if (spend.entries.length && now - spend.entries[0].at >= KEEP_MS) {
       spend.entries = spend.entries.filter((e) => now - e.at < KEEP_MS);

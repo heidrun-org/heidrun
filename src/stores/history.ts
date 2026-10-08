@@ -25,6 +25,10 @@ export interface HistoryRun {
   cost?: number;
   summary: string;
   closed: boolean;
+  /** 2: cost measured per session (older lines may hold an inflated cost). */
+  v?: number;
+  /** Still running (shown live, not stored yet). */
+  live?: boolean;
 }
 
 export const history = reactive({
@@ -36,7 +40,11 @@ export const history = reactive({
 export async function loadHistory() {
   try {
     const list = await invoke<HistoryRun[]>("history_read", { since: 0 });
-    history.runs = list.filter((r) => r && typeof r.end === "number").sort((a, b) => b.end - a.end);
+    history.runs = list
+      .filter((r) => r && typeof r.end === "number")
+      // Recorded before the cost fix: the time is right, the cost is not.
+      .map((r) => (r.v === 2 ? r : { ...r, cost: undefined }))
+      .sort((a, b) => b.end - a.end);
   } catch {
     /* no history yet */
   }
@@ -80,7 +88,7 @@ onRunEnd((r: ActivityEntry) => {
     const next = state.activity.filter((x) => x.paneId === r.paneId && x.start > end).map((x) => x.start);
     const to = Math.min(end + COST_DELAY, ...next);
     const cost = paneSpend(r.paneId, r.start, to);
-    const run: HistoryRun = { ...base, branch, cost: cost || undefined };
+    const run: HistoryRun = { ...base, branch, cost: cost || undefined, v: 2 };
     await invoke("history_append", { entry: run }).catch(() => {});
     if (history.loaded) {
       // Recorded 15 s late, possibly out of order: keep most recent first.
@@ -96,16 +104,47 @@ function startOfDay(t = Date.now()) {
   return d.getTime();
 }
 
-/** Moves once a minute: "today" changes at midnight. */
+/** Moves every 15 s: runs in progress grow, and "today" changes at midnight. */
 const tick = ref(Date.now());
-setInterval(() => (tick.value = Date.now()), 60_000);
+setInterval(() => (tick.value = Date.now()), 15_000);
+
+/** Runs still going (working or waiting for a decision), counted up to now. */
+export const liveRuns = computed<HistoryRun[]>(() => {
+  const now = tick.value;
+  return state.activity
+    .filter((r) => r.end === null)
+    .map((r) => {
+      const blocked = (r.blockedMs ?? 0) + (r.blockedAt ? now - r.blockedAt : 0);
+      return {
+        id: `${r.paneId}-${r.start}`,
+        start: r.start,
+        end: now,
+        activeMs: Math.max(0, now - r.start - blocked),
+        blockedMs: blocked,
+        startUnknown: r.startUnknown,
+        ws: r.workspace,
+        wsId: r.workspaceId,
+        tab: r.tab,
+        agent: r.name,
+        kind: r.kind,
+        paneId: r.paneId,
+        summary: lastPrompt[r.paneId] && lastPrompt[r.paneId].at >= r.start - 120_000 ? lastPrompt[r.paneId].text : "",
+        cost: paneSpend(r.paneId, r.start, now) || undefined,
+        closed: false,
+        live: true,
+      };
+    });
+});
+
+/** Finished and running, most recent first: what the window and the summary show. */
+export const allRuns = computed(() => [...liveRuns.value, ...history.runs]);
 
 /** Today, for the one-line summary of the right panel. */
 export const todaySummary = computed(() => {
   const from = startOfDay(tick.value);
   const byWs = new Map<string, number>();
   let total = 0;
-  for (const r of history.runs) {
+  for (const r of allRuns.value) {
     if (r.end < from) continue;
     total += r.activeMs;
     byWs.set(r.ws, (byWs.get(r.ws) ?? 0) + r.activeMs);

@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { daysAgo, history, hm, startOfDay, toCsv, type HistoryRun } from "../stores/history";
+import { allRuns, daysAgo, history, hm, startOfDay, toCsv, type HistoryRun } from "../stores/history";
 import { allPanes, selectPane, toast } from "../stores/session";
 import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
@@ -15,7 +15,7 @@ const q = ref("");
 const el = ref<HTMLElement>();
 
 const from = computed(() => (period.value === "today" ? startOfDay() : daysAgo(Number(period.value) - 1)));
-const inPeriod = computed(() => history.runs.filter((r) => r.end >= from.value));
+const inPeriod = computed(() => allRuns.value.filter((r) => r.end >= from.value));
 const workspaces = computed(() => [...new Set(inPeriod.value.map((r) => r.ws))].sort());
 const kinds = computed(() => [...new Set(inPeriod.value.map((r) => r.kind))].sort());
 const matches = (r: HistoryRun) => {
@@ -60,7 +60,8 @@ const when = (r: HistoryRun) => {
   const s = new Date(r.start);
   const e = new Date(r.end);
   const day = startOfDay(r.end) === startOfDay() ? "aujourd’hui" : `${d2(e.getDate())}/${d2(e.getMonth() + 1)}`;
-  return `${day} ${r.startUnknown ? "≤ " : ""}${d2(s.getHours())}:${d2(s.getMinutes())}–${d2(e.getHours())}:${d2(e.getMinutes())}`;
+  const endTxt = r.live ? "…" : `${d2(e.getHours())}:${d2(e.getMinutes())}`;
+  return `${day} ${r.startUnknown ? "≤ " : ""}${d2(s.getHours())}:${d2(s.getMinutes())}–${endTxt}`;
 };
 const alive = (r: HistoryRun) => allPanes.value.find((p) => p.pane_id === r.paneId) ?? null;
 
@@ -75,7 +76,7 @@ async function exportCsv() {
   const d = new Date();
   const name = `herdr-desk-historique-${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}.csv`;
   try {
-    const path = await invoke<string>("history_export", { csv: toCsv(runs.value), name });
+    const path = await invoke<string>("history_export", { csv: toCsv(runs.value.filter((r) => !r.live)), name });
     toast(`Exporté : ${path}`);
     revealItemInDir(path).catch(() => {});
   } catch (e) {
@@ -153,6 +154,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <span class="r-top">
               <span class="mono r-when">{{ when(r) }}</span>
               <span class="mono r-dur">{{ hm(r.activeMs) }}</span>
+              <span v-if="r.live" class="r-live">en cours</span>
               <span class="r-where">{{ r.ws }} · {{ r.tab }}</span>
               <span class="r-kind">{{ r.agent }}</span>
               <span v-if="r.branch" class="mono r-branch">{{ r.branch }}</span>
@@ -168,6 +170,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
+/* No grey system background on buttons: each style below sets its own. */
+:where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.55); display: flex; padding: 28px; }
 .modal {
   flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
@@ -201,6 +205,7 @@ button.tot:hover { background: var(--hover); }
 .empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
 .run { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 8px; text-align: left; border-bottom: 1px solid var(--line); }
 .run:hover:not(:disabled) { background: var(--hover); }
+.r-live { font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--working) 18%, transparent); color: var(--working); white-space: nowrap; }
 .run:disabled { cursor: default; opacity: 0.85; }
 .r-top { display: flex; align-items: baseline; gap: 10px; font-size: 12.5px; min-width: 0; }
 .r-when { color: var(--muted); font-size: 11.5px; white-space: nowrap; }

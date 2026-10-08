@@ -142,6 +142,8 @@ function onKey(e: KeyboardEvent) {
 </template>
 
 <style scoped>
+/* No grey system background on buttons: each style below sets its own. */
+:where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .dialog {
   width: min(620px, 100%); max-height: calc(100vh - 48px); overflow: auto; padding: 22px; border-radius: 14px;

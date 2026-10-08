@@ -140,6 +140,8 @@ function parts(line: string, s: number, e: number) {
 </template>
 
 <style scoped>
+/* No grey system background on buttons: each style below sets its own. */
+:where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; padding: 56px 24px 24px; }
 .modal {
   width: min(980px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;

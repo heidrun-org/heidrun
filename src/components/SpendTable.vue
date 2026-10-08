@@ -86,6 +86,8 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
 </template>
 
 <style scoped>
+/* No grey system background on buttons: each style below sets its own. */
+:where(button) { background: transparent; border: 0; }
 .block { display: flex; flex-direction: column; gap: 6px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
