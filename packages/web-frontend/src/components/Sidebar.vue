@@ -7,6 +7,7 @@ import {
   dismiss,
   finishRename,
   moveWorkspaceInView,
+  newTerminal,
   newWorkspace,
   selectPane,
   selectWorkspace,
@@ -24,6 +25,7 @@ import { settings } from "../stores/settings";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
+import { newAgent } from "../stores/agents";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
@@ -130,7 +132,13 @@ async function createWorkspace() {
     </section>
 
     <section class="group tight">
-      <div class="eyebrow pad">{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</div>
+      <div class="eyebrow pad heading">
+        <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
+        <span class="heading-actions">
+          <button class="add" :title="t('tabBar.newAgentTitle')" :aria-label="t('tabBar.newAgentTitle')" @click="newAgent.open = true"><Icon name="robot" /></button>
+          <button class="add" :title="t('tabBar.newTerminalTitle')" :aria-label="t('tabBar.newTerminalTitle')" @click="newTerminal()"><Icon name="terminal" /></button>
+        </span>
+      </div>
       <template v-for="p in workspacePanes" :key="p.pane_id">
         <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
           <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
@@ -211,6 +219,7 @@ async function createWorkspace() {
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
 .heading { display: flex; align-items: center; justify-content: space-between; }
+.heading-actions { display: flex; align-items: center; gap: 2px; }
 .add {
   width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent;
   color: var(--muted); font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;

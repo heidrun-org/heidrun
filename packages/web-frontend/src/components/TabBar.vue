@@ -3,7 +3,6 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { useReorder } from "../lib/reorder";
-import { newAgent } from "../stores/agents";
 import { t } from "../i18n/index";
 import { closeTab, finishRename, moveTab, newTerminal, selectTab, splitPane, startRename, state, tabs } from "../stores/session";
 
@@ -61,8 +60,6 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
     </div>
     <button class="tab-add" :aria-label="t('tabBar.newTab')" :title="t('tabBar.newTabTitle')" @click="newTerminal()"><Icon name="plus-lg" /></button>
     <div class="spacer"></div>
-    <button class="btn" :title="t('tabBar.newAgentTitle')" @click="newAgent.open = true">{{ t("tabBar.newAgent") }} <kbd>⇧⌘T</kbd></button>
-    <button :title="t('tabBar.newTerminalTitle')" class="btn" @click="newTerminal()">{{ t("tabBar.newTerminal") }} <kbd>⌘T</kbd></button>
     <button class="btn" :title="t('tabBar.splitRight')" @click="splitPane('right')"><Icon name="layout-split" /> <kbd>⌘D</kbd></button>
     <button class="btn" :title="t('tabBar.splitDown')" @click="splitPane('down')"><Icon name="layout-split" class="rotated" /> <kbd>⇧⌘D</kbd></button>
   </div>
