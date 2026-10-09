@@ -82,13 +82,15 @@ const subtitle = computed(() => {
           @click="mosaic.paneId = pane.pane_id"
         >▦</button>
         <button
-          class="tool txt"
+          class="tool"
           :class="{ on: pinned }"
           :aria-pressed="pinned"
           :title="pinned ? 'Ne plus garder à côté' : 'Garder à côté : reste visible quand tu changes d’onglet ou de workspace'"
           @mousedown.stop
           @click="toggleDock(pane.pane_id)"
-        >⊞</button>
+        >
+          <Icon :name="pinned ? 'pin-fill' : 'pin'" />
+        </button>
         <button class="tool" aria-label="Diviser à droite" title="Diviser à droite (⌘D)" @mousedown.stop @click="splitPane('right', pane.pane_id)">
           <Icon name="split-right" />
         </button>
