@@ -25,5 +25,12 @@
   "hideLabel": "Hide {name}",
   "hideTitle": "Hide until the next change",
   "remoteControlBadge": "RC",
-  "chooseWorkspaceFolder": "Choose the folder of the new workspace"
+  "chooseWorkspaceFolder": "Choose the folder of the new workspace",
+  "newAgentTitle": "Start Claude or Codex in a new tab, with a prompt",
+  "newTerminalTitle": "Open a new terminal",
+  "paneMenu": "Pane actions",
+  "paneMenuLabel": "Actions for {name}",
+  "rename": "Rename",
+  "closePaneConfirm": "Close",
+  "closePane": "Close the pane {name}"
 }
