@@ -165,7 +165,7 @@ h2 { margin: 0; font-size: 16px; font-weight: 600; }
 footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 footer :deep(.confirm) {
   width: 36px; height: 36px; border-radius: 10px; font-size: 16px; color: var(--blocked);
-  border: 1px solid var(--blocked); background: transparent;
+  border: none; background: transparent;
 }
-footer :deep(.confirm:hover) { background: var(--blocked); color: #fff; }
+footer :deep(.confirm:hover) { background: var(--hover); color: var(--blocked); }
 </style>
