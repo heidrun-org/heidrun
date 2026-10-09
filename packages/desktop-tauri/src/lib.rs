@@ -90,7 +90,8 @@ fn herdr_paths() -> Value {
 /// close the app instead of reaching our "close pane" shortcut.
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let app_menu = SubmenuBuilder::new(app, "Heidrun")
-        .about(None)
+        // Our own item: the About window is drawn by the web frontend, with an image.
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-about", "À propos de Heidrun").build(app)?)
         .separator()
         .services()
         .separator()
@@ -153,6 +154,10 @@ pub fn run() {
             Ok(())
         })
         .on_menu_event(|app, event| {
+            if event.id().as_ref() == "hd-about" {
+                use tauri::Emitter;
+                let _ = app.emit("show-about", ());
+            }
             if event.id().as_ref() == "hd-quit" {
                 if UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
                     use tauri::Emitter;
