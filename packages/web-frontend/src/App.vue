@@ -10,6 +10,8 @@ import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
+import FolderSelectorModal from "./components/FolderSelectorModal.vue";
+import { folderSelector } from "./stores/folderSelector";
 import DangerModal from "./components/DangerModal.vue";
 import GitModal from "./components/GitModal.vue";
 import { git, merging } from "./stores/git";
@@ -256,6 +258,7 @@ onBeforeUnmount(() => {
     <MobileModal v-if="mobile.open" />
     <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
+    <FolderSelectorModal v-if="folderSelector.open" />
     <ConfirmModal v-if="confirmDialog.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>

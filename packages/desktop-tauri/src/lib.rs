@@ -201,6 +201,7 @@ pub fn run() {
             history::history_read,
             history::history_export,
             files::files_list,
+            files::folders_list,
             files::files_resolve,
             files::file_image,
             files::file_open_external,

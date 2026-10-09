@@ -1,0 +1,11 @@
+{
+  "title": "Choose the folder of the new workspace",
+  "parentTitle": "Go to the parent folder",
+  "foldersLabel": "Folders",
+  "loading": "Reading the folder…",
+  "empty": "No folder here.",
+  "cancelTitle": "Cancel and close the window",
+  "cancel": "Cancel",
+  "chooseTitle": "Use the folder shown above as the new workspace",
+  "choose": "Choose this folder"
+}

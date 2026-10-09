@@ -125,3 +125,16 @@ export async function waitForOutput(paneId: string, regex: string, timeoutMs = 3
   });
   return r.matched_line ?? null;
 }
+
+// ---- Folders --------------------------------------------------------------
+
+/** The sub-folders of one folder, as the folder selector shows them. */
+export type FolderList = {
+  path: string;
+  parent: string | null;
+  folders: string[];
+};
+
+export function foldersList(path: string | null): Promise<FolderList> {
+  return invoke<FolderList>("folders_list", { path });
+}
