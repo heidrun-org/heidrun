@@ -163,4 +163,9 @@ h2 { margin: 0; font-size: 16px; font-weight: 600; }
 .vars { font-size: 10.5px; color: var(--faint); }
 .check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin-top: 6px; }
 footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+footer :deep(.confirm) {
+  width: 36px; height: 36px; border-radius: 10px; font-size: 16px; color: var(--blocked);
+  border: 1px solid var(--blocked); background: transparent;
+}
+footer :deep(.confirm:hover) { background: var(--blocked); color: #fff; }
 </style>
