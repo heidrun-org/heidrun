@@ -3,18 +3,18 @@ import { nextTick, onMounted, ref } from "vue";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
 import { t } from "../i18n/index";
 
-const cancel = ref<HTMLButtonElement>();
-// Focus on "Cancel": Enter must never run a destructive action by reflex.
-onMounted(() => nextTick(() => cancel.value?.focus()));
+const confirmButton = ref<HTMLButtonElement>();
+// Enter validates the main button, Escape and a click outside cancel; the focus stays inside the window so the keys arrive.
+onMounted(() => nextTick(() => confirmButton.value?.focus()));
 </script>
 
 <template>
-  <div class="overlay" @mousedown.self="answerConfirm(false)" @keydown.esc.stop.prevent="answerConfirm(false)">
+  <div class="overlay" @mousedown.self="answerConfirm(false)" @keydown.esc.stop.prevent="answerConfirm(false)" @keydown.enter.stop.prevent="answerConfirm(true)">
     <div class="dialog" role="alertdialog" aria-labelledby="confirm-title">
       <h2 id="confirm-title">{{ confirmDialog.title }}</h2>
       <div class="row">
-        <button ref="cancel" class="btn lg" :title="t('confirmModal.cancelTitle')" @click="answerConfirm(false)">{{ t("confirmModal.cancel") }}</button>
-        <button class="btn lg danger" @click="answerConfirm(true)">{{ confirmDialog.confirmLabel }}</button>
+        <button class="btn lg" :title="t('confirmModal.cancelTitle')" @click="answerConfirm(false)">{{ t("confirmModal.cancel") }}</button>
+        <button ref="confirmButton" class="btn lg danger" @click="answerConfirm(true)">{{ confirmDialog.confirmLabel }}</button>
       </div>
     </div>
   </div>
