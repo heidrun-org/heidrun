@@ -12,7 +12,7 @@
   "stop": "Arrêter (ctrl+C)",
   "run": "Lancer",
   "runAgainInTab": "Relancer dans son onglet",
-  "removeArmed": "Retirer ?",
+  "removeConfirm": "Retirer",
   "removeAction": "Retirer l’action {action}",
   "command": "Commande",
   "nameOptional": "Nom (facultatif)",

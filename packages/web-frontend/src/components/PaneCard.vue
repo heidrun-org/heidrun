@@ -98,7 +98,7 @@ const subtitle = computed(() => {
         <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
-        <ConfirmButton icon="x-lg" :aria-label="t('paneCard.close')" @confirm="closePane(pane.pane_id)" />
+        <ConfirmButton icon="x-lg" :confirm-label="t('paneCard.closeConfirm')" :question="t('paneCard.close')" @confirm="closePane(pane.pane_id)" />
         </template>
       </span>
     </header>

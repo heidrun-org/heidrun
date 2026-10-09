@@ -11,7 +11,7 @@
   "noteTitle": "Titre de la note",
   "doubleClickToRename": "Double-clic pour renommer",
   "openLarge": "Ouvrir en grand",
-  "deleteArmed": "Supprimer ?",
+  "deleteConfirm": "Supprimer",
   "deleteNote": "Supprimer la note",
   "textTitle": "Clic : déplier · double-clic : ouvrir en grand",
   "copyTitle": "Copier la note",

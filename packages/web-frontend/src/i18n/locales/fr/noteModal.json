@@ -17,6 +17,6 @@
   "sendToAgent": "Envoyer à un agent",
   "sendToAgentChoice": "Envoyer à un agent…",
   "delete": "Supprimer",
-  "deleteArmed": "Supprimer ?",
+  "deleteConfirm": "Supprimer",
   "deleteNote": "Supprimer la note"
 }

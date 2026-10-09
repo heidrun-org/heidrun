@@ -11,5 +11,6 @@
   "newTerminal": "New terminal",
   "newTerminalTitle": "Open a new terminal",
   "splitRight": "Split right",
-  "splitDown": "Split down"
+  "splitDown": "Split down",
+  "closeConfirm": "Close"
 }

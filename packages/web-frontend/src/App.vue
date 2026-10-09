@@ -9,6 +9,7 @@ import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
+import ConfirmModal from "./components/ConfirmModal.vue";
 import DangerModal from "./components/DangerModal.vue";
 import GitModal from "./components/GitModal.vue";
 import { git, merging } from "./stores/git";
@@ -24,6 +25,7 @@ import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, dockVisible } from "./stores/dock";
 import { search } from "./stores/search";
+import { answerConfirm, confirmDialog } from "./stores/confirm";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
 import CommandPalette from "./components/CommandPalette.vue";
@@ -76,6 +78,16 @@ let armedAt = 0;
 // Capture phase: our shortcuts win over xterm, which otherwise swallows the keys.
 // e.code is used because ⌥ changes e.key on macOS (⌥B gives "∫").
 function onKey(e: KeyboardEvent) {
+  if (confirmDialog.open) {
+    // The confirmation dialog owns the keyboard: Esc cancels, nothing else runs behind it.
+    if (e.key === "Escape") {
+      e.preventDefault();
+      answerConfirm(false);
+    } else if (e.metaKey) {
+      e.preventDefault();
+    }
+    return;
+  }
   if (danger.open) {
     // The confirmation window owns the keyboard: Esc cancels, nothing else runs behind it.
     if (e.key === "Escape") {
@@ -244,6 +256,7 @@ onBeforeUnmount(() => {
     <MobileModal v-if="mobile.open" />
     <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
+    <ConfirmModal v-if="confirmDialog.open" />
     <Transition name="toast">
       <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
     </Transition>

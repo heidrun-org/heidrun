@@ -12,7 +12,7 @@
   "stop": "Stop (ctrl+C)",
   "run": "Run",
   "runAgainInTab": "Run again in its tab",
-  "removeArmed": "Remove?",
+  "removeConfirm": "Remove",
   "removeAction": "Remove the action {action}",
   "command": "Command",
   "nameOptional": "Name (optional)",

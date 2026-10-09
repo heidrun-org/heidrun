@@ -124,7 +124,7 @@ function isRestarting(a: Action) {
           >↻</button>
           <button v-if="status(a) === 'running'" class="tool" :aria-label="t('actionsPanel.stop')" :title="t('actionsPanel.stop')" @click="stopAction(ws, a)"><Icon name="stop-fill" /></button>
           <button v-else class="tool" :aria-label="t('actionsPanel.run')" :title="status(a) === 'finished' ? t('actionsPanel.runAgainInTab') : t('actionsPanel.run')" @click="runAction(ws, a, true)"><Icon name="play-fill" /></button>
-          <ConfirmButton icon="x-lg" :armed-label="t('actionsPanel.removeArmed')" :aria-label="t('actionsPanel.removeAction', { action: a.label })" @confirm="removeAction(ws, a.id)" />
+          <ConfirmButton icon="x-lg" :confirm-label="t('actionsPanel.removeConfirm')" :question="t('actionsPanel.removeAction', { action: a.label })" @confirm="removeAction(ws, a.id)" />
         </div>
       </div>
 
