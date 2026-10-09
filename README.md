@@ -15,7 +15,7 @@ Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les te
 Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec un filtre.
 
 <!-- shortcuts:start -->
-<!-- Généré depuis src/lib/shortcuts.json : npm run docs:shortcuts -->
+<!-- Généré depuis packages/web-frontend/src/lib/shortcuts.json : pnpm docs:shortcuts -->
 
 | Raccourci | Action |
 | --- | --- |
@@ -194,8 +194,8 @@ xcode-select --install   # outils de compilation Apple, si besoin
 
 ```sh
 cd ~/Projects/HerdrDesk
-npm install
-npm run tauri dev
+pnpm install
+pnpm dev
 ```
 
 Pas besoin d’ouvrir `herdr` dans un terminal : si le serveur ne tourne pas, l’app le démarre en arrière-plan (option « Démarrer Herdr automatiquement »). Il reste actif quand tu fermes l’app, jusqu’à `herdr server stop` ou au redémarrage du Mac.
@@ -203,8 +203,8 @@ Pas besoin d’ouvrir `herdr` dans un terminal : si le serveur ne tourne pas, l�
 ## Construire l’app
 
 ```sh
-npm run tauri build
-open src-tauri/target/release/bundle/macos/
+pnpm build
+open packages/desktop-tauri/target/release/bundle/macos/
 ```
 
 Glisse `Herdr Desk.app` dans `/Applications`.
@@ -238,13 +238,13 @@ Ce format n’est pas une API officielle d’OpenAI : si une mise à jour de Cod
 ## Architecture
 
 ```
-src-tauri/src/
+packages/desktop-tauri/src/
   herdr.rs   client du socket ~/.config/herdr/herdr.sock (JSON ligne par ligne),
              abonnements aux événements, reconnexion automatique
   pty.rs     pseudo-terminaux qui exécutent `herdr terminal attach <terminal_id>`
   usage.rs   lecture des journaux Codex
   lib.rs     commandes Tauri exposées au front
-src/
+packages/web-frontend/src/
   stores/session.ts   état : snapshot Herdr, sélection, notifications, actions
   components/         TopBar, Sidebar, TabBar, PaneGrid, PaneCard, TerminalView,
                       InputBar, Inspector, StatusBar, CommandPalette

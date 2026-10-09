@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "dev.edefiez.herdrdesk",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "pnpm --filter web-frontend dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "pnpm --filter web-frontend build",
+    "frontendDist": "../web-frontend/dist"
   },
   "app": {
     "windows": [

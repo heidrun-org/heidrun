@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde_json::{json, Map, Value};
 use std::path::PathBuf;
 
-const SCRIPT: &str = include_str!("../../scripts/claude-statusline.sh");
+const SCRIPT: &str = include_str!("../../../scripts/claude-statusline.sh");
 
 fn claude_dir() -> PathBuf {
     if let Ok(d) = std::env::var("CLAUDE_CONFIG_DIR") {

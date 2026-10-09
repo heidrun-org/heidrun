@@ -1,15 +1,15 @@
-// Writes the shortcut table of README.md from src/lib/shortcuts.json (also shown by ⌘/ in the app).
-// npm run docs:shortcuts
+// Writes the shortcut table of README.md from packages/web-frontend/src/lib/shortcuts.json (also shown by ⌘/ in the app).
+// pnpm docs:shortcuts
 import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
-const groups = JSON.parse(readFileSync(new URL("src/lib/shortcuts.json", root), "utf8"));
+const groups = JSON.parse(readFileSync(new URL("packages/web-frontend/src/lib/shortcuts.json", root), "utf8"));
 const START = "<!-- shortcuts:start -->";
 const END = "<!-- shortcuts:end -->";
 
 const table = [
   START,
-  "<!-- Généré depuis src/lib/shortcuts.json : npm run docs:shortcuts -->",
+  "<!-- Généré depuis packages/web-frontend/src/lib/shortcuts.json : pnpm docs:shortcuts -->",
   "",
   "| Raccourci | Action |",
   "| --- | --- |",
