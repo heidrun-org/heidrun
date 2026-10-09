@@ -16,8 +16,8 @@ onMounted(() => nextTick(() => cancel.value?.focus()));
       <pre class="cmd mono">{{ danger.command }}</pre>
       <p v-if="danger.level === 'block'" class="hint">Le projet l’interdit dans <span class="mono">.herdr-desk.json</span> (<span class="mono">guards.block</span>). Lance-la toi-même dans un terminal si c’est voulu.</p>
       <div class="row">
-        <button ref="cancel" class="btn lg" @click="answerDanger(false)">{{ danger.level === "block" ? "Fermer" : "Annuler" }}</button>
-        <button v-if="danger.level !== 'block'" class="btn lg danger" @click="answerDanger(true)">Exécuter quand même</button>
+        <button title="Cancel and do not run the command" ref="cancel" class="btn lg" @click="answerDanger(false)">{{ danger.level === "block" ? "Fermer" : "Annuler" }}</button>
+        <button title="Run the command anyway" v-if="danger.level !== 'block'" class="btn lg danger" @click="answerDanger(true)">Exécuter quand même</button>
       </div>
     </div>
   </div>

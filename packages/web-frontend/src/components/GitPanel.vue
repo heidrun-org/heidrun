@@ -92,7 +92,7 @@ async function askReview(ref: string, url: string, title: string) {
             </button>
           </li>
           <li v-if="st.files.length > 14">
-            <button class="link more" @click="openGitModal()">… et {{ st.changed + st.untracked - 14 }} autres : tout voir</button>
+            <button title="Show all changed files" class="link more" @click="openGitModal()">… et {{ st.changed + st.untracked - 14 }} autres : tout voir</button>
           </li>
         </ul>
       </section>

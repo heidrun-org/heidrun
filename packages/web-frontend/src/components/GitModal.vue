@@ -188,16 +188,16 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
     <div ref="modalEl" class="modal" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
-          <button v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
+          <button title="Open the repository in the browser" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
           <span v-else class="repo plain">{{ repoName }}</span>
           <span v-if="st" class="mono branch">{{ st.branch ?? "(détachée)" }}</span>
           <span v-if="st?.ahead" class="chip warn">↑ {{ st.ahead }}</span>
           <span v-if="st?.behind" class="chip pending">↓ {{ st.behind }}</span>
-          <button v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
+          <button title="Open the continuous integration result in the browser" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div class="tools">
-          <button class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
-          <button class="close" aria-label="Fermer (Échap)" @click="git.modal.open = false"><Icon name="x-lg" /></button>
+          <button title="Refresh the Git status" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
+          <button title="Close the Git window (Escape)" class="close" aria-label="Fermer (Échap)" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
       </header>
 
@@ -245,9 +245,9 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               <span v-if="selected && diff.length" class="stats"><span class="plus">+{{ stats.added }}</span> <span class="minus">−{{ stats.removed }}</span></span>
             </div>
             <div class="seg" role="radiogroup" aria-label="Affichage">
-              <button :class="{ on: mode === 'unified' }" @click="settings.diffMode = 'unified'">Diff</button>
-              <button :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">Côte à côte</button>
-              <button :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">Fichier</button>
+              <button title="Show the changes as a unified diff" :class="{ on: mode === 'unified' }" @click="settings.diffMode = 'unified'">Diff</button>
+              <button title="Show the changes side by side" :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">Côte à côte</button>
+              <button title="Show the whole file" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">Fichier</button>
               <button v-if="md" :class="{ on: mode === 'read' }" title="Markdown mis en forme" @click="settings.diffMode = 'read'">Lecture</button>
             </div>
             <div v-if="mode === 'read'" class="seg" role="radiogroup" aria-label="Largeur de lecture">

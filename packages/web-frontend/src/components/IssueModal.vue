@@ -62,11 +62,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </div>
         <div class="tools">
           <div class="seg" role="radiogroup" aria-label="Largeur de lecture">
-            <button :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">Centré</button>
-            <button :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">Pleine largeur</button>
+            <button title="Center the text" :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">Centré</button>
+            <button title="Use the full width" :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">Pleine largeur</button>
           </div>
-          <button v-if="webUrl" class="btn" @click="openUrl(webUrl!)">Ouvrir sur {{ forgeName }} <Icon name="box-arrow-up-right" /></button>
-          <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+          <button title="Open the issue in the browser" v-if="webUrl" class="btn" @click="openUrl(webUrl!)">Ouvrir sur {{ forgeName }} <Icon name="box-arrow-up-right" /></button>
+          <button title="Close the issue (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
         </div>
       </header>
 

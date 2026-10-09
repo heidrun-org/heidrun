@@ -166,9 +166,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <header>
         <h2>Historique</h2>
         <div class="seg" role="radiogroup" aria-label="Période">
-          <button v-for="[v, l] in ([['today', 'Aujourd’hui'], ['7', '7 jours'], ['30', '30 jours'], ['90', '90 jours'], ['365', '1 an']] as [Period, string][])" :key="v" :class="{ on: period === v }" @click="period = v">{{ l }}</button>
+          <button title="Show the history for this period" v-for="[v, l] in ([['today', 'Aujourd’hui'], ['7', '7 jours'], ['30', '30 jours'], ['90', '90 jours'], ['365', '1 an']] as [Period, string][])" :key="v" :class="{ on: period === v }" @click="period = v">{{ l }}</button>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button title="Close the history (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="filters">
         <select v-model="ws" aria-label="Workspace">
@@ -181,7 +181,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </select>
         <input v-model="q" placeholder="Rechercher dans les consignes, branches…" spellcheck="false" />
         <button class="btn" :class="{ on: showCalib }" title="Hypothèses des estimations" @click="showCalib = !showCalib">⚙ Hypothèses</button>
-        <button class="btn" :disabled="!runs.length" @click="exportCsv">Export CSV ⤓</button>
+        <button title="Export the history as a CSV file" class="btn" :disabled="!runs.length" @click="exportCsv">Export CSV ⤓</button>
       </div>
 
       <div v-if="showCalib" class="calib">
@@ -235,8 +235,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <aside class="side">
           <div class="side-head">
             <span class="seg small" role="radiogroup" aria-label="Regrouper">
-              <button :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">Par workspace</button>
-              <button :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">Par fonctionnalité</button>
+              <button title="Group by workspace" :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">Par workspace</button>
+              <button title="Group by feature" :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">Par fonctionnalité</button>
             </span>
           </div>
           <template v-if="groupBy === 'feature'">
@@ -249,7 +249,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <p v-if="!features.length" class="hint">Rien sur cette période.</p>
           </template>
           <template v-else>
-          <button v-for="t in totals.list" :key="t.name" class="tot" :class="{ on: ws === t.name }" @click="ws = ws === t.name ? '' : t.name">
+          <button title="Filter the history by this workspace" v-for="t in totals.list" :key="t.name" class="tot" :class="{ on: ws === t.name }" @click="ws = ws === t.name ? '' : t.name">
             <span class="t-name">{{ t.name || "—" }}</span>
             <span class="mono t-ms">{{ hm(t.ms) }}</span>
             <span class="bar"><span :style="{ width: `${(t.ms / totals.max) * 100}%` }"></span></span>
@@ -282,7 +282,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
           <div class="eyebrow sub-h budget-h">
             Budgets du mois
-            <button class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? "OK" : "Modifier" }}</button>
+            <button title="Edit the budgets" class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? "OK" : "Modifier" }}</button>
           </div>
           <div v-for="n in budgetNames.filter((x) => showBudgets || settings.budgets[x])" :key="n" class="budget" :class="budgetLevel(n)">
             <span class="t-name">{{ n }}</span>

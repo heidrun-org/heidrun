@@ -144,12 +144,12 @@ function onKey(e: KeyboardEvent) {
           <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" title="Tous les agents de la session, terminés compris" @click="settings.mosaicActiveOnly = false">Tous <span class="n">{{ tiles.length }}</span></button>
         </div>
         <span class="hint">Lecture seule, d’après les journaux de Claude · un clic affiche l’agent dans le terminal</span>
-        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button title="Close the mosaic (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div v-if="!loaded" class="empty">Lecture des journaux…</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
       <div v-else class="grid" :style="{ fontSize: `${Math.max(10, settings.codeFontSize - 1)}px` }">
-        <div v-if="!shownTiles.length" class="empty">Aucun agent actif. <button class="link" @click="settings.mosaicActiveOnly = false">Voir tous les agents</button></div>
+        <div v-if="!shownTiles.length" class="empty">Aucun agent actif. <button title="Show all agents" class="link" @click="settings.mosaicActiveOnly = false">Voir tous les agents</button></div>
         <button
           v-for="t in shownTiles"
           :key="t.id"

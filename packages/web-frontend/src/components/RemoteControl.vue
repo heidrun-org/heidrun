@@ -31,13 +31,13 @@ const busy = computed(() => props.pane.agent_status === "blocked");
       <template v-if="state === 'active'">Session ouverte sur claude.ai/code et l’app Claude (iPhone, iPad).</template>
       <template v-else>Reprends cette session depuis claude.ai/code ou l’app Claude sur ton téléphone.</template>
     </p>
-    <button v-if="state === 'active' && url" class="btn" @click="remote.openFor = pane.pane_id">Afficher l’URL et le QR code</button>
+    <button title="Show the URL and the QR code" v-if="state === 'active' && url" class="btn" @click="remote.openFor = pane.pane_id">Afficher l’URL et le QR code</button>
     <button v-else class="btn" :disabled="busy" :title="busy ? 'L’agent attend une décision' : ''" @click="toggleRemoteControl(pane.pane_id)">
       {{ state === "failed" ? "Reconnecter" : state === "active" ? "Ouvrir le panneau Remote Control" : "Activer Remote Control" }}
     </button>
     <div v-if="state === 'active' && url" class="url">
       <span class="mono">{{ url.replace("https://", "") }}</span>
-      <button class="btn small" @click="copyUrl">Copier</button>
+      <button title="Copy the URL" class="btn small" @click="copyUrl">Copier</button>
     </div>
 
     <label class="check">

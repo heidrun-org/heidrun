@@ -60,7 +60,7 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
     <button class="tab-add" aria-label="Nouvel onglet" title="Nouvel onglet (⌘T)" @click="newTerminal()"><Icon name="plus-lg" /></button>
     <div class="spacer"></div>
     <button class="btn" title="Lancer Claude ou Codex dans un nouvel onglet, avec une consigne" @click="newAgent.open = true">Nouvel agent <kbd>⇧⌘T</kbd></button>
-    <button class="btn" @click="newTerminal()">Nouveau terminal <kbd>⌘T</kbd></button>
+    <button title="Open a new terminal" class="btn" @click="newTerminal()">Nouveau terminal <kbd>⌘T</kbd></button>
     <button class="btn" title="Diviser à droite" @click="splitPane('right')"><Icon name="layout-split" /> <kbd>⌘D</kbd></button>
     <button class="btn" title="Diviser en bas" @click="splitPane('down')"><Icon name="layout-split" class="rotated" /> <kbd>⇧⌘D</kbd></button>
   </div>

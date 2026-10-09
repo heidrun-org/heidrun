@@ -575,7 +575,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <span class="root mono" :title="files.root">{{ shortPath(files.root) }}</span>
         <div class="tabs" role="tablist">
           <div v-for="t in files.tabs" :key="t" class="tab" :class="{ on: t === files.active }" role="tab" :title="t">
-            <button class="tab-name" @click="openTab(t)">
+            <button title="Open this file" class="tab-name" @click="openTab(t)">
               <span v-if="files.status[t]" class="st" :class="'s-' + files.status[t]"><Icon name="circle-fill" /></span>{{ t.split("/").pop() }}
             </button>
             <button
@@ -587,25 +587,25 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             ><template v-if="closingTab === t">?</template><Icon v-else-if="isDirty(t)" name="circle-fill" /><Icon v-else name="x-lg" /></button>
           </div>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close()"><Icon name="x-lg" /></button>
+        <button title="Close the file browser (Escape)" class="close" aria-label="Fermer (Échap)" @click="close()"><Icon name="x-lg" /></button>
       </header>
       <div v-if="files.quitting && dirtyTabs().length" class="banner warn">
         <span>Quitter Herdr Desk : {{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }} ({{ dirtyTabs().map((t) => t.split("/").pop()).join(", ") }}).</span>
-        <button class="tb accent" @click="saveAllAndQuit">Tout enregistrer et quitter</button>
-        <button class="tb danger" @click="quitNow">Quitter sans enregistrer</button>
-        <button class="tb" @click="files.quitting = false">Annuler</button>
+        <button title="Save all files and quit" class="tb accent" @click="saveAllAndQuit">Tout enregistrer et quitter</button>
+        <button title="Quit without saving" class="tb danger" @click="quitNow">Quitter sans enregistrer</button>
+        <button title="Cancel and keep the file browser open" class="tb" @click="files.quitting = false">Annuler</button>
       </div>
       <div v-else-if="closingAll" class="banner warn">
         <span>{{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} modifié{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }}.</span>
-        <button class="tb accent" @click="saveAllAndClose">Tout enregistrer et fermer</button>
-        <button class="tb danger" @click="abandonAndClose">Abandonner les modifications</button>
-        <button class="tb" @click="closingAll = false">Annuler</button>
+        <button title="Save all files and close" class="tb accent" @click="saveAllAndClose">Tout enregistrer et fermer</button>
+        <button title="Discard the changes and close" class="tb danger" @click="abandonAndClose">Abandonner les modifications</button>
+        <button title="Cancel and keep the file browser open" class="tb" @click="closingAll = false">Annuler</button>
       </div>
 
       <div class="body" :style="{ gridTemplateColumns: `${settings.filesListWidth}px 5px 1fr` }">
         <aside class="side" @click="menu = null">
           <div class="side-tabs" role="tablist">
-            <button :class="{ on: sideMode === 'tree' }" @click="sideMode = 'tree'">Fichiers</button>
+            <button title="Show the file tree" :class="{ on: sideMode === 'tree' }" @click="sideMode = 'tree'">Fichiers</button>
             <button :class="{ on: sideMode === 'grep' }" title="Chercher dans le contenu (⇧⌘F)" @click="openSearch">Rechercher</button>
           </div>
 
@@ -621,14 +621,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div class="list">
               <div v-if="gError" class="empty err">{{ gError }}</div>
               <template v-for="[p, hits] in gGroups" :key="p">
-                <button class="g-file" @click="toggleGroup(p)">
+                <button title="Fold or unfold the matches in this file" class="g-file" @click="toggleGroup(p)">
                   <span class="chev">{{ gFolded.has(p) ? "▸" : "▾" }}</span>
                   <span class="nm">{{ p.split("/").pop() }}</span>
                   <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
                   <span class="g-n">{{ hits.length }}</span>
                 </button>
                 <template v-if="!gFolded.has(p)">
-                  <button v-for="h in hits" :key="p + h.line" class="g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
+                  <button title="Open the file at this line" v-for="h in hits" :key="p + h.line" class="g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
                     <span class="g-line">{{ h.line }}</span>
                     <span class="g-text">{{ hitParts(h.text).pre }}<mark>{{ hitParts(h.text).hit }}</mark>{{ hitParts(h.text).post }}</span>
                   </button>
@@ -654,15 +654,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <span class="muted">{{ naming.kind === "rename" ? "Renommer / déplacer" : naming.kind === "dir" ? "Nouveau dossier" : "Nouveau fichier" }}</span>
             <input ref="nameEl" v-model="naming.value" class="mono" spellcheck="false" />
             <span class="n-tools">
-              <button type="submit" class="tb accent">{{ naming.kind === "rename" ? "Renommer" : "Créer" }} ↵</button>
-              <button type="button" class="tb" @click="naming = null">Annuler</button>
+              <button title="Confirm" type="submit" class="tb accent">{{ naming.kind === "rename" ? "Renommer" : "Créer" }} ↵</button>
+              <button title="Cancel" type="button" class="tb" @click="naming = null">Annuler</button>
             </span>
           </form>
           <div class="list">
             <div v-if="files.loading && !files.list.length" class="empty">Lecture…</div>
             <div v-else-if="files.error" class="empty err">{{ files.error }}</div>
             <template v-else-if="q.trim()">
-              <button v-for="(p, i) in results" :key="p" class="res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
+              <button title="Open this file" v-for="(p, i) in results" :key="p" class="res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
                 <span class="r-name">{{ p.split("/").pop() }}</span>
                 <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
               </button>
@@ -692,11 +692,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
           <div v-if="menu?.row" class="ctxmenu" :style="{ left: `${Math.min(menu.x, settings.filesListWidth - 200)}px`, top: `${menu.y}px` }" @click.stop>
             <div class="cm-title mono">{{ menu.row.name }}</div>
-            <button @click="startNaming('file', menu.row)">Nouveau fichier ici</button>
-            <button @click="startNaming('dir', menu.row)">Nouveau dossier ici</button>
-            <button @click="startNaming('rename', menu.row)">Renommer / déplacer…</button>
-            <button @click="menuCopy">Copier le chemin</button>
-            <button class="danger" @click="menuTrash">{{ menu.armTrash ? "Confirmer : à la Corbeille" : menu.row.dir ? "Mettre le dossier à la Corbeille" : "Mettre à la Corbeille" }}</button>
+            <button title="Create a new file in this folder" @click="startNaming('file', menu.row)">Nouveau fichier ici</button>
+            <button title="Create a new folder in this folder" @click="startNaming('dir', menu.row)">Nouveau dossier ici</button>
+            <button title="Rename or move this item" @click="startNaming('rename', menu.row)">Renommer / déplacer…</button>
+            <button title="Copy the path of this item" @click="menuCopy">Copier le chemin</button>
+            <button title="Move this item to the Trash" class="danger" @click="menuTrash">{{ menu.armTrash ? "Confirmer : à la Corbeille" : menu.row.dir ? "Mettre le dossier à la Corbeille" : "Mettre à la Corbeille" }}</button>
           </div>
         </aside>
         <div class="drag" title="Glisser pour redimensionner" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @dblclick="settings.filesListWidth = 300"></div>
@@ -706,7 +706,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <nav class="crumbs mono" aria-label="Chemin">
               <template v-for="(c, i) in crumbs" :key="i">
                 <span v-if="i" class="sep">/</span>
-                <button :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
+                <button title="Go to this folder" :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
               </template>
             </nav>
             <div class="tools">
@@ -719,8 +719,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <button v-else-if="canEdit" class="tb edit" title="Modifier ce fichier" @click="beginEdit"><Icon name="pencil" /> Modifier</button>
               <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" title="Changements de ce fichier par rapport au dernier commit (HEAD)" @click="toggleGitDiff">Diff git</button>
               <div v-if="md && !edit" class="seg" role="radiogroup" aria-label="Affichage Markdown">
-                <button :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">Lecture</button>
-                <button :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">Code</button>
+                <button title="Show the rendered Markdown" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">Lecture</button>
+                <button title="Show the Markdown source code" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">Code</button>
               </div>
               <select v-model="settings.codeTheme" class="theme" aria-label="Thème">
                 <option v-for="t in CODE_THEMES" :key="t.id" :value="t.id">{{ t.label }}</option>
@@ -735,7 +735,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <div v-if="gitDiff" class="diff code" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
             <div class="diff-head">
               <span>Changements depuis le dernier commit (enregistrés sur le disque)</span>
-              <button class="tb" @click="gitDiff = null">Fermer</button>
+              <button title="Close the diff" class="tb" @click="gitDiff = null">Fermer</button>
             </div>
             <div v-for="(l, i) in gitDiff" :key="i" class="d-row" :class="l.kind === 'hunk' ? 'gap' : l.kind">
               <span class="d-sign">{{ l.kind === "add" ? "+" : l.kind === "del" ? "−" : "" }}</span>{{ l.text || " " }}
@@ -746,14 +746,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-if="edit.conflict" class="banner warn">
               <template v-if="edit.diskHash === null && edit.disk === null">
                 <span>Ce fichier a été supprimé sur le disque depuis que tu l’as ouvert (par un agent ?).</span>
-                <button class="tb danger" @click="save(true)">Le recréer avec ma version</button>
-                <button class="tb" @click="finishEdit">Laisser supprimé</button>
+                <button title="Create the file again with my version" class="tb danger" @click="save(true)">Le recréer avec ma version</button>
+                <button title="Leave the file deleted" class="tb" @click="finishEdit">Laisser supprimé</button>
               </template>
               <template v-else>
                 <span>Ce fichier a été modifié sur le disque depuis que tu l’as ouvert (par un agent ?). Rien n’a été écrasé.</span>
-                <button class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">Voir la différence</button>
-                <button class="tb" @click="reloadEdit(files.active!)">Recharger (perdre mes changements)</button>
-                <button class="tb danger" @click="save(true)">Écraser avec ma version</button>
+                <button title="Show the differences" class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">Voir la différence</button>
+                <button title="Reload the file and discard my changes" class="tb" @click="reloadEdit(files.active!)">Recharger (perdre mes changements)</button>
+                <button title="Overwrite the file with my version" class="tb danger" @click="save(true)">Écraser avec ma version</button>
               </template>
             </div>
             <div v-else-if="agentBusy" class="banner info">Un agent travaille dans ce projet : il peut modifier ce fichier en même temps (l’app te préviendra).</div>
@@ -761,10 +761,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <div class="diff-head">
                 <span>{{ showDiff === "conflict" ? "Disque (−) → ma version (+)" : "Ouvert (−) → ma version (+)" }}</span>
                 <template v-if="showDiff === 'beforeSave'">
-                  <button class="tb accent" @click="save(false)">Enregistrer</button>
-                  <button class="tb" @click="showDiff = null">Annuler</button>
+                  <button title="Save the file" class="tb accent" @click="save(false)">Enregistrer</button>
+                  <button title="Cancel and go back to editing" class="tb" @click="showDiff = null">Annuler</button>
                 </template>
-                <button v-else class="tb" @click="showDiff = null">Fermer</button>
+                <button title="Close the diff" v-else class="tb" @click="showDiff = null">Fermer</button>
               </div>
               <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
               <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">Aucune différence.</div>
@@ -790,8 +790,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-if="truncated" class="empty">Affichage limité aux {{ MAX_ROWS }} premières lignes.</div>
             <div v-if="sel" class="selbar" :style="{ left: `${Math.max(8, sel.x)}px`, top: `${sel.y}px` }" @mousedown.stop.prevent>
               <span class="muted">{{ sel.from === sel.to ? `ligne ${sel.from}` : `lignes ${sel.from}–${sel.to}` }}</span>
-              <button class="tb" @click="askAgent('explain')">Explique</button>
-              <button class="tb" @click="askAgent('fix')">Corrige ces lignes</button>
+              <button title="Ask the agent to explain the selected lines" class="tb" @click="askAgent('explain')">Explique</button>
+              <button title="Ask the agent to fix the selected lines" class="tb" @click="askAgent('fix')">Corrige ces lignes</button>
             </div>
           </div>
           <div v-if="files.active" class="foot muted">

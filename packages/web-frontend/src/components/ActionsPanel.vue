@@ -106,7 +106,7 @@ function isRestarting(a: Action) {
               @save="(v) => { renameAction(ws!, a.id, v); renaming = null; }"
               @cancel="renaming = null"
             />
-            <span v-else class="label" @dblclick.stop="renaming = a.id">{{ a.label }}</span>
+            <span title="Double-click to rename this action" v-else class="label" @dblclick.stop="renaming = a.id">{{ a.label }}</span>
             <span class="cmd mono">{{ a.command }}</span>
           </span>
           <span v-if="STATUS_TEXT[status(a)]" class="state" :class="status(a)">{{ STATUS_TEXT[status(a)] }}</span>
@@ -133,16 +133,16 @@ function isRestarting(a: Action) {
         <label class="sr" for="act-label">Nom (facultatif)</label>
         <input id="act-label" v-model="label" placeholder="Nom (facultatif)" spellcheck="false" />
         <div class="row">
-          <button class="btn" type="button" @click="adding = false">Annuler</button>
-          <button class="btn primary" type="submit">Ajouter</button>
+          <button title="Cancel adding the action" class="btn" type="button" @click="adding = false">Annuler</button>
+          <button title="Add the action" class="btn primary" type="submit">Ajouter</button>
         </div>
       </form>
-      <button v-else class="btn dashed" @click="adding = true">+ Ajouter une action</button>
+      <button title="Add a new action" v-else class="btn dashed" @click="adding = true">+ Ajouter une action</button>
 
       <template v-if="recentRuns.length">
         <div class="sub-head">
           <div class="eyebrow">Récentes</div>
-          <button class="link small" @click="clearRecent(ws)">Effacer</button>
+          <button title="Clear the recent commands" class="link small" @click="clearRecent(ws)">Effacer</button>
         </div>
         <div v-for="r in recentRuns" :key="r.command" class="sugg">
           <span class="grow">
@@ -186,7 +186,7 @@ function isRestarting(a: Action) {
           <button class="tool" :aria-label="`Lancer ${d.command} une fois`" title="Lancer une fois" @click="runDetected(ws, d)"><Icon name="play-fill" /></button>
           <button class="tool" :aria-label="`Ajouter ${d.command} aux actions`" title="Ajouter aux actions" @click="addAction(ws, d.label, d.command)">+</button>
         </div>
-        <button v-if="suggestions.length > 6" class="link" @click="showAllSuggestions = !showAllSuggestions">
+        <button :title="showAllSuggestions ? 'Show fewer suggestions' : 'Show all suggestions'" v-if="suggestions.length > 6" class="link" @click="showAllSuggestions = !showAllSuggestions">
           {{ showAllSuggestions ? "Moins" : `Voir les ${suggestions.length}` }}
         </button>
       </template>

@@ -120,7 +120,7 @@ function parts(line: string, s: number, e: number) {
             <span v-if="g.pane.workspace_id !== state.selectedWorkspaceId" class="muted ws">{{ workspaceLabel(g.pane.workspace_id) }}</span>
             <span class="count">{{ g.total }}</span>
           </h3>
-          <button
+          <button title="Open this search result"
             v-for="(h, j) in g.hits"
             :key="j"
             class="hit mono"

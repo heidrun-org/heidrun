@@ -25,7 +25,7 @@ import { mobile } from "../stores/mobile";
       Local · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : "hors ligne" }}
     </div>
     <div class="search-wrap" data-tauri-drag-region>
-      <button class="search" @click="state.paletteOpen = true">
+      <button title="Search or run a command" class="search" @click="state.paletteOpen = true">
         <span>Rechercher, lancer une commande…</span><kbd>⌘K</kbd>
       </button>
     </div>

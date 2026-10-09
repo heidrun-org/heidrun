@@ -31,10 +31,10 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         <option v-for="f in FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
       </select>
       <div class="size">
-        <button class="btn" aria-label="Réduire la police" :disabled="settings.fontSize <= FONT_MIN" @click="zoom(-0.5)">A−</button>
+        <button title="Decrease the font size" class="btn" aria-label="Réduire la police" :disabled="settings.fontSize <= FONT_MIN" @click="zoom(-0.5)">A−</button>
         <span class="mono val">{{ settings.fontSize }} px</span>
-        <button class="btn" aria-label="Agrandir la police" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
-        <button class="btn" @click="resetZoom()">Réinitialiser</button>
+        <button title="Increase the font size" class="btn" aria-label="Agrandir la police" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
+        <button title="Reset the font size" class="btn" @click="resetZoom()">Réinitialiser</button>
       </div>
       <div v-if="settings.fontId === 'inconsolata-powerline'" class="keys">
         Police à installer sur le Mac (<span class="mono">brew install --cask font-inconsolata-for-powerline</span>
@@ -46,8 +46,8 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
       <div class="keys"><kbd>⌘+</kbd> agrandir · <kbd>⌘−</kbd> réduire · <kbd>⌘0</kbd> par défaut</div>
       <div class="eyebrow sep">Souris</div>
       <div class="seg" role="radiogroup" aria-label="Comportement de la souris">
-        <button role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">Sélectionner du texte</button>
-        <button role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">Souris pour l’app</button>
+        <button title="Mouse selects text in the terminal" role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">Sélectionner du texte</button>
+        <button title="Mouse is sent to the application in the terminal" role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">Souris pour l’app</button>
       </div>
       <div class="keys">
         <template v-if="settings.mouseMode === 'select'">Glisser sélectionne, <kbd>⌘C</kbd> copie. La molette et les clics ne vont plus à Herdr.</template>
@@ -55,7 +55,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
       </div>
       <div class="eyebrow sep">Éléments terminés</div>
       <div class="seg" role="radiogroup" aria-label="Masquer les éléments terminés après">
-        <button
+        <button title="Hide finished jobs after this delay"
           v-for="o in TTL_OPTIONS"
           :key="o.v"
           role="radio"
