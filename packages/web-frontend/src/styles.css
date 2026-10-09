@@ -22,6 +22,11 @@
 
   --accent: #f2a93b;
   --line-modal: #33383e;
+  --pane-ring-selected: #33506f;
+  --pane-ring-blocked: #5c2826;
+  --pane-ring-blocked-selected: #7d3330;
+  --pane-head-line: #1a1d20;
+  --pane-head-line-blocked: #2f1b1a;
   --line-soft: #262a2f;
   --raised: #1b1e22;
   --chip: #1d2024;
@@ -69,6 +74,11 @@
 
   --accent: #b86e00;
   --line-modal: #cbcbc4;
+  --pane-ring-selected: #aec3de;
+  --pane-ring-blocked: #e6bcb9;
+  --pane-ring-blocked-selected: #d98d89;
+  --pane-head-line: #e4e4df;
+  --pane-head-line-blocked: #f0d2d0;
   --line-soft: #e4e4df;
   --raised: #ffffff;
   --chip: #e9e9e5;

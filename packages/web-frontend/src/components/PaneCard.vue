@@ -116,9 +116,9 @@ const subtitle = computed(() => {
 
 <style scoped>
 .pane { height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; }
-.pane.blocked { box-shadow: inset 0 0 0 1px #5c2826; }
-.pane.selected { box-shadow: inset 0 0 0 1px #33506f; }
-.pane.blocked.selected { box-shadow: inset 0 0 0 1px #7d3330; }
+.pane.blocked { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked); }
+.pane.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-selected); }
+.pane.blocked.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked-selected); }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;
@@ -127,9 +127,9 @@ const subtitle = computed(() => {
 }
 .head {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
-  border-bottom: 1px solid #1a1d20; font-size: 12px;
+  border-bottom: 1px solid var(--pane-head-line); font-size: 12px;
 }
-.pane.blocked .head { background: var(--tint-err); border-bottom-color: #2f1b1a; }
+.pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
 .name { font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
