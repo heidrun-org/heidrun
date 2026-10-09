@@ -136,3 +136,20 @@ export function zoom(delta: number) {
 export function resetZoom() {
   settings.fontSize = FONT_DEFAULT;
 }
+
+/** The sections of the Settings window. */
+export type SettingsSection = "terminal" | "mouse" | "finishedItems" | "notifications" | "language" | "mobileAccess";
+
+/** State of the Settings window: not saved, the window starts closed on the first section. */
+export const settingsModal = reactive({
+  open: false,
+  section: "terminal" as SettingsSection,
+});
+
+/** Opens the Settings window, on `section` when given. */
+export function openSettings(section?: SettingsSection) {
+  if (section !== undefined) {
+    settingsModal.section = section;
+  }
+  settingsModal.open = true;
+}

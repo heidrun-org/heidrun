@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import FontMenu from "./FontMenu.vue";
 import Icon from "./Icon.vue";
-import LanguageMenu from "./LanguageMenu.vue";
 import ThemeMenu from "./ThemeMenu.vue";
 import { counts, state } from "../stores/session";
-import { settings } from "../stores/settings";
-import { mobile } from "../stores/mobile";
+import { openSettings, settings, settingsModal } from "../stores/settings";
 import { t } from "../i18n/index";
 </script>
 
@@ -37,19 +34,17 @@ import { t } from "../i18n/index";
       <span><span class="dot working"></span>{{ t("topBar.working", { count: counts.working }) }}</span>
       <span><span class="dot done"></span>{{ t("topBar.done", { count: counts.done }) }}</span>
     </div>
-    <button
-      class="icon-btn help"
-      :class="{ on: mobile.status?.enabled }"
-      :aria-label="t('topBar.mobileLabel')"
-      :title="mobile.status?.enabled ? (mobile.status.running ? t('topBar.mobileActive') : t('topBar.mobileError')) : t('topBar.mobileTitle')"
-      @click="mobile.open = true"
-    >
-      <Icon name="phone" />
-    </button>
     <button class="icon-btn help" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">?</button>
-    <LanguageMenu />
     <ThemeMenu />
-    <FontMenu />
+    <button
+      class="icon-btn"
+      :class="{ on: settingsModal.open }"
+      :aria-label="t('topBar.settingsLabel')"
+      :title="t('topBar.settingsTitle')"
+      @click="openSettings()"
+    >
+      <Icon name="gear" />
+    </button>
     <button
       class="icon-btn"
       :class="{ on: settings.rightOpen }"

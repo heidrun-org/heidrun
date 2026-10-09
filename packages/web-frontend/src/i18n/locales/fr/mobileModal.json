@@ -1,7 +1,4 @@
 {
-  "title": "Accès mobile",
-  "closeTitle": "Fermer la fenêtre (Échap)",
-  "closeLabel": "Fermer (Échap)",
   "lead": "Suivre les agents depuis le téléphone : ce qui attend une décision, autoriser ou refuser, envoyer une consigne, lire la fin de la sortie d’un agent. Seulement par Tailscale, jamais sur Internet, et avec un appairage.",
   "enable": "Activer l’accès mobile",
   "pairStep1Before": "Sur l’iPhone ou l’iPad, ouvre ",
