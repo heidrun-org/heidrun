@@ -3,6 +3,8 @@
   "titleIn": "Ajouter un panneau dans {workspace}",
   "titleInWorkspace": "Ajouter un panneau dans le workspace",
   "terminal": "Terminal",
+  "forget": "Réinitialiser",
+  "forgetTitle": "Oublier les valeurs gardées du panneau précédent",
   "useTerminal": "Ouvrir un nouveau terminal",
   "startTerminal": "Ouvrir le terminal",
   "workspaceFolder": "dossier du workspace",

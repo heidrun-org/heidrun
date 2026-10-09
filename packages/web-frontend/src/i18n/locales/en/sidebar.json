@@ -26,7 +26,7 @@
   "hideTitle": "Hide until the next change",
   "remoteControlBadge": "RC",
   "chooseWorkspaceFolder": "Choose the folder of the new workspace",
-  "newPaneTitle": "Add a pane: a terminal, Claude Code, or Codex",
+  "newPaneTitle": "Add a pane: a terminal, Claude Code, or Codex (shift click: start the previous pane again)",
   "paneMenu": "Pane actions",
   "paneMenuLabel": "Actions for {name}",
   "rename": "Rename",

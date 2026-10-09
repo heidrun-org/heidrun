@@ -26,7 +26,7 @@ import { settings } from "../stores/settings";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
-import { newAgent } from "../stores/agents";
+import { onNewPaneClick } from "../stores/newPane";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
@@ -151,7 +151,7 @@ async function createWorkspace() {
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
         <span class="heading-actions">
-          <button class="add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="newAgent.open = true"><Icon name="plus-lg" /></button>
+          <button class="add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
         </span>
       </div>
       <template v-for="p in workspacePanes" :key="p.pane_id">

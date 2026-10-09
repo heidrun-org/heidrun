@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import { agentCommand, launchAgent, listAgents, newAgent, type AgentDef } from "../stores/agents";
+import { agentCommand, listAgents, newAgent, type AgentDef } from "../stores/agents";
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
 import { projectPrompts, prompts } from "../stores/prompts";
-import { insertIntoFocusedPane } from "../stores/input";
-import { newTerminal } from "../stores/session";
+import { forgetNewPaneValues, loadNewPaneValues, saveNewPaneValues, startNewPane } from "../stores/newPane";
 import { t } from "../i18n/index";
 
 const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null);
 const agents = ref<AgentDef[]>([]);
 const loading = ref(true);
-const tool = ref<"terminal" | "claude" | "codex">("claude");
-const agent = ref<string | null>(null);
-const model = ref("");
-const label = ref("");
-const labelTouched = ref(false);
-const text = ref("");
+const previous = loadNewPaneValues();
+const tool = ref<"terminal" | "claude" | "codex">(previous?.tool ?? "claude");
+const agent = ref<string | null>(previous?.agent ?? null);
+const model = ref(previous?.model ?? "");
+const label = ref(previous?.label ?? "");
+const labelTouched = ref(previous?.labelTouched ?? false);
+const text = ref(previous?.text ?? "");
 const busy = ref(false);
 const first = ref<HTMLElement>();
 
@@ -53,29 +53,31 @@ function close() {
   if (!busy.value) newAgent.open = false;
 }
 
+function forget() {
+  forgetNewPaneValues();
+  tool.value = "claude";
+  agent.value = null;
+  model.value = "";
+  labelTouched.value = false;
+  label.value = "claude";
+  text.value = "";
+}
+
 async function go() {
-  const ws = selectedWorkspace.value;
-  if (!ws || busy.value) return;
-  if (tool.value === "terminal") {
-    newAgent.open = false;
-    newTerminal();
-    return;
-  }
+  if (!selectedWorkspace.value || busy.value) return;
   busy.value = true;
-  const prompt = text.value;
+  const values = {
+    tool: tool.value,
+    agent: agent.value,
+    model: model.value,
+    label: label.value,
+    labelTouched: labelTouched.value,
+    text: text.value,
+  };
+  saveNewPaneValues(values);
   // The window closes right away: launching and waiting for the agent take a while.
   newAgent.open = false;
-  const res = await launchAgent({
-    workspaceId: ws.workspace_id,
-    cwd: cwd.value,
-    tool: tool.value,
-    agent: tool.value === "claude" ? agent.value : null,
-    model: model.value.trim() || null,
-    label: label.value.trim(),
-    prompt,
-  });
-  // Not sent: kept in the input bar so nothing is lost.
-  if (res === "failed" && prompt.trim()) insertIntoFocusedPane(prompt);
+  await startNewPane(values);
 }
 
 function onKey(e: KeyboardEvent) {
@@ -93,7 +95,10 @@ function onKey(e: KeyboardEvent) {
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
     <div class="dialog" role="dialog" aria-labelledby="na-title">
-      <div class="eyebrow">{{ t("newAgentModal.eyebrow") }}</div>
+      <div class="eyebrow top">
+        <span>{{ t("newAgentModal.eyebrow") }}</span>
+        <button class="forget" :title="t('newAgentModal.forgetTitle')" :aria-label="t('newAgentModal.forgetTitle')" @click="forget">{{ t("newAgentModal.forget") }}</button>
+      </div>
       <h2 id="na-title">{{ selectedWorkspace ? t("newAgentModal.titleIn", { workspace: workspaceLabel(selectedWorkspace.workspace_id) }) : t("newAgentModal.titleInWorkspace") }}</h2>
       <p class="where mono">{{ cwd ?? t("newAgentModal.workspaceFolder") }}</p>
 
@@ -160,6 +165,9 @@ function onKey(e: KeyboardEvent) {
   display: flex; flex-direction: column; gap: 10px;
 }
 .eyebrow { color: var(--accent); }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.forget { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.forget:hover { color: var(--text); }
 h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .where { margin: 0; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seg { display: inline-flex; align-self: flex-start; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }

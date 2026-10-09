@@ -3,6 +3,8 @@
   "titleIn": "Add a pane in {workspace}",
   "titleInWorkspace": "Add a pane in the workspace",
   "terminal": "Terminal",
+  "forget": "Reset",
+  "forgetTitle": "Forget the values kept from the previous pane",
   "useTerminal": "Open a new terminal",
   "startTerminal": "Open the terminal",
   "workspaceFolder": "workspace folder",
