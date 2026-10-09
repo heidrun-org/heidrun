@@ -1,11 +1,11 @@
 #!/bin/sh
-# Herdr Desk — status line for Claude Code.
+# Heidrun — status line for Claude Code.
 #
 # 1. Prints a compact line at the bottom of Claude Code (model · context · quotas).
 # 2. When Claude runs inside a Herdr pane, reports the same numbers to Herdr as
-#    pane tokens, which Herdr Desk (and Herdr's own sidebar) can display.
+#    pane tokens, which Heidrun (and Herdr's own sidebar) can display.
 #
-# Installed by Herdr Desk (Panneau → « Activer le suivi Claude ») as
+# Installed by Heidrun (Panneau → « Activer le suivi Claude ») as
 # ~/.config/herdr-desk/claude-statusline.sh. If you already had a status line, its
 # command is saved in ~/.config/herdr-desk/claude-statusline-next and still drives
 # what Claude Code displays: this script only adds the report to Herdr.
@@ -57,7 +57,7 @@ fi
 
 # ---- The line shown in Claude Code -----------------------------------------
 desk_dir="${HERDR_DESK_DIR:-$HOME/.config/herdr-desk}"
-# "Masquer dans le terminal" in Herdr Desk: print nothing, the app shows the numbers.
+# "Masquer dans le terminal" in Heidrun: print nothing, the app shows the numbers.
 if [ -e "$desk_dir/claude-statusline-hidden" ]; then
   exit 0
 fi

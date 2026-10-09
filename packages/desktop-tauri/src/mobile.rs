@@ -151,7 +151,7 @@ async fn call(app: &AppHandle, method: &str, params: Value) -> Result<Value, Str
         Ok(Ok(v)) => Ok(v),
         _ => {
             state.inner.lock().unwrap().pending.remove(&id);
-            Err("L’app Herdr Desk ne répond pas sur le Mac".into())
+            Err("L’app Heidrun ne répond pas sur le Mac".into())
         }
     }
 }
@@ -192,7 +192,7 @@ fn authorized(s: &Shared, headers: &HeaderMap) -> Result<(), Response> {
         inner.failures = 0;
         inner.locked_until = Some(Instant::now() + Duration::from_secs(60));
     }
-    Err((StatusCode::UNAUTHORIZED, "Appairage nécessaire : scanne le QR code dans Herdr Desk").into_response())
+    Err((StatusCode::UNAUTHORIZED, "Appairage nécessaire : scanne le QR code dans Heidrun").into_response())
 }
 
 async fn page() -> Response {
@@ -216,7 +216,7 @@ async fn page() -> Response {
 async fn manifest() -> Response {
     (
         [(header::CONTENT_TYPE, "application/manifest+json")],
-        r##"{"name":"Herdr Desk","short_name":"Herdr","start_url":"/","display":"standalone","background_color":"#0b0c0e","theme_color":"#0b0c0e"}"##,
+        r##"{"name":"Heidrun","short_name":"Heidrun","start_url":"/","display":"standalone","background_color":"#0b0c0e","theme_color":"#0b0c0e"}"##,
     )
         .into_response()
 }

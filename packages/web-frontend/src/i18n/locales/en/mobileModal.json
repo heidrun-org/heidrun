@@ -9,7 +9,7 @@
   "pairStep2": "Scan this QR code with the camera, then open the link in Safari.",
   "pairStep3Before": "Share → ",
   "pairStep3Bold": "Add to Home Screen",
-  "pairStep3After": ": Herdr Desk then opens like an app.",
+  "pairStep3After": ": Heidrun then opens like an app.",
   "qrSecret": "The QR code contains the pairing key: do not show it, do not share it.",
   "lastSeen": "Last connection of a device: {time}",
   "revokeTitle": "The devices already paired will have to scan the QR code again",
@@ -18,5 +18,5 @@
   "beforeEnable": "Before you turn it on",
   "setupStep1Before": "Install ",
   "setupStep1After": " on this Mac and on the iPhone / the iPad (App Store), connect them with the same account (Google, Apple…).",
-  "setupStep2": "Turn it on here: macOS can ask to allow incoming connections for Herdr Desk, answer Allow."
+  "setupStep2": "Turn it on here: macOS can ask to allow incoming connections for Heidrun, answer Allow."
 }

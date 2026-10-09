@@ -1,4 +1,4 @@
-//! Plugs Herdr Desk into Claude Code's status line, without losing the user's own.
+//! Plugs Heidrun into Claude Code's status line, without losing the user's own.
 //!
 //! Claude Code gives its status line command the context window and the account
 //! rate limits on stdin. Our script (embedded below) reports them to Herdr as pane
@@ -106,7 +106,7 @@ pub fn claude_statusline_install() -> Result<StatuslineState, String> {
     let mut m = read_settings()?;
     std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
 
-    // Always (re)write the script so updates of Herdr Desk reach it.
+    // Always (re)write the script so updates of Heidrun reach it.
     std::fs::write(script_path(), SCRIPT).map_err(|e| e.to_string())?;
     #[cfg(unix)]
     {

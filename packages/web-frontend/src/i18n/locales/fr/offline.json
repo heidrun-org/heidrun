@@ -2,7 +2,7 @@
   "connection": "Connexion",
   "starting": "Démarrage de Herdr…",
   "notResponding": "Herdr ne répond pas",
-  "intro": "Herdr Desk peut démarrer le serveur Herdr en arrière-plan, sans terminal. Il continue de tourner quand tu fermes l’app, jusqu’à {command} ou au redémarrage du Mac.",
+  "intro": "Heidrun peut démarrer le serveur Herdr en arrière-plan, sans terminal. Il continue de tourner quand tu fermes l’app, jusqu’à {command} ou au redémarrage du Mac.",
   "start": "Démarrer Herdr",
   "startTitle": "Démarrer Herdr",
   "retry": "Réessayer",

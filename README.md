@@ -1,4 +1,4 @@
-# Herdr Desk
+# Heidrun
 
 A macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of your Herdr session, in one work window.
 
@@ -157,10 +157,10 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 **Mobile access (iPhone, iPad)** — phone button at the top, or ⌘K "Mobile access": from the phone, see what needs handling, answer permission menus, send a prompt, deny or interrupt, read the end of an agent's output. Disabled by default.
 
 1. Install **Tailscale** on the Mac and on the iPhone / iPad (same account: Google, Apple, Microsoft or GitHub).
-2. Enable mobile access in Herdr Desk (macOS may ask to allow incoming connections: Allow).
+2. Enable mobile access in Heidrun (macOS may ask to allow incoming connections: Allow).
 3. Scan the QR code with the camera, open the link in Safari, then Share → "Add to Home Screen".
 
-Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/herdr-desk/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Herdr Desk must be open on the Mac.
+Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/herdr-desk/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Heidrun must be open on the Mac.
 
 **Broadcasting a prompt**: "Several agents…" in the recipient menu of the input bar. Tick the agents (shortcuts: all those of the workspace, all the Claude ones), write, "Broadcast": a summary lists the recipients before sending. Blocked agents are skipped and reported; the template variables are filled for each agent; a `!` command goes through the safeguards of each project.
 
@@ -207,13 +207,13 @@ pnpm build
 open packages/desktop-tauri/target/release/bundle/macos/
 ```
 
-Drag `Herdr Desk.app` into `/Applications`.
+Drag `Heidrun.app` into `/Applications`.
 
 ## Context and quotas
 
 ### Claude Code
 
-Claude Code passes the context and the quotas (5 h, week) to its status line. Herdr Desk hooks into it: click **"Enable Claude tracking"** (right panel of a Claude agent, or bottom bar). The app:
+Claude Code passes the context and the quotas (5 h, week) to its status line. Heidrun hooks into it: click **"Enable Claude tracking"** (right panel of a Claude agent, or bottom bar). The app:
 
 - copies `scripts/claude-statusline.sh` into `~/.config/herdr-desk/`;
 - keeps your current status line in `~/.config/herdr-desk/claude-statusline-next`, which continues to be displayed as is in the terminal;
@@ -227,7 +227,7 @@ In the right panel of a Claude agent, the **Remote Control** block shows whether
 
 ### Codex
 
-Nothing to configure: Herdr Desk reads the logs `~/.codex/sessions/**/rollout-*.jsonl` (last `token_count` event). To link a log to the right pane, install the Herdr integration:
+Nothing to configure: Heidrun reads the logs `~/.codex/sessions/**/rollout-*.jsonl` (last `token_count` event). To link a log to the right pane, install the Herdr integration:
 
 ```sh
 herdr integration install codex
