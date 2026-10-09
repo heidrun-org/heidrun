@@ -315,9 +315,9 @@ async function createWorkspace() {
   flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0;
   border: none; background: transparent; color: inherit; font: inherit; text-align: left;
 }
-.pane-actions { position: relative; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
-.row-btn { opacity: 0; }
-.pane-row:hover .row-btn, .pane-row.active .row-btn, .pane-row.menuOpen .row-btn, .row-btn:focus-visible { opacity: 1; }
+.pane-actions { position: relative; display: none; align-items: center; gap: 2px; flex-shrink: 0; }
+.pane-row:hover .pane-actions, .pane-row.menuOpen .pane-actions, .pane-row:focus-within .pane-actions { display: flex; }
+.pane-row:hover .status, .pane-row.menuOpen .status, .pane-row:focus-within .status { display: none; }
 .row-menu {
   position: absolute; top: 100%; right: 0; z-index: 20; min-width: 120px; padding: 4px; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
