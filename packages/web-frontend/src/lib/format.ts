@@ -1,4 +1,4 @@
-import type { AgentInfo, AgentStatus, PaneInfo } from "./types";
+import type { AgentInfo, AgentStatus, CodexUsage, LimitWindow, PaneInfo, QuotaBlock } from "./types";
 import { locale, t } from "../i18n/index";
 
 /** The text of an agent status, in the language in use. */
@@ -71,4 +71,28 @@ export function duration(ms: number): string {
   if (min < 1) return "< 1 min";
   if (min < 60) return `${min} min`;
   return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
+}
+
+const WEEK_WINDOW_MINUTES = 10080;
+
+/**
+ * The quota windows of Codex, named by their length and not by their position: since Sept 2026 some plans
+ * report only the weekly window, and Codex then puts it in `primary`.
+ * A window without a length keeps the old meaning of its position (`primary` is the session, `secondary` is the week).
+ * A window whose reset time has passed is back to 0 %, until Codex reports again.
+ */
+export function codexWindows(codex: Pick<CodexUsage, "primary" | "secondary">, nowSeconds: number): QuotaBlock["windows"] {
+  const windows: QuotaBlock["windows"] = [];
+  const add = (window: LimitWindow | null | undefined, fallbackId: "session" | "week") => {
+    if (window == null) return;
+    const minutes = window.window_minutes ?? null;
+    const id = minutes === null ? fallbackId : minutes >= WEEK_WINDOW_MINUTES ? "week" : "session";
+    if (windows.some((w) => w.id === id)) return;
+    const resetsAt = window.resets_at ?? undefined;
+    const percent = resetsAt !== undefined && resetsAt < nowSeconds ? 0 : window.used_percent;
+    windows.push({ id, name: t(id === "week" ? "sessionStore.window.week" : "sessionStore.window.session"), percent, resetsAt });
+  };
+  add(codex.primary, "session");
+  add(codex.secondary, "week");
+  return windows.sort((a, b) => (a.id === b.id ? 0 : a.id === "session" ? -1 : 1));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compactTokens, duration, gaugeLevel, shortPath } from "./format";
+import { codexWindows, compactTokens, duration, gaugeLevel, shortPath } from "./format";
 
 describe("shortPath", () => {
   it("replaces the home folder with a tilde", () => {
@@ -114,5 +114,34 @@ describe("statusLabel", () => {
     for (const status of ["idle", "working", "blocked", "done", "unknown"] as const) {
       expect(statusLabel(status)).not.toContain("format.status");
     }
+  });
+});
+
+describe("codexWindows", () => {
+  it("names a lone weekly window in primary a week, not a 5 h session", () => {
+    const windows = codexWindows({ primary: { used_percent: 44, window_minutes: 10080, resets_at: 2000 }, secondary: null }, 1000);
+    expect(windows).toHaveLength(1);
+    expect(windows[0]).toMatchObject({ id: "week", percent: 44, resetsAt: 2000 });
+  });
+
+  it("returns both windows, the session first", () => {
+    const windows = codexWindows(
+      {
+        primary: { used_percent: 10, window_minutes: 300, resets_at: 2000 },
+        secondary: { used_percent: 40, window_minutes: 10080, resets_at: 3000 },
+      },
+      1000,
+    );
+    expect(windows.map((w) => w.id)).toEqual(["session", "week"]);
+  });
+
+  it("keeps the old meaning of the position when the length is missing", () => {
+    const windows = codexWindows({ primary: { used_percent: 1 }, secondary: { used_percent: 2 } }, 1000);
+    expect(windows.map((w) => w.id)).toEqual(["session", "week"]);
+  });
+
+  it("puts a window back to 0 % after its reset time", () => {
+    const windows = codexWindows({ primary: { used_percent: 44, window_minutes: 10080, resets_at: 500 } }, 1000);
+    expect(windows[0].percent).toBe(0);
   });
 });
