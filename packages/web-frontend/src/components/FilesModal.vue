@@ -576,7 +576,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <div class="tabs" role="tablist">
           <div v-for="t in files.tabs" :key="t" class="tab" :class="{ on: t === files.active }" role="tab" :title="t">
             <button class="tab-name" @click="openTab(t)">
-              <span v-if="files.status[t]" class="st" :class="'s-' + files.status[t]">●</span>{{ t.split("/").pop() }}
+              <span v-if="files.status[t]" class="st" :class="'s-' + files.status[t]"><Icon name="circle-fill" /></span>{{ t.split("/").pop() }}
             </button>
             <button
               class="tab-x"
@@ -584,7 +584,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               :aria-label="`Fermer ${t}`"
               :title="closingTab === t ? 'Pas enregistré : clique encore pour fermer sans enregistrer' : isDirty(t) ? 'Modifié, pas enregistré' : 'Fermer (⌘W)'"
               @click="askCloseTab(t)"
-            ><template v-if="closingTab === t">?</template><template v-else-if="isDirty(t)">●</template><Icon v-else name="x-lg" /></button>
+            ><template v-if="closingTab === t">?</template><Icon v-else-if="isDirty(t)" name="circle-fill" /><Icon v-else name="x-lg" /></button>
           </div>
         </div>
         <button class="close" aria-label="Fermer (Échap)" @click="close()"><Icon name="x-lg" /></button>

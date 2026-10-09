@@ -29,8 +29,9 @@ function onKey(e: KeyboardEvent) {
 }
 // "⇧⌘T / ⌘D" → ⇧ ⌘ T, a "/" separator, ⌘ D. Words ("Double-clic sur une bordure",
 // "Molette") stay in one cap.
-function caps(keys: string): { t: string; sep: boolean }[] {
-  const out: { t: string; sep: boolean }[] = [];
+function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
+  if (keys.startsWith("bi:")) return [{ t: keys.slice(3), sep: false, icon: true }];
+  const out: { t: string; sep: boolean; icon?: boolean }[] = [];
   const combo = (w: string) => {
     const m = /^([⇧⌥⌃⌘]+)(\S+)$/.exec(w);
     if (m) for (const c of [...m[1], m[2]]) out.push({ t: c, sep: false });
@@ -62,7 +63,7 @@ function caps(keys: string): { t: string; sep: boolean }[] {
             <span class="keys">
               <template v-for="(c, k) in caps(i.keys)" :key="k">
                 <span v-if="c.sep" class="sep">{{ c.t }}</span>
-                <kbd v-else>{{ c.t }}</kbd>
+                <kbd v-else><Icon v-if="c.icon" :name="c.t" /><template v-else>{{ c.t }}</template></kbd>
               </template>
             </span>
             <span class="action">{{ i.action }}</span>

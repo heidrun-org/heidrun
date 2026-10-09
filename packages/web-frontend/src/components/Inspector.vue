@@ -157,7 +157,7 @@ const statusText = computed(() => {
 
         <div class="block">
           <div class="title">{{ paneName(p) }}</div>
-          <div class="chip" :class="p.agent ? p.agent_status : 'process'">● {{ statusText }}</div>
+          <div class="chip" :class="p.agent ? p.agent_status : 'process'"><Icon name="circle-fill" /> {{ statusText }}</div>
         </div>
 
         <!-- Approval buttons: keys for Claude Code's menu; Codex accepts Enter / Esc too. -->
@@ -296,7 +296,7 @@ const statusText = computed(() => {
             :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
             @click="a.pane && selectPane(a.pane)"
           >
-            <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">●</span>
+            <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)"><Icon name="circle-fill" /></span>
             <span class="act-main">
               <span class="act-where">{{ a.where || "—" }}</span>
               <span class="act-who">

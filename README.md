@@ -63,8 +63,8 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 | ⌥ + glisser | Select text, even in "Mouse for the app" mode |
 | Double-clic | Rename a workspace, a tab or a pane |
 | Glisser-déposer | Reorder workspaces and tabs |
-| ⊞ | Keep an agent alongside, visible whatever the tab |
-| ▦ | Tiles of a Claude session: what each sub-agent is doing |
+| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> | Keep an agent alongside, visible whatever the tab |
+| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> | Tiles of a Claude session: what each sub-agent is doing |
 | Double-clic sur une bordure | Return to the default width |
 
 <!-- shortcuts:end -->
@@ -138,7 +138,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Global search** (⇧⌘F): searches what all terminals have displayed (the last 3,000 lines of each pane), ignoring case and accents. Results are grouped by workspace · tab, most recent first, with the line before and after. Filters: this workspace, agents only, regular expression (`.*`). ↵ or a click opens the pane and selects the text if it is still on screen.
 
-**Open alongside**: the ⊞ button in a pane header, on a "To handle" card or in the ⌘K palette keeps the agent in a column to the right of the current tab, whatever its workspace: the first one splits the screen in two, the following ones stack in the column (4 at most). Each cell is a real terminal: a click gives it the keyboard (and makes it the recipient of the input bar), ↗ opens its tab, × removes it from the column without stopping the agent. The column is resized by its border and is remembered; an agent of the displayed tab does not appear in it (it is already in the grid).
+**Open alongside**: the <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> button in a pane header, on a "To handle" card or in the ⌘K palette keeps the agent in a column to the right of the current tab, whatever its workspace: the first one splits the screen in two, the following ones stack in the column (4 at most). Each cell is a real terminal: a click gives it the keyboard (and makes it the recipient of the input bar), ↗ opens its tab, × removes it from the column without stopping the agent. The column is resized by its border and is remembered; an agent of the displayed tab does not appear in it (it is already in the grid).
 
 **Writing to a sub-agent**: in the recipient menu of the input bar, the agents of all workspaces are listed and, under each Claude session that has some, its sub-agents (`↳ jerome-645`). The app switches the session to this sub-agent with the arrow keys, checks that it is really displayed, sends the prompt, then goes back to `main` (box "Then go back to main"). If the list is not found or if the agent is waiting for a decision, nothing is typed.
 
@@ -146,7 +146,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Consumption per workspace** (in the History window): cost of each workspace over the current 5 h window, with its share of the total, a small chart per quarter of an hour and, on hover, the detail per agent. The app records the cost increase of each Claude session (status line) and attaches it to the workspace of the pane; the share of the 5 h quota is an estimate proportional to the cost. Only spending seen while the app is running is counted.
 
-**Tiles** (▦ in the header of a Claude pane): one cell per agent of the session (main and sub-agents), with its last lines, read from the Claude logs (`~/.claude/projects/…`), so without touching the terminal. Refreshed every 2 to 3 s; a green dot marks an active agent. A click on a cell displays this agent in the terminal.
+**Tiles** (<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> in the header of a Claude pane): one cell per agent of the session (main and sub-agents), with its last lines, read from the Claude logs (`~/.claude/projects/…`), so without touching the terminal. Refreshed every 2 to 3 s; a green dot marks an active agent. A click on a cell displays this agent in the terminal.
 
 **Project files** (folder icon next to "Folder" in the panel, or ⌘P): the tree of the project of the pane, as in VS Code, with the git state of each file (modified, new, deleted; a dot on folders that contain some) and the files of `.gitignore` hidden ("Ignored files" to see them). ⌘P searches a file by its name ("comp/term" finds `src/components/TerminalView.vue`). The file is displayed colored, Markdown rendered or as code, images as a preview, with tabs (⌘W to close one), breadcrumb, "Path" (⌥: absolute path), Finder, VS Code and "→ Agent", which puts `@path` in the input bar. Select lines: "Explain" or "Fix these lines" prepares the prompt. In the terminals, `src/app.ts:42` quoted by an agent opens the file at the line (hover or ⌘-click).
 

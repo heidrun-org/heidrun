@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onMounted, ref } from "vue";
 import {
   allPanes,
@@ -34,6 +35,7 @@ interface Item {
   section: string;
   label: string;
   hint?: string;
+  hintIcon?: string;
   mono?: boolean;
   run: () => unknown;
 }
@@ -84,7 +86,7 @@ const items = computed<Item[]>(() => {
       list.push({
         section: "Ouvrir à côté",
         label: `${isDocked(p.pane_id) ? "Retirer d’à côté" : "Ouvrir à côté"} : ${paneName(p)} · ${workspaceLabel(p.workspace_id)}`,
-        hint: "⊞",
+        hintIcon: "pin",
         run: () => toggleDock(p.pane_id),
       });
   }
@@ -129,7 +131,7 @@ const items = computed<Item[]>(() => {
     { section: "Affichage", label: "Taille de police par défaut", hint: "⌘0", run: () => resetZoom() },
     { section: "Affichage", label: "Barre latérale gauche", hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
     { section: "Affichage", label: "Panneau de droite", hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
-    ...FONTS.map((f) => ({ section: "Affichage", label: `Police : ${f.label}`, hint: f.id === settings.fontId ? "✓" : undefined, run: () => (settings.fontId = f.id) })),
+    ...FONTS.map((f) => ({ section: "Affichage", label: `Police : ${f.label}`, hintIcon: f.id === settings.fontId ? "check-lg" : undefined, run: () => (settings.fontId = f.id) })),
   ];
   list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower)));
   return list;
@@ -203,7 +205,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
             @click="execute(item)"
           >
             <span class="grow">{{ item.label }}</span>
-            <span v-if="item.hint" class="hint">{{ item.hint }}</span>
+            <span v-if="item.hint || item.hintIcon" class="hint"><Icon v-if="item.hintIcon" :name="item.hintIcon" /><template v-else>{{ item.hint }}</template></span>
           </button>
         </template>
       </div>

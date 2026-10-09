@@ -163,3 +163,7 @@ input { font: inherit; color: inherit; user-select: text; }
   display: inline-block;
   transform: rotate(90deg);
 }
+
+.bi-circle-fill {
+  font-size: 0.6em;
+}
