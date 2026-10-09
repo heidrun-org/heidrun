@@ -920,55 +920,24 @@ export async function sendPrompt(paneId: string, text: string) {
   return guard(() => api.prompt(paneId, text));
 }
 
+const BRACKETED_PASTE_START = "\x1b[200~";
+const BRACKETED_PASTE_END = "\x1b[201~";
+
 /**
- * Same consigne to several agents. A blocked agent is not forced (it waits for a
- * decision); the others get it one after the other.
+ * Writes `text` into the terminal of a pane. With `submit`, Enter is pressed after the text.
+ * A text of several lines goes as a bracketed paste, so a line break does not press Enter.
  */
-export async function broadcastPrompt(
-  paneIds: string[],
-  text: string,
-  /** Template variables ({agent}, {branche}…) resolved for each recipient. */
-  resolve?: (text: string, paneId: string) => Promise<string>,
-): Promise<{ sent: string[]; skipped: string[]; failed: string[] }> {
-  const res = { sent: [] as string[], skipped: [] as string[], failed: [] as string[] };
-  // "! command": checked against each project's own rules (one window per project).
+export async function insertText(paneId: string, text: string, submit: boolean) {
   const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
-  const refused = new Set<string>();
-  if (shell) {
-    const byCwd = new Map<string, string[]>();
-    for (const id of paneIds) {
-      const w = whereOf(id);
-      const k = w.cwd ?? "";
-      byCwd.set(k, [...(byCwd.get(k) ?? []), id]);
-    }
-    for (const [cwd, ids] of byCwd) {
-      const label = ids.length > 1 ? t("sessionStore.severalAgents", { count: ids.length, where: whereOf(ids[0]).where }) : whereOf(ids[0]).where;
-      if (!(await allowCommand(shell[1], cwd || null, label))) ids.forEach((id) => refused.add(id));
-    }
-    if (refused.size === paneIds.length) return res;
+  if (submit && shell) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(shell[1], cwd, where))) return undefined;
   }
-  for (const id of paneIds) {
-    if (refused.has(id)) {
-      res.skipped.push(id);
-      continue;
-    }
-    const p = allPanes.value.find((x) => x.pane_id === id);
-    if (!p) continue;
-    if (p.agent_status === "blocked") {
-      res.skipped.push(id);
-      continue;
-    }
-    try {
-      const t = resolve ? await resolve(text, id) : text;
-      await api.prompt(id, t);
-      rememberPrompt(id, t);
-      res.sent.push(id);
-    } catch {
-      res.failed.push(id);
-    }
+  if (submit) {
+    rememberPrompt(paneId, text);
   }
-  scheduleRefresh();
-  return res;
+  const body = text.includes("\n") ? `${BRACKETED_PASTE_START}${text}${BRACKETED_PASTE_END}` : text;
+  return guard(() => api.sendInput(paneId, body, submit ? ["Enter"] : []));
 }
 
 export function sendKeys(paneId: string, keys: string[]) {

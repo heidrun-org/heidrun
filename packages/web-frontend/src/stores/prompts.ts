@@ -11,6 +11,8 @@ import { t } from "../i18n/index";
 export interface PromptTemplate {
   id: string;
   label: string;
+  /** One short line shown under the label in the template menu. May be empty. */
+  description: string;
   text: string;
 }
 
@@ -19,16 +21,16 @@ const KEY = "heidrun.prompts";
 // The labels of the default templates follow the language in use (getters); the texts are consignes sent to
 // the agent, kept as they are.
 const DEFAULTS: PromptTemplate[] = [
-  { id: "revue-mr", get label() { return t("promptsStore.default.reviewMergeRequest"); }, text: "Fais la revue de la MR de la branche {branche} : sécurité, bugs, tests. Résumé, points bloquants, suggestions." },
-  { id: "note-reprise", get label() { return t("promptsStore.default.handoverNote"); }, text: "Commite ce qui est prêt, puis écris la note de reprise : ce qui est fait, ce qui reste, les décisions prises." },
-  { id: "ou-en-es-tu", get label() { return t("promptsStore.default.progress"); }, text: "Où en es-tu ? Résume en 5 lignes ce que tu as fait et ce qu'il reste." },
-  { id: "explique-selection", get label() { return t("promptsStore.default.explainSelection"); }, text: "Explique-moi ceci :\n\n```\n{selection}\n```" },
+  { id: "revue-mr", get label() { return t("promptsStore.default.reviewMergeRequest"); }, get description() { return t("promptsStore.default.reviewMergeRequestDescription"); }, text: "Fais la revue de la MR de la branche {branche} : sécurité, bugs, tests. Résumé, points bloquants, suggestions." },
+  { id: "note-reprise", get label() { return t("promptsStore.default.handoverNote"); }, get description() { return t("promptsStore.default.handoverNoteDescription"); }, text: "Commite ce qui est prêt, puis écris la note de reprise : ce qui est fait, ce qui reste, les décisions prises." },
+  { id: "ou-en-es-tu", get label() { return t("promptsStore.default.progress"); }, get description() { return t("promptsStore.default.progressDescription"); }, text: "Où en es-tu ? Résume en 5 lignes ce que tu as fait et ce qu'il reste." },
+  { id: "explique-selection", get label() { return t("promptsStore.default.explainSelection"); }, get description() { return t("promptsStore.default.explainSelectionDescription"); }, text: "Explique-moi ceci :\n\n```\n{selection}\n```" },
 ];
 
 function load(): PromptTemplate[] {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? "null");
-    return Array.isArray(v) ? v : DEFAULTS;
+    return Array.isArray(v) ? v.map((p: Partial<PromptTemplate>) => ({ description: "", ...p }) as PromptTemplate) : DEFAULTS;
   } catch {
     return DEFAULTS;
   }
@@ -54,14 +56,19 @@ export const projectPrompts = computed<PromptTemplate[]>(() => {
   // Hand-written entries: label and id may be missing.
   return (list as Partial<PromptTemplate>[])
     .filter((p) => p && typeof p.text === "string")
-    .map((p, i) => ({ id: typeof p.id === "string" && p.id ? p.id : `projet-${i}`, label: typeof p.label === "string" && p.label ? p.label : p.text!.slice(0, 40), text: p.text! }));
+    .map((p, i) => ({
+      id: typeof p.id === "string" && p.id ? p.id : `projet-${i}`,
+      label: typeof p.label === "string" && p.label ? p.label : p.text!.slice(0, 40),
+      description: typeof p.description === "string" ? p.description : "",
+      text: p.text!,
+    }));
 });
 
 const slug = (s: string) =>
   `${s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "modele"}-${Math.random().toString(36).slice(2, 5)}`;
 
-export async function addPrompt(label: string, text: string, inProject: boolean) {
-  const template = { id: slug(label), label: label.trim() || text.slice(0, 40), text };
+export async function addPrompt(label: string, description: string, text: string, inProject: boolean): Promise<string> {
+  const template = { id: slug(label), label: label.trim() || text.slice(0, 40), description: description.trim(), text };
   const ws = state.selectedWorkspaceId;
   if (inProject && ws && currentProject.value) {
     // Re-read the file first: another workspace on the same repo may have changed it.
@@ -72,7 +79,26 @@ export async function addPrompt(label: string, text: string, inProject: boolean)
   } else {
     prompts.personal.push(template);
   }
+  return template.id;
 }
+
+/** Replaces the label, the description and the text of the template `id`, in the project file or on this Mac. */
+export async function updatePrompt(id: string, fromProject: boolean, label: string, description: string, text: string) {
+  const ws = state.selectedWorkspaceId;
+  if (fromProject && ws && currentProject.value) {
+    await loadProject(ws);
+    const cfg = currentProject.value.config as { prompts?: Partial<PromptTemplate>[] };
+    cfg.prompts = (cfg.prompts ?? []).map((p, i) =>
+      (typeof p.id === "string" && p.id ? p.id : `projet-${i}`) === id ? { ...p, id, label: label.trim() || text.slice(0, 40), description: description.trim(), text } : p,
+    );
+    if (!(await saveProject(ws))) throw new Error(t("promptsStore.saveFailed"));
+  } else {
+    prompts.personal = prompts.personal.map((p) => (p.id === id ? { id, label: label.trim() || text.slice(0, 40), description: description.trim(), text } : p));
+  }
+}
+
+/** The window that edits the templates. */
+export const promptEditor = reactive({ open: false });
 
 export async function removePrompt(id: string, fromProject: boolean) {
   const ws = state.selectedWorkspaceId;

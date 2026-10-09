@@ -95,6 +95,11 @@ export function sendKeys(paneId: string, keys: string[]) {
   return request("pane.send_keys", { pane_id: paneId, keys });
 }
 
+/** Writes `text` into the pane, then presses `keys`, in one call. */
+export function sendInput(paneId: string, text: string, keys: string[]) {
+  return request("pane.send_input", { pane_id: paneId, text, keys });
+}
+
 /** `pane run` submits text + Enter atomically and honours bracketed paste. */
 export function run(paneId: string, command: string) {
   return cli(["pane", "run", paneId, command]);

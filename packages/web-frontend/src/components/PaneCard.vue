@@ -4,6 +4,7 @@ import TerminalView from "./TerminalView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import PromptMenu from "./PromptMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
 import { mosaic } from "../stores/mosaic";
@@ -66,6 +67,7 @@ const subtitle = computed(() => {
         </span>
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
       </template>
+      <PromptMenu :pane-id="pane.pane_id" />
       <span class="tools">
         <template v-if="docked">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>

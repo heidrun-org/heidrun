@@ -36,7 +36,7 @@ import { allPanes } from "../stores/session";
 import { settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { toast } from "../stores/session";
-import { fillInput } from "../stores/input";
+import { insertIntoFocusedPane } from "../stores/input";
 import { CODE_THEMES, highlightFile, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import { shortPath } from "../lib/format";
@@ -300,7 +300,7 @@ async function vscode() {
 }
 function sendToAgent() {
   if (!files.active) return;
-  fillInput(`@${files.active} `);
+  insertIntoFocusedPane(`@${files.active} `);
   files.open = false;
 }
 
@@ -324,7 +324,7 @@ function askAgent(kind: "explain" | "fix") {
   const where = s.from === s.to ? t("filesModal.ask.line", { line: s.from }) : t("filesModal.ask.lines", { from: s.from, to: s.to });
   const lang = languageFor(files.active) ?? "";
   const ask = kind === "explain" ? t("filesModal.ask.explain") : t("filesModal.ask.fix");
-  fillInput(t("filesModal.ask.prompt", { path: files.active, where, language: lang, code: s.text.replace(/\n$/, ""), ask }));
+  insertIntoFocusedPane(t("filesModal.ask.prompt", { path: files.active, where, language: lang, code: s.text.replace(/\n$/, ""), ask }));
   sel.value = null;
   files.open = false;
 }

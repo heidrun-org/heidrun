@@ -3,7 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
-import InputBar from "./components/InputBar.vue";
+import PromptEditor from "./components/PromptEditor.vue";
+import { promptEditor } from "./stores/prompts";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
@@ -230,7 +231,6 @@ onBeforeUnmount(() => {
               <DockColumn :style="{ width: `${dockShown}px` }" />
             </template>
           </div>
-          <InputBar />
         </template>
         <Offline v-else />
       </main>
@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
+    <PromptEditor v-if="promptEditor.open" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />

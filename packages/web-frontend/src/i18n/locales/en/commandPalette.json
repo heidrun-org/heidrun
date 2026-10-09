@@ -4,7 +4,7 @@
   "runInPane": "Run in {pane}",
   "runAndNotify": "Run and notify me at the end",
   "section.prompts": "Prompts",
-  "promptHint": "in the input bar",
+  "promptHint": "inserted in the pane",
   "section.recent": "Recent",
   "section.goTo": "Go to",
   "terminalHint": "terminal",

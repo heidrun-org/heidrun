@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { agentCommand, launchAgent, listAgents, newAgent, type AgentDef } from "../stores/agents";
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
 import { projectPrompts, prompts } from "../stores/prompts";
-import { fillInput } from "../stores/input";
+import { insertIntoFocusedPane } from "../stores/input";
 import { t } from "../i18n/index";
 
 const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null);
@@ -68,7 +68,7 @@ async function go() {
     prompt,
   });
   // Not sent: kept in the input bar so nothing is lost.
-  if (res === "failed" && prompt.trim()) fillInput(prompt);
+  if (res === "failed" && prompt.trim()) insertIntoFocusedPane(prompt);
 }
 
 function onKey(e: KeyboardEvent) {

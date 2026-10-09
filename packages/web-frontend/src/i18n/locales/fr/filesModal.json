@@ -108,7 +108,7 @@
   "copyPath": "⧉ Chemin",
   "finderTitle": "Voir dans le Finder",
   "vscodeTitle": "Ouvrir dans VS Code",
-  "sendToAgentTitle": "Insère @chemin dans la barre de saisie de l’agent",
+  "sendToAgentTitle": "Écrit @chemin dans le terminal du panneau sélectionné",
   "sendToAgent": "→ Agent",
   "gitDiffHead": "Changements depuis le dernier commit (enregistrés sur le disque)",
   "closeDiffTitle": "Fermer le diff",

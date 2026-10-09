@@ -4,7 +4,7 @@ A macOS graphical interface for [Herdr](https://herdr.dev): the agents and termi
 
 - **Sidebar**: workspaces, panes, then the "To handle" queue (blocked or finished agents) at the bottom, so the list does not shift.
 - **Real terminals**: each pane is displayed with `herdr terminal attach`, so the rendering is identical to Herdr (Claude Code TUI, Codex, colors…).
-- **Input bar**: a prompt for an agent, or a command for a terminal.
+- **Prompt templates**: an icon in each pane header opens a menu of templates; a click writes the template into the terminal of the pane.
 - **Inspector**: Allow / Deny, agent context, "Ask an agent to fix", pattern watching.
 - **Status bar**: Claude quotas (5 h, week) and Codex.
 - **⌘K palette** for all actions.
@@ -39,8 +39,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 | ⇧⌥⌘← / ⇧⌥⌘→ | Move the tab left / right |
 | ⇧⌥⌘↑ / ⇧⌥⌘↓ | Move the workspace up / down |
 | **Input** | |
-| ↵ | Send (input bar) |
-| ⇧↵ / ⌥↵ | New line, in the terminal as in the input bar |
+| ⇧↵ / ⌥↵ | New line in the terminal |
 | ⌘↵ | Launch (New agent window) |
 | ↑ / ↓ then ↵ | Choose a result (palette, search) then confirm |
 | **File explorer and editor** | |
@@ -115,7 +114,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Answering the menus of a blocked agent**: when Claude (or Codex) displays a numbered menu ("1. Yes / 2. Yes, and don't ask again… / 3. No"), its options appear as buttons on the "To handle" card and in the right panel, with the command or file concerned. One click sends the option number. If the same menu is still there a moment later, the app uses the arrow keys and Enter; it never acts on a new dialog without you seeing it.
 
-**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, input bar, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.heidrun.json`:
+**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, template with Shift+click, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.heidrun.json`:
 
 ```json
 "guards": {
@@ -128,19 +127,18 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Git tab** (right panel): for the selected workspace, branch, ahead / behind the remote, modified files, last commit, CI state of the branch, and the list of open **MRs (GitLab) or PRs (GitHub)** with their state (ready, CI running, to approve, conflict…). One click opens the MR; "Ask for a review" sends it to the agent of the workspace. The host is deduced from the remote (`references.forge` to force it). The app uses the `glab` and `gh` already logged in on the Mac, read-only: no token is stored. In the sidebar, `↑2` signals commits not pushed yet.
 
-**Prompt templates**: the ☰ button of the input bar lists your templates ("MR review", "Handover note"…) and those of the project. One click inserts the text, which you can edit before sending; "Save input as template" creates one, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.heidrun.json`:
+**Prompt templates**: the template icon in a pane header opens a menu with the title and the description of each template, yours and those of the project. A click writes the text into the terminal of that pane, without pressing Enter; Shift+click writes it and presses Enter. "Edit templates…" opens a window to create (New), change (Save, Discard) or delete a template, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.heidrun.json`:
 
 ```json
 "prompts": [{ "id": "review", "label": "MR review", "text": "Review the MR of {branch}" }]
 ```
 
-**New agent** (⇧⌘T, button in the tab bar, ⌘K palette): choose Claude Code or Codex, a project agent (`.claude/agents/*.md`, with its description and model) or one from `~/.claude/agents`, or a free agent; a model (`opus`, `sonnet`…); a starting prompt, possibly taken from a template. The app creates a tab named after the agent, runs `claude --agent … --model …` and sends the prompt as soon as the agent is ready (if Claude first asks to trust the folder, it waits for your answer). If the prompt could not be sent, it is put back in the input bar.
+**New agent** (⇧⌘T, button in the tab bar, ⌘K palette): choose Claude Code or Codex, a project agent (`.claude/agents/*.md`, with its description and model) or one from `~/.claude/agents`, or a free agent; a model (`opus`, `sonnet`…); a starting prompt, possibly taken from a template. The app creates a tab named after the agent, runs `claude --agent … --model …` and sends the prompt as soon as the agent is ready (if Claude first asks to trust the folder, it waits for your answer). If the prompt could not be sent, it is written into the terminal of the selected pane.
 
 **Global search** (⇧⌘F): searches what all terminals have displayed (the last 3,000 lines of each pane), ignoring case and accents. Results are grouped by workspace · tab, most recent first, with the line before and after. Filters: this workspace, agents only, regular expression (`.*`). ↵ or a click opens the pane and selects the text if it is still on screen.
 
-**Open alongside**: the <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> button in a pane header, on a "To handle" card or in the ⌘K palette keeps the agent in a column to the right of the current tab, whatever its workspace: the first one splits the screen in two, the following ones stack in the column (4 at most). Each cell is a real terminal: a click gives it the keyboard (and makes it the recipient of the input bar), ↗ opens its tab, × removes it from the column without stopping the agent. The column is resized by its border and is remembered; an agent of the displayed tab does not appear in it (it is already in the grid).
+**Open alongside**: the <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> button in a pane header, on a "To handle" card or in the ⌘K palette keeps the agent in a column to the right of the current tab, whatever its workspace: the first one splits the screen in two, the following ones stack in the column (4 at most). Each cell is a real terminal: a click gives it the keyboard (and makes it the pane that receives the ⌘K palette insertions), ↗ opens its tab, × removes it from the column without stopping the agent. The column is resized by its border and is remembered; an agent of the displayed tab does not appear in it (it is already in the grid).
 
-**Writing to a sub-agent**: in the recipient menu of the input bar, the agents of all workspaces are listed and, under each Claude session that has some, its sub-agents (`↳ jerome-645`). The app switches the session to this sub-agent with the arrow keys, checks that it is really displayed, sends the prompt, then goes back to `main` (box "Then go back to main"). If the list is not found or if the agent is waiting for a decision, nothing is typed.
 
 **History** (⇧⌘H, or the "Today … History ↗" line of the right panel): each job of an agent appears live while it runs ("running"), then is saved at the end on this Mac (`~/.config/heidrun/history.jsonl`, never in a repo) with its workspace, its tab, the branch, the prompt that started it, its active time (without the waits for your decision) and its cost. At the top, summary cards follow the filters: agent cost (with day, 7 d, 30 d and the difference with the previous period), agent time, estimated human time (1 h of agent ≈ 4 h of developer by default), your estimated time (prompts written, decisions), the leverage between the two, the time agents waited for you and the rework rate (jobs followed within the hour by a correction prompt). The assumptions are set with "⚙ Assumptions". On the left: totals per workspace or **per feature** (branch, with the issue or MR taken from its name), **productive hours** (work and waiting per hour of the day), and **monthly budgets** per workspace (notification at 80% then at 100%). The window opens on today and filters by period (today to 1 year), workspace, agent or text, gives totals per workspace and a chart per day, and exports the selection as CSV (in Downloads, readable by Excel). A click on a job opens its pane if it still exists.
 
@@ -148,7 +146,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Tiles** (<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> in the header of a Claude pane): one cell per agent of the session (main and sub-agents), with its last lines, read from the Claude logs (`~/.claude/projects/…`), so without touching the terminal. Refreshed every 2 to 3 s; a green dot marks an active agent. A click on a cell displays this agent in the terminal.
 
-**Project files** (folder icon next to "Folder" in the panel, or ⌘P): the tree of the project of the pane, as in VS Code, with the git state of each file (modified, new, deleted; a dot on folders that contain some) and the files of `.gitignore` hidden ("Ignored files" to see them). ⌘P searches a file by its name ("comp/term" finds `src/components/TerminalView.vue`). The file is displayed colored, Markdown rendered or as code, images as a preview, with tabs (⌘W to close one), breadcrumb, "Path" (⌥: absolute path), Finder, VS Code and "→ Agent", which puts `@path` in the input bar. Select lines: "Explain" or "Fix these lines" prepares the prompt. In the terminals, `src/app.ts:42` quoted by an agent opens the file at the line (hover or ⌘-click).
+**Project files** (folder icon next to "Folder" in the panel, or ⌘P): the tree of the project of the pane, as in VS Code, with the git state of each file (modified, new, deleted; a dot on folders that contain some) and the files of `.gitignore` hidden ("Ignored files" to see them). ⌘P searches a file by its name ("comp/term" finds `src/components/TerminalView.vue`). The file is displayed colored, Markdown rendered or as code, images as a preview, with tabs (⌘W to close one), breadcrumb, "Path" (⌥: absolute path), Finder, VS Code and "→ Agent", which writes `@path` in the terminal of the selected pane. Select lines: "Explain" or "Fix these lines" prepares the prompt. In the terminals, `src/app.ts:42` quoted by an agent opens the file at the line (hover or ⌘-click).
 
 **Editing a file**: "✎ Edit" in the explorer opens a real editor (CodeMirror: highlighting, multiple cursors, ⌘F / ⌘⌥F search-replace, ⌘D next occurrence, ⌘Z). **⌘S** saves; a dot in the tab signals an unsaved change, and closing the tab or the window asks for confirmation. "Diff" shows your changes, "Diff before ⌘S" shows them before each save. If an agent modifies the file while you edit it, nothing is overwritten: if you made no change the file is reloaded, otherwise a banner offers to see the difference, to reload or to overwrite with your version. Saving is atomic, keeps the permissions of the file, and refuses `.git`, symbolic links and files that are not UTF-8.
 
@@ -162,7 +160,6 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/heidrun/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Heidrun must be open on the Mac.
 
-**Broadcasting a prompt**: "Several agents…" in the recipient menu of the input bar. Tick the agents (shortcuts: all those of the workspace, all the Claude ones), write, "Broadcast": a summary lists the recipients before sending. Blocked agents are skipped and reported; the template variables are filled for each agent; a `!` command goes through the safeguards of each project.
 
 **Notifications** ("A" menu): reminder when an agent stays blocked (5 min by default), agent context above 80%, Claude quota above 80% then 95%, summary of the day at the chosen time (finished jobs per workspace), quiet hours without notification (e.g. 20:00 → 08:00, alerts postponed until after).
 
