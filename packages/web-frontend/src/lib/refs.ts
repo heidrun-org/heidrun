@@ -91,7 +91,7 @@ async function load(cwd: string): Promise<RefContext> {
       repo?: string;
       tickets?: string | { url?: string; prefixes?: string[] };
     };
-    // "repo" in .herdr-desk.json overrides the git remote (any form git accepts, or the web URL).
+    // "repo" in .heidrun.json overrides the git remote (any form git accepts, or the web URL).
     const source = conf.repo ?? r.remote;
     const web = source ? remoteToWeb(source) : null;
     // Unknown hosts are most often self-hosted GitLab; GitHub is github.com.

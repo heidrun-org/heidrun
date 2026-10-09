@@ -29,7 +29,7 @@ export const FONT_MIN = 9;
 export const FONT_MAX = 24;
 export const FONT_DEFAULT = 12.5;
 
-const KEY = "herdr-desk.settings";
+const KEY = "heidrun.settings";
 
 const defaults = {
   fontId: "geist",

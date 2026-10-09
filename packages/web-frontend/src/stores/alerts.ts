@@ -10,7 +10,7 @@ import { locale, t } from "../i18n/index";
 const remindedBlocked = new Set<string>(); // attentionKey of the episode
 const contextWarned = new Set<string>(); // pane:session
 // Persisted: the last quota reading comes back at launch and must not alert again.
-const QUOTA_KEY = "herdr-desk.quota-warned";
+const QUOTA_KEY = "heidrun.quota-warned";
 const quotaWarned = new Set<string>(
   (() => {
     try {
@@ -85,7 +85,7 @@ function checkQuota() {
 
 // ---- Monthly budget per workspace ---------------------------------------------
 
-const BUDGET_KEY = "herdr-desk.budget-warned";
+const BUDGET_KEY = "heidrun.budget-warned";
 const budgetWarned = new Set<string>(
   (() => {
     try {
@@ -122,7 +122,7 @@ function checkBudget() {
 
 // ---- Evening summary: finished work of the day, by workspace -----------------
 
-const DAY_KEY = "herdr-desk.day";
+const DAY_KEY = "heidrun.day";
 interface Day {
   date: string;
   done: Record<string, number>; // workspace label → finished runs

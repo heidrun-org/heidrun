@@ -15,7 +15,7 @@ export interface Note {
 }
 
 // Notes stay on this Mac (not in the repo): terminal output can hold tokens or secrets.
-const KEY = "herdr-desk.notes";
+const KEY = "heidrun.notes";
 
 function load(): Note[] {
   try {

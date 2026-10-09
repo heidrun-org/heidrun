@@ -378,7 +378,7 @@ pub fn file_write(root: String, path: String, content: String, expected: Option<
         let dir = real.parent().ok_or("dossier introuvable")?;
         let name = real.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         let n = TMP_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        let tmp = dir.join(format!(".{name}.herdr-desk-{}-{n}", std::process::id()));
+        let tmp = dir.join(format!(".{name}.heidrun-{}-{n}", std::process::id()));
         {
             use std::io::Write;
             let mut f = std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp).map_err(|e| format!("écriture impossible : {e}"))?;

@@ -18,7 +18,7 @@ interface Seen {
 }
 
 // v2: per-session tracking; the first version could count a total several times.
-const KEY = "herdr-desk.spend.v2";
+const KEY = "heidrun.spend.v2";
 const KEEP_MS = 8 * 24 * 3600_000;
 
 function load(): Entry[] {

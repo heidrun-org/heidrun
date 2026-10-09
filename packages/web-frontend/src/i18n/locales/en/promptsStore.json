@@ -3,5 +3,5 @@
   "default.handoverNote": "Handover note",
   "default.progress": "Where are you?",
   "default.explainSelection": "Explain the selection",
-  "saveFailed": "Cannot save .herdr-desk.json"
+  "saveFailed": "Cannot save .heidrun.json"
 }

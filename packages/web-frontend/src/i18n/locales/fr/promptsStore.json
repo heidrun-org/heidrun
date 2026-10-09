@@ -3,5 +3,5 @@
   "default.handoverNote": "Note de reprise",
   "default.progress": "Où en es-tu ?",
   "default.explainSelection": "Explique la sélection",
-  "saveFailed": "Enregistrement de .herdr-desk.json impossible"
+  "saveFailed": "Enregistrement de .heidrun.json impossible"
 }
