@@ -139,6 +139,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
@@ -201,7 +202,6 @@ pub fn run() {
             history::history_read,
             history::history_export,
             files::files_list,
-            files::folders_list,
             files::files_resolve,
             files::file_image,
             files::file_open_external,

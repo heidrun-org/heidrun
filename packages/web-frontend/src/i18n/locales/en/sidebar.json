@@ -24,5 +24,6 @@
   "dockTitle": "Open on the side: follow it without leaving the current tab",
   "hideLabel": "Hide {name}",
   "hideTitle": "Hide until the next change",
-  "remoteControlBadge": "RC"
+  "remoteControlBadge": "RC",
+  "chooseWorkspaceFolder": "Choose the folder of the new workspace"
 }

@@ -26,7 +26,8 @@ import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
-import { askFolder } from "../stores/folderSelector";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { homeDir } from "@tauri-apps/api/path";
 import { t } from "../i18n/index";
 
 function summary(p: AgentInfo): string {
@@ -57,7 +58,12 @@ const firstQuiet = computed(() => workspaces.value.findIndex((w) => !agentsIn(w.
 const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
 
 async function createWorkspace() {
-  const path = await askFolder();
+  const path = await openDialog({
+    directory: true,
+    multiple: false,
+    title: t("sidebar.chooseWorkspaceFolder"),
+    defaultPath: await homeDir(),
+  });
   if (path === null) {
     return;
   }

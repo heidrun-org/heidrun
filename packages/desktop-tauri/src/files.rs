@@ -115,39 +115,6 @@ fn walk(base: &Path, dir: &Path, out: &mut Vec<String>, depth: u8) {
     }
 }
 
-#[derive(Serialize)]
-pub struct FolderList {
-    /// The folder that was listed, absolute.
-    pub path: String,
-    /// The folder above, or None at the top of the disk.
-    pub parent: Option<String>,
-    /// Names of the sub-folders, sorted, hidden folders left out.
-    pub folders: Vec<String>,
-}
-
-/// Sub-folders of `path` (the home folder when None), for the folder selector of a new workspace.
-#[tauri::command(async)]
-pub fn folders_list(path: Option<String>) -> Result<FolderList, String> {
-    let start = match path.filter(|p| !p.is_empty()) {
-        Some(p) => PathBuf::from(p),
-        None => dirs::home_dir().ok_or_else(|| "home folder not found".to_string())?,
-    };
-    let real = std::fs::canonicalize(&start).map_err(|e| format!("{}: {e}", start.display()))?;
-    let mut folders: Vec<String> = std::fs::read_dir(&real)
-        .map_err(|e| format!("{}: {e}", real.display()))?
-        .flatten()
-        .filter(|e| e.path().is_dir())
-        .map(|e| e.file_name().to_string_lossy().into_owned())
-        .filter(|n| !n.starts_with('.'))
-        .collect();
-    folders.sort_by_key(|n| n.to_lowercase());
-    Ok(FolderList {
-        path: real.display().to_string(),
-        parent: real.parent().map(|p| p.display().to_string()),
-        folders,
-    })
-}
-
 /// Files of the project containing `cwd`: the git repository (tracked and new files,
 /// .gitignore respected), or the folder itself when it is not a repository.
 #[tauri::command]
