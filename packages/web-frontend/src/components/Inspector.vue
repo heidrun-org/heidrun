@@ -260,7 +260,7 @@ const statusText = computed(() => {
           </form>
         </div>
 
-        <ConfirmButton class="link" :label="t('inspector.closePane')" :armed-label="t('inspector.closePaneArmed')" :aria-label="t('inspector.closePane')" @confirm="closePane(p.pane_id)" />
+        <ConfirmButton class="link" :label="t('inspector.closePane')" :confirm-label="t('inspector.closePaneConfirm')" :question="t('inspector.closePane')" @confirm="closePane(p.pane_id)" />
       </section>
     </template>
     <div v-else class="muted">{{ t("inspector.selectPane") }}</div>

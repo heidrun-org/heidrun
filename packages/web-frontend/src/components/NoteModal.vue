@@ -164,7 +164,7 @@ function remove() {
             </optgroup>
           </select>
           <span class="grow"></span>
-          <ConfirmButton :label="t('noteModal.delete')" :armed-label="t('noteModal.deleteArmed')" :aria-label="t('noteModal.deleteNote')" @confirm="remove" />
+          <ConfirmButton :label="t('noteModal.delete')" :confirm-label="t('noteModal.deleteConfirm')" :question="t('noteModal.deleteNote')" @confirm="remove" />
         </template>
       </footer>
     </section>

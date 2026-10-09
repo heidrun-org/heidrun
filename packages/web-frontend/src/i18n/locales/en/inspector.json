@@ -52,7 +52,7 @@
   "watchTitle": "Start watching this pane",
   "watch": "Watch",
   "closePane": "Close this pane",
-  "closePaneArmed": "Click again to close",
+  "closePaneConfirm": "Close",
   "selectPane": "Select a pane.",
   "allAgents": "All agents",
   "allAgentsDetail": "account quotas and activity",

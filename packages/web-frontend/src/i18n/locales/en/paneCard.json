@@ -13,5 +13,6 @@
   "splitRightTitle": "Split right (⌘D)",
   "splitDown": "Split down",
   "splitDownTitle": "Split down (⇧⌘D)",
-  "close": "Close the pane (⌘W)"
+  "close": "Close the pane (⌘W)",
+  "closeConfirm": "Close"
 }

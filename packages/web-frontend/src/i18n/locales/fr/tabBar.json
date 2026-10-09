@@ -11,5 +11,6 @@
   "newTerminal": "Nouveau terminal",
   "newTerminalTitle": "Ouvrir un nouveau terminal",
   "splitRight": "Diviser à droite",
-  "splitDown": "Diviser en bas"
+  "splitDown": "Diviser en bas",
+  "closeConfirm": "Fermer"
 }

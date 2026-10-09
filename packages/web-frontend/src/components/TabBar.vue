@@ -54,7 +54,8 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
       <ConfirmButton
         class="tab-close"
         icon="x-lg"
-        :aria-label="t('tabBar.closeTab', { name: tab.label || tab.number, count: tab.pane_count })"
+        :confirm-label="t('tabBar.closeConfirm')"
+        :question="t('tabBar.closeTab', { name: tab.label || tab.number, count: tab.pane_count })"
         @confirm="closeTab(tab.tab_id)"
       />
     </div>

@@ -13,5 +13,6 @@
   "splitRightTitle": "Diviser à droite (⌘D)",
   "splitDown": "Diviser en bas",
   "splitDownTitle": "Diviser en bas (⇧⌘D)",
-  "close": "Fermer le panneau (⌘W)"
+  "close": "Fermer le panneau (⌘W)",
+  "closeConfirm": "Fermer"
 }

@@ -76,7 +76,7 @@ function sendTo(n: Note, paneId: string) {
         <button class="tool" :aria-label="t('notesPanel.openLarge')" :title="t('notesPanel.openLarge')" @click="notes.openId = n.id">
           <Icon name="arrows-angle-expand" />
         </button>
-        <ConfirmButton icon="x-lg" :armed-label="t('notesPanel.deleteArmed')" :aria-label="t('notesPanel.deleteNote')" @confirm="removeNote(n.id)" />
+        <ConfirmButton icon="x-lg" :confirm-label="t('notesPanel.deleteConfirm')" :question="t('notesPanel.deleteNote')" @confirm="removeNote(n.id)" />
       </header>
       <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
       <pre class="mono" :class="{ open: expanded[n.id] }" :title="t('notesPanel.textTitle')" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>

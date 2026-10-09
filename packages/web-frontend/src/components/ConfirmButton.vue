@@ -1,42 +1,23 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { onBeforeUnmount, ref } from "vue";
-import { t } from "../i18n/index";
+import { askConfirm } from "../stores/confirm";
 
-// Two-step button for destructive actions: the first click arms it, the second confirms.
-// Closing a pane ends the process running in it, so it is worth one extra click.
-const props = defineProps<{ label?: string; icon?: string; armedLabel?: string; ariaLabel?: string }>();
+// Button for destructive actions: a click opens a confirmation modal dialog, and the action runs only after the
+// user confirms in that dialog. Closing a pane ends the process running in it, so it is worth a question.
+const props = defineProps<{ label?: string; icon?: string; confirmLabel: string; question: string }>();
 const emit = defineEmits<{ confirm: [] }>();
 
-const armed = ref(false);
-let timer: number | undefined;
-
-function click(e: MouseEvent) {
+async function click(e: MouseEvent) {
   e.stopPropagation();
-  if (armed.value) {
-    window.clearTimeout(timer);
-    armed.value = false;
+  if (await askConfirm(props.question, props.confirmLabel)) {
     emit("confirm");
-    return;
   }
-  armed.value = true;
-  timer = window.setTimeout(() => (armed.value = false), 2500);
 }
-
-onBeforeUnmount(() => window.clearTimeout(timer));
 </script>
 
 <template>
-  <button
-    class="confirm"
-    :class="{ armed }"
-    :aria-label="armed ? t('confirmButton.confirm', { action: props.ariaLabel ?? props.label ?? '' }) : props.ariaLabel"
-    :title="armed ? t('confirmButton.clickAgain') : props.ariaLabel"
-    @mousedown.stop
-    @click="click"
-  >
-    <template v-if="armed">{{ props.armedLabel ?? t("confirmButton.close") }}</template>
-    <Icon v-else-if="props.icon" :name="props.icon" />
+  <button class="confirm" :aria-label="props.question" :title="props.question" @mousedown.stop @click="click">
+    <Icon v-if="props.icon" :name="props.icon" />
     <template v-else>{{ props.label }}</template>
   </button>
 </template>
@@ -48,5 +29,4 @@ onBeforeUnmount(() => window.clearTimeout(timer));
   display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;
 }
 .confirm:hover { background: var(--hover); color: var(--text); }
-.confirm.armed { background: #3a1d1d; color: var(--fail); font-size: 11px; font-weight: 600; }
 </style>

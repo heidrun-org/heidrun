@@ -11,7 +11,7 @@
   "noteTitle": "Note title",
   "doubleClickToRename": "Double-click to rename",
   "openLarge": "Open in large view",
-  "deleteArmed": "Delete?",
+  "deleteConfirm": "Delete",
   "deleteNote": "Delete the note",
   "textTitle": "Click: expand · double-click: open in large view",
   "copyTitle": "Copy the note",

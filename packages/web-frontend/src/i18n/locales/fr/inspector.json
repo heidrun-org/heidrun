@@ -52,7 +52,7 @@
   "watchTitle": "Surveiller ce panneau",
   "watch": "Surveiller",
   "closePane": "Fermer ce panneau",
-  "closePaneArmed": "Cliquer encore pour fermer",
+  "closePaneConfirm": "Fermer",
   "selectPane": "Sélectionne un panneau.",
   "allAgents": "Tous les agents",
   "allAgentsDetail": "quotas du compte et activité",
