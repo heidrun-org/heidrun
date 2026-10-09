@@ -4,15 +4,27 @@ import { computed, nextTick, onMounted, ref } from "vue";
 import groups from "../lib/shortcuts.json";
 import { state } from "../stores/session";
 import { fold } from "../stores/search";
+import { t } from "../i18n/index";
 
 const q = ref("");
 const input = ref<HTMLInputElement>();
 onMounted(() => nextTick(() => input.value?.focus()));
 
+// The texts of shortcuts.json are translation keys of the "shortcuts" namespace.
+const translated = computed(() =>
+  groups.map((g) => ({
+    group: t(`shortcuts.${g.groupKey}`),
+    items: g.items.map((i) => ({
+      keys: i.keys ?? t(`shortcuts.${i.keysKey}`),
+      action: t(`shortcuts.${i.actionKey}`),
+    })),
+  })),
+);
+
 const shown = computed(() => {
   const f = fold(q.value.trim());
-  if (!f) return groups;
-  return groups
+  if (!f) return translated.value;
+  return translated.value
     .map((g) => ({ ...g, items: g.items.filter((i) => fold(`${i.keys} ${i.action} ${g.group}`).includes(f)) }))
     .filter((g) => g.items.length);
 });
@@ -27,8 +39,8 @@ function onKey(e: KeyboardEvent) {
     close();
   }
 }
-// "⇧⌘T / ⌘D" → ⇧ ⌘ T, a "/" separator, ⌘ D. Words ("Double-clic sur une bordure",
-// "Molette") stay in one cap.
+// "⇧⌘T / ⌘D" → ⇧ ⌘ T, a "/" separator, ⌘ D. Words ("Double-click on a border",
+// "Wheel") stay in one cap. "then" (French "puis") is a separator.
 function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
   if (keys.startsWith("bi:")) return [{ t: keys.slice(3), sep: false, icon: true }];
   const out: { t: string; sep: boolean; icon?: boolean }[] = [];
@@ -37,9 +49,9 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
     if (m) for (const c of [...m[1], m[2]]) out.push({ t: c, sep: false });
     else out.push({ t: w, sep: false });
   };
-  for (const part of keys.split(/(\s+\/\s+|\s+puis\s+|\s+\+\s+|\s+…\s+)/)) {
+  for (const part of keys.split(/(\s+\/\s+|\s+(?:puis|then)\s+|\s+\+\s+|\s+…\s+)/)) {
     if (!part.trim()) continue;
-    if (/^\s+(\/|puis|\+|…)\s+$/.test(part)) out.push({ t: part.trim(), sep: true });
+    if (/^\s+(\/|puis|then|\+|…)\s+$/.test(part)) out.push({ t: part.trim(), sep: true });
     // "⌘W ⌘W": several key combos in a row.
     else if (part.split(" ").every((w) => /^[⇧⌥⌃⌘]+\S+$/.test(w))) part.split(" ").forEach(combo);
     else out.push({ t: part, sep: false });
@@ -50,11 +62,11 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
 
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
-    <div class="modal" role="dialog" aria-label="Raccourcis">
+    <div class="modal" role="dialog" :aria-label="t('shortcutsModal.dialogLabel')">
       <header>
-        <h2>Raccourcis</h2>
-        <input ref="input" v-model="q" placeholder="Filtrer : onglet, agent, souris…" spellcheck="false" />
-        <button title="Close the shortcuts (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <h2>{{ t("shortcutsModal.title") }}</h2>
+        <input ref="input" v-model="q" :placeholder="t('shortcutsModal.filterPlaceholder')" spellcheck="false" />
+        <button :title="t('shortcutsModal.closeTitle')" class="close" :aria-label="t('shortcutsModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="cols">
         <section v-for="g in shown" :key="g.group" class="group">
@@ -69,9 +81,9 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
             <span class="action">{{ i.action }}</span>
           </div>
         </section>
-        <p v-if="!shown.length" class="empty">Aucun raccourci pour « {{ q }} ».</p>
+        <p v-if="!shown.length" class="empty">{{ t("shortcutsModal.noShortcut", { query: q }) }}</p>
       </div>
-      <footer>Les commandes sans raccourci sont dans la palette <kbd>⌘K</kbd>.</footer>
+      <footer>{{ t("shortcutsModal.footerBefore") }} <kbd>⌘K</kbd>.</footer>
     </div>
   </div>
 </template>

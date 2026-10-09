@@ -40,6 +40,7 @@ import { fillInput } from "../stores/input";
 import { CODE_THEMES, highlightFile, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import { shortPath } from "../lib/format";
+import { t } from "../i18n/index";
 
 const MAX_ROWS = 20000;
 const q = ref("");
@@ -108,7 +109,7 @@ function diffOf(a: string, b: string) {
     else if (folded[folded.length - 1]?.kind !== "gap") folded.push({ kind: "gap", text: "…" });
   });
   // Invisible otherwise: only the newline at the very end differs.
-  if (a.endsWith("\n") !== b.endsWith("\n")) folded.push({ kind: b.endsWith("\n") ? "add" : "del", text: "↵ retour à la ligne à la fin du fichier" });
+  if (a.endsWith("\n") !== b.endsWith("\n")) folded.push({ kind: b.endsWith("\n") ? "add" : "del", text: t("filesModal.diff.newlineAtEnd") });
   return folded;
 }
 const diffRows = computed(() => {
@@ -129,13 +130,13 @@ onMounted(() => {
 });
 onBeforeUnmount(() => window.clearInterval(poll));
 
-function askCloseTab(t: string) {
-  if (isDirty(t) && closingTab.value !== t) {
-    closingTab.value = t; // second click confirms
+function askCloseTab(tab: string) {
+  if (isDirty(tab) && closingTab.value !== tab) {
+    closingTab.value = tab; // second click confirms
     return;
   }
   closingTab.value = null;
-  closeTab(t);
+  closeTab(tab);
 }
 
 // ---- Tree / quick search ---------------------------------------------------------
@@ -184,7 +185,18 @@ watch(
   () => reloadFiles(),
 );
 
-const statusLabel: Record<string, string> = { M: "modifié", A: "ajouté", D: "supprimé", R: "renommé", "?": "nouveau, non suivi", "•": "contient des modifications" };
+const statusLabelKey: Record<string, string> = {
+  M: "filesModal.status.modified",
+  A: "filesModal.status.added",
+  D: "filesModal.status.deleted",
+  R: "filesModal.status.renamed",
+  "?": "filesModal.status.untracked",
+  "•": "filesModal.status.containsChanges",
+};
+function statusLabel(status: string): string {
+  const key = statusLabelKey[status];
+  return key === undefined ? status : t(key);
+}
 
 // ---- File view --------------------------------------------------------------------
 const lines = ref<string[]>([]);
@@ -224,7 +236,7 @@ async function load() {
       return;
     }
     if (files.status[path] === "D") {
-      error.value = "Fichier supprimé (pas encore commité) : voir l’onglet Git pour son contenu d’avant.";
+      error.value = t("filesModal.deletedFile");
       return;
     }
     const text = (await invoke<string>("git_file", { root: files.root, path, rev: null })).replace(/\n$/, "");
@@ -276,7 +288,7 @@ async function copyPath(abs: boolean) {
   const p = abs ? await fullPath() : files.active;
   if (!p) return;
   await writeText(p).catch(() => {});
-  toast(`Copié : ${p}`);
+  toast(t("filesModal.copied", { path: p }));
 }
 async function finder() {
   const p = await fullPath();
@@ -309,10 +321,10 @@ function onMouseUp() {
 function askAgent(kind: "explain" | "fix") {
   const s = sel.value;
   if (!s || !files.active) return;
-  const where = s.from === s.to ? `ligne ${s.from}` : `lignes ${s.from}-${s.to}`;
+  const where = s.from === s.to ? t("filesModal.ask.line", { line: s.from }) : t("filesModal.ask.lines", { from: s.from, to: s.to });
   const lang = languageFor(files.active) ?? "";
-  const ask = kind === "explain" ? "Explique-moi ce code." : "Corrige ces lignes (explique ce qui n’allait pas).";
-  fillInput(`Dans @${files.active} (${where}) :\n\n\`\`\`${lang}\n${s.text.replace(/\n$/, "")}\n\`\`\`\n\n${ask}`);
+  const ask = kind === "explain" ? t("filesModal.ask.explain") : t("filesModal.ask.fix");
+  fillInput(t("filesModal.ask.prompt", { path: files.active, where, language: lang, code: s.text.replace(/\n$/, ""), ask }));
   sel.value = null;
   files.open = false;
 }
@@ -370,6 +382,11 @@ const gGroups = computed(() => {
   const m = new Map<string, GrepHit[]>();
   for (const h of gHits.value) m.set(h.path, [...(m.get(h.path) ?? []), h]);
   return [...m.entries()];
+});
+const gSummary = computed(() => {
+  const results = t("filesModal.grep.results", { count: gHits.value.length, more: gTruncated.value ? "+" : "" });
+  const filesText = t("filesModal.grep.files", { count: gGroups.value.length });
+  return t("filesModal.grep.summary", { results, files: filesText });
 });
 /** The hit's text split around the match, for the highlight. */
 function hitParts(text: string) {
@@ -460,7 +477,7 @@ async function menuCopy() {
   menu.value = null;
   if (r) {
     await writeText(r.path).catch(() => {});
-    toast(`Copié : ${r.path}`);
+    toast(t("filesModal.copied", { path: r.path }));
   }
 }
 
@@ -505,9 +522,9 @@ function close(force = false) {
 }
 /** Saves every edited file; stops on the first conflict or error (and shows it). */
 async function saveAll(): Promise<boolean> {
-  for (const t of dirtyTabs()) {
-    if (!(await saveEdit(t))) {
-      openTab(t);
+  for (const tab of dirtyTabs()) {
+    if (!(await saveEdit(tab))) {
+      openTab(tab);
       closingAll.value = false;
       files.quitting = false;
       return false;
@@ -570,104 +587,104 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close()">
-    <div class="modal" role="dialog" aria-label="Fichiers du projet" @mousedown="menu && !($event.target as HTMLElement).closest('.ctxmenu') && (menu = null)">
+    <div class="modal" role="dialog" :aria-label="t('filesModal.dialogLabel')" @mousedown="menu && !($event.target as HTMLElement).closest('.ctxmenu') && (menu = null)">
       <header class="top">
-        <span class="title">Fichiers</span>
+        <span class="title">{{ t("filesModal.title") }}</span>
         <span class="root mono" :title="files.root">{{ shortPath(files.root) }}</span>
         <div class="tabs" role="tablist">
-          <div v-for="t in files.tabs" :key="t" class="tab" :class="{ on: t === files.active }" role="tab" :title="t">
-            <button title="Open this file" class="tab-name" @click="openTab(t)">
-              <span v-if="files.status[t]" class="st" :class="'s-' + files.status[t]"><Icon name="circle-fill" /></span>{{ t.split("/").pop() }}
+          <div v-for="tab in files.tabs" :key="tab" class="tab" :class="{ on: tab === files.active }" role="tab" :title="tab">
+            <button :title="t('filesModal.openFileTitle')" class="tab-name" @click="openTab(tab)">
+              <span v-if="files.status[tab]" class="st" :class="'s-' + files.status[tab]"><Icon name="circle-fill" /></span>{{ tab.split("/").pop() }}
             </button>
             <button
               class="tab-x"
-              :class="{ dirty: isDirty(t), arm: closingTab === t }"
-              :aria-label="`Fermer ${t}`"
-              :title="closingTab === t ? 'Pas enregistré : clique encore pour fermer sans enregistrer' : isDirty(t) ? 'Modifié, pas enregistré' : 'Fermer (⌘W)'"
-              @click="askCloseTab(t)"
-            ><template v-if="closingTab === t">?</template><Icon v-else-if="isDirty(t)" name="circle-fill" /><Icon v-else name="x-lg" /></button>
+              :class="{ dirty: isDirty(tab), arm: closingTab === tab }"
+              :aria-label="t('filesModal.closeTabLabel', { path: tab })"
+              :title="closingTab === tab ? t('filesModal.closeTabArmed') : isDirty(tab) ? t('filesModal.closeTabDirty') : t('filesModal.closeTab')"
+              @click="askCloseTab(tab)"
+            ><template v-if="closingTab === tab">?</template><Icon v-else-if="isDirty(tab)" name="circle-fill" /><Icon v-else name="x-lg" /></button>
           </div>
         </div>
-        <button title="Close the file browser (Escape)" class="close" aria-label="Fermer (Échap)" @click="close()"><Icon name="x-lg" /></button>
+        <button :title="t('filesModal.closeTitle')" class="close" :aria-label="t('filesModal.closeLabel')" @click="close()"><Icon name="x-lg" /></button>
       </header>
       <div v-if="files.quitting && dirtyTabs().length" class="banner warn">
-        <span>Quitter Herdr Desk : {{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }} ({{ dirtyTabs().map((t) => t.split("/").pop()).join(", ") }}).</span>
-        <button title="Save all files and quit" class="tb accent" @click="saveAllAndQuit">Tout enregistrer et quitter</button>
-        <button title="Quit without saving" class="tb danger" @click="quitNow">Quitter sans enregistrer</button>
-        <button title="Cancel and keep the file browser open" class="tb" @click="files.quitting = false">Annuler</button>
+        <span>{{ t("filesModal.quitUnsaved", { count: dirtyTabs().length, names: dirtyTabs().map((tab) => tab.split("/").pop()).join(", ") }) }}</span>
+        <button :title="t('filesModal.saveAllAndQuitTitle')" class="tb accent" @click="saveAllAndQuit">{{ t("filesModal.saveAllAndQuit") }}</button>
+        <button :title="t('filesModal.quitWithoutSavingTitle')" class="tb danger" @click="quitNow">{{ t("filesModal.quitWithoutSaving") }}</button>
+        <button :title="t('filesModal.cancelTitle')" class="tb" @click="files.quitting = false">{{ t("filesModal.cancel") }}</button>
       </div>
       <div v-else-if="closingAll" class="banner warn">
-        <span>{{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} modifié{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }}.</span>
-        <button title="Save all files and close" class="tb accent" @click="saveAllAndClose">Tout enregistrer et fermer</button>
-        <button title="Discard the changes and close" class="tb danger" @click="abandonAndClose">Abandonner les modifications</button>
-        <button title="Cancel and keep the file browser open" class="tb" @click="closingAll = false">Annuler</button>
+        <span>{{ t("filesModal.closeUnsaved", { count: dirtyTabs().length }) }}</span>
+        <button :title="t('filesModal.saveAllAndCloseTitle')" class="tb accent" @click="saveAllAndClose">{{ t("filesModal.saveAllAndClose") }}</button>
+        <button :title="t('filesModal.discardTitle')" class="tb danger" @click="abandonAndClose">{{ t("filesModal.discard") }}</button>
+        <button :title="t('filesModal.cancelTitle')" class="tb" @click="closingAll = false">{{ t("filesModal.cancel") }}</button>
       </div>
 
       <div class="body" :style="{ gridTemplateColumns: `${settings.filesListWidth}px 5px 1fr` }">
         <aside class="side" @click="menu = null">
           <div class="side-tabs" role="tablist">
-            <button title="Show the file tree" :class="{ on: sideMode === 'tree' }" @click="sideMode = 'tree'">Fichiers</button>
-            <button :class="{ on: sideMode === 'grep' }" title="Chercher dans le contenu (⇧⌘F)" @click="openSearch">Rechercher</button>
+            <button :title="t('filesModal.treeTabTitle')" :class="{ on: sideMode === 'tree' }" @click="sideMode = 'tree'">{{ t("filesModal.treeTab") }}</button>
+            <button :class="{ on: sideMode === 'grep' }" :title="t('filesModal.grepTabTitle')" @click="openSearch">{{ t("filesModal.grepTab") }}</button>
           </div>
 
           <template v-if="sideMode === 'grep'">
             <div class="search grep">
-              <input ref="grepEl" v-model="gq" placeholder="Texte à chercher dans le projet…  ⇧⌘F" spellcheck="false" @keydown.enter.prevent="runGrep" />
-              <button class="tg" :class="{ on: gCase }" title="Respecter la casse" @click="gCase = !gCase">Aa</button>
-              <button class="tg mono" :class="{ on: gRegex }" title="Expression régulière" @click="gRegex = !gRegex">.*</button>
+              <input ref="grepEl" v-model="gq" :placeholder="t('filesModal.grep.placeholder')" spellcheck="false" @keydown.enter.prevent="runGrep" />
+              <button class="tg" :class="{ on: gCase }" :title="t('filesModal.grep.matchCase')" @click="gCase = !gCase">Aa</button>
+              <button class="tg mono" :class="{ on: gRegex }" :title="t('filesModal.grep.regex')" @click="gRegex = !gRegex">.*</button>
             </div>
             <div class="opts">
-              <span>{{ gBusy ? "Recherche…" : gq.trim().length >= 2 ? `${gHits.length}${gTruncated ? "+" : ""} résultat${gHits.length > 1 ? "s" : ""} dans ${gGroups.length} fichier${gGroups.length > 1 ? "s" : ""}` : "" }}</span>
+              <span>{{ gBusy ? t("filesModal.grep.searching") : gq.trim().length >= 2 ? gSummary : "" }}</span>
             </div>
             <div class="list">
               <div v-if="gError" class="empty err">{{ gError }}</div>
               <template v-for="[p, hits] in gGroups" :key="p">
-                <button title="Fold or unfold the matches in this file" class="g-file" @click="toggleGroup(p)">
+                <button :title="t('filesModal.grep.foldTitle')" class="g-file" @click="toggleGroup(p)">
                   <span class="chev">{{ gFolded.has(p) ? "▸" : "▾" }}</span>
                   <span class="nm">{{ p.split("/").pop() }}</span>
                   <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
                   <span class="g-n">{{ hits.length }}</span>
                 </button>
                 <template v-if="!gFolded.has(p)">
-                  <button title="Open the file at this line" v-for="h in hits" :key="p + h.line" class="g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
+                  <button :title="t('filesModal.grep.openAtLine')" v-for="h in hits" :key="p + h.line" class="g-hit mono" :class="{ on: files.active === p && files.line === h.line }" @click="openTab(p, h.line)">
                     <span class="g-line">{{ h.line }}</span>
                     <span class="g-text">{{ hitParts(h.text).pre }}<mark>{{ hitParts(h.text).hit }}</mark>{{ hitParts(h.text).post }}</span>
                   </button>
                 </template>
               </template>
-              <div v-if="gTruncated" class="empty">Plus de 2 000 résultats : précise la recherche.</div>
+              <div v-if="gTruncated" class="empty">{{ t("filesModal.grep.truncated") }}</div>
             </div>
           </template>
 
           <template v-else>
           <div class="search">
-            <input ref="searchEl" v-model="q" placeholder="Rechercher un fichier…  ⌘P" spellcheck="false" @keydown="onSearchKey" />
+            <input ref="searchEl" v-model="q" :placeholder="t('filesModal.searchPlaceholder')" spellcheck="false" @keydown="onSearchKey" />
           </div>
           <div class="opts">
-            <label><input v-model="files.showIgnored" type="checkbox" />Fichiers ignorés</label>
+            <label><input v-model="files.showIgnored" type="checkbox" />{{ t("filesModal.showIgnored") }}</label>
             <span class="opt-tools">
-              <button class="link" title="Nouveau fichier" @click.stop="startNaming('file')">+ Fichier</button>
-              <button class="link" title="Nouveau dossier" @click.stop="startNaming('dir')">+ Dossier</button>
-              <button class="link" title="Relire la liste des fichiers" @click="reloadFiles()">↻</button>
+              <button class="link" :title="t('filesModal.newFile')" @click.stop="startNaming('file')">{{ t("filesModal.newFileButton") }}</button>
+              <button class="link" :title="t('filesModal.newFolder')" @click.stop="startNaming('dir')">{{ t("filesModal.newFolderButton") }}</button>
+              <button class="link" :title="t('filesModal.reloadList')" @click="reloadFiles()">↻</button>
             </span>
           </div>
           <form v-if="naming" class="naming" @submit.prevent="submitNaming" @click.stop>
-            <span class="muted">{{ naming.kind === "rename" ? "Renommer / déplacer" : naming.kind === "dir" ? "Nouveau dossier" : "Nouveau fichier" }}</span>
+            <span class="muted">{{ naming.kind === "rename" ? t("filesModal.renameMove") : naming.kind === "dir" ? t("filesModal.newFolder") : t("filesModal.newFile") }}</span>
             <input ref="nameEl" v-model="naming.value" class="mono" spellcheck="false" />
             <span class="n-tools">
-              <button title="Confirm" type="submit" class="tb accent">{{ naming.kind === "rename" ? "Renommer" : "Créer" }} ↵</button>
-              <button title="Cancel" type="button" class="tb" @click="naming = null">Annuler</button>
+              <button :title="t('filesModal.confirm')" type="submit" class="tb accent">{{ naming.kind === "rename" ? t("filesModal.rename") : t("filesModal.create") }} ↵</button>
+              <button :title="t('filesModal.cancel')" type="button" class="tb" @click="naming = null">{{ t("filesModal.cancel") }}</button>
             </span>
           </form>
           <div class="list">
-            <div v-if="files.loading && !files.list.length" class="empty">Lecture…</div>
+            <div v-if="files.loading && !files.list.length" class="empty">{{ t("filesModal.reading") }}</div>
             <div v-else-if="files.error" class="empty err">{{ files.error }}</div>
             <template v-else-if="q.trim()">
-              <button title="Open this file" v-for="(p, i) in results" :key="p" class="res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
+              <button :title="t('filesModal.openFileTitle')" v-for="(p, i) in results" :key="p" class="res" :class="{ on: i === qIndex }" @mouseenter="qIndex = i" @click="openResult(i)">
                 <span class="r-name">{{ p.split("/").pop() }}</span>
                 <span class="r-dir mono">{{ p.split("/").slice(0, -1).join("/") }}</span>
               </button>
-              <div v-if="!results.length" class="empty">Aucun fichier pour « {{ q }} ».</div>
+              <div v-if="!results.length" class="empty">{{ t("filesModal.noFile", { query: q }) }}</div>
             </template>
             <template v-else>
               <button
@@ -676,7 +693,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 class="row"
                 :class="{ on: r.path === files.active, ignored: r.ignored, dir: r.dir, ctx: menu?.row?.path === r.path }"
                 :style="{ paddingLeft: `${8 + r.depth * 14}px` }"
-                :title="r.status ? `${r.path} · ${statusLabel[r.status] ?? r.status}` : r.path"
+                :title="r.status ? `${r.path} · ${statusLabel(r.status)}` : r.path"
                 @click="pick(r)"
                 @contextmenu="(e) => !r.ignored && onRowMenu(e, r)"
               >
@@ -685,99 +702,99 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <span v-if="r.status && !r.dir" class="st" :class="'s-' + r.status">{{ r.status === "?" ? "U" : r.status }}</span>
                 <span v-else-if="r.status" class="st s-dir">•</span>
               </button>
-              <div v-if="files.truncated" class="empty">Liste limitée aux 50 000 premiers fichiers.</div>
-              <div v-if="rows.length" class="hint-row muted">Clic droit sur un fichier : renommer, déplacer, Corbeille…</div>
+              <div v-if="files.truncated" class="empty">{{ t("filesModal.listTruncated") }}</div>
+              <div v-if="rows.length" class="hint-row muted">{{ t("filesModal.rightClickHint") }}</div>
             </template>
           </div>
           </template>
 
           <div v-if="menu?.row" class="ctxmenu" :style="{ left: `${Math.min(menu.x, settings.filesListWidth - 200)}px`, top: `${menu.y}px` }" @click.stop>
             <div class="cm-title mono">{{ menu.row.name }}</div>
-            <button title="Create a new file in this folder" @click="startNaming('file', menu.row)">Nouveau fichier ici</button>
-            <button title="Create a new folder in this folder" @click="startNaming('dir', menu.row)">Nouveau dossier ici</button>
-            <button title="Rename or move this item" @click="startNaming('rename', menu.row)">Renommer / déplacer…</button>
-            <button title="Copy the path of this item" @click="menuCopy">Copier le chemin</button>
-            <button title="Move this item to the Trash" class="danger" @click="menuTrash">{{ menu.armTrash ? "Confirmer : à la Corbeille" : menu.row.dir ? "Mettre le dossier à la Corbeille" : "Mettre à la Corbeille" }}</button>
+            <button :title="t('filesModal.menu.newFileHereTitle')" @click="startNaming('file', menu.row)">{{ t("filesModal.menu.newFileHere") }}</button>
+            <button :title="t('filesModal.menu.newFolderHereTitle')" @click="startNaming('dir', menu.row)">{{ t("filesModal.menu.newFolderHere") }}</button>
+            <button :title="t('filesModal.menu.renameTitle')" @click="startNaming('rename', menu.row)">{{ t("filesModal.menu.rename") }}</button>
+            <button :title="t('filesModal.menu.copyPathTitle')" @click="menuCopy">{{ t("filesModal.menu.copyPath") }}</button>
+            <button :title="t('filesModal.menu.trashTitle')" class="danger" @click="menuTrash">{{ menu.armTrash ? t("filesModal.menu.trashConfirm") : menu.row.dir ? t("filesModal.menu.trashFolder") : t("filesModal.menu.trash") }}</button>
           </div>
         </aside>
-        <div class="drag" title="Glisser pour redimensionner" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @dblclick="settings.filesListWidth = 300"></div>
+        <div class="drag" :title="t('filesModal.resize')" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @dblclick="settings.filesListWidth = 300"></div>
 
         <section class="view">
           <div v-if="files.active" class="bar">
-            <nav class="crumbs mono" aria-label="Chemin">
+            <nav class="crumbs mono" :aria-label="t('filesModal.breadcrumbLabel')">
               <template v-for="(c, i) in crumbs" :key="i">
                 <span v-if="i" class="sep">/</span>
-                <button title="Go to this folder" :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
+                <button :title="t('filesModal.goToFolder')" :class="{ last: i === crumbs.length - 1 }" @click="crumbOpen(i)">{{ c }}</button>
               </template>
             </nav>
             <div class="tools">
               <template v-if="edit">
-                <button class="tb accent" :disabled="!dirty || edit.saving" title="Enregistrer (⌘S)" @click="save()">{{ edit.saving ? "Enregistrement…" : "Enregistrer ⌘S" }}</button>
-                <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" title="Mes changements depuis l’ouverture" @click="showDiff = showDiff === 'mine' ? null : 'mine'">Diff</button>
-                <label class="wrap-t" title="Montrer le diff avant chaque enregistrement"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />Diff avant ⌘S</label>
-                <button class="tb" :class="{ arm: leaving }" :title="leaving ? 'Clique encore pour quitter sans enregistrer' : 'Revenir à la lecture'" @click="finishEdit">{{ leaving ? "Quitter sans enregistrer ?" : "Terminer" }}</button>
+                <button class="tb accent" :disabled="!dirty || edit.saving" :title="t('filesModal.saveTitle')" @click="save()">{{ edit.saving ? t("filesModal.saving") : t("filesModal.saveButton") }}</button>
+                <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" :title="t('filesModal.myChangesTitle')" @click="showDiff = showDiff === 'mine' ? null : 'mine'">{{ t("filesModal.diffButton") }}</button>
+                <label class="wrap-t" :title="t('filesModal.diffBeforeSaveTitle')"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />{{ t("filesModal.diffBeforeSave") }}</label>
+                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToReading')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
               </template>
-              <button v-else-if="canEdit" class="tb edit" title="Modifier ce fichier" @click="beginEdit"><Icon name="pencil" /> Modifier</button>
-              <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" title="Changements de ce fichier par rapport au dernier commit (HEAD)" @click="toggleGitDiff">Diff git</button>
-              <div v-if="md && !edit" class="seg" role="radiogroup" aria-label="Affichage Markdown">
-                <button title="Show the rendered Markdown" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">Lecture</button>
-                <button title="Show the Markdown source code" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">Code</button>
+              <button v-else-if="canEdit" class="tb edit" :title="t('filesModal.editTitle')" @click="beginEdit"><Icon name="pencil" /> {{ t("filesModal.edit") }}</button>
+              <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" :title="t('filesModal.gitDiffTitle')" @click="toggleGitDiff">{{ t("filesModal.gitDiff") }}</button>
+              <div v-if="md && !edit" class="seg" role="radiogroup" :aria-label="t('filesModal.markdownLabel')">
+                <button :title="t('filesModal.renderedTitle')" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">{{ t("filesModal.rendered") }}</button>
+                <button :title="t('filesModal.sourceTitle')" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">{{ t("filesModal.source") }}</button>
               </div>
-              <select v-model="settings.codeTheme" class="theme" aria-label="Thème">
-                <option v-for="t in CODE_THEMES" :key="t.id" :value="t.id">{{ t.label }}</option>
+              <select v-model="settings.codeTheme" class="theme" :aria-label="t('filesModal.themeLabel')">
+                <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
               </select>
-              <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />Retour à la ligne</label>
-              <button class="tb" title="Copier le chemin relatif (⌥ : absolu)" @click="(e) => copyPath(e.altKey)">⧉ Chemin</button>
-              <button class="tb" title="Voir dans le Finder" @click="finder">Finder</button>
-              <button class="tb" title="Ouvrir dans VS Code" @click="vscode">VS Code</button>
-              <button class="tb accent" title="Insère @chemin dans la barre de saisie de l’agent" @click="sendToAgent">→ Agent</button>
+              <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("filesModal.wrap") }}</label>
+              <button class="tb" :title="t('filesModal.copyPathTitle')" @click="(e) => copyPath(e.altKey)">{{ t("filesModal.copyPath") }}</button>
+              <button class="tb" :title="t('filesModal.finderTitle')" @click="finder">Finder</button>
+              <button class="tb" :title="t('filesModal.vscodeTitle')" @click="vscode">VS Code</button>
+              <button class="tb accent" :title="t('filesModal.sendToAgentTitle')" @click="sendToAgent">{{ t("filesModal.sendToAgent") }}</button>
             </div>
           </div>
           <div v-if="gitDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
             <div class="diff-head">
-              <span>Changements depuis le dernier commit (enregistrés sur le disque)</span>
-              <button title="Close the diff" class="tb" @click="gitDiff = null">Fermer</button>
+              <span>{{ t("filesModal.gitDiffHead") }}</span>
+              <button :title="t('filesModal.closeDiffTitle')" class="tb" @click="gitDiff = null">{{ t("filesModal.close") }}</button>
             </div>
             <div v-for="(l, i) in gitDiff" :key="i" class="d-row" :class="l.kind === 'hunk' ? 'gap' : l.kind">
               <span class="d-sign">{{ l.kind === "add" ? "+" : l.kind === "del" ? "−" : "" }}</span>{{ l.text || " " }}
             </div>
-            <div v-if="!gitDiff.length" class="empty">Aucun changement par rapport au dernier commit.</div>
+            <div v-if="!gitDiff.length" class="empty">{{ t("filesModal.noGitChanges") }}</div>
           </div>
           <template v-if="edit">
             <div v-if="edit.conflict" class="banner warn">
               <template v-if="edit.diskHash === null && edit.disk === null">
-                <span>Ce fichier a été supprimé sur le disque depuis que tu l’as ouvert (par un agent ?).</span>
-                <button title="Create the file again with my version" class="tb danger" @click="save(true)">Le recréer avec ma version</button>
-                <button title="Leave the file deleted" class="tb" @click="finishEdit">Laisser supprimé</button>
+                <span>{{ t("filesModal.conflict.deleted") }}</span>
+                <button :title="t('filesModal.conflict.recreateTitle')" class="tb danger" @click="save(true)">{{ t("filesModal.conflict.recreate") }}</button>
+                <button :title="t('filesModal.conflict.leaveDeletedTitle')" class="tb" @click="finishEdit">{{ t("filesModal.conflict.leaveDeleted") }}</button>
               </template>
               <template v-else>
-                <span>Ce fichier a été modifié sur le disque depuis que tu l’as ouvert (par un agent ?). Rien n’a été écrasé.</span>
-                <button title="Show the differences" class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">Voir la différence</button>
-                <button title="Reload the file and discard my changes" class="tb" @click="reloadEdit(files.active!)">Recharger (perdre mes changements)</button>
-                <button title="Overwrite the file with my version" class="tb danger" @click="save(true)">Écraser avec ma version</button>
+                <span>{{ t("filesModal.conflict.modified") }}</span>
+                <button :title="t('filesModal.conflict.showDiffTitle')" class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">{{ t("filesModal.conflict.showDiff") }}</button>
+                <button :title="t('filesModal.conflict.reloadTitle')" class="tb" @click="reloadEdit(files.active!)">{{ t("filesModal.conflict.reload") }}</button>
+                <button :title="t('filesModal.conflict.overwriteTitle')" class="tb danger" @click="save(true)">{{ t("filesModal.conflict.overwrite") }}</button>
               </template>
             </div>
-            <div v-else-if="agentBusy" class="banner info">Un agent travaille dans ce projet : il peut modifier ce fichier en même temps (l’app te préviendra).</div>
+            <div v-else-if="agentBusy" class="banner info">{{ t("filesModal.agentBusy") }}</div>
             <div v-if="showDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
               <div class="diff-head">
-                <span>{{ showDiff === "conflict" ? "Disque (−) → ma version (+)" : "Ouvert (−) → ma version (+)" }}</span>
+                <span>{{ showDiff === "conflict" ? t("filesModal.diffDisk") : t("filesModal.diffOpened") }}</span>
                 <template v-if="showDiff === 'beforeSave'">
-                  <button title="Save the file" class="tb accent" @click="save(false)">Enregistrer</button>
-                  <button title="Cancel and go back to editing" class="tb" @click="showDiff = null">Annuler</button>
+                  <button :title="t('filesModal.saveFileTitle')" class="tb accent" @click="save(false)">{{ t("filesModal.save") }}</button>
+                  <button :title="t('filesModal.backToEditTitle')" class="tb" @click="showDiff = null">{{ t("filesModal.cancel") }}</button>
                 </template>
-                <button title="Close the diff" v-else class="tb" @click="showDiff = null">Fermer</button>
+                <button :title="t('filesModal.closeDiffTitle')" v-else class="tb" @click="showDiff = null">{{ t("filesModal.close") }}</button>
               </div>
               <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
-              <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">Aucune différence.</div>
+              <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">{{ t("filesModal.noDifference") }}</div>
             </div>
             <div class="code editing" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
               <CodeEditor :key="files.root + files.active" :path="files.active!" :text="edit.original === edit.current ? edit.original : edit.current" :wrap="settings.codeWrap" :line="files.line" @change="onEditorChange" @save="save()" />
             </div>
           </template>
           <div v-else ref="codeEl" class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
-            <div v-if="!files.active" class="empty">Choisis un fichier à gauche, ou ⌘P pour le chercher par son nom.</div>
+            <div v-if="!files.active" class="empty">{{ t("filesModal.chooseFile") }}</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
-            <div v-else-if="loading" class="empty">Chargement…</div>
+            <div v-else-if="loading" class="empty">{{ t("filesModal.loading") }}</div>
             <div v-else-if="image" class="img"><img :src="image" :alt="files.active" /></div>
             <article v-else-if="reading" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
             <table v-else class="tbl">
@@ -788,16 +805,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 </tr>
               </tbody>
             </table>
-            <div v-if="truncated" class="empty">Affichage limité aux {{ MAX_ROWS }} premières lignes.</div>
+            <div v-if="truncated" class="empty">{{ t("filesModal.linesTruncated", { max: MAX_ROWS }) }}</div>
             <div v-if="sel" class="selbar" :style="{ left: `${Math.max(8, sel.x)}px`, top: `${sel.y}px` }" @mousedown.stop.prevent>
-              <span class="muted">{{ sel.from === sel.to ? `ligne ${sel.from}` : `lignes ${sel.from}–${sel.to}` }}</span>
-              <button title="Ask the agent to explain the selected lines" class="tb" @click="askAgent('explain')">Explique</button>
-              <button title="Ask the agent to fix the selected lines" class="tb" @click="askAgent('fix')">Corrige ces lignes</button>
+              <span class="muted">{{ sel.from === sel.to ? t("filesModal.selection.line", { line: sel.from }) : t("filesModal.selection.lines", { from: sel.from, to: sel.to }) }}</span>
+              <button :title="t('filesModal.explainTitle')" class="tb" @click="askAgent('explain')">{{ t("filesModal.explain") }}</button>
+              <button :title="t('filesModal.fixTitle')" class="tb" @click="askAgent('fix')">{{ t("filesModal.fix") }}</button>
             </div>
           </div>
           <div v-if="files.active" class="foot muted">
-            <template v-if="edit">{{ dirty ? "modifié, pas enregistré" : "enregistré" }} · ⌘S enregistrer · ⌘F chercher · ⌘⌥F remplacer · ⌘D occurrence suivante · ⌘Z annuler</template>
-            <template v-else>{{ files.status[files.active] ? statusLabel[files.status[files.active]] : files.git ? "à jour avec git" : "hors git" }} · ⌘P chercher · ⌘W fermer l’onglet · ⌘+ / ⌘− taille</template>
+            <template v-if="edit">{{ dirty ? t("filesModal.foot.unsaved") : t("filesModal.foot.saved") }} · {{ t("filesModal.foot.editKeys") }}</template>
+            <template v-else>{{ files.status[files.active] ? statusLabel(files.status[files.active]) : files.git ? t("filesModal.foot.upToDate") : t("filesModal.foot.outsideGit") }} · {{ t("filesModal.foot.readKeys") }}</template>
           </div>
         </section>
       </div>

@@ -6,6 +6,7 @@ import { askMerge, currentForge, currentGit, git, openGitModal, refreshGit } fro
 import { openIssue } from "../stores/issues";
 import { selectedPane, sendPrompt, state, toast, workspaceLabel, workspacePanes } from "../stores/session";
 import { ago, paneName } from "../lib/format";
+import { t } from "../i18n/index";
 
 const st = currentGit;
 const fg = currentForge;
@@ -43,33 +44,33 @@ function open(url: string | null | undefined) {
 
 async function askReview(ref: string, url: string, title: string) {
   const a = reviewer.value;
-  if (!a) return toast("Aucun agent dans ce workspace");
-  await sendPrompt(a.pane_id, `Fais la revue de la ${kind.value} ${ref} « ${title} » : ${url}`);
-  toast(`Demande envoyée à ${paneName(a)}`);
+  if (!a) return toast(t("gitPanel.noAgent"));
+  await sendPrompt(a.pane_id, t("gitPanel.reviewPrompt", { kind: kind.value, ref, title, url }));
+  toast(t("gitPanel.reviewSent", { agent: paneName(a) }));
 }
 </script>
 
 <template>
   <div class="gitp">
-    <div v-if="!state.selectedWorkspaceId" class="muted">Sélectionne un workspace.</div>
+    <div v-if="!state.selectedWorkspaceId" class="muted">{{ t("gitPanel.selectWorkspace") }}</div>
     <template v-else-if="st">
       <section class="block">
         <header class="head">
-          <span class="eyebrow">Dépôt</span>
-          <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()"><span :class="{ 'label-hidden': git.loading }">Rafraîchir</span><span v-if="git.loading" class="spinner-border" role="status" aria-label="Rafraîchissement en cours"></span></button>
+          <span class="eyebrow">{{ t("gitPanel.repository") }}</span>
+          <button class="link" :disabled="git.loading" :title="t('gitPanel.refresh')" @click="refreshGit()"><span :class="{ 'label-hidden': git.loading }">{{ t("gitPanel.refresh") }}</span><span v-if="git.loading" class="spinner-border" role="status" :aria-label="t('gitPanel.refreshing')"></span></button>
         </header>
-        <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
+        <button v-if="fg?.base" class="repo" :title="t('gitPanel.openOn', { forge: forgeLabel })" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
         <div v-else class="repo plain">{{ repoName }}</div>
         <div class="branch">
-          <span class="mono b">{{ st.branch ?? "(détachée)" }}</span>
+          <span class="mono b">{{ st.branch ?? t("gitPanel.detached") }}</span>
           <span v-if="st.upstream" class="muted mono">→ {{ st.upstream }}</span>
-          <span v-else class="muted">pas de branche distante</span>
+          <span v-else class="muted">{{ t("gitPanel.noUpstream") }}</span>
         </div>
         <div class="chips">
-          <span v-if="st.ahead" class="chip warn" title="Commits pas encore poussés">↑ {{ st.ahead }} à pousser</span>
-          <span v-if="st.behind" class="chip pending" title="Commits distants pas encore récupérés">↓ {{ st.behind }} à récupérer</span>
-          <span v-if="!st.ahead && !st.behind && st.upstream" class="chip ok">à jour</span>
-          <button v-if="fg?.ci" class="chip" :class="fg.ci.level" title="Dernier pipeline de cette branche" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
+          <span v-if="st.ahead" class="chip warn" :title="t('gitPanel.aheadTitle')">↑ {{ t("gitPanel.ahead", { count: st.ahead }) }}</span>
+          <span v-if="st.behind" class="chip pending" :title="t('gitPanel.behindTitle')">↓ {{ t("gitPanel.behind", { count: st.behind }) }}</span>
+          <span v-if="!st.ahead && !st.behind && st.upstream" class="chip ok">{{ t("gitPanel.upToDate") }}</span>
+          <button v-if="fg?.ci" class="chip" :class="fg.ci.level" :title="t('gitPanel.ciTitle')" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div v-if="st.last_sha" class="last">
           <span class="mono muted">{{ st.last_sha }}</span>
@@ -80,31 +81,31 @@ async function askReview(ref: string, url: string, title: string) {
 
       <section class="block">
         <header class="head">
-          <span class="eyebrow">Modifications <span class="count">{{ st.changed + st.untracked }}</span></span>
-          <button v-if="st.files.length" class="link" title="Ouvrir en grand : fichiers, diff, code" @click="openGitModal()">Agrandir ⤢</button>
+          <span class="eyebrow">{{ t("gitPanel.changes") }} <span class="count">{{ st.changed + st.untracked }}</span></span>
+          <button v-if="st.files.length" class="link" :title="t('gitPanel.expandTitle')" @click="openGitModal()">{{ t("gitPanel.expand") }} ⤢</button>
         </header>
-        <div v-if="!st.files.length" class="muted">Aucune modification locale.</div>
+        <div v-if="!st.files.length" class="muted">{{ t("gitPanel.noChanges") }}</div>
         <ul v-else class="files">
           <li v-for="f in st.files.slice(0, 14)" :key="f.path">
-            <button class="file" :title="`Voir le diff de ${f.path}`" @click="openGitModal(f.path)">
+            <button class="file" :title="t('gitPanel.viewDiff', { path: f.path })" @click="openGitModal(f.path)">
               <span class="st" :class="statusClass(f.status)">{{ statusLetter(f.status) }}</span>
               <span class="mono path">{{ f.path }}</span>
             </button>
           </li>
           <li v-if="st.files.length > 14">
-            <button title="Show all changed files" class="link more" @click="openGitModal()">… et {{ st.changed + st.untracked - 14 }} autres : tout voir</button>
+            <button :title="t('gitPanel.showAllTitle')" class="link more" @click="openGitModal()">{{ t("gitPanel.showAll", { count: st.changed + st.untracked - 14 }) }}</button>
           </li>
         </ul>
       </section>
 
       <section class="block">
-        <div class="eyebrow">{{ kind }} ouvertes <span v-if="fg" class="count">{{ fg.requests.length }}</span></div>
-        <div v-if="!st.remote" class="muted">Pas de remote : rien à afficher.</div>
-        <div v-else-if="!fg" class="muted">Chargement…</div>
+        <div class="eyebrow">{{ t("gitPanel.openRequests", { kind }) }} <span v-if="fg" class="count">{{ fg.requests.length }}</span></div>
+        <div v-if="!st.remote" class="muted">{{ t("gitPanel.noRemote") }}</div>
+        <div v-else-if="!fg" class="muted">{{ t("gitPanel.loading") }}</div>
         <div v-else-if="fg.error" class="err">{{ fg.error }}</div>
-        <div v-else-if="!fg.requests.length" class="muted">Aucune {{ kind }} ouverte.</div>
+        <div v-else-if="!fg.requests.length" class="muted">{{ t("gitPanel.noOpenRequest", { kind }) }}</div>
         <div v-for="r in fg?.requests ?? []" :key="r.ref" class="req" :class="{ mine: r.branch === st.branch }">
-          <button class="req-main" :title="`Ouvrir ${r.ref} sur ${forgeLabel}`" @click="open(r.url)">
+          <button class="req-main" :title="t('gitPanel.openRefOn', { ref: r.ref, forge: forgeLabel })" @click="open(r.url)">
             <span class="req-top">
               <span class="mono ref">{{ r.ref }}</span>
               <span class="chip sm" :class="r.level">{{ r.state }}</span>
@@ -114,35 +115,35 @@ async function askReview(ref: string, url: string, title: string) {
             <span class="muted mono">{{ r.branch }}<template v-if="r.author"> · {{ r.author }}</template></span>
           </button>
           <span class="req-actions">
-            <button class="link" title="Description et commentaires, dans l’app" @click="openIssue(st.root, { type: 'mr', number: r.number }, r.url)">Aperçu</button>
+            <button class="link" :title="t('gitPanel.previewTitle')" @click="openIssue(st.root, { type: 'mr', number: r.number }, r.url)">{{ t("gitPanel.preview") }}</button>
             <button
               v-if="reviewer"
               class="link"
-              :title="`Demander une revue à ${paneName(reviewer)}`"
+              :title="t('gitPanel.askReviewTitle', { agent: paneName(reviewer) })"
               @click="askReview(r.ref, r.url, r.title)"
-            >Demander une revue</button>
+            >{{ t("gitPanel.askReview") }}</button>
             <button
               v-if="!r.draft"
               class="link merge"
               :class="{ ready: r.level === 'ok' }"
-              :title="`Fusionner ${r.ref} (avec confirmation)`"
+              :title="t('gitPanel.mergeTitle', { ref: r.ref })"
               @click="askMerge(state.selectedWorkspaceId!, r)"
-            >Fusionner…</button>
+            >{{ t("gitPanel.merge") }}</button>
           </span>
         </div>
         <template v-if="fg && fg.recent.length">
-          <div class="eyebrow recent-h">Fusionnées / fermées (7 jours)</div>
-          <button v-for="r in fg.recent" :key="r.ref" class="recent" :title="`Ouvrir ${r.ref} sur ${forgeLabel}`" @click="open(r.url)">
+          <div class="eyebrow recent-h">{{ t("gitPanel.recent") }}</div>
+          <button v-for="r in fg.recent" :key="r.ref" class="recent" :title="t('gitPanel.openRefOn', { ref: r.ref, forge: forgeLabel })" @click="open(r.url)">
             <span class="mono ref">{{ r.ref }}</span>
             <span class="chip sm" :class="r.status === 'merged' ? 'merged' : 'muted'">{{ r.state }}</span>
             <span class="recent-t">{{ r.title }}</span>
             <span v-if="r.at" class="muted when">{{ ago(r.at) }}</span>
           </button>
         </template>
-        <div v-if="fg && !fg.error" class="muted foot">{{ forgeLabel }} · mis à jour {{ ago(fg.at) }} · {{ workspaceLabel(state.selectedWorkspaceId) }}</div>
+        <div v-if="fg && !fg.error" class="muted foot">{{ forgeLabel }} · {{ t("gitPanel.updated", { time: ago(fg.at) }) }} · {{ workspaceLabel(state.selectedWorkspaceId) }}</div>
       </section>
     </template>
-    <div v-else class="muted">Ce workspace n’est pas un dépôt Git.</div>
+    <div v-else class="muted">{{ t("gitPanel.notRepository") }}</div>
   </div>
 </template>
 

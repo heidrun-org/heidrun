@@ -8,6 +8,7 @@ import { useReorder } from "../lib/reorder";
 import { agentGroups, allPanes, paneFullName, sendPrompt, state, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
 import { ago } from "../lib/format";
+import { t } from "../i18n/index";
 
 const list = computed(() =>
   notes.showAll ? notes.list : notes.list.filter((n) => n.workspaceId === state.selectedWorkspaceId),
@@ -24,27 +25,27 @@ const expanded = ref<Record<string, boolean>>({});
 
 async function copyNote(n: Note) {
   await copy(n.text);
-  toast("Copié");
+  toast(t("notesPanel.copied"));
 }
 
 function sendTo(n: Note, paneId: string) {
   if (!paneId) return;
   sendPrompt(paneId, `${n.title}\n\n\`\`\`\n${n.text}\n\`\`\``);
   const agent = agents.value.find((a) => a.pane_id === paneId);
-  if (agent) toast(`Note envoyée à ${paneFullName(agent)}`);
+  if (agent) toast(t("notesPanel.sentTo", { agent: paneFullName(agent) }));
 }
 </script>
 
 <template>
   <div class="panel">
     <div class="head">
-      <div class="eyebrow">Notes épinglées</div>
-      <label class="toggle"><input v-model="notes.showAll" type="checkbox" />Tous les workspaces</label>
+      <div class="eyebrow">{{ t("notesPanel.title") }}</div>
+      <label class="toggle"><input v-model="notes.showAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
     </div>
 
     <p v-if="!list.length" class="empty">
-      Sélectionne du texte dans un terminal, puis « Épingler » ou <kbd>⇧⌘P</kbd>.
-      <template v-if="others">({{ others }} note{{ others > 1 ? "s" : "" }} dans d’autres workspaces.)</template>
+      {{ t("notesPanel.emptyBefore") }}<kbd>⇧⌘P</kbd>{{ t("notesPanel.emptyAfter") }}
+      <template v-if="others">{{ t("notesPanel.otherWorkspaces", { count: others }) }}</template>
     </p>
 
     <article
@@ -63,32 +64,32 @@ function sendTo(n: Note, paneId: string) {
       @dragend="drag.onDragEnd(); armed = null"
     >
       <header>
-        <span class="grip" aria-hidden="true" title="Glisser pour réordonner" @mousedown="armed = n.id" @mouseup="armed = null">⋮⋮</span>
+        <span class="grip" aria-hidden="true" :title="t('notesPanel.dragToReorder')" @mousedown="armed = n.id" @mouseup="armed = null">⋮⋮</span>
         <InlineRename
           v-if="renaming === n.id"
           :value="n.title"
-          label="Titre de la note"
+          :label="t('notesPanel.noteTitle')"
           @save="(v) => { renameNote(n.id, v); renaming = null; }"
           @cancel="renaming = null"
         />
-        <h3 v-else title="Double-clic pour renommer" @dblclick="renaming = n.id">{{ n.title }}</h3>
-        <button class="tool" aria-label="Ouvrir en grand" title="Ouvrir en grand" @click="notes.openId = n.id">
+        <h3 v-else :title="t('notesPanel.doubleClickToRename')" @dblclick="renaming = n.id">{{ n.title }}</h3>
+        <button class="tool" :aria-label="t('notesPanel.openLarge')" :title="t('notesPanel.openLarge')" @click="notes.openId = n.id">
           <Icon name="arrows-angle-expand" />
         </button>
-        <ConfirmButton icon="x-lg" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="removeNote(n.id)" />
+        <ConfirmButton icon="x-lg" :armed-label="t('notesPanel.deleteArmed')" :aria-label="t('notesPanel.deleteNote')" @confirm="removeNote(n.id)" />
       </header>
       <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
-      <pre class="mono" :class="{ open: expanded[n.id] }" title="Clic : déplier · double-clic : ouvrir en grand" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>
+      <pre class="mono" :class="{ open: expanded[n.id] }" :title="t('notesPanel.textTitle')" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>
       <div class="actions">
-        <button title="Copy the note" class="btn" @click="copyNote(n)">Copier</button>
-        <label class="sr" :for="`send-${n.id}`">Envoyer à un agent</label>
+        <button :title="t('notesPanel.copyTitle')" class="btn" @click="copyNote(n)">{{ t("notesPanel.copy") }}</button>
+        <label class="sr" :for="`send-${n.id}`">{{ t("notesPanel.sendToAgent") }}</label>
         <select
           v-if="agents.length"
           :id="`send-${n.id}`"
           class="send"
           @change="(e) => { sendTo(n, (e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
         >
-          <option value="">Envoyer à…</option>
+          <option value="">{{ t("notesPanel.sendTo") }}</option>
           <optgroup v-for="g in agentGroups" :key="g.workspace" :label="g.workspace">
             <option v-for="a in g.items" :key="a.pane.pane_id" :value="a.pane.pane_id">{{ a.label }}</option>
           </optgroup>

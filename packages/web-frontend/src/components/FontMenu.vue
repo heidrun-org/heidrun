@@ -1,13 +1,14 @@
 <script setup lang="ts">
 const TTL_OPTIONS = [
-  { v: 5, label: "5 min" },
-  { v: 15, label: "15 min" },
-  { v: 60, label: "1 h" },
-  { v: 0, label: "Jamais" },
+  { v: 5, labelKey: "fontMenu.minutes5" },
+  { v: 15, labelKey: "fontMenu.minutes15" },
+  { v: 60, labelKey: "fontMenu.hour1" },
+  { v: 0, labelKey: "fontMenu.never" },
 ];
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { FONTS, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../stores/settings";
+import { t } from "../i18n/index";
 
 const open = ref(false);
 const root = ref<HTMLElement>();
@@ -21,69 +22,68 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <template>
   <div ref="root" class="wrap">
-    <button class="icon-btn" :class="{ on: open }" aria-label="Réglages du terminal" title="Police et souris du terminal" @click="open = !open">
+    <button class="icon-btn" :class="{ on: open }" :aria-label="t('fontMenu.buttonLabel')" :title="t('fontMenu.buttonTitle')" @click="open = !open">
       <Icon name="type" />
     </button>
-    <div v-if="open" class="menu" role="dialog" aria-label="Police du terminal">
-      <div class="eyebrow">Terminal</div>
-      <label class="sr" for="font-family">Police</label>
+    <div v-if="open" class="menu" role="dialog" :aria-label="t('fontMenu.menuLabel')">
+      <div class="eyebrow">{{ t("fontMenu.terminal") }}</div>
+      <label class="sr" for="font-family">{{ t("fontMenu.font") }}</label>
       <select id="font-family" v-model="settings.fontId">
         <option v-for="f in FONTS" :key="f.id" :value="f.id">{{ f.label }}</option>
       </select>
       <div class="size">
-        <button title="Decrease the font size" class="btn" aria-label="Réduire la police" :disabled="settings.fontSize <= FONT_MIN" @click="zoom(-0.5)">A−</button>
-        <span class="mono val">{{ settings.fontSize }} px</span>
-        <button title="Increase the font size" class="btn" aria-label="Agrandir la police" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
-        <button title="Reset the font size" class="btn" @click="resetZoom()">Réinitialiser</button>
+        <button :title="t('fontMenu.decreaseTitle')" class="btn" :aria-label="t('fontMenu.decreaseLabel')" :disabled="settings.fontSize <= FONT_MIN" @click="zoom(-0.5)">A−</button>
+        <span class="mono val">{{ t("fontMenu.fontSize", { size: settings.fontSize }) }}</span>
+        <button :title="t('fontMenu.increaseTitle')" class="btn" :aria-label="t('fontMenu.increaseLabel')" :disabled="settings.fontSize >= FONT_MAX" @click="zoom(0.5)">A+</button>
+        <button :title="t('fontMenu.resetTitle')" class="btn" @click="resetZoom()">{{ t("fontMenu.reset") }}</button>
       </div>
       <div v-if="settings.fontId === 'inconsolata-powerline'" class="keys">
-        Police à installer sur le Mac (<span class="mono">brew install --cask font-inconsolata-for-powerline</span>
-        ou la version Nerd Font). Sans elle, l’app prend Inconsolata, sans les symboles Powerline.
+        {{ t("fontMenu.powerlineBefore") }}<span class="mono">brew install --cask font-inconsolata-for-powerline</span>{{ t("fontMenu.powerlineAfter") }}
       </div>
       <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${settings.fontSize}px` }">
         ❯ flutter test → 12 passed <template v-if="settings.fontId === 'inconsolata-powerline'">  main </template>
       </div>
-      <div class="keys"><kbd>⌘+</kbd> agrandir · <kbd>⌘−</kbd> réduire · <kbd>⌘0</kbd> par défaut</div>
-      <div class="eyebrow sep">Souris</div>
-      <div class="seg" role="radiogroup" aria-label="Comportement de la souris">
-        <button title="Mouse selects text in the terminal" role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">Sélectionner du texte</button>
-        <button title="Mouse is sent to the application in the terminal" role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">Souris pour l’app</button>
+      <div class="keys"><kbd>⌘+</kbd> {{ t("fontMenu.keyIncrease") }} · <kbd>⌘−</kbd> {{ t("fontMenu.keyDecrease") }} · <kbd>⌘0</kbd> {{ t("fontMenu.keyDefault") }}</div>
+      <div class="eyebrow sep">{{ t("fontMenu.mouse") }}</div>
+      <div class="seg" role="radiogroup" :aria-label="t('fontMenu.mouseLabel')">
+        <button :title="t('fontMenu.mouseSelectTitle')" role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">{{ t("fontMenu.mouseSelect") }}</button>
+        <button :title="t('fontMenu.mouseAppTitle')" role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">{{ t("fontMenu.mouseApp") }}</button>
       </div>
       <div class="keys">
-        <template v-if="settings.mouseMode === 'select'">Glisser sélectionne, <kbd>⌘C</kbd> copie. La molette et les clics ne vont plus à Herdr.</template>
-        <template v-else>Molette et clics vont à Herdr et aux agents. <kbd>⌥</kbd> + glisser pour sélectionner.</template>
+        <template v-if="settings.mouseMode === 'select'">{{ t("fontMenu.mouseSelectHelpBefore") }}<kbd>⌘C</kbd>{{ t("fontMenu.mouseSelectHelpAfter") }}</template>
+        <template v-else>{{ t("fontMenu.mouseAppHelpBefore") }}<kbd>⌥</kbd>{{ t("fontMenu.mouseAppHelpAfter") }}</template>
       </div>
-      <div class="eyebrow sep">Éléments terminés</div>
-      <div class="seg" role="radiogroup" aria-label="Masquer les éléments terminés après">
-        <button title="Hide finished jobs after this delay"
+      <div class="eyebrow sep">{{ t("fontMenu.finished") }}</div>
+      <div class="seg" role="radiogroup" :aria-label="t('fontMenu.finishedLabel')">
+        <button :title="t('fontMenu.finishedTitle')"
           v-for="o in TTL_OPTIONS"
           :key="o.v"
           role="radio"
           :aria-checked="settings.finishedTtl === o.v"
           :class="{ on: settings.finishedTtl === o.v }"
           @click="settings.finishedTtl = o.v"
-        >{{ o.label }}</button>
+        >{{ t(o.labelKey) }}</button>
       </div>
-      <div class="keys">Les travaux terminés (Activité, cartes « À traiter ») disparaissent après ce délai. Les agents bloqués restent.</div>
-      <div class="eyebrow sep">Notifications</div>
+      <div class="keys">{{ t("fontMenu.finishedHelp") }}</div>
+      <div class="eyebrow sep">{{ t("fontMenu.notifications") }}</div>
       <label class="nrow">
-        <span>Rappel si un agent reste bloqué</span>
+        <span>{{ t("fontMenu.notifyBlocked") }}</span>
         <select v-model.number="settings.notifBlockedMin">
-          <option :value="0">jamais</option>
-          <option :value="2">2 min</option>
-          <option :value="5">5 min</option>
-          <option :value="10">10 min</option>
-          <option :value="30">30 min</option>
+          <option :value="0">{{ t("fontMenu.neverLower") }}</option>
+          <option :value="2">{{ t("fontMenu.minutes", { minutes: 2 }) }}</option>
+          <option :value="5">{{ t("fontMenu.minutes", { minutes: 5 }) }}</option>
+          <option :value="10">{{ t("fontMenu.minutes", { minutes: 10 }) }}</option>
+          <option :value="30">{{ t("fontMenu.minutes", { minutes: 30 }) }}</option>
         </select>
       </label>
-      <label class="nrow"><span>Contexte d’un agent au-delà de 80 %</span><input v-model="settings.notifContext" type="checkbox" /></label>
-      <label class="nrow"><span>Quota Claude au-delà de 80 % puis 95 %</span><input v-model="settings.notifQuota" type="checkbox" /></label>
-      <label class="nrow"><span>Résumé de la journée à</span><input v-model.lazy="settings.notifEvening" class="time" placeholder="18:30" /></label>
+      <label class="nrow"><span>{{ t("fontMenu.notifyContext") }}</span><input v-model="settings.notifContext" type="checkbox" /></label>
+      <label class="nrow"><span>{{ t("fontMenu.notifyQuota") }}</span><input v-model="settings.notifQuota" type="checkbox" /></label>
+      <label class="nrow"><span>{{ t("fontMenu.notifyEvening") }}</span><input v-model.lazy="settings.notifEvening" class="time" placeholder="18:30" /></label>
       <label class="nrow">
-        <span>Heures calmes</span>
+        <span>{{ t("fontMenu.quietHours") }}</span>
         <span class="range"><input v-model.lazy="settings.quietFrom" class="time" placeholder="20:00" /> → <input v-model.lazy="settings.quietTo" class="time" placeholder="08:00" /></span>
       </label>
-      <div class="keys">Pendant les heures calmes, aucune notification n’est envoyée. Laisse vide pour désactiver.</div>
+      <div class="keys">{{ t("fontMenu.quietHoursHelp") }}</div>
     </div>
   </div>
 </template>

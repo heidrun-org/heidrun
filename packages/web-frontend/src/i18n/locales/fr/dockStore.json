@@ -1,0 +1,5 @@
+{
+  "tooMany_one": "{count} agent à côté au maximum : retires-en un d’abord",
+  "tooMany_other": "{count} agents à côté au maximum : retires-en un d’abord",
+  "staysDocked": "{name} restera à côté quand tu changeras d’onglet"
+}

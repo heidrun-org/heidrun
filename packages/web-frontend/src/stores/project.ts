@@ -4,6 +4,7 @@ import * as api from "../lib/api";
 import { moveId } from "../lib/reorder";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
 import { allowCommand } from "./guards";
+import { t } from "../i18n/index";
 
 export interface Action {
   id: string;
@@ -292,14 +293,14 @@ export async function restartAction(workspaceId: string, action: Action) {
       if (i === 16) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
     }
     if (!stopped) {
-      toast(`${action.label} ne s’arrête pas : relance annulée (regarde son onglet)`);
+      toast(t("projectStore.restartCancelled", { name: action.label }));
       return;
     }
     await new Promise((r) => setTimeout(r, 250));
     recordRun(workspaceId, action.label, action.command);
     await api.run(pane.pane_id, action.command).catch((e) => toast(String(e)));
     project.busy[pane.pane_id] = true;
-    toast(`${action.label} relancée`);
+    toast(t("projectStore.restarted", { name: action.label }));
   } finally {
     delete project.restarting[pane.pane_id];
   }

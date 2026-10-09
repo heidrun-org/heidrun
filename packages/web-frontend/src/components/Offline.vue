@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import * as api from "../lib/api";
 import { refresh, startHerdr, state } from "../stores/session";
 import { settings } from "../stores/settings";
+import { t } from "../i18n/index";
 
 const paths = ref<Awaited<ReturnType<typeof api.paths>> | null>(null);
 onMounted(async () => {
@@ -12,27 +13,28 @@ onMounted(async () => {
     /* ignore */
   }
 });
+// The command is shown in a monospace font in the middle of the sentence.
+const introParts = computed(() => t("offline.intro").split("{command}"));
 </script>
 
 <template>
   <div class="offline">
     <div class="card">
-      <div class="eyebrow">Connexion</div>
-      <h1>{{ state.starting ? "Démarrage de Herdr…" : "Herdr ne répond pas" }}</h1>
+      <div class="eyebrow">{{ t("offline.connection") }}</div>
+      <h1>{{ state.starting ? t("offline.starting") : t("offline.notResponding") }}</h1>
       <p>
-        Herdr Desk peut démarrer le serveur Herdr en arrière-plan, sans terminal. Il continue de tourner
-        quand tu fermes l’app, jusqu’à <span class="mono">herdr server stop</span> ou au redémarrage du Mac.
+        {{ introParts[0] }}<span class="mono">herdr server stop</span>{{ introParts[1] }}
       </p>
       <div class="row">
-        <button title="Start Herdr" class="btn lg primary" :disabled="state.starting" @click="startHerdr()">Démarrer Herdr</button>
-        <button title="Try to connect again" class="btn lg" :disabled="state.starting" @click="refresh()">Réessayer</button>
+        <button :title="t('offline.startTitle')" class="btn lg primary" :disabled="state.starting" @click="startHerdr()">{{ t("offline.start") }}</button>
+        <button :title="t('offline.retryTitle')" class="btn lg" :disabled="state.starting" @click="refresh()">{{ t("offline.retry") }}</button>
       </div>
-      <label class="check"><input v-model="settings.autoStartHerdr" type="checkbox" />Démarrer Herdr automatiquement à l’ouverture de l’app</label>
+      <label class="check"><input v-model="settings.autoStartHerdr" type="checkbox" />{{ t("offline.autoStart") }}</label>
       <dl v-if="paths">
-        <dt>Socket</dt>
-        <dd class="mono">{{ paths.socket }} <span :class="paths.socket_exists ? 'ok' : 'ko'">{{ paths.socket_exists ? "trouvé" : "absent" }}</span></dd>
-        <dt>Binaire</dt>
-        <dd class="mono">{{ paths.bin }} <span :class="paths.bin_exists ? 'ok' : 'ko'">{{ paths.bin_exists ? "trouvé" : "absent" }}</span></dd>
+        <dt>{{ t("offline.socket") }}</dt>
+        <dd class="mono">{{ paths.socket }} <span :class="paths.socket_exists ? 'ok' : 'ko'">{{ paths.socket_exists ? t("offline.found") : t("offline.missing") }}</span></dd>
+        <dt>{{ t("offline.binary") }}</dt>
+        <dd class="mono">{{ paths.bin }} <span :class="paths.bin_exists ? 'ok' : 'ko'">{{ paths.bin_exists ? t("offline.found") : t("offline.missing") }}</span></dd>
       </dl>
       <p v-if="state.error" class="err mono">{{ state.error }}</p>
     </div>

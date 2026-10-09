@@ -8,6 +8,7 @@ import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../store
 import { settings } from "../stores/settings";
 import { copy } from "../lib/clipboard";
 import { ago } from "../lib/format";
+import { t } from "../i18n/index";
 
 const note = computed(() => notes.list.find((n) => n.id === notes.openId) ?? null);
 const agents = computed(() => allPanes.value.filter((p) => p.agent));
@@ -96,7 +97,7 @@ function saveEdit() {
 async function copyNote() {
   if (!note.value) return;
   await copy(note.value.text);
-  toast("Copié");
+  toast(t("noteModal.copied"));
 }
 
 function sendTo(paneId: string) {
@@ -104,7 +105,7 @@ function sendTo(paneId: string) {
   if (!n || !paneId) return;
   sendPrompt(paneId, `${n.title}\n\n\`\`\`\n${n.text}\n\`\`\``);
   const agent = agents.value.find((a) => a.pane_id === paneId);
-  if (agent) toast(`Note envoyée à ${paneFullName(agent)}`);
+  if (agent) toast(t("noteModal.sentTo", { agent: paneFullName(agent) }));
 }
 
 function remove() {
@@ -121,22 +122,22 @@ function remove() {
         <InlineRename
           v-if="renaming"
           :value="note.title"
-          label="Titre de la note"
+          :label="t('noteModal.noteTitle')"
           @save="(v) => { renameNote(note!.id, v); renaming = false; }"
           @cancel="renaming = false"
         />
         <div v-else class="titles">
-          <h2 title="Double-clic pour renommer" @dblclick="renaming = true">{{ note.title }}</h2>
+          <h2 :title="t('noteModal.doubleClickToRename')" @dblclick="renaming = true">{{ note.title }}</h2>
           <div class="origin">{{ note.origin }} · {{ ago(note.createdAt) }}</div>
         </div>
-        <button class="x" aria-label="Fermer" title="Fermer (Échap)" @click="close">
+        <button class="x" :aria-label="t('noteModal.close')" :title="t('noteModal.closeTitle')" @click="close">
           <Icon name="x-lg" />
         </button>
       </header>
 
       <div class="body">
         <template v-if="editing">
-          <label class="sr" for="note-edit">Texte de la note</label>
+          <label class="sr" for="note-edit">{{ t("noteModal.noteText") }}</label>
           <textarea id="note-edit" v-model="draft" class="mono" spellcheck="false" autofocus></textarea>
         </template>
         <pre v-else class="mono" @dblclick="startEdit">{{ note.text }}</pre>
@@ -144,26 +145,26 @@ function remove() {
 
       <footer class="foot">
         <template v-if="editing">
-          <button title="Cancel editing the note" class="btn" @click="editing = false">Annuler</button>
-          <button title="Save the note" class="btn primary" @click="saveEdit">Enregistrer</button>
+          <button :title="t('noteModal.cancelTitle')" class="btn" @click="editing = false">{{ t("noteModal.cancel") }}</button>
+          <button :title="t('noteModal.saveTitle')" class="btn primary" @click="saveEdit">{{ t("noteModal.save") }}</button>
         </template>
         <template v-else>
-          <button title="Copy the note" class="btn" @click="copyNote">Copier</button>
-          <button title="Edit the note" class="btn" @click="startEdit">Modifier</button>
-          <label class="sr" for="modal-send">Envoyer à un agent</label>
+          <button :title="t('noteModal.copyTitle')" class="btn" @click="copyNote">{{ t("noteModal.copy") }}</button>
+          <button :title="t('noteModal.editTitle')" class="btn" @click="startEdit">{{ t("noteModal.edit") }}</button>
+          <label class="sr" for="modal-send">{{ t("noteModal.sendToAgent") }}</label>
           <select
             v-if="agents.length"
             id="modal-send"
             class="send"
             @change="(e) => { sendTo((e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
           >
-            <option value="">Envoyer à un agent…</option>
+            <option value="">{{ t("noteModal.sendToAgentChoice") }}</option>
             <optgroup v-for="g in agentGroups" :key="g.workspace" :label="g.workspace">
               <option v-for="a in g.items" :key="a.pane.pane_id" :value="a.pane.pane_id">{{ a.label }}</option>
             </optgroup>
           </select>
           <span class="grow"></span>
-          <ConfirmButton label="Supprimer" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="remove" />
+          <ConfirmButton :label="t('noteModal.delete')" :armed-label="t('noteModal.deleteArmed')" :aria-label="t('noteModal.deleteNote')" @confirm="remove" />
         </template>
       </footer>
     </section>

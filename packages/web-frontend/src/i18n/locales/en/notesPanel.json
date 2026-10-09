@@ -1,0 +1,21 @@
+{
+  "copied": "Copied",
+  "sentTo": "Note sent to {agent}",
+  "title": "Pinned notes",
+  "allWorkspaces": "All workspaces",
+  "emptyBefore": "Select some text in a terminal, then “Pin” or ",
+  "emptyAfter": ".",
+  "otherWorkspaces_one": "({count} note in other workspaces.)",
+  "otherWorkspaces_other": "({count} notes in other workspaces.)",
+  "dragToReorder": "Drag to reorder",
+  "noteTitle": "Note title",
+  "doubleClickToRename": "Double-click to rename",
+  "openLarge": "Open in large view",
+  "deleteArmed": "Delete?",
+  "deleteNote": "Delete the note",
+  "textTitle": "Click: expand · double-click: open in large view",
+  "copyTitle": "Copy the note",
+  "copy": "Copy",
+  "sendToAgent": "Send to an agent",
+  "sendTo": "Send to…"
+}

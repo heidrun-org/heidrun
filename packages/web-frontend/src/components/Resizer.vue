@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from "vue";
+import { t } from "../i18n/index";
 
 // Vertical drag handle between two columns. `side` says which column it resizes:
 // "left" grows when dragged right, "right" grows when dragged left.
@@ -58,9 +59,9 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
     :aria-valuenow="width"
     :aria-valuemin="min"
     :aria-valuemax="max"
-    :aria-label="side === 'left' ? 'Largeur de la barre de gauche' : 'Largeur du panneau de droite'"
+    :aria-label="side === 'left' ? t('resizer.leftWidth') : t('resizer.rightWidth')"
     tabindex="0"
-    title="Glisser pour redimensionner · double-clic pour revenir à la taille par défaut"
+    :title="t('resizer.title')"
     @pointerdown="onDown"
     @pointermove="onMove"
     @pointerup="onUp"

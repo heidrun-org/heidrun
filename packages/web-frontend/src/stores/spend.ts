@@ -136,7 +136,7 @@ function rows(from: number, quotaPercent?: number): { total: number; rows: Spend
   return { total, rows: list };
 }
 
-const fiveHour = computed(() => quotas.value.find((q) => q.provider === "claude")?.windows.find((w) => w.name === "Session 5 h"));
+const fiveHour = computed(() => quotas.value.find((q) => q.provider === "claude")?.windows.find((w) => w.id === "session"));
 
 /** Start of the current 5 h window (from its reset time), or the last 5 h. */
 const windowStart = computed(() => {

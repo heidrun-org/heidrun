@@ -29,6 +29,7 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
 import { resolvedTheme } from "../stores/theme";
+import { t } from "../i18n/index";
 
 const TERMINAL_THEMES = {
   dark: {
@@ -138,7 +139,7 @@ async function attach(takeover = false, quiet = false) {
   try {
     await invoke("pty_spawn", { id, terminalId: props.terminalId, cols: term.cols, rows: term.rows, takeover });
   } catch (e) {
-    term.writeln(`\r\n\x1b[31mImpossible d’attacher le terminal : ${e}\x1b[0m`);
+    term.writeln(`\r\n\x1b[31m${t("terminalView.attachFailed", { error: String(e) })}\x1b[0m`);
     exited.value = true;
   }
 }
@@ -207,7 +208,7 @@ onMounted(async () => {
                 },
                 hover: () => {
                   overLink = true;
-                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, "↩ Revenir à la saisie", () => backToPrompt(steps), undefined, true);
+                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, t("terminalView.backToPrompt"), () => backToPrompt(steps), undefined, true);
                 },
                 leave: () => {
                   overLink = false;
@@ -228,7 +229,7 @@ onMounted(async () => {
           const link = {
             s: agentRow.start,
             e: e0,
-            label: agentRow.current ? `● ${agentRow.name} (affiché)` : `▷ Voir ${agentRow.name}`,
+            label: agentRow.current ? t("terminalView.agentShown", { name: agentRow.name }) : t("terminalView.showAgent", { name: agentRow.name }),
             run: () => switchToAgent(agentRow.name),
             underline: true,
             after: true,
@@ -245,7 +246,7 @@ onMounted(async () => {
             const link = {
               s: s0,
               e: e0,
-              label: `▷ Exécuter ${short}`,
+              label: t("terminalView.runCommand", { command: short }),
               run: () => sendPrompt(props.paneId, `! ${block.command}`),
               underline: true,
             };
@@ -257,7 +258,7 @@ onMounted(async () => {
       const inline = props.agent ? findInlineShell(text) : [];
       for (const c of inline) {
         const short = c.command.length > 48 ? `${c.command.slice(0, 48)}…` : c.command;
-        items.push({ s: c.start, e: c.end, label: `▷ Exécuter ${short}`, run: () => sendPrompt(props.paneId, `! ${c.command}`), underline: true });
+        items.push({ s: c.start, e: c.end, label: t("terminalView.runCommand", { command: short }), run: () => sendPrompt(props.paneId, `! ${c.command}`), underline: true });
       }
       const inCommand = (s: number, e: number) => inline.some((c) => s < c.end && e > c.start);
       for (const r of findRefs(text, refCtx)) {
@@ -268,11 +269,11 @@ onMounted(async () => {
         items.push({
           s: r.start,
           e: r.end,
-          label: `↗ Ouvrir ${what}`,
+          label: t("terminalView.openLink", { name: what }),
           run: () => openUrl(r.url!).catch(() => {}),
           underline: true,
           // Issues and MR: also previewed in the app; ⌘-click goes straight there.
-          alt: preview ? { label: "⧉ Aperçu", run: preview } : undefined,
+          alt: preview ? { label: t("terminalView.preview"), run: preview } : undefined,
           meta: preview,
         });
       }
@@ -281,12 +282,12 @@ onMounted(async () => {
         if (items.some((i) => f.start < i.e && f.end > i.s)) continue;
         const name = f.path.split("/").pop() + (f.line ? `:${f.line}` : "");
         const open = () => openFileRef(props.cwd, f.path, f.line);
-        items.push({ s: f.start, e: f.end, label: `📄 Ouvrir ${name}`, run: open, underline: true, meta: open });
+        items.push({ s: f.start, e: f.end, label: t("terminalView.openFile", { name }), run: open, underline: true, meta: open });
       }
       if (isClaude()) {
         for (const c of findCommands(text, commands)) {
           if (items.some((i) => c.start < i.e && c.end > i.s)) continue;
-          items.push({ s: c.start, e: c.end, label: `▷ Lancer ${c.command}`, run: () => sendPrompt(props.paneId, c.command), underline: true });
+          items.push({ s: c.start, e: c.end, label: t("terminalView.launchCommand", { command: c.command }), run: () => sendPrompt(props.paneId, c.command), underline: true });
         }
       }
       if (props.agent) {
@@ -300,7 +301,7 @@ onMounted(async () => {
             items.push({
               s: step.start,
               e: end,
-              label: `▷ Faire le point ${step.number}`,
+              label: t("terminalView.doStep", { number: step.number }),
               run: () => sendPrompt(props.paneId, `Vas-y pour le point ${step.number} : « ${snippet} »`),
               underline: false,
             });
@@ -551,7 +552,7 @@ async function switchToAgent(name: string) {
     // pressing Enter on something unknown.
     if (!after) {
       await pressKeys([up]);
-      toast("Impossible d’atteindre la liste des agents : utilise ↓ puis Entrée");
+      toast(t("terminalView.agentListUnreachable"));
       return;
     }
     list = { names: after.names, selected: after.selected ?? 0 };
@@ -762,7 +763,7 @@ watch(
       }
     }
     search.jump = null;
-    toast("Résultat plus haut dans l’historique : fais défiler le panneau pour le voir");
+    toast(t("terminalView.resultAbove"));
   },
   { immediate: true },
 );
@@ -888,18 +889,18 @@ onBeforeUnmount(() => {
       @mouseleave="leaveChip()"
       @mousedown.stop.prevent
     >
-      <button class="chip" type="button" :title="chip.alt ? '' : '⌘-clic sur le texte fait la même chose'" @click="runChip(false)">{{ chip.label }}</button>
-      <button v-if="chip.alt" class="chip" type="button" title="Aperçu dans l’app (⌘-clic sur le texte)" @click="runChip(true)">{{ chip.alt.label }}</button>
+      <button class="chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
+      <button v-if="chip.alt" class="chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
     </div>
     <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
-      <button title="Copy the selected text" class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
-      <button title="Pin the selected text" class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
+      <button :title="t('terminalView.copyTitle')" class="btn" @click="copySelection">{{ t("terminalView.copy") }} <kbd>⌘C</kbd></button>
+      <button :title="t('terminalView.pinTitle')" class="btn" @click="pinSelection">{{ t("terminalView.pin") }} <kbd>⇧⌘P</kbd></button>
     </div>
     <div v-if="exited" class="overlay">
-      <p>Terminal détaché.</p>
+      <p>{{ t("terminalView.detached") }}</p>
       <div class="actions">
-        <button title="Attach to this terminal" class="btn" @click="attach(false)">Rattacher</button>
-        <button title="Take control of this terminal" class="btn" @click="attach(true)">Prendre le contrôle</button>
+        <button :title="t('terminalView.reattachTitle')" class="btn" @click="attach(false)">{{ t("terminalView.reattach") }}</button>
+        <button :title="t('terminalView.takeControlTitle')" class="btn" @click="attach(true)">{{ t("terminalView.takeControl") }}</button>
       </div>
     </div>
   </div>

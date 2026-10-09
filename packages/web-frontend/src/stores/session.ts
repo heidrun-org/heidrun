@@ -7,6 +7,7 @@ import { settings } from "./settings";
 import { agentKind, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
 import { allowCommand } from "./guards";
+import { t } from "../i18n/index";
 import type {
   AgentInfo,
   AgentStatus,
@@ -260,8 +261,8 @@ export const counts = computed(() => {
 });
 
 export function tabLabel(id: string): string {
-  const t = state.snapshot?.tabs.find((x) => x.tab_id === id);
-  return t ? t.label || `onglet ${t.number}` : "";
+  const tab = state.snapshot?.tabs.find((x) => x.tab_id === id);
+  return tab ? tab.label || t("sessionStore.tabNumber", { number: tab.number }) : "";
 }
 
 export function workspaceLabel(id: string): string {
@@ -397,8 +398,8 @@ export const quotas = computed<QuotaBlock[]>(() => {
     // Once a window's reset time has passed it is back to 0 %, until the next report.
     const value = (w: WindowReading) => (w.resetsAt && w.resetsAt < now ? 0 : w.percent);
     const windows: QuotaBlock["windows"] = [];
-    if (claudeWindows.q5h) windows.push({ name: "Session 5 h", percent: value(claudeWindows.q5h), resetsAt: claudeWindows.q5h.resetsAt });
-    if (claudeWindows.q7d) windows.push({ name: "Semaine", percent: value(claudeWindows.q7d), resetsAt: claudeWindows.q7d.resetsAt });
+    if (claudeWindows.q5h) windows.push({ id: "session", name: t("sessionStore.window.session"), percent: value(claudeWindows.q5h), resetsAt: claudeWindows.q5h.resetsAt });
+    if (claudeWindows.q7d) windows.push({ id: "week", name: t("sessionStore.window.week"), percent: value(claudeWindows.q7d), resetsAt: claudeWindows.q7d.resetsAt });
     const cost = allPanes.value.reduce((sum, p) => sum + (num(p.tokens?.hd_cost) ?? 0), 0);
     const updatedAt = Math.max(claudeWindows.q5h?.at ?? 0, claudeWindows.q7d?.at ?? 0) || undefined;
     blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt });
@@ -407,8 +408,8 @@ export const quotas = computed<QuotaBlock[]>(() => {
   const c = state.codex;
   if (c?.primary || c?.secondary) {
     const windows: QuotaBlock["windows"] = [];
-    if (c.primary) windows.push({ name: "Session 5 h", percent: c.primary.used_percent, resetsAt: c.primary.resets_at ?? undefined });
-    if (c.secondary) windows.push({ name: "Semaine", percent: c.secondary.used_percent, resetsAt: c.secondary.resets_at ?? undefined });
+    if (c.primary) windows.push({ id: "session", name: t("sessionStore.window.session"), percent: c.primary.used_percent, resetsAt: c.primary.resets_at ?? undefined });
+    if (c.secondary) windows.push({ id: "week", name: t("sessionStore.window.week"), percent: c.secondary.used_percent, resetsAt: c.secondary.resets_at ?? undefined });
     blocks.push({ provider: "codex", label: c.plan ? `Codex · ${c.plan}` : "Codex", windows, updatedAt: c.updated_at ?? undefined });
   }
   return blocks;
@@ -616,10 +617,10 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
     state.questions[paneId] = { text: question, at: Date.now() };
     // Shown again even if an earlier "terminé" card was closed.
     delete state.dismissed[paneId];
-    if (notifyQuestion) notify(`${name} te pose une question`, `${ws ? `${ws} · ` : ""}${question}`);
+    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
   } else {
     delete state.questions[paneId];
-    if (notifyDone) notify(`${name} a terminé`, ws);
+    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
   }
 }
 
@@ -636,12 +637,12 @@ function applySnapshot(snap: SessionSnapshot) {
     if (!pane.agent) continue;
     const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
     const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
-    const t = snap.tabs.find((x) => x.tab_id === pane.tab_id);
+    const tab = snap.tabs.find((x) => x.tab_id === pane.tab_id);
     trackRun(pane.pane_id, before, after, now, {
       name: paneName(view),
       kind: agentKind(view),
       workspace: ws,
-      tab: t ? t.label || `onglet ${t.number}` : "",
+      tab: tab ? tab.label || t("sessionStore.tabNumber", { number: tab.number }) : "",
       workspaceId: pane.workspace_id,
       cwd: pane.foreground_cwd || pane.cwd || null,
     });
@@ -657,7 +658,7 @@ function applySnapshot(snap: SessionSnapshot) {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
-        notify(`${paneName(view)} attend une décision`, ws);
+        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
       }
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).
@@ -815,8 +816,8 @@ async function guard<T>(fn: () => Promise<T>): Promise<T | undefined> {
 }
 
 function humanError(e: string): string {
-  if (e.includes("agent_blocked")) return "L’agent attend une décision : réponds-lui d’abord.";
-  if (e.includes("herdr_unreachable")) return "Herdr ne répond pas. Lance « herdr » dans un terminal.";
+  if (e.includes("agent_blocked")) return t("sessionStore.error.agentBlocked");
+  if (e.includes("herdr_unreachable")) return t("sessionStore.error.herdrUnreachable");
   return e;
 }
 
@@ -941,7 +942,7 @@ export async function broadcastPrompt(
       byCwd.set(k, [...(byCwd.get(k) ?? []), id]);
     }
     for (const [cwd, ids] of byCwd) {
-      const label = ids.length > 1 ? `${ids.length} agents · ${whereOf(ids[0]).where}` : whereOf(ids[0]).where;
+      const label = ids.length > 1 ? t("sessionStore.severalAgents", { count: ids.length, where: whereOf(ids[0]).where }) : whereOf(ids[0]).where;
       if (!(await allowCommand(shell[1], cwd || null, label))) ids.forEach((id) => refused.add(id));
     }
     if (refused.size === paneIds.length) return res;
@@ -1008,7 +1009,7 @@ export function addWatch(paneId: string, regex: string) {
     .waitForOutput(paneId, regex)
     .then((line) => {
       const pane = allPanes.value.find((p) => p.pane_id === paneId);
-      notify(`${pane ? paneName(pane) : paneId} : motif trouvé`, line ?? regex);
+      notify(t("sessionStore.notify.patternFound", { name: pane ? paneName(pane) : paneId }), line ?? regex);
     })
     .catch(() => {})
     .finally(() => {
@@ -1026,7 +1027,7 @@ export async function askAgentToFix(sourcePaneId: string, agentPaneId: string) {
     `Voici la fin de sa sortie. Trouve la cause et corrige-la.\n\n\`\`\`\n${text.trim()}\n\`\`\``;
   await sendPrompt(agentPaneId, message);
   const agent = allPanes.value.find((p) => p.pane_id === agentPaneId);
-  if (agent) toast(`Sortie envoyée à ${paneName(agent)}`);
+  if (agent) toast(t("sessionStore.outputSent", { name: paneName(agent) }));
 }
 
 // ---- Recent commands (local convenience only) ----------------------------

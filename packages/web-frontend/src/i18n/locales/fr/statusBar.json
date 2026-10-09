@@ -1,0 +1,10 @@
+{
+  "reset": "· reset {time}",
+  "estimatedCost": "coût estimé",
+  "costValue": "{value} $",
+  "enableTracking": "Claude : activer le suivi des quotas",
+  "enableTrackingTitle": "Activer le suivi de l’utilisation de Claude",
+  "waitingForData": "Claude : en attente de données",
+  "connected": "connecté",
+  "offline": "hors ligne"
+}

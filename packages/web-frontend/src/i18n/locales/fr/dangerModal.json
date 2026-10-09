@@ -1,0 +1,12 @@
+{
+  "forbidden": "Commande interdite",
+  "risky": "Commande à risque",
+  "notSent": "Cette commande n’est pas envoyée",
+  "runQuestion": "Exécuter cette commande ?",
+  "blockedHint": "Le projet l’interdit dans {file} ({setting}). Lance-la toi-même dans un terminal si c’est voulu.",
+  "close": "Fermer",
+  "cancel": "Annuler",
+  "cancelTitle": "Annuler et ne pas exécuter la commande",
+  "runAnyway": "Exécuter quand même",
+  "runAnywayTitle": "Exécuter la commande quand même"
+}

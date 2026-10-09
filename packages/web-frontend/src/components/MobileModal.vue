@@ -3,6 +3,7 @@ import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { mobile, mobileStatus, revokeMobile, setMobile } from "../stores/mobile";
 import { ago } from "../lib/format";
+import { t } from "../i18n/index";
 
 const st = computed(() => mobile.status);
 let timer = 0;
@@ -33,19 +34,18 @@ function onKey(e: KeyboardEvent) {
       <header>
         <div>
           <div class="eyebrow">iPhone · iPad</div>
-          <h2 id="mob-title">Accès mobile</h2>
+          <h2 id="mob-title">{{ t("mobileModal.title") }}</h2>
         </div>
-        <button title="Close the window (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button :title="t('mobileModal.closeTitle')" class="close" :aria-label="t('mobileModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
 
       <p class="lead">
-        Suivre les agents depuis le téléphone : ce qui attend une décision, autoriser ou refuser, envoyer une consigne,
-        lire la fin de la sortie d’un agent. Seulement par Tailscale, jamais sur Internet, et avec un appairage.
+        {{ t("mobileModal.lead") }}
       </p>
 
       <label class="switch">
         <input type="checkbox" :checked="st?.enabled" :disabled="mobile.busy" @change="setMobile(($event.target as HTMLInputElement).checked)" />
-        <span>Activer l’accès mobile</span>
+        <span>{{ t("mobileModal.enable") }}</span>
       </label>
 
       <p v-if="st?.error" class="err">{{ st.error }}</p>
@@ -55,29 +55,29 @@ function onKey(e: KeyboardEvent) {
           <!-- eslint-disable-next-line vue/no-v-html : SVG produced by the app itself -->
           <div class="qr" v-html="st.qr"></div>
           <ol>
-            <li>Sur l’iPhone ou l’iPad, ouvre <b>Tailscale</b> et vérifie qu’il est connecté.</li>
-            <li>Scanne ce QR code avec l’appareil photo, puis ouvre le lien dans Safari.</li>
-            <li>Partager → <b>Sur l’écran d’accueil</b> : Herdr Desk s’ouvre ensuite comme une app.</li>
+            <li>{{ t("mobileModal.pairStep1Before") }}<b>Tailscale</b>{{ t("mobileModal.pairStep1After") }}</li>
+            <li>{{ t("mobileModal.pairStep2") }}</li>
+            <li>{{ t("mobileModal.pairStep3Before") }}<b>{{ t("mobileModal.pairStep3Bold") }}</b>{{ t("mobileModal.pairStep3After") }}</li>
           </ol>
         </div>
         <p class="url mono">{{ st.url }}</p>
-        <p class="hint">Le QR code contient la clé d’appairage : ne le montre pas, ne le partage pas.</p>
-        <p v-if="mobile.lastSeen" class="hint">Dernière connexion d’un appareil : {{ ago(mobile.lastSeen) }}</p>
+        <p class="hint">{{ t("mobileModal.qrSecret") }}</p>
+        <p v-if="mobile.lastSeen" class="hint">{{ t("mobileModal.lastSeen", { time: ago(mobile.lastSeen) }) }}</p>
         <div class="row">
-          <button class="btn" :disabled="mobile.busy" title="Les appareils déjà appairés devront rescanner le QR code" @click="revokeMobile">
-            Révoquer les appareils appairés
+          <button class="btn" :disabled="mobile.busy" :title="t('mobileModal.revokeTitle')" @click="revokeMobile">
+            {{ t("mobileModal.revoke") }}
           </button>
         </div>
       </template>
       <template v-else-if="st?.enabled && !st.running && !st.error">
-        <p class="hint">Démarrage…</p>
+        <p class="hint">{{ t("mobileModal.starting") }}</p>
       </template>
       <template v-else-if="!st?.enabled">
         <div class="steps">
-          <div class="eyebrow">Avant d’activer</div>
+          <div class="eyebrow">{{ t("mobileModal.beforeEnable") }}</div>
           <ol>
-            <li>Installe <b>Tailscale</b> sur ce Mac et sur l’iPhone / l’iPad (App Store), connecte-les avec le même compte (Google, Apple…).</li>
-            <li>Active ici : macOS peut demander d’autoriser les connexions entrantes pour Herdr Desk, réponds Autoriser.</li>
+            <li>{{ t("mobileModal.setupStep1Before") }}<b>Tailscale</b>{{ t("mobileModal.setupStep1After") }}</li>
+            <li>{{ t("mobileModal.setupStep2") }}</li>
           </ol>
         </div>
       </template>

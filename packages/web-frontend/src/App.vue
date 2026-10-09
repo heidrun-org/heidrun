@@ -57,6 +57,7 @@ import FilesModal from "./components/FilesModal.vue";
 import { files, openFiles } from "./stores/files";
 import { mobile, startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
+import { t } from "./i18n/index";
 
 function codeZoom(dir: 1 | -1) {
   settings.codeFontSize = Math.min(24, Math.max(9, Math.round((settings.codeFontSize + dir) * 2) / 2));
@@ -127,7 +128,7 @@ function onKey(e: KeyboardEvent) {
           pinText(text, pane);
           settings.rightOpen = true;
           settings.rightTab = "notes";
-        } else toast("Sélectionne d’abord du texte dans un terminal");
+        } else toast(t("app.selectTextFirst"));
       });
     case "KeyF":
       if (!e.shiftKey) return;
@@ -154,7 +155,7 @@ function onKey(e: KeyboardEvent) {
         } else {
           armedClose = id;
           armedAt = Date.now();
-          toast("⌘W encore une fois pour fermer ce panneau");
+          toast(t("app.pressAgainToClose"));
         }
       });
     case "KeyB":

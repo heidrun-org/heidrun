@@ -2,6 +2,7 @@ import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, sendPrompt, toast } from "./session";
+import { t } from "../i18n/index";
 
 interface StatuslineState {
   installed: boolean;
@@ -38,7 +39,7 @@ export async function enableClaudeLink() {
   claudeLink.busy = true;
   try {
     apply(await invoke<StatuslineState>("claude_statusline_install"));
-    toast("Suivi Claude activé : les chiffres arrivent à la prochaine réponse de Claude");
+    toast(t("claudeStore.trackingEnabled"));
   } catch (e) {
     toast(String(e));
   } finally {
@@ -49,7 +50,7 @@ export async function enableClaudeLink() {
 export async function setClaudeLineHidden(hidden: boolean) {
   try {
     apply(await invoke<StatuslineState>("claude_statusline_set_hidden", { hidden }));
-    toast(hidden ? "Status line masquée dans le terminal (à la prochaine réponse de Claude)" : "Status line réaffichée dans le terminal");
+    toast(hidden ? t("claudeStore.statusLineHidden") : t("claudeStore.statusLineShown"));
   } catch (e) {
     toast(String(e));
   }
@@ -133,7 +134,7 @@ export async function loadRcStartup() {
 export async function setRcStartup(enabled: boolean) {
   try {
     remote.atStartup = await invoke<boolean | null>("claude_set_rc_startup", { enabled });
-    toast(enabled ? "Remote Control activé pour les nouvelles sessions Claude" : "Remote Control automatique désactivé");
+    toast(enabled ? t("claudeStore.remoteControlEnabled") : t("claudeStore.remoteControlDisabled"));
   } catch (e) {
     toast(String(e));
   }
@@ -151,7 +152,7 @@ export async function disableClaudeLink() {
   claudeLink.busy = true;
   try {
     apply(await invoke<StatuslineState>("claude_statusline_uninstall"));
-    toast("Suivi Claude désactivé : ta status line d’origine est rétablie");
+    toast(t("claudeStore.trackingDisabled"));
   } catch (e) {
     toast(String(e));
   } finally {

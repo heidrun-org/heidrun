@@ -9,8 +9,16 @@ import { settings } from "../stores/settings";
 import { allPanes, selectPane, toast } from "../stores/session";
 import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
+import { t } from "../i18n/index";
 
 type Period = "today" | "7" | "30" | "90" | "365";
+const PERIODS: [Period, string][] = [
+  ["today", "historyModal.periodToday"],
+  ["7", "historyModal.period7"],
+  ["30", "historyModal.period30"],
+  ["90", "historyModal.period90"],
+  ["365", "historyModal.period365"],
+];
 const period = ref<Period>("today");
 const ws = ref("");
 const kind = ref("");
@@ -72,9 +80,9 @@ const leverage = computed(() => (yourMs.value > 0 ? humanMs.value / yourMs.value
 function delta(now: number, before: number): { txt: string; up: boolean } | null {
   if (!before) return null;
   const pct = Math.round(((now - before) / before) * 100);
-  return { txt: `${pct > 0 ? "+" : ""}${pct} %`, up: pct > 0 };
+  return { txt: t("historyModal.percent", { value: `${pct > 0 ? "+" : ""}${pct}` }), up: pct > 0 };
 }
-const prevLabel = computed(() => (period.value === "today" ? "vs hier à la même heure" : `vs les ${period.value} jours d’avant`));
+const prevLabel = computed(() => (period.value === "today" ? t("historyModal.vsYesterday") : t("historyModal.vsPreviousDays", { days: period.value })));
 /** Cost over day / week / month, whatever the period chosen (same workspace and agent filters). */
 const costBy = computed(() => {
   const sum = (since: number) =>
@@ -88,7 +96,7 @@ const groupBy = ref<"ws" | "feature">("ws");
 const features = computed(() => byFeature(inPeriod.value.filter((r) => (!ws.value || r.ws === ws.value) && matches(r))));
 const featMax = computed(() => Math.max(1, ...features.value.map((f) => f.ms)));
 function pickFeature(branch: string) {
-  q.value = q.value === branch ? "" : branch === "sans branche" ? "" : branch;
+  q.value = q.value === branch ? "" : branch === t("historyStore.noBranch") ? "" : branch;
 }
 
 const rw = computed(() => rework(runs.value));
@@ -117,7 +125,7 @@ const d2 = (n: number) => String(n).padStart(2, "0");
 const when = (r: HistoryRun) => {
   const s = new Date(r.start);
   const e = new Date(r.end);
-  const day = startOfDay(r.end) === startOfDay() ? "aujourd’hui" : `${d2(e.getDate())}/${d2(e.getMonth() + 1)}`;
+  const day = startOfDay(r.end) === startOfDay() ? t("historyModal.today") : `${d2(e.getDate())}/${d2(e.getMonth() + 1)}`;
   const endTxt = r.live ? "…" : `${d2(e.getHours())}:${d2(e.getMinutes())}`;
   return `${day} ${r.startUnknown ? "≤ " : ""}${d2(s.getHours())}:${d2(s.getMinutes())}–${endTxt}`;
 };
@@ -135,10 +143,10 @@ async function exportCsv() {
   const name = `herdr-desk-historique-${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}.csv`;
   try {
     const path = await invoke<string>("history_export", { csv: toCsv(runs.value.filter((r) => !r.live)), name });
-    toast(`Exporté : ${path}`);
+    toast(t("historyModal.exported", { path }));
     revealItemInDir(path).catch(() => {});
   } catch (e) {
-    toast(`Export impossible : ${e}`);
+    toast(t("historyModal.exportFailed", { error: String(e) }));
   }
 }
 
@@ -162,158 +170,158 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="modal" role="dialog" aria-label="Historique" tabindex="-1">
+    <div ref="el" class="modal" role="dialog" :aria-label="t('historyModal.title')" tabindex="-1">
       <header>
-        <h2>Historique</h2>
-        <div class="seg" role="radiogroup" aria-label="Période">
-          <button title="Show the history for this period" v-for="[v, l] in ([['today', 'Aujourd’hui'], ['7', '7 jours'], ['30', '30 jours'], ['90', '90 jours'], ['365', '1 an']] as [Period, string][])" :key="v" :class="{ on: period === v }" @click="period = v">{{ l }}</button>
+        <h2>{{ t("historyModal.title") }}</h2>
+        <div class="seg" role="radiogroup" :aria-label="t('historyModal.periodLabel')">
+          <button :title="t('historyModal.periodTitle')" v-for="[v, l] in PERIODS" :key="v" :class="{ on: period === v }" @click="period = v">{{ t(l) }}</button>
         </div>
-        <button title="Close the history (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button :title="t('historyModal.closeTitle')" class="close" :aria-label="t('historyModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="filters">
-        <select v-model="ws" aria-label="Workspace">
-          <option value="">Tous les workspaces</option>
+        <select v-model="ws" :aria-label="t('historyModal.workspace')">
+          <option value="">{{ t("historyModal.allWorkspaces") }}</option>
           <option v-for="w in workspaces" :key="w" :value="w">{{ w }}</option>
         </select>
-        <select v-model="kind" aria-label="Agent">
-          <option value="">Tous les agents</option>
+        <select v-model="kind" :aria-label="t('historyModal.agent')">
+          <option value="">{{ t("historyModal.allAgents") }}</option>
           <option v-for="k in kinds" :key="k" :value="k">{{ k }}</option>
         </select>
-        <input v-model="q" placeholder="Rechercher dans les consignes, branches…" spellcheck="false" />
-        <button class="btn" :class="{ on: showCalib }" title="Hypothèses des estimations" @click="showCalib = !showCalib">⚙ Hypothèses</button>
-        <button title="Export the history as a CSV file" class="btn" :disabled="!runs.length" @click="exportCsv">Export CSV ⤓</button>
+        <input v-model="q" :placeholder="t('historyModal.searchPlaceholder')" spellcheck="false" />
+        <button class="btn" :class="{ on: showCalib }" :title="t('historyModal.assumptionsTitle')" @click="showCalib = !showCalib">{{ t("historyModal.assumptions") }}</button>
+        <button :title="t('historyModal.exportTitle')" class="btn" :disabled="!runs.length" @click="exportCsv">{{ t("historyModal.export") }}</button>
       </div>
 
       <div v-if="showCalib" class="calib">
-        <label>1 h d’agent ≈ <input v-model.number="settings.histHumanFactor" type="number" min="0.5" max="20" step="0.5" /> h de développeur</label>
-        <label>Une consigne écrite ≈ <input v-model.number="settings.histPromptMin" type="number" min="0" max="60" step="0.5" /> min de ton temps</label>
-        <label>Une décision (autoriser, choisir) ≈ <input v-model.number="settings.histDecisionMin" type="number" min="0" max="30" step="0.5" /> min</label>
-        <span class="hint">Estimations, à ajuster à ton expérience. « Ton temps » ne compte que l’écriture des consignes et les décisions, pas la relecture ni les tests faits à côté.</span>
+        <label>{{ t("historyModal.humanFactorBefore") }} <input v-model.number="settings.histHumanFactor" type="number" min="0.5" max="20" step="0.5" /> {{ t("historyModal.humanFactorAfter") }}</label>
+        <label>{{ t("historyModal.promptMinBefore") }} <input v-model.number="settings.histPromptMin" type="number" min="0" max="60" step="0.5" /> {{ t("historyModal.promptMinAfter") }}</label>
+        <label>{{ t("historyModal.decisionMinBefore") }} <input v-model.number="settings.histDecisionMin" type="number" min="0" max="30" step="0.5" /> {{ t("historyModal.decisionMinAfter") }}</label>
+        <span class="hint">{{ t("historyModal.assumptionsHint") }}</span>
       </div>
 
-      <div class="cards" aria-label="Synthèse">
+      <div class="cards" :aria-label="t('historyModal.summary')">
         <div class="card">
-          <span class="c-label">Coût agents</span>
+          <span class="c-label">{{ t("historyModal.agentCost") }}</span>
           <span class="c-value">{{ usd(k.cost) }}</span>
           <span v-if="delta(k.cost, kp.cost)" class="c-delta" :class="{ up: delta(k.cost, kp.cost)!.up }">{{ delta(k.cost, kp.cost)!.txt }} {{ prevLabel }}</span>
-          <span class="c-sub">jour {{ usd(costBy.day) }} · 7 j {{ usd(costBy.week) }} · 30 j {{ usd(costBy.month) }}</span>
+          <span class="c-sub">{{ t("historyModal.costBy", { day: usd(costBy.day), week: usd(costBy.week), month: usd(costBy.month) }) }}</span>
         </div>
         <div class="card">
-          <span class="c-label">Temps agents</span>
+          <span class="c-label">{{ t("historyModal.agentTime") }}</span>
           <span class="c-value">{{ hm(k.agentMs) }}</span>
           <span v-if="delta(k.agentMs, kp.agentMs)" class="c-delta neutral">{{ delta(k.agentMs, kp.agentMs)!.txt }} {{ prevLabel }}</span>
-          <span class="c-sub">{{ k.runs }} travau{{ k.runs > 1 ? "x" : "" }} · {{ k.projects }} projet{{ k.projects > 1 ? "s" : "" }}<template v-if="k.agentMs > 60_000"> · {{ usd(k.cost / (k.agentMs / 3_600_000)) }} / h</template></span>
+          <span class="c-sub">{{ t("historyModal.runs", { count: k.runs }) }} · {{ t("historyModal.projects", { count: k.projects }) }}<template v-if="k.agentMs > 60_000"> · {{ t("historyModal.perHour", { cost: usd(k.cost / (k.agentMs / 3_600_000)) }) }}</template></span>
         </div>
         <div class="card">
-          <span class="c-label">Temps homme estimé</span>
+          <span class="c-label">{{ t("historyModal.humanTime") }}</span>
           <span class="c-value">{{ hm(humanMs) }}</span>
-          <span class="c-sub">si un développeur l’avait fait seul · × {{ settings.histHumanFactor }}</span>
+          <span class="c-sub">{{ t("historyModal.humanTimeSub", { factor: settings.histHumanFactor }) }}</span>
         </div>
         <div class="card">
-          <span class="c-label">Ton temps estimé</span>
+          <span class="c-label">{{ t("historyModal.yourTime") }}</span>
           <span class="c-value">{{ hm(yourMs) }}</span>
-          <span class="c-sub">{{ k.prompts }} consigne{{ k.prompts > 1 ? "s" : "" }} · {{ k.decisions }} décision{{ k.decisions > 1 ? "s" : "" }}</span>
+          <span class="c-sub">{{ t("historyModal.prompts", { count: k.prompts }) }} · {{ t("historyModal.decisions", { count: k.decisions }) }}</span>
         </div>
         <div class="card accent">
-          <span class="c-label">Effet de levier</span>
+          <span class="c-label">{{ t("historyModal.leverage") }}</span>
           <span class="c-value">{{ leverage ? `× ${leverage >= 10 ? Math.round(leverage) : leverage.toFixed(1)}` : "—" }}</span>
-          <span class="c-sub">temps homme estimé / ton temps<template v-if="leverage"> · {{ hm(Math.max(0, humanMs - yourMs)) }} gagnées</template></span>
+          <span class="c-sub">{{ t("historyModal.leverageSub") }}<template v-if="leverage"> · {{ t("historyModal.saved", { time: hm(Math.max(0, humanMs - yourMs)) }) }}</template></span>
         </div>
         <div class="card" :class="{ warn: rw.total >= 5 && rw.reworked / rw.total > 0.25 }">
-          <span class="c-label">Taux de reprise</span>
-          <span class="c-value">{{ rw.total ? `${Math.round((rw.reworked / rw.total) * 100)} %` : "—" }}</span>
-          <span class="c-sub">{{ rw.reworked }} travau{{ rw.reworked > 1 ? "x" : "" }} suivi{{ rw.reworked > 1 ? "s" : "" }} d’une correction dans l’heure</span>
+          <span class="c-label">{{ t("historyModal.reworkRate") }}</span>
+          <span class="c-value">{{ rw.total ? t("historyModal.percent", { value: Math.round((rw.reworked / rw.total) * 100) }) : "—" }}</span>
+          <span class="c-sub">{{ t("historyModal.reworked", { count: rw.reworked }) }}</span>
         </div>
         <div class="card" :class="{ warn: k.blockedMs > 0.2 * Math.max(1, k.agentMs + k.blockedMs) }">
-          <span class="c-label">Agents qui t’attendaient</span>
+          <span class="c-label">{{ t("historyModal.waitingAgents") }}</span>
           <span class="c-value">{{ hm(k.blockedMs) }}</span>
-          <span class="c-sub">en attente de ta décision<template v-if="k.agentMs + k.blockedMs > 0"> · {{ Math.round((k.blockedMs / (k.agentMs + k.blockedMs)) * 100) }} % du temps</template></span>
+          <span class="c-sub">{{ t("historyModal.waitingForDecision") }}<template v-if="k.agentMs + k.blockedMs > 0"> · {{ t("historyModal.shareOfTime", { value: Math.round((k.blockedMs / (k.agentMs + k.blockedMs)) * 100) }) }}</template></span>
         </div>
       </div>
 
       <div class="body">
         <aside class="side">
           <div class="side-head">
-            <span class="seg small" role="radiogroup" aria-label="Regrouper">
-              <button title="Group by workspace" :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">Par workspace</button>
-              <button title="Group by feature" :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">Par fonctionnalité</button>
+            <span class="seg small" role="radiogroup" :aria-label="t('historyModal.groupLabel')">
+              <button :title="t('historyModal.groupByWorkspaceTitle')" :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">{{ t("historyModal.groupByWorkspace") }}</button>
+              <button :title="t('historyModal.groupByFeatureTitle')" :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">{{ t("historyModal.groupByFeature") }}</button>
             </span>
           </div>
           <template v-if="groupBy === 'feature'">
-            <button v-for="f in features" :key="f.key" class="tot feat" :class="{ on: q === f.branch }" :title="`${f.ws} · ${f.branch} · ${f.n} travau${f.n > 1 ? 'x' : ''}`" @click="pickFeature(f.branch)">
+            <button v-for="f in features" :key="f.key" class="tot feat" :class="{ on: q === f.branch }" :title="t('historyModal.featureTitle', { ws: f.ws, branch: f.branch, count: f.n })" @click="pickFeature(f.branch)">
               <span class="t-name"><span v-if="f.ref" class="f-ref">{{ f.ref }}</span>{{ f.branch }}<span class="f-ws">{{ f.ws }}</span></span>
               <span class="mono t-ms">{{ hm(f.ms) }}</span>
               <span class="bar"><span :style="{ width: `${(f.ms / featMax) * 100}%` }"></span></span>
               <span class="mono t-cost">{{ f.cost ? usd(f.cost) : "" }}</span>
             </button>
-            <p v-if="!features.length" class="hint">Rien sur cette période.</p>
+            <p v-if="!features.length" class="hint">{{ t("historyModal.nothingInPeriod") }}</p>
           </template>
           <template v-else>
-          <button title="Filter the history by this workspace" v-for="t in totals.list" :key="t.name" class="tot" :class="{ on: ws === t.name }" @click="ws = ws === t.name ? '' : t.name">
-            <span class="t-name">{{ t.name || "—" }}</span>
-            <span class="mono t-ms">{{ hm(t.ms) }}</span>
-            <span class="bar"><span :style="{ width: `${(t.ms / totals.max) * 100}%` }"></span></span>
-            <span class="mono t-cost">{{ t.cost ? usd(t.cost) : "" }}</span>
+          <button :title="t('historyModal.filterWorkspaceTitle')" v-for="row in totals.list" :key="row.name" class="tot" :class="{ on: ws === row.name }" @click="ws = ws === row.name ? '' : row.name">
+            <span class="t-name">{{ row.name || "—" }}</span>
+            <span class="mono t-ms">{{ hm(row.ms) }}</span>
+            <span class="bar"><span :style="{ width: `${(row.ms / totals.max) * 100}%` }"></span></span>
+            <span class="mono t-cost">{{ row.cost ? usd(row.cost) : "" }}</span>
           </button>
           <div v-if="totals.list.length" class="tot total">
-            <span class="t-name">Total</span><span class="mono t-ms">{{ hm(totals.ms) }}</span><span></span>
+            <span class="t-name">{{ t("historyModal.total") }}</span><span class="mono t-ms">{{ hm(totals.ms) }}</span><span></span>
             <span class="mono t-cost">{{ totals.cost ? usd(totals.cost) : "" }}</span>
           </div>
           </template>
-          <svg v-if="bars.vals.length > 1" class="chart" :viewBox="`0 0 ${bars.vals.length * 10} 40`" preserveAspectRatio="none" role="img" aria-label="Temps de travail par jour">
+          <svg v-if="bars.vals.length > 1" class="chart" :viewBox="`0 0 ${bars.vals.length * 10} 40`" preserveAspectRatio="none" role="img" :aria-label="t('historyModal.workChartLabel')">
             <rect v-for="(v, i) in bars.vals" :key="i" :x="i * 10 + 1.5" :y="38 - (v / bars.max) * 36" width="7" :height="Math.max(0.6, (v / bars.max) * 36)" rx="1" fill="var(--done)">
               <title>{{ hm(v) }}</title>
             </rect>
           </svg>
-          <div v-if="bars.vals.length > 1" class="hint">par {{ bars.step === 7 ? "semaine" : "jour" }}</div>
-          <p class="hint">Temps où les agents travaillaient, sans les attentes de ta décision. Coût : sessions Claude suivies.</p>
+          <div v-if="bars.vals.length > 1" class="hint">{{ bars.step === 7 ? t("historyModal.perWeek") : t("historyModal.perDay") }}</div>
+          <p class="hint">{{ t("historyModal.workHint") }}</p>
 
-          <div class="eyebrow sub-h">Heures productives</div>
-          <svg class="chart hours" viewBox="0 0 240 44" preserveAspectRatio="none" role="img" aria-label="Temps des agents par heure de la journée">
+          <div class="eyebrow sub-h">{{ t("historyModal.productiveHours") }}</div>
+          <svg class="chart hours" viewBox="0 0 240 44" preserveAspectRatio="none" role="img" :aria-label="t('historyModal.hoursChartLabel')">
             <g v-for="h in 24" :key="h">
-              <title>{{ h - 1 }} h : {{ hm(hours.active[h - 1]) }} de travail, {{ hm(hours.blocked[h - 1]) }} d’attente</title>
+              <title>{{ t("historyModal.hourTitle", { hour: h - 1, active: hm(hours.active[h - 1]), blocked: hm(hours.blocked[h - 1]) }) }}</title>
               <rect :x="(h - 1) * 10 + 1" y="0" width="8" height="44" fill="transparent" />
               <rect :x="(h - 1) * 10 + 1" :y="40 - (hours.active[h - 1] / hourMax) * 38" width="8" :height="Math.max(0.5, (hours.active[h - 1] / hourMax) * 38)" fill="var(--done)" rx="1" />
               <rect :x="(h - 1) * 10 + 1" :y="40 - ((hours.active[h - 1] + hours.blocked[h - 1]) / hourMax) * 38" width="8" :height="(hours.blocked[h - 1] / hourMax) * 38" fill="var(--accent)" rx="1" />
             </g>
           </svg>
           <div class="hours-axis mono"><span>0 h</span><span>6 h</span><span>12 h</span><span>18 h</span><span>23 h</span></div>
-          <div class="hint"><span class="sw done"></span>travail <span class="sw wait"></span>en attente de ta décision</div>
+          <div class="hint"><span class="sw done"></span>{{ t("historyModal.legendWork") }} <span class="sw wait"></span>{{ t("historyModal.waitingForDecision") }}</div>
 
           <div class="eyebrow sub-h budget-h">
-            Budgets du mois
-            <button title="Edit the budgets" class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? "OK" : "Modifier" }}</button>
+            {{ t("historyModal.monthBudgets") }}
+            <button :title="t('historyModal.editBudgetsTitle')" class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? t("historyModal.budgetsDone") : t("historyModal.budgetsEdit") }}</button>
           </div>
           <div v-for="n in budgetNames.filter((x) => showBudgets || settings.budgets[x])" :key="n" class="budget" :class="budgetLevel(n)">
             <span class="t-name">{{ n }}</span>
             <template v-if="showBudgets">
               <input :value="settings.budgets[n] ?? ''" placeholder="—" inputmode="decimal" @change="(e) => setBudget(n, (e.target as HTMLInputElement).value)" />
-              <span class="muted">$ / mois</span>
+              <span class="muted">{{ t("historyModal.perMonth") }}</span>
             </template>
             <template v-else>
               <span class="bar"><span :style="{ width: `${Math.min(100, ((monthSpend.get(n) ?? 0) / settings.budgets[n]) * 100)}%` }"></span></span>
               <span class="mono t-cost">{{ usd(monthSpend.get(n) ?? 0) }} / {{ usd(settings.budgets[n]) }}</span>
             </template>
           </div>
-          <p v-if="!showBudgets && !Object.keys(settings.budgets).length" class="hint">Aucun budget. « Modifier » pour en fixer un par workspace : notification à 80 % et à 100 %.</p>
+          <p v-if="!showBudgets && !Object.keys(settings.budgets).length" class="hint">{{ t("historyModal.noBudget") }}</p>
           <div class="win"><SpendTable fixed="window" /></div>
         </aside>
 
         <section class="list">
-          <div v-if="!history.loaded" class="empty">Lecture…</div>
-          <div v-else-if="!runs.length" class="empty">Aucun travail sur cette période. L’historique se remplit à chaque fin de travail d’un agent.</div>
-          <button v-for="r in runs" :key="r.id" class="run" :disabled="!alive(r)" :title="alive(r) ? 'Aller au panneau' : 'Panneau fermé depuis'" @click="go(r)">
+          <div v-if="!history.loaded" class="empty">{{ t("historyModal.loading") }}</div>
+          <div v-else-if="!runs.length" class="empty">{{ t("historyModal.noRuns") }}</div>
+          <button v-for="r in runs" :key="r.id" class="run" :disabled="!alive(r)" :title="alive(r) ? t('historyModal.goToPane') : t('historyModal.paneClosed')" @click="go(r)">
             <span class="r-top">
               <span class="mono r-when">{{ when(r) }}</span>
               <span class="mono r-dur">{{ hm(r.activeMs) }}</span>
-              <span v-if="r.live" class="r-live">en cours</span>
+              <span v-if="r.live" class="r-live">{{ t("historyModal.running") }}</span>
               <span class="r-where">{{ r.ws }} · {{ r.tab }}</span>
               <span class="r-kind">{{ r.agent }}</span>
               <span v-if="r.branch" class="mono r-branch">{{ r.branch }}</span>
               <span v-if="r.cost" class="mono r-cost">{{ usd(r.cost) }}</span>
             </span>
             <span v-if="r.summary" class="r-sum">{{ r.summary }}</span>
-            <span v-if="r.blockedMs > 60_000" class="r-wait">dont {{ hm(r.blockedMs) }} d’attente de décision (non comptée)</span>
+            <span v-if="r.blockedMs > 60_000" class="r-wait">{{ t("historyModal.waitDetail", { time: hm(r.blockedMs) }) }}</span>
           </button>
         </section>
       </div>

@@ -2,24 +2,25 @@
 import { computed, nextTick, onMounted, ref } from "vue";
 import { confirmMerge, merging } from "../stores/git";
 import { toast } from "../stores/session";
+import { t } from "../i18n/index";
 
 const cancel = ref<HTMLButtonElement>();
 onMounted(() => nextTick(() => cancel.value?.focus()));
 
 const r = computed(() => merging.req!);
-const kind = computed(() => (merging.forge === "github" ? "la PR" : "la MR"));
 // Not "ready": merging still possible, but said loudly.
 const risky = computed(() => r.value.level !== "ok" || r.value.review?.level === "crit");
 
 async function go() {
   const ref = r.value.ref;
-  const target = r.value.target || "la branche cible";
+  const target = r.value.target || t("mergeModal.theTargetBranch");
   if (await confirmMerge()) {
     // glab sets auto-merge when the pipeline is still running: say what happened.
     const out = merging.result;
-    if (/auto.?merge|when the pipeline succeeds|will be merged/i.test(out)) toast(`${ref} sera fusionnée quand la CI sera verte`);
+    if (/auto.?merge|when the pipeline succeeds|will be merged/i.test(out)) toast(t("mergeModal.toastAutoMerge", { ref }));
+    // The server writes this text in French: its output is shown as it is.
     else if (/branche distante n’a pas été supprimée/.test(out)) toast(out);
-    else toast(`${ref} fusionnée dans ${target}`);
+    else toast(t("mergeModal.toastMerged", { ref, target }));
   }
 }
 </script>
@@ -27,34 +28,34 @@ async function go() {
 <template>
   <div class="overlay" @mousedown.self="!merging.busy && (merging.open = false)" @keydown.esc.stop.prevent="!merging.busy && (merging.open = false)">
     <div class="dialog" role="alertdialog" aria-labelledby="merge-title">
-      <div class="eyebrow">Fusion</div>
-      <h2 id="merge-title">Fusionner {{ kind }} {{ r.ref }} ?</h2>
+      <div class="eyebrow">{{ t("mergeModal.eyebrow") }}</div>
+      <h2 id="merge-title">{{ t(merging.forge === "github" ? "mergeModal.titlePr" : "mergeModal.titleMr", { ref: r.ref }) }}</h2>
       <p class="title">{{ r.title }}</p>
-      <p class="branches mono">{{ r.branch }} → {{ r.target || "branche cible" }}</p>
+      <p class="branches mono">{{ r.branch }} → {{ r.target || t("mergeModal.targetBranch") }}</p>
       <div class="chips">
         <span class="chip" :class="r.level">{{ r.state }}</span>
         <span v-if="r.review" class="chip" :class="r.review.level">{{ r.review.label }}</span>
       </div>
-      <p v-if="risky" class="warn">Elle n’est pas indiquée comme prête : l’hébergeur peut refuser, ou fusionner sans les vérifications habituelles.</p>
+      <p v-if="risky" class="warn">{{ t("mergeModal.notReady") }}</p>
 
       <div class="opts">
-        <label class="sr" for="merge-method">Méthode</label>
+        <label class="sr" for="merge-method">{{ t("mergeModal.method") }}</label>
         <select id="merge-method" v-model="merging.method" :disabled="merging.busy">
-          <option value="merge">Commit de fusion</option>
-          <option value="squash">Squash (un seul commit)</option>
-          <option value="rebase">Rebase</option>
+          <option value="merge">{{ t("mergeModal.methodMerge") }}</option>
+          <option value="squash">{{ t("mergeModal.methodSquash") }}</option>
+          <option value="rebase">{{ t("mergeModal.methodRebase") }}</option>
         </select>
         <label class="check">
-          <input v-model="merging.removeBranch" type="checkbox" :disabled="merging.busy" />Supprimer la branche source
+          <input v-model="merging.removeBranch" type="checkbox" :disabled="merging.busy" />{{ t("mergeModal.removeBranch") }}
         </label>
       </div>
-      <p v-if="merging.forge === 'gitlab'" class="hint">Si la CI tourne encore, GitLab programme la fusion pour quand elle sera verte.</p>
-      <p class="hint">Fusion du dernier commit vu{{ r.sha ? ` (${r.sha.slice(0, 8)})` : "" }} : si quelqu’un a poussé depuis, l’hébergeur la refuse.</p>
+      <p v-if="merging.forge === 'gitlab'" class="hint">{{ t("mergeModal.gitlabHint") }}</p>
+      <p class="hint">{{ r.sha ? t("mergeModal.shaHint", { sha: r.sha.slice(0, 8) }) : t("mergeModal.shaHintNoSha") }}</p>
       <pre v-if="merging.error" class="err mono">{{ merging.error }}</pre>
 
       <div class="row">
-        <button title="Cancel the merge" ref="cancel" class="btn lg" :disabled="merging.busy" @click="merging.open = false">Annuler</button>
-        <button title="Merge the branch" class="btn lg go" :disabled="merging.busy" @click="go">{{ merging.busy ? "Fusion…" : `Fusionner ${r.ref}` }}</button>
+        <button :title="t('mergeModal.cancelTitle')" ref="cancel" class="btn lg" :disabled="merging.busy" @click="merging.open = false">{{ t("mergeModal.cancel") }}</button>
+        <button :title="t('mergeModal.mergeTitle')" class="btn lg go" :disabled="merging.busy" @click="go">{{ merging.busy ? t("mergeModal.merging") : t("mergeModal.merge", { ref: r.ref }) }}</button>
       </div>
     </div>
   </div>

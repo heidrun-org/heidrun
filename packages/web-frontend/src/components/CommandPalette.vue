@@ -30,6 +30,7 @@ import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
 import { mobile } from "../stores/mobile";
 import { openFiles } from "../stores/files";
+import { t } from "../i18n/index";
 
 interface Item {
   section: string;
@@ -56,36 +57,36 @@ const items = computed<Item[]>(() => {
   const shell = selectedPane.value && !selectedPane.value.agent ? selectedPane.value : null;
 
   if (q) {
-    list.push({ section: "Lancer", label: `Lancer « ${q} » dans un nouveau panneau`, hint: "↵", run: () => runInNewPane(q) });
-    if (shell) list.push({ section: "Lancer", label: `Lancer dans ${paneName(shell)}`, hint: "⌥↵", run: () => runInPane(shell.pane_id, q) });
-    list.push({ section: "Lancer", label: "Lancer et me notifier à la fin", hint: "⇧↵", run: () => runInNewPane(q, "passed|failed|error|Error|✓|✗|done|Done") });
+    list.push({ section: t("commandPalette.section.run"), label: t("commandPalette.runInNewPane", { command: q }), hint: "↵", run: () => runInNewPane(q) });
+    if (shell) list.push({ section: t("commandPalette.section.run"), label: t("commandPalette.runInPane", { pane: paneName(shell) }), hint: "⌥↵", run: () => runInPane(shell.pane_id, q) });
+    list.push({ section: t("commandPalette.section.run"), label: t("commandPalette.runAndNotify"), hint: "⇧↵", run: () => runInNewPane(q, "passed|failed|error|Error|✓|✗|done|Done") });
   }
 
   // Consigne templates: fill the input bar (editable before sending).
-  for (const t of [...projectPrompts.value, ...prompts.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
+  for (const prompt of [...projectPrompts.value, ...prompts.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
     list.push({
-      section: "Consignes",
-      label: t.label,
-      hint: "dans la saisie",
-      run: async () => fillInput(await resolvePrompt(t.text, selectedPane.value?.pane_id ?? null)),
+      section: t("commandPalette.section.prompts"),
+      label: prompt.label,
+      hint: t("commandPalette.promptHint"),
+      run: async () => fillInput(await resolvePrompt(prompt.text, selectedPane.value?.pane_id ?? null)),
     });
   }
 
   for (const cmd of recent.filter((c) => !lower || c.toLowerCase().includes(lower)).slice(0, 5)) {
-    list.push({ section: "Récentes", label: cmd, mono: true, run: () => runInNewPane(cmd) });
+    list.push({ section: t("commandPalette.section.recent"), label: cmd, mono: true, run: () => runInNewPane(cmd) });
   }
 
   for (const p of allPanes.value.filter((x) => !lower || paneName(x).toLowerCase().includes(lower)).slice(0, 6)) {
     list.push({
-      section: "Aller à",
+      section: t("commandPalette.section.goTo"),
       label: `${paneName(p)} · ${workspaceLabel(p.workspace_id)}`,
-      hint: p.agent ? statusLabel(p.agent_status) : "terminal",
+      hint: p.agent ? statusLabel(p.agent_status) : t("commandPalette.terminalHint"),
       run: () => selectPane(p),
     });
     if (p.agent && p.tab_id !== state.selectedTabId)
       list.push({
-        section: "Ouvrir à côté",
-        label: `${isDocked(p.pane_id) ? "Retirer d’à côté" : "Ouvrir à côté"} : ${paneName(p)} · ${workspaceLabel(p.workspace_id)}`,
+        section: t("commandPalette.section.dock"),
+        label: t(isDocked(p.pane_id) ? "commandPalette.undock" : "commandPalette.dock", { pane: `${paneName(p)} · ${workspaceLabel(p.workspace_id)}` }),
         hintIcon: "pin",
         run: () => toggleDock(p.pane_id),
       });
@@ -96,42 +97,42 @@ const items = computed<Item[]>(() => {
   const proj = currentProject.value;
   if (wsId && proj) {
     for (const a of proj.config.actions.filter((x) => !lower || x.label.toLowerCase().includes(lower) || x.command.toLowerCase().includes(lower))) {
-      list.push({ section: "Actions du projet", label: a.label, hint: a.command, run: () => runAction(wsId, a) });
+      list.push({ section: t("commandPalette.section.projectActions"), label: a.label, hint: a.command, run: () => runAction(wsId, a) });
     }
   }
   const actions: Item[] = [
-    { section: "Terminaux", label: "Nouvel agent (Claude, Codex, agents du projet)…", hint: "⇧⌘T", run: () => (newAgent.open = true) },
-    { section: "Terminaux", label: "Nouveau terminal", hint: "⌘T", run: () => newTerminal() },
-    { section: "Terminaux", label: "Diviser à droite", hint: "⌘D", run: () => splitPane("right") },
-    { section: "Terminaux", label: "Diviser en bas", hint: "⇧⌘D", run: () => splitPane("down") },
-    ...(sel ? [{ section: "Terminaux", label: `Fermer le panneau ${paneName(sel)}`, hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
-    ...(state.selectedTabId ? [{ section: "Terminaux", label: "Fermer l’onglet courant", run: () => closeTab(state.selectedTabId!) }] : []),
-    ...(state.selectedWorkspaceId ? [{ section: "Renommer", label: "Renommer le workspace", run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
-    ...(state.selectedTabId ? [{ section: "Renommer", label: "Renommer l’onglet", run: () => startRename("tab", state.selectedTabId!) }] : []),
-    ...(sel ? [{ section: "Renommer", label: "Renommer le panneau", run: () => startRename("pane", sel.pane_id) }] : []),
-    { section: "Navigation", label: "Chercher dans tous les terminaux…", hint: "⇧⌘F", run: () => (search.open = true) },
-    { section: "Navigation", label: "Ouvrir un fichier du projet…", hint: "⌘P", run: () => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }) },
-    { section: "Aide", label: "Raccourcis clavier et souris", hint: "⌘/", run: () => (state.shortcutsOpen = true) },
-    { section: "Affichage", label: "Accès mobile (iPhone, iPad)…", run: () => (mobile.open = true) },
-    { section: "Navigation", label: "Onglet suivant", hint: "⌥⌘→", run: () => cycleTab(1) },
-    { section: "Navigation", label: "Onglet précédent", hint: "⌥⌘←", run: () => cycleTab(-1) },
-    { section: "Navigation", label: "Workspace suivant", hint: "⌥⌘↓", run: () => cycleWorkspace(1) },
-    { section: "Réorganiser", label: "Déplacer l’onglet à gauche", hint: "⇧⌥⌘←", run: () => shiftTab(-1) },
-    { section: "Réorganiser", label: "Déplacer l’onglet à droite", hint: "⇧⌥⌘→", run: () => shiftTab(1) },
-    { section: "Réorganiser", label: "Monter le workspace", hint: "⇧⌥⌘↑", run: () => shiftWorkspace(-1) },
-    { section: "Réorganiser", label: "Descendre le workspace", hint: "⇧⌥⌘↓", run: () => shiftWorkspace(1) },
-    { section: "Navigation", label: "Workspace précédent", hint: "⌥⌘↑", run: () => cycleWorkspace(-1) },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newAgent"), hint: "⇧⌘T", run: () => (newAgent.open = true) },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), hint: "⌘T", run: () => newTerminal() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => splitPane("right") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => splitPane("down") },
+    ...(sel ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closePane", { pane: paneName(sel) }), hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
+    ...(state.selectedTabId ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closeTab"), run: () => closeTab(state.selectedTabId!) }] : []),
+    ...(state.selectedWorkspaceId ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renameWorkspace"), run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
+    ...(state.selectedTabId ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renameTab"), run: () => startRename("tab", state.selectedTabId!) }] : []),
+    ...(sel ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renamePane"), run: () => startRename("pane", sel.pane_id) }] : []),
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.searchTerminals"), hint: "⇧⌘F", run: () => (search.open = true) },
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.openFile"), hint: "⌘P", run: () => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }) },
+    { section: t("commandPalette.section.help"), label: t("commandPalette.shortcuts"), hint: "⌘/", run: () => (state.shortcutsOpen = true) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.mobile"), run: () => (mobile.open = true) },
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextTab"), hint: "⌥⌘→", run: () => cycleTab(1) },
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.previousTab"), hint: "⌥⌘←", run: () => cycleTab(-1) },
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextWorkspace"), hint: "⌥⌘↓", run: () => cycleWorkspace(1) },
+    { section: t("commandPalette.section.reorder"), label: t("commandPalette.moveTabLeft"), hint: "⇧⌥⌘←", run: () => shiftTab(-1) },
+    { section: t("commandPalette.section.reorder"), label: t("commandPalette.moveTabRight"), hint: "⇧⌥⌘→", run: () => shiftTab(1) },
+    { section: t("commandPalette.section.reorder"), label: t("commandPalette.moveWorkspaceUp"), hint: "⇧⌥⌘↑", run: () => shiftWorkspace(-1) },
+    { section: t("commandPalette.section.reorder"), label: t("commandPalette.moveWorkspaceDown"), hint: "⇧⌥⌘↓", run: () => shiftWorkspace(1) },
+    { section: t("commandPalette.section.navigation"), label: t("commandPalette.previousWorkspace"), hint: "⌥⌘↑", run: () => cycleWorkspace(-1) },
     {
-      section: "Affichage",
-      label: settings.mouseMode === "select" ? "Souris : envoyer à l’app (molette, clics)" : "Souris : sélectionner du texte",
+      section: t("commandPalette.section.display"),
+      label: settings.mouseMode === "select" ? t("commandPalette.mouseToApp") : t("commandPalette.mouseSelect"),
       run: () => (settings.mouseMode = settings.mouseMode === "select" ? "app" : "select"),
     },
-    { section: "Affichage", label: "Agrandir la police", hint: "⌘+", run: () => zoom(0.5) },
-    { section: "Affichage", label: "Réduire la police", hint: "⌘−", run: () => zoom(-0.5) },
-    { section: "Affichage", label: "Taille de police par défaut", hint: "⌘0", run: () => resetZoom() },
-    { section: "Affichage", label: "Barre latérale gauche", hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
-    { section: "Affichage", label: "Panneau de droite", hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
-    ...FONTS.map((f) => ({ section: "Affichage", label: `Police : ${f.label}`, hintIcon: f.id === settings.fontId ? "check-lg" : undefined, run: () => (settings.fontId = f.id) })),
+    { section: t("commandPalette.section.display"), label: t("commandPalette.zoomIn"), hint: "⌘+", run: () => zoom(0.5) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.zoomOut"), hint: "⌘−", run: () => zoom(-0.5) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.zoomReset"), hint: "⌘0", run: () => resetZoom() },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.leftSidebar"), hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.rightPanel"), hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
+    ...FONTS.map((f) => ({ section: t("commandPalette.section.display"), label: t("commandPalette.font", { font: f.label }), hintIcon: f.id === settings.fontId ? "check-lg" : undefined, run: () => (settings.fontId = f.id) })),
   ];
   list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower)));
   return list;
@@ -176,16 +177,16 @@ onMounted(() => nextTick(() => input.value?.focus()));
 
 <template>
   <div class="scrim" @mousedown.self="close">
-    <div class="palette" role="dialog" aria-label="Palette de commandes">
+    <div class="palette" role="dialog" :aria-label="t('commandPalette.dialogLabel')">
       <div class="field">
         <span class="mono prompt">$</span>
-        <label class="sr" for="palette-input">Commande ou recherche</label>
+        <label class="sr" for="palette-input">{{ t("commandPalette.inputLabel") }}</label>
         <input
           id="palette-input"
           ref="input"
           v-model="query"
           class="mono"
-          placeholder="Taper une commande, un agent, une action…"
+          :placeholder="t('commandPalette.placeholder')"
           spellcheck="false"
           autocomplete="off"
           @input="index = 0"
@@ -196,7 +197,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
       <div class="list">
         <template v-for="g in grouped" :key="g.section">
           <div class="eyebrow sec">{{ g.section }}</div>
-          <button title="Run this command"
+          <button :title="t('commandPalette.runTitle')"
             v-for="{ item, i } in g.items"
             :key="i"
             class="row"

@@ -7,6 +7,7 @@ import { remote, toggleRemoteControl } from "../stores/claude";
 import { allPanes, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
 import { paneName } from "../lib/format";
+import { t } from "../i18n/index";
 
 // Remote Control link of a Claude session, with a QR code made locally (no network).
 const pane = computed(() => allPanes.value.find((p) => p.pane_id === remote.openFor) ?? null);
@@ -30,7 +31,7 @@ function close() {
 async function copyUrl() {
   if (!url.value) return;
   await copy(url.value);
-  toast("Lien de la session copié");
+  toast(t("rcModal.linkCopied"));
 }
 
 async function openInBrowser() {
@@ -59,26 +60,26 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <header>
         <div>
           <div class="eyebrow">Remote Control</div>
-          <h2>{{ pane ? paneName(pane) : "Session Claude" }}</h2>
+          <h2>{{ pane ? paneName(pane) : t("rcModal.claudeSession") }}</h2>
         </div>
-        <button class="x" aria-label="Fermer" title="Fermer (Échap)" @click="close">
+        <button class="x" :aria-label="t('rcModal.closeLabel')" :title="t('rcModal.closeTitle')" @click="close">
           <Icon name="x-lg" />
         </button>
       </header>
       <template v-if="url">
         <!-- Output of the qrcode library: an SVG built from the URL only. -->
-        <div class="qr" role="img" :aria-label="`QR code de ${url}`" v-html="svg"></div>
-        <p class="hint">Scanne avec l’appareil photo de ton iPhone ou iPad : la session s’ouvre dans l’app Claude.</p>
+        <div class="qr" role="img" :aria-label="t('rcModal.qrLabel', { url })" v-html="svg"></div>
+        <p class="hint">{{ t("rcModal.scanHint") }}</p>
         <div class="url">
           <span class="mono">{{ url }}</span>
         </div>
         <div class="actions">
-          <button title="Copy the link" class="btn primary" @click="copyUrl">Copier le lien</button>
-          <button title="Open the link in the browser" class="btn" @click="openInBrowser">Ouvrir dans le navigateur</button>
-          <button class="btn" title="Ouvre le panneau de Claude Code dans le terminal (déconnexion…)" @click="manage">Gérer dans le terminal</button>
+          <button :title="t('rcModal.copyTitle')" class="btn primary" @click="copyUrl">{{ t("rcModal.copy") }}</button>
+          <button :title="t('rcModal.openTitle')" class="btn" @click="openInBrowser">{{ t("rcModal.open") }}</button>
+          <button class="btn" :title="t('rcModal.manageTitle')" @click="manage">{{ t("rcModal.manage") }}</button>
         </div>
       </template>
-      <p v-else class="hint">Le lien de la session n’est pas encore visible dans le terminal.</p>
+      <p v-else class="hint">{{ t("rcModal.noLink") }}</p>
     </section>
   </div>
 </template>

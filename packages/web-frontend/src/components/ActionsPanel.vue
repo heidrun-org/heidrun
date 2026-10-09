@@ -26,6 +26,7 @@ import {
 import { state, workspaceLabel } from "../stores/session";
 import { ago, shortPath } from "../lib/format";
 import { useReorder } from "../lib/reorder";
+import { t } from "../i18n/index";
 
 const ws = computed(() => state.selectedWorkspaceId);
 const p = currentProject;
@@ -55,7 +56,7 @@ async function submit() {
   adding.value = false;
 }
 
-const STATUS_TEXT = { idle: "", running: "en cours", finished: "terminée" } as const;
+const STATUS_TEXT_KEY = { idle: "", running: "actionsPanel.status.running", finished: "actionsPanel.status.finished" } as const;
 
 function status(a: Action) {
   return ws.value ? actionStatus(ws.value, a) : "idle";
@@ -70,12 +71,12 @@ function isRestarting(a: Action) {
   <div class="panel">
     <template v-if="ws && p">
       <div class="head">
-        <div class="eyebrow">Actions · {{ workspaceLabel(ws) }}</div>
+        <div class="eyebrow">{{ t("actionsPanel.title", { workspace: workspaceLabel(ws) }) }}</div>
         <div class="path mono" :title="p.config_path">{{ shortPath(p.root) }}/.herdr-desk.json</div>
       </div>
 
       <div v-if="!p.config.actions.length && !adding" class="empty">
-        Aucune action pour ce projet. Ajoute une commande ou choisis une suggestion ci-dessous.
+        {{ t("actionsPanel.empty") }}
       </div>
 
       <div
@@ -96,20 +97,20 @@ function isRestarting(a: Action) {
         @drop="actionsDrag.onDrop($event, p.config.actions.map((x) => x.id))"
         @dragend="actionsDrag.onDragEnd()"
       >
-        <button class="main" :title="status(a) === 'idle' ? `Lancer dans un nouvel onglet` : `Aller à l’onglet`" @click="runAction(ws, a)">
+        <button class="main" :title="status(a) === 'idle' ? t('actionsPanel.runInNewTab') : t('actionsPanel.goToTab')" @click="runAction(ws, a)">
           <span class="dot" :class="status(a) === 'running' ? 'working' : status(a) === 'finished' ? 'done' : ''"></span>
           <span class="text">
             <InlineRename
               v-if="renaming === a.id"
               :value="a.label"
-              label="Nom de l’action"
+              :label="t('actionsPanel.actionName')"
               @save="(v) => { renameAction(ws!, a.id, v); renaming = null; }"
               @cancel="renaming = null"
             />
-            <span title="Double-click to rename this action" v-else class="label" @dblclick.stop="renaming = a.id">{{ a.label }}</span>
+            <span :title="t('actionsPanel.renameTitle')" v-else class="label" @dblclick.stop="renaming = a.id">{{ a.label }}</span>
             <span class="cmd mono">{{ a.command }}</span>
           </span>
-          <span v-if="STATUS_TEXT[status(a)]" class="state" :class="status(a)">{{ STATUS_TEXT[status(a)] }}</span>
+          <span v-if="STATUS_TEXT_KEY[status(a)]" class="state" :class="status(a)">{{ t(STATUS_TEXT_KEY[status(a)]) }}</span>
         </button>
         <div class="tools">
           <button
@@ -117,51 +118,51 @@ function isRestarting(a: Action) {
             class="tool"
             :class="{ spin: isRestarting(a) }"
             :disabled="isRestarting(a)"
-            aria-label="Relancer"
-            title="Relancer : ctrl+C, puis la même commande dans son onglet"
+            :aria-label="t('actionsPanel.restart')"
+            :title="t('actionsPanel.restartTitle')"
             @click="restartAction(ws, a)"
           >↻</button>
-          <button v-if="status(a) === 'running'" class="tool" aria-label="Arrêter (ctrl+C)" title="Arrêter (ctrl+C)" @click="stopAction(ws, a)"><Icon name="stop-fill" /></button>
-          <button v-else class="tool" aria-label="Lancer" :title="status(a) === 'finished' ? 'Relancer dans son onglet' : 'Lancer'" @click="runAction(ws, a, true)"><Icon name="play-fill" /></button>
-          <ConfirmButton icon="x-lg" armed-label="Retirer ?" :aria-label="`Retirer l’action ${a.label}`" @confirm="removeAction(ws, a.id)" />
+          <button v-if="status(a) === 'running'" class="tool" :aria-label="t('actionsPanel.stop')" :title="t('actionsPanel.stop')" @click="stopAction(ws, a)"><Icon name="stop-fill" /></button>
+          <button v-else class="tool" :aria-label="t('actionsPanel.run')" :title="status(a) === 'finished' ? t('actionsPanel.runAgainInTab') : t('actionsPanel.run')" @click="runAction(ws, a, true)"><Icon name="play-fill" /></button>
+          <ConfirmButton icon="x-lg" :armed-label="t('actionsPanel.removeArmed')" :aria-label="t('actionsPanel.removeAction', { action: a.label })" @confirm="removeAction(ws, a.id)" />
         </div>
       </div>
 
       <form v-if="adding" class="add" @submit.prevent="submit">
-        <label class="sr" for="act-cmd">Commande</label>
+        <label class="sr" for="act-cmd">{{ t("actionsPanel.command") }}</label>
         <input id="act-cmd" v-model="command" class="mono" placeholder="make dev" autofocus spellcheck="false" />
-        <label class="sr" for="act-label">Nom (facultatif)</label>
-        <input id="act-label" v-model="label" placeholder="Nom (facultatif)" spellcheck="false" />
+        <label class="sr" for="act-label">{{ t("actionsPanel.nameOptional") }}</label>
+        <input id="act-label" v-model="label" :placeholder="t('actionsPanel.nameOptional')" spellcheck="false" />
         <div class="row">
-          <button title="Cancel adding the action" class="btn" type="button" @click="adding = false">Annuler</button>
-          <button title="Add the action" class="btn primary" type="submit">Ajouter</button>
+          <button :title="t('actionsPanel.cancelTitle')" class="btn" type="button" @click="adding = false">{{ t("actionsPanel.cancel") }}</button>
+          <button :title="t('actionsPanel.addTitle')" class="btn primary" type="submit">{{ t("actionsPanel.add") }}</button>
         </div>
       </form>
-      <button title="Add a new action" v-else class="btn dashed" @click="adding = true">+ Ajouter une action</button>
+      <button :title="t('actionsPanel.addNewTitle')" v-else class="btn dashed" @click="adding = true">{{ t("actionsPanel.addNew") }}</button>
 
       <template v-if="recentRuns.length">
         <div class="sub-head">
-          <div class="eyebrow">Récentes</div>
-          <button title="Clear the recent commands" class="link small" @click="clearRecent(ws)">Effacer</button>
+          <div class="eyebrow">{{ t("actionsPanel.recent") }}</div>
+          <button :title="t('actionsPanel.clearTitle')" class="link small" @click="clearRecent(ws)">{{ t("actionsPanel.clear") }}</button>
         </div>
         <div v-for="r in recentRuns" :key="r.command" class="sugg">
           <span class="grow">
             <span class="mono">{{ r.command }}</span>
             <span class="src">{{ ago(r.at) }}</span>
           </span>
-          <button class="tool" :aria-label="`Relancer ${r.command}`" title="Relancer" @click="runDetected(ws, r)"><Icon name="play-fill" /></button>
+          <button class="tool" :aria-label="t('actionsPanel.runAgainCommand', { command: r.command })" :title="t('actionsPanel.restart')" @click="runDetected(ws, r)"><Icon name="play-fill" /></button>
           <button
             v-if="!p.config.actions.some((a) => a.command === r.command)"
             class="tool"
-            :aria-label="`Ajouter ${r.command} aux actions`"
-            title="Ajouter aux actions"
+            :aria-label="t('actionsPanel.addCommand', { command: r.command })"
+            :title="t('actionsPanel.addToActions')"
             @click="addAction(ws, r.label, r.command)"
           >+</button>
         </div>
       </template>
 
       <template v-if="suggestions.length">
-        <div class="eyebrow sub">Suggestions</div>
+        <div class="eyebrow sub">{{ t("actionsPanel.suggestions") }}</div>
         <div
           v-for="(d, di) in visibleSuggestions"
           :key="d.command"
@@ -172,7 +173,7 @@ function isRestarting(a: Action) {
             'drop-after': suggDrag.gap.value === di + 1 && di === visibleSuggestions.length - 1,
           }"
           draggable="true"
-          title="Glisser pour réordonner"
+          :title="t('actionsPanel.dragToReorder')"
           @dragstart="suggDrag.onDragStart($event, d.command)"
           @dragover="suggDrag.onDragOver($event, di)"
           @drop="suggDrag.onDrop($event, visibleSuggestions.map((x) => x.command))"
@@ -183,16 +184,16 @@ function isRestarting(a: Action) {
             <span class="mono">{{ d.command }}</span>
             <span class="src">{{ d.source }}</span>
           </span>
-          <button class="tool" :aria-label="`Lancer ${d.command} une fois`" title="Lancer une fois" @click="runDetected(ws, d)"><Icon name="play-fill" /></button>
-          <button class="tool" :aria-label="`Ajouter ${d.command} aux actions`" title="Ajouter aux actions" @click="addAction(ws, d.label, d.command)">+</button>
+          <button class="tool" :aria-label="t('actionsPanel.runOnceCommand', { command: d.command })" :title="t('actionsPanel.runOnce')" @click="runDetected(ws, d)"><Icon name="play-fill" /></button>
+          <button class="tool" :aria-label="t('actionsPanel.addCommand', { command: d.command })" :title="t('actionsPanel.addToActions')" @click="addAction(ws, d.label, d.command)">+</button>
         </div>
-        <button :title="showAllSuggestions ? 'Show fewer suggestions' : 'Show all suggestions'" v-if="suggestions.length > 6" class="link" @click="showAllSuggestions = !showAllSuggestions">
-          {{ showAllSuggestions ? "Moins" : `Voir les ${suggestions.length}` }}
+        <button :title="showAllSuggestions ? t('actionsPanel.showFewerTitle') : t('actionsPanel.showAllTitle')" v-if="suggestions.length > 6" class="link" @click="showAllSuggestions = !showAllSuggestions">
+          {{ showAllSuggestions ? t("actionsPanel.showFewer") : t("actionsPanel.showAll", { total: suggestions.length }) }}
         </button>
       </template>
     </template>
     <p v-else-if="error" class="err mono">{{ error }}</p>
-    <p v-else class="empty">Ouvre un terminal dans ce workspace pour détecter son dossier de projet.</p>
+    <p v-else class="empty">{{ t("actionsPanel.noProject") }}</p>
   </div>
 </template>
 

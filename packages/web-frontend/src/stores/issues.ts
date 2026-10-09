@@ -2,6 +2,7 @@
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { refContext, type Forge } from "../lib/refs";
+import { t } from "../i18n/index";
 
 export interface IssueComment {
   author: string;
@@ -37,13 +38,20 @@ export const issueView = reactive({
 const cli = (cwd: string, tool: "glab" | "gh", args: string[]) => invoke<string>("forge_cli", { cwd, tool, args });
 const time = (s?: string | null) => (s ? Date.parse(s) || null : null);
 
+// Forge state → translation key of the label, level.
 const STATE: Record<string, [string, IssueData["stateLevel"]]> = {
-  opened: ["ouverte", "ok"],
-  open: ["ouverte", "ok"],
-  closed: ["fermée", "muted"],
-  merged: ["fusionnée", "merged"],
-  locked: ["verrouillée", "muted"],
+  opened: ["issuesStore.state.open", "ok"],
+  open: ["issuesStore.state.open", "ok"],
+  closed: ["issuesStore.state.closed", "muted"],
+  merged: ["issuesStore.state.merged", "merged"],
+  locked: ["issuesStore.state.locked", "muted"],
 };
+
+/** The shown label and the level of a forge state (an unknown state is shown as it is). */
+function stateOf(raw: string): [string, IssueData["stateLevel"]] {
+  const known = STATE[raw];
+  return known ? [t(known[0]), known[1]] : [raw, "muted"];
+}
 
 async function gitlab(cwd: string, type: "issue" | "mr", n: number, project?: string): Promise<IssueData> {
   const base = project ? `projects/${encodeURIComponent(project)}` : "projects/:fullpath";
@@ -62,11 +70,11 @@ async function gitlab(cwd: string, type: "issue" | "mr", n: number, project?: st
   let notes: { body: string; author?: { username?: string }; created_at?: string; system?: boolean }[] = [];
   try {
     notes = JSON.parse(await cli(cwd, "glab", ["api", `${base}/${kind}/${n}/notes?sort=asc&order_by=created_at&per_page=100`]));
-    if (notes.length === 100) notes.push({ body: "_… commentaires suivants sur la page de l’issue._", system: false });
+    if (notes.length === 100) notes.push({ body: t("issuesStore.moreComments"), system: false });
   } catch {
     /* comments are optional */
   }
-  const [state, stateLevel] = STATE[it.state] ?? [it.state, "muted"];
+  const [state, stateLevel] = stateOf(it.state);
   return {
     ref: `${project ?? ""}${type === "mr" ? "!" : "#"}${n}`,
     title: it.title,
@@ -109,7 +117,7 @@ async function github(cwd: string, type: "issue" | "mr", n: number, project?: st
     if (type !== "issue" || !/could not resolve|not found|pull request/i.test(String(e))) throw e;
     return github(cwd, "mr", n, project);
   }
-  const [state, stateLevel] = STATE[it.state.toLowerCase()] ?? [it.state.toLowerCase(), "muted"];
+  const [state, stateLevel] = stateOf(it.state.toLowerCase());
   return {
     ref: `${project ?? ""}#${n}`,
     title: it.title,
@@ -133,7 +141,7 @@ export async function openIssue(cwd: string | null | undefined, target: { type: 
   Object.assign(issueView, { open: true, loading: true, error: "", url, data: null });
   const my = ++seq;
   try {
-    if (!cwd) throw new Error("Dossier du panneau inconnu");
+    if (!cwd) throw new Error(t("issuesStore.unknownFolder"));
     const ctx = await refContext(cwd);
     const forge: Forge = ctx.forge ?? "gitlab";
     const data = forge === "github" ? await github(cwd, target.type, target.number, target.project) : await gitlab(cwd, target.type, target.number, target.project);

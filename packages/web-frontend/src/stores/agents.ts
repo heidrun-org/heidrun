@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolvePrompt } from "./prompts";
+import { t } from "../i18n/index";
 
 export interface AgentDef {
   name: string;
@@ -24,8 +25,8 @@ const SAFE = /^[A-Za-z0-9._\-[\]]+$/;
 const q = (v: string) => `'${v}'`;
 
 export function agentCommand(tool: "claude" | "codex", agent: string | null, model: string | null): string {
-  if (agent && !SAFE.test(agent)) throw new Error(`Nom d’agent invalide : ${agent}`);
-  if (model && !SAFE.test(model)) throw new Error(`Modèle invalide : ${model}`);
+  if (agent && !SAFE.test(agent)) throw new Error(t("agentsStore.invalidAgentName", { name: agent }));
+  if (model && !SAFE.test(model)) throw new Error(t("agentsStore.invalidModel", { name: model }));
   if (tool === "codex") return ["codex", model ? `-m ${q(model)}` : ""].filter(Boolean).join(" ");
   return ["claude", agent ? `--agent ${q(agent)}` : "", model ? `--model ${q(model)}` : ""].filter(Boolean).join(" ");
 }
@@ -44,7 +45,7 @@ async function whenReady(paneId: string): Promise<"ready" | "closed" | "timeout"
     if (p.agent_status === "blocked" && !warned) {
       // First launch in a folder: Claude asks whether to trust it.
       warned = true;
-      toast("L’agent attend une confirmation (dossier de confiance ?) : la consigne partira après");
+      toast(t("agentsStore.waitingConfirmation"));
     }
     if (p.agent_status === "idle" && p.interactive_ready !== false) return "ready";
   }
@@ -71,7 +72,7 @@ export async function launchAgent(o: {
   try {
     pane = await api.newTab(o.workspaceId, o.cwd, o.label || undefined);
   } catch (e) {
-    toast(`Onglet non créé : ${e}`);
+    toast(t("agentsStore.tabNotCreated", { error: String(e) }));
     return "failed";
   }
   await refresh();
@@ -81,18 +82,18 @@ export async function launchAgent(o: {
   try {
     await api.run(pane.pane_id, command);
   } catch (e) {
-    toast(`Lancement impossible : ${e}`);
+    toast(t("agentsStore.launchFailed", { error: String(e) }));
     return "failed";
   }
   const text = o.prompt.trim();
   if (!text) return "ok";
   const ready = await whenReady(pane.pane_id);
   if (ready === "closed") {
-    toast("Onglet fermé avant que l’agent soit prêt : consigne non envoyée");
+    toast(t("agentsStore.tabClosedBeforeReady"));
     return "closed";
   }
   if (ready === "timeout") {
-    toast("L’agent n’est pas prêt au bout de 2 min : la consigne de départ est dans la zone de saisie");
+    toast(t("agentsStore.notReady"));
     return "failed";
   }
   // Refused by a guard or failed: undefined, and the consigne goes back to the input.

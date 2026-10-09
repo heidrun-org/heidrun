@@ -1,0 +1,21 @@
+{
+  "unknownSession": "Session Claude inconnue : le suivi Claude (status line) doit être activé.",
+  "noJournal": "Pas de journal trouvé pour cette session dans ~/.claude/projects.",
+  "dialogLabel": "Mosaïque des agents",
+  "eyebrow": "Mosaïque",
+  "shownAgentsLabel": "Agents affichés",
+  "activeTitle": "Le fil principal, les agents qui écrivent encore ou présents dans la liste de Claude",
+  "active": "Actifs",
+  "allTitle": "Tous les agents de la session, terminés compris",
+  "all": "Tous",
+  "hint": "Lecture seule, d’après les journaux de Claude · un clic affiche l’agent dans le terminal",
+  "closeTitle": "Fermer la mosaïque (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "loading": "Lecture des journaux…",
+  "noActive": "Aucun agent actif.",
+  "showAllTitle": "Afficher tous les agents",
+  "showAll": "Voir tous les agents",
+  "showInTerminal": "Afficher {name} dans le terminal",
+  "notInList": "Pas (ou plus) dans la liste des agents de Claude",
+  "shown": "affiché"
+}

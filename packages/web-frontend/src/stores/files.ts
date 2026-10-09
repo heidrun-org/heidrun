@@ -3,6 +3,7 @@ import { markRaw, reactive, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "./session";
+import { t } from "../i18n/index";
 
 interface FileList {
   root: string;
@@ -108,13 +109,13 @@ export async function saveEdit(path: string, overwrite = false): Promise<boolean
       expected: overwrite ? ed.diskHash : ed.hash,
     });
     Object.assign(ed, { original: content, hash: st.hash, conflict: false, disk: null, diskHash: null });
-    toast(`${path.split("/").pop()} enregistré`);
+    toast(t("filesStore.saved", { name: path.split("/").pop() ?? path }));
     // Git state of the tree (M, U…) follows.
     reloadFiles();
     return true;
   } catch (e) {
     if (String(e).includes("changed_on_disk")) {
-      if (overwrite) toast("Le fichier a encore changé sur le disque : regarde la nouvelle différence");
+      if (overwrite) toast(t("filesStore.changedAgain"));
       await markConflict(path);
     } else toast(String(e));
     return false;
@@ -168,7 +169,7 @@ export async function checkEdit(path: string) {
     // Typed something while the file was being read: not replaced, it is a conflict.
     if (now.current !== now.original) return markConflict(path);
     files.edits[path] = fresh(r);
-    toast(`${path.split("/").pop()} modifié sur le disque (un agent ?) : rechargé`);
+    toast(t("filesStore.reloaded", { name: path.split("/").pop() ?? path }));
   } else await markConflict(path);
 }
 
@@ -191,7 +192,7 @@ export async function loadFiles(cwd: string): Promise<boolean> {
     if (my !== loadSeq) return false;
     const sameRoot = r.root === files.root;
     if (!sameRoot && files.root && dirtyTabs().length) {
-      toast("Des fichiers modifiés ne sont pas enregistrés : enregistre-les ou ferme leurs onglets d’abord");
+      toast(t("filesStore.unsavedBeforeSwitch"));
       return false;
     }
     // Large and read-only: not made deeply reactive (50 000 paths).
@@ -265,7 +266,7 @@ export function closeTab(path: string) {
 
 /** Opens the explorer on the project of `cwd` (optionally a file at a line, or the quick search). */
 export async function openFiles(cwd: string | null | undefined, opts: { path?: string; line?: number | null; search?: boolean } = {}) {
-  if (!cwd) return toast("Dossier du panneau inconnu");
+  if (!cwd) return toast(t("filesStore.unknownFolder"));
   files.open = true;
   if ((cwd !== cwdOpen || !files.list.length) && !(await loadFiles(cwd)) && cwd !== cwdOpen) return;
   if (opts.path) openTab(opts.path, opts.line ?? null);
@@ -274,7 +275,7 @@ export async function openFiles(cwd: string | null | undefined, opts: { path?: s
 
 /** "src/app.ts:42" seen in a terminal: resolved from the pane's folder, then opened. */
 export async function openFileRef(cwd: string | null | undefined, path: string, line: number | null) {
-  if (!cwd) return toast("Dossier du panneau inconnu");
+  if (!cwd) return toast(t("filesStore.unknownFolder"));
   try {
     const r = await invoke<{ root: string; path: string }>("files_resolve", { cwd, path });
     files.open = true;
@@ -440,7 +441,7 @@ export async function createFile(path: string, dir: boolean): Promise<boolean> {
 export async function renameFile(from: string, to: string): Promise<boolean> {
   if (from === to) return true;
   if (dirtyTabs().some((t) => t === from || t.startsWith(from + "/"))) {
-    toast("Enregistre d’abord les fichiers modifiés concernés");
+    toast(t("filesStore.saveFirst"));
     return false;
   }
   try {
@@ -463,7 +464,7 @@ export async function renameFile(from: string, to: string): Promise<boolean> {
 export async function trashFile(path: string): Promise<boolean> {
   const under = (p: string) => p === path || p.startsWith(path + "/");
   if (dirtyTabs().some(under)) {
-    toast("Des fichiers modifiés non enregistrés sont concernés : enregistre-les ou annule d’abord");
+    toast(t("filesStore.unsavedConcerned"));
     return false;
   }
   try {
@@ -471,7 +472,7 @@ export async function trashFile(path: string): Promise<boolean> {
     for (const k of Object.keys(files.edits)) if (under(k)) delete files.edits[k];
     for (const t of [...files.tabs]) if (under(t)) closeTab(t);
     await reloadFiles();
-    toast(`${path.split("/").pop()} mis à la Corbeille`);
+    toast(t("filesStore.trashed", { name: path.split("/").pop() ?? path }));
     return true;
   } catch (e) {
     toast(String(e));

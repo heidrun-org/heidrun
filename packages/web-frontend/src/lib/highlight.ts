@@ -18,6 +18,7 @@ import twig from "highlight.js/lib/languages/twig";
 import typescript from "highlight.js/lib/languages/typescript";
 import xml from "highlight.js/lib/languages/xml";
 import yaml from "highlight.js/lib/languages/yaml";
+import { t } from "../i18n/index";
 
 const LANGS = { bash, css, dart, dockerfile, ini, javascript, json, makefile, markdown, php, python, rust, scss, sql, twig, typescript, xml, yaml };
 for (const [name, def] of Object.entries(LANGS)) hljs.registerLanguage(name, def);
@@ -84,7 +85,13 @@ export function highlightFile(text: string, lang: string | null): string[] {
 }
 
 export const CODE_THEMES = [
-  { id: "auto", label: "Comme l'application" },
+  {
+    id: "auto",
+    // A getter: the text follows the language in use.
+    get label() {
+      return t("highlight.codeThemeAuto");
+    },
+  },
   { id: "github-dark", label: "GitHub Dark" },
   { id: "github-light", label: "GitHub Light" },
   { id: "one-dark", label: "One Dark" },

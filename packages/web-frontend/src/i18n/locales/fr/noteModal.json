@@ -1,0 +1,22 @@
+{
+  "copied": "Copié",
+  "sentTo": "Note envoyée à {agent}",
+  "noteTitle": "Titre de la note",
+  "doubleClickToRename": "Double-clic pour renommer",
+  "close": "Fermer",
+  "closeTitle": "Fermer (Échap)",
+  "noteText": "Texte de la note",
+  "cancelTitle": "Annuler la modification de la note",
+  "cancel": "Annuler",
+  "saveTitle": "Enregistrer la note",
+  "save": "Enregistrer",
+  "copyTitle": "Copier la note",
+  "copy": "Copier",
+  "editTitle": "Modifier la note",
+  "edit": "Modifier",
+  "sendToAgent": "Envoyer à un agent",
+  "sendToAgentChoice": "Envoyer à un agent…",
+  "delete": "Supprimer",
+  "deleteArmed": "Supprimer ?",
+  "deleteNote": "Supprimer la note"
+}

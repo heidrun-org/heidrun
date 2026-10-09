@@ -26,6 +26,7 @@ import {
   workspacePanes,
 } from "../stores/session";
 import { statusLabel, agentKind, clockTime, compactTokens, duration, gaugeLevel, paneName, shortPath } from "../lib/format";
+import { locale, t } from "../i18n/index";
 
 const p = selectedPane;
 const ctx = computed(() => (p.value ? contextFor(p.value) : null));
@@ -85,20 +86,28 @@ const branchState = computed(() => {
   if (!g) return { level: "", badge: "", title: "" };
   const dirty = g.changed + g.untracked;
   const parts: string[] = [];
-  if (dirty) parts.push(`${dirty} fichier${dirty > 1 ? "s" : ""} non commité${dirty > 1 ? "s" : ""}`);
-  if (g.ahead) parts.push(`${g.ahead} commit${g.ahead > 1 ? "s" : ""} à pousser`);
-  if (g.behind) parts.push(`${g.behind} en retard sur ${g.upstream ?? "le distant"}`);
-  if (!g.upstream) parts.push("pas de branche distante");
+  if (dirty) parts.push(t("inspector.git.uncommitted", { count: dirty }));
+  if (g.ahead) parts.push(t("inspector.git.toPush", { count: g.ahead }));
+  if (g.behind) {
+    parts.push(g.upstream ? t("inspector.git.behind", { commits: g.behind, upstream: g.upstream }) : t("inspector.git.behindRemote", { commits: g.behind }));
+  }
+  if (!g.upstream) parts.push(t("inspector.git.noUpstream"));
   const level = dirty ? "dirty" : g.ahead || !g.upstream ? "ahead" : "clean";
   const badge = [dirty ? `±${dirty}` : "", g.ahead ? `↑${g.ahead}` : "", g.behind ? `↓${g.behind}` : ""].filter(Boolean).join(" ");
-  return { level, badge, title: `${g.branch}${g.upstream ? ` → ${g.upstream}` : ""}\n${parts.length ? parts.join(" · ") : "Tout est commité et poussé"}` };
+  return { level, badge, title: `${g.branch}${g.upstream ? ` → ${g.upstream}` : ""}\n${parts.length ? parts.join(" · ") : t("inspector.git.clean")}` };
 });
 
 function runLabel(a: (typeof state.activity)[number]): string {
-  if (a.status === "blocked") return "attend une décision";
-  if (a.status === "working") return a.startUnknown ? "en cours" : `en cours · ${duration(now.value - a.start)}`;
-  const took = a.end && !a.startUnknown ? ` · ${duration(a.end - a.start)}` : "";
-  return (a.status === "closed" ? "fermé" : "terminé") + took;
+  if (a.status === "blocked") return t("inspector.run.blocked");
+  if (a.status === "working") {
+    return a.startUnknown ? t("inspector.run.working") : t("inspector.run.workingFor", { duration: duration(now.value - a.start) });
+  }
+  const closed = a.status === "closed";
+  if (a.end && !a.startUnknown) {
+    const took = duration(a.end - a.start);
+    return closed ? t("inspector.run.closedAfter", { duration: took }) : t("inspector.run.doneAfter", { duration: took });
+  }
+  return closed ? t("inspector.run.closed") : t("inspector.run.done");
 }
 
 const watches = computed(() => state.watches.filter((w) => w.paneId === p.value?.pane_id));
@@ -139,8 +148,8 @@ function watchOutput() {
 const statusText = computed(() => {
   const x = p.value;
   if (!x) return "";
-  if (!x.agent) return "Terminal";
-  if (x.agent_status === "blocked") return "Bloqué · attend une décision";
+  if (!x.agent) return t("inspector.terminal");
+  if (x.agent_status === "blocked") return t("inspector.blockedWaiting");
   return statusLabel(x.agent_status).replace(/^./, (c) => c.toUpperCase());
 });
 </script>
@@ -151,7 +160,7 @@ const statusText = computed(() => {
       <!-- 1. This session: everything tied to the selected pane. -->
       <section class="sec" aria-labelledby="sec-session">
         <header class="sec-head">
-          <span id="sec-session" class="eyebrow">Session</span>
+          <span id="sec-session" class="eyebrow">{{ t("inspector.session") }}</span>
           <span class="sec-where">{{ workspaceLabel(p.workspace_id) }}<template v-if="tabName"> · {{ tabName }}</template></span>
         </header>
 
@@ -174,104 +183,104 @@ const statusText = computed(() => {
           >
             <span class="opt-n">{{ o.n }}</span><span class="opt-l">{{ o.label }}</span>
           </button>
-          <button title="Send the Escape key to the pane" class="btn" @click="sendKeys(p.pane_id, ['esc'])">Échap</button>
+          <button :title="t('inspector.escapeTitle')" class="btn" @click="sendKeys(p.pane_id, ['esc'])">{{ t("inspector.escape") }}</button>
         </div>
         <div v-else-if="p.agent && p.agent_status === 'blocked'" class="block actions">
-          <button title="Allow this action" class="btn lg primary" @click="sendKeys(p.pane_id, ['enter'])">Autoriser</button>
+          <button :title="t('inspector.allowTitle')" class="btn lg primary" @click="sendKeys(p.pane_id, ['enter'])">{{ t("inspector.allow") }}</button>
           <div class="pair">
-            <button title="Always allow this action" v-if="isClaude" class="btn lg" @click="sendKeys(p.pane_id, ['2'])">Toujours</button>
-            <button title="Refuse this action" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Refuser</button>
+            <button :title="t('inspector.alwaysTitle')" v-if="isClaude" class="btn lg" @click="sendKeys(p.pane_id, ['2'])">{{ t("inspector.always") }}</button>
+            <button :title="t('inspector.refuseTitle')" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">{{ t("inspector.refuse") }}</button>
           </div>
         </div>
         <div v-else-if="p.agent && p.agent_status === 'working'" class="block actions">
-          <button title="Interrupt the agent" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Interrompre</button>
+          <button :title="t('inspector.interruptTitle')" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">{{ t("inspector.interrupt") }}</button>
         </div>
         <div v-else-if="!p.agent" class="block actions">
-          <button title="Ask another agent to fix this problem" v-if="fixer" class="btn lg primary" @click="askAgentToFix(p.pane_id, fixer.pane_id)">
-            Demander à {{ paneName(fixer) }} de corriger
+          <button :title="t('inspector.askFixTitle')" v-if="fixer" class="btn lg primary" @click="askAgentToFix(p.pane_id, fixer.pane_id)">
+            {{ t("inspector.askFix", { agent: paneName(fixer) }) }}
           </button>
           <div class="pair">
-            <button title="Run the last command again" class="btn lg" @click="sendKeys(p.pane_id, ['up', 'enter'])">Relancer</button>
-            <button title="Stop the command (Control+C)" class="btn lg" @click="sendKeys(p.pane_id, ['ctrl+c'])">Arrêter ⌃C</button>
+            <button :title="t('inspector.rerunTitle')" class="btn lg" @click="sendKeys(p.pane_id, ['up', 'enter'])">{{ t("inspector.rerun") }}</button>
+            <button :title="t('inspector.stopTitle')" class="btn lg" @click="sendKeys(p.pane_id, ['ctrl+c'])">{{ t("inspector.stop") }} ⌃C</button>
           </div>
         </div>
 
         <dl class="facts">
-          <template v-if="p.agent"><dt>Agent</dt><dd>{{ agentKind(p) }}<span v-if="p.tokens?.hd_model"> · {{ p.tokens.hd_model }}</span></dd></template>
+          <template v-if="p.agent"><dt>{{ t("inspector.agent") }}</dt><dd>{{ agentKind(p) }}<span v-if="p.tokens?.hd_model"> · {{ p.tokens.hd_model }}</span></dd></template>
           <template v-else-if="p.terminal_title_stripped">
-            <dt>Commande</dt>
+            <dt>{{ t("inspector.command") }}</dt>
             <dd class="mono full" tabindex="0" :title="p.terminal_title_stripped">{{ p.terminal_title_stripped }}</dd>
           </template>
-          <dt>Dossier</dt>
+          <dt>{{ t("inspector.folder") }}</dt>
           <dd class="mono full dir-dd" tabindex="0" :title="p.foreground_cwd || p.cwd || ''">
             <span>{{ shortPath(p.foreground_cwd || p.cwd) }}</span>
-            <button type="button" class="dir-open" title="Fichiers du projet (⌘P pour chercher)" aria-label="Fichiers du projet" @click="openFiles(p.foreground_cwd || p.cwd)">
+            <button type="button" class="dir-open" :title="t('inspector.projectFilesTitle')" :aria-label="t('inspector.projectFiles')" @click="openFiles(p.foreground_cwd || p.cwd)">
               <Icon name="folder" />
             </button>
           </dd>
           <template v-if="paneGit?.branch">
-            <dt>Branche</dt>
+            <dt>{{ t("inspector.branch") }}</dt>
             <dd class="mono full branch" :class="branchState.level" tabindex="0" :title="branchState.title">
               <span class="b-dot"></span>{{ paneGit.branch }}<span v-if="branchState.badge" class="b-badge">{{ branchState.badge }}</span>
             </dd>
           </template>
-          <dt>Panneau</dt><dd class="mono">{{ p.pane_id }}</dd>
+          <dt>{{ t("inspector.pane") }}</dt><dd class="mono">{{ p.pane_id }}</dd>
         </dl>
 
         <div v-if="ctx" class="block">
           <div class="line">
-            <span class="muted">Fenêtre de contexte</span>
+            <span class="muted">{{ t("inspector.contextWindow") }}</span>
             <span class="mono" :class="'lvl-' + gaugeLevel(ctx.percent)">
               <template v-if="ctx.used && ctx.size">{{ compactTokens(ctx.used) }} / {{ compactTokens(ctx.size) }}</template>
-              <template v-else>{{ Math.round(ctx.percent) }} %</template>
+              <template v-else>{{ t("inspector.percent", { percent: Math.round(ctx.percent) }) }}</template>
             </span>
           </div>
           <div class="gauge lg" :class="gaugeLevel(ctx.percent)"><span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span></div>
-          <div v-if="ctx.percent > 80" class="hint lvl-crit">Proche de la limite — pense à /compact</div>
-          <div v-else-if="ctx.percent >= 60" class="hint">Plus de la moitié utilisée</div>
+          <div v-if="ctx.percent > 80" class="hint lvl-crit">{{ t("inspector.contextNearLimit") }}</div>
+          <div v-else-if="ctx.percent >= 60" class="hint">{{ t("inspector.contextOverHalf") }}</div>
         </div>
 
         <div v-if="p.agent && sessionCost != null" class="line small">
-          <span class="muted">Coût estimé de la session</span>
-          <span class="mono">{{ sessionCost.toFixed(2).replace(".", ",") }} $</span>
+          <span class="muted">{{ t("inspector.sessionCost") }}</span>
+          <span class="mono">{{ t("inspector.dollars", { amount: sessionCost.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }) }}</span>
         </div>
 
         <RemoteControl v-if="provider === 'claude'" :pane="p" />
 
         <div v-if="!p.agent" class="block">
-          <div class="eyebrow">Surveillances</div>
+          <div class="eyebrow">{{ t("inspector.watches") }}</div>
           <div v-for="w in watches" :key="w.id" class="watch">
             <span class="mono">{{ w.regex }}</span>
-            <span class="muted">Notification à la première correspondance</span>
+            <span class="muted">{{ t("inspector.watchNotice") }}</span>
           </div>
           <form class="watch-form" @submit.prevent="watchOutput">
-            <label class="sr" for="regex">Motif à surveiller</label>
+            <label class="sr" for="regex">{{ t("inspector.watchPattern") }}</label>
             <input id="regex" v-model="regex" class="mono" spellcheck="false" />
-            <button title="Start watching this pane" class="btn" type="submit">Surveiller</button>
+            <button :title="t('inspector.watchTitle')" class="btn" type="submit">{{ t("inspector.watch") }}</button>
           </form>
         </div>
 
-        <ConfirmButton class="link" label="Fermer ce panneau" armed-label="Cliquer encore pour fermer" aria-label="Fermer ce panneau" @confirm="closePane(p.pane_id)" />
+        <ConfirmButton class="link" :label="t('inspector.closePane')" :armed-label="t('inspector.closePaneArmed')" :aria-label="t('inspector.closePane')" @confirm="closePane(p.pane_id)" />
       </section>
     </template>
-    <div v-else class="muted">Sélectionne un panneau.</div>
+    <div v-else class="muted">{{ t("inspector.selectPane") }}</div>
 
     <!-- 2. Everything shared by all agents: account quotas and activity. -->
     <section v-if="providers.length || state.activity.length" class="sec global" aria-labelledby="sec-global">
       <header class="sec-head">
-        <span id="sec-global" class="eyebrow">Tous les agents</span>
-        <span class="sec-where">quotas du compte et activité</span>
+        <span id="sec-global" class="eyebrow">{{ t("inspector.allAgents") }}</span>
+        <span class="sec-where">{{ t("inspector.allAgentsDetail") }}</span>
       </header>
 
-      <button type="button" class="hist-line" title="Historique, temps et coût par projet (⇧⌘H)" @click="history.open = true">
-        <span class="muted">Aujourd’hui</span>
+      <button type="button" class="hist-line" :title="t('inspector.historyTitle')" @click="history.open = true">
+        <span class="muted">{{ t("inspector.today") }}</span>
         <strong v-if="todaySummary.total">{{ hm(todaySummary.total) }}<template v-if="todaySummary.cost"> · ${{ todaySummary.cost.toFixed(2) }}</template></strong>
         <!-- On one line: the workspaces end with "…" rather than wrapping. -->
         <span class="hist-ws" :title="todaySummary.top.map(([w, ms]) => `${w} ${hm(ms)}`).join(' · ')">
           <template v-if="todaySummary.total">{{ todaySummary.top.map(([w, ms]) => `· ${w} ${hm(ms)}`).join("  ") }}</template>
-          <template v-else>pas encore de travail</template>
+          <template v-else>{{ t("inspector.noWorkYet") }}</template>
         </span>
-        <span class="hist-go">Historique <Icon name="box-arrow-up-right" /></span>
+        <span class="hist-go">{{ t("inspector.history") }} <Icon name="box-arrow-up-right" /></span>
       </button>
 
       <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
@@ -279,12 +288,12 @@ const statusText = computed(() => {
 
       <div v-if="state.activity.length" class="block">
         <div class="act-head">
-          <span class="eyebrow">Activité</span>
-          <button v-if="hasFinished" type="button" class="clear" title="Retirer les travaux terminés" @click="clearFinishedRuns()">Effacer terminés</button>
+          <span class="eyebrow">{{ t("inspector.activity") }}</span>
+          <button v-if="hasFinished" type="button" class="clear" :title="t('inspector.clearFinishedTitle')" @click="clearFinishedRuns()">{{ t("inspector.clearFinished") }}</button>
           <span class="grow"></span>
-          <span v-if="p" class="seg" role="group" aria-label="Activité affichée">
-            <button title="Show the activity of all panes" type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">Tous</button>
-            <button title="Show the activity of this pane only" type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">Ce panneau</button>
+          <span v-if="p" class="seg" role="group" :aria-label="t('inspector.activityShown')">
+            <button :title="t('inspector.scopeAllTitle')" type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">{{ t("inspector.scopeAll") }}</button>
+            <button :title="t('inspector.scopePaneTitle')" type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">{{ t("inspector.scopePane") }}</button>
           </span>
         </div>
         <div v-for="a in activity" :key="a.id" class="act-row">
@@ -293,7 +302,7 @@ const statusText = computed(() => {
             class="act"
             :class="{ current: a.paneId === p?.pane_id, gone: !a.pane }"
             :disabled="!a.pane"
-            :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
+            :title="a.pane ? t('inspector.goToPane') : t('inspector.paneClosed')"
             @click="a.pane && selectPane(a.pane)"
           >
             <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)"><Icon name="circle-fill" /></span>
@@ -314,12 +323,12 @@ const statusText = computed(() => {
             v-if="a.end"
             type="button"
             class="act-x"
-            :aria-label="`Retirer ${a.where || a.kind} de la liste`"
-            title="Retirer de la liste"
+            :aria-label="t('inspector.removeFromListLabel', { name: a.where || a.kind })"
+            :title="t('inspector.removeFromList')"
             @click="dismissRun(a.id)"
           ><Icon name="x-lg" /></button>
         </div>
-        <div v-if="!activity.length" class="muted">Ce panneau n’a pas travaillé depuis l’ouverture de l’app.</div>
+        <div v-if="!activity.length" class="muted">{{ t("inspector.paneNoActivity") }}</div>
       </div>
     </section>
   </div>

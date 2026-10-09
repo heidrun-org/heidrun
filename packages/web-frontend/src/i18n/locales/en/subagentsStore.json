@@ -1,0 +1,9 @@
+{
+  "agentBlocked": "The agent is waiting for a decision: answer it first",
+  "showFailed": "Cannot show {name}: use ↓ then Enter in the terminal",
+  "alreadySending": "A send to a sub-agent is already in progress",
+  "switching": "Switching to {name}…",
+  "unreachable": "Cannot reach {name} in Claude's agent list: prompt not sent",
+  "sentButReturnFailed": "Sent to {name}, but going back to {first} failed",
+  "sent": "Sent to {name}"
+}

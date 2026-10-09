@@ -3,6 +3,7 @@ import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { allPanes, selectedPane, state as session, workspaces } from "./session";
 import { refContext, type Forge } from "../lib/refs";
+import { t } from "../i18n/index";
 
 export interface GitStatus {
   root: string;
@@ -149,40 +150,41 @@ function cli(cwd: string, tool: "glab" | "gh", args: string[]): Promise<string> 
   return invoke<string>("forge_cli", { cwd, tool, args });
 }
 
-// GitLab "detailed_merge_status" → what it means for you.
+// GitLab "detailed_merge_status" → what it means for you (translation key of the label, level).
 const GL_STATUS: Record<string, [string, Level]> = {
-  mergeable: ["prête à fusionner", "ok"],
-  ci_still_running: ["CI en cours", "pending"],
-  ci_must_pass: ["CI à faire passer", "warn"],
-  not_approved: ["à approuver", "warn"],
-  approvals_syncing: ["approbations en cours", "pending"],
-  conflict: ["conflit", "crit"],
-  need_rebase: ["à rebaser", "warn"],
-  draft_status: ["brouillon", "muted"],
-  discussions_not_resolved: ["discussions ouvertes", "warn"],
-  blocked_status: ["bloquée", "crit"],
-  checking: ["vérification…", "pending"],
-  unchecked: ["non vérifiée", "muted"],
-  not_open: ["fermée", "muted"],
-  requested_changes: ["changements demandés", "crit"],
-  jira_association_missing: ["ticket manquant", "warn"],
-  external_status_checks: ["contrôles externes", "pending"],
+  mergeable: ["gitStore.state.mergeable", "ok"],
+  ci_still_running: ["gitStore.ci.running", "pending"],
+  ci_must_pass: ["gitStore.state.ciMustPass", "warn"],
+  not_approved: ["gitStore.state.notApproved", "warn"],
+  approvals_syncing: ["gitStore.state.approvalsSyncing", "pending"],
+  conflict: ["gitStore.state.conflict", "crit"],
+  need_rebase: ["gitStore.state.needRebase", "warn"],
+  draft_status: ["gitStore.state.draft", "muted"],
+  discussions_not_resolved: ["gitStore.state.discussionsNotResolved", "warn"],
+  blocked_status: ["gitStore.state.blocked", "crit"],
+  checking: ["gitStore.state.checking", "pending"],
+  unchecked: ["gitStore.state.unchecked", "muted"],
+  not_open: ["gitStore.state.closed", "muted"],
+  requested_changes: ["gitStore.review.changesRequested", "crit"],
+  jira_association_missing: ["gitStore.state.ticketMissing", "warn"],
+  external_status_checks: ["gitStore.state.externalChecks", "pending"],
 };
 
+// Pipeline status → translation key of the label, level.
 const PIPE: Record<string, [string, Level]> = {
-  success: ["CI verte", "ok"],
-  passed: ["CI verte", "ok"],
-  failed: ["CI en échec", "crit"],
-  failure: ["CI en échec", "crit"],
-  running: ["CI en cours", "pending"],
-  in_progress: ["CI en cours", "pending"],
-  pending: ["CI en attente", "pending"],
-  queued: ["CI en attente", "pending"],
-  created: ["CI en attente", "pending"],
-  canceled: ["CI annulée", "muted"],
-  cancelled: ["CI annulée", "muted"],
-  skipped: ["CI ignorée", "muted"],
-  manual: ["CI manuelle", "warn"],
+  success: ["gitStore.ci.success", "ok"],
+  passed: ["gitStore.ci.success", "ok"],
+  failed: ["gitStore.ci.failed", "crit"],
+  failure: ["gitStore.ci.failed", "crit"],
+  running: ["gitStore.ci.running", "pending"],
+  in_progress: ["gitStore.ci.running", "pending"],
+  pending: ["gitStore.ci.waiting", "pending"],
+  queued: ["gitStore.ci.waiting", "pending"],
+  created: ["gitStore.ci.waiting", "pending"],
+  canceled: ["gitStore.ci.canceled", "muted"],
+  cancelled: ["gitStore.ci.canceled", "muted"],
+  skipped: ["gitStore.ci.skipped", "muted"],
+  manual: ["gitStore.ci.manual", "warn"],
 };
 
 type GlMr = {
@@ -208,14 +210,16 @@ type GlMr = {
 const time = (s?: string | null) => (s ? Date.parse(s) || null : null);
 
 function glRequest(m: GlMr, status: Request["status"]): Request {
-  const [state, level] =
+  const [stateKey, level] =
     status === "merged"
-      ? (["fusionnée", "ok"] as [string, Level])
+      ? (["gitStore.state.merged", "ok"] as [string, Level])
       : status === "closed"
-        ? (["fermée", "muted"] as [string, Level])
+        ? (["gitStore.state.closed", "muted"] as [string, Level])
         : m.has_conflicts
           ? GL_STATUS.conflict
-          : GL_STATUS[m.detailed_merge_status ?? ""] ?? [m.detailed_merge_status ?? "ouverte", "muted" as Level];
+          : GL_STATUS[m.detailed_merge_status ?? ""] ?? [null, "muted" as Level];
+  // An unknown GitLab status is shown as it is.
+  const state = stateKey !== null ? t(stateKey) : m.detailed_merge_status ?? t("gitStore.state.open");
   return {
     ref: `!${m.iid}`,
     title: m.title,
@@ -225,7 +229,7 @@ function glRequest(m: GlMr, status: Request["status"]): Request {
     draft: !!m.draft,
     state,
     level,
-    review: m.detailed_merge_status === "requested_changes" ? { label: "changements demandés", level: "crit" } : null,
+    review: m.detailed_merge_status === "requested_changes" ? { label: t("gitStore.review.changesRequested"), level: "crit" } : null,
     status,
     at: time(m.merged_at) ?? time(m.closed_at) ?? time(m.updated_at),
     number: m.iid,
@@ -257,9 +261,9 @@ async function loadGitlab(cwd: string, branch: string | null): Promise<Pick<Forg
         const by = a.approved_by ?? [];
         const who = by.map((x) => x.user?.username).filter(Boolean).join(", ");
         // "approved" is also true when the project has no approval rule: only count real approvals.
-        if (by.length && !a.approvals_left) r.review = { label: `approuvée · ${who}`, level: "ok" };
-        else if (by.length) r.review = { label: `${by.length} approbation(s), ${a.approvals_left} restante(s)`, level: "pending" };
-        else if (!r.draft) r.review = { label: "en attente de revue", level: "warn" };
+        if (by.length && !a.approvals_left) r.review = { label: t("gitStore.review.approvedBy", { who }), level: "ok" };
+        else if (by.length) r.review = { label: t("gitStore.review.approvals", { count: by.length, left: a.approvals_left ?? 0 }), level: "pending" };
+        else if (!r.draft) r.review = { label: t("gitStore.review.waiting"), level: "warn" };
       } catch {
         /* approvals not available on this plan / project */
       }
@@ -286,8 +290,8 @@ async function loadGitlab(cwd: string, branch: string | null): Promise<Pick<Forg
         await cli(cwd, "glab", ["api", `projects/:fullpath/pipelines?ref=${encodeURIComponent(branch)}&per_page=1`]),
       ) as { status: string; web_url: string }[];
       if (p[0]) {
-        const [label, level] = PIPE[p[0].status] ?? [p[0].status, "muted" as Level];
-        ci = { label, level, url: p[0].web_url };
+        const known = PIPE[p[0].status];
+        ci = known ? { label: t(known[0]), level: known[1], url: p[0].web_url } : { label: p[0].status, level: "muted", url: p[0].web_url };
       }
     } catch {
       /* no CI on this project */
@@ -314,25 +318,28 @@ type GhPr = {
   updatedAt?: string | null;
 };
 
-const GH_REVIEW: Record<string, { label: string; level: Level }> = {
-  APPROVED: { label: "approuvée", level: "ok" },
-  CHANGES_REQUESTED: { label: "changements demandés", level: "crit" },
-  REVIEW_REQUIRED: { label: "en attente de revue", level: "warn" },
+// GitHub review decision → translation key of the label, level.
+const GH_REVIEW: Record<string, { labelKey: string; level: Level }> = {
+  APPROVED: { labelKey: "gitStore.review.approved", level: "ok" },
+  CHANGES_REQUESTED: { labelKey: "gitStore.review.changesRequested", level: "crit" },
+  REVIEW_REQUIRED: { labelKey: "gitStore.review.waiting", level: "warn" },
 };
 
 function ghRequest(p: GhPr, status: Request["status"]): Request {
   const checks = p.statusCheckRollup ?? [];
   const failed = checks.some((c) => ["FAILURE", "ERROR", "TIMED_OUT"].includes((c.conclusion || c.state || "").toUpperCase()));
   const running = checks.some((c) => ["IN_PROGRESS", "QUEUED", "PENDING"].includes((c.status || c.state || "").toUpperCase()));
-  let state = "ouverte";
+  let stateKey = "gitStore.state.open";
   let level: Level = "muted";
-  if (status === "merged") [state, level] = ["fusionnée", "ok"];
-  else if (status === "closed") [state, level] = ["fermée", "muted"];
-  else if (p.isDraft) [state, level] = ["brouillon", "muted"];
-  else if (p.mergeable === "CONFLICTING") [state, level] = ["conflit", "crit"];
-  else if (failed) [state, level] = ["CI en échec", "crit"];
-  else if (running) [state, level] = ["CI en cours", "pending"];
-  else if (p.mergeable === "MERGEABLE") [state, level] = ["prête à fusionner", "ok"];
+  if (status === "merged") [stateKey, level] = ["gitStore.state.merged", "ok"];
+  else if (status === "closed") [stateKey, level] = ["gitStore.state.closed", "muted"];
+  else if (p.isDraft) [stateKey, level] = ["gitStore.state.draft", "muted"];
+  else if (p.mergeable === "CONFLICTING") [stateKey, level] = ["gitStore.state.conflict", "crit"];
+  else if (failed) [stateKey, level] = ["gitStore.ci.failed", "crit"];
+  else if (running) [stateKey, level] = ["gitStore.ci.running", "pending"];
+  else if (p.mergeable === "MERGEABLE") [stateKey, level] = ["gitStore.state.mergeable", "ok"];
+  const state = t(stateKey);
+  const reviewDecision = status === "open" ? GH_REVIEW[p.reviewDecision ?? ""] : undefined;
   return {
     ref: `#${p.number}`,
     title: p.title,
@@ -342,7 +349,7 @@ function ghRequest(p: GhPr, status: Request["status"]): Request {
     draft: p.isDraft,
     state,
     level,
-    review: status === "open" ? GH_REVIEW[p.reviewDecision ?? ""] ?? null : null,
+    review: reviewDecision ? { label: t(reviewDecision.labelKey), level: reviewDecision.level } : null,
     status,
     at: time(p.mergedAt) ?? time(p.closedAt) ?? time(p.updatedAt),
     number: p.number,
@@ -380,8 +387,8 @@ async function loadGithub(cwd: string, branch: string | null): Promise<Pick<Forg
       ) as { status: string; conclusion: string; url: string }[];
       if (runs[0]) {
         const key = runs[0].status === "completed" ? runs[0].conclusion : runs[0].status;
-        const [label, level] = PIPE[key] ?? [key, "muted" as Level];
-        ci = { label, level, url: runs[0].url };
+        const known = PIPE[key];
+        ci = known ? { label: t(known[0]), level: known[1], url: runs[0].url } : { label: key, level: "muted", url: runs[0].url };
       }
     } catch {
       /* no Actions */
@@ -392,9 +399,9 @@ async function loadGithub(cwd: string, branch: string | null): Promise<Pick<Forg
 
 function explain(e: unknown, tool: string): string {
   const s = String(e);
-  if (/\b404\b/.test(s)) return "Projet introuvable sur l’hébergeur (remote ou accès).";
-  if (/\b(401|403)\b|auth login|not logged|unauthorized|token/i.test(s)) return `${tool} n’est pas connecté à cet hébergeur (${tool} auth login).`;
-  if (/command not found|No such file or directory/i.test(s)) return `${tool} n’est pas installé (brew install ${tool}).`;
+  if (/\b404\b/.test(s)) return t("gitStore.error.projectNotFound");
+  if (/\b(401|403)\b|auth login|not logged|unauthorized|token/i.test(s)) return t("gitStore.error.notLoggedIn", { tool });
+  if (/command not found|No such file or directory/i.test(s)) return t("gitStore.error.notInstalled", { tool });
   return s.split("\n")[0].slice(0, 200);
 }
 

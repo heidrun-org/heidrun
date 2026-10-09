@@ -114,7 +114,8 @@ export interface ContextUsage {
 export interface QuotaBlock {
   provider: "claude" | "codex";
   label: string;
-  windows: { name: string; percent: number; resetsAt?: number }[];
+  /** `id` names the window in the code, `name` is the text shown (translated). */
+  windows: { id: "session" | "week"; name: string; percent: number; resetsAt?: number }[];
   cost?: number;
   updatedAt?: number;
 }

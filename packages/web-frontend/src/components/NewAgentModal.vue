@@ -4,6 +4,7 @@ import { agentCommand, launchAgent, listAgents, newAgent, type AgentDef } from "
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
 import { projectPrompts, prompts } from "../stores/prompts";
 import { fillInput } from "../stores/input";
+import { t } from "../i18n/index";
 
 const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null);
 const agents = ref<AgentDef[]>([]);
@@ -85,57 +86,57 @@ function onKey(e: KeyboardEvent) {
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
     <div class="dialog" role="dialog" aria-labelledby="na-title">
-      <div class="eyebrow">Nouvel agent</div>
-      <h2 id="na-title">Lancer un agent dans {{ selectedWorkspace ? workspaceLabel(selectedWorkspace.workspace_id) : "le workspace" }}</h2>
-      <p class="where mono">{{ cwd ?? "dossier du workspace" }}</p>
+      <div class="eyebrow">{{ t("newAgentModal.eyebrow") }}</div>
+      <h2 id="na-title">{{ selectedWorkspace ? t("newAgentModal.titleIn", { workspace: workspaceLabel(selectedWorkspace.workspace_id) }) : t("newAgentModal.titleInWorkspace") }}</h2>
+      <p class="where mono">{{ cwd ?? t("newAgentModal.workspaceFolder") }}</p>
 
-      <div class="seg" role="radiogroup" aria-label="Outil">
-        <button title="Use Claude Code" ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
-        <button title="Use Codex" :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
+      <div class="seg" role="radiogroup" :aria-label="t('newAgentModal.toolLabel')">
+        <button :title="t('newAgentModal.useClaude')" ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
+        <button :title="t('newAgentModal.useCodex')" :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
       </div>
 
       <template v-if="tool === 'claude'">
-        <div class="field-label">Agent</div>
-        <div class="agents" role="radiogroup" aria-label="Agent">
-          <button title="Start a general agent without a role" class="agent" :class="{ on: agent === null }" @click="agent = null">
-            <span class="a-name">Agent libre</span><span class="a-desc">Claude Code sans rôle particulier</span>
+        <div class="field-label">{{ t("newAgentModal.agent") }}</div>
+        <div class="agents" role="radiogroup" :aria-label="t('newAgentModal.agent')">
+          <button :title="t('newAgentModal.freeAgentTitle')" class="agent" :class="{ on: agent === null }" @click="agent = null">
+            <span class="a-name">{{ t("newAgentModal.freeAgent") }}</span><span class="a-desc">{{ t("newAgentModal.freeAgentDescription") }}</span>
           </button>
-          <div v-if="loading" class="muted small">Lecture de .claude/agents…</div>
-          <button title="Start this agent" v-for="a in agents" :key="a.name" class="agent" :class="{ on: agent === a.name }" @click="agent = a.name">
+          <div v-if="loading" class="muted small">{{ t("newAgentModal.loading") }}</div>
+          <button :title="t('newAgentModal.startThisAgent')" v-for="a in agents" :key="a.name" class="agent" :class="{ on: agent === a.name }" @click="agent = a.name">
             <span class="a-name">{{ a.name }}<span class="src">{{ a.source }}</span><span v-if="a.model" class="src">{{ a.model }}</span></span>
             <span class="a-desc">{{ a.description || "—" }}</span>
           </button>
-          <div v-if="!loading && !agents.length" class="muted small">Aucun agent dans .claude/agents (projet) ni ~/.claude/agents.</div>
+          <div v-if="!loading && !agents.length" class="muted small">{{ t("newAgentModal.noAgents") }}</div>
         </div>
       </template>
 
       <div class="grid">
         <label>
-          <span class="field-label">Modèle</span>
-          <input v-model="model" list="na-models" :placeholder="chosen?.model ? `celui de l’agent (${chosen.model})` : 'par défaut'" spellcheck="false" />
+          <span class="field-label">{{ t("newAgentModal.model") }}</span>
+          <input v-model="model" list="na-models" :placeholder="chosen?.model ? t('newAgentModal.agentModel', { model: chosen.model }) : t('newAgentModal.defaultModel')" spellcheck="false" />
           <datalist id="na-models"><option v-for="m in MODELS[tool]" :key="m" :value="m" /></datalist>
         </label>
         <label>
-          <span class="field-label">Nom de l’onglet</span>
+          <span class="field-label">{{ t("newAgentModal.tabName") }}</span>
           <input v-model="label" spellcheck="false" @input="labelTouched = true" />
         </label>
       </div>
 
       <label class="block">
         <span class="field-label row-label">
-          Consigne de départ <span class="muted">(facultative, envoyée quand l’agent est prêt)</span>
-          <select v-if="templates.length" class="tpl" aria-label="Insérer un modèle de consigne" @change="useTemplate">
-            <option value="">☰ Modèle…</option>
+          {{ t("newAgentModal.prompt") }} <span class="muted">{{ t("newAgentModal.promptHint") }}</span>
+          <select v-if="templates.length" class="tpl" :aria-label="t('newAgentModal.templateLabel')" @change="useTemplate">
+            <option value="">{{ t("newAgentModal.template") }}</option>
             <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.label }}</option>
           </select>
         </span>
-        <textarea v-model="text" rows="4" placeholder="Ex. : Fais la revue de la MR de la branche {branche}"></textarea>
+        <textarea v-model="text" rows="4" :placeholder="t('newAgentModal.promptPlaceholder')"></textarea>
       </label>
 
       <p class="cmd mono">$ {{ command }}</p>
       <div class="row">
-        <button title="Cancel and close the window" class="btn lg" @click="close">Annuler</button>
-        <button title="Start the agent" class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">Lancer <kbd>⌘↵</kbd></button>
+        <button :title="t('newAgentModal.cancelTitle')" class="btn lg" @click="close">{{ t("newAgentModal.cancel") }}</button>
+        <button :title="t('newAgentModal.startTitle')" class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">{{ t("newAgentModal.start") }} <kbd>⌘↵</kbd></button>
       </div>
     </div>
   </div>

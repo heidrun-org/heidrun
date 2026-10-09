@@ -1,0 +1,14 @@
+{
+  "claudeAccount": "Compte Claude",
+  "codexAccount": "Compte Codex",
+  "percent": "{value} %",
+  "resetsAt": "réinitialisé {time}",
+  "notLinked": "Claude Code ne transmet pas encore ses chiffres à l’app. L’activation branche Herdr Desk sur sa status line, et ta status line actuelle reste affichée telle quelle dans le terminal.",
+  "enableTitle": "Commencer le suivi de la consommation Claude",
+  "enable": "Activer le suivi Claude",
+  "waitingClaude": "En attente de la prochaine réponse de Claude. Les quotas n’existent qu’avec un abonnement Pro ou Max.",
+  "waitingCodex": "Pas encore de données : Codex les écrit après sa première réponse.",
+  "showStatusLine": "Afficher aussi la status line dans le terminal",
+  "disableTitle": "Rétablit ta status line d’origine dans ~/.claude/settings.json",
+  "disable": "Désactiver le suivi Claude"
+}

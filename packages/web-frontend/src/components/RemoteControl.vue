@@ -4,18 +4,19 @@ import { remote, setRcStartup, toggleRemoteControl } from "../stores/claude";
 import { copy } from "../lib/clipboard";
 import { toast } from "../stores/session";
 import type { AgentInfo } from "../lib/types";
+import { t } from "../i18n/index";
 
 // Claude Code's Remote Control: follow this session from claude.ai/code or the Claude app.
 const props = defineProps<{ pane: AgentInfo }>();
 
 const state = computed(() => remote.byPane[props.pane.pane_id] ?? "off");
-const label = computed(() => ({ active: "Connecté", failed: "Connexion échouée", off: "Non connecté" })[state.value]);
+const label = computed(() => ({ active: t("remoteControl.connected"), failed: t("remoteControl.failed"), off: t("remoteControl.notConnected") })[state.value]);
 const url = computed(() => remote.urls[props.pane.pane_id]);
 
 async function copyUrl() {
   if (!url.value) return;
   await copy(url.value);
-  toast("Lien de la session copié");
+  toast(t("remoteControl.linkCopied"));
 }
 
 const busy = computed(() => props.pane.agent_status === "blocked");
@@ -28,21 +29,21 @@ const busy = computed(() => props.pane.agent_status === "blocked");
       <span class="chip" :class="state"><span class="dot" :class="state === 'active' ? 'working' : state === 'failed' ? 'blocked' : ''"></span>{{ label }}</span>
     </div>
     <p class="hint">
-      <template v-if="state === 'active'">Session ouverte sur claude.ai/code et l’app Claude (iPhone, iPad).</template>
-      <template v-else>Reprends cette session depuis claude.ai/code ou l’app Claude sur ton téléphone.</template>
+      <template v-if="state === 'active'">{{ t("remoteControl.activeHint") }}</template>
+      <template v-else>{{ t("remoteControl.offHint") }}</template>
     </p>
-    <button title="Show the URL and the QR code" v-if="state === 'active' && url" class="btn" @click="remote.openFor = pane.pane_id">Afficher l’URL et le QR code</button>
-    <button v-else class="btn" :disabled="busy" :title="busy ? 'L’agent attend une décision' : ''" @click="toggleRemoteControl(pane.pane_id)">
-      {{ state === "failed" ? "Reconnecter" : state === "active" ? "Ouvrir le panneau Remote Control" : "Activer Remote Control" }}
+    <button :title="t('remoteControl.showTitle')" v-if="state === 'active' && url" class="btn" @click="remote.openFor = pane.pane_id">{{ t("remoteControl.show") }}</button>
+    <button v-else class="btn" :disabled="busy" :title="busy ? t('remoteControl.busyTitle') : ''" @click="toggleRemoteControl(pane.pane_id)">
+      {{ state === "failed" ? t("remoteControl.reconnect") : state === "active" ? t("remoteControl.openPanel") : t("remoteControl.enable") }}
     </button>
     <div v-if="state === 'active' && url" class="url">
       <span class="mono">{{ url.replace("https://", "") }}</span>
-      <button title="Copy the URL" class="btn small" @click="copyUrl">Copier</button>
+      <button :title="t('remoteControl.copyTitle')" class="btn small" @click="copyUrl">{{ t("remoteControl.copy") }}</button>
     </div>
 
     <label class="check">
       <input type="checkbox" :checked="remote.atStartup === true" @change="(e) => setRcStartup((e.target as HTMLInputElement).checked)" />
-      Activer pour toutes les nouvelles sessions Claude
+      {{ t("remoteControl.atStartup") }}
     </label>
   </div>
 </template>

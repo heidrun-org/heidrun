@@ -1,0 +1,14 @@
+{
+  "tabNumber": "onglet {number}",
+  "window.session": "Session 5 h",
+  "window.week": "Semaine",
+  "notify.question": "{name} te pose une question",
+  "notify.done": "{name} a terminé",
+  "notify.blocked": "{name} attend une décision",
+  "notify.patternFound": "{name} : motif trouvé",
+  "error.agentBlocked": "L’agent attend une décision : réponds-lui d’abord.",
+  "error.herdrUnreachable": "Herdr ne répond pas. Lance « herdr » dans un terminal.",
+  "severalAgents_one": "{count} agent · {where}",
+  "severalAgents_other": "{count} agents · {where}",
+  "outputSent": "Sortie envoyée à {name}"
+}

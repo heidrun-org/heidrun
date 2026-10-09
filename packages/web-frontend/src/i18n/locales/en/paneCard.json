@@ -1,0 +1,17 @@
+{
+  "renameLabel": "New pane name (empty to go back to the automatic name)",
+  "renameTitle": "Double-click to rename",
+  "context": "context",
+  "goToTab": "Go to its tab",
+  "undock": "Remove from the side view",
+  "undockTitle": "Remove from the side view (the agent continues)",
+  "mosaicTitle": "Mosaic: what each agent of this session does (main, subagents)",
+  "mosaic": "Mosaic of the session agents",
+  "unpin": "Stop keeping on the side",
+  "pinTitle": "Keep on the side: stays visible when you change tab or workspace",
+  "splitRight": "Split right",
+  "splitRightTitle": "Split right (⌘D)",
+  "splitDown": "Split down",
+  "splitDownTitle": "Split down (⇧⌘D)",
+  "close": "Close the pane (⌘W)"
+}

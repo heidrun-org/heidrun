@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { checkCommand, type ProjectGuards } from "../lib/guards";
+import { t } from "../i18n/index";
 
 /** The confirmation window shown before a dangerous command. */
 export const danger = reactive({
@@ -35,7 +36,7 @@ function projectGuards(cwd: string | null | undefined): Promise<ProjectGuards | 
 /** The guard that a command hits, without asking anything (the phone asks on its side). */
 export async function guardHit(command: string, cwd: string | null | undefined) {
   const g = await projectGuards(cwd);
-  if (g === "unreadable") return { level: "confirm" as const, why: ".herdr-desk.json illisible : ses règles ne peuvent pas être vérifiées" };
+  if (g === "unreadable") return { level: "confirm" as const, why: t("guardsStore.unreadableConfig") };
   return checkCommand(command, g);
 }
 
@@ -47,7 +48,7 @@ export async function allowCommand(command: string, cwd: string | null | undefin
   const g = await projectGuards(cwd);
   const hit =
     g === "unreadable"
-      ? { level: "confirm" as const, why: ".herdr-desk.json illisible : ses règles ne peuvent pas être vérifiées" }
+      ? { level: "confirm" as const, why: t("guardsStore.unreadableConfig") }
       : checkCommand(command, g);
   if (!hit) return true;
   // Only one window at a time: a second request waits for the first answer.

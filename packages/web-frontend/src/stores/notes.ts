@@ -3,6 +3,7 @@ import { paneName } from "../lib/format";
 import { reorderSubset } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 import { tabLabel, toast, workspaceLabel } from "./session";
+import { t } from "../i18n/index";
 
 export interface Note {
   id: string;
@@ -43,7 +44,7 @@ export const selectionReaders = new Map<string, () => string>();
 
 function firstLine(text: string): string {
   const line = text.trim().split("\n")[0].trim();
-  return line.length > 60 ? `${line.slice(0, 57)}…` : line || "Note";
+  return line.length > 60 ? `${line.slice(0, 57)}…` : line || t("notesStore.defaultTitle");
 }
 
 export function pinText(text: string, pane: AgentInfo) {
@@ -57,7 +58,7 @@ export function pinText(text: string, pane: AgentInfo) {
     origin: `${workspaceLabel(pane.workspace_id)} – ${tabLabel(pane.tab_id)} · ${paneName(pane)}`,
     createdAt: Date.now(),
   });
-  toast("Note épinglée");
+  toast(t("notesStore.pinned"));
 }
 
 /** Drag and drop within the visible notes (current workspace or all). */

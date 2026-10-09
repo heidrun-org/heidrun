@@ -1,0 +1,8 @@
+{
+  "trackingEnabled": "Suivi Claude activé : les chiffres arrivent à la prochaine réponse de Claude",
+  "statusLineHidden": "Status line masquée dans le terminal (à la prochaine réponse de Claude)",
+  "statusLineShown": "Status line réaffichée dans le terminal",
+  "remoteControlEnabled": "Remote Control activé pour les nouvelles sessions Claude",
+  "remoteControlDisabled": "Remote Control automatique désactivé",
+  "trackingDisabled": "Suivi Claude désactivé : ta status line d’origine est rétablie"
+}
