@@ -17,7 +17,7 @@ import {
   workspacePanes,
   sidebarWorkspaces as workspaces,
 } from "../stores/session";
-import { STATUS_LABEL, agentKind, ago, paneName } from "../lib/format";
+import { statusLabel, agentKind, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
@@ -149,7 +149,7 @@ async function createWorkspace() {
           <span class="grow">{{ paneName(p) }}</span>
           <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" title="Remote Control connecté">RC</span>
           <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
-            {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
+            {{ p.agent ? statusLabel(p.agent_status) : "terminal" }}
           </span>
         </button>
       </template>
@@ -162,7 +162,7 @@ async function createWorkspace() {
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
             <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">QUESTION</span>
-            <span v-else class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+            <span v-else class="badge" :class="'t-' + p.agent_status">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
           </span>
           <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
           <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>

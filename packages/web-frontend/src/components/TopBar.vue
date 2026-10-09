@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import FontMenu from "./FontMenu.vue";
 import Icon from "./Icon.vue";
+import LanguageMenu from "./LanguageMenu.vue";
 import ThemeMenu from "./ThemeMenu.vue";
 import { counts, state } from "../stores/session";
 import { settings } from "../stores/settings";
 import { mobile } from "../stores/mobile";
+import { t } from "../i18n/index";
 </script>
 
 <template>
@@ -14,45 +16,46 @@ import { mobile } from "../stores/mobile";
       class="icon-btn"
       :class="{ on: settings.leftOpen }"
       :aria-pressed="settings.leftOpen"
-      aria-label="Afficher la barre latérale gauche"
-      title="Barre latérale gauche (⌘B)"
+      :aria-label="t('topBar.leftSidebarLabel')"
+      :title="t('topBar.leftSidebarTitle')"
       @click="settings.leftOpen = !settings.leftOpen"
     >
       <Icon name="layout-sidebar" />
     </button>
     <div class="brand" data-tauri-drag-region>Herdr Desk</div>
-    <div class="machine" :title="state.error || 'Connecté au serveur Herdr local'">
+    <div class="machine" :title="state.error || t('topBar.connectedTitle')">
       <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
-      Local · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : "hors ligne" }}
+      {{ t("topBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("topBar.offline") }}
     </div>
     <div class="search-wrap" data-tauri-drag-region>
-      <button title="Search or run a command" class="search" @click="state.paletteOpen = true">
-        <span>Rechercher, lancer une commande…</span><kbd>⌘K</kbd>
+      <button :title="t('topBar.searchTitle')" class="search" @click="state.paletteOpen = true">
+        <span>{{ t("topBar.searchPlaceholder") }}</span><kbd>⌘K</kbd>
       </button>
     </div>
     <div class="counts">
-      <span><span class="dot blocked"></span>{{ counts.blocked }} bloqué{{ counts.blocked > 1 ? "s" : "" }}</span>
-      <span><span class="dot working"></span>{{ counts.working }} en cours</span>
-      <span><span class="dot done"></span>{{ counts.done }} terminé{{ counts.done > 1 ? "s" : "" }}</span>
+      <span><span class="dot blocked"></span>{{ t("topBar.blocked", { count: counts.blocked }) }}</span>
+      <span><span class="dot working"></span>{{ t("topBar.working", { count: counts.working }) }}</span>
+      <span><span class="dot done"></span>{{ t("topBar.done", { count: counts.done }) }}</span>
     </div>
     <button
       class="icon-btn help"
       :class="{ on: mobile.status?.enabled }"
-      aria-label="Accès mobile"
-      :title="mobile.status?.enabled ? (mobile.status.running ? 'Accès mobile actif' : 'Accès mobile : erreur') : 'Accès mobile (iPhone, iPad)'"
+      :aria-label="t('topBar.mobileLabel')"
+      :title="mobile.status?.enabled ? (mobile.status.running ? t('topBar.mobileActive') : t('topBar.mobileError')) : t('topBar.mobileTitle')"
       @click="mobile.open = true"
     >
       <Icon name="phone" />
     </button>
-    <button class="icon-btn help" aria-label="Raccourcis" title="Raccourcis (⌘/)" @click="state.shortcutsOpen = true">?</button>
+    <button class="icon-btn help" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">?</button>
+    <LanguageMenu />
     <ThemeMenu />
     <FontMenu />
     <button
       class="icon-btn"
       :class="{ on: settings.rightOpen }"
       :aria-pressed="settings.rightOpen"
-      aria-label="Afficher le panneau de droite"
-      title="Panneau de droite (⌥⌘B)"
+      :aria-label="t('topBar.rightPanelLabel')"
+      :title="t('topBar.rightPanelTitle')"
       @click="settings.rightOpen = !settings.rightOpen"
     >
       <Icon name="layout-sidebar-reverse" />

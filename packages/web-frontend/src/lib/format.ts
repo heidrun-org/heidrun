@@ -1,12 +1,10 @@
 import type { AgentInfo, AgentStatus, PaneInfo } from "./types";
+import { locale, t } from "../i18n/index";
 
-export const STATUS_LABEL: Record<AgentStatus, string> = {
-  working: "en cours",
-  blocked: "bloqué",
-  done: "terminé",
-  idle: "inactif",
-  unknown: "inconnu",
-};
+/** The text of an agent status, in the language in use. */
+export function statusLabel(status: AgentStatus): string {
+  return t(`format.status.${status}`);
+}
 
 export function paneName(p: PaneInfo | AgentInfo): string {
   const name = (p as AgentInfo).name;
@@ -33,18 +31,18 @@ export function clockTime(epochSeconds?: number | null): string {
   if (!epochSeconds) return "";
   const d = new Date(epochSeconds * 1000);
   const now = new Date();
-  const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" });
   if (d.toDateString() === now.toDateString()) return time;
-  const day = d.toLocaleDateString("fr-FR", { weekday: "short" });
+  const day = d.toLocaleDateString(locale.value, { weekday: "short" });
   return `${day} ${time}`;
 }
 
 export function ago(ms: number): string {
   const s = Math.max(0, Math.round((Date.now() - ms) / 1000));
-  if (s < 60) return "à l’instant";
+  if (s < 60) return t("format.justNow");
   const m = Math.round(s / 60);
-  if (m < 60) return `il y a ${m} min`;
-  return `il y a ${Math.round(m / 60)} h`;
+  if (m < 60) return t("format.minutesAgo", { minutes: m });
+  return t("format.hoursAgo", { hours: Math.round(m / 60) });
 }
 
 export function compactTokens(n?: number | null): string {

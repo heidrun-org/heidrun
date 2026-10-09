@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { settings } from "../stores/settings";
-import { THEME_OPTIONS, resolvedTheme } from "../stores/theme";
-import { t } from "../i18n/index";
+import { LANGUAGES, type Language, t } from "../i18n/index";
 
 const open = ref(false);
 const root = ref<HTMLElement>();
 
-const buttonIcon = computed(() => (resolvedTheme.value === "dark" ? "moon-stars" : "sun"));
-
-function choose(id: (typeof THEME_OPTIONS)[number]["id"]) {
-  settings.theme = id;
+function choose(id: Language) {
+  settings.language = id;
   open.value = false;
 }
 
@@ -26,22 +23,21 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <template>
   <div ref="root" class="wrap">
-    <button class="icon-btn" :class="{ on: open }" :aria-label="t('themeMenu.buttonLabel')" :title="t('themeMenu.buttonTitle')" @click="open = !open">
-      <Icon :name="buttonIcon" />
+    <button class="icon-btn" :class="{ on: open }" :aria-label="t('languageMenu.buttonLabel')" :title="t('languageMenu.buttonTitle')" @click="open = !open">
+      <Icon name="translate" />
     </button>
-    <div v-if="open" class="menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
+    <div v-if="open" class="menu" role="menu" :aria-label="t('languageMenu.menuLabel')">
       <button
-        v-for="o in THEME_OPTIONS"
+        v-for="o in LANGUAGES"
         :key="o.id"
         class="item"
         role="menuitemradio"
-        :title="t('themeMenu.useTheme', { theme: t(o.labelKey) })"
-        :aria-checked="settings.theme === o.id"
+        :title="t('languageMenu.useLanguage', { language: o.label })"
+        :aria-checked="settings.language === o.id"
         @click="choose(o.id)"
       >
-        <Icon :name="o.icon" />
-        <span class="label">{{ t(o.labelKey) }}</span>
-        <Icon v-if="settings.theme === o.id" name="check2" />
+        <span class="label">{{ o.label }}</span>
+        <Icon v-if="settings.language === o.id" name="check2" />
       </button>
     </div>
   </div>

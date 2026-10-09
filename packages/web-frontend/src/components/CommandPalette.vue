@@ -20,7 +20,7 @@ import {
   state,
   workspaceLabel,
 } from "../stores/session";
-import { STATUS_LABEL, paneName } from "../lib/format";
+import { statusLabel, paneName } from "../lib/format";
 import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
 import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
@@ -79,7 +79,7 @@ const items = computed<Item[]>(() => {
     list.push({
       section: "Aller à",
       label: `${paneName(p)} · ${workspaceLabel(p.workspace_id)}`,
-      hint: p.agent ? STATUS_LABEL[p.agent_status] : "terminal",
+      hint: p.agent ? statusLabel(p.agent_status) : "terminal",
       run: () => selectPane(p),
     });
     if (p.agent && p.tab_id !== state.selectedTabId)

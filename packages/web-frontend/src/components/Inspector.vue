@@ -25,7 +25,7 @@ import {
   workspaceLabel,
   workspacePanes,
 } from "../stores/session";
-import { STATUS_LABEL, agentKind, clockTime, compactTokens, duration, gaugeLevel, paneName, shortPath } from "../lib/format";
+import { statusLabel, agentKind, clockTime, compactTokens, duration, gaugeLevel, paneName, shortPath } from "../lib/format";
 
 const p = selectedPane;
 const ctx = computed(() => (p.value ? contextFor(p.value) : null));
@@ -141,7 +141,7 @@ const statusText = computed(() => {
   if (!x) return "";
   if (!x.agent) return "Terminal";
   if (x.agent_status === "blocked") return "Bloqué · attend une décision";
-  return STATUS_LABEL[x.agent_status].replace(/^./, (c) => c.toUpperCase());
+  return statusLabel(x.agent_status).replace(/^./, (c) => c.toUpperCase());
 });
 </script>
 
