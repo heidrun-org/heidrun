@@ -2,6 +2,7 @@
 name = "herdr-desk"
 version = "0.1.0"
 description = "Interface graphique pour Herdr"
+license = "MIT"
 edition = "2021"
 
 [lib]
