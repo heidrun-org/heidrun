@@ -56,7 +56,7 @@ async function askReview(ref: string, url: string, title: string) {
       <section class="block">
         <header class="head">
           <span class="eyebrow">Dépôt</span>
-          <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
+          <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()"><span :class="{ 'label-hidden': git.loading }">Rafraîchir</span><span v-if="git.loading" class="spinner-border" role="status" aria-label="Rafraîchissement en cours"></span></button>
         </header>
         <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
         <div v-else class="repo plain">{{ repoName }}</div>
@@ -152,6 +152,14 @@ async function askReview(ref: string, url: string, title: string) {
 .head { display: flex; align-items: center; justify-content: space-between; }
 .link { border: none; background: none; padding: 0; color: var(--faint); font-size: 11px; }
 .link:hover:not(:disabled) { color: var(--text-2); }
+.link { position: relative; }
+.label-hidden { visibility: hidden; }
+.spinner-border {
+  position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border: 0.15em solid currentcolor; border-right-color: transparent; border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
+}
+@keyframes spinner-border { to { transform: rotate(360deg); } }
 .repo { align-self: flex-start; border: none; background: none; padding: 0; color: var(--text); font-size: 15px; font-weight: 600; text-align: left; }
 .repo:hover { color: var(--done); }
 .repo.plain:hover { color: var(--text); }
