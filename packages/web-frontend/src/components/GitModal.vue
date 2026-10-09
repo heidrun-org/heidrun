@@ -11,6 +11,7 @@ import { diffStats, parseDiff, splitDiff, type DiffLine } from "../lib/diff";
 import { CODE_THEMES, highlightFile, highlightLine, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import Resizer from "./Resizer.vue";
+import { t } from "../i18n/index";
 
 const st = currentGit;
 const fg = currentForge;
@@ -150,8 +151,8 @@ function startSplit(e: PointerEvent) {
 }
 function onKey(e: KeyboardEvent) {
   if (e.altKey || e.metaKey || e.ctrlKey) return;
-  const t = e.target as HTMLElement | null;
-  if (t && (t.closest("select, textarea, [contenteditable]") || (t instanceof HTMLInputElement && e.key !== "Escape"))) {
+  const target = e.target as HTMLElement | null;
+  if (target && (target.closest("select, textarea, [contenteditable]") || (target instanceof HTMLInputElement && e.key !== "Escape"))) {
     if (e.key !== "Escape") return;
   }
   if (e.key === "Escape") {
@@ -189,23 +190,23 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
     <div ref="modalEl" class="modal" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
-          <button title="Open the repository in the browser" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
+          <button :title="t('gitModal.openRepositoryTitle')" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
           <span v-else class="repo plain">{{ repoName }}</span>
-          <span v-if="st" class="mono branch">{{ st.branch ?? "(détachée)" }}</span>
+          <span v-if="st" class="mono branch">{{ st.branch ?? t("gitModal.detached") }}</span>
           <span v-if="st?.ahead" class="chip warn">↑ {{ st.ahead }}</span>
           <span v-if="st?.behind" class="chip pending">↓ {{ st.behind }}</span>
-          <button title="Open the continuous integration result in the browser" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
+          <button :title="t('gitModal.openCiTitle')" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div class="tools">
-          <button title="Refresh the Git status" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
-          <button title="Close the Git window (Escape)" class="close" aria-label="Fermer (Échap)" @click="git.modal.open = false"><Icon name="x-lg" /></button>
+          <button :title="t('gitModal.refreshTitle')" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : t("gitModal.refresh") }}</button>
+          <button :title="t('gitModal.closeTitle')" class="close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
       </header>
 
       <div class="body">
         <aside v-show="!settings.gitListHidden" class="left" :style="{ width: `${settings.gitListWidth}px` }">
-          <input v-model="filter" class="filter" placeholder="Filtrer les fichiers…" spellcheck="false" />
-          <div class="eyebrow">Modifications <span class="count">{{ st ? st.changed + st.untracked : 0 }}</span></div>
+          <input v-model="filter" class="filter" :placeholder="t('gitModal.filterPlaceholder')" spellcheck="false" />
+          <div class="eyebrow">{{ t("gitModal.changes") }} <span class="count">{{ st ? st.changed + st.untracked : 0 }}</span></div>
           <div ref="listEl" class="files">
             <button
               v-for="f in files"
@@ -219,10 +220,10 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               <span class="name">{{ base(f.path) }}</span>
               <span class="dir mono">{{ dir(f.path) }}</span>
             </button>
-            <div v-if="!files.length" class="muted pad">{{ filter ? "Aucun fichier ne correspond." : "Aucune modification locale." }}</div>
+            <div v-if="!files.length" class="muted pad">{{ filter ? t("gitModal.noMatch") : t("gitModal.noChanges") }}</div>
           </div>
           <div v-if="fg && !fg.error && fg.requests.length" class="reqs">
-            <div class="eyebrow">{{ kind }} ouvertes <span class="count">{{ fg.requests.length }}</span></div>
+            <div class="eyebrow">{{ t("gitModal.openRequests", { kind }) }} <span class="count">{{ fg.requests.length }}</span></div>
             <button v-for="r in fg.requests" :key="r.ref" class="req" :class="{ mine: r.branch === st?.branch }" :title="r.title" @click="open(r.url)">
               <span class="mono ref">{{ r.ref }}</span>
               <span class="chip sm" :class="r.level">{{ r.state }}</span>
@@ -238,35 +239,35 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             <button
               type="button"
               class="icon"
-              :title="settings.gitListHidden ? 'Afficher la liste des fichiers' : 'Masquer la liste : plein écran'"
+              :title="settings.gitListHidden ? t('gitModal.showList') : t('gitModal.hideList')"
               @click="settings.gitListHidden = !settings.gitListHidden"
             >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
             <div class="path mono" :title="selected ?? ''">
               <template v-if="selected">{{ selected }}</template>
               <span v-if="selected && diff.length" class="stats"><span class="plus">+{{ stats.added }}</span> <span class="minus">−{{ stats.removed }}</span></span>
             </div>
-            <div class="seg" role="radiogroup" aria-label="Affichage">
-              <button title="Show the changes as a unified diff" :class="{ on: mode === 'unified' }" @click="settings.diffMode = 'unified'">Diff</button>
-              <button title="Show the changes side by side" :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">Côte à côte</button>
-              <button title="Show the whole file" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">Fichier</button>
-              <button v-if="md" :class="{ on: mode === 'read' }" title="Markdown mis en forme" @click="settings.diffMode = 'read'">Lecture</button>
+            <div class="seg" role="radiogroup" :aria-label="t('gitModal.display')">
+              <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
+              <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
+              <button :title="t('gitModal.fileTitle')" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">{{ t("gitModal.file") }}</button>
+              <button v-if="md" :class="{ on: mode === 'read' }" :title="t('gitModal.readTitle')" @click="settings.diffMode = 'read'">{{ t("gitModal.read") }}</button>
             </div>
-            <div v-if="mode === 'read'" class="seg" role="radiogroup" aria-label="Largeur de lecture">
-              <button :class="{ on: settings.mdWidth === 'center' }" title="Colonne centrée, confortable à lire" @click="settings.mdWidth = 'center'">Centré</button>
-              <button :class="{ on: settings.mdWidth === 'full' }" title="Toute la largeur (grands tableaux)" @click="settings.mdWidth = 'full'">Pleine largeur</button>
+            <div v-if="mode === 'read'" class="seg" role="radiogroup" :aria-label="t('gitModal.readingWidth')">
+              <button :class="{ on: settings.mdWidth === 'center' }" :title="t('gitModal.centeredTitle')" @click="settings.mdWidth = 'center'">{{ t("gitModal.centered") }}</button>
+              <button :class="{ on: settings.mdWidth === 'full' }" :title="t('gitModal.fullWidthTitle')" @click="settings.mdWidth = 'full'">{{ t("gitModal.fullWidth") }}</button>
             </div>
-            <label class="sr" for="code-theme">Thème</label>
+            <label class="sr" for="code-theme">{{ t("gitModal.theme") }}</label>
             <select id="code-theme" v-model="settings.codeTheme" class="theme">
-              <option v-for="t in CODE_THEMES" :key="t.id" :value="t.id">{{ t.label }}</option>
+              <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
             </select>
-            <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />Retour à la ligne</label>
+            <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("gitModal.wrap") }}</label>
             <span class="size mono" title="⌘+ / ⌘− / ⌘0">{{ settings.codeFontSize }} px</span>
           </div>
 
           <div class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }">
-            <div v-if="!selected" class="empty">Choisis un fichier à gauche.</div>
+            <div v-if="!selected" class="empty">{{ t("gitModal.chooseFile") }}</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
-            <div v-else-if="loading && !diff.length && !fileLines.length" class="empty">Chargement…</div>
+            <div v-else-if="loading && !diff.length && !fileLines.length" class="empty">{{ t("gitModal.loading") }}</div>
 
             <!-- Markdown, rendered -->
             <article v-else-if="mode === 'read'" class="md" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
@@ -307,7 +308,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
                   </tbody>
                 </table>
               </div>
-              <div class="split-bar" title="Glisser pour redimensionner · double-clic : au centre" @pointerdown="startSplit" @dblclick="settings.splitRatio = 0.5"></div>
+              <div class="split-bar" :title="t('gitModal.splitBarTitle')" @pointerdown="startSplit" @dblclick="settings.splitRatio = 0.5"></div>
               <div class="side">
                 <table class="tbl">
                   <tbody>
@@ -352,14 +353,14 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
                 </tr>
               </tbody>
             </table>
-            <div v-if="truncated" class="empty">Affichage limité aux {{ MAX_ROWS }} premières lignes.</div>
-            <div v-if="selected && !error && !loading && mode !== 'file' && mode !== 'read' && !diff.length" class="empty">Pas de différence textuelle (fichier binaire, renommage ou droits).</div>
+            <div v-if="truncated" class="empty">{{ t("gitModal.truncated", { count: MAX_ROWS }) }}</div>
+            <div v-if="selected && !error && !loading && mode !== 'file' && mode !== 'read' && !diff.length" class="empty">{{ t("gitModal.noTextDiff") }}</div>
           </div>
           <div v-if="selectedFile" class="foot muted">
-            <template v-if="mode === 'read'">Markdown mis en forme · </template>
-            {{ selectedFile.status === "??" ? "Nouveau fichier, pas encore suivi" : "Comparé au dernier commit (HEAD)" }}
-            <template v-if="st?.last_time"> · dernier commit {{ ago(st.last_time * 1000) }}</template>
-            · ↑ / ↓ fichier suivant · ⌘+ / ⌘− taille du code · Échap pour fermer
+            <template v-if="mode === 'read'">{{ t("gitModal.readTitle") }} · </template>
+            {{ selectedFile.status === "??" ? t("gitModal.untracked") : t("gitModal.comparedToHead") }}
+            <template v-if="st?.last_time"> · {{ t("gitModal.lastCommit", { time: ago(st.last_time * 1000) }) }}</template>
+            · {{ t("gitModal.footerKeys") }}
           </div>
         </section>
       </div>

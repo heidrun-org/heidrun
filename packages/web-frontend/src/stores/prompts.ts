@@ -6,6 +6,7 @@ import { currentProject, loadProject, saveProject } from "./project";
 import { git } from "./git";
 import { selectionReaders } from "./notes";
 import { paneName } from "../lib/format";
+import { t } from "../i18n/index";
 
 export interface PromptTemplate {
   id: string;
@@ -15,11 +16,13 @@ export interface PromptTemplate {
 
 const KEY = "herdr-desk.prompts";
 
+// The labels of the default templates follow the language in use (getters); the texts are consignes sent to
+// the agent, kept as they are.
 const DEFAULTS: PromptTemplate[] = [
-  { id: "revue-mr", label: "Revue de la MR", text: "Fais la revue de la MR de la branche {branche} : sécurité, bugs, tests. Résumé, points bloquants, suggestions." },
-  { id: "note-reprise", label: "Note de reprise", text: "Commite ce qui est prêt, puis écris la note de reprise : ce qui est fait, ce qui reste, les décisions prises." },
-  { id: "ou-en-es-tu", label: "Où en es-tu ?", text: "Où en es-tu ? Résume en 5 lignes ce que tu as fait et ce qu'il reste." },
-  { id: "explique-selection", label: "Explique la sélection", text: "Explique-moi ceci :\n\n```\n{selection}\n```" },
+  { id: "revue-mr", get label() { return t("promptsStore.default.reviewMergeRequest"); }, text: "Fais la revue de la MR de la branche {branche} : sécurité, bugs, tests. Résumé, points bloquants, suggestions." },
+  { id: "note-reprise", get label() { return t("promptsStore.default.handoverNote"); }, text: "Commite ce qui est prêt, puis écris la note de reprise : ce qui est fait, ce qui reste, les décisions prises." },
+  { id: "ou-en-es-tu", get label() { return t("promptsStore.default.progress"); }, text: "Où en es-tu ? Résume en 5 lignes ce que tu as fait et ce qu'il reste." },
+  { id: "explique-selection", get label() { return t("promptsStore.default.explainSelection"); }, text: "Explique-moi ceci :\n\n```\n{selection}\n```" },
 ];
 
 function load(): PromptTemplate[] {
@@ -58,16 +61,16 @@ const slug = (s: string) =>
   `${s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "modele"}-${Math.random().toString(36).slice(2, 5)}`;
 
 export async function addPrompt(label: string, text: string, inProject: boolean) {
-  const t = { id: slug(label), label: label.trim() || text.slice(0, 40), text };
+  const template = { id: slug(label), label: label.trim() || text.slice(0, 40), text };
   const ws = state.selectedWorkspaceId;
   if (inProject && ws && currentProject.value) {
     // Re-read the file first: another workspace on the same repo may have changed it.
     await loadProject(ws);
     const cfg = currentProject.value.config as { prompts?: PromptTemplate[] };
-    cfg.prompts = [...(Array.isArray(cfg.prompts) ? cfg.prompts : []), t];
-    if (!(await saveProject(ws))) throw new Error("Enregistrement de .herdr-desk.json impossible");
+    cfg.prompts = [...(Array.isArray(cfg.prompts) ? cfg.prompts : []), template];
+    if (!(await saveProject(ws))) throw new Error(t("promptsStore.saveFailed"));
   } else {
-    prompts.personal.push(t);
+    prompts.personal.push(template);
   }
 }
 

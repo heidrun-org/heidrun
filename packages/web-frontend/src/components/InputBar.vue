@@ -21,6 +21,7 @@ import { currentProject } from "../stores/project";
 import { paneName } from "../lib/format";
 import { refreshSubagents, sendToSubagent, subagents } from "../stores/subagents";
 import { dockState } from "../stores/dock";
+import { t } from "../i18n/index";
 
 const target = ref<string | null>(null);
 const newPane = ref(true);
@@ -147,9 +148,9 @@ async function submit() {
   const value = input.text.trim();
   if (!value) return;
   // Arrow keys are being sent to a session: nothing else is typed meanwhile.
-  if (subagents.busy) return toast("Bascule vers un sous-agent en cours…");
+  if (subagents.busy) return toast(t("inputBar.switchingToSubagent"));
   if (input.multi) {
-    if (!chosen.value.length) return toast("Choisis au moins un agent");
+    if (!chosen.value.length) return toast(t("inputBar.chooseOneAgent"));
     // Recap first: several agents at once deserve a second look.
     picker.value = false;
     confirming.value = true;
@@ -174,9 +175,9 @@ async function sendBroadcast() {
   confirming.value = false;
   const r = await broadcastPrompt(input.targets, input.text.trim(), (text, id) => resolvePrompt(text, id));
   if (!r.sent.length && !r.skipped.length && !r.failed.length) return; // refused by the guards
-  const parts = [`Envoyé à ${r.sent.length} agent${r.sent.length > 1 ? "s" : ""}`];
-  if (r.skipped.length) parts.push(`${r.skipped.length} ignoré${r.skipped.length > 1 ? "s" : ""} (bloqué)`);
-  if (r.failed.length) parts.push(`${r.failed.length} en échec`);
+  const parts = [t("inputBar.sentTo", { count: r.sent.length })];
+  if (r.skipped.length) parts.push(t("inputBar.skipped", { count: r.skipped.length }));
+  if (r.failed.length) parts.push(t("inputBar.failed", { count: r.failed.length }));
   toast(parts.join(", "));
   if (r.sent.length) input.text = "";
 }
@@ -202,13 +203,13 @@ async function useTemplate(t: PromptTemplate) {
 }
 
 async function saveTemplate() {
-  if (!input.text.trim()) return toast("Écris d’abord la consigne à enregistrer");
+  if (!input.text.trim()) return toast(t("inputBar.writePromptFirst"));
   try {
     await addPrompt(newLabel.value, input.text.trim(), inProject.value);
   } catch (e) {
     return toast(String(e));
   }
-  toast(inProject.value ? "Modèle ajouté au projet (.herdr-desk.json)" : "Modèle enregistré");
+  toast(inProject.value ? t("inputBar.templateAddedToProject") : t("inputBar.templateSaved"));
   saving.value = false;
   newLabel.value = "";
 }
@@ -229,69 +230,69 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
     <!-- Templates -->
     <div v-if="tplOpen" class="pop tpl" role="menu">
       <template v-if="projectPrompts.length">
-        <div class="pop-h">Projet</div>
-        <div v-for="t in projectPrompts" :key="'p' + t.id" class="tpl-row">
-          <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-          <button title="Delete this template" type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, true)"><Icon name="x-lg" /></button>
+        <div class="pop-h">{{ t("inputBar.project") }}</div>
+        <div v-for="tpl in projectPrompts" :key="'p' + tpl.id" class="tpl-row">
+          <button type="button" class="tpl-item" :title="tpl.text" @click="useTemplate(tpl)">{{ tpl.label }}</button>
+          <button :title="t('inputBar.deleteTemplateTitle')" type="button" class="x" :aria-label="t('inputBar.deleteTemplate', { name: tpl.label })" @click="removePrompt(tpl.id, true)"><Icon name="x-lg" /></button>
         </div>
       </template>
-      <div class="pop-h">Mes modèles</div>
-      <div v-for="t in prompts.personal" :key="t.id" class="tpl-row">
-        <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-        <button title="Delete this template" type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, false)"><Icon name="x-lg" /></button>
+      <div class="pop-h">{{ t("inputBar.myTemplates") }}</div>
+      <div v-for="tpl in prompts.personal" :key="tpl.id" class="tpl-row">
+        <button type="button" class="tpl-item" :title="tpl.text" @click="useTemplate(tpl)">{{ tpl.label }}</button>
+        <button :title="t('inputBar.deleteTemplateTitle')" type="button" class="x" :aria-label="t('inputBar.deleteTemplate', { name: tpl.label })" @click="removePrompt(tpl.id, false)"><Icon name="x-lg" /></button>
       </div>
       <div v-if="!saving" class="pop-foot">
-        <button title="Save the typed text as a template" type="button" class="link" @click="saving = true">+ Enregistrer la saisie comme modèle</button>
-        <span class="vars mono" title="Variables remplacées à l’insertion">{{ VARIABLES.join(" ") }}</span>
+        <button :title="t('inputBar.saveAsTemplateTitle')" type="button" class="link" @click="saving = true">{{ t("inputBar.saveAsTemplate") }}</button>
+        <span class="vars mono" :title="t('inputBar.variablesTitle')">{{ VARIABLES.join(" ") }}</span>
       </div>
       <div v-else class="save">
-        <input v-model="newLabel" placeholder="Nom du modèle" @keydown.enter.prevent="saveTemplate" />
-        <label v-if="currentProject" class="check"><input v-model="inProject" type="checkbox" />Dans le projet</label>
-        <button title="Save the template" type="button" class="btn" @click="saveTemplate">Enregistrer</button>
+        <input v-model="newLabel" :placeholder="t('inputBar.templateName')" @keydown.enter.prevent="saveTemplate" />
+        <label v-if="currentProject" class="check"><input v-model="inProject" type="checkbox" />{{ t("inputBar.inProject") }}</label>
+        <button :title="t('inputBar.saveTemplateTitle')" type="button" class="btn" @click="saveTemplate">{{ t("inputBar.save") }}</button>
       </div>
     </div>
 
     <!-- Recipients -->
     <div v-if="picker && input.multi" class="pop picker">
       <div class="pop-tools">
-        <button title="Select all agents of this workspace" type="button" class="link" @click="pickWorkspace">Tous les agents de ce workspace</button>
-        <button title="Select all Claude agents" type="button" class="link" @click="pickAllClaude">Tous les Claude</button>
-        <button title="Select no agent" type="button" class="link" @click="input.targets = []">Aucun</button>
+        <button :title="t('inputBar.pickWorkspaceTitle')" type="button" class="link" @click="pickWorkspace">{{ t("inputBar.pickWorkspace") }}</button>
+        <button :title="t('inputBar.pickAllClaudeTitle')" type="button" class="link" @click="pickAllClaude">{{ t("inputBar.pickAllClaude") }}</button>
+        <button :title="t('inputBar.pickNoneTitle')" type="button" class="link" @click="input.targets = []">{{ t("inputBar.pickNone") }}</button>
       </div>
       <div v-for="g in agentGroups" :key="g.workspace" class="grp">
         <div class="pop-h">{{ g.workspace }}</div>
         <label v-for="a in g.items" :key="a.pane.pane_id" class="pick">
           <input type="checkbox" :checked="input.targets.includes(a.pane.pane_id)" @change="toggle(a.pane.pane_id)" />
           <span>{{ a.label }}</span>
-          <span v-if="a.pane.agent_status === 'blocked'" class="t-blocked small">bloqué</span>
+          <span v-if="a.pane.agent_status === 'blocked'" class="t-blocked small">{{ t("inputBar.blocked") }}</span>
         </label>
       </div>
     </div>
 
     <!-- Recap before a broadcast -->
     <div v-if="confirming" class="pop recap">
-      <div class="pop-h">Envoyer à {{ chosen.length - blockedChosen.length }} agent{{ chosen.length - blockedChosen.length > 1 ? "s" : "" }}</div>
+      <div class="pop-h">{{ t("inputBar.sendTo", { count: chosen.length - blockedChosen.length }) }}</div>
       <ul>
         <li v-for="p in chosen" :key="p.pane_id" :class="{ off: p.agent_status === 'blocked' }">
-          {{ paneFullName(p) }}<span v-if="p.agent_status === 'blocked'"> — bloqué, ignoré</span>
+          {{ paneFullName(p) }}<span v-if="p.agent_status === 'blocked'">{{ t("inputBar.blockedSkipped") }}</span>
         </li>
       </ul>
       <div class="row">
-        <button title="Cancel the broadcast" type="button" class="btn" @click="confirming = false">Annuler</button>
-        <button title="Send the message to all selected agents" type="button" class="btn primary" @click="sendBroadcast">Envoyer</button>
+        <button :title="t('inputBar.cancelTitle')" type="button" class="btn" @click="confirming = false">{{ t("inputBar.cancel") }}</button>
+        <button :title="t('inputBar.sendBroadcastTitle')" type="button" class="btn primary" @click="sendBroadcast">{{ t("inputBar.send") }}</button>
       </div>
     </div>
 
     <template v-if="input.multi">
       <button type="button" class="target multi-btn" :title="chosen.map((p) => paneName(p)).join(', ')" @click="picker = !picker">
-        {{ chosen.length }} agent{{ chosen.length > 1 ? "s" : "" }} ▾
+        {{ t("inputBar.agentCount", { count: chosen.length }) }} ▾
       </button>
-      <button type="button" class="link solo" title="Revenir à un seul destinataire" @click="single">un seul</button>
+      <button type="button" class="link solo" :title="t('inputBar.singleTitle')" @click="single">{{ t("inputBar.single") }}</button>
     </template>
     <template v-else>
-      <label class="sr" for="target">Destinataire</label>
+      <label class="sr" for="target">{{ t("inputBar.recipient") }}</label>
       <select id="target" v-model="target" class="target" @mousedown="loadSubs" @focus="loadSubs">
-        <optgroup v-if="agents.length" label="Agents">
+        <optgroup v-if="agents.length" :label="t('inputBar.agents')">
           <template v-for="a in agents" :key="a.pane_id">
             <option :value="a.pane_id">{{ paneTarget(a) }}</option>
             <option v-for="n in subsOf(a.pane_id)" :key="a.pane_id + n" :value="subKey(a.pane_id, n)">&nbsp;&nbsp;↳ {{ n }}</option>
@@ -303,17 +304,17 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
             <option v-for="n in subsOf(a.pane.pane_id)" :key="a.pane.pane_id + n" :value="subKey(a.pane.pane_id, n)">&nbsp;&nbsp;↳ {{ n }}</option>
           </template>
         </optgroup>
-        <optgroup v-if="terminals.length" label="Terminaux">
-          <option v-for="t in terminals" :key="t.pane_id" :value="t.pane_id">{{ paneName(t) }} ({{ t.pane_id }})</option>
+        <optgroup v-if="terminals.length" :label="t('inputBar.terminals')">
+          <option v-for="term in terminals" :key="term.pane_id" :value="term.pane_id">{{ paneName(term) }} ({{ term.pane_id }})</option>
         </optgroup>
-        <option :value="MULTI">Plusieurs agents…</option>
+        <option :value="MULTI">{{ t("inputBar.severalAgents") }}</option>
       </select>
     </template>
-    <button type="button" class="tpl-btn" :class="{ on: tplOpen }" title="Modèles de consignes" aria-label="Modèles de consignes" @click="tplOpen = !tplOpen">
+    <button type="button" class="tpl-btn" :class="{ on: tplOpen }" :title="t('inputBar.templates')" :aria-label="t('inputBar.templates')" @click="tplOpen = !tplOpen">
       ☰
     </button>
     <span v-if="mode === 'command'" class="prompt mono">$</span>
-    <label class="sr" for="input">{{ mode === "agent" ? "Consigne pour l’agent" : "Commande à lancer" }}</label>
+    <label class="sr" for="input">{{ mode === "agent" ? t("inputBar.promptForAgent") : t("inputBar.commandToRun") }}</label>
     <textarea
       id="input"
       ref="field"
@@ -322,24 +323,24 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
       :class="{ mono: mode === 'command' }"
       :placeholder="
         input.multi
-          ? `Consigne pour ${chosen.length} agents…  (⇧↵ nouvelle ligne)`
+          ? t('inputBar.placeholderMulti', { count: chosen.length })
           : mode === 'agent'
-            ? `Envoyer une consigne à ${sub ? sub.name : targetPane ? paneTarget(targetPane) : 'l’agent'}…  (⇧↵ nouvelle ligne)`
-            : 'Lancer une commande…  (⇧↵ nouvelle ligne)'
+            ? t('inputBar.placeholderAgent', { name: sub ? sub.name : targetPane ? paneTarget(targetPane) : t('inputBar.theAgent') })
+            : t('inputBar.placeholderCommand')
       "
       autocomplete="off"
       spellcheck="false"
       @keydown="onKeydown"
       @focus="loadSubs"
     ></textarea>
-    <label v-if="sub && sub.name !== 'main'" class="check" title="Après l’envoi, Claude réaffiche la conversation principale">
-      <input v-model="backToMain" type="checkbox" />Puis revenir sur main
+    <label v-if="sub && sub.name !== 'main'" class="check" :title="t('inputBar.backToMainTitle')">
+      <input v-model="backToMain" type="checkbox" />{{ t("inputBar.backToMain") }}
     </label>
     <template v-if="mode === 'command'">
-      <label class="check"><input v-model="newPane" type="checkbox" />Nouveau panneau</label>
-      <label class="check"><input v-model="notifyEnd" type="checkbox" :disabled="!newPane" />Me notifier</label>
+      <label class="check"><input v-model="newPane" type="checkbox" />{{ t("inputBar.newPane") }}</label>
+      <label class="check"><input v-model="notifyEnd" type="checkbox" :disabled="!newPane" />{{ t("inputBar.notifyMe") }}</label>
     </template>
-    <button title="Send the message" class="btn lg primary send" type="submit" :disabled="!!subagents.busy">{{ input.multi ? "Diffuser" : mode === "agent" ? "Envoyer" : "Lancer" }} ↵</button>
+    <button :title="t('inputBar.sendTitle')" class="btn lg primary send" type="submit" :disabled="!!subagents.busy">{{ input.multi ? t("inputBar.broadcast") : mode === "agent" ? t("inputBar.send") : t("inputBar.run") }} ↵</button>
   </form>
 </template>
 

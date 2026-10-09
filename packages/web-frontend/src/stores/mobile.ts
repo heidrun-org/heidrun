@@ -22,6 +22,7 @@ import {
 import { guardHit } from "./guards";
 import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
+import { t } from "../i18n/index";
 
 export interface MobileStatus {
   enabled: boolean;
@@ -56,7 +57,7 @@ export async function revokeMobile() {
   mobile.busy = true;
   try {
     mobile.status = await invoke<MobileStatus>("mobile_revoke");
-    toast("Ancien appairage révoqué : scanne le nouveau QR code");
+    toast(t("mobileStore.pairingRevoked"));
   } catch (e) {
     toast(String(e));
   } finally {
@@ -104,7 +105,7 @@ async function handle(method: string, params: Params): Promise<unknown> {
   mobile.lastSeen = Date.now();
   if (method === "state") return snapshot();
   const pane = agentPane(params.paneId);
-  if (!pane) return { error: "Agent introuvable (panneau fermé ?)" };
+  if (!pane) return { error: t("mobileStore.error.agentNotFound") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
 
   if (method === "read") {
@@ -116,34 +117,34 @@ async function handle(method: string, params: Params): Promise<unknown> {
     const menu = state.choices[pane.pane_id];
     const n = Number(params.n);
     const option = menu?.options.find((o) => o.n === n);
-    if (!menu || !option) return { error: "Ce menu n’est plus affiché : rafraîchis" };
+    if (!menu || !option) return { error: t("mobileStore.error.menuGone") };
     // Anything but a refusal approves ("Always allow", "Continue"…): checked by the guards.
     const approves = !REFUSAL.test(option.label);
     if (approves && menu.detail) {
       const hit = await guardHit(menu.detail, cwd);
-      if (hit?.level === "block") return { error: `Bloqué par les règles du projet : ${hit.why}` };
+      if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
       // The phone confirms a precise command: the one on screen now, not another one.
       if (hit && (params.confirmed !== true || params.command !== menu.detail)) return { confirm: { command: menu.detail, why: hit.why } };
     }
     // The menu checked above, and no other (it may have changed during the checks).
-    if (!(await answerChoice(pane.pane_id, n, true, menu))) return { error: "Le menu a changé ou une réponse est déjà en cours : rafraîchis" };
+    if (!(await answerChoice(pane.pane_id, n, true, menu))) return { error: t("mobileStore.error.menuChanged") };
     return { ok: true };
   }
 
   if (method === "prompt") {
     const text = String(params.text ?? "").trim();
-    if (!text) return { error: "Consigne vide" };
+    if (!text) return { error: t("mobileStore.error.emptyPrompt") };
     // A menu on screen would take the text as its answer ("2" picks option 2): never.
-    if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: "L’agent attend une décision : réponds d’abord à son menu" };
+    if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: t("mobileStore.error.agentBlocked") };
     const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
     if (shell) {
       const hit = await guardHit(shell[1], cwd);
-      if (hit?.level === "block") return { error: `Bloqué par les règles du projet : ${hit.why}` };
+      if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
       if (hit && (params.confirmed !== true || params.command !== shell[1])) return { confirm: { command: shell[1], why: hit.why } };
     }
     await api.prompt(pane.pane_id, text);
     rememberPrompt(pane.pane_id, text);
-    toast(`Consigne reçue du téléphone pour ${paneFullName(pane)}`);
+    toast(t("mobileStore.promptReceived", { name: paneFullName(pane) }));
     return { ok: true };
   }
 
@@ -154,9 +155,9 @@ async function handle(method: string, params: Params): Promise<unknown> {
       await api.sendKeys(pane.pane_id, ["esc"]);
       return { ok: true };
     }
-    return { error: "Action inconnue" };
+    return { error: t("mobileStore.error.unknownAction") };
   }
-  return { error: "Méthode inconnue" };
+  return { error: t("mobileStore.error.unknownMethod") };
 }
 
 let started = false;

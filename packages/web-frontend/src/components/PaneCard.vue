@@ -10,6 +10,7 @@ import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneName } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
+import { t } from "../i18n/index";
 
 // `docked`: shown in the "à côté" column, outside its own tab.
 const props = defineProps<{ pane: AgentInfo; docked?: boolean }>();
@@ -50,16 +51,16 @@ const subtitle = computed(() => {
         v-if="state.renaming === `pane:${pane.pane_id}`"
         class="pane-rename"
         :value="pane.label || paneName(pane)"
-        label="Nouveau nom du panneau (vide pour revenir au nom automatique)"
+        :label="t('paneCard.renameLabel')"
         allow-empty
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
-      <span v-else class="name" title="Double-clic pour renommer" @dblclick="startRename('pane', pane.pane_id)">{{ paneName(pane) }}</span>
+      <span v-else class="name" :title="t('paneCard.renameTitle')" @dblclick="startRename('pane', pane.pane_id)">{{ paneName(pane) }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <template v-if="ctx">
-        <span class="sub">contexte</span>
+        <span class="sub">{{ t("paneCard.context") }}</span>
         <span class="gauge" :class="gaugeLevel(ctx.percent)" style="width: 110px">
           <span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span>
         </span>
@@ -67,8 +68,8 @@ const subtitle = computed(() => {
       </template>
       <span class="tools">
         <template v-if="docked">
-          <button class="tool" title="Aller à son onglet" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
-          <button class="tool" aria-label="Retirer de la vue à côté" title="Retirer de la vue à côté (l’agent continue)" @mousedown.stop @click="undock(pane.pane_id)">
+          <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
+          <button class="tool" :aria-label="t('paneCard.undock')" :title="t('paneCard.undockTitle')" @mousedown.stop @click="undock(pane.pane_id)">
             <Icon name="x-lg" />
           </button>
         </template>
@@ -76,8 +77,8 @@ const subtitle = computed(() => {
         <button
           v-if="(pane.agent ?? '').includes('claude')"
           class="tool"
-          title="Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)"
-          aria-label="Mosaïque des agents de la session"
+          :title="t('paneCard.mosaicTitle')"
+          :aria-label="t('paneCard.mosaic')"
           @mousedown.stop
           @click="mosaic.paneId = pane.pane_id"
         ><Icon name="grid-3x3-gap" /></button>
@@ -85,19 +86,19 @@ const subtitle = computed(() => {
           class="tool"
           :class="{ on: pinned }"
           :aria-pressed="pinned"
-          :title="pinned ? 'Ne plus garder à côté' : 'Garder à côté : reste visible quand tu changes d’onglet ou de workspace'"
+          :title="pinned ? t('paneCard.unpin') : t('paneCard.pinTitle')"
           @mousedown.stop
           @click="toggleDock(pane.pane_id)"
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
-        <button class="tool" aria-label="Diviser à droite" title="Diviser à droite (⌘D)" @mousedown.stop @click="splitPane('right', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="splitPane('right', pane.pane_id)">
           <Icon name="layout-split" />
         </button>
-        <button class="tool" aria-label="Diviser en bas" title="Diviser en bas (⇧⌘D)" @mousedown.stop @click="splitPane('down', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
-        <ConfirmButton icon="x-lg" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
+        <ConfirmButton icon="x-lg" :aria-label="t('paneCard.close')" @confirm="closePane(pane.pane_id)" />
         </template>
       </span>
     </header>

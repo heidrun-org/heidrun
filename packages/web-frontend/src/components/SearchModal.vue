@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { clearSearchCache, requestJump, runSearch, search, type SearchGroup } from "../stores/search";
 import { selectPane, state, workspaceLabel } from "../stores/session";
 import { settings } from "../stores/settings";
+import { t } from "../i18n/index";
 
 const q = ref("");
 const regex = ref(false);
@@ -17,6 +18,11 @@ const active = ref(0);
 
 const flat = computed(() => groups.value.flatMap((g) => g.hits.map((h) => ({ g, h }))));
 const totalHits = computed(() => groups.value.reduce((n, g) => n + g.total, 0));
+const summary = computed(() => {
+  const results = t("searchModal.results", { count: totalHits.value });
+  const panes = t("searchModal.panes", { count: groups.value.length });
+  return t("searchModal.summary", { results, panes, ms: ms.value });
+});
 
 let timer = 0;
 let seq = 0;
@@ -99,18 +105,18 @@ function parts(line: string, s: number, e: number) {
 
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
-    <div class="modal" role="dialog" aria-label="Recherche dans les terminaux">
+    <div class="modal" role="dialog" :aria-label="t('searchModal.dialogLabel')">
       <div class="bar">
-        <input ref="input" v-model="q" class="q" placeholder="Chercher dans tous les terminaux (#419, une erreur, un nom de fichier…)" spellcheck="false" />
-        <label class="opt"><input v-model="here" type="checkbox" />Ce workspace</label>
-        <label class="opt"><input v-model="agentsOnly" type="checkbox" />Agents seulement</label>
-        <label class="opt mono" title="Expression régulière"><input v-model="regex" type="checkbox" />.*</label>
+        <input ref="input" v-model="q" class="q" :placeholder="t('searchModal.placeholder')" spellcheck="false" />
+        <label class="opt"><input v-model="here" type="checkbox" />{{ t("searchModal.thisWorkspace") }}</label>
+        <label class="opt"><input v-model="agentsOnly" type="checkbox" />{{ t("searchModal.agentsOnly") }}</label>
+        <label class="opt mono" :title="t('searchModal.regex')"><input v-model="regex" type="checkbox" />.*</label>
       </div>
       <div class="status">
         <span v-if="error" class="err">{{ error }}</span>
-        <span v-else-if="busy">Recherche…</span>
-        <span v-else-if="q.trim().length >= 2">{{ totalHits }} résultat{{ totalHits > 1 ? "s" : "" }} dans {{ groups.length }} panneau{{ groups.length > 1 ? "x" : "" }} · {{ ms }} ms</span>
-        <span v-else>Majuscules et accents ignorés. ↑↓ pour choisir, ↵ pour ouvrir le panneau.</span>
+        <span v-else-if="busy">{{ t("searchModal.searching") }}</span>
+        <span v-else-if="q.trim().length >= 2">{{ summary }}</span>
+        <span v-else>{{ t("searchModal.help") }}</span>
       </div>
       <div class="results" :style="{ fontSize: `${settings.codeFontSize}px` }">
         <section v-for="g in groups" :key="g.pane.pane_id" class="group">
@@ -120,7 +126,7 @@ function parts(line: string, s: number, e: number) {
             <span v-if="g.pane.workspace_id !== state.selectedWorkspaceId" class="muted ws">{{ workspaceLabel(g.pane.workspace_id) }}</span>
             <span class="count">{{ g.total }}</span>
           </h3>
-          <button title="Open this search result"
+          <button :title="t('searchModal.openResult')"
             v-for="(h, j) in g.hits"
             :key="j"
             class="hit mono"
@@ -132,7 +138,7 @@ function parts(line: string, s: number, e: number) {
             <span class="line">{{ parts(h.line, h.start, h.end).pre }}<mark>{{ parts(h.line, h.start, h.end).hit }}</mark>{{ parts(h.line, h.start, h.end).post }}</span>
             <span v-if="h.after" class="ctx">{{ clip(h.after) }}</span>
           </button>
-          <div v-if="g.total > g.hits.length" class="more muted">… et {{ g.total - g.hits.length }} autre{{ g.total - g.hits.length > 1 ? "s" : "" }} plus haut</div>
+          <div v-if="g.total > g.hits.length" class="more muted">{{ t("searchModal.more", { count: g.total - g.hits.length }) }}</div>
         </section>
       </div>
     </div>

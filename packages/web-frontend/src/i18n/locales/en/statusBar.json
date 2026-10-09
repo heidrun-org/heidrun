@@ -1,0 +1,10 @@
+{
+  "reset": "· resets at {time}",
+  "estimatedCost": "estimated cost",
+  "costValue": "${value}",
+  "enableTracking": "Claude: enable quota tracking",
+  "enableTrackingTitle": "Enable Claude usage tracking",
+  "waitingForData": "Claude: waiting for data",
+  "connected": "connected",
+  "offline": "offline"
+}

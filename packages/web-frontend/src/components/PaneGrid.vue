@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import PaneCard from "./PaneCard.vue";
+import { t } from "../i18n/index";
 import { tabLayout, tabPanes } from "../stores/session";
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
@@ -38,7 +39,7 @@ const placed = computed(() => {
     <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
       <PaneCard :pane="item.pane" />
     </div>
-    <div v-if="!placed.length" class="empty">Aucun panneau dans cet onglet.</div>
+    <div v-if="!placed.length" class="empty">{{ t("paneGrid.empty") }}</div>
   </div>
 </template>
 

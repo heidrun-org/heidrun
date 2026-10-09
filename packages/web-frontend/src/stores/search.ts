@@ -3,6 +3,7 @@ import { reactive } from "vue";
 import * as api from "../lib/api";
 import { allPanes, paneFullName } from "./session";
 import type { AgentInfo } from "../lib/types";
+import { t } from "../i18n/index";
 
 export const search = reactive({
   open: false,
@@ -78,7 +79,7 @@ export function matcher(query: string, regex: boolean): ((folded: string) => [nu
     try {
       re = new RegExp(query.normalize("NFD").replace(/[\u0300-\u036f]/g, ""), "i");
     } catch (e) {
-      return `Expression invalide : ${(e as Error).message}`;
+      return t("searchStore.invalidExpression", { message: (e as Error).message });
     }
     return (line) => {
       const m = re.exec(line);

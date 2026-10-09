@@ -69,6 +69,8 @@ const defaults = {
   /** Git window: file list hidden (the viewer takes the whole window). */
   gitListHidden: false,
   gitListWidth: 340,
+  /** Language of the user interface. */
+  language: "en" as "en" | "fr",
   /** Application theme: "system" follows the operating system. */
   theme: "system" as "system" | "light" | "dark",
   /** Code colours: "auto" follows the application theme. */

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { settings } from "../stores/settings";
 import { THEME_OPTIONS, resolvedTheme } from "../stores/theme";
+import { t } from "../i18n/index";
 
 const open = ref(false);
 const root = ref<HTMLElement>();
@@ -25,21 +26,21 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <template>
   <div ref="root" class="wrap">
-    <button class="icon-btn" :class="{ on: open }" aria-label="Thème" title="Theme: light, dark or system" @click="open = !open">
+    <button class="icon-btn" :class="{ on: open }" :aria-label="t('themeMenu.buttonLabel')" :title="t('themeMenu.buttonTitle')" @click="open = !open">
       <Icon :name="buttonIcon" />
     </button>
-    <div v-if="open" class="menu" role="menu" aria-label="Theme">
+    <div v-if="open" class="menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
       <button
         v-for="o in THEME_OPTIONS"
         :key="o.id"
         class="item"
         role="menuitemradio"
-        :title="`Use the ${o.label} theme`"
+        :title="t('themeMenu.useTheme', { theme: t(o.labelKey) })"
         :aria-checked="settings.theme === o.id"
         @click="choose(o.id)"
       >
         <Icon :name="o.icon" />
-        <span class="label">{{ o.label }}</span>
+        <span class="label">{{ t(o.labelKey) }}</span>
         <Icon v-if="settings.theme === o.id" name="check2" />
       </button>
     </div>

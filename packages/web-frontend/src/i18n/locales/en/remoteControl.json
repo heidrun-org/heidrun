@@ -1,0 +1,17 @@
+{
+  "connected": "Connected",
+  "failed": "Connection failed",
+  "notConnected": "Not connected",
+  "linkCopied": "Session link copied",
+  "activeHint": "Session open on claude.ai/code and in the Claude app (iPhone, iPad).",
+  "offHint": "Continue this session from claude.ai/code or the Claude app on your phone.",
+  "showTitle": "Show the URL and the QR code",
+  "show": "Show the URL and the QR code",
+  "busyTitle": "The agent waits for a decision",
+  "reconnect": "Reconnect",
+  "openPanel": "Open the Remote Control panel",
+  "enable": "Turn on Remote Control",
+  "copyTitle": "Copy the URL",
+  "copy": "Copy",
+  "atStartup": "Turn on for all new Claude sessions"
+}

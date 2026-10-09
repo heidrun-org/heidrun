@@ -1,0 +1,17 @@
+{
+  "csv.date": "Date",
+  "csv.start": "Start",
+  "csv.end": "End",
+  "csv.activeMinutes": "Active time (min)",
+  "csv.blockedMinutes": "Waiting for a decision (min)",
+  "csv.workspace": "Workspace",
+  "csv.tab": "Tab",
+  "csv.agent": "Agent",
+  "csv.type": "Type",
+  "csv.branch": "Branch",
+  "csv.cost": "Cost (USD)",
+  "csv.prompts": "Prompts",
+  "csv.decisions": "Decisions",
+  "csv.summary": "Summary",
+  "noBranch": "no branch"
+}

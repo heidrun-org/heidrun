@@ -17,7 +17,7 @@ import {
   workspacePanes,
   sidebarWorkspaces as workspaces,
 } from "../stores/session";
-import { STATUS_LABEL, agentKind, ago, paneName } from "../lib/format";
+import { statusLabel, agentKind, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
@@ -26,12 +26,13 @@ import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
+import { t } from "../i18n/index";
 
 function summary(p: AgentInfo): string {
   const q = state.questions[p.pane_id];
   if (q && p.agent_status !== "blocked") return q.text;
-  if (p.agent_status === "blocked") return p.state_labels?.blocked || p.title || "attend une décision";
-  return p.title || p.terminal_title_stripped || "travail terminé, à relire";
+  if (p.agent_status === "blocked") return p.state_labels?.blocked || p.title || t("sidebar.waitingForDecision");
+  return p.title || p.terminal_title_stripped || t("sidebar.workDoneToReview");
 }
 
 function paneCount(wsId: string) {
@@ -68,14 +69,14 @@ async function createWorkspace() {
 <template>
   <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
     <section class="group tight">
-      <div class="eyebrow pad">Workspaces</div>
+      <div class="eyebrow pad">{{ t("sidebar.workspaces") }}</div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
-        <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" aria-label="Workspaces sans agent"></div>
+        <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
         <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <InlineRename
             :value="w.label"
-            label="Nouveau nom du workspace"
+            :label="t('sidebar.newWorkspaceName')"
             @save="(v) => finishRename('ws', w.workspace_id, v)"
             @cancel="state.renaming = null"
           />
@@ -91,7 +92,7 @@ async function createWorkspace() {
             'drop-after': ws.gap.value === wi + 1 && wi === workspaces.length - 1,
           }"
           draggable="true"
-          title="Double-clic pour renommer · glisser pour déplacer"
+          :title="t('sidebar.workspaceTitle')"
           @dragstart="ws.onDragStart($event, w.workspace_id)"
           @dragover="ws.onDragOver($event, wi)"
           @drop="ws.onDrop($event, workspaces.map((x) => x.workspace_id))"
@@ -105,33 +106,33 @@ async function createWorkspace() {
           <span
             v-if="git.status[w.workspace_id]?.ahead"
             class="git-ahead"
-            :title="`${git.status[w.workspace_id]!.ahead} commit(s) pas encore poussé(s)`"
+            :title="t('sidebar.commitsNotPushed', { count: git.status[w.workspace_id]!.ahead })"
           >↑{{ git.status[w.workspace_id]!.ahead }}</span>
           <span
             v-for="a in agentsIn(w.workspace_id)"
             :key="a.kind"
             class="agent-tag"
             :class="a.kind.toLowerCase()"
-            :title="`${a.n} session${a.n > 1 ? 's' : ''} ${a.kind}`"
+            :title="t('sidebar.sessions', { count: a.n, kind: a.kind })"
           >{{ a.kind }}<template v-if="a.n > 1"> {{ a.n }}</template></span>
           <span class="count">{{ paneCount(w.workspace_id) }}</span>
         </button>
       </template>
       <form v-if="creating" class="create" @submit.prevent="createWorkspace">
-        <label class="sr" for="ws-path">Dossier du workspace</label>
+        <label class="sr" for="ws-path">{{ t("sidebar.workspaceFolder") }}</label>
         <input id="ws-path" v-model="newPath" class="mono" placeholder="~/Projects/…" autofocus @keydown.esc="creating = false" />
       </form>
-      <button title="Create a new workspace" v-else class="item dashed" @click="creating = true">+ Nouveau workspace</button>
+      <button :title="t('sidebar.newWorkspaceTitle')" v-else class="item dashed" @click="creating = true">{{ t("sidebar.newWorkspace") }}</button>
     </section>
 
     <section class="group tight">
-      <div class="eyebrow pad">Panneaux · {{ state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }}</div>
+      <div class="eyebrow pad">{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</div>
       <template v-for="p in workspacePanes" :key="p.pane_id">
         <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
           <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
           <InlineRename
             :value="p.label || paneName(p)"
-            label="Nouveau nom du panneau (vide pour revenir au nom automatique)"
+            :label="t('sidebar.newPaneName')"
             allow-empty
             @save="(v) => finishRename('pane', p.pane_id, v)"
             @cancel="state.renaming = null"
@@ -141,28 +142,28 @@ async function createWorkspace() {
           v-else
           class="item small"
           :class="{ active: p.pane_id === state.selectedPaneId }"
-          :title="`${p.terminal_title_stripped || p.agent || 'terminal'} · double-clic pour renommer`"
+          :title="t('sidebar.paneTitle', { name: p.terminal_title_stripped || p.agent || t('sidebar.terminalLower') })"
           @click="selectPane(p)"
           @dblclick="startRename('pane', p.pane_id)"
         >
           <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
           <span class="grow">{{ paneName(p) }}</span>
-          <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" title="Remote Control connecté">RC</span>
+          <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" :title="t('sidebar.remoteControlConnected')">{{ t("sidebar.remoteControlBadge") }}</span>
           <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
-            {{ p.agent ? STATUS_LABEL[p.agent_status] : "terminal" }}
+            {{ p.agent ? statusLabel(p.agent_status) : t("sidebar.terminalLower") }}
           </span>
         </button>
       </template>
     </section>
     <!-- At the bottom: cards come and go without moving the workspaces list. -->
     <section v-if="attention.length" class="group attention">
-      <div class="eyebrow pad">À traiter</div>
+      <div class="eyebrow pad">{{ t("sidebar.toHandle") }}</div>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
-        <button title="Show this pane" class="card-main" @click="selectPane(p)">
+        <button :title="t('sidebar.showPane')" class="card-main" @click="selectPane(p)">
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
-            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">QUESTION</span>
-            <span v-else class="badge" :class="'t-' + p.agent_status">{{ STATUS_LABEL[p.agent_status].toUpperCase() }}</span>
+            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">{{ t("sidebar.question") }}</span>
+            <span v-else class="badge" :class="'t-' + p.agent_status">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
           </span>
           <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
           <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
@@ -184,11 +185,11 @@ async function createWorkspace() {
         <button
           class="card-dock"
           :class="{ on: isDocked(p.pane_id) }"
-          :aria-label="`${isDocked(p.pane_id) ? 'Retirer d’à côté' : 'Ouvrir à côté'} ${paneName(p)}`"
-          :title="isDocked(p.pane_id) ? 'Retirer de la vue à côté' : 'Ouvrir à côté : le suivre sans quitter l’onglet en cours'"
+          :aria-label="isDocked(p.pane_id) ? t('sidebar.undockLabel', { name: paneName(p) }) : t('sidebar.dockLabel', { name: paneName(p) })"
+          :title="isDocked(p.pane_id) ? t('sidebar.undockTitle') : t('sidebar.dockTitle')"
           @click="toggleDock(p.pane_id)"
         ><Icon :name="isDocked(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
-        <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
+        <button class="card-x" :aria-label="t('sidebar.hideLabel', { name: paneName(p) })" :title="t('sidebar.hideTitle')" @click="dismiss(p)">
           <Icon name="x-lg" />
         </button>
       </div>

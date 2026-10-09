@@ -26,7 +26,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 | ⇧⌘F | Search the output of all terminals |
 | ⇧⌘H | History: agent jobs, time and cost per project, CSV export |
 | ⇧⌘P | Pin the selected text in a note |
-| Échap | Close the open window |
+| Esc | Close the open window |
 | **Terminals and agents** | |
 | ⌘T | New terminal (new tab) |
 | ⇧⌘T | New agent (Claude, Codex, project agents) |
@@ -42,7 +42,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 | ↵ | Send (input bar) |
 | ⇧↵ / ⌥↵ | New line, in the terminal as in the input bar |
 | ⌘↵ | Launch (New agent window) |
-| ↑ / ↓ puis ↵ | Choose a result (palette, search) then confirm |
+| ↑ / ↓ then ↵ | Choose a result (palette, search) then confirm |
 | **File explorer and editor** | |
 | ⇧⌘F | Search the whole project (explorer open) |
 | ⌘S | Save the file |
@@ -50,22 +50,22 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 | ⌘D | Select the next occurrence (multiple cursors) |
 | ⌘Z / ⇧⌘Z | Undo / redo |
 | ⌘W | Close the tab (confirmation if not saved) |
-| Clic droit | New file or folder, rename / move, Trash |
+| Right click | New file or folder, rename / move, Trash |
 | **Display** | |
 | ⌘B / ⌥⌘B | Hide the left sidebar / the right panel |
 | ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font (the code in the Git and Preview windows) |
 | **Mouse** | |
-| ⌘-clic | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
-| ⌘-clic | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |
-| Survol | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View <agent> |
-| Molette | Scroll the pane history |
-| ⌥ + molette | Send ↑ / ↓ (last commands or prompts) |
-| ⌥ + glisser | Select text, even in "Mouse for the app" mode |
-| Double-clic | Rename a workspace, a tab or a pane |
-| Glisser-déposer | Reorder workspaces and tabs |
+| ⌘-click | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
+| ⌘-click | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |
+| Hover | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View <agent> |
+| Wheel | Scroll the pane history |
+| ⌥ + wheel | Send ↑ / ↓ (last commands or prompts) |
+| ⌥ + drag | Select text, even in "Mouse for the app" mode |
+| Double-click | Rename a workspace, a tab or a pane |
+| Drag and drop | Reorder workspaces and tabs |
 | <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> | Keep an agent alongside, visible whatever the tab |
 | <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> | Tiles of a Claude session: what each sub-agent is doing |
-| Double-clic sur une bordure | Return to the default width |
+| Double-click on a border | Return to the default width |
 
 <!-- shortcuts:end -->
 

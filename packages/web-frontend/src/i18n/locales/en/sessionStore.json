@@ -1,0 +1,14 @@
+{
+  "tabNumber": "tab {number}",
+  "window.session": "5 h session",
+  "window.week": "Week",
+  "notify.question": "{name} is asking you a question",
+  "notify.done": "{name} has finished",
+  "notify.blocked": "{name} is waiting for a decision",
+  "notify.patternFound": "{name}: pattern found",
+  "error.agentBlocked": "The agent is waiting for a decision: answer it first.",
+  "error.herdrUnreachable": "Herdr does not answer. Run \"herdr\" in a terminal.",
+  "severalAgents_one": "{count} agent · {where}",
+  "severalAgents_other": "{count} agents · {where}",
+  "outputSent": "Output sent to {name}"
+}

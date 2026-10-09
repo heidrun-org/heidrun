@@ -1,0 +1,12 @@
+{
+  "forbidden": "Forbidden command",
+  "risky": "Risky command",
+  "notSent": "This command is not sent",
+  "runQuestion": "Run this command?",
+  "blockedHint": "The project forbids it in {file} ({setting}). Run it yourself in a terminal if you want it.",
+  "close": "Close",
+  "cancel": "Cancel",
+  "cancelTitle": "Cancel and do not run the command",
+  "runAnyway": "Run anyway",
+  "runAnywayTitle": "Run the command anyway"
+}

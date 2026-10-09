@@ -7,6 +7,7 @@ import { allPanes, paneFullName, selectPane } from "../stores/session";
 import { agentList, showSubagent, subagents } from "../stores/subagents";
 import { settings } from "../stores/settings";
 import { ago } from "../lib/format";
+import { t } from "../i18n/index";
 
 interface Transcript {
   id: string;
@@ -41,7 +42,7 @@ async function load() {
 async function loadOnce() {
   if (!pane.value) return;
   if (!sid.value) {
-    error.value = "Session Claude inconnue : le suivi Claude (status line) doit être activé.";
+    error.value = t("mosaicModal.unknownSession");
     loaded.value = true;
     return;
   }
@@ -49,14 +50,14 @@ async function loadOnce() {
   const atBottom = new Map<string, boolean>();
   el.value?.querySelectorAll<HTMLElement>(".lines").forEach((n) => atBottom.set(n.dataset.id ?? "", n.scrollHeight - n.scrollTop - n.clientHeight < 24));
   try {
-    const [t, list] = await Promise.all([
+    const [found, list] = await Promise.all([
       invoke<Transcript[]>("claude_session_agents", { sessionId: sid.value, lines: 40 }),
       agentList(pane.value.pane_id),
     ]);
-    tiles.value = t;
+    tiles.value = found;
     names.value = list?.names ?? [];
     current.value = list?.current ?? null;
-    error.value = t.length ? "" : "Pas de journal trouvé pour cette session dans ~/.claude/projects.";
+    error.value = found.length ? "" : t("mosaicModal.noJournal");
   } catch (e) {
     error.value = String(e);
   }
@@ -133,40 +134,40 @@ function onKey(e: KeyboardEvent) {
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="modal" role="dialog" aria-label="Mosaïque des agents">
+    <div ref="el" class="modal" role="dialog" :aria-label="t('mosaicModal.dialogLabel')">
       <header>
         <div>
-          <div class="eyebrow">Mosaïque</div>
+          <div class="eyebrow">{{ t("mosaicModal.eyebrow") }}</div>
           <h2>{{ pane ? paneFullName(pane) : "" }}</h2>
         </div>
-        <div class="seg" role="radiogroup" aria-label="Agents affichés" @keydown.left.prevent="settings.mosaicActiveOnly = true" @keydown.right.prevent="settings.mosaicActiveOnly = false">
-          <button role="radio" :aria-checked="settings.mosaicActiveOnly" :class="{ on: settings.mosaicActiveOnly }" title="Le fil principal, les agents qui écrivent encore ou présents dans la liste de Claude" @click="settings.mosaicActiveOnly = true">Actifs <span class="n">{{ workingCount }}</span></button>
-          <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" title="Tous les agents de la session, terminés compris" @click="settings.mosaicActiveOnly = false">Tous <span class="n">{{ tiles.length }}</span></button>
+        <div class="seg" role="radiogroup" :aria-label="t('mosaicModal.shownAgentsLabel')" @keydown.left.prevent="settings.mosaicActiveOnly = true" @keydown.right.prevent="settings.mosaicActiveOnly = false">
+          <button role="radio" :aria-checked="settings.mosaicActiveOnly" :class="{ on: settings.mosaicActiveOnly }" :title="t('mosaicModal.activeTitle')" @click="settings.mosaicActiveOnly = true">{{ t("mosaicModal.active") }} <span class="n">{{ workingCount }}</span></button>
+          <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" :title="t('mosaicModal.allTitle')" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.all") }} <span class="n">{{ tiles.length }}</span></button>
         </div>
-        <span class="hint">Lecture seule, d’après les journaux de Claude · un clic affiche l’agent dans le terminal</span>
-        <button title="Close the mosaic (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <span class="hint">{{ t("mosaicModal.hint") }}</span>
+        <button :title="t('mosaicModal.closeTitle')" class="close" :aria-label="t('mosaicModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
-      <div v-if="!loaded" class="empty">Lecture des journaux…</div>
+      <div v-if="!loaded" class="empty">{{ t("mosaicModal.loading") }}</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
       <div v-else class="grid" :style="{ fontSize: `${Math.max(10, settings.codeFontSize - 1)}px` }">
-        <div v-if="!shownTiles.length" class="empty">Aucun agent actif. <button title="Show all agents" class="link" @click="settings.mosaicActiveOnly = false">Voir tous les agents</button></div>
+        <div v-if="!shownTiles.length" class="empty">{{ t("mosaicModal.noActive") }} <button :title="t('mosaicModal.showAllTitle')" class="link" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.showAll") }}</button></div>
         <button
-          v-for="t in shownTiles"
-          :key="t.id"
+          v-for="tile in shownTiles"
+          :key="tile.id"
           class="tile"
-          :class="{ shown: isShown(t), off: !listName(t) }"
-          :disabled="!listName(t) || !!subagents.busy"
-          :title="listName(t) ? `Afficher ${listName(t)} dans le terminal` : 'Pas (ou plus) dans la liste des agents de Claude'"
-          @click="show(t)"
+          :class="{ shown: isShown(tile), off: !listName(tile) }"
+          :disabled="!listName(tile) || !!subagents.busy"
+          :title="listName(tile) ? t('mosaicModal.showInTerminal', { name: listName(tile) ?? '' }) : t('mosaicModal.notInList')"
+          @click="show(tile)"
         >
           <span class="t-head">
-            <span class="dot" :class="{ on: active(t) }"></span>
-            <span class="t-name">{{ title(t) }}</span>
-            <span v-if="isShown(t)" class="tag">affiché</span>
-            <span class="t-when">{{ ago(t.modified * 1000) }}</span>
+            <span class="dot" :class="{ on: active(tile) }"></span>
+            <span class="t-name">{{ title(tile) }}</span>
+            <span v-if="isShown(tile)" class="tag">{{ t("mosaicModal.shown") }}</span>
+            <span class="t-when">{{ ago(tile.modified * 1000) }}</span>
           </span>
-          <span v-if="t.description" class="t-desc">{{ t.description }}</span>
-          <span class="lines mono" :data-id="t.id"><span v-for="(l, i) in t.lines" :key="i" class="l" :class="{ tool: l.startsWith('⏺ ') && /^⏺ \w+\(/.test(l), res: l.startsWith('  ⎿'), you: l.startsWith('> ') }">{{ l }}</span></span>
+          <span v-if="tile.description" class="t-desc">{{ tile.description }}</span>
+          <span class="lines mono" :data-id="tile.id"><span v-for="(l, i) in tile.lines" :key="i" class="l" :class="{ tool: l.startsWith('⏺ ') && /^⏺ \w+\(/.test(l), res: l.startsWith('  ⎿'), you: l.startsWith('> ') }">{{ l }}</span></span>
         </button>
       </div>
     </div>

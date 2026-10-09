@@ -3,6 +3,7 @@ import { Marked } from "marked";
 import DOMPurify from "dompurify";
 import { highlightLine } from "./highlight";
 import hljs from "highlight.js/lib/core";
+import { t } from "../i18n/index";
 
 const md = new Marked({ gfm: true, breaks: false });
 md.use({
@@ -64,7 +65,7 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
       // Remote image from an unknown host: shown as a link, loaded only if clicked.
       const a = node.ownerDocument.createElement("a");
       a.setAttribute("href", src);
-      a.textContent = `🖼 ${node.getAttribute("alt") || "image"}`;
+      a.textContent = `🖼 ${node.getAttribute("alt") || t("markdown.image")}`;
       node.parentNode?.replaceChild(a, node);
     }
   }

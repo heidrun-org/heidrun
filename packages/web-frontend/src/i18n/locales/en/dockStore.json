@@ -1,0 +1,5 @@
+{
+  "tooMany_one": "{count} agent on the side at most: remove one first",
+  "tooMany_other": "{count} agents on the side at most: remove one first",
+  "staysDocked": "{name} will stay on the side when you change tabs"
+}

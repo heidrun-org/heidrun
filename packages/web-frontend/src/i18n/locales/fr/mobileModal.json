@@ -1,0 +1,22 @@
+{
+  "title": "Accès mobile",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "lead": "Suivre les agents depuis le téléphone : ce qui attend une décision, autoriser ou refuser, envoyer une consigne, lire la fin de la sortie d’un agent. Seulement par Tailscale, jamais sur Internet, et avec un appairage.",
+  "enable": "Activer l’accès mobile",
+  "pairStep1Before": "Sur l’iPhone ou l’iPad, ouvre ",
+  "pairStep1After": " et vérifie qu’il est connecté.",
+  "pairStep2": "Scanne ce QR code avec l’appareil photo, puis ouvre le lien dans Safari.",
+  "pairStep3Before": "Partager → ",
+  "pairStep3Bold": "Sur l’écran d’accueil",
+  "pairStep3After": " : Herdr Desk s’ouvre ensuite comme une app.",
+  "qrSecret": "Le QR code contient la clé d’appairage : ne le montre pas, ne le partage pas.",
+  "lastSeen": "Dernière connexion d’un appareil : {time}",
+  "revokeTitle": "Les appareils déjà appairés devront rescanner le QR code",
+  "revoke": "Révoquer les appareils appairés",
+  "starting": "Démarrage…",
+  "beforeEnable": "Avant d’activer",
+  "setupStep1Before": "Installe ",
+  "setupStep1After": " sur ce Mac et sur l’iPhone / l’iPad (App Store), connecte-les avec le même compte (Google, Apple…).",
+  "setupStep2": "Active ici : macOS peut demander d’autoriser les connexions entrantes pour Herdr Desk, réponds Autoriser."
+}

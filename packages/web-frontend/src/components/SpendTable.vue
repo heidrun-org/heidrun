@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { spendSlots, spendToday, spendWindow } from "../stores/spend";
 import { clockTime } from "../lib/format";
+import { t } from "../i18n/index";
 
 // `fixed`: always the 5 h window (in the history window), no toggle.
 const props = defineProps<{ fixed?: "window" }>();
@@ -41,21 +42,21 @@ const chart = computed(() => {
 });
 
 const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
-  `${r.label}\n` + r.agents.map((a) => `  ${a.who} : ${usd(a.cost)}`).join("\n");
+  `${r.label}\n` + r.agents.map((a) => t("spendTable.agentCost", { who: a.who, cost: usd(a.cost) })).join("\n");
 </script>
 
 <template>
   <div class="block">
     <div class="head">
-      <span class="eyebrow">{{ fixed ? "Fenêtre 5 h en cours" : "Consommation par workspace" }}</span>
+      <span class="eyebrow">{{ fixed ? t("spendTable.currentWindow") : t("spendTable.byWorkspace") }}</span>
       <span v-if="!fixed" class="seg">
-        <button title="Show the spending of the last 5 hours" type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">5 h</button>
-        <button title="Show the spending of today" type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">Aujourd’hui</button>
+        <button :title="t('spendTable.windowTitle')" type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">{{ t("spendTable.window") }}</button>
+        <button :title="t('spendTable.todayTitle')" type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">{{ t("spendTable.today") }}</button>
       </span>
     </div>
 
     <template v-if="data.rows.length">
-      <svg v-if="scope === 'window'" class="chart" viewBox="0 0 240 40" preserveAspectRatio="none" role="img" aria-label="Coût par quart d’heure sur la fenêtre de 5 h">
+      <svg v-if="scope === 'window'" class="chart" viewBox="0 0 240 40" preserveAspectRatio="none" role="img" :aria-label="t('spendTable.chartLabel')">
         <rect x="0" y="36" width="240" height="1" fill="var(--line-strong)" />
         <g v-for="(b, i) in chart.bars" :key="i">
           <title>{{ clockTime((chart.from + i * 15 * 60_000) / 1000) }} · {{ usd(b.total) }}</title>
@@ -68,19 +69,18 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
         <span class="sw" :style="{ background: colorOf(r.ws) }"></span>
         <span class="name">{{ r.label }}</span>
         <span class="bar"><span :style="{ width: `${Math.max(2, r.share * 100)}%`, background: colorOf(r.ws) }"></span></span>
-        <span class="mono pct">{{ Math.round(r.share * 100) }} %</span>
+        <span class="mono pct">{{ t("spendTable.percent", { value: Math.round(r.share * 100) }) }}</span>
         <span class="mono cost">{{ usd(r.cost) }}</span>
       </div>
       <div class="foot">
-        <span>Total {{ usd(data.total) }}</span>
+        <span>{{ t("spendTable.total", { cost: usd(data.total) }) }}</span>
         <span v-if="scope === 'window' && data.rows[0]?.quota != null" class="muted">
-          · part estimée du quota 5 h : {{ data.rows.map((r) => `${r.label} ${Math.round(r.quota ?? 0)} pts`).slice(0, 3).join(", ") }}
+          {{ t("spendTable.quotaShare", { list: data.rows.map((r) => t("spendTable.quotaPoints", { label: r.label, points: Math.round(r.quota ?? 0) })).slice(0, 3).join(", ") }) }}
         </span>
       </div>
     </template>
     <p v-else class="hint">
-      Rien encore {{ scope === "window" ? "sur la fenêtre de 5 h" : "aujourd’hui" }} : le coût de chaque session Claude est relevé à chaque réponse
-      (suivi Claude activé).
+      {{ scope === "window" ? t("spendTable.emptyWindow") : t("spendTable.emptyToday") }}
     </p>
   </div>
 </template>

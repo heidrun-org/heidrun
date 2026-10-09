@@ -1,0 +1,9 @@
+{
+  "invalidAgentName": "Nom d’agent invalide : {name}",
+  "invalidModel": "Modèle invalide : {name}",
+  "waitingConfirmation": "L’agent attend une confirmation (dossier de confiance ?) : la consigne partira après",
+  "tabNotCreated": "Onglet non créé : {error}",
+  "launchFailed": "Lancement impossible : {error}",
+  "tabClosedBeforeReady": "Onglet fermé avant que l’agent soit prêt : consigne non envoyée",
+  "notReady": "L’agent n’est pas prêt au bout de 2 min : la consigne de départ est dans la zone de saisie"
+}

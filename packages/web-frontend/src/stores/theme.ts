@@ -2,9 +2,9 @@ import { computed, ref, watch } from "vue";
 import { settings } from "./settings";
 
 export const THEME_OPTIONS = [
-  { id: "system", label: "System", icon: "circle-half" },
-  { id: "dark", label: "Dark", icon: "moon-stars" },
-  { id: "light", label: "Light", icon: "sun" },
+  { id: "system", labelKey: "themeMenu.system", icon: "circle-half" },
+  { id: "dark", labelKey: "themeMenu.dark", icon: "moon-stars" },
+  { id: "light", labelKey: "themeMenu.light", icon: "sun" },
 ] as const;
 
 const query = window.matchMedia("(prefers-color-scheme: dark)");

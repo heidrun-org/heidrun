@@ -4,6 +4,7 @@ import { computed, reactive, watch } from "vue";
 import { allPanes, state, toast } from "./session";
 import { settings } from "./settings";
 import { paneName } from "../lib/format";
+import { t } from "../i18n/index";
 
 export const MAX_DOCKED = 4;
 
@@ -30,12 +31,12 @@ export const isDocked = (paneId: string) => settings.dockedPanes.includes(paneId
 export function dock(paneId: string) {
   if (isDocked(paneId)) return;
   if (settings.dockedPanes.length >= MAX_DOCKED) {
-    toast(`${MAX_DOCKED} agents à côté au maximum : retires-en un d’abord`);
+    toast(t("dockStore.tooMany", { count: MAX_DOCKED }));
     return;
   }
   settings.dockedPanes = [...settings.dockedPanes, paneId];
   const p = allPanes.value.find((x) => x.pane_id === paneId);
-  if (p && p.tab_id === state.selectedTabId) toast(`${paneName(p)} restera à côté quand tu changeras d’onglet`);
+  if (p && p.tab_id === state.selectedTabId) toast(t("dockStore.staysDocked", { name: paneName(p) }));
 }
 
 export function undock(paneId: string) {

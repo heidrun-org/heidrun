@@ -5,6 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { allPanes, lastPrompt, onRunEnd, state, type ActivityEntry } from "./session";
 import { paneSpend } from "./spend";
 import type { GitStatus } from "./git";
+import { t } from "../i18n/index";
 
 export interface HistoryRun {
   id: string;
@@ -191,15 +192,30 @@ const csvCell = (v: string | number) => {
 /** Semicolons: what Excel expects with a French locale. */
 export function toCsv(runs: HistoryRun[]): string {
   const d2 = (n: number) => String(n).padStart(2, "0");
-  const date = (t: number) => {
-    const d = new Date(t);
+  const date = (at: number) => {
+    const d = new Date(at);
     return `${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}`;
   };
-  const time = (t: number) => {
-    const d = new Date(t);
+  const time = (at: number) => {
+    const d = new Date(at);
     return `${d2(d.getHours())}:${d2(d.getMinutes())}`;
   };
-  const head = ["Date", "Début", "Fin", "Durée active (min)", "Attente décision (min)", "Workspace", "Onglet", "Agent", "Type", "Branche", "Coût (USD)", "Consignes", "Décisions", "Résumé"];
+  const head = [
+    "date",
+    "start",
+    "end",
+    "activeMinutes",
+    "blockedMinutes",
+    "workspace",
+    "tab",
+    "agent",
+    "type",
+    "branch",
+    "cost",
+    "prompts",
+    "decisions",
+    "summary",
+  ].map((column) => t(`historyStore.csv.${column}`));
   const rows = runs.map((r) => [
     date(r.start),
     (r.startUnknown ? "≤ " : "") + time(r.start),
@@ -274,7 +290,7 @@ export interface FeatureRow {
 export function byFeature(list: HistoryRun[]): FeatureRow[] {
   const m = new Map<string, FeatureRow>();
   for (const r of list) {
-    const branch = r.branch || "sans branche";
+    const branch = r.branch || t("historyStore.noBranch");
     const key = `${r.ws}\u0000${branch}`;
     const row = m.get(key) ?? { key, ws: r.ws, branch, ref: null, ms: 0, cost: 0, n: 0 };
     row.ms += r.activeMs;

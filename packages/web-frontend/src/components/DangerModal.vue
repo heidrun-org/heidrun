@@ -1,23 +1,30 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import { answerDanger, danger } from "../stores/guards";
+import { t } from "../i18n/index";
 
 const cancel = ref<HTMLButtonElement>();
 // Focus on "Annuler": Enter must never run a dangerous command by reflex.
 onMounted(() => nextTick(() => cancel.value?.focus()));
+// The file name and the setting name are shown in a monospace font inside the sentence.
+const hintParts = computed(() =>
+  t("dangerModal.blockedHint")
+    .split(/(\{file\}|\{setting\})/)
+    .map((part) => (part === "{file}" ? { text: ".herdr-desk.json", mono: true } : part === "{setting}" ? { text: "guards.block", mono: true } : { text: part, mono: false })),
+);
 </script>
 
 <template>
   <div class="overlay" @mousedown.self="answerDanger(false)" @keydown.esc.stop.prevent="answerDanger(false)">
     <div class="dialog" role="alertdialog" aria-labelledby="danger-title" aria-describedby="danger-why">
-      <div class="eyebrow" :class="danger.level">{{ danger.level === "block" ? "Commande interdite" : "Commande à risque" }}</div>
-      <h2 id="danger-title">{{ danger.level === "block" ? "Cette commande n’est pas envoyée" : "Exécuter cette commande ?" }}</h2>
+      <div class="eyebrow" :class="danger.level">{{ danger.level === "block" ? t("dangerModal.forbidden") : t("dangerModal.risky") }}</div>
+      <h2 id="danger-title">{{ danger.level === "block" ? t("dangerModal.notSent") : t("dangerModal.runQuestion") }}</h2>
       <p id="danger-why" class="why">{{ danger.why }}<template v-if="danger.where"> · {{ danger.where }}</template></p>
       <pre class="cmd mono">{{ danger.command }}</pre>
-      <p v-if="danger.level === 'block'" class="hint">Le projet l’interdit dans <span class="mono">.herdr-desk.json</span> (<span class="mono">guards.block</span>). Lance-la toi-même dans un terminal si c’est voulu.</p>
+      <p v-if="danger.level === 'block'" class="hint"><template v-for="(part, i) in hintParts" :key="i"><span v-if="part.mono" class="mono">{{ part.text }}</span><template v-else>{{ part.text }}</template></template></p>
       <div class="row">
-        <button title="Cancel and do not run the command" ref="cancel" class="btn lg" @click="answerDanger(false)">{{ danger.level === "block" ? "Fermer" : "Annuler" }}</button>
-        <button title="Run the command anyway" v-if="danger.level !== 'block'" class="btn lg danger" @click="answerDanger(true)">Exécuter quand même</button>
+        <button :title="t('dangerModal.cancelTitle')" ref="cancel" class="btn lg" @click="answerDanger(false)">{{ danger.level === "block" ? t("dangerModal.close") : t("dangerModal.cancel") }}</button>
+        <button :title="t('dangerModal.runAnywayTitle')" v-if="danger.level !== 'block'" class="btn lg danger" @click="answerDanger(true)">{{ t("dangerModal.runAnyway") }}</button>
       </div>
     </div>
   </div>

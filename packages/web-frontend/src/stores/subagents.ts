@@ -5,6 +5,7 @@ import * as api from "../lib/api";
 import { agentListState } from "../lib/refs";
 import { allPanes, paneFullName, rememberPrompt, scheduleRefresh, toast } from "./session";
 import { allowCommand } from "./guards";
+import { t } from "../i18n/index";
 
 export const subagents = reactive({
   /** pane id → names shown in Claude's agent list ("main" first). */
@@ -77,13 +78,13 @@ export async function showSubagent(paneId: string, name: string): Promise<boolea
   if (subagents.busy) return false;
   const pane = allPanes.value.find((p) => p.pane_id === paneId);
   if (pane?.agent_status === "blocked") {
-    toast("L’agent attend une décision : réponds-lui d’abord");
+    toast(t("subagentsStore.agentBlocked"));
     return false;
   }
   subagents.busy = paneId;
   try {
     const ok = await switchTo(paneId, name);
-    if (!ok) toast(`Impossible d’afficher ${name} : utilise ↓ puis Entrée dans le terminal`);
+    if (!ok) toast(t("subagentsStore.showFailed", { name }));
     return ok;
   } catch (e) {
     toast(String(e));
@@ -119,7 +120,7 @@ async function restore(paneId: string, name: string) {
  */
 export async function sendToSubagent(paneId: string, name: string, text: string, backToMain = true): Promise<boolean> {
   if (subagents.busy) {
-    toast("Un envoi à un sous-agent est déjà en cours");
+    toast(t("subagentsStore.alreadySending"));
     return false;
   }
   // "! command": Claude's shell mode, checked like any other command.
@@ -128,15 +129,15 @@ export async function sendToSubagent(paneId: string, name: string, text: string,
   if (shell && !(await allowCommand(shell[1], pane?.foreground_cwd || pane?.cwd || null, pane ? `${paneFullName(pane)} › ${name}` : name))) return false;
   // A permission menu is open: the arrows and Enter would answer it.
   if (pane?.agent_status === "blocked") {
-    toast("L’agent attend une décision : réponds-lui d’abord");
+    toast(t("subagentsStore.agentBlocked"));
     return false;
   }
   subagents.busy = paneId;
-  toast(`Bascule vers ${name}…`);
+  toast(t("subagentsStore.switching", { name }));
   let switched = false;
   try {
     if (!(await switchTo(paneId, name))) {
-      toast(`Impossible d’atteindre ${name} dans la liste des agents de Claude : consigne non envoyée`);
+      toast(t("subagentsStore.unreachable", { name }));
       await restore(paneId, name);
       return false;
     }
@@ -146,9 +147,9 @@ export async function sendToSubagent(paneId: string, name: string, text: string,
     if (backToMain && name !== "main") {
       await wait(500);
       const first = (await listOf(paneId))?.names[0] ?? "main";
-      if (!(await switchTo(paneId, first))) toast(`Envoyé à ${name}, mais le retour sur ${first} a échoué`);
-      else toast(`Envoyé à ${name}`);
-    } else toast(`Envoyé à ${name}`);
+      if (!(await switchTo(paneId, first))) toast(t("subagentsStore.sentButReturnFailed", { name, first }));
+      else toast(t("subagentsStore.sent", { name }));
+    } else toast(t("subagentsStore.sent", { name }));
     return true;
   } catch (e) {
     toast(String(e));

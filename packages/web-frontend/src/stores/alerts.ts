@@ -5,6 +5,7 @@ import { isQuiet, notify } from "../lib/notify";
 import { settings } from "./settings";
 import { allPanes, attentionKey, contextFor, paneFullName, quotas, state } from "./session";
 import { monthSpend } from "./history";
+import { locale, t } from "../i18n/index";
 
 const remindedBlocked = new Set<string>(); // attentionKey of the episode
 const contextWarned = new Set<string>(); // pane:session
@@ -30,7 +31,10 @@ function checkBlocked(now: number) {
     const key = `${p.pane_id}:${attentionKey(p)}`;
     if (!since || now - since < limit || remindedBlocked.has(key)) continue;
     remindedBlocked.add(key);
-    notify(`${paneFullName(p)} attend toujours`, `Bloqué depuis ${Math.round((now - since) / 60_000)} min : une décision est nécessaire.`);
+    notify(
+      t("alertsStore.stillBlocked.title", { name: paneFullName(p) }),
+      t("alertsStore.stillBlocked.body", { minutes: Math.round((now - since) / 60_000) }),
+    );
   }
 }
 
@@ -43,7 +47,10 @@ function checkContext() {
     const key = `${p.pane_id}:${p.tokens?.hd_sid ?? ""}`;
     if (ctx.percent >= 80 && !contextWarned.has(key)) {
       contextWarned.add(key);
-      notify(`${paneFullName(p)} : contexte à ${Math.round(ctx.percent)} %`, "Pense à /compact, ou à une nouvelle session.");
+      notify(
+        t("alertsStore.context.title", { name: paneFullName(p), percent: Math.round(ctx.percent) }),
+        t("alertsStore.context.body"),
+      );
     } else if (ctx.percent < 60) {
       contextWarned.delete(key); // after a /compact, warn again next time
     }
@@ -57,7 +64,7 @@ function checkQuota() {
     for (const w of q.windows) {
       const level = w.percent >= 95 ? 95 : w.percent >= 80 ? 80 : 0;
       if (!level) continue;
-      const key = `${w.name}:${w.resetsAt ?? ""}:${level}`;
+      const key = `${w.id}:${w.resetsAt ?? ""}:${level}`;
       if (quotaWarned.has(key)) continue;
       quotaWarned.add(key);
       try {
@@ -65,7 +72,13 @@ function checkQuota() {
       } catch {
         /* ignore */
       }
-      notify(`Quota Claude « ${w.name} » à ${Math.round(w.percent)} %`, w.resetsAt ? `Réinitialisé à ${new Date(w.resetsAt * 1000).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.` : "");
+      const resetTime = w.resetsAt
+        ? new Date(w.resetsAt * 1000).toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" })
+        : "";
+      notify(
+        t("alertsStore.quota.title", { name: w.name, percent: Math.round(w.percent) }),
+        w.resetsAt ? t("alertsStore.quota.body", { time: resetTime }) : "",
+      );
     }
   }
 }
@@ -101,8 +114,8 @@ function checkBudget() {
       /* ignore */
     }
     notify(
-      level === 100 ? `${ws} : budget du mois dépassé` : `${ws} : 80 % du budget du mois`,
-      `$${spent.toFixed(2)} dépensés sur $${budget.toFixed(0)} ce mois-ci.`,
+      level === 100 ? t("alertsStore.budget.exceeded", { workspace: ws }) : t("alertsStore.budget.nearly", { workspace: ws }),
+      t("alertsStore.budget.body", { spent: spent.toFixed(2), budget: budget.toFixed(0) }),
     );
   }
 }
@@ -169,7 +182,7 @@ function checkEvening(d: Date) {
   const parts = Object.entries(day.done).sort((a, b) => b[1] - a[1]);
   const total = parts.reduce((n, [, c]) => n + c, 0);
   notify(
-    total ? `Journée : ${total} travail${total > 1 ? "x" : ""} terminé${total > 1 ? "s" : ""}` : "Journée : aucun travail terminé",
+    total ? t("alertsStore.evening.title", { count: total }) : t("alertsStore.evening.none"),
     parts.map(([w, c]) => `${w} : ${c}`).join(" · "),
   );
 }

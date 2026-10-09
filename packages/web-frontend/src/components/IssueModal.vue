@@ -6,6 +6,7 @@ import { issueView } from "../stores/issues";
 import { settings } from "../stores/settings";
 import { renderMarkdown } from "../lib/markdown";
 import { ago } from "../lib/format";
+import { t } from "../i18n/index";
 
 const el = ref<HTMLElement>();
 const d = computed(() => issueView.data);
@@ -53,7 +54,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="modal" role="dialog" aria-label="Aperçu" tabindex="-1">
+    <div ref="el" class="modal" role="dialog" :aria-label="t('issueModal.dialogLabel')" tabindex="-1">
       <header class="top">
         <div class="title">
           <span class="mono ref">{{ d?.ref ?? "…" }}</span>
@@ -61,17 +62,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <span v-for="l in d?.labels ?? []" :key="l" class="label">{{ l }}</span>
         </div>
         <div class="tools">
-          <div class="seg" role="radiogroup" aria-label="Largeur de lecture">
-            <button title="Center the text" :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">Centré</button>
-            <button title="Use the full width" :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">Pleine largeur</button>
+          <div class="seg" role="radiogroup" :aria-label="t('issueModal.readingWidth')">
+            <button :title="t('issueModal.centeredTitle')" :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">{{ t("issueModal.centered") }}</button>
+            <button :title="t('issueModal.fullWidthTitle')" :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">{{ t("issueModal.fullWidth") }}</button>
           </div>
-          <button title="Open the issue in the browser" v-if="webUrl" class="btn" @click="openUrl(webUrl!)">Ouvrir sur {{ forgeName }} <Icon name="box-arrow-up-right" /></button>
-          <button title="Close the issue (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+          <button :title="t('issueModal.openTitle')" v-if="webUrl" class="btn" @click="openUrl(webUrl!)">{{ t("issueModal.openOn", { forge: forgeName }) }} <Icon name="box-arrow-up-right" /></button>
+          <button :title="t('issueModal.closeTitle')" class="close" :aria-label="t('issueModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
         </div>
       </header>
 
       <div class="scroll" :style="{ fontSize: `${settings.codeFontSize + 2.5}px` }" @click="onClick" @auxclick="onClick">
-        <div v-if="issueView.loading" class="empty">Chargement…</div>
+        <div v-if="issueView.loading" class="empty">{{ t("issueModal.loading") }}</div>
         <div v-else-if="issueView.error" class="empty err">{{ issueView.error }}</div>
         <template v-else-if="d">
           <div class="md-doc head-doc" :class="{ full: settings.mdWidth === 'full' }">
@@ -83,10 +84,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             </p>
           </div>
           <article v-if="body" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" v-html="body"></article>
-          <div v-else class="md-doc muted" :class="{ full: settings.mdWidth === 'full' }">Pas de description.</div>
+          <div v-else class="md-doc muted" :class="{ full: settings.mdWidth === 'full' }">{{ t("issueModal.noDescription") }}</div>
 
           <section v-if="comments.length" class="md-doc comments" :class="{ full: settings.mdWidth === 'full' }">
-            <h2>Commentaires <span class="count">{{ comments.length }}</span></h2>
+            <h2>{{ t("issueModal.comments") }} <span class="count">{{ comments.length }}</span></h2>
             <div v-for="(c, i) in comments" :key="i" class="comment">
               <div class="c-head"><strong>{{ c.author }}</strong><span v-if="c.at" class="muted"> · {{ ago(c.at) }}</span></div>
               <div class="c-body" v-html="c.html"></div>
@@ -94,7 +95,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           </section>
         </template>
       </div>
-      <footer class="foot muted">Échap pour fermer · ⌘+ / ⌘− taille du texte</footer>
+      <footer class="foot muted">{{ t("issueModal.footer") }}</footer>
     </div>
   </div>
 </template>

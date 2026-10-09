@@ -9,6 +9,7 @@ import { settings } from "../stores/settings";
 import { notes } from "../stores/notes";
 import { actionStatus, currentProject } from "../stores/project";
 import { state } from "../stores/session";
+import { t } from "../i18n/index";
 
 const running = computed(() => {
   const ws = state.selectedWorkspaceId;
@@ -18,25 +19,25 @@ const running = computed(() => {
 });
 
 const tabs = computed(() => [
-  { id: "pane" as const, label: "Panneau", badge: 0 },
-  { id: "actions" as const, label: "Actions", badge: running.value },
+  { id: "pane" as const, label: t("rightPanel.tab.pane"), badge: 0 },
+  { id: "actions" as const, label: t("rightPanel.tab.actions"), badge: running.value },
   { id: "git" as const, label: "Git", badge: currentForge.value?.requests.length ?? 0 },
-  { id: "notes" as const, label: "Notes", badge: notes.list.length },
+  { id: "notes" as const, label: t("rightPanel.tab.notes"), badge: notes.list.length },
 ]);
 </script>
 
 <template>
   <aside class="right" :style="{ width: `${settings.rightWidth}px` }">
-    <div class="seg" role="tablist" aria-label="Panneau de droite">
-      <button title="Show this tab"
-        v-for="t in tabs"
-        :key="t.id"
+    <div class="seg" role="tablist" :aria-label="t('rightPanel.label')">
+      <button :title="t('rightPanel.showTab')"
+        v-for="tab in tabs"
+        :key="tab.id"
         role="tab"
-        :aria-selected="settings.rightTab === t.id"
-        :class="{ on: settings.rightTab === t.id }"
-        @click="settings.rightTab = t.id"
+        :aria-selected="settings.rightTab === tab.id"
+        :class="{ on: settings.rightTab === tab.id }"
+        @click="settings.rightTab = tab.id"
       >
-        {{ t.label }}<span v-if="t.badge" class="badge" :class="{ live: t.id === 'actions' }">{{ t.badge }}</span>
+        {{ tab.label }}<span v-if="tab.badge" class="badge" :class="{ live: tab.id === 'actions' }">{{ tab.badge }}</span>
       </button>
     </div>
     <Inspector v-if="settings.rightTab === 'pane'" />
