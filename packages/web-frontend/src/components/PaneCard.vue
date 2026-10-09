@@ -67,8 +67,8 @@ const subtitle = computed(() => {
         </span>
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
       </template>
-      <PromptMenu :pane-id="pane.pane_id" />
       <span class="tools">
+        <PromptMenu :pane-id="pane.pane_id" />
         <template v-if="docked">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button class="tool" :aria-label="t('paneCard.undock')" :title="t('paneCard.undockTitle')" @mousedown.stop @click="undock(pane.pane_id)">
@@ -137,7 +137,7 @@ const subtitle = computed(() => {
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
 .pct { color: var(--text-2); }
-.tools { display: flex; align-items: center; gap: 2px; margin-left: 6px; opacity: 0.55; transition: opacity 0.15s; }
+.tools { display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
 .pane:hover .tools, .pane.selected .tools { opacity: 1; }
 .tool {
   width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
