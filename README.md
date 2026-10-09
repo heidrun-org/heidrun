@@ -1,83 +1,83 @@
 # Herdr Desk
 
-Interface graphique macOS pour [Herdr](https://herdr.dev) : les agents et les terminaux de ta session Herdr, dans une fenêtre de travail.
+A macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of your Herdr session, in one work window.
 
-- **Sidebar** : workspaces, panneaux, puis la file « À traiter » (agents bloqués ou terminés) en bas, pour ne pas décaler la liste.
-- **Vrais terminaux** : chaque panneau est affiché avec `herdr terminal attach`, donc le rendu est identique à Herdr (TUI de Claude Code, Codex, couleurs…).
-- **Barre de saisie** : une consigne pour un agent, ou une commande pour un terminal.
-- **Inspecteur** : Autoriser / Refuser, contexte de l’agent, « Demander à un agent de corriger », surveillance de motifs.
-- **Status bar** : quotas Claude (5 h, semaine) et Codex.
-- **Palette ⌘K** pour toutes les actions.
-- Police du terminal au choix (Geist Mono, SF Mono, JetBrains Mono, Fira Code, Menlo, Monaco), réglable dans le bouton « A » de la barre du haut.
+- **Sidebar**: workspaces, panes, then the "To handle" queue (blocked or finished agents) at the bottom, so the list does not shift.
+- **Real terminals**: each pane is displayed with `herdr terminal attach`, so the rendering is identical to Herdr (Claude Code TUI, Codex, colors…).
+- **Input bar**: a prompt for an agent, or a command for a terminal.
+- **Inspector**: Allow / Deny, agent context, "Ask an agent to fix", pattern watching.
+- **Status bar**: Claude quotas (5 h, week) and Codex.
+- **⌘K palette** for all actions.
+- Terminal font of your choice (Geist Mono, SF Mono, JetBrains Mono, Fira Code, Menlo, Monaco), set with the "A" button in the top bar.
 
-## Raccourcis
+## Shortcuts
 
-Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec un filtre.
+In the app: **⌘/** (or the **?** button at the top) shows this list, with a filter.
 
 <!-- shortcuts:start -->
-<!-- Généré depuis packages/web-frontend/src/lib/shortcuts.json : pnpm docs:shortcuts -->
+<!-- Generated from packages/web-frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
 
-| Raccourci | Action |
+| Shortcut | Action |
 | --- | --- |
-| **Fenêtres** | |
-| ⌘K | Palette de commandes |
-| ⌘/ | Cette liste des raccourcis |
-| ⌘P | Ouvrir un fichier du projet (recherche par nom) |
-| ⇧⌘F | Chercher dans la sortie de tous les terminaux |
-| ⇧⌘H | Historique : travaux des agents, temps et coût par projet, export CSV |
-| ⇧⌘P | Épingler le texte sélectionné dans une note |
-| Échap | Fermer la fenêtre ouverte |
-| **Terminaux et agents** | |
-| ⌘T | Nouveau terminal (nouvel onglet) |
-| ⇧⌘T | Nouvel agent (Claude, Codex, agents du projet) |
-| ⌘D / ⇧⌘D | Diviser le panneau à droite / en bas |
-| ⌘W ⌘W | Fermer le panneau sélectionné (deux fois, pour éviter les accidents) |
+| **Windows** | |
+| ⌘K | Command palette |
+| ⌘/ | This list of shortcuts |
+| ⌘P | Open a project file (search by name) |
+| ⇧⌘F | Search the output of all terminals |
+| ⇧⌘H | History: agent jobs, time and cost per project, CSV export |
+| ⇧⌘P | Pin the selected text in a note |
+| Échap | Close the open window |
+| **Terminals and agents** | |
+| ⌘T | New terminal (new tab) |
+| ⇧⌘T | New agent (Claude, Codex, project agents) |
+| ⌘D / ⇧⌘D | Split the pane to the right / to the bottom |
+| ⌘W ⌘W | Close the selected pane (twice, to avoid accidents) |
 | **Navigation** | |
-| ⌥⌘← / ⌥⌘→ | Onglet précédent / suivant |
-| ⌥⌘↑ / ⌥⌘↓ | Workspace précédent / suivant |
-| ⌘1 … ⌘9 | Aller au workspace n° 1 à 9 (ordre de la barre latérale) |
-| ⇧⌥⌘← / ⇧⌥⌘→ | Déplacer l’onglet à gauche / à droite |
-| ⇧⌥⌘↑ / ⇧⌥⌘↓ | Monter / descendre le workspace |
-| **Saisie** | |
-| ↵ | Envoyer (barre de saisie) |
-| ⇧↵ / ⌥↵ | Nouvelle ligne, dans le terminal comme dans la barre de saisie |
-| ⌘↵ | Lancer (fenêtre Nouvel agent) |
-| ↑ / ↓ puis ↵ | Choisir un résultat (palette, recherche) |
-| **Explorateur et éditeur de fichiers** | |
-| ⇧⌘F | Chercher dans tout le projet (explorateur ouvert) |
-| ⌘S | Enregistrer le fichier |
-| ⌘F / ⌘⌥F | Chercher / remplacer dans le fichier |
-| ⌘D | Sélectionner l’occurrence suivante (curseurs multiples) |
-| ⌘Z / ⇧⌘Z | Annuler / rétablir |
-| ⌘W | Fermer l’onglet (confirmation s’il n’est pas enregistré) |
-| Clic droit | Nouveau fichier ou dossier, renommer / déplacer, Corbeille |
-| **Affichage** | |
-| ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
-| ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police (le code dans les fenêtres Git et Aperçu) |
-| **Souris** | |
-| ⌘-clic | Sur #12 / !34 : aperçu de l’issue ou de la MR ; sur une URL ou un commit : l’ouvrir |
-| ⌘-clic | Sur src/app.ts:42 cité dans un terminal : le fichier à la ligne, dans l’explorateur |
-| Survol | Boutons d’action : ↗ Ouvrir, ⧉ Aperçu, ▷ Lancer, ▷ Exécuter, ▷ Voir <agent> |
-| Molette | Faire défiler l’historique du panneau |
-| ⌥ + molette | Envoyer ↑ / ↓ (dernières commandes ou consignes) |
-| ⌥ + glisser | Sélectionner du texte, même en mode « Souris pour l’app » |
-| Double-clic | Renommer un workspace, un onglet ou un panneau |
-| Glisser-déposer | Réordonner les workspaces et les onglets |
-| ⊞ | Garder un agent à côté, visible quel que soit l’onglet |
-| ▦ | Mosaïque d’une session Claude : ce que fait chaque sous-agent |
-| Double-clic sur une bordure | Revenir à la largeur par défaut |
+| ⌥⌘← / ⌥⌘→ | Previous / next tab |
+| ⌥⌘↑ / ⌥⌘↓ | Previous / next workspace |
+| ⌘1 … ⌘9 | Go to workspace 1 to 9 (sidebar order) |
+| ⇧⌥⌘← / ⇧⌥⌘→ | Move the tab left / right |
+| ⇧⌥⌘↑ / ⇧⌥⌘↓ | Move the workspace up / down |
+| **Input** | |
+| ↵ | Send (input bar) |
+| ⇧↵ / ⌥↵ | New line, in the terminal as in the input bar |
+| ⌘↵ | Launch (New agent window) |
+| ↑ / ↓ puis ↵ | Choose a result (palette, search) then confirm |
+| **File explorer and editor** | |
+| ⇧⌘F | Search the whole project (explorer open) |
+| ⌘S | Save the file |
+| ⌘F / ⌘⌥F | Search / replace in the file |
+| ⌘D | Select the next occurrence (multiple cursors) |
+| ⌘Z / ⇧⌘Z | Undo / redo |
+| ⌘W | Close the tab (confirmation if not saved) |
+| Clic droit | New file or folder, rename / move, Trash |
+| **Display** | |
+| ⌘B / ⌥⌘B | Hide the left sidebar / the right panel |
+| ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font (the code in the Git and Preview windows) |
+| **Mouse** | |
+| ⌘-clic | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
+| ⌘-clic | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |
+| Survol | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View <agent> |
+| Molette | Scroll the pane history |
+| ⌥ + molette | Send ↑ / ↓ (last commands or prompts) |
+| ⌥ + glisser | Select text, even in "Mouse for the app" mode |
+| Double-clic | Rename a workspace, a tab or a pane |
+| Glisser-déposer | Reorder workspaces and tabs |
+| ⊞ | Keep an agent alongside, visible whatever the tab |
+| ▦ | Tiles of a Claude session: what each sub-agent is doing |
+| Double-clic sur une bordure | Return to the default width |
 
 <!-- shortcuts:end -->
 
-**Jauges** : vert jusqu’à 60 %, orange de 60 à 80 %, rouge au-delà (contexte, session 5 h, semaine). Les dernières valeurs connues restent affichées entre deux réponses.
+**Gauges**: green up to 60%, orange from 60 to 80%, red above (context, 5 h session, week). The last known values stay displayed between two replies.
 
-**Molette** : fait défiler l’historique du panneau (remonter dans la conversation d’un agent). **⌥ + molette** envoie ↑/↓ à la place, pour parcourir les dernières commandes ou consignes.
+**Mouse wheel**: scrolls the pane history (go back up in an agent's conversation). **⌥ + wheel** sends ↑/↓ instead, to browse the last commands or prompts.
 
-**Copier du texte** : par défaut, glisser sélectionne et **⌘C** copie (⌘V colle). Dans le menu « A » de la barre du haut, l’option « Souris pour l’app » renvoie la molette et les clics à Herdr et aux agents ; dans ce mode, **⌥ + glisser** sélectionne toujours.
+**Copying text**: by default, dragging selects and **⌘C** copies (⌘V pastes). In the "A" menu of the top bar, the "Mouse for the app" option sends the wheel and the clicks to Herdr and the agents; in this mode, **⌥ + drag** still selects.
 
-**Notes épinglées** : sélectionne du texte dans un terminal, puis « Épingler » (ou ⇧⌘P). La note apparaît dans l’onglet **Notes** du panneau de droite, avec sa provenance ; tu peux la renommer (double-clic), la copier ou l’envoyer à un agent. Le bouton ⤢ (ou un double-clic sur le texte) l’ouvre dans une fenêtre centrale qu’on peut déplacer par son titre, redimensionner par le coin bas-droit et modifier ; sa taille est mémorisée. Les notes restent sur ce Mac, jamais dans le repo : une sortie de terminal peut contenir des secrets.
+**Pinned notes**: select text in a terminal, then "Pin" (or ⇧⌘P). The note appears in the **Notes** tab of the right panel, with its origin; you can rename it (double-click), copy it or send it to an agent. The ⤢ button (or a double-click on the text) opens it in a central window that you can move by its title, resize by the bottom-right corner and edit; its size is remembered. Notes stay on this Mac, never in the repo: a terminal output can contain secrets.
 
-**Actions** : l’onglet **Actions** du panneau de droite liste les commandes du projet (`make dev`, `npm install`, `ngrok http 3000`…). Un clic ouvre un onglet Herdr à leur nom et lance la commande ; le bouton indique « en cours » tant qu’elle tourne, et un second clic ramène à son onglet. Les actions sont enregistrées dans `.herdr-desk.json` à la racine du repo, à versionner avec le code :
+**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.herdr-desk.json` at the root of the repo, to be versioned with the code:
 
 ```json
 {
@@ -90,32 +90,32 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 }
 ```
 
-Les scripts de `package.json`, les cibles du `Makefile`, le `Procfile` et quelques commandes Flutter, Cargo ou Symfony sont proposés en suggestions. Les commandes lancées récemment apparaissent dans **Récentes**, entre les actions et les suggestions. Actions, suggestions et notes se réordonnent par glisser-déposer (l’ordre des actions est écrit dans `.herdr-desk.json`, celui des suggestions et l’historique restent sur ce Mac).
+The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.herdr-desk.json`; the order of the suggestions and the history stay on this Mac).
 
-**Références colorées** : dans les terminaux, les issues (`#12`), merge requests et pull requests (`!34`, `MR !34`, `PR #5`, `groupe/app#7`) et les commits (`abc1234`) sont colorés ; **⌘-clic** sur une issue, une MR ou une PR l’ouvre dans une fenêtre de l’app (description et commentaires rendus en Markdown, Centré / Pleine largeur, ⌘+/− pour la taille, « Ouvrir sur GitLab/GitHub ↗ ») ; au survol, « ↗ Ouvrir » l’ouvre dans le navigateur et « ⧉ Aperçu » dans l’app. Les commits s’ouvrent sur GitLab ou GitHub, d’après le `git remote` du dossier du panneau (les URL s’ouvrent aussi au ⌘-clic). Le texte envoyé par l’agent n’est pas modifié : la couleur est posée par-dessus. Réglages facultatifs dans `.herdr-desk.json` :
+**Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.herdr-desk.json`:
 
 ```json
 "references": {
   "forge": "gitlab",
-  "repo": "https://gitlab.example.com/groupe/app",
+  "repo": "https://gitlab.example.com/group/app",
   "tickets": { "url": "https://acme.atlassian.net/browse/{key}", "prefixes": ["ABC", "OPS"] },
   "enabled": true
 }
 ```
 
-`forge` force GitHub ou GitLab (un hôte inconnu est traité comme un GitLab auto-hébergé), `repo` remplace le remote, `tickets` active les tickets du type `ABC-123` (désactivés sans URL).
+`forge` forces GitHub or GitLab (an unknown host is treated as a self-hosted GitLab), `repo` replaces the remote, `tickets` enables tickets of the `ABC-123` type (disabled without a URL).
 
-**Actions au survol** : dans un terminal, survoler une référence affiche « ↗ Ouvrir », une commande de Claude Code citée par l’agent (`/fin-tache`, `/compact`…) affiche « ▷ Lancer », et un point d’une liste numérotée (« 1. Ouvrir une issue… ») affiche « ▷ Faire le point 1 », qui envoie la consigne à l’agent. Une commande proposée par Claude en mode shell (`! docker builder prune -af && …`) affiche « ▷ Exécuter » : elle est remise sur une seule ligne si elle s’étale sur plusieurs (retour à la ligne, `\`, `&&`, `|`), puis envoyée dans la zone de saisie de Claude avec Entrée. Ça marche aussi pour une commande citée dans une phrase (« Ensuite, lance ! scripts/verifier.sh. »), si elle commence par un chemin ou un outil connu (`git`, `npm`, `docker`…). ⌘-clic sur le texte fait la même chose. Seules les commandes qui existent vraiment sont proposées (intégrées, `~/.claude/commands`, `.claude/commands` du projet, skills et plugins), jamais un chemin comme `/tmp`.
+**Hover actions**: in a terminal, hovering a reference shows "↗ Open"; a Claude Code command quoted by the agent (`/finish-task`, `/compact`…) shows "▷ Launch"; and an item of a numbered list ("1. Open an issue…") shows "▷ Do item 1", which sends the instruction to the agent. A command proposed by Claude in shell mode (`! docker builder prune -af && …`) shows "▷ Run": it is put back on a single line if it spans several (line break, `\`, `&&`, `|`), then sent into the Claude input area with Enter. It also works for a command quoted in a sentence ("Then run ! scripts/check.sh."), if it starts with a path or a known tool (`git`, `npm`, `docker`…). ⌘-click on the text does the same. Only commands that really exist are offered (built-in, `~/.claude/commands`, the project `.claude/commands`, skills and plugins), never a path like `/tmp`.
 
-**Agents de Claude** : la liste affichée sous la zone de saisie (`● main`, `○ jerome-645 …`) est cliquable : « ▷ Voir jerome-645 » envoie à Claude ↓ jusqu’à la ligne puis Entrée, comme si tu y allais avec les flèches. Cliquer sur `main` ramène à la conversation principale.
+**Claude agents**: the list displayed under the input area (`● main`, `○ jerome-645 …`) is clickable: "▷ View jerome-645" sends Claude ↓ down to the line then Enter, as if you went there with the arrow keys. Clicking `main` brings you back to the main conversation.
 
-**Panneau de droite** : en haut, la **Session** du panneau sélectionné (workspace · onglet, état, contexte, coût, Remote Control) ; en dessous, **Tous les agents** : quotas du compte Claude et Codex, partagés par toutes les sessions, et le fil **Activité** (workspace · onglet, puis l’agent ; clic pour y aller).
+**Right panel**: at the top, the **Session** of the selected pane (workspace · tab, state, context, cost, Remote Control); below, **All agents**: quotas of the Claude and Codex account, shared by all sessions, and the **Activity** feed (workspace · tab, then the agent; click to go there).
 
-Les éléments **terminés** (fil Activité, cartes « À traiter » terminées) disparaissent tout seuls après 15 min par défaut ; le délai se règle dans le menu « A » (5 min, 15 min, 1 h, jamais). Les agents bloqués restent affichés.
+**Finished** items (Activity feed, finished "To handle" cards) disappear by themselves after 15 min by default; the delay is set in the "A" menu (5 min, 15 min, 1 h, never). Blocked agents stay displayed.
 
-**Répondre aux menus d'un agent bloqué** : quand Claude (ou Codex) affiche un menu numéroté (« 1. Yes / 2. Yes, and don't ask again… / 3. No »), ses options apparaissent en boutons sur la carte « À traiter » et dans le panneau de droite, avec la commande ou le fichier concerné. Un clic envoie le numéro de l'option. Si le même menu est encore là un instant plus tard, l'app passe par les flèches et Entrée ; elle n'agit jamais sur un nouveau dialogue sans que tu le voies.
+**Answering the menus of a blocked agent**: when Claude (or Codex) displays a numbered menu ("1. Yes / 2. Yes, and don't ask again… / 3. No"), its options appear as buttons on the "To handle" card and in the right panel, with the command or file concerned. One click sends the option number. If the same menu is still there a moment later, the app uses the arrow keys and Enter; it never acts on a new dialog without you seeing it.
 
-**Garde-fous** : avant d'envoyer une commande d'un clic (« ▷ Exécuter » sur un `!`, actions, barre de saisie, palette, réponse « Yes » à un menu d'autorisation), l'app la compare à une liste de motifs dangereux (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` sans `WHERE`, fusion de MR, actions sur la prod…). En cas de correspondance, une fenêtre affiche la commande complète et demande confirmation ; « Annuler » est sélectionné par défaut. Règles du projet dans `.herdr-desk.json` :
+**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, input bar, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.herdr-desk.json`:
 
 ```json
 "guards": {
@@ -124,73 +124,73 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 }
 ```
 
-`block` empêche l'envoi depuis l'app. Si le fichier est illisible, toutes les commandes demandent confirmation.
+`block` prevents sending from the app. If the file is unreadable, all commands ask for confirmation.
 
-**Onglet Git** (panneau de droite) : pour le workspace sélectionné, branche, avance / retard sur le remote, fichiers modifiés, dernier commit, état de la CI de la branche, et la liste des **MR (GitLab) ou PR (GitHub)** ouvertes avec leur état (prête, CI en cours, à approuver, conflit…). Un clic ouvre la MR ; « Demander une revue » l'envoie à l'agent du workspace. L'hébergeur est déduit du remote (`references.forge` pour le forcer). L'app passe par `glab` et `gh` déjà connectés sur le Mac, en lecture seule : aucun jeton n'est stocké. Dans la barre latérale, `↑2` signale des commits pas encore poussés.
+**Git tab** (right panel): for the selected workspace, branch, ahead / behind the remote, modified files, last commit, CI state of the branch, and the list of open **MRs (GitLab) or PRs (GitHub)** with their state (ready, CI running, to approve, conflict…). One click opens the MR; "Ask for a review" sends it to the agent of the workspace. The host is deduced from the remote (`references.forge` to force it). The app uses the `glab` and `gh` already logged in on the Mac, read-only: no token is stored. In the sidebar, `↑2` signals commits not pushed yet.
 
-**Modèles de consignes** : le bouton ☰ de la barre de saisie liste tes modèles (« Revue de la MR », « Note de reprise »…) et ceux du projet. Un clic insère le texte, modifiable avant l'envoi ; « Enregistrer la saisie comme modèle » en crée un, sur ce Mac ou dans le projet. Ils sont aussi dans la palette ⌘K (section Consignes). Variables remplacées à l'insertion : `{workspace}`, `{onglet}`, `{agent}`, `{branche}`, `{selection}` (texte sélectionné dans un terminal), `{presse-papiers}`. Modèles du projet dans `.herdr-desk.json` :
+**Prompt templates**: the ☰ button of the input bar lists your templates ("MR review", "Handover note"…) and those of the project. One click inserts the text, which you can edit before sending; "Save input as template" creates one, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.herdr-desk.json`:
 
 ```json
-"prompts": [{ "id": "revue", "label": "Revue de la MR", "text": "Fais la revue de la MR de {branche}" }]
+"prompts": [{ "id": "review", "label": "MR review", "text": "Review the MR of {branch}" }]
 ```
 
-**Nouvel agent** (⇧⌘T, bouton dans la barre d'onglets, palette ⌘K) : choisis Claude Code ou Codex, un agent du projet (`.claude/agents/*.md`, avec sa description et son modèle) ou de `~/.claude/agents`, ou un agent libre ; un modèle (`opus`, `sonnet`…) ; une consigne de départ, éventuellement tirée d'un modèle. L'app crée un onglet au nom de l'agent, lance `claude --agent … --model …` et envoie la consigne dès que l'agent est prêt (si Claude demande d'abord de faire confiance au dossier, elle attend ta réponse). Si la consigne n'a pas pu partir, elle est remise dans la barre de saisie.
+**New agent** (⇧⌘T, button in the tab bar, ⌘K palette): choose Claude Code or Codex, a project agent (`.claude/agents/*.md`, with its description and model) or one from `~/.claude/agents`, or a free agent; a model (`opus`, `sonnet`…); a starting prompt, possibly taken from a template. The app creates a tab named after the agent, runs `claude --agent … --model …` and sends the prompt as soon as the agent is ready (if Claude first asks to trust the folder, it waits for your answer). If the prompt could not be sent, it is put back in the input bar.
 
-**Recherche globale** (⇧⌘F) : cherche dans ce que tous les terminaux ont affiché (les 3 000 dernières lignes de chaque panneau), sans tenir compte des majuscules ni des accents. Résultats groupés par workspace · onglet, le plus récent d'abord, avec la ligne d'avant et d'après. Filtres : ce workspace, agents seulement, expression régulière (`.*`). ↵ ou un clic ouvre le panneau et sélectionne le texte s'il est encore à l'écran.
+**Global search** (⇧⌘F): searches what all terminals have displayed (the last 3,000 lines of each pane), ignoring case and accents. Results are grouped by workspace · tab, most recent first, with the line before and after. Filters: this workspace, agents only, regular expression (`.*`). ↵ or a click opens the pane and selects the text if it is still on screen.
 
-**Ouvrir à côté** : le bouton ⊞ dans l'en-tête d'un panneau, sur une carte « À traiter » ou dans la palette ⌘K garde l'agent dans une colonne à droite de l'onglet en cours, quel que soit son workspace : le premier divise l'écran en deux, les suivants s'empilent dans la colonne (4 au plus). Chaque case est un vrai terminal : un clic lui donne le clavier (et en fait le destinataire de la barre de saisie), ↗ ouvre son onglet, × le retire de la colonne sans arrêter l'agent. La colonne se redimensionne par sa bordure et est mémorisée ; un agent de l'onglet affiché n'y apparaît pas (il est déjà dans la grille).
+**Open alongside**: the ⊞ button in a pane header, on a "To handle" card or in the ⌘K palette keeps the agent in a column to the right of the current tab, whatever its workspace: the first one splits the screen in two, the following ones stack in the column (4 at most). Each cell is a real terminal: a click gives it the keyboard (and makes it the recipient of the input bar), ↗ opens its tab, × removes it from the column without stopping the agent. The column is resized by its border and is remembered; an agent of the displayed tab does not appear in it (it is already in the grid).
 
-**Écrire à un sous-agent** : dans le menu destinataire de la barre de saisie, les agents de tous les workspaces sont listés et, sous chaque session Claude qui en a, ses sous-agents (`↳ jerome-645`). L'app bascule la session sur ce sous-agent avec les flèches, vérifie qu'il est bien affiché, envoie la consigne, puis revient sur `main` (case « Puis revenir sur main »). Si la liste n'est pas trouvée ou si l'agent attend une décision, rien n'est tapé.
+**Writing to a sub-agent**: in the recipient menu of the input bar, the agents of all workspaces are listed and, under each Claude session that has some, its sub-agents (`↳ jerome-645`). The app switches the session to this sub-agent with the arrow keys, checks that it is really displayed, sends the prompt, then goes back to `main` (box "Then go back to main"). If the list is not found or if the agent is waiting for a decision, nothing is typed.
 
-**Historique** (⇧⌘H, ou la ligne « Aujourd'hui … Historique ↗ » du panneau de droite) : chaque travail d'un agent apparaît en direct pendant qu'il tourne (« en cours »), puis est enregistré à la fin sur ce Mac (`~/.config/herdr-desk/history.jsonl`, jamais dans un repo) avec son workspace, son onglet, la branche, la consigne qui l'a lancé, son temps actif (sans les attentes de ta décision) et son coût. En haut, des cartes de synthèse suivent les filtres : coût des agents (avec jour, 7 j, 30 j et l'écart avec la période d'avant), temps des agents, temps homme estimé (1 h d'agent ≈ 4 h de développeur par défaut), ton temps estimé (consignes écrites, décisions), l'effet de levier entre les deux, le temps où les agents t'attendaient et le taux de reprise (travaux suivis dans l'heure d'une consigne de correction). Les hypothèses se règlent avec « ⚙ Hypothèses ». À gauche : totaux par workspace ou **par fonctionnalité** (branche, avec l'issue ou la MR tirée de son nom), **heures productives** (travail et attente par heure de la journée), et **budgets du mois** par workspace (notification à 80 % puis à 100 %). La fenêtre s'ouvre sur aujourd'hui et filtre par période (aujourd'hui à 1 an), workspace, agent ou texte, donne les totaux par workspace et un graphique par jour, et exporte la sélection en CSV (dans Téléchargements, lisible par Excel). Un clic sur un travail ouvre son panneau s'il existe encore.
+**History** (⇧⌘H, or the "Today … History ↗" line of the right panel): each job of an agent appears live while it runs ("running"), then is saved at the end on this Mac (`~/.config/herdr-desk/history.jsonl`, never in a repo) with its workspace, its tab, the branch, the prompt that started it, its active time (without the waits for your decision) and its cost. At the top, summary cards follow the filters: agent cost (with day, 7 d, 30 d and the difference with the previous period), agent time, estimated human time (1 h of agent ≈ 4 h of developer by default), your estimated time (prompts written, decisions), the leverage between the two, the time agents waited for you and the rework rate (jobs followed within the hour by a correction prompt). The assumptions are set with "⚙ Assumptions". On the left: totals per workspace or **per feature** (branch, with the issue or MR taken from its name), **productive hours** (work and waiting per hour of the day), and **monthly budgets** per workspace (notification at 80% then at 100%). The window opens on today and filters by period (today to 1 year), workspace, agent or text, gives totals per workspace and a chart per day, and exports the selection as CSV (in Downloads, readable by Excel). A click on a job opens its pane if it still exists.
 
-**Consommation par workspace** (dans la fenêtre Historique) : coût de chaque workspace sur la fenêtre de 5 h en cours, avec sa part du total, un petit graphique par quart d'heure et, au survol, le détail par agent. L'app relève l'augmentation du coût de chaque session Claude (status line) et la rattache au workspace du panneau ; la part du quota 5 h est une estimation au prorata du coût. Seules les dépenses vues pendant que l'app tourne sont comptées.
+**Consumption per workspace** (in the History window): cost of each workspace over the current 5 h window, with its share of the total, a small chart per quarter of an hour and, on hover, the detail per agent. The app records the cost increase of each Claude session (status line) and attaches it to the workspace of the pane; the share of the 5 h quota is an estimate proportional to the cost. Only spending seen while the app is running is counted.
 
-**Mosaïque** (▦ dans l'en-tête d'un panneau Claude) : une case par agent de la session (main et sous-agents), avec ses dernières lignes, lues dans les journaux de Claude (`~/.claude/projects/…`), donc sans toucher au terminal. Rafraîchie toutes les 2 à 3 s ; un point vert signale un agent actif. Un clic sur une case affiche cet agent dans le terminal.
+**Tiles** (▦ in the header of a Claude pane): one cell per agent of the session (main and sub-agents), with its last lines, read from the Claude logs (`~/.claude/projects/…`), so without touching the terminal. Refreshed every 2 to 3 s; a green dot marks an active agent. A click on a cell displays this agent in the terminal.
 
-**Fichiers du projet** (icône dossier à côté de « Dossier » dans le panneau, ou ⌘P) : l'arborescence du projet du panneau, comme dans VS Code, avec l'état git de chaque fichier (modifié, nouveau, supprimé ; un point sur les dossiers qui en contiennent) et les fichiers de `.gitignore` masqués (« Fichiers ignorés » pour les voir). ⌘P cherche un fichier par son nom (« comp/term » trouve `src/components/TerminalView.vue`). Le fichier s'affiche coloré, Markdown rendu ou en code, images en aperçu, avec onglets (⌘W pour en fermer un), fil d'Ariane, « Chemin » (⌥ : chemin absolu), Finder, VS Code et « → Agent » qui met `@chemin` dans la barre de saisie. Sélectionne des lignes : « Explique » ou « Corrige ces lignes » prépare la consigne. Dans les terminaux, `src/app.ts:42` cité par un agent ouvre le fichier à la ligne (survol ou ⌘-clic).
+**Project files** (folder icon next to "Folder" in the panel, or ⌘P): the tree of the project of the pane, as in VS Code, with the git state of each file (modified, new, deleted; a dot on folders that contain some) and the files of `.gitignore` hidden ("Ignored files" to see them). ⌘P searches a file by its name ("comp/term" finds `src/components/TerminalView.vue`). The file is displayed colored, Markdown rendered or as code, images as a preview, with tabs (⌘W to close one), breadcrumb, "Path" (⌥: absolute path), Finder, VS Code and "→ Agent", which puts `@path` in the input bar. Select lines: "Explain" or "Fix these lines" prepares the prompt. In the terminals, `src/app.ts:42` quoted by an agent opens the file at the line (hover or ⌘-click).
 
-**Modifier un fichier** : « ✎ Modifier » dans l'explorateur ouvre un vrai éditeur (CodeMirror : coloration, curseurs multiples, ⌘F / ⌘⌥F chercher-remplacer, ⌘D occurrence suivante, ⌘Z). **⌘S** enregistre ; un point dans l'onglet signale une modification non enregistrée, et fermer l'onglet ou la fenêtre demande confirmation. « Diff » montre tes changements, « Diff avant ⌘S » les montre avant chaque enregistrement. Si un agent modifie le fichier pendant que tu l'édites, rien n'est écrasé : sans changement de ta part le fichier est rechargé, sinon un bandeau propose de voir la différence, de recharger ou d'écraser avec ta version. L'enregistrement est atomique, garde les droits du fichier, et refuse `.git`, les liens symboliques et les fichiers qui ne sont pas en UTF-8.
+**Editing a file**: "✎ Edit" in the explorer opens a real editor (CodeMirror: highlighting, multiple cursors, ⌘F / ⌘⌥F search-replace, ⌘D next occurrence, ⌘Z). **⌘S** saves; a dot in the tab signals an unsaved change, and closing the tab or the window asks for confirmation. "Diff" shows your changes, "Diff before ⌘S" shows them before each save. If an agent modifies the file while you edit it, nothing is overwritten: if you made no change the file is reloaded, otherwise a banner offers to see the difference, to reload or to overwrite with your version. Saving is atomic, keeps the permissions of the file, and refuses `.git`, symbolic links and files that are not UTF-8.
 
-**Chercher dans le projet** (onglet « Rechercher » de l'explorateur, ou ⇧⌘F quand il est ouvert) : texte ou expression régulière (`.*`), casse respectée ou non (`Aa`), dans tous les fichiers du projet hors `.gitignore` ; résultats groupés par fichier, un clic ouvre le fichier à la ligne. **Créer, renommer, supprimer** : « + Fichier », « + Dossier », ou clic droit sur un fichier ou un dossier (nouveau fichier ici, renommer / déplacer en changeant le chemin, copier le chemin, mettre à la Corbeille — jamais de suppression définitive). **Diff git** : les changements du fichier ouvert depuis le dernier commit.
+**Searching the project** ("Search" tab of the explorer, or ⇧⌘F when it is open): text or regular expression (`.*`), case sensitive or not (`Aa`), in all the files of the project except `.gitignore`; results grouped by file, a click opens the file at the line. **Create, rename, delete**: "+ File", "+ Folder", or right-click on a file or folder (new file here, rename / move by changing the path, copy the path, move to the Trash — never a permanent deletion). **Git diff**: the changes of the open file since the last commit.
 
-**Accès mobile (iPhone, iPad)** — bouton téléphone en haut, ou ⌘K « Accès mobile » : depuis le téléphone, voir ce qui est à traiter, répondre aux menus d'autorisation, envoyer une consigne, refuser ou interrompre, lire la fin de la sortie d'un agent. Désactivé par défaut.
+**Mobile access (iPhone, iPad)** — phone button at the top, or ⌘K "Mobile access": from the phone, see what needs handling, answer permission menus, send a prompt, deny or interrupt, read the end of an agent's output. Disabled by default.
 
-1. Installe **Tailscale** sur le Mac et sur l'iPhone / l'iPad (même compte : Google, Apple, Microsoft ou GitHub).
-2. Active l'accès mobile dans Herdr Desk (macOS peut demander d'autoriser les connexions entrantes : Autoriser).
-3. Scanne le QR code avec l'appareil photo, ouvre le lien dans Safari, puis Partager → « Sur l'écran d'accueil ».
+1. Install **Tailscale** on the Mac and on the iPhone / iPad (same account: Google, Apple, Microsoft or GitHub).
+2. Enable mobile access in Herdr Desk (macOS may ask to allow incoming connections: Allow).
+3. Scan the QR code with the camera, open the link in Safari, then Share → "Add to Home Screen".
 
-Sécurité : le serveur n'écoute que sur l'adresse Tailscale du Mac (100.x), jamais sur Internet ni sur le Wi-Fi ; chaque requête porte la clé d'appairage (64 caractères, dans `~/.config/herdr-desk/mobile.json`, lisible par toi seul) ; « Révoquer » change la clé et coupe immédiatement les appareils appairés. Seules cinq actions existent (état, lecture, réponse à un menu, consigne, refuser / interrompre) ; une commande dangereuse est montrée en entier sur le téléphone et demande une confirmation, et ce que le projet bloque reste bloqué. Herdr Desk doit être ouvert sur le Mac.
+Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/herdr-desk/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Herdr Desk must be open on the Mac.
 
-**Diffuser une consigne** : « Plusieurs agents… » dans le menu destinataire de la barre de saisie. Coche les agents (raccourcis : tous ceux du workspace, tous les Claude), écris, « Diffuser » : un récapitulatif liste les destinataires avant l'envoi. Les agents bloqués sont ignorés et signalés ; les variables des modèles sont remplies pour chaque agent ; une commande `!` passe par les garde-fous de chaque projet.
+**Broadcasting a prompt**: "Several agents…" in the recipient menu of the input bar. Tick the agents (shortcuts: all those of the workspace, all the Claude ones), write, "Broadcast": a summary lists the recipients before sending. Blocked agents are skipped and reported; the template variables are filled for each agent; a `!` command goes through the safeguards of each project.
 
-**Notifications** (menu « A ») : rappel quand un agent reste bloqué (5 min par défaut), contexte d'un agent au-delà de 80 %, quota Claude au-delà de 80 % puis 95 %, résumé de la journée à l'heure choisie (travaux terminés par workspace), heures calmes sans notification (par ex. 20:00 → 08:00, alertes reportées après).
+**Notifications** ("A" menu): reminder when an agent stays blocked (5 min by default), agent context above 80%, Claude quota above 80% then 95%, summary of the day at the chosen time (finished jobs per workspace), quiet hours without notification (e.g. 20:00 → 08:00, alerts postponed until after).
 
-**Questions de l'agent** : quand un agent termine sa réponse par une question (« Veux-tu que je m'attaque à #44 ? »), l'app la repère, même si l'onglet n'est pas affiché. Une carte violette **QUESTION** apparaît dans « À traiter », avec la question, et une notification « … te pose une question » remplace « a terminé ». La carte reste jusqu'à ta réponse ou jusqu'à ce que tu la fermes. Les agents **bloqués** (menu d'autorisation) sont en rouge.
+**Agent questions**: when an agent ends its reply with a question ("Do you want me to tackle #44?"), the app spots it, even if the tab is not displayed. A purple **QUESTION** card appears in "To handle", with the question, and a notification "… asks you a question" replaces "finished". The card stays until you answer or until you close it. **Blocked** agents (permission menu) are in red.
 
-Une carte « À traiter » fermée avec × reste fermée, même après un redémarrage de l’app, jusqu’au prochain changement d’état de l’agent.
+A "To handle" card closed with × stays closed, even after an app restart, until the next state change of the agent.
 
-**Redimensionner** : tire la bordure de la barre de gauche ou du panneau de droite ; la zone centrale s’ajuste. Double-clic sur la bordure pour revenir à la largeur par défaut. Les largeurs sont mémorisées.
+**Resizing**: drag the border of the left bar or of the right panel; the central area adjusts. Double-click on the border to return to the default width. The widths are remembered.
 
-**Renommer** : double-clic sur un workspace, un onglet, ou un panneau (dans la liste « Panneaux » ou dans son en-tête). Pour un panneau, un nom vide rend le nom automatique (agent ou titre du terminal). Les noms sont enregistrés dans Herdr.
+**Renaming**: double-click on a workspace, a tab, or a pane (in the "Panes" list or in its header). For a pane, an empty name makes the name automatic (agent or terminal title). The names are saved in Herdr.
 
-**Réorganiser** : glisser-déposer les workspaces dans la barre de gauche et les onglets dans la barre d’onglets. L’ordre est enregistré dans Herdr.
+**Reordering**: drag and drop the workspaces in the left bar and the tabs in the tab bar. The order is saved in Herdr.
 
-Fermer un onglet : le × qui apparaît au survol de l’onglet (deux clics). Fermer un panneau : le × de son en-tête, ou ⌘W deux fois.
-- Notifications macOS quand un agent passe en bloqué ou termine.
+Closing a tab: the × that appears when hovering the tab (two clicks). Closing a pane: the × of its header, or ⌘W twice.
+- macOS notifications when an agent becomes blocked or finishes.
 
-Tout passe par le serveur Herdr : fermer l’app n’arrête rien, et tu retrouves les mêmes agents depuis l’iPhone en SSH.
+Everything goes through the Herdr server: closing the app stops nothing, and you find the same agents again from the iPhone over SSH.
 
-## Prérequis
+## Prerequisites
 
 ```sh
-herdr --version          # Herdr 0.9 ou plus
+herdr --version          # Herdr 0.9 or later
 rustc --version          # Rust stable (rustup)
-node --version           # Node 20 ou plus
-xcode-select --install   # outils de compilation Apple, si besoin
+node --version           # Node 20 or later
+xcode-select --install   # Apple build tools, if needed
 ```
 
-## Lancer en développement
+## Run in development
 
 ```sh
 cd ~/Projects/HerdrDesk
@@ -198,75 +198,75 @@ pnpm install
 pnpm dev
 ```
 
-Pas besoin d’ouvrir `herdr` dans un terminal : si le serveur ne tourne pas, l’app le démarre en arrière-plan (option « Démarrer Herdr automatiquement »). Il reste actif quand tu fermes l’app, jusqu’à `herdr server stop` ou au redémarrage du Mac.
+There is no need to open `herdr` in a terminal: if the server is not running, the app starts it in the background (option "Start Herdr automatically"). It stays active when you close the app, until `herdr server stop` or until the Mac restarts.
 
-## Construire l’app
+## Build the app
 
 ```sh
 pnpm build
 open packages/desktop-tauri/target/release/bundle/macos/
 ```
 
-Glisse `Herdr Desk.app` dans `/Applications`.
+Drag `Herdr Desk.app` into `/Applications`.
 
-## Contexte et quotas
+## Context and quotas
 
 ### Claude Code
 
-Claude Code transmet le contexte et les quotas (5 h, semaine) à sa status line. Herdr Desk s’y branche : clique sur **« Activer le suivi Claude »** (panneau de droite d’un agent Claude, ou barre du bas). L’app :
+Claude Code passes the context and the quotas (5 h, week) to its status line. Herdr Desk hooks into it: click **"Enable Claude tracking"** (right panel of a Claude agent, or bottom bar). The app:
 
-- copie `scripts/claude-statusline.sh` dans `~/.config/herdr-desk/` ;
-- garde ta status line actuelle dans `~/.config/herdr-desk/claude-statusline-next`, qui continue d’être affichée telle quelle dans le terminal ;
-- pointe `statusLine.command` de `~/.claude/settings.json` vers le script (sauvegarde : `settings.json.herdr-desk-backup`).
+- copies `scripts/claude-statusline.sh` into `~/.config/herdr-desk/`;
+- keeps your current status line in `~/.config/herdr-desk/claude-statusline-next`, which continues to be displayed as is in the terminal;
+- points `statusLine.command` of `~/.claude/settings.json` to the script (backup: `settings.json.herdr-desk-backup`).
 
-Claude Code recharge ses réglages tout seul ; les chiffres arrivent à la réponse suivante. Pour gagner une ligne dans le terminal, décoche **« Afficher aussi la status line dans le terminal »** : le script n’affiche plus rien, mais continue d’envoyer les chiffres à l’app. « Désactiver le suivi Claude » rétablit ta status line d’origine. Il faut `jq` (inclus dans macOS 15, sinon `brew install jq`). Les quotas n’existent qu’avec un abonnement Pro ou Max.
+Claude Code reloads its settings by itself; the figures arrive at the next reply. To gain a line in the terminal, untick **"Also show the status line in the terminal"**: the script no longer prints anything, but keeps sending the figures to the app. "Disable Claude tracking" restores your original status line. `jq` is required (included in macOS 15, otherwise `brew install jq`). Quotas exist only with a Pro or Max subscription.
 
 ### Remote Control (Claude Code)
 
-Dans le panneau de droite d’un agent Claude, le bloc **Remote Control** indique si la session est connectée (badge **RC** dans la liste des panneaux) et propose **Activer Remote Control**, qui envoie `/remote-control` à l’agent. Une fois connecté, **Afficher l’URL et le QR code** ouvre une fenêtre avec le lien de la session (copier, ouvrir dans le navigateur) et un QR code à scanner avec le téléphone, généré localement par l’app. La case « Activer pour toutes les nouvelles sessions Claude » écrit `remoteControlAtStartup: true` dans `~/.claude/settings.json`. L’état est lu dans l’indicateur `/rc active` que Claude Code affiche sous la zone de saisie ; il n’apparaît pas si le terminal est trop étroit. Abonnement Pro, Max, Team ou Enterprise requis.
+In the right panel of a Claude agent, the **Remote Control** block shows whether the session is connected (**RC** badge in the pane list) and offers **Enable Remote Control**, which sends `/remote-control` to the agent. Once connected, **Show the URL and QR code** opens a window with the link of the session (copy, open in the browser) and a QR code to scan with the phone, generated locally by the app. The box "Enable for all new Claude sessions" writes `remoteControlAtStartup: true` in `~/.claude/settings.json`. The state is read from the `/rc active` indicator that Claude Code displays under the input area; it does not appear if the terminal is too narrow. Pro, Max, Team or Enterprise subscription required.
 
 ### Codex
 
-Rien à configurer : Herdr Desk lit les journaux `~/.codex/sessions/**/rollout-*.jsonl` (dernier événement `token_count`). Pour relier un journal au bon panneau, installe l’intégration Herdr :
+Nothing to configure: Herdr Desk reads the logs `~/.codex/sessions/**/rollout-*.jsonl` (last `token_count` event). To link a log to the right pane, install the Herdr integration:
 
 ```sh
 herdr integration install codex
 ```
 
-Ce format n’est pas une API officielle d’OpenAI : si une mise à jour de Codex le change, la jauge Codex disparaît simplement, sans casser l’app.
+This format is not an official OpenAI API: if a Codex update changes it, the Codex gauge simply disappears, without breaking the app.
 
 ## Architecture
 
 ```
 packages/desktop-tauri/src/
-  herdr.rs   client du socket ~/.config/herdr/herdr.sock (JSON ligne par ligne),
-             abonnements aux événements, reconnexion automatique
-  pty.rs     pseudo-terminaux qui exécutent `herdr terminal attach <terminal_id>`
-  usage.rs   lecture des journaux Codex
-  lib.rs     commandes Tauri exposées au front
+  herdr.rs   client of the socket ~/.config/herdr/herdr.sock (line-by-line JSON),
+             event subscriptions, automatic reconnection
+  pty.rs     pseudo-terminals that run `herdr terminal attach <terminal_id>`
+  usage.rs   reading of the Codex logs
+  lib.rs     Tauri commands exposed to the front end
 packages/web-frontend/src/
-  stores/session.ts   état : snapshot Herdr, sélection, notifications, actions
+  stores/session.ts   state: Herdr snapshot, selection, notifications, actions
   components/         TopBar, Sidebar, TabBar, PaneGrid, PaneCard, TerminalView,
                       InputBar, Inspector, StatusBar, CommandPalette
 ```
 
-Le front charge `session.snapshot` au démarrage, puis traite chaque événement Herdr comme un signal de rafraîchissement (c’est la méthode recommandée par la doc de l’API). Un rafraîchissement de secours a lieu toutes les 5 s.
+The front end loads `session.snapshot` at startup, then treats each Herdr event as a refresh signal (this is the method recommended by the API docs). A fallback refresh happens every 5 s.
 
-Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
+For a named session, start the app with `HERDR_SESSION=<name>`.
 
-## Pistes
+## Next steps
 
-Les 14 premières issues sont faites ; #15 à #17 (explorateur, édition, recherche et gestion des fichiers) aussi. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
+The first 14 issues are done; #15 to #17 (explorer, editing, search and file management) too. For the following ones: each is detailed in `docs/issues/` (context, expected behavior, technical leads, acceptance criteria) and becomes a GitLab issue with:
 
 ```sh
-sh scripts/create-gitlab-issues.sh --dry-run          # aperçu
-sh scripts/create-gitlab-issues.sh --create-project   # crée didheclick/herdr-desk, pousse, ouvre les issues
+sh scripts/create-gitlab-issues.sh --dry-run          # preview
+sh scripts/create-gitlab-issues.sh --create-project   # creates didheclick/herdr-desk, pushes, opens the issues
 ```
 
-Modèles d'issues pour la suite : `.gitlab/issue_templates/` (Fonctionnalité, Bug).
+Issue templates for what comes next: `.gitlab/issue_templates/` (Feature, Bug).
 
-## Limites connues
+## Known limitations
 
-- **Un seul serveur** : la machine locale. La connexion à un VPS viendra ensuite.
-- **Boutons d’approbation** : « Toujours » envoie la touche `2` du menu de Claude Code. Pour les autres agents, seuls Autoriser (Entrée) et Refuser (Échap) sont proposés.
-- **Redimensionnement** : afficher un panneau dans l’app adapte sa taille à la fenêtre. Si le même panneau est ouvert dans le TUI Herdr, l’affichage peut s’y ajuster aussi.
+- **One server only**: the local machine. Connecting to a VPS will come later.
+- **Approval buttons**: "Always" sends the `2` key of the Claude Code menu. For other agents, only Allow (Enter) and Deny (Esc) are offered.
+- **Resizing**: displaying a pane in the app adapts its size to the window. If the same pane is open in the Herdr TUI, the display there may adjust too.

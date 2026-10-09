@@ -9,9 +9,9 @@ const END = "<!-- shortcuts:end -->";
 
 const table = [
   START,
-  "<!-- Généré depuis packages/web-frontend/src/lib/shortcuts.json : pnpm docs:shortcuts -->",
+  "<!-- Generated from packages/web-frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->",
   "",
-  "| Raccourci | Action |",
+  "| Shortcut | Action |",
   "| --- | --- |",
   ...groups.flatMap((g) => [`| **${g.group}** | |`, ...g.items.map((i) => `| ${i.keys} | ${i.action.replace(/\|/g, "\\|")} |`)]),
   "",
@@ -23,8 +23,8 @@ const readme = readFileSync(path, "utf8");
 const a = readme.indexOf(START);
 const b = readme.indexOf(END);
 if (a === -1 || b === -1) {
-  console.error(`Marqueurs ${START} / ${END} absents de README.md`);
+  console.error(`Markers ${START} / ${END} missing from README.md`);
   process.exit(1);
 }
 writeFileSync(path, readme.slice(0, a) + table + readme.slice(b + END.length));
-console.log("README.md : tableau des raccourcis à jour");
+console.log("README.md: shortcuts table up to date");
