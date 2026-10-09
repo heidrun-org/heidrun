@@ -1,4 +1,8 @@
-# Project memory
+# Herdr Desk
+
+Herdr Desk is a macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of a Herdr session, in one work window. This file gives the rules for working on this repository. The file `README.md` describes the application itself.
+
+## Project memory
 
 This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
