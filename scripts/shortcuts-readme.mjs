@@ -1,11 +1,11 @@
-// Writes the shortcut table of README.md from packages/web-frontend/src/lib/shortcuts.json (also shown by ⌘/ in the app)
+// Writes the shortcut table of packages/website_public/docs/documentation/shortcuts.md from packages/web-frontend/src/lib/shortcuts.json (also shown by ⌘/ in the app)
 // and the English texts of packages/web-frontend/src/i18n/locales/en/shortcuts.json.
 // pnpm docs:shortcuts
 import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
 const groups = JSON.parse(readFileSync(new URL("packages/web-frontend/src/lib/shortcuts.json", root), "utf8"));
-// shortcuts.json holds translation keys; the README is in English.
+// shortcuts.json holds translation keys; the documentation is in English.
 const english = JSON.parse(readFileSync(new URL("packages/web-frontend/src/i18n/locales/en/shortcuts.json", root), "utf8"));
 const text = (key) => {
   if (english[key] === undefined) {
@@ -35,13 +35,13 @@ const table = [
   END,
 ].join("\n");
 
-const path = new URL("README.md", root);
+const path = new URL("packages/website_public/docs/documentation/shortcuts.md", root);
 const readme = readFileSync(path, "utf8");
 const a = readme.indexOf(START);
 const b = readme.indexOf(END);
 if (a === -1 || b === -1) {
-  console.error(`Markers ${START} / ${END} missing from README.md`);
+  console.error(`Markers ${START} / ${END} missing from shortcuts.md`);
   process.exit(1);
 }
 writeFileSync(path, readme.slice(0, a) + table + readme.slice(b + END.length));
-console.log("README.md: shortcuts table up to date");
+console.log("shortcuts.md: shortcuts table up to date");
