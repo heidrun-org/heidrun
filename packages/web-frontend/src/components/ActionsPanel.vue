@@ -72,7 +72,7 @@ function isRestarting(a: Action) {
     <template v-if="ws && p">
       <div class="head">
         <div class="eyebrow">{{ t("actionsPanel.title", { workspace: workspaceLabel(ws) }) }}</div>
-        <div class="path mono" :title="p.config_path">{{ shortPath(p.root) }}/.herdr-desk.json</div>
+        <div class="path mono" :title="p.config_path">{{ shortPath(p.root) }}/.heidrun.json</div>
       </div>
 
       <div v-if="!p.config.actions.length && !adding" class="empty">

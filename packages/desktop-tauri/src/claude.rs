@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 const SCRIPT: &str = include_str!("../../../scripts/claude-statusline.sh");
 
-fn claude_dir() -> PathBuf {
+pub(crate) fn claude_dir() -> PathBuf {
     if let Ok(d) = std::env::var("CLAUDE_CONFIG_DIR") {
         if !d.is_empty() {
             return PathBuf::from(d);
@@ -21,7 +21,7 @@ fn claude_dir() -> PathBuf {
 }
 
 fn desk_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_default().join(".config").join("herdr-desk")
+    dirs::home_dir().unwrap_or_default().join(".config").join("heidrun")
 }
 
 fn settings_path() -> PathBuf {
@@ -76,7 +76,34 @@ fn current_command(m: &Map<String, Value>) -> Option<String> {
 }
 
 fn is_ours(cmd: &str) -> bool {
-    cmd.contains("herdr-desk/claude-statusline.sh") || cmd.contains("HerdrDesk/scripts/claude-statusline.sh")
+    cmd.contains("heidrun/claude-statusline.sh") || cmd.contains("Heidrun/scripts/claude-statusline.sh")
+}
+
+/// Moves what the former name "Herdr Desk" left in the Claude Code settings: the backup file, and the
+/// status line command that points into the former configuration folder.
+pub fn migrate_legacy() {
+    let legacy_backup = claude_dir().join("settings.json.herdr-desk-backup");
+    let backup = claude_dir().join("settings.json.heidrun-backup");
+    if legacy_backup.exists() && !backup.exists() {
+        let _ = std::fs::rename(legacy_backup, backup);
+    }
+    let Ok(mut m) = read_settings() else { return };
+    let Some(cmd) = current_command(&m) else { return };
+    if !cmd.contains("herdr-desk/claude-statusline.sh") {
+        return;
+    }
+    if let Some(Value::Object(line)) = m.get_mut("statusLine") {
+        line.insert("command".into(), json!(script_path().display().to_string()));
+    }
+    if write_settings(&m).is_ok() {
+        let _ = std::fs::create_dir_all(desk_dir());
+        let _ = std::fs::write(script_path(), SCRIPT);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let _ = std::fs::set_permissions(script_path(), std::fs::Permissions::from_mode(0o755));
+        }
+    }
 }
 
 #[tauri::command]
@@ -125,7 +152,7 @@ pub fn claude_statusline_install() -> Result<StatuslineState, String> {
     }
 
     // Backup once, before the first change.
-    let backup = claude_dir().join("settings.json.herdr-desk-backup");
+    let backup = claude_dir().join("settings.json.heidrun-backup");
     if settings_path().exists() && !backup.exists() {
         let _ = std::fs::copy(settings_path(), &backup);
     }
@@ -150,7 +177,7 @@ pub fn claude_rc_startup() -> Result<Option<bool>, String> {
 #[tauri::command]
 pub fn claude_set_rc_startup(enabled: bool) -> Result<Option<bool>, String> {
     let mut m = read_settings()?;
-    let backup = claude_dir().join("settings.json.herdr-desk-backup");
+    let backup = claude_dir().join("settings.json.heidrun-backup");
     if settings_path().exists() && !backup.exists() {
         let _ = std::fs::copy(settings_path(), &backup);
     }

@@ -1,12 +1,12 @@
 [package]
-name = "herdr-desk"
+name = "heidrun"
 version = "0.1.0"
 description = "Interface graphique pour Herdr"
 license = "MIT"
 edition = "2021"
 
 [lib]
-name = "herdr_desk_lib"
+name = "heidrun_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -1,11 +1,12 @@
-//! Per-project actions, stored in `.herdr-desk.json` at the project root
+//! Per-project actions, stored in `.heidrun.json` at the project root
 //! (versioned with the code), plus commands detected from the usual project files.
 
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const CONFIG_FILE: &str = ".herdr-desk.json";
+const CONFIG_FILE: &str = ".heidrun.json";
+const LEGACY_CONFIG_FILE: &str = ".herdr-desk.json";
 
 #[derive(Serialize)]
 pub struct Detected {
@@ -22,16 +23,25 @@ pub struct Project {
     pub detected: Vec<Detected>,
 }
 
-/// Walks up from `cwd` to the folder holding `.herdr-desk.json` or `.git`.
+/// Walks up from `cwd` to the folder holding `.heidrun.json` or `.git`.
 fn find_root(cwd: &Path) -> PathBuf {
     let mut dir = Some(cwd);
     while let Some(d) = dir {
+        migrate_legacy_config_file(d);
         if d.join(CONFIG_FILE).exists() || d.join(".git").exists() {
             return d.to_path_buf();
         }
         dir = d.parent();
     }
     cwd.to_path_buf()
+}
+
+/// Renames `.herdr-desk.json`, the former name of the project file, to `.heidrun.json`.
+fn migrate_legacy_config_file(dir: &Path) {
+    let legacy = dir.join(LEGACY_CONFIG_FILE);
+    if legacy.exists() && !dir.join(CONFIG_FILE).exists() {
+        let _ = std::fs::rename(legacy, dir.join(CONFIG_FILE));
+    }
 }
 
 fn package_manager(root: &Path) -> &'static str {
@@ -141,7 +151,7 @@ pub struct RepoRefs {
     pub root: String,
     /// `remote.origin.url` (or the first remote), as git stores it.
     pub remote: Option<String>,
-    /// The `references` section of `.herdr-desk.json`, if any.
+    /// The `references` section of `.heidrun.json`, if any.
     pub references: Value,
 }
 

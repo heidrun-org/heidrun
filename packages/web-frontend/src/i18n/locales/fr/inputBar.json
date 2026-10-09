@@ -8,7 +8,7 @@
   "failed_one": "{count} en échec",
   "failed_other": "{count} en échec",
   "writePromptFirst": "Écris d’abord la consigne à enregistrer",
-  "templateAddedToProject": "Modèle ajouté au projet (.herdr-desk.json)",
+  "templateAddedToProject": "Modèle ajouté au projet (.heidrun.json)",
   "templateSaved": "Modèle enregistré",
   "project": "Projet",
   "myTemplates": "Mes modèles",

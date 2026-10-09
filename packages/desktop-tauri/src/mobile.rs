@@ -33,9 +33,9 @@ struct Config {
 }
 
 fn config_path() -> PathBuf {
-    std::env::var("HERDR_DESK_DIR")
+    std::env::var("HEIDRUN_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("herdr-desk"))
+        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
         .join("mobile.json")
 }
 
@@ -82,7 +82,7 @@ fn new_token() -> Result<String, String> {
 /// The Mac's Tailscale address (100.64.0.0/10). Never another interface.
 fn tailscale_ip() -> Option<Ipv4Addr> {
     // For tests on this Mac only: a Tailscale or loopback address, never 0.0.0.0.
-    if let Ok(v) = std::env::var("HERDR_DESK_MOBILE_BIND") {
+    if let Ok(v) = std::env::var("HEIDRUN_MOBILE_BIND") {
         return v.parse::<Ipv4Addr>().ok().filter(|ip| is_tailscale(*ip) || ip.is_loopback());
     }
     if_addrs::get_if_addrs().ok()?.into_iter().find_map(|i| match i.ip() {

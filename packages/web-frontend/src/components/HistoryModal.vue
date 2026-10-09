@@ -140,7 +140,7 @@ function go(r: HistoryRun) {
 
 async function exportCsv() {
   const d = new Date();
-  const name = `herdr-desk-historique-${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}.csv`;
+  const name = `heidrun-historique-${d.getFullYear()}-${d2(d.getMonth() + 1)}-${d2(d.getDate())}.csv`;
   try {
     const path = await invoke<string>("history_export", { csv: toCsv(runs.value.filter((r) => !r.live)), name });
     toast(t("historyModal.exported", { path }));

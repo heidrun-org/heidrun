@@ -81,7 +81,7 @@ export interface OutputWatch {
   regex: string;
 }
 
-const DISMISSED_KEY = "herdr-desk.dismissed";
+const DISMISSED_KEY = "heidrun.dismissed";
 
 function loadDismissed(): Record<string, string> {
   try {
@@ -316,7 +316,7 @@ interface WindowReading {
   resetsAt?: number;
   at: number;
 }
-const QUOTA_KEY = "herdr-desk.claude-windows";
+const QUOTA_KEY = "heidrun.claude-windows";
 const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
   try {
     return { q5h: undefined, q7d: undefined, ...JSON.parse(localStorage.getItem(QUOTA_KEY) ?? "{}") };
@@ -732,7 +732,7 @@ export async function refreshCodex() {
 
 // Last tab used in each workspace and last pane used in each tab: coming back to a
 // workspace opens where you left it. Kept across restarts.
-const LAST_KEY = "herdr-desk.last-selection";
+const LAST_KEY = "heidrun.last-selection";
 const last: { tab: Record<string, string>; pane: Record<string, string> } = (() => {
   try {
     return { tab: {}, pane: {}, ...JSON.parse(localStorage.getItem(LAST_KEY) ?? "{}") };
@@ -1032,7 +1032,7 @@ export async function askAgentToFix(sourcePaneId: string, agentPaneId: string) {
 
 // ---- Recent commands (local convenience only) ----------------------------
 
-const RECENT_KEY = "herdr-desk.recent";
+const RECENT_KEY = "heidrun.recent";
 
 export function recentCommands(): string[] {
   try {

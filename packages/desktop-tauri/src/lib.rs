@@ -2,6 +2,7 @@ mod claude;
 mod files;
 mod git;
 mod history;
+mod legacy;
 mod herdr;
 mod mobile;
 mod project;
@@ -144,6 +145,8 @@ pub fn run() {
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
         .setup(|app| {
+            legacy::migrate_config_dir();
+            claude::migrate_legacy();
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());

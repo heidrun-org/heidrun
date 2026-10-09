@@ -43,7 +43,7 @@ export interface RecentRun {
 
 // History and suggestion order are personal: kept on this Mac, not in the repo.
 // Keyed by project root, so they follow the project rather than a workspace id.
-const LOCAL_KEY = "herdr-desk.project-local";
+const LOCAL_KEY = "heidrun.project-local";
 
 interface LocalData {
   recent: Record<string, RecentRun[]>;
@@ -155,7 +155,7 @@ export function clearRecent(workspaceId: string) {
   if (p) delete local.recent[p.root];
 }
 
-/** Drag and drop in the saved actions: the order is written to .herdr-desk.json. */
+/** Drag and drop in the saved actions: the order is written to .heidrun.json. */
 export async function moveAction(workspaceId: string, id: string, at: number) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;

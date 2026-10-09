@@ -16,7 +16,7 @@ export const danger = reactive({
 const cache = new Map<string, Promise<ProjectGuards | "unreadable" | null>>();
 
 /**
- * `guards` section of the project's .herdr-desk.json (cached a minute).
+ * `guards` section of the project's .heidrun.json (cached a minute).
  * "unreadable": the file exists but is not valid JSON — its blocking rules
  * cannot be applied, so every command asks for confirmation.
  */

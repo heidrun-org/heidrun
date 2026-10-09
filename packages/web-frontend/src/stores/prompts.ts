@@ -1,4 +1,4 @@
-// Reusable consignes: personal ones (this Mac) and the project's (.herdr-desk.json).
+// Reusable consignes: personal ones (this Mac) and the project's (.heidrun.json).
 import { computed, reactive, watch } from "vue";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { allPanes, state, tabLabel, workspaceLabel } from "./session";
@@ -14,7 +14,7 @@ export interface PromptTemplate {
   text: string;
 }
 
-const KEY = "herdr-desk.prompts";
+const KEY = "heidrun.prompts";
 
 // The labels of the default templates follow the language in use (getters); the texts are consignes sent to
 // the agent, kept as they are.
@@ -47,7 +47,7 @@ watch(
   { deep: true },
 );
 
-/** Templates of the selected workspace's project, from .herdr-desk.json `prompts`. */
+/** Templates of the selected workspace's project, from .heidrun.json `prompts`. */
 export const projectPrompts = computed<PromptTemplate[]>(() => {
   const list = (currentProject.value?.config as { prompts?: unknown } | undefined)?.prompts;
   if (!Array.isArray(list)) return [];

@@ -49,7 +49,7 @@ function compile(list: string[] | undefined): RegExp[] {
     try {
       out.push(new RegExp(s, "i"));
     } catch {
-      /* invalid regex in .herdr-desk.json: ignored */
+      /* invalid regex in .heidrun.json: ignored */
     }
   }
   return out;

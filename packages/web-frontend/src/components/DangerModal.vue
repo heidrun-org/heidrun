@@ -10,7 +10,7 @@ onMounted(() => nextTick(() => cancel.value?.focus()));
 const hintParts = computed(() =>
   t("dangerModal.blockedHint")
     .split(/(\{file\}|\{setting\})/)
-    .map((part) => (part === "{file}" ? { text: ".herdr-desk.json", mono: true } : part === "{setting}" ? { text: "guards.block", mono: true } : { text: part, mono: false })),
+    .map((part) => (part === "{file}" ? { text: ".heidrun.json", mono: true } : part === "{setting}" ? { text: "guards.block", mono: true } : { text: part, mono: false })),
 );
 </script>
 

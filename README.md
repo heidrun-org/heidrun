@@ -77,7 +77,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 
 **Pinned notes**: select text in a terminal, then "Pin" (or ⇧⌘P). The note appears in the **Notes** tab of the right panel, with its origin; you can rename it (double-click), copy it or send it to an agent. The ⤢ button (or a double-click on the text) opens it in a central window that you can move by its title, resize by the bottom-right corner and edit; its size is remembered. Notes stay on this Mac, never in the repo: a terminal output can contain secrets.
 
-**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.herdr-desk.json` at the root of the repo, to be versioned with the code:
+**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun.json` at the root of the repo, to be versioned with the code:
 
 ```json
 {
@@ -90,9 +90,9 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 }
 ```
 
-The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.herdr-desk.json`; the order of the suggestions and the history stay on this Mac).
+The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.heidrun.json`; the order of the suggestions and the history stay on this Mac).
 
-**Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.herdr-desk.json`:
+**Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.heidrun.json`:
 
 ```json
 "references": {
@@ -115,7 +115,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Answering the menus of a blocked agent**: when Claude (or Codex) displays a numbered menu ("1. Yes / 2. Yes, and don't ask again… / 3. No"), its options appear as buttons on the "To handle" card and in the right panel, with the command or file concerned. One click sends the option number. If the same menu is still there a moment later, the app uses the arrow keys and Enter; it never acts on a new dialog without you seeing it.
 
-**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, input bar, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.herdr-desk.json`:
+**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, input bar, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.heidrun.json`:
 
 ```json
 "guards": {
@@ -128,7 +128,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Git tab** (right panel): for the selected workspace, branch, ahead / behind the remote, modified files, last commit, CI state of the branch, and the list of open **MRs (GitLab) or PRs (GitHub)** with their state (ready, CI running, to approve, conflict…). One click opens the MR; "Ask for a review" sends it to the agent of the workspace. The host is deduced from the remote (`references.forge` to force it). The app uses the `glab` and `gh` already logged in on the Mac, read-only: no token is stored. In the sidebar, `↑2` signals commits not pushed yet.
 
-**Prompt templates**: the ☰ button of the input bar lists your templates ("MR review", "Handover note"…) and those of the project. One click inserts the text, which you can edit before sending; "Save input as template" creates one, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.herdr-desk.json`:
+**Prompt templates**: the ☰ button of the input bar lists your templates ("MR review", "Handover note"…) and those of the project. One click inserts the text, which you can edit before sending; "Save input as template" creates one, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.heidrun.json`:
 
 ```json
 "prompts": [{ "id": "review", "label": "MR review", "text": "Review the MR of {branch}" }]
@@ -142,7 +142,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Writing to a sub-agent**: in the recipient menu of the input bar, the agents of all workspaces are listed and, under each Claude session that has some, its sub-agents (`↳ jerome-645`). The app switches the session to this sub-agent with the arrow keys, checks that it is really displayed, sends the prompt, then goes back to `main` (box "Then go back to main"). If the list is not found or if the agent is waiting for a decision, nothing is typed.
 
-**History** (⇧⌘H, or the "Today … History ↗" line of the right panel): each job of an agent appears live while it runs ("running"), then is saved at the end on this Mac (`~/.config/herdr-desk/history.jsonl`, never in a repo) with its workspace, its tab, the branch, the prompt that started it, its active time (without the waits for your decision) and its cost. At the top, summary cards follow the filters: agent cost (with day, 7 d, 30 d and the difference with the previous period), agent time, estimated human time (1 h of agent ≈ 4 h of developer by default), your estimated time (prompts written, decisions), the leverage between the two, the time agents waited for you and the rework rate (jobs followed within the hour by a correction prompt). The assumptions are set with "⚙ Assumptions". On the left: totals per workspace or **per feature** (branch, with the issue or MR taken from its name), **productive hours** (work and waiting per hour of the day), and **monthly budgets** per workspace (notification at 80% then at 100%). The window opens on today and filters by period (today to 1 year), workspace, agent or text, gives totals per workspace and a chart per day, and exports the selection as CSV (in Downloads, readable by Excel). A click on a job opens its pane if it still exists.
+**History** (⇧⌘H, or the "Today … History ↗" line of the right panel): each job of an agent appears live while it runs ("running"), then is saved at the end on this Mac (`~/.config/heidrun/history.jsonl`, never in a repo) with its workspace, its tab, the branch, the prompt that started it, its active time (without the waits for your decision) and its cost. At the top, summary cards follow the filters: agent cost (with day, 7 d, 30 d and the difference with the previous period), agent time, estimated human time (1 h of agent ≈ 4 h of developer by default), your estimated time (prompts written, decisions), the leverage between the two, the time agents waited for you and the rework rate (jobs followed within the hour by a correction prompt). The assumptions are set with "⚙ Assumptions". On the left: totals per workspace or **per feature** (branch, with the issue or MR taken from its name), **productive hours** (work and waiting per hour of the day), and **monthly budgets** per workspace (notification at 80% then at 100%). The window opens on today and filters by period (today to 1 year), workspace, agent or text, gives totals per workspace and a chart per day, and exports the selection as CSV (in Downloads, readable by Excel). A click on a job opens its pane if it still exists.
 
 **Consumption per workspace** (in the History window): cost of each workspace over the current 5 h window, with its share of the total, a small chart per quarter of an hour and, on hover, the detail per agent. The app records the cost increase of each Claude session (status line) and attaches it to the workspace of the pane; the share of the 5 h quota is an estimate proportional to the cost. Only spending seen while the app is running is counted.
 
@@ -160,7 +160,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 2. Enable mobile access in Heidrun (macOS may ask to allow incoming connections: Allow).
 3. Scan the QR code with the camera, open the link in Safari, then Share → "Add to Home Screen".
 
-Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/herdr-desk/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Heidrun must be open on the Mac.
+Security: the server listens only on the Tailscale address of the Mac (100.x), never on the Internet or the Wi-Fi; each request carries the pairing key (64 characters, in `~/.config/heidrun/mobile.json`, readable by you only); "Revoke" changes the key and immediately cuts off the paired devices. Only five actions exist (state, reading, answer to a menu, prompt, deny / interrupt); a dangerous command is shown in full on the phone and asks for confirmation, and what the project blocks stays blocked. Heidrun must be open on the Mac.
 
 **Broadcasting a prompt**: "Several agents…" in the recipient menu of the input bar. Tick the agents (shortcuts: all those of the workspace, all the Claude ones), write, "Broadcast": a summary lists the recipients before sending. Blocked agents are skipped and reported; the template variables are filled for each agent; a `!` command goes through the safeguards of each project.
 
@@ -193,7 +193,7 @@ xcode-select --install   # Apple build tools, if needed
 ## Run in development
 
 ```sh
-cd ~/Projects/HerdrDesk
+cd ~/Projects/Heidrun
 pnpm install
 pnpm dev
 ```
@@ -215,9 +215,9 @@ Drag `Heidrun.app` into `/Applications`.
 
 Claude Code passes the context and the quotas (5 h, week) to its status line. Heidrun hooks into it: click **"Enable Claude tracking"** (right panel of a Claude agent, or bottom bar). The app:
 
-- copies `scripts/claude-statusline.sh` into `~/.config/herdr-desk/`;
-- keeps your current status line in `~/.config/herdr-desk/claude-statusline-next`, which continues to be displayed as is in the terminal;
-- points `statusLine.command` of `~/.claude/settings.json` to the script (backup: `settings.json.herdr-desk-backup`).
+- copies `scripts/claude-statusline.sh` into `~/.config/heidrun/`;
+- keeps your current status line in `~/.config/heidrun/claude-statusline-next`, which continues to be displayed as is in the terminal;
+- points `statusLine.command` of `~/.claude/settings.json` to the script (backup: `settings.json.heidrun-backup`).
 
 Claude Code reloads its settings by itself; the figures arrive at the next reply. To gain a line in the terminal, untick **"Also show the status line in the terminal"**: the script no longer prints anything, but keeps sending the figures to the app. "Disable Claude tracking" restores your original status line. `jq` is required (included in macOS 15, otherwise `brew install jq`). Quotas exist only with a Pro or Max subscription.
 

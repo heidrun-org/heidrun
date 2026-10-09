@@ -1,5 +1,5 @@
 //! Agents' work history: one JSON line per finished run, in
-//! ~/.config/herdr-desk/history.jsonl (on this Mac, never in a repo).
+//! ~/.config/heidrun/history.jsonl (on this Mac, never in a repo).
 
 use serde_json::Value;
 use std::io::Write;
@@ -11,9 +11,9 @@ const KEEP_DAYS: i64 = 400;
 static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 fn path() -> PathBuf {
-    std::env::var("HERDR_DESK_DIR")
+    std::env::var("HEIDRUN_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("herdr-desk"))
+        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
         .join("history.jsonl")
 }
 
@@ -103,7 +103,7 @@ mod tests {
     fn appends_and_reads() {
         let dir = std::env::temp_dir().join(format!("hd-hist-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
-        std::env::set_var("HERDR_DESK_DIR", &dir);
+        std::env::set_var("HEIDRUN_DIR", &dir);
         let now = now_ms();
         history_append(serde_json::json!({ "end": now, "ws": "a" })).unwrap();
         history_append(serde_json::json!({ "end": now - 500 * 86_400_000_i64, "ws": "old" })).unwrap();

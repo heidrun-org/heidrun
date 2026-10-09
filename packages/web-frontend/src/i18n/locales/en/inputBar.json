@@ -8,7 +8,7 @@
   "failed_one": "{count} failed",
   "failed_other": "{count} failed",
   "writePromptFirst": "First write the prompt to save",
-  "templateAddedToProject": "Template added to the project (.herdr-desk.json)",
+  "templateAddedToProject": "Template added to the project (.heidrun.json)",
   "templateSaved": "Template saved",
   "project": "Project",
   "myTemplates": "My templates",
