@@ -28,7 +28,7 @@ const table = [
     `| **${text(g.groupKey)}** | |`,
     ...g.items.map((i) => {
       const keys = i.keys ?? text(i.keysKey);
-      return `| ${keys.startsWith("bi:") ? icon(keys.slice(3)) : keys} | ${text(i.actionKey).replace(/\|/g, "\\|")} |`;
+      return `| ${keys.startsWith("bi:") ? icon(keys.slice(3)) : keys} | ${text(i.actionKey).replace(/\|/g, "\\|").replace(/</g, "&lt;").replace(/>/g, "&gt;")} |`;
     }),
   ]),
   "",

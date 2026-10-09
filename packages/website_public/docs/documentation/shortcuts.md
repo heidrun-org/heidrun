@@ -44,7 +44,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | **Mouse** | |
 | ⌘-click | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
 | ⌘-click | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |
-| Hover | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View <agent> |
+| Hover | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View &lt;agent&gt; |
 | Wheel | Scroll the pane history |
 | ⌥ + wheel | Send ↑ / ↓ (last commands or prompts) |
 | ⌥ + drag | Select text, even in "Mouse for the app" mode |
