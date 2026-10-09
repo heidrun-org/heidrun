@@ -10,6 +10,7 @@
     "dev:web": "pnpm --filter web-frontend dev",
     "build:web": "pnpm --filter web-frontend build",
     "tauri": "pnpm --filter desktop-tauri tauri",
+    "test": "pnpm --filter web-frontend test && pnpm --filter desktop-tauri test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs"
   }
 }
