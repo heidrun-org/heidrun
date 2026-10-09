@@ -1,55 +1,55 @@
 [
   {
-    "group": "Fenêtres",
+    "group": "Windows",
     "items": [
       {
         "keys": "⌘K",
-        "action": "Palette de commandes"
+        "action": "Command palette"
       },
       {
         "keys": "⌘/",
-        "action": "Cette liste des raccourcis"
+        "action": "This list of shortcuts"
       },
       {
         "keys": "⌘P",
-        "action": "Ouvrir un fichier du projet (recherche par nom)"
+        "action": "Open a project file (search by name)"
       },
       {
         "keys": "⇧⌘F",
-        "action": "Chercher dans la sortie de tous les terminaux"
+        "action": "Search the output of all terminals"
       },
       {
         "keys": "⇧⌘H",
-        "action": "Historique : travaux des agents, temps et coût par projet, export CSV"
+        "action": "History: agent jobs, time and cost per project, CSV export"
       },
       {
         "keys": "⇧⌘P",
-        "action": "Épingler le texte sélectionné dans une note"
+        "action": "Pin the selected text in a note"
       },
       {
         "keys": "Échap",
-        "action": "Fermer la fenêtre ouverte"
+        "action": "Close the open window"
       }
     ]
   },
   {
-    "group": "Terminaux et agents",
+    "group": "Terminals and agents",
     "items": [
       {
         "keys": "⌘T",
-        "action": "Nouveau terminal (nouvel onglet)"
+        "action": "New terminal (new tab)"
       },
       {
         "keys": "⇧⌘T",
-        "action": "Nouvel agent (Claude, Codex, agents du projet)"
+        "action": "New agent (Claude, Codex, project agents)"
       },
       {
         "keys": "⌘D / ⇧⌘D",
-        "action": "Diviser le panneau à droite / en bas"
+        "action": "Split the pane to the right / to the bottom"
       },
       {
         "keys": "⌘W ⌘W",
-        "action": "Fermer le panneau sélectionné (deux fois, pour éviter les accidents)"
+        "action": "Close the selected pane (twice, to avoid accidents)"
       }
     ]
   },
@@ -58,139 +58,139 @@
     "items": [
       {
         "keys": "⌥⌘← / ⌥⌘→",
-        "action": "Onglet précédent / suivant"
+        "action": "Previous / next tab"
       },
       {
         "keys": "⌥⌘↑ / ⌥⌘↓",
-        "action": "Workspace précédent / suivant"
+        "action": "Previous / next workspace"
       },
       {
         "keys": "⌘1 … ⌘9",
-        "action": "Aller au workspace n° 1 à 9 (ordre de la barre latérale)"
+        "action": "Go to workspace 1 to 9 (sidebar order)"
       },
       {
         "keys": "⇧⌥⌘← / ⇧⌥⌘→",
-        "action": "Déplacer l’onglet à gauche / à droite"
+        "action": "Move the tab left / right"
       },
       {
         "keys": "⇧⌥⌘↑ / ⇧⌥⌘↓",
-        "action": "Monter / descendre le workspace"
+        "action": "Move the workspace up / down"
       }
     ]
   },
   {
-    "group": "Saisie",
+    "group": "Input",
     "items": [
       {
         "keys": "↵",
-        "action": "Envoyer (barre de saisie)"
+        "action": "Send (input bar)"
       },
       {
         "keys": "⇧↵ / ⌥↵",
-        "action": "Nouvelle ligne, dans le terminal comme dans la barre de saisie"
+        "action": "New line, in the terminal as in the input bar"
       },
       {
         "keys": "⌘↵",
-        "action": "Lancer (fenêtre Nouvel agent)"
+        "action": "Launch (New agent window)"
       },
       {
         "keys": "↑ / ↓ puis ↵",
-        "action": "Choisir un résultat (palette, recherche)"
+        "action": "Choose a result (palette, search) then confirm"
       }
     ]
   },
   {
-    "group": "Explorateur et éditeur de fichiers",
+    "group": "File explorer and editor",
     "items": [
       {
         "keys": "⇧⌘F",
-        "action": "Chercher dans tout le projet (explorateur ouvert)"
+        "action": "Search the whole project (explorer open)"
       },
       {
         "keys": "⌘S",
-        "action": "Enregistrer le fichier"
+        "action": "Save the file"
       },
       {
         "keys": "⌘F / ⌘⌥F",
-        "action": "Chercher / remplacer dans le fichier"
+        "action": "Search / replace in the file"
       },
       {
         "keys": "⌘D",
-        "action": "Sélectionner l’occurrence suivante (curseurs multiples)"
+        "action": "Select the next occurrence (multiple cursors)"
       },
       {
         "keys": "⌘Z / ⇧⌘Z",
-        "action": "Annuler / rétablir"
+        "action": "Undo / redo"
       },
       {
         "keys": "⌘W",
-        "action": "Fermer l’onglet (confirmation s’il n’est pas enregistré)"
+        "action": "Close the tab (confirmation if not saved)"
       },
       {
         "keys": "Clic droit",
-        "action": "Nouveau fichier ou dossier, renommer / déplacer, Corbeille"
+        "action": "New file or folder, rename / move, Trash"
       }
     ]
   },
   {
-    "group": "Affichage",
+    "group": "Display",
     "items": [
       {
         "keys": "⌘B / ⌥⌘B",
-        "action": "Masquer la barre latérale gauche / le panneau de droite"
+        "action": "Hide the left sidebar / the right panel"
       },
       {
         "keys": "⌘+ / ⌘− / ⌘0",
-        "action": "Agrandir / réduire / réinitialiser la police (le code dans les fenêtres Git et Aperçu)"
+        "action": "Increase / decrease / reset the font (the code in the Git and Preview windows)"
       }
     ]
   },
   {
-    "group": "Souris",
+    "group": "Mouse",
     "items": [
       {
         "keys": "⌘-clic",
-        "action": "Sur #12 / !34 : aperçu de l’issue ou de la MR ; sur une URL ou un commit : l’ouvrir"
+        "action": "On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it"
       },
       {
         "keys": "⌘-clic",
-        "action": "Sur src/app.ts:42 cité dans un terminal : le fichier à la ligne, dans l’explorateur"
+        "action": "On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer"
       },
       {
         "keys": "Survol",
-        "action": "Boutons d’action : ↗ Ouvrir, ⧉ Aperçu, ▷ Lancer, ▷ Exécuter, ▷ Voir <agent>"
+        "action": "Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View <agent>"
       },
       {
         "keys": "Molette",
-        "action": "Faire défiler l’historique du panneau"
+        "action": "Scroll the pane history"
       },
       {
         "keys": "⌥ + molette",
-        "action": "Envoyer ↑ / ↓ (dernières commandes ou consignes)"
+        "action": "Send ↑ / ↓ (last commands or prompts)"
       },
       {
         "keys": "⌥ + glisser",
-        "action": "Sélectionner du texte, même en mode « Souris pour l’app »"
+        "action": "Select text, even in \"Mouse for the app\" mode"
       },
       {
         "keys": "Double-clic",
-        "action": "Renommer un workspace, un onglet ou un panneau"
+        "action": "Rename a workspace, a tab or a pane"
       },
       {
         "keys": "Glisser-déposer",
-        "action": "Réordonner les workspaces et les onglets"
+        "action": "Reorder workspaces and tabs"
       },
       {
         "keys": "⊞",
-        "action": "Garder un agent à côté, visible quel que soit l’onglet"
+        "action": "Keep an agent alongside, visible whatever the tab"
       },
       {
         "keys": "▦",
-        "action": "Mosaïque d’une session Claude : ce que fait chaque sous-agent"
+        "action": "Tiles of a Claude session: what each sub-agent is doing"
       },
       {
         "keys": "Double-clic sur une bordure",
-        "action": "Revenir à la largeur par défaut"
+        "action": "Return to the default width"
       }
     ]
   }
