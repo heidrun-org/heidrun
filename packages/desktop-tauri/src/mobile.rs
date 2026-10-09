@@ -444,3 +444,35 @@ mod tests {
         assert_eq!(new_token().unwrap().len(), 64);
     }
 }
+
+#[cfg(test)]
+mod access_tests {
+    use super::*;
+
+    #[test]
+    fn tailscale_range_has_exact_edges() {
+        assert!(is_tailscale(Ipv4Addr::new(100, 64, 0, 0)));
+        assert!(is_tailscale(Ipv4Addr::new(100, 127, 255, 255)));
+        assert!(!is_tailscale(Ipv4Addr::new(100, 63, 255, 255)));
+        assert!(!is_tailscale(Ipv4Addr::new(100, 128, 0, 0)));
+        assert!(!is_tailscale(Ipv4Addr::new(192, 168, 1, 10)));
+        assert!(!is_tailscale(Ipv4Addr::new(10, 64, 0, 1)));
+    }
+
+    #[test]
+    fn compares_tokens_by_content() {
+        assert!(same("abc", "abc"));
+        assert!(!same("abc", "abd"));
+        assert!(!same("abc", "abcd"));
+        assert!(same("", ""));
+    }
+
+    #[test]
+    fn generates_a_long_random_hexadecimal_token() {
+        let a = new_token().unwrap();
+        let b = new_token().unwrap();
+        assert_eq!(a.len(), 64);
+        assert!(a.chars().all(|c| c.is_ascii_hexdigit()));
+        assert_ne!(a, b);
+    }
+}

@@ -9,6 +9,10 @@ mod project;
 mod pty;
 mod usage;
 
+/// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
+#[cfg(test)]
+pub(crate) static HOME_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 use serde_json::{json, Value};
 use tauri::menu::{Menu, MenuBuilder, SubmenuBuilder};
 use tauri::{AppHandle, State};

@@ -385,3 +385,42 @@ mod tests {
         assert!(!allowed("sh", &v(&["-c", "id"])));
     }
 }
+
+#[cfg(test)]
+mod path_tests {
+    use super::*;
+
+    #[test]
+    fn removes_the_quotes_git_adds_around_odd_names() {
+        assert_eq!(unquote("\"a b\""), "a b");
+        assert_eq!(unquote("\"say \\\"hi\\\"\""), "say \"hi\"");
+        assert_eq!(unquote("\"tab\\there\""), "tab\there");
+        assert_eq!(unquote("plain.txt"), "plain.txt");
+        assert_eq!(unquote("\""), "\"");
+    }
+
+    #[test]
+    fn accepts_only_relative_paths_inside_the_repository() {
+        assert_eq!(safe_rel("src/main.rs").unwrap(), "src/main.rs");
+        assert!(safe_rel("").is_err());
+        assert!(safe_rel("/etc/passwd").is_err());
+        assert!(safe_rel("../x").is_err());
+        assert!(safe_rel("a/../../x").is_err());
+    }
+
+    #[test]
+    fn refuses_a_forge_tool_that_is_not_known() {
+        assert!(!allowed("curl", &["x".to_string()]));
+        assert!(!allowed("gh", &[]));
+    }
+
+    #[test]
+    fn refuses_a_forge_flag_that_is_not_read_only() {
+        let v = |x: &[&str]| x.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        assert!(!allowed("gh", &v(&["pr", "list", "--web"])));
+        assert!(!allowed("gh", &v(&["pr", "merge", "1"])));
+        assert!(allowed("gh", &v(&["issue", "view", "5", "--repo", "a/b"])));
+        assert!(!allowed("glab", &v(&["api", "projects/1", "extra"])));
+        assert!(!allowed("glab", &v(&["api", "users"])));
+    }
+}

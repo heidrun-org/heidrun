@@ -237,3 +237,89 @@ impl StatusWatcher {
         });
     }
 }
+
+#[cfg(test)]
+mod herdr_tests {
+    use super::*;
+
+    /// The tests change environment variables of the whole process: they run one at a time.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn clear_env() {
+        for name in ["HERDR_SOCKET_PATH", "HERDR_SESSION", "XDG_CONFIG_HOME", "HERDR_BIN_PATH"] {
+            std::env::remove_var(name);
+        }
+    }
+
+    #[test]
+    fn config_dir_follows_the_xdg_variable() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("XDG_CONFIG_HOME", "/xdg");
+        assert_eq!(config_dir(), PathBuf::from("/xdg/herdr"));
+        std::env::set_var("XDG_CONFIG_HOME", "");
+        assert!(config_dir().ends_with(".config/herdr"));
+        clear_env();
+    }
+
+    #[test]
+    fn socket_path_prefers_the_explicit_path() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("HERDR_SOCKET_PATH", "/run/herdr.sock");
+        std::env::set_var("HERDR_SESSION", "work");
+        assert_eq!(socket_path(), PathBuf::from("/run/herdr.sock"));
+        clear_env();
+    }
+
+    #[test]
+    fn socket_path_uses_the_named_session() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("XDG_CONFIG_HOME", "/xdg");
+        std::env::set_var("HERDR_SESSION", "work");
+        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/sessions/work/herdr.sock"));
+        clear_env();
+    }
+
+    #[test]
+    fn socket_path_defaults_to_the_main_socket() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("XDG_CONFIG_HOME", "/xdg");
+        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/herdr.sock"));
+        clear_env();
+    }
+
+    #[test]
+    fn binary_path_follows_the_variable() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("HERDR_BIN_PATH", "/opt/herdr");
+        assert_eq!(herdr_bin(), PathBuf::from("/opt/herdr"));
+        clear_env();
+    }
+
+    #[test]
+    fn request_identifiers_are_unique_and_prefixed() {
+        let a = next_id();
+        let b = next_id();
+        assert_ne!(a, b);
+        assert!(a.starts_with("hd_"));
+    }
+
+    #[test]
+    fn formats_an_error_with_its_code_and_message() {
+        assert_eq!(format_error(&json!({ "code": "not_found", "message": "no pane" })), "not_found: no pane");
+        assert_eq!(format_error(&json!({})), "error: ");
+    }
+
+    #[test]
+    fn subscribes_to_the_lifecycle_events_without_duplicates() {
+        let mut seen = std::collections::HashSet::new();
+        for event in LIFECYCLE_EVENTS {
+            assert!(seen.insert(*event), "duplicate {event}");
+            assert!(event.contains('.'));
+        }
+    }
+}

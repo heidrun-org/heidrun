@@ -44,3 +44,11 @@ Attach every screenshot, image, or video related to an issue with the `--attach`
 - When the issue already exists: `gh issue edit <issue number> --attach './screenshot.png#Alt text'`
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
+
+## Tests
+
+- `pnpm test` at the repository root runs the tests of both packages, and exits with a non-zero code when a test fails.
+- `pnpm --filter web-frontend test` runs the Vitest tests of the package `packages/web-frontend`. The test files sit next to the code, and are named `*.test.ts`.
+- `pnpm --filter desktop-tauri test` runs `cargo test` for the package `packages/desktop-tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
+- When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.

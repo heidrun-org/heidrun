@@ -598,6 +598,7 @@ mod tests {
 
     #[test]
     fn refuses_home_and_root() {
+        let _home_lock = crate::HOME_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let home = dirs::home_dir().unwrap();
         assert!(acceptable_root(&home).is_err());
         assert!(acceptable_root(Path::new("/")).is_err());
@@ -659,5 +660,51 @@ mod tests {
         assert_eq!((r.hits[0].path.as_str(), r.hits[0].line, r.hits[0].text.as_str()), ("src/a.ts", 12, "const x = 1;"));
         assert_eq!((r.hits[1].path.as_str(), r.hits[1].text.as_str()), ("b.md", "a:b:c"));
         assert_eq!((r.hits[2].path.as_str(), r.hits[2].line), ("d:1:e.txt", 5));
+    }
+}
+
+#[cfg(test)]
+mod helper_tests {
+    use super::*;
+
+    #[test]
+    fn fingerprint_changes_with_the_content_and_the_length() {
+        assert_eq!(fingerprint(b"abc"), fingerprint(b"abc"));
+        assert_ne!(fingerprint(b"abc"), fingerprint(b"abd"));
+        assert!(fingerprint(b"abc").ends_with("-3"));
+        assert!(fingerprint(b"").ends_with("-0"));
+    }
+
+    #[test]
+    fn splits_a_zero_separated_list_and_skips_empty_items() {
+        let items: Vec<String> = split_z(b"a\0b c\0\0d\0").collect();
+        assert_eq!(items, vec!["a", "b c", "d"]);
+    }
+
+    #[test]
+    fn parses_grep_output_with_a_stripped_prefix() {
+        let r = parse_grep("/root/a.txt\x001\x00hello\n", Some("/root/"));
+        assert_eq!(r.hits[0].path, "a.txt");
+    }
+
+    #[test]
+    fn cuts_a_very_long_match_line() {
+        let long = "x".repeat(500);
+        let r = parse_grep(&format!("a.txt\x001\x00{long}\n"), None);
+        assert_eq!(r.hits[0].text.chars().count(), 300);
+    }
+
+    #[test]
+    fn stops_after_the_maximum_number_of_hits() {
+        let out: String = (0..MAX_HITS + 5).map(|i| format!("a.txt\x00{}\x00x\n", i + 1)).collect();
+        let r = parse_grep(&out, None);
+        assert_eq!(r.hits.len(), MAX_HITS);
+        assert!(r.truncated);
+    }
+
+    #[test]
+    fn refuses_a_path_inside_the_git_folder() {
+        assert!(not_in_git_dir("x/.git").is_err());
+        assert!(not_in_git_dir("x/.github/y").is_ok());
     }
 }

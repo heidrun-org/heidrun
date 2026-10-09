@@ -188,3 +188,140 @@ pub async fn project_refs(cwd: String) -> Result<RepoRefs, String> {
     }
     Ok(RepoRefs { root: root.display().to_string(), remote, references })
 }
+
+#[cfg(test)]
+mod project_tests {
+    use super::*;
+
+    fn scratch(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("hd-project-{}-{name}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn finds_the_root_from_a_sub_folder() {
+        let dir = scratch("root");
+        std::fs::create_dir_all(dir.join(".git")).unwrap();
+        std::fs::create_dir_all(dir.join("a/b")).unwrap();
+        assert_eq!(find_root(&dir.join("a/b")), dir);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn finds_the_root_from_the_configuration_folder() {
+        let dir = scratch("conf");
+        std::fs::create_dir_all(dir.join(".heidrun")).unwrap();
+        std::fs::create_dir_all(dir.join("deep/er")).unwrap();
+        assert_eq!(find_root(&dir.join("deep/er")), dir);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn picks_the_package_manager_from_the_lock_file() {
+        let dir = scratch("pm");
+        assert_eq!(package_manager(&dir), "npm");
+        std::fs::write(dir.join("yarn.lock"), "").unwrap();
+        assert_eq!(package_manager(&dir), "yarn");
+        std::fs::remove_file(dir.join("yarn.lock")).unwrap();
+        std::fs::write(dir.join("bun.lockb"), "").unwrap();
+        assert_eq!(package_manager(&dir), "bun");
+        std::fs::write(dir.join("pnpm-lock.yaml"), "").unwrap();
+        std::fs::write(dir.join("yarn.lock"), "").unwrap();
+        assert_eq!(package_manager(&dir), "pnpm");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_package_scripts_with_the_right_prefix() {
+        let dir = scratch("scripts");
+        std::fs::write(dir.join("package.json"), r#"{"scripts":{"build":"x","test":"y"}}"#).unwrap();
+        let commands: Vec<String> = detect(&dir).into_iter().map(|d| d.command).collect();
+        assert!(commands.contains(&"npm install".to_string()));
+        assert!(commands.contains(&"npm run build".to_string()));
+        std::fs::write(dir.join("pnpm-lock.yaml"), "").unwrap();
+        let commands: Vec<String> = detect(&dir).into_iter().map(|d| d.command).collect();
+        assert!(commands.contains(&"pnpm test".to_string()));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_makefile_targets_and_skips_variables() {
+        let dir = scratch("make");
+        std::fs::write(dir.join("Makefile"), "CC := gcc\n.PHONY: all\nall: build\n\techo\nbuild:\n%.o: %.c\nbuild:\n# note\n").unwrap();
+        let commands: Vec<String> = detect(&dir).into_iter().map(|d| d.command).collect();
+        assert_eq!(commands, vec!["make all", "make build"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_procfile_processes() {
+        let dir = scratch("proc");
+        std::fs::write(dir.join("Procfile"), "web: node server.js\n# comment: x\nworker:\n\n").unwrap();
+        let found = detect(&dir);
+        assert_eq!(found.len(), 1);
+        assert_eq!((found[0].label.as_str(), found[0].command.as_str()), ("web", "node server.js"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_the_usual_project_files() {
+        let dir = scratch("kinds");
+        std::fs::write(dir.join("Cargo.toml"), "").unwrap();
+        std::fs::write(dir.join("pubspec.yaml"), "").unwrap();
+        std::fs::create_dir_all(dir.join("bin")).unwrap();
+        std::fs::write(dir.join("bin/console"), "").unwrap();
+        let commands: Vec<String> = detect(&dir).into_iter().map(|d| d.command).collect();
+        for expected in ["cargo test", "flutter run", "symfony serve"] {
+            assert!(commands.contains(&expected.to_string()), "missing {expected}");
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn detects_nothing_in_an_empty_folder() {
+        let dir = scratch("empty");
+        assert!(detect(&dir).is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn ignores_a_broken_package_file() {
+        let dir = scratch("broken");
+        std::fs::write(dir.join("package.json"), "{ not json").unwrap();
+        assert!(detect(&dir).is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn loads_a_default_configuration_when_the_file_is_missing() {
+        let dir = scratch("load-default");
+        std::fs::create_dir_all(dir.join(".git")).unwrap();
+        let project = project_load(dir.display().to_string()).unwrap();
+        assert_eq!(project.config, json!({ "version": 1, "actions": [] }));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn saves_then_loads_the_configuration() {
+        let dir = scratch("roundtrip");
+        std::fs::create_dir_all(dir.join(".git")).unwrap();
+        let config = json!({ "version": 1, "actions": [{ "id": "a", "label": "A", "command": "ls" }] });
+        project_save(dir.display().to_string(), config.clone()).unwrap();
+        let text = std::fs::read_to_string(dir.join(".heidrun/config.json")).unwrap();
+        assert!(text.ends_with('\n'));
+        assert_eq!(project_load(dir.display().to_string()).unwrap().config, config);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn reports_an_invalid_configuration_file() {
+        let dir = scratch("invalid");
+        std::fs::create_dir_all(dir.join(".heidrun")).unwrap();
+        std::fs::write(dir.join(".heidrun/config.json"), "{ nope").unwrap();
+        let error = project_load(dir.display().to_string()).map(|_| ()).unwrap_err();
+        assert!(error.contains("config.json"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

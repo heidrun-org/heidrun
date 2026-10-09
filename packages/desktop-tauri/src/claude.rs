@@ -228,8 +228,22 @@ pub fn claude_statusline_uninstall() -> Result<StatuslineState, String> {
 mod tests {
     use super::*;
 
+    /// Puts the environment variable `HOME` back when the test ends, so other tests see the real home folder.
+    struct RestoreHome(Option<std::ffi::OsString>);
+
+    impl Drop for RestoreHome {
+        fn drop(&mut self) {
+            match &self.0 {
+                Some(value) => std::env::set_var("HOME", value),
+                None => std::env::remove_var("HOME"),
+            }
+        }
+    }
+
     #[test]
     fn install_chains_and_uninstall_restores() {
+        let _home_lock = crate::HOME_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let _home_restore = RestoreHome(std::env::var_os("HOME"));
         let home = std::env::temp_dir().join(format!("hd-test-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         std::fs::create_dir_all(home.join(".claude")).unwrap();
@@ -627,5 +641,26 @@ mod transcript_tests {
         render_entry(&v, &mut out);
         assert_eq!(out, vec!["⏺ Je regarde.", "  OK", "⏺ Bash(ls -la)", "  ⎿ total 8"]);
         assert!(session_agents("../etc", None).is_err());
+    }
+}
+
+#[cfg(test)]
+mod text_tests {
+    use super::*;
+
+    #[test]
+    fn short_collapses_whitespace() {
+        assert_eq!(short("a   b\n\tc", 20), "a b c");
+    }
+
+    #[test]
+    fn short_cuts_long_text_with_an_ellipsis() {
+        assert_eq!(short("abcdefghij", 4), "abcd…");
+        assert_eq!(short("abcd", 4), "abcd");
+    }
+
+    #[test]
+    fn short_counts_characters_not_bytes() {
+        assert_eq!(short("éééé", 2), "éé…");
     }
 }

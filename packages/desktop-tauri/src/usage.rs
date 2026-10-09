@@ -213,3 +213,47 @@ mod tests {
         assert_eq!(p.session.context_window, Some(272000));
     }
 }
+
+#[cfg(test)]
+mod parse_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn reads_a_time_stamp() {
+        assert_eq!(parse_time(&json!({ "timestamp": "2026-01-01T00:00:00Z" })), Some(1_767_225_600));
+        assert_eq!(parse_time(&json!({ "timestamp": "yesterday" })), None);
+        assert_eq!(parse_time(&json!({})), None);
+    }
+
+    #[test]
+    fn reads_a_limit_window_with_an_absolute_reset() {
+        let w = parse_window(&json!({ "used_percent": 42.5, "window_minutes": 300, "resets_at": 1000 }), None).unwrap();
+        assert_eq!(w.used_percent, 42.5);
+        assert_eq!(w.window_minutes, Some(300));
+        assert_eq!(w.resets_at, Some(1000));
+    }
+
+    #[test]
+    fn computes_the_reset_from_a_delay() {
+        let w = parse_window(&json!({ "used_percent": 10.0, "resets_in_seconds": 60 }), Some(1000)).unwrap();
+        assert_eq!(w.resets_at, Some(1060));
+    }
+
+    #[test]
+    fn accepts_the_camel_case_name_of_the_percentage() {
+        assert!(parse_window(&json!({ "usedPercent": 5.0 }), None).is_some());
+    }
+
+    #[test]
+    fn refuses_a_window_without_percentage() {
+        assert!(parse_window(&json!({ "window_minutes": 300 }), None).is_none());
+    }
+
+    #[test]
+    fn ignores_lines_that_are_not_json_or_not_token_counts() {
+        let parsed = parse_log("not json\n{\"type\":\"message\"}\n");
+        assert!(parsed.primary.is_none());
+        assert!(parsed.secondary.is_none());
+    }
+}
