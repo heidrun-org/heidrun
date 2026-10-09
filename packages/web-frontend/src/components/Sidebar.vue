@@ -8,7 +8,6 @@ import {
   dismiss,
   finishRename,
   moveWorkspaceInView,
-  newTerminal,
   newWorkspace,
   selectPane,
   selectWorkspace,
@@ -152,8 +151,7 @@ async function createWorkspace() {
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
         <span class="heading-actions">
-          <button class="add" :title="t('sidebar.newAgentTitle')" :aria-label="t('sidebar.newAgentTitle')" @click="newAgent.open = true"><Icon name="robot" /></button>
-          <button class="add" :title="t('sidebar.newTerminalTitle')" :aria-label="t('sidebar.newTerminalTitle')" @click="newTerminal()"><Icon name="terminal" /></button>
+          <button class="add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="newAgent.open = true"><Icon name="plus-lg" /></button>
         </span>
       </div>
       <template v-for="p in workspacePanes" :key="p.pane_id">

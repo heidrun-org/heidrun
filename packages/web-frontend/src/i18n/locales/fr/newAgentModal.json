@@ -1,7 +1,10 @@
 {
-  "eyebrow": "Nouvel agent",
-  "titleIn": "Lancer un agent dans {workspace}",
-  "titleInWorkspace": "Lancer un agent dans le workspace",
+  "eyebrow": "Nouveau panneau",
+  "titleIn": "Ajouter un panneau dans {workspace}",
+  "titleInWorkspace": "Ajouter un panneau dans le workspace",
+  "terminal": "Terminal",
+  "useTerminal": "Ouvrir un nouveau terminal",
+  "startTerminal": "Ouvrir le terminal",
   "workspaceFolder": "dossier du workspace",
   "toolLabel": "Outil",
   "useClaude": "Utiliser Claude Code",

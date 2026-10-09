@@ -4,12 +4,13 @@ import { agentCommand, launchAgent, listAgents, newAgent, type AgentDef } from "
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
 import { projectPrompts, prompts } from "../stores/prompts";
 import { insertIntoFocusedPane } from "../stores/input";
+import { newTerminal } from "../stores/session";
 import { t } from "../i18n/index";
 
 const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null);
 const agents = ref<AgentDef[]>([]);
 const loading = ref(true);
-const tool = ref<"claude" | "codex">("claude");
+const tool = ref<"terminal" | "claude" | "codex">("claude");
 const agent = ref<string | null>(null);
 const model = ref("");
 const label = ref("");
@@ -20,8 +21,9 @@ const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
 const templates = computed(() => [...projectPrompts.value, ...prompts.personal]);
-const MODELS = { claude: ["opus", "sonnet", "haiku"], codex: ["gpt-5-codex", "gpt-5"] };
+const MODELS = { claude: ["opus", "sonnet", "haiku"], codex: ["gpt-5-codex", "gpt-5"], terminal: [] as string[] };
 const command = computed(() => {
+  if (tool.value === "terminal") return "";
   try {
     return agentCommand(tool.value, tool.value === "claude" ? agent.value : null, model.value.trim() || null);
   } catch (e) {
@@ -54,6 +56,11 @@ function close() {
 async function go() {
   const ws = selectedWorkspace.value;
   if (!ws || busy.value) return;
+  if (tool.value === "terminal") {
+    newAgent.open = false;
+    newTerminal();
+    return;
+  }
   busy.value = true;
   const prompt = text.value;
   // The window closes right away: launching and waiting for the agent take a while.
@@ -91,6 +98,7 @@ function onKey(e: KeyboardEvent) {
       <p class="where mono">{{ cwd ?? t("newAgentModal.workspaceFolder") }}</p>
 
       <div class="seg" role="radiogroup" :aria-label="t('newAgentModal.toolLabel')">
+        <button :title="t('newAgentModal.useTerminal')" :class="{ on: tool === 'terminal' }" @click="tool = 'terminal'">{{ t("newAgentModal.terminal") }}</button>
         <button :title="t('newAgentModal.useClaude')" ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
         <button :title="t('newAgentModal.useCodex')" :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
       </div>
@@ -110,7 +118,7 @@ function onKey(e: KeyboardEvent) {
         </div>
       </template>
 
-      <div class="grid">
+      <div v-if="tool !== 'terminal'" class="grid">
         <label>
           <span class="field-label">{{ t("newAgentModal.model") }}</span>
           <input v-model="model" list="na-models" :placeholder="chosen?.model ? t('newAgentModal.agentModel', { model: chosen.model }) : t('newAgentModal.defaultModel')" spellcheck="false" />
@@ -122,7 +130,7 @@ function onKey(e: KeyboardEvent) {
         </label>
       </div>
 
-      <label class="block">
+      <label v-if="tool !== 'terminal'" class="block">
         <span class="field-label row-label">
           {{ t("newAgentModal.prompt") }} <span class="muted">{{ t("newAgentModal.promptHint") }}</span>
           <select v-if="templates.length" class="tpl" :aria-label="t('newAgentModal.templateLabel')" @change="useTemplate">
@@ -133,10 +141,10 @@ function onKey(e: KeyboardEvent) {
         <textarea v-model="text" rows="4" :placeholder="t('newAgentModal.promptPlaceholder')"></textarea>
       </label>
 
-      <p class="cmd mono">$ {{ command }}</p>
+      <p v-if="tool !== 'terminal'" class="cmd mono">$ {{ command }}</p>
       <div class="row">
         <button :title="t('newAgentModal.cancelTitle')" class="btn lg" @click="close">{{ t("newAgentModal.cancel") }}</button>
-        <button :title="t('newAgentModal.startTitle')" class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">{{ t("newAgentModal.start") }} <kbd>⌘↵</kbd></button>
+        <button :title="t('newAgentModal.startTitle')" class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">{{ tool === "terminal" ? t("newAgentModal.startTerminal") : t("newAgentModal.start") }} <kbd>⌘↵</kbd></button>
       </div>
     </div>
   </div>
