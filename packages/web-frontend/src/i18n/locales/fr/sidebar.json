@@ -9,9 +9,7 @@
   "commitsNotPushed_other": "{count} commits pas encore poussés",
   "sessions_one": "{count} session {kind}",
   "sessions_other": "{count} sessions {kind}",
-  "workspaceFolder": "Dossier du workspace",
   "newWorkspaceTitle": "Créer un nouveau workspace",
-  "newWorkspace": "+ Nouveau workspace",
   "panes": "Panneaux · {workspace}",
   "newPaneName": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
   "paneTitle": "{name} · double-clic pour renommer",
@@ -26,5 +24,6 @@
   "dockTitle": "Ouvrir à côté : le suivre sans quitter l’onglet en cours",
   "hideLabel": "Masquer {name}",
   "hideTitle": "Masquer jusqu’au prochain changement",
-  "remoteControlBadge": "RC"
+  "remoteControlBadge": "RC",
+  "chooseWorkspaceFolder": "Choisir le dossier du nouveau workspace"
 }

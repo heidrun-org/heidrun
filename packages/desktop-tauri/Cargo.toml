@@ -30,3 +30,4 @@ qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 if-addrs = "0.15"
 # Deleting from the file explorer goes to the macOS Trash
 trash = "5"
+tauri-plugin-dialog = "2"

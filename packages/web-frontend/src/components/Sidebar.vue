@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import {
   allPanes,
   answerChoice,
@@ -26,6 +26,8 @@ import { useReorder } from "../lib/reorder";
 import { git } from "../stores/git";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { homeDir } from "@tauri-apps/api/path";
 import { t } from "../i18n/index";
 
 function summary(p: AgentInfo): string {
@@ -55,21 +57,28 @@ const firstQuiet = computed(() => workspaces.value.findIndex((w) => !agentsIn(w.
 
 const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
 
-const creating = ref(false);
-const newPath = ref("");
 async function createWorkspace() {
-  const path = newPath.value.trim();
-  const label = path ? path.split("/").filter(Boolean).pop() ?? null : null;
-  await newWorkspace(path || null, label);
-  creating.value = false;
-  newPath.value = "";
+  const path = await openDialog({
+    directory: true,
+    multiple: false,
+    title: t("sidebar.chooseWorkspaceFolder"),
+    defaultPath: await homeDir(),
+  });
+  if (path === null) {
+    return;
+  }
+  const label = path.split("/").filter(Boolean).pop() ?? null;
+  await newWorkspace(path, label);
 }
 </script>
 
 <template>
   <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
     <section class="group tight">
-      <div class="eyebrow pad">{{ t("sidebar.workspaces") }}</div>
+      <div class="eyebrow pad heading">
+        <span>{{ t("sidebar.workspaces") }}</span>
+        <button class="add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace">+</button>
+      </div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
         <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
         <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
@@ -118,11 +127,6 @@ async function createWorkspace() {
           <span class="count">{{ paneCount(w.workspace_id) }}</span>
         </button>
       </template>
-      <form v-if="creating" class="create" @submit.prevent="createWorkspace">
-        <label class="sr" for="ws-path">{{ t("sidebar.workspaceFolder") }}</label>
-        <input id="ws-path" v-model="newPath" class="mono" placeholder="~/Projects/…" autofocus @keydown.esc="creating = false" />
-      </form>
-      <button :title="t('sidebar.newWorkspaceTitle')" v-else class="item dashed" @click="creating = true">{{ t("sidebar.newWorkspace") }}</button>
     </section>
 
     <section class="group tight">
@@ -206,6 +210,12 @@ async function createWorkspace() {
 .group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
+.heading { display: flex; align-items: center; justify-content: space-between; }
+.add {
+  width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent;
+  color: var(--muted); font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+.add:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
@@ -259,7 +269,6 @@ async function createWorkspace() {
 .item.editing { background: var(--hover); padding-right: 4px; }
 .item:hover { background: var(--hover-soft); }
 .item.active { background: var(--hover); color: var(--text); }
-.item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: var(--muted-2); font-size: 12px; }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc {
   font: 600 9.5px var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
@@ -279,9 +288,4 @@ async function createWorkspace() {
 .item.quiet .dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
 .key { font: 400 10.5px var(--mono); color: var(--faint); opacity: 0; transition: opacity 0.15s; }
 .item:hover .key, .item.active .key { opacity: 1; }
-.create input {
-  width: 100%; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong);
-  background: var(--field); outline: none; font-size: 12px;
-}
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
