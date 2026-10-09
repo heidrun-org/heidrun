@@ -1,0 +1,23 @@
+{
+  "title": "Edit templates",
+  "close": "Close",
+  "template": "Template",
+  "newOption": "New template",
+  "newTitle": "Clear the fields to write a new template",
+  "new": "New",
+  "project": "project",
+  "labelField": "Title",
+  "description": "Description",
+  "text": "Text",
+  "variablesTitle": "Variables replaced when the template is inserted",
+  "inProject": "Keep in the project (.heidrun.json)",
+  "delete": "Delete this template",
+  "deleteConfirm": "Delete",
+  "discard": "Discard",
+  "discardTitle": "Go back to the saved values",
+  "save": "Save",
+  "textRequired": "Write the text of the template first",
+  "saved": "Template saved",
+  "addedToProject": "Template added to the project (.heidrun.json)",
+  "deleteLabel": "Delete"
+}

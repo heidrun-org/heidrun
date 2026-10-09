@@ -82,10 +82,6 @@
     "groupKey": "group.input",
     "items": [
       {
-        "keys": "↵",
-        "actionKey": "action.send"
-      },
-      {
         "keys": "⇧↵ / ⌥↵",
         "actionKey": "action.newLine"
       },

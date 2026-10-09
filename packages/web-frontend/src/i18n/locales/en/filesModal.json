@@ -108,7 +108,7 @@
   "copyPath": "⧉ Path",
   "finderTitle": "Show in the Finder",
   "vscodeTitle": "Open in VS Code",
-  "sendToAgentTitle": "Puts @path in the input bar of the agent",
+  "sendToAgentTitle": "Writes @path in the terminal of the selected pane",
   "sendToAgent": "→ Agent",
   "gitDiffHead": "Changes since the last commit (saved on the disk)",
   "closeDiffTitle": "Close the diff",

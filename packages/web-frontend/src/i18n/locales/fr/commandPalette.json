@@ -4,7 +4,7 @@
   "runInPane": "Lancer dans {pane}",
   "runAndNotify": "Lancer et me notifier à la fin",
   "section.prompts": "Consignes",
-  "promptHint": "dans la saisie",
+  "promptHint": "insérée dans le panneau",
   "section.recent": "Récentes",
   "section.goTo": "Aller à",
   "terminalHint": "terminal",

@@ -24,7 +24,7 @@ import { statusLabel, paneName } from "../lib/format";
 import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
 import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
-import { fillInput } from "../stores/input";
+import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
@@ -68,7 +68,7 @@ const items = computed<Item[]>(() => {
       section: t("commandPalette.section.prompts"),
       label: prompt.label,
       hint: t("commandPalette.promptHint"),
-      run: async () => fillInput(await resolvePrompt(prompt.text, selectedPane.value?.pane_id ?? null)),
+      run: async () => insertIntoFocusedPane(await resolvePrompt(prompt.text, selectedPane.value?.pane_id ?? null)),
     });
   }
 
