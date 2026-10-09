@@ -3,7 +3,7 @@
   "default.handoverNote": "Handover note",
   "default.progress": "Where are you?",
   "default.explainSelection": "Explain the selection",
-  "saveFailed": "Cannot save .heidrun.json",
+  "saveFailed": "Cannot save .heidrun/config.json",
   "default.reviewMergeRequestDescription": "Security, bugs, tests, summary",
   "default.handoverNoteDescription": "Commit, then write what is done and what remains",
   "default.progressDescription": "Five lines on what is done and what remains",

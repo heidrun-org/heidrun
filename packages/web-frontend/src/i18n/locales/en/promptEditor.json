@@ -10,7 +10,7 @@
   "description": "Description",
   "text": "Text",
   "variablesTitle": "Variables replaced when the template is inserted",
-  "inProject": "Keep in the project (.heidrun.json)",
+  "inProject": "Keep in the project (.heidrun/config.json)",
   "delete": "Delete this template",
   "deleteConfirm": "Delete",
   "discard": "Discard",
@@ -18,6 +18,6 @@
   "save": "Save",
   "textRequired": "Write the text of the template first",
   "saved": "Template saved",
-  "addedToProject": "Template added to the project (.heidrun.json)",
+  "addedToProject": "Template added to the project (.heidrun/config.json)",
   "deleteLabel": "Delete"
 }

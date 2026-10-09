@@ -5,25 +5,14 @@ import { moveId } from "../lib/reorder";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
+import { parseProjectConfig, type Action, type ProjectConfig } from "../lib/project_config";
 
-export interface Action {
-  id: string;
-  label: string;
-  command: string;
-  /** Optional sub-folder, relative to the project root. */
-  cwd?: string;
-}
+export type { Action };
 
 export interface Detected {
   label: string;
   command: string;
   source: string;
-}
-
-interface ProjectConfig {
-  version: number;
-  actions: Action[];
-  [key: string]: unknown;
 }
 
 interface Project {
@@ -40,6 +29,8 @@ export interface RecentRun {
   command: string;
   at: number;
 }
+
+const CONFIG_PATH = ".heidrun/config.json";
 
 // History and suggestion order are personal: kept on this Mac, not in the repo.
 // Keyed by project root, so they follow the project rather than a workspace id.
@@ -96,19 +87,26 @@ export async function loadProject(workspaceId: string) {
   if (!cwd) return;
   try {
     const p = await invoke<Project>("project_load", { cwd });
-    if (!Array.isArray(p.config.actions)) p.config.actions = [];
+    p.config = parseProjectConfig(p.config);
     project.byWorkspace[workspaceId] = p;
     project.errors[workspaceId] = undefined;
   } catch (e) {
-    project.errors[workspaceId] = String(e);
+    project.errors[workspaceId] = t("projectStore.invalidConfig", { path: CONFIG_PATH, reason: String(e instanceof Error ? e.message : e) });
   }
 }
 
 export async function saveProject(workspaceId: string): Promise<boolean> {
   const p = project.byWorkspace[workspaceId];
   if (!p) return false;
+  let config: ProjectConfig;
   try {
-    await invoke("project_save", { root: p.root, config: p.config });
+    config = parseProjectConfig(p.config);
+  } catch (e) {
+    toast(t("projectStore.invalidConfig", { path: CONFIG_PATH, reason: String(e instanceof Error ? e.message : e) }));
+    return false;
+  }
+  try {
+    await invoke("project_save", { root: p.root, config });
     return true;
   } catch (e) {
     toast(String(e));
@@ -155,7 +153,7 @@ export function clearRecent(workspaceId: string) {
   if (p) delete local.recent[p.root];
 }
 
-/** Drag and drop in the saved actions: the order is written to .heidrun.json. */
+/** Drag and drop in the saved actions: the order is written to .heidrun/config.json. */
 export async function moveAction(workspaceId: string, id: string, at: number) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;

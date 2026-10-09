@@ -1,6 +1,7 @@
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { checkCommand, type ProjectGuards } from "../lib/guards";
+import { parseProjectConfig } from "../lib/project_config";
 import { t } from "../i18n/index";
 
 /** The confirmation window shown before a dangerous command. */
@@ -16,16 +17,16 @@ export const danger = reactive({
 const cache = new Map<string, Promise<ProjectGuards | "unreadable" | null>>();
 
 /**
- * `guards` section of the project's .heidrun.json (cached a minute).
- * "unreadable": the file exists but is not valid JSON — its blocking rules
+ * `guards` section of the project's .heidrun/config.json (cached a minute).
+ * "unreadable": the file exists but is not valid JSON or does not follow the schema — its blocking rules
  * cannot be applied, so every command asks for confirmation.
  */
 function projectGuards(cwd: string | null | undefined): Promise<ProjectGuards | "unreadable" | null> {
   if (!cwd) return Promise.resolve(null);
   let p = cache.get(cwd);
   if (!p) {
-    p = invoke<{ config: { guards?: ProjectGuards } }>("project_load", { cwd })
-      .then((r) => r.config?.guards ?? null)
+    p = invoke<{ config: unknown }>("project_load", { cwd })
+      .then((r) => parseProjectConfig(r.config).guards ?? null)
       .catch(() => "unreadable" as const);
     cache.set(cwd, p);
     window.setTimeout(() => cache.delete(cwd), 60_000);

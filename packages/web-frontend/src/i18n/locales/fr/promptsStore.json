@@ -3,7 +3,7 @@
   "default.handoverNote": "Note de reprise",
   "default.progress": "Où en es-tu ?",
   "default.explainSelection": "Explique la sélection",
-  "saveFailed": "Enregistrement de .heidrun.json impossible",
+  "saveFailed": "Enregistrement de .heidrun/config.json impossible",
   "default.reviewMergeRequestDescription": "Sécurité, bugs, tests, résumé",
   "default.handoverNoteDescription": "Commite, puis écris ce qui est fait et ce qui reste",
   "default.progressDescription": "Cinq lignes sur ce qui est fait et ce qui reste",
