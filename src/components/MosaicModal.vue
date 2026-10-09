@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { mosaic } from "../stores/mosaic";
 import { allPanes, paneFullName, selectPane } from "../stores/session";
@@ -90,6 +90,15 @@ const isShown = (t: Transcript) => {
 };
 const title = (t: Transcript) => (t.id === "main" ? "main" : t.agent_type || listName(t) || t.id.slice(0, 8));
 const active = (t: Transcript) => Date.now() / 1000 - t.modified < 90;
+/** At work: the main thread, a journal written lately, or still in Claude's agent list. */
+const working = (t: Transcript) => t.id === "main" || active(t) || listName(t) != null;
+const workingCount = computed(() => tiles.value.filter(working).length);
+// Tiles that appear on "Tous" show their latest lines, like the others.
+watch(
+  () => settings.mosaicActiveOnly,
+  () => nextTick(() => el.value?.querySelectorAll<HTMLElement>(".lines").forEach((n) => (n.scrollTop = n.scrollHeight))),
+);
+const shownTiles = computed(() => (settings.mosaicActiveOnly ? tiles.value.filter(working) : tiles.value));
 
 async function show(t: Transcript) {
   const p = pane.value;
@@ -129,14 +138,19 @@ function onKey(e: KeyboardEvent) {
           <div class="eyebrow">Mosaïque</div>
           <h2>{{ pane ? paneFullName(pane) : "" }}</h2>
         </div>
+        <div class="seg" role="radiogroup" aria-label="Agents affichés" @keydown.left.prevent="settings.mosaicActiveOnly = true" @keydown.right.prevent="settings.mosaicActiveOnly = false">
+          <button role="radio" :aria-checked="settings.mosaicActiveOnly" :class="{ on: settings.mosaicActiveOnly }" title="Le fil principal, les agents qui écrivent encore ou présents dans la liste de Claude" @click="settings.mosaicActiveOnly = true">Actifs <span class="n">{{ workingCount }}</span></button>
+          <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" title="Tous les agents de la session, terminés compris" @click="settings.mosaicActiveOnly = false">Tous <span class="n">{{ tiles.length }}</span></button>
+        </div>
         <span class="hint">Lecture seule, d’après les journaux de Claude · un clic affiche l’agent dans le terminal</span>
         <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
       </header>
       <div v-if="!loaded" class="empty">Lecture des journaux…</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
       <div v-else class="grid" :style="{ fontSize: `${Math.max(10, settings.codeFontSize - 1)}px` }">
+        <div v-if="!shownTiles.length" class="empty">Aucun agent actif. <button class="link" @click="settings.mosaicActiveOnly = false">Voir tous les agents</button></div>
         <button
-          v-for="t in tiles"
+          v-for="t in shownTiles"
           :key="t.id"
           class="tile"
           :class="{ shown: isShown(t), off: !listName(t) }"
@@ -169,6 +183,12 @@ function onKey(e: KeyboardEvent) {
 header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .eyebrow { color: var(--question); }
 h2 { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
+.seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; margin-left: 8px; }
+.seg button { color: var(--muted); font-size: 12px; padding: 3px 10px; border-radius: 6px; }
+.seg button.on { background: var(--hover); color: var(--text); }
+.seg .n { margin-left: 3px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.link { color: var(--accent); font-size: 13px; cursor: pointer; }
+.grid > .empty { grid-column: 1 / -1; }
 .hint { margin-left: auto; font-size: 11.5px; color: var(--muted); }
 .close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: 18px; }
 .close:hover { background: var(--hover); color: var(--text); }

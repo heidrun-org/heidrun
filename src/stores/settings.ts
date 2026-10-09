@@ -85,6 +85,8 @@ const defaults = {
   filesMdRead: true,
   /** Show the diff before each save in the editor. */
   filesDiffBeforeSave: false,
+  /** Mosaic: only the agents at work (main, recent journal, or in Claude's list). */
+  mosaicActiveOnly: true,
   /** Monthly budget per workspace (label → USD); alert at 80 % and 100 %. */
   budgets: {} as Record<string, number>,
   dockWidth: 560,
