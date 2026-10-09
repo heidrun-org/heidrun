@@ -256,12 +256,7 @@ For a named session, start the app with `HERDR_SESSION=<name>`.
 
 ## Next steps
 
-The first 14 issues are done; #15 to #17 (explorer, editing, search and file management) too. For the following ones: each is detailed in `docs/issues/` (context, expected behavior, technical leads, acceptance criteria) and becomes a GitLab issue with:
-
-```sh
-sh scripts/create-gitlab-issues.sh --dry-run          # preview
-sh scripts/create-gitlab-issues.sh --create-project   # creates didheclick/herdr-desk, pushes, opens the issues
-```
+The first 14 issues are done; #15 to #17 (explorer, editing, search and file management) too.
 
 Issue templates for what comes next: `.gitlab/issue_templates/` (Feature, Bug).
 
