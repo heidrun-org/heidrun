@@ -167,5 +167,5 @@ footer :deep(.confirm) {
   width: 36px; height: 36px; border-radius: 10px; font-size: 16px; color: var(--blocked);
   border: none; background: transparent;
 }
-footer :deep(.confirm:hover) { background: var(--hover); color: var(--blocked); }
+footer :deep(.confirm:hover) { background: var(--blocked); color: #fff; }
 </style>
