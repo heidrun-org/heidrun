@@ -4,3 +4,4 @@ packages/desktop-tauri/target
 packages/desktop-tauri/gen
 .DS_Store
 *.log
+packages/website_public/docs/.vitepress/cache
