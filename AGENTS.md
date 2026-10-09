@@ -34,7 +34,13 @@ The Issue Fix Completion starts when the developer is satisfied with the change.
 
 ### Creating an issue
 
-When you create an issue and you have screenshots related to the issue, attach the screenshots to the issue with the `--attach` flag of the `gh` command. The flag takes a file path, and an optional alt text after `#`. Repeat the flag to attach several files.
+Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
+
+### Attaching an image to an issue
+
+Attach every screenshot, image, or video related to an issue with the `--attach` flag of the `gh` command. The flag uploads the file to GitHub and adds it to the issue. The flag takes a file path, and an optional alt text after `#`. Repeat the flag to attach several files, up to 50 files per command.
 
 - When you create the issue: `gh issue create --title "<title>" --body "<body>" --attach './screenshot.png#Alt text'`
 - When the issue already exists: `gh issue edit <issue number> --attach './screenshot.png#Alt text'`
+
+Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
