@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import FontMenu from "./FontMenu.vue";
 import Icon from "./Icon.vue";
+import ThemeMenu from "./ThemeMenu.vue";
 import { counts, state } from "../stores/session";
 import { settings } from "../stores/settings";
 import { mobile } from "../stores/mobile";
@@ -44,6 +45,7 @@ import { mobile } from "../stores/mobile";
       <Icon name="phone" />
     </button>
     <button class="icon-btn help" aria-label="Raccourcis" title="Raccourcis (⌘/)" @click="state.shortcutsOpen = true">?</button>
+    <ThemeMenu />
     <FontMenu />
     <button
       class="icon-btn"
@@ -77,7 +79,7 @@ import { mobile } from "../stores/mobile";
   color: var(--muted); font-size: 12px; overflow: hidden; white-space: nowrap;
 }
 .search kbd { font-family: var(--mono); color: var(--faint); }
-.counts { display: flex; gap: 12px; font-size: 12px; color: #9aa0a6; white-space: nowrap; }
+.counts { display: flex; gap: 12px; font-size: 12px; color: var(--muted-2); white-space: nowrap; }
 .counts > span { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
   width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--line-strong);

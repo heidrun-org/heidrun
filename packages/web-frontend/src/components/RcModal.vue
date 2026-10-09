@@ -87,7 +87,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .scrim { position: fixed; inset: 0; z-index: 46; background: rgba(5, 6, 7, 0.55); display: flex; align-items: center; justify-content: center; }
 .win {
   width: min(600px, calc(100vw - 40px)); display: flex; flex-direction: column; gap: 14px; padding: 18px 20px 20px;
-  border-radius: 14px; border: 1px solid #33383e; background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
+  border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
 }
 header { display: flex; align-items: flex-start; justify-content: space-between; }
 h2 { margin: 4px 0 0; font-size: 16px; font-weight: 600; }

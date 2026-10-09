@@ -103,15 +103,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .overlay { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
 .modal {
   outline: none; width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid #33383e; box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
 }
 .top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.ref { color: #c29bf0; font-size: 13px; }
-.label { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #1f2730; color: var(--text-2); }
-.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; background: #1d2024; color: var(--text-2); }
-.chip.ok { background: #132a1c; color: var(--ok); } .chip.merged { background: #24193a; color: #c29bf0; }
-.chip.crit { background: #301817; color: var(--blocked); } .chip.muted { color: var(--muted); }
+.ref { color: var(--question); font-size: 13px; }
+.label { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--text-2); }
+.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; background: var(--chip); color: var(--text-2); }
+.chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.merged { background: var(--tint-merged); color: var(--question); }
+.chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.muted { color: var(--muted); }
 .tools { display: flex; align-items: center; gap: 8px; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
 .seg button { border: none; background: transparent; color: var(--muted); font-size: 12px; padding: 4px 10px; border-radius: 6px; }
@@ -124,7 +124,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .meta { color: var(--muted); font-size: 0.85em; }
 .comments { margin-top: 2em; }
 .count { color: var(--muted); font-weight: 400; font-size: 0.8em; }
-.comment { border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; background: rgba(255, 255, 255, 0.02); }
+.comment { border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 16px; margin-bottom: 12px; background: rgba(var(--wash), 0.02); }
 .c-head { font-size: 0.85em; margin-bottom: 4px; }
 .c-body :deep(p:last-child) { margin-bottom: 0; }
 .empty { padding: 24px; color: var(--muted); }

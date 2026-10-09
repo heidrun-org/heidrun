@@ -205,7 +205,7 @@ async function createWorkspace() {
 .group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
-.card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: #121821; }
+.card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
   border: none; background: transparent; border-radius: 10px;
@@ -214,16 +214,16 @@ async function createWorkspace() {
   position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
-.card-x:hover, .card-dock:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.card-x:hover, .card-dock:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card-dock {
   position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: 13px;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-dock.on { color: var(--accent); }
-.card.blocked { border-color: #5c2826; background: #201313; }
+.card.blocked { border-color: #5c2826; background: var(--tint-err); }
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {
-  margin: 0 0 2px; padding: 6px 8px; border-radius: 6px; background: #170f0f; color: var(--text-2);
+  margin: 0 0 2px; padding: 6px 8px; border-radius: 6px; background: var(--tint-err); color: var(--text-2);
   font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 84px; overflow: hidden;
 }
 .choice-q { font-size: 11.5px; color: var(--text-2); margin: 0 2px 2px; }
@@ -235,7 +235,7 @@ async function createWorkspace() {
 .choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: #4a2523; color: var(--blocked);
   font: 600 11px var(--mono); display: inline-flex; align-items: center; justify-content: center; }
 .choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card.question { border-color: #4a3866; background: #1a1622; }
+.card.question { border-color: #4a3866; background: var(--tint-merged); }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { flex-shrink: 0; }
@@ -256,21 +256,21 @@ async function createWorkspace() {
 .item.drop-before::before { top: -1px; }
 .item.drop-after::after { bottom: -1px; }
 .item.editing { background: var(--hover); padding-right: 4px; }
-.item:hover { background: #181b1e; }
+.item:hover { background: var(--hover-soft); }
 .item.active { background: var(--hover); color: var(--text); }
-.item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: #9aa0a6; font-size: 12px; }
+.item.dashed { margin-top: 4px; border: 1px dashed var(--line-strong); color: var(--muted-2); font-size: 12px; }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc {
   font: 600 9.5px var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
-  background: #13282a; color: var(--working);
+  background: var(--tint-working); color: var(--working);
 }
 .count, .status { font-size: 11px; color: var(--muted); }
 /* Workspaces with an agent session vs. plain shells or nothing running. */
-.git-ahead { flex-shrink: 0; font: 600 10.5px var(--mono); color: #f2a93b; }
+.git-ahead { flex-shrink: 0; font: 600 10.5px var(--mono); color: var(--accent); }
 .ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
 .agent-tag {
   flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
-  display: inline-flex; align-items: center; background: #1e2329; color: var(--text-2); letter-spacing: 0.2px;
+  display: inline-flex; align-items: center; background: var(--chip); color: var(--text-2); letter-spacing: 0.2px;
 }
 .agent-tag.claude { background: rgba(217, 119, 87, 0.14); color: #e3a083; }
 .agent-tag.codex { background: rgba(110, 168, 254, 0.13); color: #9cc3ff; }

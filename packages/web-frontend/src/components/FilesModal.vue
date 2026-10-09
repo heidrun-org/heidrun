@@ -34,6 +34,7 @@ import CodeEditor from "./CodeEditor.vue";
 import { diffLines } from "diff";
 import { allPanes } from "../stores/session";
 import { settings } from "../stores/settings";
+import { codeThemeClass } from "../stores/theme";
 import { toast } from "../stores/session";
 import { fillInput } from "../stores/input";
 import { CODE_THEMES, highlightFile, languageFor } from "../lib/highlight";
@@ -732,7 +733,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <button class="tb accent" title="Insère @chemin dans la barre de saisie de l’agent" @click="sendToAgent">→ Agent</button>
             </div>
           </div>
-          <div v-if="gitDiff" class="diff code" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
+          <div v-if="gitDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
             <div class="diff-head">
               <span>Changements depuis le dernier commit (enregistrés sur le disque)</span>
               <button title="Close the diff" class="tb" @click="gitDiff = null">Fermer</button>
@@ -757,7 +758,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               </template>
             </div>
             <div v-else-if="agentBusy" class="banner info">Un agent travaille dans ce projet : il peut modifier ce fichier en même temps (l’app te préviendra).</div>
-            <div v-if="showDiff" class="diff code" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
+            <div v-if="showDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
               <div class="diff-head">
                 <span>{{ showDiff === "conflict" ? "Disque (−) → ma version (+)" : "Ouvert (−) → ma version (+)" }}</span>
                 <template v-if="showDiff === 'beforeSave'">
@@ -769,11 +770,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
               <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">Aucune différence.</div>
             </div>
-            <div class="code editing" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
+            <div class="code editing" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
               <CodeEditor :key="files.root + files.active" :path="files.active!" :text="edit.original === edit.current ? edit.original : edit.current" :wrap="settings.codeWrap" :line="files.line" @change="onEditorChange" @save="save()" />
             </div>
           </template>
-          <div v-else ref="codeEl" class="code" :class="[settings.codeTheme, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
+          <div v-else ref="codeEl" class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
             <div v-if="!files.active" class="empty">Choisis un fichier à gauche, ou ⌘P pour le chercher par son nom.</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading" class="empty">Chargement…</div>
@@ -871,7 +872,7 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .md-doc { padding: 24px 36px 60px; }
 .empty { padding: 24px; color: var(--muted); font-family: var(--sans); font-size: 13px; }
 .err { color: var(--fail); }
-.selbar { position: absolute; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 9px; background: #1b1e22; border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); font-family: var(--sans); font-size: 12px; }
+.selbar { position: absolute; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); font-family: var(--sans); font-size: 12px; }
 .tb:disabled { opacity: 0.45; cursor: default; }
 .tb.on { border-color: var(--done); color: var(--text); }
 .tb.edit { color: var(--text); }
@@ -879,8 +880,8 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .tb.danger { color: var(--blocked); }
 .tab-x.dirty { color: var(--text); font-size: 11px; }
 .banner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; font-size: 12.5px; border-bottom: 1px solid var(--line); }
-.banner.warn { background: #2b2213; color: #f6c06a; }
-.banner.info { background: #12202e; color: var(--text-2); }
+.banner.warn { background: var(--tint-warn); color: #f6c06a; }
+.banner.info { background: var(--tint-done); color: var(--text-2); }
 .code.editing { overflow: hidden; }
 .diff { flex: 0 0 auto; max-height: 45%; overflow: auto; border-bottom: 1px solid var(--line); white-space: pre; font-family: var(--mono); }
 .diff-head { position: sticky; top: 0; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel); font-family: var(--sans); font-size: 12px; color: var(--text-2); }
@@ -914,7 +915,7 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .n-tools { display: flex; gap: 6px; }
 .row.ctx { background: var(--hover); }
 .hint-row { padding: 10px 12px; font-size: 11px; }
-.ctxmenu { position: absolute; z-index: 5; min-width: 200px; padding: 4px; border-radius: 9px; background: #1b1e22; border: 1px solid var(--line-strong); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; }
+.ctxmenu { position: absolute; z-index: 5; min-width: 200px; padding: 4px; border-radius: 9px; background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; }
 .ctxmenu .cm-title { padding: 4px 8px 6px; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 1px solid var(--line); margin-bottom: 3px; }
 .ctxmenu button { text-align: left; padding: 6px 8px; border-radius: 6px; font-size: 12.5px; color: var(--text); }
 .ctxmenu button:hover { background: var(--hover); }

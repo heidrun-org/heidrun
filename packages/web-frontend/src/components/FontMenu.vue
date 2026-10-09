@@ -102,7 +102,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 .icon-btn:hover, .icon-btn.on { background: var(--hover); color: var(--text); }
 .menu {
   position: absolute; right: 0; top: 38px; width: 300px; z-index: 30; padding: 14px; border-radius: 12px;
-  border: 1px solid #33383e; background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
   display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 80px); overflow-y: auto;
 }
 select {

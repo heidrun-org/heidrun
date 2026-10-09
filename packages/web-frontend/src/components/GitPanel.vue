@@ -160,15 +160,15 @@ async function askReview(ref: string, url: string, title: string) {
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
   height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
-  background: #1d2024; color: var(--text-2); border: none;
+  background: var(--chip); color: var(--text-2); border: none;
 }
 .chip.sm { height: 18px; font-size: 10.5px; padding: 0 7px; }
-.chip.ok { background: #132a1c; color: var(--ok); }
-.chip.warn { background: #2b2213; color: #f2a93b; }
-.chip.crit { background: #301817; color: var(--blocked); }
-.chip.pending { background: #13282a; color: var(--working); }
+.chip.ok { background: var(--tint-ok); color: var(--ok); }
+.chip.warn { background: var(--tint-warn); color: var(--accent); }
+.chip.crit { background: var(--tint-crit); color: var(--blocked); }
+.chip.pending { background: var(--tint-working); color: var(--working); }
 .chip.muted { color: var(--muted); }
-.chip.merged { background: #24193a; color: #c29bf0; }
+.chip.merged { background: var(--tint-merged); color: var(--question); }
 .req-top { flex-wrap: wrap; }
 .recent-h { margin-top: 10px; }
 .recent { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; margin: 0 -6px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: 12px; }
@@ -186,17 +186,17 @@ button.chip { cursor: pointer; }
 .head-tools { display: flex; gap: 12px; }
 .more { font-size: 12px; color: var(--done); }
 .st { width: 16px; flex-shrink: 0; font: 600 11px var(--mono); text-align: center; }
-.st.mod { color: #f2a93b; } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked); } .st.ren { color: var(--done); } .st.conf { color: var(--blocked); }
+.st.mod { color: var(--accent); } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked); } .st.ren { color: var(--done); } .st.conf { color: var(--blocked); }
 .path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
 .req { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); }
 .req.mine { box-shadow: inset 0 0 0 1px #33506f; }
 .req-main { display: flex; flex-direction: column; gap: 4px; border: none; background: none; padding: 0; text-align: left; color: var(--text); }
 .req-top { display: flex; gap: 8px; align-items: center; }
-.ref { color: #c29bf0; font-size: 12px; }
+.ref { color: var(--question); font-size: 12px; }
 .req-title { font-size: 12.5px; font-weight: 500; }
 .req .muted { font-size: 11px; }
 .req-actions { display: flex; gap: 14px; }
-.merge.ready { color: #c29bf0; }
+.merge.ready { color: var(--question); }
 .merge.ready:hover { color: #d6b8f6; }
 .err { font-size: 12px; color: var(--fail); }
 .muted { font-size: 12px; color: var(--muted); }

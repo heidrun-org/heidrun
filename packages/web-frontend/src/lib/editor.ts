@@ -24,30 +24,32 @@ const style = HighlightStyle.define([
   { tag: [t.invalid], color: "var(--blocked)" },
 ]);
 
-const theme = EditorView.theme(
-  {
+const themeRules = {
     "&": { height: "100%", backgroundColor: "var(--c-bg)", color: "var(--c-fg)" },
     ".cm-scroller": { fontFamily: "var(--mono)", lineHeight: "1.55" },
     ".cm-gutters": { backgroundColor: "var(--c-bg)", color: "var(--c-gutter)", border: "none" },
-    ".cm-activeLineGutter": { backgroundColor: "rgba(255,255,255,0.04)" },
-    ".cm-activeLine": { backgroundColor: "rgba(255,255,255,0.035)" },
-    ".cm-content": { caretColor: "#e8e6e1" },
-    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "#e8e6e1" },
+    ".cm-activeLineGutter": { backgroundColor: "var(--editor-active-line)" },
+    ".cm-activeLine": { backgroundColor: "var(--editor-active-line)" },
+    ".cm-content": { caretColor: "var(--editor-caret)" },
+    ".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--editor-caret)" },
     "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection": { backgroundColor: "rgba(110,168,254,0.28) !important" },
     ".cm-selectionMatch": { backgroundColor: "rgba(110,168,254,0.14)" },
     ".cm-matchingBracket": { backgroundColor: "rgba(126,198,153,0.22)", outline: "none" },
     ".cm-searchMatch": { backgroundColor: "rgba(242,169,59,0.25)" },
     ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "rgba(242,169,59,0.5)" },
-    ".cm-panels": { backgroundColor: "#16181b", color: "#e8e6e1", borderTop: "1px solid #2a2e33" },
+    ".cm-panels": { backgroundColor: "var(--field)", color: "var(--text)", borderTop: "1px solid var(--line-strong)" },
     ".cm-panel input, .cm-panel button": { fontSize: "12px" },
-    ".cm-textfield": { backgroundColor: "#0b0c0e", border: "1px solid #2a2e33", color: "#e8e6e1", borderRadius: "5px" },
-    ".cm-button": { backgroundImage: "none", backgroundColor: "#1d2024", border: "1px solid #2a2e33", color: "#e8e6e1", borderRadius: "5px" },
-    ".cm-tooltip": { backgroundColor: "#1b1e22", border: "1px solid #2e3339", color: "#e8e6e1" },
-    ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "#24406a" },
-    ".cm-foldPlaceholder": { backgroundColor: "#1d2024", border: "none", color: "#8e949a" },
-  },
-  { dark: true },
-);
+    ".cm-textfield": { backgroundColor: "var(--bg)", border: "1px solid var(--line-strong)", color: "var(--text)", borderRadius: "5px" },
+    ".cm-button": { backgroundImage: "none", backgroundColor: "var(--chip)", border: "1px solid var(--line-strong)", color: "var(--text)", borderRadius: "5px" },
+    ".cm-tooltip": { backgroundColor: "var(--raised)", border: "1px solid var(--line-modal)", color: "var(--text)" },
+    ".cm-tooltip-autocomplete ul li[aria-selected]": { backgroundColor: "var(--sel)" },
+    ".cm-foldPlaceholder": { backgroundColor: "var(--chip)", border: "none", color: "var(--muted)" },
+};
+
+/** Editor theme; `dark` switches the built-in CodeMirror base colours. */
+function themeFor(dark: boolean): Extension {
+  return EditorView.theme(themeRules, { dark });
+}
 
 /** Language of a file, by its name (lazy: only the one needed is loaded). */
 async function languageFor(path: string): Promise<LanguageSupport | Extension | null> {
@@ -96,6 +98,7 @@ export interface Editor {
   /** Replaces only the part that differs: the cursor and the scroll stay put. */
   replaceKeepingCursor(text: string): void;
   setWrap(on: boolean): void;
+  setDark(dark: boolean): void;
   focus(): void;
   goToLine(line: number): void;
   destroy(): void;
@@ -103,10 +106,11 @@ export interface Editor {
 
 export async function createEditor(
   parent: HTMLElement,
-  opts: { text: string; path: string; wrap: boolean; onChange: (text: string) => void; onSave: () => void },
+  opts: { text: string; path: string; wrap: boolean; dark: boolean; onChange: (text: string) => void; onSave: () => void },
 ): Promise<Editor> {
   const wrap = new Compartment();
   const lang = new Compartment();
+  const colors = new Compartment();
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -118,7 +122,7 @@ export async function createEditor(
           indentWithTab,
         ]),
         syntaxHighlighting(style),
-        theme,
+        colors.of(themeFor(opts.dark)),
         wrap.of(opts.wrap ? EditorView.lineWrapping : []),
         lang.of([]),
         EditorView.updateListener.of((u) => {
@@ -148,6 +152,7 @@ export async function createEditor(
       view.dispatch({ changes: { from: start, to: endOld, insert: text.slice(start, endNew) } });
     },
     setWrap: (on) => view.dispatch({ effects: wrap.reconfigure(on ? EditorView.lineWrapping : []) }),
+    setDark: (dark) => view.dispatch({ effects: colors.reconfigure(themeFor(dark)) }),
     focus: () => view.focus(),
     goToLine: (n) => {
       const line = view.state.doc.line(Math.min(Math.max(1, n), view.state.doc.lines));

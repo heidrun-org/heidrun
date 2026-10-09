@@ -34,7 +34,7 @@ import { clockTime, gaugeLevel } from "../lib/format";
 <style scoped>
 .status {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px;
-  border-top: 1px solid var(--line); background: var(--bar); font-size: 11.5px; color: #9aa0a6;
+  border-top: 1px solid var(--line); background: var(--bar); font-size: 11.5px; color: var(--muted-2);
   white-space: nowrap; overflow: hidden;
 }
 .label { font-weight: 600; color: var(--text-2); }

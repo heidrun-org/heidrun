@@ -66,22 +66,22 @@ async function go() {
   width: min(560px, 100%); padding: 22px; border-radius: 14px; background: var(--panel); border: 1px solid #3a3150;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 10px;
 }
-.eyebrow { color: #c29bf0; }
+.eyebrow { color: var(--question); }
 h2 { margin: 0; font-size: 18px; font-weight: 600; }
 .title { margin: 0; font-size: 13.5px; color: var(--text); }
 .branches { margin: 0; font-size: 12px; color: var(--text-2); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; background: #1d2024; color: var(--text-2); }
-.chip.ok { background: #132a1c; color: var(--ok); } .chip.warn { background: #2b2213; color: #f2a93b; }
-.chip.crit { background: #301817; color: var(--blocked); } .chip.pending { background: #13282a; color: var(--working); }
+.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; background: var(--chip); color: var(--text-2); }
+.chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.warn { background: var(--tint-warn); color: var(--accent); }
+.chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.pending { background: var(--tint-working); color: var(--working); }
 .chip.muted { color: var(--muted); }
-.warn { margin: 0; font-size: 12px; color: #f2a93b; }
+.warn { margin: 0; font-size: 12px; color: var(--accent); }
 .opts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
 select { height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: 12.5px; padding: 0 8px; }
 .check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-2); }
-.check input { accent-color: #c29bf0; }
+.check input { accent-color: var(--question); }
 .hint { margin: 0; font-size: 11.5px; color: var(--muted); }
-.err { margin: 0; padding: 10px 12px; border-radius: 8px; background: #201313; color: var(--fail); font-size: 12px; white-space: pre-wrap; }
+.err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: 12px; white-space: pre-wrap; }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .btn.go { background: #7a4fc2; border-color: transparent; color: #fff; font-weight: 600; }
 .btn.go:hover:not(:disabled) { background: #8a5fd4; }
