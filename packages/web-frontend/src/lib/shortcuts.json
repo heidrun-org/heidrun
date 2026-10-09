@@ -181,11 +181,11 @@
         "action": "Reorder workspaces and tabs"
       },
       {
-        "keys": "⊞",
+        "keys": "bi:pin",
         "action": "Keep an agent alongside, visible whatever the tab"
       },
       {
-        "keys": "▦",
+        "keys": "bi:grid-3x3-gap",
         "action": "Tiles of a Claude session: what each sub-agent is doing"
       },
       {

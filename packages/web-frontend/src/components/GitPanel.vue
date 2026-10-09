@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { askMerge, currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
@@ -57,7 +58,7 @@ async function askReview(ref: string, url: string, title: string) {
           <span class="eyebrow">Dépôt</span>
           <button class="link" :disabled="git.loading" title="Rafraîchir" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
         </header>
-        <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} ↗</button>
+        <button v-if="fg?.base" class="repo" :title="`Ouvrir sur ${forgeLabel}`" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
         <div v-else class="repo plain">{{ repoName }}</div>
         <div class="branch">
           <span class="mono b">{{ st.branch ?? "(détachée)" }}</span>

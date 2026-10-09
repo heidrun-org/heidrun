@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -187,7 +188,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
     <div ref="modalEl" class="modal" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
-          <button v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} ↗</button>
+          <button v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
           <span v-else class="repo plain">{{ repoName }}</span>
           <span v-if="st" class="mono branch">{{ st.branch ?? "(détachée)" }}</span>
           <span v-if="st?.ahead" class="chip warn">↑ {{ st.ahead }}</span>
@@ -196,7 +197,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
         </div>
         <div class="tools">
           <button class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : "Rafraîchir" }}</button>
-          <button class="close" aria-label="Fermer (Échap)" @click="git.modal.open = false">×</button>
+          <button class="close" aria-label="Fermer (Échap)" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
       </header>
 

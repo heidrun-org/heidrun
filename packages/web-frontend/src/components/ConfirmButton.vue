@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { onBeforeUnmount, ref } from "vue";
 
 // Two-step button for destructive actions: the first click arms it, the second confirms.
 // Closing a pane ends the process running in it, so it is worth one extra click.
-const props = defineProps<{ label: string; armedLabel?: string; ariaLabel?: string }>();
+const props = defineProps<{ label?: string; icon?: string; armedLabel?: string; ariaLabel?: string }>();
 const emit = defineEmits<{ confirm: [] }>();
 
 const armed = ref(false);
@@ -28,12 +29,14 @@ onBeforeUnmount(() => window.clearTimeout(timer));
   <button
     class="confirm"
     :class="{ armed }"
-    :aria-label="armed ? `Confirmer : ${props.ariaLabel ?? props.label}` : props.ariaLabel"
+    :aria-label="armed ? `Confirmer : ${props.ariaLabel ?? props.label ?? ''}` : props.ariaLabel"
     :title="armed ? 'Cliquer encore pour confirmer' : props.ariaLabel"
     @mousedown.stop
     @click="click"
   >
-    {{ armed ? props.armedLabel ?? "Fermer ?" : props.label }}
+    <template v-if="armed">{{ props.armedLabel ?? "Fermer ?" }}</template>
+    <Icon v-else-if="props.icon" :name="props.icon" />
+    <template v-else>{{ props.label }}</template>
   </button>
 </template>
 

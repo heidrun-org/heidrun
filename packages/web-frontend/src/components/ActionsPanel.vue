@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, ref, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
@@ -120,9 +121,9 @@ function isRestarting(a: Action) {
             title="Relancer : ctrl+C, puis la même commande dans son onglet"
             @click="restartAction(ws, a)"
           >↻</button>
-          <button v-if="status(a) === 'running'" class="tool" aria-label="Arrêter (ctrl+C)" title="Arrêter (ctrl+C)" @click="stopAction(ws, a)">■</button>
-          <button v-else class="tool" aria-label="Lancer" :title="status(a) === 'finished' ? 'Relancer dans son onglet' : 'Lancer'" @click="runAction(ws, a, true)">▶</button>
-          <ConfirmButton label="×" armed-label="Retirer ?" :aria-label="`Retirer l’action ${a.label}`" @confirm="removeAction(ws, a.id)" />
+          <button v-if="status(a) === 'running'" class="tool" aria-label="Arrêter (ctrl+C)" title="Arrêter (ctrl+C)" @click="stopAction(ws, a)"><Icon name="stop-fill" /></button>
+          <button v-else class="tool" aria-label="Lancer" :title="status(a) === 'finished' ? 'Relancer dans son onglet' : 'Lancer'" @click="runAction(ws, a, true)"><Icon name="play-fill" /></button>
+          <ConfirmButton icon="x-lg" armed-label="Retirer ?" :aria-label="`Retirer l’action ${a.label}`" @confirm="removeAction(ws, a.id)" />
         </div>
       </div>
 
@@ -148,7 +149,7 @@ function isRestarting(a: Action) {
             <span class="mono">{{ r.command }}</span>
             <span class="src">{{ ago(r.at) }}</span>
           </span>
-          <button class="tool" :aria-label="`Relancer ${r.command}`" title="Relancer" @click="runDetected(ws, r)">▶</button>
+          <button class="tool" :aria-label="`Relancer ${r.command}`" title="Relancer" @click="runDetected(ws, r)"><Icon name="play-fill" /></button>
           <button
             v-if="!p.config.actions.some((a) => a.command === r.command)"
             class="tool"
@@ -182,7 +183,7 @@ function isRestarting(a: Action) {
             <span class="mono">{{ d.command }}</span>
             <span class="src">{{ d.source }}</span>
           </span>
-          <button class="tool" :aria-label="`Lancer ${d.command} une fois`" title="Lancer une fois" @click="runDetected(ws, d)">▶</button>
+          <button class="tool" :aria-label="`Lancer ${d.command} une fois`" title="Lancer une fois" @click="runDetected(ws, d)"><Icon name="play-fill" /></button>
           <button class="tool" :aria-label="`Ajouter ${d.command} aux actions`" title="Ajouter aux actions" @click="addAction(ws, d.label, d.command)">+</button>
         </div>
         <button v-if="suggestions.length > 6" class="link" @click="showAllSuggestions = !showAllSuggestions">

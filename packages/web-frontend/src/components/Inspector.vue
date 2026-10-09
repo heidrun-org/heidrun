@@ -157,7 +157,7 @@ const statusText = computed(() => {
 
         <div class="block">
           <div class="title">{{ paneName(p) }}</div>
-          <div class="chip" :class="p.agent ? p.agent_status : 'process'">● {{ statusText }}</div>
+          <div class="chip" :class="p.agent ? p.agent_status : 'process'"><Icon name="circle-fill" /> {{ statusText }}</div>
         </div>
 
         <!-- Approval buttons: keys for Claude Code's menu; Codex accepts Enter / Esc too. -->
@@ -271,7 +271,7 @@ const statusText = computed(() => {
           <template v-if="todaySummary.total">{{ todaySummary.top.map(([w, ms]) => `· ${w} ${hm(ms)}`).join("  ") }}</template>
           <template v-else>pas encore de travail</template>
         </span>
-        <span class="hist-go">Historique ↗</span>
+        <span class="hist-go">Historique <Icon name="box-arrow-up-right" /></span>
       </button>
 
       <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
@@ -296,7 +296,7 @@ const statusText = computed(() => {
             :title="a.pane ? 'Aller à ce panneau' : 'Panneau fermé'"
             @click="a.pane && selectPane(a.pane)"
           >
-            <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)">●</span>
+            <span class="dot-s" :class="'t-' + (a.status === 'closed' ? 'idle' : a.status)"><Icon name="circle-fill" /></span>
             <span class="act-main">
               <span class="act-where">{{ a.where || "—" }}</span>
               <span class="act-who">
@@ -317,7 +317,7 @@ const statusText = computed(() => {
             :aria-label="`Retirer ${a.where || a.kind} de la liste`"
             title="Retirer de la liste"
             @click="dismissRun(a.id)"
-          >×</button>
+          ><Icon name="x-lg" /></button>
         </div>
         <div v-if="!activity.length" class="muted">Ce panneau n’a pas travaillé depuis l’ouverture de l’app.</div>
       </div>

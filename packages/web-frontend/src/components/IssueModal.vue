@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { issueView } from "../stores/issues";
@@ -64,8 +65,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <button :class="{ on: settings.mdWidth === 'center' }" @click="settings.mdWidth = 'center'">Centré</button>
             <button :class="{ on: settings.mdWidth === 'full' }" @click="settings.mdWidth = 'full'">Pleine largeur</button>
           </div>
-          <button v-if="webUrl" class="btn" @click="openUrl(webUrl!)">Ouvrir sur {{ forgeName }} ↗</button>
-          <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
+          <button v-if="webUrl" class="btn" @click="openUrl(webUrl!)">Ouvrir sur {{ forgeName }} <Icon name="box-arrow-up-right" /></button>
+          <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
         </div>
       </header>
 

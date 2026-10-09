@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -167,7 +168,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <div class="seg" role="radiogroup" aria-label="Période">
           <button v-for="[v, l] in ([['today', 'Aujourd’hui'], ['7', '7 jours'], ['30', '30 jours'], ['90', '90 jours'], ['365', '1 an']] as [Period, string][])" :key="v" :class="{ on: period === v }" @click="period = v">{{ l }}</button>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
+        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="filters">
         <select v-model="ws" aria-label="Workspace">

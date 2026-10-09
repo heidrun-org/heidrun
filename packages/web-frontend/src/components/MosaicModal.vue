@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { mosaic } from "../stores/mosaic";
@@ -143,7 +144,7 @@ function onKey(e: KeyboardEvent) {
           <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" title="Tous les agents de la session, terminés compris" @click="settings.mosaicActiveOnly = false">Tous <span class="n">{{ tiles.length }}</span></button>
         </div>
         <span class="hint">Lecture seule, d’après les journaux de Claude · un clic affiche l’agent dans le terminal</span>
-        <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
+        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div v-if="!loaded" class="empty">Lecture des journaux…</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>

@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
 const groups = JSON.parse(readFileSync(new URL("packages/web-frontend/src/lib/shortcuts.json", root), "utf8"));
+const icon = (n) => `<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/${n}.svg" alt="${n}" width="14">`;
 const START = "<!-- shortcuts:start -->";
 const END = "<!-- shortcuts:end -->";
 
@@ -13,7 +14,7 @@ const table = [
   "",
   "| Shortcut | Action |",
   "| --- | --- |",
-  ...groups.flatMap((g) => [`| **${g.group}** | |`, ...g.items.map((i) => `| ${i.keys} | ${i.action.replace(/\|/g, "\\|")} |`)]),
+  ...groups.flatMap((g) => [`| **${g.group}** | |`, ...g.items.map((i) => `| ${i.keys.startsWith("bi:") ? icon(i.keys.slice(3)) : i.keys} | ${i.action.replace(/\|/g, "\\|")} |`)]),
   "",
   END,
 ].join("\n");
