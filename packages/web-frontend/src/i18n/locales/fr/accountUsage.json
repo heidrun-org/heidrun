@@ -3,7 +3,7 @@
   "codexAccount": "Compte Codex",
   "percent": "{value} %",
   "resetsAt": "réinitialisé {time}",
-  "notLinked": "Claude Code ne transmet pas encore ses chiffres à l’app. L’activation branche Herdr Desk sur sa status line, et ta status line actuelle reste affichée telle quelle dans le terminal.",
+  "notLinked": "Claude Code ne transmet pas encore ses chiffres à l’app. L’activation branche Heidrun sur sa status line, et ta status line actuelle reste affichée telle quelle dans le terminal.",
   "enableTitle": "Commencer le suivi de la consommation Claude",
   "enable": "Activer le suivi Claude",
   "waitingClaude": "En attente de la prochaine réponse de Claude. Les quotas n’existent qu’avec un abonnement Pro ou Max.",

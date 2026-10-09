@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Herdr">
 <meta name="theme-color" content="#0b0c0e">
 <link rel="manifest" href="/manifest.json">
-<title>Herdr Desk</title>
+<title>Heidrun</title>
 <style>
 :root {
   --bg: #0b0c0e; --panel: #121417; --field: #1a1d21; --line: #23272c; --line-strong: #2e3339;
@@ -187,7 +187,7 @@ function cardFor(a) {
 function home() {
   const att = data.attention.map(agentById).filter(Boolean);
   return [
-    el("header", { class: "top" }, el("h1", {}, "Herdr Desk"), el("span", { class: "conn " + (online ? "ok" : online === false ? "bad" : "") })),
+    el("header", { class: "top" }, el("h1", {}, "Heidrun"), el("span", { class: "conn " + (online ? "ok" : online === false ? "bad" : "") })),
     el("main", {},
       data.quotas.length ? el("div", { class: "quota" }, data.quotas.map((q) => el("span", {}, `${q.name} ${q.percent} %`))) : null,
       el("div", { class: "eyebrow" }, "À traiter"),
@@ -243,11 +243,11 @@ function render() {
   app.replaceChildren();
   if (!token()) {
     app.append(el("div", { class: "pairing" }, el("h2", {}, "Appairage nécessaire"),
-      el("p", {}, "Dans Herdr Desk sur le Mac, ouvre « Accès mobile » et scanne le QR code avec l’appareil photo."),
+      el("p", {}, "Dans Heidrun sur le Mac, ouvre « Accès mobile » et scanne le QR code avec l’appareil photo."),
       el("p", {}, "Tailscale doit être connecté sur cet appareil.")));
     return;
   }
-  if (!data) { app.append(el("div", { class: "pairing" }, online === false ? "Le Mac ne répond pas. Tailscale est-il connecté ? Herdr Desk est-il ouvert ?" : "Connexion…")); return; }
+  if (!data) { app.append(el("div", { class: "pairing" }, online === false ? "Le Mac ne répond pas. Tailscale est-il connecté ? Heidrun est-il ouvert ?" : "Connexion…")); return; }
   app.append(...(view.name === "agent" ? agentView() : home()));
 }
 

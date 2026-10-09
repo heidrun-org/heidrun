@@ -22,7 +22,7 @@ import { t } from "../i18n/index";
     >
       <Icon name="layout-sidebar" />
     </button>
-    <div class="brand" data-tauri-drag-region>Herdr Desk</div>
+    <div class="brand" data-tauri-drag-region>Heidrun</div>
     <div class="machine" :title="state.error || t('topBar.connectedTitle')">
       <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
       {{ t("topBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("topBar.offline") }}

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Herdr Desk",
+  "productName": "Heidrun",
   "version": "0.1.0",
   "identifier": "dev.edefiez.herdrdesk",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Herdr Desk",
+        "title": "Heidrun",
         "width": 1440,
         "height": 900,
         "minWidth": 980,

@@ -59,7 +59,7 @@ async fn herdr_server_start() -> Result<String, String> {
     }
     #[cfg(unix)]
     {
-        // Own process group: the server outlives Herdr Desk, like `herdr` does.
+        // Own process group: the server outlives Heidrun, like `herdr` does.
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
     }
@@ -88,7 +88,7 @@ fn herdr_paths() -> Value {
 /// Custom menu: the default macOS menu binds ⌘W to "Close Window", which would
 /// close the app instead of reaching our "close pane" shortcut.
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
-    let app_menu = SubmenuBuilder::new(app, "Herdr Desk")
+    let app_menu = SubmenuBuilder::new(app, "Heidrun")
         .about(None)
         .separator()
         .services()
@@ -98,7 +98,7 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .show_all()
         .separator()
         // Our own item: with unsaved files, ⌘Q shows them instead of quitting.
-        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", "Quitter Herdr Desk").accelerator("CmdOrCtrl+Q").build(app)?)
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", "Quitter Heidrun").accelerator("CmdOrCtrl+Q").build(app)?)
         .build()?;
     let edit = SubmenuBuilder::new(app, "Édition")
         .undo()
@@ -220,7 +220,7 @@ pub fn run() {
             mobile::mobile_revoke,
         ])
         .build(tauri::generate_context!())
-        .expect("error while running Herdr Desk")
+        .expect("error while running Heidrun")
         .run(|app, event| {
             // ⌘Q with unsaved files: the app stays and shows them.
             if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
