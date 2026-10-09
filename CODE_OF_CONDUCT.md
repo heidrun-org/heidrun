@@ -26,7 +26,7 @@ This Code of Conduct applies to all spaces of the project: issues, pull requests
 
 ## Enforcement
 
-The maintainers can edit or remove comments, close issues, and block people who break these rules. To report a problem, contact the maintainer [Jérôme Étienne](https://github.com/jeromeetienne) through GitHub. Reports are kept private. The maintainers decide fairly, and nobody is thrown out of the hall without a reason.
+The maintainers can edit or remove comments, close issues, and block people who break these rules. To report a problem, contact the maintainers [Eric Defiez](https://github.com/edefiez) and [Jérôme Étienne](https://github.com/jeromeetienne) through GitHub. Reports are kept private. The maintainers decide fairly, and nobody is thrown out of the hall without a reason.
 
 ## Source
 
