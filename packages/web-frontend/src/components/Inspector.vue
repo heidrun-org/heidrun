@@ -331,11 +331,11 @@ const statusText = computed(() => {
 .title { font-size: 20px; font-weight: 600; word-break: break-word; }
 .chip {
   align-self: flex-start; height: 24px; padding: 0 10px; border-radius: 12px; display: inline-flex; align-items: center;
-  font-size: 12px; font-weight: 600; background: #1d2024; color: var(--text-2);
+  font-size: 12px; font-weight: 600; background: var(--chip); color: var(--text-2);
 }
-.chip.blocked { background: #301817; color: var(--blocked); }
-.chip.working { background: #13282a; color: var(--working); }
-.chip.done { background: #142033; color: var(--done); }
+.chip.blocked { background: var(--tint-crit); color: var(--blocked); }
+.chip.working { background: var(--tint-working); color: var(--working); }
+.chip.done { background: var(--tint-done); color: var(--done); }
 .pair { display: flex; gap: 8px; }
 .q { font-size: 13px; color: var(--text); }
 .detail {

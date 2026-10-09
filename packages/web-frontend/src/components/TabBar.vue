@@ -71,14 +71,14 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
   height: 44px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 16px;
   border-bottom: 1px solid var(--line); overflow-x: auto;
 }
-.tab { position: relative; display: flex; align-items: center; border-radius: 7px; color: #9aa0a6; }
+.tab { position: relative; display: flex; align-items: center; border-radius: 7px; color: var(--muted-2); }
 .tab.dragging { opacity: 0.4; }
 .tab.drop-before::before, .tab.drop-after::after {
   content: ""; position: absolute; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--done);
 }
 .tab.drop-before::before { left: -3px; }
 .tab.drop-after::after { right: -3px; }
-.tab:hover { color: var(--text-2); background: #16191c; }
+.tab:hover { color: var(--text-2); background: var(--hover-soft); }
 .tab.active { background: var(--hover); color: var(--text); }
 .tab-main {
   height: 30px; padding: 0 4px 0 12px; border: none; background: transparent; color: inherit;
@@ -89,7 +89,7 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
 .tab:hover .tab-close, .tab.active .tab-close, .tab-close.armed, .tab-close:focus-visible { opacity: 1; }
 .tab-add {
   width: 30px; height: 30px; border: none; border-radius: 7px; background: transparent;
-  color: #9aa0a6; font-size: 16px;
+  color: var(--muted-2); font-size: 16px;
 }
 .tab-add:hover { background: var(--hover); color: var(--text); }
 .spacer { flex: 1; }

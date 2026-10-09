@@ -58,8 +58,8 @@ const tabs = computed(() => [
 }
 .seg button.on { background: var(--hover); color: var(--text); }
 .badge {
-  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #2a2e33; color: var(--text-2);
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--line-strong); color: var(--text-2);
   font-size: 10px; display: inline-flex; align-items: center; justify-content: center;
 }
-.badge.live { background: #13282a; color: var(--working); }
+.badge.live { background: var(--tint-working); color: var(--working); }
 </style>

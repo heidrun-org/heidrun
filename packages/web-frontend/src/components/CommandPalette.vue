@@ -216,10 +216,10 @@ onMounted(() => nextTick(() => input.value?.focus()));
 <style scoped>
 .scrim { position: fixed; inset: 0; background: rgba(5, 6, 7, 0.55); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding-top: 120px; }
 .palette {
-  width: min(560px, calc(100% - 32px)); border-radius: 14px; border: 1px solid #33383e; background: var(--field);
+  width: min(560px, calc(100% - 32px)); border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
-.field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid #262a2f; }
+.field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
 .prompt { color: var(--working); font-size: 14px; }
 .field input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text); }
 kbd { font: 400 11px var(--mono); color: var(--faint); }
@@ -230,7 +230,7 @@ kbd { font: 400 11px var(--mono); color: var(--faint); }
   background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
 }
 .row.mono { font-family: var(--mono); font-weight: 400; font-size: 12.5px; }
-.row.active { background: #232830; color: var(--text); }
+.row.active { background: var(--hover); color: var(--text); }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hint { font: 400 11px var(--mono); color: var(--muted); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

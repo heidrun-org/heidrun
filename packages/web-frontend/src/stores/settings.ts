@@ -69,7 +69,10 @@ const defaults = {
   /** Git window: file list hidden (the viewer takes the whole window). */
   gitListHidden: false,
   gitListWidth: 340,
-  codeTheme: "github-dark",
+  /** Application theme: "system" follows the operating system. */
+  theme: "system" as "system" | "light" | "dark",
+  /** Code colours: "auto" follows the application theme. */
+  codeTheme: "auto",
   codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
@@ -94,7 +97,12 @@ const defaults = {
 
 function load(): typeof defaults {
   try {
-    return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+    const saved = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+    // "github-dark" was the only default before themes existed: it now means "auto".
+    if (saved.codeTheme === "github-dark") {
+      saved.codeTheme = "auto";
+    }
+    return saved;
   } catch {
     return { ...defaults };
   }

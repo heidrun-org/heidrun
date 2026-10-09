@@ -354,7 +354,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
   color: var(--text); outline: none;
 }
 .target { padding: 0 10px; max-width: 200px; font-size: 12px; font-weight: 500; }
-.multi-btn { color: #c29bf0; white-space: nowrap; }
+.multi-btn { color: var(--question); white-space: nowrap; }
 textarea {
   flex: 1; min-width: 0; padding: 10px 14px; font: inherit; font-size: 13px; line-height: 20px;
   resize: none; overflow-y: auto; display: block;
@@ -375,7 +375,7 @@ textarea:focus { border-color: #3a4048; }
 .solo { color: var(--muted); font-size: 11px; }
 .pop {
   position: absolute; bottom: calc(100% + 6px); left: 16px; z-index: 20; width: min(440px, calc(100% - 32px));
-  max-height: 60vh; overflow-y: auto; padding: 10px; border-radius: 12px; border: 1px solid #33383e; background: var(--field);
+  max-height: 60vh; overflow-y: auto; padding: 10px; border-radius: 12px; border: 1px solid var(--line-modal); background: var(--field);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 4px;
 }
 .pop-h { font-size: 10.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin: 6px 4px 2px; }
@@ -392,7 +392,7 @@ textarea:focus { border-color: #3a4048; }
 .pop-tools { display: flex; gap: 14px; flex-wrap: wrap; padding: 2px 4px 4px; }
 .pick { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 6px; font-size: 12.5px; color: var(--text-2); }
 .pick:hover { background: var(--hover); }
-.pick input { accent-color: #c29bf0; }
+.pick input { accent-color: var(--question); }
 .small { font-size: 11px; margin-left: auto; }
 .recap ul { margin: 2px 0 6px; padding-left: 18px; font-size: 12.5px; color: var(--text); }
 .recap li.off { color: var(--muted); }

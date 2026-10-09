@@ -128,7 +128,7 @@ const subtitle = computed(() => {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   border-bottom: 1px solid #1a1d20; font-size: 12px;
 }
-.pane.blocked .head { background: #170f0f; border-bottom-color: #2f1b1a; }
+.pane.blocked .head { background: var(--tint-err); border-bottom-color: #2f1b1a; }
 .name { font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -143,5 +143,5 @@ const subtitle = computed(() => {
 .tool:hover { background: var(--hover); color: var(--text); }
 .tool.txt { font-size: 13px; line-height: 1; }
 .tool.on { color: var(--accent); }
-.pane.docked .head { background: #101317; }
+.pane.docked .head { background: var(--bar); }
 </style>

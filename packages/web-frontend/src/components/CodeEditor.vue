@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { Editor } from "../lib/editor";
+import { codeIsDark } from "../stores/theme";
 
 const props = defineProps<{ path: string; text: string; wrap: boolean; line?: number | null }>();
 const emit = defineEmits<{ change: [text: string]; save: [] }>();
@@ -16,6 +17,7 @@ onMounted(async () => {
     text: props.text,
     path: props.path,
     wrap: props.wrap,
+    dark: codeIsDark.value,
     onChange: (t) => emit("change", t),
     onSave: () => emit("save"),
   });
@@ -30,6 +32,7 @@ watch(
   () => props.wrap,
   (w) => ed?.setWrap(w),
 );
+watch(codeIsDark, (dark) => ed?.setDark(dark));
 // Reloaded from the disk (or "recharger"): replace the content, not while typing.
 watch(
   () => props.text,

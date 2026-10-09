@@ -28,6 +28,63 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
+import { resolvedTheme } from "../stores/theme";
+
+const TERMINAL_THEMES = {
+  dark: {
+    background: "#0b0c0e",
+    foreground: "#c9cdd1",
+    cursor: "#c9cdd1",
+    selectionBackground: "#2a3b4d",
+    black: "#16181b",
+    red: "#e58a8a",
+    green: "#7ec699",
+    yellow: "#f2a93b",
+    blue: "#6ea8fe",
+    magenta: "#c29bf0",
+    cyan: "#3fb8af",
+    white: "#c9cdd1",
+    brightBlack: "#5a6066",
+    brightRed: "#f0a3a3",
+    brightGreen: "#9bd8b0",
+    brightYellow: "#f6c06a",
+    brightBlue: "#9cc3ff",
+    brightMagenta: "#d6b8f6",
+    brightCyan: "#6fd0c8",
+    brightWhite: "#e8e6e1",
+  },
+  light: {
+    background: "#ffffff",
+    foreground: "#2b2f33",
+    cursor: "#2b2f33",
+    cursorAccent: "#ffffff",
+    selectionBackground: "#bcd4f5",
+    black: "#2b2f33",
+    red: "#c0392b",
+    green: "#1e8a4c",
+    yellow: "#9a6700",
+    blue: "#1f5fc7",
+    magenta: "#8250c4",
+    cyan: "#0e7c78",
+    white: "#8a8f95",
+    brightBlack: "#5a6066",
+    brightRed: "#d9534f",
+    brightGreen: "#2da05f",
+    brightYellow: "#b07a10",
+    brightBlue: "#3b7be0",
+    brightMagenta: "#9a68d8",
+    brightCyan: "#1f968f",
+    brightWhite: "#1c1d1f",
+  },
+};
+
+const REF_COLORS_LIGHT: typeof REF_COLORS = {
+  issue: "#0b5cc2",
+  mr: "#7d4cc4",
+  ticket: "#0e7c78",
+  commit: "#9a5b13",
+};
+
 import { fontStack, settings } from "../stores/settings";
 import { selectionReaders } from "../stores/notes";
 
@@ -97,28 +154,7 @@ onMounted(async () => {
     macOptionClickForcesSelection: true,
     scrollback: 0, // Herdr owns the scrollback; the attach client redraws the screen.
     allowProposedApi: true,
-    theme: {
-      background: "#0b0c0e",
-      foreground: "#c9cdd1",
-      cursor: "#c9cdd1",
-      selectionBackground: "#2a3b4d",
-      black: "#16181b",
-      red: "#e58a8a",
-      green: "#7ec699",
-      yellow: "#f2a93b",
-      blue: "#6ea8fe",
-      magenta: "#c29bf0",
-      cyan: "#3fb8af",
-      white: "#c9cdd1",
-      brightBlack: "#5a6066",
-      brightRed: "#f0a3a3",
-      brightGreen: "#9bd8b0",
-      brightYellow: "#f6c06a",
-      brightBlue: "#9cc3ff",
-      brightMagenta: "#d6b8f6",
-      brightCyan: "#6fd0c8",
-      brightWhite: "#e8e6e1",
-    },
+    theme: TERMINAL_THEMES[resolvedTheme.value],
   });
   try {
     await document.fonts.load(`${settings.fontSize}px ${fontStack()}`);
@@ -613,7 +649,7 @@ function paintRefs() {
     for (const r of refs) {
       const x = col[r.start];
       const end = col[r.end - 1] + width[r.end - 1];
-      const d = term.registerDecoration({ marker, x, width: end - x, foregroundColor: REF_COLORS[r.kind], layer: "top" });
+      const d = term.registerDecoration({ marker, x, width: end - x, foregroundColor: (resolvedTheme.value === "light" ? REF_COLORS_LIGHT : REF_COLORS)[r.kind], layer: "top" });
       if (d) decorations.push(d);
     }
     rows.set(y, { text, marker, decorations });
@@ -637,6 +673,12 @@ watch(
     fit?.fit();
   },
 );
+
+watch(resolvedTheme, (theme) => {
+  if (term) {
+    term.options.theme = TERMINAL_THEMES[theme];
+  }
+});
 
 // Switching modes live: turn local mouse reporting off, or give back what the app asked for.
 watch(
@@ -875,16 +917,16 @@ onBeforeUnmount(() => {
 :deep(.xterm) { height: 100%; }
 .sel-bar {
   position: absolute; right: 12px; bottom: 12px; z-index: 5; display: flex; gap: 6px; padding: 6px;
-  border-radius: 10px; background: #1b1e22; border: 1px solid #33383e; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  border-radius: 10px; background: var(--raised); border: 1px solid var(--line-modal); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 .sel-bar .btn { background: var(--field); }
 /* The padding is part of the hover zone, and reaches down to the hovered text. */
 .chips { position: absolute; z-index: 6; height: 26px; display: flex; align-items: flex-start; gap: 4px; padding: 0 4px; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
-  border: 1px solid #3a4250; background: #1b2028; color: var(--text); font-size: 11.5px; font-weight: 500;
+  border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: 11.5px; font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
   max-width: 360px; overflow: hidden; text-overflow: ellipsis;
 }
-.chip:hover { background: #24406a; border-color: #3d6aa8; }
+.chip:hover { background: var(--sel); border-color: #3d6aa8; }
 :deep(.xterm-viewport) { background: transparent !important; }
 </style>

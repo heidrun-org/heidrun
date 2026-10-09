@@ -84,7 +84,9 @@ export function highlightFile(text: string, lang: string | null): string[] {
 }
 
 export const CODE_THEMES = [
+  { id: "auto", label: "Comme l'application" },
   { id: "github-dark", label: "GitHub Dark" },
+  { id: "github-light", label: "GitHub Light" },
   { id: "one-dark", label: "One Dark" },
   { id: "dracula", label: "Dracula" },
   { id: "solarized", label: "Solarized" },

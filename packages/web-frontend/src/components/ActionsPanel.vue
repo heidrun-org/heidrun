@@ -241,7 +241,7 @@ function isRestarting(a: Action) {
 .grip { color: var(--faint); cursor: grab; font-size: 11px; letter-spacing: -2px; padding: 0 2px; user-select: none; }
 
 .sugg { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 8px; }
-.sugg:hover { background: #16191c; }
+.sugg:hover { background: var(--hover-soft); }
 .grow { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 12px; overflow: hidden; }
 .grow .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
 .src { font-size: 10.5px; color: var(--faint); white-space: nowrap; }

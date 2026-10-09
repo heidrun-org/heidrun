@@ -176,12 +176,12 @@ function remove() {
   position: absolute; left: 20px; top: 20px;
   min-width: 360px; min-height: 240px; max-width: calc(100vw - 20px); max-height: calc(100vh - 20px);
   resize: both; overflow: hidden;
-  display: flex; flex-direction: column; border-radius: 14px; border: 1px solid #33383e;
+  display: flex; flex-direction: column; border-radius: 14px; border: 1px solid var(--line-modal);
   background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
 }
 .bar {
   display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px 18px;
-  border-bottom: 1px solid #262a2f; cursor: grab;
+  border-bottom: 1px solid var(--line-soft); cursor: grab;
 }
 .bar:active { cursor: grabbing; }
 .titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
