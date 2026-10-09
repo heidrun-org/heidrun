@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
@@ -72,9 +73,7 @@ function sendTo(n: Note, paneId: string) {
         />
         <h3 v-else title="Double-clic pour renommer" @dblclick="renaming = n.id">{{ n.title }}</h3>
         <button class="tool" aria-label="Ouvrir en grand" title="Ouvrir en grand" @click="notes.openId = n.id">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M9.5 2.5h4v4M13.5 2.5L9 7M6.5 13.5h-4v-4M2.5 13.5L7 9"></path>
-          </svg>
+          <Icon name="arrows-angle-expand" />
         </button>
         <ConfirmButton label="×" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="removeNote(n.id)" />
       </header>

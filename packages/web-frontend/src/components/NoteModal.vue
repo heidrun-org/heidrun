@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
@@ -129,7 +130,7 @@ function remove() {
           <div class="origin">{{ note.origin }} · {{ ago(note.createdAt) }}</div>
         </div>
         <button class="x" aria-label="Fermer" title="Fermer (Échap)" @click="close">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+          <Icon name="x-lg" />
         </button>
       </header>
 

@@ -103,6 +103,9 @@ importers:
       '@xterm/xterm':
         specifier: ^5.5.0
         version: 5.5.0
+      bootstrap-icons:
+        specifier: ^1.13.2
+        version: 1.13.2
       codemirror:
         specifier: ^6.0.2
         version: 6.0.2
@@ -742,6 +745,9 @@ packages:
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
+
+  bootstrap-icons@1.13.2:
+    resolution: {integrity: sha512-fAU1Ly3dH7hwRg+CB8EZ0Vl0fF80zgXHeUVJyfUOKzoURr+TbwISbCW5tKUoQLERaWYG2emTCybcPbD96hdD1A==}
 
   brace-expansion@2.1.7:
     resolution: {integrity: sha512-uZbew1NqdmPDTMJ8ah1y+b+9QEJrfkXFk3RcTQw3X0jW/xRUvFKsg1CfQdSYGdTbXZWExtU3J3ccxtnfw1Fi0g==}
@@ -1584,6 +1590,8 @@ snapshots:
       color-convert: 2.0.1
 
   balanced-match@1.0.2: {}
+
+  bootstrap-icons@1.13.2: {}
 
   brace-expansion@2.1.7:
     dependencies:

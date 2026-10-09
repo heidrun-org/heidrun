@@ -187,9 +187,9 @@ async function createWorkspace() {
           :aria-label="`${isDocked(p.pane_id) ? 'Retirer d’à côté' : 'Ouvrir à côté'} ${paneName(p)}`"
           :title="isDocked(p.pane_id) ? 'Retirer de la vue à côté' : 'Ouvrir à côté : le suivre sans quitter l’onglet en cours'"
           @click="toggleDock(p.pane_id)"
-        >⊞</button>
+        ><Icon :name="isDocked(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
         <button class="card-x" :aria-label="`Masquer ${paneName(p)}`" title="Masquer jusqu’au prochain changement" @click="dismiss(p)">
-          <Icon name="close" />
+          <Icon name="x-lg" />
         </button>
       </div>
     </section>

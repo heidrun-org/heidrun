@@ -22,7 +22,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 <template>
   <div ref="root" class="wrap">
     <button class="icon-btn" :class="{ on: open }" aria-label="Réglages du terminal" title="Police et souris du terminal" @click="open = !open">
-      <Icon name="text" />
+      <Icon name="type" />
     </button>
     <div v-if="open" class="menu" role="dialog" aria-label="Police du terminal">
       <div class="eyebrow">Terminal</div>

@@ -158,3 +158,8 @@ input { font: inherit; color: inherit; user-select: text; }
 .md-doc th { background: rgba(255, 255, 255, 0.05); font-weight: 600; }
 .md-doc hr { border: none; border-top: 1px solid rgba(255, 255, 255, 0.12); margin: 2em 0; }
 .md-doc img { max-width: 100%; }
+
+.bi.rotated {
+  display: inline-block;
+  transform: rotate(90deg);
+}

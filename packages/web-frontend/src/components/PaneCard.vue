@@ -69,31 +69,33 @@ const subtitle = computed(() => {
         <template v-if="docked">
           <button class="tool txt" title="Aller à son onglet" @mousedown.stop @click="selectPane(pane)">↗</button>
           <button class="tool" aria-label="Retirer de la vue à côté" title="Retirer de la vue à côté (l’agent continue)" @mousedown.stop @click="undock(pane.pane_id)">
-            <Icon name="close" />
+            <Icon name="x-lg" />
           </button>
         </template>
         <template v-else>
         <button
           v-if="(pane.agent ?? '').includes('claude')"
-          class="tool txt"
+          class="tool"
           title="Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)"
           aria-label="Mosaïque des agents de la session"
           @mousedown.stop
           @click="mosaic.paneId = pane.pane_id"
-        >▦</button>
+        ><Icon name="grid-3x3-gap" /></button>
         <button
-          class="tool txt"
+          class="tool"
           :class="{ on: pinned }"
           :aria-pressed="pinned"
           :title="pinned ? 'Ne plus garder à côté' : 'Garder à côté : reste visible quand tu changes d’onglet ou de workspace'"
           @mousedown.stop
           @click="toggleDock(pane.pane_id)"
-        >⊞</button>
+        >
+          <Icon :name="pinned ? 'pin-fill' : 'pin'" />
+        </button>
         <button class="tool" aria-label="Diviser à droite" title="Diviser à droite (⌘D)" @mousedown.stop @click="splitPane('right', pane.pane_id)">
-          <Icon name="split-right" />
+          <Icon name="layout-split" />
         </button>
         <button class="tool" aria-label="Diviser en bas" title="Diviser en bas (⇧⌘D)" @mousedown.stop @click="splitPane('down', pane.pane_id)">
-          <Icon name="split-down" />
+          <Icon name="layout-split" class="rotated" />
         </button>
         <ConfirmButton label="×" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
         </template>

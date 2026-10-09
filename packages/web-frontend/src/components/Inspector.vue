@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import type { GitStatus } from "../stores/git";
@@ -205,7 +206,7 @@ const statusText = computed(() => {
           <dd class="mono full dir-dd" tabindex="0" :title="p.foreground_cwd || p.cwd || ''">
             <span>{{ shortPath(p.foreground_cwd || p.cwd) }}</span>
             <button type="button" class="dir-open" title="Fichiers du projet (⌘P pour chercher)" aria-label="Fichiers du projet" @click="openFiles(p.foreground_cwd || p.cwd)">
-              <svg width="15" height="13" viewBox="0 0 15 13" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3l1.5 1.6h5.5A1.5 1.5 0 0 1 14 4.1v6.4A1.5 1.5 0 0 1 12.5 12h-10A1.5 1.5 0 0 1 1 10.5z" /></svg>
+              <Icon name="folder" />
             </button>
           </dd>
           <template v-if="paneGit?.branch">
