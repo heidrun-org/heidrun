@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import { mobile, mobileStatus, revokeMobile, setMobile } from "../stores/mobile";
 import { ago } from "../lib/format";
@@ -34,7 +35,7 @@ function onKey(e: KeyboardEvent) {
           <div class="eyebrow">iPhone · iPad</div>
           <h2 id="mob-title">Accès mobile</h2>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
+        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
 
       <p class="lead">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   agentGroups,
@@ -231,13 +232,13 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
         <div class="pop-h">Projet</div>
         <div v-for="t in projectPrompts" :key="'p' + t.id" class="tpl-row">
           <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-          <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, true)">×</button>
+          <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, true)"><Icon name="x-lg" /></button>
         </div>
       </template>
       <div class="pop-h">Mes modèles</div>
       <div v-for="t in prompts.personal" :key="t.id" class="tpl-row">
         <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-        <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, false)">×</button>
+        <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, false)"><Icon name="x-lg" /></button>
       </div>
       <div v-if="!saving" class="pop-foot">
         <button type="button" class="link" @click="saving = true">+ Enregistrer la saisie comme modèle</button>

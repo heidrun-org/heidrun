@@ -271,7 +271,7 @@ const statusText = computed(() => {
           <template v-if="todaySummary.total">{{ todaySummary.top.map(([w, ms]) => `· ${w} ${hm(ms)}`).join("  ") }}</template>
           <template v-else>pas encore de travail</template>
         </span>
-        <span class="hist-go">Historique ↗</span>
+        <span class="hist-go">Historique <Icon name="box-arrow-up-right" /></span>
       </button>
 
       <AccountUsage v-for="pr in providers" :key="pr" :provider="pr" />
@@ -317,7 +317,7 @@ const statusText = computed(() => {
             :aria-label="`Retirer ${a.where || a.kind} de la liste`"
             title="Retirer de la liste"
             @click="dismissRun(a.id)"
-          >×</button>
+          ><Icon name="x-lg" /></button>
         </div>
         <div v-if="!activity.length" class="muted">Ce panneau n’a pas travaillé depuis l’ouverture de l’app.</div>
       </div>

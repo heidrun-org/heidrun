@@ -67,7 +67,7 @@ const subtitle = computed(() => {
       </template>
       <span class="tools">
         <template v-if="docked">
-          <button class="tool txt" title="Aller à son onglet" @mousedown.stop @click="selectPane(pane)">↗</button>
+          <button class="tool" title="Aller à son onglet" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button class="tool" aria-label="Retirer de la vue à côté" title="Retirer de la vue à côté (l’agent continue)" @mousedown.stop @click="undock(pane.pane_id)">
             <Icon name="x-lg" />
           </button>
@@ -97,7 +97,7 @@ const subtitle = computed(() => {
         <button class="tool" aria-label="Diviser en bas" title="Diviser en bas (⇧⌘D)" @mousedown.stop @click="splitPane('down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
-        <ConfirmButton label="×" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
+        <ConfirmButton icon="x-lg" aria-label="Fermer le panneau (⌘W)" @confirm="closePane(pane.pane_id)" />
         </template>
       </span>
     </header>

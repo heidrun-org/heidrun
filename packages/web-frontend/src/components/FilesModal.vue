@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -583,10 +584,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               :aria-label="`Fermer ${t}`"
               :title="closingTab === t ? 'Pas enregistré : clique encore pour fermer sans enregistrer' : isDirty(t) ? 'Modifié, pas enregistré' : 'Fermer (⌘W)'"
               @click="askCloseTab(t)"
-            >{{ closingTab === t ? "?" : isDirty(t) ? "●" : "×" }}</button>
+            ><template v-if="closingTab === t">?</template><template v-else-if="isDirty(t)">●</template><Icon v-else name="x-lg" /></button>
           </div>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close()">×</button>
+        <button class="close" aria-label="Fermer (Échap)" @click="close()"><Icon name="x-lg" /></button>
       </header>
       <div v-if="files.quitting && dirtyTabs().length" class="banner warn">
         <span>Quitter Herdr Desk : {{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }} ({{ dirtyTabs().map((t) => t.split("/").pop()).join(", ") }}).</span>
@@ -715,7 +716,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <label class="wrap-t" title="Montrer le diff avant chaque enregistrement"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />Diff avant ⌘S</label>
                 <button class="tb" :class="{ arm: leaving }" :title="leaving ? 'Clique encore pour quitter sans enregistrer' : 'Revenir à la lecture'" @click="finishEdit">{{ leaving ? "Quitter sans enregistrer ?" : "Terminer" }}</button>
               </template>
-              <button v-else-if="canEdit" class="tb edit" title="Modifier ce fichier" @click="beginEdit">✎ Modifier</button>
+              <button v-else-if="canEdit" class="tb edit" title="Modifier ce fichier" @click="beginEdit"><Icon name="pencil" /> Modifier</button>
               <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" title="Changements de ce fichier par rapport au dernier commit (HEAD)" @click="toggleGitDiff">Diff git</button>
               <div v-if="md && !edit" class="seg" role="radiogroup" aria-label="Affichage Markdown">
                 <button :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">Lecture</button>

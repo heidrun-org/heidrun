@@ -75,7 +75,7 @@ function sendTo(n: Note, paneId: string) {
         <button class="tool" aria-label="Ouvrir en grand" title="Ouvrir en grand" @click="notes.openId = n.id">
           <Icon name="arrows-angle-expand" />
         </button>
-        <ConfirmButton label="×" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="removeNote(n.id)" />
+        <ConfirmButton icon="x-lg" armed-label="Supprimer ?" aria-label="Supprimer la note" @confirm="removeNote(n.id)" />
       </header>
       <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
       <pre class="mono" :class="{ open: expanded[n.id] }" title="Clic : déplier · double-clic : ouvrir en grand" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>

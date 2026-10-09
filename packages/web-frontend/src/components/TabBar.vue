@@ -52,12 +52,12 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
       </button>
       <ConfirmButton
         class="tab-close"
-        label="×"
+        icon="x-lg"
         :aria-label="`Fermer l’onglet ${t.label || t.number} (${t.pane_count} panneau${t.pane_count > 1 ? 'x' : ''})`"
         @confirm="closeTab(t.tab_id)"
       />
     </div>
-    <button class="tab-add" aria-label="Nouvel onglet" title="Nouvel onglet (⌘T)" @click="newTerminal()">+</button>
+    <button class="tab-add" aria-label="Nouvel onglet" title="Nouvel onglet (⌘T)" @click="newTerminal()"><Icon name="plus-lg" /></button>
     <div class="spacer"></div>
     <button class="btn" title="Lancer Claude ou Codex dans un nouvel onglet, avec une consigne" @click="newAgent.open = true">Nouvel agent <kbd>⇧⌘T</kbd></button>
     <button class="btn" @click="newTerminal()">Nouveau terminal <kbd>⌘T</kbd></button>
