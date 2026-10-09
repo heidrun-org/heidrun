@@ -56,6 +56,8 @@ import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
 import MobileModal from "./components/MobileModal.vue";
 import FilesModal from "./components/FilesModal.vue";
+import AboutModal from "./components/AboutModal.vue";
+import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { mobile, startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
@@ -208,6 +210,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app">
+    <SplashScreen />
+    <AboutModal />
     <TopBar />
     <div class="body">
       <template v-if="settings.leftOpen">
