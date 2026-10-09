@@ -1,6 +1,7 @@
 // Issue / MR / PR / ticket / commit references in terminal output:
 // found per screen line, then colored (decorations) and made clickable (link provider).
 import { invoke } from "@tauri-apps/api/core";
+import { parseReferences } from "./project_config";
 
 export type RefKind = "issue" | "mr" | "ticket" | "commit";
 export type Forge = "github" | "gitlab";
@@ -85,13 +86,8 @@ async function load(cwd: string): Promise<RefContext> {
       "project_refs",
       { cwd },
     );
-    const conf = (r.references ?? {}) as {
-      enabled?: boolean;
-      forge?: Forge;
-      repo?: string;
-      tickets?: string | { url?: string; prefixes?: string[] };
-    };
-    // "repo" in .heidrun.json overrides the git remote (any form git accepts, or the web URL).
+    const conf = parseReferences(r.references ?? {});
+    // "repo" in .heidrun/config.json overrides the git remote (any form git accepts, or the web URL).
     const source = conf.repo ?? r.remote;
     const web = source ? remoteToWeb(source) : null;
     // Unknown hosts are most often self-hosted GitLab; GitHub is github.com.

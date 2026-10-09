@@ -1,12 +1,18 @@
-//! Per-project actions, stored in `.heidrun.json` at the project root
+//! Per-project configuration, stored in `.heidrun/config.json` at the project root
 //! (versioned with the code), plus commands detected from the usual project files.
+//! The format of the file is validated by the Zod schema of the web frontend
+//! (`packages/web-frontend/src/lib/project_config.ts`).
 
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 
-const CONFIG_FILE: &str = ".heidrun.json";
-const LEGACY_CONFIG_FILE: &str = ".herdr-desk.json";
+const CONFIG_DIR: &str = ".heidrun";
+const CONFIG_FILE: &str = "config.json";
+
+fn config_path(root: &Path) -> PathBuf {
+    root.join(CONFIG_DIR).join(CONFIG_FILE)
+}
 
 #[derive(Serialize)]
 pub struct Detected {
@@ -23,25 +29,16 @@ pub struct Project {
     pub detected: Vec<Detected>,
 }
 
-/// Walks up from `cwd` to the folder holding `.heidrun.json` or `.git`.
+/// Walks up from `cwd` to the folder holding the folder `.heidrun` or the folder `.git`.
 fn find_root(cwd: &Path) -> PathBuf {
     let mut dir = Some(cwd);
     while let Some(d) = dir {
-        migrate_legacy_config_file(d);
-        if d.join(CONFIG_FILE).exists() || d.join(".git").exists() {
+        if d.join(CONFIG_DIR).is_dir() || d.join(".git").exists() {
             return d.to_path_buf();
         }
         dir = d.parent();
     }
     cwd.to_path_buf()
-}
-
-/// Renames `.herdr-desk.json`, the former name of the project file, to `.heidrun.json`.
-fn migrate_legacy_config_file(dir: &Path) {
-    let legacy = dir.join(LEGACY_CONFIG_FILE);
-    if legacy.exists() && !dir.join(CONFIG_FILE).exists() {
-        let _ = std::fs::rename(legacy, dir.join(CONFIG_FILE));
-    }
 }
 
 fn package_manager(root: &Path) -> &'static str {
@@ -125,9 +122,9 @@ fn detect(root: &Path) -> Vec<Detected> {
 #[tauri::command]
 pub fn project_load(cwd: String) -> Result<Project, String> {
     let root = find_root(Path::new(&cwd));
-    let path = root.join(CONFIG_FILE);
+    let path = config_path(&root);
     let config = match std::fs::read_to_string(&path) {
-        Ok(text) => serde_json::from_str(&text).map_err(|e| format!("{CONFIG_FILE} invalide : {e}"))?,
+        Ok(text) => serde_json::from_str(&text).map_err(|e| format!("{CONFIG_DIR}/{CONFIG_FILE} invalide : {e}"))?,
         Err(_) => json!({ "version": 1, "actions": [] }),
     };
     Ok(Project {
@@ -140,7 +137,10 @@ pub fn project_load(cwd: String) -> Result<Project, String> {
 
 #[tauri::command]
 pub fn project_save(root: String, config: Value) -> Result<(), String> {
-    let path = Path::new(&root).join(CONFIG_FILE);
+    let path = config_path(Path::new(&root));
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir).map_err(|e| format!("création de {} impossible : {e}", dir.display()))?;
+    }
     let mut text = serde_json::to_string_pretty(&config).map_err(|e| e.to_string())?;
     text.push('\n');
     std::fs::write(&path, text).map_err(|e| format!("écriture de {} impossible : {e}", path.display()))
@@ -151,7 +151,7 @@ pub struct RepoRefs {
     pub root: String,
     /// `remote.origin.url` (or the first remote), as git stores it.
     pub remote: Option<String>,
-    /// The `references` section of `.heidrun.json`, if any.
+    /// The `references` section of `.heidrun/config.json`, if any.
     pub references: Value,
 }
 
@@ -160,7 +160,7 @@ pub struct RepoRefs {
 #[tauri::command]
 pub async fn project_refs(cwd: String) -> Result<RepoRefs, String> {
     let root = find_root(Path::new(&cwd));
-    let references = std::fs::read_to_string(root.join(CONFIG_FILE))
+    let references = std::fs::read_to_string(config_path(&root))
         .ok()
         .and_then(|t| serde_json::from_str::<Value>(&t).ok())
         .and_then(|v| v.get("references").cloned())

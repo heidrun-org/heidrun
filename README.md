@@ -76,7 +76,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 
 **Pinned notes**: select text in a terminal, then "Pin" (or ⇧⌘P). The note appears in the **Notes** tab of the right panel, with its origin; you can rename it (double-click), copy it or send it to an agent. The ⤢ button (or a double-click on the text) opens it in a central window that you can move by its title, resize by the bottom-right corner and edit; its size is remembered. Notes stay on this Mac, never in the repo: a terminal output can contain secrets.
 
-**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun.json` at the root of the repo, to be versioned with the code:
+**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun/config.json` at the root of the repo, to be versioned with the code. The file is validated with a Zod schema (`packages/web-frontend/src/lib/project_config.ts`) each time it is loaded or saved; an unknown or wrong field shows an error that names the field, and nothing is written:
 
 ```json
 {
@@ -89,9 +89,9 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 }
 ```
 
-The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.heidrun.json`; the order of the suggestions and the history stay on this Mac).
+The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.heidrun/config.json`; the order of the suggestions and the history stay on this Mac).
 
-**Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.heidrun.json`:
+**Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.heidrun/config.json`:
 
 ```json
 "references": {
@@ -114,7 +114,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Answering the menus of a blocked agent**: when Claude (or Codex) displays a numbered menu ("1. Yes / 2. Yes, and don't ask again… / 3. No"), its options appear as buttons on the "To handle" card and in the right panel, with the command or file concerned. One click sends the option number. If the same menu is still there a moment later, the app uses the arrow keys and Enter; it never acts on a new dialog without you seeing it.
 
-**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, template with Shift+click, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.heidrun.json`:
+**Safeguards**: before sending a command with one click ("▷ Run" on a `!`, actions, template with Shift+click, palette, "Yes" answer to a permission menu), the app compares it to a list of dangerous patterns (`rm -rf`, `prune -af`, `push --force`, `reset --hard`, `DROP TABLE`, `DELETE` without `WHERE`, MR merge, actions on production…). On a match, a window shows the full command and asks for confirmation; "Cancel" is selected by default. Project rules in `.heidrun/config.json`:
 
 ```json
 "guards": {
@@ -127,7 +127,7 @@ The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flu
 
 **Git tab** (right panel): for the selected workspace, branch, ahead / behind the remote, modified files, last commit, CI state of the branch, and the list of open **MRs (GitLab) or PRs (GitHub)** with their state (ready, CI running, to approve, conflict…). One click opens the MR; "Ask for a review" sends it to the agent of the workspace. The host is deduced from the remote (`references.forge` to force it). The app uses the `glab` and `gh` already logged in on the Mac, read-only: no token is stored. In the sidebar, `↑2` signals commits not pushed yet.
 
-**Prompt templates**: the template icon in a pane header opens a menu with the title and the description of each template, yours and those of the project. A click writes the text into the terminal of that pane, without pressing Enter; Shift+click writes it and presses Enter. "Edit templates…" opens a window to create (New), change (Save, Discard) or delete a template, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.heidrun.json`:
+**Prompt templates**: the template icon in a pane header opens a menu with the title and the description of each template, yours and those of the project. A click writes the text into the terminal of that pane, without pressing Enter; Shift+click writes it and presses Enter. "Edit templates…" opens a window to create (New), change (Save, Discard) or delete a template, on this Mac or in the project. They are also in the ⌘K palette (Prompts section). Variables replaced on insertion: `{workspace}`, `{tab}`, `{agent}`, `{branch}`, `{selection}` (text selected in a terminal), `{clipboard}`. Project templates in `.heidrun/config.json`:
 
 ```json
 "prompts": [{ "id": "review", "label": "MR review", "text": "Review the MR of {branch}" }]

@@ -1,4 +1,5 @@
 {
   "restartCancelled": "{name} ne s’arrête pas : relance annulée (regarde son onglet)",
-  "restarted": "{name} relancée"
+  "restarted": "{name} relancée",
+  "invalidConfig": "{path} n’est pas valide : {reason}"
 }

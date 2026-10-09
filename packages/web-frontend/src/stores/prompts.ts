@@ -1,4 +1,4 @@
-// Reusable consignes: personal ones (this Mac) and the project's (.heidrun.json).
+// Reusable consignes: personal ones (this Mac) and the project's (.heidrun/config.json).
 import { computed, reactive, watch } from "vue";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
 import { allPanes, state, tabLabel, workspaceLabel } from "./session";
@@ -49,7 +49,7 @@ watch(
   { deep: true },
 );
 
-/** Templates of the selected workspace's project, from .heidrun.json `prompts`. */
+/** Templates of the selected workspace's project, from .heidrun/config.json `prompts`. */
 export const projectPrompts = computed<PromptTemplate[]>(() => {
   const list = (currentProject.value?.config as { prompts?: unknown } | undefined)?.prompts;
   if (!Array.isArray(list)) return [];
