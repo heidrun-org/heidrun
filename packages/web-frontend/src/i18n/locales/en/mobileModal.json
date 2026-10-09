@@ -1,7 +1,4 @@
 {
-  "title": "Mobile access",
-  "closeTitle": "Close the window (Escape)",
-  "closeLabel": "Close (Escape)",
   "lead": "Follow the agents from the phone: what waits for a decision, allow or refuse, send a prompt, read the end of the output of an agent. Only through Tailscale, never on the Internet, and with pairing.",
   "enable": "Turn on mobile access",
   "pairStep1Before": "On the iPhone or the iPad, open ",

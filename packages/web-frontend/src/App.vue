@@ -45,7 +45,7 @@ import {
   state,
   toast,
 } from "./stores/session";
-import { resetZoom, settings, zoom } from "./stores/settings";
+import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
@@ -54,12 +54,12 @@ import { startAlerts } from "./stores/alerts";
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
-import MobileModal from "./components/MobileModal.vue";
+import SettingsModal from "./components/SettingsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
-import { mobile, startMobile } from "./stores/mobile";
+import { startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 import { t } from "./i18n/index";
 
@@ -256,7 +256,7 @@ onBeforeUnmount(() => {
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
     <HistoryModal v-if="history.open" />
-    <MobileModal v-if="mobile.open" />
+    <SettingsModal v-if="settingsModal.open" />
     <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
     <ConfirmModal v-if="confirmDialog.open" />

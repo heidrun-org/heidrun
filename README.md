@@ -8,7 +8,7 @@ A macOS graphical interface for [Herdr](https://herdr.dev): the agents and termi
 - **Inspector**: Allow / Deny, agent context, "Ask an agent to fix", pattern watching.
 - **Status bar**: Claude quotas (5 h, week) and Codex.
 - **⌘K palette** for all actions.
-- Terminal font of your choice (Geist Mono, SF Mono, JetBrains Mono, Fira Code, Menlo, Monaco), set with the "A" button in the top bar.
+- Terminal font of your choice (Geist Mono, SF Mono, JetBrains Mono, Fira Code, Menlo, Monaco), set in the Settings window (gear button in the top bar).
 
 ## Shortcuts
 

@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import FontMenu from "./FontMenu.vue";
 import Icon from "./Icon.vue";
-import LanguageMenu from "./LanguageMenu.vue";
 import ThemeMenu from "./ThemeMenu.vue";
 import { counts, state } from "../stores/session";
-import { settings } from "../stores/settings";
-import { mobile } from "../stores/mobile";
+import { openSettings, settings, settingsModal } from "../stores/settings";
 import { t } from "../i18n/index";
 </script>
 
@@ -37,29 +34,31 @@ import { t } from "../i18n/index";
       <span><span class="dot working"></span>{{ t("topBar.working", { count: counts.working }) }}</span>
       <span><span class="dot done"></span>{{ t("topBar.done", { count: counts.done }) }}</span>
     </div>
-    <button
-      class="icon-btn help"
-      :class="{ on: mobile.status?.enabled }"
-      :aria-label="t('topBar.mobileLabel')"
-      :title="mobile.status?.enabled ? (mobile.status.running ? t('topBar.mobileActive') : t('topBar.mobileError')) : t('topBar.mobileTitle')"
-      @click="mobile.open = true"
-    >
-      <Icon name="phone" />
-    </button>
-    <button class="icon-btn help" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">?</button>
-    <LanguageMenu />
-    <ThemeMenu />
-    <FontMenu />
-    <button
-      class="icon-btn"
-      :class="{ on: settings.rightOpen }"
-      :aria-pressed="settings.rightOpen"
-      :aria-label="t('topBar.rightPanelLabel')"
-      :title="t('topBar.rightPanelTitle')"
-      @click="settings.rightOpen = !settings.rightOpen"
-    >
-      <Icon name="layout-sidebar-reverse" />
-    </button>
+    <div class="tools">
+      <button class="icon-btn" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">
+        <Icon name="question-lg" />
+      </button>
+      <ThemeMenu />
+      <button
+        class="icon-btn"
+        :class="{ on: settingsModal.open }"
+        :aria-label="t('topBar.settingsLabel')"
+        :title="t('topBar.settingsTitle')"
+        @click="openSettings()"
+      >
+        <Icon name="gear" />
+      </button>
+      <button
+        class="icon-btn"
+        :class="{ on: settings.rightOpen }"
+        :aria-pressed="settings.rightOpen"
+        :aria-label="t('topBar.rightPanelLabel')"
+        :title="t('topBar.rightPanelTitle')"
+        @click="settings.rightOpen = !settings.rightOpen"
+      >
+        <Icon name="layout-sidebar-reverse" />
+      </button>
+    </div>
   </header>
 </template>
 
@@ -85,11 +84,11 @@ import { t } from "../i18n/index";
 .counts { display: flex; gap: 12px; font-size: 12px; color: var(--muted-2); white-space: nowrap; }
 .counts > span { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
-  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--line-strong);
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 0;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
-.icon-btn.help { font-size: 13px; font-weight: 600; }
+.tools { display: flex; align-items: center; gap: 2px; }
 .icon-btn.on { color: var(--text-2); background: var(--field); }
 @media (max-width: 1180px) { .counts { display: none; } }
 </style>

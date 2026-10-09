@@ -12,12 +12,10 @@
   "working_other": "{count} working",
   "done_one": "{count} done",
   "done_other": "{count} done",
-  "mobileLabel": "Mobile access",
-  "mobileActive": "Mobile access active",
-  "mobileError": "Mobile access: error",
-  "mobileTitle": "Mobile access (iPhone, iPad)",
   "shortcutsLabel": "Shortcuts",
   "shortcutsTitle": "Shortcuts (⌘/)",
   "rightPanelLabel": "Show the right panel",
-  "rightPanelTitle": "Right panel (⌥⌘B)"
+  "rightPanelTitle": "Right panel (⌥⌘B)",
+  "settingsLabel": "Settings",
+  "settingsTitle": "Settings"
 }

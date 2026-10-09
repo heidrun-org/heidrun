@@ -21,14 +21,13 @@ import {
   workspaceLabel,
 } from "../stores/session";
 import { statusLabel, paneName } from "../lib/format";
-import { FONTS, resetZoom, settings, zoom } from "../stores/settings";
+import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
 import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
 import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
-import { mobile } from "../stores/mobile";
 import { openFiles } from "../stores/files";
 import { t } from "../i18n/index";
 
@@ -113,7 +112,7 @@ const items = computed<Item[]>(() => {
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.searchTerminals"), hint: "⇧⌘F", run: () => (search.open = true) },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.openFile"), hint: "⌘P", run: () => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }) },
     { section: t("commandPalette.section.help"), label: t("commandPalette.shortcuts"), hint: "⌘/", run: () => (state.shortcutsOpen = true) },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.mobile"), run: () => (mobile.open = true) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.mobile"), run: () => openSettings("mobileAccess") },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextTab"), hint: "⌥⌘→", run: () => cycleTab(1) },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.previousTab"), hint: "⌥⌘←", run: () => cycleTab(-1) },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextWorkspace"), hint: "⌥⌘↓", run: () => cycleWorkspace(1) },

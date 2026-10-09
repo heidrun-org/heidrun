@@ -12,12 +12,10 @@
   "working_other": "{count} en cours",
   "done_one": "{count} terminé",
   "done_other": "{count} terminés",
-  "mobileLabel": "Accès mobile",
-  "mobileActive": "Accès mobile actif",
-  "mobileError": "Accès mobile : erreur",
-  "mobileTitle": "Accès mobile (iPhone, iPad)",
   "shortcutsLabel": "Raccourcis",
   "shortcutsTitle": "Raccourcis (⌘/)",
   "rightPanelLabel": "Afficher le panneau de droite",
-  "rightPanelTitle": "Panneau de droite (⌥⌘B)"
+  "rightPanelTitle": "Panneau de droite (⌥⌘B)",
+  "settingsLabel": "Réglages",
+  "settingsTitle": "Réglages"
 }
