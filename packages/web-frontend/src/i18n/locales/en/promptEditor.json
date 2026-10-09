@@ -18,5 +18,6 @@
   "save": "Save",
   "textRequired": "Write the text of the template first",
   "saved": "Template saved",
-  "addedToProject": "Template added to the project (.heidrun.json)"
+  "addedToProject": "Template added to the project (.heidrun.json)",
+  "deleteLabel": "Delete"
 }

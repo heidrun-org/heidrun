@@ -130,7 +130,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
       <label v-if="isNew && currentProject" class="check"><input v-model="inProject" type="checkbox" />{{ t("promptEditor.inProject") }}</label>
 
       <footer>
-        <ConfirmButton v-if="!isNew" icon="trash" :confirm-label="t('promptEditor.deleteConfirm')" :question="t('promptEditor.delete')" @confirm="remove" />
+        <ConfirmButton v-if="!isNew" icon="trash" :label="t('promptEditor.deleteLabel')" :confirm-label="t('promptEditor.deleteConfirm')" :question="t('promptEditor.delete')" @confirm="remove" />
         <span class="grow"></span>
         <button type="button" class="btn lg" :title="t('promptEditor.discardTitle')" @click="discard">{{ t("promptEditor.discard") }}</button>
         <button type="button" class="btn lg primary" @click="save">{{ t("promptEditor.save") }}</button>
@@ -164,7 +164,7 @@ h2 { margin: 0; font-size: 16px; font-weight: 600; }
 .check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin-top: 6px; }
 footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 footer :deep(.confirm) {
-  width: 36px; height: 36px; border-radius: 10px; font-size: 16px; color: var(--blocked);
+  height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; color: var(--blocked);
   border: none; background: transparent;
 }
 footer :deep(.confirm:hover) { background: var(--blocked); color: #fff; }
