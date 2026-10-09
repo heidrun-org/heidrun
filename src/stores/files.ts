@@ -404,3 +404,77 @@ export function visibleRows(tree: Node, expanded: Set<string>, status: Record<st
 }
 
 export const isImage = (path: string) => /\.(png|jpe?g|gif|webp|svg|ico|bmp)$/i.test(path);
+
+// ---- Search, create, rename, delete (lot 3) ---------------------------------------
+
+export interface GrepHit {
+  path: string;
+  line: number;
+  text: string;
+}
+
+export async function grepFiles(query: string, regex: boolean, caseSensitive: boolean) {
+  return invoke<{ hits: GrepHit[]; truncated: boolean }>("files_grep", { root: files.root, query, regex, case: caseSensitive });
+}
+
+export async function createFile(path: string, dir: boolean): Promise<boolean> {
+  try {
+    await invoke("file_create", { root: files.root, path, dir });
+    await reloadFiles();
+    if (dir) {
+      const next = new Set(files.expanded);
+      next.add(path);
+      files.expanded = next;
+    } else {
+      openTab(path);
+      await startEdit(path);
+    }
+    return true;
+  } catch (e) {
+    toast(String(e));
+    return false;
+  }
+}
+
+/** Rename / move; open tabs and edits inside follow. */
+export async function renameFile(from: string, to: string): Promise<boolean> {
+  if (from === to) return true;
+  if (dirtyTabs().some((t) => t === from || t.startsWith(from + "/"))) {
+    toast("Enregistre d’abord les fichiers modifiés concernés");
+    return false;
+  }
+  try {
+    await invoke("file_rename", { root: files.root, from, to });
+    const move = (p: string) => (p === from ? to : p.startsWith(from + "/") ? to + p.slice(from.length) : p);
+    files.tabs = files.tabs.map(move);
+    if (files.active) files.active = move(files.active);
+    const edits: Record<string, Edit> = {};
+    for (const [k, v] of Object.entries(files.edits)) edits[move(k)] = v;
+    files.edits = edits;
+    await reloadFiles();
+    return true;
+  } catch (e) {
+    toast(String(e));
+    return false;
+  }
+}
+
+/** To the macOS Trash (recoverable from the Finder). */
+export async function trashFile(path: string): Promise<boolean> {
+  const under = (p: string) => p === path || p.startsWith(path + "/");
+  if (dirtyTabs().some(under)) {
+    toast("Des fichiers modifiés non enregistrés sont concernés : enregistre-les ou annule d’abord");
+    return false;
+  }
+  try {
+    await invoke("file_trash", { root: files.root, path });
+    for (const k of Object.keys(files.edits)) if (under(k)) delete files.edits[k];
+    for (const t of [...files.tabs]) if (under(t)) closeTab(t);
+    await reloadFiles();
+    toast(`${path.split("/").pop()} mis à la Corbeille`);
+    return true;
+  } catch (e) {
+    toast(String(e));
+    return false;
+  }
+}

@@ -100,8 +100,12 @@
     ]
   },
   {
-    "group": "Éditeur de fichiers",
+    "group": "Explorateur et éditeur de fichiers",
     "items": [
+      {
+        "keys": "⇧⌘F",
+        "action": "Chercher dans tout le projet (explorateur ouvert)"
+      },
       {
         "keys": "⌘S",
         "action": "Enregistrer le fichier"
@@ -121,6 +125,10 @@
       {
         "keys": "⌘W",
         "action": "Fermer l’onglet (confirmation s’il n’est pas enregistré)"
+      },
+      {
+        "keys": "Clic droit",
+        "action": "Nouveau fichier ou dossier, renommer / déplacer, Corbeille"
       }
     ]
   },

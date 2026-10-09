@@ -43,12 +43,14 @@ Dans l’app : **⌘/** (ou le bouton **?** en haut) affiche cette liste, avec u
 | ⇧↵ / ⌥↵ | Nouvelle ligne, dans le terminal comme dans la barre de saisie |
 | ⌘↵ | Lancer (fenêtre Nouvel agent) |
 | ↑ / ↓ puis ↵ | Choisir un résultat (palette, recherche) |
-| **Éditeur de fichiers** | |
+| **Explorateur et éditeur de fichiers** | |
+| ⇧⌘F | Chercher dans tout le projet (explorateur ouvert) |
 | ⌘S | Enregistrer le fichier |
 | ⌘F / ⌘⌥F | Chercher / remplacer dans le fichier |
 | ⌘D | Sélectionner l’occurrence suivante (curseurs multiples) |
 | ⌘Z / ⇧⌘Z | Annuler / rétablir |
 | ⌘W | Fermer l’onglet (confirmation s’il n’est pas enregistré) |
+| Clic droit | Nouveau fichier ou dossier, renommer / déplacer, Corbeille |
 | **Affichage** | |
 | ⌘B / ⌥⌘B | Masquer la barre latérale gauche / le panneau de droite |
 | ⌘+ / ⌘− / ⌘0 | Agrandir / réduire / réinitialiser la police (le code dans les fenêtres Git et Aperçu) |
@@ -149,6 +151,8 @@ Les éléments **terminés** (fil Activité, cartes « À traiter » terminées)
 **Fichiers du projet** (icône dossier à côté de « Dossier » dans le panneau, ou ⌘P) : l'arborescence du projet du panneau, comme dans VS Code, avec l'état git de chaque fichier (modifié, nouveau, supprimé ; un point sur les dossiers qui en contiennent) et les fichiers de `.gitignore` masqués (« Fichiers ignorés » pour les voir). ⌘P cherche un fichier par son nom (« comp/term » trouve `src/components/TerminalView.vue`). Le fichier s'affiche coloré, Markdown rendu ou en code, images en aperçu, avec onglets (⌘W pour en fermer un), fil d'Ariane, « Chemin » (⌥ : chemin absolu), Finder, VS Code et « → Agent » qui met `@chemin` dans la barre de saisie. Sélectionne des lignes : « Explique » ou « Corrige ces lignes » prépare la consigne. Dans les terminaux, `src/app.ts:42` cité par un agent ouvre le fichier à la ligne (survol ou ⌘-clic).
 
 **Modifier un fichier** : « ✎ Modifier » dans l'explorateur ouvre un vrai éditeur (CodeMirror : coloration, curseurs multiples, ⌘F / ⌘⌥F chercher-remplacer, ⌘D occurrence suivante, ⌘Z). **⌘S** enregistre ; un point dans l'onglet signale une modification non enregistrée, et fermer l'onglet ou la fenêtre demande confirmation. « Diff » montre tes changements, « Diff avant ⌘S » les montre avant chaque enregistrement. Si un agent modifie le fichier pendant que tu l'édites, rien n'est écrasé : sans changement de ta part le fichier est rechargé, sinon un bandeau propose de voir la différence, de recharger ou d'écraser avec ta version. L'enregistrement est atomique, garde les droits du fichier, et refuse `.git`, les liens symboliques et les fichiers qui ne sont pas en UTF-8.
+
+**Chercher dans le projet** (onglet « Rechercher » de l'explorateur, ou ⇧⌘F quand il est ouvert) : texte ou expression régulière (`.*`), casse respectée ou non (`Aa`), dans tous les fichiers du projet hors `.gitignore` ; résultats groupés par fichier, un clic ouvre le fichier à la ligne. **Créer, renommer, supprimer** : « + Fichier », « + Dossier », ou clic droit sur un fichier ou un dossier (nouveau fichier ici, renommer / déplacer en changeant le chemin, copier le chemin, mettre à la Corbeille — jamais de suppression définitive). **Diff git** : les changements du fichier ouvert depuis le dernier commit.
 
 **Accès mobile (iPhone, iPad)** — bouton téléphone en haut, ou ⌘K « Accès mobile » : depuis le téléphone, voir ce qui est à traiter, répondre aux menus d'autorisation, envoyer une consigne, refuser ou interrompre, lire la fin de la sortie d'un agent. Désactivé par défaut.
 
@@ -252,7 +256,7 @@ Pour une session nommée, lance l’app avec `HERDR_SESSION=<nom>`.
 
 ## Pistes
 
-Les 14 premières issues sont faites ; #15 et #16 (explorateur, édition) aussi ; #17 (recherche et gestion des fichiers) reste à faire. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
+Les 14 premières issues sont faites ; #15 à #17 (explorateur, édition, recherche et gestion des fichiers) aussi. Pour les suivantes : chacune est détaillée dans `docs/issues/` (contexte, comportement attendu, pistes techniques, critères d'acceptation) et devient une issue GitLab avec :
 
 ```sh
 sh scripts/create-gitlab-issues.sh --dry-run          # aperçu
