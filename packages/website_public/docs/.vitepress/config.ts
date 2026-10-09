@@ -15,6 +15,7 @@ export default defineConfig({
 				text: 'Documentation',
 				items: [
 					{ text: 'Introduction', link: '/documentation/' },
+					{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
 				],
 			},
 		],
