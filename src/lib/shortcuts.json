@@ -100,6 +100,31 @@
     ]
   },
   {
+    "group": "Éditeur de fichiers",
+    "items": [
+      {
+        "keys": "⌘S",
+        "action": "Enregistrer le fichier"
+      },
+      {
+        "keys": "⌘F / ⌘⌥F",
+        "action": "Chercher / remplacer dans le fichier"
+      },
+      {
+        "keys": "⌘D",
+        "action": "Sélectionner l’occurrence suivante (curseurs multiples)"
+      },
+      {
+        "keys": "⌘Z / ⇧⌘Z",
+        "action": "Annuler / rétablir"
+      },
+      {
+        "keys": "⌘W",
+        "action": "Fermer l’onglet (confirmation s’il n’est pas enregistré)"
+      }
+    ]
+  },
+  {
     "group": "Affichage",
     "items": [
       {

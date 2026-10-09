@@ -3,7 +3,29 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl, revealItemInDir } from "@tauri-apps/plugin-opener";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { buildTree, closeTab, files, isImage, openTab, quickSearch, reloadFiles, visibleRows, type TreeRow } from "../stores/files";
+import {
+  buildTree,
+  checkEdit,
+  closeTab,
+  dirtyTabs,
+  discardAll,
+  quitNow,
+  files,
+  isDirty,
+  isImage,
+  openTab,
+  quickSearch,
+  reloadEdit,
+  reloadFiles,
+  saveEdit,
+  startEdit,
+  stopEdit,
+  visibleRows,
+  type TreeRow,
+} from "../stores/files";
+import CodeEditor from "./CodeEditor.vue";
+import { diffLines } from "diff";
+import { allPanes } from "../stores/session";
 import { settings } from "../stores/settings";
 import { toast } from "../stores/session";
 import { fillInput } from "../stores/input";
@@ -17,6 +39,96 @@ const qIndex = ref(0);
 const searchEl = ref<HTMLInputElement>();
 const codeEl = ref<HTMLElement>();
 const sel = ref<{ from: number; to: number; text: string; x: number; y: number } | null>(null);
+
+// ---- Editing ---------------------------------------------------------------------
+const edit = computed(() => (files.active ? files.edits[files.active] ?? null : null));
+const dirty = computed(() => isDirty(files.active));
+const canEdit = computed(() => !!files.active && !isImage(files.active) && files.status[files.active] !== "D" && !error.value);
+/** "diff": my changes vs what was read; "conflict": what is on the disk vs mine. */
+const showDiff = ref<null | "mine" | "conflict" | "beforeSave">(null);
+const closingTab = ref<string | null>(null);
+const closingAll = ref(false);
+const leaving = ref(false);
+
+async function beginEdit() {
+  if (!files.active) return;
+  await startEdit(files.active);
+  showDiff.value = null;
+}
+function finishEdit() {
+  if (!files.active) return;
+  if (dirty.value && !leaving.value && !edit.value?.conflict) {
+    leaving.value = true; // second click confirms
+    return;
+  }
+  leaving.value = false;
+  stopEdit(files.active);
+  showDiff.value = null;
+  load();
+}
+async function save(force = false) {
+  const path = files.active;
+  if (!path || !edit.value) return;
+  if (!dirty.value && !force) return;
+  if (settings.filesDiffBeforeSave && !force && showDiff.value !== "beforeSave") {
+    showDiff.value = "beforeSave";
+    return;
+  }
+  const ok = await saveEdit(path, force);
+  if (ok) showDiff.value = null;
+  else if (files.edits[path]?.conflict) showDiff.value = null;
+}
+function onEditorChange(text: string) {
+  if (files.active && files.edits[files.active]) files.edits[files.active].current = text;
+  leaving.value = false;
+}
+/** Diff lines (added / removed / same), for the panels. */
+function diffOf(a: string, b: string) {
+  const out: { kind: "add" | "del" | "ctx"; text: string }[] = [];
+  for (const part of diffLines(a, b)) {
+    const lines = part.value.replace(/\n$/, "").split("\n");
+    for (const l of lines) out.push({ kind: part.added ? "add" : part.removed ? "del" : "ctx", text: l });
+  }
+  // Long unchanged stretches are folded to a few lines of context.
+  const keep = new Set<number>();
+  out.forEach((l, i) => {
+    if (l.kind !== "ctx") for (let k = i - 3; k <= i + 3; k++) keep.add(k);
+  });
+  const folded: { kind: "add" | "del" | "ctx" | "gap"; text: string }[] = [];
+  out.forEach((l, i) => {
+    if (keep.has(i)) folded.push(l);
+    else if (folded[folded.length - 1]?.kind !== "gap") folded.push({ kind: "gap", text: "…" });
+  });
+  // Invisible otherwise: only the newline at the very end differs.
+  if (a.endsWith("\n") !== b.endsWith("\n")) folded.push({ kind: b.endsWith("\n") ? "add" : "del", text: "↵ retour à la ligne à la fin du fichier" });
+  return folded;
+}
+const diffRows = computed(() => {
+  const e = edit.value;
+  if (!e || !showDiff.value) return [];
+  if (showDiff.value === "conflict") return diffOf(e.disk ?? "", e.current);
+  return diffOf(e.original, e.current);
+});
+// An agent at work in this project may write to the same file.
+const agentBusy = computed(() => allPanes.value.some((p) => p.agent && p.agent_status === "working" && (p.foreground_cwd || p.cwd || "").startsWith(files.root)));
+
+// Changes made on the disk while editing (an agent): checked every few seconds.
+let poll = 0;
+onMounted(() => {
+  poll = window.setInterval(() => {
+    if (files.active && files.edits[files.active]) checkEdit(files.active);
+  }, 4000);
+});
+onBeforeUnmount(() => window.clearInterval(poll));
+
+function askCloseTab(t: string) {
+  if (isDirty(t) && closingTab.value !== t) {
+    closingTab.value = t; // second click confirms
+    return;
+  }
+  closingTab.value = null;
+  closeTab(t);
+}
 
 // ---- Tree / quick search ---------------------------------------------------------
 const tree = computed(() => buildTree(files.list));
@@ -80,6 +192,14 @@ async function load() {
   // First: an answer still on its way for the previous file is dropped.
   const my = ++seq;
   sel.value = null;
+  showDiff.value = null;
+  leaving.value = false;
+  // Being edited: the editor shows it, nothing to load.
+  if (path && files.edits[path]) {
+    error.value = "";
+    loading.value = false;
+    return;
+  }
   lines.value = [];
   rendered.value = "";
   image.value = "";
@@ -210,14 +330,52 @@ function endDrag() {
 }
 
 // ---- Keys ---------------------------------------------------------------------------
-function close() {
+function close(force = false) {
+  if (!force && dirtyTabs().length) {
+    closingAll.value = true;
+    return;
+  }
+  closingAll.value = false;
+  files.quitting = false;
   files.open = false;
 }
+/** Saves every edited file; stops on the first conflict or error (and shows it). */
+async function saveAll(): Promise<boolean> {
+  for (const t of dirtyTabs()) {
+    if (!(await saveEdit(t))) {
+      openTab(t);
+      closingAll.value = false;
+      files.quitting = false;
+      return false;
+    }
+  }
+  return true;
+}
+async function saveAllAndClose() {
+  if (await saveAll()) close(true);
+}
+function abandonAndClose() {
+  discardAll();
+  close(true);
+}
+async function saveAllAndQuit() {
+  if (await saveAll()) quitNow();
+}
 function onKey(e: KeyboardEvent) {
+  const inEditor = !!(e.target as HTMLElement | null)?.closest?.(".cm-editor");
+  if (e.metaKey && e.code === "KeyS") {
+    e.preventDefault();
+    e.stopPropagation();
+    save();
+    return;
+  }
   if (e.key === "Escape") {
+    // In the editor, Échap belongs to it (search panel, completion).
+    if (inEditor) return;
     e.preventDefault();
     e.stopPropagation();
     if (sel.value) sel.value = null;
+    else if (showDiff.value) showDiff.value = null;
     else if (q.value) q.value = "";
     else close();
   } else if (e.metaKey && e.code === "KeyP" && !e.shiftKey) {
@@ -229,7 +387,7 @@ function onKey(e: KeyboardEvent) {
     // Inside the explorer, ⌘W closes the file, never the terminal pane behind.
     e.preventDefault();
     e.stopPropagation();
-    closeTab(files.active);
+    askCloseTab(files.active);
   }
 }
 onMounted(() => {
@@ -240,7 +398,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>
 
 <template>
-  <div class="overlay" @mousedown.self="close">
+  <div class="overlay" @mousedown.self="close()">
     <div class="modal" role="dialog" aria-label="Fichiers du projet">
       <header class="top">
         <span class="title">Fichiers</span>
@@ -250,11 +408,29 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <button class="tab-name" @click="openTab(t)">
               <span v-if="files.status[t]" class="st" :class="'s-' + files.status[t]">●</span>{{ t.split("/").pop() }}
             </button>
-            <button class="tab-x" :aria-label="`Fermer ${t}`" @click="closeTab(t)">×</button>
+            <button
+              class="tab-x"
+              :class="{ dirty: isDirty(t), arm: closingTab === t }"
+              :aria-label="`Fermer ${t}`"
+              :title="closingTab === t ? 'Pas enregistré : clique encore pour fermer sans enregistrer' : isDirty(t) ? 'Modifié, pas enregistré' : 'Fermer (⌘W)'"
+              @click="askCloseTab(t)"
+            >{{ closingTab === t ? "?" : isDirty(t) ? "●" : "×" }}</button>
           </div>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close">×</button>
+        <button class="close" aria-label="Fermer (Échap)" @click="close()">×</button>
       </header>
+      <div v-if="files.quitting && dirtyTabs().length" class="banner warn">
+        <span>Quitter Herdr Desk : {{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }} ({{ dirtyTabs().map((t) => t.split("/").pop()).join(", ") }}).</span>
+        <button class="tb accent" @click="saveAllAndQuit">Tout enregistrer et quitter</button>
+        <button class="tb danger" @click="quitNow">Quitter sans enregistrer</button>
+        <button class="tb" @click="files.quitting = false">Annuler</button>
+      </div>
+      <div v-else-if="closingAll" class="banner warn">
+        <span>{{ dirtyTabs().length }} fichier{{ dirtyTabs().length > 1 ? "s" : "" }} modifié{{ dirtyTabs().length > 1 ? "s" : "" }} pas encore enregistré{{ dirtyTabs().length > 1 ? "s" : "" }}.</span>
+        <button class="tb accent" @click="saveAllAndClose">Tout enregistrer et fermer</button>
+        <button class="tb danger" @click="abandonAndClose">Abandonner les modifications</button>
+        <button class="tb" @click="closingAll = false">Annuler</button>
+      </div>
 
       <div class="body" :style="{ gridTemplateColumns: `${settings.filesListWidth}px 5px 1fr` }">
         <aside class="side">
@@ -305,7 +481,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               </template>
             </nav>
             <div class="tools">
-              <div v-if="md" class="seg" role="radiogroup" aria-label="Affichage Markdown">
+              <template v-if="edit">
+                <button class="tb accent" :disabled="!dirty || edit.saving" title="Enregistrer (⌘S)" @click="save()">{{ edit.saving ? "Enregistrement…" : "Enregistrer ⌘S" }}</button>
+                <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" title="Mes changements depuis l’ouverture" @click="showDiff = showDiff === 'mine' ? null : 'mine'">Diff</button>
+                <label class="wrap-t" title="Montrer le diff avant chaque enregistrement"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />Diff avant ⌘S</label>
+                <button class="tb" :class="{ arm: leaving }" :title="leaving ? 'Clique encore pour quitter sans enregistrer' : 'Revenir à la lecture'" @click="finishEdit">{{ leaving ? "Quitter sans enregistrer ?" : "Terminer" }}</button>
+              </template>
+              <button v-else-if="canEdit" class="tb edit" title="Modifier ce fichier" @click="beginEdit">✎ Modifier</button>
+              <div v-if="md && !edit" class="seg" role="radiogroup" aria-label="Affichage Markdown">
                 <button :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">Lecture</button>
                 <button :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">Code</button>
               </div>
@@ -319,7 +502,38 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <button class="tb accent" title="Insère @chemin dans la barre de saisie de l’agent" @click="sendToAgent">→ Agent</button>
             </div>
           </div>
-          <div ref="codeEl" class="code" :class="[settings.codeTheme, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
+          <template v-if="edit">
+            <div v-if="edit.conflict" class="banner warn">
+              <template v-if="edit.diskHash === null && edit.disk === null">
+                <span>Ce fichier a été supprimé sur le disque depuis que tu l’as ouvert (par un agent ?).</span>
+                <button class="tb danger" @click="save(true)">Le recréer avec ma version</button>
+                <button class="tb" @click="finishEdit">Laisser supprimé</button>
+              </template>
+              <template v-else>
+                <span>Ce fichier a été modifié sur le disque depuis que tu l’as ouvert (par un agent ?). Rien n’a été écrasé.</span>
+                <button class="tb" :class="{ on: showDiff === 'conflict' }" @click="showDiff = showDiff === 'conflict' ? null : 'conflict'">Voir la différence</button>
+                <button class="tb" @click="reloadEdit(files.active!)">Recharger (perdre mes changements)</button>
+                <button class="tb danger" @click="save(true)">Écraser avec ma version</button>
+              </template>
+            </div>
+            <div v-else-if="agentBusy" class="banner info">Un agent travaille dans ce projet : il peut modifier ce fichier en même temps (l’app te préviendra).</div>
+            <div v-if="showDiff" class="diff code" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
+              <div class="diff-head">
+                <span>{{ showDiff === "conflict" ? "Disque (−) → ma version (+)" : "Ouvert (−) → ma version (+)" }}</span>
+                <template v-if="showDiff === 'beforeSave'">
+                  <button class="tb accent" @click="save(false)">Enregistrer</button>
+                  <button class="tb" @click="showDiff = null">Annuler</button>
+                </template>
+                <button v-else class="tb" @click="showDiff = null">Fermer</button>
+              </div>
+              <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
+              <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">Aucune différence.</div>
+            </div>
+            <div class="code editing" :class="settings.codeTheme" :style="{ fontSize: `${settings.codeFontSize}px` }">
+              <CodeEditor :key="files.root + files.active" :path="files.active!" :text="edit.original === edit.current ? edit.original : edit.current" :wrap="settings.codeWrap" :line="files.line" @change="onEditorChange" @save="save()" />
+            </div>
+          </template>
+          <div v-else ref="codeEl" class="code" :class="[settings.codeTheme, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
             <div v-if="!files.active" class="empty">Choisis un fichier à gauche, ou ⌘P pour le chercher par son nom.</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading" class="empty">Chargement…</div>
@@ -341,8 +555,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             </div>
           </div>
           <div v-if="files.active" class="foot muted">
-            {{ files.status[files.active] ? statusLabel[files.status[files.active]] : files.git ? "à jour avec git" : "hors git" }}
-            · ⌘P chercher · ⌘W fermer l’onglet · ⌘+ / ⌘− taille
+            <template v-if="edit">{{ dirty ? "modifié, pas enregistré" : "enregistré" }} · ⌘S enregistrer · ⌘F chercher · ⌘⌥F remplacer · ⌘D occurrence suivante · ⌘Z annuler</template>
+            <template v-else>{{ files.status[files.active] ? statusLabel[files.status[files.active]] : files.git ? "à jour avec git" : "hors git" }} · ⌘P chercher · ⌘W fermer l’onglet · ⌘+ / ⌘− taille</template>
           </div>
         </section>
       </div>
@@ -418,6 +632,24 @@ tr.hit > td { background: rgba(242, 169, 59, 0.16); }
 .empty { padding: 24px; color: var(--muted); font-family: var(--sans); font-size: 13px; }
 .err { color: var(--fail); }
 .selbar { position: absolute; z-index: 3; display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; border-radius: 9px; background: #1b1e22; border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); font-family: var(--sans); font-size: 12px; }
+.tb:disabled { opacity: 0.45; cursor: default; }
+.tb.on { border-color: var(--done); color: var(--text); }
+.tb.edit { color: var(--text); }
+.tb.arm, .tab-x.arm { color: var(--accent); border-color: var(--accent); }
+.tb.danger { color: var(--blocked); }
+.tab-x.dirty { color: var(--text); font-size: 11px; }
+.banner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; font-size: 12.5px; border-bottom: 1px solid var(--line); }
+.banner.warn { background: #2b2213; color: #f6c06a; }
+.banner.info { background: #12202e; color: var(--text-2); }
+.code.editing { overflow: hidden; }
+.diff { flex: 0 0 auto; max-height: 45%; overflow: auto; border-bottom: 1px solid var(--line); white-space: pre; font-family: var(--mono); }
+.diff-head { position: sticky; top: 0; display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--panel); font-family: var(--sans); font-size: 12px; color: var(--text-2); }
+.diff-head span { flex: 1; }
+.d-row { padding: 0 10px; }
+.d-row.add { background: var(--c-add); }
+.d-row.del { background: var(--c-del); }
+.d-row.gap { color: var(--c-gutter); }
+.d-sign { display: inline-block; width: 16px; color: var(--c-gutter); user-select: none; }
 .foot { padding: 5px 12px; border-top: 1px solid var(--line); font-size: 11px; }
 .muted { color: var(--muted); }
 </style>

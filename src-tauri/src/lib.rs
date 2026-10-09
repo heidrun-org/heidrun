@@ -97,7 +97,8 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .hide_others()
         .show_all()
         .separator()
-        .quit()
+        // Our own item: with unsaved files, ⌘Q shows them instead of quitting.
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", "Quitter Herdr Desk").accelerator("CmdOrCtrl+Q").build(app)?)
         .build()?;
     let edit = SubmenuBuilder::new(app, "Édition")
         .undo()
@@ -117,6 +118,21 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     MenuBuilder::new(app).items(&[&app_menu, &edit, &window]).build()
 }
 
+/// Files edited and not saved: quitting or closing the window asks first.
+static UNSAVED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn set_unsaved(on: bool) {
+    UNSAVED.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// "Quitter sans enregistrer": the user chose, the app leaves.
+#[tauri::command]
+fn quit_now(app: AppHandle) {
+    UNSAVED.store(false, std::sync::atomic::Ordering::Relaxed);
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -132,7 +148,28 @@ pub fn run() {
             mobile::start_if_enabled(app.handle());
             Ok(())
         })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "hd-quit" {
+                if UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    use tauri::Emitter;
+                    let _ = app.emit("quit-blocked", ());
+                } else {
+                    app.exit(0);
+                }
+            }
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    api.prevent_close();
+                    use tauri::Emitter;
+                    let _ = window.emit("quit-blocked", ());
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
+            set_unsaved,
+            quit_now,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,
@@ -168,12 +205,25 @@ pub fn run() {
             files::file_image,
             files::file_open_external,
             files::file_full_path,
+            files::file_read,
+            files::file_stat,
+            files::file_write,
             mobile::mobile_reply,
             mobile::mobile_status,
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Herdr Desk");
+        .build(tauri::generate_context!())
+        .expect("error while running Herdr Desk")
+        .run(|app, event| {
+            // ⌘Q with unsaved files: the app stays and shows them.
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if code.is_none() && UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    api.prevent_exit();
+                    use tauri::Emitter;
+                    let _ = app.emit("quit-blocked", ());
+                }
+            }
+        });
 }

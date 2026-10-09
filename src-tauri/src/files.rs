@@ -259,6 +259,145 @@ pub fn file_full_path(root: String, path: String) -> Result<String, String> {
     full_path(&root, &path).map(|p| p.display().to_string())
 }
 
+// ---- Editing -------------------------------------------------------------------------
+
+const MAX_EDIT: u64 = 5 * 1024 * 1024;
+
+/// Content fingerprint: a same-size write within the same second is still seen
+/// (timestamps alone miss it on some file systems).
+fn fingerprint(bytes: &[u8]) -> String {
+    use std::hash::{Hash, Hasher};
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    bytes.hash(&mut h);
+    format!("{:016x}-{}", h.finish(), bytes.len())
+}
+
+#[derive(Serialize, Debug)]
+pub struct FileText {
+    pub text: String,
+    /// Fingerprint when read: a save checks the file is still the same.
+    pub hash: String,
+}
+
+#[derive(Serialize, Debug)]
+pub struct FileStamp {
+    /// None: the file is gone (deleted on the disk).
+    pub hash: Option<String>,
+}
+
+/// Never inside .git (hooks, config): editing those is not what the explorer is for.
+fn not_in_git_dir(path: &str) -> Result<(), String> {
+    if Path::new(path).components().any(|c| c.as_os_str() == ".git") {
+        return Err("fichier interne de git : non modifiable ici".into());
+    }
+    Ok(())
+}
+
+/// A text file to edit, with its fingerprint.
+#[tauri::command(async)]
+pub fn file_read(root: String, path: String) -> Result<FileText, String> {
+    let real = full_path(&root, &path)?;
+    let meta = std::fs::metadata(&real).map_err(|e| e.to_string())?;
+    if meta.len() > MAX_EDIT {
+        return Err(format!("fichier trop gros pour l’édition ({} Ko)", meta.len() / 1024));
+    }
+    let bytes = std::fs::read(&real).map_err(|e| e.to_string())?;
+    if bytes.iter().take(8000).any(|b| *b == 0) {
+        return Err("fichier binaire : non modifiable".into());
+    }
+    let hash = fingerprint(&bytes);
+    let text = String::from_utf8(bytes).map_err(|_| "fichier qui n’est pas en UTF-8 : non modifiable ici (risque d’abîmer les accents)".to_string())?;
+    Ok(FileText { text, hash })
+}
+
+/// Fingerprint of a file now, to see whether someone (an agent) changed it.
+#[tauri::command(async)]
+pub fn file_stat(root: String, path: String) -> Result<FileStamp, String> {
+    known_root(&root)?;
+    let rel = safe_rel(&path)?;
+    let base = std::fs::canonicalize(&root).map_err(|e| e.to_string())?;
+    if std::fs::symlink_metadata(base.join(rel)).is_err() {
+        return Ok(FileStamp { hash: None });
+    }
+    let real = full_path(&root, &path)?;
+    let bytes = std::fs::read(&real).map_err(|e| e.to_string())?;
+    Ok(FileStamp { hash: Some(fingerprint(&bytes)) })
+}
+
+static TMP_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Saves a file of the project. Refused when the file on the disk is not the one
+/// the editor started from (`expected`: its fingerprint, or None when it was gone),
+/// never in .git, never through a symlink, never a read-only file. Written next to
+/// it then renamed (a crash never leaves half a file), permissions kept; a file
+/// with several hard links is written in place so they stay linked.
+#[tauri::command(async)]
+pub fn file_write(root: String, path: String, content: String, expected: Option<String>) -> Result<FileStamp, String> {
+    not_in_git_dir(&path)?;
+    known_root(&root)?;
+    let rel = safe_rel(&path)?;
+    if content.len() as u64 > MAX_EDIT {
+        return Err("contenu trop gros".into());
+    }
+    let base = std::fs::canonicalize(&root).map_err(|e| e.to_string())?;
+    let target = base.join(rel);
+    let exists = std::fs::symlink_metadata(&target).is_ok();
+    let real = if exists {
+        full_path(&root, &path)?
+    } else {
+        // Deleted meanwhile, and the user chose to write it back: its folder must
+        // still be inside the project.
+        let parent = target.parent().ok_or("dossier introuvable")?;
+        let parent = std::fs::canonicalize(parent).map_err(|_| "le dossier du fichier n’existe plus".to_string())?;
+        if !parent.starts_with(&base) {
+            return Err("chemin hors du projet".into());
+        }
+        parent.join(target.file_name().ok_or("nom invalide")?)
+    };
+    let current = if exists { Some(fingerprint(&std::fs::read(&real).map_err(|e| e.to_string())?)) } else { None };
+    if current != expected {
+        return Err("changed_on_disk".into());
+    }
+    let bytes = content.as_bytes();
+    if exists {
+        let meta = std::fs::metadata(&real).map_err(|e| e.to_string())?;
+        if !meta.is_file() {
+            return Err("ce n’est pas un fichier".into());
+        }
+        if meta.permissions().readonly() {
+            return Err("fichier en lecture seule : non modifié".into());
+        }
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::MetadataExt;
+            if meta.nlink() > 1 {
+                std::fs::write(&real, bytes).map_err(|e| format!("écriture impossible : {e}"))?;
+                return Ok(FileStamp { hash: Some(fingerprint(bytes)) });
+            }
+        }
+        let dir = real.parent().ok_or("dossier introuvable")?;
+        let name = real.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let n = TMP_SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let tmp = dir.join(format!(".{name}.herdr-desk-{}-{n}", std::process::id()));
+        {
+            use std::io::Write;
+            let mut f = std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp).map_err(|e| format!("écriture impossible : {e}"))?;
+            f.write_all(bytes).map_err(|e| format!("écriture impossible : {e}"))?;
+            f.sync_all().ok();
+        }
+        let _ = std::fs::set_permissions(&tmp, meta.permissions());
+        if let Err(e) = std::fs::rename(&tmp, &real) {
+            let _ = std::fs::remove_file(&tmp);
+            return Err(format!("enregistrement impossible : {e}"));
+        }
+    } else {
+        use std::io::Write;
+        let mut f = std::fs::OpenOptions::new().write(true).create_new(true).open(&real).map_err(|e| format!("écriture impossible : {e}"))?;
+        f.write_all(bytes).map_err(|e| format!("écriture impossible : {e}"))?;
+    }
+    Ok(FileStamp { hash: Some(fingerprint(bytes)) })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -269,5 +408,37 @@ mod tests {
         assert!(acceptable_root(&home).is_err());
         assert!(acceptable_root(Path::new("/")).is_err());
         assert!(acceptable_root(&home.join("Projects/x")).is_ok());
+        assert!(acceptable_root(&home.join(".ssh")).is_err());
+        assert!(acceptable_root(Path::new("/etc/x")).is_err());
+        assert!(not_in_git_dir(".git/config").is_err());
+        assert!(not_in_git_dir("a/.git/hooks/x").is_err());
+        assert!(not_in_git_dir("src/.gitignore").is_ok());
+    }
+
+    #[test]
+    fn writes_atomically_and_detects_changes() {
+        let dir = std::env::temp_dir().join(format!("hd-files-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(dir.join("src/a.txt"), "un\n").unwrap();
+        let root = std::fs::canonicalize(&dir).unwrap().display().to_string();
+        remember_root(&root);
+        let t = file_read(root.clone(), "src/a.txt".into()).unwrap();
+        assert_eq!(t.text, "un\n");
+        let st = file_write(root.clone(), "src/a.txt".into(), "deux\n".into(), Some(t.hash.clone())).unwrap();
+        assert_eq!(std::fs::read_to_string(dir.join("src/a.txt")).unwrap(), "deux\n");
+        // Same size, right away: still seen through the fingerprint.
+        std::fs::write(dir.join("src/a.txt"), "DEUX\n").unwrap();
+        assert_eq!(file_write(root.clone(), "src/a.txt".into(), "moi\n".into(), st.hash.clone()).unwrap_err(), "changed_on_disk");
+        // Deleted meanwhile: written back only when the editor knew it was gone.
+        std::fs::remove_file(dir.join("src/a.txt")).unwrap();
+        assert_eq!(file_stat(root.clone(), "src/a.txt".into()).unwrap().hash, None);
+        assert!(file_write(root.clone(), "src/a.txt".into(), "x\n".into(), st.hash.clone()).is_err());
+        file_write(root.clone(), "src/a.txt".into(), "x\n".into(), None).unwrap();
+        assert_eq!(std::fs::read_to_string(dir.join("src/a.txt")).unwrap(), "x\n");
+        assert!(file_write(root.clone(), "../x".into(), "".into(), None).is_err());
+        assert!(file_write(root.clone(), ".git/config".into(), "".into(), None).is_err());
+        assert_eq!(std::fs::read_dir(dir.join("src")).unwrap().count(), 1, "no temp file left");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

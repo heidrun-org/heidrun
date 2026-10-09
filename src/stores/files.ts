@@ -1,5 +1,6 @@
 // File explorer (read only for now): the project of a pane, its tree, open tabs.
-import { markRaw, reactive } from "vue";
+import { markRaw, reactive, watch } from "vue";
+import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "./session";
 
@@ -28,35 +29,197 @@ export const files = reactive({
   line: null as number | null,
   expanded: new Set<string>(),
   lineTick: 0,
+  /** Files being edited, by path. */
+  edits: {} as Record<string, Edit>,
+  /** ⌘Q (or closing the window) was stopped: unsaved files are shown first. */
+  quitting: false,
   /** Bumped to focus the quick search (⌘P). */
   searchTick: 0,
 });
 
+export interface Edit {
+  /** Content when read from the disk, and its fingerprint (a save checks it). */
+  original: string;
+  /** null: the file was deleted on the disk. */
+  hash: string | null;
+  /** What the editor holds now. */
+  current: string;
+  /** The disk changed meanwhile (an agent?): what is there now, and its fingerprint. */
+  conflict: boolean;
+  disk: string | null;
+  diskHash: string | null;
+  saving: boolean;
+}
+
+interface FileText {
+  text: string;
+  hash: string;
+}
+
+export const isDirty = (path: string | null | undefined) => !!path && !!files.edits[path] && files.edits[path].current !== files.edits[path].original;
+/** Every edited file not saved, open in a tab or not. */
+export const dirtyTabs = () => Object.keys(files.edits).filter((t) => isDirty(t));
+
+// The app asks before quitting (⌘Q, closing the window) while files are not saved.
+watch(
+  () => dirtyTabs().length > 0,
+  (on) => invoke("set_unsaved", { on }).catch(() => {}),
+);
+
+const fresh = (r: FileText): Edit => ({ original: r.text, current: r.text, hash: r.hash, conflict: false, disk: null, diskHash: null, saving: false });
+
+export async function startEdit(path: string) {
+  try {
+    files.edits[path] = fresh(await invoke<FileText>("file_read", { root: files.root, path }));
+  } catch (e) {
+    toast(String(e));
+  }
+}
+
+/** Leaves edit mode (the caller asked first when there were changes). */
+export function stopEdit(path: string) {
+  delete files.edits[path];
+}
+
+/** Back to what is on the disk now (changes dropped). */
+export async function reloadEdit(path: string) {
+  try {
+    files.edits[path] = fresh(await invoke<FileText>("file_read", { root: files.root, path }));
+  } catch (e) {
+    toast(String(e));
+  }
+}
+
+/**
+ * Saves the edited file, only if the disk still holds the version the editor
+ * started from. `overwrite`: replace the disk version shown in the conflict (and
+ * only that one: if it changed again, the conflict is refreshed instead).
+ */
+export async function saveEdit(path: string, overwrite = false): Promise<boolean> {
+  const ed = files.edits[path];
+  if (!ed || ed.saving) return false;
+  ed.saving = true;
+  try {
+    const content = ed.current;
+    const st = await invoke<{ hash: string | null }>("file_write", {
+      root: files.root,
+      path,
+      content,
+      expected: overwrite ? ed.diskHash : ed.hash,
+    });
+    Object.assign(ed, { original: content, hash: st.hash, conflict: false, disk: null, diskHash: null });
+    toast(`${path.split("/").pop()} enregistré`);
+    // Git state of the tree (M, U…) follows.
+    reloadFiles();
+    return true;
+  } catch (e) {
+    if (String(e).includes("changed_on_disk")) {
+      if (overwrite) toast("Le fichier a encore changé sur le disque : regarde la nouvelle différence");
+      await markConflict(path);
+    } else toast(String(e));
+    return false;
+  } finally {
+    ed.saving = false;
+  }
+}
+
+async function markConflict(path: string) {
+  const ed = files.edits[path];
+  if (!ed) return;
+  ed.conflict = true;
+  try {
+    const st = await invoke<{ hash: string | null }>("file_stat", { root: files.root, path });
+    if (st.hash === null) {
+      ed.disk = null;
+      ed.diskHash = null;
+      return;
+    }
+    const r = await invoke<FileText>("file_read", { root: files.root, path });
+    ed.disk = r.text;
+    ed.diskHash = r.hash;
+  } catch {
+    /* shown as "changed", without the other version */
+  }
+}
+
+/**
+ * Looks at the edited file on the disk: untouched here → reloaded quietly; changes
+ * in progress (or typed during the reload) → the conflict is shown at once rather
+ * than at the save. While a conflict is shown, a new change on the disk refreshes it.
+ */
+export async function checkEdit(path: string) {
+  const ed = files.edits[path];
+  if (!ed || ed.saving) return;
+  let st: { hash: string | null };
+  try {
+    st = await invoke("file_stat", { root: files.root, path });
+  } catch {
+    return;
+  }
+  if (ed.conflict) {
+    if (st.hash !== ed.diskHash) await markConflict(path);
+    return;
+  }
+  if (st.hash === ed.hash) return;
+  if (!isDirty(path) && st.hash !== null) {
+    const r = await invoke<FileText>("file_read", { root: files.root, path }).catch(() => null);
+    const now = files.edits[path];
+    if (!r || !now) return;
+    // Typed something while the file was being read: not replaced, it is a conflict.
+    if (now.current !== now.original) return markConflict(path);
+    files.edits[path] = fresh(r);
+    toast(`${path.split("/").pop()} modifié sur le disque (un agent ?) : rechargé`);
+  } else await markConflict(path);
+}
+
+/** Drops every unsaved change ("Abandonner"). */
+export function discardAll() {
+  files.edits = {};
+}
+
 let cwdOpen: string | null = null;
 let loadSeq = 0;
 
-export async function loadFiles(cwd: string) {
+/** False when the project could not be shown (error, or unsaved files elsewhere). */
+export async function loadFiles(cwd: string): Promise<boolean> {
   files.loading = true;
   files.error = "";
   const my = ++loadSeq;
   try {
     const r = await invoke<FileList>("files_list", { cwd, ignored: files.showIgnored });
     // A later request (another project) won: this answer is dropped.
-    if (my !== loadSeq) return;
+    if (my !== loadSeq) return false;
     const sameRoot = r.root === files.root;
+    if (!sameRoot && files.root && dirtyTabs().length) {
+      toast("Des fichiers modifiés ne sont pas enregistrés : enregistre-les ou ferme leurs onglets d’abord");
+      return false;
+    }
     // Large and read-only: not made deeply reactive (50 000 paths).
     Object.assign(files, { root: r.root, git: r.git, list: markRaw(r.files), status: markRaw(r.status), truncated: r.truncated });
     if (!sameRoot) {
+      // Another project: unsaved edits are not carried over (the caller asked first).
       files.tabs = [];
       files.active = null;
       files.expanded = new Set();
+      files.edits = {};
     }
     cwdOpen = cwd;
+    return true;
   } catch (e) {
     if (my === loadSeq) files.error = String(e);
+    return false;
   } finally {
     if (my === loadSeq) files.loading = false;
   }
+}
+
+listen("quit-blocked", () => {
+  files.open = true;
+  files.quitting = true;
+}).catch(() => {});
+
+export async function quitNow() {
+  await invoke("quit_now").catch(() => {});
 }
 
 export function reloadFiles() {
@@ -72,7 +235,17 @@ function reveal(path: string) {
 }
 
 export function openTab(path: string, line: number | null = null) {
-  if (!files.tabs.includes(path)) files.tabs = [...files.tabs, path].slice(-12);
+  if (!files.tabs.includes(path)) {
+    const tabs = [...files.tabs, path];
+    // 12 tabs at most, dropping the oldest ones that hold nothing unsaved.
+    while (tabs.length > 12) {
+      const i = tabs.findIndex((t) => t !== path && !isDirty(t));
+      if (i === -1) break;
+      delete files.edits[tabs[i]];
+      tabs.splice(i, 1);
+    }
+    files.tabs = tabs;
+  }
   files.active = path;
   files.line = line;
   // Same file, new line: the view scrolls to it (watched together with the path).
@@ -81,6 +254,7 @@ export function openTab(path: string, line: number | null = null) {
 }
 
 export function closeTab(path: string) {
+  delete files.edits[path];
   const i = files.tabs.indexOf(path);
   files.tabs = files.tabs.filter((t) => t !== path);
   if (files.active === path) {
@@ -93,7 +267,7 @@ export function closeTab(path: string) {
 export async function openFiles(cwd: string | null | undefined, opts: { path?: string; line?: number | null; search?: boolean } = {}) {
   if (!cwd) return toast("Dossier du panneau inconnu");
   files.open = true;
-  if (cwd !== cwdOpen || !files.list.length) await loadFiles(cwd);
+  if ((cwd !== cwdOpen || !files.list.length) && !(await loadFiles(cwd)) && cwd !== cwdOpen) return;
   if (opts.path) openTab(opts.path, opts.line ?? null);
   if (opts.search) files.searchTick++;
 }
@@ -104,7 +278,7 @@ export async function openFileRef(cwd: string | null | undefined, path: string, 
   try {
     const r = await invoke<{ root: string; path: string }>("files_resolve", { cwd, path });
     files.open = true;
-    if (r.root !== files.root || !files.list.length) await loadFiles(r.root);
+    if ((r.root !== files.root || !files.list.length) && !(await loadFiles(r.root))) return;
     openTab(r.path, line);
   } catch (e) {
     toast(String(e));

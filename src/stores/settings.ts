@@ -83,6 +83,8 @@ const defaults = {
   /** File explorer: tree width, Markdown shown rendered. */
   filesListWidth: 300,
   filesMdRead: true,
+  /** Show the diff before each save in the editor. */
+  filesDiffBeforeSave: false,
   /** Monthly budget per workspace (label → USD); alert at 80 % and 100 %. */
   budgets: {} as Record<string, number>,
   dockWidth: 560,

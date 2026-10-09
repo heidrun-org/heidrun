@@ -84,6 +84,8 @@ function onKey(e: KeyboardEvent) {
     return;
   }
   if (!e.metaKey || e.ctrlKey) return;
+  // The file explorer (and its editor: ⌘D, ⌘F…) owns the keyboard; only the zoom passes.
+  if (files.open && !/^(Equal|Minus|NumpadAdd|NumpadSubtract|Digit0|Numpad0)$/.test(e.code)) return;
   const run = (fn: () => unknown) => {
     e.preventDefault();
     e.stopPropagation();
