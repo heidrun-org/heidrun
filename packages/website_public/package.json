@@ -1,0 +1,16 @@
+{
+  "name": "website_public",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs",
+    "ghpage:deploy": "pnpm build && gh-pages --dist docs/.vitepress/dist --dotfiles"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0",
+    "vitepress": "^1.6.4"
+  }
+}
