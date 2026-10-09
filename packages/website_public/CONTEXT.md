@@ -1,7 +1,7 @@
 # Directory Context: `/packages/website_public`
 
 ## Purpose
-The public website of Heidrun: a homepage and the user documentation, built with VitePress and published on GitHub Pages.
+The public website of Heidrun: a homepage and the user documentation, built with VitePress and published on GitHub Pages with the script `deploy_github_pages`.
 
 ## Key Exports & Entry Points
 - `docs/`: the Markdown source of the website. `docs/index.md` is the homepage. `docs/documentation/` holds the documentation pages.
@@ -11,7 +11,6 @@ The public website of Heidrun: a homepage and the user documentation, built with
 ## Rules
 - The `base` option in `docs/.vitepress/config.ts` equals the GitHub Pages path of the repository (`/heidrun/`).
 - Nothing in this folder imports from another package of the workspace.
-- The workflow `.github/workflows/website_public.yml` builds and publishes this folder.
 
 ## Background
 - The package was created by [issue #69](https://github.com/heidrun-org/heidrun/issues/69).
