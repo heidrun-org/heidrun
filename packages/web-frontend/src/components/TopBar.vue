@@ -17,7 +17,7 @@ import { mobile } from "../stores/mobile";
       title="Barre latérale gauche (⌘B)"
       @click="settings.leftOpen = !settings.leftOpen"
     >
-      <Icon name="panel-left" />
+      <Icon name="layout-sidebar" />
     </button>
     <div class="brand" data-tauri-drag-region>Herdr Desk</div>
     <div class="machine" :title="state.error || 'Connecté au serveur Herdr local'">
@@ -41,7 +41,7 @@ import { mobile } from "../stores/mobile";
       :title="mobile.status?.enabled ? (mobile.status.running ? 'Accès mobile actif' : 'Accès mobile : erreur') : 'Accès mobile (iPhone, iPad)'"
       @click="mobile.open = true"
     >
-      <svg width="12" height="16" viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="10" height="14" rx="2" /><path d="M5 12.5h2" /></svg>
+      <Icon name="phone" />
     </button>
     <button class="icon-btn help" aria-label="Raccourcis" title="Raccourcis (⌘/)" @click="state.shortcutsOpen = true">?</button>
     <FontMenu />
@@ -53,7 +53,7 @@ import { mobile } from "../stores/mobile";
       title="Panneau de droite (⌥⌘B)"
       @click="settings.rightOpen = !settings.rightOpen"
     >
-      <Icon name="panel-right" />
+      <Icon name="layout-sidebar-reverse" />
     </button>
   </header>
 </template>

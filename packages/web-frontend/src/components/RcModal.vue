@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import QRCode from "qrcode";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -61,7 +62,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <h2>{{ pane ? paneName(pane) : "Session Claude" }}</h2>
         </div>
         <button class="x" aria-label="Fermer" title="Fermer (Échap)" @click="close">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+          <Icon name="x-lg" />
         </button>
       </header>
       <template v-if="url">

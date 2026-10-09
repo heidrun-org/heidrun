@@ -61,8 +61,8 @@ const tr = useReorder("x", (id, at) => moveTab(id, at));
     <div class="spacer"></div>
     <button class="btn" title="Lancer Claude ou Codex dans un nouvel onglet, avec une consigne" @click="newAgent.open = true">Nouvel agent <kbd>⇧⌘T</kbd></button>
     <button class="btn" @click="newTerminal()">Nouveau terminal <kbd>⌘T</kbd></button>
-    <button class="btn" title="Diviser à droite" @click="splitPane('right')"><Icon name="split-right" /> <kbd>⌘D</kbd></button>
-    <button class="btn" title="Diviser en bas" @click="splitPane('down')"><Icon name="split-down" /> <kbd>⇧⌘D</kbd></button>
+    <button class="btn" title="Diviser à droite" @click="splitPane('right')"><Icon name="layout-split" /> <kbd>⌘D</kbd></button>
+    <button class="btn" title="Diviser en bas" @click="splitPane('down')"><Icon name="layout-split" class="rotated" /> <kbd>⇧⌘D</kbd></button>
   </div>
 </template>
 
