@@ -86,12 +86,31 @@ fn herdr_paths() -> Value {
     })
 }
 
+/// True when the first preferred language of the Mac is French.
+fn is_system_language_french() -> bool {
+    let output = std::process::Command::new("defaults").args(["read", "-g", "AppleLanguages"]).output();
+    let Ok(output) = output else {
+        return false;
+    };
+    let text = String::from_utf8_lossy(&output.stdout);
+    let first_language = text.lines().find(|line| line.contains('"') || line.trim().starts_with(|c: char| c.is_alphabetic()));
+    match first_language {
+        Some(line) => line.trim().trim_start_matches('"').starts_with("fr"),
+        None => false,
+    }
+}
+
 /// Custom menu: the default macOS menu binds ⌘W to "Close Window", which would
 /// close the app instead of reaching our "close pane" shortcut.
 fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let is_french = is_system_language_french();
+    let about_label = if is_french { "À propos de Heidrun" } else { "About Heidrun" };
+    let quit_label = if is_french { "Quitter Heidrun" } else { "Quit Heidrun" };
+    let edit_label = if is_french { "Édition" } else { "Edit" };
+    let window_label = if is_french { "Fenêtre" } else { "Window" };
     let app_menu = SubmenuBuilder::new(app, "Heidrun")
         // Our own item: the About window is drawn by the web frontend, with an image.
-        .item(&tauri::menu::MenuItemBuilder::with_id("hd-about", "À propos de Heidrun").build(app)?)
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-about", about_label).build(app)?)
         .separator()
         .services()
         .separator()
@@ -100,9 +119,9 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .show_all()
         .separator()
         // Our own item: with unsaved files, ⌘Q shows them instead of quitting.
-        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", "Quitter Heidrun").accelerator("CmdOrCtrl+Q").build(app)?)
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", quit_label).accelerator("CmdOrCtrl+Q").build(app)?)
         .build()?;
-    let edit = SubmenuBuilder::new(app, "Édition")
+    let edit = SubmenuBuilder::new(app, edit_label)
         .undo()
         .redo()
         .separator()
@@ -111,7 +130,7 @@ fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
         .paste()
         .select_all()
         .build()?;
-    let window = SubmenuBuilder::new(app, "Fenêtre")
+    let window = SubmenuBuilder::new(app, window_label)
         .minimize()
         .maximize()
         .separator()
