@@ -29,7 +29,7 @@ const title = computed(() => (props.provider === "claude" ? "Compte Claude" : bl
         Claude Code ne transmet pas encore ses chiffres à l’app. L’activation branche Herdr Desk sur sa status line,
         et ta status line actuelle reste affichée telle quelle dans le terminal.
       </p>
-      <button class="btn" :disabled="claudeLink.busy" @click="enableClaudeLink">Activer le suivi Claude</button>
+      <button title="Start tracking Claude usage" class="btn" :disabled="claudeLink.busy" @click="enableClaudeLink">Activer le suivi Claude</button>
     </template>
     <p v-else-if="provider === 'claude'" class="hint">En attente de la prochaine réponse de Claude. Les quotas n’existent qu’avec un abonnement Pro ou Max.</p>
     <p v-else class="hint">Pas encore de données : Codex les écrit après sa première réponse.</p>

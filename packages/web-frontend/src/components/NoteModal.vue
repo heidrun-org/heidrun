@@ -144,12 +144,12 @@ function remove() {
 
       <footer class="foot">
         <template v-if="editing">
-          <button class="btn" @click="editing = false">Annuler</button>
-          <button class="btn primary" @click="saveEdit">Enregistrer</button>
+          <button title="Cancel editing the note" class="btn" @click="editing = false">Annuler</button>
+          <button title="Save the note" class="btn primary" @click="saveEdit">Enregistrer</button>
         </template>
         <template v-else>
-          <button class="btn" @click="copyNote">Copier</button>
-          <button class="btn" @click="startEdit">Modifier</button>
+          <button title="Copy the note" class="btn" @click="copyNote">Copier</button>
+          <button title="Edit the note" class="btn" @click="startEdit">Modifier</button>
           <label class="sr" for="modal-send">Envoyer à un agent</label>
           <select
             v-if="agents.length"

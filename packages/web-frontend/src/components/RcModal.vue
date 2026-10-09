@@ -73,8 +73,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <span class="mono">{{ url }}</span>
         </div>
         <div class="actions">
-          <button class="btn primary" @click="copyUrl">Copier le lien</button>
-          <button class="btn" @click="openInBrowser">Ouvrir dans le navigateur</button>
+          <button title="Copy the link" class="btn primary" @click="copyUrl">Copier le lien</button>
+          <button title="Open the link in the browser" class="btn" @click="openInBrowser">Ouvrir dans le navigateur</button>
           <button class="btn" title="Ouvre le panneau de Claude Code dans le terminal (déconnexion…)" @click="manage">Gérer dans le terminal</button>
         </div>
       </template>

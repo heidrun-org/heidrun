@@ -54,7 +54,7 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
       <header>
         <h2>Raccourcis</h2>
         <input ref="input" v-model="q" placeholder="Filtrer : onglet, agent, souris…" spellcheck="false" />
-        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button title="Close the shortcuts (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="cols">
         <section v-for="g in shown" :key="g.group" class="group">

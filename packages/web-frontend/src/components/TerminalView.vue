@@ -850,14 +850,14 @@ onBeforeUnmount(() => {
       <button v-if="chip.alt" class="chip" type="button" title="Aperçu dans l’app (⌘-clic sur le texte)" @click="runChip(true)">{{ chip.alt.label }}</button>
     </div>
     <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
-      <button class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
-      <button class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
+      <button title="Copy the selected text" class="btn" @click="copySelection">Copier <kbd>⌘C</kbd></button>
+      <button title="Pin the selected text" class="btn" @click="pinSelection">Épingler <kbd>⇧⌘P</kbd></button>
     </div>
     <div v-if="exited" class="overlay">
       <p>Terminal détaché.</p>
       <div class="actions">
-        <button class="btn" @click="attach(false)">Rattacher</button>
-        <button class="btn" @click="attach(true)">Prendre le contrôle</button>
+        <button title="Attach to this terminal" class="btn" @click="attach(false)">Rattacher</button>
+        <button title="Take control of this terminal" class="btn" @click="attach(true)">Prendre le contrôle</button>
       </div>
     </div>
   </div>

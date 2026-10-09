@@ -174,25 +174,25 @@ const statusText = computed(() => {
           >
             <span class="opt-n">{{ o.n }}</span><span class="opt-l">{{ o.label }}</span>
           </button>
-          <button class="btn" @click="sendKeys(p.pane_id, ['esc'])">Échap</button>
+          <button title="Send the Escape key to the pane" class="btn" @click="sendKeys(p.pane_id, ['esc'])">Échap</button>
         </div>
         <div v-else-if="p.agent && p.agent_status === 'blocked'" class="block actions">
-          <button class="btn lg primary" @click="sendKeys(p.pane_id, ['enter'])">Autoriser</button>
+          <button title="Allow this action" class="btn lg primary" @click="sendKeys(p.pane_id, ['enter'])">Autoriser</button>
           <div class="pair">
-            <button v-if="isClaude" class="btn lg" @click="sendKeys(p.pane_id, ['2'])">Toujours</button>
-            <button class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Refuser</button>
+            <button title="Always allow this action" v-if="isClaude" class="btn lg" @click="sendKeys(p.pane_id, ['2'])">Toujours</button>
+            <button title="Refuse this action" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Refuser</button>
           </div>
         </div>
         <div v-else-if="p.agent && p.agent_status === 'working'" class="block actions">
-          <button class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Interrompre</button>
+          <button title="Interrupt the agent" class="btn lg" @click="sendKeys(p.pane_id, ['esc'])">Interrompre</button>
         </div>
         <div v-else-if="!p.agent" class="block actions">
-          <button v-if="fixer" class="btn lg primary" @click="askAgentToFix(p.pane_id, fixer.pane_id)">
+          <button title="Ask another agent to fix this problem" v-if="fixer" class="btn lg primary" @click="askAgentToFix(p.pane_id, fixer.pane_id)">
             Demander à {{ paneName(fixer) }} de corriger
           </button>
           <div class="pair">
-            <button class="btn lg" @click="sendKeys(p.pane_id, ['up', 'enter'])">Relancer</button>
-            <button class="btn lg" @click="sendKeys(p.pane_id, ['ctrl+c'])">Arrêter ⌃C</button>
+            <button title="Run the last command again" class="btn lg" @click="sendKeys(p.pane_id, ['up', 'enter'])">Relancer</button>
+            <button title="Stop the command (Control+C)" class="btn lg" @click="sendKeys(p.pane_id, ['ctrl+c'])">Arrêter ⌃C</button>
           </div>
         </div>
 
@@ -247,7 +247,7 @@ const statusText = computed(() => {
           <form class="watch-form" @submit.prevent="watchOutput">
             <label class="sr" for="regex">Motif à surveiller</label>
             <input id="regex" v-model="regex" class="mono" spellcheck="false" />
-            <button class="btn" type="submit">Surveiller</button>
+            <button title="Start watching this pane" class="btn" type="submit">Surveiller</button>
           </form>
         </div>
 
@@ -283,8 +283,8 @@ const statusText = computed(() => {
           <button v-if="hasFinished" type="button" class="clear" title="Retirer les travaux terminés" @click="clearFinishedRuns()">Effacer terminés</button>
           <span class="grow"></span>
           <span v-if="p" class="seg" role="group" aria-label="Activité affichée">
-            <button type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">Tous</button>
-            <button type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">Ce panneau</button>
+            <button title="Show the activity of all panes" type="button" :class="{ on: activityScope === 'all' }" @click="activityScope = 'all'">Tous</button>
+            <button title="Show the activity of this pane only" type="button" :class="{ on: activityScope === 'pane' }" @click="activityScope = 'pane'">Ce panneau</button>
           </span>
         </div>
         <div v-for="a in activity" :key="a.id" class="act-row">

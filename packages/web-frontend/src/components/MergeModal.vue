@@ -53,8 +53,8 @@ async function go() {
       <pre v-if="merging.error" class="err mono">{{ merging.error }}</pre>
 
       <div class="row">
-        <button ref="cancel" class="btn lg" :disabled="merging.busy" @click="merging.open = false">Annuler</button>
-        <button class="btn lg go" :disabled="merging.busy" @click="go">{{ merging.busy ? "Fusion…" : `Fusionner ${r.ref}` }}</button>
+        <button title="Cancel the merge" ref="cancel" class="btn lg" :disabled="merging.busy" @click="merging.open = false">Annuler</button>
+        <button title="Merge the branch" class="btn lg go" :disabled="merging.busy" @click="go">{{ merging.busy ? "Fusion…" : `Fusionner ${r.ref}` }}</button>
       </div>
     </div>
   </div>

@@ -80,7 +80,7 @@ function sendTo(n: Note, paneId: string) {
       <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
       <pre class="mono" :class="{ open: expanded[n.id] }" title="Clic : déplier · double-clic : ouvrir en grand" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>
       <div class="actions">
-        <button class="btn" @click="copyNote(n)">Copier</button>
+        <button title="Copy the note" class="btn" @click="copyNote(n)">Copier</button>
         <label class="sr" :for="`send-${n.id}`">Envoyer à un agent</label>
         <select
           v-if="agents.length"

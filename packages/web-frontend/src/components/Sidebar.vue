@@ -121,7 +121,7 @@ async function createWorkspace() {
         <label class="sr" for="ws-path">Dossier du workspace</label>
         <input id="ws-path" v-model="newPath" class="mono" placeholder="~/Projects/…" autofocus @keydown.esc="creating = false" />
       </form>
-      <button v-else class="item dashed" @click="creating = true">+ Nouveau workspace</button>
+      <button title="Create a new workspace" v-else class="item dashed" @click="creating = true">+ Nouveau workspace</button>
     </section>
 
     <section class="group tight">
@@ -158,7 +158,7 @@ async function createWorkspace() {
     <section v-if="attention.length" class="group attention">
       <div class="eyebrow pad">À traiter</div>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
-        <button class="card-main" @click="selectPane(p)">
+        <button title="Show this pane" class="card-main" @click="selectPane(p)">
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
             <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">QUESTION</span>

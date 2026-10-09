@@ -35,7 +35,7 @@ function onKey(e: KeyboardEvent) {
           <div class="eyebrow">iPhone · iPad</div>
           <h2 id="mob-title">Accès mobile</h2>
         </div>
-        <button class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
+        <button title="Close the window (Escape)" class="close" aria-label="Fermer (Échap)" @click="close"><Icon name="x-lg" /></button>
       </header>
 
       <p class="lead">

@@ -232,31 +232,31 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
         <div class="pop-h">Projet</div>
         <div v-for="t in projectPrompts" :key="'p' + t.id" class="tpl-row">
           <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-          <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, true)"><Icon name="x-lg" /></button>
+          <button title="Delete this template" type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, true)"><Icon name="x-lg" /></button>
         </div>
       </template>
       <div class="pop-h">Mes modèles</div>
       <div v-for="t in prompts.personal" :key="t.id" class="tpl-row">
         <button type="button" class="tpl-item" :title="t.text" @click="useTemplate(t)">{{ t.label }}</button>
-        <button type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, false)"><Icon name="x-lg" /></button>
+        <button title="Delete this template" type="button" class="x" :aria-label="`Supprimer ${t.label}`" @click="removePrompt(t.id, false)"><Icon name="x-lg" /></button>
       </div>
       <div v-if="!saving" class="pop-foot">
-        <button type="button" class="link" @click="saving = true">+ Enregistrer la saisie comme modèle</button>
+        <button title="Save the typed text as a template" type="button" class="link" @click="saving = true">+ Enregistrer la saisie comme modèle</button>
         <span class="vars mono" title="Variables remplacées à l’insertion">{{ VARIABLES.join(" ") }}</span>
       </div>
       <div v-else class="save">
         <input v-model="newLabel" placeholder="Nom du modèle" @keydown.enter.prevent="saveTemplate" />
         <label v-if="currentProject" class="check"><input v-model="inProject" type="checkbox" />Dans le projet</label>
-        <button type="button" class="btn" @click="saveTemplate">Enregistrer</button>
+        <button title="Save the template" type="button" class="btn" @click="saveTemplate">Enregistrer</button>
       </div>
     </div>
 
     <!-- Recipients -->
     <div v-if="picker && input.multi" class="pop picker">
       <div class="pop-tools">
-        <button type="button" class="link" @click="pickWorkspace">Tous les agents de ce workspace</button>
-        <button type="button" class="link" @click="pickAllClaude">Tous les Claude</button>
-        <button type="button" class="link" @click="input.targets = []">Aucun</button>
+        <button title="Select all agents of this workspace" type="button" class="link" @click="pickWorkspace">Tous les agents de ce workspace</button>
+        <button title="Select all Claude agents" type="button" class="link" @click="pickAllClaude">Tous les Claude</button>
+        <button title="Select no agent" type="button" class="link" @click="input.targets = []">Aucun</button>
       </div>
       <div v-for="g in agentGroups" :key="g.workspace" class="grp">
         <div class="pop-h">{{ g.workspace }}</div>
@@ -277,8 +277,8 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
         </li>
       </ul>
       <div class="row">
-        <button type="button" class="btn" @click="confirming = false">Annuler</button>
-        <button type="button" class="btn primary" @click="sendBroadcast">Envoyer</button>
+        <button title="Cancel the broadcast" type="button" class="btn" @click="confirming = false">Annuler</button>
+        <button title="Send the message to all selected agents" type="button" class="btn primary" @click="sendBroadcast">Envoyer</button>
       </div>
     </div>
 
@@ -339,7 +339,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocDown));
       <label class="check"><input v-model="newPane" type="checkbox" />Nouveau panneau</label>
       <label class="check"><input v-model="notifyEnd" type="checkbox" :disabled="!newPane" />Me notifier</label>
     </template>
-    <button class="btn lg primary send" type="submit" :disabled="!!subagents.busy">{{ input.multi ? "Diffuser" : mode === "agent" ? "Envoyer" : "Lancer" }} ↵</button>
+    <button title="Send the message" class="btn lg primary send" type="submit" :disabled="!!subagents.busy">{{ input.multi ? "Diffuser" : mode === "agent" ? "Envoyer" : "Lancer" }} ↵</button>
   </form>
 </template>
 

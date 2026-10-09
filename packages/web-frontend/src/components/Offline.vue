@@ -24,8 +24,8 @@ onMounted(async () => {
         quand tu fermes l’app, jusqu’à <span class="mono">herdr server stop</span> ou au redémarrage du Mac.
       </p>
       <div class="row">
-        <button class="btn lg primary" :disabled="state.starting" @click="startHerdr()">Démarrer Herdr</button>
-        <button class="btn lg" :disabled="state.starting" @click="refresh()">Réessayer</button>
+        <button title="Start Herdr" class="btn lg primary" :disabled="state.starting" @click="startHerdr()">Démarrer Herdr</button>
+        <button title="Try to connect again" class="btn lg" :disabled="state.starting" @click="refresh()">Réessayer</button>
       </div>
       <label class="check"><input v-model="settings.autoStartHerdr" type="checkbox" />Démarrer Herdr automatiquement à l’ouverture de l’app</label>
       <dl v-if="paths">

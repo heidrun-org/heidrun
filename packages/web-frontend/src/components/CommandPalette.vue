@@ -196,7 +196,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
       <div class="list">
         <template v-for="g in grouped" :key="g.section">
           <div class="eyebrow sec">{{ g.section }}</div>
-          <button
+          <button title="Run this command"
             v-for="{ item, i } in g.items"
             :key="i"
             class="row"

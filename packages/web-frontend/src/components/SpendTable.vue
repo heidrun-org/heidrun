@@ -49,8 +49,8 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
     <div class="head">
       <span class="eyebrow">{{ fixed ? "Fenêtre 5 h en cours" : "Consommation par workspace" }}</span>
       <span v-if="!fixed" class="seg">
-        <button type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">5 h</button>
-        <button type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">Aujourd’hui</button>
+        <button title="Show the spending of the last 5 hours" type="button" :class="{ on: scope === 'window' }" @click="scope = 'window'">5 h</button>
+        <button title="Show the spending of today" type="button" :class="{ on: scope === 'today' }" @click="scope = 'today'">Aujourd’hui</button>
       </span>
     </div>
 

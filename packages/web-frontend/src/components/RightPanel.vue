@@ -28,7 +28,7 @@ const tabs = computed(() => [
 <template>
   <aside class="right" :style="{ width: `${settings.rightWidth}px` }">
     <div class="seg" role="tablist" aria-label="Panneau de droite">
-      <button
+      <button title="Show this tab"
         v-for="t in tabs"
         :key="t.id"
         role="tab"

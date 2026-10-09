@@ -90,18 +90,18 @@ function onKey(e: KeyboardEvent) {
       <p class="where mono">{{ cwd ?? "dossier du workspace" }}</p>
 
       <div class="seg" role="radiogroup" aria-label="Outil">
-        <button ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
-        <button :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
+        <button title="Use Claude Code" ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
+        <button title="Use Codex" :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
       </div>
 
       <template v-if="tool === 'claude'">
         <div class="field-label">Agent</div>
         <div class="agents" role="radiogroup" aria-label="Agent">
-          <button class="agent" :class="{ on: agent === null }" @click="agent = null">
+          <button title="Start a general agent without a role" class="agent" :class="{ on: agent === null }" @click="agent = null">
             <span class="a-name">Agent libre</span><span class="a-desc">Claude Code sans rôle particulier</span>
           </button>
           <div v-if="loading" class="muted small">Lecture de .claude/agents…</div>
-          <button v-for="a in agents" :key="a.name" class="agent" :class="{ on: agent === a.name }" @click="agent = a.name">
+          <button title="Start this agent" v-for="a in agents" :key="a.name" class="agent" :class="{ on: agent === a.name }" @click="agent = a.name">
             <span class="a-name">{{ a.name }}<span class="src">{{ a.source }}</span><span v-if="a.model" class="src">{{ a.model }}</span></span>
             <span class="a-desc">{{ a.description || "—" }}</span>
           </button>
@@ -134,8 +134,8 @@ function onKey(e: KeyboardEvent) {
 
       <p class="cmd mono">$ {{ command }}</p>
       <div class="row">
-        <button class="btn lg" @click="close">Annuler</button>
-        <button class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">Lancer <kbd>⌘↵</kbd></button>
+        <button title="Cancel and close the window" class="btn lg" @click="close">Annuler</button>
+        <button title="Start the agent" class="btn lg go" :disabled="busy || !selectedWorkspace" @click="go">Lancer <kbd>⌘↵</kbd></button>
       </div>
     </div>
   </div>

@@ -17,7 +17,7 @@ import { clockTime, gaugeLevel } from "../lib/format";
       <span v-if="q.cost" class="muted">coût estimé <span class="mono val">{{ q.cost.toFixed(2).replace(".", ",") }} $</span></span>
       <span class="sep"></span>
     </template>
-    <button
+    <button title="Enable Claude usage tracking"
       v-if="!quotas.some((q) => q.provider === 'claude') && claudeLink.loaded && !claudeLink.installed"
       class="link"
       :disabled="claudeLink.busy"
