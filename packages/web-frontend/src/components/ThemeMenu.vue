@@ -50,7 +50,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 <style scoped>
 .wrap { position: relative; }
 .icon-btn {
-  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: transparent;
+  width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent;
   color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
