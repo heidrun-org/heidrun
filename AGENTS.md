@@ -15,3 +15,12 @@ Every modification of this repository follows these seven steps, in this order. 
 5. Merge the pull request into the personal development branch of the developer, for example `dev_jerome`.
 6. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree if one was created.
 7. Close the issue.
+
+## GitHub
+
+### Creating an issue
+
+When you create an issue and you have screenshots related to the issue, attach the screenshots to the issue with the `--attach` flag of the `gh` command. The flag takes a file path, and an optional alt text after `#`. Repeat the flag to attach several files.
+
+- When you create the issue: `gh issue create --title "<title>" --body "<body>" --attach './screenshot.png#Alt text'`
+- When the issue already exists: `gh issue edit <issue number> --attach './screenshot.png#Alt text'`
