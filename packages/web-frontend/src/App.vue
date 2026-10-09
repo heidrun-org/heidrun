@@ -2,7 +2,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
-import TabBar from "./components/TabBar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
 import InputBar from "./components/InputBar.vue";
 import RightPanel from "./components/RightPanel.vue";
@@ -216,7 +215,6 @@ onBeforeUnmount(() => {
       </template>
       <main class="center">
         <template v-if="state.snapshot">
-          <TabBar />
           <div class="stage">
             <PaneGrid />
             <template v-if="dockVisible.length">

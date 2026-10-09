@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import {
   allPanes,
   answerChoice,
   attention,
+  closePane,
   dismiss,
   finishRename,
   moveWorkspaceInView,
@@ -19,6 +20,7 @@ import {
   sidebarWorkspaces as workspaces,
 } from "../stores/session";
 import { statusLabel, agentKind, ago, paneName } from "../lib/format";
+import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
@@ -56,6 +58,21 @@ function agentsIn(wsId: string) {
 
 /** Index of the first workspace without an agent, where the divider goes. */
 const firstQuiet = computed(() => workspaces.value.findIndex((w) => !agentsIn(w.workspace_id).length));
+
+/** Pane whose three-dot menu is open, or null. */
+const menuPaneId = ref<string | null>(null);
+
+function renamePane(paneId: string) {
+  menuPaneId.value = null;
+  startRename("pane", paneId);
+}
+
+function closeMenu() {
+  menuPaneId.value = null;
+}
+
+onMounted(() => document.addEventListener("mousedown", closeMenu));
+onBeforeUnmount(() => document.removeEventListener("mousedown", closeMenu));
 
 const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
 
@@ -135,8 +152,8 @@ async function createWorkspace() {
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
         <span class="heading-actions">
-          <button class="add" :title="t('tabBar.newAgentTitle')" :aria-label="t('tabBar.newAgentTitle')" @click="newAgent.open = true"><Icon name="robot" /></button>
-          <button class="add" :title="t('tabBar.newTerminalTitle')" :aria-label="t('tabBar.newTerminalTitle')" @click="newTerminal()"><Icon name="terminal" /></button>
+          <button class="add" :title="t('sidebar.newAgentTitle')" :aria-label="t('sidebar.newAgentTitle')" @click="newAgent.open = true"><Icon name="robot" /></button>
+          <button class="add" :title="t('sidebar.newTerminalTitle')" :aria-label="t('sidebar.newTerminalTitle')" @click="newTerminal()"><Icon name="terminal" /></button>
         </span>
       </div>
       <template v-for="p in workspacePanes" :key="p.pane_id">
@@ -150,21 +167,46 @@ async function createWorkspace() {
             @cancel="state.renaming = null"
           />
         </div>
-        <button
+        <div
           v-else
-          class="item small"
-          :class="{ active: p.pane_id === state.selectedPaneId }"
-          :title="t('sidebar.paneTitle', { name: p.terminal_title_stripped || p.agent || t('sidebar.terminalLower') })"
-          @click="selectPane(p)"
-          @dblclick="startRename('pane', p.pane_id)"
+          class="item small pane-row"
+          :class="{ active: p.pane_id === state.selectedPaneId, menuOpen: menuPaneId === p.pane_id }"
         >
-          <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
-          <span class="grow">{{ paneName(p) }}</span>
-          <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" :title="t('sidebar.remoteControlConnected')">{{ t("sidebar.remoteControlBadge") }}</span>
-          <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
-            {{ p.agent ? statusLabel(p.agent_status) : t("sidebar.terminalLower") }}
+          <button
+            class="pane-main"
+            :title="t('sidebar.paneTitle', { name: p.terminal_title_stripped || p.agent || t('sidebar.terminalLower') })"
+            @click="selectPane(p)"
+            @dblclick="startRename('pane', p.pane_id)"
+          >
+            <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
+            <span class="grow">{{ paneName(p) }}</span>
+            <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" :title="t('sidebar.remoteControlConnected')">{{ t("sidebar.remoteControlBadge") }}</span>
+            <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
+              {{ p.agent ? statusLabel(p.agent_status) : t("sidebar.terminalLower") }}
+            </span>
+          </button>
+          <span class="pane-actions">
+            <button
+              class="row-btn"
+              :aria-label="t('sidebar.paneMenuLabel', { name: paneName(p) })"
+              :title="t('sidebar.paneMenu')"
+              aria-haspopup="menu"
+              :aria-expanded="menuPaneId === p.pane_id"
+              @mousedown.stop
+              @click.stop="menuPaneId = menuPaneId === p.pane_id ? null : p.pane_id"
+            ><Icon name="three-dots-vertical" /></button>
+            <div v-if="menuPaneId === p.pane_id" class="row-menu" role="menu" @mousedown.stop>
+              <button class="row-menu-item" role="menuitem" @click.stop="renamePane(p.pane_id)">{{ t("sidebar.rename") }}</button>
+            </div>
+            <ConfirmButton
+              class="row-btn"
+              icon="x-lg"
+              :confirm-label="t('sidebar.closePaneConfirm')"
+              :question="t('sidebar.closePane', { name: paneName(p) })"
+              @confirm="closePane(p.pane_id)"
+            />
           </span>
-        </button>
+        </div>
       </template>
     </section>
     <!-- At the bottom: cards come and go without moving the workspaces list. -->
@@ -268,6 +310,23 @@ async function createWorkspace() {
   border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
 }
 .item.small { height: 34px; font-weight: 400; }
+.pane-row { padding-right: 4px; }
+.pane-main {
+  flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0;
+  border: none; background: transparent; color: inherit; font: inherit; text-align: left;
+}
+.pane-actions { position: relative; display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.row-btn { opacity: 0; }
+.pane-row:hover .row-btn, .pane-row.active .row-btn, .pane-row.menuOpen .row-btn, .row-btn:focus-visible { opacity: 1; }
+.row-menu {
+  position: absolute; top: 100%; right: 0; z-index: 20; min-width: 120px; padding: 4px; border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+.row-menu-item {
+  width: 100%; height: 28px; padding: 0 10px; border: none; border-radius: 6px; background: transparent;
+  color: var(--text-2); text-align: left; font-size: 13px;
+}
+.row-menu-item:hover { background: var(--hover); color: var(--text); }
 .item { position: relative; }
 .item.dragging { opacity: 0.4; }
 .item.drop-before::before, .item.drop-after::after {
