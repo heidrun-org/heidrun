@@ -95,7 +95,7 @@ async function createWorkspace() {
     <section class="group tight">
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.workspaces") }}</span>
-        <button class="add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace">+</button>
+        <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
         <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
@@ -150,9 +150,7 @@ async function createWorkspace() {
     <section class="group tight">
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
-        <span class="heading-actions">
-          <button class="add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
-        </span>
+        <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="p in workspacePanes" :key="p.pane_id">
         <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
@@ -258,11 +256,10 @@ async function createWorkspace() {
 .group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
-.heading { display: flex; align-items: center; justify-content: space-between; }
-.heading-actions { display: flex; align-items: center; gap: 2px; }
+.heading { display: flex; align-items: center; justify-content: space-between; padding-right: 0; }
 .add {
   width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent;
-  color: var(--muted); font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
 }
 .add:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
