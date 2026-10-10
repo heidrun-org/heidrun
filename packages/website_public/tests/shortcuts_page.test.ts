@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { SiteFiles } from './site_files';
 
 const pagePath = Path.join(SiteFiles.docsDir, 'documentation/shortcuts.md');
-const shortcutsPath = Path.join(SiteFiles.repositoryDir, 'packages/web-frontend/src/lib/shortcuts.json');
-const englishPath = Path.join(SiteFiles.repositoryDir, 'packages/web-frontend/src/i18n/locales/en/shortcuts.json');
+const shortcutsPath = Path.join(SiteFiles.repositoryDir, 'packages/web_frontend/src/lib/shortcuts.json');
+const englishPath = Path.join(SiteFiles.repositoryDir, 'packages/web_frontend/src/i18n/locales/en/shortcuts.json');
 
 type Group = { groupKey: string; items: { keys?: string; keysKey?: string; actionKey: string }[] };
 

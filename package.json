@@ -5,12 +5,12 @@
   "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter desktop-tauri tauri dev",
-    "build": "pnpm --filter desktop-tauri tauri build",
-    "dev:web": "pnpm --filter web-frontend dev",
-    "build:web": "pnpm --filter web-frontend build",
-    "tauri": "pnpm --filter desktop-tauri tauri",
-    "test": "pnpm --filter web-frontend test && pnpm --filter desktop-tauri test && pnpm --filter website_public test",
+    "dev": "pnpm --filter desktop_tauri tauri dev",
+    "build": "pnpm --filter desktop_tauri tauri build",
+    "dev:web": "pnpm --filter web_frontend dev",
+    "build:web": "pnpm --filter web_frontend build",
+    "tauri": "pnpm --filter desktop_tauri tauri",
+    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --"
   },

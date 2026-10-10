@@ -21,13 +21,13 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/desktop-tauri:
+  packages/desktop_tauri:
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^2.0.0
         version: 2.12.1
 
-  packages/web-frontend:
+  packages/web_frontend:
     dependencies:
       '@codemirror/autocomplete':
         specifier: ^6.20.3

@@ -74,9 +74,9 @@ class ReleaseDmg {
 		const version = rootPackage.version;
 		const tagName = `v${version}`;
 
-		ReleaseDmg._run('pnpm', ['--filter', 'desktop-tauri', 'tauri', 'build', '--bundles', 'dmg'], rootDir);
+		ReleaseDmg._run('pnpm', ['--filter', 'desktop_tauri', 'tauri', 'build', '--bundles', 'dmg'], rootDir);
 
-		const dmgDir = Path.join(rootDir, 'packages', 'desktop-tauri', 'target', 'release', 'bundle', 'dmg');
+		const dmgDir = Path.join(rootDir, 'packages', 'desktop_tauri', 'target', 'release', 'bundle', 'dmg');
 		const dmgFileNames = Fs.existsSync(dmgDir) === true
 			? Fs.readdirSync(dmgDir).filter((fileName) => fileName.endsWith('.dmg') && fileName.includes(version))
 			: [];

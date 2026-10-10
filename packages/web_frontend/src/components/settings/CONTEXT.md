@@ -1,4 +1,4 @@
-# Directory Context: `/packages/web-frontend/src/components/settings`
+# Directory Context: `/packages/web_frontend/src/components/settings`
 
 ## Purpose
 The content of each section of the Settings window. The Settings window itself is `../SettingsModal.vue`.

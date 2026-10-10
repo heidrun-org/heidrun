@@ -11,9 +11,9 @@
 [![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
-[![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/desktop-tauri)
-[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/web-frontend)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/web-frontend)
+[![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/desktop_tauri)
+[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/web_frontend)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/web_frontend)
 [![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/issues)
 [![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/commits)
 [![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun/about)
@@ -60,8 +60,8 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 
 | Package | What it is |
 | --- | --- |
-| [`packages/desktop-tauri`](packages/desktop-tauri) | The macOS application: the Rust backend and the Tauri shell. |
-| [`packages/web-frontend`](packages/web-frontend) | The user interface, written with Vue 3 and TypeScript. |
+| [`packages/desktop_tauri`](packages/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
+| [`packages/web_frontend`](packages/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
 | [`packages/website_public`](packages/website_public) | The public website and documentation, built with VitePress. |
 
 ## Contributing

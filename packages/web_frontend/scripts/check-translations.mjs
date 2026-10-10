@@ -1,7 +1,7 @@
 // Checks the translation files of src/i18n/locales:
 // - every language has the same keys as English;
 // - every key given to t("…") in src exists in English.
-// pnpm --filter web-frontend check:translations
+// pnpm --filter web_frontend check:translations
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 

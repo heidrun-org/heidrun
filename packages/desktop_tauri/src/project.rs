@@ -1,7 +1,7 @@
 //! Per-project configuration, stored in `.heidrun/config.json` at the project root
 //! (versioned with the code), plus commands detected from the usual project files.
 //! The format of the file is validated by the Zod schema of the web frontend
-//! (`packages/web-frontend/src/lib/project_config.ts`).
+//! (`packages/web_frontend/src/lib/project_config.ts`).
 
 use serde::Serialize;
 use serde_json::{json, Value};

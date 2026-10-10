@@ -9,7 +9,7 @@ describe("parseProjectConfig", () => {
   it("accepts a full configuration", () => {
     const config = parseProjectConfig({
       version: 1,
-      actions: [{ id: "build", label: "Build", command: "pnpm build", cwd: "packages/web-frontend" }],
+      actions: [{ id: "build", label: "Build", command: "pnpm build", cwd: "packages/web_frontend" }],
       references: { forge: "github", repo: "org/app", tickets: { url: "https://x/{key}", prefixes: ["ABC"] } },
       guards: { confirm: ["^make"], block: ["publish"] },
       prompts: [{ text: "Review this" }],
