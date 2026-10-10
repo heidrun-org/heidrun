@@ -3,6 +3,7 @@
 import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Path from 'node:path';
+import { Command } from 'commander';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -20,9 +21,33 @@ class ReleaseDmg {
 	/**
 	 * Builds the disk image, then creates the GitHub release if it does not exist, uploads the disk image,
 	 * and prints the URL of the release.
+	 * @param argv The command line arguments, in the format of `process.argv`.
 	 * @returns Nothing.
 	 */
-	static main(): void {
+	static main(argv: string[]): void {
+		const program = new Command();
+		program
+			.name('pnpm release:dmg')
+			.description(
+				'Builds the macOS disk image of Heidrun and uploads it to the GitHub release of the version in the root '
+					+ 'package.json. The release is created when it does not exist.',
+			)
+			.option(
+				'--notes-file <path>',
+				'Markdown file with the text of the release. GitHub shows this text above the generated list of changes.',
+			)
+			.parse(argv);
+		const options = program.opts<{ notesFile?: string }>();
+
+		let notesPath: string | undefined = undefined;
+		if (options.notesFile !== undefined) {
+			notesPath = Path.resolve(process.cwd(), options.notesFile);
+			if (Fs.existsSync(notesPath) === false) {
+				console.error(`The notes file does not exist: ${notesPath}`);
+				process.exit(1);
+			}
+		}
+
 		if (process.platform !== 'darwin') {
 			console.error('The disk image can only be built on macOS.');
 			process.exit(1);
@@ -51,10 +76,23 @@ class ReleaseDmg {
 		});
 		if (releaseView.status === 0) {
 			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...dmgPaths, '--clobber'], rootDir);
+			if (notesPath !== undefined) {
+				ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', notesPath], rootDir);
+			}
 		} else {
+			const notesArgs = notesPath !== undefined ? ['--notes-file', notesPath] : [];
 			ReleaseDmg._run(
 				'gh',
-				['release', 'create', tagName, ...dmgPaths, '--title', `Heidrun ${version}`, '--generate-notes'],
+				[
+					'release',
+					'create',
+					tagName,
+					...dmgPaths,
+					'--title',
+					`Heidrun ${version}`,
+					...notesArgs,
+					'--generate-notes',
+				],
 				rootDir,
 			);
 		}
@@ -85,4 +123,4 @@ class ReleaseDmg {
 	}
 }
 
-ReleaseDmg.main();
+ReleaseDmg.main(process.argv);
