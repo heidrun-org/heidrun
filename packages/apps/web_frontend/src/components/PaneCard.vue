@@ -8,7 +8,7 @@ import PromptMenu from "./PromptMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
 import { mosaic } from "../stores/mosaic";
-import { gaugeLevel, paneName } from "../lib/format";
+import { gaugeLevel, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -30,12 +30,18 @@ function onDown() {
 }
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
+const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
+// A shell pane without a label is named after its folder: its terminal title repeats the user, the host and the folder.
+const displayName = computed(() => {
+  const p = props.pane;
+  if (p.agent || p.label || shellFolder.value === "") return paneName(p);
+  return shellFolder.value.split("/").filter((part) => part !== "").pop() ?? paneName(p);
+});
 const subtitle = computed(() => {
   const p = props.pane;
-  const kind = p.agent ?? "shell";
-  const extra = p.agent ? "" : p.terminal_title_stripped ? ` · ${p.terminal_title_stripped}` : "";
   if (props.docked) return paneFullName(p);
-  return `${kind} · ${p.pane_id}${extra}`;
+  if (p.agent) return `${p.agent} · ${p.pane_id}`;
+  return shortPath(shellFolder.value) || p.pane_id;
 });
 </script>
 
@@ -51,13 +57,13 @@ const subtitle = computed(() => {
       <InlineRename
         v-if="state.renaming === `pane:${pane.pane_id}` && state.renamingPlace === 'card'"
         class="pane-rename"
-        :value="pane.label || paneName(pane)"
+        :value="pane.label || displayName"
         :label="t('paneCard.renameLabel')"
         allow-empty
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
-      <span v-else class="name" :title="t('paneCard.nameTitle', { name: paneName(pane) })" @dblclick="startRename('pane', pane.pane_id, 'card')">{{ paneName(pane) }}</span>
+      <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id, 'card')">{{ displayName }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <template v-if="ctx">
