@@ -134,6 +134,8 @@ export const state = reactive({
   renamingPlace: "sidebar" as "sidebar" | "card",
   starting: false,
   toast: "" as string,
+  /** "error" shows the toast in red, with a danger icon. */
+  toastKind: "info" as "info" | "error",
 });
 
 // ---- Derived views --------------------------------------------------------
@@ -827,8 +829,9 @@ export function selectPane(p: PaneInfo) {
 
 // ---- Actions --------------------------------------------------------------
 
-export function toast(message: string) {
+export function toast(message: string, kind: "info" | "error" = "info") {
   state.toast = message;
+  state.toastKind = kind;
   window.setTimeout(() => {
     if (state.toast === message) state.toast = "";
   }, 4000);

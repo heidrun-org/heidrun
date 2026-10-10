@@ -45,7 +45,10 @@ import {
   state,
   toast,
 } from "./stores/session";
-import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
+import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { ImageDrop } from "./lib/image_drop";
+import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
@@ -186,7 +189,8 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+let unlistenDrop: (() => void) | null = null;
+onMounted(async () => {
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", onResize);
   start();
@@ -197,8 +201,20 @@ onMounted(() => {
   startMobile();
   loadClaudeLink();
   startRemoteWatch();
+  unlistenDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+    if (event.payload.type !== "drop") return;
+    const result = await ImageDrop.handleDrop(
+      event.payload.paths,
+      event.payload.position.x / zoomFactor(),
+      event.payload.position.y / zoomFactor(),
+    );
+    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"), "error");
+    else if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
+    else if (result === "failed") toast(t("app.dropFailed"), "error");
+  });
 });
 onBeforeUnmount(() => {
+  unlistenDrop?.();
   window.removeEventListener("keydown", onKey, true);
   window.removeEventListener("resize", onResize);
 });
@@ -257,7 +273,10 @@ onBeforeUnmount(() => {
     <DangerModal v-if="danger.open" />
     <ConfirmModal v-if="confirmDialog.open" />
     <Transition name="toast">
-      <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
+      <div v-if="state.toast" class="toast" :class="{ error: state.toastKind === 'error' }" :role="state.toastKind === 'error' ? 'alert' : 'status'">
+        <Icon v-if="state.toastKind === 'error'" name="exclamation-octagon-fill" class="toast-icon" />
+        {{ state.toast }}
+      </div>
     </Transition>
   </div>
 </template>
@@ -269,10 +288,12 @@ onBeforeUnmount(() => {
 .stage { flex: 1; min-height: 0; display: flex; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
-  position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%);
+  position: fixed; right: 16px; bottom: 52px;
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
   color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
 }
+.toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
+.toast-icon { margin-right: 8px; color: #fecaca; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 6px); }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(6px); }
 </style>
