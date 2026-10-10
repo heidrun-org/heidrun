@@ -5,6 +5,7 @@ import { allPanes, refresh, selectPane, selectTab, state as session, toast, work
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
 import { parseProjectConfig, type Action, type ProjectConfig } from "../lib/project_config";
+import { scriptNameFromCommand } from "../lib/script_name";
 
 export type { Action };
 
@@ -146,10 +147,12 @@ function slug(label: string): string {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
+/** Adds a custom script. Without a name, the name is the first 20 characters of the command. */
 export async function addAction(workspaceId: string, label: string, command: string) {
   const p = project.byWorkspace[workspaceId];
   if (!p || !command.trim()) return;
-  p.config.actions.push({ id: slug(label || command), label: (label || command).trim(), command: command.trim() });
+  const name = label.trim() || scriptNameFromCommand(command);
+  p.config.actions.push({ id: slug(name), label: name, command: command.trim() });
   await saveProject(workspaceId);
 }
 

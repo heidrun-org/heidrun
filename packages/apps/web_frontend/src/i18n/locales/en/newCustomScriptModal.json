@@ -1,0 +1,12 @@
+{
+  "dialogLabel": "Create a custom script",
+  "title": "Create a custom script",
+  "closeTitle": "Close the window (Escape)",
+  "closeLabel": "Close (Escape)",
+  "nameOptional": "Name (optional)",
+  "command": "Command line",
+  "cancelTitle": "Cancel: the script is not created",
+  "cancel": "Cancel",
+  "createTitle": "Create the custom script",
+  "create": "Create"
+}
