@@ -1,5 +1,5 @@
 {
-  "name": "raw_coding_agent",
+  "name": "raw_coding_agent_cli",
   "private": true,
   "license": "MIT",
   "version": "0.2.0",
@@ -7,8 +7,16 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "bin": {
+    "raw_coding_agent_cli": "./src/cli.ts"
+  },
   "scripts": {
+    "cli": "tsx src/cli.ts",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

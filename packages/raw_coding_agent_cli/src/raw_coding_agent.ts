@@ -36,6 +36,9 @@ type RawCodingAgentCommandLine = {
  * The class keeps no conversation: each call is one prompt and one answer.
  */
 export class RawCodingAgent {
+	/** The names of all the coding agents that the class can run. */
+	static readonly agentNames: RawCodingAgentName[] = ['codex', 'claude'];
+
 	/**
 	 * Runs the coding agent, sends the prompt through the standard input, and waits for the coding agent to exit.
 	 * @param options The prompt and the name of the coding agent.

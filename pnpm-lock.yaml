@@ -27,7 +27,14 @@ importers:
         specifier: ^2.0.0
         version: 2.12.1
 
-  packages/raw_coding_agent:
+  packages/raw_coding_agent_cli:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
     devDependencies:
       '@types/node':
         specifier: ^26.6.5

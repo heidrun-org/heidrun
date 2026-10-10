@@ -10,7 +10,7 @@
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",
     "tauri": "pnpm --filter desktop_tauri tauri",
-    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent test",
+    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --"
   },
