@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
+import Fs from "node:fs";
+import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
+import { onNewPaneClick } from "../stores/newPane";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
+vi.mock("../stores/newPane", () => ({ onNewPaneClick: vi.fn() }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -99,5 +104,54 @@ describe("Sidebar workspace rows", () => {
     answerConfirm(false);
     await flushPromises();
     expect(api.closeWorkspace).not.toHaveBeenCalled();
+  });
+});
+
+describe("Sidebar plus buttons", () => {
+  it("has a plus button for a new workspace and a plus button for a new pane, each with an accessible name", async () => {
+    const { wrapper } = await mountSidebar();
+    const buttons = wrapper.findAll(".heading button.add");
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual([
+      "Create a new workspace",
+      "Add a pane: a terminal, Claude Code, or Codex (shift click: start the previous pane again)",
+    ]);
+    for (const button of buttons) {
+      expect(button.attributes("title")).toBe(button.attributes("aria-label"));
+    }
+  });
+
+  it("gives the look of each plus button to Bootstrap", async () => {
+    const { wrapper } = await mountSidebar();
+    for (const button of wrapper.findAll(".heading button.add")) {
+      expect(button.classes()).toEqual(
+        expect.arrayContaining(["btn", "btn-outline-secondary", "border-0", "d-inline-flex", "align-items-center", "justify-content-center"]),
+      );
+    }
+  });
+
+  it("asks for the folder of the new workspace when the user clicks the first plus button", async () => {
+    vi.mocked(openDialog).mockResolvedValueOnce(null);
+    const { wrapper } = await mountSidebar();
+    await wrapper.findAll(".heading button.add")[0].trigger("click");
+    await flushPromises();
+    expect(openDialog).toHaveBeenCalledWith({
+      directory: true,
+      multiple: false,
+      title: "Choose the folder of the new workspace",
+      defaultPath: "/home",
+    });
+  });
+
+  it("starts the new pane action when the user clicks the second plus button", async () => {
+    const { wrapper } = await mountSidebar();
+    await wrapper.findAll(".heading button.add")[1].trigger("click");
+    expect(onNewPaneClick).toHaveBeenCalledTimes(1);
+    expect(openDialog).not.toHaveBeenCalled();
+  });
+
+  it("removes the grey ring that Bootstrap draws around a button that has the keyboard focus", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "Sidebar.vue"), "utf8");
+    const addRule = sourceText.slice(sourceText.indexOf("\n.add {"), sourceText.indexOf("\n.add:not(:hover)"));
+    expect(addRule).toContain("--bs-btn-focus-box-shadow: none;");
   });
 });

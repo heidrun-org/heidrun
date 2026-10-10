@@ -102,7 +102,7 @@ async function createWorkspace() {
     <section class="group tight">
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.workspaces") }}</span>
-        <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
+        <button class="btn btn-outline-secondary border-0 d-inline-flex align-items-center justify-content-center add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
         <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
@@ -169,7 +169,7 @@ async function createWorkspace() {
     <section class="group tight">
       <div class="eyebrow pad heading">
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
-        <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
+        <button class="btn btn-outline-secondary border-0 d-inline-flex align-items-center justify-content-center add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
         <div v-if="state.renaming === `pane:${p.pane_id}` && state.renamingPlace === 'sidebar'" class="item small editing">
@@ -288,10 +288,26 @@ async function createWorkspace() {
 .pad { padding: 0 8px 6px; }
 .heading { display: flex; align-items: center; justify-content: space-between; padding-right: 0; }
 .add {
-  width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent;
-  color: var(--muted); font-size: var(--font-size); font-weight: 400; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+  --bs-btn-padding-x: 0;
+  --bs-btn-padding-y: 0;
+  --bs-btn-font-size: var(--font-size);
+  --bs-btn-line-height: 1;
+  --bs-btn-border-radius: 6px;
+  --bs-btn-color: var(--muted);
+  --bs-btn-hover-color: var(--text);
+  --bs-btn-hover-bg: rgba(var(--wash), 0.08);
+  --bs-btn-active-color: var(--text);
+  --bs-btn-active-bg: rgba(var(--wash), 0.08);
+  --bs-btn-focus-box-shadow: none;
+  width: 22px; height: 22px;
 }
-.add:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
+/* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
+.add:not(:hover) {
+  --bs-btn-hover-color: var(--muted);
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-active-color: var(--muted);
+  --bs-btn-active-bg: transparent;
+}
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
