@@ -1,0 +1,32 @@
+// Only the Bootstrap parts that the web frontend already uses. Add one part per migration step.
+// Issue: https://github.com/heidrun-org/heidrun/issues/141
+@import "bootstrap/scss/functions";
+
+// Variable values that keep the look of the application. They must come before the Bootstrap variables.
+$btn-line-height: 1.4;
+$btn-transition: none;
+
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+
+// Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,
+// wins over a rule of this layer, whatever the specificity. So Bootstrap changes only what the application never sets.
+@layer bootstrap {
+  @import "bootstrap/scss/root";
+  @import "bootstrap/scss/buttons";
+}
+
+// What the application never set on a button, and that Bootstrap sets in a different way:
+.btn {
+  // Bootstrap fades a disabled button to 65 percent. The application never did.
+  --bs-btn-disabled-opacity: 1;
+  // Bootstrap aligns a button with the middle of its text line. The application has always used the baseline.
+  vertical-align: baseline;
+}
+
+// Bootstrap blocks the mouse on a disabled button. The application keeps the mouse pointer and the title working.
+.btn:disabled {
+  pointer-events: auto;
+}

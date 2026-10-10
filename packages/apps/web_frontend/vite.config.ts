@@ -5,6 +5,16 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   plugins: [vue()],
   clearScreen: false,
+  css: {
+    preprocessorOptions: {
+      // Bootstrap 5 still uses Sass `@import`; the warnings come from its code, not from ours.
+      scss: {
+        api: "modern-compiler",
+        quietDeps: true,
+        silenceDeprecations: ["import"],
+      },
+    },
+  },
   server: {
     port: 1420,
     strictPort: true,
