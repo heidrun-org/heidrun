@@ -74,14 +74,14 @@ async function onImageSettled(event: Event) {
 }
 .splash-title {
   margin: 0;
-  font-size: 64px;
+  font-size: 128px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: #ffd76a;
 }
 .splash-motto {
-  margin: 12px 0 0;
-  font-size: 26px;
+  margin: 24px 0 0;
+  font-size: 52px;
   font-weight: 500;
 }
 .splash-leave-active {

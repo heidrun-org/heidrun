@@ -1,3 +1,5 @@
+import Fs from "node:fs";
+import Path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 
@@ -34,6 +36,12 @@ describe("SplashScreen", () => {
     expect(wrapper.get(".splash-title").text()).not.toBe("");
     expect(wrapper.get(".splash-motto").text()).not.toBe("");
     expect(wrapper.find(".splash-subtitle").exists()).toBe(false);
+  });
+
+  it("writes the title at 128 pixels and the motto at 52 pixels, twice the size they had before", () => {
+    const source = Fs.readFileSync(Path.join(import.meta.dirname, "SplashScreen.vue"), "utf8");
+    expect(source).toMatch(/\.splash-title\s*{[^}]*font-size:\s*128px/);
+    expect(source).toMatch(/\.splash-motto\s*{[^}]*font-size:\s*52px/);
   });
 
   it("does not show the main window, and does not start the display time, before the image is loaded", async () => {
