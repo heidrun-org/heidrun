@@ -5,8 +5,6 @@
   "workspacesWithoutAgent": "Workspaces without an agent",
   "newWorkspaceName": "New name of the workspace",
   "workspaceTitle": "Double-click to rename · drag to move",
-  "sessions_one": "{count} {kind} session",
-  "sessions_other": "{count} {kind} sessions",
   "newWorkspaceTitle": "Create a new workspace",
   "panes": "Panes · {workspace}",
   "newPaneName": "New name of the pane (empty to go back to the automatic name)",
@@ -29,5 +27,9 @@
   "paneMenuLabel": "Actions for {name}",
   "rename": "Rename",
   "closePaneConfirm": "Close",
-  "closePane": "Close the pane {name}"
+  "closePane": "Close the pane {name}",
+  "workspaceMenu": "Workspace menu",
+  "workspaceMenuLabel": "Actions for {name}",
+  "closeWorkspaceConfirm": "Close",
+  "closeWorkspace": "Close the workspace {name}"
 }
