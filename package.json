@@ -10,18 +10,15 @@
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",
     "tauri": "pnpm --filter desktop_tauri tauri",
-    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm test:scripts",
+    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter change_log_generator test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --",
-    "release:change_log": "tsx scripts/generate_change_log.ts",
-    "test:scripts": "vitest run --dir scripts"
+    "release:change_log": "tsx scripts/change_log_generator/src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
     "chalk": "^6.0.1",
     "commander": "^15.0.0",
-    "raw_coding_agent_cli": "workspace:*",
-    "tsx": "^4.23.15",
-    "vitest": "^2.1.9"
+    "tsx": "^4.23.15"
   }
 }

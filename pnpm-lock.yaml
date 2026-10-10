@@ -17,15 +17,9 @@ importers:
       commander:
         specifier: ^15.0.0
         version: 15.0.0
-      raw_coding_agent_cli:
-        specifier: workspace:*
-        version: link:packages/raw_coding_agent_cli
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
-      vitest:
-        specifier: ^2.1.9
-        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
 
   packages/desktop_tauri:
     devDependencies:
@@ -217,6 +211,25 @@ importers:
       vue:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
+
+  scripts/change_log_generator:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      raw_coding_agent_cli:
+        specifier: workspace:*
+        version: link:../../packages/raw_coding_agent_cli
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
 
 packages:
 

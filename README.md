@@ -63,6 +63,7 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 | [`packages/desktop_tauri`](packages/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
 | [`packages/web_frontend`](packages/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
 | [`packages/website_public`](packages/website_public) | The public website and documentation, built with VitePress. |
+| [`scripts/change_log_generator`](scripts/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
 | [`packages/raw_coding_agent_cli`](packages/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
 
 ## Contributing

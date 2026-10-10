@@ -3,8 +3,8 @@ import Fs from 'node:fs';
 import Os from 'node:os';
 import Path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { TestRepository } from './change_log/test_repository.ts';
-import { GenerateChangeLog } from './generate_change_log.ts';
+import { GenerateChangeLog } from '../src/generation/generate_change_log.ts';
+import { TestRepository } from './test_repository.ts';
 
 const __dirname = import.meta.dirname;
 
@@ -62,7 +62,7 @@ class ScriptRunner {
 			Fs.chmodSync(commandPath, 0o755);
 		}
 		const tsxPath = Path.join(__dirname, '..', 'node_modules', '.bin', 'tsx');
-		const scriptPath = Path.join(__dirname, 'generate_change_log.ts');
+		const scriptPath = Path.join(__dirname, '..', 'src', 'cli.ts');
 		const result = ChildProcess.spawnSync(tsxPath, [scriptPath, ...args], {
 			cwd: repositoryPath,
 			encoding: 'utf8',
@@ -170,6 +170,100 @@ describe('GenerateChangeLog', () => {
 		});
 	});
 
+	describe('run, with a range between two releases', () => {
+		const numbersOf = (section: string): number[] => {
+			return [...section.matchAll(/\(\[#(\d+)\]/g)].map((match) => {
+				return Number(match[1]);
+			});
+		};
+
+		it.each([
+			[undefined, undefined, '## [Unreleased]', [5]],
+			['v1.1.0', undefined, '## [Unreleased]', [5, 4]],
+			['start', undefined, '## [Unreleased]', [5, 4, 3, 2, 1]],
+			[undefined, 'v1.0.0', '## [1.0.0] - 2026-01-10', [1]],
+			[undefined, 'v1.1.0', '## [1.1.0] - 2026-02-20', [3, 2]],
+			[undefined, 'v2.0.0', '## [2.0.0] - 2026-03-30', [4]],
+			['start', 'v2.0.0', '## [2.0.0] - 2026-03-30', [4, 3, 2, 1]],
+			['v1.0.0', 'v1.1.0', '## [1.1.0] - 2026-02-20', [3, 2]],
+			['v1.0.0', 'now', '## [Unreleased]', [5, 4, 3, 2]],
+		])('from %s to %s writes the heading %s with the pull requests %j', async (fromTag, toTag, heading, numbers) => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			const section = await GenerateChangeLog.run({
+				repositoryPath,
+				isAi: false,
+				agentName: undefined,
+				fromTag,
+				toTag,
+			});
+			expect(section.split('\n')[0]).toBe(heading);
+			expect(numbersOf(section)).toEqual(numbers);
+		});
+
+		it('puts the sections in the order Unreleased, then the releases from the highest to the lowest', async () => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			const run = async (toTag: string | undefined): Promise<void> => {
+				await GenerateChangeLog.run({
+					repositoryPath,
+					isAi: false,
+					agentName: undefined,
+					toTag,
+				});
+			};
+			await run('v1.0.0');
+			await run('v2.0.0');
+			await run(undefined);
+			await run('v1.1.0');
+			const text = Fs.readFileSync(Path.join(repositoryPath, 'CHANGELOG.md'), 'utf8');
+			const headings = text.split('\n').filter((line) => {
+				return line.startsWith('## ');
+			});
+			expect(headings).toEqual([
+				'## [Unreleased]',
+				'## [2.0.0] - 2026-03-30',
+				'## [1.1.0] - 2026-02-20',
+				'## [1.0.0] - 2026-01-10',
+			]);
+		});
+
+		it('asks the coding agent for the heading of the release, and writes this heading', async () => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			let receivedPrompt = '';
+			const section = await GenerateChangeLog.run({
+				repositoryPath,
+				isAi: true,
+				agentName: undefined,
+				fromTag: 'v1.0.0',
+				toTag: 'v1.1.0',
+				runAgentFn: async (prompt) => {
+					receivedPrompt = prompt;
+					return '## Release\n\n### Added\n\n- A thing.';
+				},
+			});
+			expect(receivedPrompt).toContain('merged since the release v1.0.0, up to the release v1.1.0.');
+			expect(receivedPrompt).toContain('Start with the heading line "## [1.1.0] - 2026-02-20".');
+			expect(receivedPrompt).toContain('Merge pull request #3 from acme/three');
+			expect(receivedPrompt).not.toContain('Merge pull request #4 from acme/four');
+			expect(section).toBe('## [1.1.0] - 2026-02-20\n\n### Added\n\n- A thing.');
+		});
+
+		it.each([
+			[{ fromTag: 'v9.9.9' }, 'Unknown tag "v9.9.9". Use the name of a tag of the repository.'],
+			[{ toTag: 'v9.9.9' }, 'Unknown tag "v9.9.9". Use the name of a tag of the repository.'],
+			[{ fromTag: 'now' }, 'The option --from cannot be "now".'],
+			[{ toTag: 'start' }, 'The option --to cannot be "start".'],
+		])('throws an error for the range %j', async (range, message) => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			await expect(GenerateChangeLog.run({
+				repositoryPath,
+				isAi: false,
+				agentName: undefined,
+				...range,
+			})).rejects.toThrow(message);
+			expect(Fs.existsSync(Path.join(repositoryPath, 'CHANGELOG.md'))).toBe(false);
+		});
+	});
+
 	describe('run, with a coding agent', () => {
 		it('sends the prompt with the merged pull requests and writes the answer in CHANGELOG.md', async () => {
 			const repositoryPath = TestRepository.createWithRelease();
@@ -252,6 +346,28 @@ describe('GenerateChangeLog', () => {
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain('- A change written by the fake claude.');
 			Fs.rmSync(promptFilePath, { force: true });
+		});
+
+		it('writes the section of a release with the options --from and --to', () => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			const promptFilePath = Path.join(repositoryPath, 'prompt.txt');
+			const result = ScriptRunner.run(repositoryPath, ['--from', 'v1.0.0', '--to', 'v1.1.0'], promptFilePath);
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout).toBe([
+				'## [1.1.0] - 2026-02-20',
+				'',
+				'- Do three ([#3](https://github.com/acme/widgets/pull/3))',
+				'- Do two ([#2](https://github.com/acme/widgets/pull/2))',
+				'',
+			].join('\n'));
+		});
+
+		it('exits with code 1 for an unknown release, and does not write the file', () => {
+			const repositoryPath = TestRepository.createWithThreeReleases();
+			const result = ScriptRunner.run(repositoryPath, ['--to', 'v9.9.9'], Path.join(repositoryPath, 'prompt.txt'));
+			expect(result.exitCode).toBe(1);
+			expect(result.stderr).toContain('Unknown tag "v9.9.9".');
+			expect(Fs.existsSync(Path.join(repositoryPath, 'CHANGELOG.md'))).toBe(false);
 		});
 
 		it('exits with code 1 for an unknown coding agent, and does not write the file', () => {

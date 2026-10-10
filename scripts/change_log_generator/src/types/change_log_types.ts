@@ -17,3 +17,27 @@ export type MergedPullRequest = {
 	/** The full message of the merge commit: the subject line, a blank line, and the body. */
 	message: string;
 };
+
+/**
+ * The range of a change log: the changes after one release, up to another release or up to the current commit.
+ */
+export type ChangeLogRange = {
+	/** The release after which the changes start, or null for the start of the history. */
+	fromTag: string | null;
+	/** The release where the changes end, or null for the current commit. */
+	toTag: string | null;
+};
+
+/**
+ * Everything that the renderer needs to write one section of the change log.
+ */
+export type ChangeLogSectionInput = {
+	/** The pull requests of the range. */
+	mergedPullRequests: MergedPullRequest[];
+	/** The web address of the GitHub repository, or null when it is not known. */
+	repositoryUrl: string | null;
+	/** The range of the section. */
+	range: ChangeLogRange;
+	/** The heading line of the section, for example `## [Unreleased]` or `## [0.2.0] - 2026-10-10`. */
+	heading: string;
+};
