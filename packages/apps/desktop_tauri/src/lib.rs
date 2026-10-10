@@ -248,6 +248,7 @@ pub fn run() {
             quit_now,
             show_main_window,
             status_item::status_item_update,
+            status_item::status_item_set_visible,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,

@@ -69,6 +69,13 @@ export function startStatusItem() {
     now.value = Date.now();
   }, CLOCK_INTERVAL_MS);
   watch(
+    () => settings.showStatusItem,
+    (isVisible) => {
+      invoke("status_item_set_visible", { isVisible }).catch(() => {});
+    },
+    { immediate: true },
+  );
+  watch(
     payloadJson,
     (json) => {
       invoke("status_item_update", { payload: JSON.parse(json) }).catch(() => {});

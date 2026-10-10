@@ -29,3 +29,20 @@ describe("SettingsModal: sections", () => {
     wrapper.unmount();
   });
 });
+
+describe("SettingsModal: status item", () => {
+  it("shows a checkbox for the status item in the section Notifications, switched on by default", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    settingsModal.section = "notifications";
+    await flushPromises();
+    const row = wrapper.findAll(".nrow").find((candidate) => candidate.text() === "Show the status item in the macOS menu bar");
+    expect(row).toBeDefined();
+    const checkbox = row!.find("input[type=checkbox]");
+    expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    await checkbox.setValue(false);
+    const { settings } = await import("../stores/settings");
+    expect(settings.showStatusItem).toBe(false);
+    wrapper.unmount();
+  });
+});

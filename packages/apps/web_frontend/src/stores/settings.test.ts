@@ -59,6 +59,10 @@ describe("settings", () => {
     expect(settings.language).toBe("en");
     expect(settings.mouseMode).toBe("select");
   });
+
+  it("shows the status item in the macOS menu bar by default", () => {
+    expect(settings.showStatusItem).toBe(true);
+  });
 });
 
 describe("time format", () => {
