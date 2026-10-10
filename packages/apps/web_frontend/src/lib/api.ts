@@ -26,6 +26,11 @@ export function startServer(): Promise<string> {
   return invoke("herdr_server_start");
 }
 
+/** Shows the main window, which is created hidden so that the user never sees it empty before the splash image. */
+export function showMainWindow(): Promise<void> {
+  return invoke("show_main_window");
+}
+
 export function codexUsage(sessionIds: string[]): Promise<CodexUsage> {
   return invoke("codex_usage", { sessionIds });
 }
