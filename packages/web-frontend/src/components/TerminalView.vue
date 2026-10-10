@@ -86,7 +86,7 @@ const REF_COLORS_LIGHT: typeof REF_COLORS = {
   commit: "#9a5b13",
 };
 
-import { fontStack, settings } from "../stores/settings";
+import { FONT_DEFAULT, fontStack, settings } from "../stores/settings";
 import { selectionReaders } from "../stores/notes";
 
 const props = defineProps<{
@@ -147,7 +147,7 @@ async function attach(takeover = false, quiet = false) {
 onMounted(async () => {
   term = new Terminal({
     fontFamily: fontStack(),
-    fontSize: settings.fontSize,
+    fontSize: FONT_DEFAULT,
     lineHeight: 1.25,
     cursorBlink: true,
     macOptionIsMeta: true,
@@ -158,7 +158,7 @@ onMounted(async () => {
     theme: TERMINAL_THEMES[resolvedTheme.value],
   });
   try {
-    await document.fonts.load(`${settings.fontSize}px ${fontStack()}`);
+    await document.fonts.load(`${FONT_DEFAULT}px ${fontStack()}`);
   } catch {
     /* ignore */
   }
@@ -659,18 +659,18 @@ function paintRefs() {
 
 // Font changes: wait for the font to load so xterm measures the right cell size,
 // then refit; the new cols/rows reach Herdr through onResize.
+// The font size is not here: the zoom of the whole window scales the terminal, see `applyWindowZoom`.
 watch(
-  () => [settings.fontId, settings.fontSize] as const,
+  () => settings.fontId,
   async () => {
     if (!term) return;
     const stack = fontStack();
     try {
-      await document.fonts.load(`${settings.fontSize}px ${stack}`);
+      await document.fonts.load(`${FONT_DEFAULT}px ${stack}`);
     } catch {
       /* fall back to whatever is available */
     }
     term.options.fontFamily = stack;
-    term.options.fontSize = settings.fontSize;
     fit?.fit();
   },
 );

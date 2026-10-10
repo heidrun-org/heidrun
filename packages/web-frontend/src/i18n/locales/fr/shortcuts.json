@@ -35,7 +35,7 @@
   "keys.rightClick": "Clic droit",
   "group.display": "Affichage",
   "action.hidePanels": "Masquer la barre latérale gauche / le panneau de droite",
-  "action.fontSize": "Agrandir / réduire / rétablir la police (le code dans les fenêtres Git et Aperçu)",
+  "action.fontSize": "Agrandir / réduire / rétablir la taille de la police de toute la fenêtre",
   "group.mouse": "Souris",
   "action.issuePreview": "Sur #12 / !34 : aperçu de l’issue ou de la merge request ; sur une URL ou un commit : l’ouvrir",
   "keys.commandClick": "⌘-clic",

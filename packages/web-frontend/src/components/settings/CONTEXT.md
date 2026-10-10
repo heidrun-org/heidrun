@@ -4,7 +4,7 @@
 The content of each section of the Settings window. The Settings window itself is `../SettingsModal.vue`.
 
 ## Key Exports & Entry Points
-- `SettingsTerminalSection.vue`: the font and the font size of the terminal.
+- `SettingsTerminalSection.vue`: the font, and the font size that zooms the whole window.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
 - `SettingsNotificationsSection.vue`: the notification settings.

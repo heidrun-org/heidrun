@@ -33,7 +33,7 @@ import { parseDiff, type DiffLine } from "../lib/diff";
 import CodeEditor from "./CodeEditor.vue";
 import { diffLines } from "diff";
 import { allPanes } from "../stores/session";
-import { settings } from "../stores/settings";
+import { CODE_FONT_SIZE, settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { toast } from "../stores/session";
 import { insertIntoFocusedPane } from "../stores/input";
@@ -750,7 +750,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <button class="tb accent" :title="t('filesModal.sendToAgentTitle')" @click="sendToAgent">{{ t("filesModal.sendToAgent") }}</button>
             </div>
           </div>
-          <div v-if="gitDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
+          <div v-if="gitDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${CODE_FONT_SIZE}px` }">
             <div class="diff-head">
               <span>{{ t("filesModal.gitDiffHead") }}</span>
               <button :title="t('filesModal.closeDiffTitle')" class="tb" @click="gitDiff = null">{{ t("filesModal.close") }}</button>
@@ -775,7 +775,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               </template>
             </div>
             <div v-else-if="agentBusy" class="banner info">{{ t("filesModal.agentBusy") }}</div>
-            <div v-if="showDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
+            <div v-if="showDiff" class="diff code" :class="codeThemeClass" :style="{ fontSize: `${CODE_FONT_SIZE}px` }">
               <div class="diff-head">
                 <span>{{ showDiff === "conflict" ? t("filesModal.diffDisk") : t("filesModal.diffOpened") }}</span>
                 <template v-if="showDiff === 'beforeSave'">
@@ -787,11 +787,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
               <div v-for="(r, i) in diffRows" :key="i" class="d-row" :class="r.kind"><span class="d-sign">{{ r.kind === "add" ? "+" : r.kind === "del" ? "−" : "" }}</span>{{ r.text || " " }}</div>
               <div v-if="!diffRows.some((r) => r.kind !== 'ctx' && r.kind !== 'gap')" class="empty">{{ t("filesModal.noDifference") }}</div>
             </div>
-            <div class="code editing" :class="codeThemeClass" :style="{ fontSize: `${settings.codeFontSize}px` }">
+            <div class="code editing" :class="codeThemeClass" :style="{ fontSize: `${CODE_FONT_SIZE}px` }">
               <CodeEditor :key="files.root + files.active" :path="files.active!" :text="edit.original === edit.current ? edit.original : edit.current" :wrap="settings.codeWrap" :line="files.line" @change="onEditorChange" @save="save()" />
             </div>
           </template>
-          <div v-else ref="codeEl" class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }" @mouseup="onMouseUp">
+          <div v-else ref="codeEl" class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${CODE_FONT_SIZE}px` }" @mouseup="onMouseUp">
             <div v-if="!files.active" class="empty">{{ t("filesModal.chooseFile") }}</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading" class="empty">{{ t("filesModal.loading") }}</div>

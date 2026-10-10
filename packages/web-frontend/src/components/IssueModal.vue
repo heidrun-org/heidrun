@@ -3,7 +3,7 @@ import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { issueView } from "../stores/issues";
-import { settings } from "../stores/settings";
+import { CODE_FONT_SIZE, settings } from "../stores/settings";
 import { renderMarkdown } from "../lib/markdown";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
@@ -71,7 +71,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </div>
       </header>
 
-      <div class="scroll" :style="{ fontSize: `${settings.codeFontSize + 2.5}px` }" @click="onClick" @auxclick="onClick">
+      <div class="scroll" :style="{ fontSize: `${CODE_FONT_SIZE + 2.5}px` }" @click="onClick" @auxclick="onClick">
         <div v-if="issueView.loading" class="empty">{{ t("issueModal.loading") }}</div>
         <div v-else-if="issueView.error" class="empty err">{{ issueView.error }}</div>
         <template v-else-if="d">

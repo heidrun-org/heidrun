@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FONTS, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../../stores/settings";
+import { FONTS, FONT_DEFAULT, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../../stores/settings";
 import { t } from "../../i18n/index";
 </script>
 
@@ -18,7 +18,7 @@ import { t } from "../../i18n/index";
     <div v-if="settings.fontId === 'inconsolata-powerline'" class="keys">
       {{ t("fontMenu.powerlineBefore") }}<span class="mono">brew install --cask font-inconsolata-for-powerline</span>{{ t("fontMenu.powerlineAfter") }}
     </div>
-    <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${settings.fontSize}px` }">
+    <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${FONT_DEFAULT}px` }">
       ❯ flutter test → 12 passed <template v-if="settings.fontId === 'inconsolata-powerline'">  main </template>
     </div>
     <div class="keys"><kbd>⌘+</kbd> {{ t("fontMenu.keyIncrease") }} · <kbd>⌘−</kbd> {{ t("fontMenu.keyDecrease") }} · <kbd>⌘0</kbd> {{ t("fontMenu.keyDefault") }}</div>

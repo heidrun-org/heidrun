@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentForge, currentGit, git, refreshGit } from "../stores/git";
-import { settings } from "../stores/settings";
+import { CODE_FONT_SIZE, settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { ago } from "../lib/format";
 import { diffStats, parseDiff, splitDiff, type DiffLine } from "../lib/diff";
@@ -261,10 +261,9 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
             </select>
             <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("gitModal.wrap") }}</label>
-            <span class="size mono" title="⌘+ / ⌘− / ⌘0">{{ settings.codeFontSize }} px</span>
           </div>
 
-          <div class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${settings.codeFontSize}px` }">
+          <div class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]" :style="{ fontSize: `${CODE_FONT_SIZE}px` }">
             <div v-if="!selected" class="empty">{{ t("gitModal.chooseFile") }}</div>
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading && !diff.length && !fileLines.length" class="empty">{{ t("gitModal.loading") }}</div>
@@ -414,7 +413,6 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .wrap-t { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); white-space: nowrap; }
 .wrap-t input { accent-color: var(--done); }
 .code { flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
-.size { font-size: 11px; color: var(--muted); }
 /* Rendered Markdown: a reading column, GitHub-like. */
 .md { max-width: 860px; margin: 0 auto; padding: 28px 36px 60px; font: 15px/1.7 var(--sans); font-size: calc(1em + 2.5px); color: var(--c-fg); user-select: text; }
 .md.full { max-width: none; padding: 24px 40px 60px; }

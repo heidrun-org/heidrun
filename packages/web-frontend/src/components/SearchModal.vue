@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { clearSearchCache, requestJump, runSearch, search, type SearchGroup } from "../stores/search";
 import { selectPane, state, workspaceLabel } from "../stores/session";
-import { settings } from "../stores/settings";
+import { CODE_FONT_SIZE } from "../stores/settings";
 import { t } from "../i18n/index";
 
 const q = ref("");
@@ -118,7 +118,7 @@ function parts(line: string, s: number, e: number) {
         <span v-else-if="q.trim().length >= 2">{{ summary }}</span>
         <span v-else>{{ t("searchModal.help") }}</span>
       </div>
-      <div class="results" :style="{ fontSize: `${settings.codeFontSize}px` }">
+      <div class="results" :style="{ fontSize: `${CODE_FONT_SIZE}px` }">
         <section v-for="g in groups" :key="g.pane.pane_id" class="group">
           <h3>
             <span>{{ g.where }}</span>

@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { mosaic } from "../stores/mosaic";
 import { allPanes, paneFullName, selectPane } from "../stores/session";
 import { agentList, showSubagent, subagents } from "../stores/subagents";
-import { settings } from "../stores/settings";
+import { CODE_FONT_SIZE, settings } from "../stores/settings";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
 
@@ -149,7 +149,7 @@ function onKey(e: KeyboardEvent) {
       </header>
       <div v-if="!loaded" class="empty">{{ t("mosaicModal.loading") }}</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
-      <div v-else class="grid" :style="{ fontSize: `${Math.max(10, settings.codeFontSize - 1)}px` }">
+      <div v-else class="grid" :style="{ fontSize: `${Math.max(10, CODE_FONT_SIZE - 1)}px` }">
         <div v-if="!shownTiles.length" class="empty">{{ t("mosaicModal.noActive") }} <button :title="t('mosaicModal.showAllTitle')" class="link" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.showAll") }}</button></div>
         <button
           v-for="tile in shownTiles"
