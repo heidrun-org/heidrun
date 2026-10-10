@@ -1,12 +1,44 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import splashImage from "../assets/heidrun_splash_screen.jpg";
 import { showMainWindow } from "../lib/api";
 import { t } from "../i18n/index";
 
 const DISPLAY_DURATION_MS = 3000;
+const MOTTO_PATH_ID = "splash-motto-path";
+/** The distance between the bottom edge of the screen and the lowest point of the line of the motto. */
+const MOTTO_LOWEST_POINT_FROM_BOTTOM_PX = 72;
+/** The radius of the circle that the motto follows. A larger radius gives a flatter curve. */
+const MOTTO_CIRCLE_RADIUS_PX = 1800;
 
 const isVisible = ref(true);
+const screenWidth = ref(window.innerWidth);
+const screenHeight = ref(window.innerHeight);
+
+/**
+ * The line that the motto follows: the lower half of a circle. The center of the circle is in the middle of the screen,
+ * above the top edge, so the motto bends like a smile. The middle of the motto is the lowest point of the circle.
+ * The radius is the same for every size of the screen, so the curve of the motto never changes.
+ */
+const mottoPath = computed(() => {
+  const radius = MOTTO_CIRCLE_RADIUS_PX;
+  const centerX = screenWidth.value / 2;
+  const centerY = screenHeight.value - MOTTO_LOWEST_POINT_FROM_BOTTOM_PX - radius;
+  return `M ${centerX - radius} ${centerY} A ${radius} ${radius} 0 0 0 ${centerX + radius} ${centerY}`;
+});
+
+function measureScreen() {
+  screenWidth.value = window.innerWidth;
+  screenHeight.value = window.innerHeight;
+}
+
+onMounted(() => {
+  window.addEventListener("resize", measureScreen);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", measureScreen);
+});
 
 function close() {
   isVisible.value = false;
@@ -38,8 +70,15 @@ async function onImageSettled(event: Event) {
       <img class="splash-image" :src="splashImage" alt="" @load="onImageSettled" @error="onImageSettled" />
       <div class="splash-text">
         <h1 class="splash-title">{{ t("splashScreen.title") }}</h1>
-        <p class="splash-motto">{{ t("splashScreen.motto") }}</p>
       </div>
+      <svg class="splash-motto-arc" :width="screenWidth" :height="screenHeight">
+        <defs>
+          <path :id="MOTTO_PATH_ID" :d="mottoPath" />
+        </defs>
+        <text class="splash-motto" text-anchor="middle">
+          <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("splashScreen.motto") }}</textPath>
+        </text>
+      </svg>
     </div>
   </Transition>
 </template>
@@ -66,7 +105,7 @@ async function onImageSettled(event: Event) {
 .splash-text {
   position: relative;
   width: 100%;
-  padding: 120px 24px 56px;
+  padding: 120px 24px 124px;
   text-align: center;
   color: #fff;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0));
@@ -79,10 +118,15 @@ async function onImageSettled(event: Event) {
   letter-spacing: 0.04em;
   color: #ffd76a;
 }
+.splash-motto-arc {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+}
 .splash-motto {
-  margin: 24px 0 0;
   font-size: 52px;
   font-weight: 500;
+  fill: #fff;
 }
 .splash-leave-active {
   transition: opacity 0.6s ease;
