@@ -21,9 +21,8 @@ async function mountList(answers: Record<string, unknown> = {}) {
 }
 
 describe("InstalledSkillsList", () => {
-  it("shows the count and one row for each skill", async () => {
+  it("shows one row for each skill", async () => {
     const { wrapper } = await mountList();
-    expect(wrapper.get(".fold").text()).toBe("Installed skills (2)");
     expect(wrapper.findAll(".list .row")).toHaveLength(2);
   });
 
@@ -31,29 +30,6 @@ describe("InstalledSkillsList", () => {
     const { wrapper } = await mountList({ skills_list: [] });
     expect(wrapper.find(".list").exists()).toBe(false);
     expect(wrapper.get(".keys").text()).toBe("No skill is installed yet.");
-  });
-
-  it("starts unfolded", async () => {
-    const { wrapper } = await mountList();
-    expect(wrapper.get(".fold").attributes("aria-expanded")).toBe("true");
-  });
-
-  it("folds and unfolds, and remembers the state", async () => {
-    const { wrapper, settings } = await mountList();
-    await wrapper.get(".fold").trigger("click");
-    expect(settings.skillsInstalledOpen).toBe(false);
-    expect(wrapper.findAll(".list .row")).toHaveLength(0);
-    await flushPromises();
-    expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").skillsInstalledOpen).toBe(false);
-    await wrapper.get(".fold").trigger("click");
-    expect(wrapper.findAll(".list .row")).toHaveLength(2);
-  });
-
-  it("restores a part that was folded", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ skillsInstalledOpen: false }));
-    const { wrapper } = await mountList();
-    expect(wrapper.get(".fold").attributes("aria-expanded")).toBe("false");
-    expect(wrapper.find(".list").exists()).toBe(false);
   });
 
   it("shows the new agent of a skill after the link is added", async () => {

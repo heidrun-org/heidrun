@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { settings } from "../../../stores/settings";
-import { t } from "../../../i18n/index";
+import { settings } from "../../stores/settings";
+import { t } from "../../i18n/index";
 </script>
 
 <template>
@@ -12,16 +12,16 @@ import { t } from "../../../i18n/index";
     <div class="seg levelChoice" role="radiogroup" :aria-label="t('settingsSkills.levelLabel')">
       <button
         role="radio"
-        :aria-checked="settings.skillsLevel === 'workspace'"
-        :class="{ on: settings.skillsLevel === 'workspace' }"
-        @click="settings.skillsLevel = 'workspace'"
-      >{{ t("settingsSkills.levelWorkspace") }}</button>
-      <button
-        role="radio"
         :aria-checked="settings.skillsLevel === 'user'"
         :class="{ on: settings.skillsLevel === 'user' }"
         @click="settings.skillsLevel = 'user'"
       >{{ t("settingsSkills.levelUser") }}</button>
+      <button
+        role="radio"
+        :aria-checked="settings.skillsLevel === 'workspace'"
+        :class="{ on: settings.skillsLevel === 'workspace' }"
+        @click="settings.skillsLevel = 'workspace'"
+      >{{ t("settingsSkills.levelWorkspace") }}</button>
     </div>
   </div>
 </template>

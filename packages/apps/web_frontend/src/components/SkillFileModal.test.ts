@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount, type VueWrapper } from "@vue/test-utils";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => []) }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
@@ -22,9 +22,9 @@ afterEach(() => {
 async function mountModal() {
   const { skills } = await import("../stores/skills");
   const { settings } = await import("../stores/settings");
-  const { default: SkillModal } = await import("./SkillModal.vue");
+  const { default: SkillFileModal } = await import("./SkillFileModal.vue");
   skills.view = { name: "pdf", originLabel: "skills.sh · anthropics/skills", text: TEXT, loading: false };
-  const wrapper = mount(SkillModal);
+  const wrapper = mount(SkillFileModal);
   mounted.push(wrapper);
   return { wrapper, skills, settings };
 }
@@ -40,7 +40,7 @@ beforeEach(() => {
   })) as unknown as typeof window.matchMedia;
 });
 
-describe("SkillModal", () => {
+describe("SkillFileModal", () => {
   it("shows the name and the origin in the title", async () => {
     const { wrapper } = await mountModal();
     expect(wrapper.get("h2").text()).toBe("pdf");
@@ -84,17 +84,17 @@ describe("SkillModal", () => {
     expect(skills.view).toBeNull();
   });
 
-  it("closes with the Escape key, and the Settings window below stays open", async () => {
-    // As in the application: the Settings window is open first, then the window of the SKILL.md file.
-    const { settingsModal } = await import("../stores/settings");
-    const { default: SettingsModal } = await import("./SettingsModal.vue");
-    settingsModal.open = true;
-    const settingsWrapper = mount(SettingsModal);
-    mounted.push(settingsWrapper);
+  it("closes with the Escape key, and the window Installed skill below stays open", async () => {
+    // As in the application: the window Installed skill is open first, then the window of the SKILL.md file.
+    const { installedSkillModal } = await import("../stores/skills");
+    const { default: InstalledSkillModal } = await import("./InstalledSkillModal.vue");
+    installedSkillModal.open = true;
+    const installSkillWrapper = mount(InstalledSkillModal);
+    mounted.push(installSkillWrapper);
     const { wrapper, skills } = await mountModal();
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", cancelable: true }));
     expect(skills.view).toBeNull();
-    expect(settingsModal.open).toBe(true);
+    expect(installedSkillModal.open).toBe(true);
     expect(wrapper.exists()).toBe(true);
   });
 });

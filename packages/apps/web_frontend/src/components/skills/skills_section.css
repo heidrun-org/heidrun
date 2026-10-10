@@ -1,4 +1,4 @@
-/* The rows of the lists of the section Skills: shared by InstalledSkillRow.vue and SkillSearchResultRow.vue. */
+/* The rows of the lists of the two skills windows: shared by InstalledSkillRow.vue and SkillSearchResultRow.vue. */
 .skillsSection .list { border: 1px solid var(--line); border-radius: 10px; }
 .skillsSection .row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .skillsSection .row:last-child { border-bottom: 0; }

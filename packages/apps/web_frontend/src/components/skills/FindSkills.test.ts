@@ -21,28 +21,9 @@ async function mountFind(answers: Record<string, unknown> = {}) {
 }
 
 describe("FindSkills", () => {
-  it("starts unfolded, with the search field", async () => {
+  it("shows the search field", async () => {
     const { wrapper } = await mountFind();
-    expect(wrapper.get(".fold").attributes("aria-expanded")).toBe("true");
     expect(wrapper.find(".search").exists()).toBe(true);
-  });
-
-  it("folds and unfolds, and remembers the state", async () => {
-    const { wrapper, settings } = await mountFind();
-    await wrapper.get(".fold").trigger("click");
-    expect(settings.skillsFindOpen).toBe(false);
-    expect(wrapper.find(".search").exists()).toBe(false);
-    await flushPromises();
-    expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").skillsFindOpen).toBe(false);
-    await wrapper.get(".fold").trigger("click");
-    expect(wrapper.find(".search").exists()).toBe(true);
-  });
-
-  it("restores a part that was folded", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ skillsFindOpen: false }));
-    const { wrapper } = await mountFind();
-    expect(wrapper.get(".fold").attributes("aria-expanded")).toBe("false");
-    expect(wrapper.find(".search").exists()).toBe(false);
   });
 
   it("lists the results of the search", async () => {

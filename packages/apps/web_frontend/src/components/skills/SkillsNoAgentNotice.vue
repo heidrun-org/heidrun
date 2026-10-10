@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { openAgentsSection } from "../../../stores/skills";
-import { t } from "../../../i18n/index";
+import { openAgentsSection } from "../../stores/skills";
+import { t } from "../../i18n/index";
 </script>
 
 <template>

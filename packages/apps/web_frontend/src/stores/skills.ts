@@ -1,5 +1,5 @@
 // Skills: the folders with a SKILL.md file that Claude Code reads. The disk and the network work are in
-// desktop_tauri/src/skills/; this store holds what the section Skills of the Settings window shows.
+// desktop_tauri/src/skills/; this store holds what the windows Installed skill and Find new skills show.
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openSettings, settings } from "./settings";
@@ -63,6 +63,36 @@ export const skills = reactive({
   busyKey: "",
   view: null as SkillView | null,
 });
+
+/** State of the window Installed skill: not saved, the window starts closed. */
+export const installedSkillModal = reactive({
+  open: false,
+});
+
+/** State of the window Find new skills: not saved, the window starts closed. */
+export const findNewSkillsModal = reactive({
+  open: false,
+});
+
+/** Opens the window Installed skill, which lists the installed skills. */
+export function openInstalledSkillModal(): void {
+  installedSkillModal.open = true;
+}
+
+/** Closes the window Installed skill. */
+export function closeInstalledSkillModal(): void {
+  installedSkillModal.open = false;
+}
+
+/** Opens the window Find new skills, which searches skills.sh. */
+export function openFindNewSkillsModal(): void {
+  findNewSkillsModal.open = true;
+}
+
+/** Closes the window Find new skills. */
+export function closeFindNewSkillsModal(): void {
+  findNewSkillsModal.open = false;
+}
 
 /** The folder of the selected workspace, or `null` when no workspace is selected. */
 export function currentCwd(): string | null {
@@ -131,8 +161,10 @@ export function linkKey(skill: InstalledSkill, agentId: string): string {
   return `${installedKey(skill)}:link:${agentId}`;
 }
 
-/** Opens the section Agents of the Settings window, where the user switches the coding agents on. */
+/** Closes the two windows of the skills and opens the section Agents of the Settings window, where the user switches the coding agents on. */
 export function openAgentsSection(): void {
+  closeInstalledSkillModal();
+  closeFindNewSkillsModal();
   openSettings("agents");
 }
 

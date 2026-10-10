@@ -1,6 +1,6 @@
 import { flushPromises } from "@vue/test-utils";
 import type { Mock } from "vitest";
-import type { SessionSnapshot } from "../../../lib/types";
+import type { SessionSnapshot } from "../../lib/types";
 
 /** One selected workspace, with the folder `/work/heidrun`. */
 export const SNAPSHOT = {
@@ -34,11 +34,11 @@ export async function prepare(invoke: Mock, answers: Record<string, unknown> = {
     }
     return command === "skills_list" ? INSTALLED : [];
   });
-  const session = await import("../../../stores/session");
+  const session = await import("../../stores/session");
   session.state.snapshot = SNAPSHOT;
   session.state.selectedWorkspaceId = "w1";
-  const settings = await import("../../../stores/settings");
-  const skills = await import("../../../stores/skills");
+  const settings = await import("../../stores/settings");
+  const skills = await import("../../stores/skills");
   await skills.loadSkills();
   await flushPromises();
   return { settings: settings.settings, skills, session };

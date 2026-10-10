@@ -46,7 +46,7 @@ import {
   toast,
 } from "./stores/session";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
-import { skills } from "./stores/skills";
+import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
 import Icon from "./components/Icon.vue";
@@ -59,7 +59,9 @@ import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
-import SkillModal from "./components/SkillModal.vue";
+import SkillFileModal from "./components/SkillFileModal.vue";
+import InstalledSkillModal from "./components/InstalledSkillModal.vue";
+import FindNewSkillsModal from "./components/FindNewSkillsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
 import SplashScreen from "./components/SplashScreen.vue";
@@ -273,7 +275,9 @@ onBeforeUnmount(() => {
     <MosaicModal v-if="mosaic.paneId" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
-    <SkillModal v-if="skills.view !== null" />
+    <InstalledSkillModal v-if="installedSkillModal.open" />
+    <FindNewSkillsModal v-if="findNewSkillsModal.open" />
+    <SkillFileModal v-if="skills.view !== null" />
     <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
     <ConfirmModal v-if="confirmDialog.open" />

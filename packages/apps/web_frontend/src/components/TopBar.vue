@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
+import MoreMenu from "./MoreMenu.vue";
 import ThemeMenu from "./ThemeMenu.vue";
 import { state } from "../stores/session";
-import { openSettings, settings, settingsModal } from "../stores/settings";
+import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 </script>
 
@@ -26,19 +27,8 @@ import { t } from "../i18n/index";
       </button>
     </div>
     <div class="tools">
-      <button class="icon-btn" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">
-        <Icon name="question-lg" />
-      </button>
       <ThemeMenu />
-      <button
-        class="icon-btn"
-        :class="{ on: settingsModal.open }"
-        :aria-label="t('topBar.settingsLabel')"
-        :title="t('topBar.settingsTitle')"
-        @click="openSettings()"
-      >
-        <Icon name="gear" />
-      </button>
+      <MoreMenu />
       <button
         class="icon-btn"
         :class="{ on: settings.rightOpen }"
