@@ -28,6 +28,8 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
+import { trailingDebounce, type TrailingDebounce } from "../lib/trailing_debounce";
+import { createRefitHold, type RefitHold } from "../lib/refit_hold";
 import { resolvedTheme } from "../stores/theme";
 import { t } from "../i18n/index";
 
@@ -109,6 +111,14 @@ const id = crypto.randomUUID();
 let term: Terminal | null = null;
 let fit: FitAddon | null = null;
 let observer: ResizeObserver | null = null;
+let refit: TrailingDebounce | null = null;
+let refitHold: RefitHold | null = null;
+/** Time without any size change, in milliseconds, before the terminal starts to take its new size. */
+const REFIT_DELAY_MS = 300;
+/** Time without any output from Herdr, in milliseconds, that means its redraw for the new size is complete. */
+const REFIT_QUIET_MS = 120;
+/** Longest time, in milliseconds, that the old screen stays on show while the redraw of Herdr is awaited. */
+const REFIT_MAX_MS = 500;
 const MOUSE_MODES = new Set([9, 1000, 1001, 1002, 1003, 1005, 1006, 1015, 1016]);
 // Alternate screen: ignored. Herdr redraws the whole pane anyway and there is no
 // scrollback here, but xterm only allows decorations (reference colors) on the normal screen.
@@ -131,8 +141,35 @@ let retries = 0;
 let lastOutput = "";
 const textDecoder = new TextDecoder();
 
+/**
+ * Gives the terminal the size of its container. While Herdr is attached, the new size goes to Herdr first and
+ * the terminal takes it once the redraw of Herdr is complete, see `createRefitHold`.
+ */
+function applyFit() {
+  if (term === null || fit === null || refitHold === null) {
+    return;
+  }
+  if (refitHold.isBusy()) {
+    refit?.call();
+    return;
+  }
+  if (exited.value) {
+    fit.fit();
+    return;
+  }
+  const size = fit.proposeDimensions();
+  if (size === undefined || Number.isNaN(size.cols) || Number.isNaN(size.rows)) {
+    return;
+  }
+  if (size.cols === term.cols && size.rows === term.rows) {
+    return;
+  }
+  refitHold.start(size.cols, size.rows);
+}
+
 async function attach(takeover = false, quiet = false) {
   if (!term) return;
+  refitHold?.cancel();
   exited.value = false;
   if (!quiet) retries = 0;
   spawnedAt = Date.now();
@@ -393,7 +430,9 @@ onMounted(async () => {
       const bytes = decode(e.payload.data);
       // Keep the start of the output, to recognize an attach refused by Herdr.
       if (Date.now() - spawnedAt < 4000 && lastOutput.length < 600) lastOutput += textDecoder.decode(bytes, { stream: true });
-      term?.write(bytes);
+      if (refitHold?.hold(bytes) !== true) {
+        term?.write(bytes);
+      }
     }),
     await listen<{ id: string }>("pty://exit", (e) => {
       if (e.payload.id !== id) return;
@@ -414,7 +453,6 @@ onMounted(async () => {
   term.onWriteParsed(scheduleRefs);
   term.onResize(scheduleRefs);
   term.onData((data) => invoke("pty_write", { id, data }).catch(() => {}));
-  term.onResize(({ cols, rows }) => invoke("pty_resize", { id, cols, rows }).catch(() => {}));
 
   // Mouse wheel. In "select" mode xterm no longer reports the mouse, so it would turn
   // the wheel into ↑/↓ keys (shell or prompt history). Instead we send real wheel
@@ -424,7 +462,22 @@ onMounted(async () => {
   el.value!.addEventListener("mousedown", onDown, true);
   el.value!.addEventListener("mouseup", onUp, true);
 
-  observer = new ResizeObserver(() => fit?.fit());
+  // While the window or a panel is dragged, the terminal keeps its size and its screen. Once the drag has
+  // paused, Herdr gets the new size, and the terminal swaps to it when the redraw of Herdr is complete.
+  // Without this, xterm reflows its old lines at once and the garbled screen shows until the redraw arrives.
+  refitHold = createRefitHold({
+    terminal: {
+      write: (data, callback) => term?.write(data, callback),
+      resize: (cols, rows) => term?.resize(cols, rows),
+    },
+    sendSize: (cols, rows) => {
+      invoke("pty_resize", { id, cols, rows }).catch(() => {});
+    },
+    quietMs: REFIT_QUIET_MS,
+    maxMs: REFIT_MAX_MS,
+  });
+  refit = trailingDebounce(applyFit, REFIT_DELAY_MS);
+  observer = new ResizeObserver(() => refit?.call());
   observer.observe(el.value!);
 
   await attach(false);
@@ -659,7 +712,7 @@ function paintRefs() {
 }
 
 // Font changes: wait for the font to load so xterm measures the right cell size,
-// then refit; the new cols/rows reach Herdr through onResize.
+// then refit; the new cols/rows reach Herdr through `applyFit`.
 // The font size is not here: the zoom of the whole window scales the terminal, see `applyWindowZoom`.
 watch(
   () => settings.fontId,
@@ -672,7 +725,7 @@ watch(
       /* fall back to whatever is available */
     }
     term.options.fontFamily = stack;
-    fit?.fit();
+    applyFit();
   },
 );
 
@@ -876,6 +929,8 @@ onBeforeUnmount(() => {
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
   if (el.value) ImageDrop.unregister(el.value);
   observer?.disconnect();
+  refit?.cancel();
+  refitHold?.cancel();
   unlisten.forEach((u) => u());
   invoke("pty_kill", { id }).catch(() => {});
   term?.dispose();
