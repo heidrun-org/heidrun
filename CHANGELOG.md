@@ -8,15 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Add a command line tool and library for running coding agents. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
-- Add support for dropping an image on a terminal to paste it. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
-- Add a script to generate the change log from merged pull requests. ([#117](https://github.com/heidrun-org/heidrun/pull/117))
-- Add a script to create a disk image for a release. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
+- Add a command-line tool and library for coding agents. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
+- Add a script to generate the change log from merged pull requests, with options to choose the range. ([#117](https://github.com/heidrun-org/heidrun/pull/117), [#119](https://github.com/heidrun-org/heidrun/pull/119))
+- Add a script to create a disk image for releases. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
 
 ### Changed
 
-- Apply font size zoom to the whole window. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
-- Rename the `desktop-tauri` and `web-frontend` packages to `desktop_tauri` and `web_frontend`. ([#112](https://github.com/heidrun-org/heidrun/pull/112))
+- Make font size zoom apply to the whole window. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
+
+### Fixed
+
+- Allow pasting an image by dropping it on a terminal. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
 
 ## [0.2.0] - 2026-10-10
 
