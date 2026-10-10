@@ -45,9 +45,10 @@ import {
   state,
   toast,
 } from "./stores/session";
-import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
+import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
+import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
@@ -204,12 +205,12 @@ onMounted(async () => {
     if (event.payload.type !== "drop") return;
     const result = await ImageDrop.handleDrop(
       event.payload.paths,
-      event.payload.position.x / window.devicePixelRatio,
-      event.payload.position.y / window.devicePixelRatio,
+      event.payload.position.x / zoomFactor(),
+      event.payload.position.y / zoomFactor(),
     );
-    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"));
-    else if (result === "not_an_image") toast(t("app.dropNotAnImage"));
-    else if (result === "failed") toast(t("app.dropFailed"));
+    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"), "error");
+    else if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
+    else if (result === "failed") toast(t("app.dropFailed"), "error");
   });
 });
 onBeforeUnmount(() => {
@@ -272,7 +273,10 @@ onBeforeUnmount(() => {
     <DangerModal v-if="danger.open" />
     <ConfirmModal v-if="confirmDialog.open" />
     <Transition name="toast">
-      <div v-if="state.toast" class="toast" role="status">{{ state.toast }}</div>
+      <div v-if="state.toast" class="toast" :class="{ error: state.toastKind === 'error' }" :role="state.toastKind === 'error' ? 'alert' : 'status'">
+        <Icon v-if="state.toastKind === 'error'" name="exclamation-octagon-fill" class="toast-icon" />
+        {{ state.toast }}
+      </div>
     </Transition>
   </div>
 </template>
@@ -288,6 +292,8 @@ onBeforeUnmount(() => {
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
   color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
 }
+.toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
+.toast-icon { margin-right: 8px; color: #fecaca; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 6px); }
 </style>
