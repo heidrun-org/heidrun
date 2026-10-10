@@ -17,7 +17,7 @@ describe("zoom", () => {
 
   it("rounds to half a point", () => {
     zoom(0.3);
-    expect(settings.fontSize).toBe(13);
+    expect(settings.fontSize).toBe(FONT_DEFAULT + 0.5);
   });
 
   it("never goes under the minimum", () => {
