@@ -110,24 +110,34 @@ function isRestarting(a: Action) {
       </template>
 
       <template v-if="recentRuns.length">
-        <div class="sub-head">
-          <div class="eyebrow">{{ t("actionsPanel.recent") }}</div>
-          <button :title="t('actionsPanel.clearTitle')" class="link small" @click="clearRecent(ws)">{{ t("actionsPanel.clear") }}</button>
-        </div>
-        <div v-for="r in recentRuns" :key="r.command" class="sugg">
-          <span class="grow">
-            <span class="mono">{{ r.command }}</span>
-            <span class="src">{{ ago(r.at) }}</span>
-          </span>
-          <button class="tool" :aria-label="t('actionsPanel.runAgainCommand', { command: r.command })" :title="t('actionsPanel.restart')" @click="runDetected(ws, r)"><Icon name="play-fill" /></button>
+        <div class="section-row sub">
           <button
-            v-if="!p.config.actions.some((a) => a.command === r.command)"
-            class="tool"
-            :aria-label="t('actionsPanel.addCommand', { command: r.command })"
-            :title="t('actionsPanel.addToActions')"
-            @click="addAction(ws, r.label, r.command)"
-          >+</button>
+            class="section-head"
+            :aria-expanded="!settings.scriptsRecentFolded"
+            :title="t(settings.scriptsRecentFolded ? 'actionsPanel.unfoldSection' : 'actionsPanel.foldSection', { section: t('actionsPanel.recent') })"
+            @click="settings.scriptsRecentFolded = !settings.scriptsRecentFolded"
+          >
+            <Icon :name="settings.scriptsRecentFolded ? 'chevron-right' : 'chevron-down'" />
+            <span class="eyebrow">{{ t("actionsPanel.recent") }}</span>
+          </button>
+          <button class="tool clear" :aria-label="t('actionsPanel.clearTitle')" :title="t('actionsPanel.clearTitle')" @click="clearRecent(ws)"><Icon name="trash" /></button>
         </div>
+        <template v-if="!settings.scriptsRecentFolded">
+          <div v-for="r in recentRuns" :key="r.command" class="sugg">
+            <span class="grow">
+              <span class="mono">{{ r.command }}</span>
+              <span class="src">{{ ago(r.at) }}</span>
+            </span>
+            <button class="tool" :aria-label="t('actionsPanel.runAgainCommand', { command: r.command })" :title="t('actionsPanel.restart')" @click="runDetected(ws, r)"><Icon name="play-fill" /></button>
+            <button
+              v-if="!p.config.actions.some((a) => a.command === r.command)"
+              class="tool"
+              :aria-label="t('actionsPanel.addCommand', { command: r.command })"
+              :title="t('actionsPanel.addToActions')"
+              @click="addAction(ws, r.label, r.command)"
+            >+</button>
+          </div>
+        </template>
       </template>
 
       <template v-if="suggestions.length">
@@ -190,9 +200,7 @@ function isRestarting(a: Action) {
   padding: 2px 0; color: var(--muted);
 }
 .section-head:hover { color: var(--text); }
-.section-head.sub { margin-top: 14px; }
-.sub-head { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
-.link.small { padding: 0; font-size: var(--font-size); }
+.section-head.sub, .section-row.sub { margin-top: 14px; }
 
 .sugg { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 8px; }
 .sugg:hover { background: var(--hover-soft); }

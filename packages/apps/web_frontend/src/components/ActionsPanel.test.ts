@@ -11,9 +11,9 @@ beforeEach(() => {
   vi.resetModules();
 });
 
-async function mountPanel() {
+async function mountPanel(options: { recentCommands?: string[] } = {}) {
   const { state } = await import("../stores/session");
-  const { project } = await import("../stores/project");
+  const { project, local } = await import("../stores/project");
   const { default: ActionsPanel } = await import("./ActionsPanel.vue");
   state.selectedWorkspaceId = "w1";
   project.byWorkspace["w1"] = {
@@ -28,6 +28,11 @@ async function mountPanel() {
       { label: "pnpm dev", command: "pnpm dev", source: "package.json" },
     ],
   } as never;
+  local.recent["/Users/me/webwork/heidrun"] = (options.recentCommands ?? []).map((command) => ({
+    label: command,
+    command,
+    at: Date.now(),
+  }));
   const wrapper = mount(ActionsPanel);
   await flushPromises();
   return wrapper;
@@ -124,5 +129,60 @@ describe("ActionsPanel", () => {
     expect(wrapper.find(".dashed").exists()).toBe(false);
     expect(wrapper.find("form").exists()).toBe(false);
     expect(wrapper.find("input").exists()).toBe(false);
+  });
+
+  it("shows the section Recent between the two other sections, when a command was run", async () => {
+    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
+    const headings = wrapper.findAll(".section-head").map((heading) => heading.text());
+    expect(headings).toEqual(["Custom Scripts", "Recent", "Existing Scripts"]);
+    expect(wrapper.text()).toContain("pnpm build");
+  });
+
+  it("does not show the section Recent when no command was run", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.findAll(".section-head").map((heading) => heading.text())).not.toContain("Recent");
+  });
+
+  it("folds and unfolds the section Recent", async () => {
+    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
+    const recentHeading = () => wrapper.findAll(".section-head")[1];
+    expect(recentHeading().attributes("aria-expanded")).toBe("true");
+
+    await recentHeading().trigger("click");
+    expect(recentHeading().attributes("aria-expanded")).toBe("false");
+    expect(wrapper.text()).not.toContain("pnpm build");
+    expect(wrapper.text()).toContain("start the server");
+    expect(wrapper.text()).toContain("pnpm install");
+
+    await recentHeading().trigger("click");
+    expect(recentHeading().attributes("aria-expanded")).toBe("true");
+    expect(wrapper.text()).toContain("pnpm build");
+  });
+
+  it("shows the button that clears the recent commands as an icon, without text, on the line of the heading", async () => {
+    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
+    const clear = wrapper.get(".section-row .clear");
+    expect(clear.text()).toBe("");
+    expect(clear.find("i.bi-trash").exists()).toBe(true);
+    expect(clear.attributes("aria-label")).toBe("Clear the recent commands");
+    expect(clear.attributes("title")).toBe("Clear the recent commands");
+    const row = clear.element.parentElement!;
+    expect(row.children[0].classList.contains("section-head")).toBe(true);
+    expect(row.children[1]).toBe(clear.element);
+    expect(wrapper.text()).not.toContain("Clear");
+  });
+
+  it("keeps the button that clears the recent commands when the section Recent is folded", async () => {
+    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
+    await wrapper.findAll(".section-head")[1].trigger("click");
+    expect(wrapper.find(".section-row .clear").exists()).toBe(true);
+  });
+
+  it("removes the section Recent when the person clicks the button that clears the recent commands", async () => {
+    const wrapper = await mountPanel({ recentCommands: ["pnpm build", "sleep 5"] });
+    await wrapper.get(".section-row .clear").trigger("click");
+    expect(wrapper.text()).not.toContain("pnpm build");
+    expect(wrapper.text()).not.toContain("sleep 5");
+    expect(wrapper.findAll(".section-head").map((heading) => heading.text())).toEqual(["Custom Scripts", "Existing Scripts"]);
   });
 });

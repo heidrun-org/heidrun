@@ -21,7 +21,6 @@
   "removeAction": "Remove the script {action}",
   "recent": "Recent",
   "clearTitle": "Clear the recent commands",
-  "clear": "Clear",
   "runAgainCommand": "Run {command} again",
   "addCommand": "Add {command} to the custom scripts",
   "addToActions": "Add to the custom scripts",

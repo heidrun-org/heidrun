@@ -49,6 +49,8 @@ const defaults = {
   rightTab: "pane" as "pane" | "actions" | "git" | "notes",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
+  /** Tab Scripts: the section Recent is folded. */
+  scriptsRecentFolded: false,
   /** Tab Scripts: the section Existing Scripts is folded. */
   scriptsExistingFolded: false,
   /** Last size of the note window, in px. */
