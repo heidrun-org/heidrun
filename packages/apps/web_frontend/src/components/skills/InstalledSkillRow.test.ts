@@ -70,7 +70,7 @@ describe("InstalledSkillRow: link for an agent switched on later", () => {
     const orphan = { name: "orphan", description: "", level: "user", origin: null, path: "/x", agents: [] };
     await prepare(invoke, { skills_list: [orphan] });
     const { default: InstalledSkillRow } = await import("./InstalledSkillRow.vue");
-    const { skills } = await import("../../../stores/skills");
+    const { skills } = await import("../../stores/skills");
     const wrapper = mount(InstalledSkillRow, { props: { skill: skills.installed[0] } });
     expect(linkButtons(wrapper).map((button) => button.text())).toEqual(["Add link for Claude Code", "Add link for Codex"]);
   });
@@ -123,7 +123,7 @@ describe("InstalledSkillRow: inspect and delete", () => {
 
   it("deletes only after the confirmation", async () => {
     const { wrapper } = await mountRow(0);
-    const confirm = await import("../../../stores/confirm");
+    const confirm = await import("../../stores/confirm");
     await wrapper.get(".danger").trigger("click");
     expect(confirm.confirmDialog.open).toBe(true);
     expect(confirm.confirmDialog.title).toBe("Move the skill pdf to the Trash?");
@@ -135,7 +135,7 @@ describe("InstalledSkillRow: inspect and delete", () => {
 
   it("keeps the skill when the user cancels", async () => {
     const { wrapper } = await mountRow(0);
-    const confirm = await import("../../../stores/confirm");
+    const confirm = await import("../../stores/confirm");
     await wrapper.get(".danger").trigger("click");
     confirm.answerConfirm(false);
     await flushPromises();
@@ -146,7 +146,7 @@ describe("InstalledSkillRow: inspect and delete", () => {
     const deletion = pending();
     const { wrapper, session } = await mountRow(0);
     invoke.mockImplementation(async (command: string) => (command === "skills_delete" ? deletion.promise : INSTALLED));
-    const confirm = await import("../../../stores/confirm");
+    const confirm = await import("../../stores/confirm");
     const button = () => wrapper.get(".danger");
     await button().trigger("click");
     confirm.answerConfirm(true);

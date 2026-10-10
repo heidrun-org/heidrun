@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import Icon from "../../Icon.vue";
-import { settings } from "../../../stores/settings";
-import { inspectResult, installSkill, isInstalledAtLevel, isSkillBusy, resultKey, type SearchResult } from "../../../stores/skills";
-import { t } from "../../../i18n/index";
+import Icon from "../Icon.vue";
+import { settings } from "../../stores/settings";
+import { inspectResult, installSkill, isInstalledAtLevel, isSkillBusy, resultKey, type SearchResult } from "../../stores/skills";
+import { t } from "../../i18n/index";
 
 defineProps<{ result: SearchResult }>();
 </script>

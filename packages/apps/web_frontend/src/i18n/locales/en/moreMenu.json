@@ -1,0 +1,14 @@
+{
+  "buttonLabel": "More actions",
+  "buttonTitle": "More actions",
+  "menuLabel": "More actions",
+  "shortcutsHelpLabel": "Shortcuts help",
+  "shortcutsHelpTitle": "Open the help about the shortcuts (⌘/)",
+  "skillsHeading": "Skills",
+  "installedSkillLabel": "Installed skill",
+  "installedSkillTitle": "Show the installed skills: inspect or delete a skill",
+  "findNewSkillsLabel": "Find new skills",
+  "findNewSkillsTitle": "Search skills.sh: inspect or install a skill",
+  "settingsLabel": "Settings",
+  "settingsTitle": "Open the settings"
+}

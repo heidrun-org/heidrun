@@ -3,10 +3,6 @@
   "leftSidebarTitle": "Barre latérale gauche (⌘B)",
   "searchTitle": "Rechercher ou lancer une commande",
   "searchPlaceholder": "Rechercher, lancer une commande…",
-  "shortcutsLabel": "Raccourcis",
-  "shortcutsTitle": "Raccourcis (⌘/)",
   "rightPanelLabel": "Afficher le panneau de droite",
-  "rightPanelTitle": "Panneau de droite (⌥⌘B)",
-  "settingsLabel": "Réglages",
-  "settingsTitle": "Réglages"
+  "rightPanelTitle": "Panneau de droite (⌥⌘B)"
 }

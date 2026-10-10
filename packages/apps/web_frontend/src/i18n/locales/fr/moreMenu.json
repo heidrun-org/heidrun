@@ -1,0 +1,14 @@
+{
+  "buttonLabel": "Plus d'actions",
+  "buttonTitle": "Plus d'actions",
+  "menuLabel": "Plus d'actions",
+  "shortcutsHelpLabel": "Aide sur les raccourcis",
+  "shortcutsHelpTitle": "Ouvrir l'aide sur les raccourcis (⌘/)",
+  "skillsHeading": "Compétences",
+  "installedSkillLabel": "Compétence installée",
+  "installedSkillTitle": "Afficher les compétences installées : inspecter ou supprimer une compétence",
+  "findNewSkillsLabel": "Trouver de nouvelles compétences",
+  "findNewSkillsTitle": "Chercher sur skills.sh : inspecter ou installer une compétence",
+  "settingsLabel": "Réglages",
+  "settingsTitle": "Ouvrir les réglages"
+}

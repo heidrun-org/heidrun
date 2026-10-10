@@ -15,13 +15,18 @@ beforeEach(() => {
 });
 
 describe("SkillsNoAgentNotice", () => {
-  it("tells the user to switch an agent on, and opens the section Agents", async () => {
+  it("tells the user to switch an agent on, and closes the windows of the skills, and opens the section Agents of the Settings window", async () => {
     await prepare(invoke);
     const { default: SkillsNoAgentNotice } = await import("./SkillsNoAgentNotice.vue");
     const wrapper = mount(SkillsNoAgentNotice);
     expect(wrapper.text()).toContain("No coding agent is switched on");
-    const { settingsModal } = await import("../../../stores/settings");
+    const { settingsModal } = await import("../../stores/settings");
+    const { findNewSkillsModal, installedSkillModal } = await import("../../stores/skills");
+    findNewSkillsModal.open = true;
+    installedSkillModal.open = true;
     await wrapper.get("button").trigger("click");
+    expect(findNewSkillsModal.open).toBe(false);
+    expect(installedSkillModal.open).toBe(false);
     expect(settingsModal.open).toBe(true);
     expect(settingsModal.section).toBe("agents");
   });

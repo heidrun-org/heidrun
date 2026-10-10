@@ -103,12 +103,8 @@ const defaults = {
   dockWidth: 560,
   /** The coding agents (ids of `lib/agents.ts`) that the user has a valid subscription or access for. */
   ownedAgents: [] as string[],
-  /** Skills section: where a skill is installed, "workspace" (the folder of the workspace) or "user". */
+  /** Window Find new skills: where a skill is installed, "workspace" (the folder of the workspace) or "user". */
   skillsLevel: "workspace" as "workspace" | "user",
-  /** Skills section: the part "Installed skills" is unfolded. */
-  skillsInstalledOpen: true,
-  /** Skills section: the part "Find skills on skills.sh" is unfolded. */
-  skillsFindOpen: true,
   /** The window of a SKILL.md file shows the rendered Markdown (true) or the highlighted source (false). */
   skillsViewRendered: true,
 };
@@ -177,8 +173,7 @@ export type SettingsSection =
   | "notifications"
   | "general"
   | "mobileAccess"
-  | "agents"
-  | "skills";
+  | "agents";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({

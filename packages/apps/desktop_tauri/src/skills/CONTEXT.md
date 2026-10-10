@@ -1,7 +1,7 @@
 # Directory Context: `/packages/apps/desktop_tauri/src/skills`
 
 ## Purpose
-The backend of the section Skills of the Settings window: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. The file `mod.rs` describes the folders of each agent and the cache.
+The backend of the windows Installed skill and Find new skills: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. The file `mod.rs` describes the folders of each agent and the cache.
 
 ## Key Exports & Entry Points
 - `installed.rs`: the commands `skills_list`, `skills_read`, and `skills_delete`.

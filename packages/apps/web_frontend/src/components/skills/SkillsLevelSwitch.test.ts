@@ -21,6 +21,11 @@ async function mountSwitch() {
 }
 
 describe("SkillsLevelSwitch", () => {
+  it("shows the choice User first, then Workspace", async () => {
+    const { wrapper } = await mountSwitch();
+    expect(wrapper.findAll(".levelChoice button").map((button) => button.text())).toEqual(["User", "Workspace"]);
+  });
+
   it("starts on the workspace level", async () => {
     const { wrapper, settings } = await mountSwitch();
     expect(settings.skillsLevel).toBe("workspace");
@@ -29,7 +34,7 @@ describe("SkillsLevelSwitch", () => {
 
   it("changes the level and keeps it in the saved settings", async () => {
     const { wrapper, settings } = await mountSwitch();
-    await wrapper.findAll(".levelChoice button")[1].trigger("click");
+    await wrapper.findAll(".levelChoice button")[0].trigger("click");
     expect(settings.skillsLevel).toBe("user");
     await flushPromises();
     expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").skillsLevel).toBe("user");

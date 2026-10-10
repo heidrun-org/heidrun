@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Icon from "../../Icon.vue";
+import Icon from "../Icon.vue";
 import {
   agentNames,
   deleteSkill,
@@ -11,8 +11,8 @@ import {
   missingAgents,
   originLabel,
   type InstalledSkill,
-} from "../../../stores/skills";
-import { t } from "../../../i18n/index";
+} from "../../stores/skills";
+import { t } from "../../i18n/index";
 
 const props = defineProps<{ skill: InstalledSkill }>();
 

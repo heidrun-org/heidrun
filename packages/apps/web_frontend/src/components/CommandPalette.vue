@@ -29,6 +29,7 @@ import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isDocked, toggleDock } from "../stores/dock";
 import { openFiles } from "../stores/files";
+import { openFindNewSkillsModal, openInstalledSkillModal } from "../stores/skills";
 import { t } from "../i18n/index";
 
 interface Item {
@@ -114,7 +115,8 @@ const items = computed<Item[]>(() => {
     { section: t("commandPalette.section.help"), label: t("commandPalette.shortcuts"), hint: "⌘/", run: () => (state.shortcutsOpen = true) },
     { section: t("commandPalette.section.display"), label: t("commandPalette.mobile"), run: () => openSettings("mobileAccess") },
     { section: t("commandPalette.section.display"), label: t("commandPalette.agents"), run: () => openSettings("agents") },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.skills"), run: () => openSettings("skills") },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.installedSkill"), run: () => openInstalledSkillModal() },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.findNewSkills"), run: () => openFindNewSkillsModal() },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextTab"), hint: "⌥⌘→", run: () => cycleTab(1) },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.previousTab"), hint: "⌥⌘←", run: () => cycleTab(-1) },
     { section: t("commandPalette.section.navigation"), label: t("commandPalette.nextWorkspace"), hint: "⌥⌘↓", run: () => cycleWorkspace(1) },
