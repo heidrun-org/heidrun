@@ -57,7 +57,7 @@ async function askReview(ref: string, url: string, title: string) {
       <section class="block">
         <header class="head">
           <span class="eyebrow">{{ t("gitPanel.repository") }}</span>
-          <button class="link" :disabled="git.loading" :title="t('gitPanel.refresh')" @click="refreshGit()"><span :class="{ 'label-hidden': git.loading }">{{ t("gitPanel.refresh") }}</span><span v-if="git.loading" class="spinner-border" role="status" :aria-label="t('gitPanel.refreshing')"></span></button>
+          <button class="icon-btn" :disabled="git.loading" :aria-label="t('gitPanel.refresh')" :title="t('gitPanel.refresh')" @click="refreshGit()"><Icon name="arrow-clockwise" :class="{ 'icon-hidden': git.loading }" /><span v-if="git.loading" class="spinner-border" role="status" :aria-label="t('gitPanel.refreshing')"></span></button>
         </header>
         <button v-if="fg?.base" class="repo" :title="t('gitPanel.openOn', { forge: forgeLabel })" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
         <div v-else class="repo plain">{{ repoName }}</div>
@@ -81,8 +81,8 @@ async function askReview(ref: string, url: string, title: string) {
 
       <section class="block">
         <header class="head">
-          <span class="eyebrow">{{ t("gitPanel.changes") }} <span class="count">{{ st.changed + st.untracked }}</span></span>
-          <button v-if="st.files.length" class="link" :title="t('gitPanel.expandTitle')" @click="openGitModal()">{{ t("gitPanel.expand") }} ⤢</button>
+          <span class="eyebrow">{{ t("gitPanel.changes") }} <span class="count">({{ st.changed + st.untracked }})</span></span>
+          <button v-if="st.files.length" class="icon-btn" :aria-label="t('gitPanel.expand')" :title="t('gitPanel.expandTitle')" @click="openGitModal()"><Icon name="fullscreen" /></button>
         </header>
         <div v-if="!st.files.length" class="muted">{{ t("gitPanel.noChanges") }}</div>
         <ul v-else class="files">
@@ -99,7 +99,7 @@ async function askReview(ref: string, url: string, title: string) {
       </section>
 
       <section class="block">
-        <div class="eyebrow">{{ t("gitPanel.openRequests", { kind }) }} <span v-if="fg" class="count">{{ fg.requests.length }}</span></div>
+        <div class="eyebrow">{{ t("gitPanel.openRequests", { kind }) }} <span v-if="fg" class="count">({{ fg.requests.length }})</span></div>
         <div v-if="!st.remote" class="muted">{{ t("gitPanel.noRemote") }}</div>
         <div v-else-if="!fg" class="muted">{{ t("gitPanel.loading") }}</div>
         <div v-else-if="fg.error" class="err">{{ fg.error }}</div>
@@ -153,8 +153,13 @@ async function askReview(ref: string, url: string, title: string) {
 .head { display: flex; align-items: center; justify-content: space-between; }
 .link { border: none; background: none; padding: 0; color: var(--faint); font-size: var(--font-size); }
 .link:hover:not(:disabled) { color: var(--text-2); }
-.link { position: relative; }
-.label-hidden { visibility: hidden; }
+.icon-btn {
+  position: relative; width: 22px; height: 22px; padding: 0; border: 1px solid var(--line-strong); border-radius: 5px;
+  background: transparent; color: var(--muted); font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-btn:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.icon-btn:disabled { opacity: 0.65; }
+.icon-hidden { visibility: hidden; }
 .spinner-border {
   position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px;
   border: 0.15em solid currentcolor; border-right-color: transparent; border-radius: 50%;

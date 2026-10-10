@@ -28,7 +28,7 @@ const tabs = computed(() => [
 
 <template>
   <aside class="right" :style="{ width: `${settings.rightWidth}px` }">
-    <div class="seg" role="tablist" :aria-label="t('rightPanel.label')">
+    <div class="tabs" role="tablist" :aria-label="t('rightPanel.label')">
       <button :title="t('rightPanel.showTab')"
         v-for="tab in tabs"
         :key="tab.id"
@@ -52,12 +52,14 @@ const tabs = computed(() => [
   flex-shrink: 0; min-width: 0; border-left: 1px solid var(--line); background: var(--panel);
   display: flex; flex-direction: column; min-height: 0;
 }
-.seg { display: flex; gap: 3px; margin: 14px 16px 0; padding: 3px; border-radius: 9px; background: var(--bg); }
-.seg button {
-  flex: 1; height: 30px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  font-size: var(--font-size); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+.tabs { display: flex; gap: 2px; margin: 14px 16px 0; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
+.tabs button {
+  flex: 1 1 auto; min-width: 0; height: 34px; margin-bottom: -1px; padding: 0 10px; border: 1px solid transparent;
+  border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); font-size: var(--font-size); font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
-.seg button.on { background: var(--hover); color: var(--text); }
+.tabs button:hover:not(.on) { border-color: var(--line) var(--line) transparent; color: var(--text-2); }
+.tabs button.on { background: var(--panel); color: var(--text); border-color: var(--line-strong) var(--line-strong) var(--panel); }
 .badge {
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--line-strong); color: var(--text-2);
   font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center;
