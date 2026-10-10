@@ -29,7 +29,6 @@ import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
 import { resolvedTheme } from "../stores/theme";
-import { TerminalColorReply } from "../lib/terminal_color_reply";
 import { t } from "../i18n/index";
 
 const TERMINAL_THEMES = {
@@ -414,17 +413,6 @@ onMounted(async () => {
   term.onWriteParsed(scheduleRefs);
   term.onResize(scheduleRefs);
   term.onData((data) => invoke("pty_write", { id, data }).catch(() => {}));
-  // Codex asks for the terminal colours (OSC 10 and OSC 11) to colour its input area. Without an answer it assumes a dark background.
-  for (const oscNumber of [10, 11] as const) {
-    term.parser.registerOscHandler(oscNumber, (data) => {
-      const theme = TERMINAL_THEMES[resolvedTheme.value];
-      const reply = TerminalColorReply.answer(oscNumber, data, oscNumber === 10 ? theme.foreground : theme.background);
-      if (reply !== null) {
-        invoke("pty_write", { id, data: reply }).catch(() => {});
-      }
-      return true;
-    });
-  }
   term.onResize(({ cols, rows }) => invoke("pty_resize", { id, cols, rows }).catch(() => {}));
 
   // Mouse wheel. In "select" mode xterm no longer reports the mouse, so it would turn
