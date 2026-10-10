@@ -4,6 +4,7 @@ import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Os from 'node:os';
 import Path from 'node:path';
+import Chalk from 'chalk';
 import { Command } from 'commander';
 
 const __filename = import.meta.filename;
@@ -53,8 +54,7 @@ class ReleaseDmg {
 		if (options.notesFile !== undefined) {
 			notesPath = Path.resolve(process.cwd(), options.notesFile);
 			if (Fs.existsSync(notesPath) === false) {
-				console.error(`The notes file does not exist: ${notesPath}`);
-				process.exit(1);
+				ReleaseDmg._fail(`The notes file does not exist: ${notesPath}`, 'Give the path of an existing file.');
 			}
 		}
 
@@ -63,13 +63,11 @@ class ReleaseDmg {
 
 		const prefixPath = Path.join(rootDir, 'docs', 'release_notes', 'prefix.md');
 		if (Fs.existsSync(prefixPath) === false) {
-			console.error(`The release notes prefix file does not exist: ${prefixPath}`);
-			process.exit(1);
+			ReleaseDmg._fail(`The release notes prefix file does not exist: ${prefixPath}`, 'Create this file.');
 		}
 
 		if (process.platform !== 'darwin') {
-			console.error('The disk image can only be built on macOS.');
-			process.exit(1);
+			ReleaseDmg._fail('The disk image can only be built on macOS.');
 		}
 
 		const rootPackage = JSON.parse(Fs.readFileSync(Path.join(rootDir, 'package.json'), 'utf8')) as { version: string };
@@ -83,8 +81,7 @@ class ReleaseDmg {
 			? Fs.readdirSync(dmgDir).filter((fileName) => fileName.endsWith('.dmg') && fileName.includes(version))
 			: [];
 		if (dmgFileNames.length === 0) {
-			console.error(`No disk image for version ${version} found in ${dmgDir}.`);
-			process.exit(1);
+			ReleaseDmg._fail(`No disk image for version ${version} found in ${dmgDir}.`);
 		}
 		const dmgPaths = dmgFileNames.map((fileName) => Path.join(dmgDir, fileName));
 
@@ -114,8 +111,7 @@ class ReleaseDmg {
 				},
 			);
 			if (generatedNotes.status !== 0) {
-				console.error('The list of changes could not be generated.');
-				process.exit(generatedNotes.status ?? 1);
+				ReleaseDmg._fail('The list of changes could not be generated.');
 			}
 			Fs.appendFileSync(bodyPath, `\n${generatedNotes.stdout.trim()}\n`);
 			ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', bodyPath], rootDir);
@@ -166,26 +162,30 @@ class ReleaseDmg {
 
 		const changes = git(['status', '--porcelain']).stdout.trim();
 		if (changes !== '') {
-			console.error('The repository has uncommitted changes, and they would not be in the release:\n');
-			console.error(changes);
-			console.error('\nCommit them, then push:\n\n  git add -A && git commit -m "<message>" && git push');
-			process.exit(1);
+			ReleaseDmg._fail(
+				'The repository has uncommitted changes.',
+				'Commit them, then push:',
+				'git add -A && git commit -m "<message>" && git push',
+			);
 		}
 
 		const branchName = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
 		const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
 		if (upstream.status !== 0) {
-			console.error(`The branch ${branchName} does not exist on GitHub yet. GitHub cannot tag a commit it does not have.`);
-			console.error(`\nPush the branch:\n\n  git push -u origin ${branchName}`);
-			process.exit(1);
+			ReleaseDmg._fail(
+				`The branch ${branchName} does not exist on GitHub yet.`,
+				'Push the branch:',
+				`git push -u origin ${branchName}`,
+			);
 		}
 
 		const aheadCount = Number(git(['rev-list', '--count', `${upstream.stdout.trim()}..HEAD`]).stdout.trim());
 		if (aheadCount > 0) {
-			console.error(`The branch ${branchName} has ${aheadCount} local commit(s) that are not on GitHub yet.`);
-			console.error('GitHub cannot tag a commit it does not have.');
-			console.error('\nPush them:\n\n  git push');
-			process.exit(1);
+			ReleaseDmg._fail(
+				`The branch ${branchName} has ${aheadCount} local commit(s) that are not on GitHub yet.`,
+				'Push them:',
+				'git push',
+			);
 		}
 	}
 
@@ -202,9 +202,27 @@ class ReleaseDmg {
 			stdio: 'inherit',
 		});
 		if (result.status !== 0) {
-			console.error(`The command failed: ${command} ${args.join(' ')}`);
-			process.exit(result.status ?? 1);
+			ReleaseDmg._fail(`The command failed: ${command} ${args.join(' ')}`);
 		}
+	}
+
+	/**
+	 * Shows the reason of a failure in red, then what to do about it, then the command to run in green, and stops
+	 * the script with the exit code 1.
+	 * @param reason The reason of the failure.
+	 * @param resolution What the developer must do, or undefined when there is nothing to say.
+	 * @param command The command that the developer can copy and run, or undefined when there is none.
+	 * @returns Never returns.
+	 */
+	private static _fail(reason: string, resolution?: string, command?: string): never {
+		console.error(Chalk.red(reason));
+		if (resolution !== undefined) {
+			console.error(resolution);
+		}
+		if (command !== undefined) {
+			console.error(`\n  ${Chalk.green(command)}\n`);
+		}
+		process.exit(1);
 	}
 }
 
