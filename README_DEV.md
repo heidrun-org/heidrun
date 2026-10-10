@@ -15,7 +15,7 @@ pnpm install
 pnpm build
 ```
 
-The command `pnpm build` builds the web frontend, then the Rust backend, then packages both into the application. The result is in `packages/desktop_tauri/target/release/bundle/`:
+The command `pnpm build` builds the web frontend, then the Rust backend, then packages both into the application. The result is in `packages/apps/desktop_tauri/target/release/bundle/`:
 
 - `macos/Heidrun.app` is the application. Drag it into `/Applications`.
 - `dmg/Heidrun_<version>_<architecture>.dmg` is the disk image.
@@ -42,11 +42,11 @@ The command runs the tests of the five packages, and ends with a non-zero exit c
 
 | Command | Tests |
 | --- | --- |
-| `pnpm --filter web_frontend test` | The Vitest tests of `packages/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
-| `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
-| `pnpm --filter website_public test` | The Vitest tests of `packages/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
-| `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
-| `pnpm --filter change_log_generator test` | The Vitest tests of `scripts/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
+| `pnpm --filter web_frontend test` | The Vitest tests of `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
+| `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/apps/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
+| `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
+| `pnpm --filter change_log_generator test` | The Vitest tests of `packages/auxiliary/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
@@ -60,7 +60,7 @@ The command builds the disk image for macOS and uploads it to the GitHub release
 
 Before you run the command:
 
-1. Set the new version in the root `package.json`, in `packages/desktop_tauri/package.json`, in `packages/desktop_tauri/tauri.conf.json`, and in `packages/desktop_tauri/Cargo.toml`.
+1. Set the new version in the root `package.json`, in `packages/apps/desktop_tauri/package.json`, in `packages/apps/desktop_tauri/tauri.conf.json`, and in `packages/apps/desktop_tauri/Cargo.toml`.
 2. Commit all your changes and push them. The command stops with the command to run when the repository is not in sync with GitHub, because GitHub cannot tag a commit that it does not have.
 
 The text of the release is, in this order:
@@ -87,7 +87,7 @@ The disk image is built for the architecture of your machine only, and it is not
 pnpm release:change_log
 ```
 
-The command writes a section of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output. The command is the package [`scripts/change_log_generator`](scripts/change_log_generator).
+The command writes a section of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output. The command is the package [`packages/auxiliary/change_log_generator`](packages/auxiliary/change_log_generator).
 
 Without option, the section is `Unreleased`: from the last release to the current commit. The last release is the Git tag with the highest version number, for example `v0.2.0`. A pull request is a commit whose first line starts with `Merge pull request #`.
 
@@ -111,7 +111,7 @@ Options:
 | --- | --- |
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
-| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the package [`raw_coding_agent_cli`](packages/raw_coding_agent_cli). You need `codex` or `claude` installed and signed in. |
+| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli). You need `codex` or `claude` installed and signed in. |
 | `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default) or `claude`. |
 | `--help` | Shows the description of the command and its options. |
 

@@ -11,9 +11,9 @@
 [![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
-[![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/desktop_tauri)
-[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/web_frontend)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/web_frontend)
+[![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/apps/desktop_tauri)
+[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/apps/web_frontend)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/apps/web_frontend)
 [![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/issues)
 [![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/commits)
 [![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun/about)
@@ -60,11 +60,11 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 
 | Package | What it is |
 | --- | --- |
-| [`packages/desktop_tauri`](packages/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
-| [`packages/web_frontend`](packages/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
-| [`packages/website_public`](packages/website_public) | The public website and documentation, built with VitePress. |
-| [`scripts/change_log_generator`](scripts/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
-| [`packages/raw_coding_agent_cli`](packages/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
+| [`packages/apps/desktop_tauri`](packages/apps/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
+| [`packages/apps/web_frontend`](packages/apps/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
+| [`packages/auxiliary/website_public`](packages/auxiliary/website_public) | The public website and documentation, built with VitePress. |
+| [`packages/auxiliary/change_log_generator`](packages/auxiliary/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
+| [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
 
 ## Contributing
 
