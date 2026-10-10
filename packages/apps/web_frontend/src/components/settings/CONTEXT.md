@@ -10,7 +10,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsNotificationsSection.vue`: the notification settings.
 - `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), and the working days.
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
-- `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. A switched on agent means the user has a valid subscription or access for it.
+- `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. A switched on agent means the user has a valid subscription or access for it. The status bar `../StatusBar.vue` shows the quota of a coding agent only when this agent is switched on, and it changes at once when a switch moves.
 - `SettingsSkillsSection.vue`: the section Skills. It loads the installed skills and puts together the parts of the subfolder `skills/`. A skill is installed for the agents switched on in the section Agents. The button "Inspect" opens the window `../SkillModal.vue`, which shows a SKILL.md file rendered or as highlighted source. The two foldable parts remember their state, and the level, in the settings.
 - `skills/`: the parts of the section Skills: level switch, notice, list of installed skills, search. See its own CONTEXT.md.
 

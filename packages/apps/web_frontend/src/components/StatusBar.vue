@@ -1,28 +1,35 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { quotas, state } from "../stores/session";
+import { settings } from "../stores/settings";
 import { claudeLink, enableClaudeLink } from "../stores/claude";
 import AgentStatusSummary from "./AgentStatusSummary.vue";
 import GitStatusSummary from "./GitStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
 import { t } from "../i18n/index";
+
+// Only the coding agents switched on in the section Agents of the Settings window show their quota.
+const ownedQuotas = computed(() => quotas.value.filter((q) => settings.ownedAgents.includes(q.provider)));
+const isClaudeOwned = computed(() => settings.ownedAgents.includes("claude"));
+const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.value.some((q) => q.provider === "claude"));
 </script>
 
 <template>
   <footer class="status">
-    <template v-for="(q, index) in quotas" :key="q.label">
+    <template v-for="(q, index) in ownedQuotas" :key="q.label">
       <span v-if="index > 0" class="sep"></span>
       <QuotaSummary :quota="q" />
     </template>
     <button :title="t('statusBar.enableTrackingTitle')"
-      v-if="!quotas.some((q) => q.provider === 'claude') && claudeLink.loaded && !claudeLink.installed"
+      v-if="isClaudeQuotaMissing && claudeLink.loaded && !claudeLink.installed"
       class="link"
       :disabled="claudeLink.busy"
       @click="enableClaudeLink"
     >
       {{ t("statusBar.enableTracking") }}
     </button>
-    <span v-else-if="!quotas.some((q) => q.provider === 'claude')" class="muted">{{ t("statusBar.waitingForData") }}</span>
-    <span class="sep"></span>
+    <span v-else-if="isClaudeQuotaMissing" class="muted">{{ t("statusBar.waitingForData") }}</span>
+    <span v-if="ownedQuotas.length > 0 || isClaudeOwned" class="sep"></span>
     <GitStatusSummary />
     <span class="grow"></span>
     <AgentStatusSummary />
