@@ -115,7 +115,7 @@ body {
   overflow: hidden;
   user-select: none;
 }
-button { font: inherit; color: inherit; cursor: pointer; }
+button:where(:not(.btn-outline-secondary)) { font: inherit; color: inherit; cursor: pointer; }
 input { font: inherit; color: inherit; user-select: text; }
 :focus-visible { outline: 2px solid var(--done); outline-offset: 1px; }
 
@@ -174,13 +174,13 @@ input { font: inherit; color: inherit; user-select: text; }
 .lvl-crit { color: #f07f75; }
 
 /* Buttons ----------------------------------------------------------------- */
-.btn {
+.btn:where(:not(.btn-outline-secondary)) {
   height: 30px; padding: 0 12px; border-radius: 7px;
   border: 1px solid var(--line-strong); background: transparent;
   color: var(--text-2); font-weight: 500; font-size: var(--font-size);
   display: inline-flex; align-items: center; gap: 6px;
 }
-.btn:hover { background: var(--hover); }
+.btn:where(:not(.btn-outline-secondary)):hover { background: var(--hover); }
 .btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
 .btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }
 .btn.primary { background: var(--accent); border-color: transparent; color: #111316; font-weight: 600; }

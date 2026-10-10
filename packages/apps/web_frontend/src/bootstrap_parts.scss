@@ -11,11 +11,44 @@ $btn-transition: none;
 @import "bootstrap/scss/maps";
 @import "bootstrap/scss/mixins";
 
+// Only the utility classes that the web frontend uses. Add one value per migration step. A utility class carries
+// "!important", so the list stays short on purpose: a class name that the application already uses must not appear here.
+$utilities: (
+  "display": (
+    property: display,
+    class: d,
+    values: (
+      inline-flex: inline-flex,
+    ),
+  ),
+  "align-items": (
+    property: align-items,
+    class: align-items,
+    values: (
+      center: center,
+    ),
+  ),
+  "justify-content": (
+    property: justify-content,
+    class: justify-content,
+    values: (
+      center: center,
+    ),
+  ),
+  "border": (
+    property: border,
+    values: (
+      0: 0,
+    ),
+  ),
+);
+
 // Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,
 // wins over a rule of this layer, whatever the specificity. So Bootstrap changes only what the application never sets.
 @layer bootstrap {
   @import "bootstrap/scss/root";
   @import "bootstrap/scss/buttons";
+  @import "bootstrap/scss/utilities/api";
 }
 
 // What the application never set on a button, and that Bootstrap sets in a different way:

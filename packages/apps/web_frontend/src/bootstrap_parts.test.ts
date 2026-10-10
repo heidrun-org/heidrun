@@ -65,6 +65,18 @@ describe('bootstrap_parts.scss', () => {
 		expect(headList).toEqual(['@layer bootstrap', '.btn', '.btn:disabled']);
 	});
 
+	it('has only the four utility classes that the web frontend uses, and they sit in the layer', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
+		const utilityRuleList = layerText.match(/^ {2}\.(d|align-items|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		expect(utilityRuleList.map((rule) => rule.trim())).toEqual([
+			'.d-inline-flex {',
+			'.align-items-center {',
+			'.justify-content-center {',
+			'.border-0 {',
+		]);
+	});
+
 	it('gives the button the line height of the application', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).toContain('--bs-btn-line-height: 1.4;');

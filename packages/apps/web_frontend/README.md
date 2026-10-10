@@ -9,7 +9,7 @@ The user interface of [Heidrun](../../../README.md), written with Vue 3, TypeScr
 - `src/lib`: shared logic, including `shortcuts.json`, the list of keyboard shortcuts.
 - `src/i18n`: the translations.
 - `src/dev`: a fake Tauri bridge with a fake Herdr session. It only runs in the development server, and only in a plain browser, so that `pnpm dev:web` shows the connected screens.
-- `src/bootstrap_parts.scss`: the Bootstrap parts that the interface uses, all inside one CSS layer, so that a rule of the interface always wins over a Bootstrap rule. See [issue 141](https://github.com/heidrun-org/heidrun/issues/141).
+- `src/bootstrap_parts.scss`: the Bootstrap parts that the interface uses, all inside one CSS layer, so that a rule of the interface always wins over a Bootstrap rule. It also holds the few Bootstrap utility classes that the interface uses, and a button that has the class `btn-outline-secondary` is styled by Bootstrap and leaves the global rules `button` and `.btn` of `src/styles.css`. See [issue 141](https://github.com/heidrun-org/heidrun/issues/141).
 
 ## Commands
 
