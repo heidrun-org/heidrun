@@ -52,4 +52,5 @@ Never commit an image to the repository, and never push an image to a branch, on
 - `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
 - `pnpm --filter website_public test` runs the Vitest tests of the package `packages/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
 - `pnpm --filter raw_coding_agent_cli test` runs the Vitest tests of the package `packages/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`.
+- `pnpm test:scripts` runs the Vitest tests of the folder `scripts`: the script `generate_change_log.ts` and the folder `scripts/change_log`. The test files are named `*.test.ts`, and sit next to the code.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.

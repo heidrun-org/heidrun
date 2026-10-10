@@ -38,7 +38,7 @@ To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the
 pnpm test
 ```
 
-The command runs the tests of the four packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
+The command runs the tests of the four packages and the tests of the folder `scripts`, and ends with a non-zero exit code when a test fails. To run the tests of one package:
 
 | Command | Tests |
 | --- | --- |
@@ -46,6 +46,7 @@ The command runs the tests of the four packages, and ends with a non-zero exit c
 | `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
 | `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
+| `pnpm test:scripts` | The Vitest tests of the folder `scripts`: the generator of the change log. The test files are named `*.test.ts`, and sit next to the code. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
@@ -79,3 +80,30 @@ Options:
 When the release already exists and you do not use `--recreate`, the command replaces the disk image and rewrites the text of the release. The release keeps its first date.
 
 The disk image is built for the architecture of your machine only, and it is not signed and not notarized. macOS shows a warning when someone opens it.
+
+## Generate the change log
+
+```bash
+pnpm release:change_log
+```
+
+The command writes the section `Unreleased` of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output.
+
+How the command finds the changes:
+
+1. It finds the last release: the Git tag with the highest version number, for example `v0.2.0`. If the repository has no tag, it uses all the history.
+2. It lists the pull requests that were merged after this tag: the commits whose first line starts with `Merge pull request #`.
+
+The command puts the new section at the top of the file, below the header. If the file already has a section `Unreleased`, the command replaces it, so you can run the command again. The older sections never change.
+
+Without option, the section is a plain list of the merged pull requests, with the title and the link of each one. The command does not choose a category.
+
+Options:
+
+| Option | Effect |
+| --- | --- |
+| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the package [`raw_coding_agent_cli`](packages/raw_coding_agent_cli). You need `codex` or `claude` installed and signed in. |
+| `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default) or `claude`. |
+| `--help` | Shows the description of the command and its options. |
+
+Read the new section before you commit it: a coding agent can make a mistake.
