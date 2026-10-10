@@ -9,10 +9,11 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 async function mountMoreMenu() {
   const { state } = await import("../stores/session");
   const { settingsModal } = await import("../stores/settings");
+  const { agentsInformationModal } = await import("../stores/agentsInformation");
   const { findNewSkillsModal, installedSkillModal } = await import("../stores/skills");
   const { default: MoreMenu } = await import("./MoreMenu.vue");
   const wrapper = mount(MoreMenu, { attachTo: document.body });
-  return { wrapper, state, settingsModal, installedSkillModal, findNewSkillsModal };
+  return { wrapper, state, settingsModal, installedSkillModal, findNewSkillsModal, agentsInformationModal };
 }
 
 beforeEach(() => {
@@ -29,17 +30,17 @@ describe("MoreMenu", () => {
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);
   });
 
-  it("opens the menu with the entries Shortcuts help, Installed skill, Find new skills, and Settings when the button is clicked", async () => {
+  it("opens the menu with the entries Shortcuts help, Agents information, Installed skill, Find new skills, and Settings when the button is clicked", async () => {
     const { wrapper } = await mountMoreMenu();
     await wrapper.get("button").trigger("click");
     const labels = wrapper.findAll('[role="menuitem"] .label');
-    expect(labels.map((label) => label.text())).toEqual(["Shortcuts help", "Installed skill", "Find new skills", "Settings"]);
+    expect(labels.map((label) => label.text())).toEqual(["Shortcuts help", "Agents information", "Installed skill", "Find new skills", "Settings"]);
   });
 
   it("opens the Settings window and closes the menu when the entry Settings is clicked", async () => {
     const { wrapper, settingsModal } = await mountMoreMenu();
     await wrapper.get("button").trigger("click");
-    await wrapper.findAll('[role="menuitem"]')[3].trigger("click");
+    await wrapper.findAll('[role="menuitem"]')[4].trigger("click");
     expect(settingsModal.open).toBe(true);
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);
   });
@@ -53,6 +54,23 @@ describe("MoreMenu", () => {
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);
   });
 
+  it("puts the entry Agents information directly below the entry Shortcuts help", async () => {
+    const { wrapper } = await mountMoreMenu();
+    await wrapper.get("button").trigger("click");
+    const labels = wrapper.findAll('[role="menuitem"] .label').map((label) => label.text());
+    expect(labels.indexOf("Agents information")).toBe(labels.indexOf("Shortcuts help") + 1);
+  });
+
+  it("opens the window Agents information and closes the menu when the entry Agents information is clicked", async () => {
+    const { wrapper, agentsInformationModal, settingsModal, state } = await mountMoreMenu();
+    await wrapper.get("button").trigger("click");
+    await wrapper.findAll('[role="menuitem"]')[1].trigger("click");
+    expect(agentsInformationModal.open).toBe(true);
+    expect(settingsModal.open).toBe(false);
+    expect(state.shortcutsOpen).toBe(false);
+    expect(wrapper.find('[role="menu"]').exists()).toBe(false);
+  });
+
   it("separates the entries with two dividers, and puts the title Skills above the two entries of the skills", async () => {
     const { wrapper } = await mountMoreMenu();
     await wrapper.get("button").trigger("click");
@@ -61,13 +79,13 @@ describe("MoreMenu", () => {
     expect(group.get(".heading").text()).toBe("Skills");
     expect(group.findAll('[role="menuitem"] .label').map((label) => label.text())).toEqual(["Installed skill", "Find new skills"]);
     const children = Array.from(wrapper.get('[role="menu"]').element.children).map((child) => child.getAttribute("role"));
-    expect(children).toEqual(["menuitem", "separator", "group", "separator", "menuitem"]);
+    expect(children).toEqual(["menuitem", "menuitem", "separator", "group", "separator", "menuitem"]);
   });
 
   it("opens the window Installed skill and closes the menu when the entry Installed skill is clicked", async () => {
     const { wrapper, installedSkillModal, findNewSkillsModal } = await mountMoreMenu();
     await wrapper.get("button").trigger("click");
-    await wrapper.findAll('[role="menuitem"]')[1].trigger("click");
+    await wrapper.findAll('[role="menuitem"]')[2].trigger("click");
     expect(installedSkillModal.open).toBe(true);
     expect(findNewSkillsModal.open).toBe(false);
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);
@@ -76,7 +94,7 @@ describe("MoreMenu", () => {
   it("opens the window Find new skills and closes the menu when the entry Find new skills is clicked", async () => {
     const { wrapper, installedSkillModal, findNewSkillsModal } = await mountMoreMenu();
     await wrapper.get("button").trigger("click");
-    await wrapper.findAll('[role="menuitem"]')[2].trigger("click");
+    await wrapper.findAll('[role="menuitem"]')[3].trigger("click");
     expect(findNewSkillsModal.open).toBe(true);
     expect(installedSkillModal.open).toBe(false);
     expect(wrapper.find('[role="menu"]').exists()).toBe(false);

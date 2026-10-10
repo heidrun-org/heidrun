@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import Icon from "./Icon.vue";
 import { state } from "../stores/session";
+import { openAgentsInformationModal } from "../stores/agentsInformation";
 import { openSettings } from "../stores/settings";
 import { openFindNewSkillsModal, openInstalledSkillModal } from "../stores/skills";
 import { t } from "../i18n/index";
@@ -12,6 +13,11 @@ const root = ref<HTMLElement>();
 function chooseShortcutsHelp() {
   open.value = false;
   state.shortcutsOpen = true;
+}
+
+function chooseAgentsInformation() {
+  open.value = false;
+  openAgentsInformationModal();
 }
 
 function chooseInstalledSkill() {
@@ -56,6 +62,10 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
         <Icon name="question-lg" />
         <span class="label">{{ t("moreMenu.shortcutsHelpLabel") }}</span>
         <kbd>⌘/</kbd>
+      </button>
+      <button class="item" role="menuitem" :title="t('moreMenu.agentsInformationTitle')" @click="chooseAgentsInformation()">
+        <Icon name="people" />
+        <span class="label">{{ t("moreMenu.agentsInformationLabel") }}</span>
       </button>
       <div class="divider" role="separator"></div>
       <div class="group" role="group" aria-labelledby="more-menu-skills">
