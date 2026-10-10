@@ -27,6 +27,22 @@ importers:
         specifier: ^2.0.0
         version: 2.12.1
 
+  packages/raw_coding_agent_cli:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
+
   packages/web_frontend:
     dependencies:
       '@codemirror/autocomplete':
@@ -1051,9 +1067,6 @@ packages:
 
   '@types/mdurl@2.0.0':
     resolution: {integrity: sha512-RGdgjQUZba5p6QEFAVx2OGb8rQDL/cPRG7GiedRzMcJ1tYnUANBncjbSB1NRGwbvjcPeikRABz2nshyPk1bhWg==}
-
-  '@types/node@26.6.4':
-    resolution: {integrity: sha512-ldVPDCzj7fsaGZrLB0NuHuTvJcsNasysBAqMolr/cgxrLd1xbqxIr3XJiPnHHJUCxj5sNF1vnRj9aWnrVh5Jcg==}
 
   '@types/node@26.6.5':
     resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
@@ -3031,17 +3044,13 @@ snapshots:
 
   '@types/mdurl@2.0.0': {}
 
-  '@types/node@26.6.4':
-    dependencies:
-      undici-types: 8.9.0
-
   '@types/node@26.6.5':
     dependencies:
       undici-types: 8.9.0
 
   '@types/qrcode@1.5.6':
     dependencies:
-      '@types/node': 26.6.4
+      '@types/node': 26.6.5
 
   '@types/trusted-types@2.0.7':
     optional: true

@@ -38,13 +38,14 @@ To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the
 pnpm test
 ```
 
-The command runs the tests of the three packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
+The command runs the tests of the four packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
 
 | Command | Tests |
 | --- | --- |
 | `pnpm --filter web_frontend test` | The Vitest tests of `packages/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
 | `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
+| `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
