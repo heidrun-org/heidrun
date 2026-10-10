@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
 import { notify } from "../lib/notify";
+import { applyOrder, moveId } from "../lib/reorder";
 import { settings } from "./settings";
 import { agentKind, codexWindows, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
@@ -91,6 +92,19 @@ function loadDismissed(): Record<string, string> {
   }
 }
 
+const PANE_ORDER_KEY = "heidrun.paneOrder";
+
+function loadPaneOrder(): Record<string, string[]> {
+  try {
+    return JSON.parse(localStorage.getItem(PANE_ORDER_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+/** Order of the pane list in the sidebar chosen by drag and drop: pane ids by workspace id. */
+export const paneOrder = reactive<Record<string, string[]>>(loadPaneOrder());
+
 export const state = reactive({
   snapshot: null as SessionSnapshot | null,
   connected: false,
@@ -178,8 +192,24 @@ export function moveWorkspaceInView(id: string, gap: number) {
 }
 
 export const workspacePanes = computed(() =>
-  allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId),
+  applyOrder(
+    allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId),
+    (p) => p.pane_id,
+    paneOrder[state.selectedWorkspaceId ?? ""] ?? [],
+  ),
 );
+
+/** Drag-and-drop in the pane list of the sidebar: moves a pane to a gap, and remembers the order. */
+export function movePaneInView(id: string, gap: number) {
+  const wsId = state.selectedWorkspaceId;
+  if (wsId === null) return;
+  paneOrder[wsId] = moveId(workspacePanes.value.map((p) => p.pane_id), id, gap);
+  try {
+    localStorage.setItem(PANE_ORDER_KEY, JSON.stringify(paneOrder));
+  } catch {
+    /* ignore */
+  }
+}
 
 export const tabLayout = computed(() =>
   (state.snapshot?.layouts ?? []).find((l) => l.tab_id === state.selectedTabId) ?? null,
