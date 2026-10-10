@@ -29,6 +29,13 @@ afterEach(() => {
 });
 
 describe("SplashScreen", () => {
+  it("shows the title and the motto, and no subtitle", async () => {
+    const { wrapper } = await mountSplashScreen();
+    expect(wrapper.get(".splash-title").text()).not.toBe("");
+    expect(wrapper.get(".splash-motto").text()).not.toBe("");
+    expect(wrapper.find(".splash-subtitle").exists()).toBe(false);
+  });
+
   it("does not show the main window, and does not start the display time, before the image is loaded", async () => {
     const { wrapper } = await mountSplashScreen();
     await vi.advanceTimersByTimeAsync(10_000);
