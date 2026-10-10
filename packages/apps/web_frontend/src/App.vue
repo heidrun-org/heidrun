@@ -46,6 +46,7 @@ import {
   toast,
 } from "./stores/session";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
+import { skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
 import Icon from "./components/Icon.vue";
@@ -58,6 +59,7 @@ import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
+import SkillModal from "./components/SkillModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
 import SplashScreen from "./components/SplashScreen.vue";
@@ -83,6 +85,8 @@ function onKey(e: KeyboardEvent) {
     // The confirmation dialog owns the keyboard: Esc cancels, nothing else runs behind it.
     if (e.key === "Escape") {
       e.preventDefault();
+      // Not the Settings window below the dialog, which also listens to Escape.
+      e.stopImmediatePropagation();
       answerConfirm(false);
     } else if (e.metaKey) {
       e.preventDefault();
@@ -269,6 +273,7 @@ onBeforeUnmount(() => {
     <MosaicModal v-if="mosaic.paneId" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
+    <SkillModal v-if="skills.view !== null" />
     <FilesModal v-if="files.open" />
     <DangerModal v-if="danger.open" />
     <ConfirmModal v-if="confirmDialog.open" />

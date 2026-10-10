@@ -75,7 +75,7 @@ export const project = reactive({
 });
 
 /** Folder of a workspace: its worktree path, else the cwd of one of its panes. */
-function workspaceCwd(workspaceId: string): string | null {
+export function workspaceCwd(workspaceId: string): string | null {
   const ws = workspaces.value.find((w) => w.workspace_id === workspaceId);
   if (ws?.worktree?.path) return ws.worktree.path;
   const pane = allPanes.value.find((p) => p.workspace_id === workspaceId && p.cwd);

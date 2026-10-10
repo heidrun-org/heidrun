@@ -1,0 +1,23 @@
+{
+  "installed": "Skill {name} installed",
+  "deleted": "Skill {name} moved to the Trash",
+  "confirmDelete": "Move the skill {name} to the Trash?",
+  "confirmDeleteButton": "Move to the Trash",
+  "error_skills_no_workspace_folder": "Select a workspace first, or choose the level User",
+  "error_skills_unknown_level": "Unknown level: {details}",
+  "error_skills_invalid_name": "This name is not allowed for a skill: {details}",
+  "error_skills_already_installed": "The skill {details} is already installed at this level",
+  "error_skills_not_installed": "The skill {details} is not installed",
+  "error_skills_not_found": "The files of this skill were not found on GitHub: {details}",
+  "error_skills_github_rate_limit": "GitHub refuses more requests for now. Try again at {time}.",
+  "error_skills_github_rate_limit_unknown": "GitHub refuses more requests for now. Try again in a few minutes.",
+  "error_skills_too_many_files": "This skill has too many files to install",
+  "error_skills_search_failed": "The search on skills.sh failed: {details}",
+  "error_skills_download_failed": "The download from GitHub failed: {details}",
+  "error_skills_install_failed": "The installation failed: {details}",
+  "error_skills_read_failed": "The SKILL.md file cannot be read: {details}",
+  "error_skills_delete_failed": "The skill cannot be moved to the Trash: {details}",
+  "error_skills_http_failed": "The network is not available: {details}",
+  "error_skills_no_agent": "Switch on a coding agent in the section Agents first",
+  "error_skills_unknown_agent": "Unknown coding agent: {details}"
+}

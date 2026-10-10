@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { LANGUAGES, language, locale, t } from "./index";
+import { LANGUAGES, hasText, language, locale, t } from "./index";
 import { settings } from "../stores/settings";
 
 const LOCALES_DIR = path.join(import.meta.dirname, "locales");
@@ -60,6 +60,16 @@ describe("t", () => {
     const many = t("alertsStore.evening.title", { count: 5 });
     expect(one).not.toBe(many);
     expect(many).toContain("5");
+  });
+});
+
+describe("hasText", () => {
+  it("is true for a key that has a text", () => {
+    expect(hasText("confirmModal.cancel")).toBe(true);
+  });
+
+  it("is false for a key without a text", () => {
+    expect(hasText("nothing.here")).toBe(false);
   });
 });
 

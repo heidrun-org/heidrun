@@ -11,6 +11,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), and the working days.
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 - `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. A switched on agent means the user has a valid subscription or access for it.
+- `SettingsSkillsSection.vue`: the level of the installation (workspace or user), the installed skills with the agents that have them, and the search on skills.sh. A skill is installed for the agents switched on in the section Agents. The button "Inspect" opens the window `../SkillModal.vue`, which shows a SKILL.md file rendered or as highlighted source. The two parts of the section fold, and the section remembers the folded state and the level in the settings.
 
 ## Rules
 - A section component shows the content only. The title, the sidebar and the close button belong to `SettingsModal.vue`.
@@ -19,4 +20,5 @@ The content of each section of the Settings window. The Settings window itself i
 
 ## Background
 - The section Agents comes from [issue 122](https://github.com/heidrun-org/heidrun/issues/122). Every agent starts switched off.
+- The section Skills installs a skill with the command `skills_install` of `desktop_tauri/src/skills.rs`. The search uses the endpoint `https://skills.sh/api/search`, because the documented API `/api/v1` needs a Vercel OIDC token that a desktop application cannot have: [issue 34](https://github.com/heidrun-org/heidrun/issues/34).
 - The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).

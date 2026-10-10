@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted } from "vue";
 import Icon from "./Icon.vue";
 import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
@@ -7,11 +7,13 @@ import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
+import SettingsSkillsSection from "./settings/SettingsSkillsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
 import { settingsModal, type SettingsSection } from "../stores/settings";
+import { skills } from "../stores/skills";
 import { t } from "../i18n/index";
 
-const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
+const SECTIONS: { id: SettingsSection; icon: string; labelKey: string; helpKey?: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
   { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
@@ -19,12 +21,20 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
+  { id: "skills", icon: "stars", labelKey: "settingsModal.skills", helpKey: "settingsModal.skillsHelp" },
 ];
+
+/** The help text of the section on screen, or `undefined` when the section has none. */
+const helpKey = computed(() => SECTIONS.find((s) => s.id === settingsModal.section)?.helpKey);
 
 function close() {
   settingsModal.open = false;
 }
 function onKey(e: KeyboardEvent) {
+  // The window of a SKILL.md file is above this window: it takes the Escape key.
+  if (skills.view !== null) {
+    return;
+  }
   if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
@@ -54,7 +64,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       </nav>
       <section class="pane">
         <header>
-          <h3>{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
+          <div class="heading">
+            <h3>{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
+            <span v-if="helpKey !== undefined" class="help">
+              <button class="helpButton" type="button" :aria-label="t('settingsModal.helpLabel')" aria-describedby="settings-help"><Icon name="question-circle" /></button>
+              <span id="settings-help" class="tip" role="tooltip">{{ t(helpKey) }}</span>
+            </span>
+          </div>
           <button :title="t('settingsModal.closeTitle')" class="close" :aria-label="t('settingsModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
         </header>
         <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
@@ -64,6 +80,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
         <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
         <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
+        <SettingsSkillsSection v-else-if="settingsModal.section === 'skills'" />
       </section>
     </div>
   </div>
@@ -87,6 +104,16 @@ h2 { margin: 0 8px 12px; font-size: var(--font-size); font-weight: 600; }
 .pane { flex: 1; min-width: 0; padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
 header { display: flex; align-items: center; justify-content: space-between; }
 h3 { margin: 0; font-size: var(--font-size); font-weight: 600; }
+.heading { display: flex; align-items: center; gap: 8px; }
+.help { position: relative; display: inline-flex; }
+.helpButton { width: 24px; height: 24px; border-radius: 50%; color: var(--muted); font-size: var(--font-size); cursor: help; }
+.helpButton:hover, .helpButton:focus-visible { color: var(--text); }
+.tip {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 2; width: 340px; padding: 10px 12px; border-radius: 10px;
+  background: var(--raised); border: 1px solid var(--line-strong); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  color: var(--text-2); font-size: var(--font-size); font-weight: 400; line-height: 1.5;
+}
+.help:hover .tip, .help:focus-within .tip { display: block; }
 .close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
 .close:hover { background: var(--hover); color: var(--text); }
 .pane :deep(select) {

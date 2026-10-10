@@ -9,5 +9,8 @@
   "finishedItems": "Éléments terminés",
   "notifications": "Notifications",
   "mobileAccess": "Accès mobile",
-  "agents": "Agents"
+  "agents": "Agents",
+  "skills": "Compétences",
+  "skillsHelp": "Les compétences sont des dossiers avec un fichier SKILL.md qui expliquent aux agents de code (par exemple Codex) comment faire une tâche. Ici, vous cherchez des compétences sur skills.sh, vous lisez le fichier SKILL.md d’une compétence avant de l’installer, vous l’installez pour l’espace de travail ou pour l’utilisateur, et vous la supprimez.",
+  "helpLabel": "De quoi parle cette section ?"
 }
