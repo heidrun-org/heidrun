@@ -50,5 +50,6 @@
   "dialogLabel": "Command palette",
   "inputLabel": "Command or search",
   "placeholder": "Type a command, an agent, an action…",
-  "runTitle": "Run this command"
+  "runTitle": "Run this command",
+  "agents": "Agents (coding agents you can use)…"
 }

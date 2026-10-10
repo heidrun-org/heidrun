@@ -50,5 +50,6 @@
   "dialogLabel": "Palette de commandes",
   "inputLabel": "Commande ou recherche",
   "placeholder": "Taper une commande, un agent, une action…",
-  "runTitle": "Lancer cette commande"
+  "runTitle": "Lancer cette commande",
+  "agents": "Agents (agents de code que vous pouvez utiliser)…"
 }

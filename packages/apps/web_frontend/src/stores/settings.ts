@@ -101,6 +101,8 @@ const defaults = {
   /** Monthly budget per workspace (label → USD); alert at 80 % and 100 %. */
   budgets: {} as Record<string, number>,
   dockWidth: 560,
+  /** The coding agents (ids of `lib/agents.ts`) that the user has a valid subscription or access for. */
+  ownedAgents: [] as string[],
 };
 
 function load(): typeof defaults {
@@ -160,7 +162,14 @@ export function resetZoom() {
 }
 
 /** The sections of the Settings window. */
-export type SettingsSection = "terminal" | "mouse" | "finishedItems" | "notifications" | "general" | "mobileAccess";
+export type SettingsSection =
+  | "terminal"
+  | "mouse"
+  | "finishedItems"
+  | "notifications"
+  | "general"
+  | "mobileAccess"
+  | "agents";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({
