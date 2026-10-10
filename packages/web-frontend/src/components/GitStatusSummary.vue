@@ -1,22 +1,25 @@
 <script setup lang="ts">
 import { currentGit } from "../stores/git";
 import { ago } from "../lib/format";
+import { computed } from "vue";
 import Icon from "./Icon.vue";
 import { t } from "../i18n/index";
 
 // The Git state of the selected workspace in the status bar, in the order of the Visual Studio Code status bar:
 // the Git icon, the branch name, the commits to download, then the commits to upload.
 // Hovering or focusing it shows a card with the details.
+// A star after the branch name means the working folder has an uncommitted change: a changed or an untracked file.
+const isDirty = computed(() => currentGit.value !== null && currentGit.value.changed + currentGit.value.untracked > 0);
 </script>
 
 <template>
   <span v-if="currentGit !== null && currentGit.branch !== null" class="git-status" tabindex="0">
     <Icon name="git" />
-    <span class="branch">{{ currentGit.branch }}</span>
+    <span class="branch">{{ currentGit.branch }}<span v-if="isDirty" class="dirty">*</span></span>
     <span class="behind"><span class="count">{{ currentGit.behind }}</span><Icon name="arrow-down" /></span>
     <span class="ahead"><span class="count">{{ currentGit.ahead }}</span><Icon name="arrow-up" /></span>
     <span class="card" role="tooltip">
-      <span class="card-title"><Icon name="git" />{{ currentGit.branch }}</span>
+      <span class="card-title"><Icon name="git" />{{ currentGit.branch }}<span v-if="isDirty" class="dirty">*</span></span>
       <span class="line">
         <span class="line-name">{{ t("statusBar.gitUpstream") }}</span>
         <span class="line-value upstream">{{ currentGit.upstream ?? t("statusBar.gitNoUpstream") }}</span>

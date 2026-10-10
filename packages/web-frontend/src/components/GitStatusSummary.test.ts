@@ -76,7 +76,7 @@ describe("GitStatusSummary", () => {
       }),
     };
     const wrapper = mount(GitStatusSummary);
-    expect(wrapper.get(".card-title").text()).toBe("main");
+    expect(wrapper.get(".card-title").text()).toBe("main*");
     expect(wrapper.get(".upstream").text()).toBe("origin/main");
     expect(wrapper.get(".to-download").text()).toBe("3");
     expect(wrapper.get(".to-upload").text()).toBe("11");
@@ -89,5 +89,28 @@ describe("GitStatusSummary", () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ upstream: null }) };
     expect(mount(GitStatusSummary).get(".upstream").text()).toBe("none");
+  });
+
+  it.each([
+    { changed: 0, untracked: 0, isStarShown: false },
+    { changed: 1, untracked: 0, isStarShown: true },
+    { changed: 0, untracked: 1, isStarShown: true },
+    { changed: 2, untracked: 3, isStarShown: true },
+  ])("shows the star after the branch in the status bar and in the hover card: $changed changed, $untracked untracked", (testCase) => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ changed: testCase.changed, untracked: testCase.untracked }) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".branch").find(".dirty").exists()).toBe(testCase.isStarShown);
+    expect(wrapper.get(".card-title").find(".dirty").exists()).toBe(testCase.isStarShown);
+  });
+
+  it("shows or hides the star when the Git state changes", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ untracked: 1 }) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".branch").text()).toBe("main*");
+    git.status = { w1: makeStatus({ untracked: 0 }) };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".branch").text()).toBe("main");
   });
 });
