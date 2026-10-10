@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import { quotas, state } from "../stores/session";
 import { claudeLink, enableClaudeLink } from "../stores/claude";
-import { clockTime, gaugeLevel } from "../lib/format";
-import { locale, t } from "../i18n/index";
-
-function formatCost(cost: number) {
-  const value = cost.toLocaleString(locale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return t("statusBar.costValue", { value });
-}
+import QuotaSummary from "./QuotaSummary.vue";
+import { t } from "../i18n/index";
 </script>
 
 <template>
   <footer class="status">
-    <template v-for="q in quotas" :key="q.label">
-      <span class="label">{{ q.label }}</span>
-      <span v-for="w in q.windows" :key="w.name" class="win">
-        {{ w.name }}
-        <span class="gauge" :class="gaugeLevel(w.percent)" style="width: 120px"><span :style="{ width: `${Math.min(100, w.percent)}%` }"></span></span>
-        <span class="mono" :class="'lvl-' + gaugeLevel(w.percent)">{{ Math.round(w.percent) }} %</span>
-        <span v-if="w.resetsAt" class="muted">{{ t("statusBar.reset", { time: clockTime(w.resetsAt) }) }}</span>
-      </span>
-      <span v-if="q.cost" class="muted">{{ t("statusBar.estimatedCost") }} <span class="mono val">{{ formatCost(q.cost) }}</span></span>
-      <span class="sep"></span>
+    <template v-for="(q, index) in quotas" :key="q.label">
+      <span v-if="index > 0" class="sep"></span>
+      <QuotaSummary :quota="q" />
     </template>
     <button :title="t('statusBar.enableTrackingTitle')"
       v-if="!quotas.some((q) => q.provider === 'claude') && claudeLink.loaded && !claudeLink.installed"
@@ -33,22 +21,25 @@ function formatCost(cost: number) {
     </button>
     <span v-else-if="!quotas.some((q) => q.provider === 'claude')" class="muted">{{ t("statusBar.waitingForData") }}</span>
     <span class="grow"></span>
-    <span class="muted">{{ state.connected ? t("statusBar.connected") : t("statusBar.offline") }}</span>
+    <span class="machine" :title="state.error || t('statusBar.connectedTitle')">
+      <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
+      {{ t("statusBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("statusBar.offline") }}
+    </span>
   </footer>
 </template>
 
 <style scoped>
 .status {
-  height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px;
-  border-top: 1px solid var(--line); background: var(--bar); font-size: 11.5px; color: var(--muted-2);
-  white-space: nowrap; overflow: hidden;
+  height: 40px; flex-shrink: 0; display: flex; align-items: center; gap: 22px; padding: 0 16px;
+  border-top: 1px solid var(--line); background: var(--bar); font-size: 13px; color: var(--muted-2);
+  white-space: nowrap; position: relative;
 }
-.label { font-weight: 600; color: var(--text-2); }
-.win { display: flex; align-items: center; gap: 8px; }
-.val { color: var(--text-2); }
 .muted { color: var(--muted); }
 .sep { width: 1px; height: 14px; background: var(--line-strong); }
 .grow { flex: 1; }
-.link { border: none; background: none; padding: 0; color: var(--done); font-size: 11.5px; }
+.machine { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.working-static { background: var(--working); }
+.offline { background: var(--fail); }
+.link { border: none; background: none; padding: 0; color: var(--done); font-size: 13px; }
 .link:hover { text-decoration: underline; }
 </style>

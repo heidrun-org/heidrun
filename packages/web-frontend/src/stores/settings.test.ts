@@ -57,3 +57,15 @@ describe("settings", () => {
     expect(settings.mouseMode).toBe("select");
   });
 });
+
+describe("time format", () => {
+  it("follows the language by default", () => {
+    expect(settings.timeFormat).toBe("auto");
+  });
+});
+
+describe("working days", () => {
+  it("are all the days of the week by default", () => {
+    expect(settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+});

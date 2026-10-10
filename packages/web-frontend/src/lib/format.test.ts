@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { codexWindows, compactTokens, duration, gaugeLevel, shortPath } from "./format";
+import { settings } from "../stores/settings";
+import { codexWindows, timeOptions, compactTokens, duration, gaugeLevel, shortPath } from "./format";
 
 describe("shortPath", () => {
   it("replaces the home folder with a tilde", () => {
@@ -143,5 +144,20 @@ describe("codexWindows", () => {
   it("puts a window back to 0 % after its reset time", () => {
     const windows = codexWindows({ primary: { used_percent: 44, window_minutes: 10080, resets_at: 500 } }, 1000);
     expect(windows[0].percent).toBe(0);
+  });
+});
+
+describe("timeOptions", () => {
+  it("leaves the choice of 12 or 24 hours to the language when the format is automatic", () => {
+    settings.timeFormat = "auto";
+    expect(timeOptions().hour12).toBeUndefined();
+  });
+
+  it("forces the 12-hour or the 24-hour clock", () => {
+    settings.timeFormat = "12h";
+    expect(timeOptions().hour12).toBe(true);
+    settings.timeFormat = "24h";
+    expect(timeOptions().hour12).toBe(false);
+    settings.timeFormat = "auto";
   });
 });
