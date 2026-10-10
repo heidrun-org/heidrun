@@ -4,6 +4,8 @@
   "menuLabel": "Plus d'actions",
   "shortcutsHelpLabel": "Aide sur les raccourcis",
   "shortcutsHelpTitle": "Ouvrir l'aide sur les raccourcis (⌘/)",
+  "agentsInformationLabel": "Informations sur les agents",
+  "agentsInformationTitle": "Afficher les quotas du compte et l’activité de tous les agents",
   "skillsHeading": "Compétences",
   "installedSkillLabel": "Compétence installée",
   "installedSkillTitle": "Afficher les compétences installées : inspecter ou supprimer une compétence",

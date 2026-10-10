@@ -4,6 +4,8 @@
   "menuLabel": "More actions",
   "shortcutsHelpLabel": "Shortcuts help",
   "shortcutsHelpTitle": "Open the help about the shortcuts (⌘/)",
+  "agentsInformationLabel": "Agents information",
+  "agentsInformationTitle": "Show the account quotas and the activity of all agents",
   "skillsHeading": "Skills",
   "installedSkillLabel": "Installed skill",
   "installedSkillTitle": "Show the installed skills: inspect or delete a skill",
