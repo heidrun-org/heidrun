@@ -12,6 +12,10 @@
     "tauri": "pnpm --filter desktop-tauri tauri",
     "test": "pnpm --filter web-frontend test && pnpm --filter desktop-tauri test && pnpm --filter website_public test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
-    "release:dmg": "node scripts/release_dmg.mjs"
+    "release:dmg": "tsx scripts/release_dmg.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15"
   }
 }

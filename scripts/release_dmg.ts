@@ -4,6 +4,7 @@ import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Path from 'node:path';
 
+const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,19 +13,24 @@ const __dirname = import.meta.dirname;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Builds the macOS disk image of Heidrun and uploads it to the GitHub release of the current version.
+ */
 class ReleaseDmg {
 	/**
-	 * Builds the disk image, then creates the GitHub release if it does not exist, and uploads the disk image.
-	 * @returns {void}
+	 * Builds the disk image, then creates the GitHub release if it does not exist, uploads the disk image,
+	 * and prints the URL of the release.
+	 * @returns Nothing.
 	 */
-	static main() {
+	static main(): void {
 		if (process.platform !== 'darwin') {
 			console.error('The disk image can only be built on macOS.');
 			process.exit(1);
 		}
 
 		const rootDir = Path.resolve(__dirname, '..');
-		const version = JSON.parse(Fs.readFileSync(Path.join(rootDir, 'package.json'), 'utf8')).version;
+		const rootPackage = JSON.parse(Fs.readFileSync(Path.join(rootDir, 'package.json'), 'utf8')) as { version: string };
+		const version = rootPackage.version;
 		const tagName = `v${version}`;
 
 		ReleaseDmg._run('pnpm', ['--filter', 'desktop-tauri', 'tauri', 'build', '--bundles', 'dmg'], rootDir);
@@ -62,12 +68,12 @@ class ReleaseDmg {
 
 	/**
 	 * Runs a command, shows its output, and stops the script when the command fails.
-	 * @param {string} command The program to run.
-	 * @param {string[]} args The arguments of the program.
-	 * @param {string} cwd The folder in which the program runs.
-	 * @returns {void}
+	 * @param command The program to run.
+	 * @param args The arguments of the program.
+	 * @param cwd The folder in which the program runs.
+	 * @returns Nothing.
 	 */
-	static _run(command, args, cwd) {
+	private static _run(command: string, args: string[], cwd: string): void {
 		const result = ChildProcess.spawnSync(command, args, {
 			cwd,
 			stdio: 'inherit',
