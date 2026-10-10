@@ -116,6 +116,16 @@ export function agentNames(skill: InstalledSkill): string[] {
   return AGENTS.filter((agent) => settings.ownedAgents.includes(agent.id) && skill.agents.includes(agent.id)).map((agent) => agent.name);
 }
 
+/** The agents that the user switched on and whose skills folder lacks the skill. */
+export function missingAgents(skill: InstalledSkill): { id: string; name: string }[] {
+  return AGENTS.filter((agent) => settings.ownedAgents.includes(agent.id) && skill.agents.includes(agent.id) === false);
+}
+
+/** The key of the link of a skill for an agent, to show the busy state of its button. */
+export function linkKey(skill: InstalledSkill, agentId: string): string {
+  return `${installedKey(skill)}:link:${agentId}`;
+}
+
 /** Opens the section Agents of the Settings window, where the user switches the coding agents on. */
 export function openAgentsSection(): void {
   openSettings("agents");
@@ -227,6 +237,21 @@ export async function deleteSkill(skill: InstalledSkill): Promise<void> {
     await invoke("skills_delete", { level: skill.level, cwd: currentCwd(), name: skill.name });
     await loadSkills();
     toast(t("skillsStore.deleted", { name: skill.name }));
+  } catch (error) {
+    toast(errorText(error), "error");
+  } finally {
+    skills.busyKey = "";
+  }
+}
+
+/** Adds the link of an installed skill for an agent that the user switched on after the installation. */
+export async function linkSkillForAgent(skill: InstalledSkill, agentId: string): Promise<void> {
+  skills.busyKey = linkKey(skill, agentId);
+  try {
+    await invoke("skills_link_agent", { level: skill.level, cwd: currentCwd(), name: skill.name, agent: agentId });
+    await loadSkills();
+    const agentName = AGENTS.find((agent) => agent.id === agentId)?.name ?? agentId;
+    toast(t("skillsStore.linked", { name: skill.name, agent: agentName }));
   } catch (error) {
     toast(errorText(error), "error");
   } finally {

@@ -258,6 +258,7 @@ pub fn run() {
             skills::skills_search,
             skills::skills_preview,
             skills::skills_install,
+            skills::skills_link_agent,
         ])
         .build(tauri::generate_context!())
         .expect("error while running Heidrun")

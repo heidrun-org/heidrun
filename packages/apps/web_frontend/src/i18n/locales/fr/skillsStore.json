@@ -19,5 +19,7 @@
   "error_skills_delete_failed": "La compétence ne peut pas être mise à la Corbeille : {details}",
   "error_skills_http_failed": "Le réseau n’est pas disponible : {details}",
   "error_skills_no_agent": "Activez d’abord un agent de code dans la section Agents",
-  "error_skills_unknown_agent": "Agent de code inconnu : {details}"
+  "error_skills_unknown_agent": "Agent de code inconnu : {details}",
+  "linked": "Compétence {name} liée pour {agent}",
+  "error_skills_already_linked": "La compétence {details} est déjà dans le dossier de cet agent"
 }

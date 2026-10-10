@@ -19,5 +19,7 @@
   "error_skills_delete_failed": "The skill cannot be moved to the Trash: {details}",
   "error_skills_http_failed": "The network is not available: {details}",
   "error_skills_no_agent": "Switch on a coding agent in the section Agents first",
-  "error_skills_unknown_agent": "Unknown coding agent: {details}"
+  "error_skills_unknown_agent": "Unknown coding agent: {details}",
+  "linked": "Skill {name} linked for {agent}",
+  "error_skills_already_linked": "The skill {details} is already in the folder of this agent"
 }

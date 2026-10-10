@@ -30,5 +30,7 @@
   "closeTitle": "Fermer la fenêtre (Échap)",
   "closeLabel": "Fermer (Échap)",
   "noAgent": "Aucun agent de code n’est activé. Activez-en un dans la section Agents pour installer des compétences.",
-  "openAgents": "Ouvrir Agents"
+  "openAgents": "Ouvrir Agents",
+  "addLink": "Ajouter le lien pour {agent}",
+  "addLinkTitle": "Rendre cette compétence disponible pour {agent}, avec un lien vers le vrai dossier"
 }
