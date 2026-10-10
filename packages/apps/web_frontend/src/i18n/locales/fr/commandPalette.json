@@ -11,7 +11,7 @@
   "section.dock": "Ouvrir à côté",
   "undock": "Retirer d’à côté : {pane}",
   "dock": "Ouvrir à côté : {pane}",
-  "section.projectActions": "Actions du projet",
+  "section.projectActions": "Scripts du projet",
   "section.terminals": "Terminaux",
   "newAgent": "Nouvel agent (Claude, Codex, agents du projet)…",
   "newTerminal": "Nouveau terminal",
@@ -51,7 +51,7 @@
   "font": "Police : {font}",
   "dialogLabel": "Palette de commandes",
   "inputLabel": "Commande ou recherche",
-  "placeholder": "Taper une commande, un agent, une action…",
+  "placeholder": "Taper une commande, un agent, un script…",
   "runTitle": "Lancer cette commande",
   "agents": "Agents (agents de code que vous pouvez utiliser)…"
 }

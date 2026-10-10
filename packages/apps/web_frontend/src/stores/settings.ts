@@ -47,6 +47,10 @@ const defaults = {
   mouseMode: "select" as "select" | "app",
   /** Right panel section. */
   rightTab: "pane" as "pane" | "actions" | "git" | "notes",
+  /** Tab Scripts: the section Custom Scripts is folded. */
+  scriptsCustomFolded: false,
+  /** Tab Scripts: the section Existing Scripts is folded. */
+  scriptsExistingFolded: false,
   /** Last size of the note window, in px. */
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */

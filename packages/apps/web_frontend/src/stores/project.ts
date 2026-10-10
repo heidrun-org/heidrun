@@ -1,7 +1,6 @@
 import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
-import { moveId } from "../lib/reorder";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
@@ -32,20 +31,19 @@ export interface RecentRun {
 
 const CONFIG_PATH = ".heidrun/config.json";
 
-// History and suggestion order are personal: kept on this Mac, not in the repo.
-// Keyed by project root, so they follow the project rather than a workspace id.
+// History is personal: kept on this Mac, not in the repo.
+// Keyed by project root, so it follows the project rather than a workspace id.
 const LOCAL_KEY = "heidrun.project-local";
 
 interface LocalData {
   recent: Record<string, RecentRun[]>;
-  suggestionOrder: Record<string, string[]>;
 }
 
 function loadLocal(): LocalData {
   try {
-    return { recent: {}, suggestionOrder: {}, ...JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "{}") };
+    return { recent: {}, ...JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "{}") };
   } catch {
-    return { recent: {}, suggestionOrder: {} };
+    return { recent: {} };
   }
 }
 
@@ -122,17 +120,7 @@ export const suggestions = computed(() => {
   const p = currentProject.value;
   if (!p) return [];
   const taken = new Set(p.config.actions.map((a) => a.command));
-  const order = local.suggestionOrder[p.root] ?? [];
-  const rank = (c: string) => {
-    const i = order.indexOf(c);
-    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
-  };
-  // User order first, then detection order for anything new.
-  return p.detected
-    .filter((d) => !taken.has(d.command))
-    .map((d, i) => ({ d, i }))
-    .sort((a, b) => rank(a.d.command) - rank(b.d.command) || a.i - b.i)
-    .map((x) => x.d);
+  return p.detected.filter((d) => !taken.has(d.command));
 });
 
 export const recentRuns = computed(() => {
@@ -151,21 +139,6 @@ function recordRun(workspaceId: string, label: string, command: string) {
 export function clearRecent(workspaceId: string) {
   const p = project.byWorkspace[workspaceId];
   if (p) delete local.recent[p.root];
-}
-
-/** Drag and drop in the saved actions: the order is written to .heidrun/config.json. */
-export async function moveAction(workspaceId: string, id: string, at: number) {
-  const p = project.byWorkspace[workspaceId];
-  if (!p) return;
-  const byId = new Map(p.config.actions.map((a) => [a.id, a]));
-  p.config.actions = moveId(p.config.actions.map((a) => a.id), id, at).map((x) => byId.get(x)!);
-  await saveProject(workspaceId);
-}
-
-export function moveSuggestion(workspaceId: string, command: string, at: number) {
-  const p = project.byWorkspace[workspaceId];
-  if (!p) return;
-  local.suggestionOrder[p.root] = moveId(suggestions.value.map((d) => d.command), command, at);
 }
 
 function slug(label: string): string {
