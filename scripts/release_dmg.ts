@@ -59,6 +59,8 @@ class ReleaseDmg {
 		}
 
 		const rootDir = Path.resolve(__dirname, '..');
+		ReleaseDmg._checkRepositoryIsSynchronized(rootDir);
+
 		const prefixPath = Path.join(rootDir, 'docs', 'release_notes', 'prefix.md');
 		if (Fs.existsSync(prefixPath) === false) {
 			console.error(`The release notes prefix file does not exist: ${prefixPath}`);
@@ -67,15 +69,6 @@ class ReleaseDmg {
 
 		if (process.platform !== 'darwin') {
 			console.error('The disk image can only be built on macOS.');
-			process.exit(1);
-		}
-
-		const remoteBranches = ChildProcess.execFileSync('git', ['branch', '--remotes', '--contains', 'HEAD'], {
-			cwd: rootDir,
-			encoding: 'utf8',
-		}).trim();
-		if (remoteBranches === '') {
-			console.error('The current commit is not on GitHub yet. Push the current branch first, then run the script again.');
 			process.exit(1);
 		}
 
@@ -155,6 +148,45 @@ class ReleaseDmg {
 			encoding: 'utf8',
 		}).stdout.trim();
 		console.log(`\nThe release is available at: ${releaseUrl}`);
+	}
+
+	/**
+	 * Stops the script with a message and the command to run when the local repository is not in sync with GitHub:
+	 * uncommitted changes, a branch without a remote branch, or local commits that are not pushed.
+	 * @param rootDir The root folder of the repository.
+	 * @returns Nothing.
+	 */
+	private static _checkRepositoryIsSynchronized(rootDir: string): void {
+		const git = (args: string[]): ChildProcess.SpawnSyncReturns<string> => {
+			return ChildProcess.spawnSync('git', args, {
+				cwd: rootDir,
+				encoding: 'utf8',
+			});
+		};
+
+		const changes = git(['status', '--porcelain']).stdout.trim();
+		if (changes !== '') {
+			console.error('The repository has uncommitted changes, and they would not be in the release:\n');
+			console.error(changes);
+			console.error('\nCommit them, then push:\n\n  git add -A && git commit -m "<message>" && git push');
+			process.exit(1);
+		}
+
+		const branchName = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
+		const upstream = git(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+		if (upstream.status !== 0) {
+			console.error(`The branch ${branchName} does not exist on GitHub yet. GitHub cannot tag a commit it does not have.`);
+			console.error(`\nPush the branch:\n\n  git push -u origin ${branchName}`);
+			process.exit(1);
+		}
+
+		const aheadCount = Number(git(['rev-list', '--count', `${upstream.stdout.trim()}..HEAD`]).stdout.trim());
+		if (aheadCount > 0) {
+			console.error(`The branch ${branchName} has ${aheadCount} local commit(s) that are not on GitHub yet.`);
+			console.error('GitHub cannot tag a commit it does not have.');
+			console.error('\nPush them:\n\n  git push');
+			process.exit(1);
+		}
 	}
 
 	/**
