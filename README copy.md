@@ -15,7 +15,7 @@ A macOS graphical interface for [Herdr](https://herdr.dev): the agents and termi
 In the app: **⌘/** (or the **?** button at the top) shows this list, with a filter.
 
 <!-- shortcuts:start -->
-<!-- Generated from packages/web-frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
+<!-- Generated from packages/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
 
 | Shortcut | Action |
 | --- | --- |
@@ -76,7 +76,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 
 **Pinned notes**: select text in a terminal, then "Pin" (or ⇧⌘P). The note appears in the **Notes** tab of the right panel, with its origin; you can rename it (double-click), copy it or send it to an agent. The ⤢ button (or a double-click on the text) opens it in a central window that you can move by its title, resize by the bottom-right corner and edit; its size is remembered. Notes stay on this Mac, never in the repo: a terminal output can contain secrets.
 
-**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun/config.json` at the root of the repo, to be versioned with the code. The file is validated with a Zod schema (`packages/web-frontend/src/lib/project_config.ts`) each time it is loaded or saved; an unknown or wrong field shows an error that names the field, and nothing is written:
+**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun/config.json` at the root of the repo, to be versioned with the code. The file is validated with a Zod schema (`packages/web_frontend/src/lib/project_config.ts`) each time it is loaded or saved; an unknown or wrong field shows an error that names the field, and nothing is written:
 
 ```json
 {
@@ -201,7 +201,7 @@ There is no need to open `herdr` in a terminal: if the server is not running, th
 
 ```sh
 pnpm build
-open packages/desktop-tauri/target/release/bundle/macos/
+open packages/desktop_tauri/target/release/bundle/macos/
 ```
 
 Drag `Heidrun.app` into `/Applications`.
@@ -235,13 +235,13 @@ This format is not an official OpenAI API: if a Codex update changes it, the Cod
 ## Architecture
 
 ```
-packages/desktop-tauri/src/
+packages/desktop_tauri/src/
   herdr.rs   client of the socket ~/.config/herdr/herdr.sock (line-by-line JSON),
              event subscriptions, automatic reconnection
   pty.rs     pseudo-terminals that run `herdr terminal attach <terminal_id>`
   usage.rs   reading of the Codex logs
   lib.rs     Tauri commands exposed to the front end
-packages/web-frontend/src/
+packages/web_frontend/src/
   stores/session.ts   state: Herdr snapshot, selection, notifications, actions
   components/         TopBar, Sidebar, TabBar, PaneGrid, PaneCard, TerminalView,
                       InputBar, Inspector, StatusBar, CommandPalette

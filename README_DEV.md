@@ -15,7 +15,7 @@ pnpm install
 pnpm build
 ```
 
-The command `pnpm build` builds the web frontend, then the Rust backend, then packages both into the application. The result is in `packages/desktop-tauri/target/release/bundle/`:
+The command `pnpm build` builds the web frontend, then the Rust backend, then packages both into the application. The result is in `packages/desktop_tauri/target/release/bundle/`:
 
 - `macos/Heidrun.app` is the application. Drag it into `/Applications`.
 - `dmg/Heidrun_<version>_<architecture>.dmg` is the disk image.
@@ -42,8 +42,8 @@ The command runs the tests of the three packages, and ends with a non-zero exit 
 
 | Command | Tests |
 | --- | --- |
-| `pnpm --filter web-frontend test` | The Vitest tests of `packages/web-frontend`. The test files sit next to the code, and are named `*.test.ts`. |
-| `pnpm --filter desktop-tauri test` | The `cargo test` tests of `packages/desktop-tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
+| `pnpm --filter web_frontend test` | The Vitest tests of `packages/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
+| `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
@@ -58,7 +58,7 @@ The command builds the disk image for macOS and uploads it to the GitHub release
 
 Before you run the command:
 
-1. Set the new version in the root `package.json`, in `packages/desktop-tauri/package.json`, in `packages/desktop-tauri/tauri.conf.json`, and in `packages/desktop-tauri/Cargo.toml`.
+1. Set the new version in the root `package.json`, in `packages/desktop_tauri/package.json`, in `packages/desktop_tauri/tauri.conf.json`, and in `packages/desktop_tauri/Cargo.toml`.
 2. Commit all your changes and push them. The command stops with the command to run when the repository is not in sync with GitHub, because GitHub cannot tag a commit that it does not have.
 
 The text of the release is, in this order:

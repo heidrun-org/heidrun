@@ -1,4 +1,4 @@
-# desktop-tauri
+# desktop_tauri
 
 The macOS application of [Heidrun](../../README.md): the Rust backend and the Tauri 2 shell that hosts the user interface.
 
@@ -15,9 +15,9 @@ Run these commands from the root of the repository.
 
 ```sh
 pnpm dev     # start the application in development
-pnpm build   # build Heidrun.app in packages/desktop-tauri/target/release/bundle/macos/
+pnpm build   # build Heidrun.app in packages/desktop_tauri/target/release/bundle/macos/
 ```
 
 ## Related packages
 
-- [`web-frontend`](../web-frontend): the user interface displayed in the window of this application.
+- [`web_frontend`](../web_frontend): the user interface displayed in the window of this application.

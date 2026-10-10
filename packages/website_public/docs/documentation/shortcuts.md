@@ -3,7 +3,7 @@
 In the application, press **⌘/** (or the **?** button at the top) to show this list, with a filter.
 
 <!-- shortcuts:start -->
-<!-- Generated from packages/web-frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
+<!-- Generated from packages/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
 
 | Shortcut | Action |
 | --- | --- |

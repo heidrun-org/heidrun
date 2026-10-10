@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     port: 1420,
     strictPort: true,
-    watch: { ignored: ["**/desktop-tauri/**"] },
+    watch: { ignored: ["**/desktop_tauri/**"] },
   },
   test: {
     environment: "jsdom",
