@@ -885,6 +885,10 @@ export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
 }
 
+export function closeWorkspace(workspaceId: string) {
+  return guard(() => api.closeWorkspace(workspaceId));
+}
+
 export function startRename(kind: "ws" | "tab" | "pane", id: string, place: "sidebar" | "card" = "sidebar") {
   if (kind === "ws") selectWorkspace(id);
   if (kind === "tab") selectTab(id);

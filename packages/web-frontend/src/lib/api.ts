@@ -56,6 +56,10 @@ export function newWorkspace(cwd: string | null, label: string | null) {
   return request("workspace.create", { cwd, label, focus: false });
 }
 
+export function closeWorkspace(workspaceId: string) {
+  return request("workspace.close", { workspace_id: workspaceId });
+}
+
 export function closePane(paneId: string) {
   return request("pane.close", { pane_id: paneId });
 }
