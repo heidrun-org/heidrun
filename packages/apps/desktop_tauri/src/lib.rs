@@ -9,6 +9,9 @@ mod mobile;
 mod project;
 mod pty;
 mod skills;
+mod status_item;
+mod status_item_goat;
+mod status_item_picture;
 mod usage;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
@@ -202,12 +205,14 @@ pub fn run() {
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
+        .manage(status_item::StatusItemState::default())
         .setup(|app| {
             legacy::migrate_config_dir();
             claude::migrate_legacy();
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());
+            status_item::create(app.handle())?;
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 tokio::time::sleep(MAIN_WINDOW_SHOW_TIMEOUT).await;
@@ -242,6 +247,7 @@ pub fn run() {
             set_unsaved,
             quit_now,
             show_main_window,
+            status_item::status_item_update,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,
