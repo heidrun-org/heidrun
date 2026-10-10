@@ -1,5 +1,5 @@
 // Skills: the folders with a SKILL.md file that Claude Code reads. The disk and the network work are in
-// src-tauri/src/skills.rs; this store holds what the section Skills of the Settings window shows.
+// desktop_tauri/src/skills/; this store holds what the section Skills of the Settings window shows.
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openSettings, settings } from "./settings";

@@ -252,13 +252,13 @@ pub fn run() {
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,
-            skills::skills_list,
-            skills::skills_read,
-            skills::skills_delete,
-            skills::skills_search,
-            skills::skills_preview,
-            skills::skills_install,
-            skills::skills_link_agent,
+            skills::installed::skills_list,
+            skills::installed::skills_read,
+            skills::installed::skills_delete,
+            skills::search::skills_search,
+            skills::install::skills_preview,
+            skills::install::skills_install,
+            skills::agent_folders::skills_link_agent,
         ])
         .build(tauri::generate_context!())
         .expect("error while running Heidrun")

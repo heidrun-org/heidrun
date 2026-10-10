@@ -20,5 +20,5 @@ The content of each section of the Settings window. The Settings window itself i
 
 ## Background
 - The section Agents comes from [issue 122](https://github.com/heidrun-org/heidrun/issues/122). Every agent starts switched off.
-- The section Skills installs a skill with the command `skills_install` of `desktop_tauri/src/skills.rs`. The search uses the endpoint `https://skills.sh/api/search`, because the documented API `/api/v1` needs a Vercel OIDC token that a desktop application cannot have: [issue 34](https://github.com/heidrun-org/heidrun/issues/34).
+- The section Skills installs a skill with the command `skills_install` of `desktop_tauri/src/skills/install.rs`. The search uses the endpoint `https://skills.sh/api/search`, because the documented API `/api/v1` needs a Vercel OIDC token that a desktop application cannot have: [issue 34](https://github.com/heidrun-org/heidrun/issues/34).
 - The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).
