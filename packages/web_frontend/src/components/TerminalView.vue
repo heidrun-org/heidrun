@@ -88,6 +88,7 @@ const REF_COLORS_LIGHT: typeof REF_COLORS = {
 
 import { FONT_DEFAULT, fontStack, settings } from "../stores/settings";
 import { selectionReaders } from "../stores/notes";
+import { ImageDrop } from "../lib/image_drop";
 
 const props = defineProps<{
   terminalId: string;
@@ -696,9 +697,20 @@ watch(
   },
 );
 
+const writeToPty = async (data: string) => {
+  await invoke("pty_write", { id, data });
+};
 watch(
   () => props.focused,
-  (f) => f && term?.focus(),
+  (f) => {
+    if (f) {
+      term?.focus();
+      ImageDrop.focusedTerminalWriter = writeToPty;
+    } else if (ImageDrop.focusedTerminalWriter === writeToPty) {
+      ImageDrop.focusedTerminalWriter = null;
+    }
+  },
+  { immediate: true },
 );
 
 // Global search: once this pane is shown, select the found text if it is in the
@@ -867,6 +879,7 @@ onBeforeUnmount(() => {
   el.value?.removeEventListener("mousedown", onDown, true);
   el.value?.removeEventListener("mouseup", onUp, true);
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
+  if (ImageDrop.focusedTerminalWriter === writeToPty) ImageDrop.focusedTerminalWriter = null;
   observer?.disconnect();
   unlisten.forEach((u) => u());
   invoke("pty_kill", { id }).catch(() => {});

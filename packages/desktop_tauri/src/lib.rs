@@ -1,4 +1,5 @@
 mod claude;
+mod clipboard;
 mod files;
 mod git;
 mod history;
@@ -211,6 +212,7 @@ pub fn run() {
             pty::pty_write,
             pty::pty_resize,
             pty::pty_kill,
+            clipboard::clipboard_set_image,
             usage::codex_usage,
             project::project_load,
             project::project_save,

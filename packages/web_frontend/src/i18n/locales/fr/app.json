@@ -1,4 +1,7 @@
 {
   "selectTextFirst": "Sélectionne d’abord du texte dans un terminal",
-  "pressAgainToClose": "⌘W encore une fois pour fermer ce panneau"
+  "pressAgainToClose": "⌘W encore une fois pour fermer ce panneau",
+  "dropNoFocusedTerminal": "Clique d’abord sur un terminal, puis dépose l’image",
+  "dropNotAnImage": "Ce fichier n’est pas une image",
+  "dropFailed": "L’image n’a pas pu être collée"
 }

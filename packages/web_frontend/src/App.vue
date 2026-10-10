@@ -46,6 +46,8 @@ import {
   toast,
 } from "./stores/session";
 import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { ImageDrop } from "./lib/image_drop";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
@@ -186,7 +188,8 @@ function onKey(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => {
+let unlistenDrop: (() => void) | null = null;
+onMounted(async () => {
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", onResize);
   start();
@@ -197,8 +200,16 @@ onMounted(() => {
   startMobile();
   loadClaudeLink();
   startRemoteWatch();
+  unlistenDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+    if (event.payload.type !== "drop") return;
+    const result = await ImageDrop.handleDrop(event.payload.paths);
+    if (result === "no_focused_terminal") toast(t("app.dropNoFocusedTerminal"));
+    else if (result === "not_an_image") toast(t("app.dropNotAnImage"));
+    else if (result === "failed") toast(t("app.dropFailed"));
+  });
 });
 onBeforeUnmount(() => {
+  unlistenDrop?.();
   window.removeEventListener("keydown", onKey, true);
   window.removeEventListener("resize", onResize);
 });
