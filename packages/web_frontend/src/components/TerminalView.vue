@@ -702,16 +702,11 @@ const writeToPty = async (data: string) => {
 };
 watch(
   () => props.focused,
-  (f) => {
-    if (f) {
-      term?.focus();
-      ImageDrop.focusedTerminalWriter = writeToPty;
-    } else if (ImageDrop.focusedTerminalWriter === writeToPty) {
-      ImageDrop.focusedTerminalWriter = null;
-    }
-  },
-  { immediate: true },
+  (f) => f && term?.focus(),
 );
+onMounted(() => {
+  if (el.value) ImageDrop.register(el.value, writeToPty);
+});
 
 // Global search: once this pane is shown, select the found text if it is in the
 // terminal's buffer (the screen, mostly: older history stays in Herdr).
@@ -879,7 +874,7 @@ onBeforeUnmount(() => {
   el.value?.removeEventListener("mousedown", onDown, true);
   el.value?.removeEventListener("mouseup", onUp, true);
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
-  if (ImageDrop.focusedTerminalWriter === writeToPty) ImageDrop.focusedTerminalWriter = null;
+  if (el.value) ImageDrop.unregister(el.value);
   observer?.disconnect();
   unlisten.forEach((u) => u());
   invoke("pty_kill", { id }).catch(() => {});

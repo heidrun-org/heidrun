@@ -202,8 +202,12 @@ onMounted(async () => {
   startRemoteWatch();
   unlistenDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
     if (event.payload.type !== "drop") return;
-    const result = await ImageDrop.handleDrop(event.payload.paths);
-    if (result === "no_focused_terminal") toast(t("app.dropNoFocusedTerminal"));
+    const result = await ImageDrop.handleDrop(
+      event.payload.paths,
+      event.payload.position.x / window.devicePixelRatio,
+      event.payload.position.y / window.devicePixelRatio,
+    );
+    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"));
     else if (result === "not_an_image") toast(t("app.dropNotAnImage"));
     else if (result === "failed") toast(t("app.dropFailed"));
   });

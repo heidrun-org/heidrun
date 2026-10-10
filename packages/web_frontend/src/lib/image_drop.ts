@@ -7,27 +7,64 @@ import { invoke } from "@tauri-apps/api/core";
 ///////////////////////////////////////////////////////////////////////////////
 
 /** The result of one drop on the window. */
-export type ImageDropResult = "pasted" | "no_focused_terminal" | "not_an_image" | "failed";
+export type ImageDropResult = "pasted" | "no_terminal_under_drop" | "not_an_image" | "failed";
 
-/** Writes a text to the terminal that has the focus. Set by the terminal view that has the focus. */
-export type FocusedTerminalWriter = (data: string) => Promise<void>;
+/** Writes a text to one terminal. */
+export type TerminalWriter = (data: string) => Promise<void>;
 
 /** The Control+V key, as the byte that a terminal sends. */
 const CONTROL_V = "\x16";
 
 export class ImageDrop {
-	/** Writer of the terminal that has the focus, or null when no terminal has the focus. */
-	static focusedTerminalWriter: FocusedTerminalWriter | null = null;
+	/** Writer of every mounted terminal, keyed by the element that shows the terminal. */
+	private static writers = new Map<Element, TerminalWriter>();
 
 	/**
-	 * Puts the first dropped file in the clipboard as an image, then sends Control+V to the focused terminal.
+	 * Makes the terminal element a valid target for a drop.
+	 * @param element The element that shows the terminal.
+	 * @param writer Writes a text to the terminal.
+	 */
+	static register(element: Element, writer: TerminalWriter): void {
+		ImageDrop.writers.set(element, writer);
+	}
+
+	/**
+	 * Removes the terminal element from the valid targets.
+	 * @param element The element that shows the terminal.
+	 */
+	static unregister(element: Element): void {
+		ImageDrop.writers.delete(element);
+	}
+
+	/**
+	 * Finds the terminal under a point of the window.
+	 * @param x Horizontal position, in CSS pixels.
+	 * @param y Vertical position, in CSS pixels.
+	 * @returns The writer of the terminal under the point, or null when no terminal is under the point.
+	 */
+	static findWriterAt(x: number, y: number): TerminalWriter | null {
+		let element: Element | null = document.elementFromPoint(x, y);
+		while (element !== null) {
+			const writer = ImageDrop.writers.get(element);
+			if (writer !== undefined) {
+				return writer;
+			}
+			element = element.parentElement;
+		}
+		return null;
+	}
+
+	/**
+	 * Puts the first dropped file in the clipboard as an image, then sends Control+V to the terminal under the drop.
 	 * @param paths Absolute paths of the dropped files.
+	 * @param x Horizontal position of the drop, in CSS pixels.
+	 * @param y Vertical position of the drop, in CSS pixels.
 	 * @returns What happened.
 	 */
-	static async handleDrop(paths: string[]): Promise<ImageDropResult> {
-		const writer = ImageDrop.focusedTerminalWriter;
+	static async handleDrop(paths: string[], x: number, y: number): Promise<ImageDropResult> {
+		const writer = ImageDrop.findWriterAt(x, y);
 		if (writer === null) {
-			return "no_focused_terminal";
+			return "no_terminal_under_drop";
 		}
 		if (paths.length === 0) {
 			return "not_an_image";
