@@ -153,6 +153,38 @@ fn set_unsaved(on: bool) {
     UNSAVED.store(on, std::sync::atomic::Ordering::Relaxed);
 }
 
+/// The main window is created hidden (see `visible` in `tauri.conf.json`), so the user never sees an empty window
+/// before the splash image. This flag is true once the window has been shown.
+static MAIN_WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The longest time the main window stays hidden. After this time the window appears even if the web page never
+/// tells that the splash image is ready, for example when the web page fails to load.
+const MAIN_WINDOW_SHOW_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// True for the first call with this flag, false for every later call. The flag is set by the first call.
+fn claim_first_show(flag: &std::sync::atomic::AtomicBool) -> bool {
+    !flag.swap(true, std::sync::atomic::Ordering::SeqCst)
+}
+
+/// Shows the main window and gives it the keyboard focus. Only the first call does the work.
+fn show_main_window_once(app: &AppHandle) {
+    use tauri::Manager;
+    if !claim_first_show(&MAIN_WINDOW_SHOWN) {
+        return;
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+/// Called by the web page when the splash image is loaded and decoded: the window can appear with the image already
+/// in its first frame.
+#[tauri::command]
+fn show_main_window(app: AppHandle) {
+    show_main_window_once(&app);
+}
+
 /// "Quitter sans enregistrer": the user chose, the app leaves.
 #[tauri::command]
 fn quit_now(app: AppHandle) {
@@ -176,6 +208,11 @@ pub fn run() {
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(MAIN_WINDOW_SHOW_TIMEOUT).await;
+                show_main_window_once(&handle);
+            });
             Ok(())
         })
         .on_menu_event(|app, event| {
@@ -204,6 +241,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_unsaved,
             quit_now,
+            show_main_window,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,
@@ -272,4 +310,24 @@ pub fn run() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_main_window_is_created_hidden_so_the_user_never_sees_it_empty() {
+        let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &config["app"]["windows"][0];
+        assert_eq!(window["visible"], json!(false));
+    }
+
+    #[test]
+    fn only_the_first_claim_to_show_the_main_window_succeeds() {
+        let flag = std::sync::atomic::AtomicBool::new(false);
+        assert!(claim_first_show(&flag));
+        assert!(!claim_first_show(&flag));
+        assert!(!claim_first_show(&flag));
+    }
 }

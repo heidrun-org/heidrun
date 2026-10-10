@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { ref } from "vue";
 import splashImage from "../assets/heidrun_splash_screen.jpg";
+import { showMainWindow } from "../lib/api";
 import { t } from "../i18n/index";
 
 const DISPLAY_DURATION_MS = 3000;
@@ -11,15 +12,30 @@ function close() {
   isVisible.value = false;
 }
 
-onMounted(() => {
+/**
+ * Called when the splash image is loaded, or when it failed to load. The main window is created hidden, so this is
+ * the moment the user sees it: the image is decoded first, so the first frame of the window already holds the image.
+ * The display time starts here, because the user could not see the splash screen before.
+ */
+async function onImageSettled(event: Event) {
+  try {
+    await (event.target as HTMLImageElement).decode();
+  } catch {
+    // An image that cannot be decoded must not keep the window hidden.
+  }
+  try {
+    await showMainWindow();
+  } catch {
+    // Outside Heidrun (a plain browser), there is no window to show.
+  }
   window.setTimeout(close, DISPLAY_DURATION_MS);
-});
+}
 </script>
 
 <template>
   <Transition name="splash">
     <div v-if="isVisible" class="splash" @click="close">
-      <img class="splash-image" :src="splashImage" alt="" />
+      <img class="splash-image" :src="splashImage" alt="" @load="onImageSettled" @error="onImageSettled" />
       <div class="splash-text">
         <h1 class="splash-title">{{ t("splashScreen.title") }}</h1>
         <p class="splash-motto">{{ t("splashScreen.motto") }}</p>
