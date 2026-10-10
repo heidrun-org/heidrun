@@ -39,7 +39,6 @@ async function onImageSettled(event: Event) {
       <div class="splash-text">
         <h1 class="splash-title">{{ t("splashScreen.title") }}</h1>
         <p class="splash-motto">{{ t("splashScreen.motto") }}</p>
-        <p class="splash-subtitle">{{ t("splashScreen.subtitle") }}</p>
       </div>
     </div>
   </Transition>
@@ -84,11 +83,6 @@ async function onImageSettled(event: Event) {
   margin: 12px 0 0;
   font-size: 26px;
   font-weight: 500;
-}
-.splash-subtitle {
-  margin: 8px 0 0;
-  font-size: 15px;
-  opacity: 0.8;
 }
 .splash-leave-active {
   transition: opacity 0.6s ease;
