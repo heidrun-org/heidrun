@@ -130,6 +130,8 @@ export const state = reactive({
   dismissed: loadDismissed(),
   /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
   renaming: null as string | null,
+  /** Where the pane rename field shows: only one place at a time, or both fields fight for the focus. */
+  renamingPlace: "sidebar" as "sidebar" | "card",
   starting: false,
   toast: "" as string,
 });
@@ -883,11 +885,12 @@ export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
 }
 
-export function startRename(kind: "ws" | "tab" | "pane", id: string) {
+export function startRename(kind: "ws" | "tab" | "pane", id: string, place: "sidebar" | "card" = "sidebar") {
   if (kind === "ws") selectWorkspace(id);
   if (kind === "tab") selectTab(id);
   state.renaming = `${kind}:${id}`;
-  if (kind === "ws") settings.leftOpen = true;
+  state.renamingPlace = place;
+  if (kind === "ws" || (kind === "pane" && place === "sidebar")) settings.leftOpen = true;
 }
 
 export async function finishRename(kind: "ws" | "tab" | "pane", id: string, label: string | null) {
