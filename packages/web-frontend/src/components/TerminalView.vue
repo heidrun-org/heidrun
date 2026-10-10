@@ -930,4 +930,9 @@ onBeforeUnmount(() => {
 }
 .chip:hover { background: var(--sel); border-color: #3d6aa8; }
 :deep(.xterm-viewport) { background: transparent !important; }
+:deep(.xterm-viewport) { scrollbar-width: thin; scrollbar-color: rgba(128, 128, 128, 0.35) transparent; }
+:deep(.xterm-viewport::-webkit-scrollbar) { width: 8px; background: transparent; }
+:deep(.xterm-viewport::-webkit-scrollbar-track) { background: transparent; }
+:deep(.xterm-viewport::-webkit-scrollbar-thumb) { background: rgba(128, 128, 128, 0.35); border-radius: 4px; }
+:deep(.xterm-viewport::-webkit-scrollbar-thumb:hover) { background: rgba(128, 128, 128, 0.6); }
 </style>
