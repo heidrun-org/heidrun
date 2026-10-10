@@ -106,6 +106,11 @@ export function isInstalledAtLevel(result: SearchResult): boolean {
   return skills.installed.some((skill) => skill.level === settings.skillsLevel && skill.name === result.skillId);
 }
 
+/** True while the installation, the link, or the deletion of the skill with this key runs. */
+export function isSkillBusy(key: string): boolean {
+  return skills.busyKey === key;
+}
+
 /** The ids of the agents that the user switched on, in the order of the table of agents. */
 export function ownedAgentIds(): string[] {
   return AGENTS.filter((agent) => settings.ownedAgents.includes(agent.id)).map((agent) => agent.id);

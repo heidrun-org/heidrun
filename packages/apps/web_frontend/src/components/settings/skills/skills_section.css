@@ -1,0 +1,17 @@
+/* The rows of the lists of the section Skills: shared by InstalledSkillRow.vue and SkillSearchResultRow.vue. */
+.skillsSection .list { border: 1px solid var(--line); border-radius: 10px; }
+.skillsSection .row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.skillsSection .row:last-child { border-bottom: 0; }
+.skillsSection .meta { flex: 1; min-width: 0; }
+.skillsSection .name { font-size: var(--font-size); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skillsSection .sub { font-size: var(--font-size); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skillsSection .place { flex-shrink: 0; padding: 2px 8px; border-radius: 6px; background: var(--field); color: var(--text-2); font-size: var(--font-size); }
+.skillsSection .btn:disabled { opacity: 0.7; cursor: default; }
+.skillsSection .btn.danger { color: var(--fail); }
+.skillsSection .btn.danger:hover:not(:disabled) { background: #a83a36; border-color: transparent; color: #fff; }
+.skillsSection .spinner {
+  display: inline-block; width: 1em; height: 1em; flex-shrink: 0; box-sizing: border-box;
+  border: 0.15em solid currentcolor; border-right-color: transparent; border-radius: 50%;
+  animation: skillsSpinner 0.75s linear infinite;
+}
+@keyframes skillsSpinner { to { transform: rotate(360deg); } }
