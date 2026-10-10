@@ -37,10 +37,10 @@ const groups = computed(() =>
 </template>
 
 <style scoped>
-.agent-status { position: relative; display: flex; align-items: center; gap: 12px; cursor: default; outline-offset: 3px; }
+.agent-status { position: relative; align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 12px; cursor: default; outline-offset: 3px; }
 .counter { display: flex; align-items: center; gap: 6px; }
 .card {
-  display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 12px); right: 0; z-index: 20; width: 340px;
+  display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 4px); right: 11px; z-index: 20; width: 340px;
   flex-direction: column; gap: 14px; padding: 16px 18px; white-space: normal;
   border: 1px solid var(--line-modal); border-radius: 8px; background: var(--panel); color: var(--text-2);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: 14.5px;
