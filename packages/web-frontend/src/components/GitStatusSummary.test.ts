@@ -62,4 +62,32 @@ describe("GitStatusSummary", () => {
     git.status = { w1: null };
     expect(mount(GitStatusSummary).find(".git-status").exists()).toBe(false);
   });
+
+  it("lists the details of the repository in the hover card", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = {
+      w1: makeStatus({
+        ahead: 11,
+        behind: 3,
+        changed: 4,
+        untracked: 2,
+        last_subject: "Fix the status bar",
+        last_time: Math.floor(Date.now() / 1000),
+      }),
+    };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".card-title").text()).toBe("main");
+    expect(wrapper.get(".upstream").text()).toBe("origin/main");
+    expect(wrapper.get(".to-download").text()).toBe("3");
+    expect(wrapper.get(".to-upload").text()).toBe("11");
+    expect(wrapper.get(".changed").text()).toBe("4");
+    expect(wrapper.get(".untracked").text()).toBe("2");
+    expect(wrapper.get(".last-subject").text()).toBe("Fix the status bar");
+  });
+
+  it("says there is no remote branch when the branch has no upstream", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ upstream: null }) };
+    expect(mount(GitStatusSummary).get(".upstream").text()).toBe("none");
+  });
 });
