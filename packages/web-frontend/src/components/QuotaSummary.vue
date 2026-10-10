@@ -95,7 +95,7 @@ function formatCost(cost: number) {
 .ring .track { fill: none; stroke: var(--gauge-track); stroke-width: 3; }
 .ring .arc { fill: none; stroke: var(--done); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s; }
 .card {
-  display: flex; visibility: hidden; transition: visibility 0s linear 0.4s; position: absolute; bottom: calc(100% + 12px); left: 0; z-index: 20; width: 340px;
+  display: flex; visibility: hidden; transition: visibility 0s linear 0.2s; position: absolute; bottom: calc(100% + 12px); left: 0; z-index: 20; width: 340px;
   flex-direction: column; gap: 14px; padding: 16px 18px; white-space: normal;
   border: 1px solid var(--line-modal); border-radius: 8px; background: var(--panel); color: var(--text-2);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: 14.5px;
