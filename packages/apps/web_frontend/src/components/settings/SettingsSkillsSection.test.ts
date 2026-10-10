@@ -1,0 +1,249 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { flushPromises, mount } from "@vue/test-utils";
+import type { SessionSnapshot } from "../../lib/types";
+
+const invoke = vi.hoisted(() => vi.fn());
+vi.mock("@tauri-apps/api/core", () => ({ invoke }));
+vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
+vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
+vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
+
+const SNAPSHOT = {
+  workspaces: [{ workspace_id: "w1", number: 1, label: "heidrun", agent_status: "idle", worktree: { path: "/work/heidrun" } }],
+  panes: [],
+  agents: [],
+  tabs: [],
+  layouts: [],
+} as unknown as SessionSnapshot;
+
+const INSTALLED = [
+  { name: "pdf", description: "", level: "user", origin: { source: "anthropics/skills", skill_id: "pdf" }, path: "/home/.claude/skills/pdf" },
+  { name: "release-notes", description: "", level: "workspace", origin: null, path: "/work/heidrun/.claude/skills/release-notes" },
+];
+
+/** Answers the commands of the backend, then mounts the section on a selected workspace. */
+async function mountSection(answers: Record<string, unknown> = {}) {
+  invoke.mockImplementation(async (command: string) => {
+    if (command in answers) {
+      return answers[command];
+    }
+    return command === "skills_list" ? INSTALLED : [];
+  });
+  const session = await import("../../stores/session");
+  session.state.snapshot = SNAPSHOT;
+  session.state.selectedWorkspaceId = "w1";
+  const settings = await import("../../stores/settings");
+  const skills = await import("../../stores/skills");
+  const { default: SettingsSkillsSection } = await import("./SettingsSkillsSection.vue");
+  const wrapper = mount(SettingsSkillsSection);
+  await flushPromises();
+  return { wrapper, settings: settings.settings, skills };
+}
+
+beforeEach(() => {
+  localStorage.clear();
+  vi.clearAllMocks();
+  vi.resetModules();
+});
+
+describe("SettingsSkillsSection: level", () => {
+  it("starts on the workspace level", async () => {
+    const { wrapper, settings } = await mountSection();
+    expect(settings.skillsLevel).toBe("workspace");
+    expect(wrapper.get(".levelChoice button.on").text()).toBe("Workspace");
+  });
+
+  it("changes the level and keeps it in the saved settings", async () => {
+    const { wrapper, settings } = await mountSection();
+    await wrapper.findAll(".levelChoice button")[1].trigger("click");
+    expect(settings.skillsLevel).toBe("user");
+    await flushPromises();
+    expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").skillsLevel).toBe("user");
+  });
+
+  it("restores the last level chosen", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ skillsLevel: "user" }));
+    const { wrapper } = await mountSection();
+    expect(wrapper.get(".levelChoice button.on").text()).toBe("User");
+  });
+});
+
+describe("SettingsSkillsSection: installed skills", () => {
+  it("asks for the skills of the folder of the selected workspace", async () => {
+    await mountSection();
+    expect(invoke).toHaveBeenCalledWith("skills_list", { cwd: "/work/heidrun" });
+  });
+
+  it("shows the count, the origin and the place of each skill", async () => {
+    const { wrapper } = await mountSection();
+    expect(wrapper.get(".fold").text()).toBe("Installed skills (2)");
+    const rows = wrapper.findAll(".list .row");
+    expect(rows[0].text()).toContain("pdf");
+    expect(rows[0].text()).toContain("skills.sh · anthropics/skills");
+    expect(rows[0].get(".place").text()).toBe("User");
+    expect(rows[1].text()).toContain("Local");
+    expect(rows[1].get(".place").text()).toBe("Workspace");
+  });
+
+  it("starts with both parts unfolded", async () => {
+    const { wrapper } = await mountSection();
+    const folds = wrapper.findAll(".fold");
+    expect(folds.map((fold) => fold.attributes("aria-expanded"))).toEqual(["true", "true"]);
+    expect(wrapper.find(".search").exists()).toBe(true);
+  });
+
+  it("folds and unfolds a part, and remembers the state", async () => {
+    const { wrapper, settings } = await mountSection();
+    await wrapper.findAll(".fold")[0].trigger("click");
+    expect(settings.skillsInstalledOpen).toBe(false);
+    expect(wrapper.findAll(".list .row")).toHaveLength(0);
+    await wrapper.findAll(".fold")[1].trigger("click");
+    expect(settings.skillsFindOpen).toBe(false);
+    expect(wrapper.find(".search").exists()).toBe(false);
+    await flushPromises();
+    const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
+    expect([saved.skillsInstalledOpen, saved.skillsFindOpen]).toEqual([false, false]);
+    await wrapper.findAll(".fold")[0].trigger("click");
+    expect(wrapper.findAll(".list .row")).toHaveLength(2);
+  });
+
+  it("restores a part that was folded", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ skillsFindOpen: false }));
+    const { wrapper } = await mountSection();
+    expect(wrapper.findAll(".fold").map((fold) => fold.attributes("aria-expanded"))).toEqual(["true", "false"]);
+    expect(wrapper.find(".search").exists()).toBe(false);
+  });
+});
+
+describe("SettingsSkillsSection: inspect", () => {
+  it("opens the SKILL.md file of an installed skill, read at its own level", async () => {
+    const { wrapper, skills } = await mountSection({ skills_read: "# Release notes" });
+    await wrapper.findAll(".list .row")[1].findAll("button")[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_read", { level: "workspace", cwd: "/work/heidrun", name: "release-notes" });
+    expect(skills.skills.view).toEqual({ name: "release-notes", originLabel: "Local", text: "# Release notes", loading: false });
+    expect(wrapper.findAll(".list .row")).toHaveLength(2);
+  });
+});
+
+describe("SettingsSkillsSection: search and install", () => {
+  const RESULT = { source: "anthropics/skills", skillId: "docx", name: "docx", installs: 198891 };
+
+  async function search(wrapper: Awaited<ReturnType<typeof mountSection>>["wrapper"], skills: Awaited<ReturnType<typeof mountSection>>["skills"]) {
+    await skills.searchSkills("docx");
+    await flushPromises();
+    return wrapper;
+  }
+
+  it("lists the results of the search", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await search(wrapper, skills);
+    expect(invoke).toHaveBeenCalledWith("skills_search", { query: "docx" });
+    const row = wrapper.findAll(".list")[1].get(".row");
+    expect(row.text()).toContain("docx");
+    expect(row.text()).toContain("anthropics/skills · 198,891 installs");
+  });
+
+  it("installs at the chosen level, in the folder of the workspace", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await search(wrapper, skills);
+    await wrapper.findAll(".list")[1].findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install", {
+      level: "workspace",
+      cwd: "/work/heidrun",
+      source: "anthropics/skills",
+      skillId: "docx",
+    });
+  });
+
+  it("installs at the user level when the user chose it", async () => {
+    const { wrapper, settings, skills } = await mountSection({ skills_search: [RESULT] });
+    settings.skillsLevel = "user";
+    await search(wrapper, skills);
+    await wrapper.findAll(".list")[1].findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install", expect.objectContaining({ level: "user" }));
+  });
+
+  it("shows a skill as installed at the chosen level, and as installable at the other level", async () => {
+    const pdf = { source: "anthropics/skills", skillId: "pdf", name: "pdf", installs: 1 };
+    const { wrapper, settings, skills } = await mountSection({ skills_search: [pdf] });
+    await search(wrapper, skills);
+    // "pdf" is installed at the user level only.
+    expect(wrapper.findAll(".list")[1].findAll("button")).toHaveLength(2);
+    settings.skillsLevel = "user";
+    await flushPromises();
+    expect(wrapper.findAll(".list")[1].findAll("button")).toHaveLength(1);
+    expect(wrapper.findAll(".list")[1].get(".place").text()).toBe("Installed");
+  });
+
+  it("does not install at the workspace level without a workspace", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await search(wrapper, skills);
+    const session = await import("../../stores/session");
+    session.state.selectedWorkspaceId = null;
+    invoke.mockClear();
+    await skills.installSkill(RESULT);
+    expect(invoke).not.toHaveBeenCalledWith("skills_install", expect.anything());
+    expect(session.state.toast).toBe("Select a workspace first, or choose the level User");
+    expect(wrapper.exists()).toBe(true);
+  });
+
+  it("shows the SKILL.md file of a result before the installation", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT], skills_preview: "---\nname: docx\n---" });
+    await search(wrapper, skills);
+    await wrapper.findAll(".list")[1].findAll("button")[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_preview", { source: "anthropics/skills", skillId: "docx" });
+    expect(skills.skills.view?.text).toContain("name: docx");
+    expect(skills.skills.view?.originLabel).toBe("skills.sh · anthropics/skills");
+  });
+});
+
+describe("SettingsSkillsSection: delete", () => {
+  it("deletes only after the confirmation", async () => {
+    const { wrapper } = await mountSection();
+    const confirm = await import("../../stores/confirm");
+    await wrapper.findAll(".list .row")[0].get(".danger").trigger("click");
+    expect(confirm.confirmDialog.open).toBe(true);
+    expect(confirm.confirmDialog.title).toBe("Move the skill pdf to the Trash?");
+    expect(invoke).not.toHaveBeenCalledWith("skills_delete", expect.anything());
+    confirm.answerConfirm(true);
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_delete", { level: "user", cwd: "/work/heidrun", name: "pdf" });
+  });
+
+  it("keeps the skill when the user cancels", async () => {
+    const { wrapper } = await mountSection();
+    const confirm = await import("../../stores/confirm");
+    await wrapper.findAll(".list .row")[0].get(".danger").trigger("click");
+    confirm.answerConfirm(false);
+    await flushPromises();
+    expect(invoke).not.toHaveBeenCalledWith("skills_delete", expect.anything());
+  });
+});
+
+describe("errorText", () => {
+  it("gives the text of a known code of the backend", async () => {
+    const { errorText } = await import("../../stores/skills");
+    expect(errorText("skills_already_installed: pdf")).toBe("The skill pdf is already installed at this level");
+  });
+
+  it("tells the time when GitHub accepts requests again", async () => {
+    const { errorText } = await import("../../stores/skills");
+    const reset = new Date(2026, 9, 10, 15, 4, 46).getTime() / 1000;
+    const text = errorText(`skills_github_rate_limit: ${reset}`);
+    expect(text).toMatch(/^GitHub refuses more requests for now\. Try again at .*(15:04|3:04)/);
+  });
+
+  it("says a few minutes when GitHub does not give the time", async () => {
+    const { errorText } = await import("../../stores/skills");
+    expect(errorText("skills_github_rate_limit")).toBe("GitHub refuses more requests for now. Try again in a few minutes.");
+  });
+
+  it("shows an unknown error as it is", async () => {
+    const { errorText } = await import("../../stores/skills");
+    expect(errorText("something_else: boom")).toBe("something_else: boom");
+  });
+});

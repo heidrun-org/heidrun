@@ -9,5 +9,8 @@
   "finishedItems": "Finished items",
   "notifications": "Notifications",
   "mobileAccess": "Mobile access",
-  "agents": "Agents"
+  "agents": "Agents",
+  "skills": "Skills",
+  "skillsHelp": "Skills are folders with a SKILL.md file that tell coding agents (e.g. Codex) how to do a task. Here you can search the skills of skills.sh, read the SKILL.md file of a skill before you install it, install it for the workspace or for the user, and delete it.",
+  "helpLabel": "What is this section about?"
 }

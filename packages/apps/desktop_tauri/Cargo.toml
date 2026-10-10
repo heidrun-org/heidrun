@@ -31,3 +31,5 @@ if-addrs = "0.15"
 # Deleting from the file explorer goes to the macOS Trash
 trash = "5"
 tauri-plugin-dialog = "2"
+# Skills: the search on skills.sh and the download from GitHub
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }

@@ -1,0 +1,21 @@
+{
+  "installed": "Compétence {name} installée",
+  "deleted": "Compétence {name} mise à la Corbeille",
+  "confirmDelete": "Mettre la compétence {name} à la Corbeille ?",
+  "confirmDeleteButton": "Mettre à la Corbeille",
+  "error_skills_no_workspace_folder": "Choisissez d’abord un espace de travail, ou le niveau Utilisateur",
+  "error_skills_unknown_level": "Niveau inconnu : {details}",
+  "error_skills_invalid_name": "Ce nom n’est pas permis pour une compétence : {details}",
+  "error_skills_already_installed": "La compétence {details} est déjà installée à ce niveau",
+  "error_skills_not_installed": "La compétence {details} n’est pas installée",
+  "error_skills_not_found": "Les fichiers de cette compétence sont introuvables sur GitHub : {details}",
+  "error_skills_github_rate_limit": "GitHub refuse d’autres requêtes pour l’instant. Réessayez à {time}.",
+  "error_skills_github_rate_limit_unknown": "GitHub refuse d’autres requêtes pour l’instant. Réessayez dans quelques minutes.",
+  "error_skills_too_many_files": "Cette compétence a trop de fichiers pour être installée",
+  "error_skills_search_failed": "La recherche sur skills.sh a échoué : {details}",
+  "error_skills_download_failed": "Le téléchargement depuis GitHub a échoué : {details}",
+  "error_skills_install_failed": "L’installation a échoué : {details}",
+  "error_skills_read_failed": "Le fichier SKILL.md est illisible : {details}",
+  "error_skills_delete_failed": "La compétence ne peut pas être mise à la Corbeille : {details}",
+  "error_skills_http_failed": "Le réseau n’est pas disponible : {details}"
+}

@@ -35,6 +35,11 @@ export const language = computed<Language>(() => (settings.language === "fr" ? "
 /** The locale given to the date and number formatting functions of the browser. */
 export const locale = computed(() => (language.value === "fr" ? "fr-FR" : "en-US"));
 
+/** True when `key` has a text, in the language in use or in English: `t` then returns a text, not the key. */
+export function hasText(key: string): boolean {
+  return key in (messages[language.value] ?? {}) || key in (messages.en ?? {});
+}
+
 /**
  * The text of `key` in the language in use.
  * With a `count` parameter, the key "<key>_one" or "<key>_other" is used, following the plural rules of the language.

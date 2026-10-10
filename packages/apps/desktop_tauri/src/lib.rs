@@ -8,6 +8,7 @@ mod herdr;
 mod mobile;
 mod project;
 mod pty;
+mod skills;
 mod usage;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
@@ -251,6 +252,12 @@ pub fn run() {
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,
+            skills::skills_list,
+            skills::skills_read,
+            skills::skills_delete,
+            skills::skills_search,
+            skills::skills_preview,
+            skills::skills_install,
         ])
         .build(tauri::generate_context!())
         .expect("error while running Heidrun")
