@@ -1,3 +1,4 @@
+import "./dev/install_tauri_mock";
 import "./lib/legacy_storage";
 import { createApp } from "vue";
 import "@xterm/xterm/css/xterm.css";
