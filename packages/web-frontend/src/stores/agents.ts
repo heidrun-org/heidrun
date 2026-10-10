@@ -6,6 +6,7 @@ import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolvePrompt } from "./prompts";
 import { t } from "../i18n/index";
+import { withBackground } from "../lib/terminal_background";
 
 export interface AgentDef {
   name: string;
@@ -64,6 +65,8 @@ export async function launchAgent(o: {
   let command: string;
   try {
     command = agentCommand(o.tool, o.agent, o.model);
+    // Codex colours its input area from the background that Herdr reports: see terminal_background.ts.
+    if (o.tool === "codex") command = withBackground(command, getComputedStyle(document.documentElement).getPropertyValue("--bg"));
   } catch (e) {
     toast(String((e as Error).message ?? e));
     return "failed";
