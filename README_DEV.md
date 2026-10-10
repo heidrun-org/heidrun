@@ -38,7 +38,7 @@ To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the
 pnpm test
 ```
 
-The command runs the tests of the four packages and the tests of the folder `scripts`, and ends with a non-zero exit code when a test fails. To run the tests of one package:
+The command runs the tests of the five packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
 
 | Command | Tests |
 | --- | --- |
@@ -46,7 +46,7 @@ The command runs the tests of the four packages and the tests of the folder `scr
 | `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
 | `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
-| `pnpm test:scripts` | The Vitest tests of the folder `scripts`: the generator of the change log. The test files are named `*.test.ts`, and sit next to the code. |
+| `pnpm --filter change_log_generator test` | The Vitest tests of `scripts/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
@@ -87,23 +87,34 @@ The disk image is built for the architecture of your machine only, and it is not
 pnpm release:change_log
 ```
 
-The command writes the section `Unreleased` of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output.
+The command writes a section of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output. The command is the package [`scripts/change_log_generator`](scripts/change_log_generator).
 
-How the command finds the changes:
+Without option, the section is `Unreleased`: from the last release to the current commit. The last release is the Git tag with the highest version number, for example `v0.2.0`. A pull request is a commit whose first line starts with `Merge pull request #`.
 
-1. It finds the last release: the Git tag with the highest version number, for example `v0.2.0`. If the repository has no tag, it uses all the history.
-2. It lists the pull requests that were merged after this tag: the commits whose first line starts with `Merge pull request #`.
+To choose another range, use the options `--from` and `--to`:
 
-The command puts the new section at the top of the file, below the header. If the file already has a section `Unreleased`, the command replaces it, so you can run the command again. The older sections never change.
+| Command | Range | Heading of the section |
+| --- | --- | --- |
+| `pnpm release:change_log` | last release → now | `## [Unreleased]` |
+| `pnpm release:change_log --from v0.2.0` | `v0.2.0` → now | `## [Unreleased]` |
+| `pnpm release:change_log --to v0.2.0` | the release before `v0.2.0`, or the start → `v0.2.0` | `## [0.2.0] - <date>` |
+| `pnpm release:change_log --from start --to v0.2.0` | the start of the history → `v0.2.0` | `## [0.2.0] - <date>` |
+| `pnpm release:change_log --from v0.2.0 --to v0.3.0` | `v0.2.0` → `v0.3.0` | `## [0.3.0] - <date>` |
 
-Without option, the section is a plain list of the merged pull requests, with the title and the link of each one. The command does not choose a category.
+The date of a release is the date of the commit of its tag. The sections of the file are in this order: `Unreleased` first, then the releases from the highest version to the lowest. The command puts the new section at its place. If the file already has a section with the same version, the command replaces it, so you can run the command again. The other sections never change.
+
+Without `--ai`, the section is a plain list of the merged pull requests, with the title and the link of each one. The command does not choose a category.
 
 Options:
 
 | Option | Effect |
 | --- | --- |
+| `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
+| `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
 | `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the package [`raw_coding_agent_cli`](packages/raw_coding_agent_cli). You need `codex` or `claude` installed and signed in. |
 | `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default) or `claude`. |
 | `--help` | Shows the description of the command and its options. |
+
+The command exits with code 1 and prints an error message when a tag does not exist.
 
 Read the new section before you commit it: a coding agent can make a mistake.
