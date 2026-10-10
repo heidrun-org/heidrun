@@ -2,6 +2,7 @@
 // pnpm release:dmg
 import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
+import Os from 'node:os';
 import Path from 'node:path';
 import { Command } from 'commander';
 
@@ -30,11 +31,14 @@ class ReleaseDmg {
 			.name('pnpm release:dmg')
 			.description(
 				'Builds the macOS disk image of Heidrun and uploads it to the GitHub release of the version in the root '
-					+ 'package.json. The release is created when it does not exist.',
+					+ 'package.json. The release is created when it does not exist. The text of the release is the file '
+					+ 'docs/release_notes/prefix.md, then the file of the option --notes-file, then the list of changes '
+					+ 'that GitHub generates.',
 			)
 			.option(
 				'--notes-file <path>',
-				'Markdown file with the text of the release. GitHub shows this text above the generated list of changes.',
+				'Markdown file with the text of this release. It goes after the prefix and before the generated list of '
+					+ 'changes.',
 			)
 			.parse(argv);
 		const options = program.opts<{ notesFile?: string }>();
@@ -48,12 +52,18 @@ class ReleaseDmg {
 			}
 		}
 
+		const rootDir = Path.resolve(__dirname, '..');
+		const prefixPath = Path.join(rootDir, 'docs', 'release_notes', 'prefix.md');
+		if (Fs.existsSync(prefixPath) === false) {
+			console.error(`The release notes prefix file does not exist: ${prefixPath}`);
+			process.exit(1);
+		}
+
 		if (process.platform !== 'darwin') {
 			console.error('The disk image can only be built on macOS.');
 			process.exit(1);
 		}
 
-		const rootDir = Path.resolve(__dirname, '..');
 		const rootPackage = JSON.parse(Fs.readFileSync(Path.join(rootDir, 'package.json'), 'utf8')) as { version: string };
 		const version = rootPackage.version;
 		const tagName = `v${version}`;
@@ -70,6 +80,12 @@ class ReleaseDmg {
 		}
 		const dmgPaths = dmgFileNames.map((fileName) => Path.join(dmgDir, fileName));
 
+		const bodyDir = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'release_dmg_'));
+		const bodyPath = Path.join(bodyDir, 'release_body.md');
+		const prefixText = Fs.readFileSync(prefixPath, 'utf8').trimEnd();
+		const notesText = notesPath !== undefined ? Fs.readFileSync(notesPath, 'utf8').trim() : '';
+		Fs.writeFileSync(bodyPath, `${prefixText}\n\n${notesText}\n`);
+
 		const releaseView = ChildProcess.spawnSync('gh', ['release', 'view', tagName], {
 			cwd: rootDir,
 			stdio: 'ignore',
@@ -77,10 +93,9 @@ class ReleaseDmg {
 		if (releaseView.status === 0) {
 			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...dmgPaths, '--clobber'], rootDir);
 			if (notesPath !== undefined) {
-				ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', notesPath], rootDir);
+				ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', bodyPath], rootDir);
 			}
 		} else {
-			const notesArgs = notesPath !== undefined ? ['--notes-file', notesPath] : [];
 			ReleaseDmg._run(
 				'gh',
 				[
@@ -90,7 +105,8 @@ class ReleaseDmg {
 					...dmgPaths,
 					'--title',
 					`Heidrun ${version}`,
-					...notesArgs,
+					'--notes-file',
+					bodyPath,
 					'--generate-notes',
 				],
 				rootDir,
