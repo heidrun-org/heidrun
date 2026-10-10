@@ -66,16 +66,16 @@ onBeforeUnmount(() => {
 <style scoped>
 .section { display: flex; flex-direction: column; gap: 12px; }
 .eyebrow { color: var(--done); }
-.lead { margin: 0; font-size: 13px; color: var(--text-2); line-height: 1.5; }
-.switch { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; }
+.lead { margin: 0; font-size: var(--font-size); color: var(--text-2); line-height: 1.5; }
+.switch { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); font-weight: 600; }
 .switch input { width: 16px; height: 16px; accent-color: var(--done); }
-.err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: 12.5px; }
+.err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: var(--font-size); }
 .pair { display: flex; gap: 18px; align-items: center; }
 .qr { flex-shrink: 0; width: 220px; height: 220px; padding: 10px; border-radius: 10px; background: #fff; }
 .qr :deep(svg) { width: 100%; height: 100%; display: block; }
-ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
-.url { margin: 0; font-size: 12px; color: var(--muted); }
-.hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: var(--font-size); color: var(--text-2); line-height: 1.45; }
+.url { margin: 0; font-size: var(--font-size); color: var(--muted); }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .row { display: flex; gap: 8px; }
 .steps { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--line); }
 </style>

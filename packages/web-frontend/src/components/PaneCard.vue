@@ -129,7 +129,7 @@ const subtitle = computed(() => {
 }
 .head {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
-  border-bottom: 1px solid var(--pane-head-line); font-size: 12px;
+  border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
 }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
 .name { font-weight: 600; white-space: nowrap; cursor: default; }
@@ -144,7 +144,7 @@ const subtitle = computed(() => {
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .tool:hover { background: var(--hover); color: var(--text); }
-.tool.txt { font-size: 13px; line-height: 1; }
+.tool.txt { font-size: var(--font-size); line-height: 1; }
 .tool.on { color: var(--accent); }
 .pane.docked .head { background: var(--bar); }
 </style>

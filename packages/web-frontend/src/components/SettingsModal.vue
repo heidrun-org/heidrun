@@ -74,27 +74,27 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 .side { width: 210px; flex-shrink: 0; padding: 18px 10px; display: flex; flex-direction: column; gap: 2px; border-right: 1px solid var(--line); }
-h2 { margin: 0 8px 12px; font-size: 16px; font-weight: 600; }
+h2 { margin: 0 8px 12px; font-size: var(--font-size); font-weight: 600; }
 .entry {
   display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border-radius: 8px;
-  color: var(--text-2); font-size: 13px; text-align: left;
+  color: var(--text-2); font-size: var(--font-size); text-align: left;
 }
 .entry:hover { background: var(--hover); color: var(--text); }
 .entry.on { background: var(--field); color: var(--text); }
 .pane { flex: 1; min-width: 0; padding: 18px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
 header { display: flex; align-items: center; justify-content: space-between; }
-h3 { margin: 0; font-size: 18px; font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: 18px; }
+h3 { margin: 0; font-size: var(--font-size); font-weight: 600; }
+.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
 .close:hover { background: var(--hover); color: var(--text); }
 .pane :deep(select) {
   height: 34px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text);
-  padding: 0 10px; font-size: 13px;
+  padding: 0 10px; font-size: var(--font-size);
 }
-.pane :deep(.keys) { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.pane :deep(.keys) { font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .pane :deep(.seg) { display: flex; padding: 3px; border-radius: 9px; background: var(--bg); gap: 3px; }
 .pane :deep(.seg button) {
   flex: 1; height: 30px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  font-size: 12px; font-weight: 500;
+  font-size: var(--font-size); font-weight: 500;
 }
 .pane :deep(.seg button.on) { background: var(--hover); color: var(--text); }
 .pane :deep(kbd) { font-family: var(--mono); color: var(--text-2); }

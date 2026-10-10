@@ -41,13 +41,13 @@ const hintParts = computed(() =>
   display: flex; flex-direction: column; gap: 12px;
 }
 .eyebrow { color: var(--blocked); }
-h2 { margin: 0; font-size: 18px; font-weight: 600; }
-.why { margin: 0; color: var(--text-2); font-size: 13px; }
+h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
+.why { margin: 0; color: var(--text-2); font-size: var(--font-size); }
 .cmd {
   margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-strong);
-  font-size: 12.5px; white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow: auto; user-select: text;
+  font-size: var(--font-size); white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow: auto; user-select: text;
 }
-.hint { margin: 0; font-size: 12px; color: var(--muted); }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .btn.danger { background: #a83a36; border-color: transparent; color: #fff; font-weight: 600; }
 .btn.danger:hover { background: #c0433e; }

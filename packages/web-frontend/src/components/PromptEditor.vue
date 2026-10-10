@@ -149,22 +149,22 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
   border: 1px solid var(--line-modal); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 6px;
 }
 header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-h2 { margin: 0; font-size: 16px; font-weight: 600; }
+h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .close { border: none; background: transparent; color: var(--muted); width: 26px; height: 26px; border-radius: 6px; }
 .close:hover { background: var(--hover); color: var(--text); }
-.lab { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+.lab { font-size: var(--font-size); color: var(--text-2); margin-top: 6px; }
 .row { display: flex; gap: 8px; }
 .grow { flex: 1; min-width: 0; }
 .field {
   height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field);
-  color: var(--text); outline: none; font: inherit; font-size: 13px;
+  color: var(--text); outline: none; font: inherit; font-size: var(--font-size);
 }
 .field.text { height: auto; padding: 8px 10px; line-height: 20px; resize: vertical; }
-.vars { font-size: 10.5px; color: var(--faint); }
-.check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); margin-top: 6px; }
+.vars { font-size: var(--font-size); color: var(--faint); }
+.check { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--text-2); margin-top: 6px; }
 footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 footer :deep(.confirm) {
-  height: 36px; padding: 0 12px; border-radius: 10px; font-size: 14px; color: var(--blocked);
+  height: 36px; padding: 0 12px; border-radius: 10px; font-size: var(--font-size); color: var(--blocked);
   border: none; background: transparent;
 }
 footer :deep(.confirm:hover) { background: var(--blocked); color: #fff; }

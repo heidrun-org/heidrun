@@ -88,8 +88,8 @@ function formatCost(cost: number) {
 
 <style scoped>
 .quota { position: relative; align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: default; outline-offset: 3px; }
-.label { font-weight: 600; font-size: 14px; color: var(--text-2); }
-.percent { font-size: 14px; }
+.label { font-weight: 600; font-size: var(--font-size); color: var(--text-2); }
+.percent { font-size: var(--font-size); }
 .percent { color: var(--text-2); }
 .unit { margin-left: 2px; font-size: 0.8em; color: var(--muted); }
 .ring .track { fill: none; stroke: var(--gauge-track); stroke-width: 3; }
@@ -98,7 +98,7 @@ function formatCost(cost: number) {
   display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 4px); left: 11px; z-index: 20; width: 340px;
   flex-direction: column; gap: 14px; padding: 16px 18px; white-space: normal;
   border: 1px solid var(--line-modal); border-radius: 8px; background: var(--panel); color: var(--text-2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: 14.5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: var(--font-size);
 }
 .card::after {
   content: ""; position: absolute; top: 100%; left: 18px; width: 10px; height: 10px; margin-top: -6px;
@@ -108,7 +108,7 @@ function formatCost(cost: number) {
 .card-head { display: flex; justify-content: space-between; align-items: baseline; }
 .card-plan { color: var(--muted); }
 .card-plan-name { color: var(--text); font-weight: 500; }
-.card-title { font-weight: 600; font-size: 16px; color: var(--text); }
+.card-title { font-weight: 600; font-size: var(--font-size); color: var(--text); }
 .card-window { display: flex; flex-direction: column; gap: 5px; }
 .card-line { display: flex; justify-content: space-between; }
 .bar { position: relative; display: block; }
@@ -123,5 +123,5 @@ function formatCost(cost: number) {
 .pace-crit { background: rgba(234, 106, 95, 0.15); }
 .pace-crit .pace-title { color: #f07f75; }
 .runs-out { color: #f07f75; font-weight: 500; }
-.card-hint { font-size: 13px; color: var(--muted); }
+.card-hint { font-size: var(--font-size); color: var(--muted); }
 </style>

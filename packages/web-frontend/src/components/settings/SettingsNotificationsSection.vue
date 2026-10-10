@@ -28,8 +28,8 @@ import { t } from "../../i18n/index";
 
 <style scoped>
 .section { display: flex; flex-direction: column; gap: 10px; }
-.nrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text-2); }
-.nrow select, .nrow .time { height: 26px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); font-size: 12px; padding: 0 6px; }
+.nrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: var(--font-size); color: var(--text-2); }
+.nrow select, .nrow .time { height: 26px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); font-size: var(--font-size); padding: 0 6px; }
 .nrow .time { width: 58px; text-align: center; font-family: var(--mono); }
 .nrow input[type="checkbox"] { accent-color: var(--done); }
 .range { display: flex; align-items: center; gap: 4px; }

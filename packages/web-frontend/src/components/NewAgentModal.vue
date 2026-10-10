@@ -166,14 +166,14 @@ function onKey(e: KeyboardEvent) {
 }
 .eyebrow { color: var(--accent); }
 .top { display: flex; justify-content: space-between; align-items: center; }
-.forget { font-size: 11px; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.forget { font-size: var(--font-size); color: var(--muted); text-transform: none; letter-spacing: 0; }
 .forget:hover { color: var(--text); }
-h2 { margin: 0; font-size: 18px; font-weight: 600; }
-.where { margin: 0; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
+.where { margin: 0; font-size: var(--font-size); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .seg { display: inline-flex; align-self: flex-start; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
-.seg button { height: 30px; padding: 0 14px; font-size: 12.5px; color: var(--text-2); }
+.seg button { height: 30px; padding: 0 14px; font-size: var(--font-size); color: var(--text-2); }
 .seg button.on { background: var(--field); color: var(--text); font-weight: 600; }
-.field-label { font-size: 11.5px; color: var(--text-2); font-weight: 600; }
+.field-label { font-size: var(--font-size); color: var(--text-2); font-weight: 600; }
 .row-label { display: flex; align-items: center; gap: 8px; }
 .row-label .muted { font-weight: 400; }
 .agents { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow: auto; }
@@ -183,19 +183,19 @@ h2 { margin: 0; font-size: 18px; font-weight: 600; }
 }
 .agent:hover { border-color: var(--line-strong); }
 .agent.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.a-name { font-size: 13px; font-weight: 600; display: flex; gap: 6px; align-items: center; }
-.src { font-size: 10.5px; font-weight: 500; padding: 1px 6px; border-radius: 6px; background: var(--field); color: var(--muted); }
-.a-desc { font-size: 12px; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.a-name { font-size: var(--font-size); font-weight: 600; display: flex; gap: 6px; align-items: center; }
+.src { font-size: var(--font-size); font-weight: 500; padding: 1px 6px; border-radius: 6px; background: var(--field); color: var(--muted); }
+.a-desc { font-size: var(--font-size); color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 label { display: flex; flex-direction: column; gap: 4px; }
 input, textarea, select {
-  border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: 12.5px; padding: 0 9px;
+  border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 9px;
 }
 input { height: 32px; }
 textarea { padding: 8px 9px; resize: vertical; font-family: inherit; line-height: 1.45; }
-.tpl { height: 24px; margin-left: auto; font-size: 11.5px; }
-.cmd { margin: 2px 0 0; font-size: 11.5px; color: var(--muted); }
-.small { font-size: 12px; padding: 4px 2px; }
+.tpl { height: 24px; margin-left: auto; font-size: var(--font-size); }
+.cmd { margin: 2px 0 0; font-size: var(--font-size); color: var(--muted); }
+.small { font-size: var(--font-size); padding: 4px 2px; }
 .muted { color: var(--muted); }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .btn.go { background: var(--accent); border-color: transparent; color: #1a1206; font-weight: 600; }

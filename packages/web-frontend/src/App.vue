@@ -271,7 +271,7 @@ onBeforeUnmount(() => {
 .toast {
   position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%);
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
-  color: var(--text); font-size: 12.5px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
+  color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
 }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 6px); }

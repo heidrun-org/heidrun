@@ -200,8 +200,8 @@ function isRestarting(a: Action) {
 <style scoped>
 .panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; }
 .head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
-.path { font-size: 11px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.empty { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.path { font-size: var(--font-size); color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .action {
   display: flex; align-items: stretch; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--field);
 }
@@ -211,27 +211,27 @@ function isRestarting(a: Action) {
   border: none; background: transparent; text-align: left; border-radius: 10px;
 }
 .text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.label { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cmd { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.state { font-size: 11px; white-space: nowrap; }
+.label { font-weight: 600; font-size: var(--font-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd { font-size: var(--font-size); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.state { font-size: var(--font-size); white-space: nowrap; }
 .state.running { color: var(--working); }
 .state.finished { color: var(--done); }
 .tools { display: flex; align-items: center; gap: 2px; padding-right: 6px; }
 .tool {
   width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  font-size: 11px; display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .tool:hover { background: var(--hover); color: var(--text); }
 .add { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: var(--field); }
 .add input {
   height: 32px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--bg);
-  outline: none; font-size: 12px;
+  outline: none; font-size: var(--font-size);
 }
 .row { display: flex; justify-content: flex-end; gap: 6px; }
 .dashed { border-style: dashed; justify-content: center; height: 34px; }
 .sub { margin-top: 14px; }
 .sub-head { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
-.link.small { padding: 0; font-size: 11px; }
+.link.small { padding: 0; font-size: var(--font-size); }
 .dragging { opacity: 0.4; }
 .drop-before, .drop-after { position: relative; }
 .drop-before::before, .drop-after::after {
@@ -239,16 +239,16 @@ function isRestarting(a: Action) {
 }
 .drop-before::before { top: -5px; }
 .drop-after::after { bottom: -5px; }
-.grip { color: var(--faint); cursor: grab; font-size: 11px; letter-spacing: -2px; padding: 0 2px; user-select: none; }
+.grip { color: var(--faint); cursor: grab; font-size: var(--font-size); letter-spacing: -2px; padding: 0 2px; user-select: none; }
 
 .sugg { display: flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 8px; }
 .sugg:hover { background: var(--hover-soft); }
-.grow { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: 12px; overflow: hidden; }
+.grow { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; font-size: var(--font-size); overflow: hidden; }
 .grow .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
-.src { font-size: 10.5px; color: var(--faint); white-space: nowrap; }
-.link { align-self: flex-start; border: none; background: none; color: var(--muted); font-size: 12px; padding: 4px 10px; }
+.src { font-size: var(--font-size); color: var(--faint); white-space: nowrap; }
+.link { align-self: flex-start; border: none; background: none; color: var(--muted); font-size: var(--font-size); padding: 4px 10px; }
 .link:hover { color: var(--text); }
-.err { color: var(--fail); font-size: 12px; }
+.err { color: var(--fail); font-size: var(--font-size); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .tool.spin { animation: spin 1s linear infinite; opacity: 0.7; }
 @keyframes spin { to { transform: rotate(360deg); } }

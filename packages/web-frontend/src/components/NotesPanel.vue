@@ -102,14 +102,14 @@ function sendTo(n: Note, paneId: string) {
 <style scoped>
 .panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
-.toggle { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.toggle { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--muted); }
 .toggle input { accent-color: var(--done); }
-.empty { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.6; }
+.empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.6; }
 kbd { font-family: var(--mono); color: var(--text-2); }
 .note { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--field); border: 1px solid var(--line-strong); }
 .note header { display: flex; align-items: center; gap: 6px; }
-h3 { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
-.origin { font-size: 11px; color: var(--muted); }
+h3 { flex: 1; min-width: 0; margin: 0; font-size: var(--font-size); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; user-select: text; }
+.origin { font-size: var(--font-size); color: var(--muted); }
 .tool {
   width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
@@ -117,14 +117,14 @@ h3 { flex: 1; min-width: 0; margin: 0; font-size: 13px; font-weight: 600; white-
 .tool:hover { background: var(--hover); color: var(--text); }
 pre {
   margin: 0; padding: 8px 10px; border-radius: 7px; background: var(--bg); color: var(--text-2);
-  font-size: 11.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+  font-size: var(--font-size); line-height: 1.5; white-space: pre-wrap; word-break: break-word;
   max-height: 96px; overflow: hidden; cursor: pointer; user-select: text;
 }
 pre.open { max-height: none; }
 .actions { display: flex; gap: 6px; }
 .send {
   flex: 1; height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-size: 12px; padding: 0 8px;
+  color: var(--text-2); font-size: var(--font-size); padding: 0 8px;
 }
 .dragging { opacity: 0.4; }
 .drop-before, .drop-after { position: relative; }
@@ -133,6 +133,6 @@ pre.open { max-height: none; }
 }
 .drop-before::before { top: -5px; }
 .drop-after::after { bottom: -5px; }
-.grip { color: var(--faint); cursor: grab; font-size: 11px; letter-spacing: -2px; padding: 0 2px; user-select: none; }
+.grip { color: var(--faint); cursor: grab; font-size: var(--font-size); letter-spacing: -2px; padding: 0 2px; user-select: none; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

@@ -29,7 +29,7 @@ import { t } from "../../i18n/index";
 .section { display: flex; flex-direction: column; gap: 10px; }
 .size { display: flex; align-items: center; gap: 6px; }
 .size .btn:disabled { opacity: 0.4; cursor: default; }
-.val { min-width: 52px; text-align: center; color: var(--text); font-size: 12px; }
+.val { min-width: 52px; text-align: center; color: var(--text); font-size: var(--font-size); }
 .preview {
   padding: 10px 12px; border-radius: 8px; background: var(--bg); color: var(--text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

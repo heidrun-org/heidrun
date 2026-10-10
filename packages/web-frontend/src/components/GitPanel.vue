@@ -151,7 +151,7 @@ async function askReview(ref: string, url: string, title: string) {
 .gitp { flex: 1; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 .block { display: flex; flex-direction: column; gap: 8px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
-.link { border: none; background: none; padding: 0; color: var(--faint); font-size: 11px; }
+.link { border: none; background: none; padding: 0; color: var(--faint); font-size: var(--font-size); }
 .link:hover:not(:disabled) { color: var(--text-2); }
 .link { position: relative; }
 .label-hidden { visibility: hidden; }
@@ -161,17 +161,17 @@ async function askReview(ref: string, url: string, title: string) {
   animation: spinner-border 0.75s linear infinite;
 }
 @keyframes spinner-border { to { transform: rotate(360deg); } }
-.repo { align-self: flex-start; border: none; background: none; padding: 0; color: var(--text); font-size: 15px; font-weight: 600; text-align: left; }
+.repo { align-self: flex-start; border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); font-weight: 600; text-align: left; }
 .repo:hover { color: var(--done); }
 .repo.plain:hover { color: var(--text); }
-.branch { display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; }
+.branch { display: flex; gap: 8px; flex-wrap: wrap; font-size: var(--font-size); }
 .b { color: var(--text); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
-  height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
+  height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600;
   background: var(--chip); color: var(--text-2); border: none;
 }
-.chip.sm { height: 18px; font-size: 10.5px; padding: 0 7px; }
+.chip.sm { height: 18px; font-size: var(--font-size); padding: 0 7px; }
 .chip.ok { background: var(--tint-ok); color: var(--ok); }
 .chip.warn { background: var(--tint-warn); color: var(--accent); }
 .chip.crit { background: var(--tint-crit); color: var(--blocked); }
@@ -180,34 +180,34 @@ async function askReview(ref: string, url: string, title: string) {
 .chip.merged { background: var(--tint-merged); color: var(--question); }
 .req-top { flex-wrap: wrap; }
 .recent-h { margin-top: 10px; }
-.recent { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; margin: 0 -6px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: 12px; }
+.recent { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 4px 6px; margin: 0 -6px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: var(--font-size); }
 .recent:hover { background: var(--hover); }
 .recent-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.when { flex-shrink: 0; font-size: 11px; }
+.when { flex-shrink: 0; font-size: var(--font-size); }
 button.chip { cursor: pointer; }
-.last { display: flex; gap: 8px; font-size: 12px; align-items: baseline; min-width: 0; }
+.last { display: flex; gap: 8px; font-size: var(--font-size); align-items: baseline; min-width: 0; }
 .subject { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .count { color: var(--muted); margin-left: 4px; }
-.files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+.files { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: var(--font-size); }
 .files li { display: flex; min-width: 0; }
 .file { display: flex; gap: 8px; align-items: center; min-width: 0; width: 100%; border: none; background: none; padding: 2px 4px; margin: 0 -4px; border-radius: 5px; text-align: left; color: inherit; }
 .file:hover { background: var(--hover); }
 .head-tools { display: flex; gap: 12px; }
-.more { font-size: 12px; color: var(--done); }
-.st { width: 16px; flex-shrink: 0; font: 600 11px var(--mono); text-align: center; }
+.more { font-size: var(--font-size); color: var(--done); }
+.st { width: 16px; flex-shrink: 0; font: 600 var(--font-size) var(--mono); text-align: center; }
 .st.mod { color: var(--accent); } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked); } .st.ren { color: var(--done); } .st.conf { color: var(--blocked); }
 .path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
 .req { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); }
 .req.mine { box-shadow: inset 0 0 0 1px #33506f; }
 .req-main { display: flex; flex-direction: column; gap: 4px; border: none; background: none; padding: 0; text-align: left; color: var(--text); }
 .req-top { display: flex; gap: 8px; align-items: center; }
-.ref { color: var(--question); font-size: 12px; }
-.req-title { font-size: 12.5px; font-weight: 500; }
-.req .muted { font-size: 11px; }
+.ref { color: var(--question); font-size: var(--font-size); }
+.req-title { font-size: var(--font-size); font-weight: 500; }
+.req .muted { font-size: var(--font-size); }
 .req-actions { display: flex; gap: 14px; }
 .merge.ready { color: var(--question); }
 .merge.ready:hover { color: #d6b8f6; }
-.err { font-size: 12px; color: var(--fail); }
-.muted { font-size: 12px; color: var(--muted); }
-.foot { font-size: 11px; }
+.err { font-size: var(--font-size); color: var(--fail); }
+.muted { font-size: var(--font-size); color: var(--muted); }
+.foot { font-size: var(--font-size); }
 </style>

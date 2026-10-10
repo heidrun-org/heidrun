@@ -924,7 +924,7 @@ onBeforeUnmount(() => {
 /* The padding is part of the hover zone, and reaches down to the hovered text. */
 .chips { position: absolute; z-index: 6; height: 26px; display: flex; align-items: flex-start; gap: 4px; padding: 0 4px; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
-  border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: 11.5px; font-weight: 500;
+  border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: var(--font-size); font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
   max-width: 360px; overflow: hidden; text-overflow: ellipsis;
 }

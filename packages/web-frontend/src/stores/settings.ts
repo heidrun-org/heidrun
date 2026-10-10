@@ -29,8 +29,9 @@ export const FONTS: FontOption[] = [
 export const FONT_MIN = 9;
 export const FONT_MAX = 24;
 export const FONT_DEFAULT = 12.5;
-/** Font size of the code in the Git, Files, Search, Issue and Mosaic windows, before the window zoom. */
-export const CODE_FONT_SIZE = 12.5;
+
+// The one place of the text size: every font size of the window reads this CSS variable.
+document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 

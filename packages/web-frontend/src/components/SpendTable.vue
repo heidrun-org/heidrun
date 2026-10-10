@@ -91,16 +91,16 @@ const title = (r: { label: string; agents: { who: string; cost: number }[] }) =>
 .block { display: flex; flex-direction: column; gap: 6px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
-.seg button { height: 20px; padding: 0 8px; font-size: 10.5px; color: var(--muted); }
+.seg button { height: 20px; padding: 0 8px; font-size: var(--font-size); color: var(--muted); }
 .seg button.on { background: var(--field); color: var(--text); }
 .chart { width: 100%; height: 40px; display: block; margin: 2px 0 4px; }
-.row { display: grid; grid-template-columns: 8px minmax(0, 1fr) 60px 34px 46px; gap: 6px; align-items: center; font-size: 12px; cursor: default; }
+.row { display: grid; grid-template-columns: 8px minmax(0, 1fr) 60px 34px 46px; gap: 6px; align-items: center; font-size: var(--font-size); cursor: default; }
 .sw { width: 8px; height: 8px; border-radius: 2px; }
 .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar { height: 4px; border-radius: 2px; background: var(--field); overflow: hidden; }
 .bar span { display: block; height: 100%; border-radius: 2px; }
-.pct, .cost { text-align: right; color: var(--text-2); font-size: 11px; }
-.foot { font-size: 11px; color: var(--text-2); }
+.pct, .cost { text-align: right; color: var(--text-2); font-size: var(--font-size); }
+.foot { font-size: var(--font-size); color: var(--text-2); }
 .muted { color: var(--muted); }
-.hint { margin: 0; font-size: 11.5px; color: var(--muted); }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 </style>

@@ -90,12 +90,12 @@ const timeExample = computed(() => {
 
 <style scoped>
 .section { display: flex; flex-direction: column; gap: 10px; }
-h4 { margin: 8px 0 0; font-size: 13px; font-weight: 600; color: var(--text-2); }
+h4 { margin: 8px 0 0; font-size: var(--font-size); font-weight: 600; color: var(--text-2); }
 h4:first-child { margin-top: 0; }
 .list { display: flex; flex-direction: column; gap: 2px; max-width: 280px; }
 .item {
   display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: none; border-radius: 8px;
-  background: transparent; color: var(--text); font-size: 13px; text-align: left;
+  background: transparent; color: var(--text); font-size: var(--font-size); text-align: left;
 }
 .item:hover { background: var(--hover); }
 .label { flex: 1; }

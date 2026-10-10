@@ -289,7 +289,7 @@ async function createWorkspace() {
 .heading { display: flex; align-items: center; justify-content: space-between; padding-right: 0; }
 .add {
   width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent;
-  color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: var(--font-size); font-weight: 400; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
 }
 .add:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
@@ -303,7 +303,7 @@ async function createWorkspace() {
 }
 .card-x:hover, .card-dock:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card-dock {
-  position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: 13px;
+  position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: var(--font-size);
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-dock.on { color: var(--accent); }
@@ -311,25 +311,25 @@ async function createWorkspace() {
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {
   margin: 0 0 2px; padding: 6px 8px; border-radius: 6px; background: var(--tint-err); color: var(--text-2);
-  font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 84px; overflow: hidden;
+  font-size: var(--font-size); white-space: pre-wrap; word-break: break-all; max-height: 84px; overflow: hidden;
 }
-.choice-q { font-size: 11.5px; color: var(--text-2); margin: 0 2px 2px; }
+.choice-q { font-size: var(--font-size); color: var(--text-2); margin: 0 2px 2px; }
 .choice {
   display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 4px 8px; border-radius: 7px;
-  border: 1px solid #4a2523; background: #2a1514; color: var(--text); text-align: left; font-size: 12px;
+  border: 1px solid #4a2523; background: #2a1514; color: var(--text); text-align: left; font-size: var(--font-size);
 }
 .choice:hover { background: #3a1c1b; border-color: #7d3330; }
 .choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: #4a2523; color: var(--blocked);
-  font: 600 11px var(--mono); display: inline-flex; align-items: center; justify-content: center; }
+  font: 600 var(--font-size) var(--mono); display: inline-flex; align-items: center; justify-content: center; }
 .choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card.question { border-color: #4a3866; background: var(--tint-merged); }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.name { font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { font-size: var(--font-size); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { flex-shrink: 0; }
 .who { color: var(--text); font-weight: 500; }
-.badge { font-size: 11px; font-weight: 600; letter-spacing: 0.4px; }
-.desc { font-size: 12px; color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.when { font-size: 11px; color: var(--muted); }
+.badge { font-size: var(--font-size); font-weight: 600; letter-spacing: 0.4px; }
+.desc { font-size: var(--font-size); color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.when { font-size: var(--font-size); color: var(--muted); }
 .item {
   display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px;
   border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
@@ -350,7 +350,7 @@ async function createWorkspace() {
 }
 .row-menu-item {
   width: 100%; height: 28px; padding: 0 10px; border: none; border-radius: 6px; background: transparent;
-  color: var(--text-2); text-align: left; font-size: 13px;
+  color: var(--text-2); text-align: left; font-size: var(--font-size);
 }
 .row-menu-item:hover { background: var(--hover); color: var(--text); }
 .item { position: relative; }
@@ -365,10 +365,10 @@ async function createWorkspace() {
 .item.active { background: var(--hover); color: var(--text); }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rc {
-  font: 600 9.5px var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
+  font: 600 var(--font-size) var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
   background: var(--tint-working); color: var(--working);
 }
-.status { font-size: 11px; color: var(--muted); }
+.status { font-size: var(--font-size); color: var(--muted); }
 /* Workspaces with an agent session vs. plain shells or nothing running. */
 .ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
 .item.quiet:not(.active) .grow { color: var(--muted); }

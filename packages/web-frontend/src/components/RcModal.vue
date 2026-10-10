@@ -91,7 +91,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
   border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
 }
 header { display: flex; align-items: flex-start; justify-content: space-between; }
-h2 { margin: 4px 0 0; font-size: 16px; font-weight: 600; }
+h2 { margin: 4px 0 0; font-size: var(--font-size); font-weight: 600; }
 .x {
   width: 28px; height: 28px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
@@ -99,10 +99,10 @@ h2 { margin: 4px 0 0; font-size: 16px; font-weight: 600; }
 .x:hover { background: var(--hover); color: var(--text); }
 .qr { align-self: center; width: 240px; height: 240px; padding: 12px; border-radius: 12px; background: #fff; }
 .qr :deep(svg) { width: 100%; height: 100%; display: block; }
-.hint { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; text-align: center; }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; text-align: center; }
 .url { padding: 10px 12px; border-radius: 9px; background: var(--bg); }
 .url .mono {
-  display: block; font-size: 12px; color: var(--text-2); white-space: nowrap; overflow-x: auto;
+  display: block; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; overflow-x: auto;
   user-select: text; text-align: center;
 }
 .actions { display: flex; gap: 8px; justify-content: space-between; }
