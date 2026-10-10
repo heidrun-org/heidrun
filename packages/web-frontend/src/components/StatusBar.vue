@@ -2,6 +2,7 @@
 import { quotas, state } from "../stores/session";
 import { claudeLink, enableClaudeLink } from "../stores/claude";
 import AgentStatusSummary from "./AgentStatusSummary.vue";
+import GitStatusSummary from "./GitStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
 import { t } from "../i18n/index";
 </script>
@@ -21,6 +22,8 @@ import { t } from "../i18n/index";
       {{ t("statusBar.enableTracking") }}
     </button>
     <span v-else-if="!quotas.some((q) => q.provider === 'claude')" class="muted">{{ t("statusBar.waitingForData") }}</span>
+    <span class="sep"></span>
+    <GitStatusSummary />
     <span class="grow"></span>
     <AgentStatusSummary />
     <span class="sep"></span>

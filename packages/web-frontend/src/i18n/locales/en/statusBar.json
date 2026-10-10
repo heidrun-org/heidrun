@@ -25,5 +25,12 @@
   "blockedTitle": "Blocked, waiting for your answer",
   "workingTitle": "Working now",
   "doneTitle": "Finished",
+  "gitUpstream": "Remote branch",
+  "gitNoUpstream": "none",
+  "gitToDownload": "Commits to download",
+  "gitToUpload": "Commits to upload",
+  "gitChangedFiles": "Changed files",
+  "gitUntrackedFiles": "Untracked files",
+  "gitLastCommit": "Last commit",
   "noAgent": "No agent"
 }

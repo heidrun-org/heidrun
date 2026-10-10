@@ -25,5 +25,12 @@
   "blockedTitle": "Bloqués, en attente de votre réponse",
   "workingTitle": "En cours de travail",
   "doneTitle": "Terminés",
+  "gitUpstream": "Branche distante",
+  "gitNoUpstream": "aucune",
+  "gitToDownload": "Commits à télécharger",
+  "gitToUpload": "Commits à envoyer",
+  "gitChangedFiles": "Fichiers modifiés",
+  "gitUntrackedFiles": "Fichiers non suivis",
+  "gitLastCommit": "Dernier commit",
   "noAgent": "Aucun agent"
 }

@@ -25,7 +25,6 @@ import InlineRename from "./InlineRename.vue";
 import { settings } from "../stores/settings";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
-import { git } from "../stores/git";
 import { onNewPaneClick } from "../stores/newPane";
 import type { AgentInfo } from "../lib/types";
 import { isDocked, toggleDock } from "../stores/dock";
@@ -130,11 +129,6 @@ async function createWorkspace() {
           <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
           <span class="grow">{{ w.label }}</span>
           <span v-if="wi < 9" class="key">⌘{{ wi + 1 }}</span>
-          <span
-            v-if="git.status[w.workspace_id]?.ahead"
-            class="git-ahead"
-            :title="t('sidebar.commitsNotPushed', { count: git.status[w.workspace_id]!.ahead })"
-          >↑{{ git.status[w.workspace_id]!.ahead }}</span>
           <span
             v-for="a in agentsIn(w.workspace_id)"
             :key="a.kind"
@@ -339,7 +333,6 @@ async function createWorkspace() {
 }
 .count, .status { font-size: 11px; color: var(--muted); }
 /* Workspaces with an agent session vs. plain shells or nothing running. */
-.git-ahead { flex-shrink: 0; font: 600 10.5px var(--mono); color: var(--accent); }
 .ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
 .agent-tag {
   flex-shrink: 0; height: 18px; padding: 0 6px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
