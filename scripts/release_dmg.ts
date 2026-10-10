@@ -70,6 +70,15 @@ class ReleaseDmg {
 			process.exit(1);
 		}
 
+		const remoteBranches = ChildProcess.execFileSync('git', ['branch', '--remotes', '--contains', 'HEAD'], {
+			cwd: rootDir,
+			encoding: 'utf8',
+		}).trim();
+		if (remoteBranches === '') {
+			console.error('The current commit is not on GitHub yet. Push the current branch first, then run the script again.');
+			process.exit(1);
+		}
+
 		const rootPackage = JSON.parse(Fs.readFileSync(Path.join(rootDir, 'package.json'), 'utf8')) as { version: string };
 		const version = rootPackage.version;
 		const tagName = `v${version}`;
