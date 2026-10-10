@@ -5,8 +5,6 @@
   "workspacesWithoutAgent": "Workspaces without an agent",
   "newWorkspaceName": "New name of the workspace",
   "workspaceTitle": "Double-click to rename · drag to move",
-  "commitsNotPushed_one": "{count} commit not pushed yet",
-  "commitsNotPushed_other": "{count} commits not pushed yet",
   "sessions_one": "{count} {kind} session",
   "sessions_other": "{count} {kind} sessions",
   "newWorkspaceTitle": "Create a new workspace",

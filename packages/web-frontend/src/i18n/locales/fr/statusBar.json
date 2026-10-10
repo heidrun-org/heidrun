@@ -25,5 +25,6 @@
   "blockedTitle": "Bloqués, en attente de votre réponse",
   "workingTitle": "En cours de travail",
   "doneTitle": "Terminés",
+  "gitTitle": "Branche {branch} : {behind} à télécharger, {ahead} à envoyer",
   "noAgent": "Aucun agent"
 }
