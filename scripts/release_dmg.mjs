@@ -52,6 +52,12 @@ class ReleaseDmg {
 				rootDir,
 			);
 		}
+
+		const releaseUrl = ChildProcess.spawnSync('gh', ['release', 'view', tagName, '--json', 'url', '--jq', '.url'], {
+			cwd: rootDir,
+			encoding: 'utf8',
+		}).stdout.trim();
+		console.log(`\nThe release is available at: ${releaseUrl}`);
 	}
 
 	/**
