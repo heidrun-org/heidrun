@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { flushPromises, mount } from "@vue/test-utils";
+import { DOMWrapper, flushPromises, mount } from "@vue/test-utils";
 import type { SessionSnapshot } from "../../lib/types";
 
 const invoke = vi.hoisted(() => vi.fn());
@@ -277,6 +277,87 @@ describe("SettingsSkillsSection: delete", () => {
     confirm.answerConfirm(false);
     await flushPromises();
     expect(invoke).not.toHaveBeenCalledWith("skills_delete", expect.anything());
+  });
+});
+
+describe("SettingsSkillsSection: link for an agent switched on later", () => {
+  /** The buttons "Add link" of a row. */
+  function linkButtons(row: Pick<DOMWrapper<Element>, "findAll">) {
+    return row.findAll("button").filter((button) => button.text().startsWith("Add link"));
+  }
+
+  it("shows a button for the agent that is switched on and lacks the skill", async () => {
+    const { wrapper } = await mountSection();
+    const rows = wrapper.findAll(".list .row");
+    expect(linkButtons(rows[0])).toHaveLength(0);
+    const buttons = linkButtons(rows[1]);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].text()).toBe("Add link for Claude Code");
+  });
+
+  it("shows no button for an agent that the user did not switch on", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: ["codex"] }));
+    const { wrapper } = await mountSection();
+    for (const row of wrapper.findAll(".list .row")) {
+      expect(linkButtons(row)).toHaveLength(0);
+    }
+  });
+
+  it("shows a button for every switched on agent when none has the skill", async () => {
+    const orphan = { name: "orphan", description: "", level: "user", origin: null, path: "/x", agents: [] };
+    const { wrapper } = await mountSection({ skills_list: [orphan] });
+    const labels = linkButtons(wrapper.get(".list .row")).map((button) => button.text());
+    expect(labels).toEqual(["Add link for Claude Code", "Add link for Codex"]);
+  });
+
+  it("adds the link at the level of the skill, reloads the list, and says it in a notification", async () => {
+    const { wrapper } = await mountSection();
+    const session = await import("../../stores/session");
+    let linked = false;
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "skills_link_agent") {
+        linked = true;
+        return undefined;
+      }
+      if (command === "skills_list") {
+        return INSTALLED.map((skill) => (linked && skill.name === "release-notes" ? { ...skill, agents: ["claude", "codex"] } : skill));
+      }
+      return [];
+    });
+    await linkButtons(wrapper.findAll(".list .row")[1])[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_link_agent", {
+      level: "workspace",
+      cwd: "/work/heidrun",
+      name: "release-notes",
+      agent: "claude",
+    });
+    expect(linkButtons(wrapper.findAll(".list .row")[1])).toHaveLength(0);
+    expect(wrapper.findAll(".list .row")[1].get(".sub").text()).toBe("Local · Claude Code · Codex");
+    expect(session.state.toast).toBe("Skill release-notes linked for Claude Code");
+  });
+
+  it("shows a spinner while the link is added, and shows the error when it fails", async () => {
+    const { wrapper } = await mountSection();
+    const session = await import("../../stores/session");
+    let fail: (error: string) => void = () => {};
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "skills_link_agent") {
+        return new Promise((_resolve, reject) => {
+          fail = reject;
+        });
+      }
+      return command === "skills_list" ? INSTALLED : [];
+    });
+    const button = linkButtons(wrapper.findAll(".list .row")[1])[0];
+    await button.trigger("click");
+    expect(button.find(".spinner").exists()).toBe(true);
+    expect(button.attributes("disabled")).toBeDefined();
+    fail("skills_already_linked: release-notes");
+    await flushPromises();
+    expect(button.find(".spinner").exists()).toBe(false);
+    expect(session.state.toast).toBe("The skill release-notes is already in the folder of this agent");
+    expect(session.state.toastKind).toBe("error");
   });
 });
 

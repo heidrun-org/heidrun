@@ -735,6 +735,31 @@ fn link_agents(level: &str, cwd: Option<&str>, name: &str, target: &Path, agents
     Ok(())
 }
 
+/// Adds, in the skills folder of `agent`, a link to the real folder of an installed skill. It never replaces a real
+/// folder or a link that is already there.
+fn link_installed_skill(level: &str, cwd: Option<&str>, name: &str, agent: &str) -> Result<(), String> {
+    if AGENTS.contains(&agent) == false {
+        return Err(format!("skills_unknown_agent: {agent}"));
+    }
+    let locations = skill_locations(level, cwd, name)?;
+    if locations.iter().any(|location| location.agent == agent) {
+        return Err(format!("skills_already_linked: {name}"));
+    }
+    let Some(real) = locations.iter().find(|location| location.is_link == false && location.path.join("SKILL.md").is_file()) else {
+        return Err(format!("skills_not_installed: {name}"));
+    };
+    let folder = skills_dir(agent, level, cwd)?;
+    std::fs::create_dir_all(&folder).map_err(|e| format!("skills_install_failed: {e}"))?;
+    let link = folder.join(name);
+    make_link(&relative_link_target(&link, &real.path), &link)
+}
+
+/// Adds the link of an installed skill for an agent whose skills folder lacks the skill.
+#[tauri::command]
+pub fn skills_link_agent(level: String, cwd: Option<String>, name: String, agent: String) -> Result<(), String> {
+    link_installed_skill(&level, cwd.as_deref(), &name, &agent)
+}
+
 /// Writes the files of the skill into `staging`. When the list of the files of the repository is not available, only
 /// `SKILL.md` is written.
 async fn write_skill(client: &reqwest::Client, source: &str, repository_dir: &str, skill_text: &str, staging: &Path) -> Result<(), String> {
@@ -1065,6 +1090,62 @@ mod tests {
         let summary: Vec<_> = places.iter().map(|p| (p.agent, p.is_link)).collect();
         assert_eq!(summary, [("claude", true), ("codex", false)]);
         assert!(skill_locations("workspace", cwd.as_deref(), "../x").is_err());
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn adds_the_link_of_an_installed_skill_for_an_agent_switched_on_later() {
+        let workspace = temp_folder("link-later");
+        let cwd = cwd_of(&workspace);
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        link_installed_skill("workspace", cwd.as_deref(), "pdf", "claude").unwrap();
+        let link = workspace.join(".claude/skills/pdf");
+        assert_eq!(std::fs::read_link(&link).unwrap(), PathBuf::from("../../.agents/skills/pdf"));
+        assert_eq!(std::fs::read_to_string(link.join("SKILL.md")).unwrap(), "# PDF");
+        assert!(std::fs::symlink_metadata(&real).unwrap().file_type().is_symlink() == false);
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn links_to_the_real_folder_even_when_it_is_in_the_folder_of_another_agent() {
+        let workspace = temp_folder("link-local");
+        let cwd = cwd_of(&workspace);
+        let real = write_skill_folder(&workspace.join(".claude/skills"), "notes", "# Notes");
+        link_installed_skill("workspace", cwd.as_deref(), "notes", "codex").unwrap();
+        let link = workspace.join(".agents/skills/notes");
+        assert_eq!(std::fs::read_link(&link).unwrap(), PathBuf::from("../../.claude/skills/notes"));
+        assert_eq!(std::fs::read_to_string(link.join("SKILL.md")).unwrap(), "# Notes");
+        assert!(real.join("SKILL.md").is_file());
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn never_replaces_a_real_folder_or_a_link_with_a_new_link() {
+        let workspace = temp_folder("link-keep");
+        let cwd = cwd_of(&workspace);
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        let own = write_skill_folder(&workspace.join(".claude/skills"), "pdf", "# Own copy");
+        let result = link_installed_skill("workspace", cwd.as_deref(), "pdf", "claude");
+        assert_eq!(result, Err("skills_already_linked: pdf".into()));
+        assert_eq!(std::fs::read_to_string(own.join("SKILL.md")).unwrap(), "# Own copy");
+        assert!(std::fs::symlink_metadata(&own).unwrap().file_type().is_symlink() == false);
+        std::fs::remove_dir_all(&own).unwrap();
+        link_agents("workspace", cwd.as_deref(), "pdf", &real, &["claude".to_string()]).unwrap();
+        let result = link_installed_skill("workspace", cwd.as_deref(), "pdf", "claude");
+        assert_eq!(result, Err("skills_already_linked: pdf".into()));
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn refuses_a_link_for_a_skill_that_is_not_installed_or_an_unknown_agent() {
+        let workspace = temp_folder("link-refuse");
+        let cwd = cwd_of(&workspace);
+        let result = link_installed_skill("workspace", cwd.as_deref(), "pdf", "claude");
+        assert_eq!(result, Err("skills_not_installed: pdf".into()));
+        write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        let result = link_installed_skill("workspace", cwd.as_deref(), "pdf", "gemini");
+        assert_eq!(result, Err("skills_unknown_agent: gemini".into()));
+        assert!(link_installed_skill("workspace", cwd.as_deref(), "../x", "claude").is_err());
         let _ = std::fs::remove_dir_all(&workspace);
     }
 

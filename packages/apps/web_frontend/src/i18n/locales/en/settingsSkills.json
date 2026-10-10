@@ -30,5 +30,7 @@
   "closeTitle": "Close the window (Escape)",
   "closeLabel": "Close (Escape)",
   "noAgent": "No coding agent is switched on. Switch one on in the section Agents to install skills.",
-  "openAgents": "Open Agents"
+  "openAgents": "Open Agents",
+  "addLink": "Add link for {agent}",
+  "addLinkTitle": "Make this skill available to {agent}, with a link to the real folder"
 }
