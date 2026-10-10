@@ -1,6 +1,6 @@
 # Marketing rules for Heidrun
 
-These rules apply to the public website (`packages/website_public`), to the README, to release notes, and to every text that presents Heidrun to the public.
+These rules apply to the public website (`packages/auxiliary/website_public`), to the README, to release notes, and to every text that presents Heidrun to the public.
 
 ## The motto
 
@@ -14,7 +14,7 @@ The motto is: **"With AI, every developer is THE GOAT!"**
 
 Heiðrún is a goat in Norse mythology. She stands on top of Valhalla and eats the leaves of the tree Læraðr. Mead flows from her udders, and the mead fills a vessel every day. The mead is enough for all the einherjar, the warriors who died in battle. The sources are the *Poetic Edda* and the *Prose Edda*. The full description is on [Wikipedia](https://en.wikipedia.org/wiki/Hei%C3%B0r%C3%BAn).
 
-- Explain this origin on the page About of the website (`packages/website_public/docs/about.md`).
+- Explain this origin on the page About of the website (`packages/auxiliary/website_public/docs/about.md`).
 - Every statement about the mythology must be true to these sources. Do not invent mythology.
 
 ## The jokes
@@ -29,7 +29,7 @@ Keep making jokes about the mythology in every public text: Vikings, Valhalla, m
 ## The splash image
 
 - The splash image is `data/images/heidrun_splash_screen.png`. It shows the goat Heiðrún on top of Valhalla, pouring mead into a cauldron.
-- The website uses a copy of the image in `packages/website_public/docs/public/`.
+- The website uses a copy of the image in `packages/auxiliary/website_public/docs/public/`.
 - Use the splash image on the homepage of the website, below the hero, so the motto stays on one line and Heidrun stays in the center.
 
 ## The name

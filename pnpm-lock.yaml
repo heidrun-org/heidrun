@@ -21,29 +21,13 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/desktop_tauri:
+  packages/apps/desktop_tauri:
     devDependencies:
       '@tauri-apps/cli':
         specifier: ^2.0.0
         version: 2.12.1
 
-  packages/raw_coding_agent_cli:
-    dependencies:
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-      tsx:
-        specifier: ^4.23.15
-        version: 4.23.15
-    devDependencies:
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      vitest:
-        specifier: ^2.1.9
-        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
-
-  packages/web_frontend:
+  packages/apps/web_frontend:
     dependencies:
       '@codemirror/autocomplete':
         specifier: ^6.20.3
@@ -188,7 +172,42 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
-  packages/website_public:
+  packages/auxiliary/change_log_generator:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      raw_coding_agent_cli:
+        specifier: workspace:*
+        version: link:../raw_coding_agent_cli
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
+
+  packages/auxiliary/raw_coding_agent_cli:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
+
+  packages/auxiliary/website_public:
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^5.2.4
@@ -211,25 +230,6 @@ importers:
       vue:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
-
-  scripts/change_log_generator:
-    dependencies:
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-      raw_coding_agent_cli:
-        specifier: workspace:*
-        version: link:../../packages/raw_coding_agent_cli
-      tsx:
-        specifier: ^4.23.15
-        version: 4.23.15
-    devDependencies:
-      '@types/node':
-        specifier: ^26.6.5
-        version: 26.6.5
-      vitest:
-        specifier: ^2.1.9
-        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)
 
 packages:
 

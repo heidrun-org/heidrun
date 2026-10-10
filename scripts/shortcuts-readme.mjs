@@ -1,12 +1,12 @@
-// Writes the shortcut table of packages/website_public/docs/documentation/shortcuts.md from packages/web_frontend/src/lib/shortcuts.json (also shown by ⌘/ in the app)
-// and the English texts of packages/web_frontend/src/i18n/locales/en/shortcuts.json.
+// Writes the shortcut table of packages/auxiliary/website_public/docs/documentation/shortcuts.md from packages/apps/web_frontend/src/lib/shortcuts.json (also shown by ⌘/ in the app)
+// and the English texts of packages/apps/web_frontend/src/i18n/locales/en/shortcuts.json.
 // pnpm docs:shortcuts
 import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
-const groups = JSON.parse(readFileSync(new URL("packages/web_frontend/src/lib/shortcuts.json", root), "utf8"));
+const groups = JSON.parse(readFileSync(new URL("packages/apps/web_frontend/src/lib/shortcuts.json", root), "utf8"));
 // shortcuts.json holds translation keys; the documentation is in English.
-const english = JSON.parse(readFileSync(new URL("packages/web_frontend/src/i18n/locales/en/shortcuts.json", root), "utf8"));
+const english = JSON.parse(readFileSync(new URL("packages/apps/web_frontend/src/i18n/locales/en/shortcuts.json", root), "utf8"));
 const text = (key) => {
   if (english[key] === undefined) {
     console.error(`Missing English text for ${key} in src/i18n/locales/en/shortcuts.json`);
@@ -20,7 +20,7 @@ const END = "<!-- shortcuts:end -->";
 
 const table = [
   START,
-  "<!-- Generated from packages/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->",
+  "<!-- Generated from packages/apps/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->",
   "",
   "| Shortcut | Action |",
   "| --- | --- |",
@@ -35,7 +35,7 @@ const table = [
   END,
 ].join("\n");
 
-const path = new URL("packages/website_public/docs/documentation/shortcuts.md", root);
+const path = new URL("packages/auxiliary/website_public/docs/documentation/shortcuts.md", root);
 const readme = readFileSync(path, "utf8");
 const a = readme.indexOf(START);
 const b = readme.indexOf(END);
