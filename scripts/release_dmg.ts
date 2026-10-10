@@ -31,7 +31,8 @@ class ReleaseDmg {
 			.name('pnpm release:dmg')
 			.description(
 				'Builds the macOS disk image of Heidrun and uploads it to the GitHub release of the version in the root '
-					+ 'package.json. The release is created when it does not exist. The text of the release is the file '
+					+ 'package.json. The release is created when it does not exist, and its text is rewritten when it '
+					+ 'exists. The text of the release is the file '
 					+ 'docs/release_notes/prefix.md, then the file of the option --notes-file, then the list of changes '
 					+ 'that GitHub generates.',
 			)
@@ -92,9 +93,20 @@ class ReleaseDmg {
 		});
 		if (releaseView.status === 0) {
 			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...dmgPaths, '--clobber'], rootDir);
-			if (notesPath !== undefined) {
-				ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', bodyPath], rootDir);
+			const generatedNotes = ChildProcess.spawnSync(
+				'gh',
+				['api', 'repos/{owner}/{repo}/releases/generate-notes', '-f', `tag_name=${tagName}`, '--jq', '.body'],
+				{
+					cwd: rootDir,
+					encoding: 'utf8',
+				},
+			);
+			if (generatedNotes.status !== 0) {
+				console.error('The list of changes could not be generated.');
+				process.exit(generatedNotes.status ?? 1);
 			}
+			Fs.appendFileSync(bodyPath, `\n${generatedNotes.stdout.trim()}\n`);
+			ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', bodyPath], rootDir);
 		} else {
 			ReleaseDmg._run(
 				'gh',
