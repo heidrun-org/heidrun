@@ -1,18 +1,19 @@
 # Inputs for code analytics
 
-The card contains information about a piece of work. To understand where that information came from and how the work progressed, connect the card to these three inputs:
+The code reflects a piece of work. To understand where the code came from and how the work progressed, connect it to these three inputs:
 
 1. **Source code and its history** — the code and its changes recorded in Git commits over time.
 2. **GitHub issues, pull requests, and reviews** — how people discussed, proposed, and reviewed changes.
-3. **Agent sessions** — the conversations that took place while generating the card, including the requests and decisions that shaped its contents.
+3. **Agent sessions** — the conversations that took place while producing the code, including the requests and decisions that shaped it.
 
 ## Section Format
 Each source section follows the same format:
 
 - **Title** names the source.
 - **Contains** describes the information or evidence available from that source.
-- **How to use it** explains which parts of the card that evidence can support.
+- **How to use it** explains which statements about the code that evidence can support.
 - **Links to** lists the original records to link so readers can check the evidence.
+- **Relation with other sources** explains how this source supports or adds context to the other sources.
 - **Limits** states what the source cannot establish on its own, to avoid claims that go beyond the evidence.
 
 ## Source code and its history
@@ -28,6 +29,10 @@ Each source section follows the same format:
 **Links to**
 - Relevant files at the recorded version.
 - Commits that changed those files.
+
+**Relation with other sources**
+- GitHub issues and pull requests explain why the code changed; reviews can discuss the implementation.
+- Agent sessions can record how the code was produced and decisions made during the work.
 
 **Limits**
 - Source code can show what changed, but may not explain why.
@@ -45,7 +50,11 @@ Each source section follows the same format:
 
 **Links to**
 - The issue and pull request.
-- Specific comments or reviews that support details in the card.
+- Specific comments or reviews that support statements about the code.
+
+**Relation with other sources**
+- The source code and its history show which parts of the request were implemented and how.
+- Agent sessions can add context about requests, decisions, and checks that may not appear in GitHub discussions.
 
 **Limits**
 - Distinguish proposals from accepted decisions, and reported test results from checked results.
@@ -54,16 +63,20 @@ Each source section follows the same format:
 ## Agent sessions
 
 **Contains**
-- The requests and decisions that shaped the work and the card.
+- The requests and decisions that shaped the work and the code.
 - Which sources the agent examined and what checks or revisions the session recorded.
 
 **How to use it**
-- Explain how the card was prepared and how the request was clarified or changed.
+- Explain how the code was produced and how the request was clarified or changed.
 - Describe checks using the session’s recorded messages and output.
 
 **Links to**
 - The relevant agent session.
 - Specific messages or command results, where available.
+
+**Relation with other sources**
+- Compare the session’s descriptions of changes and checks with the source code and its history.
+- Use GitHub issues, pull requests, and reviews to verify or add context to recorded requests and decisions.
 
 **Limits**
 - A statement in a session is not proof by itself; support claims about completed work with recorded output or source code.
