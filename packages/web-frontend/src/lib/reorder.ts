@@ -66,3 +66,14 @@ export function reorderSubset<T>(list: T[], key: (t: T) => string, visible: stri
   let i = 0;
   return list.map((t) => (visibleSet.has(key(t)) ? byKey.get(order[i++])! : t));
 }
+
+/**
+ * Puts the items of `list` in the order of `saved` (a list of keys). The items whose key is not in `saved` come after,
+ * in their original order, and the keys of `saved` with no item are ignored.
+ */
+export function applyOrder<T>(list: T[], key: (t: T) => string, saved: string[]): T[] {
+  const byKey = new Map(list.map((t) => [key(t), t]));
+  const known = saved.filter((id) => byKey.has(id)).map((id) => byKey.get(id)!);
+  const knownKeys = new Set(known.map(key));
+  return [...known, ...list.filter((t) => !knownKeys.has(key(t)))];
+}

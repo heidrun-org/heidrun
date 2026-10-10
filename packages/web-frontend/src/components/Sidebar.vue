@@ -16,6 +16,7 @@ import {
   tabLabel,
   workspaceLabel,
   workspacePanes,
+  movePaneInView,
   sidebarWorkspaces as workspaces,
 } from "../stores/session";
 import { statusLabel, agentKind, ago, paneName } from "../lib/format";
@@ -73,6 +74,7 @@ onMounted(() => document.addEventListener("mousedown", closeMenu));
 onBeforeUnmount(() => document.removeEventListener("mousedown", closeMenu));
 
 const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
+const paneReorder = useReorder("y", (id, at) => movePaneInView(id, at));
 
 async function createWorkspace() {
   const path = await openDialog({
@@ -146,7 +148,7 @@ async function createWorkspace() {
         <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
         <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
       </div>
-      <template v-for="p in workspacePanes" :key="p.pane_id">
+      <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
         <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
           <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
           <InlineRename
@@ -160,7 +162,18 @@ async function createWorkspace() {
         <div
           v-else
           class="item small pane-row"
-          :class="{ active: p.pane_id === state.selectedPaneId, menuOpen: menuPaneId === p.pane_id }"
+          :class="{
+            active: p.pane_id === state.selectedPaneId,
+            menuOpen: menuPaneId === p.pane_id,
+            dragging: paneReorder.dragging.value === p.pane_id,
+            'drop-before': paneReorder.gap.value === pi,
+            'drop-after': paneReorder.gap.value === pi + 1 && pi === workspacePanes.length - 1,
+          }"
+          draggable="true"
+          @dragstart="paneReorder.onDragStart($event, p.pane_id)"
+          @dragover="paneReorder.onDragOver($event, pi)"
+          @drop="paneReorder.onDrop($event, workspacePanes.map((x) => x.pane_id))"
+          @dragend="paneReorder.onDragEnd()"
         >
           <button
             class="pane-main"
