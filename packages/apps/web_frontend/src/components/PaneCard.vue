@@ -7,6 +7,7 @@ import InlineRename from "./InlineRename.vue";
 import PromptMenu from "./PromptMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
+import { git } from "../stores/git";
 import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
@@ -47,7 +48,9 @@ const subtitle = computed(() => {
   const p = props.pane;
   if (props.docked) return paneFullName(p);
   if (p.agent) return `${p.agent} · ${p.pane_id}`;
-  return shortPath(shellFolder.value) || p.pane_id;
+  const branch = git.branchByFolder[shellFolder.value];
+  const path = shortPath(shellFolder.value) || p.pane_id;
+  return branch ? `${branch} · ${path}` : path;
 });
 </script>
 

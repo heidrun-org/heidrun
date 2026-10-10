@@ -74,6 +74,17 @@ describe("PaneCard", () => {
     expect(wrapper.get(".sub").text()).toBe("~/webwork/heidrun");
   });
 
+  it("shows the Git branch of the folder before the folder path in the header of a shell pane", async () => {
+    const { git } = await import("../stores/git");
+    git.branchByFolder["/Users/jetienne/webwork/heidrun"] = "dev_jerome";
+    const wrapper = await mountPaneCard({
+      label: null,
+      terminal_title_stripped: LONG_NAME,
+      cwd: "/Users/jetienne/webwork/heidrun",
+    });
+    expect(wrapper.get(".sub").text()).toBe("dev_jerome · ~/webwork/heidrun");
+  });
+
   it("keeps the terminal title as the name of a shell pane while a command runs", async () => {
     const wrapper = await mountPaneCard({
       label: null,
