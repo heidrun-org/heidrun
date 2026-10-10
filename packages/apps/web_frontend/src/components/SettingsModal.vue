@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from "vue";
 import Icon from "./Icon.vue";
+import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
@@ -17,6 +18,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
+  { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
 ];
 
 function close() {
@@ -61,6 +63,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
         <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
         <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
+        <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
       </section>
     </div>
   </div>

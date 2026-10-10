@@ -10,6 +10,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsNotificationsSection.vue`: the notification settings.
 - `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), and the working days.
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
+- `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. A switched on agent means the user has a valid subscription or access for it.
 
 ## Rules
 - A section component shows the content only. The title, the sidebar and the close button belong to `SettingsModal.vue`.
@@ -17,4 +18,5 @@ The content of each section of the Settings window. The Settings window itself i
 - One section component per entry of the sidebar of `SettingsModal.vue`.
 
 ## Background
+- The section Agents comes from [issue 122](https://github.com/heidrun-org/heidrun/issues/122). Every agent starts switched off.
 - The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).
