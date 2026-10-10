@@ -23,6 +23,7 @@ import {
 } from "../stores/project";
 import { state, workspaceLabel } from "../stores/session";
 import { settings } from "../stores/settings";
+import { openNewCustomScriptModal } from "../stores/newCustomScript";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
 
@@ -33,23 +34,12 @@ const error = computed(() => (ws.value ? project.errors[ws.value] : undefined));
 // Load (or reload) the project file whenever the workspace changes.
 watch(ws, (id) => id && loadProject(id), { immediate: true });
 
-const adding = ref(false);
-const label = ref("");
-const command = ref("");
 const renaming = ref<string | null>(null);
 const showAllSuggestions = ref(false);
 
 const visibleSuggestions = computed(() =>
   showAllSuggestions.value ? suggestions.value : suggestions.value.slice(0, 6),
 );
-
-async function submit() {
-  if (!ws.value || !command.value.trim()) return;
-  await addAction(ws.value, label.value, command.value);
-  label.value = "";
-  command.value = "";
-  adding.value = false;
-}
 
 const STATUS_TEXT_KEY = { idle: "", running: "actionsPanel.status.running", finished: "actionsPanel.status.finished" } as const;
 
@@ -69,17 +59,20 @@ function isRestarting(a: Action) {
         <div class="eyebrow">{{ t("actionsPanel.title", { workspace: workspaceLabel(ws) }) }}</div>
       </div>
 
-      <button
-        class="section-head"
-        :aria-expanded="!settings.scriptsCustomFolded"
-        :title="t(settings.scriptsCustomFolded ? 'actionsPanel.unfoldSection' : 'actionsPanel.foldSection', { section: t('actionsPanel.customScripts') })"
-        @click="settings.scriptsCustomFolded = !settings.scriptsCustomFolded"
-      >
-        <Icon :name="settings.scriptsCustomFolded ? 'chevron-right' : 'chevron-down'" />
-        <span class="eyebrow">{{ t("actionsPanel.customScripts") }}</span>
-      </button>
+      <div class="section-row">
+        <button
+          class="section-head"
+          :aria-expanded="!settings.scriptsCustomFolded"
+          :title="t(settings.scriptsCustomFolded ? 'actionsPanel.unfoldSection' : 'actionsPanel.foldSection', { section: t('actionsPanel.customScripts') })"
+          @click="settings.scriptsCustomFolded = !settings.scriptsCustomFolded"
+        >
+          <Icon :name="settings.scriptsCustomFolded ? 'chevron-right' : 'chevron-down'" />
+          <span class="eyebrow">{{ t("actionsPanel.customScripts") }}</span>
+        </button>
+        <button class="tool create" :aria-label="t('actionsPanel.createTitle')" :title="t('actionsPanel.createTitle')" @click="openNewCustomScriptModal()">+</button>
+      </div>
       <template v-if="!settings.scriptsCustomFolded">
-        <div v-if="!p.config.actions.length && !adding" class="empty">
+        <div v-if="p.config.actions.length === 0" class="empty">
           {{ t("actionsPanel.empty") }}
         </div>
 
@@ -114,18 +107,6 @@ function isRestarting(a: Action) {
             <ConfirmButton icon="x-lg" :confirm-label="t('actionsPanel.removeConfirm')" :question="t('actionsPanel.removeAction', { action: a.label })" @confirm="removeAction(ws, a.id)" />
           </div>
         </div>
-
-        <form v-if="adding" class="add" @submit.prevent="submit">
-          <label class="sr" for="act-cmd">{{ t("actionsPanel.command") }}</label>
-          <input id="act-cmd" v-model="command" class="mono" placeholder="make dev" autofocus spellcheck="false" />
-          <label class="sr" for="act-label">{{ t("actionsPanel.nameOptional") }}</label>
-          <input id="act-label" v-model="label" :placeholder="t('actionsPanel.nameOptional')" spellcheck="false" />
-          <div class="row">
-            <button :title="t('actionsPanel.cancelTitle')" class="btn" type="button" @click="adding = false">{{ t("actionsPanel.cancel") }}</button>
-            <button :title="t('actionsPanel.addTitle')" class="btn primary" type="submit">{{ t("actionsPanel.add") }}</button>
-          </div>
-        </form>
-        <button :title="t('actionsPanel.addNewTitle')" v-else class="btn dashed" @click="adding = true">{{ t("actionsPanel.addNew") }}</button>
       </template>
 
       <template v-if="recentRuns.length">
@@ -203,13 +184,7 @@ function isRestarting(a: Action) {
   font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .tool:hover { background: var(--hover); color: var(--text); }
-.add { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: var(--field); }
-.add input {
-  height: 32px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--bg);
-  outline: none; font-size: var(--font-size);
-}
-.row { display: flex; justify-content: flex-end; gap: 6px; }
-.dashed { border-style: dashed; justify-content: center; height: 34px; }
+.section-row { display: flex; align-items: center; justify-content: space-between; }
 .section-head {
   align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; border: none; background: none;
   padding: 2px 0; color: var(--muted);
@@ -227,7 +202,6 @@ function isRestarting(a: Action) {
 .link { align-self: flex-start; border: none; background: none; color: var(--muted); font-size: var(--font-size); padding: 4px 10px; }
 .link:hover { color: var(--text); }
 .err { color: var(--fail); font-size: var(--font-size); }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .tool.spin { animation: spin 1s linear infinite; opacity: 0.7; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>

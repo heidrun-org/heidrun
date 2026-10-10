@@ -90,4 +90,39 @@ describe("ActionsPanel", () => {
     await wrapper.findAll(".section-head")[1].trigger("click");
     expect(wrapper.text()).toContain("pnpm install");
   });
+
+  it("has a plus button on the line of the heading Custom Scripts, after the heading", async () => {
+    const wrapper = await mountPanel();
+    const row = wrapper.get(".section-row");
+    const children = Array.from(row.element.children);
+    expect(children).toHaveLength(2);
+    expect(children[0].classList.contains("section-head")).toBe(true);
+    const plus = wrapper.get(".section-row .create");
+    expect(children[1]).toBe(plus.element);
+    expect(plus.text()).toBe("+");
+    expect(plus.attributes("title")).toBe("Create a custom script");
+    expect(plus.attributes("aria-label")).toBe("Create a custom script");
+  });
+
+  it("opens the window Create a custom script when the person clicks the plus button", async () => {
+    const wrapper = await mountPanel();
+    const { newCustomScriptModal } = await import("../stores/newCustomScript");
+    expect(newCustomScriptModal.open).toBe(false);
+    await wrapper.get(".section-row .create").trigger("click");
+    expect(newCustomScriptModal.open).toBe(true);
+  });
+
+  it("keeps the plus button when the section Custom Scripts is folded", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".section-head")[0].trigger("click");
+    expect(wrapper.find(".section-row .create").exists()).toBe(true);
+  });
+
+  it("has no dashed button and no form inside the tab: the window replaces them", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.text()).not.toContain("Add a script");
+    expect(wrapper.find(".dashed").exists()).toBe(false);
+    expect(wrapper.find("form").exists()).toBe(false);
+    expect(wrapper.find("input").exists()).toBe(false);
+  });
 });
