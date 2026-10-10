@@ -20,7 +20,6 @@ import { t } from "../i18n/index";
     >
       <Icon name="layout-sidebar" />
     </button>
-    <div class="brand" data-tauri-drag-region>Heidrun</div>
     <div class="search-wrap" data-tauri-drag-region>
       <button :title="t('topBar.searchTitle')" class="search" @click="state.paletteOpen = true">
         <span>{{ t("topBar.searchPlaceholder") }}</span><kbd>⌘K</kbd>
@@ -48,7 +47,6 @@ import { t } from "../i18n/index";
   height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
   padding: 0 16px 0 84px; border-bottom: 1px solid var(--line); background: var(--bar);
 }
-.brand { font-weight: 600; font-size: var(--font-size); letter-spacing: 0.2px; white-space: nowrap; }
 .search-wrap { flex: 1; display: flex; justify-content: center; min-width: 120px; }
 .search {
   width: min(420px, 100%); height: 30px; display: flex; align-items: center; justify-content: space-between;
