@@ -3,7 +3,7 @@ import { z } from "zod";
 // Schema of the project configuration file `.heidrun/config.json`, at the root of the repository.
 // Every object is strict: an unknown field is a typo, and the file is rejected with its path.
 
-/** A command of the Actions tab. */
+/** A custom script of the tab Scripts. It is stored under the key `actions`, which keeps older files valid. */
 export const actionSchema = z.strictObject({
   id: z.string().min(1),
   label: z.string().min(1),

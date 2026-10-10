@@ -19,7 +19,7 @@ describe("RightPanel", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".tabs").attributes("role")).toBe("tablist");
     expect(wrapper.findAll(".tabs button").map((tab) => tab.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
-    expect(wrapper.findAll(".tabs button").map((tab) => tab.text())).toEqual(["Pane", "Actions", "Git", "Notes"]);
+    expect(wrapper.findAll(".tabs button").map((tab) => tab.text())).toEqual(["Pane", "Scripts", "Git", "Notes"]);
   });
 
   it("marks only the selected tab as active", async () => {
