@@ -31,6 +31,11 @@ function onSearchInput(event: Event) {
   searchTimer = window.setTimeout(() => searchSkills(query), SEARCH_DELAY_MS);
 }
 
+/** True while the installation or the deletion of the skill with this key runs. */
+function isBusy(key: string): boolean {
+  return skills.busyKey === key;
+}
+
 /** The origin of an installed skill, then the names of the agents that have it. */
 function detailLabel(skill: InstalledSkill): string {
   return [originLabel(skill), ...agentNames(skill)].join(" · ");
@@ -87,8 +92,11 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
             <div class="sub">{{ detailLabel(skill) }}</div>
           </div>
           <span class="place">{{ placeLabel(skill) }}</span>
-          <button class="btn" @click="inspectInstalled(skill)">{{ t("settingsSkills.inspect") }}</button>
-          <button class="btn danger" :disabled="skills.busyKey === installedKey(skill)" @click="deleteSkill(skill)">{{ t("settingsSkills.delete") }}</button>
+          <button class="btn" @click="inspectInstalled(skill)"><Icon name="eye" /> {{ t("settingsSkills.inspect") }}</button>
+          <button class="btn danger" :disabled="isBusy(installedKey(skill))" :aria-busy="isBusy(installedKey(skill))" @click="deleteSkill(skill)">
+            <span v-if="isBusy(installedKey(skill))" class="spinner" aria-hidden="true"></span><Icon v-else name="trash" />
+            {{ t("settingsSkills.delete") }}
+          </button>
         </div>
       </div>
     </template>
@@ -115,15 +123,19 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
             <div class="name">{{ result.name }}</div>
             <div class="sub">{{ result.source }} · {{ t("settingsSkills.installs", { total: result.installs.toLocaleString() }) }}</div>
           </div>
-          <button class="btn" @click="inspectResult(result)">{{ t("settingsSkills.inspect") }}</button>
+          <button class="btn" @click="inspectResult(result)"><Icon name="eye" /> {{ t("settingsSkills.inspect") }}</button>
           <span v-if="isInstalledAtLevel(result)" class="place">{{ t("settingsSkills.installed") }}</span>
           <button
             v-else
             class="btn"
-            :disabled="skills.busyKey === resultKey(result)"
+            :disabled="isBusy(resultKey(result))"
+            :aria-busy="isBusy(resultKey(result))"
             :title="t(settings.skillsLevel === 'workspace' ? 'settingsSkills.installTitleWorkspace' : 'settingsSkills.installTitleUser')"
             @click="installSkill(result)"
-          >{{ t("settingsSkills.install") }}</button>
+          >
+            <span v-if="isBusy(resultKey(result))" class="spinner" aria-hidden="true"></span><Icon v-else name="download" />
+            {{ t("settingsSkills.install") }}
+          </button>
         </div>
       </div>
     </template>
@@ -145,7 +157,15 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
 .name { font-size: var(--font-size); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sub { font-size: var(--font-size); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .place { flex-shrink: 0; padding: 2px 8px; border-radius: 6px; background: var(--field); color: var(--text-2); font-size: var(--font-size); }
+.btn:disabled { opacity: 0.7; cursor: default; }
 .btn.danger { color: var(--fail); }
+.btn.danger:hover:not(:disabled) { background: #a83a36; border-color: transparent; color: #fff; }
+.spinner {
+  display: inline-block; width: 1em; height: 1em; flex-shrink: 0; box-sizing: border-box;
+  border: 0.15em solid currentcolor; border-right-color: transparent; border-radius: 50%;
+  animation: spinner 0.75s linear infinite;
+}
+@keyframes spinner { to { transform: rotate(360deg); } }
 .search { height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); font-size: var(--font-size); }
 .err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: var(--font-size); }
 </style>

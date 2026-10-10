@@ -303,3 +303,81 @@ describe("errorText", () => {
     expect(errorText("something_else: boom")).toBe("something_else: boom");
   });
 });
+
+describe("SettingsSkillsSection: icons and spinner", () => {
+  const RESULT = { source: "anthropics/skills", skillId: "docx", name: "docx", installs: 198891 };
+
+  /** A command of the backend that stays pending until `finish` is called. */
+  function pending() {
+    let finish: (value: unknown) => void = () => {};
+    const promise = new Promise((resolve) => {
+      finish = resolve;
+    });
+    return { promise, finish };
+  }
+
+  it("shows an icon before the text of each button", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await skills.searchSkills("docx");
+    await flushPromises();
+    const installed = wrapper.findAll(".list")[0].get(".row").findAll("button");
+    expect(installed[0].find(".bi-eye").exists()).toBe(true);
+    expect(installed[1].find(".bi-trash").exists()).toBe(true);
+    const found = wrapper.findAll(".list")[1].get(".row").findAll("button");
+    expect(found[0].find(".bi-eye").exists()).toBe(true);
+    expect(found[1].find(".bi-download").exists()).toBe(true);
+  });
+
+  it("shows a spinner in the button Install while the installation runs, and removes it at the notification", async () => {
+    const install = pending();
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT], skills_install: install.promise });
+    await skills.searchSkills("docx");
+    await flushPromises();
+    const button = () => wrapper.findAll(".list")[1].get(".row").findAll("button")[1];
+    expect(button().find(".spinner").exists()).toBe(false);
+    await button().trigger("click");
+    expect(button().find(".spinner").exists()).toBe(true);
+    expect(button().find(".bi-download").exists()).toBe(false);
+    expect(button().attributes("aria-busy")).toBe("true");
+    expect(button().attributes("disabled")).toBeDefined();
+    install.finish({});
+    await flushPromises();
+    const session = await import("../../stores/session");
+    expect(session.state.toast).toBe("Skill docx installed");
+    expect(wrapper.find(".spinner").exists()).toBe(false);
+  });
+
+  it("shows a spinner in the button Delete while the deletion runs, and removes it at the notification", async () => {
+    const deletion = pending();
+    const { wrapper } = await mountSection({ skills_delete: deletion.promise });
+    const confirm = await import("../../stores/confirm");
+    const button = () => wrapper.findAll(".list")[0].get(".row").get(".danger");
+    await button().trigger("click");
+    confirm.answerConfirm(true);
+    await flushPromises();
+    expect(button().find(".spinner").exists()).toBe(true);
+    expect(button().find(".bi-trash").exists()).toBe(false);
+    deletion.finish(undefined);
+    await flushPromises();
+    const session = await import("../../stores/session");
+    expect(session.state.toast).toBe("Skill pdf moved to the Trash");
+    expect(wrapper.find(".spinner").exists()).toBe(false);
+  });
+
+  it("removes the spinner when the installation fails", async () => {
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "skills_install") {
+        throw "skills_download_failed: timeout";
+      }
+      return command === "skills_search" ? [RESULT] : INSTALLED;
+    });
+    await skills.searchSkills("docx");
+    await flushPromises();
+    await wrapper.findAll(".list")[1].get(".row").findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".spinner").exists()).toBe(false);
+    const session = await import("../../stores/session");
+    expect(session.state.toastKind).toBe("error");
+  });
+});
