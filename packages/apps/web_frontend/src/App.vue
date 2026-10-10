@@ -56,6 +56,7 @@ import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
 import { startAlerts } from "./stores/alerts";
+import { startStatusItem } from "./stores/statusItem";
 // Records Claude spend by workspace from the start, right panel open or not.
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
@@ -207,6 +208,7 @@ onMounted(async () => {
   startProjects();
   startGit();
   startAlerts();
+  startStatusItem();
   loadHistory();
   startMobile();
   loadClaudeLink();
