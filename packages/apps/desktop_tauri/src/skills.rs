@@ -1,9 +1,20 @@
-//! Manages the skills (the folders with a `SKILL.md` file) that Claude Code reads.
+//! Manages the skills (the folders with a `SKILL.md` file) that the coding agents read.
 //!
-//! A skill lives in `<folder>/.claude/skills/<name>/SKILL.md`, at the workspace level (the folder of the
-//! workspace) or at the user level (the Claude configuration folder). The search goes to skills.sh. The text and the
-//! files of a skill come from its GitHub repository. Next to every skill installed from skills.sh, Heidrun writes the
-//! file `.heidrun_origin.json`, which records where the skill comes from.
+//! Each coding agent reads its skills from its own folder, at the workspace level (the folder of the workspace) or at
+//! the user level (the home folder of the user):
+//!
+//! | Agent       | Workspace folder  | User folder                                      |
+//! |-------------|-------------------|--------------------------------------------------|
+//! | Claude Code | `.claude/skills/` | `skills/` of the Claude configuration folder     |
+//! | Codex       | `.agents/skills/` | `~/.agents/skills/`                              |
+//!
+//! The real files of an installed skill are in the folder of Codex. For every other agent that the user switched on,
+//! Heidrun adds a link (a symbolic link) in the folder of that agent, so the files cannot become different from each
+//! other. The search goes to skills.sh. The text and the files of a skill come from its GitHub repository. Next to
+//! every skill installed from skills.sh, Heidrun writes the file `.heidrun_origin.json`, which records where the skill
+//! comes from. The list of the files of each repository and the text of each `SKILL.md` file are kept in the cache
+//! folder `~/Library/Caches/heidrun/skills`, fresh for one hour, and kept for 30 days for the times when GitHub
+//! refuses a call or the network is not available.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -46,8 +57,10 @@ pub struct InstalledSkill {
     pub level: String,
     /// `None` for a skill that Heidrun did not install.
     pub origin: Option<SkillOrigin>,
-    /// The folder of the skill.
+    /// The folder of the skill that holds the real files.
     pub path: String,
+    /// The ids of the agents whose skills folder has the skill, a real folder or a link.
+    pub agents: Vec<String>,
 }
 
 /// A result of the search on skills.sh.
@@ -114,24 +127,82 @@ fn is_valid_name(name: &str) -> bool {
     !name.is_empty() && name != "." && name != ".." && !name.starts_with('.') && name.chars().all(|c| c.is_ascii_alphanumeric() || "-_.".contains(c))
 }
 
-/// The folder that holds the skills of `level`.
-fn skills_dir(level: &str, cwd: Option<&str>) -> Result<PathBuf, String> {
+/// The ids of the coding agents that Heidrun knows: the ids of `lib/agents.ts` of the frontend.
+const AGENTS: [&str; 2] = ["claude", "codex"];
+/// The agent whose skills folder holds the real files. Every other agent gets a link to them.
+const REAL_FILES_AGENT: &str = "codex";
+
+/// The folder of the workspace, or the home folder of the user, under which the folders of the skills are.
+fn level_root(level: &str, cwd: Option<&str>) -> Result<PathBuf, String> {
     match level {
-        "user" => Ok(crate::claude::claude_dir().join("skills")),
+        "user" => Ok(dirs::home_dir().unwrap_or_default()),
         "workspace" => match cwd {
-            Some(cwd) if !cwd.is_empty() => Ok(Path::new(cwd).join(".claude").join("skills")),
+            Some(cwd) if !cwd.is_empty() => Ok(PathBuf::from(cwd)),
             _ => Err("skills_no_workspace_folder".into()),
         },
         _ => Err(format!("skills_unknown_level: {level}")),
     }
 }
 
-/// The folder of one skill, after the check of its name.
-fn skill_dir(level: &str, cwd: Option<&str>, name: &str) -> Result<PathBuf, String> {
+/// The folder where `agent` reads the skills of `level`.
+fn skills_dir(agent: &str, level: &str, cwd: Option<&str>) -> Result<PathBuf, String> {
+    let root = level_root(level, cwd)?;
+    match (agent, level) {
+        ("claude", "user") => Ok(crate::claude::claude_dir().join("skills")),
+        ("claude", _) => Ok(root.join(".claude").join("skills")),
+        ("codex", _) => Ok(root.join(".agents").join("skills")),
+        _ => Err(format!("skills_unknown_agent: {agent}")),
+    }
+}
+
+/// Where a skill is, for one agent.
+#[derive(Debug, PartialEq)]
+struct SkillLocation {
+    agent: &'static str,
+    path: PathBuf,
+    /// True when the path is a link to the real files, false for a real folder.
+    is_link: bool,
+}
+
+/// The places of a skill in the skills folders of all the agents: a real folder, or a link (broken or not).
+fn skill_locations(level: &str, cwd: Option<&str>, name: &str) -> Result<Vec<SkillLocation>, String> {
     if !is_valid_name(name) {
         return Err(format!("skills_invalid_name: {name}"));
     }
-    Ok(skills_dir(level, cwd)?.join(name))
+    let mut locations = Vec::new();
+    for agent in AGENTS {
+        let path = skills_dir(agent, level, cwd)?.join(name);
+        if let Ok(metadata) = std::fs::symlink_metadata(&path) {
+            locations.push(SkillLocation { agent, path, is_link: metadata.file_type().is_symlink() });
+        }
+    }
+    Ok(locations)
+}
+
+/// The path to write in the link `link` so that it leads to `target`: relative, so the link stays right when the
+/// workspace folder moves. `../../.agents/skills/pdf` for the link `.claude/skills/pdf`.
+fn relative_link_target(link: &Path, target: &Path) -> PathBuf {
+    let from: Vec<_> = link.parent().unwrap_or(Path::new("")).components().collect();
+    let to: Vec<_> = target.components().collect();
+    let common = from.iter().zip(to.iter()).take_while(|(a, b)| a == b).count();
+    let mut result = PathBuf::new();
+    for _ in common..from.len() {
+        result.push("..");
+    }
+    for component in &to[common..] {
+        result.push(component.as_os_str());
+    }
+    result
+}
+
+#[cfg(unix)]
+fn make_link(target: &Path, link: &Path) -> Result<(), String> {
+    std::os::unix::fs::symlink(target, link).map_err(|e| format!("skills_install_failed: {e}"))
+}
+
+#[cfg(not(unix))]
+fn make_link(_target: &Path, _link: &Path) -> Result<(), String> {
+    Err("skills_install_failed: links are not supported on this system".into())
 }
 
 /// The path of `full` inside `dir`, or `None` when the path goes out of `dir` or holds a `..` part.
@@ -206,23 +277,80 @@ fn write_entry(folder: &Path, source: &str, entry: &FileListEntry) {
     if let Ok(text) = serde_json::to_string(entry) {
         let _ = std::fs::write(cache_file(folder, source), text);
     }
+    prune_old(folder);
+}
+
+/// Deletes the `.json` files of a cache folder whose `fetched_at` is older than `FILE_LIST_KEPT`, or unreadable.
+fn prune_old(folder: &Path) {
     let Ok(entries) = std::fs::read_dir(folder) else {
         return;
     };
     for file in entries.flatten() {
-        let is_old = std::fs::read_to_string(file.path())
+        if file.path().extension().is_some_and(|extension| extension == "json") == false {
+            continue;
+        }
+        let fetched_at = std::fs::read_to_string(file.path())
             .ok()
-            .and_then(|text| serde_json::from_str::<FileListEntry>(&text).ok())
-            .map_or(true, |other| now_seconds().saturating_sub(other.fetched_at) > FILE_LIST_KEPT.as_secs());
-        if is_old && file.path().extension().is_some_and(|extension| extension == "json") {
+            .and_then(|text| serde_json::from_str::<serde_json::Value>(&text).ok())
+            .and_then(|value| value.get("fetched_at").and_then(|moment| moment.as_u64()));
+        if fetched_at.map_or(true, |moment| now_seconds().saturating_sub(moment) > FILE_LIST_KEPT.as_secs()) {
             let _ = std::fs::remove_file(file.path());
         }
     }
 }
 
+/// True when a moment (seconds since 1970) is not older than `max_age`; with no `max_age`, any moment is good.
+fn is_recent(fetched_at: u64, max_age: Option<Duration>) -> bool {
+    max_age.map_or(true, |age| now_seconds().saturating_sub(fetched_at) <= age.as_secs())
+}
+
 /// True when the entry is not older than `max_age`; with no `max_age`, any entry is good.
 fn is_fresh(entry: &FileListEntry, max_age: Option<Duration>) -> bool {
-    max_age.map_or(true, |age| now_seconds().saturating_sub(entry.fetched_at) <= age.as_secs())
+    is_recent(entry.fetched_at, max_age)
+}
+
+/// The text of the `SKILL.md` file of a skill, as kept in a file of the cache folder `texts`.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+struct SkillTextEntry {
+    /// When the text was downloaded, in seconds since 1970.
+    fetched_at: u64,
+    /// The folder of the skill in its repository.
+    dir: String,
+    /// The text of the `SKILL.md` file.
+    text: String,
+}
+
+/// The folder of the cache for the `SKILL.md` texts.
+fn text_cache_folder() -> PathBuf {
+    cache_folder().join("texts")
+}
+
+/// The file of the cache for a skill: `owner~repository~skill.json`. The character `~` cannot be in a name.
+fn text_cache_file(folder: &Path, source: &str, skill_id: &str) -> PathBuf {
+    folder.join(format!("{}~{skill_id}.json", source.replace('/', "~")))
+}
+
+fn read_text_entry(folder: &Path, source: &str, skill_id: &str) -> Option<SkillTextEntry> {
+    serde_json::from_str(&std::fs::read_to_string(text_cache_file(folder, source, skill_id)).ok()?).ok()
+}
+
+/// Writes the text of a skill, and deletes the files of the folder that are older than `FILE_LIST_KEPT`.
+fn write_text_entry(folder: &Path, source: &str, skill_id: &str, entry: &SkillTextEntry) {
+    if std::fs::create_dir_all(folder).is_err() {
+        return;
+    }
+    if let Ok(text) = serde_json::to_string(entry) {
+        let _ = std::fs::write(text_cache_file(folder, source, skill_id), text);
+    }
+    prune_old(folder);
+}
+
+/// The answer when the network failed: the kept text, unless the skill is really gone from its repository.
+fn fallback_to_cached_text(error: String, cached: Option<SkillTextEntry>) -> Result<(String, String), String> {
+    match cached {
+        Some(entry) if error.starts_with("skills_not_found") == false => Ok((entry.dir, entry.text)),
+        _ => Err(error),
+    }
 }
 
 /// The lists of the files of the repositories already asked, in memory, in front of the cache folder.
@@ -290,57 +418,83 @@ fn read_origin(dir: &Path) -> Option<SkillOrigin> {
     serde_json::from_str(&text).ok()
 }
 
-/// The skills in `dir`, sorted by name: every sub-folder that holds a `SKILL.md` file.
-fn list_level(level: &str, dir: &Path) -> Vec<InstalledSkill> {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return Vec::new();
-    };
-    let mut skills: Vec<InstalledSkill> = entries
-        .flatten()
-        .filter_map(|entry| {
-            let path = entry.path();
-            let text = std::fs::read_to_string(path.join("SKILL.md")).ok()?;
+/// The skills of `level`, sorted by name. A skill that is in the folders of several agents is listed once.
+fn list_level(level: &str, cwd: Option<&str>) -> Vec<InstalledSkill> {
+    // name → the agents that have the skill, and the folder with the real files (or else any folder of the skill)
+    let mut found: std::collections::BTreeMap<String, (Vec<String>, PathBuf, bool)> = std::collections::BTreeMap::new();
+    for agent in AGENTS {
+        let Ok(dir) = skills_dir(agent, level, cwd) else {
+            continue;
+        };
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
+            let path = entry.path();
+            if is_valid_name(&name) == false || path.join("SKILL.md").is_file() == false {
+                continue;
+            }
+            let is_real = std::fs::symlink_metadata(&path).map(|m| m.file_type().is_symlink() == false).unwrap_or(false);
+            let slot = found.entry(name).or_insert_with(|| (Vec::new(), path.clone(), is_real));
+            slot.0.push(agent.to_string());
+            if is_real && slot.2 == false {
+                slot.1 = path;
+                slot.2 = true;
+            }
+        }
+    }
+    found
+        .into_iter()
+        .filter_map(|(name, (agents, path, _))| {
+            let text = std::fs::read_to_string(path.join("SKILL.md")).ok()?;
             Some(InstalledSkill {
                 description: parse_description(&text),
                 level: level.into(),
                 origin: read_origin(&path),
                 path: path.display().to_string(),
+                agents,
                 name,
             })
         })
-        .collect();
-    skills.sort_by(|a, b| a.name.cmp(&b.name));
-    skills
+        .collect()
 }
 
 /// The skills of the workspace folder, then the skills of the user.
 #[tauri::command]
 pub fn skills_list(cwd: Option<String>) -> Vec<InstalledSkill> {
     let mut skills = Vec::new();
-    if let Ok(dir) = skills_dir("workspace", cwd.as_deref()) {
-        skills.extend(list_level("workspace", &dir));
+    if cwd.as_deref().is_some_and(|folder| folder.is_empty() == false) {
+        skills.extend(list_level("workspace", cwd.as_deref()));
     }
-    if let Ok(dir) = skills_dir("user", None) {
-        skills.extend(list_level("user", &dir));
-    }
+    skills.extend(list_level("user", None));
     skills
 }
 
 /// The text of the `SKILL.md` file of an installed skill.
 #[tauri::command]
 pub fn skills_read(level: String, cwd: Option<String>, name: String) -> Result<String, String> {
-    let dir = skill_dir(&level, cwd.as_deref(), &name)?;
-    std::fs::read_to_string(dir.join("SKILL.md")).map_err(|e| format!("skills_read_failed: {e}"))
+    for location in skill_locations(&level, cwd.as_deref(), &name)? {
+        if let Ok(text) = std::fs::read_to_string(location.path.join("SKILL.md")) {
+            return Ok(text);
+        }
+    }
+    Err(format!("skills_not_installed: {name}"))
 }
 
-/// Moves an installed skill to the Trash.
-#[tauri::command]
-pub fn skills_delete(level: String, cwd: Option<String>, name: String) -> Result<(), String> {
-    let dir = skill_dir(&level, cwd.as_deref(), &name)?;
-    if !dir.join("SKILL.md").exists() {
-        return Err(format!("skills_not_installed: {name}"));
+/// Deletes the links of a skill, then the real folders with `remove_real`. Gives the number of places removed.
+fn delete_locations(locations: &[SkillLocation], remove_real: &dyn Fn(&Path) -> Result<(), String>) -> Result<usize, String> {
+    for location in locations.iter().filter(|location| location.is_link) {
+        std::fs::remove_file(&location.path).map_err(|e| format!("skills_delete_failed: {e}"))?;
     }
+    for location in locations.iter().filter(|location| location.is_link == false) {
+        remove_real(&location.path)?;
+    }
+    Ok(locations.len())
+}
+
+/// Moves a folder to the Trash, never a permanent delete.
+fn move_to_trash(path: &Path) -> Result<(), String> {
     #[allow(unused_mut)]
     let mut context = trash::TrashContext::default();
     // NSFileManager: no Finder automation prompt, like the file explorer.
@@ -349,7 +503,18 @@ pub fn skills_delete(level: String, cwd: Option<String>, name: String) -> Result
         use trash::macos::{DeleteMethod, TrashContextExtMacos};
         context.set_delete_method(DeleteMethod::NsFileManager);
     }
-    context.delete(&dir).map_err(|e| format!("skills_delete_failed: {e}"))
+    context.delete(path).map_err(|e| format!("skills_delete_failed: {e}"))
+}
+
+/// Deletes an installed skill from the folders of all the agents: the links are removed, the real folder goes to the
+/// Trash.
+#[tauri::command]
+pub fn skills_delete(level: String, cwd: Option<String>, name: String) -> Result<(), String> {
+    let locations = skill_locations(&level, cwd.as_deref(), &name)?;
+    if locations.is_empty() {
+        return Err(format!("skills_not_installed: {name}"));
+    }
+    delete_locations(&locations, &move_to_trash).map(|_| ())
 }
 
 // ---- The network -----------------------------------------------------------------
@@ -444,10 +609,30 @@ async fn fetch_repository_files(client: &reqwest::Client, source: &str) -> Resul
 }
 
 /// Finds the folder of a skill in its repository: the folder and the text of its `SKILL.md` file.
+/// The answer is kept in the cache folder and used for one hour. When the network fails, an older answer is used if
+/// there is one, so a skill can be read without a network.
+async fn find_skill(client: &reqwest::Client, source: &str, skill_id: &str) -> Result<(String, String), String> {
+    let folder = text_cache_folder();
+    let cached = read_text_entry(&folder, source, skill_id);
+    if let Some(entry) = &cached {
+        if is_recent(entry.fetched_at, Some(FILE_LIST_TTL)) {
+            return Ok((entry.dir.clone(), entry.text.clone()));
+        }
+    }
+    match find_skill_online(client, source, skill_id).await {
+        Ok((dir, text)) => {
+            write_text_entry(&folder, source, skill_id, &SkillTextEntry { fetched_at: now_seconds(), dir: dir.clone(), text: text.clone() });
+            Ok((dir, text))
+        }
+        Err(error) => fallback_to_cached_text(error, cached),
+    }
+}
+
+/// Finds the folder of a skill in its repository, on GitHub, with no cache.
 /// The usual folders are tried first, with one download each. When none has the skill, the list of the files of the
 /// repository gives the folder, at any depth (`skills/productivity/grill-me`). The last way is to read the `name` of
 /// the `SKILL.md` files, because the folder of the skill `vercel-react-best-practices` is `react-best-practices`.
-async fn find_skill(client: &reqwest::Client, source: &str, skill_id: &str) -> Result<(String, String), String> {
+async fn find_skill_online(client: &reqwest::Client, source: &str, skill_id: &str) -> Result<(String, String), String> {
     for parent in SKILL_PARENTS {
         let dir = if parent.is_empty() { skill_id.to_string() } else { format!("{parent}/{skill_id}") };
         if let Some(text) = fetch_text(client, source, &format!("{dir}/SKILL.md")).await? {
@@ -485,21 +670,34 @@ pub async fn skills_preview(source: String, skill_id: String) -> Result<String, 
     find_skill(&client, &source, &skill_id).await.map(|(_, text)| text)
 }
 
-/// Installs a skill of skills.sh at `level`: the whole folder of the skill, and the file `.heidrun_origin.json`.
+/// Installs a skill of skills.sh at `level` for the agents `agents`: the whole folder of the skill, with the file
+/// `.heidrun_origin.json`, goes in the skills folder of Codex, and every other agent gets a link to it.
 #[tauri::command]
-pub async fn skills_install(level: String, cwd: Option<String>, source: String, skill_id: String) -> Result<InstalledSkill, String> {
-    if !is_valid_source(&source) {
+pub async fn skills_install(
+    level: String,
+    cwd: Option<String>,
+    source: String,
+    skill_id: String,
+    agents: Vec<String>,
+) -> Result<InstalledSkill, String> {
+    if is_valid_source(&source) == false {
         return Err(format!("skills_invalid_name: {source}"));
     }
-    let target = skill_dir(&level, cwd.as_deref(), &skill_id)?;
-    if target.exists() {
+    if let Some(unknown) = agents.iter().find(|agent| AGENTS.contains(&agent.as_str()) == false) {
+        return Err(format!("skills_unknown_agent: {unknown}"));
+    }
+    if agents.is_empty() {
+        return Err("skills_no_agent".into());
+    }
+    if skill_locations(&level, cwd.as_deref(), &skill_id)?.is_empty() == false {
         return Err(format!("skills_already_installed: {skill_id}"));
     }
+    let skills_folder = skills_dir(REAL_FILES_AGENT, &level, cwd.as_deref())?;
+    let target = skills_folder.join(&skill_id);
     let client = http_client()?;
     let (repository_dir, skill_text) = find_skill(&client, &source, &skill_id).await?;
 
     // The files are written in a hidden folder first, so a failed download leaves no half-installed skill.
-    let skills_folder = skills_dir(&level, cwd.as_deref())?;
     let staging = skills_folder.join(format!(".{skill_id}.installing"));
     let _ = std::fs::remove_dir_all(&staging);
     std::fs::create_dir_all(&staging).map_err(|e| format!("skills_install_failed: {e}"))?;
@@ -512,13 +710,29 @@ pub async fn skills_install(level: String, cwd: Option<String>, source: String, 
     let origin_text = serde_json::to_string_pretty(&origin).map_err(|e| format!("skills_install_failed: {e}"))?;
     std::fs::write(staging.join(ORIGIN_FILE), origin_text).map_err(|e| format!("skills_install_failed: {e}"))?;
     std::fs::rename(&staging, &target).map_err(|e| format!("skills_install_failed: {e}"))?;
-    Ok(InstalledSkill {
-        name: skill_id,
-        description: parse_description(&skill_text),
-        level,
-        origin: Some(origin),
-        path: target.display().to_string(),
-    })
+
+    if let Err(error) = link_agents(&level, cwd.as_deref(), &skill_id, &target, &agents) {
+        // No half-installed skill: the links already made and the real folder are removed.
+        let _ = delete_locations(&skill_locations(&level, cwd.as_deref(), &skill_id).unwrap_or_default(), &|path| {
+            std::fs::remove_dir_all(path).map_err(|e| format!("skills_install_failed: {e}"))
+        });
+        return Err(error);
+    }
+    list_level(&level, cwd.as_deref())
+        .into_iter()
+        .find(|skill| skill.name == skill_id)
+        .ok_or_else(|| format!("skills_install_failed: {skill_id} is not in its folder"))
+}
+
+/// Adds, in the skills folder of every agent of `agents` except the agent of the real files, a link to `target`.
+fn link_agents(level: &str, cwd: Option<&str>, name: &str, target: &Path, agents: &[String]) -> Result<(), String> {
+    for agent in agents.iter().filter(|agent| agent.as_str() != REAL_FILES_AGENT) {
+        let folder = skills_dir(agent, level, cwd)?;
+        std::fs::create_dir_all(&folder).map_err(|e| format!("skills_install_failed: {e}"))?;
+        let link = folder.join(name);
+        make_link(&relative_link_target(&link, target), &link)?;
+    }
+    Ok(())
 }
 
 /// Writes the files of the skill into `staging`. When the list of the files of the repository is not available, only
@@ -669,6 +883,44 @@ mod tests {
         assert!(is_fresh(&old, None));
     }
 
+    fn text_entry(age: u64) -> SkillTextEntry {
+        SkillTextEntry { fetched_at: now_seconds() - age, dir: "skills/pdf".into(), text: "# PDF".into() }
+    }
+
+    #[test]
+    fn writes_and_reads_the_text_of_a_skill_in_the_cache_folder() {
+        let folder = temp_folder("texts");
+        assert_eq!(read_text_entry(&folder, "anthropics/skills", "pdf"), None);
+        let entry = text_entry(0);
+        write_text_entry(&folder, "anthropics/skills", "pdf", &entry);
+        assert!(folder.join("anthropics~skills~pdf.json").exists());
+        assert_eq!(read_text_entry(&folder, "anthropics/skills", "pdf"), Some(entry));
+        assert_eq!(read_text_entry(&folder, "anthropics/skills", "docx"), None);
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn deletes_the_texts_older_than_thirty_days_when_it_writes() {
+        let folder = temp_folder("texts-prune");
+        let day = 24 * 3600;
+        write_text_entry(&folder, "a/b", "old", &text_entry(31 * day));
+        write_text_entry(&folder, "a/b", "recent", &text_entry(29 * day));
+        write_text_entry(&folder, "a/b", "new", &text_entry(0));
+        assert!(folder.join("a~b~old.json").exists() == false);
+        assert!(folder.join("a~b~recent.json").exists());
+        assert!(folder.join("a~b~new.json").exists());
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn uses_the_kept_text_when_the_network_fails_but_not_when_the_skill_is_gone() {
+        let kept = Some(text_entry(7200));
+        assert_eq!(fallback_to_cached_text("skills_github_rate_limit".into(), kept.clone()), Ok(("skills/pdf".into(), "# PDF".into())));
+        assert_eq!(fallback_to_cached_text("skills_download_failed: timeout".into(), kept.clone()), Ok(("skills/pdf".into(), "# PDF".into())));
+        assert_eq!(fallback_to_cached_text("skills_not_found: a/b pdf".into(), kept), Err("skills_not_found: a/b pdf".into()));
+        assert_eq!(fallback_to_cached_text("skills_download_failed: timeout".into(), None), Err("skills_download_failed: timeout".into()));
+    }
+
     #[test]
     fn deletes_the_lists_older_than_thirty_days_when_it_writes() {
         let folder = temp_folder("prune");
@@ -726,30 +978,132 @@ mod tests {
         assert_eq!(parse_description("# no frontmatter"), "");
     }
 
+    /// Writes a skill folder with a `SKILL.md` file at `dir/name`.
+    fn write_skill_folder(dir: &Path, name: &str, text: &str) -> PathBuf {
+        let folder = dir.join(name);
+        std::fs::create_dir_all(&folder).unwrap();
+        std::fs::write(folder.join("SKILL.md"), text).unwrap();
+        folder
+    }
+
+    fn cwd_of(dir: &Path) -> Option<String> {
+        Some(dir.display().to_string())
+    }
+
     #[test]
     fn lists_the_skills_with_their_origin() {
-        let dir = temp_folder("list");
-        std::fs::create_dir_all(dir.join("pdf")).unwrap();
-        std::fs::write(dir.join("pdf/SKILL.md"), "---\ndescription: Read PDF files.\n---\n").unwrap();
-        std::fs::write(dir.join("pdf").join(ORIGIN_FILE), r#"{"source":"anthropics/skills","skill_id":"pdf"}"#).unwrap();
-        std::fs::create_dir_all(dir.join("release-notes")).unwrap();
-        std::fs::write(dir.join("release-notes/SKILL.md"), "# Release notes").unwrap();
-        std::fs::create_dir_all(dir.join("not-a-skill")).unwrap();
-        let skills = list_level("user", &dir);
+        let workspace = temp_folder("list");
+        let folder = workspace.join(".agents/skills");
+        let pdf = write_skill_folder(&folder, "pdf", "---\ndescription: Read PDF files.\n---\n");
+        std::fs::write(pdf.join(ORIGIN_FILE), r#"{"source":"anthropics/skills","skill_id":"pdf"}"#).unwrap();
+        write_skill_folder(&folder, "release-notes", "# Release notes");
+        std::fs::create_dir_all(folder.join("not-a-skill")).unwrap();
+        let skills = list_level("workspace", cwd_of(&workspace).as_deref());
         let names: Vec<_> = skills.iter().map(|s| s.name.as_str()).collect();
         assert_eq!(names, ["pdf", "release-notes"]);
         assert_eq!(skills[0].origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into() }));
         assert_eq!(skills[0].description, "Read PDF files.");
+        assert_eq!(skills[0].agents, ["codex"]);
         assert_eq!(skills[1].origin, None);
-        assert_eq!(skills[1].level, "user");
-        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(skills[1].level, "workspace");
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn lists_a_skill_of_several_agents_once() {
+        let workspace = temp_folder("list-once");
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        let claude_folder = workspace.join(".claude/skills");
+        std::fs::create_dir_all(&claude_folder).unwrap();
+        make_link(&relative_link_target(&claude_folder.join("pdf"), &real), &claude_folder.join("pdf")).unwrap();
+        write_skill_folder(&claude_folder, "only-claude", "# Only Claude");
+        let skills = list_level("workspace", cwd_of(&workspace).as_deref());
+        let found: Vec<_> = skills.iter().map(|s| (s.name.as_str(), s.agents.clone())).collect();
+        assert_eq!(found, [("only-claude", vec!["claude".to_string()]), ("pdf", vec!["claude".to_string(), "codex".to_string()])]);
+        let pdf = skills.iter().find(|s| s.name == "pdf").unwrap();
+        assert_eq!(pdf.path, real.display().to_string());
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn writes_the_link_of_an_agent_relative_to_the_real_files() {
+        let link = Path::new("/work/app/.claude/skills/pdf");
+        let target = Path::new("/work/app/.agents/skills/pdf");
+        assert_eq!(relative_link_target(link, target), PathBuf::from("../../.agents/skills/pdf"));
+        let other = Path::new("/home/me/.config/claude/skills/pdf");
+        assert_eq!(relative_link_target(other, Path::new("/home/me/.agents/skills/pdf")), PathBuf::from("../../../.agents/skills/pdf"));
+    }
+
+    #[test]
+    fn links_the_agents_that_are_not_the_agent_of_the_real_files() {
+        let workspace = temp_folder("link");
+        let cwd = cwd_of(&workspace);
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        link_agents("workspace", cwd.as_deref(), "pdf", &real, &["claude".to_string(), "codex".to_string()]).unwrap();
+        let link = workspace.join(".claude/skills/pdf");
+        assert!(std::fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
+        assert_eq!(std::fs::read_to_string(link.join("SKILL.md")).unwrap(), "# PDF");
+        assert_eq!(std::fs::read_link(&link).unwrap(), PathBuf::from("../../.agents/skills/pdf"));
+        // Codex reads the real folder: no link in it.
+        assert!(std::fs::symlink_metadata(&real).unwrap().file_type().is_symlink() == false);
+        // The link is relative: it still works after the workspace folder moves.
+        let moved = temp_folder("link-moved");
+        std::fs::remove_dir_all(&moved).unwrap();
+        std::fs::rename(&workspace, &moved).unwrap();
+        assert_eq!(std::fs::read_to_string(moved.join(".claude/skills/pdf/SKILL.md")).unwrap(), "# PDF");
+        let _ = std::fs::remove_dir_all(&moved);
+    }
+
+    #[test]
+    fn finds_the_places_of_a_skill_and_tells_a_link_from_a_real_folder() {
+        let workspace = temp_folder("places");
+        let cwd = cwd_of(&workspace);
+        assert_eq!(skill_locations("workspace", cwd.as_deref(), "pdf").unwrap(), []);
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        link_agents("workspace", cwd.as_deref(), "pdf", &real, &["claude".to_string()]).unwrap();
+        let places = skill_locations("workspace", cwd.as_deref(), "pdf").unwrap();
+        let summary: Vec<_> = places.iter().map(|p| (p.agent, p.is_link)).collect();
+        assert_eq!(summary, [("claude", true), ("codex", false)]);
+        assert!(skill_locations("workspace", cwd.as_deref(), "../x").is_err());
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn deletes_the_links_and_gives_the_real_folder_to_the_remover() {
+        let workspace = temp_folder("delete");
+        let cwd = cwd_of(&workspace);
+        let real = write_skill_folder(&workspace.join(".agents/skills"), "pdf", "# PDF");
+        link_agents("workspace", cwd.as_deref(), "pdf", &real, &["claude".to_string()]).unwrap();
+        let places = skill_locations("workspace", cwd.as_deref(), "pdf").unwrap();
+        let removed = std::cell::RefCell::new(Vec::new());
+        let count = delete_locations(&places, &|path| {
+            removed.borrow_mut().push(path.to_path_buf());
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(count, 2);
+        assert_eq!(*removed.borrow(), [real.clone()]);
+        // The link is gone; the real folder is the business of the remover (the Trash).
+        assert!(std::fs::symlink_metadata(workspace.join(".claude/skills/pdf")).is_err());
+        assert!(real.join("SKILL.md").exists());
+        let _ = std::fs::remove_dir_all(&workspace);
     }
 
     #[test]
     fn needs_a_folder_for_the_workspace_level() {
-        assert_eq!(skills_dir("workspace", None), Err("skills_no_workspace_folder".into()));
-        assert_eq!(skills_dir("workspace", Some("/work/app")), Ok(PathBuf::from("/work/app/.claude/skills")));
-        assert!(skills_dir("team", None).is_err());
+        assert_eq!(skills_dir("codex", "workspace", None), Err("skills_no_workspace_folder".into()));
+        assert_eq!(skills_dir("codex", "workspace", Some("/work/app")), Ok(PathBuf::from("/work/app/.agents/skills")));
+        assert_eq!(skills_dir("claude", "workspace", Some("/work/app")), Ok(PathBuf::from("/work/app/.claude/skills")));
+        assert!(skills_dir("codex", "team", None).is_err());
+        assert_eq!(skills_dir("cursor", "workspace", Some("/work/app")), Err("skills_unknown_agent: cursor".into()));
+    }
+
+    #[tokio::test]
+    async fn refuses_an_install_for_no_agent_or_an_unknown_agent() {
+        let none = skills_install("workspace".into(), Some("/work/app".into()), "a/b".into(), "x".into(), Vec::new()).await;
+        assert_eq!(none.unwrap_err(), "skills_no_agent");
+        let unknown = skills_install("workspace".into(), Some("/work/app".into()), "a/b".into(), "x".into(), vec!["cursor".into()]).await;
+        assert_eq!(unknown.unwrap_err(), "skills_unknown_agent: cursor");
     }
 
     #[test]
@@ -769,10 +1123,10 @@ mod tests {
         assert!(text.starts_with("---"));
         let workspace = temp_folder("live-nested");
         let cwd = workspace.display().to_string();
-        let installed = skills_install("workspace".into(), Some(cwd), "mattpocock/skills".into(), "grill-me".into()).await.unwrap();
+        let installed = skills_install("workspace".into(), Some(cwd), "mattpocock/skills".into(), "grill-me".into(), vec!["codex".into()]).await.unwrap();
         assert_eq!(installed.name, "grill-me");
-        assert!(workspace.join(".claude/skills/grill-me/SKILL.md").exists());
-        assert!(workspace.join(".claude/skills/grill-me/agents/openai.yaml").exists());
+        assert!(workspace.join(".agents/skills/grill-me/SKILL.md").exists());
+        assert!(workspace.join(".agents/skills/grill-me/agents/openai.yaml").exists());
         let _ = std::fs::remove_dir_all(&workspace);
     }
 
@@ -797,13 +1151,17 @@ mod tests {
         assert!(text.starts_with("---"));
         let workspace = temp_folder("live");
         let cwd = workspace.display().to_string();
-        let installed = skills_install("workspace".into(), Some(cwd.clone()), found.source.clone(), found.skill_id.clone()).await.unwrap();
+        let installed = skills_install("workspace".into(), Some(cwd.clone()), found.source.clone(), found.skill_id.clone(), vec!["claude".into(), "codex".into()]).await.unwrap();
         assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into() }));
-        assert!(workspace.join(".claude/skills/pdf/SKILL.md").exists());
-        assert!(workspace.join(".claude/skills/pdf").join(ORIGIN_FILE).exists());
+        assert!(workspace.join(".agents/skills/pdf/SKILL.md").exists());
+        assert!(workspace.join(".agents/skills/pdf").join(ORIGIN_FILE).exists());
+        let link = workspace.join(".claude/skills/pdf");
+        assert!(std::fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
+        assert!(link.join("SKILL.md").exists());
         let listed = skills_list(Some(cwd.clone()));
-        assert!(listed.iter().any(|s| s.name == "pdf" && s.level == "workspace"));
-        let again = skills_install("workspace".into(), Some(cwd), "anthropics/skills".into(), "pdf".into()).await;
+        let pdf = listed.iter().find(|s| s.name == "pdf" && s.level == "workspace").expect("pdf is listed");
+        assert_eq!(pdf.agents, ["claude", "codex"]);
+        let again = skills_install("workspace".into(), Some(cwd), "anthropics/skills".into(), "pdf".into(), vec!["claude".into()]).await;
         assert!(again.unwrap_err().starts_with("skills_already_installed"));
         let _ = std::fs::remove_dir_all(&workspace);
     }

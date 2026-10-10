@@ -17,12 +17,17 @@ const SNAPSHOT = {
 } as unknown as SessionSnapshot;
 
 const INSTALLED = [
-  { name: "pdf", description: "", level: "user", origin: { source: "anthropics/skills", skill_id: "pdf" }, path: "/home/.claude/skills/pdf" },
-  { name: "release-notes", description: "", level: "workspace", origin: null, path: "/work/heidrun/.claude/skills/release-notes" },
+  { name: "pdf", description: "", level: "user", origin: { source: "anthropics/skills", skill_id: "pdf" }, path: "/home/.agents/skills/pdf", agents: ["claude", "codex"] },
+  { name: "release-notes", description: "", level: "workspace", origin: null, path: "/work/heidrun/.agents/skills/release-notes", agents: ["codex"] },
 ];
 
-/** Answers the commands of the backend, then mounts the section on a selected workspace. */
+/**
+ * Answers the commands of the backend, then mounts the section on a selected workspace.
+ * Both coding agents are switched on, unless the saved settings already say which ones are.
+ */
 async function mountSection(answers: Record<string, unknown> = {}) {
+  const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
+  localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: ["claude", "codex"], ...saved }));
   invoke.mockImplementation(async (command: string) => {
     if (command in answers) {
       return answers[command];
@@ -83,6 +88,36 @@ describe("SettingsSkillsSection: installed skills", () => {
     expect(rows[0].get(".place").text()).toBe("User");
     expect(rows[1].text()).toContain("Local");
     expect(rows[1].get(".place").text()).toBe("Workspace");
+  });
+
+  it("shows the names of the switched on agents that have the skill", async () => {
+    const { wrapper } = await mountSection();
+    const rows = wrapper.findAll(".list .row");
+    expect(rows[0].get(".sub").text()).toBe("skills.sh · anthropics/skills · Claude Code · Codex");
+    expect(rows[1].get(".sub").text()).toBe("Local · Codex");
+  });
+
+  it("does not show an agent that the user did not switch on", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: ["claude"] }));
+    const { wrapper } = await mountSection();
+    const rows = wrapper.findAll(".list .row");
+    expect(rows[0].get(".sub").text()).toBe("skills.sh · anthropics/skills · Claude Code");
+    expect(rows[1].get(".sub").text()).toBe("Local");
+  });
+
+  it("shows no hint when an agent is switched on", async () => {
+    const { wrapper } = await mountSection();
+    expect(wrapper.find(".notice").exists()).toBe(false);
+  });
+
+  it("tells the user to switch an agent on, and opens the section Agents", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: [] }));
+    const { wrapper } = await mountSection();
+    expect(wrapper.get(".notice").text()).toContain("No coding agent is switched on");
+    const { settingsModal } = await import("../../stores/settings");
+    await wrapper.get(".notice button").trigger("click");
+    expect(settingsModal.open).toBe(true);
+    expect(settingsModal.section).toBe("agents");
   });
 
   it("starts with both parts unfolded", async () => {
@@ -154,7 +189,28 @@ describe("SettingsSkillsSection: search and install", () => {
       cwd: "/work/heidrun",
       source: "anthropics/skills",
       skillId: "docx",
+      agents: ["claude", "codex"],
     });
+  });
+
+  it("installs only for the agents that the user switched on", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: ["codex"] }));
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await search(wrapper, skills);
+    await wrapper.findAll(".list")[1].findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install", expect.objectContaining({ agents: ["codex"] }));
+  });
+
+  it("does not install when no agent is switched on, and says what to do", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ ownedAgents: [] }));
+    const { wrapper, skills } = await mountSection({ skills_search: [RESULT] });
+    await search(wrapper, skills);
+    await wrapper.findAll(".list")[1].findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).not.toHaveBeenCalledWith("skills_install", expect.anything());
+    const session = await import("../../stores/session");
+    expect(session.state.toast).toBe("Switch on a coding agent in the section Agents first");
   });
 
   it("installs at the user level when the user chose it", async () => {

@@ -2,7 +2,8 @@
 // src-tauri/src/skills.rs; this store holds what the section Skills of the Settings window shows.
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { settings } from "./settings";
+import { openSettings, settings } from "./settings";
+import { AGENTS } from "../lib/agents";
 import { selectedWorkspace, toast } from "./session";
 import { workspaceCwd } from "./project";
 import { askConfirm } from "./confirm";
@@ -26,7 +27,10 @@ export interface InstalledSkill {
   level: SkillLevel;
   /** `null` for a skill that Heidrun did not install. */
   origin: SkillOrigin | null;
+  /** The folder with the real files of the skill. */
   path: string;
+  /** The ids of the agents whose skills folder has the skill, a real folder or a link. */
+  agents: string[];
 }
 
 /** A result of the search on skills.sh. */
@@ -100,6 +104,21 @@ export function installedKey(skill: InstalledSkill): string {
 /** True when a result of the search is already installed at the chosen level. */
 export function isInstalledAtLevel(result: SearchResult): boolean {
   return skills.installed.some((skill) => skill.level === settings.skillsLevel && skill.name === result.skillId);
+}
+
+/** The ids of the agents that the user switched on, in the order of the table of agents. */
+export function ownedAgentIds(): string[] {
+  return AGENTS.filter((agent) => settings.ownedAgents.includes(agent.id)).map((agent) => agent.id);
+}
+
+/** The names of the agents that the user switched on and that have an installed skill. */
+export function agentNames(skill: InstalledSkill): string[] {
+  return AGENTS.filter((agent) => settings.ownedAgents.includes(agent.id) && skill.agents.includes(agent.id)).map((agent) => agent.name);
+}
+
+/** Opens the section Agents of the Settings window, where the user switches the coding agents on. */
+export function openAgentsSection(): void {
+  openSettings("agents");
 }
 
 /** The text that says where an installed skill comes from. */
@@ -176,13 +195,18 @@ export function closeSkillView(): void {
 export async function installSkill(result: SearchResult): Promise<void> {
   const level = settings.skillsLevel;
   const cwd = currentCwd();
+  const agents = ownedAgentIds();
+  if (agents.length === 0) {
+    toast(t("skillsStore.error_skills_no_agent"), "error");
+    return;
+  }
   if (level === "workspace" && cwd === null) {
     toast(t("skillsStore.error_skills_no_workspace_folder"), "error");
     return;
   }
   skills.busyKey = resultKey(result);
   try {
-    await invoke<InstalledSkill>("skills_install", { level, cwd, source: result.source, skillId: result.skillId });
+    await invoke<InstalledSkill>("skills_install", { level, cwd, source: result.source, skillId: result.skillId, agents });
     await loadSkills();
     toast(t("skillsStore.installed", { name: result.name }));
   } catch (error) {

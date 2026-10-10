@@ -4,6 +4,7 @@ import Icon from "../Icon.vue";
 import { settings } from "../../stores/settings";
 import { selectedWorkspace } from "../../stores/session";
 import {
+  agentNames,
   deleteSkill,
   inspectInstalled,
   inspectResult,
@@ -11,6 +12,7 @@ import {
   installedKey,
   isInstalledAtLevel,
   loadSkills,
+  openAgentsSection,
   originLabel,
   resultKey,
   searchSkills,
@@ -27,6 +29,11 @@ function onSearchInput(event: Event) {
   skills.query = query;
   window.clearTimeout(searchTimer);
   searchTimer = window.setTimeout(() => searchSkills(query), SEARCH_DELAY_MS);
+}
+
+/** The origin of an installed skill, then the names of the agents that have it. */
+function detailLabel(skill: InstalledSkill): string {
+  return [originLabel(skill), ...agentNames(skill)].join(" · ");
 }
 
 function placeLabel(skill: InstalledSkill): string {
@@ -62,6 +69,11 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
       </div>
     </div>
 
+    <div v-if="settings.ownedAgents.length === 0" class="notice">
+      <span>{{ t("settingsSkills.noAgent") }}</span>
+      <button class="btn" @click="openAgentsSection">{{ t("settingsSkills.openAgents") }}</button>
+    </div>
+
     <button class="fold" :aria-expanded="settings.skillsInstalledOpen" @click="settings.skillsInstalledOpen = !settings.skillsInstalledOpen">
       <Icon :name="settings.skillsInstalledOpen ? 'chevron-down' : 'chevron-right'" />
       <span>{{ t("settingsSkills.installedHeading", { total: skills.installed.length }) }}</span>
@@ -72,7 +84,7 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
         <div v-for="skill in skills.installed" :key="installedKey(skill)" class="row">
           <div class="meta">
             <div class="name">{{ skill.name }}</div>
-            <div class="sub">{{ originLabel(skill) }}</div>
+            <div class="sub">{{ detailLabel(skill) }}</div>
           </div>
           <span class="place">{{ placeLabel(skill) }}</span>
           <button class="btn" @click="inspectInstalled(skill)">{{ t("settingsSkills.inspect") }}</button>
@@ -125,6 +137,7 @@ watch(() => selectedWorkspace.value?.workspace_id, loadSkills);
 .levelChoice { flex-shrink: 0; width: 280px; }
 .fold { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; background: transparent; border: 0; color: var(--text); font-size: var(--font-size); font-weight: 600; text-align: left; cursor: pointer; }
 .fold :deep(.bi) { color: var(--muted); }
+.notice { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--tint-warn); color: var(--text-2); font-size: var(--font-size); line-height: 1.5; }
 .list { border: 1px solid var(--line); border-radius: 10px; }
 .row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .row:last-child { border-bottom: 0; }

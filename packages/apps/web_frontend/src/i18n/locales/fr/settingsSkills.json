@@ -28,5 +28,7 @@
   "source": "Source",
   "sourceTitle": "Afficher la source du fichier, avec les couleurs",
   "closeTitle": "Fermer la fenêtre (Échap)",
-  "closeLabel": "Fermer (Échap)"
+  "closeLabel": "Fermer (Échap)",
+  "noAgent": "Aucun agent de code n’est activé. Activez-en un dans la section Agents pour installer des compétences.",
+  "openAgents": "Ouvrir Agents"
 }

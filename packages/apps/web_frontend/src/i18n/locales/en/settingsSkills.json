@@ -28,5 +28,7 @@
   "source": "Source",
   "sourceTitle": "Show the source of the file, with colours",
   "closeTitle": "Close the window (Escape)",
-  "closeLabel": "Close (Escape)"
+  "closeLabel": "Close (Escape)",
+  "noAgent": "No coding agent is switched on. Switch one on in the section Agents to install skills.",
+  "openAgents": "Open Agents"
 }
