@@ -31,10 +31,16 @@ function onDown() {
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
-// A shell pane without a label is named after its folder: its terminal title repeats the user, the host and the folder.
+// The terminal title of an idle shell is `user@host:folder`. It repeats the user, the host and the folder, so the pane
+// is named after its folder. When a command runs, the terminal title names that command, and the pane keeps it.
+const isIdleShellTitle = computed(() => {
+  const title = props.pane.terminal_title_stripped ?? "";
+  const folder = shellFolder.value;
+  return title === "" || title.endsWith(`:${folder}`) || title.endsWith(`:${shortPath(folder)}`);
+});
 const displayName = computed(() => {
   const p = props.pane;
-  if (p.agent || p.label || shellFolder.value === "") return paneName(p);
+  if (p.agent || p.label || shellFolder.value === "" || isIdleShellTitle.value === false) return paneName(p);
   return shellFolder.value.split("/").filter((part) => part !== "").pop() ?? paneName(p);
 });
 const subtitle = computed(() => {

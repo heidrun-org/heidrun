@@ -73,4 +73,13 @@ describe("PaneCard", () => {
     expect(wrapper.get(".name").text()).toBe("heidrun");
     expect(wrapper.get(".sub").text()).toBe("~/webwork/heidrun");
   });
+
+  it("keeps the terminal title as the name of a shell pane while a command runs", async () => {
+    const wrapper = await mountPaneCard({
+      label: null,
+      terminal_title_stripped: "npm run dev",
+      cwd: "/Users/jetienne/webwork/heidrun",
+    });
+    expect(wrapper.get(".name").text()).toBe("npm run dev");
+  });
 });
