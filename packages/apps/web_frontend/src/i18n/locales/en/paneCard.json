@@ -1,6 +1,6 @@
 {
   "renameLabel": "New pane name (empty to go back to the automatic name)",
-  "renameTitle": "Double-click to rename",
+  "nameTitle": "{name} · Double-click to rename",
   "context": "context",
   "goToTab": "Go to its tab",
   "undock": "Remove from the side view",
