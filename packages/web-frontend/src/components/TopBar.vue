@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
 import ThemeMenu from "./ThemeMenu.vue";
-import { counts, state } from "../stores/session";
+import { state } from "../stores/session";
 import { openSettings, settings, settingsModal } from "../stores/settings";
 import { t } from "../i18n/index";
 </script>
@@ -20,19 +20,10 @@ import { t } from "../i18n/index";
       <Icon name="layout-sidebar" />
     </button>
     <div class="brand" data-tauri-drag-region>Heidrun</div>
-    <div class="machine" :title="state.error || t('topBar.connectedTitle')">
-      <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
-      {{ t("topBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("topBar.offline") }}
-    </div>
     <div class="search-wrap" data-tauri-drag-region>
       <button :title="t('topBar.searchTitle')" class="search" @click="state.paletteOpen = true">
         <span>{{ t("topBar.searchPlaceholder") }}</span><kbd>⌘K</kbd>
       </button>
-    </div>
-    <div class="counts">
-      <span><span class="dot blocked"></span>{{ t("topBar.blocked", { count: counts.blocked }) }}</span>
-      <span><span class="dot working"></span>{{ t("topBar.working", { count: counts.working }) }}</span>
-      <span><span class="dot done"></span>{{ t("topBar.done", { count: counts.done }) }}</span>
     </div>
     <div class="tools">
       <button class="icon-btn" :aria-label="t('topBar.shortcutsLabel')" :title="t('topBar.shortcutsTitle')" @click="state.shortcutsOpen = true">
@@ -68,12 +59,6 @@ import { t } from "../i18n/index";
   padding: 0 16px 0 84px; border-bottom: 1px solid var(--line); background: var(--bar);
 }
 .brand { font-weight: 600; font-size: 14px; letter-spacing: 0.2px; white-space: nowrap; }
-.machine {
-  display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 8px; white-space: nowrap;
-  border: 1px solid var(--line-strong); background: var(--field); color: var(--text-2); font-size: 12px; font-weight: 500;
-}
-.working-static { background: var(--working); }
-.offline { background: var(--fail); }
 .search-wrap { flex: 1; display: flex; justify-content: center; min-width: 120px; }
 .search {
   width: min(420px, 100%); height: 30px; display: flex; align-items: center; justify-content: space-between;
@@ -81,8 +66,6 @@ import { t } from "../i18n/index";
   color: var(--muted); font-size: 12px; overflow: hidden; white-space: nowrap;
 }
 .search kbd { font-family: var(--mono); color: var(--faint); }
-.counts { display: flex; gap: 12px; font-size: 12px; color: var(--muted-2); white-space: nowrap; }
-.counts > span { display: flex; align-items: center; gap: 6px; }
 .icon-btn {
   width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 0;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
@@ -90,5 +73,4 @@ import { t } from "../i18n/index";
 .icon-btn:hover { background: var(--hover); color: var(--text); }
 .tools { display: flex; align-items: center; gap: 2px; }
 .icon-btn.on { color: var(--text-2); background: var(--field); }
-@media (max-width: 1180px) { .counts { display: none; } }
 </style>

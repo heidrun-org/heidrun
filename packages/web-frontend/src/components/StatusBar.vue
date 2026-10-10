@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { quotas, state } from "../stores/session";
 import { claudeLink, enableClaudeLink } from "../stores/claude";
+import AgentStatusSummary from "./AgentStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
 import { t } from "../i18n/index";
 </script>
@@ -21,6 +22,8 @@ import { t } from "../i18n/index";
     </button>
     <span v-else-if="!quotas.some((q) => q.provider === 'claude')" class="muted">{{ t("statusBar.waitingForData") }}</span>
     <span class="grow"></span>
+    <AgentStatusSummary />
+    <span class="sep"></span>
     <span class="machine" :title="state.error || t('statusBar.connectedTitle')">
       <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
       {{ t("statusBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("statusBar.offline") }}
