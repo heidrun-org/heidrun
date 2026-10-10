@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted } from "vue";
 import Icon from "./Icon.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
-import SettingsLanguageSection from "./settings/SettingsLanguageSection.vue";
+import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
@@ -11,11 +11,11 @@ import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
 
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
+  { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
   { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
   { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
-  { id: "language", icon: "translate", labelKey: "settingsModal.language" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
 ];
 
@@ -55,11 +55,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <h3>{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
           <button :title="t('settingsModal.closeTitle')" class="close" :aria-label="t('settingsModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
         </header>
-        <SettingsTerminalSection v-if="settingsModal.section === 'terminal'" />
+        <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
+        <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
         <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
         <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
         <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
-        <SettingsLanguageSection v-else-if="settingsModal.section === 'language'" />
         <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
       </section>
     </div>

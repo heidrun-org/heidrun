@@ -4,7 +4,7 @@ import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
 import { notify } from "../lib/notify";
 import { settings } from "./settings";
-import { agentKind, paneName } from "../lib/format";
+import { agentKind, codexWindows, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
@@ -407,9 +407,7 @@ export const quotas = computed<QuotaBlock[]>(() => {
 
   const c = state.codex;
   if (c?.primary || c?.secondary) {
-    const windows: QuotaBlock["windows"] = [];
-    if (c.primary) windows.push({ id: "session", name: t("sessionStore.window.session"), percent: c.primary.used_percent, resetsAt: c.primary.resets_at ?? undefined });
-    if (c.secondary) windows.push({ id: "week", name: t("sessionStore.window.week"), percent: c.secondary.used_percent, resetsAt: c.secondary.resets_at ?? undefined });
+    const windows = codexWindows(c, Date.now() / 1000);
     blocks.push({ provider: "codex", label: c.plan ? `Codex · ${c.plan}` : "Codex", windows, updatedAt: c.updated_at ?? undefined });
   }
   return blocks;

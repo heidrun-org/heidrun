@@ -71,6 +71,10 @@ const defaults = {
   gitListWidth: 340,
   /** Language of the user interface. */
   language: "en" as "en" | "fr",
+  /** Clock display: "auto" follows the language, "12h" shows AM and PM, "24h" shows the hour from 0 to 23. */
+  timeFormat: "auto" as "auto" | "12h" | "24h",
+  /** Days of the week you work, numbered like `Date.getDay()` (0 is Sunday). The weekly quota pace counts only these days. */
+  workingDays: [0, 1, 2, 3, 4, 5, 6] as number[],
   /** Application theme: "system" follows the operating system. */
   theme: "system" as "system" | "light" | "dark",
   /** Code colours: "auto" follows the application theme. */
@@ -138,12 +142,12 @@ export function resetZoom() {
 }
 
 /** The sections of the Settings window. */
-export type SettingsSection = "terminal" | "mouse" | "finishedItems" | "notifications" | "language" | "mobileAccess";
+export type SettingsSection = "terminal" | "mouse" | "finishedItems" | "notifications" | "general" | "mobileAccess";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({
   open: false,
-  section: "terminal" as SettingsSection,
+  section: "general" as SettingsSection,
 });
 
 /** Opens the Settings window, on `section` when given. */

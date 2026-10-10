@@ -5,6 +5,7 @@ import { isQuiet, notify } from "../lib/notify";
 import { settings } from "./settings";
 import { allPanes, attentionKey, contextFor, paneFullName, quotas, state } from "./session";
 import { monthSpend } from "./history";
+import { timeOptions } from "../lib/format";
 import { locale, t } from "../i18n/index";
 
 const remindedBlocked = new Set<string>(); // attentionKey of the episode
@@ -73,7 +74,7 @@ function checkQuota() {
         /* ignore */
       }
       const resetTime = w.resetsAt
-        ? new Date(w.resetsAt * 1000).toLocaleTimeString(locale.value, { hour: "2-digit", minute: "2-digit" })
+        ? new Date(w.resetsAt * 1000).toLocaleTimeString(locale.value, timeOptions())
         : "";
       notify(
         t("alertsStore.quota.title", { name: w.name, percent: Math.round(w.percent) }),

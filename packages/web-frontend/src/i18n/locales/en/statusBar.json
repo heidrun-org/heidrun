@@ -5,6 +5,15 @@
   "enableTracking": "Claude: enable quota tracking",
   "enableTrackingTitle": "Enable Claude usage tracking",
   "waitingForData": "Claude: waiting for data",
-  "connected": "connected",
-  "offline": "offline"
+  "offline": "offline",
+  "plan": "Plan",
+  "expectedNow": "Expected usage now",
+  "resetsAt": "Resets at {time}",
+  "runsOut": "Runs out at {time}",
+  "pace": "Pace: {value} % of the expected usage",
+  "paceCrit": "At this pace the quota runs out early. Reduce usage by {reduce} %.",
+  "paceWarn": "At this pace, the usage reaches {value} % at the reset. Watch it.",
+  "paceOk": "At this pace, the usage reaches {value} % at the reset.",
+  "connectedTitle": "Connected to the local Herdr server",
+  "local": "Local"
 }

@@ -1,7 +1,7 @@
 {
   "tabNumber": "onglet {number}",
-  "window.session": "Session 5 h",
-  "window.week": "Semaine",
+  "window.session": "Limite de 5 heures",
+  "window.week": "Limite hebdomadaire",
   "notify.question": "{name} te pose une question",
   "notify.done": "{name} a terminé",
   "notify.blocked": "{name} attend une décision",

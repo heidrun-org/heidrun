@@ -1,7 +1,7 @@
 {
   "tabNumber": "tab {number}",
-  "window.session": "5 h session",
-  "window.week": "Week",
+  "window.session": "5-hour limit",
+  "window.week": "Weekly limit",
   "notify.question": "{name} is asking you a question",
   "notify.done": "{name} has finished",
   "notify.blocked": "{name} is waiting for a decision",

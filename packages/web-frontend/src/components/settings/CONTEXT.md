@@ -8,7 +8,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
 - `SettingsNotificationsSection.vue`: the notification settings.
-- `SettingsLanguageSection.vue`: the language of the user interface.
+- `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), and the working days.
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 
 ## Rules
