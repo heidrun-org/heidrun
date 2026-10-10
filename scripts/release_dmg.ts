@@ -41,8 +41,13 @@ class ReleaseDmg {
 				'Markdown file with the text of this release. It goes after the prefix and before the generated list of '
 					+ 'changes.',
 			)
+			.option(
+				'--recreate',
+				'Delete the existing release and its tag, then create them again on the current commit. The release gets '
+					+ 'a new date.',
+			)
 			.parse(argv);
-		const options = program.opts<{ notesFile?: string }>();
+		const options = program.opts<{ notesFile?: string; recreate?: boolean }>();
 
 		let notesPath: string | undefined = undefined;
 		if (options.notesFile !== undefined) {
@@ -91,7 +96,12 @@ class ReleaseDmg {
 			cwd: rootDir,
 			stdio: 'ignore',
 		});
-		if (releaseView.status === 0) {
+		let isReleaseExisting = releaseView.status === 0;
+		if (isReleaseExisting === true && options.recreate === true) {
+			ReleaseDmg._run('gh', ['release', 'delete', tagName, '--cleanup-tag', '--yes'], rootDir);
+			isReleaseExisting = false;
+		}
+		if (isReleaseExisting === true) {
 			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...dmgPaths, '--clobber'], rootDir);
 			const generatedNotes = ChildProcess.spawnSync(
 				'gh',
@@ -108,6 +118,10 @@ class ReleaseDmg {
 			Fs.appendFileSync(bodyPath, `\n${generatedNotes.stdout.trim()}\n`);
 			ReleaseDmg._run('gh', ['release', 'edit', tagName, '--notes-file', bodyPath], rootDir);
 		} else {
+			const commitSha = ChildProcess.execFileSync('git', ['rev-parse', 'HEAD'], {
+				cwd: rootDir,
+				encoding: 'utf8',
+			}).trim();
 			ReleaseDmg._run(
 				'gh',
 				[
@@ -115,6 +129,8 @@ class ReleaseDmg {
 					'create',
 					tagName,
 					...dmgPaths,
+					'--target',
+					commitSha,
 					'--title',
 					`Heidrun ${version}`,
 					'--notes-file',
