@@ -49,7 +49,7 @@ const subtitle = computed(() => {
     <header class="head">
       <span class="dot" :class="[status, state.pulse[pane.pane_id] ? 'pulse' : '']"></span>
       <InlineRename
-        v-if="state.renaming === `pane:${pane.pane_id}`"
+        v-if="state.renaming === `pane:${pane.pane_id}` && state.renamingPlace === 'card'"
         class="pane-rename"
         :value="pane.label || paneName(pane)"
         :label="t('paneCard.renameLabel')"
@@ -57,7 +57,7 @@ const subtitle = computed(() => {
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
-      <span v-else class="name" :title="t('paneCard.renameTitle')" @dblclick="startRename('pane', pane.pane_id)">{{ paneName(pane) }}</span>
+      <span v-else class="name" :title="t('paneCard.renameTitle')" @dblclick="startRename('pane', pane.pane_id, 'card')">{{ paneName(pane) }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <template v-if="ctx">

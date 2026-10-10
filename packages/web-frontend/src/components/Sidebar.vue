@@ -149,7 +149,7 @@ async function createWorkspace() {
         <button class="btn btn-outline-secondary border-0 add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
-        <div v-if="state.renaming === `pane:${p.pane_id}`" class="item small editing">
+        <div v-if="state.renaming === `pane:${p.pane_id}` && state.renamingPlace === 'sidebar'" class="item small editing">
           <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
           <InlineRename
             :value="p.label || paneName(p)"
