@@ -288,12 +288,12 @@ onBeforeUnmount(() => {
 .stage { flex: 1; min-height: 0; display: flex; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
-  position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%);
+  position: fixed; right: 16px; bottom: 52px;
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
   color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
 }
 .toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
 .toast-icon { margin-right: 8px; color: #fecaca; }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
-.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 6px); }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(6px); }
 </style>

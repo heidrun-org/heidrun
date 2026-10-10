@@ -2,7 +2,11 @@
 //! a Control+V in a terminal makes Claude Code or Codex read the image.
 
 use std::path::Path;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::process::Command;
+
+/// Gives every call its own PNG file, so that two drops at the same time do not overwrite each other.
+static CALL_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// File extensions that Heidrun accepts as images. `sips` converts all of them to PNG.
 const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "heic", "tif", "tiff", "bmp"];
@@ -21,7 +25,11 @@ pub async fn clipboard_set_image(path: String) -> Result<(), String> {
     if !is_image_path(&path) {
         return Err("not_an_image".into());
     }
-    let png = std::env::temp_dir().join(format!("heidrun-clipboard-{}.png", std::process::id()));
+    let png = std::env::temp_dir().join(format!(
+        "heidrun-clipboard-{}-{}.png",
+        std::process::id(),
+        CALL_COUNTER.fetch_add(1, Ordering::Relaxed)
+    ));
     let png_str = png.to_string_lossy().to_string();
     let convert = Command::new("/usr/bin/sips")
         .args(["-s", "format", "png", &path, "--out", &png_str])
@@ -29,7 +37,8 @@ pub async fn clipboard_set_image(path: String) -> Result<(), String> {
         .await
         .map_err(|e| e.to_string())?;
     if !convert.status.success() {
-        return Err("not_an_image".into());
+        let _ = std::fs::remove_file(&png);
+        return Err(format!("conversion_failed: {}", String::from_utf8_lossy(&convert.stderr).trim()));
     }
     let script = format!("set the clipboard to (read (POSIX file \"{}\") as «class PNGf»)", png_str);
     let result = Command::new("/usr/bin/osascript").args(["-e", &script]).output().await;

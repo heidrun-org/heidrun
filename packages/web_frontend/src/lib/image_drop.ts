@@ -7,7 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 ///////////////////////////////////////////////////////////////////////////////
 
 /** The result of one drop on the window. */
-export type ImageDropResult = "pasted" | "no_terminal_under_drop" | "not_an_image" | "failed";
+export type ImageDropResult = "pasted" | "duplicate" | "no_terminal_under_drop" | "not_an_image" | "failed";
 
 /** Writes a text to one terminal. */
 export type TerminalWriter = (data: string) => Promise<void>;
@@ -16,6 +16,9 @@ export type TerminalWriter = (data: string) => Promise<void>;
 const CONTROL_V = "\x16";
 
 export class ImageDrop {
+	/** Paths of the last drop, with its time, to ignore the same drop delivered twice. */
+	private static lastDrop: { key: string; at: number } | null = null;
+
 	/** Writer of every mounted terminal, keyed by the element that shows the terminal. */
 	private static writers = new Map<Element, TerminalWriter>();
 
@@ -66,6 +69,12 @@ export class ImageDrop {
 		if (writer === null) {
 			return "no_terminal_under_drop";
 		}
+		const key = paths.join("\n");
+		const now = Date.now();
+		if (ImageDrop.lastDrop !== null && ImageDrop.lastDrop.key === key && now - ImageDrop.lastDrop.at < 1000) {
+			return "duplicate";
+		}
+		ImageDrop.lastDrop = { key, at: now };
 		if (paths.length === 0) {
 			return "not_an_image";
 		}

@@ -42,6 +42,16 @@ describe("ImageDrop.handleDrop", () => {
 		expect(writer).toHaveBeenCalledWith("\x16");
 	});
 
+	it("ignores the same drop delivered twice in a row", async () => {
+		const writer = vi.fn().mockResolvedValue(undefined);
+		ImageDrop.register(terminalElement, writer);
+		putElementUnderDrop(terminalElement);
+		invokeMock.mockResolvedValue(undefined);
+		expect(await ImageDrop.handleDrop(["/twice.png"], 1, 1)).toBe("pasted");
+		expect(await ImageDrop.handleDrop(["/twice.png"], 1, 1)).toBe("duplicate");
+		expect(writer).toHaveBeenCalledTimes(1);
+	});
+
 	it("sends nothing when the file is not an image", async () => {
 		const writer = vi.fn();
 		ImageDrop.register(terminalElement, writer);
