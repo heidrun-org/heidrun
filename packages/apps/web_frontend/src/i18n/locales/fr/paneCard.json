@@ -1,6 +1,6 @@
 {
   "renameLabel": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
-  "renameTitle": "Double-clic pour renommer",
+  "nameTitle": "{name} · Double-clic pour renommer",
   "context": "contexte",
   "goToTab": "Aller à son onglet",
   "undock": "Retirer de la vue à côté",

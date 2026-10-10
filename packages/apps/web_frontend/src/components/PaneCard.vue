@@ -57,7 +57,7 @@ const subtitle = computed(() => {
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
-      <span v-else class="name" :title="t('paneCard.renameTitle')" @dblclick="startRename('pane', pane.pane_id, 'card')">{{ paneName(pane) }}</span>
+      <span v-else class="name" :title="t('paneCard.nameTitle', { name: paneName(pane) })" @dblclick="startRename('pane', pane.pane_id, 'card')">{{ paneName(pane) }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <template v-if="ctx">
@@ -132,12 +132,12 @@ const subtitle = computed(() => {
   border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
 }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
-.name { font-weight: 600; white-space: nowrap; cursor: default; }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
 .pct { color: var(--text-2); }
-.tools { display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
+.tools { flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
 .pane:hover .tools, .pane.selected .tools { opacity: 1; }
 .tool {
   width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
