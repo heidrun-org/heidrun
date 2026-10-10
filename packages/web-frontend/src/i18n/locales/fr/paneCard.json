@@ -1,0 +1,18 @@
+{
+  "renameLabel": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
+  "renameTitle": "Double-clic pour renommer",
+  "context": "contexte",
+  "goToTab": "Aller à son onglet",
+  "undock": "Retirer de la vue à côté",
+  "undockTitle": "Retirer de la vue à côté (l’agent continue)",
+  "mosaicTitle": "Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)",
+  "mosaic": "Mosaïque des agents de la session",
+  "unpin": "Ne plus garder à côté",
+  "pinTitle": "Garder à côté : reste visible quand tu changes d’onglet ou de workspace",
+  "splitRight": "Diviser à droite",
+  "splitRightTitle": "Diviser à droite (⌘D)",
+  "splitDown": "Diviser en bas",
+  "splitDownTitle": "Diviser en bas (⇧⌘D)",
+  "close": "Fermer le panneau (⌘W)",
+  "closeConfirm": "Fermer"
+}

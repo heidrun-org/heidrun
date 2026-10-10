@@ -1,6 +1,7 @@
 node_modules
 dist
-src-tauri/target
-src-tauri/gen
+packages/desktop-tauri/target
+packages/desktop-tauri/gen
 .DS_Store
 *.log
+packages/website_public/docs/.vitepress/cache

@@ -1,0 +1,21 @@
+{
+  "copied": "Copié",
+  "sentTo": "Note envoyée à {agent}",
+  "title": "Notes épinglées",
+  "allWorkspaces": "Tous les workspaces",
+  "emptyBefore": "Sélectionne du texte dans un terminal, puis « Épingler » ou ",
+  "emptyAfter": ".",
+  "otherWorkspaces_one": "({count} note dans d’autres workspaces.)",
+  "otherWorkspaces_other": "({count} notes dans d’autres workspaces.)",
+  "dragToReorder": "Glisser pour réordonner",
+  "noteTitle": "Titre de la note",
+  "doubleClickToRename": "Double-clic pour renommer",
+  "openLarge": "Ouvrir en grand",
+  "deleteConfirm": "Supprimer",
+  "deleteNote": "Supprimer la note",
+  "textTitle": "Clic : déplier · double-clic : ouvrir en grand",
+  "copyTitle": "Copier la note",
+  "copy": "Copier",
+  "sendToAgent": "Envoyer à un agent",
+  "sendTo": "Envoyer à…"
+}

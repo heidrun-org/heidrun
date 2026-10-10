@@ -1,0 +1,12 @@
+{
+  "title": "Réglages",
+  "sectionsLabel": "Sections des réglages",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "general": "Général",
+  "terminal": "Terminal",
+  "mouse": "Souris",
+  "finishedItems": "Éléments terminés",
+  "notifications": "Notifications",
+  "mobileAccess": "Accès mobile"
+}

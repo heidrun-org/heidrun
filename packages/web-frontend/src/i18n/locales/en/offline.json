@@ -1,0 +1,15 @@
+{
+  "connection": "Connection",
+  "starting": "Starting Herdr…",
+  "notResponding": "Herdr does not respond",
+  "intro": "Heidrun can start the Herdr server in the background, without a terminal. It keeps running when you close the app, until {command} or until the Mac restarts.",
+  "start": "Start Herdr",
+  "startTitle": "Start Herdr",
+  "retry": "Try again",
+  "retryTitle": "Try to connect again",
+  "autoStart": "Start Herdr automatically when the app opens",
+  "socket": "Socket",
+  "binary": "Binary",
+  "found": "found",
+  "missing": "missing"
+}

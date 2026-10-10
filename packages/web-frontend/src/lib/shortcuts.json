@@ -1,0 +1,193 @@
+[
+  {
+    "groupKey": "group.windows",
+    "items": [
+      {
+        "keys": "⌘K",
+        "actionKey": "action.commandPalette"
+      },
+      {
+        "keys": "⌘/",
+        "actionKey": "action.shortcutsList"
+      },
+      {
+        "keys": "⌘P",
+        "actionKey": "action.openProjectFile"
+      },
+      {
+        "keys": "⇧⌘F",
+        "actionKey": "action.searchTerminals"
+      },
+      {
+        "keys": "⇧⌘H",
+        "actionKey": "action.history"
+      },
+      {
+        "keys": "⇧⌘P",
+        "actionKey": "action.pinSelection"
+      },
+      {
+        "keysKey": "keys.escape",
+        "actionKey": "action.closeWindow"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.terminalsAndAgents",
+    "items": [
+      {
+        "keys": "⌘T",
+        "actionKey": "action.newTerminal"
+      },
+      {
+        "keys": "⇧⌘T",
+        "actionKey": "action.newAgent"
+      },
+      {
+        "keys": "⌘D / ⇧⌘D",
+        "actionKey": "action.splitPane"
+      },
+      {
+        "keys": "⌘W ⌘W",
+        "actionKey": "action.closePane"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.navigation",
+    "items": [
+      {
+        "keys": "⌥⌘← / ⌥⌘→",
+        "actionKey": "action.previousNextTab"
+      },
+      {
+        "keys": "⌥⌘↑ / ⌥⌘↓",
+        "actionKey": "action.previousNextWorkspace"
+      },
+      {
+        "keys": "⌘1 … ⌘9",
+        "actionKey": "action.goToWorkspace"
+      },
+      {
+        "keys": "⇧⌥⌘← / ⇧⌥⌘→",
+        "actionKey": "action.moveTab"
+      },
+      {
+        "keys": "⇧⌥⌘↑ / ⇧⌥⌘↓",
+        "actionKey": "action.moveWorkspace"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.input",
+    "items": [
+      {
+        "keys": "⇧↵ / ⌥↵",
+        "actionKey": "action.newLine"
+      },
+      {
+        "keys": "⌘↵",
+        "actionKey": "action.launch"
+      },
+      {
+        "keysKey": "keys.chooseThenConfirm",
+        "actionKey": "action.chooseResult"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.fileExplorerAndEditor",
+    "items": [
+      {
+        "keys": "⇧⌘F",
+        "actionKey": "action.searchProject"
+      },
+      {
+        "keys": "⌘S",
+        "actionKey": "action.saveFile"
+      },
+      {
+        "keys": "⌘F / ⌘⌥F",
+        "actionKey": "action.searchReplace"
+      },
+      {
+        "keys": "⌘D",
+        "actionKey": "action.nextOccurrence"
+      },
+      {
+        "keys": "⌘Z / ⇧⌘Z",
+        "actionKey": "action.undoRedo"
+      },
+      {
+        "keys": "⌘W",
+        "actionKey": "action.closeFileTab"
+      },
+      {
+        "keysKey": "keys.rightClick",
+        "actionKey": "action.fileMenu"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.display",
+    "items": [
+      {
+        "keys": "⌘B / ⌥⌘B",
+        "actionKey": "action.hidePanels"
+      },
+      {
+        "keys": "⌘+ / ⌘− / ⌘0",
+        "actionKey": "action.fontSize"
+      }
+    ]
+  },
+  {
+    "groupKey": "group.mouse",
+    "items": [
+      {
+        "keysKey": "keys.commandClick",
+        "actionKey": "action.issuePreview"
+      },
+      {
+        "keysKey": "keys.commandClick",
+        "actionKey": "action.fileAtLine"
+      },
+      {
+        "keysKey": "keys.hover",
+        "actionKey": "action.actionButtons"
+      },
+      {
+        "keysKey": "keys.wheel",
+        "actionKey": "action.scrollHistory"
+      },
+      {
+        "keysKey": "keys.optionWheel",
+        "actionKey": "action.sendArrows"
+      },
+      {
+        "keysKey": "keys.optionDrag",
+        "actionKey": "action.selectText"
+      },
+      {
+        "keysKey": "keys.doubleClick",
+        "actionKey": "action.rename"
+      },
+      {
+        "keysKey": "keys.dragAndDrop",
+        "actionKey": "action.reorder"
+      },
+      {
+        "keys": "bi:pin",
+        "actionKey": "action.dock"
+      },
+      {
+        "keys": "bi:grid-3x3-gap",
+        "actionKey": "action.subAgentTiles"
+      },
+      {
+        "keysKey": "keys.doubleClickBorder",
+        "actionKey": "action.defaultWidth"
+      }
+    ]
+  }
+]

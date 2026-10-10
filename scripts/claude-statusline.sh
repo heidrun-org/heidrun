@@ -1,13 +1,13 @@
 #!/bin/sh
-# Herdr Desk — status line for Claude Code.
+# Heidrun — status line for Claude Code.
 #
 # 1. Prints a compact line at the bottom of Claude Code (model · context · quotas).
 # 2. When Claude runs inside a Herdr pane, reports the same numbers to Herdr as
-#    pane tokens, which Herdr Desk (and Herdr's own sidebar) can display.
+#    pane tokens, which Heidrun (and Herdr's own sidebar) can display.
 #
-# Installed by Herdr Desk (Panneau → « Activer le suivi Claude ») as
-# ~/.config/herdr-desk/claude-statusline.sh. If you already had a status line, its
-# command is saved in ~/.config/herdr-desk/claude-statusline-next and still drives
+# Installed by Heidrun (Panneau → « Activer le suivi Claude ») as
+# ~/.config/heidrun/claude-statusline.sh. If you already had a status line, its
+# command is saved in ~/.config/heidrun/claude-statusline-next and still drives
 # what Claude Code displays: this script only adds the report to Herdr.
 # Requires jq (shipped with macOS 15+, otherwise `brew install jq`).
 
@@ -38,7 +38,7 @@ round() {
 if [ -n "$HERDR_PANE_ID" ]; then
   herdr_bin=${HERDR_BIN_PATH:-herdr}
   if command -v "$herdr_bin" >/dev/null 2>&1; then
-    set -- --source user:herdr-desk --token "hd_ts=$(date +%s)"
+    set -- --source user:heidrun --token "hd_ts=$(date +%s)"
     [ -n "$model" ] && set -- "$@" --token "hd_model=$model"
     [ -n "$sid" ] && set -- "$@" --token "hd_sid=$sid"
     [ -n "$ctx" ] && set -- "$@" --token "hd_ctx=$(round "$ctx")"
@@ -56,8 +56,8 @@ if [ -n "$HERDR_PANE_ID" ]; then
 fi
 
 # ---- The line shown in Claude Code -----------------------------------------
-desk_dir="${HERDR_DESK_DIR:-$HOME/.config/herdr-desk}"
-# "Masquer dans le terminal" in Herdr Desk: print nothing, the app shows the numbers.
+desk_dir="${HEIDRUN_DIR:-$HOME/.config/heidrun}"
+# "Masquer dans le terminal" in Heidrun: print nothing, the app shows the numbers.
 if [ -e "$desk_dir/claude-statusline-hidden" ]; then
   exit 0
 fi

@@ -1,0 +1,17 @@
+{
+  "dialogLabel": "Recherche dans les terminaux",
+  "placeholder": "Chercher dans tous les terminaux (#419, une erreur, un nom de fichier…)",
+  "thisWorkspace": "Ce workspace",
+  "agentsOnly": "Agents seulement",
+  "regex": "Expression régulière",
+  "searching": "Recherche…",
+  "summary": "{results} dans {panes} · {ms} ms",
+  "results_one": "{count} résultat",
+  "results_other": "{count} résultats",
+  "panes_one": "{count} panneau",
+  "panes_other": "{count} panneaux",
+  "help": "Majuscules et accents ignorés. ↑↓ pour choisir, ↵ pour ouvrir le panneau.",
+  "openResult": "Ouvrir ce résultat de recherche",
+  "more_one": "… et {count} autre plus haut",
+  "more_other": "… et {count} autres plus haut"
+}

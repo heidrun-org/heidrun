@@ -1,0 +1,33 @@
+[package]
+name = "heidrun"
+version = "0.2.0"
+description = "Interface graphique pour Herdr"
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "heidrun_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-notification = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+tokio = { version = "1", features = ["net", "io-util", "time", "sync", "process", "macros"] }
+portable-pty = "0.9"
+base64 = "0.22"
+dirs = "6"
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+# Mobile access (iPhone / iPad over Tailscale)
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+if-addrs = "0.15"
+# Deleting from the file explorer goes to the macOS Trash
+trash = "5"
+tauri-plugin-dialog = "2"

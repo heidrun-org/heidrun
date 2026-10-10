@@ -1,0 +1,9 @@
+{
+  "invalidAgentName": "Invalid agent name: {name}",
+  "invalidModel": "Invalid model: {name}",
+  "waitingConfirmation": "The agent is waiting for a confirmation (trusted folder?): the prompt will be sent after",
+  "tabNotCreated": "Tab not created: {error}",
+  "launchFailed": "Cannot launch: {error}",
+  "tabClosedBeforeReady": "Tab closed before the agent was ready: prompt not sent",
+  "notReady": "The agent is not ready after 2 min: the starting prompt is in the input field"
+}

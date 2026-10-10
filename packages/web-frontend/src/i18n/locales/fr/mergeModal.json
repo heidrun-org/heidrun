@@ -1,0 +1,23 @@
+{
+  "eyebrow": "Fusion",
+  "titlePr": "Fusionner la PR {ref} ?",
+  "titleMr": "Fusionner la MR {ref} ?",
+  "targetBranch": "branche cible",
+  "theTargetBranch": "la branche cible",
+  "notReady": "Elle n’est pas indiquée comme prête : l’hébergeur peut refuser, ou fusionner sans les vérifications habituelles.",
+  "method": "Méthode",
+  "methodMerge": "Commit de fusion",
+  "methodSquash": "Squash (un seul commit)",
+  "methodRebase": "Rebase",
+  "removeBranch": "Supprimer la branche source",
+  "gitlabHint": "Si la CI tourne encore, GitLab programme la fusion pour quand elle sera verte.",
+  "shaHint": "Fusion du dernier commit vu ({sha}) : si quelqu’un a poussé depuis, l’hébergeur la refuse.",
+  "shaHintNoSha": "Fusion du dernier commit vu : si quelqu’un a poussé depuis, l’hébergeur la refuse.",
+  "cancel": "Annuler",
+  "cancelTitle": "Annuler la fusion",
+  "merge": "Fusionner {ref}",
+  "mergeTitle": "Fusionner la branche",
+  "merging": "Fusion…",
+  "toastAutoMerge": "{ref} sera fusionnée quand la CI sera verte",
+  "toastMerged": "{ref} fusionnée dans {target}"
+}

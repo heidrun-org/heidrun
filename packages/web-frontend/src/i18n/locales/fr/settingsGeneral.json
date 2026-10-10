@@ -1,0 +1,13 @@
+{
+  "languageTitle": "Langue",
+  "timeFormatTitle": "Format de l’heure",
+  "timeFormatLabel": "Format de l’heure",
+  "timeAuto": "Automatique",
+  "time12": "12 heures (AM / PM)",
+  "time24": "24 heures",
+  "timeExample": "Exemple : {time}",
+  "timeHelp": "Automatique suit la langue : 12 heures en anglais, 24 heures en français.",
+  "workingDaysTitle": "Jours de travail",
+  "workingDaysHelp": "Choisissez vos jours de travail. Le rythme de la limite hebdomadaire suppose que vous utilisez l’agent de façon régulière pendant ces jours, et pas du tout les autres. Gardez au moins un jour.",
+  "workingDaysLabel": "Jours de travail de la semaine"
+}

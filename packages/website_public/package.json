@@ -1,0 +1,22 @@
+{
+  "name": "website_public",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs",
+    "test": "vitest run",
+    "ghpage:deploy": "pnpm build && gh-pages --dist docs/.vitepress/dist --dotfiles"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.5.1",
+    "gh-pages": "^6.3.0",
+    "jsdom": "^25.0.1",
+    "vitepress": "^1.6.4",
+    "vitest": "^2.1.9",
+    "vue": "^3.5.43"
+  }
+}

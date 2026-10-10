@@ -1,0 +1,21 @@
+{
+  "unknownSession": "Unknown Claude session: Claude tracking (status line) must be turned on.",
+  "noJournal": "No journal found for this session in ~/.claude/projects.",
+  "dialogLabel": "Mosaic of the agents",
+  "eyebrow": "Mosaic",
+  "shownAgentsLabel": "Shown agents",
+  "activeTitle": "The main thread, the agents that still write or that are in the Claude list",
+  "active": "Active",
+  "allTitle": "All the agents of the session, finished ones included",
+  "all": "All",
+  "hint": "Read only, from the Claude journals · a click shows the agent in the terminal",
+  "closeTitle": "Close the mosaic (Escape)",
+  "closeLabel": "Close (Escape)",
+  "loading": "Reading the journals…",
+  "noActive": "No active agent.",
+  "showAllTitle": "Show all agents",
+  "showAll": "Show all agents",
+  "showInTerminal": "Show {name} in the terminal",
+  "notInList": "Not (or no longer) in the Claude agent list",
+  "shown": "shown"
+}

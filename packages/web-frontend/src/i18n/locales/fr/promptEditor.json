@@ -1,0 +1,23 @@
+{
+  "title": "Modifier les modèles",
+  "close": "Fermer",
+  "template": "Modèle",
+  "newOption": "Nouveau modèle",
+  "newTitle": "Vider les champs pour écrire un nouveau modèle",
+  "new": "Nouveau",
+  "project": "projet",
+  "labelField": "Titre",
+  "description": "Description",
+  "text": "Texte",
+  "variablesTitle": "Variables remplacées à l'insertion du modèle",
+  "inProject": "Garder dans le projet (.heidrun/config.json)",
+  "delete": "Supprimer ce modèle",
+  "deleteConfirm": "Supprimer",
+  "discard": "Annuler",
+  "discardTitle": "Revenir aux valeurs enregistrées",
+  "save": "Enregistrer",
+  "textRequired": "Écris d'abord le texte du modèle",
+  "saved": "Modèle enregistré",
+  "addedToProject": "Modèle ajouté au projet (.heidrun/config.json)",
+  "deleteLabel": "Supprimer"
+}

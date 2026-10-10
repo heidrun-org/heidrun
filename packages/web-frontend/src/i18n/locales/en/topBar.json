@@ -1,0 +1,12 @@
+{
+  "leftSidebarLabel": "Show the left sidebar",
+  "leftSidebarTitle": "Left sidebar (⌘B)",
+  "searchTitle": "Search or run a command",
+  "searchPlaceholder": "Search, run a command…",
+  "shortcutsLabel": "Shortcuts",
+  "shortcutsTitle": "Shortcuts (⌘/)",
+  "rightPanelLabel": "Show the right panel",
+  "rightPanelTitle": "Right panel (⌥⌘B)",
+  "settingsLabel": "Settings",
+  "settingsTitle": "Settings"
+}

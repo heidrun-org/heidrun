@@ -1,0 +1,1088 @@
+import { computed, reactive, ref, watch } from "vue";
+import { listen } from "@tauri-apps/api/event";
+import { homeDir } from "@tauri-apps/api/path";
+import * as api from "../lib/api";
+import { notify } from "../lib/notify";
+import { applyOrder, moveId } from "../lib/reorder";
+import { settings } from "./settings";
+import { agentKind, codexWindows, paneName } from "../lib/format";
+import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
+import { allowCommand } from "./guards";
+import { t } from "../i18n/index";
+import type {
+  AgentInfo,
+  AgentStatus,
+  CodexUsage,
+  ContextUsage,
+  PaneInfo,
+  QuotaBlock,
+  SessionSnapshot,
+} from "../lib/types";
+
+/**
+ * One work run of an agent: from the moment it starts working to the moment it
+ * finishes. Intermediate states (blocked, then working again after an approval)
+ * update the same run instead of adding lines.
+ */
+export interface ActivityEntry {
+  id: number;
+  paneId: string;
+  start: number;
+  /** Set when the run is over. */
+  end: number | null;
+  /** "working" or "blocked" while it runs, "done" once finished, "closed" if the pane went away. */
+  status: "working" | "blocked" | "done" | "closed";
+  /** The run was already going when the app saw the pane for the first time. */
+  startUnknown: boolean;
+  /** Names at the time of the event, used if the pane has been closed since. */
+  name: string;
+  kind: string;
+  workspace: string;
+  tab: string;
+  workspaceId?: string;
+  cwd?: string | null;
+  /** Time spent waiting for a decision (blocked), not counted as work. */
+  blockedMs?: number;
+  blockedAt?: number | null;
+  /** Consignes sent to the agent and decisions answered during this run. */
+  prompts?: number;
+  decisions?: number;
+}
+
+// Finished runs go to the history (stores/history.ts registers here).
+const runEndHandlers: ((r: ActivityEntry) => void)[] = [];
+export function onRunEnd(fn: (r: ActivityEntry) => void) {
+  runEndHandlers.push(fn);
+}
+function endRun(r: ActivityEntry, now: number) {
+  if (r.blockedAt) {
+    r.blockedMs = (r.blockedMs ?? 0) + (now - r.blockedAt);
+    r.blockedAt = null;
+  }
+  for (const fn of runEndHandlers) {
+    try {
+      fn(r);
+    } catch {
+      /* the history is best-effort */
+    }
+  }
+}
+
+/** Last consigne sent to each pane: the history's summary of the run. */
+export const lastPrompt: Record<string, { text: string; at: number }> = {};
+export function rememberPrompt(paneId: string, text: string) {
+  lastPrompt[paneId] = { text: text.replace(/\s+/g, " ").trim().slice(0, 200), at: Date.now() };
+  const open = state.activity.find((r) => r.paneId === paneId && r.end === null);
+  if (open) open.prompts = (open.prompts ?? 0) + 1;
+}
+
+export interface OutputWatch {
+  id: number;
+  paneId: string;
+  regex: string;
+}
+
+const DISMISSED_KEY = "heidrun.dismissed";
+
+function loadDismissed(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+const PANE_ORDER_KEY = "heidrun.paneOrder";
+
+function loadPaneOrder(): Record<string, string[]> {
+  try {
+    return JSON.parse(localStorage.getItem(PANE_ORDER_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+
+/** Order of the pane list in the sidebar chosen by drag and drop: pane ids by workspace id. */
+export const paneOrder = reactive<Record<string, string[]>>(loadPaneOrder());
+
+export const state = reactive({
+  snapshot: null as SessionSnapshot | null,
+  connected: false,
+  error: "",
+  selectedWorkspaceId: null as string | null,
+  selectedTabId: null as string | null,
+  selectedPaneId: null as string | null,
+  codex: null as CodexUsage | null,
+  paletteOpen: false,
+  shortcutsOpen: false,
+  /** Panes that just turned blocked: they pulse once. */
+  pulse: {} as Record<string, number>,
+  /** Status changes of all agents, most recent first. */
+  activity: [] as ActivityEntry[],
+  /** When each pane entered its current status (local clock). */
+  since: {} as Record<string, number>,
+  /** Question ending the agent's last answer, while it waits for the next consigne. */
+  questions: {} as Record<string, { text: string; at: number }>,
+  /** Numbered menu shown by a blocked agent (permission prompt, choice). */
+  choices: {} as Record<string, ChoiceMenu>,
+  watches: [] as OutputWatch[],
+  /** "À traiter" cards closed by the user, until the pane changes state again. */
+  dismissed: loadDismissed(),
+  /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
+  renaming: null as string | null,
+  /** Where the pane rename field shows: only one place at a time, or both fields fight for the focus. */
+  renamingPlace: "sidebar" as "sidebar" | "card",
+  starting: false,
+  toast: "" as string,
+});
+
+// ---- Derived views --------------------------------------------------------
+
+export const workspaces = computed(() =>
+  [...(state.snapshot?.workspaces ?? [])].sort((a, b) => a.number - b.number),
+);
+
+export const selectedWorkspace = computed(() =>
+  workspaces.value.find((w) => w.workspace_id === state.selectedWorkspaceId) ?? null,
+);
+
+// Herdr lists tabs in display order. `number` is a stable id that does not change
+// when a tab is moved, so sorting on it would undo every reordering.
+export const tabs = computed(() =>
+  (state.snapshot?.tabs ?? []).filter((t) => t.workspace_id === state.selectedWorkspaceId),
+);
+
+export const agentsByPane = computed(() => {
+  const map = new Map<string, AgentInfo>();
+  for (const a of state.snapshot?.agents ?? []) map.set(a.pane_id, a);
+  return map;
+});
+
+/** Pane enriched with its agent record when there is one. */
+export function paneView(p: PaneInfo): AgentInfo {
+  const a = agentsByPane.value.get(p.pane_id);
+  if (!a) return { ...p };
+  return { ...p, ...a, tokens: { ...(p.tokens ?? {}), ...(a.tokens ?? {}) } };
+}
+
+export const allPanes = computed(() => (state.snapshot?.panes ?? []).map(paneView));
+
+const hasAgent = (wsId: string) => allPanes.value.some((p) => p.workspace_id === wsId && p.agent);
+
+/**
+ * Sidebar order: workspaces with an agent session first, then the others, each group
+ * keeping Herdr's order. Starting an agent lifts a workspace back to its place among
+ * the active ones; stopping it puts it back among the others.
+ */
+export const sidebarWorkspaces = computed(() => {
+  const list = workspaces.value;
+  return [...list.filter((w) => hasAgent(w.workspace_id)), ...list.filter((w) => !hasAgent(w.workspace_id))];
+});
+
+/** Drag-and-drop in the sidebar: a gap in the displayed list → Herdr's insert_index. */
+export function moveWorkspaceInView(id: string, gap: number) {
+  const view = sidebarWorkspaces.value;
+  const full = workspaces.value;
+  const group = hasAgent(id);
+  const before = view[gap - 1];
+  const after = view[gap];
+  let insert: number;
+  if (before && hasAgent(before.workspace_id) === group) insert = full.indexOf(before) + 1;
+  else if (after && hasAgent(after.workspace_id) === group) insert = full.indexOf(after);
+  else insert = after ? full.indexOf(after) : full.length;
+  return moveWorkspace(id, insert);
+}
+
+export const workspacePanes = computed(() =>
+  applyOrder(
+    allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId),
+    (p) => p.pane_id,
+    paneOrder[state.selectedWorkspaceId ?? ""] ?? [],
+  ),
+);
+
+/** Drag-and-drop in the pane list of the sidebar: moves a pane to a gap, and remembers the order. */
+export function movePaneInView(id: string, gap: number) {
+  const wsId = state.selectedWorkspaceId;
+  if (wsId === null) return;
+  paneOrder[wsId] = moveId(workspacePanes.value.map((p) => p.pane_id), id, gap);
+  try {
+    localStorage.setItem(PANE_ORDER_KEY, JSON.stringify(paneOrder));
+  } catch {
+    /* ignore */
+  }
+}
+
+export const tabLayout = computed(() =>
+  (state.snapshot?.layouts ?? []).find((l) => l.tab_id === state.selectedTabId) ?? null,
+);
+
+export const tabPanes = computed(() => allPanes.value.filter((p) => p.tab_id === state.selectedTabId));
+
+export const selectedPane = computed(() => allPanes.value.find((p) => p.pane_id === state.selectedPaneId) ?? null);
+
+/** Agents waiting on the user, blocked first, then most recent first. */
+export function attentionKey(p: AgentInfo): string {
+  return `${p.agent_status}:${p.state_change_seq ?? 0}`;
+}
+
+export function dismiss(p: AgentInfo) {
+  delete state.questions[p.pane_id];
+  state.dismissed[p.pane_id] = attentionKey(p);
+  saveDismissed();
+}
+
+function saveDismissed() {
+  // Forget panes that no longer exist so the map does not grow forever.
+  const live = new Set((state.snapshot?.panes ?? []).map((p) => p.pane_id));
+  for (const id of Object.keys(state.dismissed)) if (state.snapshot && !live.has(id)) delete state.dismissed[id];
+  try {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify(state.dismissed));
+  } catch {
+    /* ignore */
+  }
+}
+
+// Clock for things that expire (finished items), ticking every 30 s.
+export const now = ref(Date.now());
+window.setInterval(() => {
+  now.value = Date.now();
+  pruneFinished();
+}, 30_000);
+
+const ttlMs = () => (settings.finishedTtl > 0 ? settings.finishedTtl * 60_000 : Infinity);
+
+/** "Terminé" for longer than the chosen delay: hidden. Blocked agents always stay. */
+function expired(p: AgentInfo): boolean {
+  if (p.agent_status !== "done") return false;
+  const since = state.since[p.pane_id];
+  return since != null && now.value - since > ttlMs();
+}
+
+function pruneFinished() {
+  const limit = ttlMs();
+  if (limit === Infinity) return;
+  const t = Date.now();
+  if (state.activity.some((r) => r.end !== null && t - r.end > limit)) {
+    state.activity = state.activity.filter((r) => r.end === null || t - r.end <= limit);
+  }
+}
+watch(() => settings.finishedTtl, pruneFinished);
+
+export const attention = computed(() =>
+  allPanes.value
+    .filter((p) => p.agent && (p.agent_status === "blocked" || p.agent_status === "done" || state.questions[p.pane_id]))
+    .filter((p) => state.dismissed[p.pane_id] !== attentionKey(p))
+    .filter((p) => state.questions[p.pane_id] || !expired(p))
+    .sort((a, b) => {
+      // Blocked first, then questions, then finished work.
+      const rank = (p: AgentInfo) => (p.agent_status === "blocked" ? 0 : state.questions[p.pane_id] ? 1 : 2);
+      return rank(a) - rank(b) || (b.state_change_seq ?? 0) - (a.state_change_seq ?? 0);
+    }),
+);
+
+export const counts = computed(() => {
+  const c = { blocked: 0, working: 0, done: 0 };
+  for (const p of allPanes.value) {
+    if (!p.agent) continue;
+    if (p.agent_status === "blocked") c.blocked++;
+    else if (p.agent_status === "working") c.working++;
+    else if (p.agent_status === "done") c.done++;
+  }
+  return c;
+});
+
+export function tabLabel(id: string): string {
+  const tab = state.snapshot?.tabs.find((x) => x.tab_id === id);
+  return tab ? tab.label || t("sessionStore.tabNumber", { number: tab.number }) : "";
+}
+
+export function workspaceLabel(id: string): string {
+  return workspaces.value.find((w) => w.workspace_id === id)?.label ?? id;
+}
+
+/**
+ * How to name a pane in a picker: its tab, the agent kind when the tab does not
+ * already say it, and the custom name if there is one. "Notes · Claude", "Refacto · Codex".
+ */
+export function paneTarget(p: AgentInfo): string {
+  const tab = tabLabel(p.tab_id);
+  const kind = p.agent ? agentKind(p) : "";
+  const name = paneName(p);
+  const parts = [tab];
+  if (kind && tab.toLowerCase() !== kind.toLowerCase()) parts.push(kind);
+  if (name && ![tab, kind, p.agent ?? ""].some((x) => x.toLowerCase() === name.toLowerCase())) parts.push(name);
+  return parts.filter(Boolean).join(" · ");
+}
+
+/** "Workspace · Onglet…", for toasts and titles. */
+export function paneFullName(p: AgentInfo): string {
+  return `${workspaceLabel(p.workspace_id)} · ${paneTarget(p)}`;
+}
+
+/** Agents grouped by workspace, in sidebar order: for "send to…" pickers. */
+export const agentGroups = computed(() =>
+  sidebarWorkspaces.value
+    .map((w) => ({
+      workspace: w.label,
+      items: allPanes.value
+        .filter((p) => p.agent && p.workspace_id === w.workspace_id)
+        .map((p) => ({ pane: p, label: paneTarget(p) })),
+    }))
+    .filter((g) => g.items.length),
+);
+
+// ---- Context and quotas ---------------------------------------------------
+
+// Last values seen, so gauges never blink out between two reports.
+const lastContext = new Map<string, ContextUsage>();
+
+/**
+ * Claude account limits, one entry per window. Several Claude sessions report them,
+ * each at its own pace, and a session that has not talked to the API yet reports
+ * nothing: every window keeps the most recent reading from any session, by the time
+ * that reading was taken. Persisted so a restart starts from the last known state.
+ */
+interface WindowReading {
+  percent: number;
+  resetsAt?: number;
+  at: number;
+}
+const QUOTA_KEY = "heidrun.claude-windows";
+const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
+  try {
+    return { q5h: undefined, q7d: undefined, ...JSON.parse(localStorage.getItem(QUOTA_KEY) ?? "{}") };
+  } catch {
+    return { q5h: undefined, q7d: undefined };
+  }
+})();
+
+const num = (v?: string) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : undefined);
+
+// Session id seen with each pane's last reading: a new one (/clear, /resume) drops it.
+const lastSession = new Map<string, string>();
+
+export function contextFor(p: AgentInfo): ContextUsage | null {
+  const sid = p.tokens?.hd_sid;
+  if (sid && lastSession.get(p.pane_id) !== sid) {
+    lastSession.set(p.pane_id, sid);
+    lastContext.delete(p.pane_id);
+  }
+  const fresh = readContext(p);
+  if (fresh) {
+    lastContext.set(p.pane_id, fresh);
+    return fresh;
+  }
+  // Same agent still in the pane: keep showing its last reading.
+  return p.agent ? lastContext.get(p.pane_id) ?? null : null;
+}
+
+function readContext(p: AgentInfo): ContextUsage | null {
+  const t = p.tokens ?? {};
+  const claude = num(t.hd_ctx);
+  if (claude != null) {
+    const size = num(t.hd_ctx_size);
+    return { percent: claude, size, used: size ? Math.round((claude / 100) * size) : undefined };
+  }
+  const sid = p.agent_session?.value;
+  const codex = sid ? state.codex?.sessions?.[sid] : undefined;
+  if (codex?.context_used != null && codex.context_window) {
+    return {
+      percent: Math.min(100, (codex.context_used / codex.context_window) * 100),
+      used: codex.context_used,
+      size: codex.context_window,
+    };
+  }
+  return null;
+}
+
+export const quotas = computed<QuotaBlock[]>(() => {
+  const blocks: QuotaBlock[] = [];
+
+  // Claude: the status line script reports the account limits as tokens on its pane.
+  let changed = false;
+  for (const p of allPanes.value) {
+    const t = p.tokens;
+    if (!t) continue;
+    for (const key of ["q5h", "q7d"] as const) {
+      const percent = num(t[`hd_${key}`]);
+      if (percent == null) continue;
+      const prev = claudeWindows[key];
+      // Per-window timestamp from the current script. Older copies only had hd_ts,
+      // which also moves when the window is missing: trust it only to seed a value.
+      const own = num(t[`hd_${key}_ts`]);
+      const at = own ?? (prev ? 0 : num(t.hd_ts) ?? 0);
+      if (!prev || at > prev.at) {
+        claudeWindows[key] = { percent, resetsAt: num(t[`hd_${key}_reset`]), at };
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
+    try {
+      localStorage.setItem(QUOTA_KEY, JSON.stringify(claudeWindows));
+    } catch {
+      /* ignore */
+    }
+  }
+  if (claudeWindows.q5h || claudeWindows.q7d) {
+    const now = Date.now() / 1000;
+    // Once a window's reset time has passed it is back to 0 %, until the next report.
+    const value = (w: WindowReading) => (w.resetsAt && w.resetsAt < now ? 0 : w.percent);
+    const windows: QuotaBlock["windows"] = [];
+    if (claudeWindows.q5h) windows.push({ id: "session", name: t("sessionStore.window.session"), percent: value(claudeWindows.q5h), resetsAt: claudeWindows.q5h.resetsAt });
+    if (claudeWindows.q7d) windows.push({ id: "week", name: t("sessionStore.window.week"), percent: value(claudeWindows.q7d), resetsAt: claudeWindows.q7d.resetsAt });
+    const cost = allPanes.value.reduce((sum, p) => sum + (num(p.tokens?.hd_cost) ?? 0), 0);
+    const updatedAt = Math.max(claudeWindows.q5h?.at ?? 0, claudeWindows.q7d?.at ?? 0) || undefined;
+    blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt });
+  }
+
+  const c = state.codex;
+  if (c?.primary || c?.secondary) {
+    const windows = codexWindows(c, Date.now() / 1000);
+    blocks.push({ provider: "codex", label: c.plan ? `Codex · ${c.plan}` : "Codex", windows, updatedAt: c.updated_at ?? undefined });
+  }
+  return blocks;
+});
+
+// ---- Snapshot refresh -----------------------------------------------------
+
+let refreshTimer: number | undefined;
+let inflight = false;
+let again = false;
+let lastPaneKey = "";
+
+export function scheduleRefresh(delay = 60) {
+  window.clearTimeout(refreshTimer);
+  refreshTimer = window.setTimeout(refresh, delay);
+}
+
+export async function refresh() {
+  if (inflight) {
+    again = true;
+    return;
+  }
+  inflight = true;
+  try {
+    do {
+      again = false;
+      const snap = await api.snapshot();
+      applySnapshot(snap);
+      state.connected = true;
+      state.error = "";
+    } while (again);
+  } catch (e) {
+    state.connected = false;
+    state.error = String(e);
+  } finally {
+    inflight = false;
+  }
+}
+
+/** Removes a finished run from the Activité list. */
+export function dismissRun(id: number) {
+  state.activity = state.activity.filter((r) => r.id !== id || r.end === null);
+}
+
+/** Removes every finished run; running ones stay. */
+export function clearFinishedRuns() {
+  state.activity = state.activity.filter((r) => r.end === null);
+}
+
+let runSeq = 0;
+const ACTIVE = new Set<AgentStatus>(["working", "blocked"]);
+
+/**
+ * Turns status changes into work runs. Only real work is recorded: an agent going
+ * idle after being "done" (Herdr does that once the result has been seen) or
+ * passing through "unknown" is not activity.
+ */
+function trackRun(
+  paneId: string,
+  before: AgentStatus | undefined,
+  after: AgentStatus,
+  now: number,
+  names: Pick<ActivityEntry, "name" | "kind" | "workspace" | "tab" | "workspaceId" | "cwd">,
+) {
+  const open = state.activity.find((r) => r.paneId === paneId && r.end === null);
+  if (ACTIVE.has(after)) {
+    if (open) {
+      // Waiting for a decision is not work: blocked time is counted apart.
+      if (after === "blocked" && open.status !== "blocked") open.blockedAt = now;
+      if (open.status === "blocked" && after !== "blocked") open.decisions = (open.decisions ?? 0) + 1;
+      if (after === "working" && open.blockedAt) {
+        open.blockedMs = (open.blockedMs ?? 0) + (now - open.blockedAt);
+        open.blockedAt = null;
+      }
+      open.status = after as "working" | "blocked";
+      Object.assign(open, names);
+      return;
+    }
+    state.activity.unshift({
+      id: ++runSeq,
+      paneId,
+      start: now,
+      end: null,
+      status: after as "working" | "blocked",
+      startUnknown: before === undefined,
+      blockedMs: 0,
+      blockedAt: after === "blocked" ? now : null,
+      // The consigne that started it was sent just before (counted then, no run was open).
+      prompts: lastPrompt[paneId] && now - lastPrompt[paneId].at < 120_000 ? 1 : 0,
+      decisions: 0,
+      ...names,
+    });
+    // Only finished runs are trimmed: a long run must not vanish before it ends.
+    const finished = state.activity.filter((r) => r.end !== null);
+    if (state.activity.length > 40 && finished.length) {
+      const drop = new Set(finished.slice(-(state.activity.length - 40)).map((r) => r.id));
+      state.activity = state.activity.filter((r) => !drop.has(r.id));
+    }
+  } else if (open && (after === "done" || after === "idle")) {
+    if (open.status === "blocked") open.decisions = (open.decisions ?? 0) + 1;
+    open.end = now;
+    open.status = "done";
+    Object.assign(open, names);
+    endRun(open, now);
+  }
+}
+
+/** Reads the menu of a blocked agent, retrying while it is still being drawn. */
+async function readChoices(paneId: string, delays = [500, 900, 1600]) {
+  for (const delay of delays) {
+    await new Promise((r) => window.setTimeout(r, delay));
+    const before = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (!before || before.agent_status !== "blocked") return;
+    try {
+      const menu = findChoices(await api.read(paneId, 60));
+      // Still blocked once the read is back (it may have moved on meanwhile).
+      const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+      if (!pane || pane.agent_status !== "blocked") return;
+      if (menu) {
+        state.choices[paneId] = menu;
+        return;
+      }
+    } catch {
+      /* read in progress: next attempt */
+    }
+  }
+}
+
+const sameMenu = (a: ChoiceMenu, b: ChoiceMenu) =>
+  a.question === b.question && a.options.length === b.options.length && a.options.every((o, i) => o.label === b.options[i].label);
+
+const answering = new Set<string>();
+
+/**
+ * Picks option `n` of a blocked agent's menu with its number key (Claude Code
+ * and Codex accept it). Only when the very same menu is still there a moment
+ * later does it fall back to the arrows and Enter: never on a new dialog.
+ * An approval of a dangerous command goes through the guards first.
+ */
+/** Any option that is not a refusal approves something ("Always allow", "Continue", "Run"…). */
+export const REFUSAL = /^(no|non|deny|refuse|refuser|reject|rejeter|cancel|annuler|abort|stop)\b/i;
+
+export async function answerChoice(paneId: string, n: number, checked = false, expected?: ChoiceMenu): Promise<boolean> {
+  const menu = state.choices[paneId];
+  if (!menu || answering.has(paneId)) return false;
+  // Checked (on the phone) against this very menu: a new one is not answered blindly.
+  if (expected && menu !== expected) return false;
+  const option = menu.options.find((o) => o.n === n);
+  const approves = !!option && !REFUSAL.test(option.label);
+  // `checked`: the guards were already applied (and confirmed) on the phone.
+  if (approves && menu.detail && !checked) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(menu.detail, cwd, where))) return false;
+  }
+  answering.add(paneId);
+  delete state.choices[paneId];
+  try {
+    await guard(() => api.sendKeys(paneId, [String(n)]));
+    await new Promise((r) => window.setTimeout(r, 700));
+    let pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (pane?.agent_status !== "blocked") return true;
+    let again: ChoiceMenu | null = null;
+    try {
+      again = findChoices(await api.read(paneId, 60));
+    } catch {
+      return true;
+    }
+    if (again && sameMenu(again, menu)) {
+      const from = again.options.findIndex((o) => o.selected);
+      const steps = n - 1 - (from === -1 ? 0 : from);
+      const keys = [...Array(Math.abs(steps)).fill(steps > 0 ? "down" : "up"), "enter"];
+      await guard(() => api.sendKeys(paneId, keys));
+      await new Promise((r) => window.setTimeout(r, 500));
+    }
+    // Next dialog (or the same one): show what is on screen now.
+    pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+    if (pane?.agent_status === "blocked") readChoices(paneId, [300, 800]);
+    return true;
+  } finally {
+    answering.delete(paneId);
+  }
+}
+
+/**
+ * Reads the end of the agent's output after it finished. A question there
+ * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
+ * shows in « À traiter » and gets its own notification.
+ */
+async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false) {
+  // Let the agent finish drawing its answer.
+  await new Promise((r) => window.setTimeout(r, 700));
+  let question: string | null = null;
+  for (let attempt = 0; attempt < 3 && question === null; attempt++) {
+    try {
+      question = findQuestion(await api.read(paneId, 120));
+      break;
+    } catch {
+      // "read in progress": another read of this terminal, try again shortly.
+      await new Promise((r) => window.setTimeout(r, 400));
+    }
+  }
+  const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
+  if (!pane || pane.agent_status === "working" || pane.agent_status === "blocked") return;
+  if (question) {
+    state.questions[paneId] = { text: question, at: Date.now() };
+    // Shown again even if an earlier "terminé" card was closed.
+    delete state.dismissed[paneId];
+    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
+  } else {
+    delete state.questions[paneId];
+    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
+  }
+}
+
+function applySnapshot(snap: SessionSnapshot) {
+  const previous = new Map((state.snapshot?.panes ?? []).map((p) => [p.pane_id, p.agent_status]));
+  const agents = new Map(snap.agents.map((a) => [a.pane_id, a]));
+  const now = Date.now();
+
+  for (const pane of snap.panes) {
+    const before = previous.get(pane.pane_id);
+    const after = pane.agent_status;
+    if (before === after) continue;
+    state.since[pane.pane_id] = now;
+    if (!pane.agent) continue;
+    const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
+    const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
+    const tab = snap.tabs.find((x) => x.tab_id === pane.tab_id);
+    trackRun(pane.pane_id, before, after, now, {
+      name: paneName(view),
+      kind: agentKind(view),
+      workspace: ws,
+      tab: tab ? tab.label || t("sessionStore.tabNumber", { number: tab.number }) : "",
+      workspaceId: pane.workspace_id,
+      cwd: pane.foreground_cwd || pane.cwd || null,
+    });
+    if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
+    if (after !== "blocked") delete state.choices[pane.pane_id];
+    else readChoices(pane.pane_id);
+    if (before === undefined) {
+      // First sight: an agent already done may have ended on a question.
+      if (after === "done") checkQuestion(pane.pane_id, paneName(view), ws, false);
+      continue;
+    }
+    if (after === "blocked") {
+      state.pulse[pane.pane_id] = now;
+      window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
+      if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
+        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
+      }
+    } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
+      // Finished: look at how the answer ends before notifying ("a terminé" or the question).
+      const away = !document.hasFocus() || state.selectedPaneId !== pane.pane_id;
+      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away);
+    }
+  }
+
+  const alive = new Set(snap.panes.map((p) => p.pane_id));
+  for (const r of state.activity) {
+    if (r.end === null && !alive.has(r.paneId)) {
+      r.end = now;
+      r.status = "closed";
+      endRun(r, now);
+    }
+  }
+
+  state.snapshot = snap;
+  fixSelection(snap);
+
+  const ids = snap.panes.filter((p) => p.agent).map((p) => p.pane_id).sort();
+  const key = ids.join(",");
+  // Re-sent every time: Rust ignores identical sets while their subscription is alive.
+  api.watchPanes(ids).catch(() => {});
+  if (key !== lastPaneKey) {
+    lastPaneKey = key;
+    refreshCodex();
+  }
+}
+
+function fixSelection(snap: SessionSnapshot) {
+  const ws = snap.workspaces;
+  if (!ws.some((w) => w.workspace_id === state.selectedWorkspaceId)) {
+    state.selectedWorkspaceId = snap.focused_workspace_id ?? ws[0]?.workspace_id ?? null;
+  }
+  const wsInfo = ws.find((w) => w.workspace_id === state.selectedWorkspaceId);
+  const wsTabs = snap.tabs.filter((t) => t.workspace_id === state.selectedWorkspaceId);
+  if (!wsTabs.some((t) => t.tab_id === state.selectedTabId)) {
+    state.selectedTabId = wsInfo?.active_tab_id ?? wsTabs[0]?.tab_id ?? null;
+  }
+  const panes = snap.panes.filter((p) => p.tab_id === state.selectedTabId);
+  if (!panes.some((p) => p.pane_id === state.selectedPaneId)) {
+    const layout = snap.layouts.find((l) => l.tab_id === state.selectedTabId);
+    state.selectedPaneId = layout?.focused_pane_id ?? panes[0]?.pane_id ?? null;
+  }
+}
+
+// ---- Codex usage polling --------------------------------------------------
+
+export async function refreshCodex() {
+  try {
+    const ids = (state.snapshot?.panes ?? [])
+      .filter((p) => p.agent === "codex" || p.agent_session?.agent === "codex")
+      .map((p) => p.agent_session?.value ?? "")
+      .filter(Boolean);
+    const next = await api.codexUsage(ids);
+    const prev = state.codex;
+    if (prev && !next.primary && !next.secondary) {
+      next.primary = prev.primary;
+      next.secondary = prev.secondary;
+      next.plan = prev.plan;
+      next.updated_at = prev.updated_at;
+    }
+    state.codex = next;
+  } catch {
+    /* ignore */
+  }
+}
+
+// ---- Selection ------------------------------------------------------------
+
+// Last tab used in each workspace and last pane used in each tab: coming back to a
+// workspace opens where you left it. Kept across restarts.
+const LAST_KEY = "heidrun.last-selection";
+const last: { tab: Record<string, string>; pane: Record<string, string> } = (() => {
+  try {
+    return { tab: {}, pane: {}, ...JSON.parse(localStorage.getItem(LAST_KEY) ?? "{}") };
+  } catch {
+    return { tab: {}, pane: {} };
+  }
+})();
+watch(
+  () => [state.selectedWorkspaceId, state.selectedTabId, state.selectedPaneId] as const,
+  ([ws, tab, pane]) => {
+    if (ws && tab) last.tab[ws] = tab;
+    if (tab && pane) last.pane[tab] = pane;
+    try {
+      localStorage.setItem(LAST_KEY, JSON.stringify(last));
+    } catch {
+      /* ignore */
+    }
+  },
+);
+
+export function selectWorkspace(id: string) {
+  state.selectedWorkspaceId = id;
+  state.selectedTabId = last.tab[id] ?? null;
+  state.selectedPaneId = state.selectedTabId ? last.pane[state.selectedTabId] ?? null : null;
+  // Gone since (closed tab or pane): fixSelection falls back to Herdr's active one.
+  if (state.snapshot) fixSelection(state.snapshot);
+}
+
+export function selectTab(id: string) {
+  state.selectedTabId = id;
+  state.selectedPaneId = last.pane[id] ?? null;
+  if (state.snapshot) fixSelection(state.snapshot);
+}
+
+/** Next / previous tab of the current workspace, wrapping around. */
+export function cycleTab(delta: number) {
+  const list = tabs.value;
+  if (!list.length) return;
+  const i = list.findIndex((t) => t.tab_id === state.selectedTabId);
+  selectTab(list[(i + delta + list.length) % list.length].tab_id);
+}
+
+/** Next / previous workspace, wrapping around. */
+export function cycleWorkspace(delta: number) {
+  const list = sidebarWorkspaces.value;
+  if (!list.length) return;
+  const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  selectWorkspace(list[(i + delta + list.length) % list.length].workspace_id);
+}
+
+/** ⌘1 … ⌘9: workspace by position in the sidebar. */
+export function selectWorkspaceAt(index: number) {
+  const w = sidebarWorkspaces.value[index];
+  if (w) selectWorkspace(w.workspace_id);
+}
+
+export function selectPane(p: PaneInfo) {
+  state.selectedWorkspaceId = p.workspace_id;
+  state.selectedTabId = p.tab_id;
+  state.selectedPaneId = p.pane_id;
+}
+
+// ---- Actions --------------------------------------------------------------
+
+export function toast(message: string) {
+  state.toast = message;
+  window.setTimeout(() => {
+    if (state.toast === message) state.toast = "";
+  }, 4000);
+}
+
+async function guard<T>(fn: () => Promise<T>): Promise<T | undefined> {
+  try {
+    const r = await fn();
+    scheduleRefresh();
+    return r;
+  } catch (e) {
+    toast(humanError(String(e)));
+    return undefined;
+  }
+}
+
+function humanError(e: string): string {
+  if (e.includes("agent_blocked")) return t("sessionStore.error.agentBlocked");
+  if (e.includes("herdr_unreachable")) return t("sessionStore.error.herdrUnreachable");
+  return e;
+}
+
+export function newTerminal() {
+  const ws = selectedWorkspace.value;
+  if (!ws) return;
+  const cwd = selectedPane.value?.cwd ?? null;
+  return guard(async () => {
+    const pane = await api.newTab(ws.workspace_id, cwd);
+    await refresh();
+    if (pane) selectPane(pane);
+  });
+}
+
+export function splitPane(direction: "right" | "down" = "right", paneId?: string) {
+  const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : selectedPane.value;
+  if (!p) return newTerminal();
+  return guard(async () => {
+    const pane = await api.split(p.pane_id, direction, p.cwd);
+    await refresh();
+    if (pane) selectPane(pane);
+  });
+}
+
+export async function newWorkspace(cwd: string | null, label: string | null) {
+  // The raw socket API wants absolute paths.
+  if (cwd?.startsWith("~")) {
+    const home = (await homeDir()).replace(/\/$/, "");
+    cwd = home + cwd.slice(1);
+  }
+  return guard(() => api.newWorkspace(cwd, label));
+}
+
+export function closePane(paneId: string) {
+  return guard(() => api.closePane(paneId));
+}
+
+export function closeWorkspace(workspaceId: string) {
+  return guard(() => api.closeWorkspace(workspaceId));
+}
+
+export function startRename(kind: "ws" | "tab" | "pane", id: string, place: "sidebar" | "card" = "sidebar") {
+  if (kind === "ws") selectWorkspace(id);
+  if (kind === "tab") selectTab(id);
+  state.renaming = `${kind}:${id}`;
+  state.renamingPlace = place;
+  if (kind === "ws" || (kind === "pane" && place === "sidebar")) settings.leftOpen = true;
+}
+
+export async function finishRename(kind: "ws" | "tab" | "pane", id: string, label: string | null) {
+  state.renaming = null;
+  if (label === null && kind !== "pane") return;
+  if (kind === "ws") await guard(() => api.renameWorkspace(id, label!));
+  else if (kind === "tab") await guard(() => api.renameTab(id, label!));
+  else await guard(() => api.renamePane(id, label ? label : null));
+}
+
+export function moveWorkspace(workspaceId: string, insertIndex: number) {
+  return guard(() => api.moveWorkspace(workspaceId, insertIndex));
+}
+
+export function moveTab(tabId: string, insertIndex: number) {
+  return guard(() => api.moveTab(tabId, insertIndex));
+}
+
+/** Keyboard reordering: moves the selected workspace up (-1) or down (+1). */
+export function shiftWorkspace(delta: -1 | 1) {
+  // Moves past the neighbor shown in the sidebar, within its group (with / without agent).
+  const view = sidebarWorkspaces.value;
+  const full = workspaces.value;
+  const i = view.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  const neighbor = view[i + delta];
+  if (i === -1 || !neighbor || hasAgent(neighbor.workspace_id) !== hasAgent(view[i].workspace_id)) return;
+  const at = full.indexOf(neighbor);
+  return moveWorkspace(view[i].workspace_id, delta > 0 ? at + 1 : at);
+}
+
+/** Keyboard reordering: moves the selected tab left (-1) or right (+1). */
+export function shiftTab(delta: -1 | 1) {
+  const list = tabs.value;
+  const i = list.findIndex((t) => t.tab_id === state.selectedTabId);
+  const target = i + delta;
+  if (i === -1 || target < 0 || target >= list.length) return;
+  return moveTab(list[i].tab_id, delta > 0 ? target + 1 : target);
+}
+
+export function closeTab(tabId: string) {
+  return guard(() => api.closeTab(tabId));
+}
+
+/** Where a pane is, for the confirmation window: "Workspace · Onglet". */
+function whereOf(paneId: string | undefined): { cwd: string | null; where: string } {
+  const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : undefined;
+  return p ? { cwd: p.foreground_cwd || p.cwd || null, where: paneFullName(p) } : { cwd: null, where: "" };
+}
+
+export async function sendPrompt(paneId: string, text: string) {
+  // "! command": Claude's shell mode runs it as is, so it goes through the guards.
+  const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
+  if (shell) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(shell[1], cwd, where))) return undefined;
+  }
+  rememberPrompt(paneId, text);
+  return guard(() => api.prompt(paneId, text));
+}
+
+const BRACKETED_PASTE_START = "\x1b[200~";
+const BRACKETED_PASTE_END = "\x1b[201~";
+
+/**
+ * Writes `text` into the terminal of a pane. With `submit`, Enter is pressed after the text.
+ * A text of several lines goes as a bracketed paste, so a line break does not press Enter.
+ */
+export async function insertText(paneId: string, text: string, submit: boolean) {
+  const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
+  if (submit && shell) {
+    const { cwd, where } = whereOf(paneId);
+    if (!(await allowCommand(shell[1], cwd, where))) return undefined;
+  }
+  if (submit) {
+    rememberPrompt(paneId, text);
+  }
+  const body = text.includes("\n") ? `${BRACKETED_PASTE_START}${text}${BRACKETED_PASTE_END}` : text;
+  return guard(() => api.sendInput(paneId, body, submit ? ["Enter"] : []));
+}
+
+export function sendKeys(paneId: string, keys: string[]) {
+  return guard(() => api.sendKeys(paneId, keys));
+}
+
+export async function runInPane(paneId: string, command: string) {
+  const { cwd, where } = whereOf(paneId);
+  if (!(await allowCommand(command, cwd, where))) return undefined;
+  rememberCommand(command);
+  return guard(() => api.run(paneId, command));
+}
+
+export async function runInNewPane(command: string, watch?: string) {
+  const base = selectedPane.value;
+  const ws = selectedWorkspace.value;
+  if (!ws) return;
+  const w = whereOf(base?.pane_id);
+  if (!(await allowCommand(command, w.cwd, w.where || ws.label))) return;
+  rememberCommand(command);
+  const pane = await guard(async () =>
+    base ? api.split(base.pane_id, "right", base.cwd) : api.newTab(ws.workspace_id, null),
+  );
+  if (!pane) return;
+  // Give the new shell a moment to print its prompt before typing into it.
+  await new Promise((r) => setTimeout(r, 350));
+  await guard(() => api.run(pane.pane_id, command));
+  await refresh();
+  selectPane(pane);
+  if (watch) addWatch(pane.pane_id, watch);
+}
+
+let watchSeq = 1;
+export function addWatch(paneId: string, regex: string) {
+  const w: OutputWatch = { id: watchSeq++, paneId, regex };
+  state.watches.push(w);
+  api
+    .waitForOutput(paneId, regex)
+    .then((line) => {
+      const pane = allPanes.value.find((p) => p.pane_id === paneId);
+      notify(t("sessionStore.notify.patternFound", { name: pane ? paneName(pane) : paneId }), line ?? regex);
+    })
+    .catch(() => {})
+    .finally(() => {
+      state.watches = state.watches.filter((x) => x.id !== w.id);
+    });
+}
+
+/** Sends the end of a terminal to an agent and asks it to fix the failure. */
+export async function askAgentToFix(sourcePaneId: string, agentPaneId: string) {
+  const text = await guard(() => api.read(sourcePaneId, 80));
+  if (text == null) return;
+  const source = allPanes.value.find((p) => p.pane_id === sourcePaneId);
+  const message =
+    `La commande dans le terminal « ${source ? paneName(source) : sourcePaneId} » a échoué. ` +
+    `Voici la fin de sa sortie. Trouve la cause et corrige-la.\n\n\`\`\`\n${text.trim()}\n\`\`\``;
+  await sendPrompt(agentPaneId, message);
+  const agent = allPanes.value.find((p) => p.pane_id === agentPaneId);
+  if (agent) toast(t("sessionStore.outputSent", { name: paneName(agent) }));
+}
+
+// ---- Recent commands (local convenience only) ----------------------------
+
+const RECENT_KEY = "heidrun.recent";
+
+export function recentCommands(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function rememberCommand(cmd: string) {
+  try {
+    const list = [cmd, ...recentCommands().filter((c) => c !== cmd)].slice(0, 12);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  } catch {
+    /* ignore */
+  }
+}
+
+// ---- Boot -----------------------------------------------------------------
+
+/** Starts the Herdr server in the background (no terminal needed), then connects. */
+export async function startHerdr() {
+  state.starting = true;
+  try {
+    await api.startServer();
+    await refresh();
+  } catch (e) {
+    state.error = String(e);
+  } finally {
+    state.starting = false;
+  }
+}
+
+export async function start() {
+  await listen("herdr://event", () => scheduleRefresh());
+  await listen("herdr://connected", () => refresh());
+  await listen("herdr://resync", () => scheduleRefresh(150));
+  await listen<string>("herdr://disconnected", (e) => {
+    state.connected = false;
+    state.error = e.payload;
+  });
+  await refresh();
+  if (!state.connected && settings.autoStartHerdr && state.error.includes("herdr_unreachable")) {
+    await startHerdr();
+  }
+  // Safety net: events invalidate the cache, a slow poll catches anything missed.
+  window.setInterval(() => scheduleRefresh(0), 5000);
+  window.setInterval(refreshCodex, 10_000);
+}

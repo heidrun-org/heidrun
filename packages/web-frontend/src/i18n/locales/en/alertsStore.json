@@ -1,0 +1,14 @@
+{
+  "stillBlocked.title": "{name} is still waiting",
+  "stillBlocked.body": "Blocked for {minutes} min: a decision is needed.",
+  "context.title": "{name}: context at {percent} %",
+  "context.body": "Think about /compact, or a new session.",
+  "quota.title": "Claude quota \"{name}\" at {percent} %",
+  "quota.body": "Resets at {time}.",
+  "budget.exceeded": "{workspace}: monthly budget exceeded",
+  "budget.nearly": "{workspace}: 80 % of the monthly budget",
+  "budget.body": "${spent} spent out of ${budget} this month.",
+  "evening.title_one": "Today: {count} work run finished",
+  "evening.title_other": "Today: {count} work runs finished",
+  "evening.none": "Today: no work finished"
+}

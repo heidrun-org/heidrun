@@ -1,0 +1,5 @@
+{
+  "restartCancelled": "{name} does not stop: restart cancelled (look at its tab)",
+  "restarted": "{name} restarted",
+  "invalidConfig": "{path} is not valid: {reason}"
+}

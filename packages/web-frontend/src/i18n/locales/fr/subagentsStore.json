@@ -1,0 +1,9 @@
+{
+  "agentBlocked": "L’agent attend une décision : réponds-lui d’abord",
+  "showFailed": "Impossible d’afficher {name} : utilise ↓ puis Entrée dans le terminal",
+  "alreadySending": "Un envoi à un sous-agent est déjà en cours",
+  "switching": "Bascule vers {name}…",
+  "unreachable": "Impossible d’atteindre {name} dans la liste des agents de Claude : consigne non envoyée",
+  "sentButReturnFailed": "Envoyé à {name}, mais le retour sur {first} a échoué",
+  "sent": "Envoyé à {name}"
+}

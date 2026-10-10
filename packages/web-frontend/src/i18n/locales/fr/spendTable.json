@@ -1,0 +1,16 @@
+{
+  "agentCost": "  {who} : {cost}",
+  "currentWindow": "Fenêtre 5 h en cours",
+  "byWorkspace": "Consommation par workspace",
+  "windowTitle": "Afficher la consommation des 5 dernières heures",
+  "window": "5 h",
+  "todayTitle": "Afficher la consommation d’aujourd’hui",
+  "today": "Aujourd’hui",
+  "chartLabel": "Coût par quart d’heure sur la fenêtre de 5 h",
+  "percent": "{value} %",
+  "total": "Total {cost}",
+  "quotaShare": "· part estimée du quota 5 h : {list}",
+  "quotaPoints": "{label} {points} pts",
+  "emptyWindow": "Rien encore sur la fenêtre de 5 h : le coût de chaque session Claude est relevé à chaque réponse (suivi Claude activé).",
+  "emptyToday": "Rien encore aujourd’hui : le coût de chaque session Claude est relevé à chaque réponse (suivi Claude activé)."
+}

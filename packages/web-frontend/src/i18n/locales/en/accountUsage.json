@@ -1,0 +1,14 @@
+{
+  "claudeAccount": "Claude account",
+  "codexAccount": "Codex account",
+  "percent": "{value}%",
+  "resetsAt": "resets at {time}",
+  "notLinked": "Claude Code does not send its numbers to the app yet. Turning tracking on connects Heidrun to its status line, and your current status line stays shown as it is in the terminal.",
+  "enableTitle": "Start tracking Claude usage",
+  "enable": "Turn on Claude tracking",
+  "waitingClaude": "Waiting for the next answer of Claude. Quotas exist only with a Pro or Max subscription.",
+  "waitingCodex": "No data yet: Codex writes it after its first answer.",
+  "showStatusLine": "Also show the status line in the terminal",
+  "disableTitle": "Restores your original status line in ~/.claude/settings.json",
+  "disable": "Turn off Claude tracking"
+}

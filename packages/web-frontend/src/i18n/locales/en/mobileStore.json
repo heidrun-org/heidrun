@@ -1,0 +1,12 @@
+{
+  "pairingRevoked": "Old pairing revoked: scan the new QR code",
+  "error.agentNotFound": "Agent not found (pane closed?)",
+  "error.menuGone": "This menu is no longer shown: refresh",
+  "error.blockedByProject": "Blocked by the project rules: {reason}",
+  "error.menuChanged": "The menu changed or an answer is already in progress: refresh",
+  "error.emptyPrompt": "Empty prompt",
+  "error.agentBlocked": "The agent is waiting for a decision: answer its menu first",
+  "promptReceived": "Prompt received from the phone for {name}",
+  "error.unknownAction": "Unknown action",
+  "error.unknownMethod": "Unknown method"
+}

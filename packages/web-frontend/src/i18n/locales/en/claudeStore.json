@@ -1,0 +1,8 @@
+{
+  "trackingEnabled": "Claude tracking on: the numbers arrive with Claude's next answer",
+  "statusLineHidden": "Status line hidden in the terminal (from Claude's next answer)",
+  "statusLineShown": "Status line shown again in the terminal",
+  "remoteControlEnabled": "Remote Control on for new Claude sessions",
+  "remoteControlDisabled": "Automatic Remote Control off",
+  "trackingDisabled": "Claude tracking off: your original status line is back"
+}

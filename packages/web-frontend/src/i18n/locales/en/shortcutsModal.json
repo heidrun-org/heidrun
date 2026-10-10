@@ -1,0 +1,9 @@
+{
+  "dialogLabel": "Shortcuts",
+  "title": "Shortcuts",
+  "filterPlaceholder": "Filter: tab, agent, mouse…",
+  "closeTitle": "Close the shortcuts (Escape)",
+  "closeLabel": "Close (Escape)",
+  "noShortcut": "No shortcut for “{query}”.",
+  "footerBefore": "The commands without a shortcut are in the palette"
+}

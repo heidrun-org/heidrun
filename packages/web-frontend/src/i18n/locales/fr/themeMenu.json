@@ -1,0 +1,9 @@
+{
+  "buttonLabel": "Thème",
+  "buttonTitle": "Thème : clair, sombre ou système",
+  "menuLabel": "Thème",
+  "useTheme": "Utiliser le thème {theme}",
+  "system": "Système",
+  "dark": "Sombre",
+  "light": "Clair"
+}
