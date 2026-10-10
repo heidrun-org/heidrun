@@ -53,16 +53,16 @@ const busy = computed(() => props.pane.agent_status === "blocked");
 .row { display: flex; align-items: center; gap: 8px; }
 .chip {
   display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px;
-  background: var(--chip); color: var(--text-2); font-size: 12px; font-weight: 600;
+  background: var(--chip); color: var(--text-2); font-size: var(--font-size); font-weight: 600;
 }
 .chip.active { background: var(--tint-working); color: var(--working); }
 .chip.failed { background: var(--tint-crit); color: var(--blocked); }
-.hint { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .btn { align-self: flex-start; }
 .btn:disabled { opacity: 0.5; }
 .url { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 10px; border-radius: 8px; background: var(--field); }
-.url .mono { flex: 1; min-width: 0; font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
-.btn.small { height: 24px; padding: 0 8px; font-size: 11px; }
-.check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.url .mono { flex: 1; min-width: 0; font-size: var(--font-size); color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+.btn.small { height: 24px; padding: 0 8px; font-size: var(--font-size); }
+.check { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); color: var(--text-2); }
 .check input { accent-color: var(--done); width: 14px; height: 14px; }
 </style>

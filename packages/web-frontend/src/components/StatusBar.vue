@@ -37,7 +37,7 @@ import { t } from "../i18n/index";
 <style scoped>
 .status {
   height: 40px; flex-shrink: 0; display: flex; align-items: center; gap: 22px; padding: 0 16px;
-  border-top: 1px solid var(--line); background: var(--bar); font-size: 13px; color: var(--muted-2);
+  border-top: 1px solid var(--line); background: var(--bar); font-size: var(--font-size); color: var(--muted-2);
   white-space: nowrap; position: relative;
 }
 .muted { color: var(--muted); }
@@ -46,6 +46,6 @@ import { t } from "../i18n/index";
 .machine { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .working-static { background: var(--working); }
 .offline { background: var(--fail); }
-.link { border: none; background: none; padding: 0; color: var(--done); font-size: 13px; }
+.link { border: none; background: none; padding: 0; color: var(--done); font-size: var(--font-size); }
 .link:hover { text-decoration: underline; }
 </style>

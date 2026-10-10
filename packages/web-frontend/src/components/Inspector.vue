@@ -337,33 +337,33 @@ const statusText = computed(() => {
 <style scoped>
 .insp { flex: 1; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 .block { display: flex; flex-direction: column; gap: 8px; }
-.title { font-size: 20px; font-weight: 600; word-break: break-word; }
+.title { font-size: var(--font-size); font-weight: 600; word-break: break-word; }
 .chip {
   align-self: flex-start; height: 24px; padding: 0 10px; border-radius: 12px; display: inline-flex; align-items: center;
-  font-size: 12px; font-weight: 600; background: var(--chip); color: var(--text-2);
+  font-size: var(--font-size); font-weight: 600; background: var(--chip); color: var(--text-2);
 }
 .chip.blocked { background: var(--tint-crit); color: var(--blocked); }
 .chip.working { background: var(--tint-working); color: var(--working); }
 .chip.done { background: var(--tint-done); color: var(--done); }
 .pair { display: flex; gap: 8px; }
-.q { font-size: 13px; color: var(--text); }
+.q { font-size: var(--font-size); color: var(--text); }
 .detail {
   margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line-strong);
-  font-size: 11.5px; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow: auto; user-select: text;
+  font-size: var(--font-size); white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow: auto; user-select: text;
 }
 .btn.opt { justify-content: flex-start; gap: 10px; text-align: left; height: auto; min-height: 40px; padding: 8px 12px; }
-.opt-n { flex-shrink: 0; font: 600 12px var(--mono); opacity: 0.8; }
+.opt-n { flex-shrink: 0; font: 600 var(--font-size) var(--mono); opacity: 0.8; }
 .opt-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pair .btn { flex: 1; }
 .actions .btn.primary { width: 100%; }
 .hist-line {
   display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; white-space: nowrap; min-width: 0; padding: 8px 10px; border-radius: 8px;
-  border: 1px solid var(--line); background: transparent; text-align: left; font-size: 12px; color: var(--text);
+  border: 1px solid var(--line); background: transparent; text-align: left; font-size: var(--font-size); color: var(--text);
 }
 .hist-line:hover { border-color: var(--line-strong); background: var(--hover); }
 .hist-ws { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
-.hist-go { flex-shrink: 0; color: var(--done); font-size: 11.5px; }
-.facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: 12px; }
+.hist-go { flex-shrink: 0; color: var(--done); font-size: var(--font-size); }
+.facts { display: grid; grid-template-columns: 88px 1fr; row-gap: 10px; margin: 0; font-size: var(--font-size); }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
 /* Long command or path: shown whole on hover or focus. */
@@ -380,53 +380,53 @@ const statusText = computed(() => {
 .branch.clean { color: var(--ok); } .branch.clean .b-dot { background: var(--ok); }
 .branch.dirty { color: var(--accent); } .branch.dirty .b-dot { background: var(--accent); }
 .branch.ahead { color: var(--done); } .branch.ahead .b-dot { background: var(--done); }
-.b-badge { font-size: 10.5px; padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--text-2); }
-.line { display: flex; justify-content: space-between; font-size: 12px; }
+.b-badge { font-size: var(--font-size); padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--text-2); }
+.line { display: flex; justify-content: space-between; font-size: var(--font-size); }
 .gauge.big { height: 8px; border-radius: 4px; }
-.hint, .muted { font-size: 11px; color: var(--muted); }
-.watch { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); font-size: 12px; }
+.hint, .muted { font-size: var(--font-size); color: var(--muted); }
+.watch { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); font-size: var(--font-size); }
 .watch-form { display: flex; gap: 6px; }
 .watch-form input {
   flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong);
-  background: var(--field); outline: none; font-size: 12px;
+  background: var(--field); outline: none; font-size: var(--font-size);
 }
 .sec { display: flex; flex-direction: column; gap: 18px; }
 .sec.global { padding-top: 18px; border-top: 1px solid var(--line); }
 .sec-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.sec-where { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sec-where { font-size: var(--font-size); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .act-head { display: flex; align-items: center; gap: 10px; }
-.clear { border: none; background: none; padding: 0; font-size: 11px; color: var(--faint); }
+.clear { border: none; background: none; padding: 0; font-size: var(--font-size); color: var(--faint); }
 .clear:hover { color: var(--text-2); }
 .act-row { position: relative; }
 .act-x {
   position: absolute; bottom: 5px; right: 0; width: 22px; height: 22px; border: none; border-radius: 6px;
-  background: var(--panel); color: var(--muted); font-size: 15px; line-height: 1; padding: 0;
+  background: var(--panel); color: var(--muted); font-size: var(--font-size); line-height: 1; padding: 0;
   display: none; align-items: center; justify-content: center;
 }
 .act-row:hover .act-x { display: inline-flex; }
 .act-x:hover { background: var(--hover); color: var(--text); }
 .seg { display: inline-flex; padding: 2px; border-radius: 7px; background: var(--field); }
 .seg button {
-  border: none; background: transparent; color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 5px;
+  border: none; background: transparent; color: var(--muted); font-size: var(--font-size); padding: 2px 8px; border-radius: 5px;
 }
 .seg button.on { background: var(--hover); color: var(--text); }
 .act {
   display: flex; align-items: flex-start; gap: 8px; width: calc(100% + 12px); padding: 6px; margin: 0 -6px;
-  border: none; border-radius: 7px; background: transparent; color: var(--text); text-align: left; font-size: 12px;
+  border: none; border-radius: 7px; background: transparent; color: var(--text); text-align: left; font-size: var(--font-size);
 }
 .act:hover:not(:disabled) { background: var(--hover); }
 .act.current { background: rgba(110, 168, 254, 0.07); }
 .act.gone { opacity: 0.55; }
 .dot-s { line-height: 18px; }
 .act-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.act-where { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 18px; }
-.act-who { display: flex; gap: 6px; align-items: baseline; min-width: 0; font-size: 11px; color: var(--text-2); }
+.act-where { font-weight: 600; font-size: var(--font-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 18px; }
+.act-who { display: flex; gap: 6px; align-items: baseline; min-width: 0; font-size: var(--font-size); color: var(--text-2); }
 .act-kind { white-space: nowrap; }
 .act-name { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .act-status { white-space: nowrap; margin-left: auto; padding-left: 6px; }
-.act-time { font-size: 11px; color: var(--muted); line-height: 18px; white-space: nowrap; }
+.act-time { font-size: var(--font-size); color: var(--muted); line-height: 18px; white-space: nowrap; }
 .grow { flex: 1; }
-.link { align-self: flex-start; font-size: 12px; padding: 0 8px; height: 26px; }
+.link { align-self: flex-start; font-size: var(--font-size); padding: 0 8px; height: 26px; }
 .link:hover { color: var(--fail); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

@@ -220,18 +220,18 @@ onMounted(() => nextTick(() => input.value?.focus()));
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
 .field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
-.prompt { color: var(--working); font-size: 14px; }
-.field input { flex: 1; border: none; background: none; outline: none; font-size: 15px; color: var(--text); }
-kbd { font: 400 11px var(--mono); color: var(--faint); }
+.prompt { color: var(--working); font-size: var(--font-size); }
+.field input { flex: 1; border: none; background: none; outline: none; font-size: var(--font-size); color: var(--text); }
+kbd { font: 400 var(--font-size) var(--mono); color: var(--faint); }
 .list { padding: 8px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .sec { padding: 10px 10px 4px; }
 .row {
   display: flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 10px; border-radius: 8px; border: none;
   background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
 }
-.row.mono { font-family: var(--mono); font-weight: 400; font-size: 12.5px; }
+.row.mono { font-family: var(--mono); font-weight: 400; font-size: var(--font-size); }
 .row.active { background: var(--hover); color: var(--text); }
 .grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hint { font: 400 11px var(--mono); color: var(--muted); }
+.hint { font: 400 var(--font-size) var(--mono); color: var(--muted); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

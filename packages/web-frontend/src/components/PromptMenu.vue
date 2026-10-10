@@ -108,15 +108,15 @@ onBeforeUnmount(close);
   border-radius: 12px; border: 1px solid var(--line-modal); background: var(--field);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 2px;
 }
-.group { font-size: 10.5px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin: 6px 8px 2px; }
+.group { font-size: var(--font-size); font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; color: var(--muted); margin: 6px 8px 2px; }
 .item {
   display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; border: none;
-  background: transparent; color: var(--text); padding: 7px 9px; border-radius: 7px; font-size: 13px;
+  background: transparent; color: var(--text); padding: 7px 9px; border-radius: 7px; font-size: var(--font-size);
 }
 .item:hover { background: var(--hover); }
 .label { font-weight: 500; }
-.description { font-size: 12px; color: var(--muted); }
+.description { font-size: var(--font-size); color: var(--muted); }
 .edit { flex-direction: row; align-items: center; gap: 6px; color: var(--done); }
 .separator { border-top: 1px solid var(--line); margin: 4px 0; }
-.hint { padding: 4px 9px 6px; font-size: 11px; color: var(--faint); }
+.hint { padding: 4px 9px 6px; font-size: var(--font-size); color: var(--faint); }
 </style>

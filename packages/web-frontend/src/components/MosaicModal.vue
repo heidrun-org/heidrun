@@ -149,7 +149,7 @@ function onKey(e: KeyboardEvent) {
       </header>
       <div v-if="!loaded" class="empty">{{ t("mosaicModal.loading") }}</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
-      <div v-else class="grid" :style="{ fontSize: `${Math.max(10, settings.codeFontSize - 1)}px` }">
+      <div v-else class="grid">
         <div v-if="!shownTiles.length" class="empty">{{ t("mosaicModal.noActive") }} <button :title="t('mosaicModal.showAllTitle')" class="link" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.showAll") }}</button></div>
         <button
           v-for="tile in shownTiles"
@@ -184,17 +184,17 @@ function onKey(e: KeyboardEvent) {
 }
 header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .eyebrow { color: var(--question); }
-h2 { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
+h2 { margin: 2px 0 0; font-size: var(--font-size); font-weight: 600; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; margin-left: 8px; }
-.seg button { color: var(--muted); font-size: 12px; padding: 3px 10px; border-radius: 6px; }
+.seg button { color: var(--muted); font-size: var(--font-size); padding: 3px 10px; border-radius: 6px; }
 .seg button.on { background: var(--hover); color: var(--text); }
-.seg .n { margin-left: 3px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.link { color: var(--accent); font-size: 13px; cursor: pointer; }
+.seg .n { margin-left: 3px; font-size: var(--font-size); color: var(--muted); font-variant-numeric: tabular-nums; }
+.link { color: var(--accent); font-size: var(--font-size); cursor: pointer; }
 .grid > .empty { grid-column: 1 / -1; }
-.hint { margin-left: auto; font-size: 11.5px; color: var(--muted); }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: 18px; }
+.hint { margin-left: auto; font-size: var(--font-size); color: var(--muted); }
+.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
 .close:hover { background: var(--hover); color: var(--text); }
-.empty { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+.empty { padding: 40px; text-align: center; color: var(--muted); font-size: var(--font-size); }
 .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); grid-auto-rows: minmax(240px, 1fr); gap: 10px; padding: 12px; overflow: auto; }
 .tile {
   min-height: 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; text-align: left; border-radius: 10px;
@@ -203,13 +203,13 @@ h2 { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
 .tile:hover:not(:disabled) { border-color: var(--done); }
 .tile.shown { border-color: var(--question); }
 .tile.off { opacity: 0.75; cursor: default; }
-.t-head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.t-head { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--idle); flex-shrink: 0; }
 .dot.on { background: var(--working); }
 .t-name { font-weight: 600; }
-.tag { font-size: 10.5px; padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--question) 18%, transparent); color: var(--question); }
-.t-when { margin-left: auto; font-size: 11px; color: var(--muted); }
-.t-desc { font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tag { font-size: var(--font-size); padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--question) 18%, transparent); color: var(--question); }
+.t-when { margin-left: auto; font-size: var(--font-size); color: var(--muted); }
+.t-desc { font-size: var(--font-size); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lines { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; margin-top: 4px; line-height: 1.45; }
 .l { white-space: pre-wrap; word-break: break-word; color: var(--text-2); }
 .l.tool { color: var(--done); }

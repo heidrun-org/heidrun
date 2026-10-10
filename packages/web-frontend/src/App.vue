@@ -63,10 +63,6 @@ import { startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 import { t } from "./i18n/index";
 
-function codeZoom(dir: 1 | -1) {
-  settings.codeFontSize = Math.min(24, Math.max(9, Math.round((settings.codeFontSize + dir) * 2) / 2));
-}
-
 // The docked column never squeezes the tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
@@ -177,16 +173,16 @@ function onKey(e: KeyboardEvent) {
         if (e.altKey) settings.rightOpen = !settings.rightOpen;
         else settings.leftOpen = !settings.leftOpen;
       });
-    // With the Git window open, ⌘+ / ⌘− / ⌘0 size its code, not the terminals.
+    // ⌘+ / ⌘− / ⌘0 zoom the whole window, whatever window is open.
     case "Equal":
     case "NumpadAdd":
-      return run(() => (git.modal.open || issueView.open || files.open ? codeZoom(1) : zoom(0.5)));
+      return run(() => zoom(0.5));
     case "Minus":
     case "NumpadSubtract":
-      return run(() => (git.modal.open || issueView.open || files.open ? codeZoom(-1) : zoom(-0.5)));
+      return run(() => zoom(-0.5));
     case "Digit0":
     case "Numpad0":
-      return run(() => (git.modal.open || issueView.open || files.open ? (settings.codeFontSize = 12.5) : resetZoom()));
+      return run(() => resetZoom());
   }
 }
 
@@ -275,7 +271,7 @@ onBeforeUnmount(() => {
 .toast {
   position: fixed; left: 50%; bottom: 52px; transform: translateX(-50%);
   padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
-  color: var(--text); font-size: 12.5px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
+  color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
 }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 6px); }

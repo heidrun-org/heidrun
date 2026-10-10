@@ -71,7 +71,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </div>
       </header>
 
-      <div class="scroll" :style="{ fontSize: `${settings.codeFontSize + 2.5}px` }" @click="onClick" @auxclick="onClick">
+      <div class="scroll" @click="onClick" @auxclick="onClick">
         <div v-if="issueView.loading" class="empty">{{ t("issueModal.loading") }}</div>
         <div v-else-if="issueView.error" class="empty err">{{ issueView.error }}</div>
         <template v-else-if="d">
@@ -108,16 +108,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 }
 .top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
-.ref { color: var(--question); font-size: 13px; }
-.label { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--text-2); }
-.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; background: var(--chip); color: var(--text-2); }
+.ref { color: var(--question); font-size: var(--font-size); }
+.label { font-size: var(--font-size); padding: 2px 8px; border-radius: 10px; background: var(--chip); color: var(--text-2); }
+.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600; background: var(--chip); color: var(--text-2); }
 .chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.merged { background: var(--tint-merged); color: var(--question); }
 .chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.muted { color: var(--muted); }
 .tools { display: flex; align-items: center; gap: 8px; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
-.seg button { border: none; background: transparent; color: var(--muted); font-size: 12px; padding: 4px 10px; border-radius: 6px; }
+.seg button { border: none; background: transparent; color: var(--muted); font-size: var(--font-size); padding: 4px 10px; border-radius: 6px; }
 .seg button.on { background: var(--hover); color: var(--text); }
-.close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: 20px; }
+.close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
 .close:hover { background: var(--hover); color: var(--text); }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 24px 40px 60px; }
 .scroll .md-doc { font-size: inherit; }
@@ -131,5 +131,5 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .empty { padding: 24px; color: var(--muted); }
 .err { color: var(--fail); }
 .muted { color: var(--muted); }
-.foot { flex-shrink: 0; padding: 6px 16px; border-top: 1px solid var(--line); font-size: 11px; }
+.foot { flex-shrink: 0; padding: 6px 16px; border-top: 1px solid var(--line); font-size: var(--font-size); }
 </style>

@@ -110,7 +110,7 @@ html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 400 13px/1.4 var(--sans);
+  font: 400 var(--font-size)/1.4 var(--sans);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   user-select: none;
@@ -120,7 +120,7 @@ input { font: inherit; color: inherit; user-select: text; }
 :focus-visible { outline: 2px solid var(--done); outline-offset: 1px; }
 
 .eyebrow {
-  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+  font-size: var(--font-size); font-weight: 600; letter-spacing: 1px;
   text-transform: uppercase; color: var(--muted);
 }
 .mono { font-family: var(--mono); }
@@ -177,12 +177,12 @@ input { font: inherit; color: inherit; user-select: text; }
 .btn {
   height: 30px; padding: 0 12px; border-radius: 7px;
   border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-weight: 500; font-size: 12px;
+  color: var(--text-2); font-weight: 500; font-size: var(--font-size);
   display: inline-flex; align-items: center; gap: 6px;
 }
 .btn:hover { background: var(--hover); }
-.btn kbd { font-family: var(--mono); color: var(--muted); font-size: 11px; }
-.btn.lg { height: 40px; border-radius: 10px; font-size: 13px; justify-content: center; }
+.btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
+.btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }
 .btn.primary { background: var(--accent); border-color: transparent; color: #111316; font-weight: 600; }
 .btn.primary:hover { filter: brightness(1.08); }
 
@@ -217,7 +217,7 @@ input { font: inherit; color: inherit; user-select: text; }
 .code .hljs-emphasis { font-style: italic; } .code .hljs-strong { font-weight: 700; }
 
 /* ---- Rendered Markdown (issue preview) ---------------------------------------- */
-.md-doc { max-width: 860px; margin: 0 auto; font: 15px/1.7 var(--sans); color: var(--text); user-select: text; }
+.md-doc { max-width: 860px; margin: 0 auto; font: var(--font-size)/1.7 var(--sans); color: var(--text); user-select: text; }
 .md-doc.full { max-width: none; }
 .md-doc h1, .md-doc h2 { padding-bottom: 0.3em; border-bottom: 1px solid var(--line-strong); }
 .md-doc h1 { font-size: 1.7em; margin: 0.2em 0 0.7em; }

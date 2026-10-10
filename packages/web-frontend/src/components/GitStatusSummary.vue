@@ -61,7 +61,7 @@ const isDirty = computed(() => currentGit.value !== null && currentGit.value.cha
   display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 4px); left: 11px; z-index: 20; width: 340px;
   flex-direction: column; gap: 8px; padding: 16px 18px; white-space: normal; font-weight: 400;
   border: 1px solid var(--line-modal); border-radius: 8px; background: var(--panel); color: var(--text-2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: 14.5px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: var(--font-size);
 }
 .card::after {
   content: ""; position: absolute; top: 100%; left: 18px; width: 10px; height: 10px; margin-top: -6px;

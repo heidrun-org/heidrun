@@ -25,7 +25,7 @@ async function click(e: MouseEvent) {
 <style scoped>
 .confirm {
   border: none; background: transparent; color: var(--muted); border-radius: 6px;
-  min-width: 22px; height: 22px; padding: 0 6px; font-size: 13px; line-height: 1;
+  min-width: 22px; height: 22px; padding: 0 6px; font-size: var(--font-size); line-height: 1;
   display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; gap: 6px;
 }
 .confirm:hover { background: var(--hover); color: var(--text); }

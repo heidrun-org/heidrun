@@ -35,7 +35,7 @@
   "keys.rightClick": "Right click",
   "group.display": "Display",
   "action.hidePanels": "Hide the left sidebar / the right panel",
-  "action.fontSize": "Increase / decrease / reset the font (the code in the Git and Preview windows)",
+  "action.fontSize": "Increase / decrease / reset the font size of the whole window",
   "group.mouse": "Mouse",
   "action.issuePreview": "On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it",
   "keys.commandClick": "⌘-click",

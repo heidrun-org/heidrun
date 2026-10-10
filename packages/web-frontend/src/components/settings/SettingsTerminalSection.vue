@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FONTS, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../../stores/settings";
+import { FONTS, FONT_DEFAULT, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../../stores/settings";
 import { t } from "../../i18n/index";
 </script>
 
@@ -18,7 +18,7 @@ import { t } from "../../i18n/index";
     <div v-if="settings.fontId === 'inconsolata-powerline'" class="keys">
       {{ t("fontMenu.powerlineBefore") }}<span class="mono">brew install --cask font-inconsolata-for-powerline</span>{{ t("fontMenu.powerlineAfter") }}
     </div>
-    <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${settings.fontSize}px` }">
+    <div class="preview" :style="{ fontFamily: FONTS.find((f) => f.id === settings.fontId)?.stack, fontSize: `${FONT_DEFAULT}px` }">
       ❯ flutter test → 12 passed <template v-if="settings.fontId === 'inconsolata-powerline'">  main </template>
     </div>
     <div class="keys"><kbd>⌘+</kbd> {{ t("fontMenu.keyIncrease") }} · <kbd>⌘−</kbd> {{ t("fontMenu.keyDecrease") }} · <kbd>⌘0</kbd> {{ t("fontMenu.keyDefault") }}</div>
@@ -29,7 +29,7 @@ import { t } from "../../i18n/index";
 .section { display: flex; flex-direction: column; gap: 10px; }
 .size { display: flex; align-items: center; gap: 6px; }
 .size .btn:disabled { opacity: 0.4; cursor: default; }
-.val { min-width: 52px; text-align: center; color: var(--text); font-size: 12px; }
+.val { min-width: 52px; text-align: center; color: var(--text); font-size: var(--font-size); }
 .preview {
   padding: 10px 12px; border-radius: 8px; background: var(--bg); color: var(--text-2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

@@ -40,7 +40,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | Right click | New file or folder, rename / move, Trash |
 | **Display** | |
 | ⌘B / ⌥⌘B | Hide the left sidebar / the right panel |
-| ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font (the code in the Git and Preview windows) |
+| ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font size of the whole window |
 | **Mouse** | |
 | ⌘-click | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
 | ⌘-click | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |

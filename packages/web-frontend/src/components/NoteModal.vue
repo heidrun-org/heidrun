@@ -186,8 +186,8 @@ function remove() {
 }
 .bar:active { cursor: grabbing; }
 .titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-h2 { margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.origin { font-size: 11.5px; color: var(--muted); }
+h2 { margin: 0; font-size: var(--font-size); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.origin { font-size: var(--font-size); color: var(--muted); }
 .x {
   width: 28px; height: 28px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
@@ -196,14 +196,14 @@ h2 { margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow
 .body { flex: 1; min-height: 0; display: flex; padding: 14px 18px; }
 pre, textarea {
   flex: 1; margin: 0; padding: 14px 16px; border-radius: 9px; background: var(--bg); color: var(--text-2);
-  font-size: 12.5px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; overflow: auto;
+  font-size: var(--font-size); line-height: 1.55; white-space: pre-wrap; word-break: break-word; overflow: auto;
 }
 pre { user-select: text; cursor: text; }
 textarea { border: 1px solid #3a5a80; outline: none; resize: none; color: var(--text); }
 .foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px 16px; }
 .send {
   height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-size: 12px; padding: 0 8px;
+  color: var(--text-2); font-size: var(--font-size); padding: 0 8px;
 }
 .grow { flex: 1; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

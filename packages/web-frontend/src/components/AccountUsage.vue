@@ -56,13 +56,13 @@ const title = computed(() => (props.provider === "claude" ? t("accountUsage.clau
 <style scoped>
 .block { display: flex; flex-direction: column; gap: 8px; }
 .win { display: flex; flex-direction: column; gap: 5px; }
-.line { display: flex; justify-content: space-between; font-size: 12px; }
+.line { display: flex; justify-content: space-between; font-size: var(--font-size); }
 .muted { color: var(--muted); }
-.hint { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+.hint { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .btn { align-self: flex-start; }
 .btn:disabled { opacity: 0.5; }
-.check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.check { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); color: var(--text-2); }
 .check input { accent-color: var(--done); width: 14px; height: 14px; }
-.off { align-self: flex-start; border: none; background: none; padding: 0; color: var(--faint); font-size: 11px; }
+.off { align-self: flex-start; border: none; background: none; padding: 0; color: var(--faint); font-size: var(--font-size); }
 .off:hover { color: var(--text-2); }
 </style>

@@ -44,18 +44,18 @@ const introParts = computed(() => t("offline.intro").split("{command}"));
 <style scoped>
 .offline { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
 .card { width: min(520px, 100%); display: flex; flex-direction: column; gap: 12px; user-select: text; }
-h1 { margin: 0; font-size: 22px; font-weight: 600; }
+h1 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 p { margin: 0; color: var(--text-2); }
 pre { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--field); color: var(--text); }
-dl { display: grid; grid-template-columns: 70px 1fr; gap: 6px 12px; margin: 4px 0; font-size: 12px; }
+dl { display: grid; grid-template-columns: 70px 1fr; gap: 6px 12px; margin: 4px 0; font-size: var(--font-size); }
 dt { color: var(--muted); }
 dd { margin: 0; word-break: break-all; }
 .ok { color: var(--working); }
 .ko { color: var(--fail); }
-.err { color: var(--fail); font-size: 12px; }
+.err { color: var(--fail); font-size: var(--font-size); }
 .row { display: flex; gap: 8px; }
 .row .btn { padding: 0 20px; }
 .btn:disabled { opacity: 0.5; }
-.check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); }
+.check { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); color: var(--text-2); }
 .check input { accent-color: var(--done); }
 </style>

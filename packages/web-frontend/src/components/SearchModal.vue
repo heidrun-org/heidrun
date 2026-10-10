@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { clearSearchCache, requestJump, runSearch, search, type SearchGroup } from "../stores/search";
 import { selectPane, state, workspaceLabel } from "../stores/session";
-import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 
 const q = ref("");
@@ -118,7 +117,7 @@ function parts(line: string, s: number, e: number) {
         <span v-else-if="q.trim().length >= 2">{{ summary }}</span>
         <span v-else>{{ t("searchModal.help") }}</span>
       </div>
-      <div class="results" :style="{ fontSize: `${settings.codeFontSize}px` }">
+      <div class="results">
         <section v-for="g in groups" :key="g.pane.pane_id" class="group">
           <h3>
             <span>{{ g.where }}</span>
@@ -154,22 +153,22 @@ function parts(line: string, s: number, e: number) {
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 .bar { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.q { flex: 1; height: 36px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: 14px; padding: 0 12px; }
-.opt { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-2); white-space: nowrap; }
+.q { flex: 1; height: 36px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 12px; }
+.opt { display: flex; align-items: center; gap: 5px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .opt input { accent-color: var(--accent); }
-.status { padding: 6px 16px; font-size: 11.5px; color: var(--muted); border-bottom: 1px solid var(--line); }
+.status { padding: 6px 16px; font-size: var(--font-size); color: var(--muted); border-bottom: 1px solid var(--line); }
 .err { color: var(--fail); }
 .results { overflow: auto; padding: 6px 8px 12px; }
-.group h3 { display: flex; align-items: center; gap: 8px; margin: 10px 8px 4px; font-size: 12px; font-weight: 600; color: var(--text); font-family: var(--font-ui, inherit); }
-.tag { font-size: 10.5px; font-weight: 500; padding: 1px 6px; border-radius: 6px; background: var(--field); color: var(--muted); }
-.count { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 500; }
+.group h3 { display: flex; align-items: center; gap: 8px; margin: 10px 8px 4px; font-size: var(--font-size); font-weight: 600; color: var(--text); font-family: var(--font-ui, inherit); }
+.tag { font-size: var(--font-size); font-weight: 500; padding: 1px 6px; border-radius: 6px; background: var(--field); color: var(--muted); }
+.count { margin-left: auto; font-size: var(--font-size); color: var(--muted); font-weight: 500; }
 .hit { display: flex; flex-direction: column; width: 100%; text-align: left; padding: 5px 10px; border-radius: 7px; gap: 1px; }
 .hit.active { background: var(--field); }
 .hit span { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .ctx { color: var(--muted); opacity: 0.75; }
 .line { color: var(--text); }
 mark { background: color-mix(in srgb, var(--accent) 35%, transparent); color: var(--text); border-radius: 3px; padding: 0 1px; }
-.more { padding: 2px 10px 4px; font-size: 11.5px; }
+.more { padding: 2px 10px 4px; font-size: var(--font-size); }
 .muted { color: var(--muted); }
 .ws { font-weight: 400; }
 </style>

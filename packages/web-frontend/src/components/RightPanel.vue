@@ -55,12 +55,12 @@ const tabs = computed(() => [
 .seg { display: flex; gap: 3px; margin: 14px 16px 0; padding: 3px; border-radius: 9px; background: var(--bg); }
 .seg button {
   flex: 1; height: 30px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: var(--font-size); font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
 .seg button.on { background: var(--hover); color: var(--text); }
 .badge {
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--line-strong); color: var(--text-2);
-  font-size: 10px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center;
 }
 .badge.live { background: var(--tint-working); color: var(--working); }
 </style>

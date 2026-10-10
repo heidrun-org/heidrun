@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { FONT_DEFAULT, FONT_MAX, FONT_MIN, FONTS, fontStack, resetZoom, settings, zoom } from "./settings";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FONT_DEFAULT, FONT_MAX, FONT_MIN, FONTS, fontStack, resetZoom, settings, zoom, zoomFactor } from "./settings";
+
+const setZoom = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom }) }));
 
 beforeEach(() => {
   settings.fontId = "geist";
@@ -14,7 +17,7 @@ describe("zoom", () => {
 
   it("rounds to half a point", () => {
     zoom(0.3);
-    expect(settings.fontSize).toBe(13);
+    expect(settings.fontSize).toBe(FONT_DEFAULT + 0.5);
   });
 
   it("never goes under the minimum", () => {
@@ -67,5 +70,34 @@ describe("time format", () => {
 describe("working days", () => {
   it("are all the days of the week by default", () => {
     expect(settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+});
+
+describe("zoom of the whole window", () => {
+  it("is 1 at the default font size", () => {
+    expect(zoomFactor()).toBe(1);
+  });
+
+  it("is the font size divided by the default font size", () => {
+    zoom(2.5);
+    expect(zoomFactor()).toBe((FONT_DEFAULT + 2.5) / FONT_DEFAULT);
+  });
+
+  it("is given to the web view, so the sidebar, the menus, the dialogs and the middle area change size together", async () => {
+    setZoom.mockClear();
+    zoom(2.5);
+    await vi.waitFor(() => expect(setZoom).toHaveBeenLastCalledWith((FONT_DEFAULT + 2.5) / FONT_DEFAULT));
+    resetZoom();
+    await vi.waitFor(() => expect(setZoom).toHaveBeenLastCalledWith(1));
+  });
+
+  it("is saved and applied again after the application restarts", async () => {
+    zoom(3);
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").fontSize).toBe(FONT_DEFAULT + 3));
+    setZoom.mockClear();
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.fontSize).toBe(FONT_DEFAULT + 3);
+    await vi.waitFor(() => expect(setZoom).toHaveBeenLastCalledWith((FONT_DEFAULT + 3) / FONT_DEFAULT));
   });
 });

@@ -62,7 +62,7 @@ onUnmounted(() => unlisten?.());
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 .info { padding: 18px 22px 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-h2 { margin: 0; font-size: 18px; font-weight: 600; }
-.version { margin: 0; font-size: 12px; opacity: 0.7; }
-.description { margin: 4px 0 10px; font-size: 13px; text-align: center; opacity: 0.85; }
+h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
+.version { margin: 0; font-size: var(--font-size); opacity: 0.7; }
+.description { margin: 4px 0 10px; font-size: var(--font-size); text-align: center; opacity: 0.85; }
 </style>

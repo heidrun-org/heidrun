@@ -1,4 +1,5 @@
 import { reactive, watch } from "vue";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 export interface FontOption {
   id: string;
@@ -27,7 +28,10 @@ export const FONTS: FontOption[] = [
 
 export const FONT_MIN = 9;
 export const FONT_MAX = 24;
-export const FONT_DEFAULT = 12.5;
+export const FONT_DEFAULT = 16;
+
+// The one place of the text size: every font size of the window reads this CSS variable.
+document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
@@ -60,8 +64,6 @@ const defaults = {
   quietTo: "",
   /** Git viewer: "unified" | "split" diff, or the whole "file". */
   diffMode: "unified" as "unified" | "split" | "file" | "read",
-  /** Git window: code size (⌘+ / ⌘− while it is open) and file list width. */
-  codeFontSize: 12.5,
   /** Side-by-side diff: share of the width for the old version (0.5 = middle). */
   splitRatio: 0.5,
   /** Markdown reading: centred column, or the whole width. */
@@ -131,6 +133,22 @@ watch(
 export function fontStack(): string {
   return (FONTS.find((f) => f.id === settings.fontId) ?? FONTS[0]).stack;
 }
+
+/** The zoom factor of the whole window: the chosen font size divided by the default font size. */
+export function zoomFactor(): number {
+  return settings.fontSize / FONT_DEFAULT;
+}
+
+/** Applies the zoom factor to the whole web view of the window, not only to the terminal. */
+export async function applyWindowZoom() {
+  try {
+    await getCurrentWebview().setZoom(zoomFactor());
+  } catch {
+    /* outside the Heidrun window (a test, a plain browser) there is no web view to zoom */
+  }
+}
+
+watch(() => settings.fontSize, applyWindowZoom, { immediate: true });
 
 export function zoom(delta: number) {
   const next = Math.round((settings.fontSize + delta) * 2) / 2;
