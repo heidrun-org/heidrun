@@ -2,8 +2,8 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
 import { Command, Option } from 'commander';
-import { RawCodingAgent } from './raw_coding_agent.ts';
-import type { RawCodingAgentName } from './raw_coding_agent.ts';
+import { RawCodingAgent } from './library/raw_coding_agent.ts';
+import type { RawCodingAgentName } from './library/raw_coding_agent.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;

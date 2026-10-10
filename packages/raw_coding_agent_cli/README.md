@@ -5,7 +5,7 @@ A library and a command line tool for [Heidrun](../../README.md). Both send one 
 ## What it contains
 
 - `src/index.ts`: the public interface of the library. It exports the class `RawCodingAgent` and the types `RawCodingAgentName` and `RawCodingAgentRunOptions`.
-- `src/raw_coding_agent.ts`: the code of the class `RawCodingAgent`.
+- `src/library/raw_coding_agent.ts`: the code of the class `RawCodingAgent`.
 - `src/cli.ts`: the command line. It is the executable `raw_coding_agent_cli`.
 - `tests/`: the Vitest tests. They use fake `codex` and `claude` commands.
 

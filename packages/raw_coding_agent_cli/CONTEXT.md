@@ -5,6 +5,7 @@ A library and a command line tool that send one prompt to a coding agent command
 
 ## Key Exports & Entry Points
 - `src/index.ts`: the only public interface of the library. It exports the class `RawCodingAgent` and the types `RawCodingAgentName` and `RawCodingAgentRunOptions`. It does not export the command line.
+- `src/library/`: the code of the class `RawCodingAgent` — see its own CONTEXT.md.
 - `src/cli.ts`: the command line, and the executable `raw_coding_agent_cli` of the `bin` entry in `package.json`.
 - `tests/`: the Vitest tests, which use fake `codex` and `claude` commands put at the start of the PATH.
 - Command to run this folder: `pnpm --silent --filter raw_coding_agent_cli cli --help`
