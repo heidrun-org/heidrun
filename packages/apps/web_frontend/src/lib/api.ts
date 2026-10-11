@@ -31,6 +31,11 @@ export function showMainWindow(): Promise<void> {
   return invoke("show_main_window");
 }
 
+/** True when Heidrun was started with the command line option `--no-splash-screen`. */
+export function isSplashScreenDisabled(): Promise<boolean> {
+  return invoke<boolean>("is_splash_screen_disabled");
+}
+
 export function codexUsage(sessionIds: string[]): Promise<CodexUsage> {
   return invoke("codex_usage", { sessionIds });
 }

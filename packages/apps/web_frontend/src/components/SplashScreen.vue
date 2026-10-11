@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import splashImage from "../assets/heidrun_splash_screen.jpg";
-import { showMainWindow } from "../lib/api";
+import { isSplashScreenDisabled, showMainWindow } from "../lib/api";
 import { t } from "../i18n/index";
 
 const DISPLAY_DURATION_MS = 3000;
@@ -11,7 +11,8 @@ const MOTTO_LOWEST_POINT_FROM_BOTTOM_PX = 72;
 /** The radius of the circle that the motto follows. A larger radius gives a flatter curve. */
 const MOTTO_CIRCLE_RADIUS_PX = 1800;
 
-const isVisible = ref(true);
+/** False until Heidrun tells if it was started with `--no-splash-screen`. The main window is hidden until then. */
+const isVisible = ref(false);
 const screenWidth = ref(window.innerWidth);
 const screenHeight = ref(window.innerHeight);
 
@@ -32,8 +33,19 @@ function measureScreen() {
   screenHeight.value = window.innerHeight;
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener("resize", measureScreen);
+  let isDisabled = false;
+  try {
+    isDisabled = await isSplashScreenDisabled();
+  } catch {
+    // Outside Heidrun (a plain browser), there is no command line option, so the splash screen shows.
+  }
+  if (isDisabled) {
+    await showMainWindowIfPossible();
+    return;
+  }
+  isVisible.value = true;
 });
 
 onUnmounted(() => {
@@ -42,6 +54,14 @@ onUnmounted(() => {
 
 function close() {
   isVisible.value = false;
+}
+
+async function showMainWindowIfPossible() {
+  try {
+    await showMainWindow();
+  } catch {
+    // Outside Heidrun (a plain browser), there is no window to show.
+  }
 }
 
 /**
@@ -55,11 +75,7 @@ async function onImageSettled(event: Event) {
   } catch {
     // An image that cannot be decoded must not keep the window hidden.
   }
-  try {
-    await showMainWindow();
-  } catch {
-    // Outside Heidrun (a plain browser), there is no window to show.
-  }
+  await showMainWindowIfPossible();
   window.setTimeout(close, DISPLAY_DURATION_MS);
 }
 </script>
