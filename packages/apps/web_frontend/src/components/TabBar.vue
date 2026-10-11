@@ -7,6 +7,7 @@ import WorkspaceButton from "./WorkspaceButton.vue";
 import { allPanes, closeTab, finishRename, moveTab, selectTab, startRename, state, tabLabel, tabs } from "../stores/session";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
+import { tabIconName } from "../lib/tab_icon";
 import { onNewPaneClick } from "../stores/newPane";
 import { t } from "../i18n/index";
 
@@ -18,6 +19,11 @@ const tabIds = computed(() => tabs.value.map((tab) => tab.tab_id));
 /** True when a pane of the tab has just turned blocked: the status dot of the tab pulses once. */
 function isPulsing(tabId: string): boolean {
   return allPanes.value.some((pane) => pane.tab_id === tabId && state.pulse[pane.pane_id] !== undefined);
+}
+
+/** The icon of the tab: the icon of the agent in the pane that decides the status dot, or the terminal icon. */
+function iconOf(tabId: string): string {
+  return tabIconName(allPanes.value.filter((pane) => pane.tab_id === tabId), state.selectedPaneId);
 }
 
 /** True when Remote Control is connected to a pane of the tab. */
@@ -33,6 +39,7 @@ function isRemoteControlled(tabId: string): boolean {
       <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation">
         <div v-if="state.renaming === `tab:${tab.tab_id}`" class="nav-link active d-flex align-items-center gap-2">
           <span class="dot" :class="tab.agent_status === 'idle' ? '' : tab.agent_status"></span>
+          <Icon :name="iconOf(tab.tab_id)" class="tab-icon" />
           <InlineRename
             class="tab-rename"
             :value="tabLabel(tab.tab_id)"
@@ -66,6 +73,7 @@ function isRemoteControlled(tabId: string): boolean {
             @dblclick="startRename('tab', tab.tab_id)"
           >
             <span class="dot" :class="[tab.agent_status === 'idle' ? '' : tab.agent_status, isPulsing(tab.tab_id) ? 'pulse' : '']"></span>
+            <Icon :name="iconOf(tab.tab_id)" class="tab-icon" />
             <span class="tab-label">{{ tabLabel(tab.tab_id) }}</span>
             <span v-if="isRemoteControlled(tab.tab_id)" class="rc" :title="t('tabBar.remoteControlConnected')">{{ t("tabBar.remoteControlBadge") }}</span>
           </button>
@@ -106,20 +114,20 @@ function isRemoteControlled(tabId: string): boolean {
   --bs-nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);
   --bs-nav-tabs-link-active-color: var(--text);
   --bs-nav-tabs-link-active-bg: var(--bg);
-  --bs-nav-link-padding-x: 12px;
+  --bs-nav-link-padding-x: 18px;
   --bs-nav-link-padding-y: 0;
   --bs-nav-link-font-weight: 500;
   --bs-nav-link-color: var(--muted);
   --bs-nav-link-hover-color: var(--text-2);
   flex-wrap: nowrap; align-items: flex-start; min-width: 0; margin: 0; gap: 2px; border-bottom: 0; overflow-x: auto; scrollbar-width: none;
 }
-.nav-item { flex: 0 1 auto; min-width: 120px; max-width: 220px; }
+.nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }
 /* The height of a tab is fixed, so that the rename field cannot make the tab bar higher. The selected tab is 1 pixel higher than
    the other tabs: the 1 pixel that goes over the panes. It has no border at the bottom, so that its left and right borders go down
    to the border of the panes. */
-.nav-tabs .nav-link { width: 100%; height: 34px; margin-bottom: 0; background-color: rgba(var(--wash), 0.04); }
+.nav-tabs .nav-link { width: 100%; height: 40px; margin-bottom: 0; background-color: rgba(var(--wash), 0.04); }
 .nav-tabs .nav-link:not(.active):hover { background-color: var(--overlay-hover); }
-.nav-tabs .nav-link.active { height: 35px; font-weight: 600; background-color: var(--bg); border-bottom-width: 0; }
+.nav-tabs .nav-link.active { height: 41px; font-weight: 600; background-color: var(--bg); border-bottom-width: 0; }
 /* The close button is 7 pixels from the right border of the tab: its box is 6 pixels from the border, and the cross has a margin of
    1 pixel inside its box. A tab that is being renamed has no close button, so it keeps the padding of Bootstrap. */
 .nav-tabs .nav-link.tab-closable { padding-right: 5px; }
@@ -127,7 +135,7 @@ function isRemoteControlled(tabId: string): boolean {
 /* As in Visual Studio Code, a short line between two tabs shows where a tab stops. It is hidden next to the selected tab and the
    tab under the mouse, which have a border. */
 .nav-item:not(:last-child)::after {
-  content: ""; position: absolute; top: 9px; bottom: 9px; right: -2px; width: 1px; background: var(--line-strong); pointer-events: none;
+  content: ""; position: absolute; top: 12px; bottom: 12px; right: -2px; width: 1px; background: var(--line-strong); pointer-events: none;
 }
 .nav-item:has(.nav-link.active)::after, .nav-item:has(+ .nav-item .nav-link.active)::after,
 .nav-item:hover::after, .nav-item:has(+ .nav-item:hover)::after { opacity: 0; }
@@ -142,6 +150,7 @@ function isRemoteControlled(tabId: string): boolean {
 /* The button that selects the tab covers the whole tab, padding included. The close button sits over it, so a click on the close
    button closes the tab. */
 .tab-main::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
+.tab-icon { flex-shrink: 0; color: var(--muted); }
 .tab-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-link .tab-rename { flex: 1; min-width: 0; width: auto; height: 24px; padding: 0 6px; }
 .rc {
@@ -171,7 +180,7 @@ function isRemoteControlled(tabId: string): boolean {
   --bs-btn-disabled-color: var(--text);
   --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
   --bs-btn-focus-box-shadow: none;
-  flex-shrink: 0; width: 28px; height: 28px; margin-bottom: 4px; line-height: 1;
+  flex-shrink: 0; width: 34px; height: 34px; margin-bottom: 4px; line-height: 1;
 }
 /* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
 .add:not(:hover) {
