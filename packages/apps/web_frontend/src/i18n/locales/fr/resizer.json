@@ -1,6 +1,6 @@
 {
-  "leftWidth": "Largeur de la barre de gauche",
-  "rightWidth": "Largeur du panneau de droite",
+  "leftWidth": "Largeur de la barre latérale gauche",
+  "rightWidth": "Largeur de la barre latérale droite",
   "title": "Glisser pour redimensionner · double-clic pour revenir à la taille par défaut",
   "paneHeight": "Hauteur des panneaux au-dessus et en dessous de cette ligne",
   "paneWidth": "Largeur des panneaux à gauche et à droite de cette ligne",

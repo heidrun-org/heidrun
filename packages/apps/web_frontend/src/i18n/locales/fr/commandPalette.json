@@ -47,7 +47,7 @@
   "zoomOut": "Réduire la police",
   "zoomReset": "Taille de police par défaut",
   "leftSidebar": "Barre latérale gauche",
-  "rightPanel": "Panneau de droite",
+  "rightSidebar": "Barre latérale droite",
   "font": "Police : {font}",
   "dialogLabel": "Palette de commandes",
   "inputLabel": "Commande ou recherche",

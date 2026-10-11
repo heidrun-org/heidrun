@@ -133,7 +133,7 @@
     "items": [
       {
         "keys": "⌘B / ⌥⌘B",
-        "actionKey": "action.hidePanels"
+        "actionKey": "action.hideSidebars"
       },
       {
         "keys": "⌘+ / ⌘− / ⌘0",

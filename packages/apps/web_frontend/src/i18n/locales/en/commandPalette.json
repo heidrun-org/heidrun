@@ -47,7 +47,7 @@
   "zoomOut": "Decrease the font size",
   "zoomReset": "Default font size",
   "leftSidebar": "Left sidebar",
-  "rightPanel": "Right panel",
+  "rightSidebar": "Right sidebar",
   "font": "Font: {font}",
   "dialogLabel": "Command palette",
   "inputLabel": "Command or search",

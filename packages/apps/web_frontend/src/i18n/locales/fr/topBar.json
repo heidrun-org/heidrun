@@ -3,6 +3,6 @@
   "leftSidebarTitle": "Barre latérale gauche (⌘B)",
   "searchTitle": "Rechercher ou lancer une commande",
   "searchPlaceholder": "Rechercher, lancer une commande…",
-  "rightPanelLabel": "Afficher le panneau de droite",
-  "rightPanelTitle": "Panneau de droite (⌥⌘B)"
+  "rightSidebarLabel": "Afficher la barre latérale droite",
+  "rightSidebarTitle": "Barre latérale droite (⌥⌘B)"
 }
