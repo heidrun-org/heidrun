@@ -17,18 +17,37 @@ export interface Chat {
   updated_at: number;
 }
 
-/** What the Tauri command `chats_list` answers: the conversations of one folder, newest first, for each coding agent. */
-type ChatsOfFolder = Record<ChatAgent, Chat[]>;
+/** The number of chats that the list shows at the start, then after each click on "Show more". The next clicks add 50. */
+export const CHAT_LIMITS = [5, 10, 20, 50] as const;
+
+/** The number of chats that a click on "Show more" adds after the last number of `CHAT_LIMITS`. */
+const CHAT_LIMIT_STEP = 50;
+
+/** What the Tauri command `chats_list` answers for one coding agent. */
+interface AgentChats {
+  /** The newest chats first, at most the limit that was asked. */
+  chats: Chat[];
+  /** True when the folder holds more chats than the ones in `chats`. */
+  has_more: boolean;
+}
+
+/** What the Tauri command `chats_list` answers: the newest chats of one folder, for each coding agent. */
+type ChatsOfFolder = Record<ChatAgent, AgentChats>;
 
 /**
  * The conversations of the folder of the selected workspace. `folder` is the folder whose conversations the lists hold.
- * `agent` is the coding agent that the developer chose in the selector.
+ * `agent` is the coding agent that the developer chose in the selector. `limit` is the number of chats that the lists ask
+ * for, and `hasMore` tells for each coding agent whether the folder holds more chats than the list shows.
  */
 export const chats = reactive({
   folder: null as string | null,
   claude: [] as Chat[],
   codex: [] as Chat[],
+  hasMore: { claude: false, codex: false } as Record<ChatAgent, boolean>,
+  limit: CHAT_LIMITS[0] as number,
   agent: "claude" as ChatAgent,
+  /** True while a click on "Show more" waits for its answer. */
+  isShowingMore: false,
   /** True until the first answer for the folder arrives. */
   isLoading: false,
   /** The reason why the conversations could not be read, or null. */
@@ -49,9 +68,34 @@ export const selectedChatAgent = computed<ChatAgent | null>(() => {
 /** The conversations that the list shows. */
 export const shownChats = computed(() => (selectedChatAgent.value === null ? [] : chats[selectedChatAgent.value]));
 
+/** True when the folder holds more chats of the selected coding agent than the list shows. */
+export const canShowMoreChats = computed(
+  () => selectedChatAgent.value !== null && chats.hasMore[selectedChatAgent.value],
+);
+
+/** The number of chats to ask for after a click on "Show more". */
+export function nextChatLimit(limit: number): number {
+  return CHAT_LIMITS.find((step) => step > limit) ?? limit + CHAT_LIMIT_STEP;
+}
+
+/** Raises the number of chats that the list asks for, and reads the chats again. */
+export async function showMoreChats(): Promise<void> {
+  if (chats.isShowingMore) {
+    return;
+  }
+  chats.isShowingMore = true;
+  chats.limit = nextChatLimit(chats.limit);
+  try {
+    await loadChats(chats.folder);
+  } finally {
+    chats.isShowingMore = false;
+  }
+}
+
 /**
- * Reads the conversations of a folder again. A change of folder empties the lists first, so that the Chats sidebar section
- * never shows the conversations of another workspace. An answer for a folder that is no longer the current one is dropped.
+ * Reads the newest conversations of a folder again. A change of folder empties the lists first, and starts again with
+ * the first limit, so that the Chats sidebar section never shows the conversations of another workspace. An answer for a
+ * folder that is no longer the current one is dropped.
  * @param folder - the folder of the selected workspace, or null when no workspace is selected
  */
 export async function loadChats(folder: string | null): Promise<void> {
@@ -59,6 +103,8 @@ export async function loadChats(folder: string | null): Promise<void> {
     chats.folder = folder;
     chats.claude = [];
     chats.codex = [];
+    chats.hasMore = { claude: false, codex: false };
+    chats.limit = CHAT_LIMITS[0];
     chats.error = null;
   }
   if (folder === null) {
@@ -67,12 +113,13 @@ export async function loadChats(folder: string | null): Promise<void> {
   }
   chats.isLoading = chats.claude.length === 0 && chats.codex.length === 0;
   try {
-    const found = await invoke<ChatsOfFolder>("chats_list", { folder });
+    const found = await invoke<ChatsOfFolder>("chats_list", { folder, limit: chats.limit });
     if (chats.folder !== folder) {
       return;
     }
-    chats.claude = found.claude;
-    chats.codex = found.codex;
+    chats.claude = found.claude.chats;
+    chats.codex = found.codex.chats;
+    chats.hasMore = { claude: found.claude.has_more, codex: found.codex.has_more };
     chats.error = null;
   } catch (reason) {
     if (chats.folder === folder) {

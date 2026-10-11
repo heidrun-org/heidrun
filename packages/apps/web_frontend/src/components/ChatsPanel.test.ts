@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { enableAutoUnmount, flushPromises, mount } from "@vue/test-utils";
 import { invoke } from "@tauri-apps/api/core";
 import ChatsPanel from "./ChatsPanel.vue";
-import { chats } from "../stores/chats";
+import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
@@ -26,9 +26,12 @@ function snapshotWith(folder: string) {
 }
 
 /** What the command chats_list answers. */
-function answer(claudeTitles: string[], codexTitles: string[]) {
+function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude?: boolean; codex?: boolean } = {}) {
   const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1 }));
-  vi.mocked(invoke).mockResolvedValue({ claude: toChats("c", claudeTitles), codex: toChats("x", codexTitles) });
+  vi.mocked(invoke).mockResolvedValue({
+    claude: { chats: toChats("c", claudeTitles), has_more: hasMore.claude ?? false },
+    codex: { chats: toChats("x", codexTitles), has_more: hasMore.codex ?? false },
+  });
 }
 
 /** The titles that the list shows. */
@@ -42,6 +45,8 @@ beforeEach(() => {
   chats.claude = [];
   chats.codex = [];
   chats.agent = "claude";
+  chats.hasMore = { claude: false, codex: false };
+  chats.limit = CHAT_LIMITS[0];
   chats.error = null;
   state.snapshot = snapshotWith("/work/app");
   state.selectedWorkspaceId = "w1";
@@ -58,7 +63,7 @@ describe("ChatsPanel", () => {
     answer([], []);
     mount(ChatsPanel);
     await flushPromises();
-    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app" });
+    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5 });
   });
 
   it("shows the selector of the coding agent first, then the title of each conversation of Claude", async () => {
@@ -121,6 +126,28 @@ describe("ChatsPanel", () => {
     wrapper.unmount();
     await vi.advanceTimersByTimeAsync(30_000);
     expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows the button Show more under the list only when the coding agent has more chats", async () => {
+    answer(["Fix the tab bar"], ["Describe image"], { claude: true });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.get("ul + button").text()).toBe("Show more");
+    expect(wrapper.get("ul + button").classes()).toContain("btn");
+    await wrapper.get("select").setValue("codex");
+    expect(wrapper.find("ul + button").exists()).toBe(false);
+  });
+
+  it("asks for 10 chats after a click on Show more, and hides the button when there is no more chat", async () => {
+    answer(["Fix the tab bar"], [], { claude: true });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    answer(["Fix the tab bar", "Add the Chats sidebar section"], [], { claude: false });
+    await wrapper.get("ul + button").trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10 });
+    expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
+    expect(wrapper.find("ul + button").exists()).toBe(false);
   });
 
   it("uses Bootstrap classes for the selector and the list", async () => {

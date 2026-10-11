@@ -75,7 +75,7 @@ export class TauriMock {
 			case 'history_read':
 				return [];
 			case 'chats_list':
-				return TauriMockFixture.buildChats();
+				return TauriMockFixture.buildChats((payload as { limit: number }).limit);
 			case 'git_status':
 			case 'mobile_status':
 			case 'herdr_watch_panes':

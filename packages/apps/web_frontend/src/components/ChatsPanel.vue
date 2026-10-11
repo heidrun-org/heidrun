@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, watch } from "vue";
-import { availableChatAgents, chats, loadChats, selectedChatAgent, shownChats, type ChatAgent } from "../stores/chats";
+import {
+  availableChatAgents,
+  canShowMoreChats,
+  chats,
+  loadChats,
+  selectedChatAgent,
+  shownChats,
+  showMoreChats,
+  type ChatAgent,
+} from "../stores/chats";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { t } from "../i18n/index";
@@ -42,6 +51,9 @@ const agent = computed<ChatAgent>({
       <ul class="list-group list-group-flush">
         <li v-for="chat in shownChats" :key="chat.id" class="list-group-item text-break">{{ chat.title }}</li>
       </ul>
+      <button v-if="canShowMoreChats" type="button" class="btn" :disabled="chats.isShowingMore" @click="showMoreChats">
+        {{ t("chatsPanel.showMore") }}
+      </button>
     </template>
   </section>
 </template>

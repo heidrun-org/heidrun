@@ -85,8 +85,10 @@ This document says where each part of the window goes and how each part works. T
 - The folder of the selected workspace gives the chats: the root of the repository that holds the folder of the workspace. A chat that a coding agent saved for another folder, a worktree of the workspace included, is not in the list.
 - A selector at the top of the Chats sidebar section chooses the coding agent: Claude or Codex. The selector offers only the coding agents that have at least one chat in the selected workspace. The Chats sidebar section shows no selector when neither coding agent has a chat, and says so.
 - Below the selector, the list shows the title of each chat of the chosen coding agent, newest first. The title of Claude comes from the last title record of the file of the chat. The title of Codex comes from the index of Codex. A chat without a title shows its first message. A chat without a title and without a message is not in the list.
+- The list shows 5 chats at the start. Under the list, the button "Show more" appears when the workspace has more chats of the chosen coding agent. Each click on the button asks for more: 10 chats, then 20, then 50, then 50 more at each click. The program opens only the files of the chats that the list shows, so the cost does not grow with the number of chats of the workspace. The one exception is the first line of each file of Codex: the program reads it once, to know the folder of the file, and keeps it. The list starts again with 5 chats when the developer selects another workspace.
+- The program keeps what it read in each file in the file `chats_cache.json`, in the data folder of Heidrun. It reads a file again only when the size or the modification date of the file changes.
 - The button of the Chats sidebar section shows no number.
-- The list reads the files of the coding agents again when the Chats sidebar section opens, when the developer selects another workspace, and every 10 seconds while the Chats sidebar section is on the screen.
+- The list reads the chats again when the Chats sidebar section opens, when the developer selects another workspace, and every 10 seconds while the Chats sidebar section is on the screen.
 - The list shows only the titles for now. The ideas for later are in [issue #250](https://github.com/heidrun-org/heidrun/issues/250).
 
 ## Status bar

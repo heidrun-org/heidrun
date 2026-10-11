@@ -44,14 +44,23 @@ describe('TauriMock', () => {
 		expect(layout?.panes[1].rect.x).toBe(50);
 	});
 
-	it('answers the Tauri command chats_list with fake conversations of Claude and of Codex', async () => {
+	it('answers the Tauri command chats_list with the newest fake conversations of Claude and of Codex, up to the limit', async () => {
 		TauriMock.install();
-		const result = await invoke<Record<'claude' | 'codex', { id: string; title: string }[]>>('chats_list', {
+		type AgentChats = { chats: { id: string; title: string }[]; has_more: boolean };
+		const result = await invoke<Record<'claude' | 'codex', AgentChats>>('chats_list', {
 			folder: '/Users/demo/webwork/heidrun',
+			limit: 5,
 		});
-		expect(result.claude.length).toBeGreaterThan(0);
-		expect(result.codex.length).toBeGreaterThan(0);
-		expect(result.claude[0].title).not.toBe('');
+		expect(result.claude.chats.length).toBe(5);
+		expect(result.claude.has_more).toBe(true);
+		expect(result.codex.chats.length).toBe(2);
+		expect(result.codex.has_more).toBe(false);
+		const everything = await invoke<Record<'claude' | 'codex', AgentChats>>('chats_list', {
+			folder: '/Users/demo/webwork/heidrun',
+			limit: 1000,
+		});
+		expect(everything.claude.chats.length).toBe(60);
+		expect(everything.claude.has_more).toBe(false);
 	});
 
 	it('rejects a Tauri command that it does not list', async () => {

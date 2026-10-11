@@ -49,29 +49,40 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first.
+	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first. Claude
+	 * has 60 conversations, so that the list needs the button "Show more". Codex has two.
 	 *
-	 * @returns A new object each call, with the fake conversations of Claude and of Codex.
+	 * @param limit - The number of conversations to return for each coding agent.
+	 * @returns A new object each call, with the newest conversations of Claude and of Codex.
 	 */
-	static buildChats(): Record<ChatAgent, Chat[]> {
+	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> {
 		const now = Date.now();
 		const buildChat = (id: string, title: string, minutesAgo: number): Chat => ({
 			id,
 			title,
 			updated_at: now - minutesAgo * 60_000,
 		});
+		const claudeChats: Chat[] = [
+			buildChat('claude_1', 'Workspace conversation navigation', 2),
+			buildChat('claude_2', 'Tab drag-drop with image drop support', 90),
+			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400),
+			buildChat('claude_4', 'Issue #251', 1_500),
+			buildChat('claude_5', 'Herdr interface description', 3_000),
+		];
+		for (let index = 6; index <= 60; index++) {
+			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
+		}
+		const codexChats: Chat[] = [
+			buildChat('codex_1', 'Describe image contents', 30),
+			buildChat('codex_2', 'Count up to 200', 600),
+		];
+		const cut = (chats: Chat[]) => ({
+			chats: chats.slice(0, limit),
+			has_more: chats.length > limit,
+		});
 		return {
-			claude: [
-				buildChat('claude_1', 'Workspace conversation navigation', 2),
-				buildChat('claude_2', 'Tab drag-drop with image drop support', 90),
-				buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400),
-				buildChat('claude_4', 'Issue #251', 1_500),
-				buildChat('claude_5', 'Herdr interface description', 3_000),
-			],
-			codex: [
-				buildChat('codex_1', 'Describe image contents', 30),
-				buildChat('codex_2', 'Count up to 200', 600),
-			],
+			claude: cut(claudeChats),
+			codex: cut(codexChats),
 		};
 	}
 
