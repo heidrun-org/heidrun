@@ -29,7 +29,7 @@ import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import { onNewPaneClick } from "../stores/newPane";
 import type { AgentInfo } from "../lib/types";
-import { isDocked, toggleDock } from "../stores/dock";
+import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { homeDir } from "@tauri-apps/api/path";
 import { t } from "../i18n/index";
@@ -168,7 +168,7 @@ async function createWorkspace() {
 
     <section class="group tight">
       <div class="eyebrow pad heading">
-        <span>{{ t("sidebar.panes", { workspace: state.selectedWorkspaceId ? workspaceLabel(state.selectedWorkspaceId) : "" }) }}</span>
+        <span>{{ t("sidebar.tabs") }}</span>
         <button class="btn border-0 justify-content-center add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
       </div>
       <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
@@ -263,12 +263,12 @@ async function createWorkspace() {
           </button>
         </div>
         <button
-          class="card-dock"
-          :class="{ on: isDocked(p.pane_id) }"
-          :aria-label="isDocked(p.pane_id) ? t('sidebar.undockLabel', { name: paneName(p) }) : t('sidebar.dockLabel', { name: paneName(p) })"
-          :title="isDocked(p.pane_id) ? t('sidebar.undockTitle') : t('sidebar.dockTitle')"
-          @click="toggleDock(p.pane_id)"
-        ><Icon :name="isDocked(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
+          class="card-pin"
+          :class="{ on: isPinned(p.pane_id) }"
+          :aria-label="isPinned(p.pane_id) ? t('sidebar.unpinLabel', { name: paneName(p) }) : t('sidebar.pinLabel', { name: paneName(p) })"
+          :title="isPinned(p.pane_id) ? t('sidebar.unpinTitle') : t('sidebar.pinTitle')"
+          @click="togglePinnedPane(p.pane_id)"
+        ><Icon :name="isPinned(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
         <button class="card-x" :aria-label="t('sidebar.hideLabel', { name: paneName(p) })" :title="t('sidebar.hideTitle')" @click="dismiss(p)">
           <Icon name="x-lg" />
         </button>
@@ -321,12 +321,12 @@ async function createWorkspace() {
   position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
-.card-x:hover, .card-dock:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
-.card-dock {
+.card-x:hover, .card-pin:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
+.card-pin {
   position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: var(--font-size);
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
-.card-dock.on { color: var(--accent); }
+.card-pin.on { color: var(--accent); }
 .card.blocked { border-color: #5c2826; background: var(--tint-err); }
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {

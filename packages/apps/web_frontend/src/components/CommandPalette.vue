@@ -27,7 +27,7 @@ import { macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
-import { isDocked, toggleDock } from "../stores/dock";
+import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import { openFiles } from "../stores/files";
 import { openFindNewSkillsModal, openInstalledSkillModal } from "../stores/skills";
 import { t } from "../i18n/index";
@@ -85,10 +85,10 @@ const items = computed<Item[]>(() => {
     });
     if (p.agent && p.tab_id !== state.selectedTabId)
       list.push({
-        section: t("commandPalette.section.dock"),
-        label: t(isDocked(p.pane_id) ? "commandPalette.undock" : "commandPalette.dock", { pane: `${paneName(p)} · ${workspaceLabel(p.workspace_id)}` }),
+        section: t("commandPalette.section.pin"),
+        label: t(isPinned(p.pane_id) ? "commandPalette.unpin" : "commandPalette.pin", { pane: `${paneName(p)} · ${workspaceLabel(p.workspace_id)}` }),
         hintIcon: "pin",
-        run: () => toggleDock(p.pane_id),
+        run: () => togglePinnedPane(p.pane_id),
       });
   }
 

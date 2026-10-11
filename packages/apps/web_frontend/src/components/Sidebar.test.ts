@@ -107,6 +107,14 @@ describe("Sidebar workspace rows", () => {
   });
 });
 
+describe("Sidebar headings", () => {
+  it("says Tabs in the heading of the list of tabs, and not Panes", async () => {
+    const { wrapper } = await mountSidebar();
+    const headings = wrapper.findAll(".heading").map((heading) => heading.get("span").text());
+    expect(headings).toEqual(["Workspaces", "Tabs"]);
+  });
+});
+
 describe("Sidebar plus buttons", () => {
   it("has a plus button for a new workspace and a plus button for a new pane, each with an accessible name", async () => {
     const { wrapper } = await mountSidebar();

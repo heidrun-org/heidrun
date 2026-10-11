@@ -131,3 +131,33 @@ describe("zoom of the whole window", () => {
     await vi.waitFor(() => expect(setZoom).toHaveBeenLastCalledWith((FONT_DEFAULT + 3) / FONT_DEFAULT));
   });
 });
+
+describe("settings that got a new name to follow the glossary", () => {
+  it("keeps the pinned panes, the width of the column of pinned panes, and the sidebar section of the right sidebar that an older version saved", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({ dockedPanes: ["p1", "p2"], dockWidth: 700, rightTab: "git" }),
+    );
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.pinnedPanes).toEqual(["p1", "p2"]);
+    expect(restarted.settings.columnOfPinnedPanesWidth).toBe(700);
+    expect(restarted.settings.rightSidebarSection).toBe("git");
+  });
+
+  it("forgets the old names, so that the saved value does not keep both names", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ dockedPanes: ["p1"], dockWidth: 700, rightTab: "git" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(Object.keys(restarted.settings)).not.toEqual(expect.arrayContaining(["dockedPanes"]));
+    expect(Object.keys(restarted.settings)).not.toEqual(expect.arrayContaining(["dockWidth"]));
+    expect(Object.keys(restarted.settings)).not.toEqual(expect.arrayContaining(["rightTab"]));
+  });
+
+  it("prefers the new name when the saved value has both names", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ dockedPanes: ["old"], pinnedPanes: ["new"] }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.pinnedPanes).toEqual(["new"]);
+  });
+});
