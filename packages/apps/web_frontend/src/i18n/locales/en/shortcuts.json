@@ -16,7 +16,7 @@
   "group.navigation": "Navigation",
   "action.previousNextTab": "Previous / next tab",
   "action.previousNextWorkspace": "Previous / next workspace",
-  "action.goToWorkspace": "Go to workspace 1 to 9 (sidebar order)",
+  "action.goToWorkspace": "Go to workspace 1 to 9 (order of the list of workspaces)",
   "action.moveTab": "Move the tab left / right",
   "action.moveWorkspace": "Move the workspace up / down",
   "group.input": "Input",

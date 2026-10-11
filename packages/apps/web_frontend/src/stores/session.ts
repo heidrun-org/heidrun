@@ -156,18 +156,18 @@ export const allPanes = computed(() => (state.snapshot?.panes ?? []).map(paneVie
 const hasAgent = (wsId: string) => allPanes.value.some((p) => p.workspace_id === wsId && p.agent);
 
 /**
- * Sidebar order: workspaces with an agent session first, then the others, each group
+ * Order of the list of workspaces: workspaces with an agent session first, then the others, each group
  * keeping Herdr's order. Starting an agent lifts a workspace back to its place among
  * the active ones; stopping it puts it back among the others.
  */
-export const sidebarWorkspaces = computed(() => {
+export const orderedWorkspaces = computed(() => {
   const list = workspaces.value;
   return [...list.filter((w) => hasAgent(w.workspace_id)), ...list.filter((w) => !hasAgent(w.workspace_id))];
 });
 
-/** Drag-and-drop in the sidebar: a gap in the displayed list → Herdr's insert_index. */
+/** Drag-and-drop in the list of workspaces: a gap in the displayed list → Herdr's insert_index. */
 export function moveWorkspaceInView(id: string, gap: number) {
-  const view = sidebarWorkspaces.value;
+  const view = orderedWorkspaces.value;
   const full = workspaces.value;
   const group = hasAgent(id);
   const before = view[gap - 1];
@@ -304,9 +304,9 @@ export function paneFullName(p: AgentInfo): string {
   return `${workspaceLabel(p.workspace_id)} · ${paneTarget(p)}`;
 }
 
-/** Agents grouped by workspace, in sidebar order: for "send to…" pickers. */
+/** Agents grouped by workspace, in the order of the list of workspaces: for "send to…" pickers. */
 export const agentGroups = computed(() =>
-  sidebarWorkspaces.value
+  orderedWorkspaces.value
     .map((w) => ({
       workspace: w.label,
       items: allPanes.value
@@ -791,15 +791,15 @@ export function cycleTab(delta: number) {
 
 /** Next / previous workspace, wrapping around. */
 export function cycleWorkspace(delta: number) {
-  const list = sidebarWorkspaces.value;
+  const list = orderedWorkspaces.value;
   if (!list.length) return;
   const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
   selectWorkspace(list[(i + delta + list.length) % list.length].workspace_id);
 }
 
-/** ⌘1 … ⌘9: workspace by position in the sidebar. */
+/** ⌘1 … ⌘9: workspace by position in the list of workspaces. */
 export function selectWorkspaceAt(index: number) {
-  const w = sidebarWorkspaces.value[index];
+  const w = orderedWorkspaces.value[index];
   if (w) selectWorkspace(w.workspace_id);
 }
 
@@ -937,8 +937,8 @@ export function moveTab(tabId: string, insertIndex: number) {
 
 /** Keyboard reordering: moves the selected workspace up (-1) or down (+1). */
 export function shiftWorkspace(delta: -1 | 1) {
-  // Moves past the neighbor shown in the sidebar, within its group (with / without agent).
-  const view = sidebarWorkspaces.value;
+  // Moves past the neighbor shown in the list of workspaces, within its group (with / without agent).
+  const view = orderedWorkspaces.value;
   const full = workspaces.value;
   const i = view.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
   const neighbor = view[i + delta];

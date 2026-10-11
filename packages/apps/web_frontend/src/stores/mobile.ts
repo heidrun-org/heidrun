@@ -13,7 +13,7 @@ import {
   paneFullName,
   quotas,
   rememberPrompt,
-  sidebarWorkspaces,
+  orderedWorkspaces,
   state,
   tabLabel,
   toast,
@@ -90,7 +90,7 @@ function snapshot() {
   return {
     now: Date.now(),
     attention: attention.value.map((p) => p.pane_id),
-    workspaces: sidebarWorkspaces.value
+    workspaces: orderedWorkspaces.value
       .map((w) => ({ id: w.workspace_id, label: w.label, agents: agents.filter((p) => p.workspace_id === w.workspace_id).map(agentView) }))
       .filter((w) => w.agents.length),
     quotas: claude ? claude.windows.map((w) => ({ name: w.name, percent: Math.round(w.percent) })) : [],

@@ -16,7 +16,7 @@ import {
   startRename,
   state,
   workspaceLabel,
-  sidebarWorkspaces as workspaces,
+  orderedWorkspaces as workspaces,
 } from "../stores/session";
 import { useReorder } from "../lib/reorder";
 import { t } from "../i18n/index";
