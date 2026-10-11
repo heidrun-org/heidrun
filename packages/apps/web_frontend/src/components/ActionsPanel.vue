@@ -171,7 +171,7 @@ function isRestarting(a: Action) {
 </template>
 
 <style scoped>
-.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; }
+.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 8px; }
 .head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 .empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .action {

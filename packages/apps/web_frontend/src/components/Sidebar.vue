@@ -60,9 +60,9 @@ function selectSidebarSection(id: string) {
 <style scoped>
 .side {
   flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
-  display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 24px; padding: 5px 0 16px; overflow-y: auto;
 }
 .sidebar-sections { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.left-navigation-bar { margin: 0 4px; }
+.left-navigation-bar { padding: 0 16px; }
 .sidebar-section-body { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
 </style>

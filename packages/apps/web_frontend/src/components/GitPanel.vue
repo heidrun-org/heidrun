@@ -148,7 +148,7 @@ async function askReview(ref: string, url: string, title: string) {
 </template>
 
 <style scoped>
-.gitp { flex: 1; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
+.gitp { flex: 1; min-height: 0; padding: 20px 16px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 .block { display: flex; flex-direction: column; gap: 8px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .link { border: none; background: none; padding: 0; color: var(--faint); font-size: var(--font-size); }
