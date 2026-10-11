@@ -113,16 +113,21 @@
 
 /* Bootstrap theme ---------------------------------------------------------- */
 /* Bootstrap draws its components from its own theme variables. These lines give the variables the colors of the application, in the
-   dark theme and in the light theme. The three z-index lines keep a dropdown, a modal, and the dark layer behind a modal below the
-   confirmation window (z-index 60) that opens above them. */
+   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The four z-index lines keep a
+   popover, a dropdown, a modal, and the dark layer behind a modal below the confirmation window (z-index 60) that opens above them. */
 :root {
   --bs-body-color: var(--text);
   --bs-body-bg: var(--panel);
   --bs-border-color: var(--line-strong);
   --bs-border-color-translucent: var(--line-modal);
   --bs-secondary-color: var(--muted);
+  --bs-secondary-bg: var(--gauge-track);
   --bs-tertiary-bg: var(--hover);
+  --bs-success: #5fbf7a;
+  --bs-warning: #f0a63a;
+  --bs-danger: #ea6a5f;
 }
+.popover { --bs-popover-zindex: 20; }
 .dropdown-menu { --bs-dropdown-zindex: 50; }
 .modal { --bs-modal-zindex: 60; }
 .modal-backdrop { --bs-backdrop-zindex: 59; }

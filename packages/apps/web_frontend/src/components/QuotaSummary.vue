@@ -3,11 +3,21 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { settings } from "../stores/settings";
 import { clockTime, gaugeLevel, quotaPace, quotaRingWindow } from "../lib/format";
 import { locale, t } from "../i18n/index";
+import { useStatusCard } from "../lib/status_card";
 import type { QuotaBlock } from "../lib/types";
 
 // One account in the status bar: its name and a small ring that fills with the usage of its shortest window.
-// Hovering or focusing it shows a card with every window, its percentage, and its reset time.
+// Hovering or focusing it shows a Bootstrap popover with every window, its percentage, and its reset time.
 const props = defineProps<{ quota: QuotaBlock }>();
+
+const { isOpen, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut } = useStatusCard();
+
+// The Bootstrap classes of each level: the color of the percentage, the color of the usage bar, and the kind of notice.
+const LEVEL_CLASSES = {
+  ok: { text: "text-success-emphasis", bar: "bg-success", alert: "alert-success" },
+  warn: { text: "text-warning-emphasis", bar: "bg-warning", alert: "alert-warning" },
+  crit: { text: "text-danger-emphasis", bar: "bg-danger", alert: "alert-danger" },
+};
 
 const RING_RADIUS = 7;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
@@ -40,7 +50,15 @@ function formatCost(cost: number) {
 </script>
 
 <template>
-  <span class="quota" tabindex="0" :data-provider="quota.provider">
+  <div
+    class="quota"
+    tabindex="0"
+    :data-provider="quota.provider"
+    @mouseenter="onMouseEnter"
+    @mouseleave="onMouseLeave"
+    @focusin="onFocusIn"
+    @focusout="onFocusOut"
+  >
     <span class="label">{{ accountName }}</span>
     <svg class="ring" viewBox="0 0 20 20" width="22" height="22" aria-hidden="true">
       <circle class="track" cx="10" cy="10" :r="RING_RADIUS" />
@@ -55,73 +73,66 @@ function formatCost(cost: number) {
       />
     </svg>
     <span v-if="ringWindow" class="mono percent">{{ Math.round(ringWindow.percent) }}<span class="unit">%</span></span>
-    <span class="card" role="tooltip">
-      <span class="card-head">
-        <span class="card-title">{{ accountName }}</span>
-        <span v-if="planName" class="card-plan">{{ t("statusBar.plan") }} <span class="card-plan-name">{{ planName }}</span></span>
-      </span>
-      <span v-for="(w, index) in quota.windows" :key="w.id" class="card-window">
-        <span class="card-line">
-          <span>{{ w.name }}</span>
-          <span class="mono" :class="'lvl-' + gaugeLevel(w.percent)">{{ Math.round(w.percent) }} %</span>
+    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip">
+      <div class="popover-arrow position-absolute ms-3"></div>
+      <div class="popover-header d-flex justify-content-between align-items-baseline gap-3">
+        <span class="fw-semibold">{{ accountName }}</span>
+        <span v-if="planName" class="fw-normal text-body-secondary" data-field="plan">
+          {{ t("statusBar.plan") }} <span class="fw-medium text-body" data-field="plan-name">{{ planName }}</span>
         </span>
-        <span class="bar">
-          <span class="gauge" :class="gaugeLevel(w.percent)"><span :style="{ width: `${Math.min(100, w.percent)}%` }"></span></span>
-          <span v-if="paces[index]" class="tick" :style="{ left: `${paces[index]?.elapsedPercent}%` }" :title="t('statusBar.expectedNow')"></span>
-        </span>
-        <span v-if="w.resetsAt" class="card-hint card-line">
-          <span>{{ t("statusBar.resetsAt", { time: clockTime(w.resetsAt) }) }}</span>
-          <span v-if="paces[index]?.runsOutAt" class="runs-out">{{ t("statusBar.runsOut", { time: clockTime(paces[index]?.runsOutAt) }) }}</span>
-        </span>
-        <span v-if="paces[index]" class="pace" :class="'pace-' + paces[index]?.level">
-          <span class="pace-title">{{ t("statusBar.pace", { value: Math.round(paces[index]?.pacePercent ?? 0) }) }}</span>
-          <span>{{ paceText(paces[index]!) }}</span>
-        </span>
-      </span>
-      <span v-if="quota.cost" class="card-line">
-        <span>{{ t("statusBar.estimatedCost") }}</span>
-        <span class="mono">{{ formatCost(quota.cost) }}</span>
-      </span>
-    </span>
-  </span>
+      </div>
+      <div class="popover-body d-flex flex-column gap-3">
+        <div v-for="(w, index) in quota.windows" :key="w.id" class="d-flex flex-column gap-2" data-field="window">
+          <div class="d-flex justify-content-between">
+            <span>{{ w.name }}</span>
+            <span :class="LEVEL_CLASSES[gaugeLevel(w.percent)].text">{{ Math.round(w.percent) }} %</span>
+          </div>
+          <div
+            class="progress position-relative"
+            role="progressbar"
+            :aria-valuenow="Math.round(w.percent)"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            <div
+              class="progress-bar"
+              :class="LEVEL_CLASSES[gaugeLevel(w.percent)].bar"
+              :style="{ width: `${Math.min(100, w.percent)}%` }"
+            ></div>
+            <span
+              v-if="paces[index]"
+              class="position-absolute top-0 bottom-0 bg-body-emphasis"
+              data-field="expected-usage"
+              :style="{ left: `${paces[index]?.elapsedPercent}%`, width: '2px' }"
+              :title="t('statusBar.expectedNow')"
+            ></span>
+          </div>
+          <div v-if="w.resetsAt" class="d-flex justify-content-between text-body-secondary">
+            <span>{{ t("statusBar.resetsAt", { time: clockTime(w.resetsAt) }) }}</span>
+            <span v-if="paces[index]?.runsOutAt" class="fw-medium text-danger-emphasis">
+              {{ t("statusBar.runsOut", { time: clockTime(paces[index]?.runsOutAt) }) }}
+            </span>
+          </div>
+          <div v-if="paces[index]" class="alert" :class="LEVEL_CLASSES[paces[index]!.level].alert" data-field="pace">
+            <div class="fw-medium">{{ t("statusBar.pace", { value: Math.round(paces[index]?.pacePercent ?? 0) }) }}</div>
+            <div>{{ paceText(paces[index]!) }}</div>
+          </div>
+        </div>
+        <div v-if="quota.cost" class="d-flex justify-content-between">
+          <span>{{ t("statusBar.estimatedCost") }}</span>
+          <span>{{ formatCost(quota.cost) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.quota { position: relative; align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: default; outline-offset: 3px; }
+.quota { align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: default; outline-offset: 3px; }
 .label { font-weight: 600; font-size: var(--font-size); color: var(--text-2); }
 .percent { font-size: var(--font-size); }
 .percent { color: var(--text-2); }
 .unit { margin-left: 2px; font-size: 0.8em; color: var(--muted); }
 .ring .track { fill: none; stroke: var(--gauge-track); stroke-width: 3; }
 .ring .arc { fill: none; stroke: var(--done); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s; }
-.card {
-  display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 4px); left: 11px; z-index: 20; width: 340px;
-  flex-direction: column; gap: 14px; padding: 16px 18px; white-space: normal;
-  border: 1px solid var(--line-modal); border-radius: 8px; background: var(--side); color: var(--text-2);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: var(--font-size);
-}
-.card::after {
-  content: ""; position: absolute; top: 100%; left: 18px; width: 10px; height: 10px; margin-top: -6px;
-  transform: rotate(45deg); border: solid var(--line-modal); border-width: 0 1px 1px 0; background: var(--side);
-}
-.quota:hover .card, .quota:focus-visible .card { visibility: visible; transition-delay: 0s; }
-.card-head { display: flex; justify-content: space-between; align-items: baseline; }
-.card-plan { color: var(--muted); }
-.card-plan-name { color: var(--text); font-weight: 500; }
-.card-title { font-weight: 600; font-size: var(--font-size); color: var(--text); }
-.card-window { display: flex; flex-direction: column; gap: 5px; }
-.card-line { display: flex; justify-content: space-between; }
-.bar { position: relative; display: block; }
-.bar .gauge { display: block; }
-.tick { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text); }
-.pace { display: flex; flex-direction: column; gap: 2px; margin-top: 9px; padding: 8px 10px; border-radius: 6px; }
-.pace-title { font-weight: 500; }
-.pace-ok { background: rgba(95, 191, 122, 0.12); }
-.pace-ok .pace-title { color: #7fd197; }
-.pace-warn { background: rgba(240, 166, 58, 0.14); }
-.pace-warn .pace-title { color: #f4b75a; }
-.pace-crit { background: rgba(234, 106, 95, 0.15); }
-.pace-crit .pace-title { color: #f07f75; }
-.runs-out { color: #f07f75; font-weight: 500; }
-.card-hint { font-size: var(--font-size); color: var(--muted); }
 </style>
