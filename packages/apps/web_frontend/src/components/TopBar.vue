@@ -32,8 +32,8 @@ import { t } from "../i18n/index";
         class="icon-btn"
         :class="{ on: settings.rightOpen }"
         :aria-pressed="settings.rightOpen"
-        :aria-label="t('topBar.rightPanelLabel')"
-        :title="t('topBar.rightPanelTitle')"
+        :aria-label="t('topBar.rightSidebarLabel')"
+        :title="t('topBar.rightSidebarTitle')"
         @click="settings.rightOpen = !settings.rightOpen"
       >
         <Icon name="layout-sidebar-reverse" />

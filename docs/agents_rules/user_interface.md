@@ -61,6 +61,8 @@ This document says where each part of the window goes and how each part works. T
 - The right sidebar holds the Pane sidebar section and the Notes sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
+- The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
+- When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section opens if it is hidden. A hidden sidebar that holds another sidebar section stays hidden.
 - The sidebars hold no tabs. The word "tab" belongs to the tab bar only.
 
 ## Status bar

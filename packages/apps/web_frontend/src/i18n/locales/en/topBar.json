@@ -3,6 +3,6 @@
   "leftSidebarTitle": "Left sidebar (⌘B)",
   "searchTitle": "Search or run a command",
   "searchPlaceholder": "Search, run a command…",
-  "rightPanelLabel": "Show the right panel",
-  "rightPanelTitle": "Right panel (⌥⌘B)"
+  "rightSidebarLabel": "Show the right sidebar",
+  "rightSidebarTitle": "Right sidebar (⌥⌘B)"
 }

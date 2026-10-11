@@ -34,7 +34,7 @@
   "action.fileMenu": "New file or folder, rename / move, Trash",
   "keys.rightClick": "Right click",
   "group.display": "Display",
-  "action.hidePanels": "Hide the left sidebar / the right panel",
+  "action.hideSidebars": "Hide the left sidebar / the right sidebar",
   "action.fontSize": "Increase / decrease / reset the font size of the whole window",
   "group.mouse": "Mouse",
   "action.issuePreview": "On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it",
