@@ -19,6 +19,7 @@ This document says where each part of the window goes and how each part works. T
 ## Rules of the layout
 
 - The viewport gets the most width, because the developer reads and writes text there.
+- The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background. The tab bar is inside the frame of the viewport.
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
 
 ## Workspace
@@ -32,7 +33,7 @@ This document says where each part of the window goes and how each part works. T
 
 ## Tabs
 
-- The tab bar sits on top of the viewport. It shows the tabs of the selected workspace, one entry for each tab.
+- The tab bar sits at the top of the viewport, inside its border. It shows the tabs of the selected workspace, one entry for each tab.
 - A click on a tab selects the tab. The viewport then shows the panes of that tab.
 - The plus button at the end of the tab bar creates a new tab.
 - A developer switches tab often, so the tabs are always visible.

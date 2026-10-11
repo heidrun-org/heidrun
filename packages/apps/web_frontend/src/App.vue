@@ -349,7 +349,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .app { height: 100%; display: flex; flex-direction: column; background: var(--shell); }
 .body { flex: 1; min-height: 0; display: flex; padding: 0 var(--pane-gap); }
-.center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+/* The viewport is a frame like the two sidebars: same border, same corners, same background. The tab bar is inside the frame. */
+.center {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 0 var(--pane-gap) var(--pane-gap);
+  border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
+}
 .stage { flex: 1; min-height: 0; display: flex; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {

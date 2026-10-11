@@ -28,11 +28,11 @@ One terminal inside a tab. The terminal runs a shell or a coding agent, for exam
 
 ### Tab bar
 
-The horizontal row on top of the viewport. It shows the tabs of the selected workspace, one entry for each tab.
+The horizontal row at the top of the viewport, inside the border of the viewport. It shows the tabs of the selected workspace, one entry for each tab.
 
 ### Viewport
 
-The main area of the window. It shows the panes of the selected tab that are not pinned, and the column of pinned panes.
+The main area of the window, between the left sidebar and the right sidebar. It has a border, like each sidebar. It holds the tab bar, the panes of the selected tab that are not pinned, and the column of pinned panes.
 
 ### Pinned pane
 
