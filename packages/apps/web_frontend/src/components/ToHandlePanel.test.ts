@@ -189,9 +189,12 @@ describe("ToHandlePanel actions", () => {
 });
 
 describe("ToHandlePanel place in the window", () => {
-  it("is a sidebar section of the left sidebar: the file Sidebar.vue shows it, and the panel has no place of its own at the bottom", () => {
+  it("is a sidebar section of the right sidebar: the file RightPanel.vue shows it, the file Sidebar.vue does not, and the panel has no place of its own at the bottom", () => {
+    const rightPanelText = Fs.readFileSync(Path.resolve(import.meta.dirname, "RightPanel.vue"), "utf8");
     const sidebarText = Fs.readFileSync(Path.resolve(import.meta.dirname, "Sidebar.vue"), "utf8");
-    expect(sidebarText).toContain("<ToHandlePanel");
+    expect(rightPanelText).toContain("<ToHandlePanel");
+    expect(sidebarText).not.toContain("<ToHandlePanel");
+    expect(rightPanelText).not.toContain("margin-top: auto");
     expect(sidebarText).not.toContain("margin-top: auto");
   });
 });

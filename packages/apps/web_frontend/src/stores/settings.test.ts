@@ -204,11 +204,20 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
-  it("keeps the sidebar section To handle when it was saved", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle" }));
+  it("shows the sidebar section Scripts when the saved sidebar section was To handle, because the To handle sidebar section moved to the right sidebar", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle", rightSidebarSection: "notes" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("toHandle");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.rightSidebarSection).toBe("notes");
+  });
+
+  it("keeps the sidebar section To handle in the right sidebar when it was saved there", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "toHandle" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
   it("keeps the sidebar section Git when it was saved", async () => {
