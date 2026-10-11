@@ -25,9 +25,9 @@ This document says where each part of the window goes and how each part works. T
 ## Workspace
 
 - One workspace is selected at a time.
-- The workspace button sits at the left end of the tab bar. It shows the name of the selected workspace. A click on the button opens the list of workspaces. The list does not open when the mouse moves over the button.
-- A developer switches workspace rarely, so the workspace button takes little space.
-- A small colored dot on the workspace button shows that an agent in another workspace is blocked or has finished. The dot follows the cards of the To handle sidebar section.
+- The workspace button sits at the left end of the tab bar. It shows a small icon of boxes, the name of the selected workspace, and an arrow. A click on the button opens the list of workspaces. The list does not open when the mouse moves over the button.
+- The workspace button has generous horizontal padding, like the tabs, and a wide space between the name and the arrow, so the tab bar does not look tightly packed.
+- A small colored dot on the workspace button shows that an agent in another workspace is blocked or has finished. The dot sits before the name, in the same place as the dot of a tab. The dot follows the cards of the To handle sidebar section.
 - The list of workspaces offers the creation of a workspace, the rename of a workspace, the close of a workspace, and the move of a workspace by drag and drop. A double click on the workspace button renames the selected workspace in place.
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
 
@@ -37,6 +37,8 @@ This document says where each part of the window goes and how each part works. T
 - A click anywhere on a tab, padding included, selects the tab. The viewport then shows the panes of that tab. The close button of the tab is the only exception: a click on it closes the tab.
 - The plus button at the end of the tab bar creates a new tab.
 - A developer switches tab often, so the tabs are always visible.
+- A workspace has few tabs, twenty tabs is extremely rare. So each tab is large, with generous horizontal padding.
+- Each tab shows a small icon between its status dot and its name: the Claude icon, the OpenAI icon for Codex, or the terminal icon. A pane with an agent always beats a terminal. Among the panes with an agent, the pane that decides the color of the status dot gives the icon (blocked, then working, then done, then idle). When two panes have the same status, the selected pane wins, then the focused pane, then the first pane.
 - The shortcut Option+Command+Left arrow or Option+Command+Right arrow selects the previous or the next tab.
 
 ## Panes

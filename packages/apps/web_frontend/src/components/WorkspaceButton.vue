@@ -138,8 +138,6 @@ onBeforeUnmount(close);
       @click="toggle"
       @dblclick="state.selectedWorkspaceId !== null && startRename('ws', state.selectedWorkspaceId)"
     >
-      <span class="name">{{ selectedLabel }}</span>
-      <Icon name="chevron-down" class="chevron" />
       <span
         v-if="otherWorkspaceStatus !== null"
         class="dot calling"
@@ -148,6 +146,9 @@ onBeforeUnmount(close);
         :aria-label="otherWorkspaceStatus === 'blocked' ? t('workspaceButton.otherBlocked') : t('workspaceButton.otherDone')"
         :title="otherWorkspaceStatus === 'blocked' ? t('workspaceButton.otherBlocked') : t('workspaceButton.otherDone')"
       ></span>
+      <Icon name="boxes" class="workspace-icon" />
+      <span class="name">{{ selectedLabel }}</span>
+      <Icon name="chevron-down" class="chevron" />
     </button>
     <Teleport to="body">
       <div
@@ -228,7 +229,7 @@ onBeforeUnmount(close);
 .workspace-button { position: relative; flex-shrink: 0; margin-bottom: 4px; }
 /* The look of the buttons of the application: only the mouse hover changes the colors. */
 .workspace {
-  --bs-btn-padding-x: 8px;
+  --bs-btn-padding-x: 18px;
   --bs-btn-padding-y: 0;
   --bs-btn-font-size: var(--font-size);
   --bs-btn-font-weight: 600;
@@ -241,7 +242,7 @@ onBeforeUnmount(close);
   --bs-btn-disabled-color: var(--text);
   --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
   --bs-btn-focus-box-shadow: none;
-  position: relative; height: 28px; max-width: 220px; line-height: 1;
+  position: relative; height: 34px; max-width: 260px; line-height: 1;
 }
 .workspace:not(:hover):not([aria-expanded="true"]) {
   --bs-btn-hover-color: var(--text-2);
@@ -253,9 +254,9 @@ onBeforeUnmount(close);
 }
 .workspace[aria-expanded="true"] { background: rgba(var(--wash), 0.08); color: var(--text); }
 .workspace .name, .workspace-main .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace .name { margin-right: 16px; }
+.workspace-icon { flex-shrink: 0; color: var(--muted); }
 .chevron { flex-shrink: 0; font-size: calc(var(--font-size) * 0.85); color: var(--muted); }
-/* The dot sits on the corner of the button, like the badge of a notification. */
-.calling { position: absolute; top: 2px; right: 2px; box-shadow: 0 0 0 2px var(--shell); }
 .workspace-rename { width: 180px; height: 26px; }
 .workspace-menu {
   --bs-dropdown-min-width: 260px;

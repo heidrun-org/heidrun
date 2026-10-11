@@ -371,6 +371,29 @@ describe("WorkspaceButton dot for the other workspaces", () => {
     expect(dot.attributes("aria-label")).toBe("An agent in another workspace has finished");
   });
 
+  it("puts the dot before the name, in the flow of the button, and not on the corner of the button", async () => {
+    const snapshot = makeSnapshot([{ pane_id: "p9", workspace_id: "w2", tab_id: "t2", agent: "claude", agent_status: "blocked" }]);
+    const { wrapper } = await mountWorkspaceButton(snapshot);
+    const children = Array.from(wrapper.get("button.workspace").element.children);
+    expect(children[0].classList.contains("calling")).toBe(true);
+    expect(children[1].classList.contains("workspace-icon")).toBe(true);
+    expect(children[2].classList.contains("name")).toBe(true);
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceButton.vue"), "utf8");
+    expect(sourceText).not.toMatch(/\.calling \{[^}]*position: absolute/);
+  });
+
+  it("shows a small icon of boxes before the name, and the arrow after the name", async () => {
+    const { wrapper } = await mountWorkspaceButton();
+    const children = Array.from(wrapper.get("button.workspace").element.children);
+    expect(children.map((child) => child.className)).toEqual(["bi bi-boxes workspace-icon", "name", "bi bi-chevron-down chevron"]);
+  });
+
+  it("gives the button 18px of horizontal padding, like a tab, and 16px of space after the name", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceButton.vue"), "utf8");
+    expect(sourceText).toContain("--bs-btn-padding-x: 18px;");
+    expect(sourceText).toContain(".workspace .name { margin-right: 16px; }");
+  });
+
   it("shows the red dot when one agent is blocked and another has finished", async () => {
     const snapshot = makeSnapshot([
       { pane_id: "p8", workspace_id: "w2", tab_id: "t2", agent: "claude", agent_status: "done" },
