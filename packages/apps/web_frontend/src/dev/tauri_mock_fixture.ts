@@ -104,6 +104,12 @@ export class TauriMockFixture {
 		const claudeChats: Chat[] = [
 			buildChat('claude_1', 'Workspace conversation navigation', 2, {
 				user_messages: 10,
+				folders: [
+					'/Users/demo/webwork/heidrun',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/add-chats-sidebar-section-250',
+					'/private/tmp/claude-501/scratchpad',
+				],
 				issues: [250, 251],
 				files_written: [
 					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats.rs',

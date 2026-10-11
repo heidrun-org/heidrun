@@ -33,5 +33,18 @@
   "stateOpen": "Ouverte",
   "stateClosed": "Fermée",
   "stateMerged": "Fusionnée",
-  "referencesTitle": "Issues et pull requests"
+  "referencesTitle": "Issues et pull requests",
+  "datesTitle": "Dates et messages",
+  "startedLabel": "Début",
+  "lastActivityLabel": "Dernière activité",
+  "durationLabel": "Durée",
+  "messagesLabel": "Messages de ta part",
+  "foldersTitle": "Dossiers où l’agent de code a travaillé",
+  "durationLessThanMinute": "Moins d’une minute",
+  "durationMinutes_one": "{count} minute",
+  "durationMinutes_other": "{count} minutes",
+  "durationHours_one": "{count} heure",
+  "durationHours_other": "{count} heures",
+  "durationDays_one": "{count} jour",
+  "durationDays_other": "{count} jours"
 }

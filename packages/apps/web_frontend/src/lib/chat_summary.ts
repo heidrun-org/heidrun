@@ -18,7 +18,8 @@ export function dayText(date: Date, now: Date): string {
   return date.toLocaleDateString(locale.value, options);
 }
 
-function timeText(date: Date): string {
+/** The time of a date, for example "17:55", in the format of the settings. */
+export function timeText(date: Date): string {
   return date.toLocaleTimeString(locale.value, timeOptions());
 }
 

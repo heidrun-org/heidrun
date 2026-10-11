@@ -18,9 +18,9 @@ import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { t } from "../i18n/index";
+import ChatDatesLine from "./ChatDatesLine.vue";
 import ChatFilesLine from "./ChatFilesLine.vue";
 import ChatReferencesLine from "./ChatReferencesLine.vue";
-import Icon from "./Icon.vue";
 
 /** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
 const REFRESH_DELAY = 10_000;
@@ -86,10 +86,12 @@ const agent = computed<ChatAgent>({
         <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
           <div>{{ row.chat.title }}</div>
           <div class="chat-summary d-flex flex-column text-body-secondary">
-            <div v-if="row.lines.dates !== ''" class="d-flex gap-2">
-              <Icon name="clock" />
-              <span>{{ row.lines.dates }}</span>
-            </div>
+            <ChatDatesLine
+              v-if="row.lines.dates !== ''"
+              :text="row.lines.dates"
+              :meta="row.chat.meta"
+              :root="chats.root"
+            />
             <ChatReferencesLine
               v-if="row.references.length > 0"
               :text="row.lines.references"
