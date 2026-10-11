@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/change_log_generator/src/generation`
+# Directory Context: `/packages/dev_tools/change_log_generator/src/generation`
 
 ## Purpose
 Runs the whole generation: resolves the range, reads the pull requests, writes the section in the mechanical mode or with a coding agent, and updates the file `CHANGELOG.md`.

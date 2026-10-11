@@ -63,8 +63,8 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 | [`packages/apps/desktop_tauri`](packages/apps/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
 | [`packages/apps/web_frontend`](packages/apps/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
 | [`packages/auxiliary/website_public`](packages/auxiliary/website_public) | The public website and documentation, built with VitePress. |
-| [`packages/auxiliary/change_log_generator`](packages/auxiliary/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
-| [`packages/auxiliary/worktree_tools`](packages/auxiliary/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
+| [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
+| [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
 | [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
 
 ## Contributing

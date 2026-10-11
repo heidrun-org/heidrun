@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/change_log_generator/src/git`
+# Directory Context: `/packages/dev_tools/change_log_generator/src/git`
 
 ## Purpose
 Reads the releases and the merged pull requests from the Git repository.

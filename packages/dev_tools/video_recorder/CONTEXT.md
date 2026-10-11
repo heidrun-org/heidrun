@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/video_recorder`
+# Directory Context: `/packages/dev_tools/video_recorder`
 
 ## Purpose
 A full npm package with two command line tools that record a marketing video of the Heidrun window and cut it around its mouse clicks. The recording tool also logs each click. The cutting tool writes `clicks.json`, which Remotion can use later to add titles and zooms.

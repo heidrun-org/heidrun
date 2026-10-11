@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/change_log_generator`
+# Directory Context: `/packages/dev_tools/change_log_generator`
 
 ## Purpose
 A full npm package that writes a section of `CHANGELOG.md`, in the Keep a Changelog format, from the pull requests merged between two releases. It reads the releases and the pull requests from Git, and it can ask a coding agent to write the categories.

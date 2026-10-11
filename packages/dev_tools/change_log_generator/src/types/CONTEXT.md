@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/change_log_generator/src/types`
+# Directory Context: `/packages/dev_tools/change_log_generator/src/types`
 
 ## Purpose
 The data shapes that the other folders of the package share.

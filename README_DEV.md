@@ -46,8 +46,8 @@ The command runs the tests of the six packages, and ends with a non-zero exit co
 | `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/apps/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
 | `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
-| `pnpm --filter change_log_generator test` | The Vitest tests of `packages/auxiliary/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
-| `pnpm --filter worktree_tools test` | The Vitest tests of `packages/auxiliary/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
+| `pnpm --filter change_log_generator test` | The Vitest tests of `packages/dev_tools/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
+| `pnpm --filter worktree_tools test` | The Vitest tests of `packages/dev_tools/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
@@ -90,7 +90,7 @@ A Git worktree is a second folder of the same repository, on its own branch. Eac
 pnpm worktree:create <name>
 ```
 
-The command creates the worktree `.claude/worktrees/<name>` on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone. The clone takes about 10 seconds and 14 MB of disk space. The first build in the worktree then takes 23 to 32 seconds and about 883 MB of disk space. The command is the package [`packages/auxiliary/worktree_tools`](packages/auxiliary/worktree_tools).
+The command creates the worktree `.claude/worktrees/<name>` on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone. The clone takes about 10 seconds and 14 MB of disk space. The first build in the worktree then takes 23 to 32 seconds and about 883 MB of disk space. The command is the package [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools).
 
 - Build the main checkout before you create a worktree. When the main checkout has no folder `target/debug`, the command creates the worktree without the clone and says so.
 - The clone needs macOS and the Apple File System. The worktree is inside the main checkout, so both folders are on the same disk.
@@ -109,7 +109,7 @@ The command lists the target folders of the worktrees that no build has used for
 pnpm release:change_log
 ```
 
-The command writes a section of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output. The command is the package [`packages/auxiliary/change_log_generator`](packages/auxiliary/change_log_generator).
+The command writes a section of the file `CHANGELOG.md` in the root of the repository, in the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, from the pull requests that were merged between two releases. If the file does not exist, the command creates it with the header of the format. The command also prints the new section on the standard output. The command is the package [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator).
 
 Without option, the section is `Unreleased`: from the last release to the current commit. The last release is the Git tag with the highest version number, for example `v0.2.0`. A pull request is a commit whose first line starts with `Merge pull request #`.
 
