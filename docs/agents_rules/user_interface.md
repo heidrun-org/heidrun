@@ -92,3 +92,9 @@ This document says where each part of the window goes and how each part works. T
 - At the first start, no state is saved, and the window opens in the middle of the screen with the size in `tauri.conf.json`.
 - When the saved position is outside every screen that is connected, the window opens at the default position of the operating system, on a connected screen.
 - The visible state is never restored. The window stays hidden until the splash image is ready.
+
+## Splash screen
+
+- At the start, Heidrun shows the splash screen for 3 seconds after the main window appears. A click on the splash screen closes it at once.
+- The command line option `--no-splash-screen` starts Heidrun without the splash screen. The main window then appears at once, and shows the application.
+- A program that drives Heidrun, for example to take a screenshot, uses this option, so that it never waits for the splash screen to close. In development, run `pnpm dev -- -- --no-splash-screen`: the command `tauri dev` gives the arguments after its second `--` to the application, and the arguments after its first `--` to `cargo`. For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.

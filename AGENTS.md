@@ -60,6 +60,14 @@ Attach every screenshot, image, or video related to an issue with the `--attach`
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
 
+## Starting Heidrun to test it or to take a screenshot
+
+Always start Heidrun with the command line option `--no-splash-screen` when you start it to test it, and above all when you take a screenshot. Without the option, the splash screen covers the application for 3 seconds after the main window appears, so a screenshot taken in this time shows the splash screen and not the application, and you wait for nothing.
+
+- In development, run `pnpm dev -- -- --no-splash-screen` at the root of the repository or of the worktree. The command `tauri dev` gives the arguments after its second `--` to the application.
+- For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
+- The rules of the splash screen are in [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md), in the section "Splash screen".
+
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
