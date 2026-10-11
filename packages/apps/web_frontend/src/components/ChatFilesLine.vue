@@ -93,7 +93,7 @@ type Row = (typeof rows.value)[number];
 /** The title of the button for VS Code: what the button does, or why it cannot do it. */
 function vscodeTitle(row: Row): string {
   if (row.isOutside) {
-    return t("chatsPanel.vscodeOutsideTitle");
+    return t("chatsPanel.outsideTitle");
   }
   return t(row.isMissingOnDisk ? "chatsPanel.vscodeMissingTitle" : "chatsPanel.vscodeTitle");
 }
@@ -101,7 +101,7 @@ function vscodeTitle(row: Row): string {
 /** The title of the button for the forge: what the button does, or why it cannot do it. */
 function forgeTitle(row: Row): string {
   if (row.isOutside) {
-    return t("chatsPanel.forgeOutsideTitle", { forge: forgeName.value });
+    return t("chatsPanel.outsideTitle");
   }
   return t(row.isMissingOnRemote ? "chatsPanel.forgeMissingTitle" : "chatsPanel.forgeTitle", { forge: forgeName.value });
 }

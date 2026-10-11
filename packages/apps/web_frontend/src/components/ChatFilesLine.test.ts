@@ -151,9 +151,9 @@ describe("ChatFilesLine", () => {
     await openCard(wrapper);
     const [vscode, github] = wrapper.findAll("[data-file]")[2].findAll("button");
     expect(vscode.attributes("disabled")).toBeDefined();
-    expect(vscode.attributes("title")).toBe("Cannot open in VS Code: the file is outside the repository.");
+    expect(vscode.attributes("title")).toBe("Cannot open the file: it is not in the repository.");
     expect(github.attributes("disabled")).toBeDefined();
-    expect(github.attributes("title")).toBe("Cannot open in GitHub: the file is outside the repository.");
+    expect(github.attributes("title")).toBe("Cannot open the file: it is not in the repository.");
     await vscode.trigger("click");
     await github.trigger("click");
     expect(openUrl).not.toHaveBeenCalled();
