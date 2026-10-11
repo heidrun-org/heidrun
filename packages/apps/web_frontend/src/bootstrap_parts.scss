@@ -23,6 +23,9 @@ $alert-margin-bottom: 0;
 
 // A row of a list group shows the background of the sidebar that holds it, in the light theme as in the dark theme.
 $list-group-bg: transparent;
+// A row of a list group that reacts to the mouse keeps the color of the text of the application, and gets only a background.
+$list-group-action-color: var(--bs-body-color);
+$list-group-action-hover-color: var(--bs-body-color);
 
 // The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
 // does not add the blue glow of Bootstrap to it.

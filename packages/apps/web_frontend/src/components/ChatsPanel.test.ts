@@ -143,18 +143,18 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 
-  /** The two buttons under the list: Show less, then Show more. */
+  /** The two buttons under the list: Show more, then Show less. */
   function pagerButtons(wrapper: ReturnType<typeof mount>) {
     const buttons = wrapper.get("ul + div").findAll("button");
-    return { less: buttons[0], more: buttons[1] };
+    return { more: buttons[0], less: buttons[1] };
   }
 
-  it("always shows the buttons Show less and Show more under the list, and disables the one that cannot act", async () => {
+  it("always shows the buttons Show more and Show less under the list, and disables the one that cannot act", async () => {
     answer(["Fix the tab bar"], ["Describe image"], { claude: true });
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     let { less, more } = pagerButtons(wrapper);
-    expect([less.text(), more.text()]).toEqual(["Show less", "Show more"]);
+    expect([more.text(), less.text()]).toEqual(["Show more", "Show less"]);
     expect(less.classes()).toContain("btn");
     expect(more.classes()).toContain("btn");
     expect(less.attributes("disabled")).toBeDefined();
@@ -242,7 +242,8 @@ describe("ChatsPanel", () => {
     await flushPromises();
     const rows = wrapper.findAll(".list-group-item");
     const lines = rows[0].get(".chat-summary");
-    expect(lines.classes()).toEqual(expect.arrayContaining(["text-body-secondary", "ms-3"]));
+    expect(lines.classes()).toEqual(expect.arrayContaining(["text-body-secondary"]));
+    expect(lines.classes()).not.toContain("ms-3");
     expect(lines.element.children.length).toBe(3);
     expect(lines.element.children[0].textContent).toBe("Oct 11, 17:55 → 18:20 · 4 messages from you");
     expect(lines.element.children[0].querySelector(".bi-clock")).not.toBeNull();
@@ -274,5 +275,6 @@ describe("ChatsPanel", () => {
     await flushPromises();
     expect(wrapper.get("select").classes()).toContain("form-select");
     expect(wrapper.get("ul").classes()).toEqual(expect.arrayContaining(["list-group", "list-group-flush"]));
+    expect(wrapper.get("li").classes()).toEqual(expect.arrayContaining(["list-group-item", "list-group-item-action"]));
   });
 });

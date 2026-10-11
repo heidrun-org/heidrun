@@ -75,9 +75,9 @@ const agent = computed<ChatAgent>({
         <option v-for="choice in availableChatAgents" :key="choice" :value="choice">{{ agentLabel(choice) }}</option>
       </select>
       <ul class="list-group list-group-flush">
-        <li v-for="row in rows" :key="row.chat.id" class="list-group-item text-break">
+        <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
           <div>{{ row.chat.title }}</div>
-          <div class="chat-summary d-flex flex-column ms-3 text-body-secondary">
+          <div class="chat-summary d-flex flex-column text-body-secondary">
             <div v-if="row.lines.dates !== ''" class="d-flex gap-2">
               <Icon name="clock" />
               <span>{{ row.lines.dates }}</span>
@@ -101,14 +101,6 @@ const agent = computed<ChatAgent>({
       <div class="d-flex gap-2">
         <button
           type="button"
-          class="btn flex-fill justify-content-center"
-          :disabled="canShowLessChats === false || chats.isShowingMore"
-          @click="showLessChats"
-        >
-          {{ t("chatsPanel.showLess") }}
-        </button>
-        <button
-          type="button"
           class="btn flex-fill d-flex align-items-center justify-content-center gap-2"
           :disabled="canShowMoreChats === false || chats.isShowingMore"
           :aria-busy="chats.isShowingMore"
@@ -117,13 +109,22 @@ const agent = computed<ChatAgent>({
           <span v-if="chats.isShowingMore" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           {{ t("chatsPanel.showMore") }}
         </button>
+        <button
+          type="button"
+          class="btn flex-fill justify-content-center"
+          :disabled="canShowLessChats === false || chats.isShowingMore"
+          @click="showLessChats"
+        >
+          {{ t("chatsPanel.showLess") }}
+        </button>
       </div>
     </template>
   </section>
 </template>
 
 <style scoped>
-.chats-panel { flex: 1; min-height: 0; padding: 18px 14px; }
+.chats-panel { --chats-inset: 14px; flex: 1; min-height: 0; padding: 18px var(--chats-inset); }
+.list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
 .chat-summary { margin-top: 2px; font-size: 0.85em; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 </style>

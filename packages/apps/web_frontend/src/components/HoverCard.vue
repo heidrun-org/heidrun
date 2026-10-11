@@ -144,5 +144,5 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .hover-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--bs-border-radius); }
-.hover-card-part:hover, .hover-card-part.is-open { background-color: var(--bs-tertiary-bg); }
+.hover-card-part:hover, .hover-card-part.is-open { background-color: var(--bs-secondary-bg); }
 </style>
