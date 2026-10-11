@@ -122,6 +122,53 @@ describe("InformationCard", () => {
     expect(wrapper.find(".popover").exists()).toBe(true);
   });
 
+  it("places the card again when its height changes, so that it stays inside the window", async () => {
+    let cardHeight = 100;
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const isCard = this.classList.contains("popover");
+      return {
+        top: 500, left: 700, right: 800, bottom: 520, width: 100, height: isCard ? cardHeight : 20, x: 700, y: 500, toJSON: () => ({}),
+      };
+    });
+    let sizeChanged: () => void = () => {};
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          sizeChanged = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    const wrapper = mountCard();
+    await wrapper.trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".popover").attributes("style")).toContain("top: 500px");
+    cardHeight = 400;
+    sizeChanged();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".popover").attributes("style")).toContain(`top: ${window.innerHeight - 400 - 8}px`);
+    vi.unstubAllGlobals();
+  });
+
+  it("places the card again when the window changes its size", async () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+      top: 100, left: 700, right: 800, bottom: 120, width: 100, height: 20, x: 700, y: 100, toJSON: () => ({}),
+    });
+    const wrapper = mountCard();
+    await wrapper.trigger("click");
+    await wrapper.vm.$nextTick();
+    const before = wrapper.get(".popover").attributes("style");
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth + 200 });
+    window.dispatchEvent(new Event("resize"));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".popover").attributes("style")).not.toBe(before);
+    expect(wrapper.get(".popover").attributes("style")).toContain(`right: ${originalWidth + 200 - 700 + 8}px`);
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+  });
+
   it("puts the card at the left of the part, as high as the part", async () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
       top: 100, left: 700, right: 800, bottom: 120, width: 100, height: 20, x: 700, y: 100, toJSON: () => ({}),

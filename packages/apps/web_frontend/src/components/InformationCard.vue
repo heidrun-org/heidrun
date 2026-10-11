@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 // A part of the screen that opens a small card when it is clicked. The part gets a background while the pointer is over it
 // and while the card is open. The card opens at the left of the part, so the part belongs in a sidebar at the right edge of
 // the window. The card is a child of the part in the page, so the keyboard reaches the buttons in the card. A click on
 // the part opens the card, and a second click closes it. The card also closes when the key Escape is pressed, when the
 // keyboard focus leaves, and on a click outside. The card does not open when the pointer only moves over the part.
+// The card is placed again each time its height changes, for example when a row of its list expands, and each time the
+// window changes its size, so that the card always stays inside the window.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
 // decides its padding. The event "open" tells that the card just opened.
 
@@ -89,9 +91,26 @@ function onDocumentPointerDown(event: PointerEvent) {
   }
 }
 
-onMounted(() => document.addEventListener("pointerdown", onDocumentPointerDown, true));
+/** Watches the size of the card while it is open. It is null while the card is closed, and in a window without this API. */
+let sizeObserver: ResizeObserver | null = null;
+
+watch(card, (element) => {
+  sizeObserver?.disconnect();
+  sizeObserver = null;
+  if (element !== null && typeof ResizeObserver !== "undefined") {
+    sizeObserver = new ResizeObserver(place);
+    sizeObserver.observe(element);
+  }
+});
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onDocumentPointerDown, true);
+  window.addEventListener("resize", place);
+});
 onBeforeUnmount(() => {
   document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+  window.removeEventListener("resize", place);
+  sizeObserver?.disconnect();
 });
 </script>
 
