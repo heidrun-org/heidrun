@@ -3,7 +3,6 @@ import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
 import { notify } from "../lib/notify";
-import { applyOrder, moveId } from "../lib/reorder";
 import { settings } from "./settings";
 import { agentKind, codexWindows, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
@@ -92,19 +91,6 @@ function loadDismissed(): Record<string, string> {
   }
 }
 
-const PANE_ORDER_KEY = "heidrun.paneOrder";
-
-function loadPaneOrder(): Record<string, string[]> {
-  try {
-    return JSON.parse(localStorage.getItem(PANE_ORDER_KEY) ?? "{}");
-  } catch {
-    return {};
-  }
-}
-
-/** Order of the pane list in the sidebar chosen by drag and drop: pane ids by workspace id. */
-export const paneOrder = reactive<Record<string, string[]>>(loadPaneOrder());
-
 export const state = reactive({
   snapshot: null as SessionSnapshot | null,
   connected: false,
@@ -130,8 +116,6 @@ export const state = reactive({
   dismissed: loadDismissed(),
   /** What is being renamed in place: "ws:<id>", "tab:<id>" or "pane:<id>". */
   renaming: null as string | null,
-  /** Where the pane rename field shows: only one place at a time, or both fields fight for the focus. */
-  renamingPlace: "sidebar" as "sidebar" | "card",
   starting: false,
   toast: "" as string,
   /** "error" shows the toast in red, with a danger icon. */
@@ -195,25 +179,7 @@ export function moveWorkspaceInView(id: string, gap: number) {
   return moveWorkspace(id, insert);
 }
 
-export const workspacePanes = computed(() =>
-  applyOrder(
-    allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId),
-    (p) => p.pane_id,
-    paneOrder[state.selectedWorkspaceId ?? ""] ?? [],
-  ),
-);
-
-/** Drag-and-drop in the pane list of the sidebar: moves a pane to a gap, and remembers the order. */
-export function movePaneInView(id: string, gap: number) {
-  const wsId = state.selectedWorkspaceId;
-  if (wsId === null) return;
-  paneOrder[wsId] = moveId(workspacePanes.value.map((p) => p.pane_id), id, gap);
-  try {
-    localStorage.setItem(PANE_ORDER_KEY, JSON.stringify(paneOrder));
-  } catch {
-    /* ignore */
-  }
-}
+export const workspacePanes = computed(() => allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId));
 
 export const tabLayout = computed(() =>
   (state.snapshot?.layouts ?? []).find((l) => l.tab_id === state.selectedTabId) ?? null,
@@ -931,12 +897,11 @@ export function closeWorkspace(workspaceId: string) {
   return guard(() => api.closeWorkspace(workspaceId));
 }
 
-export function startRename(kind: "ws" | "tab" | "pane", id: string, place: "sidebar" | "card" = "sidebar") {
+export function startRename(kind: "ws" | "tab" | "pane", id: string) {
   if (kind === "ws") selectWorkspace(id);
   if (kind === "tab") selectTab(id);
   state.renaming = `${kind}:${id}`;
-  state.renamingPlace = place;
-  if (kind === "ws" || (kind === "pane" && place === "sidebar")) settings.leftOpen = true;
+  if (kind === "ws") settings.leftOpen = true;
 }
 
 export async function finishRename(kind: "ws" | "tab" | "pane", id: string, label: string | null) {

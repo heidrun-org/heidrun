@@ -5,17 +5,17 @@ import { openSidebarSection } from "./sidebar_sections";
 beforeEach(() => {
   settings.leftOpen = true;
   settings.rightOpen = true;
-  settings.leftSidebarSection = "workspacesAndTabs";
+  settings.leftSidebarSection = "workspaces";
   settings.rightSidebarSection = "pane";
 });
 
 describe("openSidebarSection", () => {
-  it.each(["workspacesAndTabs", "actions", "git"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
+  it.each(["workspaces", "actions", "git"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.leftSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["workspacesAndTabs", "actions", "git"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
+  it.each(["workspaces", "actions", "git"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
     settings.leftOpen = false;
     openSidebarSection(sidebarSection);
     expect(settings.leftOpen).toBe(true);

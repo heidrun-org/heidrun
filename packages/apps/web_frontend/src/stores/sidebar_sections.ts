@@ -2,7 +2,7 @@ import { settings, type LeftSidebarSection, type RightSidebarSection } from "./s
 
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section opens if it is hidden, and shows the sidebar
- * section. The Workspaces and Tabs, Scripts, and Git sidebar sections belong to the left sidebar. The Pane and Notes
+ * section. The Workspaces, Scripts, and Git sidebar sections belong to the left sidebar. The Pane and Notes
  * sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {

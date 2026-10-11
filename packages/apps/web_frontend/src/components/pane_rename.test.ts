@@ -22,7 +22,7 @@ const SNAPSHOT = {
   layouts: [],
 } as unknown as SessionSnapshot;
 
-/** Mounts the sidebar and the pane card of the same pane, as the application shows them together. */
+/** Mounts the sidebar and the pane card of the same pane, as the application shows them together. The sidebar must show no field. */
 async function mountBoth() {
   const session = await import("../stores/session");
   const api = await import("../lib/api");
@@ -44,48 +44,23 @@ beforeEach(() => {
 });
 
 describe("rename of a visible pane", () => {
-  it("shows exactly one rename field when the rename starts in the sidebar", async () => {
+  it("shows exactly one rename field, in the pane card, when the rename starts", async () => {
     const { session, sidebar, card } = await mountBoth();
-    session.startRename("pane", "p1", "sidebar");
-    await flushPromises();
-    expect(sidebar.findAll("input.rename")).toHaveLength(1);
-    expect(card.findAll("input.rename")).toHaveLength(0);
-  });
-
-  it("shows exactly one rename field when the rename starts in the pane card", async () => {
-    const { session, sidebar, card } = await mountBoth();
-    session.startRename("pane", "p1", "card");
+    session.startRename("pane", "p1");
     await flushPromises();
     expect(sidebar.findAll("input.rename")).toHaveLength(0);
     expect(card.findAll("input.rename")).toHaveLength(1);
   });
 
-  it("starts the rename in the sidebar by default", async () => {
-    const { session } = await mountBoth();
-    session.startRename("pane", "p1");
-    expect(session.state.renamingPlace).toBe("sidebar");
-  });
-
-  it("saves the new name typed in the sidebar field", async () => {
-    const { session, api, sidebar } = await mountBoth();
-    session.startRename("pane", "p1", "sidebar");
-    await flushPromises();
-    const input = sidebar.get("input.rename");
-    await input.setValue("my terminal");
-    await input.trigger("keydown.enter");
-    await flushPromises();
-    expect(api.renamePane).toHaveBeenCalledWith("p1", "my terminal");
-    expect(session.state.renaming).toBeNull();
-  });
-
   it("saves the new name typed in the pane card field", async () => {
     const { session, api, card } = await mountBoth();
-    session.startRename("pane", "p1", "card");
+    session.startRename("pane", "p1");
     await flushPromises();
     const input = card.get("input.rename");
     await input.setValue("my terminal");
     await input.trigger("keydown.enter");
     await flushPromises();
     expect(api.renamePane).toHaveBeenCalledWith("p1", "my terminal");
+    expect(session.state.renaming).toBeNull();
   });
 });

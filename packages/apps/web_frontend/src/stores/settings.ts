@@ -37,7 +37,7 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 const KEY = "heidrun.settings";
 
 /** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "workspacesAndTabs" | "actions" | "git";
+export type LeftSidebarSection = "workspaces" | "actions" | "git";
 
 /** The sidebar sections of the right sidebar. */
 export type RightSidebarSection = "pane" | "notes";
@@ -53,7 +53,7 @@ const defaults = {
    */
   mouseMode: "select" as "select" | "app",
   /** Sidebar section that the left sidebar shows. */
-  leftSidebarSection: "workspacesAndTabs" as LeftSidebarSection,
+  leftSidebarSection: "workspaces" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "pane" as RightSidebarSection,
   /** Tab Scripts: the section Custom Scripts is folded. */
@@ -154,9 +154,9 @@ function load(): typeof defaults {
       }
       stored.rightSidebarSection = "pane";
     }
-    // The first sidebar section of the left sidebar holds the workspaces and the tabs: it got its name.
-    if (stored.leftSidebarSection === "workspaces") {
-      stored.leftSidebarSection = "workspacesAndTabs";
+    // The tabs left the left sidebar for the tab bar: its first sidebar section holds only the workspaces again.
+    if (stored.leftSidebarSection === "workspacesAndTabs") {
+      stored.leftSidebarSection = "workspaces";
     }
     const saved = { ...defaults, ...stored };
     // "github-dark" was the only default before themes existed: it now means "auto".

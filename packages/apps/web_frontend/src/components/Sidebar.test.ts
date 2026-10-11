@@ -5,13 +5,11 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
-import { onNewPaneClick } from "../stores/newPane";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
-vi.mock("../stores/newPane", () => ({ onNewPaneClick: vi.fn() }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -50,7 +48,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   confirmDialog.open = false;
-  settings.leftSidebarSection = "workspacesAndTabs";
+  settings.leftSidebarSection = "workspaces";
 });
 
 describe("Sidebar workspace rows", () => {
@@ -110,47 +108,51 @@ describe("Sidebar workspace rows", () => {
 });
 
 describe("Sidebar headings", () => {
-  it("says Tabs in the heading of the list of tabs, and not Panes", async () => {
+  it("has one heading, Workspaces, and no heading Tabs: the tabs are in the tab bar", async () => {
     const { wrapper } = await mountSidebar();
     const headings = wrapper.findAll(".heading").map((heading) => heading.get("span").text());
-    expect(headings).toEqual(["Workspaces", "Tabs"]);
+    expect(headings).toEqual(["Workspaces"]);
+    expect(wrapper.text()).not.toContain("Tabs");
+  });
+
+  it("lists only the workspaces, and not the panes of the workspace", async () => {
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.findAll(".item")).toHaveLength(2);
+    expect(wrapper.findAll(".item").map((item) => item.text())).toEqual(["heidrun", "teamwright"]);
   });
 });
 
 describe("Sidebar navigation bar", () => {
-  it("shows the buttons Workspaces and Tabs, Scripts, and Git, and not the buttons Pane and Notes", async () => {
+  it("shows the buttons Workspaces, Scripts, and Git, and not the buttons Pane and Notes", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.text())).toEqual(["Workspaces and Tabs", "Scripts", "Git"]);
+    expect(buttons.map((button) => button.text())).toEqual(["Workspaces", "Scripts", "Git"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
     expect(wrapper.get(".navigation-bar").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows the sidebar section Workspaces and Tabs first, and marks its button as active", async () => {
+  it("shows the sidebar section Workspaces first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
     expect(wrapper.findAll(".ws-row")).toHaveLength(2);
-    expect(wrapper.findAll(".pane-row")).toHaveLength(3);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
   });
 
-  it("shows the sidebar section Scripts, and neither the list of workspaces nor the list of tabs, after a click on its button", async () => {
+  it("shows the sidebar section Scripts, and not the list of workspaces, after a click on its button", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".navigation-bar button")[1].trigger("click");
     expect(settings.leftSidebarSection).toBe("actions");
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([false, true, false]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
     expect(wrapper.find(".ws-row").exists()).toBe(false);
-    expect(wrapper.find(".pane-row").exists()).toBe(false);
   });
 
-  it("shows neither the list of workspaces nor the list of tabs in the sidebar section Git", async () => {
+  it("does not show the list of workspaces in the sidebar section Git", async () => {
     settings.leftSidebarSection = "git";
     const { wrapper } = await mountSidebar();
     expect(wrapper.find("git-panel-stub").exists()).toBe(true);
     expect(wrapper.find(".ws-row").exists()).toBe(false);
-    expect(wrapper.find(".pane-row").exists()).toBe(false);
     expect(wrapper.findAll(".heading")).toHaveLength(0);
   });
 
@@ -165,34 +167,21 @@ describe("Sidebar navigation bar", () => {
     expect(restarted.find("git-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the list of workspaces and the list of tabs again after a click on the button Workspaces and Tabs", async () => {
+  it("shows the list of workspaces again after a click on the button Workspaces", async () => {
     settings.leftSidebarSection = "git";
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
-    expect(settings.leftSidebarSection).toBe("workspacesAndTabs");
+    expect(settings.leftSidebarSection).toBe("workspaces");
     expect(wrapper.findAll(".ws-row")).toHaveLength(2);
-    expect(wrapper.findAll(".pane-row")).toHaveLength(3);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
-  });
-
-  it("shows the list of tabs only in the sidebar section Workspaces and Tabs, under the list of workspaces", async () => {
-    const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".heading").map((heading) => heading.get("span").text())).toEqual(["Workspaces", "Tabs"]);
-    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
-    expect(wrapper.findAll(".heading")).toHaveLength(0);
-    await wrapper.findAll(".navigation-bar button")[2].trigger("click");
-    expect(wrapper.findAll(".heading")).toHaveLength(0);
   });
 });
 
 describe("Sidebar plus buttons", () => {
-  it("has a plus button for a new workspace and a plus button for a new pane, each with an accessible name", async () => {
+  it("has one plus button, for a new workspace, with an accessible name", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".heading button.add");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual([
-      "Create a new workspace",
-      "Add a pane: a terminal, Claude Code, or Codex (shift click: start the previous pane again)",
-    ]);
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Create a new workspace"]);
     for (const button of buttons) {
       expect(button.attributes("title")).toBe(button.attributes("aria-label"));
     }
@@ -206,7 +195,7 @@ describe("Sidebar plus buttons", () => {
     }
   });
 
-  it("asks for the folder of the new workspace when the user clicks the first plus button", async () => {
+  it("asks for the folder of the new workspace when the user clicks the plus button", async () => {
     vi.mocked(openDialog).mockResolvedValueOnce(null);
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".heading button.add")[0].trigger("click");
@@ -217,13 +206,6 @@ describe("Sidebar plus buttons", () => {
       title: "Choose the folder of the new workspace",
       defaultPath: "/home",
     });
-  });
-
-  it("starts the new pane action when the user clicks the second plus button", async () => {
-    const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".heading button.add")[1].trigger("click");
-    expect(onNewPaneClick).toHaveBeenCalledTimes(1);
-    expect(openDialog).not.toHaveBeenCalled();
   });
 
   it("removes the grey ring that Bootstrap draws around a button that has the keyboard focus", () => {
