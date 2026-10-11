@@ -1,47 +1,57 @@
-import { computed, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
 
 /**
  * The open state of a card above the status bar.
- * The card is open while the mouse pointer is on the item of the status bar, and while the item has the keyboard focus.
- * A click with the mouse also gives the focus to the item, so only the focus from the keyboard counts, as the rule
- * `:focus-visible` of the browser says.
+ * A click on the item of the status bar opens the card, and the next click on the item closes it.
+ * The card also closes when the user presses the key Escape, when the user clicks outside the item, and when the
+ * keyboard focus leaves the item. So only one card stays open: a click on another item is a click outside this item.
  *
- * @returns The state `isOpen`, and the four handlers that the item of the status bar listens to.
+ * @param root - The element of the item of the status bar. The card is inside this element.
+ * @returns The state `isOpen`, the functions `toggle` and `close`, and the handler `onFocusOut` for the item.
  */
-export function useStatusCard() {
-  const isHovered = ref(false);
-  const isFocused = ref(false);
-  const isOpen = computed(() => isHovered.value || isFocused.value);
+export function useStatusCard(root: Ref<HTMLElement | null>) {
+  const isOpen = ref(false);
 
-  function onMouseEnter() {
-    isHovered.value = true;
+  function toggle() {
+    isOpen.value = isOpen.value === false;
   }
 
-  function onMouseLeave() {
-    isHovered.value = false;
+  function close() {
+    isOpen.value = false;
   }
 
-  function onFocusIn(event: FocusEvent) {
-    isFocused.value = event.target instanceof Element && isKeyboardFocus(event.target);
+  function onFocusOut(event: FocusEvent) {
+    const isStillInside =
+      event.relatedTarget instanceof Node && root.value !== null && root.value.contains(event.relatedTarget);
+    if (isStillInside === true) {
+      return;
+    }
+    close();
   }
 
-  function onFocusOut() {
-    isFocused.value = false;
+  function onDocumentPointerDown(event: PointerEvent) {
+    const isInside = event.target instanceof Node && root.value !== null && root.value.contains(event.target);
+    if (isInside === true) {
+      return;
+    }
+    close();
   }
 
-  return { isOpen, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut };
-}
-
-/**
- * Tells if an element has the focus from the keyboard.
- *
- * @param element - The element that received the focus.
- * @returns `true` when the element matches `:focus-visible`, and also when the browser does not know that rule.
- */
-function isKeyboardFocus(element: Element): boolean {
-  try {
-    return element.matches(":focus-visible");
-  } catch {
-    return true;
+  function onDocumentKeyDown(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      close();
+    }
   }
+
+  onMounted(() => {
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    document.addEventListener("keydown", onDocumentKeyDown, true);
+  });
+
+  onBeforeUnmount(() => {
+    document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+    document.removeEventListener("keydown", onDocumentKeyDown, true);
+  });
+
+  return { isOpen, toggle, close, onFocusOut };
 }

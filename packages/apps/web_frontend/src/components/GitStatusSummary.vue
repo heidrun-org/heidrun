@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { currentGit } from "../stores/git";
 import { ago } from "../lib/format";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import Icon from "./Icon.vue";
 import { t } from "../i18n/index";
 import { useStatusCard } from "../lib/status_card";
 
 // The Git state of the selected workspace in the status bar, in the order of the Visual Studio Code status bar:
 // the Git icon, the branch name, the commits to download, then the commits to upload.
-// Hovering or focusing it shows a Bootstrap popover with the details.
+// A click on it shows a Bootstrap popover with the details.
 // A star after the branch name means the working folder has an uncommitted change: a changed or an untracked file.
 const isDirty = computed(() => currentGit.value !== null && currentGit.value.changed + currentGit.value.untracked > 0);
 
-const { isOpen, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut } = useStatusCard();
+const root = ref<HTMLElement | null>(null);
+const { isOpen, toggle, onFocusOut } = useStatusCard(root);
 
 const detailRows = computed(() => {
   if (currentGit.value === null) {
@@ -31,18 +32,19 @@ const detailRows = computed(() => {
 <template>
   <div
     v-if="currentGit !== null && currentGit.branch !== null"
+    ref="root"
     class="git-status"
     tabindex="0"
-    @mouseenter="onMouseEnter"
-    @mouseleave="onMouseLeave"
-    @focusin="onFocusIn"
+    @click="toggle"
+    @keydown.enter.self.prevent="toggle"
+    @keydown.space.self.prevent="toggle"
     @focusout="onFocusOut"
   >
     <Icon name="git" />
     <span class="branch">{{ currentGit.branch }}<span v-if="isDirty" class="dirty">*</span></span>
     <span class="behind"><span class="count">{{ currentGit.behind }}</span><Icon name="arrow-down" /></span>
     <span class="ahead"><span class="count">{{ currentGit.ahead }}</span><Icon name="arrow-up" /></span>
-    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip">
+    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-2">
         <div v-for="row in detailRows" :key="row.field" class="d-flex justify-content-between gap-3">
@@ -63,7 +65,7 @@ const detailRows = computed(() => {
 .git-status {
   align-self: stretch; margin: 0 -11px; padding: 0 11px;
   display: flex; align-items: center; gap: 8px; color: var(--muted-2); font-weight: 600;
-  cursor: default; outline-offset: 3px;
+  cursor: pointer; outline-offset: 3px;
 }
 .behind, .ahead { display: flex; align-items: center; gap: 1px; }
 .count { font-variant-numeric: tabular-nums; }

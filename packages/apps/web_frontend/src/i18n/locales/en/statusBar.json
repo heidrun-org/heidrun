@@ -6,7 +6,6 @@
   "enableTrackingTitle": "Enable Claude usage tracking",
   "waitingForData": "Claude: waiting for data",
   "offline": "offline",
-  "plan": "Plan",
   "expectedNow": "Expected usage now",
   "resetsAt": "Resets at {time}",
   "runsOut": "Runs out at {time}",

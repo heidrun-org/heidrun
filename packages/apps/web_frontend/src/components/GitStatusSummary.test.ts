@@ -76,7 +76,7 @@ describe("GitStatusSummary", () => {
       }),
     };
     const wrapper = mount(GitStatusSummary);
-    await wrapper.trigger("mouseenter");
+    await wrapper.trigger("click");
     expect(wrapper.find(".popover-header").exists()).toBe(false);
     expect(wrapper.get("[data-field=upstream]").text()).toBe("origin/main");
     expect(wrapper.get("[data-field=to-download]").text()).toBe("3");
@@ -86,22 +86,35 @@ describe("GitStatusSummary", () => {
     expect(wrapper.get("[data-field=last-subject]").text()).toBe("Fix the status bar");
   });
 
-  it("shows the popover while the mouse pointer is on the item, and hides it when the pointer leaves", async () => {
+  it("opens the popover with a click on the item, and closes it with the next click", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };
     const wrapper = mount(GitStatusSummary);
     expect(wrapper.find(".popover").exists()).toBe(false);
     await wrapper.trigger("mouseenter");
-    expect(wrapper.find(".popover").exists()).toBe(true);
-    await wrapper.trigger("mouseleave");
     expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("closes the popover with the key Escape", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary, { attachTo: document.body });
+    await wrapper.trigger("click");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    wrapper.unmount();
   });
 
   it("says there is no remote branch when the branch has no upstream", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ upstream: null }) };
     const wrapper = mount(GitStatusSummary);
-    await wrapper.trigger("mouseenter");
+    await wrapper.trigger("click");
     expect(wrapper.get("[data-field=upstream]").text()).toBe("none");
   });
 
@@ -114,7 +127,7 @@ describe("GitStatusSummary", () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ changed: testCase.changed, untracked: testCase.untracked }) };
     const wrapper = mount(GitStatusSummary);
-    await wrapper.trigger("mouseenter");
+    await wrapper.trigger("click");
     expect(wrapper.get(".branch").find(".dirty").exists()).toBe(testCase.isStarShown);
     expect(wrapper.get(".popover").find(".dirty").exists()).toBe(false);
   });

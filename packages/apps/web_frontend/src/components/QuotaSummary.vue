@@ -7,10 +7,11 @@ import { useStatusCard } from "../lib/status_card";
 import type { QuotaBlock } from "../lib/types";
 
 // One account in the status bar: its name and a small ring that fills with the usage of its shortest window.
-// Hovering or focusing it shows a Bootstrap popover with every window, its percentage, and its reset time.
+// A click on it shows a Bootstrap popover with every window, its percentage, and its reset time.
 const props = defineProps<{ quota: QuotaBlock }>();
 
-const { isOpen, onMouseEnter, onMouseLeave, onFocusIn, onFocusOut } = useStatusCard();
+const root = ref<HTMLElement | null>(null);
+const { isOpen, toggle, onFocusOut } = useStatusCard(root);
 
 // The Bootstrap classes of each level: the color of the percentage, the color of the usage bar, and the kind of notice.
 const LEVEL_CLASSES = {
@@ -38,7 +39,6 @@ function paceText(pace: NonNullable<ReturnType<typeof quotaPace>>) {
 }
 
 const accountName = computed(() => props.quota.label.split(" · ")[0]);
-const planName = computed(() => props.quota.label.split(" · ")[1] ?? "");
 const ringWindow = computed(() => quotaRingWindow(props.quota.windows));
 const ringPercent = computed(() => Math.min(100, Math.max(0, ringWindow.value?.percent ?? 0)));
 const ringOffset = computed(() => RING_LENGTH * (1 - ringPercent.value / 100));
@@ -51,12 +51,13 @@ function formatCost(cost: number) {
 
 <template>
   <div
+    ref="root"
     class="quota"
     tabindex="0"
     :data-provider="quota.provider"
-    @mouseenter="onMouseEnter"
-    @mouseleave="onMouseLeave"
-    @focusin="onFocusIn"
+    @click="toggle"
+    @keydown.enter.self.prevent="toggle"
+    @keydown.space.self.prevent="toggle"
     @focusout="onFocusOut"
   >
     <span class="label">{{ accountName }}</span>
@@ -73,13 +74,9 @@ function formatCost(cost: number) {
       />
     </svg>
     <span v-if="ringWindow" class="mono percent">{{ Math.round(ringWindow.percent) }}<span class="unit">%</span></span>
-    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip">
+    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-3">
-        <div v-if="planName" class="d-flex justify-content-between gap-3" data-field="plan">
-          <span class="text-body-secondary">{{ t("statusBar.plan") }}</span>
-          <span data-field="plan-name">{{ planName }}</span>
-        </div>
         <div v-for="(w, index) in quota.windows" :key="w.id" class="d-flex flex-column gap-2" data-field="window">
           <div class="d-flex justify-content-between gap-3">
             <span>{{ w.name }}</span>
@@ -126,7 +123,7 @@ function formatCost(cost: number) {
 </template>
 
 <style scoped>
-.quota { align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: default; outline-offset: 3px; }
+.quota { align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: pointer; outline-offset: 3px; }
 .label { font-weight: 600; font-size: var(--font-size); color: var(--text-2); }
 .percent { font-size: var(--font-size); }
 .percent { color: var(--text-2); }

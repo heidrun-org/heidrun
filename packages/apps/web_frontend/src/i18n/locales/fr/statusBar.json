@@ -6,7 +6,6 @@
   "enableTrackingTitle": "Activer le suivi de l’utilisation de Claude",
   "waitingForData": "Claude : en attente de données",
   "offline": "hors ligne",
-  "plan": "Offre",
   "expectedNow": "Utilisation attendue maintenant",
   "resetsAt": "Réinitialisation à {time}",
   "runsOut": "Épuisé à {time}",
