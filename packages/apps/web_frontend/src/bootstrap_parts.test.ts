@@ -84,6 +84,7 @@ describe('bootstrap_parts.scss', () => {
 			'.align-self-start',
 			'.gap-2',
 			'.gap-3',
+			'.ms-1',
 			'.ms-3',
 			'.me-auto',
 			'.mb-3',

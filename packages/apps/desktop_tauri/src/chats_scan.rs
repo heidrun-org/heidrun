@@ -2,7 +2,8 @@
 //!
 //! A scan reads the file line by line. Each line is one record. The scan keeps the title, the first message, and the meta
 //! information of the conversation: the first and the last date, the number of messages from the developer, the folders,
-//! the issues and the pull requests that the conversation mentions, and the files that the coding agent wrote.
+//! the issues and the pull requests that the conversation mentions, the files that the coding agent wrote, and the text of
+//! the first messages from the developer.
 //!
 //! A conversation file only grows at its end. So a scan can stop at the end of the last complete line, and the next scan
 //! of the same file continues from there with the state that the first scan kept (`scan_file`).
@@ -16,6 +17,12 @@ use std::path::Path;
 /// The most digits of the number of an issue or of a pull request. A longer number is not a reference.
 const REFERENCE_DIGITS: usize = 5;
 
+/// The most messages of the developer that a scan keeps as text, counted from the first one.
+const FIRST_MESSAGES: usize = 3;
+
+/// The most characters of a message of the developer that a scan keeps. A longer message ends with an ellipsis.
+const MESSAGE_LENGTH: usize = 300;
+
 /// What the scan found about one conversation, besides its title.
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct ChatMeta {
@@ -25,6 +32,10 @@ pub struct ChatMeta {
     pub last_at: Option<i64>,
     /// The number of messages that the developer typed.
     pub user_messages: u32,
+    /// The text of the first messages that the developer typed, at most `FIRST_MESSAGES` of them, each one on one line and
+    /// cut to `MESSAGE_LENGTH` characters.
+    #[serde(default)]
+    pub first_messages: Vec<String>,
     /// The folders where the coding agent ran during the conversation.
     pub folders: BTreeSet<String>,
     /// The numbers of the issues that the conversation mentions.
@@ -55,6 +66,16 @@ impl ChatMeta {
     fn note_time(&mut self, at: i64) {
         self.first_at = Some(self.first_at.map_or(at, |first| first.min(at)));
         self.last_at = Some(self.last_at.map_or(at, |last| last.max(at)));
+    }
+
+    /// Counts one message that the developer typed, keeps its text when it is one of the first messages, and finds the
+    /// issues and the pull requests that it mentions.
+    fn note_typed_message(&mut self, text: &str) {
+        self.user_messages += 1;
+        if self.first_messages.len() < FIRST_MESSAGES {
+            self.first_messages.push(crate::claude::short(text, MESSAGE_LENGTH));
+        }
+        self.note_references(text, true);
     }
 
     /// A pull request number is never an issue number too: the number goes to the pull requests only.
@@ -161,8 +182,7 @@ pub fn feed_claude_line(scan: &mut Scan, line: &str) {
         }
     } else if line.contains(r#""type":"user""#) && !line.contains(r#""type":"tool_result""#) {
         if let Some(text) = serde_json::from_str::<Value>(line).ok().as_ref().and_then(claude_typed_message) {
-            scan.meta.user_messages += 1;
-            scan.meta.note_references(&text, true);
+            scan.meta.note_typed_message(&text);
             scan.first_message.get_or_insert(text);
         }
     } else if line.contains(r#""type":"assistant""#) {
@@ -251,8 +271,7 @@ fn feed_codex_message(scan: &mut Scan, record: &Value) {
             // Codex starts every conversation with a message that holds the instructions of `AGENTS.md`, and a message in
             // angle brackets that describes the environment. Neither one is a message of the developer.
             if let Some(text) = text_of_content(content).filter(|text| !text.starts_with("# AGENTS.md")) {
-                scan.meta.user_messages += 1;
-                scan.meta.note_references(&text, true);
+                scan.meta.note_typed_message(&text);
                 scan.first_message.get_or_insert(text);
             }
         }
@@ -472,12 +491,31 @@ mod tests {
         assert_eq!(scan.first_message.as_deref(), Some("Fix the issue 250 please"));
         let meta = scan.meta;
         assert_eq!(meta.user_messages, 2);
+        assert_eq!(meta.first_messages, vec!["Fix the issue 250 please", "thanks"]);
         assert_eq!(meta.first_at, Some(1_791_712_800_000));
         assert_eq!(meta.last_at, Some(1_791_718_200_000));
         assert_eq!(meta.folders.into_iter().collect::<Vec<_>>(), vec!["/work/app", "/work/app/sub"]);
         assert_eq!(meta.issues.into_iter().collect::<Vec<_>>(), vec![250, 251]);
         assert_eq!(meta.pull_requests.into_iter().collect::<Vec<_>>(), vec![248, 249]);
         assert_eq!(meta.files_written.into_iter().collect::<Vec<_>>(), vec!["/work/app/a.ts", "/work/app/b.ts"]);
+    }
+
+    #[test]
+    fn keeps_the_text_of_the_first_three_messages_only_and_cuts_a_long_one_on_one_line() {
+        let message = |text: &str| {
+            format!(r#"{{"type":"user","message":{{"role":"user","content":{}}}}}"#, serde_json::to_string(text).unwrap())
+        };
+        let mut scan = Scan::default();
+        let long = format!("first\nline {}", "word ".repeat(100));
+        for text in [long.as_str(), "second", "third", "fourth"] {
+            feed_claude_line(&mut scan, &message(text));
+        }
+        assert_eq!(scan.meta.user_messages, 4);
+        assert_eq!(scan.meta.first_messages.len(), 3);
+        assert!(scan.meta.first_messages[0].starts_with("first line word word"));
+        assert!(scan.meta.first_messages[0].ends_with('…'));
+        assert_eq!(scan.meta.first_messages[0].chars().count(), MESSAGE_LENGTH + 1);
+        assert_eq!(scan.meta.first_messages[1..], ["second", "third"]);
     }
 
     #[test]
@@ -502,6 +540,7 @@ mod tests {
         assert_eq!(scan.first_message.as_deref(), Some("Please fix issue 250"));
         let meta = scan.meta;
         assert_eq!(meta.user_messages, 1);
+        assert_eq!(meta.first_messages, vec!["Please fix issue 250"]);
         assert_eq!(meta.first_at, Some(1_791_712_740_000));
         assert_eq!(meta.last_at, Some(1_791_713_100_000));
         assert_eq!(meta.folders.into_iter().collect::<Vec<_>>(), vec!["/work/app"]);

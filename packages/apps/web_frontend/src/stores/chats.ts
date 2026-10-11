@@ -15,6 +15,8 @@ export interface ChatMeta {
   last_at: number | null;
   /** The number of messages that the developer typed. */
   user_messages: number;
+  /** The text of the first messages that the developer typed, at most three, each one on one line. */
+  first_messages: string[];
   /** The folders where the coding agent ran during the chat. */
   folders: string[];
   /** The numbers of the issues that the chat mentions, in increasing order. */

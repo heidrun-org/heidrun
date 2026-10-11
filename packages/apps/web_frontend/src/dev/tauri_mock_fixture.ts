@@ -94,6 +94,7 @@ export class TauriMockFixture {
 				first_at: now - (minutesAgo + 90) * 60_000,
 				last_at: now - minutesAgo * 60_000,
 				user_messages: 0,
+				first_messages: [],
 				folders: [],
 				issues: [],
 				pull_requests: [],
@@ -104,11 +105,10 @@ export class TauriMockFixture {
 		const claudeChats: Chat[] = [
 			buildChat('claude_1', 'Workspace conversation navigation', 2, {
 				user_messages: 10,
-				folders: [
-					'/Users/demo/webwork/heidrun',
-					'/Users/demo/webwork/heidrun/packages/apps/web_frontend',
-					'/Users/demo/webwork/heidrun/.claude/worktrees/add-chats-sidebar-section-250',
-					'/private/tmp/claude-501/scratchpad',
+				first_messages: [
+					'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex.',
+					'Each row has a title and three lines of summary: the dates, the issues and the pull requests, and the files.',
+					'Can you make the information card wider? Then read the full text of this very long message that stops after three hundred characters, so that the card shows how a long message is cut.',
 				],
 				issues: [250, 251],
 				files_written: [

@@ -90,7 +90,6 @@ const agent = computed<ChatAgent>({
               v-if="row.lines.dates !== ''"
               :text="row.lines.dates"
               :meta="row.chat.meta"
-              :root="chats.root"
             />
             <ChatReferencesLine
               v-if="row.references.length > 0"

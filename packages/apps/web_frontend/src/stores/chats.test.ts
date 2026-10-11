@@ -24,7 +24,7 @@ function chat(id: string, title: string): Chat {
     id,
     title,
     updated_at: 1,
-    meta: { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] },
+    meta: { first_at: null, last_at: null, user_messages: 0, first_messages: [], folders: [], issues: [], pull_requests: [], files_written: [] },
   };
 }
 

@@ -38,7 +38,7 @@ const MAX_LIMIT: usize = 10_000;
 const CACHE_FILE: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 2;
+const CACHE_VERSION: u32 = 3;
 
 /// One conversation.
 #[derive(Serialize, Debug, Clone, PartialEq)]

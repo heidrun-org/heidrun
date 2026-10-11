@@ -10,7 +10,7 @@ function at(month: number, day: number, hour: number, minute: number, year = 202
 
 /** The scan of a chat that found nothing. */
 function emptyMeta(): ChatMeta {
-  return { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] };
+  return { first_at: null, last_at: null, user_messages: 0, first_messages: [], folders: [], issues: [], pull_requests: [], files_written: [] };
 }
 
 const NOW = new Date(2026, 9, 12, 9, 0);
