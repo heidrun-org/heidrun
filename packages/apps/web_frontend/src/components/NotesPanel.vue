@@ -98,7 +98,7 @@ function sendTo(n: Note, paneId: string) {
 </template>
 
 <style scoped>
-.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .toggle { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--muted); }
 .toggle input { accent-color: var(--done); }
