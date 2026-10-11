@@ -123,6 +123,10 @@ body {
 }
 button:where(:not(.btn-outline-secondary)) { font: inherit; color: inherit; cursor: pointer; }
 input { font: inherit; color: inherit; user-select: text; }
+/* While a line or a corner between panes is dragged, one cursor shows over every element, also over an element that has its own cursor. */
+html[data-pane-drag-cursor="move"], html[data-pane-drag-cursor="move"] * { cursor: move !important; }
+html[data-pane-drag-cursor="row-resize"], html[data-pane-drag-cursor="row-resize"] * { cursor: row-resize !important; }
+html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize"] * { cursor: col-resize !important; }
 :focus-visible { outline: 2px solid var(--done); outline-offset: 1px; }
 
 .eyebrow {
