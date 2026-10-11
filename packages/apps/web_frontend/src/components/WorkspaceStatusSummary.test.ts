@@ -311,6 +311,13 @@ describe("WorkspaceStatusSummary list", () => {
     expect(sourceText).not.toContain("dropdown-divider");
   });
 
+  it("leaves the same vertical space between two workspaces as between two details above them", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    expect(wrapper.get("[data-field=details]").classes()).toContain("gap-2");
+    expect(wrapper.get("[role=group]").classes()).toContain("gap-2");
+  });
+
   it("gives every workspace a dot: a ring when no agent runs, and a colored dot for the status of the agents", async () => {
     const snapshot = makeSnapshot();
     (snapshot.workspaces[1] as { agent_status: string }).agent_status = "blocked";

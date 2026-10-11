@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
+import Fs from "node:fs";
+import Path from "node:path";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -40,6 +42,13 @@ describe("StatusBar", () => {
     expect(children[0].tagName.toLowerCase()).toBe("workspace-status-summary-stub");
     expect(children[1].classList.contains("sep")).toBe(true);
     expect(children[2].classList.contains("quota")).toBe(true);
+  });
+
+  it("gives the line after the workspace status bar section 6 more pixels on each side than the other lines", async () => {
+    const { wrapper } = await mountStatusBar();
+    expect(wrapper.get(".sep").classes()).toContain("workspace-sep");
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "StatusBar.vue"), "utf8");
+    expect(sourceText).toContain(".workspace-sep { margin: 0 6px; }");
   });
 
   it("shows no quota when no coding agent is switched on", async () => {

@@ -277,6 +277,26 @@ describe("PaneGrid corners", () => {
   });
 });
 
+describe("PaneGrid pane at the top left corner", () => {
+  it("tells only the pane that touches the top left corner of the area, under the first tab", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    const cells = wrapper.findAll(".cell");
+    expect(cells.map((cell) => cell.get("div").attributes("is-top-left"))).toEqual(["true", "false", "false"]);
+  });
+
+  it("does not tell a pane that is below another pane at the left edge", () => {
+    const wrapper = mountPaneGrid({
+      ...THREE_PANES,
+      panes: [
+        { pane_id: "w1:p1", focused: true, rect: { x: 0, y: 0, width: 120, height: 20 } },
+        { pane_id: "w1:p2", focused: false, rect: { x: 0, y: 20, width: 120, height: 20 } },
+      ],
+    });
+    const cells = wrapper.findAll(".cell");
+    expect(cells.map((cell) => cell.get("div").attributes("is-top-left"))).toEqual(["true", "false"]);
+  });
+});
+
 describe("PaneGrid without pane", () => {
   it("shows the screen with the goat, the name, and the joke, and shows no line", () => {
     mocks.gridLayout.value = null;

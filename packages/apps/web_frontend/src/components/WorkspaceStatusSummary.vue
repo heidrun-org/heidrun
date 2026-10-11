@@ -215,7 +215,7 @@ watch(isRenaming, (renaming) => {
           </div>
         </div>
         <div
-          class="d-flex flex-column"
+          class="d-flex flex-column gap-2"
           :class="{ 'border-top pt-2': detailRows.length > 0 }"
           role="group"
           :aria-label="t('workspaceStatusSummary.listLabel')"
