@@ -38,7 +38,7 @@ const emit = defineEmits<{
 <style scoped>
 .navigation-bar { display: flex; gap: 2px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
 .navigation-bar button {
-  flex: 1 1 auto; min-width: 0; height: 34px; margin-bottom: -1px; padding: 4px 10px; border: 1px solid transparent; line-height: 1.2;
+  flex: 1 1 auto; min-width: 0; height: 40px; margin-bottom: -1px; padding: 4px 10px; border: 1px solid transparent; line-height: 1.2;
   border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); font-size: var(--font-size); font-weight: 500;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
