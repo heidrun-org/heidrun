@@ -27,7 +27,8 @@ function snapshotWith(folder: string) {
 
 /** What the command chats_list answers. */
 function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude?: boolean; codex?: boolean } = {}) {
-  const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1 }));
+  const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] };
+  const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1, meta }));
   vi.mocked(invoke).mockResolvedValue({
     claude: { chats: toChats("c", claudeTitles), has_more: hasMore.claude ?? false },
     codex: { chats: toChats("x", codexTitles), has_more: hasMore.codex ?? false },
@@ -36,7 +37,7 @@ function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude
 
 /** The titles that the list shows. */
 function shownTitles(wrapper: ReturnType<typeof mount>) {
-  return wrapper.findAll(".list-group-item").map((item) => item.text());
+  return wrapper.findAll(".list-group-item").map((item) => item.get("div").text());
 }
 
 beforeEach(() => {
@@ -148,6 +149,27 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10 });
     expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
     expect(wrapper.find("ul + button").exists()).toBe(false);
+  });
+
+  it("shows a small summary under the title of a chat that has meta information, and nothing under the others", async () => {
+    const meta = { first_at: null, last_at: null, user_messages: 4, folders: [], issues: [250], pull_requests: [249], files_written: ["/a"] };
+    const emptyMeta = { ...meta, user_messages: 0, issues: [], pull_requests: [], files_written: [] };
+    vi.mocked(invoke).mockResolvedValue({
+      claude: {
+        chats: [
+          { id: "a", title: "Fix the tab bar", updated_at: 1, meta },
+          { id: "b", title: "Nothing found", updated_at: 1, meta: emptyMeta },
+        ],
+        has_more: false,
+      },
+      codex: { chats: [], has_more: false },
+    });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const rows = wrapper.findAll(".list-group-item");
+    expect(rows[0].get(".chat-summary").text()).toBe("4 messages from you · Issue #250 · Pull request #249 · 1 file written");
+    expect(rows[0].get(".chat-summary").classes()).toContain("text-body-secondary");
+    expect(rows[1].find(".chat-summary").exists()).toBe(false);
   });
 
   it("uses Bootstrap classes for the selector and the list", async () => {

@@ -7,6 +7,24 @@ export type ChatAgent = "claude" | "codex";
 /** The coding agents of the selector of the Chats sidebar section, in this order. */
 export const CHAT_AGENTS: readonly ChatAgent[] = ["claude", "codex"];
 
+/** What the scan of the file of a chat found, without a model. The Rust side computes it and keeps it on the disk. */
+export interface ChatMeta {
+  /** The date of the first record that has a date, in milliseconds since 1970, or null. */
+  first_at: number | null;
+  /** The date of the last record that has a date, in milliseconds since 1970, or null. */
+  last_at: number | null;
+  /** The number of messages that the developer typed. */
+  user_messages: number;
+  /** The folders where the coding agent ran during the chat. */
+  folders: string[];
+  /** The numbers of the issues that the chat mentions, in increasing order. */
+  issues: number[];
+  /** The numbers of the pull requests that the chat mentions, in increasing order. */
+  pull_requests: number[];
+  /** The files that the coding agent wrote. */
+  files_written: string[];
+}
+
 /** One saved conversation between the developer and a coding agent. */
 export interface Chat {
   /** The identifier that the coding agent gave to the conversation. */
@@ -15,6 +33,8 @@ export interface Chat {
   title: string;
   /** When the file of the conversation changed, in milliseconds since 1970. */
   updated_at: number;
+  /** What the scan of the file found. */
+  meta: ChatMeta;
 }
 
 /** The number of chats that the list shows at the start, then after each click on "Show more". The next clicks add 50. */

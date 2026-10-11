@@ -17,7 +17,12 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
 /** One conversation of the test. */
 function chat(id: string, title: string): Chat {
-  return { id, title, updated_at: 1 };
+  return {
+    id,
+    title,
+    updated_at: 1,
+    meta: { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] },
+  };
 }
 
 /** What the Tauri command `chats_list` answers. */

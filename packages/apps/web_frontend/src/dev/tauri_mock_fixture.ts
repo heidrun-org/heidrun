@@ -1,4 +1,4 @@
-import type { Chat, ChatAgent } from '../stores/chats';
+import type { Chat, ChatAgent, ChatMeta } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -57,23 +57,47 @@ export class TauriMockFixture {
 	 */
 	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> {
 		const now = Date.now();
-		const buildChat = (id: string, title: string, minutesAgo: number): Chat => ({
+		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
 			id,
 			title,
 			updated_at: now - minutesAgo * 60_000,
+			meta: {
+				first_at: now - (minutesAgo + 90) * 60_000,
+				last_at: now - minutesAgo * 60_000,
+				user_messages: 0,
+				folders: [],
+				issues: [],
+				pull_requests: [],
+				files_written: [],
+				...meta,
+			},
 		});
 		const claudeChats: Chat[] = [
-			buildChat('claude_1', 'Workspace conversation navigation', 2),
-			buildChat('claude_2', 'Tab drag-drop with image drop support', 90),
-			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400),
-			buildChat('claude_4', 'Issue #251', 1_500),
+			buildChat('claude_1', 'Workspace conversation navigation', 2, {
+				user_messages: 10,
+				issues: [250, 251],
+				files_written: ['/Users/demo/webwork/heidrun/a.ts', '/Users/demo/webwork/heidrun/b.ts'],
+			}),
+			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
+				first_at: now - 3_000 * 60_000,
+				user_messages: 4,
+				issues: [104, 247],
+				pull_requests: [230, 249],
+			}),
+			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400, {
+				user_messages: 1,
+				issues: [1, 2, 3, 4, 5, 6],
+				pull_requests: [7],
+				files_written: ['/Users/demo/webwork/heidrun/a.ts'],
+			}),
+			buildChat('claude_4', 'Issue #251', 1_500, { user_messages: 2, issues: [251], pull_requests: [230, 249, 253] }),
 			buildChat('claude_5', 'Herdr interface description', 3_000),
 		];
 		for (let index = 6; index <= 60; index++) {
 			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
 		}
 		const codexChats: Chat[] = [
-			buildChat('codex_1', 'Describe image contents', 30),
+			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
 			buildChat('codex_2', 'Count up to 200', 600),
 		];
 		const cut = (chats: Chat[]) => ({

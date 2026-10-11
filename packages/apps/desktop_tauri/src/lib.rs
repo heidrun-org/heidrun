@@ -1,4 +1,5 @@
 mod chats;
+mod chats_scan;
 mod claude;
 mod clipboard;
 mod files;

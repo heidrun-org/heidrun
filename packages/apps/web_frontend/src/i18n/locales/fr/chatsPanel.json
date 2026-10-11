@@ -4,7 +4,15 @@
   "agent.claude": "Claude",
   "agent.codex": "Codex",
   "loading": "Lecture des conversations…",
-  "noWorkspace": "Sélectionnez un workspace pour voir ses conversations.",
+  "noWorkspace": "Sélectionne un workspace pour voir ses conversations.",
   "empty": "Aucune conversation de Claude ou de Codex n’a été trouvée pour ce workspace.",
-  "showMore": "Afficher plus"
+  "showMore": "Afficher plus",
+  "messages_one": "{count} message de ta part",
+  "messages_other": "{count} messages de ta part",
+  "issues_one": "Issue {numbers}",
+  "issues_other": "Issues {numbers}",
+  "pullRequests_one": "Pull request {numbers}",
+  "pullRequests_other": "Pull requests {numbers}",
+  "filesWritten_one": "{count} fichier écrit",
+  "filesWritten_other": "{count} fichiers écrits"
 }

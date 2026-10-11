@@ -12,9 +12,11 @@
 //! listed.
 //!
 //! The list is read on demand: the files of a folder are sorted by their modification date, and only the newest `limit`
-//! conversations are opened. What a file holds is kept on the disk, in `chats_cache.json`, until the size or the
-//! modification date of the file changes, so a file is never read twice for the same content.
+//! conversations are opened. What a file holds is found by `chats_scan` and kept on the disk, in `chats_cache.json`, until
+//! the size or the modification date of the file changes. A file that only grew is not read again from its start: the scan
+//! continues from where it stopped.
 
+use crate::chats_scan::{feed_claude_line, feed_codex_line, read_lines_from, scan_file, ChatMeta, Scan};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -36,7 +38,7 @@ const MAX_LIMIT: usize = 10_000;
 const CACHE_FILE: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 1;
+const CACHE_VERSION: u32 = 2;
 
 /// One conversation.
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -46,6 +48,8 @@ pub struct Chat {
     pub title: String,
     /// When the file of the conversation changed, in milliseconds since 1970.
     pub updated_at: i64,
+    /// What the scan of the file found: the dates, the messages, the folders, the issues, the pull requests, the files.
+    pub meta: ChatMeta,
 }
 
 /// The newest conversations of one coding agent in one folder.
@@ -66,21 +70,15 @@ pub struct Chats {
 
 // ---- Cache on the disk -------------------------------------------------------------------------------------------
 
-/// What a scan of one file found.
-#[derive(Clone, Default)]
-struct Scan {
-    title: Option<String>,
-    first_message: Option<String>,
-}
-
 /// The result of the scan of one file, valid while the size and the modification date of the file stay the same.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 struct CacheEntry {
     size: u64,
     /// The modification date of the file, in milliseconds since 1970.
     modified: i64,
-    title: Option<String>,
-    first_message: Option<String>,
+    /// The byte where the scan stopped: the end of the last complete line. A file that grew is scanned from there.
+    offset: u64,
+    scan: Scan,
 }
 
 /// What the file of the cache holds.
@@ -134,21 +132,17 @@ impl ChatsCache {
         }
     }
 
-    /// What `file` holds: the answer of the cache when the size and the date are the same, else the result of `scan_file`.
-    fn scan(&mut self, file: &FileInfo, scan_file: fn(&Path) -> Scan) -> Scan {
+    /// What `file` holds. The answer of the cache when the size and the date are the same. When the file only grew, the
+    /// scan continues from where the last scan stopped. Else the file is scanned from its start.
+    fn scan(&mut self, file: &FileInfo, feed: fn(&mut Scan, &str)) -> Scan {
         let key = file.path.display().to_string();
-        if let Some(entry) = self.content.scans.get(&key) {
-            if entry.size == file.size && entry.modified == file.modified {
-                return Scan { title: entry.title.clone(), first_message: entry.first_message.clone() };
-            }
-        }
-        let scan = scan_file(&file.path);
-        let entry = CacheEntry {
-            size: file.size,
-            modified: file.modified,
-            title: scan.title.clone(),
-            first_message: scan.first_message.clone(),
+        let (mut scan, from) = match self.content.scans.get(&key) {
+            Some(entry) if entry.size == file.size && entry.modified == file.modified => return entry.scan.clone(),
+            Some(entry) if file.size > entry.size && entry.offset <= entry.size => (entry.scan.clone(), entry.offset),
+            _ => (Scan::default(), 0),
         };
+        let offset = scan_file(&file.path, from, &mut scan, feed);
+        let entry = CacheEntry { size: file.size, modified: file.modified, offset, scan: scan.clone() };
         self.content.scans.insert(key, entry);
         self.is_dirty = true;
         scan
@@ -251,7 +245,7 @@ fn take_chats(
     cache: &mut ChatsCache,
     mut files: Vec<FileInfo>,
     limit: usize,
-    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<String>,
+    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta)>,
 ) -> AgentChats {
     files.sort_by(|a, b| b.modified.cmp(&a.modified).then_with(|| a.id.cmp(&b.id)));
     let mut found = AgentChats::default();
@@ -260,10 +254,10 @@ fn take_chats(
             found.has_more = true;
             break;
         }
-        let Some(text) = title_of(cache, file) else { continue };
+        let Some((text, meta)) = title_of(cache, file) else { continue };
         let title = crate::claude::short(&text, TITLE_LENGTH);
         if !title.is_empty() {
-            found.chats.push(Chat { id: file.id.clone(), title, updated_at: file.modified });
+            found.chats.push(Chat { id: file.id.clone(), title, updated_at: file.modified, meta });
         }
     }
     found
@@ -272,37 +266,6 @@ fn take_chats(
 /// The title of a scan, or its first message.
 fn title_of_scan(scan: &Scan) -> Option<String> {
     scan.title.clone().filter(|title| !title.trim().is_empty()).or_else(|| scan.first_message.clone())
-}
-
-/// Calls `each` with every line of the file that is valid text. A file that cannot be read has no line.
-fn for_each_line(path: &Path, mut each: impl FnMut(&str)) {
-    let Ok(file) = std::fs::File::open(path) else { return };
-    let mut reader = BufReader::new(file);
-    let mut line = Vec::new();
-    loop {
-        line.clear();
-        match reader.read_until(b'\n', &mut line) {
-            Ok(0) | Err(_) => return,
-            Ok(_) => {}
-        }
-        if let Ok(text) = std::str::from_utf8(&line) {
-            each(text);
-        }
-    }
-}
-
-/// The first text of a message content that is not in angle brackets. A content is a string, or a list of parts.
-fn text_of_content(content: &Value) -> Option<String> {
-    let text = match content {
-        Value::String(text) => Some(text.as_str()),
-        Value::Array(parts) => parts.iter().find_map(|part| part.get("text").and_then(Value::as_str)),
-        _ => None,
-    }?;
-    let text = text.trim();
-    if text.is_empty() || text.starts_with('<') {
-        return None;
-    }
-    Some(text.to_string())
 }
 
 // ---- Claude Code ------------------------------------------------------------------------------------------------
@@ -328,35 +291,10 @@ fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: us
     }
     let present: HashSet<String> = files.iter().map(|file| file.path.display().to_string()).collect();
     cache.forget_missing(&dir, &present);
-    take_chats(cache, files, limit, &mut |cache, file| title_of_scan(&cache.scan(file, scan_claude_file)))
-}
-
-fn scan_claude_file(path: &Path) -> Scan {
-    let mut scan = Scan::default();
-    for_each_line(path, |text| {
-        if text.contains(r#""type":"custom-title""#) {
-            let Ok(record) = serde_json::from_str::<Value>(text) else { return };
-            if record.get("type").and_then(Value::as_str) == Some("custom-title") {
-                scan.title = record.get("customTitle").and_then(Value::as_str).map(str::to_string);
-            }
-        } else if scan.first_message.is_none() && text.contains(r#""type":"user""#) {
-            scan.first_message = claude_user_message(text);
-        }
-    });
-    scan
-}
-
-/// The text that the developer typed, from one line of a file of Claude Code. A line that holds a tool result, a note of
-/// the program, or a command in angle brackets, such as `<command-name>`, is not a message.
-fn claude_user_message(line: &str) -> Option<String> {
-    let record = serde_json::from_str::<Value>(line).ok()?;
-    if record.get("type").and_then(Value::as_str) != Some("user")
-        || record.get("isMeta").and_then(Value::as_bool) == Some(true)
-        || record.get("isSidechain").and_then(Value::as_bool) == Some(true)
-    {
-        return None;
-    }
-    text_of_content(record.get("message")?.get("content")?)
+    take_chats(cache, files, limit, &mut |cache, file| {
+        let scan = cache.scan(file, feed_claude_line);
+        title_of_scan(&scan).map(|text| (text, scan.meta))
+    })
 }
 
 // ---- Codex -------------------------------------------------------------------------------------------------------
@@ -377,16 +315,16 @@ fn codex_chats(cache: &mut ChatsCache, home: &Path, folder: &str, limit: usize) 
         let Ok(metadata) = std::fs::metadata(&path) else { continue };
         files.push(FileInfo::new(path, id, &metadata));
     }
-    take_chats(cache, files, limit, &mut |cache, file| match titles.get(&file.id) {
-        Some(title) => Some(title.clone()),
-        None => title_of_scan(&cache.scan(file, scan_codex_file)),
+    take_chats(cache, files, limit, &mut |cache, file| {
+        let scan = cache.scan(file, feed_codex_line);
+        titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta))
     })
 }
 
 /// The titles of the index of Codex, by identifier. When an identifier is there twice, the last line wins.
 fn codex_titles(index: &Path) -> HashMap<String, String> {
     let mut titles = HashMap::new();
-    for_each_line(index, |text| {
+    read_lines_from(index, 0, |text| {
         let Ok(record) = serde_json::from_str::<Value>(text) else { return };
         if let (Some(id), Some(title)) =
             (record.get("id").and_then(Value::as_str), record.get("thread_name").and_then(Value::as_str))
@@ -421,35 +359,6 @@ fn codex_id(path: &Path) -> Option<String> {
         return None;
     }
     Some(stem[stem.len() - CODEX_ID_LENGTH..].iter().collect())
-}
-
-fn scan_codex_file(path: &Path) -> Scan {
-    let mut scan = Scan::default();
-    for_each_line(path, |text| {
-        if scan.first_message.is_none() && text.contains(r#""role":"user""#) {
-            scan.first_message = codex_user_message(text);
-        }
-    });
-    scan
-}
-
-/// The text that the developer typed, from one line of a file of Codex. Codex starts every conversation with a message
-/// that holds the instructions of `AGENTS.md`, and a message in angle brackets that describes the environment. Neither
-/// one is a message of the developer.
-fn codex_user_message(line: &str) -> Option<String> {
-    let record = serde_json::from_str::<Value>(line).ok()?;
-    let payload = record.get("payload")?;
-    if record.get("type").and_then(Value::as_str) != Some("response_item")
-        || payload.get("type").and_then(Value::as_str) != Some("message")
-        || payload.get("role").and_then(Value::as_str) != Some("user")
-    {
-        return None;
-    }
-    let text = text_of_content(payload.get("content")?)?;
-    if text.starts_with("# AGENTS.md") {
-        return None;
-    }
-    Some(text)
 }
 
 #[cfg(test)]
@@ -597,6 +506,50 @@ mod tests {
     }
 
     #[test]
+    fn gives_the_meta_information_of_each_chat() {
+        let dir = scratch("meta");
+        let typed = r#"{"type":"user","cwd":"/work/app","timestamp":"2026-10-11T10:00:00.000Z","message":{"role":"user","content":"Fix the issue 250"}}"#;
+        write(&claude_folder(&dir).join("a.jsonl"), &format!("{typed}\n{}\n", claude_title_line("Fix it")), 5);
+        let found = claude(&mut ChatsCache::in_memory(), &dir, 5);
+        let meta = &found.chats[0].meta;
+        assert_eq!(meta.user_messages, 1);
+        assert_eq!(meta.first_at, Some(1_791_712_800_000));
+        assert_eq!(meta.issues.iter().collect::<Vec<_>>(), vec![&250]);
+        assert_eq!(meta.folders.iter().collect::<Vec<_>>(), vec!["/work/app"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn continues_the_scan_of_a_file_that_grew_and_does_not_count_a_message_twice() {
+        let dir = scratch("claude-grow");
+        let path = claude_folder(&dir).join("a.jsonl");
+        let line = |text: &str| format!("{{\"type\":\"user\",\"message\":{{\"role\":\"user\",\"content\":\"{text}\"}}}}\n");
+        write(&path, &format!("{}{}", line("one"), line("two")), 100);
+        let mut cache = ChatsCache::in_memory();
+        assert_eq!(claude(&mut cache, &dir, 5).chats[0].meta.user_messages, 2);
+        write(&path, &format!("{}{}{}", line("one"), line("two"), line("three")), 50);
+        assert_eq!(claude(&mut cache, &dir, 5).chats[0].meta.user_messages, 3);
+        let entry = cache.content.scans.values().next().unwrap();
+        assert_eq!(entry.offset, entry.size);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn scans_a_file_again_from_its_start_when_it_changes_without_growing() {
+        let dir = scratch("claude-same-size");
+        let path = claude_folder(&dir).join("a.jsonl");
+        let line = |text: &str| format!("{{\"type\":\"user\",\"message\":{{\"role\":\"user\",\"content\":\"{text}\"}}}}\n");
+        write(&path, &format!("{}{}", line("one"), line("two")), 100);
+        let mut cache = ChatsCache::in_memory();
+        assert_eq!(claude(&mut cache, &dir, 5).chats[0].meta.user_messages, 2);
+        write(&path, &format!("{}{}", line("uno"), line("dos")), 50);
+        let found = claude(&mut cache, &dir, 5);
+        assert_eq!(found.chats[0].meta.user_messages, 2);
+        assert_eq!(found.chats[0].title, "uno");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn reads_a_file_again_when_it_changes() {
         let dir = scratch("claude-cache-miss");
         let path = claude_folder(&dir).join("a.jsonl");
@@ -687,6 +640,21 @@ mod tests {
         let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 10);
         assert_eq!(titles(&found), vec!["Newer", "Describe image"]);
         assert_eq!(found.chats[1].id, a);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn gives_the_meta_information_of_a_chat_of_codex_that_has_a_title_in_the_index() {
+        let dir = scratch("codex-meta");
+        let id = "01a12c31-175b-7513-b12c-bba764f46420";
+        let real = codex_message("Please fix issue 250");
+        codex_file(&dir, "2026/10/10", id, "/work/app", &[&real], 5);
+        write(&dir.join("session_index.jsonl"), &format!("{{\"id\":\"{id}\",\"thread_name\":\"Fix it\"}}\n"), 1);
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5);
+        assert_eq!(titles(&found), vec!["Fix it"]);
+        assert_eq!(found.chats[0].meta.user_messages, 1);
+        assert_eq!(found.chats[0].meta.issues.iter().collect::<Vec<_>>(), vec![&250]);
+        assert_eq!(found.chats[0].meta.folders.iter().collect::<Vec<_>>(), vec!["/work/app"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

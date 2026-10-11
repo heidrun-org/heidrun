@@ -10,6 +10,7 @@ import {
   showMoreChats,
   type ChatAgent,
 } from "../stores/chats";
+import { chatSummary } from "../lib/chat_summary";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { t } from "../i18n/index";
@@ -49,7 +50,10 @@ const agent = computed<ChatAgent>({
         <option v-for="choice in availableChatAgents" :key="choice" :value="choice">{{ agentLabel(choice) }}</option>
       </select>
       <ul class="list-group list-group-flush">
-        <li v-for="chat in shownChats" :key="chat.id" class="list-group-item text-break">{{ chat.title }}</li>
+        <li v-for="chat in shownChats" :key="chat.id" class="list-group-item text-break">
+          <div>{{ chat.title }}</div>
+          <div v-if="chatSummary(chat.meta) !== ''" class="chat-summary text-body-secondary">{{ chatSummary(chat.meta) }}</div>
+        </li>
       </ul>
       <button v-if="canShowMoreChats" type="button" class="btn" :disabled="chats.isShowingMore" @click="showMoreChats">
         {{ t("chatsPanel.showMore") }}
@@ -60,4 +64,5 @@ const agent = computed<ChatAgent>({
 
 <style scoped>
 .chats-panel { flex: 1; min-height: 0; padding: 18px 14px; }
+.chat-summary { margin-top: 2px; font-size: 0.85em; }
 </style>
