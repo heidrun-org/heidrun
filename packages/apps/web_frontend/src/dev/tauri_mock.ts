@@ -98,6 +98,12 @@ export class TauriMock {
 				return {
 					snapshot: TauriMockFixture.buildSnapshot(),
 				};
+			case 'layout.set_split_ratio':
+				TauriMockFixture.setSplitRatio(
+					requestPayload.params.path as boolean[],
+					requestPayload.params.ratio as number,
+				);
+				return {};
 			case 'pane.read':
 				return {
 					read: {

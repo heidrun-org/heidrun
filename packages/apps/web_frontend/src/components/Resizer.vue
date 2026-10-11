@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from "vue";
 import { t } from "../i18n/index";
+import { ResizerWidth } from "../lib/resizer_width";
 
 // Vertical drag handle between two columns. `side` says which column it resizes:
 // "left" grows when dragged right, "right" grows when dragged left.
@@ -12,9 +13,7 @@ let startX = 0;
 let startW = 0;
 
 function clamp(w: number) {
-  // Never squeeze the centre below 420 px, whatever the window size.
-  const roomLeft = window.innerWidth - 420 - (props.reserve ?? 0);
-  return Math.round(Math.min(props.max, roomLeft, Math.max(props.min, w)));
+  return ResizerWidth.clamp(w, { min: props.min, max: props.max, reserve: props.reserve ?? 0 }, window.innerWidth);
 }
 
 function onDown(e: PointerEvent) {

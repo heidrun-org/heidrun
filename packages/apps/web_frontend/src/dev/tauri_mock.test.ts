@@ -11,6 +11,7 @@ describe('TauriMock', () => {
 	afterEach(() => {
 		clearMocks();
 		delete tauriWindow.__TAURI_INTERNALS__;
+		TauriMockFixture.setSplitRatio([], 0.5);
 	});
 
 	it('answers the Herdr request session.snapshot with the fake Herdr session', async () => {
@@ -21,6 +22,26 @@ describe('TauriMock', () => {
 		});
 		expect(result.snapshot.workspaces.length).toBe(2);
 		expect(result.snapshot.panes.length).toBe(4);
+	});
+
+	it('moves the line between the two panes of the first tab with the Herdr request layout.set_split_ratio', async () => {
+		TauriMock.install();
+		await invoke('herdr_request', {
+			method: 'layout.set_split_ratio',
+			params: {
+				tab_id: 'tab_1',
+				path: [],
+				ratio: 0.25,
+			},
+		});
+		const result = await invoke<{ snapshot: SessionSnapshot }>('herdr_request', {
+			method: 'session.snapshot',
+			params: {},
+		});
+		const layout = result.snapshot.layouts.find((candidate) => candidate.tab_id === 'tab_1');
+		expect(layout?.splits?.[0].ratio).toBe(0.25);
+		expect(layout?.panes[0].rect.width).toBe(50);
+		expect(layout?.panes[1].rect.x).toBe(50);
 	});
 
 	it('rejects a Tauri command that it does not list', async () => {

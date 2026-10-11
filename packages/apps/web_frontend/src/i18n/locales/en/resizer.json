@@ -1,5 +1,9 @@
 {
   "leftWidth": "Width of the left bar",
   "rightWidth": "Width of the right panel",
-  "title": "Drag to resize · double-click to go back to the default size"
+  "title": "Drag to resize · double-click to go back to the default size",
+  "paneHeight": "Height of the panes above and below this line",
+  "paneWidth": "Width of the panes left and right of this line",
+  "paneTitle": "Drag to resize · double-click to share the room evenly",
+  "paneCornerTitle": "Drag to resize in both directions"
 }

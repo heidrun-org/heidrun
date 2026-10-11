@@ -30,6 +30,23 @@ type FixturePaneOptions = {
  * The fake Herdr session. It has two workspaces, three tabs, and four panes, with every agent status present.
  */
 export class TauriMockFixture {
+	/** Share of the width that the left pane of the first tab takes. The Herdr request `layout.set_split_ratio` changes it. */
+	private static _firstTabRatio = 0.5;
+
+	/**
+	 * Sets the share that the first group of a split takes, like the Herdr request `layout.set_split_ratio`.
+	 * The fake session has one split only: the one between the two panes of the first tab.
+	 *
+	 * @param path - The way from the root of the layout to the split. The root split has an empty way.
+	 * @param ratio - The new share of the first group. Like Herdr, the fixture keeps it between 0.1 and 0.9.
+	 */
+	static setSplitRatio(path: boolean[], ratio: number): void {
+		if (path.length > 0) {
+			throw new Error('split_not_found: split path not found');
+		}
+		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
 	/**
 	 * Builds the snapshot that the Herdr request `session.snapshot` returns.
 	 *
@@ -82,6 +99,7 @@ export class TauriMockFixture {
 			}),
 		];
 
+		const leftWidth = Math.round(200 * TauriMockFixture._firstTabRatio);
 		const layoutsList: PaneLayoutSnapshot[] = [
 			{
 				workspace_id: 'workspace_1',
@@ -101,7 +119,7 @@ export class TauriMockFixture {
 						rect: {
 							x: 0,
 							y: 0,
-							width: 100,
+							width: leftWidth,
 							height: 50,
 						},
 					},
@@ -109,9 +127,22 @@ export class TauriMockFixture {
 						pane_id: 'pane_2',
 						focused: false,
 						rect: {
-							x: 100,
+							x: leftWidth,
 							y: 0,
-							width: 100,
+							width: 200 - leftWidth,
+							height: 50,
+						},
+					},
+				],
+				splits: [
+					{
+						id: 'split_0_root',
+						direction: 'right',
+						ratio: TauriMockFixture._firstTabRatio,
+						rect: {
+							x: 0,
+							y: 0,
+							width: 200,
 							height: 50,
 						},
 					},

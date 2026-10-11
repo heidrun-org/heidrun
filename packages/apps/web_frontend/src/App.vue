@@ -74,6 +74,8 @@ import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 import { t } from "./i18n/index";
+import { ResizerWidth } from "./lib/resizer_width";
+import type { PaneOuterEdge } from "./lib/pane_separators";
 
 // The docked column never squeezes the tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
@@ -81,6 +83,46 @@ const onResize = () => (winW.value = window.innerWidth);
 const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
 const dockShown = computed(() => Math.max(240, Math.min(settings.dockWidth, winW.value - sides.value - 420)));
 const dockReserve = computed(() => (dockVisible.value.length ? dockShown.value : 0));
+
+// The three columns that the user drags, and the width that the other columns take away from each of them.
+const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
+const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
+const DOCK_COLUMN = { min: 320, max: 1400, defaultWidth: 560 };
+const leftReserve = computed(() => (settings.rightOpen ? settings.rightWidth : 0) + dockReserve.value);
+const rightReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + dockReserve.value);
+const dockColumnReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0));
+
+// The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
+const paneOuterEdges = computed(() => ({
+  left: settings.leftOpen,
+  right: dockVisible.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
+}));
+
+/** The column that sits against one side of the panes, with the way its width follows the pointer. */
+function columnAgainst(edge: PaneOuterEdge) {
+  if (edge === "left") {
+    return { ...LEFT_COLUMN, reserve: leftReserve.value, width: settings.leftWidth, sign: 1, set: (w: number) => (settings.leftWidth = w) };
+  }
+  if (dockVisible.value.length > 0) {
+    return { ...DOCK_COLUMN, reserve: dockColumnReserve.value, width: dockShown.value, sign: -1, set: (w: number) => (settings.dockWidth = w) };
+  }
+  return { ...RIGHT_COLUMN, reserve: rightReserve.value, width: settings.rightWidth, sign: -1, set: (w: number) => (settings.rightWidth = w) };
+}
+
+// A corner of the panes that touches a column also moves that column, from the width it had when the drag began.
+let cornerColumn: { edge: PaneOuterEdge; width: number } | null = null;
+
+function onCornerStart(edge: PaneOuterEdge) {
+  cornerColumn = { edge, width: columnAgainst(edge).width };
+}
+
+function onCornerMove(edge: PaneOuterEdge, dx: number) {
+  if (cornerColumn === null || cornerColumn.edge !== edge) {
+    return;
+  }
+  const column = columnAgainst(edge);
+  column.set(ResizerWidth.clamp(cornerColumn.width + column.sign * dx, column, window.innerWidth));
+}
 
 let armedClose: string | null = null;
 let armedAt = 0;
@@ -240,21 +282,21 @@ onBeforeUnmount(() => {
     <div class="body">
       <template v-if="settings.leftOpen">
         <Sidebar />
-        <Resizer v-model:width="settings.leftWidth" side="left" :min="200" :max="520" :default-width="280" :reserve="(settings.rightOpen ? settings.rightWidth : 0) + dockReserve" />
+        <Resizer v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" />
       </template>
       <main class="center">
         <template v-if="state.snapshot">
           <div class="stage">
-            <PaneGrid />
+            <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" />
             <template v-if="dockVisible.length">
               <Resizer
                 :width="dockShown"
                 @update:width="(v: number) => (settings.dockWidth = v)"
                 side="right"
-                :min="320"
-                :max="1400"
-                :default-width="560"
-                :reserve="(settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0)"
+                :min="DOCK_COLUMN.min"
+                :max="DOCK_COLUMN.max"
+                :default-width="DOCK_COLUMN.defaultWidth"
+                :reserve="dockColumnReserve"
               />
               <DockColumn :style="{ width: `${dockShown}px` }" />
             </template>
@@ -263,7 +305,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="260" :max="720" :default-width="320" :reserve="(settings.leftOpen ? settings.leftWidth : 0) + dockReserve" />
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" />
         <RightPanel />
       </template>
     </div>

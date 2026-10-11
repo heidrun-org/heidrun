@@ -57,6 +57,16 @@ export async function split(paneId: string, direction: "right" | "down", cwd?: s
   return r.pane;
 }
 
+/**
+ * Sets the share that the first group of a split takes. Herdr keeps the value between 0.1 and 0.9.
+ * @param tabId - the tab that holds the split
+ * @param path - the way from the root of the layout to the split: `false` goes to the first group, `true` to the second
+ * @param ratio - the new share of the first group, from 0 to 1
+ */
+export function setSplitRatio(tabId: string, path: boolean[], ratio: number) {
+  return request("layout.set_split_ratio", { tab_id: tabId, path, ratio });
+}
+
 export function newWorkspace(cwd: string | null, label: string | null) {
   return request("workspace.create", { cwd, label, focus: false });
 }

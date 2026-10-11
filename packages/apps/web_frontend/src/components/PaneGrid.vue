@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
-import { tabLayout, tabPanes } from "../stores/session";
+import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
+import { setSplitRatios, tabLayout, tabPanes } from "../stores/session";
+
+// The columns of the window that sit against the panes: a corner where a line between panes reaches one of them
+// also moves that column. The parent moves the column, see `outerStart` and `outerMove`.
+const props = defineProps<{ outerEdges: PaneOuterEdges }>();
+const emit = defineEmits<{
+  /** The user starts to drag a corner that touches a column of the window. */
+  outerStart: [edge: PaneOuterEdge];
+  /** The pointer moved this far, in pixels, to the right since the start of the drag. */
+  outerMove: [edge: PaneOuterEdge, dx: number];
+}>();
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
 // so the grid matches the tab's real split layout at any window size.
@@ -32,22 +43,250 @@ const placed = computed(() => {
       };
     });
 });
+
+// ---- Lines between panes, and corners where lines meet --------------------
+
+const GAP = "var(--pane-gap)";
+
+const separators = computed(() => {
+  const layout = tabLayout.value;
+  if (layout === null || layout.area.width <= 0 || layout.area.height <= 0) {
+    return [];
+  }
+  return PaneSeparators.findSeparators(layout);
+});
+
+const separatorItems = computed(() => {
+  const area = tabLayout.value?.area;
+  if (area === undefined) {
+    return [];
+  }
+  const percentX = (cells: number) => ((cells - area.x) / area.width) * 100;
+  const percentY = (cells: number) => ((cells - area.y) / area.height) * 100;
+  return separators.value.map((separator) => {
+    // The line is as thick as the space between two panes, and stops at the edge of the panes at both ends.
+    const style =
+      separator.direction === "down"
+        ? {
+            top: `calc(${percentY(separator.position)}% - ${GAP} / 2)`,
+            left: `calc(${percentX(separator.start)}% + ${GAP} / 2)`,
+            width: `calc(${percentX(separator.end) - percentX(separator.start)}% - ${GAP})`,
+          }
+        : {
+            left: `calc(${percentX(separator.position)}% - ${GAP} / 2)`,
+            top: `calc(${percentY(separator.start)}% + ${GAP} / 2)`,
+            height: `calc(${percentY(separator.end) - percentY(separator.start)}% - ${GAP})`,
+          };
+    return { separator, style };
+  });
+});
+
+const cornerItems = computed(() => {
+  const layout = tabLayout.value;
+  if (layout === null) {
+    return [];
+  }
+  const { area } = layout;
+  return PaneSeparators.findCorners(separators.value, area, props.outerEdges).map((corner) => {
+    const members = [...corner.horizontalSeparators, ...corner.verticalSeparators];
+    return {
+      // The key follows the lines, not the place: the corner moves with the pointer, and its element must stay.
+      key: `${corner.outerEdge ?? "inside"}:${members.map((separator) => separator.splitId).join("+")}`,
+      separators: members,
+      edge: corner.outerEdge,
+      style: {
+        left: `calc(${((corner.x - area.x) / area.width) * 100}% - var(--corner-size) / 2)`,
+        top: `calc(${((corner.y - area.y) / area.height) * 100}% - var(--corner-size) / 2)`,
+      },
+    };
+  });
+});
+
+// ---- Drag -----------------------------------------------------------------
+
+type Drag = {
+  /** Which handle the user holds: the name of a split, or the key of a corner. */
+  key: string;
+  /** The lines that the drag moves, as they were when the drag started. */
+  separators: PaneSeparator[];
+  /** The side of the panes where the corner touches a column of the window, or null. */
+  edge: PaneOuterEdge | null;
+  tabId: string;
+  startX: number;
+  startY: number;
+  /** Size of one terminal cell of Herdr on the screen, in pixels. */
+  cellWidth: number;
+  cellHeight: number;
+  /** The last move, in whole cells, that was sent to Herdr. */
+  sentCellsX: number;
+  sentCellsY: number;
+};
+
+const gridEl = ref<HTMLElement | null>(null);
+const drag = ref<Drag | null>(null);
+const draggedIds = computed(() => new Set(drag.value?.separators.map((separator) => separator.splitId) ?? []));
+
+function startDrag(e: PointerEvent, key: string, dragged: PaneSeparator[], edge: PaneOuterEdge | null) {
+  const layout = tabLayout.value;
+  const grid = gridEl.value;
+  if (layout === null || grid === null) {
+    return;
+  }
+  const box = grid.getBoundingClientRect();
+  if (box.width <= 0 || box.height <= 0) {
+    return;
+  }
+  const hasHorizontal = dragged.some((separator) => separator.direction === "down");
+  const hasVertical = dragged.some((separator) => separator.direction === "right");
+  const movesBothWays = (hasHorizontal && hasVertical) || edge !== null;
+  drag.value = {
+    key,
+    separators: dragged,
+    edge,
+    tabId: layout.tab_id,
+    startX: e.clientX,
+    startY: e.clientY,
+    cellWidth: box.width / layout.area.width,
+    cellHeight: box.height / layout.area.height,
+    sentCellsX: 0,
+    sentCellsY: 0,
+  };
+  // On the window, so that the drag goes on when the layout changes under the pointer and the handle is replaced.
+  window.addEventListener("pointermove", moveDrag);
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+  document.body.style.cursor = movesBothWays ? "move" : hasHorizontal ? "row-resize" : "col-resize";
+  if (edge !== null) {
+    emit("outerStart", edge);
+  }
+  e.preventDefault();
+}
+
+function moveDrag(e: PointerEvent) {
+  const current = drag.value;
+  if (current === null) {
+    return;
+  }
+  const dx = e.clientX - current.startX;
+  const dy = e.clientY - current.startY;
+  if (current.edge !== null) {
+    emit("outerMove", current.edge, dx);
+  }
+  // Herdr keeps whole cells, so a move that stays in the same cell sends nothing.
+  const cellsX = Math.round(dx / current.cellWidth);
+  const cellsY = Math.round(dy / current.cellHeight);
+  if (cellsX === current.sentCellsX && cellsY === current.sentCellsY) {
+    return;
+  }
+  current.sentCellsX = cellsX;
+  current.sentCellsY = cellsY;
+  setSplitRatios(
+    current.separators.map((separator) => ({
+      tabId: current.tabId,
+      path: separator.path,
+      ratio: PaneSeparators.moveRatio(separator, separator.direction === "down" ? cellsY : cellsX),
+    })),
+  );
+}
+
+function endDrag() {
+  window.removeEventListener("pointermove", moveDrag);
+  window.removeEventListener("pointerup", endDrag);
+  window.removeEventListener("pointercancel", endDrag);
+  if (drag.value === null) {
+    return;
+  }
+  drag.value = null;
+  document.body.style.cursor = "";
+}
+
+onBeforeUnmount(endDrag);
+
+function resetRatio(separator: PaneSeparator) {
+  const tabId = tabLayout.value?.tab_id;
+  if (tabId !== undefined) {
+    setSplitRatios([{ tabId, path: separator.path, ratio: 0.5 }]);
+  }
+}
+
+function onKey(e: KeyboardEvent, separator: PaneSeparator) {
+  const tabId = tabLayout.value?.tab_id;
+  const grow = separator.direction === "down" ? "ArrowDown" : "ArrowRight";
+  const shrink = separator.direction === "down" ? "ArrowUp" : "ArrowLeft";
+  const step = e.shiftKey ? 4 : 1;
+  if (tabId === undefined || (e.key !== grow && e.key !== shrink)) {
+    return;
+  }
+  const ratio = PaneSeparators.moveRatio(separator, e.key === grow ? step : -step);
+  setSplitRatios([{ tabId, path: separator.path, ratio }]);
+  e.preventDefault();
+}
 </script>
 
 <template>
-  <div class="grid">
+  <div ref="gridEl" class="grid">
     <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
       <PaneCard :pane="item.pane" />
     </div>
     <div v-if="!placed.length" class="empty">{{ t("paneGrid.empty") }}</div>
+    <div
+      v-for="item in separatorItems"
+      :key="item.separator.splitId"
+      class="separator"
+      :class="[item.separator.direction, { active: draggedIds.has(item.separator.splitId) }]"
+      :style="item.style"
+      role="separator"
+      :aria-orientation="item.separator.direction === 'down' ? 'horizontal' : 'vertical'"
+      :aria-valuenow="Math.round(item.separator.ratio * 100)"
+      aria-valuemin="10"
+      aria-valuemax="90"
+      :aria-label="item.separator.direction === 'down' ? t('resizer.paneHeight') : t('resizer.paneWidth')"
+      tabindex="0"
+      :title="t('resizer.paneTitle')"
+      @pointerdown="startDrag($event, item.separator.splitId, [item.separator], null)"
+      @dblclick="resetRatio(item.separator)"
+      @keydown="onKey($event, item.separator)"
+    ></div>
+    <div
+      v-for="item in cornerItems"
+      :key="item.key"
+      class="corner"
+      :class="{ active: drag?.key === item.key }"
+      :style="item.style"
+      aria-hidden="true"
+      :title="t('resizer.paneCornerTitle')"
+      @pointerdown="startDrag($event, item.key, item.separators, item.edge)"
+    ></div>
   </div>
 </template>
 
 <style scoped>
-.grid { flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2); }
+.grid {
+  --corner-size: max(16px, calc(var(--pane-gap) * 2));
+  flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2);
+}
 .cell { position: absolute; padding: calc(var(--pane-gap) / 2); }
 .empty {
   position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
 }
+.separator { position: absolute; z-index: 5; touch-action: none; }
+.separator.down { height: var(--pane-gap); cursor: row-resize; }
+.separator.right { width: var(--pane-gap); cursor: col-resize; }
+.separator::after { content: ""; position: absolute; background: transparent; transition: background 0.15s; }
+.separator.down::after { left: 0; right: 0; top: calc(var(--pane-gap) / 2 - 0.5px); height: 1px; }
+.separator.right::after { top: 0; bottom: 0; left: calc(var(--pane-gap) / 2 - 0.5px); width: 1px; }
+.separator:hover::after, .separator.active::after, .separator:focus-visible::after { background: var(--done); }
+.separator.down:hover::after, .separator.down.active::after, .separator.down:focus-visible::after {
+  top: calc(var(--pane-gap) / 2 - 1px); height: 2px;
+}
+.separator.right:hover::after, .separator.right.active::after, .separator.right:focus-visible::after {
+  left: calc(var(--pane-gap) / 2 - 1px); width: 2px;
+}
+.separator:focus-visible { outline: none; }
+.corner { position: absolute; z-index: 7; width: var(--corner-size); height: var(--corner-size); cursor: move; touch-action: none; }
+.corner::after {
+  content: ""; position: absolute; inset: calc(50% - 4px); border-radius: 50%; background: transparent; transition: background 0.15s;
+}
+.corner:hover::after, .corner.active::after { background: var(--done); }
 </style>

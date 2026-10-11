@@ -888,6 +888,45 @@ export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
 }
 
+/** One split to move: the tab that holds it, the way from the root of the layout to it, and its new share. */
+export type SplitRatioChange = { tabId: string; path: boolean[]; ratio: number };
+
+let splitRatioPending: SplitRatioChange[] | null = null;
+let isSplitRatioRunning = false;
+
+/**
+ * Sets the share of one or several splits while the user drags a line between panes.
+ * Only one request runs at a time. A call that comes while a request runs replaces the call that waits, so the
+ * panes follow the pointer without a queue of old positions.
+ */
+export function setSplitRatios(changes: SplitRatioChange[]) {
+  splitRatioPending = changes;
+  if (isSplitRatioRunning) {
+    return;
+  }
+  void flushSplitRatios();
+}
+
+async function flushSplitRatios() {
+  isSplitRatioRunning = true;
+  try {
+    while (splitRatioPending !== null) {
+      const changes = splitRatioPending;
+      splitRatioPending = null;
+      for (const change of changes) {
+        await api.setSplitRatio(change.tabId, change.path, change.ratio);
+      }
+      await refresh();
+    }
+  } catch (e) {
+    splitRatioPending = null;
+    toast(humanError(String(e)));
+    scheduleRefresh();
+  } finally {
+    isSplitRatioRunning = false;
+  }
+}
+
 export function closeWorkspace(workspaceId: string) {
   return guard(() => api.closeWorkspace(workspaceId));
 }

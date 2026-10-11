@@ -6,7 +6,7 @@ Code that only runs in the development server, so that the web frontend shows it
 ## Key Exports & Entry Points
 - `install_tauri_mock.ts`: imported first by `src/main.ts`; calls `TauriMock.install()`.
 - `tauri_mock.ts`: `TauriMock`, a minimal replacement for the Tauri bridge. It answers a short list of Tauri commands and rejects every other command.
-- `tauri_mock_fixture.ts`: `TauriMockFixture`, the fake Herdr session (two workspaces, three tabs, four panes, every agent status).
+- `tauri_mock_fixture.ts`: `TauriMockFixture`, the fake Herdr session (two workspaces, three tabs, four panes, every agent status). It keeps the share of the one split between the two panes of the first tab, so that the request `layout.set_split_ratio` moves the line between them.
 - Command to run this folder: `pnpm dev:web`, then open `http://localhost:1420`.
 
 ## Rules
