@@ -36,6 +36,13 @@ describe('website build', () => {
 		expect(html).toMatch(/<title>Heidrun/);
 	});
 
+	it('puts the title, the motto, and the description of data/identity.json in the home page', () => {
+		const identity = JSON.parse(Fs.readFileSync(Path.join(SiteFiles.repositoryDir, 'data/identity.json'), 'utf8'));
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		expect(html).toContain(identity.motto.en);
+		expect(html).toContain(identity.description.en);
+	});
+
 	it('copies the splash image', () => {
 		expect(Fs.existsSync(Path.join(outDir, 'heidrun_splash_screen.png'))).toBe(true);
 	});

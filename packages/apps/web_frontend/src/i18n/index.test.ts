@@ -128,3 +128,30 @@ describe("locale files", () => {
     }
   });
 });
+
+describe("the identity texts", () => {
+  const identity = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "../../../../../data/identity.json"), "utf8"));
+
+  it("come from data/identity.json, in English", () => {
+    expect(t("identity.title")).toBe(identity.title);
+    expect(t("identity.motto")).toBe(identity.motto.en);
+    expect(t("identity.description")).toBe(identity.description.en);
+  });
+
+  it("come from data/identity.json, in French", () => {
+    settings.language = "fr";
+    expect(t("identity.title")).toBe(identity.title);
+    expect(t("identity.motto")).toBe(identity.motto.fr);
+    expect(t("identity.description")).toBe(identity.description.fr);
+  });
+
+  it("are written in no locale file, so that data/identity.json stays the only place", () => {
+    for (const { id: lang } of LANGUAGES) {
+      for (const file of fs.readdirSync(path.join(LOCALES_DIR, lang))) {
+        const text = fs.readFileSync(path.join(LOCALES_DIR, lang, file), "utf8");
+        expect(text, `${lang}/${file}`).not.toContain(identity.motto[lang]);
+        expect(text, `${lang}/${file}`).not.toContain(identity.description[lang]);
+      }
+    }
+  });
+});

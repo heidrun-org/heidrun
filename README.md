@@ -2,11 +2,16 @@
 
 <img src="data/images/heidrun_splash_screen.png" alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron" width="720">
 
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+
 # Heidrun
 
 ### With AI, every developer is THE GOAT!
 
-**All the agents and terminals of your [Herdr](https://herdr.dev) session, in one work window. A macOS graphical interface, forged for Vikings.**
+**Keep your agents working. Know which one needs you.**
+
+<!-- identity:end -->
 
 [![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)

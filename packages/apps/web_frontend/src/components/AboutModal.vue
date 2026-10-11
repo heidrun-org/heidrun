@@ -32,12 +32,12 @@ onUnmounted(() => unlisten?.());
     <div class="dialog" role="dialog" aria-labelledby="about-title">
       <figure class="figure">
         <img class="image" :src="aboutImage" alt="" />
-        <figcaption class="legend">{{ t("aboutModal.legend") }}</figcaption>
+        <figcaption class="legend">{{ t("identity.motto") }}</figcaption>
       </figure>
       <div class="info">
-        <h2 id="about-title">{{ t("aboutModal.title") }}</h2>
+        <h2 id="about-title">{{ t("identity.title") }}</h2>
         <p class="version">{{ t("aboutModal.version", { version }) }}</p>
-        <p class="description">{{ t("aboutModal.description") }}</p>
+        <p class="description">{{ t("identity.description") }}</p>
         <button ref="closeButton" class="btn lg" @click="close">{{ t("aboutModal.close") }}</button>
       </div>
     </div>
