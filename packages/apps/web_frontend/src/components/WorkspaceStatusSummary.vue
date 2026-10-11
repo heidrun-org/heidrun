@@ -215,7 +215,7 @@ watch(isRenaming, (renaming) => {
           </div>
         </div>
         <div
-          class="d-flex flex-column gap-2"
+          class="d-flex flex-column"
           :class="{ 'border-top pt-2': detailRows.length > 0 }"
           role="group"
           :aria-label="t('workspaceStatusSummary.listLabel')"
@@ -292,8 +292,8 @@ watch(isRenaming, (renaming) => {
 }
 .workspace-rename { width: 180px; height: 26px; }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.workspace-row { border-radius: 6px; }
-.workspace-main { flex: 1; min-width: 0; background: transparent; }
+.workspace-row { min-height: 32px; border-radius: 6px; }
+.workspace-main { flex: 1; min-width: 0; align-self: stretch; background: transparent; }
 .workspace-row:hover, .workspace-row:focus-within { background: var(--hover-soft); }
 .workspace-row.active { background: var(--hover); }
 .row-actions { display: none; align-items: center; flex-shrink: 0; gap: 2px; padding-right: 6px; }

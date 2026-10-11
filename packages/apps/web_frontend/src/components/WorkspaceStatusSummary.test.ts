@@ -311,11 +311,14 @@ describe("WorkspaceStatusSummary list", () => {
     expect(sourceText).not.toContain("dropdown-divider");
   });
 
-  it("leaves the same vertical space between two workspaces as between two details above them", async () => {
+  it("leaves no space between two workspaces, so the pointer is always on a workspace between the two lines, and makes each row as tall as the space between two details", async () => {
     const { wrapper } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
-    expect(wrapper.get("[data-field=details]").classes()).toContain("gap-2");
-    expect(wrapper.get("[role=group]").classes()).toContain("gap-2");
+    const list = wrapper.get("[role=group]");
+    expect(list.classes().filter((className) => className.startsWith("gap-"))).toEqual([]);
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
+    expect(sourceText).toMatch(/\.workspace-row \{[^}]*min-height: 32px;/);
+    expect(sourceText).toMatch(/\.workspace-main \{[^}]*align-self: stretch;/);
   });
 
   it("gives every workspace a dot: a ring when no agent runs, and a colored dot for the status of the agents", async () => {
