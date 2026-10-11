@@ -8,6 +8,13 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 - The branch `dev_jerome` is the personal development branch of Jérôme Étienne. Jérôme's work goes on `dev_jerome`.
 
+## Agent rules
+
+The folder `docs/agents_rules` holds all the rules that every agent follows. Read these documents before you change the code, and keep them up to date when a rule changes.
+
+- [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
+- [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md): the rules of the user interface: where each part goes, and how each part works.
+
 ## Issue Fix Workflow
 
 Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`.
