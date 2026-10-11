@@ -32,15 +32,15 @@ The horizontal row on top of the viewport. It shows the tabs of the selected wor
 
 ### Viewport
 
-The main area of the window. It shows the panes of the selected tab, and the column of pinned panes.
+The main area of the window. It shows the panes of the selected tab that are not pinned, and the column of pinned panes.
 
 ### Pinned pane
 
-A pane that the developer keeps visible. The pin button in the header of the pane pins the pane. A pinned pane stays visible when the developer changes tab or workspace.
+A pane that the developer keeps visible. The pin button in the header of the pane pins the pane. A pinned pane stays visible, with the same width, when the developer changes tab or workspace.
 
 ### Column of pinned panes
 
-The column at the right edge of the viewport. It holds the pinned panes, one above the other.
+The column at the right edge of the viewport. It holds the pinned panes, one above the other, in every tab.
 
 ### Left sidebar
 

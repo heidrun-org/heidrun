@@ -4,7 +4,8 @@ import EmptyTabScreen from "./EmptyTabScreen.vue";
 import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
-import { setSplitRatios, tabLayout, tabPanes } from "../stores/session";
+import { setSplitRatios } from "../stores/session";
+import { gridLayout, gridPanes } from "../stores/pinned_panes";
 
 // The columns of the window that sit against the panes: a corner where a line between panes reaches one of them
 // also moves that column. The parent moves the column, see `outerStart` and `outerMove`.
@@ -21,8 +22,8 @@ const emit = defineEmits<{
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
 // so the grid matches the tab's real split layout at any window size.
 const placed = computed(() => {
-  const layout = tabLayout.value;
-  const panes = tabPanes.value;
+  const layout = gridLayout.value;
+  const panes = gridPanes.value;
   if (!layout || !layout.area.width || !layout.area.height) {
     return panes.map((p, i) => ({
       pane: p,
@@ -52,7 +53,7 @@ const placed = computed(() => {
 const GAP = "var(--pane-gap)";
 
 const separators = computed(() => {
-  const layout = tabLayout.value;
+  const layout = gridLayout.value;
   if (layout === null || layout.area.width <= 0 || layout.area.height <= 0) {
     return [];
   }
@@ -60,7 +61,7 @@ const separators = computed(() => {
 });
 
 const separatorItems = computed(() => {
-  const area = tabLayout.value?.area;
+  const area = gridLayout.value?.area;
   if (area === undefined) {
     return [];
   }
@@ -86,7 +87,7 @@ const separatorItems = computed(() => {
 });
 
 const cornerItems = computed(() => {
-  const layout = tabLayout.value;
+  const layout = gridLayout.value;
   if (layout === null) {
     return [];
   }
@@ -141,7 +142,7 @@ const litEdge = computed(() => drag.value?.edge ?? litCorner.value?.edge ?? null
 watch(litEdge, (edge) => emit("outerHighlight", edge));
 
 function startDrag(e: PointerEvent, key: string, dragged: PaneSeparator[], edge: PaneOuterEdge | null) {
-  const layout = tabLayout.value;
+  const layout = gridLayout.value;
   const grid = gridEl.value;
   if (layout === null || grid === null) {
     return;
@@ -218,14 +219,14 @@ function endDrag() {
 onBeforeUnmount(endDrag);
 
 function resetRatio(separator: PaneSeparator) {
-  const tabId = tabLayout.value?.tab_id;
+  const tabId = gridLayout.value?.tab_id;
   if (tabId !== undefined) {
     setSplitRatios([{ tabId, path: separator.path, ratio: 0.5 }]);
   }
 }
 
 function onKey(e: KeyboardEvent, separator: PaneSeparator) {
-  const tabId = tabLayout.value?.tab_id;
+  const tabId = gridLayout.value?.tab_id;
   const grow = separator.direction === "down" ? "ArrowDown" : "ArrowRight";
   const shrink = separator.direction === "down" ? "ArrowUp" : "ArrowLeft";
   const step = e.shiftKey ? 4 : 1;

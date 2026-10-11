@@ -1,9 +1,10 @@
 // Pinned panes: panes kept in a column of pinned panes next to the panes of the selected tab, whatever the
 // workspace, to watch several of them at once.
 import { computed, reactive, watch } from "vue";
-import { allPanes, state, toast } from "./session";
+import { allPanes, state, tabLayout, tabPanes, toast } from "./session";
 import { settings } from "./settings";
 import { paneName } from "../lib/format";
+import { PaneLayoutWithoutPanes } from "../lib/pane_layout_without_panes";
 import { t } from "../i18n/index";
 
 export const MAX_PINNED_PANES = 4;
@@ -17,16 +18,28 @@ export const allPinnedPanes = computed(() =>
   settings.pinnedPanes.map((id) => allPanes.value.find((p) => p.pane_id === id)).filter((p): p is NonNullable<typeof p> => !!p),
 );
 
-/**
- * Shown in the column of pinned panes: a pane of the tab on screen is already in the grid, and a
- * terminal is attached only once.
- */
-export const visiblePinnedPanes = computed(() => allPinnedPanes.value.filter((p) => p.tab_id !== state.selectedTabId));
-
 /** The pane with the keyboard: a pinned one when clicked, else the tab's selection. */
 export const activePaneId = () => pinnedPaneState.focus ?? state.selectedPaneId;
 
 export const isPinned = (paneId: string) => settings.pinnedPanes.includes(paneId);
+
+/**
+ * The panes of the selected tab that the grid draws. A pinned pane is only in the column of pinned panes, in every tab,
+ * so that it keeps the same width and a terminal is attached only once.
+ */
+export const gridPanes = computed(() => tabPanes.value.filter((p) => isPinned(p.pane_id) === false));
+
+/**
+ * The layout of the selected tab for the grid: the pinned panes are left out, and the other panes fill the width.
+ * It is null when there is no layout, or when the splits cannot tell where each pane goes.
+ */
+export const gridLayout = computed(() => {
+  const layout = tabLayout.value;
+  if (layout === null) {
+    return null;
+  }
+  return PaneLayoutWithoutPanes.remove(layout, settings.pinnedPanes);
+});
 
 export function pinPane(paneId: string) {
   if (isPinned(paneId)) return;

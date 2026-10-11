@@ -44,7 +44,9 @@ This document says where each part of the window goes and how each part works. T
 - A tab with several panes shares the viewport between its panes.
 - A click on a pane gives the focus to that pane.
 - A click on the pin button in the header of a pane pins the pane. A pinned pane goes into the column of pinned panes.
-- The column of pinned panes sits at the right edge of the viewport, beside the panes of the selected tab. The new layout keeps the column as it is today.
+- The column of pinned panes sits at the right edge of the viewport, beside the panes of the selected tab. It shows every pinned pane in every tab, the tab of the pinned pane included. Its width is the same in every tab, so a pinned pane keeps the same width in every tab.
+- The panes of the selected tab that are not pinned fill the width that the column leaves. A tab whose panes are all pinned shows the same picture as an empty tab.
+- The header of a pinned pane in the column shows the pressed pin button, as in the panes of the selected tab. A click on the pressed pin button unpins the pane.
 - A pinned pane does not change when the developer selects another tab or another workspace. Only the panes of the selected tab change.
 
 ## To handle

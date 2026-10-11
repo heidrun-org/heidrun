@@ -189,7 +189,7 @@ export class PaneSeparators {
 			origin,
 			size,
 			ratio: split.ratio,
-			path: PaneSeparators._findPath(splitList, split),
+			path: split.path ?? PaneSeparators._findPath(splitList, split),
 		};
 		return separator;
 	}
