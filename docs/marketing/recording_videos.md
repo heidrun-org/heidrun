@@ -5,13 +5,13 @@ The package `packages/auxiliary/video_recorder` records a short video of the Hei
 ## Method
 
 1. Write a scenario file in `packages/auxiliary/video_recorder/scenarios/`: the list of the clicks, with what each click does.
-2. Run `pnpm video:record --output-dir <folder>`. The tool records only the Heidrun window with `screencapture -v -C -k -o -l<window id>`, and logs each click. Other windows on top of the Heidrun window, for example the Claude window, do not show in the video.
+2. Run `pnpm --filter video_recorder video:record --output-dir <folder>`. The tool records only the Heidrun window with `screencapture -v -C -k -o -l<window id>`, and logs each click. Other windows on top of the Heidrun window, for example the Claude window, do not show in the video.
 3. Computer use runs the scenario in the real Heidrun window and moves the real mouse. Each click is "mouse button down, wait 0.1 second, mouse button up". A click without this wait is too short, and the click logger does not see it.
 4. Stop the recording with Ctrl-C, or with SIGTERM.
-5. Run `pnpm video:cut --recording <folder>/recording.json --scenario <scenario file>`. The tool cuts the video from 1 second before the first click to 1.5 seconds after the last click, and writes `cut.mp4` and `clicks.json` in the same folder.
+5. Run `pnpm --filter video_recorder video:cut --recording <folder>/recording.json --scenario <scenario file>`. The tool cuts the video from 1 second before the first click to 1.5 seconds after the last click, and writes `cut.mp4` and `clicks.json` in the same folder.
 6. Remotion can use `clicks.json` to add titles, zooms, and music.
 
-The recording needs the permission Screen Recording for the terminal application. The tools need `ffmpeg` and `ffprobe`. The number of logged clicks must equal the number of clicks of the scenario, or `pnpm video:cut` fails.
+The recording needs the permission Screen Recording for the terminal application. The tools need `ffmpeg` and `ffprobe`. The number of logged clicks must equal the number of clicks of the scenario, or `pnpm --filter video_recorder video:cut` fails.
 
 ## Files in the output folder
 
@@ -39,4 +39,4 @@ The recording needs the permission Screen Recording for the terminal application
 
 ## Start delay
 
-`pnpm video:cut` takes the start of the video from the moment when `screencapture` was started. The first frame comes a little later. If the circles of the clicks come too early in the video, measure the difference and give it with `--start-delay <seconds>`.
+`pnpm --filter video_recorder video:cut` takes the start of the video from the moment when `screencapture` was started. The first frame comes a little later. If the circles of the clicks come too early in the video, measure the difference and give it with `--start-delay <seconds>`.

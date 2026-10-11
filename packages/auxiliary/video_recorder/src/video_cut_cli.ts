@@ -1,16 +1,16 @@
 #!/usr/bin/env tsx
-// Cuts a raw video around its clicks and writes clicks.json. pnpm video:cut --recording <recording.json> --scenario <file>
+// Cuts a raw video around its clicks and writes clicks.json. pnpm --filter video_recorder video:cut --recording <recording.json> --scenario <file>
 import { Command, InvalidArgumentError } from 'commander';
 import { VideoCutter } from './video_cutter.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	VideoCutCli — the command line `pnpm video:cut`
+//	VideoCutCli — the command line `pnpm --filter video_recorder video:cut`
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The command line `pnpm video:cut`: reads a recording and a scenario, and writes `cut.mp4` and `clicks.json` in the
+ * The command line `pnpm --filter video_recorder video:cut`: reads a recording and a scenario, and writes `cut.mp4` and `clicks.json` in the
  * folder of the recording.
  */
 export class VideoCutCli {
@@ -23,12 +23,12 @@ export class VideoCutCli {
 	static main(argv: string[]): void {
 		const program = new Command();
 		program
-			.name('pnpm video:cut')
+			.name('pnpm --filter video_recorder video:cut')
 			.description(
 				'Cuts the raw video from 1 second before the first click to 1.5 seconds after the last click, and '
 					+ 'writes cut.mp4 and clicks.json next to recording.json. Needs ffmpeg and ffprobe.',
 			)
-			.requiredOption('--recording <file>', 'The file recording.json written by `pnpm video:record`.')
+			.requiredOption('--recording <file>', 'The file recording.json written by `pnpm --filter video_recorder video:record`.')
 			.requiredOption('--scenario <file>', 'The scenario file, for example scenarios/issue_211_pin_a_pane.json.')
 			.option(
 				'--start-delay <seconds>',

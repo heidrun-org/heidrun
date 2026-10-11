@@ -14,9 +14,7 @@
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --",
     "release:change_log": "tsx packages/auxiliary/change_log_generator/src/cli.ts",
-    "worktree:create": "tsx packages/auxiliary/worktree_tools/src/worktree_create_cli.ts",
-    "video:record": "tsx packages/auxiliary/video_recorder/src/video_record_cli.ts",
-    "video:cut": "tsx packages/auxiliary/video_recorder/src/video_cut_cli.ts"
+    "worktree:create": "tsx packages/auxiliary/worktree_tools/src/worktree_create_cli.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

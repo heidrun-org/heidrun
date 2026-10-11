@@ -5,8 +5,8 @@ A full npm package with two command line tools that record a marketing video of 
 
 ## Key Exports & Entry Points
 - `src/index.ts`: the public interface for another package. It exports the classes `ClicksBuilder`, `VideoCutter`, and `VideoRecorder` and their types.
-- `src/video_record_cli.ts`: the command line `pnpm video:record`.
-- `src/video_cut_cli.ts`: the command line `pnpm video:cut`.
+- `src/video_record_cli.ts`: the command line `pnpm --filter video_recorder video:record`.
+- `src/video_cut_cli.ts`: the command line `pnpm --filter video_recorder video:cut`.
 - `src/click_logger.js`: the script that finds a window and logs the left mouse button presses. It runs with `osascript -l JavaScript`.
 - `src/video_files.ts`: the class `VideoFiles`, the only code that reads the files of a recording and runs `ffprobe` and `ffmpeg`.
 - `scenarios/`: one JSON file for each video, with the label of each click in order.

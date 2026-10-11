@@ -1,16 +1,16 @@
 #!/usr/bin/env tsx
-// Records one window and logs the clicks, until Ctrl-C or SIGTERM. pnpm video:record --output-dir <folder>
+// Records one window and logs the clicks, until Ctrl-C or SIGTERM. pnpm --filter video_recorder video:record --output-dir <folder>
 import { Command, InvalidArgumentError } from 'commander';
 import { VideoRecorder } from './video_recorder.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	VideoRecordCli — the command line `pnpm video:record`
+//	VideoRecordCli — the command line `pnpm --filter video_recorder video:record`
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The command line `pnpm video:record`: finds the window, starts the recording, and waits to be stopped.
+ * The command line `pnpm --filter video_recorder video:record`: finds the window, starts the recording, and waits to be stopped.
  */
 export class VideoRecordCli {
 	/**
@@ -23,10 +23,10 @@ export class VideoRecordCli {
 	static async main(argv: string[]): Promise<void> {
 		const program = new Command();
 		program
-			.name('pnpm video:record')
+			.name('pnpm --filter video_recorder video:record')
 			.description(
 				'Records only one window with `screencapture -v -C -k -o -l<window id>`, and logs each mouse click. '
-					+ 'The recording stops with Ctrl-C or SIGTERM. Then run `pnpm video:cut`.',
+					+ 'The recording stops with Ctrl-C or SIGTERM. Then run `pnpm --filter video_recorder video:cut`.',
 			)
 			.requiredOption('--output-dir <folder>', 'The folder that receives the raw video and the clicks log.')
 			.option('--owner <name>', 'The name of the application whose window is recorded.', 'Heidrun')

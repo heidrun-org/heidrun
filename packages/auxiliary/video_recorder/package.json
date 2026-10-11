@@ -12,7 +12,9 @@
     "video_cut": "./src/video_cut_cli.ts"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "video:record": "tsx src/video_record_cli.ts",
+    "video:cut": "tsx src/video_cut_cli.ts"
   },
   "dependencies": {
     "commander": "^15.0.0",
