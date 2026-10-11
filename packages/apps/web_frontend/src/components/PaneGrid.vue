@@ -168,7 +168,8 @@ function startDrag(e: PointerEvent, key: string, dragged: PaneSeparator[], edge:
   window.addEventListener("pointermove", moveDrag);
   window.addEventListener("pointerup", endDrag);
   window.addEventListener("pointercancel", endDrag);
-  document.body.style.cursor = movesBothWays ? "move" : hasHorizontal ? "row-resize" : "col-resize";
+  // One cursor over every element for the whole drag: a line or a column resizer under the pointer has its own cursor.
+  document.documentElement.dataset.paneDragCursor = movesBothWays ? "move" : hasHorizontal ? "row-resize" : "col-resize";
   if (edge !== null) {
     emit("outerStart", edge);
   }
@@ -210,7 +211,7 @@ function endDrag() {
     return;
   }
   drag.value = null;
-  document.body.style.cursor = "";
+  delete document.documentElement.dataset.paneDragCursor;
 }
 
 onBeforeUnmount(endDrag);

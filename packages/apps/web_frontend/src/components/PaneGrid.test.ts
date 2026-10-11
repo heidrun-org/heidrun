@@ -131,7 +131,23 @@ describe("PaneGrid lines between panes", () => {
     releasePointer();
     movePointer(900, 500);
     expect(mocks.setSplitRatios).not.toHaveBeenCalled();
-    expect(document.body.style.cursor).toBe("");
+    expect(document.documentElement.dataset.paneDragCursor).toBeUndefined();
+  });
+
+  it("asks for the cursor with arrows up and down during the drag of the horizontal line", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    await wrapper.find(".separator.down").trigger("pointerdown", { clientX: 900, clientY: 400 });
+    expect(document.documentElement.dataset.paneDragCursor).toBe("row-resize");
+    releasePointer();
+    expect(document.documentElement.dataset.paneDragCursor).toBeUndefined();
+  });
+
+  it("asks for the cursor with arrows left and right during the drag of the vertical line", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    await wrapper.find(".separator.right").trigger("pointerdown", { clientX: 600, clientY: 400 });
+    expect(document.documentElement.dataset.paneDragCursor).toBe("col-resize");
+    releasePointer();
+    expect(document.documentElement.dataset.paneDragCursor).toBeUndefined();
   });
 
   it("shares the room evenly after a double-click", async () => {
@@ -170,6 +186,22 @@ describe("PaneGrid corners", () => {
     expect(changes.map((change: { path: boolean[] }) => change.path)).toEqual([[true], []]);
     expect(changes[0].ratio).toBeCloseTo(0.55);
     expect(changes[1].ratio).toBeCloseTo(0.4);
+  });
+
+  it("asks for the cursor with four arrows during the drag of a corner, and only then", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(document.documentElement.dataset.paneDragCursor).toBeUndefined();
+    await wrapper.find(".corner").trigger("pointerdown", { clientX: 600, clientY: 400 });
+    expect(document.documentElement.dataset.paneDragCursor).toBe("move");
+    releasePointer();
+    expect(document.documentElement.dataset.paneDragCursor).toBeUndefined();
+  });
+
+  it("asks for the cursor with four arrows during the drag of a corner that touches a column of the window", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES, OUTER_EDGES);
+    await wrapper.findAll(".corner")[1].trigger("pointerdown", { clientX: 1200, clientY: 400 });
+    expect(document.documentElement.dataset.paneDragCursor).toBe("move");
+    releasePointer();
   });
 
   it("shows a corner at each side that has a column of the window against it", () => {
