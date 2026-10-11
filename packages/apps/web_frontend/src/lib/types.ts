@@ -66,6 +66,18 @@ export interface Rect {
   height: number;
 }
 
+/** One cut of the layout of a tab: a line that divides a rectangle into two groups of panes. */
+export interface LayoutSplit {
+  /** Name of the split in Herdr, for example `split_0_root`. */
+  id: string;
+  /** `down`: a horizontal line, the groups sit one above the other. `right`: a vertical line, side by side. */
+  direction: "down" | "right";
+  /** Share of the rectangle that the first group (the top or the left one) takes, from 0 to 1. */
+  ratio: number;
+  /** The rectangle that the split divides, in terminal cells. */
+  rect: Rect;
+}
+
 export interface PaneLayoutSnapshot {
   workspace_id: string;
   tab_id: string;
@@ -73,6 +85,8 @@ export interface PaneLayoutSnapshot {
   area: Rect;
   focused_pane_id: string;
   panes: { pane_id: string; focused: boolean; rect: Rect }[];
+  /** The splits of the tab. A Herdr server that is too old does not send them. */
+  splits?: LayoutSplit[];
 }
 
 export interface SessionSnapshot {
