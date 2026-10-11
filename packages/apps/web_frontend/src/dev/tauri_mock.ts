@@ -86,7 +86,7 @@ export class TauriMock {
 				return (payload as { paths: string[] }).paths.map((path) => ({
 					path,
 					on_disk: path.includes('OldCard') === false,
-					on_remote: path.includes('OldCard') === false && path.includes('HoverCard') === false,
+					on_remote: path.includes('OldCard') === false && path.includes('InformationCard') === false,
 				}));
 			case 'files_resolve':
 				return {

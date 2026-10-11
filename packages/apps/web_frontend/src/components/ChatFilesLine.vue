@@ -2,21 +2,20 @@
 import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import HoverCard from "./HoverCard.vue";
+import InformationCard from "./InformationCard.vue";
 import Icon from "./Icon.vue";
 import { fileFolder, fileIconName, fileName, fileWebUrl, type ChatFile } from "../lib/chat_files";
 import type { Forge } from "../lib/refs";
 import { toast } from "../stores/session";
 import { t } from "../i18n/index";
 
-// The line of the summary of a chat that names the files that the coding agent wrote. When the pointer rests on the line,
-// a card lists every file with its folders below the root of the repository, and two buttons for each file: one opens the
-// file in VS Code, and one opens the file on the web page of the repository on GitHub or GitLab. A button is disabled,
-// with a title that says why, when the file does not exist on the disk of this Mac or on the default branch of the remote.
-// A file that is not below the root of the repository has the same buttons, both disabled with a title that says why. A
-// row has two lines: the name of the file, and its
-// folders (`./` for a file at the root). A line that does not fit shows its beginning with an ellipsis, and scrolls to
-// its end while the pointer is over the row.
+// The line of the summary of a chat that names the files that the coding agent wrote. When the line is clicked, an
+// information card lists every file with its folders below the root of the repository, and two buttons for each file: one
+// opens the file in VS Code, and one opens the file on the web page of the repository on GitHub or GitLab. A button is
+// disabled, with a title that says why, when the file does not exist on the disk of this Mac or on the default branch of
+// the remote. A file that is not below the root of the repository has the same buttons, both disabled with a title that
+// says why. A row has two lines: the name of the file, and its folders (`./` for a file at the root). A line that does not
+// fit shows its beginning with an ellipsis, and scrolls to its end while the pointer is over the row.
 
 const props = defineProps<{
   /** The text of the line: the names of the first files. */
@@ -153,7 +152,7 @@ async function openOnForge(url: string) {
 </script>
 
 <template>
-  <HoverCard :label="t('chatsPanel.filesWritten', { count: entries.length })" @open="checkFiles">
+  <InformationCard :label="t('chatsPanel.filesWritten', { count: entries.length })" @open="checkFiles">
     <div class="d-flex gap-2">
       <Icon name="file-earmark" />
       <span>{{ text }}</span>
@@ -205,7 +204,7 @@ async function openOnForge(url: string) {
         </div>
       </div>
     </template>
-  </HoverCard>
+  </InformationCard>
 </template>
 
 <style scoped>

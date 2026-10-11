@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 
-// A part of the screen that opens a small card when the mouse pointer rests on it. The part gets a background while the
-// pointer is over it and while the card is open. The card opens at the left of the part, so the part belongs in a
-// sidebar at the right edge of the window. The card stays open while the pointer is on the part or on the card, and the
-// card is a child of the part in the page, so the keyboard reaches the buttons in the card. The card closes after the
-// pointer left both, when the key Escape is pressed, when the keyboard focus leaves, and on a click outside.
+// A part of the screen that opens a small card when it is clicked. The part gets a background while the pointer is over it
+// and while the card is open. The card opens at the left of the part, so the part belongs in a sidebar at the right edge of
+// the window. The card is a child of the part in the page, so the keyboard reaches the buttons in the card. A click on
+// the part opens the card, and a second click closes it. The card also closes when the key Escape is pressed, when the
+// keyboard focus leaves, and on a click outside. The card does not open when the pointer only moves over the part.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
 // decides its padding. The event "open" tells that the card just opened.
 
@@ -18,12 +18,6 @@ const emit = defineEmits<{
   /** The card just opened. */
   open: [];
 }>();
-
-/** How long the pointer rests on the part before the card opens, in milliseconds. */
-const OPEN_DELAY = 200;
-
-/** How long the card stays open after the pointer left, in milliseconds. It lets the pointer cross the gap to the card. */
-const CLOSE_DELAY = 150;
 
 /** The space between the part and the card, and between the card and the edge of the window, in pixels. */
 const GAP = 8;
@@ -39,13 +33,6 @@ const card = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const cardStyle = ref<Record<string, string>>({});
 const arrowStyle = ref<Record<string, string>>({});
-let timer: number | undefined;
-
-function clearTimer() {
-  window.clearTimeout(timer);
-  timer = undefined;
-}
-
 /** Puts the card at the left of the part, as high as the part, and inside the window. */
 function place() {
   if (root.value === null || card.value === null) {
@@ -65,7 +52,6 @@ function place() {
 }
 
 async function open() {
-  clearTimer();
   if (isOpen.value === true) {
     return;
   }
@@ -76,22 +62,16 @@ async function open() {
 }
 
 function close() {
-  clearTimer();
   isOpen.value = false;
 }
 
-function onPointerEnter() {
-  clearTimer();
-  if (isOpen.value === false) {
-    timer = window.setTimeout(open, OPEN_DELAY);
-  }
-}
-
-function onPointerLeave() {
-  clearTimer();
+/** Closes the card when it is open, and opens it when it is closed. */
+function toggle() {
   if (isOpen.value === true) {
-    timer = window.setTimeout(close, CLOSE_DELAY);
+    close();
+    return;
   }
+  open();
 }
 
 function onFocusOut(event: FocusEvent) {
@@ -111,7 +91,6 @@ function onDocumentPointerDown(event: PointerEvent) {
 
 onMounted(() => document.addEventListener("pointerdown", onDocumentPointerDown, true));
 onBeforeUnmount(() => {
-  clearTimer();
   document.removeEventListener("pointerdown", onDocumentPointerDown, true);
 });
 </script>
@@ -119,13 +98,10 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="root"
-    class="hover-card-part"
+    class="information-card-part"
     :class="{ 'is-open': isOpen }"
     tabindex="0"
-    @pointerenter="onPointerEnter"
-    @pointerleave="onPointerLeave"
-    @click="open"
-    @focusin="open"
+    @click="toggle"
     @focusout="onFocusOut"
     @keydown.escape.stop="close"
     @keydown.enter.self.prevent="open"
@@ -152,6 +128,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .popover { --bs-popover-body-padding-x: 0; --bs-popover-body-padding-y: 0; }
 .popover-body { overflow: hidden; border-radius: var(--bs-popover-inner-border-radius); }
-.hover-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--bs-border-radius); }
-.hover-card-part:hover, .hover-card-part.is-open { background-color: var(--bs-secondary-bg); }
+.information-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--bs-border-radius); cursor: pointer; }
+.information-card-part:hover, .information-card-part.is-open { background-color: var(--bs-secondary-bg); }
 </style>

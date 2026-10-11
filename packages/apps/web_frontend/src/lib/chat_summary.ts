@@ -63,7 +63,7 @@ export type ChatSummaryLines = {
   references: string;
   /** The names of the files that the coding agent wrote. */
   files: string;
-  /** The files that the coding agent wrote, each one once. The hover card of the third line lists them. */
+  /** The files that the coding agent wrote, each one once. The information card of the third line lists them. */
   fileEntries: ChatFile[];
 };
 

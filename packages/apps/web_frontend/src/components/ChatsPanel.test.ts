@@ -263,7 +263,7 @@ describe("ChatsPanel", () => {
     });
     const wrapper = mount(ChatsPanel, { attachTo: document.body });
     await flushPromises();
-    await wrapper.get(".hover-card-part").trigger("click");
+    await wrapper.get(".information-card-part").trigger("click");
     expect(wrapper.findAll("[data-file]").length).toBe(1);
     const row = wrapper.get("[data-file]");
     expect(row.get(".fw-medium").text()).toBe("chats.rs");

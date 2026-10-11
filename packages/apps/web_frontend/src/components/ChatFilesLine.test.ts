@@ -66,7 +66,7 @@ beforeEach(() => {
 });
 
 describe("ChatFilesLine", () => {
-  it("shows the icon of a file and the text of the line, and no card before the pointer rests on it", () => {
+  it("shows the icon of a file and the text of the line, and no card before a click", () => {
     const wrapper = mountLine();
     expect(wrapper.find(".bi-file-earmark").exists()).toBe(true);
     expect(wrapper.text()).toBe("a.rs, b ts.vue, +1");

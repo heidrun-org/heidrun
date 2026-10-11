@@ -1,6 +1,6 @@
 import type { Forge } from "./refs";
 
-/** A file that a chat wrote, ready for the summary and for the hover card. */
+/** A file that a chat wrote, ready for the summary and for the information card. */
 export type ChatFile = {
   /** The path below the root of the repository, or null when the file is not below the root. */
   relativePath: string | null;
