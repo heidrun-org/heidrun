@@ -131,12 +131,13 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeMenu));
 .tab-row { flex: 0 1 auto; min-width: 0; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .tab {
   --tab-background: transparent;
-  position: relative; flex: 0 1 200px; min-width: 96px; height: 32px; display: flex; align-items: center; gap: 8px;
-  padding: 0 6px 0 10px; border-radius: 8px; background: var(--tab-background); color: var(--muted); font-weight: 500;
+  position: relative; flex: 0 1 200px; min-width: 120px; height: 32px; display: flex; align-items: center; gap: 8px;
+  padding: 0 8px 0 10px; border-radius: 8px; background: var(--tab-background); color: var(--muted); font-weight: 500;
 }
-.tab:hover { --tab-background: var(--hover-soft); color: var(--text-2); }
-.tab.active { --tab-background: var(--hover); color: var(--text); }
-.tab.editing { --tab-background: var(--hover); padding-right: 4px; }
+.tab:hover { --tab-background: var(--overlay-hover); color: var(--text-2); }
+/* The selected tab has the color of the panes below it, which is far from the color of the bar. */
+.tab.active { --tab-background: var(--bg); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.tab.editing { --tab-background: var(--bg); padding-right: 4px; box-shadow: inset 0 0 0 1px var(--line-strong); }
 .tab.dragging { opacity: 0.4; }
 .tab.drop-before::before, .tab.drop-after::after {
   content: ""; position: absolute; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--done);
@@ -154,15 +155,15 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", closeMenu));
 }
 /* The actions of a tab cover the end of its name, so that a tab keeps its width when the mouse moves over it. */
 .tab-actions {
-  position: absolute; top: 0; bottom: 0; right: 0; display: none; align-items: center; gap: 2px; padding: 0 4px 0 12px;
-  border-radius: 0 8px 8px 0; background: linear-gradient(to right, transparent, var(--tab-background) 10px);
+  position: absolute; top: 0; bottom: 0; right: 0; display: none; align-items: center; padding: 0 3px 0 8px;
+  border-radius: 0 8px 8px 0; background: linear-gradient(to right, transparent, var(--tab-background) 8px);
 }
 .tab:hover .tab-actions, .tab.menuOpen .tab-actions, .tab:focus-within .tab-actions { display: flex; }
-.tab-action {
-  width: 22px; height: 22px; padding: 0; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; font-size: var(--font-size);
+.tab-action, .tab-actions .confirm {
+  width: 16px; min-width: 16px; height: 16px; padding: 0; border: none; border-radius: 4px; background: transparent;
+  color: var(--muted); display: inline-flex; align-items: center; justify-content: center; font-size: calc(var(--font-size) * 0.75);
 }
-.tab-action:hover { background: var(--hover); color: var(--text); }
+.tab-action:hover, .tab-actions .confirm:hover { background: var(--overlay-hover); color: var(--text); }
 .tab-menu {
   position: fixed; z-index: 20; min-width: 120px; padding: 4px; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
