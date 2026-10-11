@@ -38,7 +38,7 @@ To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the
 pnpm test
 ```
 
-The command runs the tests of the five packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
+The command runs the tests of the six packages, and ends with a non-zero exit code when a test fails. To run the tests of one package:
 
 | Command | Tests |
 | --- | --- |
@@ -47,6 +47,7 @@ The command runs the tests of the five packages, and ends with a non-zero exit c
 | `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
 | `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
 | `pnpm --filter change_log_generator test` | The Vitest tests of `packages/auxiliary/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
+| `pnpm --filter worktree_tools test` | The Vitest tests of `packages/auxiliary/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
 
@@ -80,6 +81,27 @@ Options:
 When the release already exists and you do not use `--recreate`, the command replaces the disk image and rewrites the text of the release. The release keeps its first date.
 
 The disk image is built for the architecture of your machine only, and it is not signed and not notarized. macOS shows a warning when someone opens it.
+
+## Work in a Git worktree
+
+A Git worktree is a second folder of the same repository, on its own branch. Each worktree has its own Cargo target folder, and a new target folder is empty. The first build in a new worktree compiles every Rust dependency again: it takes 52 to 65 seconds and about 2.5 GB of disk space. The commands below remove most of this cost.
+
+```bash
+pnpm worktree:create <name>
+```
+
+The command creates the worktree `.claude/worktrees/<name>` on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone. The clone takes about 10 seconds and 14 MB of disk space. The first build in the worktree then takes 23 to 32 seconds and about 883 MB of disk space. The command is the package [`packages/auxiliary/worktree_tools`](packages/auxiliary/worktree_tools).
+
+- Build the main checkout before you create a worktree. When the main checkout has no folder `target/debug`, the command creates the worktree without the clone and says so.
+- The clone needs macOS and the Apple File System. The worktree is inside the main checkout, so both folders are on the same disk.
+- The clone shares its files with the main checkout only at the start. Each file that Cargo rewrites becomes a real copy.
+- To start the new branch from a commit other than the current commit of the main checkout, add the option `--base <ref>`.
+
+```bash
+pnpm --filter desktop_tauri target:clean
+```
+
+The command lists the target folders of the worktrees that no build has used for 7 days. It deletes nothing. To delete them, add the option `--yes`. To change the number of days, add the option `--days <number>`. The command never touches the main checkout. It does not show the size of the folders, because the clones share their disk blocks, so the command `du` shows a size that is too high.
 
 ## Generate the change log
 
