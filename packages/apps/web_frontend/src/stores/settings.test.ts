@@ -192,6 +192,6 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("notes");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("workspaces");
   });
 });
