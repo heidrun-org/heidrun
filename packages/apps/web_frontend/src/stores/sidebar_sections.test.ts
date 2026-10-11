@@ -10,12 +10,12 @@ beforeEach(() => {
 });
 
 describe("openSidebarSection", () => {
-  it.each(["actions", "git"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
+  it.each(["toHandle", "actions", "git"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.leftSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["actions", "git"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
+  it.each(["toHandle", "actions", "git"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
     settings.leftOpen = false;
     openSidebarSection(sidebarSection);
     expect(settings.leftOpen).toBe(true);

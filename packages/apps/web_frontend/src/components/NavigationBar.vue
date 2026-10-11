@@ -2,8 +2,11 @@
 import { t } from "../i18n/index";
 
 defineProps<{
-  /** The buttons of the navigation bar, one for each sidebar section of the sidebar. A badge of 0 shows no number. */
-  sidebarSections: { id: string; label: string; badge: number; isLive?: boolean }[];
+  /**
+   * The buttons of the navigation bar, one for each sidebar section of the sidebar. A badge of 0 shows no number.
+   * `isLive` gives the number the color of the working status. `isAlert` gives it the color of the blocked status.
+   */
+  sidebarSections: { id: string; label: string; badge: number; isLive?: boolean; isAlert?: boolean }[];
   /** The identifier of the selected sidebar section. */
   selectedId: string;
   /** The accessible name of the navigation bar. */
@@ -27,7 +30,7 @@ const emit = defineEmits<{
       :class="{ on: selectedId === sidebarSection.id }"
       @click="emit('select', sidebarSection.id)"
     >
-      {{ sidebarSection.label }}<span v-if="sidebarSection.badge" class="badge" :class="{ live: sidebarSection.isLive }">{{ sidebarSection.badge }}</span>
+      {{ sidebarSection.label }}<span v-if="sidebarSection.badge" class="badge" :class="{ live: sidebarSection.isLive, alert: sidebarSection.isAlert }">{{ sidebarSection.badge }}</span>
     </button>
   </div>
 </template>
@@ -46,4 +49,5 @@ const emit = defineEmits<{
   font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center;
 }
 .badge.live { background: var(--tint-working); color: var(--working); }
+.badge.alert { background: var(--tint-err); color: var(--blocked); }
 </style>

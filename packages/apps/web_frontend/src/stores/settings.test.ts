@@ -204,6 +204,13 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
+  it("keeps the sidebar section To handle when it was saved", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("toHandle");
+  });
+
   it("keeps the sidebar section Git when it was saved", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "git" }));
     vi.resetModules();
