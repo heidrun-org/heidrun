@@ -72,6 +72,16 @@ describe("ChatDatesLine", () => {
     expect(marks[0].attributes("aria-label")).toBe("Sun, Oct 11, 2026, 21:23");
   });
 
+  it("gives every fact and every first message the highlight of a row of the other information cards", async () => {
+    const wrapper = mountLine();
+    await wrapper.trigger("click");
+    const rows = [...wrapper.findAll("[data-fact]"), ...wrapper.findAll("[data-message]")];
+    expect(rows).toHaveLength(7);
+    for (const row of rows) {
+      expect(row.classes()).toContain("list-group-item-action");
+    }
+  });
+
   it("reads the present time again each time the card opens", async () => {
     const wrapper = mountLine();
     await wrapper.trigger("click");

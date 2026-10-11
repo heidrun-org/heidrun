@@ -62,7 +62,7 @@ function refreshNow() {
           <Icon name="clock" />
           {{ t("chatsPanel.datesTitle") }}
         </div>
-        <div v-for="fact in facts" :key="fact.label" class="list-group-item d-flex justify-content-between gap-3" data-fact>
+        <div v-for="fact in facts" :key="fact.label" class="list-group-item list-group-item-action d-flex justify-content-between gap-3" data-fact>
           <span class="fact-label text-body-secondary">{{ fact.label }}</span>
           <span class="text-end">
             <span data-value>{{ fact.value }}</span>
@@ -73,7 +73,7 @@ function refreshNow() {
         </div>
         <template v-if="rows.firstMessages.length > 0">
           <div class="list-group-item text-body-secondary">{{ t("chatsPanel.firstMessagesTitle") }}</div>
-          <div v-for="(message, index) in rows.firstMessages" :key="index" class="list-group-item d-flex gap-2 text-break" data-message>
+          <div v-for="(message, index) in rows.firstMessages" :key="index" class="list-group-item list-group-item-action d-flex gap-2 text-break" data-message>
             <Icon name="chat-left-text" />
             <span>{{ message }}</span>
           </div>
