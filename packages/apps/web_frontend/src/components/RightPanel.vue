@@ -5,12 +5,12 @@ import NavigationBar from "./NavigationBar.vue";
 import NotesPanel from "./NotesPanel.vue";
 import { settings } from "../stores/settings";
 import { openSidebarSection } from "../stores/sidebar_sections";
-import { notes } from "../stores/notes";
+import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
 const sidebarSections = computed(() => [
   { id: "pane", label: t("rightPanel.sidebarSection.pane"), badge: 0 },
-  { id: "notes", label: t("rightPanel.sidebarSection.notes"), badge: notes.list.length },
+  { id: "notes", label: t("rightPanel.sidebarSection.notes"), badge: visibleNotes.value.length },
 ]);
 
 function selectSidebarSection(id: string) {

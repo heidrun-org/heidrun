@@ -67,6 +67,12 @@ This document says where each part of the window goes and how each part works. T
 - When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section opens if it is hidden. A hidden sidebar that holds another sidebar section stays hidden.
 - The sidebars hold no tabs. The word "tab" belongs to the tab bar only.
 
+## Notes
+
+- A note belongs to the workspace where the developer pinned the text. The workspace is found again by its name, because Herdr gives new identifiers to its workspaces in its next session.
+- The Notes sidebar section lists the notes of the selected workspace, or every note when "All workspaces" is checked. The number on the button of the Notes sidebar section counts the notes that the list shows.
+- A note whose workspace does not exist any more stays, and shows only when "All workspaces" is checked.
+
 ## Status bar
 
 - The status bar sits at the bottom of the window, over the whole width.

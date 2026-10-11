@@ -1,15 +1,19 @@
-import { reactive, watch } from "vue";
+import { computed, reactive, watch } from "vue";
 import { paneName } from "../lib/format";
 import { reorderSubset } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
-import { tabLabel, toast, workspaceLabel } from "./session";
+import { selectedWorkspace, tabLabel, toast, workspaceLabel } from "./session";
 import { t } from "../i18n/index";
 
 export interface Note {
   id: string;
   title: string;
   text: string;
-  workspaceId: string;
+  /**
+   * The name of the workspace where the note was pinned. The notes stay after Herdr stops, and Herdr gives new
+   * identifiers to its workspaces in its next session, so the name is what finds the workspace again.
+   */
+  workspaceLabel: string;
   origin: string;
   createdAt: number;
 }
@@ -17,9 +21,31 @@ export interface Note {
 // Notes stay on this Mac (not in the repo): terminal output can hold tokens or secrets.
 const KEY = "heidrun.notes";
 
+/** The text between the name of the workspace and the rest of the origin of a note. */
+const ORIGIN_SEPARATOR = " – ";
+
+/**
+ * A note as an older version saved it: it kept the identifier of the workspace in the Herdr session of that day, and not
+ * the name. The origin of the note starts with the name, so the name comes from there.
+ */
+function fromStored(stored: Partial<Note>): Note {
+  const origin = stored.origin ?? "";
+  const separatorAt = origin.indexOf(ORIGIN_SEPARATOR);
+  const { workspaceId: _unused, ...kept } = stored as Partial<Note> & { workspaceId?: string };
+  return {
+    id: "",
+    title: "",
+    text: "",
+    origin,
+    createdAt: 0,
+    ...kept,
+    workspaceLabel: stored.workspaceLabel ?? (separatorAt > 0 ? origin.slice(0, separatorAt) : ""),
+  };
+}
+
 function load(): Note[] {
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "[]");
+    return (JSON.parse(localStorage.getItem(KEY) ?? "[]") as Partial<Note>[]).map(fromStored);
   } catch {
     return [];
   }
@@ -39,6 +65,18 @@ watch(
   { deep: true },
 );
 
+/**
+ * The notes that the Notes sidebar section lists, and that the number on its button counts: the notes pinned in the
+ * selected workspace, or every note when "All workspaces" is checked.
+ */
+export const visibleNotes = computed(() => {
+  if (notes.showAll) {
+    return notes.list;
+  }
+  const label = selectedWorkspace.value?.label;
+  return notes.list.filter((n) => label !== undefined && n.workspaceLabel === label);
+});
+
 /** Each terminal registers how to read its current selection, for ⇧⌘P. */
 export const selectionReaders = new Map<string, () => string>();
 
@@ -54,7 +92,7 @@ export function pinText(text: string, pane: AgentInfo) {
     id: crypto.randomUUID(),
     title: firstLine(clean),
     text: clean,
-    workspaceId: pane.workspace_id,
+    workspaceLabel: workspaceLabel(pane.workspace_id),
     origin: `${workspaceLabel(pane.workspace_id)} – ${tabLabel(pane.tab_id)} · ${paneName(pane)}`,
     createdAt: Date.now(),
   });
