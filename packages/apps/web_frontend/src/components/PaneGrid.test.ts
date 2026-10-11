@@ -273,3 +273,19 @@ describe("PaneGrid corners", () => {
     releasePointer();
   });
 });
+
+describe("PaneGrid without pane", () => {
+  it("shows the screen with the goat, the name, and the joke, and shows no line", () => {
+    mocks.tabLayout.value = null;
+    mocks.tabPanes.value = [];
+    const wrapper = mount(PaneGrid, { props: { outerEdges: NO_OUTER_EDGES } });
+    expect(wrapper.find(".empty .empty-tab-screen").exists()).toBe(true);
+    expect(wrapper.get(".empty-tab-title").text()).toBe("Heidrun");
+    expect(wrapper.findAll(".separator").length).toBe(0);
+  });
+
+  it("does not show the screen when the tab has a pane", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(wrapper.find(".empty-tab-screen").exists()).toBe(false);
+  });
+});

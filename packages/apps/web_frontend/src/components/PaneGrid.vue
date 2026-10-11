@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import EmptyTabScreen from "./EmptyTabScreen.vue";
 import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
@@ -242,7 +243,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
     <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
       <PaneCard :pane="item.pane" />
     </div>
-    <div v-if="!placed.length" class="empty">{{ t("paneGrid.empty") }}</div>
+    <div v-if="!placed.length" class="empty"><EmptyTabScreen /></div>
     <div
       v-for="item in separatorItems"
       :key="item.separator.splitId"
@@ -284,6 +285,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 .empty {
   position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
+  overflow: hidden;
 }
 /* Like the sash of Visual Studio Code: the colour fills the whole space between two panes. */
 .separator {
