@@ -65,11 +65,40 @@ describe('bootstrap_parts.scss', () => {
 		expect(headList).toEqual(['@layer bootstrap', '.btn', '.btn:disabled']);
 	});
 
-	it('has only the two utility classes that the web frontend uses, and they sit in the layer', () => {
+	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|align-items|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
-		expect(utilityRuleList.map((rule) => rule.trim())).toEqual(['.justify-content-center {', '.border-0 {']);
+		const utilityRuleList = layerText.match(/^ {2}\.(d|align-items|gap|me|mb|fw|text|position|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
+			'.justify-content-center',
+			'.border-0',
+			'.d-block',
+			'.d-flex',
+			'.align-items-center',
+			'.gap-2',
+			'.me-auto',
+			'.mb-3',
+			'.fw-medium',
+			'.fw-semibold',
+			'.text-wrap',
+			'.text-primary-emphasis',
+			'.text-danger-emphasis',
+			'.text-body-secondary',
+			'.position-fixed',
+			'.overflow-y-auto',
+		]);
+	});
+
+	it('has the Bootstrap parts of the dropdown, the modal, the close button, and the form fields', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label']) {
+			expect(cssText).toContain(`${selector} {`);
+		}
+	});
+
+	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.form-control \{[^}]*font-size: var\(--font-size\)/);
 	});
 
 	it('gives the button no transition, as the application has none', () => {

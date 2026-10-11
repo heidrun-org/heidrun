@@ -4,7 +4,7 @@ import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
-import { resolvePrompt } from "./prompts";
+import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
 import { withBackground } from "../lib/terminal_background";
 
@@ -100,5 +100,5 @@ export async function launchAgent(o: {
     return "failed";
   }
   // Refused by a guard or failed: undefined, and the consigne goes back to the input.
-  return (await sendPrompt(pane.pane_id, await resolvePrompt(text, pane.pane_id))) !== undefined ? "ok" : "failed";
+  return (await sendPrompt(pane.pane_id, await resolveMacroVariables(text, pane.pane_id))) !== undefined ? "ok" : "failed";
 }

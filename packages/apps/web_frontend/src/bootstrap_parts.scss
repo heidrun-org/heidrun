@@ -5,6 +5,19 @@
 // Variable values that keep the look of the application. They must come before the Bootstrap variables.
 $btn-transition: none;
 
+// The size of the text follows the variable --font-size of the application, which a user can change. Bootstrap makes a
+// font size fluid with a calculation, and the calculation cannot work with a variable, so the calculation is off.
+$enable-rfs: false;
+$input-font-family: inherit;
+$input-font-size: var(--font-size);
+$dropdown-font-size: var(--font-size);
+
+// The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
+// does not add the blue glow of Bootstrap to it.
+$input-focus-box-shadow: none;
+$form-select-focus-box-shadow: none;
+$form-check-input-focus-box-shadow: none;
+
 @import "bootstrap/scss/variables";
 @import "bootstrap/scss/variables-dark";
 @import "bootstrap/scss/maps";
@@ -26,6 +39,80 @@ $utilities: (
       0: 0,
     ),
   ),
+  "display": (
+    property: display,
+    class: d,
+    values: (
+      block: block,
+      flex: flex,
+    ),
+  ),
+  "align-items": (
+    property: align-items,
+    class: align-items,
+    values: (
+      center: center,
+    ),
+  ),
+  "gap": (
+    property: gap,
+    class: gap,
+    values: (
+      2: 0.5rem,
+    ),
+  ),
+  "margin-end": (
+    property: margin-right,
+    class: me,
+    values: (
+      auto: auto,
+    ),
+  ),
+  "margin-bottom": (
+    property: margin-bottom,
+    class: mb,
+    values: (
+      3: 1rem,
+    ),
+  ),
+  "font-weight": (
+    property: font-weight,
+    class: fw,
+    values: (
+      medium: 500,
+      semibold: 600,
+    ),
+  ),
+  "white-space": (
+    property: white-space,
+    class: text,
+    values: (
+      wrap: normal,
+    ),
+  ),
+  "color": (
+    property: color,
+    class: text,
+    values: (
+      primary-emphasis: var(--bs-primary-text-emphasis),
+      danger-emphasis: var(--bs-danger-text-emphasis),
+      body-secondary: var(--bs-secondary-color),
+    ),
+  ),
+  "position": (
+    property: position,
+    class: position,
+    values: (
+      fixed: fixed,
+    ),
+  ),
+  "overflow-y": (
+    property: overflow-y,
+    class: overflow-y,
+    values: (
+      auto: auto,
+    ),
+  ),
 );
 
 // Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,
@@ -33,6 +120,14 @@ $utilities: (
 @layer bootstrap {
   @import "bootstrap/scss/root";
   @import "bootstrap/scss/buttons";
+  @import "bootstrap/scss/close";
+  @import "bootstrap/scss/dropdown";
+  @import "bootstrap/scss/modal";
+  @import "bootstrap/scss/forms/labels";
+  @import "bootstrap/scss/forms/form-text";
+  @import "bootstrap/scss/forms/form-control";
+  @import "bootstrap/scss/forms/form-select";
+  @import "bootstrap/scss/forms/form-check";
   @import "bootstrap/scss/utilities/api";
 }
 

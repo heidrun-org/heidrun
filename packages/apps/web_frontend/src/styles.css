@@ -111,6 +111,22 @@
 :root[data-theme="light"] .lvl-crit { color: #cc3a35; }
 :root[data-theme="light"] .gauge::before, :root[data-theme="light"] .gauge::after { background: rgba(255, 255, 255, 0.9); }
 
+/* Bootstrap theme ---------------------------------------------------------- */
+/* Bootstrap draws its components from its own theme variables. These lines give the variables the colors of the application, in the
+   dark theme and in the light theme. The three z-index lines keep a dropdown, a modal, and the dark layer behind a modal below the
+   confirmation window (z-index 60) that opens above them. */
+:root {
+  --bs-body-color: var(--text);
+  --bs-body-bg: var(--panel);
+  --bs-border-color: var(--line-strong);
+  --bs-border-color-translucent: var(--line-modal);
+  --bs-secondary-color: var(--muted);
+  --bs-tertiary-bg: var(--hover);
+}
+.dropdown-menu { --bs-dropdown-zindex: 50; }
+.modal { --bs-modal-zindex: 60; }
+.modal-backdrop { --bs-backdrop-zindex: 59; }
+
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; margin: 0; }
 body {

@@ -16,8 +16,8 @@ features:
     details: Workspaces, panes, and the queue of agents that are blocked or finished, all in one sidebar.
   - title: Real terminals
     details: Each pane shows the real Herdr terminal, so Claude Code, Codex, and the colors look the same as in Herdr.
-  - title: Prompt templates
-    details: One click writes a ready prompt into the terminal of a pane. The agents never wait for a developer who is typing.
+  - title: Macros
+    details: One click writes a ready text into the terminal of a pane. The agents never wait for a developer who is typing.
   - title: Inspector
     details: Allow or deny an agent request, read the context of an agent, and ask another agent to fix a problem.
   - title: Quotas in view

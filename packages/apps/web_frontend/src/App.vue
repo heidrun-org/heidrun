@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
-import PromptEditor from "./components/PromptEditor.vue";
-import { promptEditor } from "./stores/prompts";
+import MacroEditor from "./components/MacroEditor.vue";
+import { macroEditor } from "./stores/macros";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
@@ -315,7 +315,7 @@ onBeforeUnmount(() => {
     </div>
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
-    <PromptEditor v-if="promptEditor.open" />
+    <MacroEditor v-if="macroEditor.open" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
