@@ -87,6 +87,27 @@ describe("TabBar entries", () => {
     expect(dotClasses[2]).toEqual(["dot"]);
   });
 
+  it("shows an icon between the status dot and the name of each tab: the icon of the agent that decides the dot, or a terminal", async () => {
+    const { wrapper, session } = await mountTabBar();
+    session.state.snapshot = {
+      ...SNAPSHOT,
+      panes: [
+        { pane_id: "p1", workspace_id: "w1", tab_id: "t1", agent: "claude", agent_status: "working" },
+        { pane_id: "p2", workspace_id: "w1", tab_id: "t2", agent: "claude", agent_status: "idle" },
+        { pane_id: "p3", workspace_id: "w1", tab_id: "t2", agent: "codex", agent_status: "blocked" },
+        { pane_id: "p4", workspace_id: "w1", tab_id: "t3", agent_status: "idle" },
+      ],
+    } as unknown as SessionSnapshot;
+    await flushPromises();
+    expect(wrapper.findAll("[role=tab] .tab-icon").map((icon) => icon.element.className)).toEqual([
+      "bi bi-claude tab-icon",
+      "bi bi-openai tab-icon",
+      "bi bi-terminal tab-icon",
+    ]);
+    const children = Array.from(wrapper.get("[role=tab]").element.children);
+    expect(children.map((child) => child.classList[0])).toEqual(["dot", "bi", "tab-label"]);
+  });
+
   it("marks the selected tab", async () => {
     const { wrapper } = await mountTabBar();
     expect(wrapper.findAll("[role=tab]").map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false", "false"]);
@@ -304,6 +325,12 @@ describe("TabBar height", () => {
     expect(heightOfTab).not.toBeNull();
     expect(heightOfField).not.toBeNull();
     expect(Number(heightOfField![1])).toBeLessThanOrEqual(Number(heightOfTab![1]) - 2);
+  });
+
+  it("gives a tab 18px of horizontal padding and a width of 170px at least, so that the tabs are not tightly packed", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain("--bs-nav-link-padding-x: 18px;");
+    expect(sourceText).toContain(".nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }");
   });
 
   it("gives the rename field the class tab-rename", async () => {
