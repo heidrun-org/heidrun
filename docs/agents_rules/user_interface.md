@@ -27,6 +27,7 @@ This document says where each part of the window goes and how each part works. T
 - The workspace button sits at the left end of the tab bar. It shows the name of the selected workspace. A click on the button opens the list of workspaces. The list does not open when the mouse moves over the button.
 - A developer switches workspace rarely, so the workspace button takes little space.
 - A small colored dot on the workspace button shows that an agent in another workspace is blocked or has finished.
+- The list of workspaces offers the creation of a workspace, the rename of a workspace, the close of a workspace, and the move of a workspace by drag and drop. A double click on the workspace button renames the selected workspace in place.
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
 
 ## Tabs

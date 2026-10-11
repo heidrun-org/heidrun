@@ -109,7 +109,7 @@ describe("TabBar entries", () => {
     const { wrapper } = await mountTabBar();
     expect(wrapper.findAll(".nav-link .confirm")).toHaveLength(3);
     expect(wrapper.find(".bi-three-dots-vertical").exists()).toBe(false);
-    expect(wrapper.find("[aria-haspopup=menu]").exists()).toBe(false);
+    expect(wrapper.find(".nav-tabs [aria-haspopup=menu]").exists()).toBe(false);
   });
 
   it("shows the close button of the selected tab always, and the close button of another tab only when the mouse is over it", () => {
@@ -324,8 +324,12 @@ describe("TabBar join with the panes", () => {
   });
 });
 
-describe("TabBar left edge", () => {
-  it("starts at the left edge of the panes, with no space on the left, so that the first tab is aligned with the pane", () => {
+describe("TabBar workspace button", () => {
+  it("starts with the workspace button, before the tabs, at the left edge of the panes", async () => {
+    const { wrapper } = await mountTabBar();
+    const children = Array.from(wrapper.get(".tab-bar").element.children);
+    expect(children[0].classList.contains("workspace-button")).toBe(true);
+    expect(children[1].classList.contains("nav-tabs")).toBe(true);
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
     expect(sourceText).toMatch(/\.tab-bar \{[^}]*padding: 4px var\(--pane-radius\) 0 0;/);
   });
