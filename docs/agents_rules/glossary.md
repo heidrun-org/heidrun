@@ -32,7 +32,15 @@ The horizontal row on top of the viewport. It shows the tabs of the selected wor
 
 ### Viewport
 
-The main area of the window. It shows the panes of the selected tab.
+The main area of the window. It shows the panes of the selected tab, and the column of pinned panes.
+
+### Pinned pane
+
+A pane that the developer keeps visible. The pin button in the header of the pane pins the pane. A pinned pane stays visible when the developer changes tab or workspace.
+
+### Column of pinned panes
+
+The column at the right edge of the viewport. It holds the pinned panes, one above the other.
 
 ### Left sidebar
 
@@ -44,7 +52,7 @@ The panel on the right of the viewport. It holds sidebar sections.
 
 ### Sidebar section
 
-One part of a sidebar, for example the Actions or the Git sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+One part of a sidebar, for example the Scripts or the Git sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 
 ### Navigation bar
 
@@ -67,3 +75,4 @@ A small card that opens above a status bar section. It gives more detail about t
 - The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - The word "section" is never alone. Write "sidebar section" or "status bar section".
+- Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".

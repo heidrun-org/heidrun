@@ -7,11 +7,11 @@ This document says where each part of the window goes and how each part works. T
 ```
 ┌───────────┬─────────────────────────────────────┬───────────┐
 │           │ [heidrun ▾] [tab 1] [tab 2] [+]     │           │
-│   left    ├─────────────────────────────────────┤   right   │
-│  sidebar  │                                     │  sidebar  │
-│           │  viewport: the panes of the         │           │
-│           │  selected tab                       │           │
-├───────────┴─────────────────────────────────────┴───────────┤
+│   left    ├─────────────────────┬───────────────┤   right   │
+│  sidebar  │ panes of the        │ pinned panes  │  sidebar  │
+│           │ selected tab        │ in a column   │           │
+│           │                     │               │           │
+├───────────┴─────────────────────┴───────────────┴───────────┤
 │ status bar: [status bar section] [status bar section]       │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -42,11 +42,14 @@ This document says where each part of the window goes and how each part works. T
 - A tab with one pane shows one terminal over the whole viewport.
 - A tab with several panes shares the viewport between its panes.
 - A click on a pane gives the focus to that pane.
+- A click on the pin button in the header of a pane pins the pane. A pinned pane goes into the column of pinned panes.
+- The column of pinned panes sits at the right edge of the viewport, beside the panes of the selected tab. The new layout keeps the column as it is today.
+- A pinned pane does not change when the developer selects another tab or another workspace. Only the panes of the selected tab change.
 
 ## Sidebars
 
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
-- The left sidebar holds the Actions sidebar section and the Git sidebar section.
+- The left sidebar holds the Scripts sidebar section and the Git sidebar section.
 - The right sidebar holds the Pane sidebar section and the Notes sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
