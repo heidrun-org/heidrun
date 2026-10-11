@@ -21,12 +21,12 @@ describe("openSidebarSection", () => {
     expect(settings.leftOpen).toBe(true);
   });
 
-  it.each(["toHandle", "pane", "notes"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
+  it.each(["toHandle", "pane", "notes", "chats"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.rightSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["toHandle", "pane", "notes"] as const)("shows the right sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
+  it.each(["toHandle", "pane", "notes", "chats"] as const)("shows the right sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
     settings.rightOpen = false;
     openSidebarSection(sidebarSection);
     expect(settings.rightOpen).toBe(true);

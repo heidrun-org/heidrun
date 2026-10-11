@@ -1,3 +1,4 @@
+import type { Chat, ChatAgent, ChatMeta } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,115 @@ export class TauriMockFixture {
 			throw new Error('split_not_found: split path not found');
 		}
 		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
+	/**
+	 * The answer of `gh issue view` or `gh pr view` for one number. The issue 123 fails, so the card shows the failure.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'view', '250', '--json', 'title,state']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeAnswer(args: string[]): string {
+		const isIssue = args[0] === 'issue';
+		const number = Number(args[2]);
+		if (number === 123) {
+			throw new Error('mock: GraphQL: Could not resolve to an issue or pull request with the number of 123.');
+		}
+		const isOpen = number % 3 === 0;
+		const state = isIssue ? (isOpen ? 'OPEN' : 'CLOSED') : isOpen ? 'OPEN' : 'MERGED';
+		return JSON.stringify({
+			title: isIssue
+				? 'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex'
+				: 'Move the To handle sidebar section from the left sidebar to the right sidebar',
+			state,
+			body: isIssue
+				? '## Goal\n\nMove the To handle sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
+				: 'The To handle sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
+			labels: isIssue ? [{ name: 'Simple Work', color: '2ea043' }, { name: 'Design', color: '1d76db' }] : [],
+			author: { login: 'jeromeetienne' },
+			createdAt: '2026-10-11T09:30:00Z',
+			...(isIssue ? {} : { headRefName: 'move-to-handle-to-the-right-sidebar-251', baseRefName: 'dev_jerome' }),
+		});
+	}
+
+	/**
+	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first. Claude
+	 * has 60 conversations, so that the list needs the button "Show more". Codex has two.
+	 *
+	 * @param limit - The number of conversations to return for each coding agent.
+	 * @returns A new object each call, with the newest conversations of Claude and of Codex.
+	 */
+	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
+		const now = Date.now();
+		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
+			id,
+			title,
+			updated_at: now - minutesAgo * 60_000,
+			meta: {
+				first_at: now - (minutesAgo + 90) * 60_000,
+				last_at: now - minutesAgo * 60_000,
+				user_messages: 0,
+				first_messages: [],
+				folders: [],
+				issues: [],
+				pull_requests: [],
+				files_written: [],
+				...meta,
+			},
+		});
+		const claudeChats: Chat[] = [
+			buildChat('claude_1', 'Workspace conversation navigation', 2, {
+				user_messages: 10,
+				first_messages: [
+					'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex.',
+					'Each row has a title and three lines of summary: the dates, the issues and the pull requests, and the files.',
+					'Can you make the information card wider? Then read the full text of this very long message that stops after three hundred characters, so that the card shows how a long message is cut.',
+				],
+				issues: [250, 251],
+				files_written: [
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats.rs',
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats_scan.rs',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/add-chats-sidebar-section-250/packages/apps/web_frontend/src/components/ChatsPanel.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/InformationCard.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
+					'/Users/demo/webwork/heidrun/AGENTS.md',
+					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_information_card/at_all/notes.md',
+					'/Users/demo/notes/scratch.md',
+					'/private/tmp/claude-501/-Users-demo-webwork-heidrun/e957b92e-4848-4b5b-849e-6618a7a326fd/scratchpad/issue_31_comment.md',
+				],
+			}),
+			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
+				first_at: now - 3_000 * 60_000,
+				user_messages: 4,
+				issues: [104, 247],
+				pull_requests: [230, 249],
+			}),
+			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400, {
+				user_messages: 1,
+				issues: [1, 2, 3, 4, 5, 6],
+				pull_requests: [7],
+				files_written: ['/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/TabBar.vue'],
+			}),
+			buildChat('claude_4', 'Issue #251', 1_500, { user_messages: 2, issues: [251], pull_requests: [230, 249, 253] }),
+			buildChat('claude_5', 'Herdr interface description', 3_000),
+		];
+		for (let index = 6; index <= 60; index++) {
+			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
+		}
+		const codexChats: Chat[] = [
+			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
+			buildChat('codex_2', 'Count up to 200', 600),
+		];
+		const cut = (chats: Chat[]) => ({
+			chats: chats.slice(0, limit),
+			has_more: chats.length > limit,
+		});
+		return {
+			root: '/Users/demo/webwork/heidrun',
+			claude: cut(claudeChats),
+			codex: cut(codexChats),
+		};
 	}
 
 	/**

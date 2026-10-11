@@ -54,6 +54,14 @@ The panel on the right of the viewport. It holds sidebar sections.
 
 One part of a sidebar, for example the To handle, the Scripts, or the Git sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 
+### Chat
+
+One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
+
+### Chats sidebar section
+
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+
 ### Navigation bar
 
 A row of buttons inside a sidebar. Each button shows one sidebar section of that sidebar.
@@ -68,7 +76,7 @@ One part of the status bar. It shows one piece of information, for example the u
 
 ### Information card
 
-A small card that opens above a status bar section. It gives more detail about that section.
+A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, or at the left of a part of a sidebar. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
 
 ### Workspace status bar section
 
@@ -78,5 +86,6 @@ The first status bar section, at the left end of the status bar. It shows the st
 
 - The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
+- The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
 - The word "section" is never alone. Write "sidebar section" or "status bar section".
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".

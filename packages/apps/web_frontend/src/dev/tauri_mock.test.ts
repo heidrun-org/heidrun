@@ -44,6 +44,64 @@ describe('TauriMock', () => {
 		expect(layout?.panes[1].rect.x).toBe(50);
 	});
 
+	it('answers the Tauri command chats_list with the newest fake conversations of Claude and of Codex, up to the limit', async () => {
+		TauriMock.install();
+		type AgentChats = { chats: { id: string; title: string }[]; has_more: boolean };
+		const result = await invoke<Record<'claude' | 'codex', AgentChats>>('chats_list', {
+			folder: '/Users/demo/webwork/heidrun',
+			limit: 5,
+		});
+		expect(result.claude.chats.length).toBe(5);
+		expect(result.claude.has_more).toBe(true);
+		expect(result.codex.chats.length).toBe(2);
+		expect(result.codex.has_more).toBe(false);
+		const everything = await invoke<Record<'claude' | 'codex', AgentChats>>('chats_list', {
+			folder: '/Users/demo/webwork/heidrun',
+			limit: 1000,
+		});
+		expect(everything.claude.chats.length).toBe(60);
+		expect(everything.claude.has_more).toBe(false);
+	});
+
+	it('answers the cached forge command with the JSON of an issue and of a pull request, and fails for the issue 123', async () => {
+		TauriMock.install();
+		const issue = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'view', '250', '--json', 'title'] }),
+		);
+		expect(issue.title).toContain('Chats');
+		expect(issue.headRefName).toBeUndefined();
+		const pullRequest = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['pr', 'view', '230', '--json', 'title'] }),
+		);
+		expect(pullRequest).toMatchObject({ state: 'MERGED', headRefName: expect.any(String), baseRefName: 'dev_jerome' });
+		await expect(
+			invoke('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'view', '123', '--json', 'title'] }),
+		).rejects.toThrow();
+	});
+
+	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
+		TauriMock.install();
+		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });
+		expect(result.root).toBe('/Users/demo/webwork/heidrun');
+		const refs = await invoke<{ remote: string }>('project_refs', { cwd: '/Users/demo/webwork/heidrun' });
+		expect(refs.remote).toBe('git@github.com:heidrun-org/heidrun.git');
+		const resolved = await invoke('files_resolve', {
+			cwd: '/Users/demo/webwork/heidrun',
+			path: '/Users/demo/webwork/heidrun/docs/a.md',
+		});
+		expect(resolved).toEqual({ root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' });
+		const existence = await invoke<{ path: string; on_disk: boolean; on_remote: boolean }[]>('chats_files_exist', {
+			folder: '/Users/demo/webwork/heidrun',
+			paths: ['docs/a.md', 'src/OldCard.vue', 'src/InformationCard.vue'],
+		});
+		expect(existence.map((item) => [item.on_disk, item.on_remote])).toEqual([
+			[true, true],
+			[false, false],
+			[true, false],
+		]);
+		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
+	});
+
 	it('rejects a Tauri command that it does not list', async () => {
 		TauriMock.install();
 		await expect(invoke('pty_spawn')).rejects.toThrow('pty_spawn');

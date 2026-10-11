@@ -9,6 +9,7 @@ import type { SessionSnapshot } from "../lib/types";
 const stubs = {
   Inspector: true,
   NotesPanel: true,
+  ChatsPanel: true,
   ToHandlePanel: true,
 };
 
@@ -44,18 +45,18 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons To handle, Pane, and Notes in the navigation bar, and not the buttons Scripts and Git", () => {
+  it("shows the buttons To handle, Pane, Notes, and Chats in the navigation bar, and not the buttons Scripts and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".navigation-bar").attributes("role")).toBe("tablist");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["To handle", "Pane", "Notes"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["To handle", "Pane", "Notes", "Chats"]);
   });
 
   it("does not call a button of the navigation bar a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("title"))).toEqual(
-      Array(3).fill("Show this sidebar section"),
+      Array(4).fill("Show this sidebar section"),
     );
   });
 
@@ -63,8 +64,8 @@ describe("RightPanel", () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.classes("on"))).toEqual([false, false, true]);
-    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "true"]);
+    expect(buttons.map((button) => button.classes("on"))).toEqual([false, false, true, false]);
+    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "true", "false"]);
   });
 
   it("shows the sidebar section Pane first, and the sidebar section Notes after a click on its button", async () => {
@@ -84,12 +85,27 @@ describe("RightPanel", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
     expect(settings.rightSidebarSection).toBe("toHandle");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false, false]);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("inspector-stub").exists()).toBe(false);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
     const restarted = mount(RightPanel, { global: { stubs } });
     expect(restarted.find("to-handle-panel-stub").exists()).toBe(true);
+  });
+
+  it("shows the sidebar section Chats, and no other sidebar section, after a click on its button", async () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.findAll(".navigation-bar button")[3].trigger("click");
+    expect(settings.rightSidebarSection).toBe("chats");
+    expect(wrapper.findAll(".navigation-bar button")[3].classes("on")).toBe(true);
+    expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("inspector-stub").exists()).toBe(false);
+    expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
+  });
+
+  it("shows no number on the button Chats", () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    expect(wrapper.findAll(".navigation-bar button")[3].find(".badge").exists()).toBe(false);
   });
 
   it("shows the sidebar section Pane again after a click on its button", async () => {

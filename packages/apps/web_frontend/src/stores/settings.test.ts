@@ -250,6 +250,8 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["searchThisWorkspace", false, true],
   ["scriptsShowAllSuggestions", false, true],
   ["notesShowAll", false, true],
+  ["chatsAgent", "claude", "codex"],
+  ["chatsView", "compact", "expanded"],
 ];
 
 describe("the last state of each option", () => {
@@ -322,6 +324,8 @@ describe("a corrupted saved value", () => {
         agentsActivityScope: "none",
         historyPeriod: "12",
         historyGroupBy: "year",
+        chatsAgent: "gemini",
+        chatsView: "wide",
         searchRegex: true,
       }),
     );
@@ -331,6 +335,8 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.agentsActivityScope).toBe("all");
     expect(restarted.settings.historyPeriod).toBe("today");
     expect(restarted.settings.historyGroupBy).toBe("ws");
+    expect(restarted.settings.chatsAgent).toBe("claude");
+    expect(restarted.settings.chatsView).toBe("compact");
     expect(restarted.settings.searchRegex).toBe(true);
   });
 });

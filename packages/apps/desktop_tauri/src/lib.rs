@@ -1,6 +1,10 @@
+mod chats;
+mod chats_files;
+mod chats_scan;
 mod claude;
 mod clipboard;
 mod files;
+mod forge_cache;
 mod git;
 mod history;
 mod legacy;
@@ -302,6 +306,7 @@ pub fn run() {
             project::project_refs,
             git::git_status,
             git::forge_cli,
+            forge_cache::forge_cli_cached,
             git::forge_merge,
             git::git_diff,
             git::git_file,
@@ -314,6 +319,8 @@ pub fn run() {
             claude::claude_commands,
             claude::claude_agents,
             claude::claude_session_agents,
+            chats::chats_list,
+            chats_files::chats_files_exist,
             history::history_append,
             history::history_read,
             history::history_export,

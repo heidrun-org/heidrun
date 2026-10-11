@@ -2,5 +2,6 @@
   "label": "Barre latérale droite",
   "sidebarSection.toHandle": "À traiter",
   "sidebarSection.pane": "Panneau",
-  "sidebarSection.notes": "Notes"
+  "sidebarSection.notes": "Notes",
+  "sidebarSection.chats": "Conversations"
 }

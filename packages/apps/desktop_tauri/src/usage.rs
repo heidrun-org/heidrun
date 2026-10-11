@@ -51,7 +51,7 @@ struct Parsed {
     session: SessionUsage,
 }
 
-fn codex_home() -> PathBuf {
+pub(crate) fn codex_home() -> PathBuf {
     if let Ok(p) = std::env::var("CODEX_HOME") {
         if !p.is_empty() {
             return PathBuf::from(p);

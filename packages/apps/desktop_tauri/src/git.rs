@@ -227,7 +227,7 @@ pub async fn git_file(root: String, path: String, rev: Option<String>) -> Result
 /// Read-only calls the app makes, and nothing else: `glab api <path>` (GET only)
 /// and `gh pr list` / `gh run list`. Anything that could change the forge or run
 /// code (`gh alias set --shell`, `glab mr merge`, `api -X DELETE`…) is refused.
-fn allowed(tool: &str, args: &[String]) -> bool {
+pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
     let a: Vec<&str> = args.iter().map(String::as_str).collect();
     match tool {
         "glab" => {
@@ -251,7 +251,7 @@ fn allowed(tool: &str, args: &[String]) -> bool {
 
 /// Runs `glab` / `gh` in the repository through the login shell (Homebrew PATH,
 /// accounts already connected). `exec "$0" "$@"` passes arguments as is.
-async fn run_forge(cwd: &str, tool: &str, args: &[String], timeout: u64) -> Result<String, String> {
+pub(crate) async fn run_forge(cwd: &str, tool: &str, args: &[String], timeout: u64) -> Result<String, String> {
     // It needs a POSIX shell: fish and friends fall back to zsh (login PATH too).
     let user_shell = std::env::var("SHELL").unwrap_or_default();
     let shell = if user_shell.ends_with("/zsh") || user_shell.ends_with("/bash") || user_shell.ends_with("/sh") {

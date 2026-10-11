@@ -74,6 +74,28 @@ export class TauriMock {
 				};
 			case 'history_read':
 				return [];
+			case 'chats_list':
+				return TauriMockFixture.buildChats((payload as { limit: number }).limit);
+			case 'project_refs':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					remote: 'git@github.com:heidrun-org/heidrun.git',
+					references: null,
+				};
+			case 'forge_cli_cached':
+				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
+			case 'chats_files_exist':
+				return (payload as { paths: string[] }).paths.map((path) => ({
+					path,
+					on_disk: path.includes('OldCard') === false,
+					on_remote: path.includes('OldCard') === false && path.includes('InformationCard') === false,
+				}));
+			case 'files_resolve':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					path: (payload as { path: string }).path.replace('/Users/demo/webwork/heidrun/', ''),
+				};
+			case 'file_open_external':
 			case 'git_status':
 			case 'mobile_status':
 			case 'herdr_watch_panes':
