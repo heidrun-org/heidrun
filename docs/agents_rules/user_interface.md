@@ -79,3 +79,11 @@ This document says where each part of the window goes and how each part works. T
 - The status bar sits at the bottom of the window, over the whole width.
 - Each status bar section shows one piece of information, for example the usage of Claude, the usage of Codex, the Git branch, the number of agents that are blocked, working, or done, and the connection to Herdr.
 - A click on a status bar section opens its information card above the section.
+
+## Position and size of the window
+
+- When Heidrun quits, it saves the position and the size of the window, and whether the window was maximized or full screen. The window-state plugin of Tauri does this work, and keeps the file `.window-state.json` in the configuration folder of the application.
+- At the next start, the window opens with the saved position, the saved size, and the saved maximized or full screen state.
+- At the first start, no state is saved, and the window opens in the middle of the screen with the size in `tauri.conf.json`.
+- When the saved position is outside every screen that is connected, the window opens at the default position of the operating system, on a connected screen.
+- The visible state is never restored. The window stays hidden until the splash image is ready.
