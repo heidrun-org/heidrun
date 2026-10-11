@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import paneCardSource from "./PaneCard.vue?raw";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => null) }));
@@ -25,10 +26,11 @@ function styleRule(selector: string): string {
   return match![1];
 }
 
-async function mountPaneCard(paneFields: Record<string, unknown> = {}) {
+async function mountPaneCard(paneFields: Record<string, unknown> = {}, isInColumnOfPinnedPanes = false) {
   const { default: PaneCard } = await import("./PaneCard.vue");
   return mount(PaneCard, {
     props: {
+      isInColumnOfPinnedPanes,
       pane: {
         pane_id: "w1:p1",
         terminal_id: "t1",
@@ -92,5 +94,43 @@ describe("PaneCard", () => {
       cwd: "/Users/jetienne/webwork/heidrun",
     });
     expect(wrapper.get(".name").text()).toBe("npm run dev");
+  });
+
+  it("shows the pressed pin button in the header of a pane of the column of pinned panes, and no close button", async () => {
+    const wrapper = await mountPaneCard({}, true);
+    const unpinButton = wrapper.get("button[aria-label='Unpin the pane']");
+    expect(unpinButton.attributes("aria-pressed")).toBe("true");
+    expect(unpinButton.classes()).toContain("on");
+    expect(unpinButton.find(".bi-pin-fill").exists()).toBe(true);
+    expect(wrapper.find(".bi-x-lg").exists()).toBe(false);
+    expect(wrapper.find("button[title='Go to its tab']").exists()).toBe(true);
+  });
+
+  it("unpins the pane of the column of pinned panes when the pressed pin button is clicked", async () => {
+    const { settings } = await import("../stores/settings");
+    settings.pinnedPanes = ["w1:p1"];
+    const wrapper = await mountPaneCard({}, true);
+    await wrapper.get("button[aria-label='Unpin the pane']").trigger("click");
+    expect(settings.pinnedPanes).toEqual([]);
+  });
+
+  it("is the selected pane in the column of pinned panes when it is the selected pane of the selected tab", async () => {
+    const { state } = await import("../stores/session");
+    const { pinnedPaneState } = await import("../stores/pinned_panes");
+    state.selectedPaneId = "w1:p1";
+    pinnedPaneState.focus = null;
+    const wrapper = await mountPaneCard({}, true);
+    expect(wrapper.get("section").classes()).toContain("selected");
+  });
+
+  it("is not the selected pane in the column of pinned panes when another pinned pane has the keyboard", async () => {
+    const { state } = await import("../stores/session");
+    const { pinnedPaneState } = await import("../stores/pinned_panes");
+    state.selectedPaneId = "w1:p1";
+    // The store gives the keyboard back to the grid when the selected pane changes: wait for that, then pin the focus.
+    await nextTick();
+    pinnedPaneState.focus = "w1:p2";
+    const wrapper = await mountPaneCard({}, true);
+    expect(wrapper.get("section").classes()).not.toContain("selected");
   });
 });

@@ -24,7 +24,7 @@ import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
-import { activePaneId, visiblePinnedPanes } from "./stores/pinned_panes";
+import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { search } from "./stores/search";
 import { openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
@@ -84,7 +84,7 @@ const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
 const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
-const columnOfPinnedPanesTakenWidth = computed(() => (visiblePinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
+const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
 const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
@@ -97,7 +97,7 @@ const columnOfPinnedPanesReserve = computed(() => (settings.leftOpen ? settings.
 // The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
 const paneOuterEdges = computed(() => ({
   left: settings.leftOpen,
-  right: visiblePinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
+  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
 }));
 
 // The column that a corner of the panes under the pointer touches: its line is drawn in colour.
@@ -108,7 +108,7 @@ function columnAgainst(edge: PaneOuterEdge) {
   if (edge === "left") {
     return { ...LEFT_COLUMN, reserve: leftReserve.value, width: settings.leftWidth, sign: 1, set: (w: number) => (settings.leftWidth = w) };
   }
-  if (visiblePinnedPanes.value.length > 0) {
+  if (allPinnedPanes.value.length > 0) {
     return { ...COLUMN_OF_PINNED_PANES, reserve: columnOfPinnedPanesReserve.value, width: columnOfPinnedPanesShownWidth.value, sign: -1, set: (w: number) => (settings.columnOfPinnedPanesWidth = w) };
   }
   return { ...RIGHT_COLUMN, reserve: rightReserve.value, width: settings.rightWidth, sign: -1, set: (w: number) => (settings.rightWidth = w) };
@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
           <TabBar />
           <div class="stage">
             <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
-            <template v-if="visiblePinnedPanes.length">
+            <template v-if="allPinnedPanes.length">
               <Resizer
                 :width="columnOfPinnedPanesShownWidth"
                 @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && visiblePinnedPanes.length === 0" />
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <RightPanel />
       </template>
     </div>

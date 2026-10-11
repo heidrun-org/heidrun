@@ -76,6 +76,12 @@ export interface LayoutSplit {
   ratio: number;
   /** The rectangle that the split divides, in terminal cells. */
   rect: Rect;
+  /**
+   * The way from the root of the layout of Herdr to the split: `false` goes to the first group, `true` to the second.
+   * Herdr does not send it. Heidrun sets it when it removes panes from a layout, because the way in the smaller layout
+   * is not the way that Herdr needs to change the share of the split.
+   */
+  path?: boolean[];
 }
 
 export interface PaneLayoutSnapshot {

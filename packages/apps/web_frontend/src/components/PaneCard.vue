@@ -14,12 +14,14 @@ import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
-// `isInColumnOfPinnedPanes`: shown in the column of pinned panes, outside its own tab.
+// `isInColumnOfPinnedPanes`: shown in the column of pinned panes, in every tab, the tab of the pane included.
 const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
+// A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
 const selected = computed(() =>
   props.isInColumnOfPinnedPanes
-    ? pinnedPaneState.focus === props.pane.pane_id
+    ? pinnedPaneState.focus === props.pane.pane_id ||
+      (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
     : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
 );
 const pinned = computed(() => isPinned(props.pane.pane_id));
@@ -78,8 +80,15 @@ const subtitle = computed(() => {
         <MacroMenu :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
-          <button class="tool" :aria-label="t('paneCard.unpin')" :title="t('paneCard.unpinTitle')" @mousedown.stop @click="unpinPane(pane.pane_id)">
-            <Icon name="x-lg" />
+          <button
+            class="tool on"
+            aria-pressed="true"
+            :aria-label="t('paneCard.unpin')"
+            :title="t('paneCard.unpinTitle')"
+            @mousedown.stop
+            @click="unpinPane(pane.pane_id)"
+          >
+            <Icon name="pin-fill" />
           </button>
         </template>
         <template v-else>

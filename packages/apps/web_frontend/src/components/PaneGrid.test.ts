@@ -5,16 +5,19 @@ import type { PaneLayoutSnapshot } from "../lib/types";
 const mocks = await vi.hoisted(async () => {
   const { ref } = await import("vue");
   return {
-    tabLayout: ref<unknown>(null),
-    tabPanes: ref<unknown[]>([]),
+    gridLayout: ref<unknown>(null),
+    gridPanes: ref<unknown[]>([]),
     setSplitRatios: vi.fn(),
   };
 });
 
 vi.mock("../stores/session", () => ({
-  tabLayout: mocks.tabLayout,
-  tabPanes: mocks.tabPanes,
   setSplitRatios: mocks.setSplitRatios,
+}));
+
+vi.mock("../stores/pinned_panes", () => ({
+  gridLayout: mocks.gridLayout,
+  gridPanes: mocks.gridPanes,
 }));
 
 // The panes show terminals, which need a real browser: the lines between the panes are the subject of these tests.
@@ -47,8 +50,8 @@ const NO_OUTER_EDGES = { left: false, right: false };
 
 /** The screen is 1200 pixels wide and 800 pixels high, so one cell of Herdr is 10 pixels wide and 20 pixels high. */
 function mountPaneGrid(layout: PaneLayoutSnapshot, outerEdges = NO_OUTER_EDGES) {
-  mocks.tabLayout.value = layout;
-  mocks.tabPanes.value = layout.panes.map((layoutPane) => ({ pane_id: layoutPane.pane_id }));
+  mocks.gridLayout.value = layout;
+  mocks.gridPanes.value = layout.panes.map((layoutPane) => ({ pane_id: layoutPane.pane_id }));
   const wrapper = mount(PaneGrid, {
     props: { outerEdges },
     attachTo: document.body,
@@ -69,8 +72,8 @@ function releasePointer() {
 
 beforeEach(() => {
   mocks.setSplitRatios.mockClear();
-  mocks.tabLayout.value = null;
-  mocks.tabPanes.value = [];
+  mocks.gridLayout.value = null;
+  mocks.gridPanes.value = [];
   document.body.innerHTML = "";
 });
 
@@ -267,7 +270,7 @@ describe("PaneGrid corners", () => {
         { id: "split_1_1", direction: "down", ratio: 0.55, rect: { x: 48, y: 0, width: 72, height: 40 } },
       ],
     };
-    mocks.tabLayout.value = moved;
+    mocks.gridLayout.value = moved;
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".corner").element).toBe(corner);
     releasePointer();
@@ -276,8 +279,8 @@ describe("PaneGrid corners", () => {
 
 describe("PaneGrid without pane", () => {
   it("shows the screen with the goat, the name, and the joke, and shows no line", () => {
-    mocks.tabLayout.value = null;
-    mocks.tabPanes.value = [];
+    mocks.gridLayout.value = null;
+    mocks.gridPanes.value = [];
     const wrapper = mount(PaneGrid, { props: { outerEdges: NO_OUTER_EDGES } });
     expect(wrapper.find(".empty .empty-tab-screen").exists()).toBe(true);
     expect(wrapper.get(".empty-tab-title").text()).toBe("Heidrun");
