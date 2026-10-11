@@ -161,7 +161,7 @@ export const allRuns = computed(() => {
   return out;
 });
 
-/** Today, for the one-line summary of the right panel. */
+/** Today, for the one-line summary of the Agents information window. */
 export const todaySummary = computed(() => {
   const from = startOfDay(tick.value);
   const byWs = new Map<string, number>();

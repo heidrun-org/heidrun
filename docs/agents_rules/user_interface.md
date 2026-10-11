@@ -1,6 +1,6 @@
 # User interface of Heidrun
 
-This document says where each part of the window goes and how each part works. The words are defined in [glossary.md](glossary.md). The layout below is the decided target layout. Parts of the current window do not follow it yet.
+This document says where each part of the window goes and how each part works. The words are defined in [glossary.md](glossary.md). The layout below is the layout of the window.
 
 ## Layout
 

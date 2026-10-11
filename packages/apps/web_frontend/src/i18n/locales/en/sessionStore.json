@@ -8,7 +8,5 @@
   "notify.patternFound": "{name}: pattern found",
   "error.agentBlocked": "The agent is waiting for a decision: answer it first.",
   "error.herdrUnreachable": "Herdr does not answer. Run \"herdr\" in a terminal.",
-  "severalAgents_one": "{count} agent · {where}",
-  "severalAgents_other": "{count} agents · {where}",
   "outputSent": "Output sent to {name}"
 }
