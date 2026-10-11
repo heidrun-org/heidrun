@@ -21,14 +21,21 @@ describe("QuotaSummary", () => {
     expect(wrapper.get(".percent").text()).toBe("60%");
   });
 
-  it("hides the subscription in the status bar and shows it on the right of the popover title", async () => {
+  it("shows the subscription in the popover and not in the status bar, and does not repeat the name of the account", async () => {
     const quota: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [] };
     const wrapper = mount(QuotaSummary, { props: { quota } });
     await wrapper.trigger("mouseenter");
     expect(wrapper.get(".label").text()).toBe("Codex");
-    expect(wrapper.get(".popover-header .fw-semibold").text()).toBe("Codex");
-    expect(wrapper.get("[data-field=plan]").text()).toBe("Plan prolite");
-    expect(wrapper.get("[data-field=plan-name]").text()).toBe("prolite");
+    expect(wrapper.find(".popover-header").exists()).toBe(false);
+    expect(wrapper.get(".popover [data-field=plan-name]").text()).toBe("prolite");
+    expect(wrapper.get(".popover").text()).not.toContain("Codex");
+  });
+
+  it("shows no subscription row when the account has no subscription", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("mouseenter");
+    expect(wrapper.find("[data-field=plan]").exists()).toBe(false);
+    expect(wrapper.get(".popover").text()).not.toContain("Claude");
   });
 
   it("shows the popover while the mouse pointer is on the item, and hides it when the pointer leaves", async () => {

@@ -13,8 +13,6 @@ $input-font-size: var(--font-size);
 $dropdown-font-size: var(--font-size);
 $popover-max-width: 340px;
 $popover-font-size: var(--font-size);
-$popover-header-font-size: var(--font-size);
-$popover-header-color: var(--bs-body-color);
 
 // The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.
 $progress-height: 0.5rem;
@@ -77,7 +75,6 @@ $utilities: (
     class: align-items,
     values: (
       center: center,
-      baseline: baseline,
     ),
   ),
   "gap": (
@@ -120,7 +117,6 @@ $utilities: (
     property: font-weight,
     class: fw,
     values: (
-      normal: 400,
       medium: 500,
       semibold: 600,
     ),
@@ -150,7 +146,6 @@ $utilities: (
     property: color,
     class: text,
     values: (
-      body: var(--bs-body-color),
       primary-emphasis: var(--bs-primary-text-emphasis),
       success-emphasis: var(--bs-success-text-emphasis),
       warning-emphasis: var(--bs-warning-text-emphasis),

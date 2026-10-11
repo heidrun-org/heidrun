@@ -77,7 +77,7 @@ describe("GitStatusSummary", () => {
     };
     const wrapper = mount(GitStatusSummary);
     await wrapper.trigger("mouseenter");
-    expect(wrapper.get(".popover-header").text()).toBe("main*");
+    expect(wrapper.find(".popover-header").exists()).toBe(false);
     expect(wrapper.get("[data-field=upstream]").text()).toBe("origin/main");
     expect(wrapper.get("[data-field=to-download]").text()).toBe("3");
     expect(wrapper.get("[data-field=to-upload]").text()).toBe("11");
@@ -110,13 +110,13 @@ describe("GitStatusSummary", () => {
     { changed: 1, untracked: 0, isStarShown: true },
     { changed: 0, untracked: 1, isStarShown: true },
     { changed: 2, untracked: 3, isStarShown: true },
-  ])("shows the star after the branch in the status bar and in the popover: $changed changed, $untracked untracked", async (testCase) => {
+  ])("shows the star after the branch in the status bar, and does not repeat the branch in the popover: $changed changed, $untracked untracked", async (testCase) => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ changed: testCase.changed, untracked: testCase.untracked }) };
     const wrapper = mount(GitStatusSummary);
     await wrapper.trigger("mouseenter");
     expect(wrapper.get(".branch").find(".dirty").exists()).toBe(testCase.isStarShown);
-    expect(wrapper.get(".popover-header").find(".dirty").exists()).toBe(testCase.isStarShown);
+    expect(wrapper.get(".popover").find(".dirty").exists()).toBe(false);
   });
 
   it("shows or hides the star when the Git state changes", async () => {

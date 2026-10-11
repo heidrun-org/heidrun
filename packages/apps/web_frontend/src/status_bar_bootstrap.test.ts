@@ -43,7 +43,7 @@ describe('the cards of the quotas (QuotaSummary.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('QuotaSummary.vue');
 
 	it('uses the Bootstrap popover, progress bar, and alert classes', () => {
-		for (const className of ['popover', 'popover-arrow', 'popover-header', 'popover-body', 'progress', 'progress-bar', 'alert']) {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'progress', 'progress-bar', 'alert']) {
 			expect(sourceText).toContain(className);
 		}
 	});
@@ -59,7 +59,7 @@ describe('the card of the git branch (GitStatusSummary.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitStatusSummary.vue');
 
 	it('uses the Bootstrap popover classes', () => {
-		for (const className of ['popover', 'popover-arrow', 'popover-header', 'popover-body']) {
+		for (const className of ['popover', 'popover-arrow', 'popover-body']) {
 			expect(sourceText).toContain(className);
 		}
 	});

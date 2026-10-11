@@ -75,15 +75,13 @@ function formatCost(cost: number) {
     <span v-if="ringWindow" class="mono percent">{{ Math.round(ringWindow.percent) }}<span class="unit">%</span></span>
     <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip">
       <div class="popover-arrow position-absolute ms-3"></div>
-      <div class="popover-header d-flex justify-content-between align-items-baseline gap-3">
-        <span class="fw-semibold">{{ accountName }}</span>
-        <span v-if="planName" class="fw-normal text-body-secondary" data-field="plan">
-          {{ t("statusBar.plan") }} <span class="fw-medium text-body" data-field="plan-name">{{ planName }}</span>
-        </span>
-      </div>
       <div class="popover-body d-flex flex-column gap-3">
+        <div v-if="planName" class="d-flex justify-content-between gap-3" data-field="plan">
+          <span class="text-body-secondary">{{ t("statusBar.plan") }}</span>
+          <span data-field="plan-name">{{ planName }}</span>
+        </div>
         <div v-for="(w, index) in quota.windows" :key="w.id" class="d-flex flex-column gap-2" data-field="window">
-          <div class="d-flex justify-content-between">
+          <div class="d-flex justify-content-between gap-3">
             <span>{{ w.name }}</span>
             <span :class="LEVEL_CLASSES[gaugeLevel(w.percent)].text">{{ Math.round(w.percent) }} %</span>
           </div>
@@ -107,7 +105,7 @@ function formatCost(cost: number) {
               :title="t('statusBar.expectedNow')"
             ></span>
           </div>
-          <div v-if="w.resetsAt" class="d-flex justify-content-between text-body-secondary">
+          <div v-if="w.resetsAt" class="d-flex justify-content-between gap-3 text-body-secondary">
             <span>{{ t("statusBar.resetsAt", { time: clockTime(w.resetsAt) }) }}</span>
             <span v-if="paces[index]?.runsOutAt" class="fw-medium text-danger-emphasis">
               {{ t("statusBar.runsOut", { time: clockTime(paces[index]?.runsOutAt) }) }}
@@ -118,7 +116,7 @@ function formatCost(cost: number) {
             <div>{{ paceText(paces[index]!) }}</div>
           </div>
         </div>
-        <div v-if="quota.cost" class="d-flex justify-content-between">
+        <div v-if="quota.cost" class="d-flex justify-content-between gap-3">
           <span>{{ t("statusBar.estimatedCost") }}</span>
           <span>{{ formatCost(quota.cost) }}</span>
         </div>
