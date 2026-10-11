@@ -52,7 +52,7 @@ beforeEach(() => {
 });
 
 describe("Sidebar without the list of workspaces", () => {
-  it("shows no workspace, no heading Workspaces, and no plus button for a new workspace: the workspace button of the tab bar has them", async () => {
+  it("shows no workspace, no heading Workspaces, and no plus button for a new workspace: the workspace status bar section has them", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.text()).not.toContain("heidrun");
     expect(wrapper.text()).not.toContain("teamwright");

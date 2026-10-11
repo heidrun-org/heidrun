@@ -70,6 +70,10 @@ One part of the status bar. It shows one piece of information, for example the u
 
 A small card that opens above a status bar section. It gives more detail about that section.
 
+### Workspace status bar section
+
+The first status bar section, at the left end of the status bar. It shows the status dot and the name of the selected workspace. Its information card gives the details of the selected workspace, and lists the workspaces to select, rename, close, move, or create.
+
 ## Rules
 
 - The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.

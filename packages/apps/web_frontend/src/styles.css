@@ -163,6 +163,8 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 .dot.done { background: var(--done); }
 .dot.unknown { background: var(--muted); }
 .dot.process { background: var(--idle); }
+/* A hollow ring: no agent runs in the workspace. */
+.dot.quiet { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
 .dot.pulse { animation: pulse-once 1.2s ease-out 1; }
 
 .t-working { color: var(--working); }

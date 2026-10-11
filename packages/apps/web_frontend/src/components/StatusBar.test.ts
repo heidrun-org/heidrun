@@ -21,7 +21,7 @@ async function mountStatusBar() {
   claudeLink.loaded = true;
   claudeLink.installed = true;
   const wrapper = mount(StatusBar, {
-    global: { stubs: { GitStatusSummary: true, AgentStatusSummary: true } },
+    global: { stubs: { GitStatusSummary: true, AgentStatusSummary: true, WorkspaceStatusSummary: true } },
   });
   return { wrapper, settings, claudeLink };
 }
@@ -32,6 +32,16 @@ beforeEach(() => {
 });
 
 describe("StatusBar", () => {
+  it("starts with the workspace status bar section, before the quotas, and separates it from the next section", async () => {
+    const { wrapper, settings } = await mountStatusBar();
+    settings.ownedAgents = ["codex"];
+    await nextTick();
+    const children = Array.from(wrapper.get("footer").element.children);
+    expect(children[0].tagName.toLowerCase()).toBe("workspace-status-summary-stub");
+    expect(children[1].classList.contains("sep")).toBe(true);
+    expect(children[2].classList.contains("quota")).toBe(true);
+  });
+
   it("shows no quota when no coding agent is switched on", async () => {
     const { wrapper } = await mountStatusBar();
     expect(wrapper.findAll(".quota")).toHaveLength(0);

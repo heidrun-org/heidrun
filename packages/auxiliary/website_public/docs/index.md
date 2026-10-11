@@ -13,7 +13,7 @@ hero:
       link: /about
 features:
   - title: One work window
-    details: A workspace button and a tab bar above the panes, and the queue of agents that are blocked or finished in the left sidebar.
+    details: A tab bar above the panes, the workspace selector in the status bar, and the queue of agents that are blocked or finished in the left sidebar.
   - title: Real terminals
     details: Each pane shows the real Herdr terminal, so Claude Code, Codex, and the colors look the same as in Herdr.
   - title: Macros
