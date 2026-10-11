@@ -11,6 +11,14 @@ $enable-rfs: false;
 $input-font-family: inherit;
 $input-font-size: var(--font-size);
 $dropdown-font-size: var(--font-size);
+$popover-max-width: 340px;
+$popover-font-size: var(--font-size);
+
+// The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.
+$progress-height: 0.5rem;
+$alert-padding-y: 0.5rem;
+$alert-padding-x: 0.75rem;
+$alert-margin-bottom: 0;
 
 // The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
 // does not add the blue glow of Bootstrap to it.
@@ -31,6 +39,7 @@ $utilities: (
     class: justify-content,
     values: (
       center: center,
+      between: space-between,
     ),
   ),
   "border": (
@@ -39,12 +48,26 @@ $utilities: (
       0: 0,
     ),
   ),
+  "border-top": (
+    property: border-top,
+    class: border-top,
+    values: (
+      null: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color),
+    ),
+  ),
   "display": (
     property: display,
     class: d,
     values: (
       block: block,
       flex: flex,
+    ),
+  ),
+  "flex-direction": (
+    property: flex-direction,
+    class: flex,
+    values: (
+      column: column,
     ),
   ),
   "align-items": (
@@ -59,6 +82,14 @@ $utilities: (
     class: gap,
     values: (
       2: 0.5rem,
+      3: 1rem,
+    ),
+  ),
+  "margin-start": (
+    property: margin-left,
+    class: ms,
+    values: (
+      3: 1rem,
     ),
   ),
   "margin-end": (
@@ -75,12 +106,34 @@ $utilities: (
       3: 1rem,
     ),
   ),
+  "padding-top": (
+    property: padding-top,
+    class: pt,
+    values: (
+      2: 0.5rem,
+    ),
+  ),
   "font-weight": (
     property: font-weight,
     class: fw,
     values: (
       medium: 500,
       semibold: 600,
+    ),
+  ),
+  "text-align": (
+    property: text-align,
+    class: text,
+    values: (
+      start: left,
+      end: right,
+    ),
+  ),
+  "word-wrap": (
+    property: word-wrap word-break,
+    class: text,
+    values: (
+      break: break-word,
     ),
   ),
   "white-space": (
@@ -95,8 +148,20 @@ $utilities: (
     class: text,
     values: (
       primary-emphasis: var(--bs-primary-text-emphasis),
+      success-emphasis: var(--bs-success-text-emphasis),
+      warning-emphasis: var(--bs-warning-text-emphasis),
       danger-emphasis: var(--bs-danger-text-emphasis),
       body-secondary: var(--bs-secondary-color),
+    ),
+  ),
+  "background-color": (
+    property: background-color,
+    class: bg,
+    values: (
+      success: var(--bs-success),
+      warning: var(--bs-warning),
+      danger: var(--bs-danger),
+      body-emphasis: var(--bs-emphasis-color),
     ),
   ),
   "position": (
@@ -104,6 +169,30 @@ $utilities: (
     class: position,
     values: (
       fixed: fixed,
+      absolute: absolute,
+      relative: relative,
+    ),
+  ),
+  "top": (
+    property: top,
+    class: top,
+    values: (
+      0: 0,
+    ),
+  ),
+  "bottom": (
+    property: bottom,
+    class: bottom,
+    values: (
+      0: 0,
+      100: 100%,
+    ),
+  ),
+  "height": (
+    property: height,
+    class: h,
+    values: (
+      auto: auto,
     ),
   ),
   "overflow-y": (
@@ -123,6 +212,9 @@ $utilities: (
   @import "bootstrap/scss/close";
   @import "bootstrap/scss/dropdown";
   @import "bootstrap/scss/modal";
+  @import "bootstrap/scss/popover";
+  @import "bootstrap/scss/progress";
+  @import "bootstrap/scss/alert";
   @import "bootstrap/scss/forms/labels";
   @import "bootstrap/scss/forms/form-text";
   @import "bootstrap/scss/forms/form-control";

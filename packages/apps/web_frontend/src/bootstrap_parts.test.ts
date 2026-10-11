@@ -68,30 +68,51 @@ describe('bootstrap_parts.scss', () => {
 	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|align-items|gap|me|mb|fw|text|position|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|gap|ms|me|mb|pt|fw|text|bg|position|top|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
 			'.justify-content-center',
+			'.justify-content-between',
 			'.border-0',
+			'.border-top',
 			'.d-block',
 			'.d-flex',
+			'.flex-column',
 			'.align-items-center',
 			'.gap-2',
+			'.gap-3',
+			'.ms-3',
 			'.me-auto',
 			'.mb-3',
+			'.pt-2',
 			'.fw-medium',
 			'.fw-semibold',
+			'.text-start',
+			'.text-end',
+			'.text-break',
 			'.text-wrap',
 			'.text-primary-emphasis',
+			'.text-success-emphasis',
+			'.text-warning-emphasis',
 			'.text-danger-emphasis',
 			'.text-body-secondary',
+			'.bg-success',
+			'.bg-warning',
+			'.bg-danger',
+			'.bg-body-emphasis',
 			'.position-fixed',
+			'.position-absolute',
+			'.position-relative',
+			'.top-0',
+			'.bottom-0',
+			'.bottom-100',
+			'.h-auto',
 			'.overflow-y-auto',
 		]);
 	});
 
-	it('has the Bootstrap parts of the dropdown, the modal, the close button, and the form fields', () => {
+	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, and the alert', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label']) {
+		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger']) {
 			expect(cssText).toContain(`${selector} {`);
 		}
 	});

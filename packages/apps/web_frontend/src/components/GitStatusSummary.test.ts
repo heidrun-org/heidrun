@@ -63,7 +63,7 @@ describe("GitStatusSummary", () => {
     expect(mount(GitStatusSummary).find(".git-status").exists()).toBe(false);
   });
 
-  it("lists the details of the repository in the hover card", () => {
+  it("lists the details of the repository in the popover", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = {
       w1: makeStatus({
@@ -76,19 +76,46 @@ describe("GitStatusSummary", () => {
       }),
     };
     const wrapper = mount(GitStatusSummary);
-    expect(wrapper.get(".card-title").text()).toBe("main*");
-    expect(wrapper.get(".upstream").text()).toBe("origin/main");
-    expect(wrapper.get(".to-download").text()).toBe("3");
-    expect(wrapper.get(".to-upload").text()).toBe("11");
-    expect(wrapper.get(".changed").text()).toBe("4");
-    expect(wrapper.get(".untracked").text()).toBe("2");
-    expect(wrapper.get(".last-subject").text()).toBe("Fix the status bar");
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover-header").exists()).toBe(false);
+    expect(wrapper.get("[data-field=upstream]").text()).toBe("origin/main");
+    expect(wrapper.get("[data-field=to-download]").text()).toBe("3");
+    expect(wrapper.get("[data-field=to-upload]").text()).toBe("11");
+    expect(wrapper.get("[data-field=changed]").text()).toBe("4");
+    expect(wrapper.get("[data-field=untracked]").text()).toBe("2");
+    expect(wrapper.get("[data-field=last-subject]").text()).toBe("Fix the status bar");
   });
 
-  it("says there is no remote branch when the branch has no upstream", () => {
+  it("opens the popover with a click on the item, and closes it with the next click", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.trigger("mouseenter");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("closes the popover with the key Escape", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary, { attachTo: document.body });
+    await wrapper.trigger("click");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("says there is no remote branch when the branch has no upstream", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ upstream: null }) };
-    expect(mount(GitStatusSummary).get(".upstream").text()).toBe("none");
+    const wrapper = mount(GitStatusSummary);
+    await wrapper.trigger("click");
+    expect(wrapper.get("[data-field=upstream]").text()).toBe("none");
   });
 
   it.each([
@@ -96,12 +123,13 @@ describe("GitStatusSummary", () => {
     { changed: 1, untracked: 0, isStarShown: true },
     { changed: 0, untracked: 1, isStarShown: true },
     { changed: 2, untracked: 3, isStarShown: true },
-  ])("shows the star after the branch in the status bar and in the hover card: $changed changed, $untracked untracked", (testCase) => {
+  ])("shows the star after the branch in the status bar, and does not repeat the branch in the popover: $changed changed, $untracked untracked", async (testCase) => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({ changed: testCase.changed, untracked: testCase.untracked }) };
     const wrapper = mount(GitStatusSummary);
+    await wrapper.trigger("click");
     expect(wrapper.get(".branch").find(".dirty").exists()).toBe(testCase.isStarShown);
-    expect(wrapper.get(".card-title").find(".dirty").exists()).toBe(testCase.isStarShown);
+    expect(wrapper.get(".popover").find(".dirty").exists()).toBe(false);
   });
 
   it("shows or hides the star when the Git state changes", async () => {

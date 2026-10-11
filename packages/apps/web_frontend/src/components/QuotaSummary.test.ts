@@ -21,12 +21,73 @@ describe("QuotaSummary", () => {
     expect(wrapper.get(".percent").text()).toBe("60%");
   });
 
-  it("hides the subscription in the status bar and shows it on the right of the hover card title", () => {
-    const quota: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [] };
+  it("shows neither the subscription nor the name of the account in the popover, because the item already shows the name", async () => {
+    const quota: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [{ id: "week", name: "Week", percent: 44 }] };
     const wrapper = mount(QuotaSummary, { props: { quota } });
+    await wrapper.trigger("click");
     expect(wrapper.get(".label").text()).toBe("Codex");
-    expect(wrapper.get(".card-title").text()).toBe("Codex");
-    expect(wrapper.get(".card-plan-name").text()).toBe("prolite");
+    expect(wrapper.get(".popover").text()).toContain("Week");
+    expect(wrapper.get(".popover").text()).not.toContain("Codex");
+    expect(wrapper.get(".popover").text()).not.toContain("prolite");
+    expect(wrapper.get(".popover").text()).not.toContain("Plan");
+  });
+
+  it("opens the popover with a click on the item, and closes it with the next click", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await wrapper.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("does not open the popover when the mouse pointer only moves over the item", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("mouseenter");
+    await wrapper.trigger("mouseover");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("keeps the popover open when the user clicks inside it", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("click");
+    await wrapper.get(".popover").trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("opens the popover with the keys Enter and Space when the item has the keyboard focus", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("keydown", { key: "Enter" });
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await wrapper.trigger("keydown", { key: " " });
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.trigger("keydown", { key: " " });
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("closes the popover with the key Escape", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude }, attachTo: document.body });
+    await wrapper.trigger("click");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("closes the popover when the user presses the mouse outside the item", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude }, attachTo: document.body });
+    await wrapper.trigger("click");
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("closes the popover when the keyboard focus leaves the item", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("click");
+    await wrapper.trigger("focusout");
+    expect(wrapper.find(".popover").exists()).toBe(false);
   });
 
   it("fills the ring in proportion to the percentage", () => {
@@ -36,11 +97,21 @@ describe("QuotaSummary", () => {
     expect(Number(arc.attributes("stroke-dashoffset"))).toBeCloseTo(length * 0.4);
   });
 
-  it("lists every window and the cost in the hover card", () => {
+  it("lists every window and the cost in the popover", async () => {
     const wrapper = mount(QuotaSummary, { props: { quota: claude } });
-    expect(wrapper.findAll(".card-window")).toHaveLength(2);
-    expect(wrapper.get(".card").text()).toContain("Week");
-    expect(wrapper.get(".card").text()).toContain("60 %");
+    await wrapper.trigger("click");
+    expect(wrapper.findAll("[data-field=window]")).toHaveLength(2);
+    expect(wrapper.get(".popover").text()).toContain("Week");
+    expect(wrapper.get(".popover").text()).toContain("60 %");
+  });
+
+  it("draws the usage of each window with a Bootstrap progress bar, in the color of its level", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    await wrapper.trigger("click");
+    const barList = wrapper.findAll(".progress-bar");
+    expect(barList.map((bar) => bar.attributes("style"))).toEqual(["width: 25%;", "width: 60%;"]);
+    expect(barList.map((bar) => bar.classes().filter((name) => name.startsWith("bg-")))).toEqual([["bg-success"], ["bg-warning"]]);
+    expect(wrapper.findAll(".progress").map((progress) => progress.attributes("aria-valuenow"))).toEqual(["25", "60"]);
   });
 
   it("shows the first window in the ring when there is no week", () => {
@@ -96,7 +167,7 @@ describe("quotaPace", () => {
 });
 
 describe("QuotaSummary pace", () => {
-  it("shows the pace box and the expected-usage mark in the hover card", () => {
+  it("shows the pace as a Bootstrap alert, and the expected-usage mark on the progress bar, in the popover", async () => {
     const nowSeconds = Date.now() / 1000;
     const quota: QuotaBlock = {
       provider: "claude",
@@ -104,8 +175,9 @@ describe("QuotaSummary pace", () => {
       windows: [{ id: "session", name: "5 h session", percent: 90, resetsAt: nowSeconds + 150 * 60 }],
     };
     const wrapper = mount(QuotaSummary, { props: { quota } });
-    expect(wrapper.find(".pace-crit").exists()).toBe(true);
-    expect(wrapper.find(".tick").exists()).toBe(true);
+    await wrapper.trigger("click");
+    expect(wrapper.get("[data-field=pace]").classes()).toEqual(["alert", "alert-danger"]);
+    expect(wrapper.find(".progress [data-field=expected-usage]").exists()).toBe(true);
   });
 });
 
