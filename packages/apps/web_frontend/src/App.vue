@@ -25,6 +25,7 @@ import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, visiblePinnedPanes } from "./stores/pinned_panes";
 import { search } from "./stores/search";
+import { openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
@@ -195,8 +196,7 @@ function onKey(e: KeyboardEvent) {
         const text = pane ? selectionReaders.get(pane.pane_id)?.() : "";
         if (pane && text) {
           pinText(text, pane);
-          settings.rightOpen = true;
-          settings.rightSidebarSection = "notes";
+          openSidebarSection("notes");
         } else toast(t("app.selectTextFirst"));
       });
     case "KeyF":

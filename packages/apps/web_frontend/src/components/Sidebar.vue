@@ -21,10 +21,16 @@ import {
   sidebarWorkspaces as workspaces,
 } from "../stores/session";
 import { statusLabel, agentKind, ago, paneName } from "../lib/format";
+import ActionsPanel from "./ActionsPanel.vue";
 import ConfirmButton from "./ConfirmButton.vue";
+import GitPanel from "./GitPanel.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import NavigationBar from "./NavigationBar.vue";
+import { currentForge } from "../stores/git";
+import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
+import { openSidebarSection } from "../stores/sidebar_sections";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
 import { onNewPaneClick } from "../stores/newPane";
@@ -50,6 +56,26 @@ function agentsIn(wsId: string) {
     counts.set(k, (counts.get(k) ?? 0) + 1);
   }
   return [...counts].map(([kind, n]) => ({ kind, n }));
+}
+
+/** The number of scripts of the selected workspace that are running. */
+const runningScripts = computed(() => {
+  const workspaceId = state.selectedWorkspaceId;
+  const project = currentProject.value;
+  if (workspaceId === null || !project) {
+    return 0;
+  }
+  return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
+});
+
+/** The buttons of the navigation bar of the left sidebar: the Scripts sidebar section, then the Git sidebar section. */
+const sidebarSections = computed(() => [
+  { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
+  { id: "git", label: "Git", badge: currentForge.value?.requests.length ?? 0 },
+]);
+
+function selectSidebarSection(id: string) {
+  openSidebarSection(id === "git" ? "git" : "actions");
 }
 
 /** Index of the first workspace without an agent, where the divider goes. */
@@ -235,6 +261,18 @@ async function createWorkspace() {
         </div>
       </template>
     </section>
+    <!-- Transition layout: the navigation bar and its sidebar section sit under the lists, which leave in later stages. -->
+    <section class="sidebar-sections">
+      <NavigationBar
+        class="left-navigation-bar"
+        :sidebar-sections="sidebarSections"
+        :selected-id="settings.leftSidebarSection"
+        :label="t('sidebar.navigationBarLabel')"
+        @select="selectSidebarSection"
+      />
+      <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
+      <GitPanel v-else />
+    </section>
     <!-- At the bottom: cards come and go without moving the workspaces list. -->
     <section v-if="attention.length" class="group attention">
       <div class="eyebrow pad">{{ t("sidebar.toHandle") }}</div>
@@ -283,6 +321,8 @@ async function createWorkspace() {
   display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
 }
 .group { display: flex; flex-direction: column; gap: 8px; }
+.sidebar-sections { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
+.left-navigation-bar { margin: 0 4px; }
 .group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }

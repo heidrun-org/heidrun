@@ -7,6 +7,8 @@
   "workspaceTitle": "Double-click to rename · drag to move",
   "newWorkspaceTitle": "Create a new workspace",
   "tabs": "Tabs",
+  "navigationBarLabel": "Left sidebar",
+  "sidebarSection.actions": "Scripts",
   "newPaneName": "New name of the pane (empty to go back to the automatic name)",
   "paneTitle": "{name} · double-click to rename",
   "terminalLower": "terminal",

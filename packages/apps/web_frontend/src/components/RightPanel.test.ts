@@ -5,8 +5,6 @@ import { settings } from "../stores/settings";
 
 const stubs = {
   Inspector: true,
-  ActionsPanel: true,
-  GitPanel: true,
   NotesPanel: true,
 };
 
@@ -15,33 +13,45 @@ describe("RightPanel", () => {
     settings.rightSidebarSection = "pane";
   });
 
-  it("shows one button for each sidebar section, in the navigation bar", () => {
+  it("shows the buttons Pane and Notes in the navigation bar, and not the buttons Scripts and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".navigation-bar").attributes("role")).toBe("tablist");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["Pane", "Scripts", "Git", "Notes"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["Pane", "Notes"]);
   });
 
   it("does not call a button of the navigation bar a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("title"))).toEqual(
-      Array(4).fill("Show this sidebar section"),
+      Array(2).fill("Show this sidebar section"),
     );
   });
 
   it("marks only the selected sidebar section as active", async () => {
-    settings.rightSidebarSection = "git";
+    settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.classes("on"))).toEqual([false, false, true, false]);
-    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "true", "false"]);
+    expect(buttons.map((button) => button.classes("on"))).toEqual([false, true]);
+    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true"]);
   });
 
-  it("selects a sidebar section when the person clicks its button", async () => {
+  it("shows the sidebar section Pane first, and the sidebar section Notes after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".navigation-bar button")[3].trigger("click");
+    expect(wrapper.find("inspector-stub").exists()).toBe(true);
+    expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
+    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
     expect(settings.rightSidebarSection).toBe("notes");
-    expect(wrapper.findAll(".navigation-bar button")[3].classes("on")).toBe(true);
+    expect(wrapper.findAll(".navigation-bar button")[1].classes("on")).toBe(true);
+    expect(wrapper.find("inspector-stub").exists()).toBe(false);
+    expect(wrapper.find("notes-panel-stub").exists()).toBe(true);
+  });
+
+  it("shows the sidebar section Pane again after a click on its button", async () => {
+    settings.rightSidebarSection = "notes";
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.findAll(".navigation-bar button")[0].trigger("click");
+    expect(settings.rightSidebarSection).toBe("pane");
+    expect(wrapper.find("inspector-stub").exists()).toBe(true);
   });
 });
