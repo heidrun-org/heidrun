@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FONT_DEFAULT, FONT_MAX, FONT_MIN, FONTS, fontStack, resetZoom, settings, zoom, zoomFactor } from "./settings";
 
 const setZoom = vi.hoisted(() => vi.fn(async () => {}));
+const invoke = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom }) }));
+vi.mock("@tauri-apps/api/core", () => ({ invoke }));
 
 beforeEach(() => {
   settings.fontId = "geist";
@@ -62,6 +64,30 @@ describe("settings", () => {
 
   it("shows the status item in the macOS menu bar by default", () => {
     expect(settings.showStatusItem).toBe(true);
+  });
+});
+
+describe("keep agents running after quit", () => {
+  it("is off by default, so quitting Heidrun stops its Herdr session", () => {
+    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
+  });
+
+  it("is given to the Rust side at the start and at each change", async () => {
+    invoke.mockClear();
+    settings.keepAgentsRunningAfterQuit = true;
+    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: true }));
+    settings.keepAgentsRunningAfterQuit = false;
+    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: false }));
+  });
+
+  it("is given to the Rust side when the application starts again with the setting on", async () => {
+    settings.keepAgentsRunningAfterQuit = true;
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").keepAgentsRunningAfterQuit).toBe(true));
+    invoke.mockClear();
+    vi.resetModules();
+    await import("./settings");
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith("set_keep_agents_running", { isKeeping: true }));
+    settings.keepAgentsRunningAfterQuit = false;
   });
 });
 

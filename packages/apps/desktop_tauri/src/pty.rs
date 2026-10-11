@@ -9,7 +9,7 @@ use std::io::{Read, Write};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
 
-use crate::herdr::herdr_bin;
+use crate::herdr::{command_arguments, herdr_bin};
 
 struct Session {
     master: Box<dyn MasterPty + Send>,
@@ -33,6 +33,15 @@ struct ExitEvent<'a> {
     id: &'a str,
 }
 
+/// The arguments of the command that attaches to the terminal `terminal_id`, in the session that Heidrun uses.
+fn attach_arguments(terminal_id: &str, takeover: bool) -> Vec<String> {
+    let mut arguments = vec!["terminal", "attach", terminal_id];
+    if takeover {
+        arguments.push("--takeover");
+    }
+    command_arguments(&arguments)
+}
+
 #[tauri::command]
 pub fn pty_spawn(
     app: AppHandle,
@@ -48,10 +57,7 @@ pub fn pty_spawn(
         .map_err(|e| e.to_string())?;
 
     let mut cmd = CommandBuilder::new(herdr_bin());
-    cmd.args(["terminal", "attach", terminal_id.as_str()]);
-    if takeover {
-        cmd.arg("--takeover");
-    }
+    cmd.args(attach_arguments(&terminal_id, takeover));
     cmd.env("TERM", "xterm-256color");
     cmd.env("COLORTERM", "truecolor");
     if let Some(home) = dirs::home_dir() {
@@ -116,4 +122,20 @@ pub fn pty_kill(state: State<'_, PtyState>, id: String) -> Result<(), String> {
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_attach_command_uses_the_heidrun_session() {
+        let _guard = crate::herdr::ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        crate::herdr::clear_env();
+        assert_eq!(attach_arguments("term_1", false), vec!["--session", "heidrun", "terminal", "attach", "term_1"]);
+        assert_eq!(
+            attach_arguments("term_1", true),
+            vec!["--session", "heidrun", "terminal", "attach", "term_1", "--takeover"]
+        );
+    }
 }

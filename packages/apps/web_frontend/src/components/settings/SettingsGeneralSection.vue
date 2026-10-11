@@ -85,6 +85,13 @@ const timeExample = computed(() => {
       </button>
     </div>
     <div class="keys">{{ t("settingsGeneral.workingDaysHelp") }}</div>
+
+    <h4>{{ t("settingsGeneral.quitTitle") }}</h4>
+    <label class="check">
+      <input v-model="settings.keepAgentsRunningAfterQuit" type="checkbox" />
+      <span>{{ t("settingsGeneral.keepAgentsRunning") }}</span>
+    </label>
+    <div class="keys">{{ t("settingsGeneral.keepAgentsRunningHelp") }}</div>
   </div>
 </template>
 
@@ -99,4 +106,6 @@ h4:first-child { margin-top: 0; }
 }
 .item:hover { background: var(--hover); }
 .label { flex: 1; }
+.check { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); color: var(--text-2); }
+.check input { accent-color: var(--done); }
 </style>

@@ -28,11 +28,11 @@ async fn herdr_request(method: String, params: Option<Value>) -> Result<Value, S
     herdr::request(&method, params.unwrap_or_else(|| json!({}))).await
 }
 
-/// Runs the herdr CLI (used for `pane run`, which handles bracketed paste for us).
+/// Runs the herdr CLI (used for `pane run`, which handles bracketed paste for us), in the session that Heidrun uses.
 #[tauri::command]
 async fn herdr_cli(args: Vec<String>) -> Result<String, String> {
     let out = tokio::process::Command::new(herdr::herdr_bin())
-        .args(&args)
+        .args(herdr::command_arguments_from(&args))
         .output()
         .await
         .map_err(|e| format!("herdr_cli_failed: {e}"))?;
@@ -57,10 +57,9 @@ async fn herdr_server_start() -> Result<String, String> {
         return Ok("already_running".into());
     }
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
-    let bin = herdr::herdr_bin();
     let mut cmd = std::process::Command::new(shell);
     cmd.arg("-lc")
-        .arg(format!("exec '{}' server", bin.display().to_string().replace('\'', "'\\''")))
+        .arg(herdr::server_shell_command(&herdr::herdr_bin()))
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
@@ -69,7 +68,8 @@ async fn herdr_server_start() -> Result<String, String> {
     }
     #[cfg(unix)]
     {
-        // Own process group: the server outlives Heidrun, like `herdr` does.
+        // Own process group: the server is not stopped by a signal sent to Heidrun. Heidrun stops the server itself
+        // when the user quits, unless the user chose "Keep agents running after quit".
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
     }
@@ -188,6 +188,15 @@ fn show_main_window(app: AppHandle) {
     show_main_window_once(&app);
 }
 
+/// The setting "Keep agents running after quit": when true, quitting Heidrun does not stop the Herdr session `heidrun`.
+/// The web page sends the value at the start and at each change. Until then the value is false, the default.
+static KEEP_AGENTS_RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn set_keep_agents_running(is_keeping: bool) {
+    KEEP_AGENTS_RUNNING.store(is_keeping, std::sync::atomic::Ordering::Relaxed);
+}
+
 /// "Quitter sans enregistrer": the user chose, the app leaves.
 #[tauri::command]
 fn quit_now(app: AppHandle) {
@@ -245,6 +254,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             set_unsaved,
+            set_keep_agents_running,
             quit_now,
             show_main_window,
             status_item::status_item_update,
@@ -309,12 +319,16 @@ pub fn run() {
         .expect("error while running Heidrun")
         .run(|app, event| {
             // ⌘Q with unsaved files: the app stays and shows them.
-            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = &event {
                 if code.is_none() && UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
                     api.prevent_exit();
                     use tauri::Emitter;
                     let _ = app.emit("quit-blocked", ());
                 }
+            }
+            // The app leaves for good: the Herdr session of Heidrun stops with it, like the processes of a normal macOS app.
+            if let tauri::RunEvent::Exit = event {
+                herdr::stop_session_on_quit(KEEP_AGENTS_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
             }
         });
 }

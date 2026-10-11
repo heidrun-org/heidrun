@@ -9,5 +9,8 @@
   "timeHelp": "Automatic follows the language: 12-hour in English, 24-hour in French.",
   "workingDaysTitle": "Working days",
   "workingDaysHelp": "Pick the days you work. The pace of the weekly limit assumes you use the agent evenly across these days, and not at all on the others. Keep at least one day.",
-  "workingDaysLabel": "Working days of the week"
+  "workingDaysLabel": "Working days of the week",
+  "quitTitle": "Quit",
+  "keepAgentsRunning": "Keep agents running after quit",
+  "keepAgentsRunningHelp": "Off: when you quit Heidrun, Heidrun stops its Herdr session, and the agents stop. On: the agents continue to run, and Heidrun connects to the same session at the next start. The default Herdr session of your terminal is never stopped."
 }

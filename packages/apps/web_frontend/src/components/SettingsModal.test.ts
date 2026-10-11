@@ -30,6 +30,20 @@ describe("SettingsModal: sections", () => {
   });
 });
 
+describe("SettingsModal: keep agents running after quit", () => {
+  it("shows a checkbox in the section General, switched off by default", async () => {
+    const wrapper = await mountSettings();
+    const row = wrapper.findAll(".check").find((candidate) => candidate.text() === "Keep agents running after quit");
+    expect(row).toBeDefined();
+    const checkbox = row!.find("input[type=checkbox]");
+    expect((checkbox.element as HTMLInputElement).checked).toBe(false);
+    await checkbox.setValue(true);
+    const { settings } = await import("../stores/settings");
+    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
+    wrapper.unmount();
+  });
+});
+
 describe("SettingsModal: status item", () => {
   it("shows a checkbox for the status item in the section Notifications, switched on by default", async () => {
     const wrapper = await mountSettings();
