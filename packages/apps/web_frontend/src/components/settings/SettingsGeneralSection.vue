@@ -123,7 +123,10 @@ h4:first-child { margin-top: 0; }
 .checkRow { position: relative; display: flex; align-items: center; gap: 6px; }
 .check { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); color: var(--text-2); }
 .check input { accent-color: var(--done); }
-.helpButton { width: 24px; height: 24px; border-radius: 50%; color: var(--muted); font-size: var(--font-size); cursor: help; }
+.helpButton {
+  width: 24px; height: 24px; border-radius: 50%; background: transparent; border: 0; color: var(--muted);
+  font-size: var(--font-size); cursor: help;
+}
 .helpButton:hover, .helpButton:focus-visible { color: var(--text); }
 .tip {
   display: none; position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 2; width: min(340px, 100%); padding: 10px 12px;
