@@ -36,7 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="closeNewCustomScriptModal()">
-    <form class="modal" role="dialog" :aria-label="t('newCustomScriptModal.dialogLabel')" @submit.prevent="create">
+    <form class="dialog" role="dialog" :aria-label="t('newCustomScriptModal.dialogLabel')" @submit.prevent="create">
       <header>
         <h2>{{ t("newCustomScriptModal.title") }}</h2>
         <button type="button" :title="t('newCustomScriptModal.closeTitle')" class="close" :aria-label="t('newCustomScriptModal.closeLabel')" @click="closeNewCustomScriptModal()"><Icon name="x-lg" /></button>
@@ -69,7 +69,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
-.modal {
+.dialog {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

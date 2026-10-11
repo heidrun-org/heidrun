@@ -52,7 +52,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div v-if="view !== null" class="overlay" @mousedown.self="closeSkillView">
-    <div ref="dialog" class="modal" role="dialog" aria-labelledby="skill-title" tabindex="-1">
+    <div ref="dialog" class="dialog" role="dialog" aria-labelledby="skill-title" tabindex="-1">
       <header class="top">
         <h2 id="skill-title">{{ view.name }}</h2>
         <span class="origin">{{ view.originLabel }}</span>
@@ -102,7 +102,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 :where(button) { background: transparent; border: 0; color: inherit; font: inherit; }
 .overlay { position: fixed; inset: 0; z-index: 61; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.modal {
+.dialog {
   width: min(1100px, 100%); height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); outline: none;
 }
