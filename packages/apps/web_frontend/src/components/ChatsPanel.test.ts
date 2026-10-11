@@ -372,7 +372,7 @@ describe("ChatsPanel", () => {
     expect(groups[0].classes()).toContain("btn-group");
     const buttons = groups[0].findAll("button");
     expect(buttons.map((button) => button.attributes("title"))).toEqual(["Open in the Claude app", "Open in Heidrun"]);
-    expect(buttons.map((button) => button.find(".bi").classes()[1])).toEqual(["bi-box-arrow-up-right", "bi-terminal"]);
+    expect(buttons.map((button) => button.find(".bi").classes()[1])).toEqual(["bi-claude", "bi-terminal"]);
     expect(wrapper.get("li").get(".chat-title").text()).toBe("Fix the tab bar");
   });
 
@@ -385,6 +385,7 @@ describe("ChatsPanel", () => {
     expect(openUrl).toHaveBeenLastCalledWith("claude://code/c0");
     await wrapper.get("#chats-agent-codex").setValue();
     expect(wrapper.get("li .chat-actions button").attributes("title")).toBe("Open in the Codex app");
+    expect(wrapper.get("li .chat-actions button .bi").classes()).toContain("bi-openai");
     await wrapper.get("li .chat-actions button").trigger("click");
     expect(openUrl).toHaveBeenLastCalledWith("codex://threads/x0");
   });

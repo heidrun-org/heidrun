@@ -75,6 +75,9 @@ const agent = computed<ChatAgent>({
 /** The title of the button that opens a chat in the desktop application of the coding agent of the list. */
 const appTitle = computed(() => t("chatsPanel.openInAppTitle", { app: agentLabel(agent.value) }));
 
+/** The icon of the coding agent of the list, as the tabs show it: Claude has its own icon, and Codex has the icon of OpenAI. */
+const agentIcon = computed(() => (agent.value === "codex" ? "openai" : "claude"));
+
 /** The view of the list: "expanded" gives more air to the rows, and every other saved value gives the compact view. */
 const view = computed<"compact" | "expanded">({
   get: () => (settings.chatsView === "expanded" ? "expanded" : "compact"),
@@ -151,7 +154,7 @@ const VIEWS = [
                 :aria-label="appTitle"
                 @click="openChatInApp(agent, row.chat)"
               >
-                <Icon name="box-arrow-up-right" />
+                <Icon :name="agentIcon" />
               </button>
               <button
                 type="button"
