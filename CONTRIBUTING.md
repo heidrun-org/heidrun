@@ -16,6 +16,16 @@ pnpm install
 pnpm dev
 ```
 
+## Branches
+
+This project uses a simplified form of Gitflow. Gitflow is a way to organize the branches of a Git repository, so that the stable version and the work in progress never mix.
+
+- `main` holds the public stable version. Every commit on `main` is a version that users can install.
+- `dev` holds the public development version. It collects the finished changes before they go to `main`.
+- A feature branch holds one change. It starts from `dev`, and it comes back into `dev` with a pull request.
+
+The full form of Gitflow also has release branches and hotfix branches. This project does not use them. The authoritative source is the original article, [A successful Git branching model](https://nvie.com/posts/a-successful-git-branching-model/), by Vincent Driessen.
+
 ## Make a change
 
 1. Create a branch for the change. Name it after the change and the issue number, for example `fix-sidebar-scroll-42`.
