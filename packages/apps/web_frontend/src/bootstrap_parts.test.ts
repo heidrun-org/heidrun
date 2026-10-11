@@ -68,7 +68,7 @@ describe('bootstrap_parts.scss', () => {
 	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|align-self|gap|ms|me|mb|pt|fw|fst|text|bg|position|top|end|translate|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|align-self|gap|ms|me|my|mb|pt|fw|fst|text|bg|position|top|end|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
 			'.justify-content-center',
 			'.justify-content-between',
@@ -88,6 +88,7 @@ describe('bootstrap_parts.scss', () => {
 			'.ms-3',
 			'.me-2',
 			'.me-auto',
+			'.my-auto',
 			'.mb-3',
 			'.pt-2',
 			'.fw-medium',
@@ -110,9 +111,7 @@ describe('bootstrap_parts.scss', () => {
 			'.position-absolute',
 			'.position-relative',
 			'.top-0',
-			'.top-50',
 			'.end-0',
-			'.translate-middle-y',
 			'.bottom-0',
 			'.bottom-100',
 			'.h-auto',

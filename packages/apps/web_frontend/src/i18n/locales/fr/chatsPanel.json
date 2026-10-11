@@ -57,5 +57,9 @@
   "agoMonths_one": "il y a {count} mois",
   "agoMonths_other": "il y a {count} mois",
   "agoYears_one": "il y a {count} an",
-  "agoYears_other": "il y a {count} ans"
+  "agoYears_other": "il y a {count} ans",
+  "viewLabel": "Affichage de la liste",
+  "viewCompact": "Vue compacte",
+  "viewExpanded": "Vue aérée",
+  "agentUnavailableTitle": "Aucune conversation de cet agent de code dans ce workspace."
 }

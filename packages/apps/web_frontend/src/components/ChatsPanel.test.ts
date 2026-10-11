@@ -40,7 +40,7 @@ function snapshotWith(folder: string) {
 
 /** What the command chats_list answers. */
 function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude?: boolean; codex?: boolean } = {}) {
-  const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] };
+  const meta = { first_at: null, last_at: null, user_messages: 0, first_messages: [], folders: [], issues: [], pull_requests: [], files_written: [] };
   const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1, meta }));
   vi.mocked(invoke).mockResolvedValue({
     root: "/work/app",
@@ -60,6 +60,8 @@ beforeEach(() => {
   chats.claude = [];
   chats.codex = [];
   chats.agent = "claude";
+  settings.chatsAgent = "claude";
+  settings.chatsView = "compact";
   chats.hasMore = { claude: false, codex: false };
   chats.limit = CHAT_LIMITS[0];
   chats.error = null;
@@ -81,36 +83,99 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5 });
   });
 
-  it("shows the selector of the coding agent first, then the title of each conversation of Claude", async () => {
+  it("shows the two groups of radio buttons first, then a separator, then the title of each conversation of Claude", async () => {
     answer(["Fix the tab bar", "Add the Chats sidebar section"], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.element.firstElementChild?.tagName).toBe("SELECT");
+    const header = wrapper.element.firstElementChild as HTMLElement;
+    expect([...header.children].map((child) => child.getAttribute("role"))).toEqual(["group", "group"]);
+    expect(header.nextElementSibling?.getAttribute("role")).toBe("separator");
+    expect(header.nextElementSibling?.nextElementSibling?.tagName).toBe("UL");
     expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
   });
 
-  it("offers Claude and Codex when both have conversations, and shows the titles of Codex after the choice", async () => {
+  it("offers every coding agent in a group of radio buttons, checks Claude, and shows the titles of Codex after the choice", async () => {
     answer(["Fix the tab bar"], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.findAll("option").map((option) => option.text())).toEqual(["Claude", "Codex"]);
-    await wrapper.get("select").setValue("codex");
+    const group = wrapper.get('[aria-label="Coding agent"]');
+    expect(group.classes()).toContain("btn-group");
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Claude", "Codex"]);
+    const inputs = group.findAll("input");
+    expect(inputs.map((input) => input.attributes("type"))).toEqual(["radio", "radio"]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([true, false]);
+    await inputs[1].setValue();
     expect(shownTitles(wrapper)).toEqual(["Describe image"]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true]);
   });
 
-  it("offers only Codex when only Codex has conversations", async () => {
+  it("saves the coding agent that the developer chose, and starts with it the next time", async () => {
+    answer(["Fix the tab bar"], ["Describe image"]);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    await wrapper.get("#chats-agent-codex").setValue();
+    expect(settings.chatsAgent).toBe("codex");
+    expect(chats.agent).toBe("codex");
+  });
+
+  it("shows both coding agents, and disables the one that has no conversation, when only Codex has conversations", async () => {
     answer([], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.findAll("option").map((option) => option.text())).toEqual(["Codex"]);
+    const inputs = wrapper.get('[aria-label="Coding agent"]').findAll("input");
+    expect(inputs.map((input) => input.attributes("disabled") !== undefined)).toEqual([true, false]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true]);
+    expect(wrapper.get('label[for="chats-agent-claude"]').attributes("title")).toBe(
+      "No chat of this coding agent in this workspace.",
+    );
     expect(shownTitles(wrapper)).toEqual(["Describe image"]);
   });
 
-  it("tells that no chat was found, and shows no selector, when neither coding agent has a conversation", async () => {
+  it("offers the expanded view and the compact view in a group of radio buttons with an icon each, and starts compact", async () => {
+    answer(["Fix the tab bar"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const group = wrapper.get('[aria-label="View of the list"]');
+    expect(group.classes()).toContain("btn-group");
+    const inputs = group.findAll("input");
+    expect(inputs.map((input) => input.attributes("aria-label"))).toEqual(["Expanded view", "Compact view"]);
+    expect(group.findAll("label").map((label) => label.attributes("title"))).toEqual(["Expanded view", "Compact view"]);
+    expect(group.findAll("label .bi").map((icon) => icon.classes()[1])).toEqual(["bi-view-stacked", "bi-list"]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true]);
+    expect(wrapper.get("ul").classes()).not.toContain("is-expanded");
+  });
+
+  it("gives more air to the rows in the expanded view, and saves the view", async () => {
+    answer(["Fix the tab bar"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    await wrapper.get("#chats-view-expanded").setValue();
+    expect(wrapper.get("ul").classes()).toContain("is-expanded");
+    expect(settings.chatsView).toBe("expanded");
+    await wrapper.get("#chats-view-compact").setValue();
+    expect(wrapper.get("ul").classes()).not.toContain("is-expanded");
+    expect(settings.chatsView).toBe("compact");
+  });
+
+  it("starts in the expanded view when the developer left it there, and in the compact view for a value that is not valid", async () => {
+    answer(["Fix the tab bar"], []);
+    settings.chatsView = "expanded";
+    const expanded = mount(ChatsPanel);
+    await flushPromises();
+    expect(expanded.get("ul").classes()).toContain("is-expanded");
+    expect((expanded.get("#chats-view-expanded").element as HTMLInputElement).checked).toBe(true);
+    expanded.unmount();
+    (settings as { chatsView: string }).chatsView = "wide";
+    const invalid = mount(ChatsPanel);
+    await flushPromises();
+    expect(invalid.get("ul").classes()).not.toContain("is-expanded");
+  });
+
+  it("tells that no chat was found, and shows no group of radio buttons, when neither coding agent has a conversation", async () => {
     answer([], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.find("select").exists()).toBe(false);
+    expect(wrapper.find(".btn-group").exists()).toBe(false);
     expect(wrapper.text()).toBe("No chat of Claude or Codex was found for this workspace.");
   });
 
@@ -127,7 +192,7 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.get(".alert-danger").text()).toBe("boom");
-    expect(wrapper.find("select").exists()).toBe(false);
+    expect(wrapper.find(".btn-group").exists()).toBe(false);
   });
 
   it("reads the files again every 10 seconds while it is on the screen, and stops when it leaves the screen", async () => {
@@ -159,7 +224,7 @@ describe("ChatsPanel", () => {
     expect(more.classes()).toContain("btn");
     expect(less.attributes("disabled")).toBeDefined();
     expect(more.attributes("disabled")).toBeUndefined();
-    await wrapper.get("select").setValue("codex");
+    await wrapper.get("#chats-agent-codex").setValue();
     ({ less, more } = pagerButtons(wrapper));
     expect(less.attributes("disabled")).toBeDefined();
     expect(more.attributes("disabled")).toBeDefined();
@@ -180,8 +245,11 @@ describe("ChatsPanel", () => {
     expect(more.attributes("aria-busy")).toBe("true");
     expect(less.find(".spinner-border").exists()).toBe(false);
     expect(more.get(".spinner-border").classes()).toEqual(
-      expect.arrayContaining(["position-absolute", "end-0", "top-50", "translate-middle-y"]),
+      expect.arrayContaining(["position-absolute", "end-0", "top-0", "bottom-0", "my-auto"]),
     );
+    expect(more.get(".spinner-border").classes()).not.toContain("translate-middle-y");
+    expect(more.classes()).toContain("justify-content-center");
+    expect(less.classes()).toContain("justify-content-center");
     expect(more.text()).toBe("Show more");
     expect([more.classes().join(" "), less.classes().join(" ")]).toEqual(classesBefore);
     finish({ root: "/work/app", claude: { chats: [], has_more: true }, codex: { chats: [], has_more: false } });
@@ -280,11 +348,11 @@ describe("ChatsPanel", () => {
     ]);
   });
 
-  it("uses Bootstrap classes for the selector and the list", async () => {
+  it("uses Bootstrap classes for the radio button groups and the list", async () => {
     answer(["Fix the tab bar"], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.get("select").classes()).toContain("form-select");
+    expect(wrapper.findAll(".btn-group > input.btn-check + label.btn")).toHaveLength(4);
     expect(wrapper.get("ul").classes()).toEqual(expect.arrayContaining(["list-group", "list-group-flush"]));
     expect(wrapper.get("li").classes()).toEqual(expect.arrayContaining(["list-group-item", "list-group-item-action"]));
   });

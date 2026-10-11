@@ -142,6 +142,13 @@ $utilities: (
       auto: auto,
     ),
   ),
+  "margin-y": (
+    property: margin-top margin-bottom,
+    class: my,
+    values: (
+      auto: auto,
+    ),
+  ),
   "margin-bottom": (
     property: margin-bottom,
     class: mb,
@@ -228,7 +235,6 @@ $utilities: (
     class: top,
     values: (
       0: 0,
-      50: 50%,
     ),
   ),
   "end": (
@@ -238,13 +244,7 @@ $utilities: (
       0: 0,
     ),
   ),
-  "translate-middle-y": (
-    property: transform,
-    class: translate-middle,
-    values: (
-      y: translateY(-50%),
-    ),
-  ),
+
   "bottom": (
     property: bottom,
     class: bottom,

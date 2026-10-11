@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import {
-  availableChatAgents,
   canShowLessChats,
   canShowMoreChats,
+  CHAT_AGENTS,
   chats,
+  chooseChatAgent,
   loadChats,
   selectedChatAgent,
   shownChats,
@@ -17,10 +18,12 @@ import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
+import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 import ChatDatesLine from "./ChatDatesLine.vue";
 import ChatFilesLine from "./ChatFilesLine.vue";
 import ChatReferencesLine from "./ChatReferencesLine.vue";
+import Icon from "./Icon.vue";
 
 /** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
 const REFRESH_DELAY = 10_000;
@@ -65,10 +68,22 @@ const rows = computed(() =>
 /** The coding agent of the selector. */
 const agent = computed<ChatAgent>({
   get: () => selectedChatAgent.value ?? chats.agent,
+  set: (value) => chooseChatAgent(value),
+});
+
+/** The view of the list: "expanded" gives more air to the rows, and every other saved value gives the compact view. */
+const view = computed<"compact" | "expanded">({
+  get: () => (settings.chatsView === "expanded" ? "expanded" : "compact"),
   set: (value) => {
-    chats.agent = value;
+    settings.chatsView = value;
   },
 });
+
+/** The two views of the list, in the order of the buttons: the expanded view first, then the compact view. */
+const VIEWS = [
+  { id: "expanded", icon: "view-stacked", title: "chatsPanel.viewExpanded" },
+  { id: "compact", icon: "list", title: "chatsPanel.viewCompact" },
+] as const;
 </script>
 
 <template>
@@ -79,10 +94,48 @@ const agent = computed<ChatAgent>({
       {{ folder === null ? t("chatsPanel.noWorkspace") : t("chatsPanel.empty") }}
     </div>
     <template v-else>
-      <select v-model="agent" class="form-select" :aria-label="t('chatsPanel.agentLabel')">
-        <option v-for="choice in availableChatAgents" :key="choice" :value="choice">{{ agentLabel(choice) }}</option>
-      </select>
-      <ul class="list-group list-group-flush">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="btn-group" role="group" :aria-label="t('chatsPanel.agentLabel')">
+          <template v-for="choice in CHAT_AGENTS" :key="choice">
+            <input
+              :id="`chats-agent-${choice}`"
+              v-model="agent"
+              type="radio"
+              class="btn-check"
+              name="chats-agent"
+              autocomplete="off"
+              :value="choice"
+              :disabled="chats[choice].length === 0"
+            />
+            <label
+              class="btn"
+              :for="`chats-agent-${choice}`"
+              :title="chats[choice].length === 0 ? t('chatsPanel.agentUnavailableTitle') : undefined"
+            >
+              {{ agentLabel(choice) }}
+            </label>
+          </template>
+        </div>
+        <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
+          <template v-for="choice in VIEWS" :key="choice.id">
+            <input
+              :id="`chats-view-${choice.id}`"
+              v-model="view"
+              type="radio"
+              class="btn-check"
+              name="chats-view"
+              autocomplete="off"
+              :value="choice.id"
+              :aria-label="t(choice.title)"
+            />
+            <label class="btn" :for="`chats-view-${choice.id}`" :title="t(choice.title)">
+              <Icon :name="choice.icon" />
+            </label>
+          </template>
+        </div>
+      </div>
+      <div class="chats-separator border-top" role="separator"></div>
+      <ul class="list-group list-group-flush" :class="{ 'is-expanded': view === 'expanded' }">
         <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
           <div>{{ row.chat.title }}</div>
           <div class="chat-summary d-flex flex-column text-body-secondary">
@@ -113,7 +166,7 @@ const agent = computed<ChatAgent>({
       <div class="d-flex gap-2">
         <button
           type="button"
-          class="btn flex-fill position-relative"
+          class="btn flex-fill justify-content-center position-relative"
           :disabled="canShowMoreChats === false || chats.isShowingMore"
           :aria-busy="chats.isShowingMore"
           @click="showMoreChats"
@@ -121,14 +174,14 @@ const agent = computed<ChatAgent>({
           {{ t("chatsPanel.showMore") }}
           <span
             v-if="chats.isShowingMore"
-            class="busy-spinner spinner-border position-absolute top-50 end-0 translate-middle-y me-2"
+            class="busy-spinner spinner-border position-absolute top-0 bottom-0 end-0 my-auto me-2"
             role="status"
             aria-hidden="true"
           ></span>
         </button>
         <button
           type="button"
-          class="btn flex-fill"
+          class="btn flex-fill justify-content-center"
           :disabled="canShowLessChats === false || chats.isShowingMore"
           @click="showLessChats"
         >
@@ -142,6 +195,18 @@ const agent = computed<ChatAgent>({
 <style scoped>
 .chats-panel { --chats-inset: 14px; flex: 1; min-height: 0; padding: 18px var(--chats-inset); }
 .list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
+.chats-separator { margin: 0 calc(-1 * var(--chats-inset)) -0.5rem; }
+.is-expanded { --bs-list-group-item-padding-y: 1rem; }
+.is-expanded .chat-summary { margin-top: 6px; gap: 4px; }
+.btn-check:checked + .btn {
+  --bs-btn-color: var(--text);
+  --bs-btn-hover-color: var(--text);
+  --bs-btn-active-color: var(--text);
+  --bs-btn-hover-bg: var(--bs-secondary-bg);
+  --bs-btn-active-bg: var(--bs-secondary-bg);
+}
+.btn-check:focus-visible + .btn { outline: 2px solid var(--done); outline-offset: 1px; }
+.btn-check:disabled + .btn { opacity: 0.45; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 .busy-spinner { --bs-spinner-width: 0.75rem; --bs-spinner-height: 0.75rem; --bs-spinner-border-width: 0.15em; }

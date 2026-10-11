@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import {
   availableChatAgents,
@@ -6,6 +6,7 @@ import {
   canShowMoreChats,
   CHAT_LIMITS,
   chats,
+  chooseChatAgent,
   loadChats,
   nextChatLimit,
   previousChatLimit,
@@ -15,6 +16,7 @@ import {
   showMoreChats,
   type Chat,
 } from "./chats";
+import { settings } from "./settings";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
@@ -246,5 +248,27 @@ describe("the coding agents of the selector", () => {
   it("shows no coding agent and no conversation when there is none", () => {
     expect(selectedChatAgent.value).toBeNull();
     expect(shownChats.value).toEqual([]);
+  });
+});
+
+describe("the coding agent that the developer chose", () => {
+  afterEach(() => {
+    localStorage.removeItem("heidrun.settings");
+    vi.resetModules();
+  });
+
+  it("is saved in the settings when the developer chooses it", () => {
+    chooseChatAgent("codex");
+    expect(chats.agent).toBe("codex");
+    expect(settings.chatsAgent).toBe("codex");
+  });
+
+  it("is the coding agent of the next start, and Claude when the saved value is not a coding agent", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ chatsAgent: "codex" }));
+    vi.resetModules();
+    expect((await import("./chats")).chats.agent).toBe("codex");
+    localStorage.setItem("heidrun.settings", JSON.stringify({ chatsAgent: "unknown" }));
+    vi.resetModules();
+    expect((await import("./chats")).chats.agent).toBe("claude");
   });
 });

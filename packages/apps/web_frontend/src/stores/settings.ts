@@ -56,6 +56,10 @@ const defaults = {
   leftSidebarSection: "actions" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "pane" as RightSidebarSection,
+  /** Sidebar section Chats: the coding agent whose chats the list shows. */
+  chatsAgent: "claude" as "claude" | "codex",
+  /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
+  chatsView: "compact" as "compact" | "expanded",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */

@@ -1,11 +1,17 @@
 import { computed, reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { settings } from "./settings";
 
 /** A coding agent that saves its conversations on this Mac. */
 export type ChatAgent = "claude" | "codex";
 
 /** The coding agents of the selector of the Chats sidebar section, in this order. */
 export const CHAT_AGENTS: readonly ChatAgent[] = ["claude", "codex"];
+
+/** The coding agent that the developer chose the last time, or the first coding agent when the saved choice is not valid. */
+function savedChatAgent(): ChatAgent {
+  return CHAT_AGENTS.find((agent) => agent === settings.chatsAgent) ?? CHAT_AGENTS[0];
+}
 
 /** What the scan of the file of a chat found, without a model. The Rust side computes it and keeps it on the disk. */
 export interface ChatMeta {
@@ -72,7 +78,7 @@ export const chats = reactive({
   codex: [] as Chat[],
   hasMore: { claude: false, codex: false } as Record<ChatAgent, boolean>,
   limit: CHAT_LIMITS[0] as number,
-  agent: "claude" as ChatAgent,
+  agent: savedChatAgent(),
   /** True while a click on "Show more" waits for its answer. */
   isShowingMore: false,
   /** True until the first answer for the folder arrives. */
@@ -80,6 +86,12 @@ export const chats = reactive({
   /** The reason why the conversations could not be read, or null. */
   error: null as string | null,
 });
+
+/** Saves the coding agent that the developer chose in the selector, for the next start. */
+export function chooseChatAgent(agent: ChatAgent) {
+  chats.agent = agent;
+  settings.chatsAgent = agent;
+}
 
 /** The coding agents that have at least one conversation in the folder, in the order of the selector. */
 export const availableChatAgents = computed(() => CHAT_AGENTS.filter((agent) => chats[agent].length > 0));

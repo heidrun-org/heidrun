@@ -57,5 +57,9 @@
   "agoMonths_one": "{count} month ago",
   "agoMonths_other": "{count} months ago",
   "agoYears_one": "{count} year ago",
-  "agoYears_other": "{count} years ago"
+  "agoYears_other": "{count} years ago",
+  "viewLabel": "View of the list",
+  "viewCompact": "Compact view",
+  "viewExpanded": "Expanded view",
+  "agentUnavailableTitle": "No chat of this coding agent in this workspace."
 }
