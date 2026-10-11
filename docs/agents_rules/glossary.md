@@ -60,7 +60,11 @@ One saved conversation between the developer and a coding agent, for example Cla
 
 ### Chats sidebar section
 
-The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent.
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+
+### Hover card
+
+A small card that opens at the left of a part of a sidebar when the mouse pointer rests on that part. It gives more detail about that part, and it can hold buttons. It is not an information card: an information card opens on a click, above a status bar section. The part gets a background while the pointer is over it. The files line of a chat in the Chats sidebar section has the first hover card.
 
 ### Navigation bar
 

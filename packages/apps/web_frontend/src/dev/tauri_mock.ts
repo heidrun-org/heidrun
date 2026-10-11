@@ -76,6 +76,18 @@ export class TauriMock {
 				return [];
 			case 'chats_list':
 				return TauriMockFixture.buildChats((payload as { limit: number }).limit);
+			case 'project_refs':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					remote: 'git@github.com:heidrun-org/heidrun.git',
+					references: null,
+				};
+			case 'files_resolve':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					path: (payload as { path: string }).path.replace('/Users/demo/webwork/heidrun/', ''),
+				};
+			case 'file_open_external':
 			case 'git_status':
 			case 'mobile_status':
 			case 'herdr_watch_panes':

@@ -55,7 +55,7 @@ export class TauriMockFixture {
 	 * @param limit - The number of conversations to return for each coding agent.
 	 * @returns A new object each call, with the newest conversations of Claude and of Codex.
 	 */
-	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> {
+	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
 		const now = Date.now();
 		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
 			id,
@@ -76,7 +76,14 @@ export class TauriMockFixture {
 			buildChat('claude_1', 'Workspace conversation navigation', 2, {
 				user_messages: 10,
 				issues: [250, 251],
-				files_written: ['/Users/demo/webwork/heidrun/a.ts', '/Users/demo/webwork/heidrun/b.ts'],
+				files_written: [
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats.rs',
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats_scan.rs',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/ChatsPanel.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/HoverCard.vue',
+					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
+					'/Users/demo/notes/scratch.md',
+				],
 			}),
 			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
 				first_at: now - 3_000 * 60_000,
@@ -88,7 +95,7 @@ export class TauriMockFixture {
 				user_messages: 1,
 				issues: [1, 2, 3, 4, 5, 6],
 				pull_requests: [7],
-				files_written: ['/Users/demo/webwork/heidrun/a.ts'],
+				files_written: ['/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/TabBar.vue'],
 			}),
 			buildChat('claude_4', 'Issue #251', 1_500, { user_messages: 2, issues: [251], pull_requests: [230, 249, 253] }),
 			buildChat('claude_5', 'Herdr interface description', 3_000),
@@ -105,6 +112,7 @@ export class TauriMockFixture {
 			has_more: chats.length > limit,
 		});
 		return {
+			root: '/Users/demo/webwork/heidrun',
 			claude: cut(claudeChats),
 			codex: cut(codexChats),
 		};

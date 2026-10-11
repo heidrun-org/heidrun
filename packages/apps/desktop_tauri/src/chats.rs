@@ -64,6 +64,8 @@ pub struct AgentChats {
 /// The conversations of one folder, for each coding agent.
 #[derive(Serialize, Debug, Default)]
 pub struct Chats {
+    /// The root of the repository whose conversations these are. The files that a conversation wrote are below it.
+    pub root: String,
     pub claude: AgentChats,
     pub codex: AgentChats,
 }
@@ -211,6 +213,7 @@ fn list(folder: &str, limit: usize) -> Chats {
 fn list_in(cache: &mut ChatsCache, projects: &Path, codex_home: &Path, folder: &str, limit: usize) -> Chats {
     let limit = limit.clamp(1, MAX_LIMIT);
     Chats {
+        root: folder.to_string(),
         claude: claude_chats(cache, projects, folder, limit),
         codex: codex_chats(cache, codex_home, folder, limit),
     }
@@ -699,6 +702,14 @@ mod tests {
         let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5);
         assert_eq!(found.claude, AgentChats::default());
         assert_eq!(found.codex, AgentChats::default());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn answers_the_root_of_the_repository_that_it_listed() {
+        let dir = scratch("root");
+        let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5);
+        assert_eq!(found.root, "/work/app");
         let _ = std::fs::remove_dir_all(&dir);
     }
 

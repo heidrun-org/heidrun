@@ -4,8 +4,21 @@ import { invoke } from "@tauri-apps/api/core";
 import ChatsPanel from "./ChatsPanel.vue";
 import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
+import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
+vi.mock("../lib/refs", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/refs")>()),
+  refContext: vi.fn(async () => ({
+    base: "https://github.com/heidrun-org/heidrun",
+    origin: "https://github.com",
+    forge: "github",
+    ticketUrl: null,
+    ticketPrefixes: [],
+    enabled: true,
+  })),
+}));
 
 // A panel that stays mounted keeps its refresh timer, and the timer calls the Tauri command in the next test.
 enableAutoUnmount(afterEach);
@@ -200,10 +213,22 @@ describe("ChatsPanel", () => {
     expect(pagerButtons(wrapper).more.attributes("disabled")).toBeUndefined();
   });
 
-  it("shows a small summary under the title of a chat that has meta information, and nothing under the others", async () => {
-    const meta = { first_at: null, last_at: null, user_messages: 4, folders: [], issues: [250], pull_requests: [249], files_written: ["/a"] };
-    const emptyMeta = { ...meta, user_messages: 0, issues: [], pull_requests: [], files_written: [] };
+  it("shows the summary of a chat in three lines under the title, each with its icon, and nothing under a chat that has nothing", async () => {
+    settings.language = "en";
+    settings.timeFormat = "24h";
+    const year = new Date().getFullYear();
+    const meta = {
+      first_at: new Date(year, 9, 11, 17, 55).getTime(),
+      last_at: new Date(year, 9, 11, 18, 20).getTime(),
+      user_messages: 4,
+      folders: [],
+      issues: [250],
+      pull_requests: [249],
+      files_written: ["/work/app/chats.rs", "/work/app/chats_scan.rs", "/work/app/a.ts"],
+    };
+    const emptyMeta = { ...meta, first_at: null, last_at: null, user_messages: 0, issues: [], pull_requests: [], files_written: [] };
     vi.mocked(invoke).mockResolvedValue({
+      root: "/work/app",
       claude: {
         chats: [
           { id: "a", title: "Fix the tab bar", updated_at: 1, meta },
@@ -216,9 +241,31 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     const rows = wrapper.findAll(".list-group-item");
-    expect(rows[0].get(".chat-summary").text()).toBe("4 messages from you · Issue #250 · Pull request #249 · 1 file written");
-    expect(rows[0].get(".chat-summary").classes()).toContain("text-body-secondary");
-    expect(rows[1].find(".chat-summary").exists()).toBe(false);
+    const lines = rows[0].get(".chat-summary");
+    expect(lines.classes()).toEqual(expect.arrayContaining(["text-body-secondary", "ms-3"]));
+    expect(lines.element.children.length).toBe(3);
+    expect(lines.element.children[0].textContent).toBe("Oct 11, 17:55 → 18:20 · 4 messages from you");
+    expect(lines.element.children[0].querySelector(".bi-clock")).not.toBeNull();
+    expect(lines.element.children[1].textContent).toBe("Issue #250 · Pull request #249");
+    expect(lines.element.children[1].querySelector(".bi-github")).not.toBeNull();
+    expect(lines.element.children[2].textContent).toBe("chats.rs, chats_scan.rs, +1");
+    expect(lines.element.children[2].querySelector(".bi-file-earmark")).not.toBeNull();
+    expect(rows[1].get(".chat-summary").element.children.length).toBe(0);
+  });
+
+  it("opens a card with the files of a chat, relative to the root of the repository, when the files line is clicked", async () => {
+    const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: ["/work/app/src/chats.rs"] };
+    vi.mocked(invoke).mockResolvedValue({
+      root: "/work/app",
+      claude: { chats: [{ id: "a", title: "Fix the tab bar", updated_at: 1, meta }], has_more: false },
+      codex: { chats: [], has_more: false },
+    });
+    const wrapper = mount(ChatsPanel, { attachTo: document.body });
+    await flushPromises();
+    await wrapper.get(".hover-card-part").trigger("click");
+    const row = wrapper.get("[data-file]");
+    expect(row.get("span").text()).toBe("src/chats.rs");
+    expect(row.findAll("button").map((button) => button.text())).toEqual(["VS Code", "GitHub"]);
   });
 
   it("uses Bootstrap classes for the selector and the list", async () => {

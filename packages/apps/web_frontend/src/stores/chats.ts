@@ -51,8 +51,11 @@ interface AgentChats {
   has_more: boolean;
 }
 
-/** What the Tauri command `chats_list` answers: the newest chats of one folder, for each coding agent. */
-type ChatsOfFolder = Record<ChatAgent, AgentChats>;
+/**
+ * What the Tauri command `chats_list` answers: the root of the repository that holds the folder, and the newest chats of
+ * that repository for each coding agent.
+ */
+type ChatsOfFolder = Record<ChatAgent, AgentChats> & { root: string };
 
 /**
  * The conversations of the folder of the selected workspace. `folder` is the folder whose conversations the lists hold.
@@ -61,6 +64,8 @@ type ChatsOfFolder = Record<ChatAgent, AgentChats>;
  */
 export const chats = reactive({
   folder: null as string | null,
+  /** The root of the repository that holds `folder`. The files that the chats wrote are below it. Null until the first answer. */
+  root: null as string | null,
   claude: [] as Chat[],
   codex: [] as Chat[],
   hasMore: { claude: false, codex: false } as Record<ChatAgent, boolean>,
@@ -149,6 +154,7 @@ export async function showMoreChats(): Promise<void> {
 export async function loadChats(folder: string | null): Promise<void> {
   if (chats.folder !== folder) {
     chats.folder = folder;
+    chats.root = null;
     chats.claude = [];
     chats.codex = [];
     chats.hasMore = { claude: false, codex: false };
@@ -166,6 +172,7 @@ export async function loadChats(folder: string | null): Promise<void> {
     if (chats.folder !== folder || chats.limit !== limit) {
       return;
     }
+    chats.root = found.root;
     chats.claude = found.claude.chats;
     chats.codex = found.codex.chats;
     chats.hasMore = { claude: found.claude.has_more, codex: found.codex.has_more };

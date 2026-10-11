@@ -63,6 +63,20 @@ describe('TauriMock', () => {
 		expect(everything.claude.has_more).toBe(false);
 	});
 
+	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
+		TauriMock.install();
+		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });
+		expect(result.root).toBe('/Users/demo/webwork/heidrun');
+		const refs = await invoke<{ remote: string }>('project_refs', { cwd: '/Users/demo/webwork/heidrun' });
+		expect(refs.remote).toBe('git@github.com:heidrun-org/heidrun.git');
+		const resolved = await invoke('files_resolve', {
+			cwd: '/Users/demo/webwork/heidrun',
+			path: '/Users/demo/webwork/heidrun/docs/a.md',
+		});
+		expect(resolved).toEqual({ root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' });
+		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
+	});
+
 	it('rejects a Tauri command that it does not list', async () => {
 		TauriMock.install();
 		await expect(invoke('pty_spawn')).rejects.toThrow('pty_spawn');

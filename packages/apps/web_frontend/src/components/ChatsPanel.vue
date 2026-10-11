@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import {
   availableChatAgents,
   canShowLessChats,
@@ -12,17 +12,37 @@ import {
   showMoreChats,
   type ChatAgent,
 } from "../stores/chats";
-import { chatSummary } from "../lib/chat_summary";
+import { chatSummaryLines } from "../lib/chat_summary";
+import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { t } from "../i18n/index";
+import ChatFilesLine from "./ChatFilesLine.vue";
+import Icon from "./Icon.vue";
 
 /** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
 const REFRESH_DELAY = 10_000;
 
 const folder = computed(() => (state.selectedWorkspaceId === null ? null : workspaceCwd(state.selectedWorkspaceId)));
 
+/** The address and the forge of the repository of the folder, for the buttons that open a file on the web. */
+const repository = ref<RefContext>(EMPTY_CONTEXT);
+
 watch(folder, (value) => loadChats(value), { immediate: true });
+watch(
+  folder,
+  async (value) => {
+    repository.value = EMPTY_CONTEXT;
+    if (value === null) {
+      return;
+    }
+    const context = await refContext(value);
+    if (folder.value === value) {
+      repository.value = context;
+    }
+  },
+  { immediate: true },
+);
 const refreshTimer = setInterval(() => loadChats(folder.value), REFRESH_DELAY);
 onBeforeUnmount(() => clearInterval(refreshTimer));
 
@@ -30,6 +50,9 @@ onBeforeUnmount(() => clearInterval(refreshTimer));
 function agentLabel(agent: ChatAgent): string {
   return t(`chatsPanel.agent.${agent}`);
 }
+
+/** The chats that the list shows, each with the three lines of its summary. */
+const rows = computed(() => shownChats.value.map((chat) => ({ chat, lines: chatSummaryLines(chat.meta) })));
 
 /** The coding agent of the selector. */
 const agent = computed<ChatAgent>({
@@ -52,9 +75,27 @@ const agent = computed<ChatAgent>({
         <option v-for="choice in availableChatAgents" :key="choice" :value="choice">{{ agentLabel(choice) }}</option>
       </select>
       <ul class="list-group list-group-flush">
-        <li v-for="chat in shownChats" :key="chat.id" class="list-group-item text-break">
-          <div>{{ chat.title }}</div>
-          <div v-if="chatSummary(chat.meta) !== ''" class="chat-summary text-body-secondary">{{ chatSummary(chat.meta) }}</div>
+        <li v-for="row in rows" :key="row.chat.id" class="list-group-item text-break">
+          <div>{{ row.chat.title }}</div>
+          <div class="chat-summary d-flex flex-column ms-3 text-body-secondary">
+            <div v-if="row.lines.dates !== ''" class="d-flex gap-2">
+              <Icon name="clock" />
+              <span>{{ row.lines.dates }}</span>
+            </div>
+            <div v-if="row.lines.references !== ''" class="d-flex gap-2">
+              <Icon :name="repository.forge ?? 'git'" />
+              <span>{{ row.lines.references }}</span>
+            </div>
+            <ChatFilesLine
+              v-if="row.lines.files !== ''"
+              :text="row.lines.files"
+              :files="row.chat.meta.files_written"
+              :root="chats.root"
+              :folder="chats.folder ?? ''"
+              :web-base="repository.base"
+              :forge="repository.forge"
+            />
+          </div>
         </li>
       </ul>
       <div class="d-flex gap-2">

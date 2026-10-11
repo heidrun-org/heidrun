@@ -15,5 +15,7 @@
   "pullRequests_one": "Pull request {numbers}",
   "pullRequests_other": "Pull requests {numbers}",
   "filesWritten_one": "{count} fichier écrit",
-  "filesWritten_other": "{count} fichiers écrits"
+  "filesWritten_other": "{count} fichiers écrits",
+  "vscodeTitle": "Ouvrir {path} dans VS Code",
+  "forgeTitle": "Ouvrir {path} sur {forge}"
 }
