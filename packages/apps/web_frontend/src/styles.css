@@ -121,7 +121,7 @@ body {
   overflow: hidden;
   user-select: none;
 }
-button:where(:not(.btn-outline-secondary)) { font: inherit; color: inherit; cursor: pointer; }
+button:where(:not(.btn)) { font: inherit; color: inherit; cursor: pointer; }
 input { font: inherit; color: inherit; user-select: text; }
 /* While a line or a corner between panes is dragged, one cursor shows over every element, also over an element that has its own cursor. */
 html[data-pane-drag-cursor="move"], html[data-pane-drag-cursor="move"] * { cursor: move !important; }
@@ -184,13 +184,36 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 .lvl-crit { color: #f07f75; }
 
 /* Buttons ----------------------------------------------------------------- */
-.btn:where(:not(.btn-outline-secondary)) {
-  height: 30px; padding: 0 12px; border-radius: 7px;
-  border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-weight: 500; font-size: var(--font-size);
-  display: inline-flex; align-items: center; gap: 6px;
+/* The base look of a button is made of the Bootstrap button variables. Bootstrap draws the button from them, in the layer "bootstrap".
+   This rule keeps only what Bootstrap cannot express: the height, the display, the alignment, the gap, the line height, and the text selection. */
+.btn {
+  --bs-btn-padding-x: 12px;
+  --bs-btn-padding-y: 0;
+  --bs-btn-font-size: var(--font-size);
+  --bs-btn-font-weight: 500;
+  --bs-btn-border-width: 1px;
+  --bs-btn-border-radius: 7px;
+  --bs-btn-color: var(--text-2);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--line-strong);
+  --bs-btn-hover-color: var(--text-2);
+  --bs-btn-hover-bg: var(--hover);
+  --bs-btn-hover-border-color: var(--line-strong);
+  --bs-btn-active-color: var(--text-2);
+  --bs-btn-active-bg: var(--hover);
+  --bs-btn-active-border-color: var(--line-strong);
+  --bs-btn-disabled-color: var(--text-2);
+  --bs-btn-disabled-bg: var(--hover);
+  --bs-btn-disabled-border-color: var(--line-strong);
+  --bs-btn-focus-box-shadow: none;
+  height: 30px; display: inline-flex; align-items: center; gap: 6px; line-height: inherit; user-select: inherit;
 }
-.btn:where(:not(.btn-outline-secondary)):hover { background: var(--hover); }
+/* The application never had a pressed look, a disabled look, or a focus background: only the mouse hover changes the background. */
+.btn:not(:hover) {
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-active-bg: transparent;
+  --bs-btn-disabled-bg: transparent;
+}
 .btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
 .btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }
 .btn.primary { background: var(--accent); border-color: transparent; color: #111316; font-weight: 600; }

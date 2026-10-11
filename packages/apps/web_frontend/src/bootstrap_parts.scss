@@ -3,7 +3,6 @@
 @import "bootstrap/scss/functions";
 
 // Variable values that keep the look of the application. They must come before the Bootstrap variables.
-$btn-line-height: 1.4;
 $btn-transition: none;
 
 @import "bootstrap/scss/variables";
@@ -14,20 +13,6 @@ $btn-transition: none;
 // Only the utility classes that the web frontend uses. Add one value per migration step. A utility class carries
 // "!important", so the list stays short on purpose: a class name that the application already uses must not appear here.
 $utilities: (
-  "display": (
-    property: display,
-    class: d,
-    values: (
-      inline-flex: inline-flex,
-    ),
-  ),
-  "align-items": (
-    property: align-items,
-    class: align-items,
-    values: (
-      center: center,
-    ),
-  ),
   "justify-content": (
     property: justify-content,
     class: justify-content,
