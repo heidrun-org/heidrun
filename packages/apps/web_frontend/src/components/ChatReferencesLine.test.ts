@@ -166,6 +166,7 @@ describe("ChatReferencesLine", () => {
     await wrapper.findAll("[data-reference]")[0].trigger("click");
     const [heidrun, forge] = wrapper.get("[data-reference-details]").findAll("button");
     expect(heidrun.attributes("title")).toBe("Open in Heidrun");
+    expect(heidrun.find(".bi-heidrun-goat-only").exists()).toBe(true);
     expect(forge.attributes("title")).toBe("Open in GitHub");
     await forge.trigger("click");
     expect(openUrl).toHaveBeenCalledWith(`${BASE}/issues/31`);

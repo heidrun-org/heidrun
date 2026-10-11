@@ -100,7 +100,7 @@ async function openOnForge() {
           :aria-label="t('chatsPanel.heidrunTitle')"
           @click="openInHeidrun"
         >
-          <Icon name="card-text" />
+          <Icon name="heidrun-goat-only" />
         </button>
         <button
           type="button"
