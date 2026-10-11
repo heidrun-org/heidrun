@@ -12,5 +12,6 @@
   "workingDaysLabel": "Jours de travail de la semaine",
   "quitTitle": "Quitter",
   "keepAgentsRunning": "Garder les agents actifs après avoir quitté",
+  "keepAgentsRunningHelpLabel": "Que fait ce réglage ?",
   "keepAgentsRunningHelp": "Désactivé : quand vous quittez Heidrun, Heidrun arrête sa session Herdr, et les agents s’arrêtent. Activé : les agents continuent de tourner, et Heidrun se reconnecte à la même session au prochain démarrage. La session Herdr par défaut de votre terminal n’est jamais arrêtée."
 }

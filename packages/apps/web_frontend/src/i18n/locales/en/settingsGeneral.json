@@ -12,5 +12,6 @@
   "workingDaysLabel": "Working days of the week",
   "quitTitle": "Quit",
   "keepAgentsRunning": "Keep agents running after quit",
+  "keepAgentsRunningHelpLabel": "What does this setting do?",
   "keepAgentsRunningHelp": "Off: when you quit Heidrun, Heidrun stops its Herdr session, and the agents stop. On: the agents continue to run, and Heidrun connects to the same session at the next start. The default Herdr session of your terminal is never stopped."
 }

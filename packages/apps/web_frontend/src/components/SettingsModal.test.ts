@@ -42,6 +42,27 @@ describe("SettingsModal: keep agents running after quit", () => {
     expect(settings.keepAgentsRunningAfterQuit).toBe(true);
     wrapper.unmount();
   });
+
+  it("keeps the long explanation out of the section: it opens from a question mark next to the checkbox", async () => {
+    const wrapper = await mountSettings();
+    const row = wrapper.findAll(".checkRow").find((candidate) => candidate.find(".check").text() === "Keep agents running after quit");
+    expect(row).toBeDefined();
+    const helpButton = row!.find("button.helpButton");
+    expect(helpButton.attributes("aria-label")).toBe("What does this setting do?");
+    const tip = row!.find("[role=tooltip]");
+    expect(helpButton.attributes("aria-describedby")).toBe(tip.attributes("id"));
+    expect(tip.text()).toContain("Heidrun stops its Herdr session");
+    expect(wrapper.findAll(".keys").some((keys) => keys.text().includes("Heidrun stops its Herdr session"))).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("does not switch the checkbox when the question mark is clicked", async () => {
+    const wrapper = await mountSettings();
+    const { settings } = await import("../stores/settings");
+    await wrapper.find("button.helpButton").trigger("click");
+    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
+    wrapper.unmount();
+  });
 });
 
 describe("SettingsModal: status item", () => {
