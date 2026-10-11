@@ -136,13 +136,13 @@ describe("settings that got a new name to follow the glossary", () => {
   it("keeps the pinned panes, the width of the column of pinned panes, and the sidebar section of the right sidebar that an older version saved", async () => {
     localStorage.setItem(
       "heidrun.settings",
-      JSON.stringify({ dockedPanes: ["p1", "p2"], dockWidth: 700, rightTab: "git" }),
+      JSON.stringify({ dockedPanes: ["p1", "p2"], dockWidth: 700, rightTab: "notes" }),
     );
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.pinnedPanes).toEqual(["p1", "p2"]);
     expect(restarted.settings.columnOfPinnedPanesWidth).toBe(700);
-    expect(restarted.settings.rightSidebarSection).toBe("git");
+    expect(restarted.settings.rightSidebarSection).toBe("notes");
   });
 
   it("forgets the old names, so that the saved value does not keep both names", async () => {
@@ -159,5 +159,55 @@ describe("settings that got a new name to follow the glossary", () => {
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.pinnedPanes).toEqual(["new"]);
+  });
+});
+
+describe("sidebar sections that moved from the right sidebar to the left sidebar", () => {
+  it.each(["actions", "git"])("shows the sidebar section %s in the left sidebar when an older version saved it for the right sidebar", async (section) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: section }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe(section);
+    expect(restarted.settings.rightSidebarSection).toBe("pane");
+  });
+
+  it("does the same for the name rightTab, that is older still", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightTab: "git" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("git");
+    expect(restarted.settings.rightSidebarSection).toBe("pane");
+  });
+
+  it("keeps the sidebar section that the left sidebar already had", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "git", leftSidebarSection: "actions" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.rightSidebarSection).toBe("pane");
+  });
+
+  it("keeps the sidebar sections that belong to the right sidebar", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "notes" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe("notes");
+    expect(restarted.settings.leftSidebarSection).toBe("workspacesAndTabs");
+  });
+});
+
+describe("sidebar section of the left sidebar that holds the workspaces and the tabs", () => {
+  it("keeps the name Workspaces that an earlier version saved, under its new name", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "workspaces" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("workspacesAndTabs");
+  });
+
+  it("is the sidebar section that the left sidebar shows first", async () => {
+    localStorage.clear();
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("workspacesAndTabs");
   });
 });

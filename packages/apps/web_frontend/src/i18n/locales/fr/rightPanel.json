@@ -1,7 +1,5 @@
 {
   "label": "Panneau de droite",
-  "showSidebarSection": "Afficher cette section de la barre latérale",
   "sidebarSection.pane": "Panneau",
-  "sidebarSection.actions": "Scripts",
   "sidebarSection.notes": "Notes"
 }

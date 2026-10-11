@@ -36,6 +36,12 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
+/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
+export type LeftSidebarSection = "workspacesAndTabs" | "actions" | "git";
+
+/** The sidebar sections of the right sidebar. */
+export type RightSidebarSection = "pane" | "notes";
+
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
@@ -46,8 +52,10 @@ const defaults = {
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
    */
   mouseMode: "select" as "select" | "app",
+  /** Sidebar section that the left sidebar shows. */
+  leftSidebarSection: "workspacesAndTabs" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
-  rightSidebarSection: "pane" as "pane" | "actions" | "git" | "notes",
+  rightSidebarSection: "pane" as RightSidebarSection,
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -138,6 +146,17 @@ function load(): typeof defaults {
         }
         delete stored[oldName];
       }
+    }
+    // The Scripts and Git sidebar sections moved from the right sidebar to the left sidebar.
+    if (stored.rightSidebarSection === "actions" || stored.rightSidebarSection === "git") {
+      if (!("leftSidebarSection" in stored)) {
+        stored.leftSidebarSection = stored.rightSidebarSection;
+      }
+      stored.rightSidebarSection = "pane";
+    }
+    // The first sidebar section of the left sidebar holds the workspaces and the tabs: it got its name.
+    if (stored.leftSidebarSection === "workspaces") {
+      stored.leftSidebarSection = "workspacesAndTabs";
     }
     const saved = { ...defaults, ...stored };
     // "github-dark" was the only default before themes existed: it now means "auto".

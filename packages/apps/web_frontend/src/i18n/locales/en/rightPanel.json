@@ -1,7 +1,5 @@
 {
   "label": "Right panel",
-  "showSidebarSection": "Show this sidebar section",
   "sidebarSection.pane": "Pane",
-  "sidebarSection.actions": "Scripts",
   "sidebarSection.notes": "Notes"
 }
