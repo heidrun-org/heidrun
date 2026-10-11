@@ -54,7 +54,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="modal" role="dialog" :aria-label="t('issueModal.dialogLabel')" tabindex="-1">
+    <div ref="el" class="dialog" role="dialog" :aria-label="t('issueModal.dialogLabel')" tabindex="-1">
       <header class="top">
         <div class="title">
           <span class="mono ref">{{ d?.ref ?? "…" }}</span>
@@ -102,7 +102,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <style scoped>
 .overlay { position: fixed; inset: 0; z-index: 55; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
-.modal {
+.dialog {
   outline: none; width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
 }

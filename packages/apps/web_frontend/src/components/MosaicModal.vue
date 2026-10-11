@@ -134,7 +134,7 @@ function onKey(e: KeyboardEvent) {
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="modal" role="dialog" :aria-label="t('mosaicModal.dialogLabel')">
+    <div ref="el" class="dialog" role="dialog" :aria-label="t('mosaicModal.dialogLabel')">
       <header>
         <div>
           <div class="eyebrow">{{ t("mosaicModal.eyebrow") }}</div>
@@ -178,7 +178,7 @@ function onKey(e: KeyboardEvent) {
 /* No grey system background on buttons: each style below sets its own. */
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.55); display: flex; padding: 28px; }
-.modal {
+.dialog {
   flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
