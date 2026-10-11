@@ -60,6 +60,8 @@ export const git = reactive({
   /** By workspace id. */
   status: {} as Record<string, GitStatus | null>,
   forge: {} as Record<string, ForgeInfo | undefined>,
+  /** Git branch by folder, for the header of each shell pane. */
+  branchByFolder: {} as Record<string, string | null>,
   loading: false,
   /** Large Git window: open, and the file shown. */
   modal: { open: false, path: null as string | null },
@@ -143,6 +145,32 @@ async function loadStatus(wsId: string) {
     git.status[wsId] = await invoke<GitStatus | null>("git_status", { cwd });
   } catch {
     git.status[wsId] = null;
+  }
+}
+
+/** Reads the Git branch of a folder, for the header of a shell pane. */
+async function loadBranch(folder: string) {
+  try {
+    const status = await invoke<GitStatus | null>("git_status", { cwd: folder });
+    git.branchByFolder[folder] = status?.branch ?? null;
+  } catch {
+    git.branchByFolder[folder] = null;
+  }
+}
+
+/** Reads the Git branch of every folder where a shell pane is. */
+function loadShellBranches() {
+  const folders = new Set<string>();
+  for (const pane of allPanes.value) {
+    const folder = pane.foreground_cwd || pane.cwd;
+    if (pane.agent === null || pane.agent === undefined) {
+      if (folder) {
+        folders.add(folder);
+      }
+    }
+  }
+  for (const folder of folders) {
+    loadBranch(folder);
   }
 }
 
@@ -455,12 +483,18 @@ export function startGit() {
     tick++;
     const sel = session.selectedWorkspaceId;
     if (sel) loadStatus(sel);
+    loadShellBranches();
     if (tick % 6 === 0) for (const w of workspaces.value) if (w.workspace_id !== sel) loadStatus(w.workspace_id);
     if (sel && tick % 9 === 0) loadForge(sel);
   }, 10_000);
   watch(
     () => session.selectedWorkspaceId,
     (id) => id && refreshGit(id),
+    { immediate: true },
+  );
+  watch(
+    () => allPanes.value.map((pane) => pane.foreground_cwd || pane.cwd || "").join("\n"),
+    () => loadShellBranches(),
     { immediate: true },
   );
   // First pass for the sidebar badges, once panes are known.

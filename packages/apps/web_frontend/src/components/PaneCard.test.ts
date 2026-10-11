@@ -25,7 +25,7 @@ function styleRule(selector: string): string {
   return match![1];
 }
 
-async function mountPaneCard() {
+async function mountPaneCard(paneFields: Record<string, unknown> = {}) {
   const { default: PaneCard } = await import("./PaneCard.vue");
   return mount(PaneCard, {
     props: {
@@ -38,6 +38,7 @@ async function mountPaneCard() {
         agent_status: "unknown",
         revision: 1,
         label: LONG_NAME,
+        ...paneFields,
       },
     },
     global: { stubs: { PromptMenu: true } },
@@ -61,5 +62,35 @@ describe("PaneCard", () => {
     const wrapper = await mountPaneCard();
     expect(wrapper.get(".name").text()).toBe(LONG_NAME);
     expect(wrapper.get(".name").attributes("title")).toBe(`${LONG_NAME} · Double-click to rename`);
+  });
+
+  it("names a shell pane without a label after its folder, and shows the full folder path once, without the pane identifier", async () => {
+    const wrapper = await mountPaneCard({
+      label: null,
+      terminal_title_stripped: LONG_NAME,
+      cwd: "/Users/jetienne/webwork/heidrun",
+    });
+    expect(wrapper.get(".name").text()).toBe("heidrun");
+    expect(wrapper.get(".sub").text()).toBe("~/webwork/heidrun");
+  });
+
+  it("shows the Git branch of the folder before the folder path in the header of a shell pane", async () => {
+    const { git } = await import("../stores/git");
+    git.branchByFolder["/Users/jetienne/webwork/heidrun"] = "dev_jerome";
+    const wrapper = await mountPaneCard({
+      label: null,
+      terminal_title_stripped: LONG_NAME,
+      cwd: "/Users/jetienne/webwork/heidrun",
+    });
+    expect(wrapper.get(".sub").text()).toBe("dev_jerome · ~/webwork/heidrun");
+  });
+
+  it("keeps the terminal title as the name of a shell pane while a command runs", async () => {
+    const wrapper = await mountPaneCard({
+      label: null,
+      terminal_title_stripped: "npm run dev",
+      cwd: "/Users/jetienne/webwork/heidrun",
+    });
+    expect(wrapper.get(".name").text()).toBe("npm run dev");
   });
 });

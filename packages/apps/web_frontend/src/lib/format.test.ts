@@ -55,6 +55,19 @@ describe("paneName", () => {
     expect(paneName(pane({ terminal_title_stripped: "vim" }))).toBe("vim");
   });
 
+  it("names an idle shell after its folder, and a shell that runs a command after the terminal title", () => {
+    const folder = "/Users/jetienne/webwork/heidrun";
+    const idle = pane({ cwd: folder, terminal_title_stripped: "jetienne@Jeromes-Macbook-Pro:~/webwork/heidrun" });
+    expect(paneName(idle)).toBe("heidrun");
+    expect(paneName(pane({ cwd: folder, terminal_title_stripped: "htop" }))).toBe("htop");
+  });
+
+  it("goes back to the dynamic name when the label is empty", () => {
+    const folder = "/Users/jetienne/webwork/heidrun";
+    expect(paneName(pane({ cwd: folder, label: null, terminal_title_stripped: "vim" }))).toBe("vim");
+    expect(paneName(pane({ cwd: folder, label: "foobar", terminal_title_stripped: "vim" }))).toBe("foobar");
+  });
+
   it("ends with the word shell", () => {
     expect(paneName(pane({}))).toBe("shell");
   });
