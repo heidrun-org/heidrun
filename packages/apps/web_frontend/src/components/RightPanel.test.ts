@@ -36,7 +36,7 @@ describe("RightPanel", () => {
   afterEach(() => {
     settings.rightSidebarSection = "pane";
     notes.list = [];
-    notes.showAll = false;
+    settings.notesShowAll = false;
     state.snapshot = null;
     state.selectedWorkspaceId = null;
     for (const paneId of Object.keys(state.dismissed)) {
@@ -116,7 +116,7 @@ describe("RightPanel", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     const badge = () => wrapper.findAll(".navigation-bar button")[2].find(".badge").text();
     expect(badge()).toBe("1");
-    notes.showAll = true;
+    settings.notesShowAll = true;
     await wrapper.vm.$nextTick();
     expect(badge()).toBe("2");
   });
