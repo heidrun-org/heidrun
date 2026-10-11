@@ -25,6 +25,7 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 
 1. Read the issue.
 2. Create a temporary branch, or a temporary worktree, for the fix. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
+   - To create a temporary worktree, run `pnpm worktree:create <name>` at the root of the repository, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree.
 3. Make the change on the temporary branch. Every commit message mentions the issue number.
 
 ### Issue Fix Completion
@@ -60,4 +61,5 @@ Never commit an image to the repository, and never push an image to a branch, on
 - `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
 - `pnpm --filter raw_coding_agent_cli test` runs the Vitest tests of the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`.
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/auxiliary/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
+- `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/auxiliary/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.

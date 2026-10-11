@@ -1,0 +1,149 @@
+import ChildProcess from 'node:child_process';
+import Fs from 'node:fs';
+import Os from 'node:os';
+import Path from 'node:path';
+import { TargetPaths } from '../src/target_paths.ts';
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	TestRepository — creates a small main checkout with worktrees in a temporary folder, for the tests
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Creates and fills temporary Git repositories. A test uses them in place of the real repository.
+ */
+export class TestRepository {
+	/** The folders that the class created and did not remove yet. */
+	private static _createdPaths: string[] = [];
+
+	/**
+	 * Creates a Git repository with one commit. The path is the real path, without a symbolic link, because Git
+	 * prints real paths.
+	 * @returns The absolute path of the new main checkout.
+	 */
+	static create(): string {
+		const temporaryPath = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'worktree_tools_test_'));
+		const repositoryPath = Fs.realpathSync(temporaryPath);
+		TestRepository._createdPaths.push(repositoryPath);
+		TestRepository.git(repositoryPath, ['init', '--quiet', '--initial-branch', 'main']);
+		TestRepository.git(repositoryPath, ['config', 'user.name', 'Test Author']);
+		TestRepository.git(repositoryPath, ['config', 'user.email', 'test@example.com']);
+		TestRepository.git(repositoryPath, ['config', 'commit.gpgsign', 'false']);
+		TestRepository.git(repositoryPath, ['commit', '--quiet', '--allow-empty', '-m', 'Initial commit']);
+		return repositoryPath;
+	}
+
+	/**
+	 * Creates a repository whose main checkout holds a debug build folder with two files, one of them in a subfolder.
+	 * @returns The absolute path of the new main checkout.
+	 */
+	static createWithBuiltTarget(): string {
+		const repositoryPath = TestRepository.create();
+		TestRepository.writeTargetFile(repositoryPath, 'debug/heidrun', 'compiled application');
+		TestRepository.writeTargetFile(repositoryPath, 'debug/deps/libserde.rlib', 'compiled dependency');
+		return repositoryPath;
+	}
+
+	/**
+	 * Creates a repository whose main checkout is built, with one worktree whose target folder is ten days old.
+	 * @returns The path of the main checkout, and the path of the target folder of the old worktree.
+	 */
+	static createWithOldWorktree(): { mainCheckoutPath: string; oldTargetPath: string } {
+		const mainCheckoutPath = TestRepository.createWithBuiltTarget();
+		const oldWorktreePath = TestRepository.addWorktree(mainCheckoutPath, 'old');
+		TestRepository.writeTargetFile(oldWorktreePath, 'debug/heidrun', 'compiled application');
+		const oldTargetPath = TargetPaths.targetPath(oldWorktreePath);
+		TestRepository.ageTarget(oldWorktreePath, 10);
+		return {
+			mainCheckoutPath,
+			oldTargetPath,
+		};
+	}
+
+	/**
+	 * Makes the Cargo target folder of a checkout look unused for some days.
+	 * @param checkoutPath The absolute path of the main checkout or of a worktree.
+	 * @param days The number of days.
+	 * @returns Nothing.
+	 */
+	static ageTarget(checkoutPath: string, days: number): void {
+		TestRepository.setModificationTimeOfTree(TargetPaths.targetPath(checkoutPath), TestRepository.daysAgo(days));
+	}
+
+	/**
+	 * Gives a date some days before now.
+	 * @param days The number of days.
+	 * @returns The date.
+	 */
+	static daysAgo(days: number): Date {
+		return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+	}
+
+	/**
+	 * Writes a file inside the Cargo target folder of a checkout, and creates the missing folders.
+	 * @param checkoutPath The absolute path of the main checkout or of a worktree.
+	 * @param relativePath The path of the file, relative to the Cargo target folder.
+	 * @param content The text of the file.
+	 * @returns The absolute path of the file.
+	 */
+	static writeTargetFile(checkoutPath: string, relativePath: string, content: string): string {
+		const filePath = Path.join(TargetPaths.targetPath(checkoutPath), relativePath);
+		Fs.mkdirSync(Path.dirname(filePath), { recursive: true });
+		Fs.writeFileSync(filePath, content);
+		return filePath;
+	}
+
+	/**
+	 * Creates a worktree on a new branch in the folder `.claude/worktrees` of the main checkout, without the clone.
+	 * @param mainCheckoutPath The absolute path of the main checkout.
+	 * @param name The name of the new branch and of the folder of the worktree.
+	 * @returns The absolute path of the new worktree.
+	 */
+	static addWorktree(mainCheckoutPath: string, name: string): string {
+		const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', name);
+		TestRepository.git(mainCheckoutPath, ['worktree', 'add', '--quiet', '-b', name, worktreePath, 'HEAD']);
+		return worktreePath;
+	}
+
+	/**
+	 * Sets the modification time of a folder and of everything inside it.
+	 * @param folderPath The absolute path of the folder.
+	 * @param date The new modification time.
+	 * @returns Nothing.
+	 */
+	static setModificationTimeOfTree(folderPath: string, date: Date): void {
+		for (const entry of Fs.readdirSync(folderPath, { withFileTypes: true })) {
+			const entryPath = Path.join(folderPath, entry.name);
+			if (entry.isDirectory() === true) {
+				TestRepository.setModificationTimeOfTree(entryPath, date);
+			} else {
+				Fs.utimesSync(entryPath, date, date);
+			}
+		}
+		Fs.utimesSync(folderPath, date, date);
+	}
+
+	/**
+	 * Runs one `git` command in a repository.
+	 * @param repositoryPath The folder to run the command in.
+	 * @param args The arguments of the `git` command.
+	 * @returns The standard output of the command.
+	 */
+	static git(repositoryPath: string, args: string[]): string {
+		return ChildProcess.execFileSync('git', args, {
+			cwd: repositoryPath,
+			encoding: 'utf8',
+		});
+	}
+
+	/**
+	 * Removes all the repository folders that the class created.
+	 * @returns Nothing.
+	 */
+	static removeAll(): void {
+		for (const repositoryPath of TestRepository._createdPaths.splice(0)) {
+			Fs.rmSync(repositoryPath, { recursive: true, force: true });
+		}
+	}
+}
