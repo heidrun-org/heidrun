@@ -7,16 +7,30 @@ export function statusLabel(status: AgentStatus): string {
   return t(`format.status.${status}`);
 }
 
-export function paneName(p: PaneInfo | AgentInfo): string {
+/**
+ * The name a pane has without a name set by a person. An idle shell has the terminal title `user@host:folder`, which
+ * repeats the user, the host and the folder, so it is named after its folder. When a command runs, the terminal title
+ * names that command, and the pane keeps it.
+ */
+export function paneDynamicName(p: PaneInfo | AgentInfo): string {
   const name = (p as AgentInfo).name;
-  return (
-    p.label ||
-    name ||
-    p.display_agent ||
-    (p.agent ? p.agent : "") ||
-    p.terminal_title_stripped ||
-    "shell"
-  );
+  if (name || p.display_agent || p.agent) {
+    return name || p.display_agent || p.agent || "";
+  }
+  const folder = p.foreground_cwd || p.cwd || "";
+  const title = p.terminal_title_stripped ?? "";
+  const isIdleShellTitle = title === "" || title.endsWith(`:${folder}`) || title.endsWith(`:${shortPath(folder)}`);
+  if (folder !== "" && isIdleShellTitle) {
+    const folderName = folder.split("/").filter((part) => part !== "").pop();
+    if (folderName !== undefined) {
+      return folderName;
+    }
+  }
+  return title || "shell";
+}
+
+export function paneName(p: PaneInfo | AgentInfo): string {
+  return p.label || paneDynamicName(p);
 }
 
 export function isAgent(p: PaneInfo): boolean {

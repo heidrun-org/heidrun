@@ -9,7 +9,7 @@ import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPan
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
 import { git } from "../stores/git";
 import { mosaic } from "../stores/mosaic";
-import { gaugeLevel, paneName, shortPath } from "../lib/format";
+import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -32,25 +32,15 @@ function onDown() {
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
-// The terminal title of an idle shell is `user@host:folder`. It repeats the user, the host and the folder, so the pane
-// is named after its folder. When a command runs, the terminal title names that command, and the pane keeps it.
-const isIdleShellTitle = computed(() => {
-  const title = props.pane.terminal_title_stripped ?? "";
-  const folder = shellFolder.value;
-  return title === "" || title.endsWith(`:${folder}`) || title.endsWith(`:${shortPath(folder)}`);
-});
-const displayName = computed(() => {
-  const p = props.pane;
-  if (p.agent || p.label || shellFolder.value === "" || isIdleShellTitle.value === false) return paneName(p);
-  return shellFolder.value.split("/").filter((part) => part !== "").pop() ?? paneName(p);
-});
+const displayName = computed(() => paneName(props.pane));
 const subtitle = computed(() => {
   const p = props.pane;
   if (props.docked) return paneFullName(p);
   if (p.agent) return `${p.agent} · ${p.pane_id}`;
   const branch = git.branchByFolder[shellFolder.value];
   const path = shortPath(shellFolder.value) || p.pane_id;
-  return branch ? `${branch} · ${path}` : path;
+  const parts = [p.label ? paneDynamicName(p) : "", branch ?? "", path];
+  return parts.filter((part) => part !== "").join(" · ");
 });
 </script>
 
