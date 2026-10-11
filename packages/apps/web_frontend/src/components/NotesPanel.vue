@@ -7,6 +7,7 @@ import { moveNote, notes, removeNote, renameNote, visibleNotes, type Note } from
 import { useReorder } from "../lib/reorder";
 import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
+import { settings } from "../stores/settings";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
 
@@ -37,7 +38,7 @@ function sendTo(n: Note, paneId: string) {
   <div class="panel">
     <div class="head">
       <div class="eyebrow">{{ t("notesPanel.title") }}</div>
-      <label class="toggle"><input v-model="notes.showAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
+      <label class="toggle"><input v-model="settings.notesShowAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
     </div>
 
     <p v-if="!list.length" class="empty">

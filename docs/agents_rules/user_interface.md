@@ -57,7 +57,7 @@ This document says where each part of the window goes and how each part works. T
 
 ## To handle
 
-- The To handle sidebar section is a sidebar section of the left sidebar. It holds one card for each agent that is blocked, that asks a question, or that has finished, with the blocked agents first.
+- The To handle sidebar section is a sidebar section of the right sidebar. It holds one card for each agent that is blocked, that asks a question, or that has finished, with the blocked agents first.
 - A click on a card shows the pane of the agent. A card also lets the developer answer a blocked agent, pin the pane, and hide the card.
 - The button of the To handle sidebar section shows the number of cards. The number is red when an agent is blocked.
 - A hidden card comes back at the next change of the agent. A finished agent leaves the sidebar section after the delay that the settings give.
@@ -65,8 +65,8 @@ This document says where each part of the window goes and how each part works. T
 ## Sidebars
 
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
-- The left sidebar holds the To handle sidebar section, the Scripts sidebar section, and the Git sidebar section.
-- The right sidebar holds the Pane sidebar section, the Notes sidebar section, and the Chats sidebar section.
+- The left sidebar holds the Scripts sidebar section and the Git sidebar section.
+- The right sidebar holds the To handle sidebar section, the Pane sidebar section, the Notes sidebar section, and the Chats sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar. In each sidebar, the line of the navigation bar reaches the left border and the right border, and the space between the top border and the selected button of the navigation bar is 5 pixels. A button of the navigation bar has the same height as a tab of the tab bar, so the three bars have the same height.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
 - The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
@@ -125,3 +125,16 @@ This document says where each part of the window goes and how each part works. T
 - At the first start, no state is saved, and the window opens in the middle of the screen with the size in `tauri.conf.json`.
 - When the saved position is outside every screen that is connected, the window opens at the default position of the operating system, on a connected screen.
 - The visible state is never restored. The window stays hidden until the splash image is ready.
+
+## Last state of each option
+
+- Every option keeps its last state between two runs of Heidrun. An option is a toggle, a choice between a few values, a sidebar section that is shown, a panel that is open or closed, or a size.
+- The last state of each option is saved in the `localStorage` of the web frontend, in the store `packages/apps/web_frontend/src/stores/settings.ts`, under the key `heidrun.settings`. A new option is a new line in `defaults` of this store, and not a new key.
+- At the start, each option reads its saved state. An option with no saved state, or with a corrupted saved value (the wrong type, or a value that is not in the list of its values), uses its default value.
+- A text that the user types, a search text for example, is not an option and is not saved. A mode that edits data, for example the edit mode of the budgets in the window History, is not an option and is not saved.
+
+## Splash screen
+
+- At the start, Heidrun shows the splash screen for 3 seconds after the main window appears. A click on the splash screen closes it at once.
+- The command line option `--no-splash-screen` starts Heidrun without the splash screen. The main window then appears at once, and shows the application.
+- A program that drives Heidrun, for example to take a screenshot, uses this option, so that it never waits for the splash screen to close. In development, run `pnpm dev -- -- --no-splash-screen`: the command `tauri dev` gives the arguments after its second `--` to the application, and the arguments after its first `--` to `cargo`. For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.

@@ -204,11 +204,20 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
-  it("keeps the sidebar section To handle when it was saved", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle" }));
+  it("shows the sidebar section Scripts when the saved sidebar section was To handle, because the To handle sidebar section moved to the right sidebar", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle", rightSidebarSection: "notes" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("toHandle");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.rightSidebarSection).toBe("notes");
+  });
+
+  it("keeps the sidebar section To handle in the right sidebar when it was saved there", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "toHandle" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
   it("keeps the sidebar section Git when it was saved", async () => {
@@ -223,5 +232,111 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.leftSidebarSection).toBe("actions");
+  });
+});
+
+/** The options of the windows and of the sidebar sections that the application saves: name, default value, other value. */
+const SAVED_OPTIONS: [string, unknown, unknown][] = [
+  ["filesSideMode", "tree", "grep"],
+  ["filesGrepRegex", false, true],
+  ["filesGrepCase", false, true],
+  ["filesShowIgnored", false, true],
+  ["agentsActivityScope", "all", "pane"],
+  ["historyPeriod", "today", "90"],
+  ["historyGroupBy", "ws", "feature"],
+  ["historyShowAssumptions", false, true],
+  ["searchRegex", false, true],
+  ["searchAgentsOnly", false, true],
+  ["searchThisWorkspace", false, true],
+  ["scriptsShowAllSuggestions", false, true],
+  ["notesShowAll", false, true],
+  ["chatsAgent", "claude", "codex"],
+  ["chatsView", "compact", "expanded"],
+];
+
+describe("the last state of each option", () => {
+  it.each(SAVED_OPTIONS)("gives the default value of the option %s when nothing is saved", async (name, defaultValue) => {
+    localStorage.clear();
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect((restarted.settings as Record<string, unknown>)[name]).toEqual(defaultValue);
+  });
+
+  it.each(SAVED_OPTIONS)("saves the option %s when it changes, and gives it back after the application restarts", async (name, _defaultValue, otherValue) => {
+    localStorage.clear();
+    (settings as Record<string, unknown>)[name] = otherValue;
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}")[name]).toEqual(otherValue));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect((restarted.settings as Record<string, unknown>)[name]).toEqual(otherValue);
+    (settings as Record<string, unknown>)[name] = SAVED_OPTIONS.find((option) => option[0] === name)?.[1];
+  });
+
+  it("keeps the other options when the saved value holds only some of them", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ searchRegex: true }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.searchRegex).toBe(true);
+    expect(restarted.settings.searchAgentsOnly).toBe(false);
+    expect(restarted.settings.mouseMode).toBe("select");
+  });
+});
+
+describe("a corrupted saved value", () => {
+  it.each(["{not json", "", "null", "42", '"text"', "[]"])("gives the default values when the saved text is %j", async (savedText) => {
+    localStorage.setItem("heidrun.settings", savedText);
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.filesSideMode).toBe("tree");
+    expect(restarted.settings.historyPeriod).toBe("today");
+    expect(restarted.settings.fontSize).toBe(FONT_DEFAULT);
+  });
+
+  it("gives the default value for each option whose saved value has the wrong type, and keeps the other options", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({
+        filesGrepRegex: "yes",
+        historyPeriod: 7,
+        workingDays: "monday",
+        budgets: null,
+        fontSize: "big",
+        searchAgentsOnly: null,
+        theme: "dark",
+      }),
+    );
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.filesGrepRegex).toBe(false);
+    expect(restarted.settings.historyPeriod).toBe("today");
+    expect(restarted.settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(restarted.settings.budgets).toEqual({});
+    expect(restarted.settings.fontSize).toBe(FONT_DEFAULT);
+    expect(restarted.settings.searchAgentsOnly).toBe(false);
+    expect(restarted.settings.theme).toBe("dark");
+  });
+
+  it("gives the default value for each option whose saved value is not in the list of its values, and keeps the other options", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({
+        filesSideMode: "sideways",
+        agentsActivityScope: "none",
+        historyPeriod: "12",
+        historyGroupBy: "year",
+        chatsAgent: "gemini",
+        chatsView: "wide",
+        searchRegex: true,
+      }),
+    );
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.filesSideMode).toBe("tree");
+    expect(restarted.settings.agentsActivityScope).toBe("all");
+    expect(restarted.settings.historyPeriod).toBe("today");
+    expect(restarted.settings.historyGroupBy).toBe("ws");
+    expect(restarted.settings.chatsAgent).toBe("claude");
+    expect(restarted.settings.chatsView).toBe("compact");
+    expect(restarted.settings.searchRegex).toBe(true);
   });
 });

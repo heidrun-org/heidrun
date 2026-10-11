@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef } from "vue";
 import AccountUsage from "./AccountUsage.vue";
 import { closeAgentsInformationModal } from "../stores/agentsInformation";
 import { history, hm, todaySummary } from "../stores/history";
 import { allPanes, clearFinishedRuns, dismissRun, selectPane, selectedPane, state, tabLabel, workspaceLabel } from "../stores/session";
+import { settings } from "../stores/settings";
 import { agentKind, clockTime, duration, paneName } from "../lib/format";
 import { t } from "../i18n/index";
 
@@ -12,7 +13,7 @@ const p = selectedPane;
 const el = ref<HTMLElement>();
 
 // Activity: all agents by default, or only the selected pane.
-const activityScope = ref<"all" | "pane">("all");
+const activityScope = toRef(settings, "agentsActivityScope");
 const activity = computed(() =>
   state.activity
     .filter((a) => activityScope.value === "all" || a.paneId === p.value?.pane_id)

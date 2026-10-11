@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { allRuns, byFeature, byHour, daysAgo, history, hm, kpis, loadHistory, monthSpend, rework, startOfDay, tick, toCsv, type HistoryRun } from "../stores/history";
@@ -11,15 +11,14 @@ import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
 import { t } from "../i18n/index";
 
-type Period = "today" | "7" | "30" | "90" | "365";
-const PERIODS: [Period, string][] = [
+const PERIODS: [(typeof settings)["historyPeriod"], string][] = [
   ["today", "historyModal.periodToday"],
   ["7", "historyModal.period7"],
   ["30", "historyModal.period30"],
   ["90", "historyModal.period90"],
   ["365", "historyModal.period365"],
 ];
-const period = ref<Period>("today");
+const period = toRef(settings, "historyPeriod");
 const ws = ref("");
 const kind = ref("");
 const q = ref("");
@@ -89,10 +88,10 @@ const costBy = computed(() => {
     allRuns.value.filter((r) => r.end >= since && (!ws.value || r.ws === ws.value) && matches(r)).reduce((s, r) => s + (r.cost ?? 0), 0);
   return { day: sum(startOfDay()), week: sum(daysAgo(6)), month: sum(daysAgo(29)) };
 });
-const showCalib = ref(false);
+const showCalib = toRef(settings, "historyShowAssumptions");
 
 // Left column: by workspace, or by feature (branch, with its issue / MR).
-const groupBy = ref<"ws" | "feature">("ws");
+const groupBy = toRef(settings, "historyGroupBy");
 const features = computed(() => byFeature(inPeriod.value.filter((r) => (!ws.value || r.ws === ws.value) && matches(r))));
 const featMax = computed(() => Math.max(1, ...features.value.map((f) => f.ms)));
 function pickFeature(branch: string) {

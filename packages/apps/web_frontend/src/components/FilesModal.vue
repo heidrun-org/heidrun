@@ -181,7 +181,7 @@ watch(
   () => nextTick(() => searchEl.value?.focus()),
 );
 watch(
-  () => files.showIgnored,
+  () => settings.filesShowIgnored,
   () => reloadFiles(),
 );
 
@@ -339,10 +339,7 @@ function onMdClick(e: MouseEvent) {
 }
 
 // ---- Search in the project (⇧⌘F) ------------------------------------------------------
-const sideMode = ref<"tree" | "grep">("tree");
 const gq = ref("");
-const gRegex = ref(false);
-const gCase = ref(false);
 const gHits = ref<GrepHit[]>([]);
 const gTruncated = ref(false);
 const gError = ref("");
@@ -363,7 +360,7 @@ async function runGrep() {
   }
   gBusy.value = true;
   try {
-    const r = await grepFiles(query, gRegex.value, gCase.value);
+    const r = await grepFiles(query, settings.filesGrepRegex, settings.filesGrepCase);
     if (my !== gSeq) return;
     gHits.value = r.hits;
     gTruncated.value = r.truncated;
@@ -374,7 +371,7 @@ async function runGrep() {
     if (my === gSeq) gBusy.value = false;
   }
 }
-watch([gq, gRegex, gCase], () => {
+watch([gq, () => settings.filesGrepRegex, () => settings.filesGrepCase], () => {
   window.clearTimeout(gTimer);
   gTimer = window.setTimeout(runGrep, 350);
 });
@@ -391,8 +388,8 @@ const gSummary = computed(() => {
 /** The hit's text split around the match, for the highlight. */
 function hitParts(text: string) {
   try {
-    const re = gRegex.value ? new RegExp(gq.value, gCase.value ? "" : "i") : null;
-    const i = re ? text.search(re) : (gCase.value ? text : text.toLowerCase()).indexOf(gCase.value ? gq.value : gq.value.toLowerCase());
+    const re = settings.filesGrepRegex ? new RegExp(gq.value, settings.filesGrepCase ? "" : "i") : null;
+    const i = re ? text.search(re) : (settings.filesGrepCase ? text : text.toLowerCase()).indexOf(settings.filesGrepCase ? gq.value : gq.value.toLowerCase());
     if (i < 0) return { pre: text, hit: "", post: "" };
     const len = re ? (text.slice(i).match(re)?.[0].length ?? 0) : gq.value.length;
     const from = Math.max(0, i - 40);
@@ -408,7 +405,7 @@ function toggleGroup(p: string) {
   gFolded.value = n;
 }
 function openSearch() {
-  sideMode.value = "grep";
+  settings.filesSideMode = "grep";
   nextTick(() => {
     grepEl.value?.focus();
     grepEl.value?.select();
@@ -623,15 +620,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <div class="body" :style="{ gridTemplateColumns: `${settings.filesListWidth}px 5px 1fr` }">
         <aside class="side" @click="menu = null">
           <div class="side-tabs" role="tablist">
-            <button :title="t('filesModal.treeTabTitle')" :class="{ on: sideMode === 'tree' }" @click="sideMode = 'tree'">{{ t("filesModal.treeTab") }}</button>
-            <button :class="{ on: sideMode === 'grep' }" :title="t('filesModal.grepTabTitle')" @click="openSearch">{{ t("filesModal.grepTab") }}</button>
+            <button :title="t('filesModal.treeTabTitle')" :class="{ on: settings.filesSideMode === 'tree' }" @click="settings.filesSideMode = 'tree'">{{ t("filesModal.treeTab") }}</button>
+            <button :class="{ on: settings.filesSideMode === 'grep' }" :title="t('filesModal.grepTabTitle')" @click="openSearch">{{ t("filesModal.grepTab") }}</button>
           </div>
 
-          <template v-if="sideMode === 'grep'">
+          <template v-if="settings.filesSideMode === 'grep'">
             <div class="search grep">
               <input ref="grepEl" v-model="gq" :placeholder="t('filesModal.grep.placeholder')" spellcheck="false" @keydown.enter.prevent="runGrep" />
-              <button class="tg" :class="{ on: gCase }" :title="t('filesModal.grep.matchCase')" @click="gCase = !gCase">Aa</button>
-              <button class="tg mono" :class="{ on: gRegex }" :title="t('filesModal.grep.regex')" @click="gRegex = !gRegex">.*</button>
+              <button class="tg" :class="{ on: settings.filesGrepCase }" :title="t('filesModal.grep.matchCase')" @click="settings.filesGrepCase = !settings.filesGrepCase">Aa</button>
+              <button class="tg mono" :class="{ on: settings.filesGrepRegex }" :title="t('filesModal.grep.regex')" @click="settings.filesGrepRegex = !settings.filesGrepRegex">.*</button>
             </div>
             <div class="opts">
               <span>{{ gBusy ? t("filesModal.grep.searching") : gq.trim().length >= 2 ? gSummary : "" }}</span>
@@ -661,7 +658,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <input ref="searchEl" v-model="q" :placeholder="t('filesModal.searchPlaceholder')" spellcheck="false" @keydown="onSearchKey" />
           </div>
           <div class="opts">
-            <label><input v-model="files.showIgnored" type="checkbox" />{{ t("filesModal.showIgnored") }}</label>
+            <label><input v-model="settings.filesShowIgnored" type="checkbox" />{{ t("filesModal.showIgnored") }}</label>
             <span class="opt-tools">
               <button class="link" :title="t('filesModal.newFile')" @click.stop="startNaming('file')">{{ t("filesModal.newFileButton") }}</button>
               <button class="link" :title="t('filesModal.newFolder')" @click.stop="startNaming('dir')">{{ t("filesModal.newFolderButton") }}</button>
