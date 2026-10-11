@@ -137,7 +137,7 @@ describe("ChatFilesLine", () => {
     const wrapper = mountLine({ forge: "gitlab", webBase: "https://gitlab.com/group/app" });
     await openCard(wrapper);
     expect(cardRows(wrapper)[0].buttons).toEqual(["code-slash", "gitlab"]);
-    expect(wrapper.get("[data-file]").findAll("button")[1].attributes("title")).toBe("Open src/a.rs on GitLab");
+    expect(wrapper.get("[data-file]").findAll("button")[1].attributes("title")).toBe("Open in GitLab");
   });
 
   it("has no button for the forge when the repository has no remote", async () => {
@@ -162,9 +162,9 @@ describe("ChatFilesLine", () => {
     await openCard(wrapper);
     const [vscode, github] = wrapper.get("[data-file]").findAll("button");
     expect(vscode.attributes("disabled")).toBeDefined();
-    expect(vscode.attributes("title")).toBe("VS Code cannot open src/a.rs: the file does not exist on this Mac.");
+    expect(vscode.attributes("title")).toBe("Cannot open in VS Code: the file does not exist on this Mac.");
     expect(github.attributes("disabled")).toBeUndefined();
-    expect(github.attributes("title")).toBe("Open src/a.rs on GitHub");
+    expect(github.attributes("title")).toBe("Open in GitHub");
     const [otherVscode] = wrapper.findAll("[data-file]")[1].findAll("button");
     expect(otherVscode.attributes("disabled")).toBeUndefined();
   });
@@ -175,7 +175,7 @@ describe("ChatFilesLine", () => {
     await openCard(wrapper);
     const [vscode, github] = wrapper.findAll("[data-file]")[1].findAll("button");
     expect(github.attributes("disabled")).toBeDefined();
-    expect(github.attributes("title")).toBe("web/b ts.vue does not exist on GitHub, on the default branch.");
+    expect(github.attributes("title")).toBe("Cannot open in GitHub: the file does not exist on the default branch.");
     expect(vscode.attributes("disabled")).toBeUndefined();
   });
 
@@ -229,12 +229,22 @@ describe("ChatFilesLine", () => {
     expect(state.toast).toBe("no browser");
   });
 
-  it("gives each button a title that says what it does, with the path below the root, and the same text to the screen reader", async () => {
+  it("puts the two buttons of a file in a Bootstrap button group, and none for a file outside the repository", async () => {
+    const wrapper = mountLine();
+    await openCard(wrapper);
+    const groups = wrapper.findAll("[data-file]").map((row) => row.findAll(".btn-group"));
+    expect(groups.map((found) => found.length)).toEqual([1, 1, 0]);
+    expect(groups[0][0].attributes("role")).toBe("group");
+    expect(groups[0][0].attributes("aria-label")).toBe("Open this file");
+    expect(groups[0][0].findAll(":scope > button.btn").length).toBe(2);
+  });
+
+  it("gives each button a title that says what it does, without the path, and the same text to the screen reader", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
     const buttons = wrapper.findAll("[data-file]")[0].findAll("button");
-    expect(buttons[0].attributes("title")).toBe("Open src/a.rs in VS Code");
-    expect(buttons[1].attributes("title")).toBe("Open src/a.rs on GitHub");
+    expect(buttons[0].attributes("title")).toBe("Open in VS Code");
+    expect(buttons[1].attributes("title")).toBe("Open in GitHub");
     expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(buttons.map((button) => button.attributes("title")));
   });
 

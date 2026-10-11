@@ -16,8 +16,9 @@
   "pullRequests_other": "Pull requests {numbers}",
   "filesWritten_one": "{count} file written",
   "filesWritten_other": "{count} files written",
-  "vscodeTitle": "Open {path} in VS Code",
-  "forgeTitle": "Open {path} on {forge}",
-  "vscodeMissingTitle": "VS Code cannot open {path}: the file does not exist on this Mac.",
-  "forgeMissingTitle": "{path} does not exist on {forge}, on the default branch."
+  "vscodeTitle": "Open in VS Code",
+  "forgeTitle": "Open in {forge}",
+  "vscodeMissingTitle": "Cannot open in VS Code: the file does not exist on this Mac.",
+  "forgeMissingTitle": "Cannot open in {forge}: the file does not exist on the default branch.",
+  "openFileLabel": "Open this file"
 }

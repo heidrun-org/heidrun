@@ -93,13 +93,13 @@ type Row = (typeof rows.value)[number];
 /** The title of the button for VS Code: what the button does, or why it cannot do it. */
 function vscodeTitle(row: Row): string {
   const key = row.isMissingOnDisk ? "chatsPanel.vscodeMissingTitle" : "chatsPanel.vscodeTitle";
-  return t(key, { path: row.entry.label });
+  return t(key);
 }
 
 /** The title of the button for the forge: what the button does, or why it cannot do it. */
 function forgeTitle(row: Row): string {
   const key = row.isMissingOnRemote ? "chatsPanel.forgeMissingTitle" : "chatsPanel.forgeTitle";
-  return t(key, { path: row.entry.label, forge: forgeName.value });
+  return t(key, { forge: forgeName.value });
 }
 
 /** Checks that the file is in a project that a pane works in, then opens it in VS Code. */
@@ -199,7 +199,7 @@ async function openOnForge(url: string) {
             <span class="file-line fw-medium" data-scroll>{{ row.name }}</span>
             <span class="file-line folder text-body-secondary" data-scroll>{{ row.folder }}</span>
           </div>
-          <template v-if="row.hasButtons">
+          <div v-if="row.hasButtons" class="btn-group" role="group" :aria-label="t('chatsPanel.openFileLabel')">
             <button
               type="button"
               class="btn"
@@ -221,7 +221,7 @@ async function openOnForge(url: string) {
             >
               <Icon :name="props.forge === 'gitlab' ? 'gitlab' : 'github'" />
             </button>
-          </template>
+          </div>
         </div>
       </div>
     </template>
@@ -230,6 +230,7 @@ async function openOnForge(url: string) {
 
 <style scoped>
 .files-list { max-height: 50vh; overflow-y: auto; }
+.files-list .btn { --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-active-bg: var(--bs-secondary-bg); }
 .files-list .btn:disabled { opacity: 0.45; }
 .file-text { flex: 1 1 0; min-width: 0; }
 .file-line { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

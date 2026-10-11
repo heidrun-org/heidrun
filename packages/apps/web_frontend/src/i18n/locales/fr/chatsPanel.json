@@ -16,8 +16,9 @@
   "pullRequests_other": "Pull requests {numbers}",
   "filesWritten_one": "{count} fichier écrit",
   "filesWritten_other": "{count} fichiers écrits",
-  "vscodeTitle": "Ouvrir {path} dans VS Code",
-  "forgeTitle": "Ouvrir {path} sur {forge}",
-  "vscodeMissingTitle": "VS Code ne peut pas ouvrir {path} : le fichier n’existe pas sur ce Mac.",
-  "forgeMissingTitle": "{path} n’existe pas sur {forge}, sur la branche par défaut."
+  "vscodeTitle": "Ouvrir dans VS Code",
+  "forgeTitle": "Ouvrir dans {forge}",
+  "vscodeMissingTitle": "Impossible d’ouvrir dans VS Code : le fichier n’existe pas sur ce Mac.",
+  "forgeMissingTitle": "Impossible d’ouvrir dans {forge} : le fichier n’existe pas sur la branche par défaut.",
+  "openFileLabel": "Ouvrir ce fichier"
 }

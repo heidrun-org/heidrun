@@ -111,9 +111,9 @@ describe('bootstrap_parts.scss', () => {
 		]);
 	});
 
-	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, and the spinner', () => {
+	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, the spinner, and the button group', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm']) {
+		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm', '.btn-group']) {
 			expect(cssText).toContain(`${selector} {`);
 		}
 	});

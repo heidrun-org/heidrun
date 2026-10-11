@@ -269,8 +269,8 @@ describe("ChatsPanel", () => {
     expect(row.get(".fw-medium").text()).toBe("chats.rs");
     expect(row.get(".folder").text()).toBe("src");
     expect(row.findAll("button").map((button) => button.attributes("title"))).toEqual([
-      "Open src/chats.rs in VS Code",
-      "Open src/chats.rs on GitHub",
+      "Open in VS Code",
+      "Open in GitHub",
     ]);
   });
 
