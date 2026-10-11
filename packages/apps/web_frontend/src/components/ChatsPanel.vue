@@ -126,6 +126,6 @@ const agent = computed<ChatAgent>({
 <style scoped>
 .chats-panel { --chats-inset: 14px; flex: 1; min-height: 0; padding: 18px var(--chats-inset); }
 .list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
-.chat-summary { margin-top: 2px; font-size: 0.85em; }
+.chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 </style>
