@@ -268,7 +268,10 @@ describe("ChatsPanel", () => {
     const row = wrapper.get("[data-file]");
     expect(row.get(".fw-medium").text()).toBe("chats.rs");
     expect(row.get(".folder").text()).toBe("src");
-    expect(row.findAll("button").map((button) => button.text())).toEqual(["VS Code", "GitHub"]);
+    expect(row.findAll("button").map((button) => button.attributes("title"))).toEqual([
+      "Open src/chats.rs in VS Code",
+      "Open src/chats.rs on GitHub",
+    ]);
   });
 
   it("uses Bootstrap classes for the selector and the list", async () => {
