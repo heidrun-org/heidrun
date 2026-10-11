@@ -39,5 +39,6 @@
   "notifyQuota": "Claude quota above 80 %, then 95 %",
   "notifyEvening": "Summary of the day at",
   "quietHours": "Quiet hours",
-  "quietHoursHelp": "During quiet hours, no notification is sent. Leave empty to turn off."
+  "quietHoursHelp": "During quiet hours, no notification is sent. Leave empty to turn off.",
+  "showStatusItem": "Show the status item in the macOS menu bar"
 }

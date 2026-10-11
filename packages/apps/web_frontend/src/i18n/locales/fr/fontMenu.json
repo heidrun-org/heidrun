@@ -39,5 +39,6 @@
   "notifyQuota": "Quota Claude au-delà de 80 % puis 95 %",
   "notifyEvening": "Résumé de la journée à",
   "quietHours": "Heures calmes",
-  "quietHoursHelp": "Pendant les heures calmes, aucune notification n’est envoyée. Laisse vide pour désactiver."
+  "quietHoursHelp": "Pendant les heures calmes, aucune notification n’est envoyée. Laisse vide pour désactiver.",
+  "showStatusItem": "Afficher l’élément d’état dans la barre de menus de macOS"
 }

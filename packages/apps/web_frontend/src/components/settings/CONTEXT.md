@@ -7,7 +7,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsTerminalSection.vue`: the font, and the font size that zooms the whole window.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
-- `SettingsNotificationsSection.vue`: the notification settings.
+- `SettingsNotificationsSection.vue`: the notification settings, and the checkbox that shows or hides the status item in the macOS menu bar (the setting `showStatusItem`, handled by `../../stores/statusItem.ts`).
 - `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), and the working days.
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 - `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. The whole row of an agent is the switch: a click anywhere on the row, or the Space key or the Enter key on the focused row, changes it. A switched on agent means the user has a valid subscription or access for it. The status bar `../StatusBar.vue` shows the quota of a coding agent only when this agent is switched on, and it changes at once when a switch moves.

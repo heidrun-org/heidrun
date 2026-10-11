@@ -68,6 +68,8 @@ const defaults = {
   notifEvening: "", // "18:30": summary of the day's finished work ("" = off)
   quietFrom: "", // "20:00" … "08:00": no notification in between ("" = never quiet)
   quietTo: "",
+  /** The status item (the dots) is shown in the macOS menu bar. */
+  showStatusItem: true,
   /** Git viewer: "unified" | "split" diff, or the whole "file". */
   diffMode: "unified" as "unified" | "split" | "file" | "read",
   /** Side-by-side diff: share of the width for the old version (0.5 = middle). */

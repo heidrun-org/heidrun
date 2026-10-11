@@ -293,6 +293,15 @@ pub fn status_item_update(
     Ok(())
 }
 
+/// Called by the web page when the user shows or hides the status item in the menu bar.
+#[tauri::command]
+pub fn status_item_set_visible(app: AppHandle, is_visible: bool) -> Result<(), String> {
+    match app.tray_by_id(STATUS_ITEM_ID) {
+        Some(tray) => tray.set_visible(is_visible).map_err(|error| error.to_string()),
+        None => Ok(()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

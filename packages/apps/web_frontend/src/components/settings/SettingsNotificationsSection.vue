@@ -23,6 +23,7 @@ import { t } from "../../i18n/index";
       <span class="range"><input v-model.lazy="settings.quietFrom" class="time" placeholder="20:00" /> → <input v-model.lazy="settings.quietTo" class="time" placeholder="08:00" /></span>
     </label>
     <div class="keys">{{ t("fontMenu.quietHoursHelp") }}</div>
+    <label class="nrow"><span>{{ t("fontMenu.showStatusItem") }}</span><input v-model="settings.showStatusItem" type="checkbox" /></label>
   </div>
 </template>
 
