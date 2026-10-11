@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/worktree_tools`
+# Directory Context: `/packages/dev_tools/worktree_tools`
 
 ## Purpose
 A full npm package with two command line tools for Git worktrees. The first tool creates a worktree and clones the compiled Rust files of the main checkout into it. The second tool finds and deletes the Cargo target folders of the worktrees that no build has used for some days.

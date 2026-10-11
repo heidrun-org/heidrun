@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/change_log_generator/src/rendering`
+# Directory Context: `/packages/dev_tools/change_log_generator/src/rendering`
 
 ## Purpose
 Turns data into the texts of the change log: the heading, the section, the prompt for a coding agent, and the new text of the file `CHANGELOG.md`.

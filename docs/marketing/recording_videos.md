@@ -1,10 +1,10 @@
 # Recording marketing videos of Heidrun
 
-The package `packages/auxiliary/video_recorder` records a short video of the Heidrun window, with the mouse and a circle at each click, and cuts it around the clicks. The first video was made for [issue #211](https://github.com/heidrun-org/heidrun/issues/211). The raw videos and the cut videos stay out of the repository.
+The package `packages/dev_tools/video_recorder` records a short video of the Heidrun window, with the mouse and a circle at each click, and cuts it around the clicks. The first video was made for [issue #211](https://github.com/heidrun-org/heidrun/issues/211). The raw videos and the cut videos stay out of the repository.
 
 ## Method
 
-1. Write a scenario file in `packages/auxiliary/video_recorder/scenarios/`: the list of the clicks, with what each click does.
+1. Write a scenario file in `packages/dev_tools/video_recorder/scenarios/`: the list of the clicks, with what each click does.
 2. Run `pnpm --filter video_recorder video:record --output-dir <folder>`. The tool records only the Heidrun window with `screencapture -v -C -k -o -l<window id>`, and logs each click. Other windows on top of the Heidrun window, for example the Claude window, do not show in the video.
 3. Computer use runs the scenario in the real Heidrun window and moves the real mouse. Each click is "mouse button down, wait 0.1 second, mouse button up". A click without this wait is too short, and the click logger does not see it.
 4. Stop the recording with Ctrl-C, or with SIGTERM.
