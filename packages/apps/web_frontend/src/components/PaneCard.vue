@@ -4,7 +4,7 @@ import TerminalView from "./TerminalView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
-import PromptMenu from "./PromptMenu.vue";
+import MacroMenu from "./MacroMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
 import { git } from "../stores/git";
@@ -73,7 +73,7 @@ const subtitle = computed(() => {
         <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
       </template>
       <span class="tools">
-        <PromptMenu :pane-id="pane.pane_id" />
+        <MacroMenu :pane-id="pane.pane_id" />
         <template v-if="docked">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button class="tool" :aria-label="t('paneCard.undock')" :title="t('paneCard.undockTitle')" @mousedown.stop @click="undock(pane.pane_id)">

@@ -34,8 +34,8 @@ export const guardsSchema = z.strictObject({
   block: z.array(z.string()).optional(),
 });
 
-/** A prompt template of the project. */
-export const promptSchema = z.strictObject({
+/** A macro of the project. */
+export const macroSchema = z.strictObject({
   id: z.string().min(1).optional(),
   label: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -48,13 +48,14 @@ export const projectConfigSchema = z.strictObject({
   actions: z.array(actionSchema).default([]),
   references: referencesSchema.optional(),
   guards: guardsSchema.optional(),
-  prompts: z.array(promptSchema).optional(),
+  // The key keeps the old name of the feature, because other people already have the file.
+  prompts: z.array(macroSchema).optional(),
 });
 
 export type Action = z.infer<typeof actionSchema>;
 export type ProjectReferences = z.infer<typeof referencesSchema>;
 export type ProjectGuardsConfig = z.infer<typeof guardsSchema>;
-export type ProjectPrompt = z.infer<typeof promptSchema>;
+export type ProjectMacro = z.infer<typeof macroSchema>;
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;
 
 /** One line per problem, each starting with the path of the field: `actions.0.command: Too small…`. */

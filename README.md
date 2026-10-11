@@ -34,7 +34,7 @@ Think of Valhalla: the agents are the einherjar (the warriors who feast and figh
 
 - **One work window.** Workspaces, panes, and a "To handle" queue of blocked or finished agents, all in one sidebar.
 - **Real terminals.** Every pane shows the real Herdr terminal, so Claude Code, Codex, and all the colors look exactly as in Herdr.
-- **Prompt templates.** One click writes a ready prompt into a pane. The agents never wait for a developer who is typing.
+- **Macros.** One click writes a ready text into a pane. The agents never wait for a developer who is typing.
 - **Inspector.** Allow or deny an agent request in one click, read the context of the agent, and ask another agent to fix a problem.
 - **Quotas in view.** The status bar shows your Claude and Codex quotas. The mead never runs out by surprise.
 - **Command palette.** Press <kbd>⌘</kbd><kbd>K</kbd> for every action. A real Viking does not use the mouse.

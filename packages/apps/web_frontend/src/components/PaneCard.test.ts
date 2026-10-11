@@ -41,7 +41,7 @@ async function mountPaneCard(paneFields: Record<string, unknown> = {}) {
         ...paneFields,
       },
     },
-    global: { stubs: { PromptMenu: true } },
+    global: { stubs: { MacroMenu: true } },
   });
 }
 

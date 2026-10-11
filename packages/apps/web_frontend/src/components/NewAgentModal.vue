@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { agentCommand, listAgents, newAgent, type AgentDef } from "../stores/agents";
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
-import { projectPrompts, prompts } from "../stores/prompts";
+import { macros, projectMacros } from "../stores/macros";
 import { forgetNewPaneValues, loadNewPaneValues, saveNewPaneValues, startNewPane } from "../stores/newPane";
 import { t } from "../i18n/index";
 
@@ -20,7 +20,7 @@ const busy = ref(false);
 const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
-const templates = computed(() => [...projectPrompts.value, ...prompts.personal]);
+const allMacros = computed(() => [...projectMacros.value, ...macros.personal]);
 const MODELS = { claude: ["opus", "sonnet", "haiku"], codex: ["gpt-5-codex", "gpt-5"], terminal: [] as string[] };
 const command = computed(() => {
   if (tool.value === "terminal") return "";
@@ -42,10 +42,10 @@ onMounted(async () => {
   nextTick(() => first.value?.focus());
 });
 
-function useTemplate(e: Event) {
+function useMacro(e: Event) {
   const id = (e.target as HTMLSelectElement).value;
-  const t = templates.value.find((x) => x.id === id);
-  if (t) text.value = text.value ? `${text.value}\n\n${t.text}` : t.text;
+  const macro = allMacros.value.find((x) => x.id === id);
+  if (macro) text.value = text.value ? `${text.value}\n\n${macro.text}` : macro.text;
   (e.target as HTMLSelectElement).value = "";
 }
 
@@ -138,9 +138,9 @@ function onKey(e: KeyboardEvent) {
       <label v-if="tool !== 'terminal'" class="block">
         <span class="field-label row-label">
           {{ t("newAgentModal.prompt") }} <span class="muted">{{ t("newAgentModal.promptHint") }}</span>
-          <select v-if="templates.length" class="tpl" :aria-label="t('newAgentModal.templateLabel')" @change="useTemplate">
-            <option value="">{{ t("newAgentModal.template") }}</option>
-            <option v-for="t in templates" :key="t.id" :value="t.id">{{ t.label }}</option>
+          <select v-if="allMacros.length" class="macro-select" :aria-label="t('newAgentModal.macroLabel')" @change="useMacro">
+            <option value="">{{ t("newAgentModal.macro") }}</option>
+            <option v-for="macro in allMacros" :key="macro.id" :value="macro.id">{{ macro.label }}</option>
           </select>
         </span>
         <textarea v-model="text" rows="4" :placeholder="t('newAgentModal.promptPlaceholder')"></textarea>
@@ -193,7 +193,7 @@ input, textarea, select {
 }
 input { height: 32px; }
 textarea { padding: 8px 9px; resize: vertical; font-family: inherit; line-height: 1.45; }
-.tpl { height: 24px; margin-left: auto; font-size: var(--font-size); }
+.macro-select { height: 24px; margin-left: auto; font-size: var(--font-size); }
 .cmd { margin: 2px 0 0; font-size: var(--font-size); color: var(--muted); }
 .small { font-size: var(--font-size); padding: 4px 2px; }
 .muted { color: var(--muted); }

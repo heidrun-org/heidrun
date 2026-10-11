@@ -36,6 +36,8 @@ watch(
   resolvedTheme,
   (theme) => {
     document.documentElement.dataset.theme = theme;
+    // Bootstrap reads the theme from this attribute, for the close button, the arrow of a select, and the check box.
+    document.documentElement.dataset.bsTheme = theme;
   },
   { immediate: true },
 );

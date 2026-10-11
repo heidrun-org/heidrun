@@ -23,7 +23,7 @@ import {
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
-import { projectPrompts, prompts, resolvePrompt } from "../stores/prompts";
+import { macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
@@ -62,13 +62,13 @@ const items = computed<Item[]>(() => {
     list.push({ section: t("commandPalette.section.run"), label: t("commandPalette.runAndNotify"), hint: "⇧↵", run: () => runInNewPane(q, "passed|failed|error|Error|✓|✗|done|Done") });
   }
 
-  // Consigne templates: fill the input bar (editable before sending).
-  for (const prompt of [...projectPrompts.value, ...prompts.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
+  // Macros: fill the input bar (editable before sending).
+  for (const macro of [...projectMacros.value, ...macros.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
     list.push({
-      section: t("commandPalette.section.prompts"),
-      label: prompt.label,
-      hint: t("commandPalette.promptHint"),
-      run: async () => insertIntoFocusedPane(await resolvePrompt(prompt.text, selectedPane.value?.pane_id ?? null)),
+      section: t("commandPalette.section.macros"),
+      label: macro.label,
+      hint: t("commandPalette.macroHint"),
+      run: async () => insertIntoFocusedPane(await resolveMacroVariables(macro.text, selectedPane.value?.pane_id ?? null)),
     });
   }
 
