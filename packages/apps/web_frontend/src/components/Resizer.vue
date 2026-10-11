@@ -76,7 +76,7 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 /* Like the sash of Visual Studio Code: the colour fills the whole space between the two columns. */
 .resizer {
   width: var(--pane-gap); flex-shrink: 0; position: relative; z-index: 6; cursor: col-resize;
-  touch-action: none; background: transparent; transition: background 0.15s;
+  touch-action: none; background: transparent; transition: background 0.15s; border-radius: calc(var(--pane-gap) / 2);
 }
 .resizer:hover, .resizer.active, .resizer.highlighted, .resizer:focus-visible { background: var(--done); }
 .resizer:focus-visible { outline: none; }

@@ -66,18 +66,19 @@ const separatorItems = computed(() => {
   const percentX = (cells: number) => ((cells - area.x) / area.width) * 100;
   const percentY = (cells: number) => ((cells - area.y) / area.height) * 100;
   return separators.value.map((separator) => {
-    // The line is as thick as the space between two panes, and stops at the edge of the panes at both ends.
+    // The line is as thick as the space between two panes. At each end it reaches the middle of the space where it
+    // meets another line, so that the round ends of two lines drawn together join without a notch.
     const style =
       separator.direction === "down"
         ? {
             top: `calc(${percentY(separator.position)}% - ${GAP} / 2)`,
-            left: `calc(${percentX(separator.start)}% + ${GAP} / 2)`,
-            width: `calc(${percentX(separator.end) - percentX(separator.start)}% - ${GAP})`,
+            left: `${percentX(separator.start)}%`,
+            width: `${percentX(separator.end) - percentX(separator.start)}%`,
           }
         : {
             left: `calc(${percentX(separator.position)}% - ${GAP} / 2)`,
-            top: `calc(${percentY(separator.start)}% + ${GAP} / 2)`,
-            height: `calc(${percentY(separator.end) - percentY(separator.start)}% - ${GAP})`,
+            top: `${percentY(separator.start)}%`,
+            height: `${percentY(separator.end) - percentY(separator.start)}%`,
           };
     return { separator, style };
   });
@@ -284,7 +285,10 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
 }
 /* Like the sash of Visual Studio Code: the colour fills the whole space between two panes. */
-.separator { position: absolute; z-index: 5; touch-action: none; background: transparent; transition: background 0.15s; }
+.separator {
+  position: absolute; z-index: 5; touch-action: none; background: transparent; transition: background 0.15s;
+  border-radius: calc(var(--pane-gap) / 2);
+}
 .separator.down { height: var(--pane-gap); cursor: row-resize; }
 .separator.right { width: var(--pane-gap); cursor: col-resize; }
 .separator:hover, .separator.lit, .separator:focus-visible { background: var(--done); }
