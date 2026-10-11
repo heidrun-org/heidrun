@@ -8,6 +8,7 @@
   "newWorkspaceTitle": "Créer un nouveau workspace",
   "tabs": "Onglets",
   "navigationBarLabel": "Panneau de gauche",
+  "sidebarSection.workspacesAndTabs": "Workspaces et onglets",
   "sidebarSection.actions": "Scripts",
   "newPaneName": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
   "paneTitle": "{name} · double-clic pour renommer",

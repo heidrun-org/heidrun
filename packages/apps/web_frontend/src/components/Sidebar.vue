@@ -68,15 +68,15 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the navigation bar of the left sidebar: the Workspaces, Scripts, and Git sidebar sections. */
+/** The buttons of the navigation bar of the left sidebar: the Workspaces and Tabs, Scripts, and Git sidebar sections. */
 const sidebarSections = computed(() => [
-  { id: "workspaces", label: t("sidebar.workspaces"), badge: 0 },
+  { id: "workspacesAndTabs", label: t("sidebar.sidebarSection.workspacesAndTabs"), badge: 0 },
   { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
   { id: "git", label: "Git", badge: currentForge.value?.requests.length ?? 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "git" || id === "actions" ? id : "workspaces");
+  openSidebarSection(id === "git" || id === "actions" ? id : "workspacesAndTabs");
 }
 
 /** Index of the first workspace without an agent, where the divider goes. */
@@ -135,147 +135,148 @@ async function createWorkspace() {
         :label="t('sidebar.navigationBarLabel')"
         @select="selectSidebarSection"
       />
-      <section v-if="settings.leftSidebarSection === 'workspaces'" class="group tight">
-        <div class="eyebrow pad heading">
-          <span>{{ t("sidebar.workspaces") }}</span>
-          <button class="btn border-0 justify-content-center add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
-        </div>
-        <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
-          <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
-          <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
-            <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
-            <InlineRename
-              :value="w.label"
-              :label="t('sidebar.newWorkspaceName')"
-              @save="(v) => finishRename('ws', w.workspace_id, v)"
-              @cancel="state.renaming = null"
-            />
+      <div v-if="settings.leftSidebarSection === 'workspacesAndTabs'" class="lists">
+        <section class="group tight">
+          <div class="eyebrow pad heading">
+            <span>{{ t("sidebar.workspaces") }}</span>
+            <button class="btn border-0 justify-content-center add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
           </div>
-          <div
-            v-else
-            class="item ws-row"
-            :class="{
-              quiet: !agentsIn(w.workspace_id).length,
-              active: w.workspace_id === state.selectedWorkspaceId,
-              menuOpen: menuWorkspaceId === w.workspace_id,
-              dragging: ws.dragging.value === w.workspace_id,
-              'drop-before': ws.gap.value === wi,
-              'drop-after': ws.gap.value === wi + 1 && wi === workspaces.length - 1,
-            }"
-            draggable="true"
-            @dragstart="ws.onDragStart($event, w.workspace_id)"
-            @dragover="ws.onDragOver($event, wi)"
-            @drop="ws.onDrop($event, workspaces.map((x) => x.workspace_id))"
-            @dragend="ws.onDragEnd()"
-          >
-            <button
-              class="pane-main"
-              :title="t('sidebar.workspaceTitle')"
-              @click="selectWorkspace(w.workspace_id)"
-              @dblclick="startRename('ws', w.workspace_id)"
-            >
+          <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
+            <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
+            <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
               <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
-              <span class="grow">{{ w.label }}</span>
-            </button>
-            <span class="pane-actions">
-              <button
-                class="row-btn"
-                :aria-label="t('sidebar.workspaceMenuLabel', { name: w.label })"
-                :title="t('sidebar.workspaceMenu')"
-                aria-haspopup="menu"
-                :aria-expanded="menuWorkspaceId === w.workspace_id"
-                @mousedown.stop
-                @click.stop="menuWorkspaceId = menuWorkspaceId === w.workspace_id ? null : w.workspace_id"
-              ><Icon name="three-dots-vertical" /></button>
-              <div v-if="menuWorkspaceId === w.workspace_id" class="row-menu" role="menu" @mousedown.stop>
-                <button class="row-menu-item" role="menuitem" @click.stop="renameWorkspace(w.workspace_id)">{{ t("sidebar.rename") }}</button>
-              </div>
-              <ConfirmButton
-                class="row-btn"
-                icon="x-lg"
-                :confirm-label="t('sidebar.closeWorkspaceConfirm')"
-                :question="t('sidebar.closeWorkspace', { name: w.label })"
-                @confirm="closeWorkspace(w.workspace_id)"
+              <InlineRename
+                :value="w.label"
+                :label="t('sidebar.newWorkspaceName')"
+                @save="(v) => finishRename('ws', w.workspace_id, v)"
+                @cancel="state.renaming = null"
               />
-            </span>
+            </div>
+            <div
+              v-else
+              class="item ws-row"
+              :class="{
+                quiet: !agentsIn(w.workspace_id).length,
+                active: w.workspace_id === state.selectedWorkspaceId,
+                menuOpen: menuWorkspaceId === w.workspace_id,
+                dragging: ws.dragging.value === w.workspace_id,
+                'drop-before': ws.gap.value === wi,
+                'drop-after': ws.gap.value === wi + 1 && wi === workspaces.length - 1,
+              }"
+              draggable="true"
+              @dragstart="ws.onDragStart($event, w.workspace_id)"
+              @dragover="ws.onDragOver($event, wi)"
+              @drop="ws.onDrop($event, workspaces.map((x) => x.workspace_id))"
+              @dragend="ws.onDragEnd()"
+            >
+              <button
+                class="pane-main"
+                :title="t('sidebar.workspaceTitle')"
+                @click="selectWorkspace(w.workspace_id)"
+                @dblclick="startRename('ws', w.workspace_id)"
+              >
+                <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
+                <span class="grow">{{ w.label }}</span>
+              </button>
+              <span class="pane-actions">
+                <button
+                  class="row-btn"
+                  :aria-label="t('sidebar.workspaceMenuLabel', { name: w.label })"
+                  :title="t('sidebar.workspaceMenu')"
+                  aria-haspopup="menu"
+                  :aria-expanded="menuWorkspaceId === w.workspace_id"
+                  @mousedown.stop
+                  @click.stop="menuWorkspaceId = menuWorkspaceId === w.workspace_id ? null : w.workspace_id"
+                ><Icon name="three-dots-vertical" /></button>
+                <div v-if="menuWorkspaceId === w.workspace_id" class="row-menu" role="menu" @mousedown.stop>
+                  <button class="row-menu-item" role="menuitem" @click.stop="renameWorkspace(w.workspace_id)">{{ t("sidebar.rename") }}</button>
+                </div>
+                <ConfirmButton
+                  class="row-btn"
+                  icon="x-lg"
+                  :confirm-label="t('sidebar.closeWorkspaceConfirm')"
+                  :question="t('sidebar.closeWorkspace', { name: w.label })"
+                  @confirm="closeWorkspace(w.workspace_id)"
+                />
+              </span>
+            </div>
+          </template>
+        </section>
+        <section class="group tight">
+          <div class="eyebrow pad heading">
+            <span>{{ t("sidebar.tabs") }}</span>
+            <button class="btn border-0 justify-content-center add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
           </div>
-        </template>
-      </section>
+          <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
+            <div v-if="state.renaming === `pane:${p.pane_id}` && state.renamingPlace === 'sidebar'" class="item small editing">
+              <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
+              <InlineRename
+                :value="p.label || paneName(p)"
+                :label="t('sidebar.newPaneName')"
+                allow-empty
+                @save="(v) => finishRename('pane', p.pane_id, v)"
+                @cancel="state.renaming = null"
+              />
+            </div>
+            <div
+              v-else
+              class="item small pane-row"
+              :class="{
+                active: p.pane_id === state.selectedPaneId,
+                menuOpen: menuPaneId === p.pane_id,
+                dragging: paneReorder.dragging.value === p.pane_id,
+                'drop-before': paneReorder.gap.value === pi,
+                'drop-after': paneReorder.gap.value === pi + 1 && pi === workspacePanes.length - 1,
+              }"
+              draggable="true"
+              @dragstart="paneReorder.onDragStart($event, p.pane_id)"
+              @dragover="paneReorder.onDragOver($event, pi)"
+              @drop="paneReorder.onDrop($event, workspacePanes.map((x) => x.pane_id))"
+              @dragend="paneReorder.onDragEnd()"
+            >
+              <button
+                class="pane-main"
+                :title="t('sidebar.paneTitle', { name: p.terminal_title_stripped || p.agent || t('sidebar.terminalLower') })"
+                @click="selectPane(p)"
+                @dblclick="startRename('pane', p.pane_id)"
+              >
+                <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
+                <span class="grow">{{ paneName(p) }}</span>
+                <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" :title="t('sidebar.remoteControlConnected')">{{ t("sidebar.remoteControlBadge") }}</span>
+                <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
+                  {{ p.agent ? statusLabel(p.agent_status) : t("sidebar.terminalLower") }}
+                </span>
+              </button>
+              <span class="pane-actions">
+                <button
+                  class="row-btn"
+                  :aria-label="t('sidebar.paneMenuLabel', { name: paneName(p) })"
+                  :title="t('sidebar.paneMenu')"
+                  aria-haspopup="menu"
+                  :aria-expanded="menuPaneId === p.pane_id"
+                  @mousedown.stop
+                  @click.stop="menuPaneId = menuPaneId === p.pane_id ? null : p.pane_id"
+                ><Icon name="three-dots-vertical" /></button>
+                <div v-if="menuPaneId === p.pane_id" class="row-menu" role="menu" @mousedown.stop>
+                  <button class="row-menu-item" role="menuitem" @click.stop="renamePane(p.pane_id)">{{ t("sidebar.rename") }}</button>
+                </div>
+                <ConfirmButton
+                  class="row-btn"
+                  icon="x-lg"
+                  :confirm-label="t('sidebar.closePaneConfirm')"
+                  :question="t('sidebar.closePane', { name: paneName(p) })"
+                  @confirm="closePane(p.pane_id)"
+                />
+              </span>
+            </div>
+          </template>
+        </section>
+      </div>
       <div v-else class="sidebar-section-body">
         <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
         <GitPanel v-else />
       </div>
     </div>
-
-    <section class="group tight">
-      <div class="eyebrow pad heading">
-        <span>{{ t("sidebar.tabs") }}</span>
-        <button class="btn border-0 justify-content-center add" :title="t('sidebar.newPaneTitle')" :aria-label="t('sidebar.newPaneTitle')" @click="onNewPaneClick"><Icon name="plus-lg" /></button>
-      </div>
-      <template v-for="(p, pi) in workspacePanes" :key="p.pane_id">
-        <div v-if="state.renaming === `pane:${p.pane_id}` && state.renamingPlace === 'sidebar'" class="item small editing">
-          <span class="dot" :class="p.agent ? p.agent_status : 'process'"></span>
-          <InlineRename
-            :value="p.label || paneName(p)"
-            :label="t('sidebar.newPaneName')"
-            allow-empty
-            @save="(v) => finishRename('pane', p.pane_id, v)"
-            @cancel="state.renaming = null"
-          />
-        </div>
-        <div
-          v-else
-          class="item small pane-row"
-          :class="{
-            active: p.pane_id === state.selectedPaneId,
-            menuOpen: menuPaneId === p.pane_id,
-            dragging: paneReorder.dragging.value === p.pane_id,
-            'drop-before': paneReorder.gap.value === pi,
-            'drop-after': paneReorder.gap.value === pi + 1 && pi === workspacePanes.length - 1,
-          }"
-          draggable="true"
-          @dragstart="paneReorder.onDragStart($event, p.pane_id)"
-          @dragover="paneReorder.onDragOver($event, pi)"
-          @drop="paneReorder.onDrop($event, workspacePanes.map((x) => x.pane_id))"
-          @dragend="paneReorder.onDragEnd()"
-        >
-          <button
-            class="pane-main"
-            :title="t('sidebar.paneTitle', { name: p.terminal_title_stripped || p.agent || t('sidebar.terminalLower') })"
-            @click="selectPane(p)"
-            @dblclick="startRename('pane', p.pane_id)"
-          >
-            <span class="dot" :class="[p.agent ? p.agent_status : 'process', state.pulse[p.pane_id] ? 'pulse' : '']"></span>
-            <span class="grow">{{ paneName(p) }}</span>
-            <span v-if="remote.byPane[p.pane_id] === 'active'" class="rc" :title="t('sidebar.remoteControlConnected')">{{ t("sidebar.remoteControlBadge") }}</span>
-            <span class="status" :class="p.agent ? 't-' + p.agent_status : 't-idle'">
-              {{ p.agent ? statusLabel(p.agent_status) : t("sidebar.terminalLower") }}
-            </span>
-          </button>
-          <span class="pane-actions">
-            <button
-              class="row-btn"
-              :aria-label="t('sidebar.paneMenuLabel', { name: paneName(p) })"
-              :title="t('sidebar.paneMenu')"
-              aria-haspopup="menu"
-              :aria-expanded="menuPaneId === p.pane_id"
-              @mousedown.stop
-              @click.stop="menuPaneId = menuPaneId === p.pane_id ? null : p.pane_id"
-            ><Icon name="three-dots-vertical" /></button>
-            <div v-if="menuPaneId === p.pane_id" class="row-menu" role="menu" @mousedown.stop>
-              <button class="row-menu-item" role="menuitem" @click.stop="renamePane(p.pane_id)">{{ t("sidebar.rename") }}</button>
-            </div>
-            <ConfirmButton
-              class="row-btn"
-              icon="x-lg"
-              :confirm-label="t('sidebar.closePaneConfirm')"
-              :question="t('sidebar.closePane', { name: paneName(p) })"
-              @confirm="closePane(p.pane_id)"
-            />
-          </span>
-        </div>
-      </template>
-    </section>
     <!-- At the bottom: cards come and go without moving the workspaces list. -->
     <section v-if="attention.length" class="group attention">
       <div class="eyebrow pad">{{ t("sidebar.toHandle") }}</div>
@@ -324,9 +325,10 @@ async function createWorkspace() {
   display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
 }
 .group { display: flex; flex-direction: column; gap: 8px; }
-.sidebar-sections { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+.sidebar-sections { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.lists { display: flex; flex-direction: column; gap: 24px; }
 .left-navigation-bar { margin: 0 4px; }
-.sidebar-section-body { height: 320px; display: flex; flex-direction: column; min-height: 0; }
+.sidebar-section-body { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
 .group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }

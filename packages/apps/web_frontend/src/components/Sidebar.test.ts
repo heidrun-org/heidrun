@@ -50,7 +50,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   confirmDialog.open = false;
-  settings.leftSidebarSection = "workspaces";
+  settings.leftSidebarSection = "workspacesAndTabs";
 });
 
 describe("Sidebar workspace rows", () => {
@@ -118,29 +118,40 @@ describe("Sidebar headings", () => {
 });
 
 describe("Sidebar navigation bar", () => {
-  it("shows the buttons Workspaces, Scripts, and Git, and not the buttons Pane and Notes", async () => {
+  it("shows the buttons Workspaces and Tabs, Scripts, and Git, and not the buttons Pane and Notes", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.text())).toEqual(["Workspaces", "Scripts", "Git"]);
+    expect(buttons.map((button) => button.text())).toEqual(["Workspaces and Tabs", "Scripts", "Git"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
     expect(wrapper.get(".navigation-bar").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows the sidebar section Workspaces first, and marks its button as active", async () => {
+  it("shows the sidebar section Workspaces and Tabs first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
     expect(wrapper.findAll(".ws-row")).toHaveLength(2);
+    expect(wrapper.findAll(".pane-row")).toHaveLength(3);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
   });
 
-  it("shows the sidebar section Scripts, and not the list of workspaces, after a click on its button", async () => {
+  it("shows the sidebar section Scripts, and neither the list of workspaces nor the list of tabs, after a click on its button", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".navigation-bar button")[1].trigger("click");
     expect(settings.leftSidebarSection).toBe("actions");
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([false, true, false]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
     expect(wrapper.find(".ws-row").exists()).toBe(false);
+    expect(wrapper.find(".pane-row").exists()).toBe(false);
+  });
+
+  it("shows neither the list of workspaces nor the list of tabs in the sidebar section Git", async () => {
+    settings.leftSidebarSection = "git";
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+    expect(wrapper.find(".ws-row").exists()).toBe(false);
+    expect(wrapper.find(".pane-row").exists()).toBe(false);
+    expect(wrapper.findAll(".heading")).toHaveLength(0);
   });
 
   it("shows the sidebar section Git after a click on its button, and remembers it", async () => {
@@ -154,20 +165,23 @@ describe("Sidebar navigation bar", () => {
     expect(restarted.find("git-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the list of workspaces again after a click on the button Workspaces", async () => {
+  it("shows the list of workspaces and the list of tabs again after a click on the button Workspaces and Tabs", async () => {
     settings.leftSidebarSection = "git";
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
-    expect(settings.leftSidebarSection).toBe("workspaces");
+    expect(settings.leftSidebarSection).toBe("workspacesAndTabs");
     expect(wrapper.findAll(".ws-row")).toHaveLength(2);
+    expect(wrapper.findAll(".pane-row")).toHaveLength(3);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
   });
 
-  it("keeps the list of tabs under every sidebar section, until the stage that removes it is done", async () => {
+  it("shows the list of tabs only in the sidebar section Workspaces and Tabs, under the list of workspaces", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".heading").map((heading) => heading.get("span").text())).toEqual(["Workspaces", "Tabs"]);
     await wrapper.findAll(".navigation-bar button")[1].trigger("click");
-    expect(wrapper.findAll(".heading").map((heading) => heading.get("span").text())).toEqual(["Tabs"]);
+    expect(wrapper.findAll(".heading")).toHaveLength(0);
+    await wrapper.findAll(".navigation-bar button")[2].trigger("click");
+    expect(wrapper.findAll(".heading")).toHaveLength(0);
   });
 });
 

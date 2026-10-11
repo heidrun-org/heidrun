@@ -8,6 +8,7 @@
   "newWorkspaceTitle": "Create a new workspace",
   "tabs": "Tabs",
   "navigationBarLabel": "Left sidebar",
+  "sidebarSection.workspacesAndTabs": "Workspaces and Tabs",
   "sidebarSection.actions": "Scripts",
   "newPaneName": "New name of the pane (empty to go back to the automatic name)",
   "paneTitle": "{name} · double-click to rename",
