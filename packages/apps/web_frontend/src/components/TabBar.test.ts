@@ -280,6 +280,23 @@ describe("TabBar move", () => {
   });
 });
 
+describe("TabBar height", () => {
+  it("gives a tab a fixed height, and a rename field that fits in it, so that the rename does not make the tab bar higher", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    const heightOfTab = /\.nav-tabs \.nav-link \{[^}]*height: (\d+)px/.exec(sourceText);
+    const heightOfField = /\.nav-link \.tab-rename \{[^}]*height: (\d+)px/.exec(sourceText);
+    expect(heightOfTab).not.toBeNull();
+    expect(heightOfField).not.toBeNull();
+    expect(Number(heightOfField![1])).toBeLessThanOrEqual(Number(heightOfTab![1]) - 2);
+  });
+
+  it("gives the rename field the class tab-rename", async () => {
+    const { wrapper } = await mountTabBar();
+    await wrapper.findAll("[role=tab]")[0].trigger("dblclick");
+    expect(wrapper.get("input.rename").classes()).toContain("tab-rename");
+  });
+});
+
 describe("TabBar place in the window", () => {
   it("sits on top of the viewport: the file App.vue shows the tab bar before the viewport", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "../App.vue"), "utf8");

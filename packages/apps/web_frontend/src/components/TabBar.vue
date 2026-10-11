@@ -26,12 +26,13 @@ function isRemoteControlled(tabId: string): boolean {
 </script>
 
 <template>
-  <div class="tab-bar d-flex align-items-center gap-2">
+  <div class="tab-bar d-flex gap-2">
     <ul class="nav nav-tabs" role="tablist" :aria-label="t('tabBar.label')">
       <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation">
         <div v-if="state.renaming === `tab:${tab.tab_id}`" class="nav-link active d-flex align-items-center gap-2">
           <span class="dot" :class="tab.agent_status === 'idle' ? '' : tab.agent_status"></span>
           <InlineRename
+            class="tab-rename"
             :value="tabLabel(tab.tab_id)"
             :label="t('tabBar.newName')"
             @save="(value) => finishRename('tab', tab.tab_id, value)"
@@ -85,26 +86,42 @@ function isRemoteControlled(tabId: string): boolean {
 </template>
 
 <style scoped>
-.tab-bar { flex-shrink: 0; min-width: 0; padding-top: 4px; }
-/* Bootstrap draws the tabs. These variables give it the colors of the application: the selected tab has the color of the panes
-   below it, and the tabs have no border line. */
+/* The line under the tab bar is the background of the bar, so that the selected tab, which reaches the bottom of the bar, covers it.
+   The panes start under the line, after the gap that separates the panes from each other. */
+.tab-bar {
+  flex-shrink: 0; min-width: 0; align-items: flex-end; padding-top: 4px; margin-bottom: var(--pane-gap);
+  background: linear-gradient(var(--line-strong), var(--line-strong)) bottom / 100% 1px no-repeat;
+}
+/* Bootstrap draws the tabs, as the navigation bar of a sidebar looks: a border around the selected tab and around the tab under the
+   mouse. These variables give Bootstrap the colors of the application. The selected tab has the color of the panes. */
 .nav-tabs {
-  --bs-nav-tabs-border-width: 0;
+  --bs-nav-tabs-border-width: 1px;
+  --bs-nav-tabs-border-color: var(--line-strong);
   --bs-nav-tabs-border-radius: 8px;
+  --bs-nav-tabs-link-hover-border-color: var(--line) var(--line) transparent;
+  --bs-nav-tabs-link-active-border-color: var(--line-strong) var(--line-strong) var(--bg);
+  --bs-nav-tabs-link-active-color: var(--text);
+  --bs-nav-tabs-link-active-bg: var(--bg);
   --bs-nav-link-padding-x: 12px;
-  --bs-nav-link-padding-y: 6px;
+  --bs-nav-link-padding-y: 0;
   --bs-nav-link-font-weight: 500;
   --bs-nav-link-color: var(--muted);
   --bs-nav-link-hover-color: var(--text-2);
-  --bs-nav-tabs-link-active-color: var(--text);
-  --bs-nav-tabs-link-active-bg: var(--bg);
-  flex-wrap: nowrap; min-width: 0; margin: 0; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  flex-wrap: nowrap; min-width: 0; margin: 0; gap: 2px; border-bottom: 0; overflow-x: auto; scrollbar-width: none;
 }
 .nav-item { flex: 0 1 auto; min-width: 120px; max-width: 220px; }
-.nav-link { width: 100%; }
-.nav-link:not(.active):hover { background: var(--overlay-hover); }
-.nav-link.active { font-weight: 600; }
+/* The height of a tab is fixed, so that the rename field cannot make the tab bar higher. */
+.nav-tabs .nav-link { width: 100%; height: 34px; margin-bottom: 0; background-color: rgba(var(--wash), 0.04); }
+.nav-tabs .nav-link:not(.active):hover { background-color: var(--overlay-hover); }
+.nav-tabs .nav-link.active { font-weight: 600; background-color: var(--bg); }
 .nav-link.dragging { opacity: 0.4; }
+/* As in Visual Studio Code, a short line between two tabs shows where a tab stops. It is hidden next to the selected tab and the
+   tab under the mouse, which have a border. */
+.nav-item:not(:last-child)::after {
+  content: ""; position: absolute; top: 9px; bottom: 9px; right: -2px; width: 1px; background: var(--line-strong); pointer-events: none;
+}
+.nav-item:has(.nav-link.active)::after, .nav-item:has(+ .nav-item .nav-link.active)::after,
+.nav-item:hover::after, .nav-item:has(+ .nav-item:hover)::after { opacity: 0; }
 .nav-link.drop-before::before, .nav-link.drop-after::after {
   content: ""; position: absolute; top: 4px; bottom: 4px; width: 2px; border-radius: 1px; background: var(--done);
 }
@@ -114,6 +131,7 @@ function isRemoteControlled(tabId: string): boolean {
   flex: 1; min-width: 0; padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left;
 }
 .tab-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-link .tab-rename { flex: 1; min-width: 0; width: auto; height: 24px; padding: 0 6px; }
 .rc {
   font: 600 var(--font-size) var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
   background: var(--tint-working); color: var(--working);
@@ -141,7 +159,7 @@ function isRemoteControlled(tabId: string): boolean {
   --bs-btn-disabled-color: var(--text);
   --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
   --bs-btn-focus-box-shadow: none;
-  flex-shrink: 0; width: 28px; height: 28px; line-height: 1;
+  flex-shrink: 0; width: 28px; height: 28px; margin-bottom: 3px; line-height: 1;
 }
 /* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
 .add:not(:hover) {
