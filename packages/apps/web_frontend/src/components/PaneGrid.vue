@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
@@ -13,6 +13,8 @@ const emit = defineEmits<{
   outerStart: [edge: PaneOuterEdge];
   /** The pointer moved this far, in pixels, to the right since the start of the drag. */
   outerMove: [edge: PaneOuterEdge, dx: number];
+  /** The column of the window that a corner under the pointer touches, or null: the column draws its line in colour. */
+  outerHighlight: [edge: PaneOuterEdge | null];
 }>();
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
@@ -124,7 +126,17 @@ type Drag = {
 
 const gridEl = ref<HTMLElement | null>(null);
 const drag = ref<Drag | null>(null);
-const draggedIds = computed(() => new Set(drag.value?.separators.map((separator) => separator.splitId) ?? []));
+const hoveredCornerKey = ref<string | null>(null);
+
+// Like Visual Studio Code: a line is drawn in colour under the pointer, and a corner under the pointer or in a drag
+// draws every line that meets there.
+const litCorner = computed(() => cornerItems.value.find((item) => item.key === (drag.value?.key ?? hoveredCornerKey.value)));
+const litIds = computed(() => {
+  const dragged = drag.value?.separators ?? litCorner.value?.separators ?? [];
+  return new Set(dragged.map((separator) => separator.splitId));
+});
+const litEdge = computed(() => drag.value?.edge ?? litCorner.value?.edge ?? null);
+watch(litEdge, (edge) => emit("outerHighlight", edge));
 
 function startDrag(e: PointerEvent, key: string, dragged: PaneSeparator[], edge: PaneOuterEdge | null) {
   const layout = tabLayout.value;
@@ -233,7 +245,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
       v-for="item in separatorItems"
       :key="item.separator.splitId"
       class="separator"
-      :class="[item.separator.direction, { active: draggedIds.has(item.separator.splitId) }]"
+      :class="[item.separator.direction, { lit: litIds.has(item.separator.splitId) }]"
       :style="item.style"
       role="separator"
       :aria-orientation="item.separator.direction === 'down' ? 'horizontal' : 'vertical'"
@@ -251,10 +263,11 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
       v-for="item in cornerItems"
       :key="item.key"
       class="corner"
-      :class="{ active: drag?.key === item.key }"
       :style="item.style"
       aria-hidden="true"
       :title="t('resizer.paneCornerTitle')"
+      @pointerenter="hoveredCornerKey = item.key"
+      @pointerleave="hoveredCornerKey = null"
       @pointerdown="startDrag($event, item.key, item.separators, item.edge)"
     ></div>
   </div>
@@ -270,23 +283,12 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
   position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
 }
-.separator { position: absolute; z-index: 5; touch-action: none; }
+/* Like the sash of Visual Studio Code: the colour fills the whole space between two panes. */
+.separator { position: absolute; z-index: 5; touch-action: none; background: transparent; transition: background 0.15s; }
 .separator.down { height: var(--pane-gap); cursor: row-resize; }
 .separator.right { width: var(--pane-gap); cursor: col-resize; }
-.separator::after { content: ""; position: absolute; background: transparent; transition: background 0.15s; }
-.separator.down::after { left: 0; right: 0; top: calc(var(--pane-gap) / 2 - 0.5px); height: 1px; }
-.separator.right::after { top: 0; bottom: 0; left: calc(var(--pane-gap) / 2 - 0.5px); width: 1px; }
-.separator:hover::after, .separator.active::after, .separator:focus-visible::after { background: var(--done); }
-.separator.down:hover::after, .separator.down.active::after, .separator.down:focus-visible::after {
-  top: calc(var(--pane-gap) / 2 - 1px); height: 2px;
-}
-.separator.right:hover::after, .separator.right.active::after, .separator.right:focus-visible::after {
-  left: calc(var(--pane-gap) / 2 - 1px); width: 2px;
-}
+.separator:hover, .separator.lit, .separator:focus-visible { background: var(--done); }
 .separator:focus-visible { outline: none; }
+/* The corner has no drawing: the lines that meet there show it. */
 .corner { position: absolute; z-index: 7; width: var(--corner-size); height: var(--corner-size); cursor: move; touch-action: none; }
-.corner::after {
-  content: ""; position: absolute; inset: calc(50% - 4px); border-radius: 50%; background: transparent; transition: background 0.15s;
-}
-.corner:hover::after, .corner.active::after { background: var(--done); }
 </style>

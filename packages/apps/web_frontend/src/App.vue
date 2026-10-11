@@ -98,6 +98,9 @@ const paneOuterEdges = computed(() => ({
   right: dockVisible.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
 }));
 
+// The column that a corner of the panes under the pointer touches: its line is drawn in colour.
+const highlightedEdge = ref<PaneOuterEdge | null>(null);
+
 /** The column that sits against one side of the panes, with the way its width follows the pointer. */
 function columnAgainst(edge: PaneOuterEdge) {
   if (edge === "left") {
@@ -282,12 +285,12 @@ onBeforeUnmount(() => {
     <div class="body">
       <template v-if="settings.leftOpen">
         <Sidebar />
-        <Resizer v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" />
+        <Resizer v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
       </template>
       <main class="center">
         <template v-if="state.snapshot">
           <div class="stage">
-            <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" />
+            <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
             <template v-if="dockVisible.length">
               <Resizer
                 :width="dockShown"
@@ -297,6 +300,7 @@ onBeforeUnmount(() => {
                 :max="DOCK_COLUMN.max"
                 :default-width="DOCK_COLUMN.defaultWidth"
                 :reserve="dockColumnReserve"
+                :highlighted="highlightedEdge === 'right'"
               />
               <DockColumn :style="{ width: `${dockShown}px` }" />
             </template>
@@ -305,7 +309,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" />
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && dockVisible.length === 0" />
         <RightPanel />
       </template>
     </div>

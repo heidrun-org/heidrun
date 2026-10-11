@@ -189,6 +189,36 @@ describe("PaneGrid corners", () => {
     expect(changes[0].path).toEqual([true]);
   });
 
+  it("draws every line of a corner in colour while the pointer is on the corner, and only then", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(wrapper.findAll(".separator.lit").length).toBe(0);
+    await wrapper.find(".corner").trigger("pointerenter");
+    expect(wrapper.findAll(".separator.lit").length).toBe(2);
+    await wrapper.find(".corner").trigger("pointerleave");
+    expect(wrapper.findAll(".separator.lit").length).toBe(0);
+  });
+
+  it("tells the parent to draw the column that sits against the corner in colour, while the pointer is on it", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES, OUTER_EDGES);
+    const rightCorner = wrapper.findAll(".corner")[1];
+    await rightCorner.trigger("pointerenter");
+    await rightCorner.trigger("pointerleave");
+    expect(wrapper.emitted("outerHighlight")).toEqual([["right"], [null]]);
+  });
+
+  it("keeps the lines of a corner in colour during the drag, also when the pointer leaves the corner", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES, OUTER_EDGES);
+    const rightCorner = wrapper.findAll(".corner")[1];
+    await rightCorner.trigger("pointerdown", { clientX: 1200, clientY: 400 });
+    await rightCorner.trigger("pointerleave");
+    expect(wrapper.findAll(".separator.lit").length).toBe(1);
+    expect(wrapper.emitted("outerHighlight")).toEqual([["right"]]);
+    releasePointer();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".separator.lit").length).toBe(0);
+    expect(wrapper.emitted("outerHighlight")).toEqual([["right"], [null]]);
+  });
+
   it("keeps the corner element while the lines move, so that the drag goes on", async () => {
     const wrapper = mountPaneGrid(THREE_PANES);
     const corner = wrapper.find(".corner").element;

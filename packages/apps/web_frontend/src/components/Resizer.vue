@@ -5,7 +5,9 @@ import { ResizerWidth } from "../lib/resizer_width";
 
 // Vertical drag handle between two columns. `side` says which column it resizes:
 // "left" grows when dragged right, "right" grows when dragged left.
-const props = defineProps<{ side: "left" | "right"; width: number; min: number; max: number; defaultWidth: number; reserve?: number }>();
+// `highlighted` draws the line in colour although the pointer is not on it: a corner of the panes that touches it
+// is under the pointer.
+const props = defineProps<{ side: "left" | "right"; width: number; min: number; max: number; defaultWidth: number; reserve?: number; highlighted?: boolean }>();
 const emit = defineEmits<{ "update:width": [value: number] }>();
 
 const active = ref(false);
@@ -52,7 +54,7 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 <template>
   <div
     class="resizer"
-    :class="{ active }"
+    :class="{ active, highlighted }"
     role="separator"
     aria-orientation="vertical"
     :aria-valuenow="width"
@@ -71,14 +73,11 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 </template>
 
 <style scoped>
+/* Like the sash of Visual Studio Code: the colour fills the whole space between the two columns. */
 .resizer {
   width: var(--pane-gap); flex-shrink: 0; position: relative; z-index: 6; cursor: col-resize;
-  touch-action: none;
+  touch-action: none; background: transparent; transition: background 0.15s;
 }
-.resizer::after {
-  content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--pane-gap) / 2 - 0.5px); width: 1px; background: transparent;
-  transition: background 0.15s;
-}
-.resizer:hover::after, .resizer.active::after, .resizer:focus-visible::after { background: var(--done); width: 2px; left: calc(var(--pane-gap) / 2 - 1px); }
+.resizer:hover, .resizer.active, .resizer.highlighted, .resizer:focus-visible { background: var(--done); }
 .resizer:focus-visible { outline: none; }
 </style>
