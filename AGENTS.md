@@ -8,6 +8,13 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 - The branch `dev_jerome` is the personal development branch of Jérôme Étienne. Jérôme's work goes on `dev_jerome`.
 
+## Agent rules
+
+The folder `docs/agents_rules` holds all the rules that every agent follows. Read these documents before you change the code, and keep them up to date when a rule changes.
+
+- [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
+- [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md): the rules of the user interface: where each part goes, and how each part works.
+
 ## Issue Fix Workflow
 
 Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`.
@@ -18,6 +25,7 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 
 1. Read the issue.
 2. Create a temporary branch, or a temporary worktree, for the fix. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
+   - To create a temporary worktree, run `pnpm worktree:create <name>` at the root of the repository, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree.
 3. Make the change on the temporary branch. Every commit message mentions the issue number.
 
 ### Issue Fix Completion
@@ -47,8 +55,12 @@ Never commit an image to the repository, and never push an image to a branch, on
 
 ## Tests
 
-- `pnpm test` at the repository root runs the tests of both packages, and exits with a non-zero code when a test fails.
-- `pnpm --filter web-frontend test` runs the Vitest tests of the package `packages/web-frontend`. The test files sit next to the code, and are named `*.test.ts`.
-- `pnpm --filter desktop-tauri test` runs `cargo test` for the package `packages/desktop-tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
+- `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
+- `pnpm --filter web_frontend test` runs the Vitest tests of the package `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`.
+- `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
+- `pnpm --filter raw_coding_agent_cli test` runs the Vitest tests of the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`.
+- `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
+- `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
+- `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.

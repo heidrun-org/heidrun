@@ -1,0 +1,14 @@
+{
+  "label": "Agents to handle",
+  "empty": "No agent is blocked, no agent has finished, and no agent asks a question.",
+  "waitingForDecision": "waiting for a decision",
+  "workDoneToReview": "work done, to review",
+  "showPane": "Show this pane",
+  "question": "QUESTION",
+  "unpinLabel": "Unpin {name}",
+  "pinLabel": "Pin {name}",
+  "unpinTitle": "Unpin the pane",
+  "pinTitle": "Pin the pane: it stays visible when you change tab or workspace",
+  "hideLabel": "Hide {name}",
+  "hideTitle": "Hide until the next change"
+}

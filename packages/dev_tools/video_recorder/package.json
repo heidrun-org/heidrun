@@ -1,0 +1,27 @@
+{
+  "name": "video_recorder",
+  "private": true,
+  "license": "MIT",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "video_record": "./src/video_record_cli.ts",
+    "video_cut": "./src/video_cut_cli.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "video:record": "tsx src/video_record_cli.ts",
+    "video:cut": "tsx src/video_cut_cli.ts"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vitest": "^2.1.9"
+  }
+}

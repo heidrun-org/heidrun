@@ -1,0 +1,8 @@
+{
+  "leftSidebarLabel": "Afficher la barre latérale gauche",
+  "leftSidebarTitle": "Barre latérale gauche (⌘B)",
+  "searchTitle": "Rechercher ou lancer une commande",
+  "searchPlaceholder": "Rechercher, lancer une commande…",
+  "rightSidebarLabel": "Afficher la barre latérale droite",
+  "rightSidebarTitle": "Barre latérale droite (⌥⌘B)"
+}

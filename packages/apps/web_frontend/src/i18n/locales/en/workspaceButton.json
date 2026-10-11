@@ -1,0 +1,17 @@
+{
+  "label": "Workspace {name}: open the list of workspaces",
+  "title": "Workspace · click to open the list · double-click to rename",
+  "none": "No workspace",
+  "newName": "New name of the workspace",
+  "listLabel": "Workspaces",
+  "withoutAgent": "Workspaces without an agent",
+  "rowTitle": "Select this workspace · drag to move",
+  "rename": "Rename the workspace {name}",
+  "closeConfirm": "Close",
+  "close": "Close the workspace {name}",
+  "new": "New workspace…",
+  "newTitle": "Create a new workspace",
+  "chooseFolder": "Choose the folder of the new workspace",
+  "otherBlocked": "An agent in another workspace is blocked",
+  "otherDone": "An agent in another workspace has finished"
+}

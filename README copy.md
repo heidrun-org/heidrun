@@ -15,7 +15,7 @@ A macOS graphical interface for [Herdr](https://herdr.dev): the agents and termi
 In the app: **⌘/** (or the **?** button at the top) shows this list, with a filter.
 
 <!-- shortcuts:start -->
-<!-- Generated from packages/web-frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
+<!-- Generated from packages/apps/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
 
 | Shortcut | Action |
 | --- | --- |
@@ -76,7 +76,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 
 **Pinned notes**: select text in a terminal, then "Pin" (or ⇧⌘P). The note appears in the **Notes** tab of the right panel, with its origin; you can rename it (double-click), copy it or send it to an agent. The ⤢ button (or a double-click on the text) opens it in a central window that you can move by its title, resize by the bottom-right corner and edit; its size is remembered. Notes stay on this Mac, never in the repo: a terminal output can contain secrets.
 
-**Actions**: the **Actions** tab of the right panel lists the commands of the project (`make dev`, `npm install`, `ngrok http 3000`…). One click opens a Herdr tab with their name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Actions are saved in `.heidrun/config.json` at the root of the repo, to be versioned with the code. The file is validated with a Zod schema (`packages/web-frontend/src/lib/project_config.ts`) each time it is loaded or saved; an unknown or wrong field shows an error that names the field, and nothing is written:
+**Scripts**: the **Scripts** tab of the right panel shows the scripts of the current workspace, in sections that can be folded: **Custom Scripts**, the commands that you create with the plus button on the line of the heading (`make dev`, `npm install`, `ngrok http 3000`…); the window that opens asks for an optional name and for the command line, and a script without a name takes the first 20 characters of its command line as its name, and **Existing Scripts**, the scripts that already exist in the project. One click on a custom script opens a Herdr tab with its name and runs the command; the button shows "running" while it runs, and a second click brings you back to its tab. Custom scripts are saved under the key `actions` in `.heidrun/config.json` at the root of the repo, to be versioned with the code. The file is validated with a Zod schema (`packages/apps/web_frontend/src/lib/project_config.ts`) each time it is loaded or saved; an unknown or wrong field shows an error that names the field, and nothing is written:
 
 ```json
 {
@@ -89,7 +89,7 @@ In the app: **⌘/** (or the **?** button at the top) shows this list, with a fi
 }
 ```
 
-The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are offered as suggestions. Recently run commands appear in **Recent**, between the actions and the suggestions. Actions, suggestions and notes can be reordered by drag and drop (the order of the actions is written in `.heidrun/config.json`; the order of the suggestions and the history stay on this Mac).
+The `package.json` scripts, the `Makefile` targets, the `Procfile` and a few Flutter, Cargo or Symfony commands are listed in **Existing Scripts**. Recently run commands appear in **Recent**, between the two sections; the trash icon on its line clears the list, and the history stays on this Mac. Notes can be reordered by drag and drop.
 
 **Colored references**: in the terminals, issues (`#12`), merge requests and pull requests (`!34`, `MR !34`, `PR #5`, `group/app#7`) and commits (`abc1234`) are colored; **⌘-click** on an issue, an MR or a PR opens it in an app window (description and comments rendered as Markdown, Centered / Full width, ⌘+/− for the size, "Open on GitLab/GitHub ↗"); on hover, "↗ Open" opens it in the browser and "⧉ Preview" in the app. Commits open on GitLab or GitHub, based on the `git remote` of the pane folder (URLs also open with ⌘-click). The text sent by the agent is not modified: the color is drawn on top. Optional settings in `.heidrun/config.json`:
 
@@ -201,7 +201,7 @@ There is no need to open `herdr` in a terminal: if the server is not running, th
 
 ```sh
 pnpm build
-open packages/desktop-tauri/target/release/bundle/macos/
+open packages/apps/desktop_tauri/target/release/bundle/macos/
 ```
 
 Drag `Heidrun.app` into `/Applications`.
@@ -235,13 +235,13 @@ This format is not an official OpenAI API: if a Codex update changes it, the Cod
 ## Architecture
 
 ```
-packages/desktop-tauri/src/
+packages/apps/desktop_tauri/src/
   herdr.rs   client of the socket ~/.config/herdr/herdr.sock (line-by-line JSON),
              event subscriptions, automatic reconnection
   pty.rs     pseudo-terminals that run `herdr terminal attach <terminal_id>`
   usage.rs   reading of the Codex logs
   lib.rs     Tauri commands exposed to the front end
-packages/web-frontend/src/
+packages/apps/web_frontend/src/
   stores/session.ts   state: Herdr snapshot, selection, notifications, actions
   components/         TopBar, Sidebar, TabBar, PaneGrid, PaneCard, TerminalView,
                       InputBar, Inspector, StatusBar, CommandPalette

@@ -1,0 +1,239 @@
+// Only the Bootstrap parts that the web frontend already uses. Add one part per migration step.
+// Issue: https://github.com/heidrun-org/heidrun/issues/141
+@import "bootstrap/scss/functions";
+
+// Variable values that keep the look of the application. They must come before the Bootstrap variables.
+$btn-transition: none;
+$nav-link-transition: none;
+
+// The size of the text follows the variable --font-size of the application, which a user can change. Bootstrap makes a
+// font size fluid with a calculation, and the calculation cannot work with a variable, so the calculation is off.
+$enable-rfs: false;
+$input-font-family: inherit;
+$input-font-size: var(--font-size);
+$dropdown-font-size: var(--font-size);
+$popover-max-width: 340px;
+$popover-font-size: var(--font-size);
+
+// The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.
+$progress-height: 0.5rem;
+$alert-padding-y: 0.5rem;
+$alert-padding-x: 0.75rem;
+$alert-margin-bottom: 0;
+
+// The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
+// does not add the blue glow of Bootstrap to it.
+$input-focus-box-shadow: none;
+$form-select-focus-box-shadow: none;
+$form-check-input-focus-box-shadow: none;
+
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+
+// Only the utility classes that the web frontend uses. Add one value per migration step. A utility class carries
+// "!important", so the list stays short on purpose: a class name that the application already uses must not appear here.
+$utilities: (
+  "justify-content": (
+    property: justify-content,
+    class: justify-content,
+    values: (
+      center: center,
+      between: space-between,
+    ),
+  ),
+  "border": (
+    property: border,
+    values: (
+      0: 0,
+    ),
+  ),
+  "border-top": (
+    property: border-top,
+    class: border-top,
+    values: (
+      null: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color),
+    ),
+  ),
+  "display": (
+    property: display,
+    class: d,
+    values: (
+      block: block,
+      flex: flex,
+    ),
+  ),
+  "flex-direction": (
+    property: flex-direction,
+    class: flex,
+    values: (
+      column: column,
+    ),
+  ),
+  "align-items": (
+    property: align-items,
+    class: align-items,
+    values: (
+      center: center,
+    ),
+  ),
+  "gap": (
+    property: gap,
+    class: gap,
+    values: (
+      2: 0.5rem,
+      3: 1rem,
+    ),
+  ),
+  "margin-start": (
+    property: margin-left,
+    class: ms,
+    values: (
+      3: 1rem,
+    ),
+  ),
+  "margin-end": (
+    property: margin-right,
+    class: me,
+    values: (
+      auto: auto,
+    ),
+  ),
+  "margin-bottom": (
+    property: margin-bottom,
+    class: mb,
+    values: (
+      3: 1rem,
+    ),
+  ),
+  "padding-top": (
+    property: padding-top,
+    class: pt,
+    values: (
+      2: 0.5rem,
+    ),
+  ),
+  "font-weight": (
+    property: font-weight,
+    class: fw,
+    values: (
+      medium: 500,
+      semibold: 600,
+    ),
+  ),
+  "text-align": (
+    property: text-align,
+    class: text,
+    values: (
+      start: left,
+      end: right,
+    ),
+  ),
+  "word-wrap": (
+    property: word-wrap word-break,
+    class: text,
+    values: (
+      break: break-word,
+    ),
+  ),
+  "white-space": (
+    property: white-space,
+    class: text,
+    values: (
+      wrap: normal,
+    ),
+  ),
+  "color": (
+    property: color,
+    class: text,
+    values: (
+      primary-emphasis: var(--bs-primary-text-emphasis),
+      success-emphasis: var(--bs-success-text-emphasis),
+      warning-emphasis: var(--bs-warning-text-emphasis),
+      danger-emphasis: var(--bs-danger-text-emphasis),
+      body-secondary: var(--bs-secondary-color),
+    ),
+  ),
+  "background-color": (
+    property: background-color,
+    class: bg,
+    values: (
+      success: var(--bs-success),
+      warning: var(--bs-warning),
+      danger: var(--bs-danger),
+      body-emphasis: var(--bs-emphasis-color),
+    ),
+  ),
+  "position": (
+    property: position,
+    class: position,
+    values: (
+      fixed: fixed,
+      absolute: absolute,
+      relative: relative,
+    ),
+  ),
+  "top": (
+    property: top,
+    class: top,
+    values: (
+      0: 0,
+    ),
+  ),
+  "bottom": (
+    property: bottom,
+    class: bottom,
+    values: (
+      0: 0,
+      100: 100%,
+    ),
+  ),
+  "height": (
+    property: height,
+    class: h,
+    values: (
+      auto: auto,
+    ),
+  ),
+  "overflow-y": (
+    property: overflow-y,
+    class: overflow-y,
+    values: (
+      auto: auto,
+    ),
+  ),
+);
+
+// Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,
+// wins over a rule of this layer, whatever the specificity. So Bootstrap changes only what the application never sets.
+@layer bootstrap {
+  @import "bootstrap/scss/root";
+  @import "bootstrap/scss/buttons";
+  @import "bootstrap/scss/close";
+  @import "bootstrap/scss/dropdown";
+  @import "bootstrap/scss/modal";
+  @import "bootstrap/scss/nav";
+  @import "bootstrap/scss/popover";
+  @import "bootstrap/scss/progress";
+  @import "bootstrap/scss/alert";
+  @import "bootstrap/scss/forms/labels";
+  @import "bootstrap/scss/forms/form-text";
+  @import "bootstrap/scss/forms/form-control";
+  @import "bootstrap/scss/forms/form-select";
+  @import "bootstrap/scss/forms/form-check";
+  @import "bootstrap/scss/utilities/api";
+}
+
+// What the application never set on a button, and that Bootstrap sets in a different way:
+.btn {
+  // Bootstrap fades a disabled button to 65 percent. The application never did.
+  --bs-btn-disabled-opacity: 1;
+  // Bootstrap aligns a button with the middle of its text line. The application has always used the baseline.
+  vertical-align: baseline;
+}
+
+// Bootstrap blocks the mouse on a disabled button. The application keeps the mouse pointer and the title working.
+.btn:disabled {
+  pointer-events: auto;
+}

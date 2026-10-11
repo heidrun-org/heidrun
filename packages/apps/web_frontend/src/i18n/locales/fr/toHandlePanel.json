@@ -1,0 +1,14 @@
+{
+  "label": "Agents à traiter",
+  "empty": "Aucun agent n’est bloqué, aucun agent n’a terminé, et aucun agent ne pose de question.",
+  "waitingForDecision": "attend une décision",
+  "workDoneToReview": "travail terminé, à relire",
+  "showPane": "Afficher ce panneau",
+  "question": "QUESTION",
+  "unpinLabel": "Désépingler {name}",
+  "pinLabel": "Épingler {name}",
+  "unpinTitle": "Désépingler le panneau",
+  "pinTitle": "Épingler le panneau : il reste visible quand tu changes d’onglet ou de workspace",
+  "hideLabel": "Masquer {name}",
+  "hideTitle": "Masquer jusqu’au prochain changement"
+}

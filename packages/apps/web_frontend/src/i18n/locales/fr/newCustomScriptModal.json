@@ -1,0 +1,12 @@
+{
+  "dialogLabel": "Créer un script personnalisé",
+  "title": "Créer un script personnalisé",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "nameOptional": "Nom (facultatif)",
+  "command": "Ligne de commande",
+  "cancelTitle": "Annuler : le script n’est pas créé",
+  "cancel": "Annuler",
+  "createTitle": "Créer le script personnalisé",
+  "create": "Créer"
+}
