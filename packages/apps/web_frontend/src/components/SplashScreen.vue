@@ -2,7 +2,9 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import splashImage from "../assets/heidrun_splash_screen.jpg";
 import { isSplashScreenDisabled, showMainWindow } from "../lib/api";
+import { playNextGoatBleat } from "../lib/goat_sounds";
 import { t } from "../i18n/index";
+import Icon from "./Icon.vue";
 
 const DISPLAY_DURATION_MS = 3000;
 const MOTTO_PATH_ID = "splash-motto-path";
@@ -95,6 +97,9 @@ async function onImageSettled(event: Event) {
           <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("identity.motto") }}</textPath>
         </text>
       </svg>
+      <button class="btn lg splash-sound-button" type="button" @click.stop="playNextGoatBleat">
+        <Icon name="volume-up" /> {{ t("splashScreen.playGoatSound") }}
+      </button>
     </div>
   </Transition>
 </template>
@@ -143,6 +148,16 @@ async function onImageSettled(event: Event) {
   font-size: 52px;
   font-weight: 500;
   fill: #fff;
+}
+.splash .splash-sound-button {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  --bs-btn-bg: rgba(0, 0, 0, 0.55);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-border-color: rgba(255, 255, 255, 0.5);
+  --bs-btn-hover-border-color: rgba(255, 255, 255, 0.8);
 }
 .splash-leave-active {
   transition: opacity 0.6s ease;

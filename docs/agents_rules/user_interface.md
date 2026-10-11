@@ -136,5 +136,14 @@ This document says where each part of the window goes and how each part works. T
 ## Splash screen
 
 - At the start, Heidrun shows the splash screen for 3 seconds after the main window appears. A click on the splash screen closes it at once.
+- The splash screen has a sound button at its bottom right corner. A click on the sound button plays a goat bleat, and does not close the splash screen. See the section "Goat sounds".
 - The command line option `--no-splash-screen` starts Heidrun without the splash screen. The main window then appears at once, and shows the application.
 - A program that drives Heidrun, for example to take a screenshot, uses this option, so that it never waits for the splash screen to close. In development, run `pnpm dev -- -- --no-splash-screen`: the command `tauri dev` gives the arguments after its second `--` to the application, and the arguments after its first `--` to `cargo`. For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
+
+## Goat sounds
+
+- Heidrun plays two goat bleats. They are the two halves of the sound "Cabra" by sonsdebarcelona, and the files are `docs/sounds/goat_bleat_1.wav` and `docs/sounds/goat_bleat_2.wav`. The application keeps one copy of each file, and plays it from the folder `docs/sounds`.
+- A bleat plays only after a click of the developer. No bleat plays by itself.
+- Three places play a bleat: the sound button of the About modal, the sound button of the splash screen, and the smiley at the end of the joke of the empty tab screen. A click on the smiley plays a bleat only when it starts the laugh again, so the laugh that starts by itself stays silent, and a click while the laugh is still running plays nothing.
+- The bleats play in turn: the first click plays the first bleat, the second click plays the second bleat, the third click plays the first bleat again. The three places share the same turn. A bleat that is still playing stops when the next bleat starts.
+- The license of the sound is Creative Commons Attribution NonCommercial 3.0, so the About modal shows the credit to the author, with a link to the Freesound page.

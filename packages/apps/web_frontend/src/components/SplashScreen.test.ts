@@ -5,11 +5,13 @@ import { flushPromises, mount } from "@vue/test-utils";
 
 const showMainWindow = vi.fn<() => Promise<void>>();
 const isSplashScreenDisabled = vi.fn<() => Promise<boolean>>();
+const playNextGoatBleat = vi.fn();
 
 vi.mock("../lib/api", () => ({
   showMainWindow: () => showMainWindow(),
   isSplashScreenDisabled: () => isSplashScreenDisabled(),
 }));
+vi.mock("../lib/goat_sounds", () => ({ playNextGoatBleat: () => playNextGoatBleat() }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
@@ -40,6 +42,7 @@ beforeEach(() => {
   showMainWindow.mockResolvedValue(undefined);
   isSplashScreenDisabled.mockReset();
   isSplashScreenDisabled.mockResolvedValue(false);
+  playNextGoatBleat.mockReset();
 });
 
 afterEach(() => {
@@ -146,6 +149,32 @@ describe("SplashScreen", () => {
     const { wrapper } = await mountSplashScreen();
     await wrapper.get(".splash").trigger("click");
     expect(wrapper.find(".splash").exists()).toBe(false);
+  });
+
+  it("shows a button that plays a goat bleat", async () => {
+    const { wrapper } = await mountSplashScreen();
+    const button = wrapper.get("button.splash-sound-button");
+    expect(button.text()).not.toBe("");
+    await button.trigger("click");
+    expect(playNextGoatBleat).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the splash screen open for a click on the sound button, and still closes it after 3 seconds", async () => {
+    const { wrapper } = await mountSplashScreen();
+    await wrapper.get("img.splash-image").trigger("load");
+    await flushPromises();
+    await wrapper.get("button.splash-sound-button").trigger("click");
+    expect(wrapper.find(".splash").exists()).toBe(true);
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(wrapper.find(".splash").exists()).toBe(false);
+  });
+
+  it("plays no sound by itself", async () => {
+    const { wrapper } = await mountSplashScreen();
+    await wrapper.get("img.splash-image").trigger("load");
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(playNextGoatBleat).not.toHaveBeenCalled();
   });
 
   it("shows no splash screen, and no splash image, when Heidrun starts with the option --no-splash-screen", async () => {
