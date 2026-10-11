@@ -1,13 +1,7 @@
 {
   "waitingForDecision": "waiting for a decision",
   "workDoneToReview": "work done, to review",
-  "workspaces": "Workspaces",
-  "workspacesWithoutAgent": "Workspaces without an agent",
-  "newWorkspaceName": "New name of the workspace",
-  "workspaceTitle": "Double-click to rename · drag to move",
-  "newWorkspaceTitle": "Create a new workspace",
   "navigationBarLabel": "Left sidebar",
-  "sidebarSection.workspaces": "Workspaces",
   "sidebarSection.actions": "Scripts",
   "toHandle": "To handle",
   "showPane": "Show this pane",
@@ -17,11 +11,5 @@
   "unpinTitle": "Unpin the pane",
   "pinTitle": "Pin the pane: it stays visible when you change tab or workspace",
   "hideLabel": "Hide {name}",
-  "hideTitle": "Hide until the next change",
-  "chooseWorkspaceFolder": "Choose the folder of the new workspace",
-  "rename": "Rename",
-  "workspaceMenu": "Workspace menu",
-  "workspaceMenuLabel": "Actions for {name}",
-  "closeWorkspaceConfirm": "Close",
-  "closeWorkspace": "Close the workspace {name}"
+  "hideTitle": "Hide until the next change"
 }

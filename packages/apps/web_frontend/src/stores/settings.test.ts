@@ -192,22 +192,29 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("notes");
-    expect(restarted.settings.leftSidebarSection).toBe("workspaces");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 });
 
-describe("sidebar section of the left sidebar that holds the workspaces", () => {
-  it("keeps the name Workspaces and Tabs that the previous stage saved, under the name workspaces", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "workspacesAndTabs" }));
+describe("sidebar section of the left sidebar that held the workspaces", () => {
+  it.each(["workspaces", "workspacesAndTabs"])("shows the sidebar section Scripts when the saved sidebar section was %s, because the workspaces left the left sidebar", async (savedName) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: savedName }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("workspaces");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
-  it("is the sidebar section that the left sidebar shows first", async () => {
+  it("keeps the sidebar section Git when it was saved", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "git" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("git");
+  });
+
+  it("is the sidebar section Scripts that the left sidebar shows first", async () => {
     localStorage.clear();
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("workspaces");
+    expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 });

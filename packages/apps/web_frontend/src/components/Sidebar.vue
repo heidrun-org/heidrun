@@ -1,38 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
-import {
-  allPanes,
-  answerChoice,
-  attention,
-  closeWorkspace,
-  dismiss,
-  finishRename,
-  moveWorkspaceInView,
-  newWorkspace,
-  selectPane,
-  selectWorkspace,
-  startRename,
-  state,
-  tabLabel,
-  workspaceLabel,
-  sidebarWorkspaces as workspaces,
-} from "../stores/session";
-import { statusLabel, agentKind, ago, paneName } from "../lib/format";
+import { computed } from "vue";
+import { answerChoice, attention, dismiss, selectPane, state, tabLabel, workspaceLabel } from "../stores/session";
+import { statusLabel, ago, paneName } from "../lib/format";
 import ActionsPanel from "./ActionsPanel.vue";
-import ConfirmButton from "./ConfirmButton.vue";
 import GitPanel from "./GitPanel.vue";
 import Icon from "./Icon.vue";
-import InlineRename from "./InlineRename.vue";
 import NavigationBar from "./NavigationBar.vue";
 import { currentForge } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
 import { openSidebarSection } from "../stores/sidebar_sections";
-import { useReorder } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { homeDir } from "@tauri-apps/api/path";
 import { t } from "../i18n/index";
 
 function summary(p: AgentInfo): string {
@@ -40,17 +19,6 @@ function summary(p: AgentInfo): string {
   if (q && p.agent_status !== "blocked") return q.text;
   if (p.agent_status === "blocked") return p.state_labels?.blocked || p.title || t("sidebar.waitingForDecision");
   return p.title || p.terminal_title_stripped || t("sidebar.workDoneToReview");
-}
-
-/** Agents running in a workspace, by kind: [{ kind: "Claude", n: 2 }, …]. */
-function agentsIn(wsId: string) {
-  const counts = new Map<string, number>();
-  for (const p of allPanes.value) {
-    if (p.workspace_id !== wsId || !p.agent) continue;
-    const k = agentKind(p);
-    counts.set(k, (counts.get(k) ?? 0) + 1);
-  }
-  return [...counts].map(([kind, n]) => ({ kind, n }));
 }
 
 /** The number of scripts of the selected workspace that are running. */
@@ -63,55 +31,19 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the navigation bar of the left sidebar: the Workspaces, Scripts, and Git sidebar sections. */
+/** The buttons of the navigation bar of the left sidebar: the Scripts and Git sidebar sections. */
 const sidebarSections = computed(() => [
-  { id: "workspaces", label: t("sidebar.sidebarSection.workspaces"), badge: 0 },
   { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
   { id: "git", label: "Git", badge: currentForge.value?.requests.length ?? 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "git" || id === "actions" ? id : "workspaces");
-}
-
-/** Index of the first workspace without an agent, where the divider goes. */
-const firstQuiet = computed(() => workspaces.value.findIndex((w) => !agentsIn(w.workspace_id).length));
-
-/** Workspace whose three-dot menu is open, or null. */
-const menuWorkspaceId = ref<string | null>(null);
-
-function renameWorkspace(workspaceId: string) {
-  menuWorkspaceId.value = null;
-  startRename("ws", workspaceId);
-}
-
-function closeMenu() {
-  menuWorkspaceId.value = null;
-}
-
-onMounted(() => document.addEventListener("mousedown", closeMenu));
-onBeforeUnmount(() => document.removeEventListener("mousedown", closeMenu));
-
-const ws = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
-
-async function createWorkspace() {
-  const path = await openDialog({
-    directory: true,
-    multiple: false,
-    title: t("sidebar.chooseWorkspaceFolder"),
-    defaultPath: await homeDir(),
-  });
-  if (path === null) {
-    return;
-  }
-  const label = path.split("/").filter(Boolean).pop() ?? null;
-  await newWorkspace(path, label);
+  openSidebarSection(id === "git" ? "git" : "actions");
 }
 </script>
 
 <template>
   <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
-    <!-- Transition layout: the lists of the left sidebar stay until the stages that remove them are done. -->
     <div class="sidebar-sections">
       <NavigationBar
         class="left-navigation-bar"
@@ -120,80 +52,12 @@ async function createWorkspace() {
         :label="t('sidebar.navigationBarLabel')"
         @select="selectSidebarSection"
       />
-      <div v-if="settings.leftSidebarSection === 'workspaces'" class="lists">
-        <section class="group tight">
-          <div class="eyebrow pad heading">
-            <span>{{ t("sidebar.workspaces") }}</span>
-            <button class="btn border-0 justify-content-center add" :title="t('sidebar.newWorkspaceTitle')" :aria-label="t('sidebar.newWorkspaceTitle')" @click="createWorkspace"><Icon name="plus-lg" /></button>
-          </div>
-          <template v-for="(w, wi) in workspaces" :key="w.workspace_id">
-            <div v-if="wi === firstQuiet && wi > 0" class="ws-divider" role="separator" :aria-label="t('sidebar.workspacesWithoutAgent')"></div>
-            <div v-if="state.renaming === `ws:${w.workspace_id}`" class="item editing">
-              <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
-              <InlineRename
-                :value="w.label"
-                :label="t('sidebar.newWorkspaceName')"
-                @save="(v) => finishRename('ws', w.workspace_id, v)"
-                @cancel="state.renaming = null"
-              />
-            </div>
-            <div
-              v-else
-              class="item ws-row"
-              :class="{
-                quiet: !agentsIn(w.workspace_id).length,
-                active: w.workspace_id === state.selectedWorkspaceId,
-                menuOpen: menuWorkspaceId === w.workspace_id,
-                dragging: ws.dragging.value === w.workspace_id,
-                'drop-before': ws.gap.value === wi,
-                'drop-after': ws.gap.value === wi + 1 && wi === workspaces.length - 1,
-              }"
-              draggable="true"
-              @dragstart="ws.onDragStart($event, w.workspace_id)"
-              @dragover="ws.onDragOver($event, wi)"
-              @drop="ws.onDrop($event, workspaces.map((x) => x.workspace_id))"
-              @dragend="ws.onDragEnd()"
-            >
-              <button
-                class="row-main"
-                :title="t('sidebar.workspaceTitle')"
-                @click="selectWorkspace(w.workspace_id)"
-                @dblclick="startRename('ws', w.workspace_id)"
-              >
-                <span class="dot" :class="w.agent_status === 'idle' ? '' : w.agent_status"></span>
-                <span class="grow">{{ w.label }}</span>
-              </button>
-              <span class="row-actions">
-                <button
-                  class="row-btn"
-                  :aria-label="t('sidebar.workspaceMenuLabel', { name: w.label })"
-                  :title="t('sidebar.workspaceMenu')"
-                  aria-haspopup="menu"
-                  :aria-expanded="menuWorkspaceId === w.workspace_id"
-                  @mousedown.stop
-                  @click.stop="menuWorkspaceId = menuWorkspaceId === w.workspace_id ? null : w.workspace_id"
-                ><Icon name="three-dots-vertical" /></button>
-                <div v-if="menuWorkspaceId === w.workspace_id" class="row-menu" role="menu" @mousedown.stop>
-                  <button class="row-menu-item" role="menuitem" @click.stop="renameWorkspace(w.workspace_id)">{{ t("sidebar.rename") }}</button>
-                </div>
-                <ConfirmButton
-                  class="row-btn"
-                  icon="x-lg"
-                  :confirm-label="t('sidebar.closeWorkspaceConfirm')"
-                  :question="t('sidebar.closeWorkspace', { name: w.label })"
-                  @confirm="closeWorkspace(w.workspace_id)"
-                />
-              </span>
-            </div>
-          </template>
-        </section>
-      </div>
-      <div v-else class="sidebar-section-body">
+      <div class="sidebar-section-body">
         <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
         <GitPanel v-else />
       </div>
     </div>
-    <!-- At the bottom: cards come and go without moving the workspaces list. -->
+    <!-- At the bottom: cards come and go without moving the sidebar section above them. -->
     <section v-if="attention.length" class="group attention">
       <div class="eyebrow pad">{{ t("sidebar.toHandle") }}</div>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
@@ -242,38 +106,10 @@ async function createWorkspace() {
 }
 .group { display: flex; flex-direction: column; gap: 8px; }
 .sidebar-sections { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.lists { display: flex; flex-direction: column; gap: 24px; }
 .left-navigation-bar { margin: 0 4px; }
 .sidebar-section-body { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
-.group.tight { gap: 2px; }
 .group.attention { margin-top: auto; padding-top: 4px; }
 .pad { padding: 0 8px 6px; }
-.heading { display: flex; align-items: center; justify-content: space-between; padding-right: 0; }
-.add {
-  --bs-btn-padding-x: 0;
-  --bs-btn-padding-y: 0;
-  --bs-btn-font-size: var(--font-size);
-  --bs-btn-font-weight: 400;
-  --bs-btn-border-radius: 6px;
-  --bs-btn-color: var(--muted);
-  --bs-btn-hover-color: var(--text);
-  --bs-btn-hover-bg: rgba(var(--wash), 0.08);
-  --bs-btn-active-color: var(--text);
-  --bs-btn-active-bg: rgba(var(--wash), 0.08);
-  --bs-btn-disabled-color: var(--text);
-  --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
-  --bs-btn-focus-box-shadow: none;
-  width: 22px; height: 22px; line-height: 1;
-}
-/* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
-.add:not(:hover) {
-  --bs-btn-hover-color: var(--muted);
-  --bs-btn-hover-bg: transparent;
-  --bs-btn-active-color: var(--muted);
-  --bs-btn-active-bg: transparent;
-  --bs-btn-disabled-color: var(--muted);
-  --bs-btn-disabled-bg: transparent;
-}
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
@@ -312,39 +148,4 @@ async function createWorkspace() {
 .badge { font-size: var(--font-size); font-weight: 600; letter-spacing: 0.4px; }
 .desc { font-size: var(--font-size); color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .when { font-size: var(--font-size); color: var(--muted); }
-.item {
-  display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px;
-  border: none; background: transparent; color: var(--text-2); font-weight: 500; text-align: left;
-}
-.ws-row { padding-right: 4px; }
-.row-main {
-  flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0;
-  border: none; background: transparent; color: inherit; font: inherit; text-align: left;
-}
-.row-actions { position: relative; display: none; align-items: center; gap: 2px; flex-shrink: 0; }
-.ws-row:hover .row-actions, .ws-row.menuOpen .row-actions, .ws-row:focus-within .row-actions { display: flex; }
-.row-menu {
-  position: absolute; top: 100%; right: 0; z-index: 20; min-width: 120px; padding: 4px; border-radius: 8px;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-.row-menu-item {
-  width: 100%; height: 28px; padding: 0 10px; border: none; border-radius: 6px; background: transparent;
-  color: var(--text-2); text-align: left; font-size: var(--font-size);
-}
-.row-menu-item:hover { background: var(--hover); color: var(--text); }
-.item { position: relative; }
-.item.dragging { opacity: 0.4; }
-.item.drop-before::before, .item.drop-after::after {
-  content: ""; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 1px; background: var(--done);
-}
-.item.drop-before::before { top: -1px; }
-.item.drop-after::after { bottom: -1px; }
-.item.editing { background: var(--hover); padding-right: 4px; }
-.item:hover { background: var(--hover-soft); }
-.item.active { background: var(--hover); color: var(--text); }
-.grow { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* Workspaces with an agent session vs. plain shells or nothing running. */
-.ws-divider { height: 1px; margin: 7px 10px; background: var(--line-strong); }
-.item.quiet:not(.active) .grow { color: var(--muted); }
-.item.quiet .dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
 </style>

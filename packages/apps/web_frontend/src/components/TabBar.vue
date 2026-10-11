@@ -3,6 +3,7 @@ import { computed } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import WorkspaceButton from "./WorkspaceButton.vue";
 import { allPanes, closeTab, finishRename, moveTab, selectTab, startRename, state, tabLabel, tabs } from "../stores/session";
 import { remote } from "../stores/claude";
 import { useReorder } from "../lib/reorder";
@@ -27,6 +28,7 @@ function isRemoteControlled(tabId: string): boolean {
 
 <template>
   <div class="tab-bar d-flex gap-2">
+    <WorkspaceButton />
     <ul class="nav nav-tabs" role="tablist" :aria-label="t('tabBar.label')">
       <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation">
         <div v-if="state.renaming === `tab:${tab.tab_id}`" class="nav-link active d-flex align-items-center gap-2">
@@ -88,9 +90,8 @@ function isRemoteControlled(tabId: string): boolean {
 <style scoped>
 /* As in Visual Studio Code, no gap separates the tab bar from the panes. The bar goes 1 pixel over the top of the panes, and
    the selected tab goes down to the bottom of the bar: it covers the border of the panes and joins the pane. The border of the panes
-   is the line under the other tabs. The first tab starts at the left edge of the panes, and the pane in the top left corner has a
-   square corner there, see PaneGrid. The outline of the selected tab has the color of the border of the selected pane, so the two
-   outlines make one line. */
+   is the line under the other tabs. The workspace button is the first entry of the bar, and it starts at the left edge of the
+   panes. The outline of the selected tab has the color of the border of the selected pane, so the two outlines make one line. */
 .tab-bar {
   position: relative; z-index: 2; flex-shrink: 0; min-width: 0; align-items: flex-end; padding: 4px var(--pane-radius) 0 0;
   margin-bottom: -1px;

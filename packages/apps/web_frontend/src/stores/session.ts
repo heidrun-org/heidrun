@@ -249,6 +249,22 @@ export const attention = computed(() =>
     }),
 );
 
+/**
+ * What the workspace button of the tab bar says about the other workspaces: "blocked" when an agent of another workspace
+ * waits for an answer, "done" when an agent of another workspace has finished, and null when no agent calls. An agent of
+ * the selected workspace never counts, because the developer sees it.
+ */
+export const otherWorkspaceStatus = computed<"blocked" | "done" | null>(() => {
+  const calling = attention.value.filter((p) => p.workspace_id !== state.selectedWorkspaceId);
+  if (calling.some((p) => p.agent_status === "blocked")) {
+    return "blocked";
+  }
+  if (calling.some((p) => p.agent_status === "done")) {
+    return "done";
+  }
+  return null;
+});
+
 export const counts = computed(() => {
   const c = { blocked: 0, working: 0, done: 0 };
   for (const p of allPanes.value) {
@@ -901,7 +917,6 @@ export function startRename(kind: "ws" | "tab" | "pane", id: string) {
   if (kind === "ws") selectWorkspace(id);
   if (kind === "tab") selectTab(id);
   state.renaming = `${kind}:${id}`;
-  if (kind === "ws") settings.leftOpen = true;
 }
 
 export async function finishRename(kind: "ws" | "tab" | "pane", id: string, label: string | null) {
