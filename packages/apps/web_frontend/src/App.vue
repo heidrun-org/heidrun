@@ -299,8 +299,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.app { height: 100%; display: flex; flex-direction: column; }
-.body { flex: 1; min-height: 0; display: flex; }
+.app { height: 100%; display: flex; flex-direction: column; background: var(--shell); }
+.body { flex: 1; min-height: 0; display: flex; padding: 0 var(--pane-gap); }
 .center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .stage { flex: 1; min-height: 0; display: flex; }
 .stage > :first-child { flex: 1; min-width: 0; }

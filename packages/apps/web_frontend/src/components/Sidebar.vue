@@ -279,7 +279,7 @@ async function createWorkspace() {
 
 <style scoped>
 .side {
-  flex-shrink: 0; min-width: 0; border-right: 1px solid var(--line); background: var(--panel);
+  flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
   display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
 }
 .group { display: flex; flex-direction: column; gap: 8px; }

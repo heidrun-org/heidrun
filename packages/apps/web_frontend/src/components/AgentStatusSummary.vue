@@ -42,12 +42,12 @@ const groups = computed(() =>
 .card {
   display: flex; visibility: hidden; transition: visibility 0s linear 0.1s; position: absolute; bottom: calc(100% + 4px); right: 11px; z-index: 20; width: 340px;
   flex-direction: column; gap: 14px; padding: 16px 18px; white-space: normal;
-  border: 1px solid var(--line-modal); border-radius: 8px; background: var(--panel); color: var(--text-2);
+  border: 1px solid var(--line-modal); border-radius: 8px; background: var(--side); color: var(--text-2);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); font-size: var(--font-size);
 }
 .card::after {
   content: ""; position: absolute; top: 100%; right: 18px; width: 10px; height: 10px; margin-top: -6px;
-  transform: rotate(45deg); border: solid var(--line-modal); border-width: 0 1px 1px 0; background: var(--panel);
+  transform: rotate(45deg); border: solid var(--line-modal); border-width: 0 1px 1px 0; background: var(--side);
 }
 .agent-status:hover .card, .agent-status:focus-visible .card { visibility: visible; transition-delay: 0s; }
 .group { display: flex; flex-direction: column; gap: 4px; }

@@ -44,7 +44,10 @@ const placed = computed(() => {
 </template>
 
 <style scoped>
-.grid { flex: 1; min-height: 0; position: relative; background: var(--line); }
-.cell { position: absolute; padding: 0.5px; }
-.empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); background: var(--bg); }
+.grid { flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2); }
+.cell { position: absolute; padding: calc(var(--pane-gap) / 2); }
+.empty {
+  position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
+  color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
+}
 </style>

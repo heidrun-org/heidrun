@@ -13,6 +13,6 @@ import { t } from "../i18n/index";
 </template>
 
 <style scoped>
-.dock { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; gap: 1px; background: var(--line); border-left: 1px solid var(--line); }
+.dock { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--pane-gap); }
 .cell { flex: 1; min-height: 0; }
 </style>
