@@ -55,7 +55,15 @@ const agent = computed<ChatAgent>({
           <div v-if="chatSummary(chat.meta) !== ''" class="chat-summary text-body-secondary">{{ chatSummary(chat.meta) }}</div>
         </li>
       </ul>
-      <button v-if="canShowMoreChats" type="button" class="btn" :disabled="chats.isShowingMore" @click="showMoreChats">
+      <button
+        v-if="canShowMoreChats"
+        type="button"
+        class="btn d-flex align-items-center justify-content-center gap-2"
+        :disabled="chats.isShowingMore"
+        :aria-busy="chats.isShowingMore"
+        @click="showMoreChats"
+      >
+        <span v-if="chats.isShowingMore" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         {{ t("chatsPanel.showMore") }}
       </button>
     </template>

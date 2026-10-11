@@ -139,6 +139,22 @@ describe("ChatsPanel", () => {
     expect(wrapper.find("ul + button").exists()).toBe(false);
   });
 
+  it("shows a spinning wheel in the button Show more while the chats load, and not before or after", async () => {
+    answer(["Fix the tab bar"], [], { claude: true });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.find(".spinner-border").exists()).toBe(false);
+    let finish: (value: unknown) => void = () => {};
+    vi.mocked(invoke).mockReturnValueOnce(new Promise((resolve) => (finish = resolve)));
+    await wrapper.get("ul + button").trigger("click");
+    expect(wrapper.get("ul + button .spinner-border").attributes("aria-hidden")).toBe("true");
+    expect(wrapper.get("ul + button").attributes("disabled")).toBeDefined();
+    expect(wrapper.get("ul + button").attributes("aria-busy")).toBe("true");
+    finish({ claude: { chats: [], has_more: true }, codex: { chats: [], has_more: false } });
+    await flushPromises();
+    expect(wrapper.find(".spinner-border").exists()).toBe(false);
+  });
+
   it("asks for 10 chats after a click on Show more, and hides the button when there is no more chat", async () => {
     answer(["Fix the tab bar"], [], { claude: true });
     const wrapper = mount(ChatsPanel);
