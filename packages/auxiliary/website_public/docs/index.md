@@ -1,9 +1,7 @@
 ---
 layout: home
 hero:
-  name: Heidrun
-  text: With AI, every developer is THE GOAT!
-  tagline: All the agents and terminals of your Herdr session, in one work window. A macOS graphical interface for Herdr.
+  # The name, the text, and the tagline come from data/identity.json, set by docs/.vitepress/config.ts.
   actions:
     - theme: brand
       text: Enter Valhalla (read the documentation)

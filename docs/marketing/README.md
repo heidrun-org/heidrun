@@ -2,12 +2,14 @@
 
 These rules apply to the public website (`packages/auxiliary/website_public`), to the README, to release notes, and to every text that presents Heidrun to the public.
 
-## The motto
+## The title, the motto, and the description
 
-The motto is: **"With AI, every developer is THE GOAT!"**
+Heidrun has three identity texts: the title, the motto, and the description. They are written once, in the file `data/identity.json`, and nowhere else by hand.
 
-- Write the motto exactly like this, with the capital letters of "THE GOAT" and the exclamation mark.
-- The motto appears in the hero of the homepage of the website.
+- The application, the website, and the README get the three texts from this file. To change a text, change the file, then run `pnpm docs:identity` to update the README. A test fails when the README is out of date.
+- Write the motto exactly as in the file, with the capital letters of "THE GOAT" and the exclamation mark.
+- The motto appears in the splash screen, in the About window, in the hero of the homepage of the website, and in the README.
+- The description says what Heidrun does, in one short sentence. The jokes stay in the motto and in the other texts.
 - "GOAT" has two meanings, and both are intended: the Greatest Of All Time, and the goat Heiðrún of the Norse mythology.
 
 ## The origin of the name

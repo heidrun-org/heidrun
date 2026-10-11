@@ -1,5 +1,6 @@
 import { computed, watch } from "vue";
 import { settings } from "../stores/settings";
+import identity from "../../../../../data/identity.json";
 
 /** The languages of the user interface. */
 export const LANGUAGES = [
@@ -27,6 +28,14 @@ for (const [path, content] of Object.entries(files)) {
   for (const [key, text] of Object.entries(content)) {
     messages[language][`${namespace}.${key}`] = text;
   }
+}
+
+// The title, the motto, and the description of Heidrun come from data/identity.json, not from a locale file.
+for (const { id } of LANGUAGES) {
+  messages[id] ??= {};
+  messages[id]["identity.title"] = identity.title;
+  messages[id]["identity.motto"] = identity.motto[id];
+  messages[id]["identity.description"] = identity.description[id];
 }
 
 /** The language in use. */

@@ -69,14 +69,14 @@ async function onImageSettled(event: Event) {
     <div v-if="isVisible" class="splash" @click="close">
       <img class="splash-image" :src="splashImage" alt="" @load="onImageSettled" @error="onImageSettled" />
       <div class="splash-text">
-        <h1 class="splash-title">{{ t("splashScreen.title") }}</h1>
+        <h1 class="splash-title">{{ t("identity.title") }}</h1>
       </div>
       <svg class="splash-motto-arc" :width="screenWidth" :height="screenHeight">
         <defs>
           <path :id="MOTTO_PATH_ID" :d="mottoPath" />
         </defs>
         <text class="splash-motto" text-anchor="middle">
-          <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("splashScreen.motto") }}</textPath>
+          <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("identity.motto") }}</textPath>
         </text>
       </svg>
     </div>
