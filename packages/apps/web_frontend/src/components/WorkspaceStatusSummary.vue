@@ -231,11 +231,8 @@ watch(isRenaming, (renaming) => {
               'drop-before': workspaceReorder.gap.value === workspaceIndex,
               'drop-after': workspaceReorder.gap.value === workspaceIndex + 1 && workspaceIndex === workspaces.length - 1,
             }"
-            draggable="true"
-            @dragstart="workspaceReorder.onDragStart($event, workspace.workspace_id)"
-            @dragover="workspaceReorder.onDragOver($event, workspaceIndex)"
-            @drop="workspaceReorder.onDrop($event, workspaces.map((other) => other.workspace_id))"
-            @dragend="workspaceReorder.onDragEnd()"
+            :data-reorder-id="workspace.workspace_id"
+            @pointerdown="workspaceReorder.onPointerDown($event, workspaces.map((other) => other.workspace_id))"
           >
             <button
               type="button"

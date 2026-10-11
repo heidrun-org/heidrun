@@ -278,23 +278,98 @@ describe("TabBar close", () => {
   });
 });
 
+/** Gives each tab a box of 100 by 40 pixels, side by side, because jsdom has no layout. */
+function layOutTabs(wrapper: ReturnType<typeof mount>) {
+  wrapper.findAll(".nav-item").forEach((item, index) => {
+    item.element.getBoundingClientRect = () =>
+      ({ left: index * 100, right: index * 100 + 100, top: 0, bottom: 40, width: 100, height: 40 }) as DOMRect;
+  });
+}
+
+/** Moves the pointer of the mouse in the window, as the mouse does while a button is down. */
+function movePointer(x: number, y: number) {
+  window.dispatchEvent(new MouseEvent("pointermove", { clientX: x, clientY: y }));
+}
+
+/** Releases the button of the mouse in the window, then waits for the end of the task that removes the guard against the click. */
+async function releasePointer() {
+  window.dispatchEvent(new MouseEvent("pointerup"));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("TabBar move", () => {
   it("moves a tab after the user drags it to the end of the bar", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".nav-link");
-    await tabs[0].trigger("dragstart");
-    await tabs[2].trigger("dragover", { clientX: 10 });
-    await tabs[2].trigger("drop");
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".nav-link")[0].classes()).toContain("dragging");
+    expect(wrapper.findAll(".nav-link")[2].classes()).toContain("drop-after");
+    await releasePointer();
     expect(api.moveTab).toHaveBeenCalledWith("t1", 3);
+  });
+
+  it("moves a tab between two other tabs", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[2].trigger("pointerdown", { button: 0, clientX: 250, clientY: 20 });
+    movePointer(120, 20);
+    await releasePointer();
+    expect(api.moveTab).toHaveBeenCalledWith("t3", 1);
   });
 
   it("does not move a tab dropped on its own place", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".nav-link");
-    await tabs[1].trigger("dragstart");
-    await tabs[1].trigger("dragover", { clientX: 0 });
-    await tabs[1].trigger("drop");
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[1].trigger("pointerdown", { button: 0, clientX: 150, clientY: 20 });
+    movePointer(160, 20);
+    await releasePointer();
     expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("does not move a tab after a click that moves the pointer by less than 5 pixels", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(53, 20);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("does not move a tab dropped far below the tab bar", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 300);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("cancels the move of a tab when the user presses the key Escape", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("ignores a press of the right button of the mouse", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 2, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("does not start a drag of the browser, because the native window would take the drop as a drop of a file", async () => {
+    const { wrapper } = await mountTabBar();
+    for (const tab of wrapper.findAll(".nav-link")) {
+      expect(tab.attributes("draggable")).toBeUndefined();
+    }
   });
 
   it("moves the selected tab with the shortcut Shift+Option+Command+Right arrow", async () => {

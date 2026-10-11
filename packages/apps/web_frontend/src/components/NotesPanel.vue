@@ -14,7 +14,6 @@ const list = visibleNotes;
 const others = computed(() => notes.list.length - list.value.length);
 
 // Only the grip starts a drag, so text in the note stays selectable.
-const armed = ref<string | null>(null);
 const drag = useReorder("y", (id, at) => moveNote(list.value.map((n) => n.id), id, at));
 
 const agents = computed(() => allPanes.value.filter((p) => p.agent));
@@ -55,14 +54,10 @@ function sendTo(n: Note, paneId: string) {
         'drop-before': drag.gap.value === ni,
         'drop-after': drag.gap.value === ni + 1 && ni === list.length - 1,
       }"
-      :draggable="armed === n.id"
-      @dragstart="drag.onDragStart($event, n.id)"
-      @dragover="drag.onDragOver($event, ni)"
-      @drop="drag.onDrop($event, list.map((x) => x.id))"
-      @dragend="drag.onDragEnd(); armed = null"
+      :data-reorder-id="n.id"
     >
       <header>
-        <span class="grip" aria-hidden="true" :title="t('notesPanel.dragToReorder')" @mousedown="armed = n.id" @mouseup="armed = null">⋮⋮</span>
+        <span class="grip" aria-hidden="true" :title="t('notesPanel.dragToReorder')" @pointerdown="drag.onPointerDown($event, list.map((x) => x.id))">⋮⋮</span>
         <InlineRename
           v-if="renaming === n.id"
           :value="n.title"

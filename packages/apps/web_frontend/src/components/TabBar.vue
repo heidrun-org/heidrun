@@ -34,7 +34,7 @@ function isRemoteControlled(tabId: string): boolean {
 <template>
   <div class="tab-bar d-flex gap-2">
     <ul class="nav nav-tabs" role="tablist" :aria-label="t('tabBar.label')">
-      <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation">
+      <li v-for="(tab, tabIndex) in tabs" :key="tab.tab_id" class="nav-item position-relative" role="presentation" :data-reorder-id="tab.tab_id">
         <div v-if="state.renaming === `tab:${tab.tab_id}`" class="nav-link active d-flex align-items-center gap-2">
           <span class="dot" :class="tab.agent_status === 'idle' ? '' : tab.agent_status"></span>
           <Icon :name="iconOf(tab.tab_id)" class="tab-icon" />
@@ -56,11 +56,7 @@ function isRemoteControlled(tabId: string): boolean {
             'drop-before': tabReorder.gap.value === tabIndex,
             'drop-after': tabReorder.gap.value === tabIndex + 1 && tabIndex === tabs.length - 1,
           }"
-          draggable="true"
-          @dragstart="tabReorder.onDragStart($event, tab.tab_id)"
-          @dragover="tabReorder.onDragOver($event, tabIndex)"
-          @drop="tabReorder.onDrop($event, tabIds)"
-          @dragend="tabReorder.onDragEnd()"
+          @pointerdown="tabReorder.onPointerDown($event, tabIds)"
         >
           <button
             class="tab-main d-flex align-items-center gap-2"

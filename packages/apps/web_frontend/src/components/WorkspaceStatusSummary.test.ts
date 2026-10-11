@@ -515,24 +515,42 @@ describe("WorkspaceStatusSummary close", () => {
 });
 
 describe("WorkspaceStatusSummary move", () => {
+  /** Gives each row a box of 200 by 32 pixels, one under the other, because jsdom has no layout. */
+  function layOutRows(wrapper: ReturnType<typeof mount>) {
+    wrapper.findAll(".workspace-row").forEach((row, index) => {
+      row.element.getBoundingClientRect = () =>
+        ({ left: 0, right: 200, top: index * 32, bottom: index * 32 + 32, width: 200, height: 32 }) as DOMRect;
+    });
+  }
+
   it("moves a workspace to the top of the list after the user drags it above the first row", async () => {
     const { wrapper, api } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
-    const rows = wrapper.findAll(".workspace-row");
-    await rows[1].trigger("dragstart");
-    await rows[0].trigger("dragover", { clientY: -10 });
-    await rows[0].trigger("drop");
+    layOutRows(wrapper);
+    await wrapper.findAll(".workspace-row")[1].trigger("pointerdown", { button: 0, clientX: 100, clientY: 48 });
+    window.dispatchEvent(new MouseEvent("pointermove", { clientX: 100, clientY: 4 }));
+    window.dispatchEvent(new MouseEvent("pointerup"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(api.moveWorkspace).toHaveBeenCalledWith("w2", 0);
   });
 
   it("moves nothing when the user drops a workspace where it is", async () => {
     const { wrapper, api } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
-    const rows = wrapper.findAll(".workspace-row");
-    await rows[1].trigger("dragstart");
-    await rows[1].trigger("dragover", { clientY: -10 });
-    await rows[1].trigger("drop");
+    layOutRows(wrapper);
+    await wrapper.findAll(".workspace-row")[1].trigger("pointerdown", { button: 0, clientX: 100, clientY: 48 });
+    window.dispatchEvent(new MouseEvent("pointermove", { clientX: 100, clientY: 52 }));
+    window.dispatchEvent(new MouseEvent("pointerup"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(api.moveWorkspace).not.toHaveBeenCalled();
+  });
+
+  it("does not start a drag of the browser, because the native window would take the drop as a drop of a file", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    for (const row of wrapper.findAll(".workspace-row")) {
+      expect(row.attributes("draggable")).toBeUndefined();
+    }
   });
 });
 
