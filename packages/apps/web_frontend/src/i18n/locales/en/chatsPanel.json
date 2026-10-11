@@ -61,5 +61,7 @@
   "viewLabel": "View of the list",
   "viewCompact": "Compact view",
   "viewExpanded": "Expanded view",
-  "agentUnavailableTitle": "No chat of this coding agent in this workspace."
+  "agentUnavailableTitle": "No chat of this coding agent in this workspace.",
+  "chatActionsLabel": "Open this chat",
+  "openInAppTitle": "Open in the {app} app"
 }

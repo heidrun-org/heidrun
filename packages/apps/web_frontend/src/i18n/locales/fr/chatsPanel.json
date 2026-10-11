@@ -61,5 +61,7 @@
   "viewLabel": "Affichage de la liste",
   "viewCompact": "Vue compacte",
   "viewExpanded": "Vue aérée",
-  "agentUnavailableTitle": "Aucune conversation de cet agent de code dans ce workspace."
+  "agentUnavailableTitle": "Aucune conversation de cet agent de code dans ce workspace.",
+  "chatActionsLabel": "Ouvrir cette conversation",
+  "openInAppTitle": "Ouvrir dans l’app {app}"
 }

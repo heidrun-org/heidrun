@@ -5,9 +5,15 @@ import ChatsPanel from "./ChatsPanel.vue";
 import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
+import { launchAgent } from "../stores/agents";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
+vi.mock("../stores/agents", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../stores/agents")>()),
+  launchAgent: vi.fn(async () => "ok"),
+}));
 vi.mock("../lib/refs", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/refs")>()),
   refContext: vi.fn(async () => ({
@@ -355,5 +361,52 @@ describe("ChatsPanel", () => {
     expect(wrapper.findAll(".btn-group > input.btn-check + label.btn")).toHaveLength(4);
     expect(wrapper.get("ul").classes()).toEqual(expect.arrayContaining(["list-group", "list-group-flush"]));
     expect(wrapper.get("li").classes()).toEqual(expect.arrayContaining(["list-group-item", "list-group-item-action"]));
+  });
+
+  it("gives each chat two buttons at the right of its title: open in the application of the coding agent, and open in Heidrun", async () => {
+    answer(["Fix the tab bar", "Add the Chats sidebar section"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const groups = wrapper.findAll("li .chat-actions");
+    expect(groups).toHaveLength(2);
+    expect(groups[0].classes()).toContain("btn-group");
+    const buttons = groups[0].findAll("button");
+    expect(buttons.map((button) => button.attributes("title"))).toEqual(["Open in the Claude app", "Open in Heidrun"]);
+    expect(buttons.map((button) => button.find(".bi").classes()[1])).toEqual(["bi-box-arrow-up-right", "bi-terminal"]);
+    expect(wrapper.get("li").get(".chat-title").text()).toBe("Fix the tab bar");
+  });
+
+  it("opens the address of the application of Claude, then of Codex, with the session identifier of the chat", async () => {
+    answer(["Fix the tab bar"], ["Describe image"]);
+    vi.mocked(openUrl).mockClear();
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    await wrapper.get("li .chat-actions button").trigger("click");
+    expect(openUrl).toHaveBeenLastCalledWith("claude://code/c0");
+    await wrapper.get("#chats-agent-codex").setValue();
+    expect(wrapper.get("li .chat-actions button").attributes("title")).toBe("Open in the Codex app");
+    await wrapper.get("li .chat-actions button").trigger("click");
+    expect(openUrl).toHaveBeenLastCalledWith("codex://threads/x0");
+  });
+
+  it("starts a new tab of the selected workspace that resumes the chat, for Claude and for Codex", async () => {
+    answer(["Fix the tab bar"], ["Describe image"]);
+    vi.mocked(launchAgent).mockClear();
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    await wrapper.get('li .chat-actions button[title="Open in Heidrun"]').trigger("click");
+    expect(launchAgent).toHaveBeenLastCalledWith({
+      workspaceId: "w1",
+      cwd: "/work/app",
+      tool: "claude",
+      agent: null,
+      model: null,
+      label: "Fix the tab bar",
+      prompt: "",
+      resumeId: "c0",
+    });
+    await wrapper.get("#chats-agent-codex").setValue();
+    await wrapper.get('li .chat-actions button[title="Open in Heidrun"]').trigger("click");
+    expect(launchAgent).toHaveBeenLastCalledWith(expect.objectContaining({ tool: "codex", label: "Describe image", resumeId: "x0" }));
   });
 });

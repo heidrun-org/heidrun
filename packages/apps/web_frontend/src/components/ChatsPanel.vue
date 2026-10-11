@@ -24,6 +24,7 @@ import ChatDatesLine from "./ChatDatesLine.vue";
 import ChatFilesLine from "./ChatFilesLine.vue";
 import ChatReferencesLine from "./ChatReferencesLine.vue";
 import Icon from "./Icon.vue";
+import { openChatInApp, openChatInHeidrun } from "../stores/chat_open";
 
 /** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
 const REFRESH_DELAY = 10_000;
@@ -70,6 +71,9 @@ const agent = computed<ChatAgent>({
   get: () => selectedChatAgent.value ?? chats.agent,
   set: (value) => chooseChatAgent(value),
 });
+
+/** The title of the button that opens a chat in the desktop application of the coding agent of the list. */
+const appTitle = computed(() => t("chatsPanel.openInAppTitle", { app: agentLabel(agent.value) }));
 
 /** The view of the list: "expanded" gives more air to the rows, and every other saved value gives the compact view. */
 const view = computed<"compact" | "expanded">({
@@ -137,7 +141,29 @@ const VIEWS = [
       <div class="chats-separator border-top" role="separator"></div>
       <ul class="list-group list-group-flush" :class="{ 'is-expanded': view === 'expanded' }">
         <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
-          <div>{{ row.chat.title }}</div>
+          <div class="d-flex align-items-start gap-2">
+            <div class="chat-title flex-fill">{{ row.chat.title }}</div>
+            <div class="chat-actions btn-group" role="group" :aria-label="t('chatsPanel.chatActionsLabel')">
+              <button
+                type="button"
+                class="btn"
+                :title="appTitle"
+                :aria-label="appTitle"
+                @click="openChatInApp(agent, row.chat)"
+              >
+                <Icon name="box-arrow-up-right" />
+              </button>
+              <button
+                type="button"
+                class="btn"
+                :title="t('chatsPanel.heidrunTitle')"
+                :aria-label="t('chatsPanel.heidrunTitle')"
+                @click="openChatInHeidrun(agent, row.chat, chats.folder)"
+              >
+                <Icon name="terminal" />
+              </button>
+            </div>
+          </div>
           <div class="chat-summary d-flex flex-column text-body-secondary">
             <ChatDatesLine
               v-if="row.lines.dates !== ''"
@@ -197,7 +223,9 @@ const VIEWS = [
 .list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
 .chats-separator { margin: 0 calc(-1 * var(--chats-inset)) -0.5rem; }
 .is-expanded { --bs-list-group-item-padding-y: 1rem; }
-.is-expanded .chat-summary { margin-top: 6px; gap: 4px; }
+.is-expanded .chat-title { min-width: 0; }
+.chat-actions .btn { height: 26px; --bs-btn-padding-x: 8px; }
+.chat-summary { margin-top: 6px; gap: 4px; }
 .btn-check:checked + .btn {
   --bs-btn-color: var(--text);
   --bs-btn-hover-color: var(--text);

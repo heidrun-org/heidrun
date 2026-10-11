@@ -11,6 +11,10 @@
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-text",
     "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "claude://*" }, { "url": "codex://*" }]
+    },
     "dialog:allow-open"
   ]
 }
