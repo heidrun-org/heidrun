@@ -4,7 +4,8 @@ The macOS application of [Heidrun](../../../README.md): the Rust backend and the
 
 ## What it does
 
-- Talks to the Herdr server and starts it in the background if it is not running.
+- Talks to the Herdr server of its own named session, `heidrun`, and starts the server in the background if it is not running. The environment variables `HERDR_SESSION` and `HERDR_SOCKET_PATH` choose another session.
+- Stops the session `heidrun` when the user quits, unless the setting "Keep agents running after quit" is on. The default Herdr session of a terminal is never stopped.
 - Runs the terminals of the panes with `portable-pty`.
 - Reads the git state, the project files, the job history, and the Claude and Codex usage.
 - Serves the mobile access (iPhone and iPad over Tailscale) with `axum`.

@@ -50,17 +50,77 @@ pub fn config_dir() -> PathBuf {
     dirs::home_dir().unwrap_or_default().join(".config").join("herdr")
 }
 
-/// Default session socket, or a named session's socket when `HERDR_SESSION` is set.
+/// The name of the Herdr session that Heidrun uses, unless the environment variable `HERDR_SOCKET_PATH` or
+/// `HERDR_SESSION` chooses another one. Heidrun never uses the default session: that session belongs to the terminal.
+pub const HEIDRUN_SESSION: &str = "heidrun";
+
+/// The value of an environment variable, or `None` when the variable is not set or is empty.
+fn non_empty_variable(name: &str) -> Option<String> {
+    std::env::var(name).ok().filter(|value| value.is_empty() == false)
+}
+
+/// True when the environment variable `HERDR_SOCKET_PATH` or `HERDR_SESSION` chooses the session. Every Herdr command
+/// line that Heidrun runs reads the same variables, so Heidrun adds no `--session` argument in this case.
+fn is_session_chosen_by_environment() -> bool {
+    non_empty_variable("HERDR_SOCKET_PATH").is_some() || non_empty_variable("HERDR_SESSION").is_some()
+}
+
+/// The socket of the session that Heidrun uses: the path in `HERDR_SOCKET_PATH`, else the socket of the session named
+/// in `HERDR_SESSION`, else the socket of the session `heidrun`.
 pub fn socket_path() -> PathBuf {
-    if let Ok(p) = std::env::var("HERDR_SOCKET_PATH") {
-        if !p.is_empty() {
-            return PathBuf::from(p);
-        }
+    if let Some(path) = non_empty_variable("HERDR_SOCKET_PATH") {
+        return PathBuf::from(path);
     }
-    match std::env::var("HERDR_SESSION") {
-        Ok(name) if !name.is_empty() => config_dir().join("sessions").join(name).join("herdr.sock"),
-        _ => config_dir().join("herdr.sock"),
+    let name = non_empty_variable("HERDR_SESSION").unwrap_or_else(|| HEIDRUN_SESSION.to_string());
+    config_dir().join("sessions").join(name).join("herdr.sock")
+}
+
+/// The arguments of a Herdr command line: `--session heidrun` first, then `arguments`. When the environment chooses the
+/// session, the arguments are `arguments` alone.
+pub fn command_arguments(arguments: &[&str]) -> Vec<String> {
+    let mut result: Vec<String> = Vec::new();
+    if is_session_chosen_by_environment() == false {
+        result.push("--session".to_string());
+        result.push(HEIDRUN_SESSION.to_string());
     }
+    result.extend(arguments.iter().map(|argument| argument.to_string()));
+    result
+}
+
+/// Like `command_arguments`, for the arguments that the web page sends.
+pub fn command_arguments_from(arguments: &[String]) -> Vec<String> {
+    let borrowed: Vec<&str> = arguments.iter().map(String::as_str).collect();
+    command_arguments(&borrowed)
+}
+
+/// The shell command that starts the Herdr server of the session that Heidrun uses, for `shell -lc`.
+pub fn server_shell_command(bin: &std::path::Path) -> String {
+    let quoted_bin = bin.display().to_string().replace('\'', "'\\''");
+    format!("exec '{quoted_bin}' {}", command_arguments(&["server"]).join(" "))
+}
+
+/// The arguments of the command that stops the session `heidrun` when the user quits Heidrun. `None` when the session
+/// stays running: the user chose "Keep agents running after quit", or the environment chooses a session that is not
+/// the session of Heidrun.
+pub fn stop_session_arguments(is_keeping_agents_running: bool) -> Option<Vec<String>> {
+    if is_keeping_agents_running || is_session_chosen_by_environment() {
+        return None;
+    }
+    Some(vec!["session".to_string(), "stop".to_string(), HEIDRUN_SESSION.to_string()])
+}
+
+/// Stops the session `heidrun`, and waits for the end of the command. Does nothing when `stop_session_arguments` gives
+/// `None`. The error of the command is ignored: the application quits anyway.
+pub fn stop_session_on_quit(is_keeping_agents_running: bool) {
+    let Some(arguments) = stop_session_arguments(is_keeping_agents_running) else {
+        return;
+    };
+    let _ = std::process::Command::new(herdr_bin())
+        .args(arguments)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status();
 }
 
 /// Apps launched from the Finder do not inherit the shell PATH, so look in the usual places.
@@ -238,18 +298,21 @@ impl StatusWatcher {
     }
 }
 
+/// The tests change environment variables of the whole process: they run one at a time, in every module.
+#[cfg(test)]
+pub(crate) static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+/// Removes the environment variables that the functions of this file read.
+#[cfg(test)]
+pub(crate) fn clear_env() {
+    for name in ["HERDR_SOCKET_PATH", "HERDR_SESSION", "XDG_CONFIG_HOME", "HERDR_BIN_PATH"] {
+        std::env::remove_var(name);
+    }
+}
+
 #[cfg(test)]
 mod herdr_tests {
     use super::*;
-
-    /// The tests change environment variables of the whole process: they run one at a time.
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
-
-    fn clear_env() {
-        for name in ["HERDR_SOCKET_PATH", "HERDR_SESSION", "XDG_CONFIG_HOME", "HERDR_BIN_PATH"] {
-            std::env::remove_var(name);
-        }
-    }
 
     #[test]
     fn config_dir_follows_the_xdg_variable() {
@@ -283,11 +346,85 @@ mod herdr_tests {
     }
 
     #[test]
-    fn socket_path_defaults_to_the_main_socket() {
+    fn socket_path_defaults_to_the_socket_of_the_heidrun_session() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_env();
         std::env::set_var("XDG_CONFIG_HOME", "/xdg");
-        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/herdr.sock"));
+        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/sessions/heidrun/herdr.sock"));
+        clear_env();
+    }
+
+    #[test]
+    fn socket_path_ignores_empty_environment_variables() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("XDG_CONFIG_HOME", "/xdg");
+        std::env::set_var("HERDR_SOCKET_PATH", "");
+        std::env::set_var("HERDR_SESSION", "");
+        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/sessions/heidrun/herdr.sock"));
+        clear_env();
+    }
+
+    #[test]
+    fn a_command_line_uses_the_heidrun_session_when_no_environment_variable_is_set() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        assert_eq!(command_arguments(&["pane", "run", "w1:p1", "ls"]), vec!["--session", "heidrun", "pane", "run", "w1:p1", "ls"]);
+        assert_eq!(
+            command_arguments_from(&["workspace".to_string(), "list".to_string()]),
+            vec!["--session", "heidrun", "workspace", "list"]
+        );
+        clear_env();
+    }
+
+    #[test]
+    fn a_command_line_adds_no_session_when_an_environment_variable_chooses_it() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("HERDR_SESSION", "work");
+        assert_eq!(command_arguments(&["workspace", "list"]), vec!["workspace", "list"]);
+        clear_env();
+        std::env::set_var("HERDR_SOCKET_PATH", "/run/herdr.sock");
+        assert_eq!(command_arguments(&["workspace", "list"]), vec!["workspace", "list"]);
+        clear_env();
+    }
+
+    #[test]
+    fn the_server_starts_in_the_heidrun_session() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        assert_eq!(server_shell_command(std::path::Path::new("/opt/homebrew/bin/herdr")), "exec '/opt/homebrew/bin/herdr' --session heidrun server");
+        assert_eq!(server_shell_command(std::path::Path::new("/it's/herdr")), "exec '/it'\\''s/herdr' --session heidrun server");
+        std::env::set_var("HERDR_SESSION", "work");
+        assert_eq!(server_shell_command(std::path::Path::new("/opt/herdr")), "exec '/opt/herdr' server");
+        clear_env();
+    }
+
+    #[test]
+    fn the_quit_step_stops_only_the_heidrun_session() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        assert_eq!(stop_session_arguments(false), Some(vec!["session".to_string(), "stop".to_string(), "heidrun".to_string()]));
+        clear_env();
+    }
+
+    #[test]
+    fn the_quit_step_does_not_stop_the_session_when_the_setting_keeps_the_agents_running() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        assert_eq!(stop_session_arguments(true), None);
+        clear_env();
+    }
+
+    #[test]
+    fn the_quit_step_does_not_stop_a_session_chosen_by_the_environment() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        clear_env();
+        std::env::set_var("HERDR_SESSION", "work");
+        assert_eq!(stop_session_arguments(false), None);
+        clear_env();
+        std::env::set_var("HERDR_SOCKET_PATH", "/run/herdr.sock");
+        assert_eq!(stop_session_arguments(false), None);
         clear_env();
     }
 

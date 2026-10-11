@@ -23,7 +23,7 @@ const introParts = computed(() => t("offline.intro").split("{command}"));
       <div class="eyebrow">{{ t("offline.connection") }}</div>
       <h1>{{ state.starting ? t("offline.starting") : t("offline.notResponding") }}</h1>
       <p>
-        {{ introParts[0] }}<span class="mono">herdr server stop</span>{{ introParts[1] }}
+        {{ introParts[0] }}<span class="mono">herdr session stop heidrun</span>{{ introParts[1] }}
       </p>
       <div class="row">
         <button :title="t('offline.startTitle')" class="btn lg primary" :disabled="state.starting" @click="startHerdr()">{{ t("offline.start") }}</button>

@@ -1,4 +1,5 @@
 import { reactive, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 
 export interface FontOption {
@@ -59,6 +60,8 @@ const defaults = {
   leftWidth: 280,
   /** Start the Herdr server in the background when it is not running. */
   autoStartHerdr: true,
+  /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
+  keepAgentsRunningAfterQuit: false,
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Notifications. */
@@ -163,6 +166,17 @@ export async function applyWindowZoom() {
 }
 
 watch(() => settings.fontSize, applyWindowZoom, { immediate: true });
+
+/** Tells the Rust side whether quitting Heidrun leaves the Herdr session of Heidrun running. */
+export async function applyKeepAgentsRunning() {
+  try {
+    await invoke("set_keep_agents_running", { isKeeping: settings.keepAgentsRunningAfterQuit });
+  } catch {
+    /* outside the Heidrun window (a test, a plain browser) there is no Rust side to tell */
+  }
+}
+
+watch(() => settings.keepAgentsRunningAfterQuit, applyKeepAgentsRunning, { immediate: true });
 
 export function zoom(delta: number) {
   const next = Math.round((settings.fontSize + delta) * 2) / 2;
