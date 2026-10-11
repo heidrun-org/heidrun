@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import HoverCard from "./HoverCard.vue";
@@ -120,55 +120,28 @@ async function openInVsCode(entry: ChatFile) {
   }
 }
 
-/** The frame that moves each line that scrolls, by line. */
-const frames = new Map<HTMLElement, number>();
-
-/** Starts to scroll each line of the row that does not fit, from its beginning to its end. */
+/** Starts the CSS animation of each line of the row that does not fit: the browser moves the text from its beginning to its end. */
 function startScrolling(event: PointerEvent) {
   for (const line of (event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>("[data-scroll]")) {
-    const overflow = line.scrollWidth - line.clientWidth;
+    const text = line.firstElementChild as HTMLElement;
+    const overflow = text.scrollWidth - line.clientWidth;
     if (overflow <= 0) {
       continue;
     }
-    stopLine(line);
-    line.classList.add("is-scrolling");
     const duration = Math.max(SCROLL_MIN_DURATION, (overflow / SCROLL_SPEED) * 1000);
-    const startedAt = performance.now();
-    const step = (now: number) => {
-      const progress = Math.min(1, Math.max(0, (now - startedAt - SCROLL_DELAY) / duration));
-      line.scrollLeft = overflow * progress;
-      if (progress < 1) {
-        frames.set(line, requestAnimationFrame(step));
-      } else {
-        frames.delete(line);
-      }
-    };
-    frames.set(line, requestAnimationFrame(step));
+    line.style.setProperty("--scroll-distance", `${overflow}px`);
+    line.style.setProperty("--scroll-duration", `${duration}ms`);
+    line.style.setProperty("--scroll-delay", `${SCROLL_DELAY}ms`);
+    line.classList.add("is-scrolling");
   }
 }
 
 /** Stops the lines of the row, and shows their beginning again. */
 function stopScrolling(event: PointerEvent) {
   for (const line of (event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>("[data-scroll]")) {
-    stopLine(line);
+    line.classList.remove("is-scrolling");
   }
 }
-
-function stopLine(line: HTMLElement) {
-  const frame = frames.get(line);
-  if (frame !== undefined) {
-    cancelAnimationFrame(frame);
-    frames.delete(line);
-  }
-  line.classList.remove("is-scrolling");
-  line.scrollLeft = 0;
-}
-
-onBeforeUnmount(() => {
-  for (const line of [...frames.keys()]) {
-    stopLine(line);
-  }
-});
 
 async function openOnForge(url: string) {
   try {
@@ -201,8 +174,10 @@ async function openOnForge(url: string) {
         >
           <Icon :name="row.icon" />
           <div class="file-text d-flex flex-column">
-            <span class="file-line fw-medium" data-scroll>{{ row.name }}</span>
-            <span class="file-line folder text-body-secondary" data-scroll>{{ row.folder }}</span>
+            <span class="file-line fw-medium" data-scroll><span class="file-line-text">{{ row.name }}</span></span>
+            <span class="file-line folder text-body-secondary" data-scroll>
+              <span class="file-line-text">{{ row.folder }}</span>
+            </span>
           </div>
           <div class="btn-group" role="group" :aria-label="t('chatsPanel.openFileLabel')">
             <button
@@ -238,7 +213,13 @@ async function openOnForge(url: string) {
 .files-list .btn { --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-active-bg: var(--bs-secondary-bg); }
 .files-list .btn:disabled { opacity: 0.45; }
 .file-text { flex: 1 1 0; min-width: 0; }
-.file-line { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.file-line.is-scrolling { text-overflow: clip; }
+.file-line { display: block; overflow: hidden; }
+.file-line-text { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.file-line.is-scrolling .file-line-text {
+  width: max-content;
+  text-overflow: clip;
+  transform: translateX(calc(-1 * var(--scroll-distance)));
+  transition: transform var(--scroll-duration) linear var(--scroll-delay);
+}
 .folder { font-size: 0.85em; }
 </style>

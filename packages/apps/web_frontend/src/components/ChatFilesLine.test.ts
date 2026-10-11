@@ -262,34 +262,24 @@ describe("ChatFilesLine", () => {
   });
 
   describe("the line that does not fit", () => {
-    const frames: FrameRequestCallback[] = [];
-
-    /** Makes the line of a row 300 pixels wide in a box of 100 pixels, as the layout of a browser would. */
+    /** Makes the text of a line 300 pixels wide in a box of 100 pixels, as the layout of a browser would. */
     function makeTooWide(line: Element, scrollWidth = 300, clientWidth = 100) {
-      Object.defineProperty(line, "scrollWidth", { configurable: true, value: scrollWidth });
+      Object.defineProperty(line.firstElementChild, "scrollWidth", { configurable: true, value: scrollWidth });
       Object.defineProperty(line, "clientWidth", { configurable: true, value: clientWidth });
     }
-
-    beforeEach(() => {
-      frames.length = 0;
-      vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => frames.push(callback));
-      vi.stubGlobal("cancelAnimationFrame", vi.fn());
-    });
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
 
     it("shows only the beginning with an ellipsis, on one line", async () => {
       const wrapper = mountLine();
       await openCard(wrapper);
       for (const line of wrapper.findAll("[data-file] .file-line")) {
         expect(line.attributes("data-scroll")).toBeDefined();
+        expect(line.find(".file-line-text").exists()).toBe(true);
       }
       expect(wrapper.get(".folder").classes()).toContain("file-line");
     });
 
-    it("scrolls to the end while the pointer is over the row, and shows the beginning again when the pointer leaves", async () => {
+    it("starts a CSS animation while the pointer is over the row, and stops it when the pointer leaves", async () => {
+      const animationFrame = vi.spyOn(window, "requestAnimationFrame");
       const wrapper = mountLine();
       await openCard(wrapper);
       const row = wrapper.get("[data-file]");
@@ -297,29 +287,31 @@ describe("ChatFilesLine", () => {
       makeTooWide(folder);
       await row.trigger("pointerenter");
       expect(folder.classList.contains("is-scrolling")).toBe(true);
-      expect(frames.length).toBe(1);
-      frames.shift()?.(performance.now() + 100_000);
-      expect(folder.scrollLeft).toBe(200);
+      expect(animationFrame).not.toHaveBeenCalled();
       await row.trigger("pointerleave");
-      expect(folder.scrollLeft).toBe(0);
       expect(folder.classList.contains("is-scrolling")).toBe(false);
     });
 
-    it("waits 300 milliseconds before it starts, then moves in proportion to the time", async () => {
+    it("gives the CSS animation the distance to the end, a speed in proportion, and a wait of 300 milliseconds", async () => {
       const wrapper = mountLine();
       await openCard(wrapper);
       const row = wrapper.get("[data-file]");
       const folder = row.get(".folder").element as HTMLElement;
       makeTooWide(folder, 220, 100);
-      vi.spyOn(performance, "now").mockReturnValue(1_000);
       await row.trigger("pointerenter");
-      frames.shift()?.(1_200);
-      expect(folder.scrollLeft).toBe(0);
-      frames.shift()?.(2_300);
-      expect(folder.scrollLeft).toBe(60);
-      frames.shift()?.(10_000);
-      expect(folder.scrollLeft).toBe(120);
-      expect(frames.length).toBe(0);
+      expect(folder.style.getPropertyValue("--scroll-distance")).toBe("120px");
+      expect(folder.style.getPropertyValue("--scroll-duration")).toBe("2000ms");
+      expect(folder.style.getPropertyValue("--scroll-delay")).toBe("300ms");
+    });
+
+    it("gives a very short distance the shortest duration", async () => {
+      const wrapper = mountLine();
+      await openCard(wrapper);
+      const row = wrapper.get("[data-file]");
+      const folder = row.get(".folder").element as HTMLElement;
+      makeTooWide(folder, 110, 100);
+      await row.trigger("pointerenter");
+      expect(folder.style.getPropertyValue("--scroll-duration")).toBe("800ms");
     });
 
     it("does not scroll a line that fits", async () => {
@@ -328,7 +320,6 @@ describe("ChatFilesLine", () => {
       const row = wrapper.get("[data-file]");
       makeTooWide(row.get(".folder").element, 100, 100);
       await row.trigger("pointerenter");
-      expect(frames.length).toBe(0);
       expect(row.get(".folder").classes()).not.toContain("is-scrolling");
     });
   });
