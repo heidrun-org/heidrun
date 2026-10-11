@@ -51,8 +51,10 @@ async function openCard(wrapper: ReturnType<typeof mountLine>) {
 function cardRows(wrapper: ReturnType<typeof mountLine>) {
   return wrapper.findAll("[data-file]").map((row) => ({
     name: row.get(".fw-medium").text(),
-    folder: row.find(".folder").exists() ? row.get(".folder").text() : "",
-    buttons: row.findAll("button").map((button) => button.text()),
+    folder: row.get(".folder").text(),
+    buttons: row
+      .findAll("button")
+      .map((button) => button.get("i.bi").classes().find((name) => name !== "bi")?.replace("bi-", "")),
   }));
 }
 
@@ -84,6 +86,15 @@ describe("ChatFilesLine", () => {
     ]);
   });
 
+  it("shows ./ as the folders of a file at the root of the repository, so that every row has two lines", async () => {
+    const wrapper = mountLine({ entries: chatFiles("/work/app", ["/work/app/AGENTS.md", "/main.ts"]) });
+    await openCard(wrapper);
+    expect(cardRows(wrapper).map((row) => [row.name, row.folder])).toEqual([
+      ["AGENTS.md", "./"],
+      ["main.ts", "/"],
+    ]);
+  });
+
   it("shows the path of a file of a worktree as the path of the same file at the root of the repository", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
@@ -109,26 +120,30 @@ describe("ChatFilesLine", () => {
     }
   });
 
-  it("gives each file below the root a button for VS Code and a button for GitHub, with an icon, and a file outside none", async () => {
+  it("gives each file below the root a button for VS Code and a button for GitHub, with an icon and no text, and a file outside none", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
-    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([["VS Code", "GitHub"], ["VS Code", "GitHub"], []]);
-    const buttons = wrapper.get("[data-file]").findAll("button");
-    expect(buttons[0].find(".bi-code-slash").exists()).toBe(true);
-    expect(buttons[1].find(".bi-github").exists()).toBe(true);
+    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([
+      ["code-slash", "github"],
+      ["code-slash", "github"],
+      [],
+    ]);
+    for (const button of wrapper.findAll("[data-file] button")) {
+      expect(button.text()).toBe("");
+    }
   });
 
-  it("names the forge GitLab, with its icon, on the buttons of a repository on GitLab", async () => {
+  it("names the forge GitLab, with its icon and in the title, on the buttons of a repository on GitLab", async () => {
     const wrapper = mountLine({ forge: "gitlab", webBase: "https://gitlab.com/group/app" });
     await openCard(wrapper);
-    expect(cardRows(wrapper)[0].buttons).toEqual(["VS Code", "GitLab"]);
-    expect(wrapper.get("[data-file]").findAll("button")[1].find(".bi-gitlab").exists()).toBe(true);
+    expect(cardRows(wrapper)[0].buttons).toEqual(["code-slash", "gitlab"]);
+    expect(wrapper.get("[data-file]").findAll("button")[1].attributes("title")).toBe("Open src/a.rs on GitLab");
   });
 
   it("has no button for the forge when the repository has no remote", async () => {
     const wrapper = mountLine({ forge: null, webBase: null });
     await openCard(wrapper);
-    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([["VS Code"], ["VS Code"], []]);
+    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([["code-slash"], ["code-slash"], []]);
   });
 
   it("asks which files exist each time the card opens, only for the files below the root", async () => {
@@ -214,11 +229,84 @@ describe("ChatFilesLine", () => {
     expect(state.toast).toBe("no browser");
   });
 
-  it("gives each button a title with the path below the root", async () => {
+  it("gives each button a title that says what it does, with the path below the root, and the same text to the screen reader", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
     const buttons = wrapper.findAll("[data-file]")[0].findAll("button");
     expect(buttons[0].attributes("title")).toBe("Open src/a.rs in VS Code");
     expect(buttons[1].attributes("title")).toBe("Open src/a.rs on GitHub");
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(buttons.map((button) => button.attributes("title")));
+  });
+
+  describe("the line that does not fit", () => {
+    const frames: FrameRequestCallback[] = [];
+
+    /** Makes the line of a row 300 pixels wide in a box of 100 pixels, as the layout of a browser would. */
+    function makeTooWide(line: Element, scrollWidth = 300, clientWidth = 100) {
+      Object.defineProperty(line, "scrollWidth", { configurable: true, value: scrollWidth });
+      Object.defineProperty(line, "clientWidth", { configurable: true, value: clientWidth });
+    }
+
+    beforeEach(() => {
+      frames.length = 0;
+      vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => frames.push(callback));
+      vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("shows only the beginning with an ellipsis, on one line", async () => {
+      const wrapper = mountLine();
+      await openCard(wrapper);
+      for (const line of wrapper.findAll("[data-file] .file-line")) {
+        expect(line.attributes("data-scroll")).toBeDefined();
+      }
+      expect(wrapper.get(".folder").classes()).toContain("file-line");
+    });
+
+    it("scrolls to the end while the pointer is over the row, and shows the beginning again when the pointer leaves", async () => {
+      const wrapper = mountLine();
+      await openCard(wrapper);
+      const row = wrapper.get("[data-file]");
+      const folder = row.get(".folder").element as HTMLElement;
+      makeTooWide(folder);
+      await row.trigger("pointerenter");
+      expect(folder.classList.contains("is-scrolling")).toBe(true);
+      expect(frames.length).toBe(1);
+      frames.shift()?.(performance.now() + 100_000);
+      expect(folder.scrollLeft).toBe(200);
+      await row.trigger("pointerleave");
+      expect(folder.scrollLeft).toBe(0);
+      expect(folder.classList.contains("is-scrolling")).toBe(false);
+    });
+
+    it("waits 300 milliseconds before it starts, then moves in proportion to the time", async () => {
+      const wrapper = mountLine();
+      await openCard(wrapper);
+      const row = wrapper.get("[data-file]");
+      const folder = row.get(".folder").element as HTMLElement;
+      makeTooWide(folder, 220, 100);
+      vi.spyOn(performance, "now").mockReturnValue(1_000);
+      await row.trigger("pointerenter");
+      frames.shift()?.(1_200);
+      expect(folder.scrollLeft).toBe(0);
+      frames.shift()?.(2_300);
+      expect(folder.scrollLeft).toBe(60);
+      frames.shift()?.(10_000);
+      expect(folder.scrollLeft).toBe(120);
+      expect(frames.length).toBe(0);
+    });
+
+    it("does not scroll a line that fits", async () => {
+      const wrapper = mountLine();
+      await openCard(wrapper);
+      const row = wrapper.get("[data-file]");
+      makeTooWide(row.get(".folder").element, 100, 100);
+      await row.trigger("pointerenter");
+      expect(frames.length).toBe(0);
+      expect(row.get(".folder").classes()).not.toContain("is-scrolling");
+    });
   });
 });
