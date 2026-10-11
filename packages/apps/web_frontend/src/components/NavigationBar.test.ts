@@ -5,7 +5,7 @@ import NavigationBar from "./NavigationBar.vue";
 const sidebarSections = [
   { id: "first", label: "First", badge: 0 },
   { id: "second", label: "Second", badge: 3, isLive: true },
-  { id: "third", label: "Third", badge: 5 },
+  { id: "third", label: "Third", badge: 5, isAlert: true },
 ];
 
 function mountNavigationBar(selectedId = "first") {
@@ -32,6 +32,11 @@ describe("NavigationBar", () => {
   it("gives the color of the working status to the number of a live button only", () => {
     const wrapper = mountNavigationBar();
     expect(wrapper.findAll(".badge").map((badge) => badge.classes("live"))).toEqual([true, false]);
+  });
+
+  it("gives the color of the blocked status to the number of an alert button only", () => {
+    const wrapper = mountNavigationBar();
+    expect(wrapper.findAll(".badge").map((badge) => badge.classes("alert"))).toEqual([false, true]);
   });
 
   it("marks only the selected sidebar section as active", () => {

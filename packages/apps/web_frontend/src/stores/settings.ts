@@ -36,8 +36,8 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "actions" | "git";
+/** The sidebar sections of the left sidebar: "toHandle" is the To handle sidebar section, and "actions" is the Scripts sidebar section. */
+export type LeftSidebarSection = "toHandle" | "actions" | "git";
 
 /** The sidebar sections of the right sidebar. */
 export type RightSidebarSection = "pane" | "notes";

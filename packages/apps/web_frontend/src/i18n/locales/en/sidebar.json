@@ -1,15 +1,5 @@
 {
-  "waitingForDecision": "waiting for a decision",
-  "workDoneToReview": "work done, to review",
   "navigationBarLabel": "Left sidebar",
-  "sidebarSection.actions": "Scripts",
-  "toHandle": "To handle",
-  "showPane": "Show this pane",
-  "question": "QUESTION",
-  "unpinLabel": "Unpin {name}",
-  "pinLabel": "Pin {name}",
-  "unpinTitle": "Unpin the pane",
-  "pinTitle": "Pin the pane: it stays visible when you change tab or workspace",
-  "hideLabel": "Hide {name}",
-  "hideTitle": "Hide until the next change"
+  "sidebarSection.toHandle": "To handle",
+  "sidebarSection.actions": "Scripts"
 }
