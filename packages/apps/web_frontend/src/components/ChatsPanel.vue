@@ -163,7 +163,7 @@ const VIEWS = [
                 :aria-label="t('chatsPanel.heidrunTitle')"
                 @click="openChatInHeidrun(agent, row.chat, chats.folder)"
               >
-                <Icon name="terminal" />
+                <Icon name="heidrun-goat-only" />
               </button>
             </div>
           </div>

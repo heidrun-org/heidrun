@@ -372,7 +372,7 @@ describe("ChatsPanel", () => {
     expect(groups[0].classes()).toContain("btn-group");
     const buttons = groups[0].findAll("button");
     expect(buttons.map((button) => button.attributes("title"))).toEqual(["Open in the Claude app", "Open in Heidrun"]);
-    expect(buttons.map((button) => button.find(".bi").classes()[1])).toEqual(["bi-claude", "bi-terminal"]);
+    expect(buttons.map((button) => button.find(".bi").classes()[1])).toEqual(["bi-claude", "bi-heidrun-goat-only"]);
     expect(wrapper.get("li").get(".chat-title").text()).toBe("Fix the tab bar");
   });
 
