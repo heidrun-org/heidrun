@@ -1,5 +1,5 @@
-import firstBleatUrl from "../../../../../docs/sounds/goat_bleat_1.wav";
-import secondBleatUrl from "../../../../../docs/sounds/goat_bleat_2.wav";
+import firstBleatUrl from "../../../../../data/sounds/goat_bleat/goat_bleat_1.wav";
+import secondBleatUrl from "../../../../../data/sounds/goat_bleat/goat_bleat_2.wav";
 
 /** The Freesound page of the sound "Cabra", where the two goat bleats come from. */
 export const GOAT_SOUND_SOURCE_URL = "https://freesound.org/people/sonsdebarcelona/sounds/393948/";

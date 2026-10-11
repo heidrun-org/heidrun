@@ -1,11 +1,12 @@
 # Directory Context: `/data`
 
 ## Purpose
-The data files that several packages of the repository share: the identity texts of Heidrun and the key images.
+The data files that several packages of the repository share: the identity texts of Heidrun, the key images, and the sounds.
 
 ## Key Exports & Entry Points
 - `identity.json`: the title, the motto, and the description of Heidrun, with the motto and the description in English and in French. This file is the only place where these three texts are written by hand.
 - `images/`: the key images of Heidrun. See [docs/marketing/README.md](../docs/marketing/README.md).
+- `sounds/`: the sound files that the application plays, one folder for each sound, with the source and the license of the sound in its README.md. The folder `sounds/goat_bleat/` holds the two goat bleats of the About modal, the splash screen, and the empty tab screen.
 
 ## Rules
 - The application, the website, and the three Markdown files get the title, the motto, and the description from `identity.json`. No other file holds a hand-written copy.

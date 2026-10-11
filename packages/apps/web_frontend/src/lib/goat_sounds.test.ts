@@ -2,7 +2,7 @@ import Fs from "node:fs";
 import Path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const SOUNDS_FOLDER = Path.join(import.meta.dirname, "../../../../../docs/sounds");
+const SOUNDS_FOLDER = Path.join(import.meta.dirname, "../../../../../data/sounds/goat_bleat");
 
 /** A fake audio element that records what the code does to it. */
 class FakeAudio {
@@ -88,7 +88,7 @@ describe("playNextGoatBleat", () => {
 
 describe("the sound files of the goat bleats", () => {
   for (const fileName of ["goat_bleat_1.wav", "goat_bleat_2.wav"]) {
-    it(`keeps ${fileName} in the folder docs/sounds, as a small wave file of about 2.5 seconds`, () => {
+    it(`keeps ${fileName} in the folder data/sounds/goat_bleat, as a small wave file of about 2.5 seconds`, () => {
       const content = Fs.readFileSync(Path.join(SOUNDS_FOLDER, fileName));
       expect(content.toString("ascii", 0, 4)).toBe("RIFF");
       expect(content.toString("ascii", 8, 12)).toBe("WAVE");

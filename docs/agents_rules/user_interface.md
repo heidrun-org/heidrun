@@ -142,7 +142,7 @@ This document says where each part of the window goes and how each part works. T
 
 ## Goat sounds
 
-- Heidrun plays two goat bleats. They are the two halves of the sound "Cabra" by sonsdebarcelona, and the files are `docs/sounds/goat_bleat_1.wav` and `docs/sounds/goat_bleat_2.wav`. The application keeps one copy of each file, and plays it from the folder `docs/sounds`.
+- Heidrun plays two goat bleats. They are the two halves of the sound "Cabra" by sonsdebarcelona, and the files are `data/sounds/goat_bleat/goat_bleat_1.wav` and `data/sounds/goat_bleat/goat_bleat_2.wav`. The application keeps one copy of each file, and plays it from the folder `data/sounds/goat_bleat`.
 - A bleat plays only after a click of the developer. No bleat plays by itself.
 - Three places play a bleat: the sound button of the About modal, the sound button of the splash screen, and the smiley at the end of the joke of the empty tab screen. A click on the smiley plays a bleat only when it starts the laugh again, so the laugh that starts by itself stays silent, and a click while the laugh is still running plays nothing.
 - The bleats play in turn: the first click plays the first bleat, the second click plays the second bleat, the third click plays the first bleat again. The three places share the same turn. A bleat that is still playing stops when the next bleat starts.
