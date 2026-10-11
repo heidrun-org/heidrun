@@ -117,6 +117,14 @@ describe('bootstrap_parts.scss', () => {
 		}
 	});
 
+	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		for (const selector of ['.nav', '.nav-link', '.nav-tabs', '.nav-tabs .nav-link']) {
+			expect(cssText).toContain(`${selector} {`);
+		}
+		expect(cssText).not.toContain('transition: color 0.15s');
+	});
+
 	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).toMatch(/\.form-control \{[^}]*font-size: var\(--font-size\)/);

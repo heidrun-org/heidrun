@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import Fs from "node:fs";
+import Path from "node:path";
 import { mount } from "@vue/test-utils";
 import type { PaneLayoutSnapshot } from "../lib/types";
 
@@ -287,5 +289,32 @@ describe("PaneGrid without pane", () => {
   it("does not show the screen when the tab has a pane", () => {
     const wrapper = mountPaneGrid(THREE_PANES);
     expect(wrapper.find(".empty-tab-screen").exists()).toBe(false);
+  });
+});
+
+describe("PaneGrid top left pane", () => {
+  it("marks only the pane in the top left corner, so that the first tab of the tab bar can start at its left edge", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    const cells = wrapper.findAll(".cell");
+    expect(cells.map((cell) => cell.classes("top-left"))).toEqual([true, false, false]);
+  });
+
+  it("marks the first pane when Herdr sends no layout", () => {
+    mocks.tabLayout.value = null;
+    mocks.tabPanes.value = [{ pane_id: "w1:p1" }, { pane_id: "w1:p2" }];
+    const wrapper = mount(PaneGrid, { props: { outerEdges: NO_OUTER_EDGES } });
+    expect(wrapper.findAll(".cell").map((cell) => cell.classes("top-left"))).toEqual([true, false]);
+  });
+
+  it("marks the screen of an empty tab", () => {
+    mocks.tabLayout.value = null;
+    mocks.tabPanes.value = [];
+    const wrapper = mount(PaneGrid, { props: { outerEdges: NO_OUTER_EDGES } });
+    expect(wrapper.get(".empty").classes()).toContain("top-left");
+  });
+
+  it("gives the pane in the top left corner a square top left corner, and no other pane", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneGrid.vue"), "utf8");
+    expect(sourceText).toMatch(/\.cell\.top-left :deep\(\.pane\), \.empty\.top-left \{ border-top-left-radius: 0; \}/);
   });
 });

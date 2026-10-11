@@ -1,0 +1,10 @@
+{
+  "label": "Tabs of the workspace",
+  "newName": "New name of the tab",
+  "tabTitle": "{name} · double-click to rename · drag to move",
+  "remoteControlConnected": "Remote Control connected",
+  "remoteControlBadge": "RC",
+  "closeConfirm": "Close",
+  "close": "Close the tab {name}",
+  "newTabTitle": "Create a tab: a terminal, Claude Code, or Codex (shift click: start the previous tab again)"
+}

@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
+import TabBar from "./components/TabBar.vue";
 import MacroEditor from "./components/MacroEditor.vue";
 import { macroEditor } from "./stores/macros";
 import RightPanel from "./components/RightPanel.vue";
@@ -289,6 +290,7 @@ onBeforeUnmount(() => {
       </template>
       <main class="center">
         <template v-if="state.snapshot">
+          <TabBar />
           <div class="stage">
             <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
             <template v-if="visiblePinnedPanes.length">

@@ -4,6 +4,7 @@
 
 // Variable values that keep the look of the application. They must come before the Bootstrap variables.
 $btn-transition: none;
+$nav-link-transition: none;
 
 // The size of the text follows the variable --font-size of the application, which a user can change. Bootstrap makes a
 // font size fluid with a calculation, and the calculation cannot work with a variable, so the calculation is off.
@@ -212,6 +213,7 @@ $utilities: (
   @import "bootstrap/scss/close";
   @import "bootstrap/scss/dropdown";
   @import "bootstrap/scss/modal";
+  @import "bootstrap/scss/nav";
   @import "bootstrap/scss/popover";
   @import "bootstrap/scss/progress";
   @import "bootstrap/scss/alert";
