@@ -128,9 +128,11 @@ const subtitle = computed(() => {
   height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative;
   border: 1px solid var(--line); border-radius: var(--pane-radius); overflow: hidden;
 }
-.pane.blocked { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked); }
-.pane.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-selected); }
-.pane.blocked.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked-selected); }
+/* The ring of a blocked pane and of the selected pane is the border itself, so that the outline of the selected tab of the tab bar
+   joins the border of the pane without an offset. */
+.pane.blocked { border-color: var(--pane-ring-blocked); }
+.pane.selected { border-color: var(--pane-ring-selected); }
+.pane.blocked.selected { border-color: var(--pane-ring-blocked-selected); }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;

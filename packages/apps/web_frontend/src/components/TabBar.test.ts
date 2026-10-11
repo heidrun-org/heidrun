@@ -298,13 +298,29 @@ describe("TabBar height", () => {
 });
 
 describe("TabBar join with the panes", () => {
-  it("has no gap above the panes: the bar goes 2 pixels over them, and the selected tab is 2 pixels higher than the other tabs", () => {
+  it("has no gap above the panes: the bar goes 1 pixel over them, and the selected tab is 1 pixel higher than the other tabs", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
-    expect(sourceText).toMatch(/\.tab-bar \{[^}]*margin-bottom: -2px/);
+    expect(sourceText).toMatch(/\.tab-bar \{[^}]*margin-bottom: -1px/);
     expect(sourceText).not.toMatch(/\.tab-bar \{[^}]*margin-bottom: var\(--pane-gap\)/);
     const heightOfTab = /\.nav-tabs \.nav-link \{[^}]*height: (\d+)px/.exec(sourceText);
     const heightOfSelectedTab = /\.nav-tabs \.nav-link\.active \{[^}]*height: (\d+)px/.exec(sourceText);
-    expect(Number(heightOfSelectedTab![1]) - Number(heightOfTab![1])).toBe(2);
+    expect(Number(heightOfSelectedTab![1]) - Number(heightOfTab![1])).toBe(1);
+  });
+
+  it("draws the outline of the selected tab with the color of the ring of the selected pane, and has no border at its bottom", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain(
+      "--bs-nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);",
+    );
+    expect(sourceText).toMatch(/\.nav-tabs \.nav-link\.active \{[^}]*border-bottom-width: 0/);
+  });
+
+  it("draws the ring of the selected pane and of a blocked pane with the border of the pane, so that it joins the selected tab", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
+    expect(sourceText).toMatch(/\.pane\.selected \{ border-color: var\(--pane-ring-selected\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked \{ border-color: var\(--pane-ring-blocked\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
+    expect(sourceText).not.toMatch(/\.pane[^{]*\{[^}]*box-shadow: inset/);
   });
 });
 
