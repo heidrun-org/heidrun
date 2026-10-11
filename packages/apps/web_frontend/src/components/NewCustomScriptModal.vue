@@ -67,7 +67,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .modal {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;

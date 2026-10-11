@@ -120,12 +120,11 @@ describe("Sidebar plus buttons", () => {
     }
   });
 
-  it("gives the look of each plus button to Bootstrap", async () => {
+  it("gives the look of each plus button to Bootstrap, as every other button, without a Bootstrap variant class", async () => {
     const { wrapper } = await mountSidebar();
     for (const button of wrapper.findAll(".heading button.add")) {
-      expect(button.classes()).toEqual(
-        expect.arrayContaining(["btn", "btn-outline-secondary", "border-0", "d-inline-flex", "align-items-center", "justify-content-center"]),
-      );
+      expect(button.classes()).toEqual(expect.arrayContaining(["btn", "border-0", "justify-content-center"]));
+      expect(button.classes()).not.toContain("btn-outline-secondary");
     }
   });
 
