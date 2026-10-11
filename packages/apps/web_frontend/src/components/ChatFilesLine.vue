@@ -13,7 +13,8 @@ import { t } from "../i18n/index";
 // a card lists every file with its folders below the root of the repository, and two buttons for each file: one opens the
 // file in VS Code, and one opens the file on the web page of the repository on GitHub or GitLab. A button is disabled,
 // with a title that says why, when the file does not exist on the disk of this Mac or on the default branch of the remote.
-// A file that is not below the root of the repository has no button. A row has two lines: the name of the file, and its
+// A file that is not below the root of the repository has the same buttons, both disabled with a title that says why. A
+// row has two lines: the name of the file, and its
 // folders (`./` for a file at the root). A line that does not fit shows its beginning with an ellipsis, and scrolls to
 // its end while the pointer is over the row.
 
@@ -66,7 +67,7 @@ const rows = computed(() =>
       name: fileName(entry.label),
       folder: folderText(entry),
       icon: fileIconName(fileName(entry.label)),
-      hasButtons: entry.relativePath !== null,
+      isOutside: entry.relativePath === null,
       url: entry.relativePath === null ? null : fileWebUrl(props.webBase, props.forge, entry.relativePath),
       isMissingOnDisk: known !== undefined && known.on_disk === false,
       isMissingOnRemote: known !== undefined && known.on_remote === false,
@@ -92,14 +93,18 @@ type Row = (typeof rows.value)[number];
 
 /** The title of the button for VS Code: what the button does, or why it cannot do it. */
 function vscodeTitle(row: Row): string {
-  const key = row.isMissingOnDisk ? "chatsPanel.vscodeMissingTitle" : "chatsPanel.vscodeTitle";
-  return t(key);
+  if (row.isOutside) {
+    return t("chatsPanel.vscodeOutsideTitle");
+  }
+  return t(row.isMissingOnDisk ? "chatsPanel.vscodeMissingTitle" : "chatsPanel.vscodeTitle");
 }
 
 /** The title of the button for the forge: what the button does, or why it cannot do it. */
 function forgeTitle(row: Row): string {
-  const key = row.isMissingOnRemote ? "chatsPanel.forgeMissingTitle" : "chatsPanel.forgeTitle";
-  return t(key, { forge: forgeName.value });
+  if (row.isOutside) {
+    return t("chatsPanel.forgeOutsideTitle", { forge: forgeName.value });
+  }
+  return t(row.isMissingOnRemote ? "chatsPanel.forgeMissingTitle" : "chatsPanel.forgeTitle", { forge: forgeName.value });
 }
 
 /** Checks that the file is in a project that a pane works in, then opens it in VS Code. */
@@ -199,11 +204,11 @@ async function openOnForge(url: string) {
             <span class="file-line fw-medium" data-scroll>{{ row.name }}</span>
             <span class="file-line folder text-body-secondary" data-scroll>{{ row.folder }}</span>
           </div>
-          <div v-if="row.hasButtons" class="btn-group" role="group" :aria-label="t('chatsPanel.openFileLabel')">
+          <div class="btn-group" role="group" :aria-label="t('chatsPanel.openFileLabel')">
             <button
               type="button"
               class="btn"
-              :disabled="row.isMissingOnDisk"
+              :disabled="row.isOutside || row.isMissingOnDisk"
               :title="vscodeTitle(row)"
               :aria-label="vscodeTitle(row)"
               @click="openInVsCode(row.entry)"
@@ -211,13 +216,13 @@ async function openOnForge(url: string) {
               <Icon name="code-slash" />
             </button>
             <button
-              v-if="row.url !== null"
+              v-if="webBase !== null"
               type="button"
               class="btn"
-              :disabled="row.isMissingOnRemote"
+              :disabled="row.isOutside || row.isMissingOnRemote || row.url === null"
               :title="forgeTitle(row)"
               :aria-label="forgeTitle(row)"
-              @click="openOnForge(row.url)"
+              @click="row.url !== null && openOnForge(row.url)"
             >
               <Icon :name="props.forge === 'gitlab' ? 'gitlab' : 'github'" />
             </button>

@@ -20,5 +20,7 @@
   "forgeTitle": "Ouvrir dans {forge}",
   "vscodeMissingTitle": "Impossible d’ouvrir dans VS Code : le fichier n’existe pas sur ce Mac.",
   "forgeMissingTitle": "Impossible d’ouvrir dans {forge} : le fichier n’existe pas sur la branche par défaut.",
+  "vscodeOutsideTitle": "Impossible d’ouvrir dans VS Code : le fichier est hors du dépôt.",
+  "forgeOutsideTitle": "Impossible d’ouvrir dans {forge} : le fichier est hors du dépôt.",
   "openFileLabel": "Ouvrir ce fichier"
 }

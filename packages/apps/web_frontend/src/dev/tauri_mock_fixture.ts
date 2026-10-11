@@ -86,6 +86,7 @@ export class TauriMockFixture {
 					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_hover_card/at_all/notes.md',
 					'/Users/demo/notes/scratch.md',
+					'/private/tmp/claude-501/-Users-demo-webwork-heidrun/e957b92e-4848-4b5b-849e-6618a7a326fd/scratchpad/issue_31_comment.md',
 				],
 			}),
 			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {

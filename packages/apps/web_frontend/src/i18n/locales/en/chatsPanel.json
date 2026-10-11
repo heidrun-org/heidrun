@@ -20,5 +20,7 @@
   "forgeTitle": "Open in {forge}",
   "vscodeMissingTitle": "Cannot open in VS Code: the file does not exist on this Mac.",
   "forgeMissingTitle": "Cannot open in {forge}: the file does not exist on the default branch.",
+  "vscodeOutsideTitle": "Cannot open in VS Code: the file is outside the repository.",
+  "forgeOutsideTitle": "Cannot open in {forge}: the file is outside the repository.",
   "openFileLabel": "Open this file"
 }

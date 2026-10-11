@@ -123,6 +123,11 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-bg: transparent/);
 	});
 
+	it('gives a row of a list group under the pointer the soft hover background, so that a line or a button inside it still shows', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-action-hover-bg: var\(--hover-soft\)/);
+	});
+
 	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		for (const selector of ['.nav', '.nav-link', '.nav-tabs', '.nav-tabs .nav-link']) {

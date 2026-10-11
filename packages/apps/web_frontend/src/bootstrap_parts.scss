@@ -26,6 +26,9 @@ $list-group-bg: transparent;
 // A row of a list group that reacts to the mouse keeps the color of the text of the application, and gets only a background.
 $list-group-action-color: var(--bs-body-color);
 $list-group-action-hover-color: var(--bs-body-color);
+// The background of a row under the pointer is soft, so that the part of the row that is itself under the pointer (a line, a button) shows
+// against it.
+$list-group-hover-bg: var(--hover-soft);
 
 // The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
 // does not add the blue glow of Bootstrap to it.

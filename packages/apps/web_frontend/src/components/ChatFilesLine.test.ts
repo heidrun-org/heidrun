@@ -120,13 +120,13 @@ describe("ChatFilesLine", () => {
     }
   });
 
-  it("gives each file below the root a button for VS Code and a button for GitHub, with an icon and no text, and a file outside none", async () => {
+  it("gives each file a button for VS Code and a button for GitHub, with an icon and no text, also a file outside the root", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
     expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([
       ["code-slash", "github"],
       ["code-slash", "github"],
-      [],
+      ["code-slash", "github"],
     ]);
     for (const button of wrapper.findAll("[data-file] button")) {
       expect(button.text()).toBe("");
@@ -143,7 +143,20 @@ describe("ChatFilesLine", () => {
   it("has no button for the forge when the repository has no remote", async () => {
     const wrapper = mountLine({ forge: null, webBase: null });
     await openCard(wrapper);
-    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([["code-slash"], ["code-slash"], []]);
+    expect(cardRows(wrapper).map((row) => row.buttons)).toEqual([["code-slash"], ["code-slash"], ["code-slash"]]);
+  });
+
+  it("disables both buttons of a file outside the repository, and says why in their titles", async () => {
+    const wrapper = mountLine();
+    await openCard(wrapper);
+    const [vscode, github] = wrapper.findAll("[data-file]")[2].findAll("button");
+    expect(vscode.attributes("disabled")).toBeDefined();
+    expect(vscode.attributes("title")).toBe("Cannot open in VS Code: the file is outside the repository.");
+    expect(github.attributes("disabled")).toBeDefined();
+    expect(github.attributes("title")).toBe("Cannot open in GitHub: the file is outside the repository.");
+    await vscode.trigger("click");
+    await github.trigger("click");
+    expect(openUrl).not.toHaveBeenCalled();
   });
 
   it("asks which files exist each time the card opens, only for the files below the root", async () => {
@@ -179,11 +192,11 @@ describe("ChatFilesLine", () => {
     expect(vscode.attributes("disabled")).toBeUndefined();
   });
 
-  it("keeps the buttons on when the program cannot tell which files exist", async () => {
+  it("keeps the buttons of the files below the root on when the program cannot tell which files exist", async () => {
     vi.mocked(invoke).mockRejectedValue("no git");
     const wrapper = mountLine();
     await openCard(wrapper);
-    for (const button of wrapper.findAll("[data-file] button")) {
+    for (const button of wrapper.findAll("[data-file]").slice(0, 2).flatMap((row) => row.findAll("button"))) {
       expect(button.attributes("disabled")).toBeUndefined();
     }
   });
@@ -229,11 +242,11 @@ describe("ChatFilesLine", () => {
     expect(state.toast).toBe("no browser");
   });
 
-  it("puts the two buttons of a file in a Bootstrap button group, and none for a file outside the repository", async () => {
+  it("puts the two buttons of every file in a Bootstrap button group, also a file outside the repository", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
     const groups = wrapper.findAll("[data-file]").map((row) => row.findAll(".btn-group"));
-    expect(groups.map((found) => found.length)).toEqual([1, 1, 0]);
+    expect(groups.map((found) => found.length)).toEqual([1, 1, 1]);
     expect(groups[0][0].attributes("role")).toBe("group");
     expect(groups[0][0].attributes("aria-label")).toBe("Open this file");
     expect(groups[0][0].findAll(":scope > button.btn").length).toBe(2);
