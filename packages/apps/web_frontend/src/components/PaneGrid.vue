@@ -26,6 +26,7 @@ const placed = computed(() => {
   if (!layout || !layout.area.width || !layout.area.height) {
     return panes.map((p, i) => ({
       pane: p,
+      isTopLeft: i === 0,
       style: { left: `${(i / panes.length) * 100}%`, top: "0", width: `${100 / panes.length}%`, height: "100%" },
     }));
   }
@@ -37,6 +38,7 @@ const placed = computed(() => {
       const r = rects.get(p.pane_id)!;
       return {
         pane: p,
+        isTopLeft: r.x === area.x && r.y === area.y,
         style: {
           left: `${((r.x - area.x) / area.width) * 100}%`,
           top: `${((r.y - area.y) / area.height) * 100}%`,
@@ -240,10 +242,10 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 
 <template>
   <div ref="gridEl" class="grid">
-    <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
+    <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :class="{ 'top-left': item.isTopLeft }" :style="item.style">
       <PaneCard :pane="item.pane" />
     </div>
-    <div v-if="!placed.length" class="empty"><EmptyTabScreen /></div>
+    <div v-if="!placed.length" class="empty top-left"><EmptyTabScreen /></div>
     <div
       v-for="item in separatorItems"
       :key="item.separator.splitId"
@@ -282,6 +284,9 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
   flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2);
 }
 .cell { position: absolute; padding: calc(var(--pane-gap) / 2); }
+/* The first tab of the tab bar starts at the left edge of the panes, so the pane in the top left corner has a square corner: the
+   left border of the pane goes straight up into the left border of the tab. */
+.cell.top-left :deep(.pane), .empty.top-left { border-top-left-radius: 0; }
 .empty {
   position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);

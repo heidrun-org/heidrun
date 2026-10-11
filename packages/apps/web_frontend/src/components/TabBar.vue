@@ -88,10 +88,10 @@ function isRemoteControlled(tabId: string): boolean {
 <style scoped>
 /* As in Visual Studio Code, no gap separates the tab bar from the panes. The bar goes 2 pixels over the top of the panes, and
    the selected tab goes down to the bottom of the bar: it covers the border of the panes (1 pixel for the border and 1 pixel for
-   the ring of the selected pane) and joins the pane. The border of the panes is the line under the other tabs. The bar starts and
-   ends after the rounded corners of the panes, so that no tab sits on a corner. */
+   the ring of the selected pane) and joins the pane. The border of the panes is the line under the other tabs. The first tab starts
+   at the left edge of the panes, and the pane in the top left corner has a square corner there, see PaneGrid. */
 .tab-bar {
-  position: relative; z-index: 2; flex-shrink: 0; min-width: 0; align-items: flex-end; padding: 4px var(--pane-radius) 0;
+  position: relative; z-index: 2; flex-shrink: 0; min-width: 0; align-items: flex-end; padding: 4px var(--pane-radius) 0 0;
   margin-bottom: -2px;
 }
 /* Bootstrap draws the tabs, as the navigation bar of a sidebar looks: a border around the selected tab and around the tab under the

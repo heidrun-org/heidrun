@@ -308,6 +308,13 @@ describe("TabBar join with the panes", () => {
   });
 });
 
+describe("TabBar left edge", () => {
+  it("starts at the left edge of the panes, with no space on the left, so that the first tab is aligned with the pane", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toMatch(/\.tab-bar \{[^}]*padding: 4px var\(--pane-radius\) 0 0;/);
+  });
+});
+
 describe("TabBar place in the window", () => {
   it("sits on top of the viewport: the file App.vue shows the tab bar before the viewport", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "../App.vue"), "utf8");
