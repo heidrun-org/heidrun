@@ -1,3 +1,4 @@
+mod chats;
 mod claude;
 mod clipboard;
 mod files;
@@ -296,6 +297,7 @@ pub fn run() {
             claude::claude_commands,
             claude::claude_agents,
             claude::claude_session_agents,
+            chats::chats_list,
             history::history_append,
             history::history_read,
             history::history_export,

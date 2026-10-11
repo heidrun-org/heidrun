@@ -1,3 +1,4 @@
+import type { Chat, ChatAgent } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,33 @@ export class TauriMockFixture {
 			throw new Error('split_not_found: split path not found');
 		}
 		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
+	/**
+	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first.
+	 *
+	 * @returns A new object each call, with the fake conversations of Claude and of Codex.
+	 */
+	static buildChats(): Record<ChatAgent, Chat[]> {
+		const now = Date.now();
+		const buildChat = (id: string, title: string, minutesAgo: number): Chat => ({
+			id,
+			title,
+			updated_at: now - minutesAgo * 60_000,
+		});
+		return {
+			claude: [
+				buildChat('claude_1', 'Workspace conversation navigation', 2),
+				buildChat('claude_2', 'Tab drag-drop with image drop support', 90),
+				buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400),
+				buildChat('claude_4', 'Issue #251', 1_500),
+				buildChat('claude_5', 'Herdr interface description', 3_000),
+			],
+			codex: [
+				buildChat('codex_1', 'Describe image contents', 30),
+				buildChat('codex_2', 'Count up to 200', 600),
+			],
+		};
 	}
 
 	/**

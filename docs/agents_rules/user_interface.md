@@ -66,7 +66,7 @@ This document says where each part of the window goes and how each part works. T
 
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 - The left sidebar holds the To handle sidebar section, the Scripts sidebar section, and the Git sidebar section.
-- The right sidebar holds the Pane sidebar section and the Notes sidebar section.
+- The right sidebar holds the Pane sidebar section, the Notes sidebar section, and the Chats sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar. In each sidebar, the line of the navigation bar reaches the left border and the right border, and the space between the top border and the selected button of the navigation bar is 5 pixels. A button of the navigation bar has the same height as a tab of the tab bar, so the three bars have the same height.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
 - The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
@@ -78,6 +78,16 @@ This document says where each part of the window goes and how each part works. T
 - A note belongs to the workspace where the developer pinned the text. The workspace is found again by its name, because Herdr gives new identifiers to its workspaces in its next session.
 - The Notes sidebar section lists the notes of the selected workspace, or every note when "All workspaces" is checked. The number on the button of the Notes sidebar section counts the notes that the list shows.
 - A note whose workspace does not exist any more stays, and shows only when "All workspaces" is checked.
+
+## Chats
+
+- The Chats sidebar section is a sidebar section of the right sidebar. It lists the chats of the selected workspace.
+- The folder of the selected workspace gives the chats: the root of the repository that holds the folder of the workspace. A chat that a coding agent saved for another folder, a worktree of the workspace included, is not in the list.
+- A selector at the top of the Chats sidebar section chooses the coding agent: Claude or Codex. The selector offers only the coding agents that have at least one chat in the selected workspace. The Chats sidebar section shows no selector when neither coding agent has a chat, and says so.
+- Below the selector, the list shows the title of each chat of the chosen coding agent, newest first. The title of Claude comes from the last title record of the file of the chat. The title of Codex comes from the index of Codex. A chat without a title shows its first message. A chat without a title and without a message is not in the list.
+- The button of the Chats sidebar section shows no number.
+- The list reads the files of the coding agents again when the Chats sidebar section opens, when the developer selects another workspace, and every 10 seconds while the Chats sidebar section is on the screen.
+- The list shows only the titles for now. The ideas for later are in [issue #250](https://github.com/heidrun-org/heidrun/issues/250).
 
 ## Status bar
 

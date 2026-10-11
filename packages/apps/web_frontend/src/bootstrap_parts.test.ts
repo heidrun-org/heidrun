@@ -110,11 +110,16 @@ describe('bootstrap_parts.scss', () => {
 		]);
 	});
 
-	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, and the alert', () => {
+	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, and the list group', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger']) {
+		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush']) {
 			expect(cssText).toContain(`${selector} {`);
 		}
+	});
+
+	it('gives a row of a list group no background of its own, so that the sidebar shows through in both themes', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-bg: transparent/);
 	});
 
 	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {

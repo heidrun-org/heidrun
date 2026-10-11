@@ -40,7 +40,7 @@ const KEY = "heidrun.settings";
 export type LeftSidebarSection = "toHandle" | "actions" | "git";
 
 /** The sidebar sections of the right sidebar. */
-export type RightSidebarSection = "pane" | "notes";
+export type RightSidebarSection = "pane" | "notes" | "chats";
 
 const defaults = {
   fontId: "geist",

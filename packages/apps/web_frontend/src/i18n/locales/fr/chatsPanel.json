@@ -1,0 +1,9 @@
+{
+  "label": "Conversations du workspace sélectionné",
+  "agentLabel": "Agent de code",
+  "agent.claude": "Claude",
+  "agent.codex": "Codex",
+  "loading": "Lecture des conversations…",
+  "noWorkspace": "Sélectionnez un workspace pour voir ses conversations.",
+  "empty": "Aucune conversation de Claude ou de Codex n’a été trouvée pour ce workspace."
+}

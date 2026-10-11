@@ -44,6 +44,16 @@ describe('TauriMock', () => {
 		expect(layout?.panes[1].rect.x).toBe(50);
 	});
 
+	it('answers the Tauri command chats_list with fake conversations of Claude and of Codex', async () => {
+		TauriMock.install();
+		const result = await invoke<Record<'claude' | 'codex', { id: string; title: string }[]>>('chats_list', {
+			folder: '/Users/demo/webwork/heidrun',
+		});
+		expect(result.claude.length).toBeGreaterThan(0);
+		expect(result.codex.length).toBeGreaterThan(0);
+		expect(result.claude[0].title).not.toBe('');
+	});
+
 	it('rejects a Tauri command that it does not list', async () => {
 		TauriMock.install();
 		await expect(invoke('pty_spawn')).rejects.toThrow('pty_spawn');

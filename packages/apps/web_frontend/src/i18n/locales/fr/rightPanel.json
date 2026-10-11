@@ -1,5 +1,6 @@
 {
   "label": "Barre latérale droite",
   "sidebarSection.pane": "Panneau",
-  "sidebarSection.notes": "Notes"
+  "sidebarSection.notes": "Notes",
+  "sidebarSection.chats": "Conversations"
 }

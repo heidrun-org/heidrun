@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import ChatsPanel from "./ChatsPanel.vue";
 import Inspector from "./Inspector.vue";
 import NavigationBar from "./NavigationBar.vue";
 import NotesPanel from "./NotesPanel.vue";
@@ -11,10 +12,11 @@ import { t } from "../i18n/index";
 const sidebarSections = computed(() => [
   { id: "pane", label: t("rightPanel.sidebarSection.pane"), badge: 0 },
   { id: "notes", label: t("rightPanel.sidebarSection.notes"), badge: visibleNotes.value.length },
+  { id: "chats", label: t("rightPanel.sidebarSection.chats"), badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "notes" ? "notes" : "pane");
+  openSidebarSection(id === "notes" || id === "chats" ? id : "pane");
 }
 </script>
 
@@ -27,8 +29,9 @@ function selectSidebarSection(id: string) {
       :label="t('rightPanel.label')"
       @select="selectSidebarSection"
     />
-    <Inspector v-if="settings.rightSidebarSection === 'pane'" />
-    <NotesPanel v-else />
+    <NotesPanel v-if="settings.rightSidebarSection === 'notes'" />
+    <ChatsPanel v-else-if="settings.rightSidebarSection === 'chats'" />
+    <Inspector v-else />
   </aside>
 </template>
 

@@ -21,6 +21,9 @@ $alert-padding-y: 0.5rem;
 $alert-padding-x: 0.75rem;
 $alert-margin-bottom: 0;
 
+// A row of a list group shows the background of the sidebar that holds it, in the light theme as in the dark theme.
+$list-group-bg: transparent;
+
 // The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
 // does not add the blue glow of Bootstrap to it.
 $input-focus-box-shadow: none;
@@ -217,6 +220,7 @@ $utilities: (
   @import "bootstrap/scss/popover";
   @import "bootstrap/scss/progress";
   @import "bootstrap/scss/alert";
+  @import "bootstrap/scss/list-group";
   @import "bootstrap/scss/forms/labels";
   @import "bootstrap/scss/forms/form-text";
   @import "bootstrap/scss/forms/form-control";

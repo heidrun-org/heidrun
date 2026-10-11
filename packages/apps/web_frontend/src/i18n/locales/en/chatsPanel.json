@@ -1,0 +1,9 @@
+{
+  "label": "Chats of the selected workspace",
+  "agentLabel": "Coding agent",
+  "agent.claude": "Claude",
+  "agent.codex": "Codex",
+  "loading": "Reading the chats…",
+  "noWorkspace": "Select a workspace to see its chats.",
+  "empty": "No chat of Claude or Codex was found for this workspace."
+}
