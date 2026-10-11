@@ -36,11 +36,11 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "toHandle" is the To handle sidebar section, and "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "toHandle" | "actions" | "git";
+/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
+export type LeftSidebarSection = "actions" | "git";
 
-/** The sidebar sections of the right sidebar. */
-export type RightSidebarSection = "pane" | "notes";
+/** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
+export type RightSidebarSection = "toHandle" | "pane" | "notes";
 
 const defaults = {
   fontId: "geist",
@@ -156,6 +156,10 @@ function load(): typeof defaults {
     }
     // The workspaces and the tabs left the left sidebar for the tab bar: its Workspaces sidebar section is gone.
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
+      stored.leftSidebarSection = "actions";
+    }
+    // The To handle sidebar section moved from the left sidebar to the right sidebar.
+    if (stored.leftSidebarSection === "toHandle") {
       stored.leftSidebarSection = "actions";
     }
     const saved = { ...defaults, ...stored };

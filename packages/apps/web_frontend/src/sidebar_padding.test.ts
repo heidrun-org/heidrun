@@ -67,11 +67,6 @@ describe('padding of the left sidebar', () => {
 });
 
 describe('horizontal padding of the sidebar sections of the left sidebar', () => {
-	it('is 6px on each side for the To handle sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/ToHandlePanel.vue', '.to-handle', 'padding');
-		expect(padding).toBe('0 6px');
-	});
-
 	it('is 14px on each side for the Scripts sidebar section', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/ActionsPanel.vue', '.panel', 'padding');
 		expect(padding).toBe('18px 14px');
@@ -101,6 +96,11 @@ describe('padding of the right sidebar', () => {
 });
 
 describe('horizontal padding of the sidebar sections of the right sidebar', () => {
+	it('is 6px on each side for the To handle sidebar section, with 8px above and 16px below', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/ToHandlePanel.vue', '.to-handle', 'padding');
+		expect(padding).toBe('8px 6px 16px');
+	});
+
 	it('is 14px on each side for the Pane sidebar section, as for the Scripts sidebar section', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/Inspector.vue', '.insp', 'padding');
 		expect(padding).toBe('20px 14px');

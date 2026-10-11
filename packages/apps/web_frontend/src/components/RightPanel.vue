@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { attention } from "../stores/session";
 import Inspector from "./Inspector.vue";
 import NavigationBar from "./NavigationBar.vue";
 import NotesPanel from "./NotesPanel.vue";
+import ToHandlePanel from "./ToHandlePanel.vue";
 import { settings } from "../stores/settings";
 import { openSidebarSection } from "../stores/sidebar_sections";
 import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
+/** The buttons of the navigation bar of the right sidebar: the To handle, Pane, and Notes sidebar sections. */
 const sidebarSections = computed(() => [
+  {
+    id: "toHandle",
+    label: t("rightPanel.sidebarSection.toHandle"),
+    badge: attention.value.length,
+    isAlert: attention.value.some((pane) => pane.agent_status === "blocked"),
+  },
   { id: "pane", label: t("rightPanel.sidebarSection.pane"), badge: 0 },
   { id: "notes", label: t("rightPanel.sidebarSection.notes"), badge: visibleNotes.value.length },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "notes" ? "notes" : "pane");
+  openSidebarSection(id === "toHandle" || id === "notes" ? id : "pane");
 }
 </script>
 
@@ -27,7 +36,8 @@ function selectSidebarSection(id: string) {
       :label="t('rightPanel.label')"
       @select="selectSidebarSection"
     />
-    <Inspector v-if="settings.rightSidebarSection === 'pane'" />
+    <ToHandlePanel v-if="settings.rightSidebarSection === 'toHandle'" />
+    <Inspector v-else-if="settings.rightSidebarSection === 'pane'" />
     <NotesPanel v-else />
   </aside>
 </template>
