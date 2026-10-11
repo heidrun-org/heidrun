@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test": "cargo test"
+    "test": "cargo test",
+    "target:clean": "tsx ../../auxiliary/worktree_tools/src/target_clean_cli.ts"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"
