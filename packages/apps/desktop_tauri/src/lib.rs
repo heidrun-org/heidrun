@@ -1,0 +1,387 @@
+mod claude;
+mod clipboard;
+mod files;
+mod git;
+mod history;
+mod legacy;
+mod herdr;
+mod mobile;
+mod project;
+mod pty;
+mod skills;
+mod status_item;
+mod status_item_goat;
+mod status_item_picture;
+mod usage;
+
+/// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
+#[cfg(test)]
+pub(crate) static HOME_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+use serde_json::{json, Value};
+use tauri::menu::{Menu, MenuBuilder, SubmenuBuilder};
+use tauri::{AppHandle, State};
+
+/// Generic socket call: the frontend passes the raw method and params.
+#[tauri::command]
+async fn herdr_request(method: String, params: Option<Value>) -> Result<Value, String> {
+    herdr::request(&method, params.unwrap_or_else(|| json!({}))).await
+}
+
+/// Runs the herdr CLI (used for `pane run`, which handles bracketed paste for us), in the session that Heidrun uses.
+#[tauri::command]
+async fn herdr_cli(args: Vec<String>) -> Result<String, String> {
+    let out = tokio::process::Command::new(herdr::herdr_bin())
+        .args(herdr::command_arguments_from(&args))
+        .output()
+        .await
+        .map_err(|e| format!("herdr_cli_failed: {e}"))?;
+    if out.status.success() {
+        Ok(String::from_utf8_lossy(&out.stdout).into_owned())
+    } else {
+        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+    }
+}
+
+#[tauri::command]
+fn herdr_watch_panes(app: AppHandle, watcher: State<'_, herdr::StatusWatcher>, pane_ids: Vec<String>) {
+    watcher.watch(app, pane_ids);
+}
+
+/// Starts the Herdr server in the background, without any terminal window.
+/// It goes through the login shell so panes get the same PATH as in Terminal
+/// (an app opened from the Finder only has a minimal one).
+#[tauri::command]
+async fn herdr_server_start() -> Result<String, String> {
+    if herdr::request("ping", json!({})).await.is_ok() {
+        return Ok("already_running".into());
+    }
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
+    let mut cmd = std::process::Command::new(shell);
+    cmd.arg("-lc")
+        .arg(herdr::server_shell_command(&herdr::herdr_bin()))
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    if let Some(home) = dirs::home_dir() {
+        cmd.current_dir(home);
+    }
+    #[cfg(unix)]
+    {
+        // Own process group: the server is not stopped by a signal sent to Heidrun. Heidrun stops the server itself
+        // when the user quits, unless the user chose "Keep agents running after quit".
+        use std::os::unix::process::CommandExt;
+        cmd.process_group(0);
+    }
+    cmd.spawn().map_err(|e| format!("herdr_start_failed: {e}"))?;
+    for _ in 0..50 {
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        if herdr::request("ping", json!({})).await.is_ok() {
+            return Ok("started".into());
+        }
+    }
+    Err("herdr_start_timeout: le serveur Herdr n’a pas répondu en 5 s".into())
+}
+
+#[tauri::command]
+fn herdr_paths() -> Value {
+    let socket = herdr::socket_path();
+    let bin = herdr::herdr_bin();
+    json!({
+        "socket": socket.display().to_string(),
+        "socket_exists": socket.exists(),
+        "bin": bin.display().to_string(),
+        "bin_exists": bin.exists(),
+    })
+}
+
+/// True when the first preferred language of the Mac is French.
+fn is_system_language_french() -> bool {
+    let output = std::process::Command::new("defaults").args(["read", "-g", "AppleLanguages"]).output();
+    let Ok(output) = output else {
+        return false;
+    };
+    let text = String::from_utf8_lossy(&output.stdout);
+    let first_language = text.lines().find(|line| line.contains('"') || line.trim().starts_with(|c: char| c.is_alphabetic()));
+    match first_language {
+        Some(line) => line.trim().trim_start_matches('"').starts_with("fr"),
+        None => false,
+    }
+}
+
+/// Custom menu: the default macOS menu binds ⌘W to "Close Window", which would
+/// close the app instead of reaching our "close pane" shortcut.
+fn build_menu(app: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
+    let is_french = is_system_language_french();
+    let about_label = if is_french { "À propos de Heidrun" } else { "About Heidrun" };
+    let quit_label = if is_french { "Quitter Heidrun" } else { "Quit Heidrun" };
+    let edit_label = if is_french { "Édition" } else { "Edit" };
+    let window_label = if is_french { "Fenêtre" } else { "Window" };
+    let app_menu = SubmenuBuilder::new(app, "Heidrun")
+        // Our own item: the About window is drawn by the web frontend, with an image.
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-about", about_label).build(app)?)
+        .separator()
+        .services()
+        .separator()
+        .hide()
+        .hide_others()
+        .show_all()
+        .separator()
+        // Our own item: with unsaved files, ⌘Q shows them instead of quitting.
+        .item(&tauri::menu::MenuItemBuilder::with_id("hd-quit", quit_label).accelerator("CmdOrCtrl+Q").build(app)?)
+        .build()?;
+    let edit = SubmenuBuilder::new(app, edit_label)
+        .undo()
+        .redo()
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+    let window = SubmenuBuilder::new(app, window_label)
+        .minimize()
+        .maximize()
+        .separator()
+        .fullscreen()
+        .build()?;
+    MenuBuilder::new(app).items(&[&app_menu, &edit, &window]).build()
+}
+
+/// Files edited and not saved: quitting or closing the window asks first.
+static UNSAVED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn set_unsaved(on: bool) {
+    UNSAVED.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// The main window is created hidden (see `visible` in `tauri.conf.json`), so the user never sees an empty window
+/// before the splash image. This flag is true once the window has been shown.
+static MAIN_WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The longest time the main window stays hidden. After this time the window appears even if the web page never
+/// tells that the splash image is ready, for example when the web page fails to load.
+const MAIN_WINDOW_SHOW_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// What the window-state plugin saves when Heidrun quits, and puts back when the main window is created: the position,
+/// the size, and the maximized and full screen states. The visible state is not in the list, because the main window
+/// stays hidden until the splash image is ready (see `MAIN_WINDOW_SHOWN`).
+fn window_state_flags() -> tauri_plugin_window_state::StateFlags {
+    use tauri_plugin_window_state::StateFlags;
+    StateFlags::POSITION | StateFlags::SIZE | StateFlags::MAXIMIZED | StateFlags::FULLSCREEN
+}
+
+/// True for the first call with this flag, false for every later call. The flag is set by the first call.
+fn claim_first_show(flag: &std::sync::atomic::AtomicBool) -> bool {
+    !flag.swap(true, std::sync::atomic::Ordering::SeqCst)
+}
+
+/// Shows the main window and gives it the keyboard focus. Only the first call does the work.
+fn show_main_window_once(app: &AppHandle) {
+    use tauri::Manager;
+    if !claim_first_show(&MAIN_WINDOW_SHOWN) {
+        return;
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+/// Called by the web page when the splash image is loaded and decoded: the window can appear with the image already
+/// in its first frame.
+#[tauri::command]
+fn show_main_window(app: AppHandle) {
+    show_main_window_once(&app);
+}
+
+/// The setting "Keep agents running after quit": when true, quitting Heidrun does not stop the Herdr session `heidrun`.
+/// The web page sends the value at the start and at each change. Until then the value is false, the default.
+static KEEP_AGENTS_RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn set_keep_agents_running(is_keeping: bool) {
+    KEEP_AGENTS_RUNNING.store(is_keeping, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// "Quitter sans enregistrer": the user chose, the app leaves.
+#[tauri::command]
+fn quit_now(app: AppHandle) {
+    UNSAVED.store(false, std::sync::atomic::Ordering::Relaxed);
+    app.exit(0);
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(window_state_flags()).build())
+        .manage(pty::PtyState::default())
+        .manage(herdr::StatusWatcher::default())
+        .manage(mobile::MobileState::default())
+        .manage(status_item::StatusItemState::default())
+        .setup(|app| {
+            legacy::migrate_config_dir();
+            claude::migrate_legacy();
+            app.set_menu(build_menu(app.handle())?)?;
+            herdr::spawn_event_loop(app.handle().clone());
+            mobile::start_if_enabled(app.handle());
+            status_item::create(app.handle())?;
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(MAIN_WINDOW_SHOW_TIMEOUT).await;
+                show_main_window_once(&handle);
+            });
+            Ok(())
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "hd-about" {
+                use tauri::Emitter;
+                let _ = app.emit("show-about", ());
+            }
+            if event.id().as_ref() == "hd-quit" {
+                if UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    use tauri::Emitter;
+                    let _ = app.emit("quit-blocked", ());
+                } else {
+                    app.exit(0);
+                }
+            }
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    api.prevent_close();
+                    use tauri::Emitter;
+                    let _ = window.emit("quit-blocked", ());
+                }
+            }
+        })
+        .invoke_handler(tauri::generate_handler![
+            set_unsaved,
+            set_keep_agents_running,
+            quit_now,
+            show_main_window,
+            status_item::status_item_update,
+            status_item::status_item_set_visible,
+            herdr_request,
+            herdr_cli,
+            herdr_watch_panes,
+            herdr_paths,
+            herdr_server_start,
+            pty::pty_spawn,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_kill,
+            clipboard::clipboard_set_image,
+            usage::codex_usage,
+            project::project_load,
+            project::project_save,
+            project::project_refs,
+            git::git_status,
+            git::forge_cli,
+            git::forge_merge,
+            git::git_diff,
+            git::git_file,
+            claude::claude_statusline_state,
+            claude::claude_statusline_install,
+            claude::claude_statusline_uninstall,
+            claude::claude_statusline_set_hidden,
+            claude::claude_rc_startup,
+            claude::claude_set_rc_startup,
+            claude::claude_commands,
+            claude::claude_agents,
+            claude::claude_session_agents,
+            history::history_append,
+            history::history_read,
+            history::history_export,
+            files::files_list,
+            files::files_resolve,
+            files::file_image,
+            files::file_open_external,
+            files::file_full_path,
+            files::file_read,
+            files::file_stat,
+            files::file_write,
+            files::files_grep,
+            files::file_create,
+            files::file_rename,
+            files::file_trash,
+            mobile::mobile_reply,
+            mobile::mobile_status,
+            mobile::mobile_enable,
+            mobile::mobile_disable,
+            mobile::mobile_revoke,
+            skills::installed::skills_list,
+            skills::installed::skills_read,
+            skills::installed::skills_delete,
+            skills::search::skills_search,
+            skills::install::skills_preview,
+            skills::install::skills_install,
+            skills::agent_folders::skills_link_agent,
+        ])
+        .build(tauri::generate_context!())
+        .expect("error while running Heidrun")
+        .run(|app, event| {
+            // ⌘Q with unsaved files: the app stays and shows them.
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = &event {
+                if code.is_none() && UNSAVED.load(std::sync::atomic::Ordering::Relaxed) {
+                    api.prevent_exit();
+                    use tauri::Emitter;
+                    let _ = app.emit("quit-blocked", ());
+                }
+            }
+            // The app leaves for good: the Herdr session of Heidrun stops with it, like the processes of a normal macOS app.
+            if let tauri::RunEvent::Exit = event {
+                herdr::stop_session_on_quit(KEEP_AGENTS_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
+            }
+        });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_main_window_is_created_hidden_so_the_user_never_sees_it_empty() {
+        let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &config["app"]["windows"][0];
+        assert_eq!(window["visible"], json!(false));
+    }
+
+    #[test]
+    fn the_window_state_restores_the_position_the_size_and_the_maximized_and_full_screen_states() {
+        use tauri_plugin_window_state::StateFlags;
+        let flags = window_state_flags();
+        assert!(flags.contains(StateFlags::POSITION));
+        assert!(flags.contains(StateFlags::SIZE));
+        assert!(flags.contains(StateFlags::MAXIMIZED));
+        assert!(flags.contains(StateFlags::FULLSCREEN));
+    }
+
+    #[test]
+    fn the_window_state_never_restores_the_visible_state_so_the_window_stays_hidden_until_the_splash_image_is_ready() {
+        use tauri_plugin_window_state::StateFlags;
+        assert!(!window_state_flags().contains(StateFlags::VISIBLE));
+    }
+
+    #[test]
+    fn the_default_size_in_the_configuration_stays_the_size_of_the_first_start() {
+        let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &config["app"]["windows"][0];
+        assert_eq!(window["width"], json!(1440));
+        assert_eq!(window["height"], json!(900));
+    }
+
+    #[test]
+    fn only_the_first_claim_to_show_the_main_window_succeeds() {
+        let flag = std::sync::atomic::AtomicBool::new(false);
+        assert!(claim_first_show(&flag));
+        assert!(!claim_first_show(&flag));
+        assert!(!claim_first_show(&flag));
+    }
+}

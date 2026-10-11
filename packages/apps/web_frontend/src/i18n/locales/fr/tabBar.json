@@ -1,0 +1,10 @@
+{
+  "label": "Onglets du workspace",
+  "newName": "Nouveau nom de l’onglet",
+  "tabTitle": "{name} · double-clic pour renommer · glisser pour déplacer",
+  "remoteControlConnected": "Remote Control connecté",
+  "remoteControlBadge": "RC",
+  "closeConfirm": "Fermer",
+  "close": "Fermer l’onglet {name}",
+  "newTabTitle": "Créer un onglet : un terminal, Claude Code ou Codex (clic avec majuscule : relancer l’onglet précédent)"
+}

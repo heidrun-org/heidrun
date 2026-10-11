@@ -1,0 +1,5 @@
+{
+  "tooMany_one": "{count} panneau épinglé au maximum : désépingles-en un d’abord",
+  "tooMany_other": "{count} panneaux épinglés au maximum : désépingles-en un d’abord",
+  "staysPinned": "{name} restera épinglé quand tu changeras d’onglet"
+}
