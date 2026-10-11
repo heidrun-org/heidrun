@@ -65,6 +65,6 @@ const facts = computed(() => {
 </template>
 
 <style scoped>
-.dates-list { width: 22rem; max-width: 100%; max-height: 50vh; overflow-y: auto; }
+.dates-list { max-height: 50vh; overflow-y: auto; }
 .fact-label { flex-shrink: 0; white-space: nowrap; }
 </style>

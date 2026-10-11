@@ -146,7 +146,7 @@ function toggle(key: string) {
 </template>
 
 <style scoped>
-.references-list { width: 24rem; max-width: 100%; max-height: 50vh; overflow-y: scroll; }
+.references-list { max-height: 50vh; overflow-y: scroll; }
 .reference-text { flex: 1 1 0; min-width: 0; }
 .subtitle { font-size: 0.85em; }
 </style>
