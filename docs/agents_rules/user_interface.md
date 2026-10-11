@@ -6,13 +6,13 @@ This document says where each part of the window goes and how each part works. T
 
 ```
 ┌───────────┬─────────────────────────────────────┬───────────┐
-│           │ [heidrun ▾] [tab 1] [tab 2] [+]     │           │
+│           │ [tab 1] [tab 2] [+]                 │           │
 │   left    ├─────────────────────┬───────────────┤   right   │
 │  sidebar  │ panes of the        │ pinned panes  │  sidebar  │
 │           │ selected tab        │ in a column   │           │
 │           │                     │               │           │
 ├───────────┴─────────────────────┴───────────────┴───────────┤
-│ status bar: [status bar section] [status bar section]       │
+│ status bar: [● heidrun] [status bar section] [...]          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -25,15 +25,17 @@ This document says where each part of the window goes and how each part works. T
 ## Workspace
 
 - One workspace is selected at a time.
-- The workspace button sits at the left end of the tab bar. It shows a small icon of boxes, the name of the selected workspace, and an arrow. A click on the button opens the list of workspaces. The list does not open when the mouse moves over the button.
-- The workspace button has generous horizontal padding, like the tabs, and a wide space between the name and the arrow, so the tab bar does not look tightly packed.
-- A small colored dot on the workspace button shows that an agent in another workspace is blocked or has finished. The dot sits before the name, in the same place as the dot of a tab. The dot follows the cards of the To handle sidebar section.
-- The list of workspaces offers the creation of a workspace, the rename of a workspace, the close of a workspace, and the move of a workspace by drag and drop. A double click on the workspace button renames the selected workspace in place.
+- The workspace status bar section is the first status bar section, at the left end of the status bar. It shows a status dot and the name of the selected workspace. A click on it opens its information card above the section. The information card does not open when the mouse moves over the section.
+- The status dot is always visible, and it sits before the name, in the same place as the dot of a tab. When an agent in another workspace is blocked or has finished, the dot has the color of that status, and it follows the cards of the To handle sidebar section. Otherwise, the dot shows the status of the selected workspace. A workspace without an agent gets a hollow ring.
+- The information card of the workspace status bar section gives the folder, the Git branch, the number of tabs, and the number of agents of the selected workspace. Under the details, it lists the workspaces. A click on a workspace selects it, and closes the information card.
+- The list of workspaces has no separator line between the workspaces, and no space between two rows: between the two separator lines, the pointer is always on a workspace. Each row is 32 pixels tall, with the padding inside the row. One separator line sits between the list and the entry "New workspace…" at the end of the information card.
+- The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
+- Each workspace of the list offers the rename of the workspace, the close of the workspace, and the move of the workspace by drag and drop. The rename puts a text field in the place of the name in the status bar. A double click on the workspace status bar section does not rename the workspace.
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
 
 ## Tabs
 
-- The tab bar sits at the top of the viewport, inside its border. It shows the tabs of the selected workspace, one entry for each tab.
+- The tab bar sits at the top of the viewport, inside its border. It shows the tabs of the selected workspace, one entry for each tab. It has no workspace selector: the workspace status bar section has it.
 - A click anywhere on a tab, padding included, selects the tab. The viewport then shows the panes of that tab. The close button of the tab is the only exception: a click on it closes the tab.
 - The plus button at the end of the tab bar creates a new tab.
 - A developer switches tab often, so the tabs are always visible.
@@ -79,7 +81,7 @@ This document says where each part of the window goes and how each part works. T
 ## Status bar
 
 - The status bar sits at the bottom of the window, over the whole width.
-- Each status bar section shows one piece of information, for example the usage of Claude, the usage of Codex, the Git branch, the number of agents that are blocked, working, or done, and the connection to Herdr.
+- Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, the usage of Codex, the Git branch, the number of agents that are blocked, working, or done, and the connection to Herdr.
 - A click on a status bar section opens its information card above the section.
 
 ## Position and size of the window

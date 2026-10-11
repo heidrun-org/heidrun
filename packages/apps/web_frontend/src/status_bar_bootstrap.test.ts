@@ -87,6 +87,34 @@ describe('the card of the agent statuses (AgentStatusSummary.vue)', () => {
 	});
 });
 
+describe('the card of the workspaces (WorkspaceStatusSummary.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('WorkspaceStatusSummary.vue');
+
+	it('uses the Bootstrap popover classes, with the arrow like the other cards', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'bs-popover-top']) {
+			expect(sourceText).toContain(className);
+		}
+	});
+
+	it('writes style rules only for the item in the status bar and for the rows of the list', () => {
+		const allowedClassNameList = [
+			'workspace-status',
+			'workspace-rename',
+			'name',
+			'workspace-row',
+			'workspace-main',
+			'active',
+			'row-actions',
+			'row-button',
+			'dragging',
+			'drop-before',
+			'drop-after',
+		];
+		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
 describe('the theme of Bootstrap', () => {
 	it('gives the Bootstrap variables of the popover, the progress bar, and the alert the colors of the application', () => {
 		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');

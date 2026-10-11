@@ -367,13 +367,15 @@ describe("TabBar join with the panes", () => {
   });
 });
 
-describe("TabBar workspace button", () => {
-  it("starts with the workspace button, before the tabs, at the left edge of the panes", async () => {
+describe("TabBar without the workspace selector", () => {
+  it("starts with the tabs, at the left edge of the panes, and has no workspace button: the status bar has the workspace selector", async () => {
     const { wrapper } = await mountTabBar();
     const children = Array.from(wrapper.get(".tab-bar").element.children);
-    expect(children[0].classList.contains("workspace-button")).toBe(true);
-    expect(children[1].classList.contains("nav-tabs")).toBe(true);
+    expect(children[0].classList.contains("nav-tabs")).toBe(true);
+    expect(children[1].classList.contains("add")).toBe(true);
+    expect(wrapper.find(".workspace-button").exists()).toBe(false);
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).not.toContain("WorkspaceButton");
     expect(sourceText).toMatch(/\.tab-bar \{[^}]*padding: 4px var\(--pane-radius\) 0 0;/);
   });
 });
