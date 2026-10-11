@@ -138,6 +138,9 @@ function isRemoteControlled(tabId: string): boolean {
 }
 .nav-link.drop-before::before { left: -2px; }
 .nav-link.drop-after::after { right: -2px; }
+/* The tab bar clips what goes out of it, so at the two ends of the bar the line stays inside the first tab and inside the last tab. */
+.nav-item:first-child .nav-link.drop-before::before { left: 0; }
+.nav-item:last-child .nav-link.drop-after::after { right: 0; }
 .tab-main {
   flex: 1; min-width: 0; padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left;
 }

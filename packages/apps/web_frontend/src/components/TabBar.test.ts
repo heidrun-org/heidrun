@@ -365,6 +365,12 @@ describe("TabBar move", () => {
     expect(api.moveTab).not.toHaveBeenCalled();
   });
 
+  it("keeps the blue line before the first tab and after the last tab inside the tab bar, which clips what goes out of it", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain(".nav-item:first-child .nav-link.drop-before::before { left: 0; }");
+    expect(sourceText).toContain(".nav-item:last-child .nav-link.drop-after::after { right: 0; }");
+  });
+
   it("does not start a drag of the browser, because the native window would take the drop as a drop of a file", async () => {
     const { wrapper } = await mountTabBar();
     for (const tab of wrapper.findAll(".nav-link")) {
