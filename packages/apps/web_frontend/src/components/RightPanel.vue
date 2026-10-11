@@ -37,5 +37,5 @@ function selectSidebarSection(id: string) {
   flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side); overflow: hidden;
   display: flex; flex-direction: column; min-height: 0;
 }
-.right-navigation-bar { margin: 14px 16px 0; }
+.right-navigation-bar { margin: 5px 0 0; padding: 0 16px; }
 </style>

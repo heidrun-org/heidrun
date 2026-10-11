@@ -207,7 +207,7 @@ const statusText = computed(() => {
 </template>
 
 <style scoped>
-.insp { flex: 1; min-height: 0; padding: 20px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
+.insp { flex: 1; min-height: 0; padding: 20px 14px; display: flex; flex-direction: column; gap: 22px; overflow-y: auto; }
 .block { display: flex; flex-direction: column; gap: 8px; }
 .title { font-size: var(--font-size); font-weight: 600; word-break: break-word; }
 .chip {
