@@ -21,5 +21,17 @@
   "vscodeMissingTitle": "Cannot open in VS Code: the file does not exist on this Mac.",
   "forgeMissingTitle": "Cannot open in {forge}: the file does not exist on the default branch.",
   "outsideTitle": "Cannot open the file: it is not in the repository.",
-  "openFileLabel": "Open this file"
+  "openFileLabel": "Open this file",
+  "heidrunTitle": "Open in Heidrun",
+  "openReferenceLabel": "Open this issue or pull request",
+  "referenceDetailsHeader": "{repository} on {date}",
+  "referenceLoading": "Reading from {forge}…",
+  "referenceUnknown": "Cannot read this from {forge}.",
+  "referenceNoDescription": "No description provided.",
+  "referenceOpenedIssue": "{author} opened this issue",
+  "referenceOpenedPullRequest": "{author} opened this pull request",
+  "stateOpen": "Open",
+  "stateClosed": "Closed",
+  "stateMerged": "Merged",
+  "referencesTitle": "Issues and pull requests"
 }

@@ -49,6 +49,35 @@ export class TauriMockFixture {
 	}
 
 	/**
+	 * The answer of `gh issue view` or `gh pr view` for one number. The issue 123 fails, so the card shows the failure.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'view', '250', '--json', 'title,state']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeAnswer(args: string[]): string {
+		const isIssue = args[0] === 'issue';
+		const number = Number(args[2]);
+		if (number === 123) {
+			throw new Error('mock: GraphQL: Could not resolve to an issue or pull request with the number of 123.');
+		}
+		const isOpen = number % 3 === 0;
+		const state = isIssue ? (isOpen ? 'OPEN' : 'CLOSED') : isOpen ? 'OPEN' : 'MERGED';
+		return JSON.stringify({
+			title: isIssue
+				? 'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex'
+				: 'Move the To handle sidebar section from the left sidebar to the right sidebar',
+			state,
+			body: isIssue
+				? '## Goal\n\nMove the To handle sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
+				: 'The To handle sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
+			labels: isIssue ? [{ name: 'Simple Work', color: '2ea043' }, { name: 'Design', color: '1d76db' }] : [],
+			author: { login: 'jeromeetienne' },
+			createdAt: '2026-10-11T09:30:00Z',
+			...(isIssue ? {} : { headRefName: 'move-to-handle-to-the-right-sidebar-251', baseRefName: 'dev_jerome' }),
+		});
+	}
+
+	/**
 	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first. Claude
 	 * has 60 conversations, so that the list needs the button "Show more". Codex has two.
 	 *

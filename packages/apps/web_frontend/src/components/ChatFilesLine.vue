@@ -4,7 +4,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import InformationCard from "./InformationCard.vue";
 import Icon from "./Icon.vue";
+import ScrollingLine from "./ScrollingLine.vue";
 import { fileFolder, fileIconName, fileName, fileWebUrl, type ChatFile } from "../lib/chat_files";
+import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
 import type { Forge } from "../lib/refs";
 import { toast } from "../stores/session";
 import { t } from "../i18n/index";
@@ -32,15 +34,6 @@ const props = defineProps<{
 
 /** What the Tauri command `chats_files_exist` answers for one file. */
 type FileExistence = { path: string; on_disk: boolean; on_remote: boolean };
-
-/** How long the pointer stays on a row before a line that does not fit starts to scroll, in milliseconds. */
-const SCROLL_DELAY = 300;
-
-/** How fast a line scrolls, in pixels each second. */
-const SCROLL_SPEED = 60;
-
-/** The shortest time that a line takes to scroll, in milliseconds. */
-const SCROLL_MIN_DURATION = 800;
 
 /** The name of the forge on the button. The names of the products are not translated. */
 const forgeName = computed(() => (props.forge === "gitlab" ? "GitLab" : "GitHub"));
@@ -119,29 +112,6 @@ async function openInVsCode(entry: ChatFile) {
   }
 }
 
-/** Starts the CSS animation of each line of the row that does not fit: the browser moves the text from its beginning to its end. */
-function startScrolling(event: PointerEvent) {
-  for (const line of (event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>("[data-scroll]")) {
-    const text = line.firstElementChild as HTMLElement;
-    const overflow = text.scrollWidth - line.clientWidth;
-    if (overflow <= 0) {
-      continue;
-    }
-    const duration = Math.max(SCROLL_MIN_DURATION, (overflow / SCROLL_SPEED) * 1000);
-    line.style.setProperty("--scroll-distance", `${overflow}px`);
-    line.style.setProperty("--scroll-duration", `${duration}ms`);
-    line.style.setProperty("--scroll-delay", `${SCROLL_DELAY}ms`);
-    line.classList.add("is-scrolling");
-  }
-}
-
-/** Stops the lines of the row, and shows their beginning again. */
-function stopScrolling(event: PointerEvent) {
-  for (const line of (event.currentTarget as HTMLElement).querySelectorAll<HTMLElement>("[data-scroll]")) {
-    line.classList.remove("is-scrolling");
-  }
-}
-
 async function openOnForge(url: string) {
   try {
     await openUrl(url);
@@ -173,10 +143,8 @@ async function openOnForge(url: string) {
         >
           <Icon :name="row.icon" />
           <div class="file-text d-flex flex-column">
-            <span class="file-line fw-medium" data-scroll><span class="file-line-text">{{ row.name }}</span></span>
-            <span class="file-line folder text-body-secondary" data-scroll>
-              <span class="file-line-text">{{ row.folder }}</span>
-            </span>
+            <ScrollingLine class="fw-medium">{{ row.name }}</ScrollingLine>
+            <ScrollingLine class="folder text-body-secondary">{{ row.folder }}</ScrollingLine>
           </div>
           <div class="btn-group" role="group" :aria-label="t('chatsPanel.openFileLabel')">
             <button
@@ -212,13 +180,5 @@ async function openOnForge(url: string) {
 .files-list .btn { --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-active-bg: var(--bs-secondary-bg); }
 .files-list .btn:disabled { opacity: 0.45; }
 .file-text { flex: 1 1 0; min-width: 0; }
-.file-line { display: block; overflow: hidden; }
-.file-line-text { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.file-line.is-scrolling .file-line-text {
-  width: max-content;
-  text-overflow: clip;
-  transform: translateX(calc(-1 * var(--scroll-distance)));
-  transition: transform var(--scroll-duration) linear var(--scroll-delay);
-}
 .folder { font-size: 0.85em; }
 </style>

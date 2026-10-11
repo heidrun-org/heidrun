@@ -10,7 +10,7 @@ const LISTED_NUMBERS = 3;
 const LISTED_FILES = 2;
 
 /** The day of a date, for example "Oct 11". The year follows when it is not the year of `now`. */
-function dayText(date: Date, now: Date): string {
+export function dayText(date: Date, now: Date): string {
   const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
   if (date.getFullYear() !== now.getFullYear()) {
     options.year = "numeric";

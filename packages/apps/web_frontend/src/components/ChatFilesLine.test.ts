@@ -271,11 +271,11 @@ describe("ChatFilesLine", () => {
     it("shows only the beginning with an ellipsis, on one line", async () => {
       const wrapper = mountLine();
       await openCard(wrapper);
-      for (const line of wrapper.findAll("[data-file] .file-line")) {
+      for (const line of wrapper.findAll("[data-file] .scrolling-line")) {
         expect(line.attributes("data-scroll")).toBeDefined();
-        expect(line.find(".file-line-text").exists()).toBe(true);
+        expect(line.find(".scrolling-line-text").exists()).toBe(true);
       }
-      expect(wrapper.get(".folder").classes()).toContain("file-line");
+      expect(wrapper.get(".folder").classes()).toContain("scrolling-line");
     });
 
     it("starts a CSS animation while the pointer is over the row, and stops it when the pointer leaves", async () => {

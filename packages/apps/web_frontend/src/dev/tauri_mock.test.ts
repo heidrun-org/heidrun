@@ -63,6 +63,22 @@ describe('TauriMock', () => {
 		expect(everything.claude.has_more).toBe(false);
 	});
 
+	it('answers the cached forge command with the JSON of an issue and of a pull request, and fails for the issue 123', async () => {
+		TauriMock.install();
+		const issue = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'view', '250', '--json', 'title'] }),
+		);
+		expect(issue.title).toContain('Chats');
+		expect(issue.headRefName).toBeUndefined();
+		const pullRequest = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['pr', 'view', '230', '--json', 'title'] }),
+		);
+		expect(pullRequest).toMatchObject({ state: 'MERGED', headRefName: expect.any(String), baseRefName: 'dev_jerome' });
+		await expect(
+			invoke('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'view', '123', '--json', 'title'] }),
+		).rejects.toThrow();
+	});
+
 	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
 		TauriMock.install();
 		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });

@@ -12,12 +12,14 @@ import {
   showMoreChats,
   type ChatAgent,
 } from "../stores/chats";
+import { chatReferences } from "../lib/chat_references";
 import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { t } from "../i18n/index";
 import ChatFilesLine from "./ChatFilesLine.vue";
+import ChatReferencesLine from "./ChatReferencesLine.vue";
 import Icon from "./Icon.vue";
 
 /** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
@@ -53,7 +55,11 @@ function agentLabel(agent: ChatAgent): string {
 
 /** The chats that the list shows, each with the three lines of its summary. */
 const rows = computed(() =>
-  shownChats.value.map((chat) => ({ chat, lines: chatSummaryLines(chat.meta, new Date(), chats.root) })),
+  shownChats.value.map((chat) => ({
+    chat,
+    lines: chatSummaryLines(chat.meta, new Date(), chats.root),
+    references: chatReferences(chat.meta.issues, chat.meta.pull_requests, repository.value.base, repository.value.forge),
+  })),
 );
 
 /** The coding agent of the selector. */
@@ -84,10 +90,14 @@ const agent = computed<ChatAgent>({
               <Icon name="clock" />
               <span>{{ row.lines.dates }}</span>
             </div>
-            <div v-if="row.lines.references !== ''" class="d-flex gap-2">
-              <Icon :name="repository.forge ?? 'git'" />
-              <span>{{ row.lines.references }}</span>
-            </div>
+            <ChatReferencesLine
+              v-if="row.references.length > 0"
+              :text="row.lines.references"
+              :references="row.references"
+              :folder="chats.folder ?? ''"
+              :forge="repository.forge"
+              :web-base="repository.base"
+            />
             <ChatFilesLine
               v-if="row.lines.files !== ''"
               :text="row.lines.files"

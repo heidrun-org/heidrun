@@ -21,6 +21,13 @@ $alert-padding-y: 0.5rem;
 $alert-padding-x: 0.75rem;
 $alert-margin-bottom: 0;
 
+// A badge is a pill, as the state and the labels of an issue are on GitHub.
+$badge-border-radius: var(--bs-border-radius-pill);
+$badge-font-size: 0.85em;
+$badge-font-weight: 500;
+$badge-padding-y: 0.4em;
+$badge-padding-x: 0.75em;
+
 // A row of a list group shows the background of the sidebar that holds it, in the light theme as in the dark theme.
 $list-group-bg: transparent;
 // A row of a list group that reacts to the mouse keeps the color of the text of the application, and gets only a background.
@@ -73,6 +80,7 @@ $utilities: (
     values: (
       block: block,
       flex: flex,
+      inline-flex: inline-flex,
     ),
   ),
   "flex-direction": (
@@ -80,6 +88,13 @@ $utilities: (
     class: flex,
     values: (
       column: column,
+    ),
+  ),
+  "flex-wrap": (
+    property: flex-wrap,
+    class: flex,
+    values: (
+      wrap: wrap,
     ),
   ),
   "flex": (
@@ -94,6 +109,13 @@ $utilities: (
     class: align-items,
     values: (
       center: center,
+    ),
+  ),
+  "align-self": (
+    property: align-self,
+    class: align-self,
+    values: (
+      start: flex-start,
     ),
   ),
   "gap": (
@@ -138,6 +160,13 @@ $utilities: (
     values: (
       medium: 500,
       semibold: 600,
+    ),
+  ),
+  "font-style": (
+    property: font-style,
+    class: fst,
+    values: (
+      italic: italic,
     ),
   ),
   "text-align": (
@@ -236,6 +265,7 @@ $utilities: (
   @import "bootstrap/scss/popover";
   @import "bootstrap/scss/progress";
   @import "bootstrap/scss/alert";
+  @import "bootstrap/scss/badge";
   @import "bootstrap/scss/list-group";
   @import "bootstrap/scss/spinners";
   @import "bootstrap/scss/forms/labels";

@@ -68,7 +68,7 @@ describe('bootstrap_parts.scss', () => {
 	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|gap|ms|me|mb|pt|fw|text|bg|position|top|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|align-self|gap|ms|me|mb|pt|fw|fst|text|bg|position|top|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
 			'.justify-content-center',
 			'.justify-content-between',
@@ -76,9 +76,12 @@ describe('bootstrap_parts.scss', () => {
 			'.border-top',
 			'.d-block',
 			'.d-flex',
+			'.d-inline-flex',
 			'.flex-column',
+			'.flex-wrap',
 			'.flex-fill',
 			'.align-items-center',
+			'.align-self-start',
 			'.gap-2',
 			'.gap-3',
 			'.ms-3',
@@ -87,6 +90,7 @@ describe('bootstrap_parts.scss', () => {
 			'.pt-2',
 			'.fw-medium',
 			'.fw-semibold',
+			'.fst-italic',
 			'.text-start',
 			'.text-end',
 			'.text-break',
@@ -111,9 +115,9 @@ describe('bootstrap_parts.scss', () => {
 		]);
 	});
 
-	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, the spinner, and the button group', () => {
+	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm', '.btn-group']) {
+		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm', '.btn-group', '.badge']) {
 			expect(cssText).toContain(`${selector} {`);
 		}
 	});

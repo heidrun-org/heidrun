@@ -82,6 +82,8 @@ export class TauriMock {
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
+			case 'forge_cli_cached':
+				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
 			case 'chats_files_exist':
 				return (payload as { paths: string[] }).paths.map((path) => ({
 					path,

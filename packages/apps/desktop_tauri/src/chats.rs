@@ -177,12 +177,16 @@ impl ChatsCache {
     }
 }
 
-/// The file of the cache: `chats_cache.json` in the folder of the data of Heidrun.
-fn cache_path() -> PathBuf {
+/// The folder of the data of Heidrun: `HEIDRUN_DIR`, else `~/.config/heidrun`.
+pub(crate) fn data_dir() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
-        .join(CACHE_FILE)
+}
+
+/// The file of the cache: `chats_cache.json` in the folder of the data of Heidrun.
+fn cache_path() -> PathBuf {
+    data_dir().join(CACHE_FILE)
 }
 
 // ---- The command -------------------------------------------------------------------------------------------------
