@@ -122,7 +122,10 @@ const subtitle = computed(() => {
 </template>
 
 <style scoped>
-.pane { height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+.pane {
+  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative;
+  border: 1px solid var(--line); border-radius: var(--pane-radius); overflow: hidden;
+}
 .pane.blocked { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked); }
 .pane.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-selected); }
 .pane.blocked.selected { box-shadow: inset 0 0 0 1px var(--pane-ring-blocked-selected); }

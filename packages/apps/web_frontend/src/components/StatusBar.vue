@@ -44,7 +44,7 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
 <style scoped>
 .status {
   height: 40px; flex-shrink: 0; display: flex; align-items: center; gap: 22px; padding: 0 16px;
-  border-top: 1px solid var(--line); background: var(--bar); font-size: var(--font-size); color: var(--muted-2);
+  background: var(--shell); font-size: var(--font-size); color: var(--muted-2);
   white-space: nowrap; position: relative;
 }
 .muted { color: var(--muted); }

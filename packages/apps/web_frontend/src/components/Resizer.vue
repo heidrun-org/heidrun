@@ -73,13 +73,13 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 
 <style scoped>
 .resizer {
-  width: 7px; margin: 0 -3px; flex-shrink: 0; position: relative; z-index: 6; cursor: col-resize;
+  width: var(--pane-gap); flex-shrink: 0; position: relative; z-index: 6; cursor: col-resize;
   touch-action: none;
 }
 .resizer::after {
-  content: ""; position: absolute; top: 0; bottom: 0; left: 3px; width: 1px; background: transparent;
+  content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--pane-gap) / 2 - 0.5px); width: 1px; background: transparent;
   transition: background 0.15s;
 }
-.resizer:hover::after, .resizer.active::after, .resizer:focus-visible::after { background: var(--done); width: 2px; left: 2.5px; }
+.resizer:hover::after, .resizer.active::after, .resizer:focus-visible::after { background: var(--done); width: 2px; left: calc(var(--pane-gap) / 2 - 1px); }
 .resizer:focus-visible { outline: none; }
 </style>

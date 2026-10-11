@@ -45,7 +45,7 @@ import { t } from "../i18n/index";
 <style scoped>
 .top {
   height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
-  padding: 0 16px 0 84px; border-bottom: 1px solid var(--line); background: var(--bar);
+  padding: 0 16px 0 84px; background: var(--shell);
 }
 .search-wrap { flex: 1; display: flex; justify-content: center; min-width: 120px; }
 .search {
@@ -58,7 +58,7 @@ import { t } from "../i18n/index";
   width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px; border: 0;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
-.icon-btn:hover { background: var(--hover); color: var(--text); }
+.icon-btn:hover { background: var(--overlay-hover); color: var(--text); }
 .tools { display: flex; align-items: center; gap: 2px; }
-.icon-btn.on { color: var(--text-2); background: var(--field); }
+.icon-btn.on { color: var(--text-2); background: var(--overlay-hover); }
 </style>

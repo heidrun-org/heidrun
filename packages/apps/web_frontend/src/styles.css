@@ -2,6 +2,10 @@
   --bg: #0b0c0e;
   --panel: #0f1113;
   --bar: #111316;
+  --shell: #1b1d20;
+  --side: #121417;
+  --pane-radius: 8px;
+  --pane-gap: 8px;
   --field: #16181b;
   --hover: #1d2024;
   --line: #22262a;
@@ -55,6 +59,8 @@
   --bg: #f6f6f4;
   --panel: #ffffff;
   --bar: #efefec;
+  --shell: #dededa;
+  --side: #efefec;
   --field: #ffffff;
   --hover: #e8e8e4;
   --line: #deded9;

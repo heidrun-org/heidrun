@@ -49,7 +49,7 @@ const tabs = computed(() => [
 
 <style scoped>
 .right {
-  flex-shrink: 0; min-width: 0; border-left: 1px solid var(--line); background: var(--panel);
+  flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side); overflow: hidden;
   display: flex; flex-direction: column; min-height: 0;
 }
 .tabs { display: flex; gap: 2px; margin: 14px 16px 0; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
@@ -59,7 +59,7 @@ const tabs = computed(() => [
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
 .tabs button:hover:not(.on) { border-color: var(--line) var(--line) transparent; color: var(--text-2); }
-.tabs button.on { background: var(--panel); color: var(--text); border-color: var(--line-strong) var(--line-strong) var(--panel); }
+.tabs button.on { background: var(--side); color: var(--text); border-color: var(--line-strong) var(--line-strong) var(--side); }
 .badge {
   min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--line-strong); color: var(--text-2);
   font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center;
