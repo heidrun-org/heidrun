@@ -86,11 +86,13 @@ function isRemoteControlled(tabId: string): boolean {
 </template>
 
 <style scoped>
-/* The line under the tab bar is the background of the bar, so that the selected tab, which reaches the bottom of the bar, covers it.
-   The panes start under the line, after the gap that separates the panes from each other. */
+/* As in Visual Studio Code, no gap separates the tab bar from the panes. The bar goes 2 pixels over the top of the panes, and
+   the selected tab goes down to the bottom of the bar: it covers the border of the panes (1 pixel for the border and 1 pixel for
+   the ring of the selected pane) and joins the pane. The border of the panes is the line under the other tabs. The bar starts and
+   ends after the rounded corners of the panes, so that no tab sits on a corner. */
 .tab-bar {
-  flex-shrink: 0; min-width: 0; align-items: flex-end; padding-top: 4px; margin-bottom: var(--pane-gap);
-  background: linear-gradient(var(--line-strong), var(--line-strong)) bottom / 100% 1px no-repeat;
+  position: relative; z-index: 2; flex-shrink: 0; min-width: 0; align-items: flex-end; padding: 4px var(--pane-radius) 0;
+  margin-bottom: -2px;
 }
 /* Bootstrap draws the tabs, as the navigation bar of a sidebar looks: a border around the selected tab and around the tab under the
    mouse. These variables give Bootstrap the colors of the application. The selected tab has the color of the panes. */
@@ -107,13 +109,14 @@ function isRemoteControlled(tabId: string): boolean {
   --bs-nav-link-font-weight: 500;
   --bs-nav-link-color: var(--muted);
   --bs-nav-link-hover-color: var(--text-2);
-  flex-wrap: nowrap; min-width: 0; margin: 0; gap: 2px; border-bottom: 0; overflow-x: auto; scrollbar-width: none;
+  flex-wrap: nowrap; align-items: flex-start; min-width: 0; margin: 0; gap: 2px; border-bottom: 0; overflow-x: auto; scrollbar-width: none;
 }
 .nav-item { flex: 0 1 auto; min-width: 120px; max-width: 220px; }
-/* The height of a tab is fixed, so that the rename field cannot make the tab bar higher. */
+/* The height of a tab is fixed, so that the rename field cannot make the tab bar higher. The selected tab is 2 pixels higher than
+   the other tabs: the 2 pixels that go over the panes. */
 .nav-tabs .nav-link { width: 100%; height: 34px; margin-bottom: 0; background-color: rgba(var(--wash), 0.04); }
 .nav-tabs .nav-link:not(.active):hover { background-color: var(--overlay-hover); }
-.nav-tabs .nav-link.active { font-weight: 600; background-color: var(--bg); }
+.nav-tabs .nav-link.active { height: 36px; font-weight: 600; background-color: var(--bg); }
 .nav-link.dragging { opacity: 0.4; }
 /* As in Visual Studio Code, a short line between two tabs shows where a tab stops. It is hidden next to the selected tab and the
    tab under the mouse, which have a border. */
@@ -159,7 +162,7 @@ function isRemoteControlled(tabId: string): boolean {
   --bs-btn-disabled-color: var(--text);
   --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
   --bs-btn-focus-box-shadow: none;
-  flex-shrink: 0; width: 28px; height: 28px; margin-bottom: 3px; line-height: 1;
+  flex-shrink: 0; width: 28px; height: 28px; margin-bottom: 5px; line-height: 1;
 }
 /* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
 .add:not(:hover) {

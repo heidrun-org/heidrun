@@ -297,6 +297,17 @@ describe("TabBar height", () => {
   });
 });
 
+describe("TabBar join with the panes", () => {
+  it("has no gap above the panes: the bar goes 2 pixels over them, and the selected tab is 2 pixels higher than the other tabs", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toMatch(/\.tab-bar \{[^}]*margin-bottom: -2px/);
+    expect(sourceText).not.toMatch(/\.tab-bar \{[^}]*margin-bottom: var\(--pane-gap\)/);
+    const heightOfTab = /\.nav-tabs \.nav-link \{[^}]*height: (\d+)px/.exec(sourceText);
+    const heightOfSelectedTab = /\.nav-tabs \.nav-link\.active \{[^}]*height: (\d+)px/.exec(sourceText);
+    expect(Number(heightOfSelectedTab![1]) - Number(heightOfTab![1])).toBe(2);
+  });
+});
+
 describe("TabBar place in the window", () => {
   it("sits on top of the viewport: the file App.vue shows the tab bar before the viewport", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "../App.vue"), "utf8");
