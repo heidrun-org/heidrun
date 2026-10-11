@@ -164,6 +164,14 @@ static MAIN_WINDOW_SHOWN: std::sync::atomic::AtomicBool = std::sync::atomic::Ato
 /// tells that the splash image is ready, for example when the web page fails to load.
 const MAIN_WINDOW_SHOW_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 
+/// What the window-state plugin saves when Heidrun quits, and puts back when the main window is created: the position,
+/// the size, and the maximized and full screen states. The visible state is not in the list, because the main window
+/// stays hidden until the splash image is ready (see `MAIN_WINDOW_SHOWN`).
+fn window_state_flags() -> tauri_plugin_window_state::StateFlags {
+    use tauri_plugin_window_state::StateFlags;
+    StateFlags::POSITION | StateFlags::SIZE | StateFlags::MAXIMIZED | StateFlags::FULLSCREEN
+}
+
 /// True for the first call with this flag, false for every later call. The flag is set by the first call.
 fn claim_first_show(flag: &std::sync::atomic::AtomicBool) -> bool {
     !flag.swap(true, std::sync::atomic::Ordering::SeqCst)
@@ -211,6 +219,7 @@ pub fn run() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(window_state_flags()).build())
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
@@ -342,6 +351,30 @@ mod tests {
         let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
         let window = &config["app"]["windows"][0];
         assert_eq!(window["visible"], json!(false));
+    }
+
+    #[test]
+    fn the_window_state_restores_the_position_the_size_and_the_maximized_and_full_screen_states() {
+        use tauri_plugin_window_state::StateFlags;
+        let flags = window_state_flags();
+        assert!(flags.contains(StateFlags::POSITION));
+        assert!(flags.contains(StateFlags::SIZE));
+        assert!(flags.contains(StateFlags::MAXIMIZED));
+        assert!(flags.contains(StateFlags::FULLSCREEN));
+    }
+
+    #[test]
+    fn the_window_state_never_restores_the_visible_state_so_the_window_stays_hidden_until_the_splash_image_is_ready() {
+        use tauri_plugin_window_state::StateFlags;
+        assert!(!window_state_flags().contains(StateFlags::VISIBLE));
+    }
+
+    #[test]
+    fn the_default_size_in_the_configuration_stays_the_size_of_the_first_start() {
+        let config: Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let window = &config["app"]["windows"][0];
+        assert_eq!(window["width"], json!(1440));
+        assert_eq!(window["height"], json!(900));
     }
 
     #[test]
