@@ -93,9 +93,37 @@ export const canShowMoreChats = computed(
   () => selectedChatAgent.value !== null && chats.hasMore[selectedChatAgent.value],
 );
 
+/** True when the list shows more chats than the next lower number of chats allows, so a click on "Show less" changes the list. */
+export const canShowLessChats = computed(() => shownChats.value.length > previousChatLimit(chats.limit));
+
 /** The number of chats to ask for after a click on "Show more". */
 export function nextChatLimit(limit: number): number {
   return CHAT_LIMITS.find((step) => step > limit) ?? limit + CHAT_LIMIT_STEP;
+}
+
+/** The number of chats to ask for after a click on "Show less": the step before `limit`, and never less than the first step. */
+export function previousChatLimit(limit: number): number {
+  const lastStep = CHAT_LIMITS[CHAT_LIMITS.length - 1];
+  if (limit > lastStep) {
+    return Math.max(lastStep, limit - CHAT_LIMIT_STEP);
+  }
+  return [...CHAT_LIMITS].reverse().find((step) => step < limit) ?? CHAT_LIMITS[0];
+}
+
+/**
+ * Lowers the number of chats that the list asks for, and cuts the lists to it at once, without asking the Tauri command.
+ * A coding agent whose list is cut now has more chats than the list shows.
+ */
+export function showLessChats(): void {
+  if (chats.isShowingMore || canShowLessChats.value === false) {
+    return;
+  }
+  const limit = previousChatLimit(chats.limit);
+  chats.limit = limit;
+  for (const agent of CHAT_AGENTS) {
+    chats.hasMore[agent] = chats.hasMore[agent] || chats[agent].length > limit;
+    chats[agent] = chats[agent].slice(0, limit);
+  }
 }
 
 /** Raises the number of chats that the list asks for, and reads the chats again. */
@@ -132,9 +160,10 @@ export async function loadChats(folder: string | null): Promise<void> {
     return;
   }
   chats.isLoading = chats.claude.length === 0 && chats.codex.length === 0;
+  const limit = chats.limit;
   try {
-    const found = await invoke<ChatsOfFolder>("chats_list", { folder, limit: chats.limit });
-    if (chats.folder !== folder) {
+    const found = await invoke<ChatsOfFolder>("chats_list", { folder, limit });
+    if (chats.folder !== folder || chats.limit !== limit) {
       return;
     }
     chats.claude = found.claude.chats;

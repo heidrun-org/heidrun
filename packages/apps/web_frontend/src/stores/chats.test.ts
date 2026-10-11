@@ -2,13 +2,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 import {
   availableChatAgents,
+  canShowLessChats,
   canShowMoreChats,
   CHAT_LIMITS,
   chats,
   loadChats,
   nextChatLimit,
+  previousChatLimit,
   selectedChatAgent,
   shownChats,
+  showLessChats,
   showMoreChats,
   type Chat,
 } from "./chats";
@@ -162,6 +165,49 @@ describe("the number of chats", () => {
     expect(canShowMoreChats.value).toBe(false);
     chats.agent = "codex";
     expect(canShowMoreChats.value).toBe(true);
+  });
+
+  it("goes back one step for each click on Show less, and never below 5", () => {
+    expect([200, 150, 100, 50, 20, 10, 5].map(previousChatLimit)).toEqual([150, 100, 50, 20, 10, 5, 5]);
+  });
+
+  it("cuts the lists to the lower number of chats at once, and tells that the coding agent has more chats", async () => {
+    const claude = ["a", "b", "c", "d", "e", "f", "g"].map((id) => chat(id, id));
+    vi.mocked(invoke).mockResolvedValue(answerOf(claude));
+    await loadChats("/work/app");
+    chats.limit = 10;
+    expect(canShowLessChats.value).toBe(true);
+    expect(canShowMoreChats.value).toBe(false);
+    vi.mocked(invoke).mockClear();
+    showLessChats();
+    expect(invoke).not.toHaveBeenCalled();
+    expect(chats.limit).toBe(5);
+    expect(chats.claude.map((item) => item.id)).toEqual(["a", "b", "c", "d", "e"]);
+    expect(canShowMoreChats.value).toBe(true);
+    expect(canShowLessChats.value).toBe(false);
+    showLessChats();
+    expect(chats.limit).toBe(5);
+  });
+
+  it("does not offer Show less when the list shows no more chats than the lower number allows", async () => {
+    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First"), chat("b", "Second")]));
+    await loadChats("/work/app");
+    chats.limit = 20;
+    expect(canShowLessChats.value).toBe(false);
+  });
+
+  it("drops an answer that was asked before a click on Show less, so the chats that were cut do not come back", async () => {
+    const claude = ["a", "b", "c", "d", "e", "f", "g"].map((id) => chat(id, id));
+    vi.mocked(invoke).mockResolvedValueOnce(answerOf(claude));
+    await loadChats("/work/app");
+    chats.limit = 10;
+    const slow = answerByHand<unknown>();
+    vi.mocked(invoke).mockReturnValueOnce(slow.promise);
+    const reading = loadChats("/work/app");
+    showLessChats();
+    slow.answer(answerOf(claude));
+    await reading;
+    expect(chats.claude.length).toBe(5);
   });
 
   it("does not ask twice when Show more is clicked twice at once", async () => {

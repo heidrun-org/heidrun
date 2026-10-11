@@ -6,6 +6,7 @@
   "loading": "Reading the chats…",
   "noWorkspace": "Select a workspace to see its chats.",
   "empty": "No chat of Claude or Codex was found for this workspace.",
+  "showLess": "Show less",
   "showMore": "Show more",
   "messages_one": "{count} message from you",
   "messages_other": "{count} messages from you",

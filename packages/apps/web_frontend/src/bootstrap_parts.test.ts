@@ -77,6 +77,7 @@ describe('bootstrap_parts.scss', () => {
 			'.d-block',
 			'.d-flex',
 			'.flex-column',
+			'.flex-fill',
 			'.align-items-center',
 			'.gap-2',
 			'.gap-3',

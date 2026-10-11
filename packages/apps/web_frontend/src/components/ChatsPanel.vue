@@ -2,11 +2,13 @@
 import { computed, onBeforeUnmount, watch } from "vue";
 import {
   availableChatAgents,
+  canShowLessChats,
   canShowMoreChats,
   chats,
   loadChats,
   selectedChatAgent,
   shownChats,
+  showLessChats,
   showMoreChats,
   type ChatAgent,
 } from "../stores/chats";
@@ -55,17 +57,26 @@ const agent = computed<ChatAgent>({
           <div v-if="chatSummary(chat.meta) !== ''" class="chat-summary text-body-secondary">{{ chatSummary(chat.meta) }}</div>
         </li>
       </ul>
-      <button
-        v-if="canShowMoreChats"
-        type="button"
-        class="btn d-flex align-items-center justify-content-center gap-2"
-        :disabled="chats.isShowingMore"
-        :aria-busy="chats.isShowingMore"
-        @click="showMoreChats"
-      >
-        <span v-if="chats.isShowingMore" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        {{ t("chatsPanel.showMore") }}
-      </button>
+      <div class="d-flex gap-2">
+        <button
+          type="button"
+          class="btn flex-fill justify-content-center"
+          :disabled="canShowLessChats === false || chats.isShowingMore"
+          @click="showLessChats"
+        >
+          {{ t("chatsPanel.showLess") }}
+        </button>
+        <button
+          type="button"
+          class="btn flex-fill d-flex align-items-center justify-content-center gap-2"
+          :disabled="canShowMoreChats === false || chats.isShowingMore"
+          :aria-busy="chats.isShowingMore"
+          @click="showMoreChats"
+        >
+          <span v-if="chats.isShowingMore" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          {{ t("chatsPanel.showMore") }}
+        </button>
+      </div>
     </template>
   </section>
 </template>
@@ -73,4 +84,5 @@ const agent = computed<ChatAgent>({
 <style scoped>
 .chats-panel { flex: 1; min-height: 0; padding: 18px 14px; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; }
+.btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 </style>

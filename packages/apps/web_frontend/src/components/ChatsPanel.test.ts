@@ -30,6 +30,7 @@ function answer(claudeTitles: string[], codexTitles: string[], hasMore: { claude
   const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: [] };
   const toChats = (prefix: string, titles: string[]) => titles.map((title, index) => ({ id: `${prefix}${index}`, title, updated_at: 1, meta }));
   vi.mocked(invoke).mockResolvedValue({
+    root: "/work/app",
     claude: { chats: toChats("c", claudeTitles), has_more: hasMore.claude ?? false },
     codex: { chats: toChats("x", codexTitles), has_more: hasMore.codex ?? false },
   });
@@ -129,14 +130,26 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 
-  it("shows the button Show more under the list only when the coding agent has more chats", async () => {
+  /** The two buttons under the list: Show less, then Show more. */
+  function pagerButtons(wrapper: ReturnType<typeof mount>) {
+    const buttons = wrapper.get("ul + div").findAll("button");
+    return { less: buttons[0], more: buttons[1] };
+  }
+
+  it("always shows the buttons Show less and Show more under the list, and disables the one that cannot act", async () => {
     answer(["Fix the tab bar"], ["Describe image"], { claude: true });
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.get("ul + button").text()).toBe("Show more");
-    expect(wrapper.get("ul + button").classes()).toContain("btn");
+    let { less, more } = pagerButtons(wrapper);
+    expect([less.text(), more.text()]).toEqual(["Show less", "Show more"]);
+    expect(less.classes()).toContain("btn");
+    expect(more.classes()).toContain("btn");
+    expect(less.attributes("disabled")).toBeDefined();
+    expect(more.attributes("disabled")).toBeUndefined();
     await wrapper.get("select").setValue("codex");
-    expect(wrapper.find("ul + button").exists()).toBe(false);
+    ({ less, more } = pagerButtons(wrapper));
+    expect(less.attributes("disabled")).toBeDefined();
+    expect(more.attributes("disabled")).toBeDefined();
   });
 
   it("shows a spinning wheel in the button Show more while the chats load, and not before or after", async () => {
@@ -146,25 +159,45 @@ describe("ChatsPanel", () => {
     expect(wrapper.find(".spinner-border").exists()).toBe(false);
     let finish: (value: unknown) => void = () => {};
     vi.mocked(invoke).mockReturnValueOnce(new Promise((resolve) => (finish = resolve)));
-    await wrapper.get("ul + button").trigger("click");
-    expect(wrapper.get("ul + button .spinner-border").attributes("aria-hidden")).toBe("true");
-    expect(wrapper.get("ul + button").attributes("disabled")).toBeDefined();
-    expect(wrapper.get("ul + button").attributes("aria-busy")).toBe("true");
-    finish({ claude: { chats: [], has_more: true }, codex: { chats: [], has_more: false } });
+    await pagerButtons(wrapper).more.trigger("click");
+    const { less, more } = pagerButtons(wrapper);
+    expect(more.get(".spinner-border").attributes("aria-hidden")).toBe("true");
+    expect(more.attributes("disabled")).toBeDefined();
+    expect(more.attributes("aria-busy")).toBe("true");
+    expect(less.find(".spinner-border").exists()).toBe(false);
+    finish({ root: "/work/app", claude: { chats: [], has_more: true }, codex: { chats: [], has_more: false } });
     await flushPromises();
     expect(wrapper.find(".spinner-border").exists()).toBe(false);
   });
 
-  it("asks for 10 chats after a click on Show more, and hides the button when there is no more chat", async () => {
+  it("asks for 10 chats after a click on Show more, and disables the button when there is no more chat", async () => {
     answer(["Fix the tab bar"], [], { claude: true });
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     answer(["Fix the tab bar", "Add the Chats sidebar section"], [], { claude: false });
-    await wrapper.get("ul + button").trigger("click");
+    await pagerButtons(wrapper).more.trigger("click");
     await flushPromises();
     expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10 });
     expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
-    expect(wrapper.find("ul + button").exists()).toBe(false);
+    expect(pagerButtons(wrapper).more.attributes("disabled")).toBeDefined();
+  });
+
+  it("goes back to 5 chats after a click on Show less, without asking again, and then disables the button", async () => {
+    const titles = ["One", "Two", "Three", "Four", "Five", "Six", "Seven"];
+    answer(titles.slice(0, 5), [], { claude: true });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    answer(titles, [], { claude: false });
+    await pagerButtons(wrapper).more.trigger("click");
+    await flushPromises();
+    expect(shownTitles(wrapper)).toEqual(titles);
+    expect(pagerButtons(wrapper).less.attributes("disabled")).toBeUndefined();
+    vi.mocked(invoke).mockClear();
+    await pagerButtons(wrapper).less.trigger("click");
+    expect(invoke).not.toHaveBeenCalled();
+    expect(shownTitles(wrapper)).toEqual(titles.slice(0, 5));
+    expect(pagerButtons(wrapper).less.attributes("disabled")).toBeDefined();
+    expect(pagerButtons(wrapper).more.attributes("disabled")).toBeUndefined();
   });
 
   it("shows a small summary under the title of a chat that has meta information, and nothing under the others", async () => {

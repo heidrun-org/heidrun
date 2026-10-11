@@ -6,6 +6,7 @@
   "loading": "Lecture des conversations…",
   "noWorkspace": "Sélectionne un workspace pour voir ses conversations.",
   "empty": "Aucune conversation de Claude ou de Codex n’a été trouvée pour ce workspace.",
+  "showLess": "Afficher moins",
   "showMore": "Afficher plus",
   "messages_one": "{count} message de ta part",
   "messages_other": "{count} messages de ta part",
