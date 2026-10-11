@@ -4,9 +4,6 @@
   "tabTitle": "{name} · double-click to rename · drag to move",
   "remoteControlConnected": "Remote Control connected",
   "remoteControlBadge": "RC",
-  "menu": "Tab actions",
-  "menuLabel": "Actions for {name}",
-  "rename": "Rename",
   "closeConfirm": "Close",
   "close": "Close the tab {name}",
   "newTabTitle": "Create a tab: a terminal, Claude Code, or Codex (shift click: start the previous tab again)"

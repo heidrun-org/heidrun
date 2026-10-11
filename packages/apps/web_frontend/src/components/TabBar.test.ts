@@ -90,7 +90,7 @@ describe("TabBar entries", () => {
   it("marks the selected tab", async () => {
     const { wrapper } = await mountTabBar();
     expect(wrapper.findAll("[role=tab]").map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false", "false"]);
-    expect(wrapper.findAll(".tab").map((tab) => tab.classes("active"))).toEqual([true, false, false]);
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("active"))).toEqual([true, false, false]);
   });
 
   it("is a list of tabs with an accessible name", async () => {
@@ -98,12 +98,32 @@ describe("TabBar entries", () => {
     expect(wrapper.get("[role=tablist]").attributes("aria-label")).toBe("Tabs of the workspace");
   });
 
+  it("is a Bootstrap nav with tabs: one nav-item for each tab, and the class active on the link of the selected tab", async () => {
+    const { wrapper } = await mountTabBar();
+    expect(wrapper.get("[role=tablist]").classes()).toEqual(expect.arrayContaining(["nav", "nav-tabs"]));
+    expect(wrapper.findAll(".nav-item")).toHaveLength(3);
+    expect(wrapper.findAll(".nav-item .nav-link").map((link) => link.classes("active"))).toEqual([true, false, false]);
+  });
+
+  it("has a close button on every tab, and no menu button with three dots", async () => {
+    const { wrapper } = await mountTabBar();
+    expect(wrapper.findAll(".nav-link .confirm")).toHaveLength(3);
+    expect(wrapper.find(".bi-three-dots-vertical").exists()).toBe(false);
+    expect(wrapper.find("[aria-haspopup=menu]").exists()).toBe(false);
+  });
+
+  it("shows the close button of the selected tab always, and the close button of another tab only when the mouse is over it", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain(".nav-link:not(.active) .confirm { opacity: 0; }");
+    expect(sourceText).toContain(".nav-link:not(.active):hover .confirm");
+  });
+
   it("shows the badge RC on the tab that holds a pane with Remote Control connected", async () => {
     const { wrapper } = await mountTabBar();
     const claude = await import("../stores/claude");
     claude.remote.byPane["p3"] = "active";
     await flushPromises();
-    expect(wrapper.findAll(".tab").map((tab) => tab.find(".rc").exists())).toEqual([false, true, false]);
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.find(".rc").exists())).toEqual([false, true, false]);
   });
 });
 
@@ -112,7 +132,7 @@ describe("TabBar selection", () => {
     const { wrapper, session } = await mountTabBar();
     await wrapper.findAll("[role=tab]")[1].trigger("click");
     expect(session.state.selectedTabId).toBe("t2");
-    expect(wrapper.findAll(".tab").map((tab) => tab.classes("active"))).toEqual([false, true, false]);
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("active"))).toEqual([false, true, false]);
   });
 
   it("follows the shortcut Option+Command+Right arrow, which selects the next tab, and wraps around", async () => {
@@ -124,7 +144,7 @@ describe("TabBar selection", () => {
     session.cycleTab(1);
     await flushPromises();
     expect(session.state.selectedTabId).toBe("t1");
-    expect(wrapper.findAll(".tab").map((tab) => tab.classes("active"))).toEqual([true, false, false]);
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("active"))).toEqual([true, false, false]);
   });
 
   it("follows the shortcut Option+Command+Left arrow, which selects the previous tab, and wraps around", async () => {
@@ -132,7 +152,7 @@ describe("TabBar selection", () => {
     session.cycleTab(-1);
     await flushPromises();
     expect(session.state.selectedTabId).toBe("t3");
-    expect(wrapper.findAll(".tab").map((tab) => tab.classes("active"))).toEqual([false, false, true]);
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("active"))).toEqual([false, false, true]);
   });
 });
 
@@ -193,30 +213,12 @@ describe("TabBar rename in place", () => {
     expect(wrapper.findAll("input.rename")).toHaveLength(1);
     expect(session.state.selectedTabId).toBe("t3");
   });
-
-  it("has a menu with the entry Rename, and starts the rename when the user chooses it", async () => {
-    const { wrapper, session } = await mountTabBar();
-    await wrapper.findAll(".tab-action")[1].trigger("click");
-    const entries = wrapper.findAll(".tab-menu-item");
-    expect(entries.map((entry) => entry.text())).toEqual(["Rename"]);
-    await entries[0].trigger("click");
-    expect(session.state.renaming).toBe("tab:t2");
-    expect(wrapper.find(".tab-menu").exists()).toBe(false);
-  });
-
-  it("closes the menu when the user clicks the same menu button again", async () => {
-    const { wrapper } = await mountTabBar();
-    await wrapper.findAll(".tab-action")[0].trigger("click");
-    expect(wrapper.find(".tab-menu").exists()).toBe(true);
-    await wrapper.findAll(".tab-action")[0].trigger("click");
-    expect(wrapper.find(".tab-menu").exists()).toBe(false);
-  });
 });
 
 describe("TabBar close", () => {
   it("asks for confirmation before it closes the tab, and does not close before the answer", async () => {
     const { wrapper, api } = await mountTabBar();
-    await wrapper.findAll(".tab .confirm")[1].trigger("click");
+    await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
     expect(confirmDialog.open).toBe(true);
     expect(confirmDialog.title).toBe("Close the tab review");
     expect(api.closeTab).not.toHaveBeenCalled();
@@ -224,7 +226,7 @@ describe("TabBar close", () => {
 
   it("closes the tab after the user confirms", async () => {
     const { wrapper, api } = await mountTabBar();
-    await wrapper.findAll(".tab .confirm")[1].trigger("click");
+    await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
     answerConfirm(true);
     await flushPromises();
     expect(api.closeTab).toHaveBeenCalledWith("t2");
@@ -232,7 +234,7 @@ describe("TabBar close", () => {
 
   it("does not close the tab when the user cancels", async () => {
     const { wrapper, api } = await mountTabBar();
-    await wrapper.findAll(".tab .confirm")[1].trigger("click");
+    await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
     answerConfirm(false);
     await flushPromises();
     expect(api.closeTab).not.toHaveBeenCalled();
@@ -242,7 +244,7 @@ describe("TabBar close", () => {
 describe("TabBar move", () => {
   it("moves a tab after the user drags it to the end of the bar", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".tab");
+    const tabs = wrapper.findAll(".nav-link");
     await tabs[0].trigger("dragstart");
     await tabs[2].trigger("dragover", { clientX: 10 });
     await tabs[2].trigger("drop");
@@ -251,7 +253,7 @@ describe("TabBar move", () => {
 
   it("does not move a tab dropped on its own place", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".tab");
+    const tabs = wrapper.findAll(".nav-link");
     await tabs[1].trigger("dragstart");
     await tabs[1].trigger("dragover", { clientX: 0 });
     await tabs[1].trigger("drop");
