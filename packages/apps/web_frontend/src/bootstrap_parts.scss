@@ -138,6 +138,7 @@ $utilities: (
     property: margin-right,
     class: me,
     values: (
+      2: 0.5rem,
       auto: auto,
     ),
   ),
@@ -227,6 +228,21 @@ $utilities: (
     class: top,
     values: (
       0: 0,
+      50: 50%,
+    ),
+  ),
+  "end": (
+    property: inset-inline-end,
+    class: end,
+    values: (
+      0: 0,
+    ),
+  ),
+  "translate-middle-y": (
+    property: transform,
+    class: translate-middle,
+    values: (
+      y: translateY(-50%),
     ),
   ),
   "bottom": (

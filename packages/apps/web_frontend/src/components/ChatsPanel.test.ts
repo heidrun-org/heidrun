@@ -170,6 +170,7 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.find(".spinner-border").exists()).toBe(false);
+    const classesBefore = [pagerButtons(wrapper).more.classes().join(" "), pagerButtons(wrapper).less.classes().join(" ")];
     let finish: (value: unknown) => void = () => {};
     vi.mocked(invoke).mockReturnValueOnce(new Promise((resolve) => (finish = resolve)));
     await pagerButtons(wrapper).more.trigger("click");
@@ -178,6 +179,11 @@ describe("ChatsPanel", () => {
     expect(more.attributes("disabled")).toBeDefined();
     expect(more.attributes("aria-busy")).toBe("true");
     expect(less.find(".spinner-border").exists()).toBe(false);
+    expect(more.get(".spinner-border").classes()).toEqual(
+      expect.arrayContaining(["position-absolute", "end-0", "top-50", "translate-middle-y"]),
+    );
+    expect(more.text()).toBe("Show more");
+    expect([more.classes().join(" "), less.classes().join(" ")]).toEqual(classesBefore);
     finish({ root: "/work/app", claude: { chats: [], has_more: true }, codex: { chats: [], has_more: false } });
     await flushPromises();
     expect(wrapper.find(".spinner-border").exists()).toBe(false);

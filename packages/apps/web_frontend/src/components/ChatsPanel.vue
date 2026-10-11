@@ -113,17 +113,22 @@ const agent = computed<ChatAgent>({
       <div class="d-flex gap-2">
         <button
           type="button"
-          class="btn flex-fill d-flex align-items-center justify-content-center gap-2"
+          class="btn flex-fill position-relative"
           :disabled="canShowMoreChats === false || chats.isShowingMore"
           :aria-busy="chats.isShowingMore"
           @click="showMoreChats"
         >
-          <span v-if="chats.isShowingMore" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           {{ t("chatsPanel.showMore") }}
+          <span
+            v-if="chats.isShowingMore"
+            class="busy-spinner spinner-border position-absolute top-50 end-0 translate-middle-y me-2"
+            role="status"
+            aria-hidden="true"
+          ></span>
         </button>
         <button
           type="button"
-          class="btn flex-fill justify-content-center"
+          class="btn flex-fill"
           :disabled="canShowLessChats === false || chats.isShowingMore"
           @click="showLessChats"
         >
@@ -139,4 +144,5 @@ const agent = computed<ChatAgent>({
 .list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
+.busy-spinner { --bs-spinner-width: 0.75rem; --bs-spinner-height: 0.75rem; --bs-spinner-border-width: 0.15em; }
 </style>
