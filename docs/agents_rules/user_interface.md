@@ -34,7 +34,7 @@ This document says where each part of the window goes and how each part works. T
 ## Tabs
 
 - The tab bar sits at the top of the viewport, inside its border. It shows the tabs of the selected workspace, one entry for each tab.
-- A click on a tab selects the tab. The viewport then shows the panes of that tab.
+- A click anywhere on a tab, padding included, selects the tab. The viewport then shows the panes of that tab. The close button of the tab is the only exception: a click on it closes the tab.
 - The plus button at the end of the tab bar creates a new tab.
 - A developer switches tab often, so the tabs are always visible.
 - The shortcut Option+Command+Left arrow or Option+Command+Right arrow selects the previous or the next tab.

@@ -43,7 +43,7 @@ function isRemoteControlled(tabId: string): boolean {
         </div>
         <div
           v-else
-          class="nav-link d-flex align-items-center gap-2"
+          class="nav-link tab-closable d-flex align-items-center gap-2"
           role="presentation"
           :class="{
             active: tab.tab_id === state.selectedTabId,
@@ -120,6 +120,9 @@ function isRemoteControlled(tabId: string): boolean {
 .nav-tabs .nav-link { width: 100%; height: 34px; margin-bottom: 0; background-color: rgba(var(--wash), 0.04); }
 .nav-tabs .nav-link:not(.active):hover { background-color: var(--overlay-hover); }
 .nav-tabs .nav-link.active { height: 35px; font-weight: 600; background-color: var(--bg); border-bottom-width: 0; }
+/* The close button is 7 pixels from the right border of the tab: its box is 6 pixels from the border, and the cross has a margin of
+   1 pixel inside its box. A tab that is being renamed has no close button, so it keeps the padding of Bootstrap. */
+.nav-tabs .nav-link.tab-closable { padding-right: 5px; }
 .nav-link.dragging { opacity: 0.4; }
 /* As in Visual Studio Code, a short line between two tabs shows where a tab stops. It is hidden next to the selected tab and the
    tab under the mouse, which have a border. */
@@ -136,6 +139,9 @@ function isRemoteControlled(tabId: string): boolean {
 .tab-main {
   flex: 1; min-width: 0; padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left;
 }
+/* The button that selects the tab covers the whole tab, padding included. The close button sits over it, so a click on the close
+   button closes the tab. */
+.tab-main::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; }
 .tab-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-link .tab-rename { flex: 1; min-width: 0; width: auto; height: 24px; padding: 0 6px; }
 .rc {
@@ -145,7 +151,7 @@ function isRemoteControlled(tabId: string): boolean {
 /* As in Visual Studio Code, the close button of the selected tab is always visible, and the close button of another tab shows
    when the mouse is over it. The button keeps its place, so the tabs do not move. */
 .nav-link .confirm {
-  flex-shrink: 0; width: 16px; min-width: 16px; height: 16px; padding: 0; border-radius: 4px;
+  position: relative; z-index: 1; flex-shrink: 0; width: 16px; min-width: 16px; height: 16px; padding: 0; border-radius: 4px;
   font-size: calc(var(--font-size) * 0.85); color: var(--muted);
 }
 .nav-link:not(.active) .confirm { opacity: 0; }
