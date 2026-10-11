@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, toRef, watch } from "vue";
 import { clearSearchCache, requestJump, runSearch, search, type SearchGroup } from "../stores/search";
 import { selectPane, state, workspaceLabel } from "../stores/session";
+import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 
 const q = ref("");
-const regex = ref(false);
-const agentsOnly = ref(false);
-const here = ref(false);
+const regex = toRef(settings, "searchRegex");
+const agentsOnly = toRef(settings, "searchAgentsOnly");
+const here = toRef(settings, "searchThisWorkspace");
 const groups = ref<SearchGroup[]>([]);
 const error = ref("");
 const busy = ref(false);

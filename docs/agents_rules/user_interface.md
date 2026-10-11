@@ -93,6 +93,13 @@ This document says where each part of the window goes and how each part works. T
 - When the saved position is outside every screen that is connected, the window opens at the default position of the operating system, on a connected screen.
 - The visible state is never restored. The window stays hidden until the splash image is ready.
 
+## Last state of each option
+
+- Every option keeps its last state between two runs of Heidrun. An option is a toggle, a choice between a few values, a sidebar section that is shown, a panel that is open or closed, or a size.
+- The last state of each option is saved in the `localStorage` of the web frontend, in the store `packages/apps/web_frontend/src/stores/settings.ts`, under the key `heidrun.settings`. A new option is a new line in `defaults` of this store, and not a new key.
+- At the start, each option reads its saved state. An option with no saved state, or with a corrupted saved value (the wrong type, or a value that is not in the list of its values), uses its default value.
+- A text that the user types, a search text for example, is not an option and is not saved. A mode that edits data, for example the edit mode of the budgets in the window History, is not an option and is not saved.
+
 ## Splash screen
 
 - At the start, Heidrun shows the splash screen for 3 seconds after the main window appears. A click on the splash screen closes it at once.
