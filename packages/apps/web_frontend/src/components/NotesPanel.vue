@@ -3,16 +3,14 @@ import Icon from "./Icon.vue";
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
-import { moveNote, notes, removeNote, renameNote, type Note } from "../stores/notes";
+import { moveNote, notes, removeNote, renameNote, visibleNotes, type Note } from "../stores/notes";
 import { useReorder } from "../lib/reorder";
-import { agentGroups, allPanes, paneFullName, sendPrompt, state, toast } from "../stores/session";
+import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
 
-const list = computed(() =>
-  notes.showAll ? notes.list : notes.list.filter((n) => n.workspaceId === state.selectedWorkspaceId),
-);
+const list = visibleNotes;
 const others = computed(() => notes.list.length - list.value.length);
 
 // Only the grip starts a drag, so text in the note stays selectable.

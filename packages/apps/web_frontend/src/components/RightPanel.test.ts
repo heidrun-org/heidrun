@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import RightPanel from "./RightPanel.vue";
 import { settings } from "../stores/settings";
+import { notes } from "../stores/notes";
+import { state } from "../stores/session";
 
 const stubs = {
   Inspector: true,
@@ -11,6 +13,10 @@ const stubs = {
 describe("RightPanel", () => {
   afterEach(() => {
     settings.rightSidebarSection = "pane";
+    notes.list = [];
+    notes.showAll = false;
+    state.snapshot = null;
+    state.selectedWorkspaceId = null;
   });
 
   it("shows the buttons Pane and Notes in the navigation bar, and not the buttons Scripts and Git", () => {
@@ -53,5 +59,26 @@ describe("RightPanel", () => {
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
     expect(settings.rightSidebarSection).toBe("pane");
     expect(wrapper.find("inspector-stub").exists()).toBe(true);
+  });
+
+  it("counts on the button Notes the notes of the selected workspace, and every note when All workspaces is checked", async () => {
+    state.snapshot = {
+      version: "test",
+      protocol: 1,
+      workspaces: [{ workspace_id: "w3", number: 3, label: "heidrun", focused: false, pane_count: 1, tab_count: 1, active_tab_id: "w3:t1", agent_status: "unknown" }],
+      tabs: [],
+      panes: [],
+      layouts: [],
+      agents: [],
+    };
+    state.selectedWorkspaceId = "w3";
+    const note = { id: "n1", title: "a", text: "a", workspaceLabel: "heidrun", origin: "heidrun – codex · heidrun", createdAt: 1 };
+    notes.list = [note, { ...note, id: "n2", workspaceLabel: "teamwright" }];
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    const badge = () => wrapper.findAll(".navigation-bar button")[1].find(".badge").text();
+    expect(badge()).toBe("1");
+    notes.showAll = true;
+    await wrapper.vm.$nextTick();
+    expect(badge()).toBe("2");
   });
 });
