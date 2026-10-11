@@ -12,7 +12,7 @@ This document says where each part of the window goes and how each part works. T
 │           │  viewport: the panes of the         │           │
 │           │  selected tab                       │           │
 ├───────────┴─────────────────────────────────────┴───────────┤
-│ status bar: [section] [section] [section]                   │
+│ status bar: [status bar section] [status bar section]       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -24,7 +24,7 @@ This document says where each part of the window goes and how each part works. T
 ## Workspace
 
 - One workspace is selected at a time.
-- The workspace button sits at the left end of the tab bar. It shows the name of the selected workspace. A click on the button opens the list of workspaces.
+- The workspace button sits at the left end of the tab bar. It shows the name of the selected workspace. A click on the button opens the list of workspaces. The list does not open when the mouse moves over the button.
 - A developer switches workspace rarely, so the workspace button takes little space.
 - A small colored dot on the workspace button shows that an agent in another workspace is blocked or has finished.
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
@@ -41,10 +41,15 @@ This document says where each part of the window goes and how each part works. T
 
 - A tab with one pane shows one terminal over the whole viewport.
 - A tab with several panes shares the viewport between its panes.
+- A click on a pane gives the focus to that pane.
 
 ## Sidebars
 
-- The right sidebar has a navigation bar. Each button of the navigation bar shows one view of the right sidebar.
+- A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+- The left sidebar holds the Actions sidebar section and the Git sidebar section.
+- The right sidebar holds the Pane sidebar section and the Notes sidebar section.
+- Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar.
+- A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
 - The sidebars hold no tabs. The word "tab" belongs to the tab bar only.
 
 ## Status bar
@@ -52,8 +57,3 @@ This document says where each part of the window goes and how each part works. T
 - The status bar sits at the bottom of the window, over the whole width.
 - Each status bar section shows one piece of information, for example the usage of Claude, the usage of Codex, the Git branch, the number of agents that are blocked, working, or done, and the connection to Herdr.
 - A click on a status bar section opens its information card above the section.
-
-## Not decided yet
-
-- What the left sidebar holds, now that the tabs are on top of the viewport.
-- Whether a sidebar can shrink to a narrow strip of icons, as the vertical tabs of Chrome and the Activity Bar of VS Code do.

@@ -36,15 +36,19 @@ The main area of the window. It shows the panes of the selected tab.
 
 ### Left sidebar
 
-The panel on the left of the viewport.
+The panel on the left of the viewport. It holds sidebar sections.
 
 ### Right sidebar
 
-The panel on the right of the viewport.
+The panel on the right of the viewport. It holds sidebar sections.
+
+### Sidebar section
+
+One part of a sidebar, for example the Actions or the Git sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 
 ### Navigation bar
 
-A row of buttons inside a sidebar. Each button shows one view of that sidebar.
+A row of buttons inside a sidebar. Each button shows one sidebar section of that sidebar.
 
 ### Status bar
 
@@ -62,3 +66,4 @@ A small card that opens above a status bar section. It gives more detail about t
 
 - The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
+- The word "section" is never alone. Write "sidebar section" or "status bar section".
