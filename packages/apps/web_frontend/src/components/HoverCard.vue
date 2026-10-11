@@ -6,11 +6,17 @@ import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 // sidebar at the right edge of the window. The card stays open while the pointer is on the part or on the card, and the
 // card is a child of the part in the page, so the keyboard reaches the buttons in the card. The card closes after the
 // pointer left both, when the key Escape is pressed, when the keyboard focus leaves, and on a click outside.
-// The first slot is the part. The slot "card" is the content of the card.
+// The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
+// decides its padding. The event "open" tells that the card just opened.
 
 const props = defineProps<{
   /** The name of the card, for the screen reader. */
   label: string;
+}>();
+
+const emit = defineEmits<{
+  /** The card just opened. */
+  open: [];
 }>();
 
 /** How long the pointer rests on the part before the card opens, in milliseconds. */
@@ -64,6 +70,7 @@ async function open() {
     return;
   }
   isOpen.value = true;
+  emit("open");
   await nextTick();
   place();
 }
@@ -143,6 +150,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.popover { --bs-popover-body-padding-x: 0; --bs-popover-body-padding-y: 0; }
+.popover-body { overflow: hidden; border-radius: var(--bs-popover-inner-border-radius); }
 .hover-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--bs-border-radius); }
 .hover-card-part:hover, .hover-card-part.is-open { background-color: var(--bs-secondary-bg); }
 </style>

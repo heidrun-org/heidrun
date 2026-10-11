@@ -52,7 +52,9 @@ function agentLabel(agent: ChatAgent): string {
 }
 
 /** The chats that the list shows, each with the three lines of its summary. */
-const rows = computed(() => shownChats.value.map((chat) => ({ chat, lines: chatSummaryLines(chat.meta) })));
+const rows = computed(() =>
+  shownChats.value.map((chat) => ({ chat, lines: chatSummaryLines(chat.meta, new Date(), chats.root) })),
+);
 
 /** The coding agent of the selector. */
 const agent = computed<ChatAgent>({
@@ -89,8 +91,7 @@ const agent = computed<ChatAgent>({
             <ChatFilesLine
               v-if="row.lines.files !== ''"
               :text="row.lines.files"
-              :files="row.chat.meta.files_written"
-              :root="chats.root"
+              :entries="row.lines.fileEntries"
               :folder="chats.folder ?? ''"
               :web-base="repository.base"
               :forge="repository.forge"

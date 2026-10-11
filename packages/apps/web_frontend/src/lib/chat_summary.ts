@@ -1,6 +1,6 @@
 import { locale, t } from "../i18n/index";
 import type { ChatMeta } from "../stores/chats";
-import { fileName } from "./chat_files";
+import { chatFiles, fileName, type ChatFile } from "./chat_files";
 import { timeOptions } from "./format";
 
 /** The most issue numbers or pull request numbers that the summary of a chat writes. The others count as "+N". */
@@ -49,8 +49,8 @@ function numbersText(numbers: number[]): string {
 }
 
 /** The names of the first files, then how many more there are: "chats.rs, chats_scan.rs, +4". */
-function filesText(files: string[]): string {
-  const listed = files.slice(0, LISTED_FILES).map(fileName);
+function filesText(files: ChatFile[]): string {
+  const listed = files.slice(0, LISTED_FILES).map((file) => fileName(file.label));
   const more = files.length - listed.length;
   return more > 0 ? `${listed.join(", ")}, +${more}` : listed.join(", ");
 }
@@ -63,6 +63,8 @@ export type ChatSummaryLines = {
   references: string;
   /** The names of the files that the coding agent wrote. */
   files: string;
+  /** The files that the coding agent wrote, each one once. The hover card of the third line lists them. */
+  fileEntries: ChatFile[];
 };
 
 /**
@@ -70,9 +72,10 @@ export type ChatSummaryLines = {
  * the pull requests, and the files written.
  * @param meta - what the scan of the file of the chat found
  * @param now - the current date, which decides whether the year shows in a date
+ * @param root - the root of the repository, or null when it is not known: the files are named below it
  * @returns the three lines, each one an empty text when the chat has nothing for it
  */
-export function chatSummaryLines(meta: ChatMeta, now: Date = new Date()): ChatSummaryLines {
+export function chatSummaryLines(meta: ChatMeta, now: Date = new Date(), root: string | null = null): ChatSummaryLines {
   const dates = [datesText(meta.first_at, meta.last_at, now)];
   if (meta.user_messages > 0) {
     dates.push(t("chatsPanel.messages", { count: meta.user_messages }));
@@ -86,9 +89,11 @@ export function chatSummaryLines(meta: ChatMeta, now: Date = new Date()): ChatSu
       t("chatsPanel.pullRequests", { count: meta.pull_requests.length, numbers: numbersText(meta.pull_requests) }),
     );
   }
+  const fileEntries = chatFiles(root, meta.files_written);
   return {
     dates: dates.filter((part) => part !== "").join(" · "),
     references: references.join(" · "),
-    files: filesText(meta.files_written),
+    files: filesText(fileEntries),
+    fileEntries,
   };
 }

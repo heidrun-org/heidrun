@@ -79,8 +79,9 @@ export class TauriMockFixture {
 				files_written: [
 					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats.rs',
 					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats_scan.rs',
-					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/ChatsPanel.vue',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/add-chats-sidebar-section-250/packages/apps/web_frontend/src/components/ChatsPanel.vue',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/HoverCard.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
 					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
 					'/Users/demo/notes/scratch.md',
 				],

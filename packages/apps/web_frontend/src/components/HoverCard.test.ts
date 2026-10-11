@@ -62,6 +62,16 @@ describe("HoverCard", () => {
     expect(wrapper.classes()).not.toContain("is-open");
   });
 
+  it("tells with the event open each time the card opens, and not when it is already open", async () => {
+    const wrapper = mountCard();
+    await wrapper.trigger("click");
+    await wrapper.trigger("click");
+    expect(wrapper.emitted("open")?.length).toBe(1);
+    await wrapper.trigger("keydown", { key: "Escape" });
+    await wrapper.trigger("click");
+    expect(wrapper.emitted("open")?.length).toBe(2);
+  });
+
   it("puts the card inside the part, with the role group and the label", async () => {
     const wrapper = mountCard();
     await wrapper.trigger("click");

@@ -82,6 +82,12 @@ export class TauriMock {
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
+			case 'chats_files_exist':
+				return (payload as { paths: string[] }).paths.map((path) => ({
+					path,
+					on_disk: path.includes('OldCard') === false,
+					on_remote: path.includes('OldCard') === false && path.includes('HoverCard') === false,
+				}));
 			case 'files_resolve':
 				return {
 					root: '/Users/demo/webwork/heidrun',

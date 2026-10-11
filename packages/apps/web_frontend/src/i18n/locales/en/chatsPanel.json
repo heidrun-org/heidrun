@@ -17,5 +17,7 @@
   "filesWritten_one": "{count} file written",
   "filesWritten_other": "{count} files written",
   "vscodeTitle": "Open {path} in VS Code",
-  "forgeTitle": "Open {path} on {forge}"
+  "forgeTitle": "Open {path} on {forge}",
+  "vscodeMissingTitle": "VS Code cannot open {path}: the file does not exist on this Mac.",
+  "forgeMissingTitle": "{path} does not exist on {forge}, on the default branch."
 }

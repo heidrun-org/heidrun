@@ -74,6 +74,15 @@ describe('TauriMock', () => {
 			path: '/Users/demo/webwork/heidrun/docs/a.md',
 		});
 		expect(resolved).toEqual({ root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' });
+		const existence = await invoke<{ path: string; on_disk: boolean; on_remote: boolean }[]>('chats_files_exist', {
+			folder: '/Users/demo/webwork/heidrun',
+			paths: ['docs/a.md', 'src/OldCard.vue', 'src/HoverCard.vue'],
+		});
+		expect(existence.map((item) => [item.on_disk, item.on_remote])).toEqual([
+			[true, true],
+			[false, false],
+			[true, false],
+		]);
 		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
 	});
 

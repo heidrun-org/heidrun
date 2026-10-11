@@ -22,7 +22,7 @@ beforeEach(() => {
 
 describe("chatSummaryLines", () => {
   it("gives three empty lines when the scan found nothing", () => {
-    expect(chatSummaryLines(emptyMeta(), NOW)).toEqual({ dates: "", references: "", files: "" });
+    expect(chatSummaryLines(emptyMeta(), NOW)).toEqual({ dates: "", references: "", files: "", fileEntries: [] });
   });
 
   it("writes the two days when the chat spans two days", () => {
@@ -72,6 +72,16 @@ describe("chatSummaryLines", () => {
     );
     const six = ["a", "b", "c", "d", "e", "f"].map((name) => `/work/${name}.rs`);
     expect(chatSummaryLines({ ...emptyMeta(), files_written: six }, NOW).files).toBe("a.rs, b.rs, +4");
+  });
+
+  it("counts a file written in a worktree and the same file at the root once, and names it below the root", () => {
+    const meta = {
+      ...emptyMeta(),
+      files_written: ["/work/app/.claude/worktrees/fix/src/a.rs", "/work/app/src/a.rs", "/work/app/web/b.vue"],
+    };
+    const lines = chatSummaryLines(meta, NOW, "/work/app");
+    expect(lines.files).toBe("a.rs, b.vue");
+    expect(lines.fileEntries.map((file) => file.label)).toEqual(["src/a.rs", "web/b.vue"]);
   });
 
   it("writes the texts in French when the language is French", () => {

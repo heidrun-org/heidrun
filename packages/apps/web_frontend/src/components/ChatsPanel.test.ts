@@ -254,8 +254,8 @@ describe("ChatsPanel", () => {
     expect(rows[1].get(".chat-summary").element.children.length).toBe(0);
   });
 
-  it("opens a card with the files of a chat, relative to the root of the repository, when the files line is clicked", async () => {
-    const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: ["/work/app/src/chats.rs"] };
+  it("opens a card with the files of a chat, each one once, with its folders below the root of the repository, when the files line is clicked", async () => {
+    const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: ["/work/app/.claude/worktrees/fix/src/chats.rs", "/work/app/src/chats.rs"] };
     vi.mocked(invoke).mockResolvedValue({
       root: "/work/app",
       claude: { chats: [{ id: "a", title: "Fix the tab bar", updated_at: 1, meta }], has_more: false },
@@ -264,8 +264,10 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel, { attachTo: document.body });
     await flushPromises();
     await wrapper.get(".hover-card-part").trigger("click");
+    expect(wrapper.findAll("[data-file]").length).toBe(1);
     const row = wrapper.get("[data-file]");
-    expect(row.get("span").text()).toBe("src/chats.rs");
+    expect(row.get(".fw-medium").text()).toBe("chats.rs");
+    expect(row.get(".folder").text()).toBe("src");
     expect(row.findAll("button").map((button) => button.text())).toEqual(["VS Code", "GitHub"]);
   });
 
