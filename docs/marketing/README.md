@@ -6,7 +6,7 @@ These rules apply to the public website (`packages/auxiliary/website_public`), t
 
 Heidrun has three identity texts: the title, the motto, and the description. They are written once, in the file `data/identity.json`, and nowhere else by hand.
 
-- The application and the website get the three texts from this file. The files `README.md`, `AGENTS.md`, `docs/release_notes/prefix.md`, and `README copy.md` receive them between the markers `<!-- identity:start -->` and `<!-- identity:end -->`. To change a text, change the file, then run `pnpm docs:identity` to update these four files. A test fails when one of them is out of date.
+- The application and the website get the three texts from this file. The files `README.md`, `AGENTS.md`, and `docs/release_notes/prefix.md` receive them between the markers `<!-- identity:start -->` and `<!-- identity:end -->`. To change a text, change the file, then run `pnpm docs:identity` to update these three files. A test fails when one of them is out of date.
 - Write the motto exactly as in the file, with the capital letters of "THE GOAT" and the exclamation mark.
 - The motto appears in the splash screen, in the About window, in the hero of the homepage of the website, and in the README.
 - The description says what Heidrun does, in one short sentence. The jokes stay in the motto and in the other texts.

@@ -9,7 +9,7 @@ const identityPath = Path.join(SiteFiles.repositoryDir, 'data/identity.json');
 const identity = JSON.parse(Fs.readFileSync(identityPath, 'utf8'));
 
 /** The Markdown files that receive the description, in addition to the README. */
-const describedFiles = ['AGENTS.md', 'docs/release_notes/prefix.md', 'README copy.md'];
+const describedFiles = ['AGENTS.md', 'docs/release_notes/prefix.md'];
 
 describe('identity texts', () => {
 	it('give the title and the description of the site', () => {

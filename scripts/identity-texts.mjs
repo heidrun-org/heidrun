@@ -54,7 +54,6 @@ class IdentityTexts {
 			},
 			{ path: 'AGENTS.md', lines: descriptionLines },
 			{ path: 'docs/release_notes/prefix.md', lines: descriptionLines },
-			{ path: 'README copy.md', lines: descriptionLines },
 		];
 	}
 

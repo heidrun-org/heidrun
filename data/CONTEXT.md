@@ -8,9 +8,9 @@ The data files that several packages of the repository share: the identity texts
 - `images/`: the key images of Heidrun. See [docs/marketing/README.md](../docs/marketing/README.md).
 
 ## Rules
-- The application, the website, and the four Markdown files get the title, the motto, and the description from `identity.json`. No other file holds a hand-written copy.
-- The application reads `identity.json` through `packages/apps/web_frontend/src/i18n/index.ts`. The website reads it through `packages/auxiliary/website_public/docs/.vitepress/config.ts`. The four Markdown files `README.md`, `AGENTS.md`, `docs/release_notes/prefix.md`, and `README copy.md` receive it from the command `pnpm docs:identity`.
-- A test fails when one of these four Markdown files differs from the output of `pnpm docs:identity`.
+- The application, the website, and the three Markdown files get the title, the motto, and the description from `identity.json`. No other file holds a hand-written copy.
+- The application reads `identity.json` through `packages/apps/web_frontend/src/i18n/index.ts`. The website reads it through `packages/auxiliary/website_public/docs/.vitepress/config.ts`. The three Markdown files `README.md`, `AGENTS.md`, and `docs/release_notes/prefix.md` receive it from the command `pnpm docs:identity`.
+- A test fails when one of these three Markdown files differs from the output of `pnpm docs:identity`.
 
 ## Background
 - The single source of truth for the three texts comes from [issue #246](https://github.com/heidrun-org/heidrun/issues/246).
