@@ -125,6 +125,7 @@ $utilities: (
     property: text-align,
     class: text,
     values: (
+      start: left,
       end: right,
     ),
   ),
@@ -185,6 +186,13 @@ $utilities: (
     values: (
       0: 0,
       100: 100%,
+    ),
+  ),
+  "height": (
+    property: height,
+    class: h,
+    values: (
+      auto: auto,
     ),
   ),
   "overflow-y": (

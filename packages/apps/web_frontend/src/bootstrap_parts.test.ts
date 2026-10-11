@@ -68,7 +68,7 @@ describe('bootstrap_parts.scss', () => {
 	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|align-items|gap|ms|me|mb|pt|fw|text|bg|position|top|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|gap|ms|me|mb|pt|fw|text|bg|position|top|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
 			'.justify-content-center',
 			'.justify-content-between',
@@ -86,6 +86,7 @@ describe('bootstrap_parts.scss', () => {
 			'.pt-2',
 			'.fw-medium',
 			'.fw-semibold',
+			'.text-start',
 			'.text-end',
 			'.text-break',
 			'.text-wrap',
@@ -104,6 +105,7 @@ describe('bootstrap_parts.scss', () => {
 			'.top-0',
 			'.bottom-0',
 			'.bottom-100',
+			'.h-auto',
 			'.overflow-y-auto',
 		]);
 	});

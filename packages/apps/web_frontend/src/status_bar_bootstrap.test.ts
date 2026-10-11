@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	StatusBarBootstrapTest — the cards and the menu above the status bar are made of Bootstrap classes
+//	StatusBarBootstrapTest — the cards above the status bar are made of Bootstrap classes
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -71,16 +71,16 @@ describe('the card of the git branch (GitStatusSummary.vue)', () => {
 	});
 });
 
-describe('the menu of the agents (AgentStatusSummary.vue)', () => {
+describe('the card of the agent statuses (AgentStatusSummary.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('AgentStatusSummary.vue');
 
-	it('uses the Bootstrap dropdown classes', () => {
-		for (const className of ['dropdown-menu', 'dropdown-header', 'dropdown-item', 'dropdown-item-text', 'dropdown-divider']) {
+	it('uses the Bootstrap popover classes, with the arrow like the other cards', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'bs-popover-top']) {
 			expect(sourceText).toContain(className);
 		}
 	});
 
-	it('writes style rules only for the item in the status bar, and not for the menu', () => {
+	it('writes style rules only for the item in the status bar, and not for the card', () => {
 		const allowedClassNameList = ['agent-status', 'counter'];
 		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
 		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
