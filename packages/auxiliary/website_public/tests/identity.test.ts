@@ -6,8 +6,10 @@ import config from '../docs/.vitepress/config';
 import { SiteFiles } from './site_files';
 
 const identityPath = Path.join(SiteFiles.repositoryDir, 'data/identity.json');
-const readmePath = Path.join(SiteFiles.repositoryDir, 'README.md');
 const identity = JSON.parse(Fs.readFileSync(identityPath, 'utf8'));
+
+/** The Markdown files that receive the description, in addition to the README. */
+const describedFiles = ['AGENTS.md', 'docs/release_notes/prefix.md', 'README copy.md'];
 
 describe('identity texts', () => {
 	it('give the title and the description of the site', () => {
@@ -38,7 +40,7 @@ describe('identity texts', () => {
 	});
 
 	it('are in the README, between the start marker and the end marker', () => {
-		const readme = Fs.readFileSync(readmePath, 'utf8');
+		const readme = Fs.readFileSync(Path.join(SiteFiles.repositoryDir, 'README.md'), 'utf8');
 		const start = readme.indexOf('<!-- identity:start -->');
 		const end = readme.indexOf('<!-- identity:end -->');
 		expect(start).toBeGreaterThan(-1);
@@ -49,13 +51,29 @@ describe('identity texts', () => {
 		expect(generated).toContain(identity.description.en);
 	});
 
-	it('make the README the file that the command "pnpm docs:identity" would write', () => {
-		const before = Fs.readFileSync(readmePath, 'utf8');
+	for (const filePath of describedFiles) {
+		it(`give the description in ${filePath}, between the start marker and the end marker`, () => {
+			const text = Fs.readFileSync(Path.join(SiteFiles.repositoryDir, filePath), 'utf8');
+			const start = text.indexOf('<!-- identity:start -->');
+			const end = text.indexOf('<!-- identity:end -->');
+			expect(start).toBeGreaterThan(-1);
+			expect(end).toBeGreaterThan(start);
+			expect(text.slice(start, end)).toContain(identity.description.en);
+		});
+	}
+
+	it('make every Markdown file the file that the command "pnpm docs:identity" would write', () => {
+		const paths = ['README.md', ...describedFiles].map((filePath) => Path.join(SiteFiles.repositoryDir, filePath));
+		const before = paths.map((path) => Fs.readFileSync(path, 'utf8'));
 		try {
-			ChildProcess.execFileSync('node', ['scripts/identity-readme.mjs'], { cwd: SiteFiles.repositoryDir });
-			expect(Fs.readFileSync(readmePath, 'utf8')).toBe(before);
+			ChildProcess.execFileSync('node', ['scripts/identity-texts.mjs'], { cwd: SiteFiles.repositoryDir });
+			paths.forEach((path, index) => {
+				expect(Fs.readFileSync(path, 'utf8'), path).toBe(before[index]);
+			});
 		} finally {
-			Fs.writeFileSync(readmePath, before);
+			paths.forEach((path, index) => {
+				Fs.writeFileSync(path, before[index]);
+			});
 		}
 	});
 });

@@ -1,6 +1,13 @@
 # Heidrun
 
-Heidrun is a macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of a Herdr session, in one work window. This file gives the rules for working on this repository. The file `README.md` describes the application itself.
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+
+Keep your agents working. Know which one needs you.
+
+<!-- identity:end -->
+
+This file gives the rules for working on this repository. The file `README.md` describes the application itself.
 
 ## Project memory
 

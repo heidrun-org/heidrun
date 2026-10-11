@@ -1,6 +1,11 @@
 # Heidrun
 
-A macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of your Herdr session, in one work window.
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+
+Keep your agents working. Know which one needs you.
+
+<!-- identity:end -->
 
 - **Sidebar**: workspaces, panes, then the "To handle" queue (blocked or finished agents) at the bottom, so the list does not shift.
 - **Real terminals**: each pane is displayed with `herdr terminal attach`, so the rendering is identical to Herdr (Claude Code TUI, Codex, colors…).
