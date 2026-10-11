@@ -1,4 +1,4 @@
-import { dockState } from "./dock";
+import { pinnedPaneState } from "./pinned_panes";
 import { insertText, selectedPane, state, toast } from "./session";
 import { t } from "../i18n/index";
 
@@ -7,7 +7,7 @@ import { t } from "../i18n/index";
  * else the selected pane. Enter is not pressed, so the user can edit the text first.
  */
 export async function insertIntoFocusedPane(text: string) {
-  const paneId = dockState.focus ?? state.selectedPaneId ?? selectedPane.value?.pane_id ?? null;
+  const paneId = pinnedPaneState.focus ?? state.selectedPaneId ?? selectedPane.value?.pane_id ?? null;
   if (paneId === null) {
     toast(t("inputStore.noPane"));
     return;

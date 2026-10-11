@@ -6,7 +6,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
-import { dockState, isDocked, toggleDock, undock } from "../stores/dock";
+import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
 import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
@@ -14,19 +14,21 @@ import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
-// `docked`: shown in the "à côté" column, outside its own tab.
-const props = defineProps<{ pane: AgentInfo; docked?: boolean }>();
+// `isInColumnOfPinnedPanes`: shown in the column of pinned panes, outside its own tab.
+const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
 const selected = computed(() =>
-  props.docked ? dockState.focus === props.pane.pane_id : state.selectedPaneId === props.pane.pane_id && !dockState.focus,
+  props.isInColumnOfPinnedPanes
+    ? pinnedPaneState.focus === props.pane.pane_id
+    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
 );
-const pinned = computed(() => isDocked(props.pane.pane_id));
-// A click in a docked pane gives it the keyboard without leaving the current tab.
+const pinned = computed(() => isPinned(props.pane.pane_id));
+// A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
-  if (props.docked) dockState.focus = props.pane.pane_id;
+  if (props.isInColumnOfPinnedPanes) pinnedPaneState.focus = props.pane.pane_id;
   else {
     selectPane(props.pane);
-    dockState.focus = null;
+    pinnedPaneState.focus = null;
   }
 }
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
@@ -35,7 +37,7 @@ const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd |
 const displayName = computed(() => paneName(props.pane));
 const subtitle = computed(() => {
   const p = props.pane;
-  if (props.docked) return paneFullName(p);
+  if (props.isInColumnOfPinnedPanes) return paneFullName(p);
   if (p.agent) return `${p.agent} · ${p.pane_id}`;
   const branch = git.branchByFolder[shellFolder.value];
   const path = shortPath(shellFolder.value) || p.pane_id;
@@ -47,7 +49,7 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected, docked }]"
+    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
@@ -74,9 +76,9 @@ const subtitle = computed(() => {
       </template>
       <span class="tools">
         <MacroMenu :pane-id="pane.pane_id" />
-        <template v-if="docked">
+        <template v-if="isInColumnOfPinnedPanes">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
-          <button class="tool" :aria-label="t('paneCard.undock')" :title="t('paneCard.undockTitle')" @mousedown.stop @click="undock(pane.pane_id)">
+          <button class="tool" :aria-label="t('paneCard.unpin')" :title="t('paneCard.unpinTitle')" @mousedown.stop @click="unpinPane(pane.pane_id)">
             <Icon name="x-lg" />
           </button>
         </template>
@@ -95,7 +97,7 @@ const subtitle = computed(() => {
           :aria-pressed="pinned"
           :title="pinned ? t('paneCard.unpin') : t('paneCard.pinTitle')"
           @mousedown.stop
-          @click="toggleDock(pane.pane_id)"
+          @click="togglePinnedPane(pane.pane_id)"
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
@@ -154,5 +156,5 @@ const subtitle = computed(() => {
 .tool:hover { background: var(--hover); color: var(--text); }
 .tool.txt { font-size: var(--font-size); line-height: 1; }
 .tool.on { color: var(--accent); }
-.pane.docked .head { background: var(--bar); }
+.pane.in-column-of-pinned-panes .head { background: var(--bar); }
 </style>

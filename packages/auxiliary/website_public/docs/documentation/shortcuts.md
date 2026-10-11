@@ -50,7 +50,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | ⌥ + drag | Select text, even in "Mouse for the app" mode |
 | Double-click | Rename a workspace, a tab or a pane |
 | Drag and drop | Reorder workspaces and tabs |
-| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> | Keep an agent alongside, visible whatever the tab |
+| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> | Pin a pane: it stays visible whatever the tab or workspace |
 | <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> | Tiles of a Claude session: what each sub-agent is doing |
 | Double-click on a border | Return to the default width |
 

@@ -46,8 +46,8 @@ const defaults = {
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
    */
   mouseMode: "select" as "select" | "app",
-  /** Right panel section. */
-  rightTab: "pane" as "pane" | "actions" | "git" | "notes",
+  /** Sidebar section that the right sidebar shows. */
+  rightSidebarSection: "pane" as "pane" | "actions" | "git" | "notes",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -95,8 +95,8 @@ const defaults = {
   codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
-  /** Agents kept "à côté" (pane ids), stacked in a column on the right of the tab. */
-  dockedPanes: [] as string[],
+  /** Pinned panes (pane ids), stacked in the column of pinned panes on the right of the panes of the selected tab. */
+  pinnedPanes: [] as string[],
   /** History estimates: 1 h of agent work ≈ this many hours of a developer. */
   histHumanFactor: 4,
   /** Your own time: minutes per consigne written, per decision answered. */
@@ -111,7 +111,8 @@ const defaults = {
   mosaicActiveOnly: true,
   /** Monthly budget per workspace (label → USD); alert at 80 % and 100 %. */
   budgets: {} as Record<string, number>,
-  dockWidth: 560,
+  /** Width of the column of pinned panes, in px. */
+  columnOfPinnedPanesWidth: 560,
   /** The coding agents (ids of `lib/agents.ts`) that the user has a valid subscription or access for. */
   ownedAgents: [] as string[],
   /** Window Find new skills: where a skill is installed, "workspace" (the folder of the workspace) or "user". */
@@ -120,9 +121,25 @@ const defaults = {
   skillsViewRendered: true,
 };
 
+/** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
+const RENAMED_SETTINGS: Record<string, string> = {
+  dockedPanes: "pinnedPanes",
+  dockWidth: "columnOfPinnedPanesWidth",
+  rightTab: "rightSidebarSection",
+};
+
 function load(): typeof defaults {
   try {
-    const saved = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+    const stored = JSON.parse(localStorage.getItem(KEY) ?? "{}");
+    for (const [oldName, newName] of Object.entries(RENAMED_SETTINGS)) {
+      if (oldName in stored) {
+        if (!(newName in stored)) {
+          stored[newName] = stored[oldName];
+        }
+        delete stored[oldName];
+      }
+    }
+    const saved = { ...defaults, ...stored };
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {
       saved.codeTheme = "auto";

@@ -35,7 +35,7 @@ export type PaneOuterEdge = 'left' | 'right';
 export type PaneOuterEdges = {
 	/** True when the sidebar sits against the left side. */
 	left: boolean;
-	/** True when the dock column or the right panel sits against the right side. */
+	/** True when the column of pinned panes or the right sidebar sits against the right side. */
 	right: boolean;
 };
 

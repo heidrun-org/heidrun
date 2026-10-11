@@ -52,7 +52,7 @@
   "keys.doubleClick": "Double-clic",
   "action.reorder": "Réordonner les workspaces et les onglets",
   "keys.dragAndDrop": "Glisser-déposer",
-  "action.dock": "Garder un agent à côté, visible quel que soit l’onglet",
+  "action.pin": "Épingler un panneau : il reste visible quel que soit l’onglet ou le workspace",
   "action.subAgentTiles": "Tuiles d’une session Claude : ce que fait chaque sous-agent",
   "action.defaultWidth": "Revenir à la largeur par défaut",
   "keys.doubleClickBorder": "Double-clic sur une bordure"

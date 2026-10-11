@@ -1,7 +1,7 @@
 {
   "label": "Panneau de droite",
-  "showTab": "Afficher cet onglet",
-  "tab.pane": "Panneau",
-  "tab.actions": "Scripts",
-  "tab.notes": "Notes"
+  "showSidebarSection": "Afficher cette section de la barre latérale",
+  "sidebarSection.pane": "Panneau",
+  "sidebarSection.actions": "Scripts",
+  "sidebarSection.notes": "Notes"
 }

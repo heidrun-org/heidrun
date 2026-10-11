@@ -52,7 +52,7 @@
   "keys.doubleClick": "Double-click",
   "action.reorder": "Reorder workspaces and tabs",
   "keys.dragAndDrop": "Drag and drop",
-  "action.dock": "Keep an agent alongside, visible whatever the tab",
+  "action.pin": "Pin a pane: it stays visible whatever the tab or workspace",
   "action.subAgentTiles": "Tiles of a Claude session: what each sub-agent is doing",
   "action.defaultWidth": "Return to the default width",
   "keys.doubleClickBorder": "Double-click on a border"

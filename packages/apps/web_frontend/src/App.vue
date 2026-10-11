@@ -19,11 +19,11 @@ import { issueView } from "./stores/issues";
 import NewAgentModal from "./components/NewAgentModal.vue";
 import { newAgent } from "./stores/agents";
 import SearchModal from "./components/SearchModal.vue";
-import DockColumn from "./components/DockColumn.vue";
+import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
-import { activePaneId, dockVisible } from "./stores/dock";
+import { activePaneId, visiblePinnedPanes } from "./stores/pinned_panes";
 import { search } from "./stores/search";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
 import { answerDanger, danger } from "./stores/guards";
@@ -77,25 +77,25 @@ import { t } from "./i18n/index";
 import { ResizerWidth } from "./lib/resizer_width";
 import type { PaneOuterEdge } from "./lib/pane_separators";
 
-// The docked column never squeezes the tab below 420 px, whatever the window size.
+// The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
 const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
-const dockShown = computed(() => Math.max(240, Math.min(settings.dockWidth, winW.value - sides.value - 420)));
-const dockReserve = computed(() => (dockVisible.value.length ? dockShown.value : 0));
+const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
+const columnOfPinnedPanesTakenWidth = computed(() => (visiblePinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
 const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
 const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
-const DOCK_COLUMN = { min: 320, max: 1400, defaultWidth: 560 };
-const leftReserve = computed(() => (settings.rightOpen ? settings.rightWidth : 0) + dockReserve.value);
-const rightReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + dockReserve.value);
-const dockColumnReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0));
+const COLUMN_OF_PINNED_PANES = { min: 320, max: 1400, defaultWidth: 560 };
+const leftReserve = computed(() => (settings.rightOpen ? settings.rightWidth : 0) + columnOfPinnedPanesTakenWidth.value);
+const rightReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + columnOfPinnedPanesTakenWidth.value);
+const columnOfPinnedPanesReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0));
 
 // The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
 const paneOuterEdges = computed(() => ({
   left: settings.leftOpen,
-  right: dockVisible.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
+  right: visiblePinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
 }));
 
 // The column that a corner of the panes under the pointer touches: its line is drawn in colour.
@@ -106,8 +106,8 @@ function columnAgainst(edge: PaneOuterEdge) {
   if (edge === "left") {
     return { ...LEFT_COLUMN, reserve: leftReserve.value, width: settings.leftWidth, sign: 1, set: (w: number) => (settings.leftWidth = w) };
   }
-  if (dockVisible.value.length > 0) {
-    return { ...DOCK_COLUMN, reserve: dockColumnReserve.value, width: dockShown.value, sign: -1, set: (w: number) => (settings.dockWidth = w) };
+  if (visiblePinnedPanes.value.length > 0) {
+    return { ...COLUMN_OF_PINNED_PANES, reserve: columnOfPinnedPanesReserve.value, width: columnOfPinnedPanesShownWidth.value, sign: -1, set: (w: number) => (settings.columnOfPinnedPanesWidth = w) };
   }
   return { ...RIGHT_COLUMN, reserve: rightReserve.value, width: settings.rightWidth, sign: -1, set: (w: number) => (settings.rightWidth = w) };
 }
@@ -196,7 +196,7 @@ function onKey(e: KeyboardEvent) {
         if (pane && text) {
           pinText(text, pane);
           settings.rightOpen = true;
-          settings.rightTab = "notes";
+          settings.rightSidebarSection = "notes";
         } else toast(t("app.selectTextFirst"));
       });
     case "KeyF":
@@ -291,25 +291,25 @@ onBeforeUnmount(() => {
         <template v-if="state.snapshot">
           <div class="stage">
             <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
-            <template v-if="dockVisible.length">
+            <template v-if="visiblePinnedPanes.length">
               <Resizer
-                :width="dockShown"
-                @update:width="(v: number) => (settings.dockWidth = v)"
+                :width="columnOfPinnedPanesShownWidth"
+                @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
                 side="right"
-                :min="DOCK_COLUMN.min"
-                :max="DOCK_COLUMN.max"
-                :default-width="DOCK_COLUMN.defaultWidth"
-                :reserve="dockColumnReserve"
+                :min="COLUMN_OF_PINNED_PANES.min"
+                :max="COLUMN_OF_PINNED_PANES.max"
+                :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
+                :reserve="columnOfPinnedPanesReserve"
                 :highlighted="highlightedEdge === 'right'"
               />
-              <DockColumn :style="{ width: `${dockShown}px` }" />
+              <ColumnOfPinnedPanes :style="{ width: `${columnOfPinnedPanesShownWidth}px` }" />
             </template>
           </div>
         </template>
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && dockVisible.length === 0" />
+        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && visiblePinnedPanes.length === 0" />
         <RightPanel />
       </template>
     </div>
