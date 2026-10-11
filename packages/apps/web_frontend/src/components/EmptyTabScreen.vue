@@ -281,7 +281,14 @@ onBeforeUnmount(() => {
   flex-direction: column;
   overflow: hidden;
   border-radius: inherit;
-  background: radial-gradient(circle at 50% 38%, rgba(255, 215, 106, 0.2), rgba(255, 215, 106, 0) 60%), #0b0c0e;
+  background: radial-gradient(circle at 50% 38%, var(--screen-glow), transparent 60%), var(--screen-background);
+  --screen-background: #0b0c0e;
+  --screen-glow: rgba(255, 215, 106, 0.2);
+  --title-color: #ffd76a;
+  --title-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  --joke-color: #fff;
+  --joke-shadow: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+  --image-shadow: drop-shadow(0 8px 24px rgba(255, 215, 106, 0.35));
   --second-line-delay: 2s;
   --second-line-fade-duration: 3s;
   --laugh-delay: calc(var(--second-line-delay) + var(--second-line-fade-duration));
@@ -302,7 +309,7 @@ onBeforeUnmount(() => {
   height: 0;
   min-height: 0;
   object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(255, 215, 106, 0.35));
+  filter: var(--image-shadow);
 }
 .empty-tab-title {
   flex: none;
@@ -310,19 +317,19 @@ onBeforeUnmount(() => {
   font-size: var(--title-size);
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #ffd76a;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  color: var(--title-color);
+  text-shadow: var(--title-shadow);
 }
 .empty-tab-joke-arc {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+  filter: var(--joke-shadow);
 }
 .empty-tab-joke {
   font-size: var(--joke-size);
   font-weight: 500;
-  fill: #fff;
+  fill: var(--joke-color);
 }
 .empty-tab-second-line {
   animation: empty-tab-fade-in var(--second-line-fade-duration) ease-in-out var(--second-line-delay) both;
@@ -406,5 +413,18 @@ onBeforeUnmount(() => {
   .empty-tab-spark {
     animation: none;
   }
+}
+</style>
+
+<style>
+/* The theme store sets data-theme="light" on the root element: the screen keeps its dark colors only in the dark theme. */
+:root[data-theme="light"] .empty-tab-screen {
+  --screen-background: var(--bg);
+  --screen-glow: rgba(255, 184, 48, 0.5);
+  --title-color: var(--accent);
+  --title-shadow: 0 2px 10px rgba(255, 255, 255, 0.8);
+  --joke-color: var(--text);
+  --joke-shadow: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.9));
+  --image-shadow: drop-shadow(0 10px 22px rgba(120, 70, 0, 0.45));
 }
 </style>
