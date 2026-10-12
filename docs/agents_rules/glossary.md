@@ -76,7 +76,7 @@ A dynamic topic exactly as it comes out of one chat. Heidrun computes it from th
 
 ### Clustered dynamic topic
 
-The name of a cluster, which is a group of raw dynamic topics that have a close meaning. A clustered dynamic topic gives one label to one subject. The option "Clustered dynamic topics" of the Settings window makes the dynamic topic bar and the rows of the chats show clustered dynamic topics instead of raw dynamic topics.
+The name of a cluster, which is a group of raw dynamic topics that have a close meaning. A clustered dynamic topic gives one label to one subject. The option "Enable clustered dynamic topics" of the Settings window makes the dynamic topic bar and the rows of the chats show clustered dynamic topics instead of raw dynamic topics.
 
 ### Translation table
 
@@ -88,7 +88,7 @@ The data that Heidrun reads in a chat to compute its dynamic topics. It has four
 
 ### Dynamic topic extraction
 
-The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model". The Settings window holds the choice, in its section "Dynamic topics".
+The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model". The Settings window holds the choice, in its section "Dynamic topics", under the title "Extraction method".
 
 ### Dynamic topic bar
 
@@ -108,7 +108,7 @@ One part of the status bar. It shows one piece of information, for example the u
 
 ### Information card
 
-A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, or at the left of a part of a sidebar. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
+A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, at the left of a part of a sidebar, or below a circled question mark of a page of the Settings window. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
 
 ### Workspace status bar section
 

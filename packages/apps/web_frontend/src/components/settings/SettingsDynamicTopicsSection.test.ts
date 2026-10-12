@@ -20,10 +20,10 @@ beforeEach(() => {
 });
 
 describe("SettingsDynamicTopicsSection", () => {
-  it("shows the title Dynamic topic extraction above a group of two radio buttons, Keyword and Language model", async () => {
+  it("shows the title Extraction method above a group of two radio buttons, Keyword and Language model", async () => {
     const { wrapper } = await mountSection();
-    expect(wrapper.get("h4").text()).toBe("Dynamic topic extraction");
-    expect(wrapper.get('[role="radiogroup"]').attributes("aria-label")).toBe("Dynamic topic extraction");
+    expect(wrapper.get("h4").text()).toBe("Extraction method");
+    expect(wrapper.get('[role="radiogroup"]').attributes("aria-label")).toBe("Extraction method");
     expect(wrapper.findAll('[role="radio"]').map((radio) => radio.text())).toEqual(["Keyword", "Language model"]);
   });
 
@@ -48,21 +48,56 @@ describe("SettingsDynamicTopicsSection", () => {
     expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["false", "true"]);
   });
 
-  it("explains each method in one line", async () => {
+  it("has no help paragraph under the controls", async () => {
     const { wrapper } = await mountSection();
-    const lines = wrapper.findAll(".keys").map((line) => line.text());
-    expect(lines).toHaveLength(3);
-    expect(lines[0]).toContain("Nothing leaves this computer");
-    expect(lines[1]).toContain("not ready yet");
+    expect(wrapper.findAll(".keys")).toHaveLength(0);
+    expect(wrapper.text()).not.toContain("Nothing leaves this computer");
+    expect(wrapper.text()).not.toContain("not ready yet");
+  });
+
+  it("shows a circled question mark just after the title Extraction method, and no information card at first", async () => {
+    const { wrapper } = await mountSection();
+    const row = wrapper.get("h4").element.parentElement as HTMLElement;
+    const mark = wrapper.findAll(".information-card-part")[0];
+    expect(row.contains(mark.element)).toBe(true);
+    expect(mark.find("svg, i, span[role=img]").exists()).toBe(true);
+    expect(mark.get('[role="img"]').attributes("aria-label")).toBe("About the extraction method");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("opens an information card below the circled question mark, with one block for Keyword and one for Language model", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    const card = wrapper.get(".popover");
+    expect(card.classes()).toContain("bs-popover-bottom");
+    expect(card.attributes("aria-label")).toBe("About the extraction method");
+    expect(card.text()).toContain("Extraction method");
+    const blocks = card.findAll("[data-help-block]").map((block) => block.text());
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toContain("Keyword");
+    expect(blocks[0]).toContain("Nothing leaves this computer");
+    expect(blocks[1]).toContain("Language model");
+    expect(blocks[1]).toContain("This method is not ready yet");
+  });
+
+  it("closes the information card of the extraction method on a second click and on the key Escape", async () => {
+    const { wrapper } = await mountSection();
+    const mark = wrapper.findAll(".information-card-part")[0];
+    await mark.trigger("click");
+    await mark.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await mark.trigger("click");
+    await mark.trigger("keydown", { key: "Escape" });
+    expect(wrapper.find(".popover").exists()).toBe(false);
   });
 });
 
 describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
-  it("shows a switch Clustered dynamic topics under the choice of the method, switched off at first", async () => {
+  it("shows a switch Enable clustered dynamic topics under the choice of the method, switched off at first", async () => {
     const { wrapper, settings } = await mountSection();
-    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Dynamic topic extraction", "Clustered dynamic topics"]);
+    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
     const switchInput = wrapper.get('input[role="switch"]');
-    expect(wrapper.get('label[for="clustered-dynamic-topics"]').text()).toBe("Clustered dynamic topics");
+    expect(wrapper.get('label[for="clustered-dynamic-topics"]').text()).toBe("Enable clustered dynamic topics");
     expect((switchInput.element as HTMLInputElement).checked).toBe(false);
     expect(settings.clusteredDynamicTopics).toBe(false);
   });
@@ -75,12 +110,42 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
     expect((second.wrapper.get('input[role="switch"]').element as HTMLInputElement).checked).toBe(true);
   });
 
-  it("says in one line that only the short labels leave the computer, for the coding agent codex or claude", async () => {
+  it("shows a circled question mark just after the label of the switch, and no help paragraph under it", async () => {
     const { wrapper } = await mountSection();
-    const help = wrapper.findAll(".keys")[2].text();
-    expect(help).toContain("only the short labels of the raw dynamic topics");
-    expect(help).toContain("never the text of a chat");
-    expect(help).toContain("codex or claude");
+    const row = wrapper.get('label[for="clustered-dynamic-topics"]').element.closest(".d-flex") as HTMLElement;
+    const mark = wrapper.findAll(".information-card-part")[1];
+    expect(row.contains(mark.element)).toBe(true);
+    expect(mark.get('[role="img"]').attributes("aria-label")).toBe("About the clustered dynamic topics");
+    expect(wrapper.findAll(".keys")).toHaveLength(0);
+  });
+
+  it("opens an information card with three blocks: what it is, what Heidrun sends, and what happens when the option is off", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.findAll(".information-card-part")[1].trigger("click");
+    const card = wrapper.get(".popover");
+    expect(card.classes()).toContain("bs-popover-bottom");
+    const blocks = card.findAll("[data-help-block]").map((block) => block.text());
+    expect(blocks).toHaveLength(3);
+    expect(blocks[0]).toContain("What it is");
+    expect(blocks[0]).toContain("the name of a group of dynamic topics that have a close meaning");
+    expect(blocks[1]).toContain("What Heidrun sends");
+    expect(blocks[1]).toContain("only the short labels of the raw dynamic topics");
+    expect(blocks[1]).toContain("never the text of a chat");
+    expect(blocks[1]).toContain("codex or claude");
+    expect(blocks[2]).toContain("When the option is off");
+    expect(blocks[2]).toContain("makes no call");
+  });
+
+  it("opens only one information card at a time", async () => {
+    const { wrapper } = await mountSection();
+    const marks = wrapper.findAll(".information-card-part");
+    await marks[0].trigger("click");
+    expect(wrapper.findAll(".popover")).toHaveLength(1);
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await wrapper.vm.$nextTick();
+    await marks[1].trigger("click");
+    expect(wrapper.findAll(".popover")).toHaveLength(1);
+    expect(wrapper.get(".popover").attributes("aria-label")).toBe("About the clustered dynamic topics");
   });
 
   it("shows the button Rebuild the clusters, disabled while the option is off", async () => {
