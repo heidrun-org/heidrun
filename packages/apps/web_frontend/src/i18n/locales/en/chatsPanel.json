@@ -63,5 +63,17 @@
   "viewExpanded": "Expanded view",
   "agentUnavailableTitle": "No chat of this coding agent in this workspace.",
   "chatActionsLabel": "Open this chat",
-  "openInAppTitle": "Open in the {app} app"
+  "openInAppTitle": "Open in the {app} app",
+  "sortLabel": "Sort the list",
+  "sortTitle": "Sort the chats",
+  "sortByHeading": "Sort by",
+  "sortOrderHeading": "Order",
+  "sortKey.created_on": "Created on",
+  "sortKey.last_updated": "Last updated",
+  "sortKey.messages": "Messages from you",
+  "sortKey.issues": "Issues",
+  "sortKey.pull_requests": "Pull requests",
+  "sortKey.files_written": "Files written",
+  "sortOrder.ascending": "Ascending",
+  "sortOrder.descending": "Descending"
 }

@@ -23,6 +23,7 @@ import { t } from "../i18n/index";
 import ChatDatesLine from "./ChatDatesLine.vue";
 import ChatFilesLine from "./ChatFilesLine.vue";
 import ChatReferencesLine from "./ChatReferencesLine.vue";
+import ChatsSortMenu from "./ChatsSortMenu.vue";
 import Icon from "./Icon.vue";
 import { openChatInApp, openChatInHeidrun } from "../stores/chat_open";
 
@@ -123,22 +124,25 @@ const VIEWS = [
             </label>
           </template>
         </div>
-        <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
-          <template v-for="choice in VIEWS" :key="choice.id">
-            <input
-              :id="`chats-view-${choice.id}`"
-              v-model="view"
-              type="radio"
-              class="btn-check"
-              name="chats-view"
-              autocomplete="off"
-              :value="choice.id"
-              :aria-label="t(choice.title)"
-            />
-            <label class="btn" :for="`chats-view-${choice.id}`" :title="t(choice.title)">
-              <Icon :name="choice.icon" />
-            </label>
-          </template>
+        <div class="d-flex align-items-center gap-2">
+          <ChatsSortMenu />
+          <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
+            <template v-for="choice in VIEWS" :key="choice.id">
+              <input
+                :id="`chats-view-${choice.id}`"
+                v-model="view"
+                type="radio"
+                class="btn-check"
+                name="chats-view"
+                autocomplete="off"
+                :value="choice.id"
+                :aria-label="t(choice.title)"
+              />
+              <label class="btn" :for="`chats-view-${choice.id}`" :title="t(choice.title)">
+                <Icon :name="choice.icon" />
+              </label>
+            </template>
+          </div>
         </div>
       </div>
       <div class="chats-separator border-top" role="separator"></div>

@@ -267,6 +267,13 @@ $utilities: (
       auto: auto,
     ),
   ),
+  "visibility": (
+    property: visibility,
+    class: null,
+    values: (
+      invisible: hidden,
+    ),
+  ),
 );
 
 // Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,

@@ -1,4 +1,4 @@
-import type { Chat, ChatAgent, ChatMeta } from '../stores/chats';
+import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,13 +78,19 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, newest first. Claude
-	 * has 60 conversations, so that the list needs the button "Show more". Codex has two.
+	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, sorted as asked.
+	 * Claude has 60 conversations, so that the list needs the button "Show more". Codex has two.
 	 *
 	 * @param limit - The number of conversations to return for each coding agent.
-	 * @returns A new object each call, with the newest conversations of Claude and of Codex.
+	 * @param sortKey - What the conversations are sorted by.
+	 * @param order - "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first.
+	 * @returns A new object each call, with the first conversations of Claude and of Codex.
 	 */
-	static buildChats(limit: number): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
+	static buildChats(
+		limit: number,
+		sortKey: ChatSortKey = 'last_updated',
+		order: ChatSortOrder = 'descending',
+	): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
 		const now = Date.now();
 		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
 			id,
@@ -146,10 +152,13 @@ export class TauriMockFixture {
 			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
 			buildChat('codex_2', 'Count up to 200', 600),
 		];
-		const cut = (chats: Chat[]) => ({
-			chats: chats.slice(0, limit),
-			has_more: chats.length > limit,
-		});
+		const cut = (chats: Chat[]) => {
+			const sortedChats = TauriMockFixture._sortChats(chats, sortKey, order);
+			return {
+				chats: sortedChats.slice(0, limit),
+				has_more: sortedChats.length > limit,
+			};
+		};
 		return {
 			root: '/Users/demo/webwork/heidrun',
 			claude: cut(claudeChats),
@@ -355,6 +364,38 @@ export class TauriMockFixture {
 	//	Helpers
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Sorts fake conversations the way the Rust command does: by the value of the sort key, then the newest file first.
+	 *
+	 * @param chats - The conversations to sort. The array is not changed.
+	 * @param sortKey - What the conversations are sorted by.
+	 * @param order - "descending" puts the largest value first, and "ascending" puts the smallest value first.
+	 * @returns A new array with the conversations in order.
+	 */
+	private static _sortChats(chats: Chat[], sortKey: ChatSortKey, order: ChatSortOrder): Chat[] {
+		const valueOf = (chat: Chat): number => {
+			switch (sortKey) {
+				case 'created_on':
+					return chat.meta.first_at ?? chat.updated_at;
+				case 'last_updated':
+					return chat.updated_at;
+				case 'messages':
+					return chat.meta.user_messages;
+				case 'issues':
+					return chat.meta.issues.length;
+				case 'pull_requests':
+					return chat.meta.pull_requests.length;
+				case 'files_written':
+					return chat.meta.files_written.length;
+			}
+		};
+		const direction = order === 'descending' ? -1 : 1;
+		return [...chats].sort((a, b) => {
+			const byValue = (valueOf(a) - valueOf(b)) * direction;
+			return byValue !== 0 ? byValue : b.updated_at - a.updated_at;
+		});
+	}
 
 	/**
 	 * Builds one pane, with the fields that the application reads.

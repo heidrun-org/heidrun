@@ -63,5 +63,17 @@
   "viewExpanded": "Vue aérée",
   "agentUnavailableTitle": "Aucune conversation de cet agent de code dans ce workspace.",
   "chatActionsLabel": "Ouvrir cette conversation",
-  "openInAppTitle": "Ouvrir dans l’app {app}"
+  "openInAppTitle": "Ouvrir dans l’app {app}",
+  "sortLabel": "Tri de la liste",
+  "sortTitle": "Trier les conversations",
+  "sortByHeading": "Trier par",
+  "sortOrderHeading": "Ordre",
+  "sortKey.created_on": "Date de création",
+  "sortKey.last_updated": "Dernière mise à jour",
+  "sortKey.messages": "Messages de ta part",
+  "sortKey.issues": "Issues",
+  "sortKey.pull_requests": "Pull requests",
+  "sortKey.files_written": "Fichiers écrits",
+  "sortOrder.ascending": "Croissant",
+  "sortOrder.descending": "Décroissant"
 }

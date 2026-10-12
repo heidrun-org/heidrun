@@ -60,6 +60,10 @@ const defaults = {
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
+  /** Sidebar section Chats: what the list is sorted by. */
+  chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
+  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  chatsOrder: "descending" as "ascending" | "descending",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -167,6 +171,8 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
+  chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
+  chatsOrder: ["ascending", "descending"],
 };
 
 /**
