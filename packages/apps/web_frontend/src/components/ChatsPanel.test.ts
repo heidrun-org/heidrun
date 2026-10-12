@@ -510,6 +510,23 @@ describe("ChatsPanel", () => {
       expect(children[children.length - 1].getAttribute("role")).toBe("separator");
     });
 
+    it("gives the number of chats of each topic in the title of its button, not on the button", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const buttons = wrapper.findAll(".topic-chip");
+      expect(buttons.map((button) => button.attributes("title"))).toEqual([
+        "Show all the chats",
+        "Show only the chats about “panel” (2 chats)",
+        "Show only the chats about “cache” (1 chat)",
+        "Show only the chats about “sidebar” (1 chat)",
+        "Show only the chats about “tab” (1 chat)",
+      ]);
+      await buttons[1].trigger("click");
+      expect(wrapper.findAll(".topic-chip")[1].attributes("title")).toBe("Show only the chats about “panel” (2 chats)");
+      expect(wrapper.findAll(".topic-chip")[2].attributes("title")).toBe("Show only the chats about “cache” (1 chat)");
+    });
+
     it("selects the button All at first, and shows every chat", async () => {
       answerWithSharedTopics();
       const wrapper = mount(ChatsPanel);

@@ -7,6 +7,9 @@ enableAutoUnmount(afterEach);
 /** The nine topics of the tests: with the button "All", the strip holds ten buttons. */
 const TOPICS = ["panel", "cache", "sidebar", "tab", "git", "note", "agent", "pane", "chat"];
 
+/** The number of chats of each topic in the tests: "panel" has two chats, the other topics have one chat. */
+const CHAT_COUNTS = new Map(TOPICS.map((topic) => [topic, topic === "panel" ? 2 : 1]));
+
 /** The visible width of the strip in the tests, in pixels. */
 const VIEW_WIDTH = 400;
 
@@ -58,7 +61,7 @@ async function mountBar(selected: string | null = null) {
   restores.push(() => {
     Element.prototype.scrollTo = original;
   });
-  const wrapper = mount(DynamicTopicBar, { props: { topics: TOPICS, selected } });
+  const wrapper = mount(DynamicTopicBar, { props: { topics: TOPICS, chatCounts: CHAT_COUNTS, selected } });
   await wrapper.vm.$nextTick();
   return { wrapper, scrollTo };
 }
@@ -95,10 +98,12 @@ describe("DynamicTopicBar", () => {
     expect(wrapper.emitted("select")).toEqual([["sidebar"], [null]]);
   });
 
-  it("gives a title to each button", async () => {
+  it("gives a title to each button, with the number of chats of the topic, and no number on the button itself", async () => {
     const { wrapper } = await mountBar();
     expect(wrapper.findAll(".topic-chip")[0].attributes("title")).toBe("Show all the chats");
-    expect(wrapper.findAll(".topic-chip")[1].attributes("title")).toBe("Show only the chats about “panel”");
+    expect(wrapper.findAll(".topic-chip")[1].attributes("title")).toBe("Show only the chats about “panel” (2 chats)");
+    expect(wrapper.findAll(".topic-chip")[2].attributes("title")).toBe("Show only the chats about “cache” (1 chat)");
+    expect(wrapper.findAll(".topic-chip")[1].text()).toBe("panel");
   });
 
   it("shows no arrow when every button fits in the strip", async () => {

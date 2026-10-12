@@ -7,6 +7,8 @@ import { t } from "../i18n/index";
 const props = defineProps<{
   /** The topics, the strongest first. The bar adds the button "All" before them. */
   topics: string[];
+  /** For each topic, the number of chats that have it. It appears in the title of the button of the topic. */
+  chatCounts: Map<string, number>;
   /** The topic that filters the chats, or null when the button "All" is selected. */
   selected: string | null;
 }>();
@@ -110,7 +112,7 @@ watch(
         class="topic-chip"
         :class="{ 'is-selected': selected === topic }"
         :aria-pressed="selected === topic"
-        :title="t('chatsPanel.topicTitle', { topic })"
+        :title="t('chatsPanel.topicTitle', { topic, count: chatCounts.get(topic) ?? 0 })"
         @click="emit('select', topic)"
       >
         {{ topic }}

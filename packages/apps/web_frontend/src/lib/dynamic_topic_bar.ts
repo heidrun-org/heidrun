@@ -47,6 +47,21 @@ export function dynamicTopicBarTopics(topicsByChat: Map<string, string[]>): stri
     .map(([topic]) => topic);
 }
 
+/**
+ * The number of chats that have each topic, for the title of each button of the dynamic topic bar.
+ * @param topicsByChat - the topics of each chat that the list shows
+ * @returns for each topic, the number of chats that have it
+ */
+export function dynamicTopicChatCounts(topicsByChat: Map<string, string[]>): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const topics of topicsByChat.values()) {
+    for (const topic of new Set(topics)) {
+      counts.set(topic, (counts.get(topic) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
 /** A number kept between a lowest and a highest value. */
 function clamp(value: number, lowest: number, highest: number): number {
   return Math.min(Math.max(value, lowest), highest);

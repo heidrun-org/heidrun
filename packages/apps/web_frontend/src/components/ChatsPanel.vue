@@ -14,7 +14,7 @@ import {
   type ChatAgent,
 } from "../stores/chats";
 import { chatReferences } from "../lib/chat_references";
-import { dynamicTopicBarTopics } from "../lib/dynamic_topic_bar";
+import { dynamicTopicBarTopics, dynamicTopicChatCounts } from "../lib/dynamic_topic_bar";
 import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { keywordTopicsOf, prepareKeywordTopics } from "../stores/dynamic_topics";
@@ -79,6 +79,9 @@ const topics = computed(() =>
 
 /** The topics of the dynamic topic bar, the strongest first. */
 const barTopics = computed(() => dynamicTopicBarTopics(topics.value));
+
+/** The number of chats that have each topic of the dynamic topic bar, among the chats that the list shows. */
+const barChatCounts = computed(() => dynamicTopicChatCounts(topics.value));
 
 /** The topic that the developer clicked in the dynamic topic bar, or null for the button "All". It is not saved. */
 const selectedTopic = ref<string | null>(null);
@@ -190,7 +193,13 @@ const VIEWS = [
             </div>
           </div>
         </div>
-        <DynamicTopicBar v-if="barTopics.length > 0" :topics="barTopics" :selected="activeTopic" @select="selectedTopic = $event" />
+        <DynamicTopicBar
+          v-if="barTopics.length > 0"
+          :topics="barTopics"
+          :chat-counts="barChatCounts"
+          :selected="activeTopic"
+          @select="selectedTopic = $event"
+        />
         <div class="chats-separator border-top" role="separator"></div>
       </div>
       <ul class="list-group list-group-flush" :class="{ 'is-expanded': view === 'expanded' }">

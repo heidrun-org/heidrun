@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ARROW_ZONE,
   dynamicTopicBarTopics,
+  dynamicTopicChatCounts,
   nextTopicsScrollLeft,
   previousTopicsScrollLeft,
   TOPICS_PER_CLICK,
@@ -54,6 +55,28 @@ describe("dynamicTopicBarTopics", () => {
   it("gives each topic once, and gives nothing for no chat", () => {
     expect(dynamicTopicBarTopics(new Map([["a", ["x"]], ["b", ["x"]]]))).toEqual(["x"]);
     expect(dynamicTopicBarTopics(new Map())).toEqual([]);
+  });
+});
+
+describe("dynamicTopicChatCounts", () => {
+  it("counts the chats that have each topic", () => {
+    const counts = dynamicTopicChatCounts(
+      new Map([
+        ["a", ["shared", "solo"]],
+        ["b", ["shared"]],
+        ["c", ["shared", "other"]],
+      ]),
+    );
+    expect([...counts.entries()]).toEqual([
+      ["shared", 3],
+      ["solo", 1],
+      ["other", 1],
+    ]);
+  });
+
+  it("counts a chat once for a topic, and gives nothing for no chat", () => {
+    expect(dynamicTopicChatCounts(new Map([["a", ["x", "x"]]])).get("x")).toBe(1);
+    expect(dynamicTopicChatCounts(new Map()).size).toBe(0);
   });
 });
 
