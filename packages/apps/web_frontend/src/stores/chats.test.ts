@@ -62,14 +62,14 @@ beforeEach(() => {
   chats.isLoading = false;
   chats.error = null;
   settings.chatsSortKey = "last_updated";
-  settings.chatsOrder = "newest";
+  settings.chatsOrder = "descending";
 });
 
 describe("loadChats", () => {
   it("asks the Tauri command chats_list for the folder, and keeps the conversations of each coding agent", async () => {
     vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [chat("b", "Second")]));
     await loadChats("/work/app");
-    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "descending" });
     expect(chats.folder).toBe("/work/app");
     expect(chats.claude).toEqual([chat("a", "First")]);
     expect(chats.codex).toEqual([chat("b", "Second")]);
@@ -149,7 +149,7 @@ describe("the number of chats", () => {
     expect(chats.claude).toEqual([chat("a", "First")]);
     more.answer(answerOf([chat("a", "First"), chat("b", "Second")]));
     await showing;
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "descending" });
     expect(chats.claude.length).toBe(2);
     expect(chats.isShowingMore).toBe(false);
     expect(canShowMoreChats.value).toBe(false);
@@ -160,9 +160,9 @@ describe("the number of chats", () => {
     await loadChats("/work/app");
     await showMoreChats();
     await loadChats("/work/app");
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "descending" });
     await loadChats("/work/website");
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/website", limit: 5, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/website", limit: 5, sortKey: "last_updated", order: "descending" });
   });
 
   it("offers Show more only for the selected coding agent that has more chats", async () => {
@@ -281,15 +281,15 @@ describe("the coding agent that the developer chose", () => {
 describe("the sort of the chats", () => {
   it("asks the Tauri command chats_list for the saved sort key and the saved order", async () => {
     settings.chatsSortKey = "messages";
-    settings.chatsOrder = "oldest";
+    settings.chatsOrder = "ascending";
     vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
-    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "messages", order: "oldest" });
+    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "messages", order: "ascending" });
   });
 
-  it("starts with the sort key last_updated and the order newest, which is the order before the dropdown menu existed", () => {
+  it("starts with the sort key last_updated and the order descending, which is the order before the dropdown menu existed", () => {
     expect(settings.chatsSortKey).toBe("last_updated");
-    expect(settings.chatsOrder).toBe("newest");
+    expect(settings.chatsOrder).toBe("descending");
   });
 
   it("saves the sort key, and reads the chats again in the new order with the same number of chats", async () => {
@@ -299,7 +299,7 @@ describe("the sort of the chats", () => {
     vi.mocked(invoke).mockResolvedValue(answerOf([chat("b", "Second")]));
     await chooseChatSortKey("issues");
     expect(settings.chatsSortKey).toBe("issues");
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "issues", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "issues", order: "descending" });
     expect(chats.claude).toEqual([chat("b", "Second")]);
   });
 
@@ -307,9 +307,9 @@ describe("the sort of the chats", () => {
     vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     vi.mocked(invoke).mockResolvedValue(answerOf([chat("z", "Last")]));
-    await chooseChatSortOrder("oldest");
-    expect(settings.chatsOrder).toBe("oldest");
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "oldest" });
+    await chooseChatSortOrder("ascending");
+    expect(settings.chatsOrder).toBe("ascending");
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "ascending" });
     expect(chats.claude).toEqual([chat("z", "Last")]);
   });
 
@@ -318,7 +318,7 @@ describe("the sort of the chats", () => {
     await loadChats("/work/app");
     const waiting = answerByHand<unknown>();
     vi.mocked(invoke).mockReturnValueOnce(waiting.promise);
-    const sorting = chooseChatSortOrder("oldest");
+    const sorting = chooseChatSortOrder("ascending");
     expect(chats.isSorting).toBe(true);
     expect(chats.claude).toEqual([chat("a", "First")]);
     waiting.answer(answerOf([chat("b", "Second")]));
@@ -348,6 +348,6 @@ describe("the sort of the chats", () => {
     await loadChats("/work/app");
     await chooseChatSortKey("files_written");
     await loadChats("/work/website");
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/website", limit: 5, sortKey: "files_written", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/website", limit: 5, sortKey: "files_written", order: "descending" });
   });
 });

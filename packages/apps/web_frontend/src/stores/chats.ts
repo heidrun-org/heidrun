@@ -24,8 +24,8 @@ export const CHAT_SORT_KEYS = [
 /** One way to sort the list of chats. */
 export type ChatSortKey = (typeof CHAT_SORT_KEYS)[number];
 
-/** The two orders of the dropdown menu, in this order. "newest" puts the largest value of the sort key first. */
-export const CHAT_SORT_ORDERS = ["oldest", "newest"] as const;
+/** The two orders of the dropdown menu, in this order. "descending" puts the largest value of the sort key first. */
+export const CHAT_SORT_ORDERS = ["ascending", "descending"] as const;
 
 /** One order of the list of chats. */
 export type ChatSortOrder = (typeof CHAT_SORT_ORDERS)[number];

@@ -14,7 +14,7 @@ import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
 
 /** The icon of each order: the smallest value first points up, and the largest value first points down. */
-const ORDER_ICONS: Record<ChatSortOrder, string> = { oldest: "sort-up", newest: "sort-down" };
+const ORDER_ICONS: Record<ChatSortOrder, string> = { ascending: "sort-up", descending: "sort-down" };
 
 /** True while the dropdown menu is open. */
 const isOpen = ref(false);

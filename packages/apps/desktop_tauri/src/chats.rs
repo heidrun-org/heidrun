@@ -90,13 +90,13 @@ pub enum SortKey {
     FilesWritten,
 }
 
-/// Which end of the sort key comes first. "Newest" is the largest value first, "oldest" is the smallest value first.
+/// Which end of the sort key comes first. "Ascending" is the smallest value first, "descending" is the largest value first.
 #[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum SortOrder {
-    Oldest,
+    Ascending,
     #[default]
-    Newest,
+    Descending,
 }
 
 /// How the list is sorted: by which key, and from which end.
@@ -308,8 +308,8 @@ fn take_chats(
     if sorting.key == SortKey::LastUpdated {
         files.sort_by(|a, b| {
             let by_date = match sorting.order {
-                SortOrder::Newest => b.modified.cmp(&a.modified),
-                SortOrder::Oldest => a.modified.cmp(&b.modified),
+                SortOrder::Descending => b.modified.cmp(&a.modified),
+                SortOrder::Ascending => a.modified.cmp(&b.modified),
             };
             by_date.then_with(|| a.id.cmp(&b.id))
         });
@@ -332,8 +332,8 @@ fn take_chats(
     }
     keyed.sort_by(|a, b| {
         let by_value = match sorting.order {
-            SortOrder::Newest => b.0.cmp(&a.0),
-            SortOrder::Oldest => a.0.cmp(&b.0),
+            SortOrder::Descending => b.0.cmp(&a.0),
+            SortOrder::Ascending => a.0.cmp(&b.0),
         };
         by_value.then_with(|| b.1.updated_at.cmp(&a.1.updated_at)).then_with(|| a.1.id.cmp(&b.1.id))
     });
@@ -889,20 +889,20 @@ mod tests {
                 SortKey::FilesWritten
             ]
         );
-        assert_eq!(serde_json::from_str::<SortOrder>("\"oldest\"").unwrap(), SortOrder::Oldest);
-        assert_eq!(serde_json::from_str::<SortOrder>("\"newest\"").unwrap(), SortOrder::Newest);
+        assert_eq!(serde_json::from_str::<SortOrder>("\"ascending\"").unwrap(), SortOrder::Ascending);
+        assert_eq!(serde_json::from_str::<SortOrder>("\"descending\"").unwrap(), SortOrder::Descending);
         assert!(serde_json::from_str::<SortKey>("\"best_match\"").is_err());
-        assert_eq!(Sorting::default(), Sorting { key: SortKey::LastUpdated, order: SortOrder::Newest });
+        assert_eq!(Sorting::default(), Sorting { key: SortKey::LastUpdated, order: SortOrder::Descending });
     }
 
     #[test]
-    fn sorts_by_the_modification_date_from_the_oldest_and_opens_only_the_oldest_files() {
-        let dir = scratch("sort-oldest");
+    fn sorts_by_the_modification_date_in_ascending_order_and_opens_only_the_first_files() {
+        let dir = scratch("sort-ascending");
         for (index, age) in [(1, 400), (2, 300), (3, 200), (4, 100)] {
             write_chat(&dir, &format!("Chat {index}"), &[], age);
         }
         let mut cache = ChatsCache::in_memory();
-        let sorting = Sorting { key: SortKey::LastUpdated, order: SortOrder::Oldest };
+        let sorting = Sorting { key: SortKey::LastUpdated, order: SortOrder::Ascending };
         let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
         assert_eq!(titles(&found), vec!["Chat 1", "Chat 2"]);
         assert!(found.has_more);
@@ -920,10 +920,10 @@ mod tests {
         write_chat(&dir, "B", &messages(3), 300);
         write_chat(&dir, "C", &messages(2), 200);
         write_chat(&dir, "D", &messages(3), 100);
-        let newest = sorted(&dir, 10, SortKey::Messages, SortOrder::Newest);
-        assert_eq!(titles(&newest), vec!["D", "B", "C", "A"]);
-        let oldest = sorted(&dir, 10, SortKey::Messages, SortOrder::Oldest);
-        assert_eq!(titles(&oldest), vec!["A", "C", "D", "B"]);
+        let descending = sorted(&dir, 10, SortKey::Messages, SortOrder::Descending);
+        assert_eq!(titles(&descending), vec!["D", "B", "C", "A"]);
+        let ascending = sorted(&dir, 10, SortKey::Messages, SortOrder::Ascending);
+        assert_eq!(titles(&ascending), vec!["A", "C", "D", "B"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -933,9 +933,9 @@ mod tests {
         write_chat(&dir, "A", &[user_line("2026-10-11T10:00:00.000Z", "hello")], 300);
         write_chat(&dir, "B", &[user_line("2026-10-09T10:00:00.000Z", "hello")], 100);
         write_chat(&dir, "C", &[user_line("2026-10-10T10:00:00.000Z", "hello")], 200);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Newest)), vec!["A", "C", "B"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Oldest)), vec!["B", "C", "A"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::LastUpdated, SortOrder::Newest)), vec!["B", "C", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Descending)), vec!["A", "C", "B"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Ascending)), vec!["B", "C", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::LastUpdated, SortOrder::Descending)), vec!["B", "C", "A"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -944,7 +944,7 @@ mod tests {
         let dir = scratch("sort-created-fallback");
         write_chat(&dir, "Dated", &[user_line("2020-01-01T00:00:00.000Z", "hello")], 100);
         write_chat(&dir, "Undated", &[USER_LINE.to_string()], 50);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Newest)), vec!["Undated", "Dated"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Descending)), vec!["Undated", "Dated"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -956,10 +956,10 @@ mod tests {
         write_chat(&dir, "B", &[user_line(time, "Fix issue 2 and issue 3")], 300);
         write_chat(&dir, "C", &[user_line(time, "Merge pull request 5")], 200);
         write_chat(&dir, "D", &[user_line(time, "Merge pull request 6 and pull request 7")], 100);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Newest)), vec!["B", "A", "D", "C"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Oldest)), vec!["D", "C", "A", "B"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Newest)), vec!["D", "C", "B", "A"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Oldest)), vec!["B", "A", "C", "D"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Descending)), vec!["B", "A", "D", "C"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Ascending)), vec!["D", "C", "A", "B"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Descending)), vec!["D", "C", "B", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Ascending)), vec!["B", "A", "C", "D"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -971,8 +971,8 @@ mod tests {
         write_chat(&dir, "B", &[write_tool_line("/work/app/a.ts"), write_tool_line("/work/app/b.ts")], 200);
         let outside = [write_tool_line("/elsewhere/x.ts"), write_tool_line("/elsewhere/y.ts"), write_tool_line("/work/app/z.ts")];
         write_chat(&dir, "C", &outside, 100);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Newest)), vec!["C", "B", "A"]);
-        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Oldest)), vec!["A", "B", "C"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Descending)), vec!["C", "B", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Ascending)), vec!["A", "B", "C"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1000,7 +1000,7 @@ mod tests {
             write_chat(&dir, &format!("Chat {index}"), &[user_line("2026-10-11T10:00:00.000Z", "hello")], age);
         }
         let mut cache = ChatsCache::in_memory();
-        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Newest };
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Descending };
         let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
         assert_eq!(found.chats.len(), 2);
         assert!(found.has_more);
@@ -1016,7 +1016,7 @@ mod tests {
         let dir = scratch("sort-empty");
         write_chat(&dir, "Only", &[user_line("2026-10-11T10:00:00.000Z", "hello")], 300);
         write(&claude_folder(&dir).join("empty.jsonl"), "", 100);
-        let found = sorted(&dir, 5, SortKey::Messages, SortOrder::Newest);
+        let found = sorted(&dir, 5, SortKey::Messages, SortOrder::Descending);
         assert_eq!(titles(&found), vec!["Only"]);
         assert!(!found.has_more);
         let _ = std::fs::remove_dir_all(&dir);
@@ -1031,10 +1031,10 @@ mod tests {
         codex_file(&dir, "2026/10/10", two, "/work/app", &[&codex_message("first"), &codex_message("second")], 300);
         let index = format!("{{\"id\":\"{one}\",\"thread_name\":\"One\"}}\n{{\"id\":\"{two}\",\"thread_name\":\"Two\"}}\n");
         write(&dir.join("session_index.jsonl"), &index, 1);
-        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Newest };
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Descending };
         let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, sorting);
         assert_eq!(titles(&found), vec!["Two", "One"]);
-        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Oldest };
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Ascending };
         let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, sorting);
         assert_eq!(titles(&found), vec!["One", "Two"]);
         let _ = std::fs::remove_dir_all(&dir);

@@ -83,13 +83,13 @@ export class TauriMockFixture {
 	 *
 	 * @param limit - The number of conversations to return for each coding agent.
 	 * @param sortKey - What the conversations are sorted by.
-	 * @param order - "newest" puts the largest value of the sort key first, and "oldest" puts the smallest value first.
+	 * @param order - "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first.
 	 * @returns A new object each call, with the first conversations of Claude and of Codex.
 	 */
 	static buildChats(
 		limit: number,
 		sortKey: ChatSortKey = 'last_updated',
-		order: ChatSortOrder = 'newest',
+		order: ChatSortOrder = 'descending',
 	): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
 		const now = Date.now();
 		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
@@ -370,7 +370,7 @@ export class TauriMockFixture {
 	 *
 	 * @param chats - The conversations to sort. The array is not changed.
 	 * @param sortKey - What the conversations are sorted by.
-	 * @param order - "newest" puts the largest value first, and "oldest" puts the smallest value first.
+	 * @param order - "descending" puts the largest value first, and "ascending" puts the smallest value first.
 	 * @returns A new array with the conversations in order.
 	 */
 	private static _sortChats(chats: Chat[], sortKey: ChatSortKey, order: ChatSortOrder): Chat[] {
@@ -390,7 +390,7 @@ export class TauriMockFixture {
 					return chat.meta.files_written.length;
 			}
 		};
-		const direction = order === 'newest' ? -1 : 1;
+		const direction = order === 'descending' ? -1 : 1;
 		return [...chats].sort((a, b) => {
 			const byValue = (valueOf(a) - valueOf(b)) * direction;
 			return byValue !== 0 ? byValue : b.updated_at - a.updated_at;

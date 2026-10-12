@@ -253,7 +253,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
   ["chatsSortKey", "last_updated", "files_written"],
-  ["chatsOrder", "newest", "oldest"],
+  ["chatsOrder", "descending", "ascending"],
 ];
 
 describe("the last state of each option", () => {
@@ -342,7 +342,7 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.chatsAgent).toBe("claude");
     expect(restarted.settings.chatsView).toBe("compact");
     expect(restarted.settings.chatsSortKey).toBe("last_updated");
-    expect(restarted.settings.chatsOrder).toBe("newest");
+    expect(restarted.settings.chatsOrder).toBe("descending");
     expect(restarted.settings.searchRegex).toBe(true);
   });
 });

@@ -69,7 +69,7 @@ beforeEach(() => {
   settings.chatsAgent = "claude";
   settings.chatsView = "compact";
   settings.chatsSortKey = "last_updated";
-  settings.chatsOrder = "newest";
+  settings.chatsOrder = "descending";
   chats.isSorting = false;
   chats.hasMore = { claude: false, codex: false };
   chats.limit = CHAT_LIMITS[0];
@@ -89,7 +89,7 @@ describe("ChatsPanel", () => {
     answer([], []);
     mount(ChatsPanel);
     await flushPromises();
-    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "descending" });
   });
 
   it("shows the agent group and the right side first, then a separator, then the title of each conversation of Claude", async () => {
@@ -276,7 +276,7 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar", "Add the Chats sidebar section"], [], { claude: false });
     await pagerButtons(wrapper).more.trigger("click");
     await flushPromises();
-    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "newest" });
+    expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "last_updated", order: "descending" });
     expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
     expect(pagerButtons(wrapper).more.attributes("disabled")).toBeDefined();
   });
@@ -448,7 +448,7 @@ describe("ChatsPanel", () => {
       await flushPromises();
       const button = sortButton(wrapper);
       expect(button.classes()).toContain("dropdown-toggle");
-      expect(button.text()).toBe("Newest");
+      expect(button.text()).toBe("Descending");
       expect(button.get(".bi").classes()).toContain("bi-sort-down");
       expect(button.attributes("aria-label")).toBe("Sort the list");
       expect(button.element.nextElementSibling).toBe(wrapper.get('[aria-label="View of the list"]').element);
@@ -473,8 +473,8 @@ describe("ChatsPanel", () => {
         "Issues",
         "Pull requests",
         "Files written",
-        "Oldest",
-        "Newest",
+        "Ascending",
+        "Descending",
       ]);
       expect(sortItems().map((item) => item.getAttribute("aria-checked"))).toEqual([
         "false",
@@ -488,8 +488,8 @@ describe("ChatsPanel", () => {
       ]);
       const hiddenChecks = sortItems().map((item) => item.querySelector(".bi-check2")?.classList.contains("invisible"));
       expect(hiddenChecks).toEqual([true, false, true, true, true, true, true, false]);
-      expect(sortItem("Oldest").querySelector(".bi-sort-up")).not.toBeNull();
-      expect(sortItem("Newest").querySelector(".bi-sort-down")).not.toBeNull();
+      expect(sortItem("Ascending").querySelector(".bi-sort-up")).not.toBeNull();
+      expect(sortItem("Descending").querySelector(".bi-sort-down")).not.toBeNull();
     });
 
     it("sorts by the sort key that the developer clicks: it saves the sort key, asks again, and closes the dropdown menu", async () => {
@@ -501,21 +501,21 @@ describe("ChatsPanel", () => {
       sortItem("Messages from you").click();
       await flushPromises();
       expect(settings.chatsSortKey).toBe("messages");
-      expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "messages", order: "newest" });
+      expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "messages", order: "descending" });
       expect(shownTitles(wrapper)).toEqual(["Add the Chats sidebar section"]);
       expect(sortMenu()).toBeNull();
     });
 
-    it("sorts from the other end when the developer clicks Oldest, and the button names the new order", async () => {
+    it("sorts from the other end when the developer clicks Ascending, and the button names the new order", async () => {
       answer(["Fix the tab bar"], []);
       const wrapper = mount(ChatsPanel);
       await flushPromises();
       await sortButton(wrapper).trigger("click");
-      sortItem("Oldest").click();
+      sortItem("Ascending").click();
       await flushPromises();
-      expect(settings.chatsOrder).toBe("oldest");
-      expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "oldest" });
-      expect(sortButton(wrapper).text()).toBe("Oldest");
+      expect(settings.chatsOrder).toBe("ascending");
+      expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "ascending" });
+      expect(sortButton(wrapper).text()).toBe("Ascending");
       expect(sortButton(wrapper).get(".bi").classes()).toContain("bi-sort-up");
       expect(sortMenu()).toBeNull();
     });
@@ -572,12 +572,12 @@ describe("ChatsPanel", () => {
 
     it("starts with the saved sort key and the saved order", async () => {
       settings.chatsSortKey = "pull_requests";
-      settings.chatsOrder = "oldest";
+      settings.chatsOrder = "ascending";
       answer(["Fix the tab bar"], []);
       const wrapper = mount(ChatsPanel);
       await flushPromises();
-      expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "pull_requests", order: "oldest" });
-      expect(sortButton(wrapper).text()).toBe("Oldest");
+      expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "pull_requests", order: "ascending" });
+      expect(sortButton(wrapper).text()).toBe("Ascending");
       await sortButton(wrapper).trigger("click");
       expect(sortItem("Pull requests").getAttribute("aria-checked")).toBe("true");
       expect(sortItem("Last updated").getAttribute("aria-checked")).toBe("false");

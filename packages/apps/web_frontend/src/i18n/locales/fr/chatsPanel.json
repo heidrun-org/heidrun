@@ -74,6 +74,6 @@
   "sortKey.issues": "Issues",
   "sortKey.pull_requests": "Pull requests",
   "sortKey.files_written": "Fichiers écrits",
-  "sortOrder.oldest": "Plus ancien",
-  "sortOrder.newest": "Plus récent"
+  "sortOrder.ascending": "Croissant",
+  "sortOrder.descending": "Décroissant"
 }

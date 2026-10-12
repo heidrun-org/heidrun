@@ -62,8 +62,8 @@ const defaults = {
   chatsView: "compact" as "compact" | "expanded",
   /** Sidebar section Chats: what the list is sorted by. */
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
-  /** Sidebar section Chats: "newest" puts the largest value of the sort key first, and "oldest" puts the smallest value first. */
-  chatsOrder: "newest" as "oldest" | "newest",
+  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  chatsOrder: "descending" as "ascending" | "descending",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -172,7 +172,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
-  chatsOrder: ["oldest", "newest"],
+  chatsOrder: ["ascending", "descending"],
 };
 
 /**
