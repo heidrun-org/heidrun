@@ -225,11 +225,9 @@ describe("ToHandlePanel colors of a blocked card", () => {
     }
   });
 
-  it("gives the choice rows a light color in the light theme, so that the dark text can be read", () => {
+  it("gives the choice rows the background of the sidebar section in the light theme", () => {
     const lightText = stylesText.slice(stylesText.indexOf(':root[data-theme="light"] {'));
-    const background = /--choice-bg:\s*#([0-9a-fA-F]{6})/.exec(lightText);
-    expect(background).not.toBeNull();
-    const red = parseInt((background as RegExpExecArray)[1].slice(0, 2), 16);
-    expect(red).toBeGreaterThan(200);
+    expect(lightText).toMatch(/--choice-bg:\s*var\(--side\);/);
+    expect(lightText).toMatch(/--side:\s*#efefec;/);
   });
 });

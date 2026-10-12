@@ -87,7 +87,7 @@
   --pane-ring-selected: #aec3de;
   --pane-ring-blocked: #e6bcb9;
   --pane-ring-blocked-selected: #d98d89;
-  --choice-bg: #ffffff;
+  --choice-bg: var(--side);
   --choice-border: #e6bcb9;
   --choice-hover-bg: #fff3f2;
   --choice-number-bg: #f8d6d3;
