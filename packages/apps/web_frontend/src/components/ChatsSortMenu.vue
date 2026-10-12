@@ -3,7 +3,6 @@ import { nextTick, onBeforeUnmount, ref } from "vue";
 import {
   CHAT_SORT_KEYS,
   CHAT_SORT_ORDERS,
-  chats,
   chooseChatSortKey,
   chooseChatSortOrder,
   type ChatSortKey,
@@ -89,13 +88,11 @@ onBeforeUnmount(close);
     :class="{ show: isOpen }"
     aria-haspopup="menu"
     :aria-expanded="isOpen"
-    :aria-busy="chats.isSorting"
     :aria-label="t('chatsPanel.sortLabel')"
     :title="t('chatsPanel.sortTitle')"
     @click="toggle"
   >
-    <span v-if="chats.isSorting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    <Icon v-else :name="ORDER_ICONS[settings.chatsOrder]" />
+    <Icon :name="ORDER_ICONS[settings.chatsOrder]" />
     {{ t(`chatsPanel.sortKey.${settings.chatsSortKey}`) }}
   </button>
   <Teleport to="body">

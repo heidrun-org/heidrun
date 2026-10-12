@@ -70,7 +70,6 @@ beforeEach(() => {
   settings.chatsView = "compact";
   settings.chatsSortKey = "last_updated";
   settings.chatsOrder = "descending";
-  chats.isSorting = false;
   chats.hasMore = { claude: false, codex: false };
   chats.limit = CHAT_LIMITS[0];
   chats.error = null;
@@ -552,7 +551,7 @@ describe("ChatsPanel", () => {
       expect(sortMenu()).toBeNull();
     });
 
-    it("shows a small spinning wheel in the sort button while the new order waits for its answer", async () => {
+    it("keeps the icon of the sort button and the list while the new sort waits for its answer, with no spinning wheel", async () => {
       answer(["Fix the tab bar"], []);
       const wrapper = mount(ChatsPanel);
       await flushPromises();
@@ -561,14 +560,14 @@ describe("ChatsPanel", () => {
       await sortButton(wrapper).trigger("click");
       sortItem("Issues").click();
       await flushPromises();
-      expect(sortButton(wrapper).find(".spinner-border").exists()).toBe(true);
-      expect(sortButton(wrapper).attributes("aria-busy")).toBe("true");
+      expect(sortButton(wrapper).find(".spinner-border").exists()).toBe(false);
+      expect(sortButton(wrapper).get(".bi").classes()).toContain("bi-sort-down");
+      expect(sortButton(wrapper).text()).toBe("Issues");
       expect(shownTitles(wrapper)).toEqual(["Fix the tab bar"]);
       answer(["Add the Chats sidebar section"], []);
       finish(await vi.mocked(invoke)("chats_list"));
       await flushPromises();
-      expect(sortButton(wrapper).find(".spinner-border").exists()).toBe(false);
-      expect(sortButton(wrapper).attributes("aria-busy")).toBe("false");
+      expect(sortButton(wrapper).get(".bi").classes()).toContain("bi-sort-down");
       expect(shownTitles(wrapper)).toEqual(["Add the Chats sidebar section"]);
     });
 

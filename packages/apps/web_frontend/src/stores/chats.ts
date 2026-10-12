@@ -103,8 +103,6 @@ export const chats = reactive({
   agent: savedChatAgent(),
   /** True while a click on "Show more" waits for its answer. */
   isShowingMore: false,
-  /** True while a new sort key or a new order waits for its answer. */
-  isSorting: false,
   /** True until the first answer for the folder arrives. */
   isLoading: false,
   /** The reason why the conversations could not be read, or null. */
@@ -123,27 +121,13 @@ export function chooseChatAgent(agent: ChatAgent) {
  */
 export async function chooseChatSortKey(key: ChatSortKey): Promise<void> {
   settings.chatsSortKey = key;
-  await reloadAfterSortChange();
+  await loadChats(chats.folder);
 }
 
 /** Saves the order that the developer chose in the dropdown menu, for the next start, and reads the chats again. */
 export async function chooseChatSortOrder(order: ChatSortOrder): Promise<void> {
   settings.chatsOrder = order;
-  await reloadAfterSortChange();
-}
-
-/** Reads the chats again with the saved sort key and order, and tells while it waits. */
-async function reloadAfterSortChange(): Promise<void> {
-  const key = settings.chatsSortKey;
-  const order = settings.chatsOrder;
-  chats.isSorting = true;
-  try {
-    await loadChats(chats.folder);
-  } finally {
-    if (settings.chatsSortKey === key && settings.chatsOrder === order) {
-      chats.isSorting = false;
-    }
-  }
+  await loadChats(chats.folder);
 }
 
 /** The coding agents that have at least one conversation in the folder, in the order of the selector. */

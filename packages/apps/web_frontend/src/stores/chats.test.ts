@@ -58,7 +58,6 @@ beforeEach(() => {
   chats.hasMore = { claude: false, codex: false };
   chats.limit = CHAT_LIMITS[0];
   chats.isShowingMore = false;
-  chats.isSorting = false;
   chats.isLoading = false;
   chats.error = null;
   settings.chatsSortKey = "last_updated";
@@ -313,17 +312,15 @@ describe("the sort of the chats", () => {
     expect(chats.claude).toEqual([chat("z", "Last")]);
   });
 
-  it("tells while the new order waits for its answer, and keeps the list on the screen meanwhile", async () => {
+  it("keeps the list on the screen while the new order waits for its answer", async () => {
     vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     const waiting = answerByHand<unknown>();
     vi.mocked(invoke).mockReturnValueOnce(waiting.promise);
     const sorting = chooseChatSortOrder("ascending");
-    expect(chats.isSorting).toBe(true);
     expect(chats.claude).toEqual([chat("a", "First")]);
     waiting.answer(answerOf([chat("b", "Second")]));
     await sorting;
-    expect(chats.isSorting).toBe(false);
     expect(chats.claude).toEqual([chat("b", "Second")]);
   });
 
@@ -336,11 +333,9 @@ describe("the sort of the chats", () => {
     vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("c", "Third")]));
     await chooseChatSortKey("issues");
     expect(chats.claude).toEqual([chat("c", "Third")]);
-    expect(chats.isSorting).toBe(false);
     slow.answer(answerOf([chat("b", "Second")]));
     await first;
     expect(chats.claude).toEqual([chat("c", "Third")]);
-    expect(chats.isSorting).toBe(false);
   });
 
   it("keeps the sort key and the order when the developer selects another workspace", async () => {
