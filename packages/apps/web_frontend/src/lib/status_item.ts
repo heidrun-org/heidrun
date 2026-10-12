@@ -10,13 +10,13 @@ export type StatusItemAgent = {
 
 /** The agents of one status, with the title of the section of the menu. */
 export type StatusItemSection = {
-  /** Translated title, with the number of agents. */
+  /** Translated title, without the number of agents. */
   title: string;
   /** The agents of the section. */
   agents: StatusItemAgent[];
 };
 
-/** The quota that the fourth slot of the status item shows. */
+/** The quota that one ring of the status item shows. */
 export type StatusItemQuota = {
   /** Share of the quota already used, from 0 to 100. */
   percent: number;
@@ -31,7 +31,8 @@ export type StatusItemPayload = {
   blocked: StatusItemSection;
   done: StatusItemSection;
   working: StatusItemSection;
-  quota: StatusItemQuota | null;
+  /** The quotas to show, one ring and one menu line each: Claude first, then Codex. Empty when no quota is known. */
+  quotas: StatusItemQuota[];
   /** Translated text of the menu item that shows the main window. */
   openLabel: string;
   /** Translated text of a section without agent. */
@@ -51,9 +52,9 @@ export type StatusItemInput = {
   now: number;
   /** How long an agent may stay blocked before the status item glows red, in milliseconds. 0 switches it off. */
   blockedLimitMs: number;
-  /** The quota to show, or `null` when no quota is known. */
-  quota: { percent: number; text: string } | null;
-  /** Translated section titles, without the number of agents. */
+  /** The quotas to show, in the order of the rings. Empty when no quota is known. */
+  quotas: { percent: number; text: string }[];
+  /** Translated section titles. */
   titles: { blocked: string; done: string; working: string };
   openLabel: string;
   emptyLabel: string;
@@ -63,7 +64,7 @@ function section(input: StatusItemInput, status: "blocked" | "done" | "working")
   const agents = input.agents
     .filter((agent) => agent.status === status)
     .map((agent) => ({ paneId: agent.paneId, name: agent.name }));
-  return { title: `${input.titles[status]} (${agents.length})`, agents };
+  return { title: input.titles[status], agents };
 }
 
 /** True when an agent has been blocked for at least the limit. */
@@ -76,15 +77,18 @@ function isUrgent(input: StatusItemInput): boolean {
   );
 }
 
-/** Builds the data that the status item shows from the agents and the quota of the session. */
+/** Builds the data that the status item shows from the agents and the quotas of the session. */
 export function buildStatusItemPayload(input: StatusItemInput): StatusItemPayload {
-  const percent = input.quota === null ? null : Math.min(100, Math.max(0, input.quota.percent));
+  const quotas = input.quotas.map((quota) => {
+    const percent = Math.min(100, Math.max(0, quota.percent));
+    return { percent, level: gaugeLevel(percent), text: quota.text };
+  });
   return {
     isUrgent: isUrgent(input),
     blocked: section(input, "blocked"),
     done: section(input, "done"),
     working: section(input, "working"),
-    quota: input.quota === null || percent === null ? null : { percent, level: gaugeLevel(percent), text: input.quota.text },
+    quotas,
     openLabel: input.openLabel,
     emptyLabel: input.emptyLabel,
   };

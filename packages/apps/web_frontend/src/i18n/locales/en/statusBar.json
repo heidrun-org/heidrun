@@ -15,15 +15,11 @@
   "paceOk": "At this pace, the usage reaches {value} % at the reset.",
   "connectedTitle": "Connected to the local Herdr server",
   "local": "Local",
-  "blockedTitle": "Blocked, waiting for your answer",
-  "workingTitle": "Working now",
-  "doneTitle": "Finished",
   "gitUpstream": "Remote branch",
   "gitNoUpstream": "none",
   "gitToDownload": "Commits to download",
   "gitToUpload": "Commits to upload",
   "gitChangedFiles": "Changed files",
   "gitUntrackedFiles": "Untracked files",
-  "gitLastCommit": "Last commit",
-  "noAgent": "No agent"
+  "gitLastCommit": "Last commit"
 }
