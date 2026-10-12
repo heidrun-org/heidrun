@@ -1,12 +1,13 @@
-//! Draws the picture of the status item in the macOS menu bar: four glossy buttons side by side.
+//! Draws the picture of the status item in the macOS menu bar: flat discs and rings side by side.
 //!
 //! Every function here is pure: the same slots and the same time always give the same pixels. The module
 //! `status_item` owns the timer and gives the time of each frame.
 
 use std::f32::consts::PI;
 
-/// Width of one slot, in pixels. The picture is drawn at twice the size of the menu bar, for Retina screens.
-pub const SLOT_WIDTH: u32 = 48;
+/// Width of one slot, in pixels. The picture is drawn at twice the size of the menu bar, for Retina screens. The disc is
+/// 36 pixels wide, so 20 pixels of empty space separate two discs.
+pub const SLOT_WIDTH: u32 = 56;
 
 /// Height of the picture, in pixels. The library that shows the picture in the menu bar always scales it to 18 points
 /// high. Empty space above and below the discs would make the discs smaller than the icons of the other applications,
@@ -16,17 +17,30 @@ pub const PICTURE_HEIGHT: u32 = 44;
 /// Outer radius of the disc or the ring of a slot, in pixels.
 const RADIUS: f32 = 18.0;
 
-/// Inner radius of the ring of a slot, in pixels.
-const RING_INNER_RADIUS: f32 = 12.0;
+/// Inner radius of the ring of a slot, in pixels. The band of the ring is 8 pixels thick.
+const RING_INNER_RADIUS: f32 = 10.0;
 
-/// Width of the glow around a pulsing disc, in pixels.
+/// Width of the thin border of a disc, in pixels. The border has the normal color of the disc, whatever the number of
+/// agents.
+const BORDER_WIDTH: f32 = 2.0;
+
+/// Width of the glow around a disc that shows three agents or more, in pixels.
 const HALO_WIDTH: f32 = 4.0;
+
+/// Opacity of the glow next to the edge of the disc, from 0 to 1.
+const HALO_OPACITY: f32 = 0.8;
+
+/// Opacity of a disc without agent: the color is very faded, from 0 to 1.
+const FADED_OPACITY: f32 = 0.22;
+
+/// Share of white mixed into the color of a disc that shows two agents or more, from 0 to 1. The disc looks brighter.
+const BRIGHT_WHITE_SHARE: f32 = 0.35;
 
 /// Empty space on the left and on the right of the whole picture, in pixels.
 pub const PICTURE_PADDING: u32 = 16;
 
-/// Empty space on each side of a sprite, in pixels.
-const SPRITE_MARGIN: u32 = 2;
+/// Empty space on each side of a sprite, in pixels. The same space as between two discs.
+const SPRITE_MARGIN: u32 = 10;
 
 /// Number of frames of a walking sprite per second.
 const WALK_FRAMES_PER_SECOND: f32 = 8.0;
@@ -40,38 +54,18 @@ const ALARM_FREQUENCY: f32 = 1.2;
 /// Radius of the rounded corners of the glow behind the whole picture, in pixels.
 const ALARM_CORNER_RADIUS: f32 = 12.0;
 
-/// Number of pulses per second of a pulsing disc.
-const PULSE_FREQUENCY: f32 = 0.8;
-
-/// Direction of the light that shines on the buttons: from the top left, toward the viewer.
-const LIGHT: [f32; 3] = [-0.35, -0.55, 0.75];
-
-/// The animation of a disc.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Effect {
-    /// The disc does not move.
-    None,
-    /// A glow around the disc grows and shrinks.
-    Pulse,
-    /// A bright spot turns around the edge of the disc.
-    Orbit,
-    /// A band of light crosses the disc every few seconds.
-    Shine,
-}
-
 /// One slot of the picture.
 #[derive(Clone, Debug)]
 pub enum Slot {
-    /// A glossy disc with the number of agents inside. A disc with the number zero is dim and does not move.
+    /// A flat disc with the number of agents inside. The number of agents sets how lit the disc is: zero is very
+    /// faded, one has the normal color, two is brighter, three or more is brighter and has a glow.
     Disc {
         /// Number of agents. Numbers above 99 are drawn as 99.
         count: usize,
-        /// Color of the disc: red, green, blue.
+        /// Normal color of the disc: red, green, blue.
         color: [u8; 3],
-        /// Animation of the disc when the number is not zero.
-        effect: Effect,
     },
-    /// A glossy ring that fills clockwise from the top with a percentage.
+    /// A flat ring that fills clockwise from the top with a percentage.
     Ring {
         /// Share of the ring that is filled, from 0 to 100. `None` draws an empty ring.
         percent: Option<f64>,
@@ -112,7 +106,7 @@ impl Slot {
     /// True when the slot looks different from one frame to the next.
     pub fn is_animated(&self) -> bool {
         match self {
-            Slot::Disc { count, effect, .. } => *count > 0 && *effect != Effect::None,
+            Slot::Disc { .. } => false,
             Slot::Ring { is_urgent, .. } => *is_urgent,
             Slot::Sprite { frames, is_walking } => *is_walking && frames.len() > 1,
         }
@@ -147,17 +141,6 @@ fn over(top: Color, bottom: Color) -> Color {
     }
     let mix = |index: usize| (top[index] * top[3] + bottom[index] * bottom[3] * (1.0 - top[3])) / alpha;
     [mix(0), mix(1), mix(2), alpha]
-}
-
-/// Smooth step from 0 at `from` to 1 at `to`.
-fn smooth_step(from: f32, to: f32, value: f32) -> f32 {
-    let x = ((value - from) / (to - from)).clamp(0.0, 1.0);
-    x * x * (3.0 - 2.0 * x)
-}
-
-fn normalize(vector: [f32; 3]) -> [f32; 3] {
-    let length = (vector[0] * vector[0] + vector[1] * vector[1] + vector[2] * vector[2]).sqrt();
-    [vector[0] / length, vector[1] / length, vector[2] / length]
 }
 
 fn to_float(color: [u8; 3]) -> [f32; 3] {
@@ -238,93 +221,36 @@ impl Digits {
 // Discs
 ///////////////////////////////////////////////////////////////////////////////
 
-/// The color of the pixel at (`dx`, `dy`) from the center of a disc, without the digits.
-fn disc_color(dx: f32, dy: f32, color: [u8; 3], is_dim: bool, effect: Effect, time: f32) -> Color {
+/// The color of the pixel at (`dx`, `dy`) from the center of a disc, without the digits. The disc is flat, with a thin
+/// border in its normal color. The number of agents sets how lit the inside of the disc is:
+/// - zero: the color is very faded;
+/// - one: the normal color;
+/// - two: a brighter color;
+/// - three or more: the brighter color, with a glow around the disc.
+fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
     let distance = (dx * dx + dy * dy).sqrt();
-    // A disc without agent is an unlit lamp: the same color, dark and dull, but still opaque.
-    let base = to_float(color).map(|channel| if is_dim { channel * 0.3 + 0.12 } else { channel });
-    let is_moving = !is_dim && effect != Effect::None;
+    let base = to_float(color);
+    let lit = if count >= 2 { base.map(|channel| channel + (1.0 - channel) * BRIGHT_WHITE_SHARE) } else { base };
+    let opacity = if count == 0 { FADED_OPACITY } else { 1.0 };
 
-    let pulse = 0.5 + 0.5 * (2.0 * PI * PULSE_FREQUENCY * time).sin();
     let mut halo = TRANSPARENT;
-    if is_moving && effect == Effect::Pulse {
+    if count >= 3 {
         let falloff = (1.0 - (distance - RADIUS).max(0.0) / HALO_WIDTH).clamp(0.0, 1.0);
-        halo = [base[0], base[1], base[2], (0.1 + 0.4 * pulse) * falloff * falloff];
+        halo = [base[0], base[1], base[2], HALO_OPACITY * falloff * falloff];
     }
 
     let coverage = (RADIUS + 0.5 - distance).clamp(0.0, 1.0);
-    if coverage <= 0.0 {
-        return halo;
-    }
-
-    // The disc is a ball lit from the top left.
-    let nx = dx / RADIUS;
-    let ny = dy / RADIUS;
-    let radial = (nx * nx + ny * ny).min(1.0);
-    let nz = (1.0 - radial).sqrt();
-    let light = normalize(LIGHT);
-    let diffuse = (nx * light[0] + ny * light[1] + nz * light[2]).max(0.0);
-    let mut brightness = 0.55 + 0.65 * diffuse;
-    brightness *= 1.0 - 0.3 * smooth_step(0.78, 1.0, radial.sqrt());
-    if is_moving && effect == Effect::Pulse {
-        brightness *= 1.0 + 0.1 * pulse;
-    }
-    let half = normalize([light[0], light[1], light[2] + 1.0]);
-    let specular = (nx * half[0] + ny * half[1] + nz * half[2]).max(0.0).powi(28) * 0.9;
-
-    let mut rgb = [
-        base[0] * brightness + specular,
-        base[1] * brightness + specular,
-        base[2] * brightness + specular,
-    ];
-
-    // The glass: a pale ellipse across the upper part of the disc.
-    let ellipse_x = nx / 0.72;
-    let ellipse_y = (ny + 0.5) / 0.3;
-    let ellipse = ellipse_x * ellipse_x + ellipse_y * ellipse_y;
-    let mut gloss = if ellipse < 1.0 { 0.35 * (1.0 - ellipse) } else { 0.0 };
-
-    if is_moving && effect == Effect::Orbit {
-        let angle = dy.atan2(dx);
-        let spot = time * 2.0 * PI * 0.9;
-        let mut delta = (angle - spot) % (2.0 * PI);
-        if delta > PI {
-            delta -= 2.0 * PI;
-        } else if delta < -PI {
-            delta += 2.0 * PI;
-        }
-        let near_edge = smooth_step(0.7, 0.9, radial.sqrt());
-        let lift = near_edge * (1.0 - delta.abs() / 0.9).max(0.0) * 0.7;
-        for channel in rgb.iter_mut() {
-            *channel += lift;
-        }
-    }
-
-    if is_moving && effect == Effect::Shine {
-        let progress = (time % 3.0) / 0.9;
-        let position = -0.9 + progress * 1.8;
-        let across = (dx + dy) / (2.0 * RADIUS);
-        let lift = (1.0 - (across - position).abs() / 0.18).max(0.0) * 0.55;
-        for channel in rgb.iter_mut() {
-            *channel += lift;
-        }
-    }
-
-    if is_dim {
-        gloss *= 0.5;
-    }
-    let disc = over(
-        [1.0, 1.0, 1.0, gloss],
-        [rgb[0].clamp(0.0, 1.0), rgb[1].clamp(0.0, 1.0), rgb[2].clamp(0.0, 1.0), coverage],
-    );
-    over(disc, halo)
+    let inside = (RADIUS - BORDER_WIDTH + 0.5 - distance).clamp(0.0, 1.0);
+    let border = [base[0], base[1], base[2], coverage * (1.0 - inside)];
+    let fill = [lit[0], lit[1], lit[2], inside * opacity];
+    over(fill, over(border, halo))
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Rings
 ///////////////////////////////////////////////////////////////////////////////
 
-/// The color of the pixel at (`dx`, `dy`) from the center of a ring.
+/// The color of the pixel at (`dx`, `dy`) from the center of a ring. The ring is flat.
 fn ring_color(dx: f32, dy: f32, percent: Option<f64>, color: [u8; 3], is_urgent: bool, time: f32) -> Color {
     let distance = (dx * dx + dy * dy).sqrt();
     let coverage = (RADIUS + 0.5 - distance).clamp(0.0, 1.0) * (distance - RING_INNER_RADIUS + 0.5).clamp(0.0, 1.0);
@@ -339,17 +265,13 @@ fn ring_color(dx: f32, dy: f32, percent: Option<f64>, color: [u8; 3], is_urgent:
         Some(percent) => (turn as f64) * 100.0 <= percent.clamp(0.0, 100.0),
         None => false,
     };
-    // A tube: the middle of the band is brighter than its two edges.
-    let across = ((distance - RING_INNER_RADIUS) / (RADIUS - RING_INNER_RADIUS)).clamp(0.0, 1.0);
-    let tube = 0.65 + 0.55 * (PI * across).sin();
     if is_filled {
         let urgency = if is_urgent { 1.0 + 0.25 * (0.5 + 0.5 * (2.0 * PI * 1.5 * time).sin()) } else { 1.0 };
         let base = to_float(color);
-        let lit = |channel: f32| (channel * tube * urgency + 0.15 * (tube - 0.65).max(0.0)).clamp(0.0, 1.0);
+        let lit = |channel: f32| (channel * urgency).clamp(0.0, 1.0);
         [lit(base[0]), lit(base[1]), lit(base[2]), coverage]
     } else {
-        let gray = 0.6 * tube;
-        [gray, gray, gray + 0.03, 0.4 * coverage]
+        [0.6, 0.6, 0.63, 0.4 * coverage]
     }
 }
 
@@ -459,7 +381,7 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
                 let dx = local_x as f32 + 0.5 - center_x;
                 let dy = y as f32 + 0.5 - center_y;
                 let mut color = match slot {
-                    Slot::Disc { count, color, effect } => disc_color(dx, dy, *color, *count == 0, *effect, time),
+                    Slot::Disc { count, color } => disc_color(dx, dy, *color, *count),
                     Slot::Ring { percent, color, is_urgent } => ring_color(dx, dy, *percent, *color, *is_urgent, time),
                     Slot::Sprite { frames, is_walking } => sprite_color(frames, *is_walking, time, local_x, y),
                 };
@@ -492,14 +414,14 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
 /// dot small beside the text of the menu item.
 pub const DOT_SIZE: u32 = 72;
 
-/// Draws a dot for a menu item: the glossy disc of a slot, without number and without animation, in the middle of a
-/// square picture. Returns the pixels as red, green, blue, alpha bytes, row by row, `DOT_SIZE` pixels wide.
+/// Draws a dot for a menu item: the flat disc of a slot with one agent, without number, in the middle of a square
+/// picture. Returns the pixels as red, green, blue, alpha bytes, row by row, `DOT_SIZE` pixels wide.
 pub fn draw_dot(color: [u8; 3]) -> Vec<u8> {
     let center = DOT_SIZE as f32 / 2.0;
     let mut pixels = vec![0u8; (DOT_SIZE * DOT_SIZE * 4) as usize];
     for y in 0..DOT_SIZE {
         for x in 0..DOT_SIZE {
-            let drawn = disc_color(x as f32 + 0.5 - center, y as f32 + 0.5 - center, color, false, Effect::None, 0.0);
+            let drawn = disc_color(x as f32 + 0.5 - center, y as f32 + 0.5 - center, color, 1);
             let offset = ((y * DOT_SIZE + x) * 4) as usize;
             for channel in 0..4 {
                 pixels[offset + channel] = (drawn[channel].clamp(0.0, 1.0) * 255.0).round() as u8;
@@ -519,8 +441,11 @@ mod tests {
     /// The row in the middle of the picture, where the centers of the discs are.
     const MIDDLE: u32 = PICTURE_HEIGHT / 2;
 
-    fn disc(count: usize, effect: Effect) -> Slot {
-        Slot::Disc { count, color: RED, effect }
+    /// The horizontal center of a slot, in pixels.
+    const CENTER: u32 = SLOT_WIDTH / 2;
+
+    fn disc(count: usize) -> Slot {
+        Slot::Disc { count, color: RED }
     }
 
     fn pixel(pixels: &[u8], width: u32, x: u32, y: u32) -> [u8; 4] {
@@ -533,7 +458,7 @@ mod tests {
     }
 
     #[test]
-    fn a_dot_is_a_lit_disc_in_the_middle_of_a_transparent_square() {
+    fn a_dot_is_a_flat_disc_in_the_middle_of_a_transparent_square() {
         let pixels = draw_dot(RED);
         assert_eq!(pixels.len() as u32, DOT_SIZE * DOT_SIZE * 4);
         let middle = DOT_SIZE / 2;
@@ -555,39 +480,92 @@ mod tests {
 
     #[test]
     fn the_picture_is_as_wide_as_the_slots() {
-        let slots = vec![disc(1, Effect::None), disc(2, Effect::None), disc(3, Effect::None)];
+        let slots = vec![disc(1), disc(2), disc(3)];
         assert_eq!(draw_slots(&slots, 0.0).len() as u32, SLOT_WIDTH * 3 * PICTURE_HEIGHT * 4);
     }
 
     #[test]
-    fn a_disc_is_lit_from_the_top_left() {
-        let pixels = draw_slots(&[disc(0, Effect::None), disc(1, Effect::None)], 0.0);
-        let width = SLOT_WIDTH * 2;
-        let top_left = pixel(&pixels, width, SLOT_WIDTH + 14, MIDDLE - 10);
-        let bottom_right = pixel(&pixels, width, SLOT_WIDTH + 34, MIDDLE + 12);
-        assert!(brightness(top_left) > brightness(bottom_right) + 60);
+    fn a_disc_is_flat_with_the_normal_color_for_one_agent() {
+        let pixels = draw_slots(&[disc(1)], 0.0);
+        let top_left = pixel(&pixels, SLOT_WIDTH, CENTER - 12, MIDDLE - 8);
+        let bottom_right = pixel(&pixels, SLOT_WIDTH, CENTER + 12, MIDDLE + 8);
+        assert_eq!(top_left, [RED[0], RED[1], RED[2], 255]);
+        assert_eq!(bottom_right, top_left);
     }
 
     #[test]
     fn the_corner_of_a_slot_is_transparent() {
-        let pixels = draw_slots(&[disc(1, Effect::None)], 0.0);
+        let pixels = draw_slots(&[disc(1)], 0.0);
         assert_eq!(pixel(&pixels, SLOT_WIDTH, 0, 0)[3], 0);
     }
 
+    /// The pixel at the right of the center of the disc of `count` agents, away from the digits.
+    fn disc_pixel(count: usize) -> [u8; 4] {
+        pixel(&draw_slots(&[disc(count)], 0.0), SLOT_WIDTH, CENTER + 12, MIDDLE)
+    }
+
     #[test]
-    fn a_disc_without_agent_is_an_opaque_unlit_lamp_and_a_disc_with_agents_is_lit() {
-        let pixels = draw_slots(&[disc(0, Effect::None), disc(1, Effect::None)], 0.0);
-        let width = SLOT_WIDTH * 2;
-        let unlit = pixel(&pixels, width, 14, MIDDLE);
-        let lit = pixel(&pixels, width, SLOT_WIDTH + 14, MIDDLE);
-        assert_eq!(unlit[3], 255);
-        assert_eq!(lit[3], 255);
-        assert!(brightness(lit) > brightness(unlit) + 100);
+    fn a_disc_without_agent_has_a_very_faded_color() {
+        let faded = disc_pixel(0);
+        assert_eq!(&faded[..3], &RED[..]);
+        assert!(faded[3] > 0 && faded[3] < 100, "the disc is faded: {faded:?}");
+    }
+
+    #[test]
+    fn a_disc_with_two_agents_is_brighter_than_a_disc_with_one_agent() {
+        let (one, two) = (disc_pixel(1), disc_pixel(2));
+        assert_eq!(two[3], 255);
+        assert!(brightness(two) > brightness(one) + 60, "one: {one:?}, two: {two:?}");
+    }
+
+    #[test]
+    fn a_disc_with_three_agents_or_more_has_a_glow_and_the_color_of_two_agents() {
+        let outside = |count: usize| {
+            let pixels = draw_slots(&[disc(count)], 0.0);
+            pixel(&pixels, SLOT_WIDTH, CENTER + 20, MIDDLE)
+        };
+        assert_eq!(outside(0)[3], 0);
+        assert_eq!(outside(1)[3], 0);
+        assert_eq!(outside(2)[3], 0);
+        assert!(outside(3)[3] > 10);
+        assert_eq!(disc_pixel(3), disc_pixel(2));
+        assert_eq!(disc_pixel(9), disc_pixel(3));
+    }
+
+    #[test]
+    fn a_disc_has_a_thin_border_in_its_normal_color_whatever_the_number_of_agents() {
+        for count in [0, 1, 2, 3] {
+            let pixels = draw_slots(&[disc(count)], 0.0);
+            let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
+            assert_eq!(border, [RED[0], RED[1], RED[2], 255], "the border of {count} agents");
+        }
+    }
+
+    #[test]
+    fn the_border_of_a_faded_disc_stands_out_from_its_inside() {
+        let pixels = draw_slots(&[disc(0)], 0.0);
+        let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
+        let inside = pixel(&pixels, SLOT_WIDTH, CENTER + 12, MIDDLE);
+        assert!(border[3] > 250);
+        assert!(inside[3] < 100);
+    }
+
+    #[test]
+    fn the_border_is_thin() {
+        let pixels = draw_slots(&[disc(2)], 0.0);
+        let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
+        let inside = pixel(&pixels, SLOT_WIDTH, CENTER + 14, MIDDLE);
+        assert!(brightness(inside) > brightness(border) + 60, "border: {border:?}, inside: {inside:?}");
+    }
+
+    #[test]
+    fn a_disc_never_moves() {
+        assert!(!is_animated(&[disc(0), disc(1), disc(2), disc(3)]));
     }
 
     #[test]
     fn the_number_is_drawn_in_white_in_the_middle_of_the_disc() {
-        let pixels = draw_slots(&[disc(1, Effect::None)], 0.0);
+        let pixels = draw_slots(&[disc(1)], 0.0);
         let digits = Digits::of(1).expect("one agent has a digit");
         let (x, y) = (0..SLOT_WIDTH as i32)
             .flat_map(|x| (0..PICTURE_HEIGHT as i32).map(move |y| (x, y)))
@@ -605,32 +583,10 @@ mod tests {
     }
 
     #[test]
-    fn a_pulsing_disc_changes_with_the_time_and_a_still_disc_does_not() {
-        let at = |effect: Effect, time: f32| draw_slots(&[disc(1, effect)], time);
-        assert_ne!(at(Effect::Pulse, 0.0), at(Effect::Pulse, 0.2));
-        assert_eq!(at(Effect::None, 0.0), at(Effect::None, 0.2));
-    }
-
-    #[test]
-    fn the_orbit_and_the_shine_change_with_the_time() {
-        let at = |effect: Effect, time: f32| draw_slots(&[disc(1, effect)], time);
-        assert_ne!(at(Effect::Orbit, 0.0), at(Effect::Orbit, 0.3));
-        assert_ne!(at(Effect::Shine, 0.1), at(Effect::Shine, 0.4));
-    }
-
-    #[test]
-    fn an_empty_disc_does_not_move() {
-        let at = |time: f32| draw_slots(&[disc(0, Effect::Pulse)], time);
-        assert_eq!(at(0.0), at(0.2));
-    }
-
-    #[test]
     fn the_picture_moves_only_when_a_slot_moves() {
-        let still = vec![disc(0, Effect::Pulse), Slot::Ring { percent: Some(50.0), color: BLUE, is_urgent: false }];
-        let moving = vec![disc(2, Effect::Pulse)];
+        let still = vec![disc(2), Slot::Ring { percent: Some(50.0), color: BLUE, is_urgent: false }];
         let urgent = vec![Slot::Ring { percent: Some(95.0), color: RED, is_urgent: true }];
         assert!(!is_animated(&still));
-        assert!(is_animated(&moving));
         assert!(is_animated(&urgent));
     }
 
@@ -638,8 +594,8 @@ mod tests {
     fn a_ring_fills_clockwise_from_the_top() {
         let slots = [Slot::Ring { percent: Some(50.0), color: BLUE, is_urgent: false }];
         let pixels = draw_slots(&slots, 0.0);
-        let right = pixel(&pixels, SLOT_WIDTH, 24 + 15, MIDDLE);
-        let left = pixel(&pixels, SLOT_WIDTH, 24 - 15, MIDDLE);
+        let right = pixel(&pixels, SLOT_WIDTH, CENTER + 15, MIDDLE);
+        let left = pixel(&pixels, SLOT_WIDTH, CENTER - 15, MIDDLE);
         assert_eq!(right[3], 255);
         assert!(left[3] < 140);
     }
@@ -653,14 +609,14 @@ mod tests {
     fn a_sprite_slot_is_as_wide_as_its_frames_plus_a_margin_on_each_side() {
         let sprite = Slot::Sprite { frames: sprite_frames(), is_walking: false };
         assert_eq!(sprite.width(), 4 + 2 * SPRITE_MARGIN);
-        assert_eq!(slots_width(&[sprite, disc(1, Effect::None)]), 4 + 2 * SPRITE_MARGIN + SLOT_WIDTH);
+        assert_eq!(slots_width(&[sprite, disc(1)]), 4 + 2 * SPRITE_MARGIN + SLOT_WIDTH);
     }
 
     #[test]
     fn the_slot_after_a_sprite_starts_where_the_sprite_slot_ends() {
         let sprite = Slot::Sprite { frames: sprite_frames(), is_walking: false };
         let sprite_width = sprite.width();
-        let slots = [sprite, disc(1, Effect::None)];
+        let slots = [sprite, disc(1)];
         let pixels = draw_slots(&slots, 0.0);
         let width = slots_width(&slots);
         assert_eq!(pixels.len() as u32, width * PICTURE_HEIGHT * 4);
@@ -710,7 +666,7 @@ mod tests {
 
     #[test]
     fn the_alarm_puts_a_red_glow_behind_the_whole_picture_and_the_glow_pulses() {
-        let slots = [Slot::Sprite { frames: sprite_frames(), is_walking: false }, disc(1, Effect::None)];
+        let slots = [Slot::Sprite { frames: sprite_frames(), is_walking: false }, disc(1)];
         let width = picture_width(&slots);
         let quiet = draw_frame(&slots, false, 0.0);
         let at_low = draw_frame(&slots, true, 0.0);
@@ -724,7 +680,7 @@ mod tests {
 
     #[test]
     fn the_alarm_keeps_the_corners_of_the_picture_round() {
-        let slots = [disc(1, Effect::None), disc(1, Effect::None)];
+        let slots = [disc(1), disc(1)];
         let width = picture_width(&slots);
         let pixels = draw_frame(&slots, true, 0.2);
         assert_eq!(pixel(&pixels, width, 0, 0)[3], 0);
@@ -733,7 +689,7 @@ mod tests {
 
     #[test]
     fn the_picture_has_empty_space_on_the_left_and_on_the_right_of_the_slots() {
-        let slots = [disc(1, Effect::None), disc(1, Effect::None)];
+        let slots = [disc(1), disc(1)];
         let width = picture_width(&slots);
         assert_eq!(width, 2 * SLOT_WIDTH + 2 * PICTURE_PADDING);
         let pixels = draw_frame(&slots, false, 0.0);
@@ -745,7 +701,7 @@ mod tests {
 
     #[test]
     fn the_first_slot_starts_after_the_empty_space_and_keeps_its_pixels() {
-        let slots = [disc(1, Effect::None)];
+        let slots = [disc(1)];
         let width = picture_width(&slots);
         let frame = draw_frame(&slots, false, 0.0);
         let content = draw_slots(&slots, 0.0);
@@ -759,7 +715,7 @@ mod tests {
 
     #[test]
     fn the_red_glow_also_covers_the_empty_space_on_the_left_and_on_the_right() {
-        let slots = [disc(1, Effect::None)];
+        let slots = [disc(1)];
         let width = picture_width(&slots);
         let pixels = draw_frame(&slots, true, 0.0);
         assert!(pixel(&pixels, width, 2, PICTURE_HEIGHT / 2)[3] > 0);
@@ -775,7 +731,7 @@ mod tests {
 
     #[test]
     fn the_alarm_makes_the_picture_move_even_when_no_slot_moves() {
-        let still = [disc(0, Effect::None)];
+        let still = [disc(0)];
         assert!(!is_frame_animated(&still, false));
         assert!(is_frame_animated(&still, true));
     }
@@ -784,6 +740,18 @@ mod tests {
     fn the_middle_of_a_ring_is_transparent() {
         let slots = [Slot::Ring { percent: Some(100.0), color: BLUE, is_urgent: false }];
         let pixels = draw_slots(&slots, 0.0);
-        assert_eq!(pixel(&pixels, SLOT_WIDTH, 24, MIDDLE)[3], 0);
+        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER, MIDDLE)[3], 0);
+    }
+
+    #[test]
+    fn the_band_of_a_ring_is_eight_pixels_thick_and_flat() {
+        let slots = [Slot::Ring { percent: Some(100.0), color: BLUE, is_urgent: false }];
+        let pixels = draw_slots(&slots, 0.0);
+        let inner = pixel(&pixels, SLOT_WIDTH, CENTER + 11, MIDDLE);
+        let outer = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
+        assert_eq!(inner, [BLUE[0], BLUE[1], BLUE[2], 255]);
+        assert_eq!(outer, inner);
+        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER + 8, MIDDLE)[3], 0);
+        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER + 19, MIDDLE)[3], 0);
     }
 }

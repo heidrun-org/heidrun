@@ -1,11 +1,12 @@
 //! The status item of Heidrun in the macOS menu bar: one wide picture with four slots, and a menu that opens on click.
 //!
-//! The slots, from left to right: blocked agents, finished agents, working agents, Claude quota.
+//! The slots, from left to right: the icon of Heidrun, blocked agents, finished agents, working agents, then one ring
+//! for each quota (Claude, then Codex).
 //! The web page sends the data with the command `status_item_update`. This module draws the picture, builds the
 //! menu, and tells the web page which agent the user chose in the menu.
 
 use crate::status_item_icon as icon;
-use crate::status_item_picture::{self as picture, Effect, Slot, PICTURE_HEIGHT};
+use crate::status_item_picture::{self as picture, Slot, PICTURE_HEIGHT};
 use serde::Deserialize;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
@@ -31,7 +32,7 @@ const FRAME_INTERVAL: Duration = Duration::from_millis(50);
 
 const BLOCKED_COLOR: [u8; 3] = [235, 64, 52];
 const DONE_COLOR: [u8; 3] = [52, 199, 89];
-const WORKING_COLOR: [u8; 3] = [142, 142, 147];
+const WORKING_COLOR: [u8; 3] = [10, 132, 255];
 const QUOTA_OK_COLOR: [u8; 3] = [10, 132, 255];
 const QUOTA_WARN_COLOR: [u8; 3] = [255, 159, 10];
 
@@ -72,7 +73,7 @@ pub enum QuotaLevel {
     Crit,
 }
 
-/// The quota that the fourth slot shows.
+/// The quota that a ring shows.
 #[derive(Deserialize, Clone, Default, Debug, PartialEq)]
 #[serde(default)]
 pub struct StatusQuota {
@@ -94,8 +95,9 @@ pub struct StatusItemPayload {
     pub done: StatusSection,
     /// Agents that work now.
     pub working: StatusSection,
-    /// The quota, or `None` when no quota is known.
-    pub quota: Option<StatusQuota>,
+    /// The quotas to show, one ring and one menu line each: Claude first, then Codex. The list is empty when no quota
+    /// is known.
+    pub quotas: Vec<StatusQuota>,
     /// Text of the menu item that shows the main window, already translated.
     pub open_label: String,
     /// Text of a section without agent, already translated.
@@ -123,7 +125,8 @@ impl Default for StatusItemState {
     }
 }
 
-/// Fake agents for the demo: two blocked, one finished, three working, and a critical quota.
+/// Fake agents for the demo: two blocked, one finished, three working, a critical Claude quota, and a calm Codex
+/// quota.
 fn demo_payload() -> StatusItemPayload {
     let section = |title: &str, count: usize| StatusSection {
         title: title.to_string(),
@@ -135,7 +138,10 @@ fn demo_payload() -> StatusItemPayload {
         blocked: section("Blocked", 2),
         done: section("Finished", 1),
         working: section("Working", 3),
-        quota: Some(StatusQuota { percent: 85.0, level: QuotaLevel::Crit, text: "Demo quota: 85 % used".to_string() }),
+        quotas: vec![
+            StatusQuota { percent: 85.0, level: QuotaLevel::Crit, text: "Demo Claude: 85 % used".to_string() },
+            StatusQuota { percent: 40.0, level: QuotaLevel::Ok, text: "Demo Codex: 40 % used".to_string() },
+        ],
         open_label: "Open Heidrun".to_string(),
         empty_label: "No agent".to_string(),
         is_urgent: true,
@@ -152,26 +158,25 @@ impl StatusItemState {
 // Picture
 ///////////////////////////////////////////////////////////////////////////////
 
-/// The slots for the data of the web page: the icon of Heidrun, then blocked, finished, working, and the quota.
-/// The icon of Heidrun does not move.
+/// The slots for the data of the web page: the icon of Heidrun, then blocked, finished, working, and one ring for each
+/// quota. The icon of Heidrun does not move.
 pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
-    let (quota_percent, quota_color, is_quota_urgent) = match &payload.quota {
-        Some(quota) => match quota.level {
-            QuotaLevel::Ok => (Some(quota.percent), QUOTA_OK_COLOR, false),
-            QuotaLevel::Warn => (Some(quota.percent), QUOTA_WARN_COLOR, false),
-            QuotaLevel::Crit => (Some(quota.percent), BLOCKED_COLOR, true),
-        },
-        None => (None, QUOTA_OK_COLOR, false),
-    };
     let mut slots = Vec::new();
     let icon = icon::frames();
     if !icon.is_empty() {
         slots.push(Slot::Sprite { frames: icon, is_walking: false });
     }
-    slots.push(Slot::Disc { count: payload.blocked.agents.len(), color: BLOCKED_COLOR, effect: Effect::Pulse });
-    slots.push(Slot::Disc { count: payload.done.agents.len(), color: DONE_COLOR, effect: Effect::None });
-    slots.push(Slot::Disc { count: payload.working.agents.len(), color: WORKING_COLOR, effect: Effect::None });
-    slots.push(Slot::Ring { percent: quota_percent, color: quota_color, is_urgent: is_quota_urgent });
+    slots.push(Slot::Disc { count: payload.blocked.agents.len(), color: BLOCKED_COLOR });
+    slots.push(Slot::Disc { count: payload.done.agents.len(), color: DONE_COLOR });
+    slots.push(Slot::Disc { count: payload.working.agents.len(), color: WORKING_COLOR });
+    for quota in &payload.quotas {
+        let (color, is_urgent) = match quota.level {
+            QuotaLevel::Ok => (QUOTA_OK_COLOR, false),
+            QuotaLevel::Warn => (QUOTA_WARN_COLOR, false),
+            QuotaLevel::Crit => (BLOCKED_COLOR, true),
+        };
+        slots.push(Slot::Ring { percent: Some(quota.percent), color, is_urgent });
+    }
     slots
 }
 
@@ -220,7 +225,7 @@ fn dot_image(color: [u8; 3]) -> Image<'static> {
     Image::new_owned(picture::draw_dot(color), picture::DOT_SIZE, picture::DOT_SIZE)
 }
 
-/// The menu that opens on a click: one section per status, then the quota, then the item that shows the main window.
+/// The menu that opens on a click: one section per status, then the quotas, then the item that shows the main window.
 /// Each agent has a dot in the color of its section.
 fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
     let mut builder = MenuBuilder::new(app);
@@ -235,8 +240,11 @@ fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Men
         }
         builder = builder.separator();
     }
-    if let Some(quota) = &payload.quota {
-        builder = builder.item(&MenuItemBuilder::new(&quota.text).enabled(false).build(app)?).separator();
+    for quota in &payload.quotas {
+        builder = builder.item(&MenuItemBuilder::new(&quota.text).enabled(false).build(app)?);
+    }
+    if !payload.quotas.is_empty() {
+        builder = builder.separator();
     }
     builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, &payload.open_label).build(app)?).build()
 }
@@ -329,13 +337,13 @@ mod tests {
             "blocked": { "title": "Blocked (1)", "agents": [{ "paneId": "p1", "name": "api · fix" }] },
             "done": { "title": "Finished (0)", "agents": [] },
             "working": { "title": "Working (0)", "agents": [] },
-            "quota": { "percent": 73.5, "level": "warn", "text": "Claude: 74 % used" },
+            "quotas": [{ "percent": 73.5, "level": "warn", "text": "Claude: 74 % used" }],
             "openLabel": "Open Heidrun",
             "emptyLabel": "No agent"
         }"#;
         let payload: StatusItemPayload = serde_json::from_str(json).expect("the data is valid");
         assert_eq!(payload.blocked.agents, vec![StatusAgent { pane_id: "p1".into(), name: "api · fix".into() }]);
-        assert_eq!(payload.quota.as_ref().map(|quota| quota.level), Some(QuotaLevel::Warn));
+        assert_eq!(payload.quotas.iter().map(|quota| quota.level).collect::<Vec<_>>(), vec![QuotaLevel::Warn]);
         assert_eq!(payload.open_label, "Open Heidrun");
     }
 
@@ -349,8 +357,8 @@ mod tests {
 
     #[test]
     fn data_without_quota_is_read() {
-        let payload: StatusItemPayload = serde_json::from_str(r#"{ "quota": null }"#).expect("the data is valid");
-        assert_eq!(payload.quota, None);
+        let payload: StatusItemPayload = serde_json::from_str(r#"{ "quotas": [] }"#).expect("the data is valid");
+        assert!(payload.quotas.is_empty());
         assert!(payload.blocked.agents.is_empty());
     }
 
@@ -391,13 +399,13 @@ mod tests {
                 Slot::Ring { .. } | Slot::Sprite { .. } => None,
             })
             .collect();
-        assert_eq!(counts, vec![None, Some(2), Some(1), Some(0), None]);
+        assert_eq!(counts, vec![None, Some(2), Some(1), Some(0)]);
     }
 
     #[test]
     fn the_ring_has_the_color_of_the_quota_level_and_a_critical_quota_moves() {
         let quota = |level: QuotaLevel| StatusItemPayload {
-            quota: Some(StatusQuota { percent: 90.0, level, text: String::new() }),
+            quotas: vec![StatusQuota { percent: 90.0, level, text: String::new() }],
             ..StatusItemPayload::default()
         };
         let ring = |payload: &StatusItemPayload| match slots_for(payload).pop() {
@@ -407,6 +415,36 @@ mod tests {
         assert_eq!(ring(&quota(QuotaLevel::Ok)), (QUOTA_OK_COLOR, false));
         assert_eq!(ring(&quota(QuotaLevel::Warn)), (QUOTA_WARN_COLOR, false));
         assert_eq!(ring(&quota(QuotaLevel::Crit)), (BLOCKED_COLOR, true));
+    }
+
+    #[test]
+    fn each_quota_has_its_own_ring_in_the_order_of_the_data() {
+        let quota = |percent: f64| StatusQuota { percent, level: QuotaLevel::Ok, text: String::new() };
+        let rings = |quotas: Vec<StatusQuota>| -> Vec<Option<f64>> {
+            let payload = StatusItemPayload { quotas, ..StatusItemPayload::default() };
+            slots_for(&payload)
+                .iter()
+                .filter_map(|slot| match slot {
+                    Slot::Ring { percent, .. } => Some(*percent),
+                    _ => None,
+                })
+                .collect()
+        };
+        assert_eq!(rings(vec![]), Vec::<Option<f64>>::new());
+        assert_eq!(rings(vec![quota(20.0)]), vec![Some(20.0)]);
+        assert_eq!(rings(vec![quota(20.0), quota(60.0)]), vec![Some(20.0), Some(60.0)]);
+    }
+
+    #[test]
+    fn the_blocked_finished_and_working_discs_are_red_green_and_blue() {
+        let colors: Vec<[u8; 3]> = slots_for(&StatusItemPayload::default())
+            .iter()
+            .filter_map(|slot| match slot {
+                Slot::Disc { color, .. } => Some(*color),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(colors, vec![[235, 64, 52], [52, 199, 89], [10, 132, 255]]);
     }
 
     #[test]
@@ -443,12 +481,12 @@ mod tests {
     }
 
     #[test]
-    fn a_blocked_agent_makes_the_picture_move() {
+    fn a_blocked_agent_alone_does_not_make_the_picture_move() {
         let payload = StatusItemPayload {
             blocked: StatusSection { title: String::new(), agents: vec![agent("p1")] },
             ..StatusItemPayload::default()
         };
-        assert!(picture::is_animated(&slots_for(&payload)));
+        assert!(!picture::is_animated(&slots_for(&payload)));
     }
 
     #[test]

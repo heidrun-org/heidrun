@@ -16,16 +16,23 @@ const CLOCK_INTERVAL_MS = 15_000;
 /** The current time in milliseconds, updated every `CLOCK_INTERVAL_MS`. */
 const now = ref(Date.now());
 
-/** The quota of the account that the fourth slot of the status item shows: Claude first, then any other account. */
-const shownQuota = computed(() => {
+/** The quotas of the accounts that the rings of the status item show: Claude first, then Codex. */
+const shownQuotas = computed(() => {
   const owned = quotas.value.filter((quota) => settings.ownedAgents.includes(quota.provider));
-  const quota = owned.find((candidate) => candidate.provider === "claude") ?? owned[0];
-  const ringWindow = quota === undefined ? undefined : quotaRingWindow(quota.windows);
-  if (quota === undefined || ringWindow === undefined) {
-    return null;
-  }
-  const percent = Math.round(ringWindow.percent);
-  return { percent: ringWindow.percent, text: t("statusItem.quota", { name: quota.label.split(" · ")[0], percent }) };
+  const ordered = ["claude", "codex"].flatMap((provider) => owned.filter((quota) => quota.provider === provider));
+  return ordered.flatMap((quota) => {
+    const ringWindow = quotaRingWindow(quota.windows);
+    if (ringWindow === undefined) {
+      return [];
+    }
+    const percent = Math.round(ringWindow.percent);
+    return [
+      {
+        percent: ringWindow.percent,
+        text: t("statusItem.quota", { name: quota.label.split(" · ")[0], percent }),
+      },
+    ];
+  });
 });
 
 /** The data of the status item, as text: the status item is updated only when this text changes. */
@@ -42,7 +49,7 @@ const payloadJson = computed(() =>
         })),
       now: now.value,
       blockedLimitMs: settings.notifBlockedMin * 60_000,
-      quota: shownQuota.value,
+      quotas: shownQuotas.value,
       titles: {
         blocked: t("statusBar.blockedTitle"),
         done: t("statusBar.doneTitle"),

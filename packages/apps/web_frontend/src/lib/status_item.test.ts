@@ -11,7 +11,7 @@ const input: StatusItemInput = {
   ],
   now: 1_000_000 + 2 * 60_000,
   blockedLimitMs: 5 * 60_000,
-  quota: { percent: 73.4, text: "Claude: 73 % used" },
+  quotas: [{ percent: 73.4, text: "Claude: 73 % used" }],
   titles: { blocked: "Blocked", done: "Finished", working: "Working" },
   openLabel: "Open Heidrun",
   emptyLabel: "No agent",
@@ -39,7 +39,7 @@ describe("buildStatusItemPayload", () => {
 
   it("gives the quota a colour level", () => {
     const level = (percent: number) =>
-      buildStatusItemPayload({ ...input, quota: { percent, text: "" } }).quota?.level;
+      buildStatusItemPayload({ ...input, quotas: [{ percent, text: "" }] }).quotas[0]?.level;
     expect(level(10)).toBe("ok");
     expect(level(70)).toBe("warn");
     expect(level(95)).toBe("crit");
@@ -47,13 +47,23 @@ describe("buildStatusItemPayload", () => {
 
   it("keeps the quota between 0 and 100", () => {
     const percent = (value: number) =>
-      buildStatusItemPayload({ ...input, quota: { percent: value, text: "" } }).quota?.percent;
+      buildStatusItemPayload({ ...input, quotas: [{ percent: value, text: "" }] }).quotas[0]?.percent;
     expect(percent(140)).toBe(100);
     expect(percent(-5)).toBe(0);
   });
 
   it("sends no quota when no quota is known", () => {
-    expect(buildStatusItemPayload({ ...input, quota: null }).quota).toBeNull();
+    expect(buildStatusItemPayload({ ...input, quotas: [] }).quotas).toEqual([]);
+  });
+
+  it("sends one quota for Claude and one for Codex, in the order given", () => {
+    const quotas = [
+      { percent: 26, text: "Claude: 26 % used" },
+      { percent: 60, text: "Codex: 60 % used" },
+    ];
+    const payload = buildStatusItemPayload({ ...input, quotas });
+    expect(payload.quotas.map((quota) => quota.text)).toEqual(["Claude: 26 % used", "Codex: 60 % used"]);
+    expect(payload.quotas.map((quota) => quota.level)).toEqual(["ok", "warn"]);
   });
 
   it("is not urgent while the blocked agent waits for less than the limit", () => {
