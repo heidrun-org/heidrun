@@ -2,15 +2,15 @@ import { settings, type LeftSidebarSection, type RightSidebarSection } from "./s
 
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section opens if it is hidden, and shows the sidebar
- * section. The To handle, Scripts, and Git sidebar sections belong to the left
- * sidebar. The Pane and Notes sidebar sections belong to the right sidebar.
+ * section. The Scripts and Git sidebar sections belong to the left sidebar. The To handle, Pane, Notes, and Chats
+ * sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
-  if (sidebarSection === "pane" || sidebarSection === "notes") {
-    settings.rightOpen = true;
-    settings.rightSidebarSection = sidebarSection;
+  if (sidebarSection === "actions" || sidebarSection === "git") {
+    settings.leftOpen = true;
+    settings.leftSidebarSection = sidebarSection;
     return;
   }
-  settings.leftOpen = true;
-  settings.leftSidebarSection = sidebarSection;
+  settings.rightOpen = true;
+  settings.rightSidebarSection = sidebarSection;
 }

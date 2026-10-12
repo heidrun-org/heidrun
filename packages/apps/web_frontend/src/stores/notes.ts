@@ -3,6 +3,7 @@ import { paneName } from "../lib/format";
 import { reorderSubset } from "../lib/reorder";
 import type { AgentInfo } from "../lib/types";
 import { selectedWorkspace, tabLabel, toast, workspaceLabel } from "./session";
+import { settings } from "./settings";
 import { t } from "../i18n/index";
 
 export interface Note {
@@ -51,7 +52,7 @@ function load(): Note[] {
   }
 }
 
-export const notes = reactive({ list: load(), showAll: false, openId: null as string | null });
+export const notes = reactive({ list: load(), openId: null as string | null });
 
 watch(
   () => notes.list,
@@ -70,7 +71,7 @@ watch(
  * selected workspace, or every note when "All workspaces" is checked.
  */
 export const visibleNotes = computed(() => {
-  if (notes.showAll) {
+  if (settings.notesShowAll) {
     return notes.list;
   }
   const label = selectedWorkspace.value?.label;

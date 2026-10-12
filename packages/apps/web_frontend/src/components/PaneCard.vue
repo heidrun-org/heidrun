@@ -5,7 +5,7 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
-import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state, tabs } from "../stores/session";
 import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
 import { mosaic } from "../stores/mosaic";
@@ -15,7 +15,15 @@ import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
 // `isInColumnOfPinnedPanes`: shown in the column of pinned panes, in every tab, the tab of the pane included.
-const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
+// `isTopLeft`: the pane touches the top left corner of the area of the panes, under the first tab of the tab bar.
+const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean; isTopLeft?: boolean }>();
+
+// The left border of the first tab, when it is selected, goes straight down into the left border of the pane at the top left
+// corner. A round corner there would leave a notch at the joint, so the corner of that pane is square.
+const isFirstTabSelected = computed(() => tabs.value.length > 0 && tabs.value[0].tab_id === state.selectedTabId);
+const isSquareTopLeft = computed(
+  () => props.isTopLeft === true && props.isInColumnOfPinnedPanes !== true && isFirstTabSelected.value === true,
+);
 
 // A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
 const selected = computed(() =>
@@ -51,7 +59,7 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
+    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes, 'square-top-left': isSquareTopLeft }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
@@ -142,6 +150,7 @@ const subtitle = computed(() => {
 .pane.blocked { border-color: var(--pane-ring-blocked); }
 .pane.selected { border-color: var(--pane-ring-selected); }
 .pane.blocked.selected { border-color: var(--pane-ring-blocked-selected); }
+.pane.square-top-left { border-top-left-radius: 0; }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;

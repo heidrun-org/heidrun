@@ -1,6 +1,13 @@
 # Heidrun
 
-Heidrun is a macOS graphical interface for [Herdr](https://herdr.dev): the agents and terminals of a Herdr session, in one work window. This file gives the rules for working on this repository. The file `README.md` describes the application itself.
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+
+Keep your agents working. Know which one needs you.
+
+<!-- identity:end -->
+
+This file gives the rules for working on this repository. The file `README.md` describes the application itself.
 
 ## Project memory
 
@@ -53,12 +60,20 @@ Attach every screenshot, image, or video related to an issue with the `--attach`
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
 
+## Starting Heidrun to test it or to take a screenshot
+
+Always start Heidrun with the command line option `--no-splash-screen` when you start it to test it, and above all when you take a screenshot. Without the option, the splash screen covers the application for 3 seconds after the main window appears, so a screenshot taken in this time shows the splash screen and not the application, and you wait for nothing.
+
+- In development, run `pnpm dev -- -- --no-splash-screen` at the root of the repository or of the worktree. The command `tauri dev` gives the arguments after its second `--` to the application.
+- For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
+- The rules of the splash screen are in [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md), in the section "Splash screen".
+
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
 - `pnpm --filter web_frontend test` runs the Vitest tests of the package `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`.
 - `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
-- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
+- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the splash image component, and a complete build of the website. The test files sit in the folder `tests`.
 - `pnpm --filter raw_coding_agent_cli test` runs the Vitest tests of the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`.
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.

@@ -30,7 +30,7 @@ pub struct Project {
 }
 
 /// Walks up from `cwd` to the folder holding the folder `.heidrun` or the folder `.git`.
-fn find_root(cwd: &Path) -> PathBuf {
+pub(crate) fn find_root(cwd: &Path) -> PathBuf {
     let mut dir = Some(cwd);
     while let Some(d) = dir {
         if d.join(CONFIG_DIR).is_dir() || d.join(".git").exists() {

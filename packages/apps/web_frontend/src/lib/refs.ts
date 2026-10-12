@@ -106,12 +106,12 @@ async function load(cwd: string): Promise<RefContext> {
   }
 }
 
-function issueUrl(base: string | null, forge: Forge | null, n: string): string | null {
+export function issueUrl(base: string | null, forge: Forge | null, n: string): string | null {
   if (!base) return null;
   return forge === "github" ? `${base}/issues/${n}` : `${base}/-/issues/${n}`;
 }
 
-function mrUrl(base: string | null, forge: Forge | null, n: string): string | null {
+export function mrUrl(base: string | null, forge: Forge | null, n: string): string | null {
   if (!base) return null;
   return forge === "github" ? `${base}/pull/${n}` : `${base}/-/merge_requests/${n}`;
 }

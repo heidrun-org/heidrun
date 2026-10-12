@@ -477,7 +477,7 @@ fn tail(path: &std::path::Path, max: u64) -> String {
     }
 }
 
-fn short(s: &str, n: usize) -> String {
+pub(crate) fn short(s: &str, n: usize) -> String {
     let one = s.split_whitespace().collect::<Vec<_>>().join(" ");
     if one.chars().count() > n {
         format!("{}…", one.chars().take(n).collect::<String>())

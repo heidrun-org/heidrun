@@ -36,11 +36,11 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "toHandle" is the To handle sidebar section, and "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "toHandle" | "actions" | "git";
+/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
+export type LeftSidebarSection = "actions" | "git";
 
-/** The sidebar sections of the right sidebar. */
-export type RightSidebarSection = "pane" | "notes";
+/** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
+export type RightSidebarSection = "toHandle" | "pane" | "notes" | "chats";
 
 const defaults = {
   fontId: "geist",
@@ -56,6 +56,18 @@ const defaults = {
   leftSidebarSection: "actions" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "pane" as RightSidebarSection,
+  /** Sidebar section Chats: the coding agent whose chats the list shows. */
+  chatsAgent: "claude" as "claude" | "codex",
+  /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
+  chatsView: "compact" as "compact" | "expanded",
+  /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
+  dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
+  /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
+  clusteredDynamicTopics: false,
+  /** Sidebar section Chats: what the list is sorted by. */
+  chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
+  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  chatsOrder: "descending" as "ascending" | "descending",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -127,7 +139,68 @@ const defaults = {
   skillsLevel: "workspace" as "workspace" | "user",
   /** The window of a SKILL.md file shows the rendered Markdown (true) or the highlighted source (false). */
   skillsViewRendered: true,
+  /** Window Files: the side column shows the file tree ("tree") or the search in the files ("grep"). */
+  filesSideMode: "tree" as "tree" | "grep",
+  /** Window Files, search in the files: the query is a regular expression. */
+  filesGrepRegex: false,
+  /** Window Files, search in the files: the case of the letters counts. */
+  filesGrepCase: false,
+  /** Window Files: the file tree shows the files that Git ignores. */
+  filesShowIgnored: false,
+  /** Window Agents information: the activity list shows all the panes ("all") or only the selected pane ("pane"). */
+  agentsActivityScope: "all" as "all" | "pane",
+  /** Window History: the period of the runs. */
+  historyPeriod: "today" as "today" | "7" | "30" | "90" | "365",
+  /** Window History: the left column groups the runs by workspace ("ws") or by feature ("feature"). */
+  historyGroupBy: "ws" as "ws" | "feature",
+  /** Window History: the panel of the assumptions is open. */
+  historyShowAssumptions: false,
+  /** Window Search: the query is a regular expression. */
+  searchRegex: false,
+  /** Window Search: look only in the panes of the coding agents. */
+  searchAgentsOnly: false,
+  /** Window Search: look only in the selected workspace. */
+  searchThisWorkspace: false,
+  /** Sidebar section Scripts: the list of suggestions shows all the suggestions, not only the first six. */
+  scriptsShowAllSuggestions: false,
+  /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
+  notesShowAll: false,
 };
+
+/** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */
+const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
+  filesSideMode: ["tree", "grep"],
+  agentsActivityScope: ["all", "pane"],
+  historyPeriod: ["today", "7", "30", "90", "365"],
+  historyGroupBy: ["ws", "feature"],
+  chatsAgent: ["claude", "codex"],
+  chatsView: ["compact", "expanded"],
+  dynamicTopicExtraction: ["keyword", "languageModel"],
+  chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
+  chatsOrder: ["ascending", "descending"],
+};
+
+/**
+ * Keeps each saved value that has the type of its default value, and that is in the list of its allowed values when the
+ * option has such a list. A corrupted saved value gives the default value back.
+ */
+function dropCorruptedValues(saved: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...saved };
+  for (const [name, defaultValue] of Object.entries(defaults)) {
+    const value = result[name];
+    const hasWrongType =
+      value === null ||
+      value === undefined ||
+      typeof value !== typeof defaultValue ||
+      Array.isArray(value) !== Array.isArray(defaultValue);
+    const allowedValues = ALLOWED_VALUES[name];
+    const isNotAllowed = allowedValues !== undefined && allowedValues.includes(value) === false;
+    if (hasWrongType || isNotAllowed) {
+      result[name] = structuredClone(defaultValue);
+    }
+  }
+  return result;
+}
 
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
 const RENAMED_SETTINGS: Record<string, string> = {
@@ -158,7 +231,11 @@ function load(): typeof defaults {
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
       stored.leftSidebarSection = "actions";
     }
-    const saved = { ...defaults, ...stored };
+    // The To handle sidebar section moved from the left sidebar to the right sidebar.
+    if (stored.leftSidebarSection === "toHandle") {
+      stored.leftSidebarSection = "actions";
+    }
+    const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {
       saved.codeTheme = "auto";
@@ -231,7 +308,8 @@ export type SettingsSection =
   | "notifications"
   | "general"
   | "mobileAccess"
-  | "agents";
+  | "agents"
+  | "dynamicTopics";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({

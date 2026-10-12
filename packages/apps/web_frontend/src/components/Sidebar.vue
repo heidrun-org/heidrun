@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { attention, state } from "../stores/session";
+import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
 import GitPanel from "./GitPanel.vue";
 import NavigationBar from "./NavigationBar.vue";
-import ToHandlePanel from "./ToHandlePanel.vue";
 import { currentForge } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
@@ -21,20 +20,14 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the navigation bar of the left sidebar: the To handle, Scripts, and Git sidebar sections. */
+/** The buttons of the navigation bar of the left sidebar: the Scripts and Git sidebar sections. */
 const sidebarSections = computed(() => [
-  {
-    id: "toHandle",
-    label: t("sidebar.sidebarSection.toHandle"),
-    badge: attention.value.length,
-    isAlert: attention.value.some((pane) => pane.agent_status === "blocked"),
-  },
   { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
   { id: "git", label: "Git", badge: currentForge.value?.requests.length ?? 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "toHandle" || id === "git" ? id : "actions");
+  openSidebarSection(id === "git" ? "git" : "actions");
 }
 </script>
 
@@ -49,8 +42,7 @@ function selectSidebarSection(id: string) {
         @select="selectSidebarSection"
       />
       <div class="sidebar-section-body">
-        <ToHandlePanel v-if="settings.leftSidebarSection === 'toHandle'" />
-        <ActionsPanel v-else-if="settings.leftSidebarSection === 'actions'" />
+        <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
         <GitPanel v-else />
       </div>
     </div>
@@ -60,9 +52,9 @@ function selectSidebarSection(id: string) {
 <style scoped>
 .side {
   flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
-  display: flex; flex-direction: column; gap: 24px; padding: 16px 12px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 24px; padding: 5px 0 16px; overflow-y: auto;
 }
 .sidebar-sections { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.left-navigation-bar { margin: 0 4px; }
+.left-navigation-bar { padding: 0 16px; }
 .sidebar-section-body { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
 </style>

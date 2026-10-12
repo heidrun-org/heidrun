@@ -6,6 +6,7 @@ import { claudeLink, enableClaudeLink } from "../stores/claude";
 import AgentStatusSummary from "./AgentStatusSummary.vue";
 import GitStatusSummary from "./GitStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
+import WorkspaceStatusSummary from "./WorkspaceStatusSummary.vue";
 import { t } from "../i18n/index";
 
 // Only the coding agents switched on in the section Agents of the Settings window show their quota.
@@ -16,6 +17,8 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
 
 <template>
   <footer class="status">
+    <WorkspaceStatusSummary />
+    <span class="sep workspace-sep"></span>
     <template v-for="(q, index) in ownedQuotas" :key="q.label">
       <span v-if="index > 0" class="sep"></span>
       <QuotaSummary :quota="q" />
@@ -49,6 +52,8 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
 }
 .muted { color: var(--muted); }
 .sep { width: 1px; height: 14px; background: var(--line-strong); }
+/* The workspace section has more room than the other sections: 6 more pixels on each side of the line after it. */
+.workspace-sep { margin: 0 6px; }
 .grow { flex: 1; }
 .machine { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .working-static { background: var(--working); }

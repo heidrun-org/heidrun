@@ -250,7 +250,7 @@ export const attention = computed(() =>
 );
 
 /**
- * What the workspace button of the tab bar says about the other workspaces: "blocked" when an agent of another workspace
+ * What the workspace status bar section says about the other workspaces: "blocked" when an agent of another workspace
  * waits for an answer, "done" when an agent of another workspace has finished, and null when no agent calls. An agent of
  * the selected workspace never counts, because the developer sees it.
  */

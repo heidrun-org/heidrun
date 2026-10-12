@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { computed, ref, watch } from "vue";
+import { computed, ref, toRef, watch } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import InlineRename from "./InlineRename.vue";
 import {
@@ -35,7 +35,7 @@ const error = computed(() => (ws.value ? project.errors[ws.value] : undefined));
 watch(ws, (id) => id && loadProject(id), { immediate: true });
 
 const renaming = ref<string | null>(null);
-const showAllSuggestions = ref(false);
+const showAllSuggestions = toRef(settings, "scriptsShowAllSuggestions");
 
 const visibleSuggestions = computed(() =>
   showAllSuggestions.value ? suggestions.value : suggestions.value.slice(0, 6),
@@ -171,7 +171,7 @@ function isRestarting(a: Action) {
 </template>
 
 <style scoped>
-.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 8px; }
+.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 8px; }
 .head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 .empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
 .action {

@@ -2,11 +2,16 @@
 
 <img src="data/images/heidrun_splash_screen.png" alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron" width="720">
 
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+
 # Heidrun
 
 ### With AI, every developer is THE GOAT!
 
-**All the agents and terminals of your [Herdr](https://herdr.dev) session, in one work window. A macOS graphical interface, forged for Vikings.**
+**Keep your agents working. Know which one needs you.**
+
+<!-- identity:end -->
 
 [![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
 [![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)
@@ -32,7 +37,7 @@ Think of Valhalla: the agents are the einherjar (the warriors who feast and figh
 
 ## Why you will like it
 
-- **One work window.** A workspace button and a tab bar above the panes, and a "To handle" queue of blocked or finished agents in the left sidebar.
+- **One work window.** A tab bar above the panes, the workspace selector in the status bar, and a "To handle" queue of blocked or finished agents in the right sidebar.
 - **Real terminals.** Every pane shows the real Herdr terminal, so Claude Code, Codex, and all the colors look exactly as in Herdr.
 - **Macros.** One click writes a ready text into a pane. The agents never wait for a developer who is typing.
 - **Inspector.** Allow or deny an agent request in one click, read the context of the agent, and ask another agent to fix a problem.

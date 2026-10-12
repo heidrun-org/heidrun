@@ -5,5 +5,6 @@
   "tabNotCreated": "Onglet non créé : {error}",
   "launchFailed": "Lancement impossible : {error}",
   "tabClosedBeforeReady": "Onglet fermé avant que l’agent soit prêt : consigne non envoyée",
-  "notReady": "L’agent n’est pas prêt au bout de 2 min : la consigne de départ est dans la zone de saisie"
+  "notReady": "L’agent n’est pas prêt au bout de 2 min : la consigne de départ est dans la zone de saisie",
+  "invalidSessionId": "Identifiant de session invalide : {name}"
 }

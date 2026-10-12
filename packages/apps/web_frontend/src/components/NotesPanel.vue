@@ -7,6 +7,7 @@ import { moveNote, notes, removeNote, renameNote, visibleNotes, type Note } from
 import { useReorder } from "../lib/reorder";
 import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
+import { settings } from "../stores/settings";
 import { ago } from "../lib/format";
 import { t } from "../i18n/index";
 
@@ -14,7 +15,6 @@ const list = visibleNotes;
 const others = computed(() => notes.list.length - list.value.length);
 
 // Only the grip starts a drag, so text in the note stays selectable.
-const armed = ref<string | null>(null);
 const drag = useReorder("y", (id, at) => moveNote(list.value.map((n) => n.id), id, at));
 
 const agents = computed(() => allPanes.value.filter((p) => p.agent));
@@ -38,7 +38,7 @@ function sendTo(n: Note, paneId: string) {
   <div class="panel">
     <div class="head">
       <div class="eyebrow">{{ t("notesPanel.title") }}</div>
-      <label class="toggle"><input v-model="notes.showAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
+      <label class="toggle"><input v-model="settings.notesShowAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
     </div>
 
     <p v-if="!list.length" class="empty">
@@ -55,14 +55,10 @@ function sendTo(n: Note, paneId: string) {
         'drop-before': drag.gap.value === ni,
         'drop-after': drag.gap.value === ni + 1 && ni === list.length - 1,
       }"
-      :draggable="armed === n.id"
-      @dragstart="drag.onDragStart($event, n.id)"
-      @dragover="drag.onDragOver($event, ni)"
-      @drop="drag.onDrop($event, list.map((x) => x.id))"
-      @dragend="drag.onDragEnd(); armed = null"
+      :data-reorder-id="n.id"
     >
       <header>
-        <span class="grip" aria-hidden="true" :title="t('notesPanel.dragToReorder')" @mousedown="armed = n.id" @mouseup="armed = null">⋮⋮</span>
+        <span class="grip" aria-hidden="true" :title="t('notesPanel.dragToReorder')" @pointerdown="drag.onPointerDown($event, list.map((x) => x.id))">⋮⋮</span>
         <InlineRename
           v-if="renaming === n.id"
           :value="n.title"
@@ -98,7 +94,7 @@ function sendTo(n: Note, paneId: string) {
 </template>
 
 <style scoped>
-.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; }
 .head { display: flex; align-items: center; justify-content: space-between; }
 .toggle { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--muted); }
 .toggle input { accent-color: var(--done); }

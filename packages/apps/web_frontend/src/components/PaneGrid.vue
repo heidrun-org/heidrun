@@ -27,6 +27,7 @@ const placed = computed(() => {
   if (!layout || !layout.area.width || !layout.area.height) {
     return panes.map((p, i) => ({
       pane: p,
+      isTopLeft: i === 0,
       style: { left: `${(i / panes.length) * 100}%`, top: "0", width: `${100 / panes.length}%`, height: "100%" },
     }));
   }
@@ -38,6 +39,7 @@ const placed = computed(() => {
       const r = rects.get(p.pane_id)!;
       return {
         pane: p,
+        isTopLeft: r.x === area.x && r.y === area.y,
         style: {
           left: `${((r.x - area.x) / area.width) * 100}%`,
           top: `${((r.y - area.y) / area.height) * 100}%`,
@@ -242,7 +244,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 <template>
   <div ref="gridEl" class="grid">
     <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
-      <PaneCard :pane="item.pane" />
+      <PaneCard :pane="item.pane" :is-top-left="item.isTopLeft" />
     </div>
     <div v-if="!placed.length" class="empty"><EmptyTabScreen /></div>
     <div

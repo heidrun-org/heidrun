@@ -48,7 +48,7 @@ const STATE: Record<string, [string, IssueData["stateLevel"]]> = {
 };
 
 /** The shown label and the level of a forge state (an unknown state is shown as it is). */
-function stateOf(raw: string): [string, IssueData["stateLevel"]] {
+export function stateOf(raw: string): [string, IssueData["stateLevel"]] {
   const known = STATE[raw];
   return known ? [t(known[0]), known[1]] : [raw, "muted"];
 }

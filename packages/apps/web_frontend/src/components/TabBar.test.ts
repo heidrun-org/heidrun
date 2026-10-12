@@ -87,6 +87,27 @@ describe("TabBar entries", () => {
     expect(dotClasses[2]).toEqual(["dot"]);
   });
 
+  it("shows an icon between the status dot and the name of each tab: the icon of the agent that decides the dot, or a terminal", async () => {
+    const { wrapper, session } = await mountTabBar();
+    session.state.snapshot = {
+      ...SNAPSHOT,
+      panes: [
+        { pane_id: "p1", workspace_id: "w1", tab_id: "t1", agent: "claude", agent_status: "working" },
+        { pane_id: "p2", workspace_id: "w1", tab_id: "t2", agent: "claude", agent_status: "idle" },
+        { pane_id: "p3", workspace_id: "w1", tab_id: "t2", agent: "codex", agent_status: "blocked" },
+        { pane_id: "p4", workspace_id: "w1", tab_id: "t3", agent_status: "idle" },
+      ],
+    } as unknown as SessionSnapshot;
+    await flushPromises();
+    expect(wrapper.findAll("[role=tab] .tab-icon").map((icon) => icon.element.className)).toEqual([
+      "bi bi-claude tab-icon",
+      "bi bi-openai tab-icon",
+      "bi bi-terminal tab-icon",
+    ]);
+    const children = Array.from(wrapper.get("[role=tab]").element.children);
+    expect(children.map((child) => child.classList[0])).toEqual(["dot", "bi", "tab-label"]);
+  });
+
   it("marks the selected tab", async () => {
     const { wrapper } = await mountTabBar();
     expect(wrapper.findAll("[role=tab]").map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false", "false"]);
@@ -116,6 +137,22 @@ describe("TabBar entries", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
     expect(sourceText).toContain(".nav-link:not(.active) .confirm { opacity: 0; }");
     expect(sourceText).toContain(".nav-link:not(.active):hover .confirm");
+  });
+
+  it("makes the whole tab clickable: the button that selects the tab covers the tab, and the close button sits over it", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain('.tab-main::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; }');
+    expect(sourceText).toMatch(/\.nav-link \.confirm \{\s*position: relative; z-index: 1;/);
+  });
+
+  it("puts the close button 6px from the right border of the tab, and keeps the padding of the tab that is being renamed", async () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain(".nav-tabs .nav-link.tab-closable { padding-right: 5px; }");
+    const { wrapper, session } = await mountTabBar();
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("tab-closable"))).toEqual([true, true, true]);
+    session.state.renaming = "tab:t2";
+    await flushPromises();
+    expect(wrapper.findAll(".nav-link").map((tab) => tab.classes("tab-closable"))).toEqual([true, false, true]);
   });
 
   it("shows the badge RC on the tab that holds a pane with Remote Control connected", async () => {
@@ -241,23 +278,104 @@ describe("TabBar close", () => {
   });
 });
 
+/** Gives each tab a box of 100 by 40 pixels, side by side, because jsdom has no layout. */
+function layOutTabs(wrapper: ReturnType<typeof mount>) {
+  wrapper.findAll(".nav-item").forEach((item, index) => {
+    item.element.getBoundingClientRect = () =>
+      ({ left: index * 100, right: index * 100 + 100, top: 0, bottom: 40, width: 100, height: 40 }) as DOMRect;
+  });
+}
+
+/** Moves the pointer of the mouse in the window, as the mouse does while a button is down. */
+function movePointer(x: number, y: number) {
+  window.dispatchEvent(new MouseEvent("pointermove", { clientX: x, clientY: y }));
+}
+
+/** Releases the button of the mouse in the window, then waits for the end of the task that removes the guard against the click. */
+async function releasePointer() {
+  window.dispatchEvent(new MouseEvent("pointerup"));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("TabBar move", () => {
   it("moves a tab after the user drags it to the end of the bar", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".nav-link");
-    await tabs[0].trigger("dragstart");
-    await tabs[2].trigger("dragover", { clientX: 10 });
-    await tabs[2].trigger("drop");
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".nav-link")[0].classes()).toContain("dragging");
+    expect(wrapper.findAll(".nav-link")[2].classes()).toContain("drop-after");
+    await releasePointer();
     expect(api.moveTab).toHaveBeenCalledWith("t1", 3);
+  });
+
+  it("moves a tab between two other tabs", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[2].trigger("pointerdown", { button: 0, clientX: 250, clientY: 20 });
+    movePointer(120, 20);
+    await releasePointer();
+    expect(api.moveTab).toHaveBeenCalledWith("t3", 1);
   });
 
   it("does not move a tab dropped on its own place", async () => {
     const { wrapper, api } = await mountTabBar();
-    const tabs = wrapper.findAll(".nav-link");
-    await tabs[1].trigger("dragstart");
-    await tabs[1].trigger("dragover", { clientX: 0 });
-    await tabs[1].trigger("drop");
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[1].trigger("pointerdown", { button: 0, clientX: 150, clientY: 20 });
+    movePointer(160, 20);
+    await releasePointer();
     expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("does not move a tab after a click that moves the pointer by less than 5 pixels", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(53, 20);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("does not move a tab dropped far below the tab bar", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 300);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("cancels the move of a tab when the user presses the key Escape", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 0, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("ignores a press of the right button of the mouse", async () => {
+    const { wrapper, api } = await mountTabBar();
+    layOutTabs(wrapper);
+    await wrapper.findAll(".nav-link")[0].trigger("pointerdown", { button: 2, clientX: 50, clientY: 20 });
+    movePointer(280, 20);
+    await releasePointer();
+    expect(api.moveTab).not.toHaveBeenCalled();
+  });
+
+  it("keeps the blue line before the first tab and after the last tab inside the tab bar, which clips what goes out of it", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain(".nav-item:first-child .nav-link.drop-before::before { left: 0; }");
+    expect(sourceText).toContain(".nav-item:last-child .nav-link.drop-after::after { right: 0; }");
+  });
+
+  it("does not start a drag of the browser, because the native window would take the drop as a drop of a file", async () => {
+    const { wrapper } = await mountTabBar();
+    for (const tab of wrapper.findAll(".nav-link")) {
+      expect(tab.attributes("draggable")).toBeUndefined();
+    }
   });
 
   it("moves the selected tab with the shortcut Shift+Option+Command+Right arrow", async () => {
@@ -288,6 +406,12 @@ describe("TabBar height", () => {
     expect(heightOfTab).not.toBeNull();
     expect(heightOfField).not.toBeNull();
     expect(Number(heightOfField![1])).toBeLessThanOrEqual(Number(heightOfTab![1]) - 2);
+  });
+
+  it("gives a tab 18px of horizontal padding and a width of 170px at least, so that the tabs are not tightly packed", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).toContain("--bs-nav-link-padding-x: 18px;");
+    expect(sourceText).toContain(".nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }");
   });
 
   it("gives the rename field the class tab-rename", async () => {
@@ -324,13 +448,15 @@ describe("TabBar join with the panes", () => {
   });
 });
 
-describe("TabBar workspace button", () => {
-  it("starts with the workspace button, before the tabs, at the left edge of the panes", async () => {
+describe("TabBar without the workspace selector", () => {
+  it("starts with the tabs, at the left edge of the panes, and has no workspace button: the status bar has the workspace selector", async () => {
     const { wrapper } = await mountTabBar();
     const children = Array.from(wrapper.get(".tab-bar").element.children);
-    expect(children[0].classList.contains("workspace-button")).toBe(true);
-    expect(children[1].classList.contains("nav-tabs")).toBe(true);
+    expect(children[0].classList.contains("nav-tabs")).toBe(true);
+    expect(children[1].classList.contains("add")).toBe(true);
+    expect(wrapper.find(".workspace-button").exists()).toBe(false);
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
+    expect(sourceText).not.toContain("WorkspaceButton");
     expect(sourceText).toMatch(/\.tab-bar \{[^}]*padding: 4px var\(--pane-radius\) 0 0;/);
   });
 });

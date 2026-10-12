@@ -57,7 +57,7 @@ function summary(p: AgentInfo): string {
 </template>
 
 <style scoped>
-.to-handle { display: flex; flex-direction: column; gap: 8px; }
+.to-handle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 6px 16px; }
 .empty { margin: 0; padding: 8px; color: var(--muted); font-size: var(--font-size); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {

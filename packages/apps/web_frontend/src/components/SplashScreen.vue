@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import splashImage from "../assets/heidrun_splash_screen.jpg";
-import { showMainWindow } from "../lib/api";
+import { isSplashScreenDisabled, showMainWindow } from "../lib/api";
+import { playNextGoatBleat } from "../lib/goat_sounds";
 import { t } from "../i18n/index";
+import Icon from "./Icon.vue";
 
 const DISPLAY_DURATION_MS = 3000;
 const MOTTO_PATH_ID = "splash-motto-path";
@@ -11,7 +13,8 @@ const MOTTO_LOWEST_POINT_FROM_BOTTOM_PX = 72;
 /** The radius of the circle that the motto follows. A larger radius gives a flatter curve. */
 const MOTTO_CIRCLE_RADIUS_PX = 1800;
 
-const isVisible = ref(true);
+/** False until Heidrun tells if it was started with `--no-splash-screen`. The main window is hidden until then. */
+const isVisible = ref(false);
 const screenWidth = ref(window.innerWidth);
 const screenHeight = ref(window.innerHeight);
 
@@ -32,8 +35,19 @@ function measureScreen() {
   screenHeight.value = window.innerHeight;
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener("resize", measureScreen);
+  let isDisabled = false;
+  try {
+    isDisabled = await isSplashScreenDisabled();
+  } catch {
+    // Outside Heidrun (a plain browser), there is no command line option, so the splash screen shows.
+  }
+  if (isDisabled) {
+    await showMainWindowIfPossible();
+    return;
+  }
+  isVisible.value = true;
 });
 
 onUnmounted(() => {
@@ -42,6 +56,14 @@ onUnmounted(() => {
 
 function close() {
   isVisible.value = false;
+}
+
+async function showMainWindowIfPossible() {
+  try {
+    await showMainWindow();
+  } catch {
+    // Outside Heidrun (a plain browser), there is no window to show.
+  }
 }
 
 /**
@@ -55,11 +77,7 @@ async function onImageSettled(event: Event) {
   } catch {
     // An image that cannot be decoded must not keep the window hidden.
   }
-  try {
-    await showMainWindow();
-  } catch {
-    // Outside Heidrun (a plain browser), there is no window to show.
-  }
+  await showMainWindowIfPossible();
   window.setTimeout(close, DISPLAY_DURATION_MS);
 }
 </script>
@@ -69,16 +87,19 @@ async function onImageSettled(event: Event) {
     <div v-if="isVisible" class="splash" @click="close">
       <img class="splash-image" :src="splashImage" alt="" @load="onImageSettled" @error="onImageSettled" />
       <div class="splash-text">
-        <h1 class="splash-title">{{ t("splashScreen.title") }}</h1>
+        <h1 class="splash-title">{{ t("identity.title") }}</h1>
       </div>
       <svg class="splash-motto-arc" :width="screenWidth" :height="screenHeight">
         <defs>
           <path :id="MOTTO_PATH_ID" :d="mottoPath" />
         </defs>
         <text class="splash-motto" text-anchor="middle">
-          <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("splashScreen.motto") }}</textPath>
+          <textPath :href="`#${MOTTO_PATH_ID}`" startOffset="50%">{{ t("identity.motto") }}</textPath>
         </text>
       </svg>
+      <button class="btn lg splash-sound-button" type="button" @click.stop="playNextGoatBleat">
+        <Icon name="volume-up" /> {{ t("splashScreen.playGoatSound") }}
+      </button>
     </div>
   </Transition>
 </template>
@@ -127,6 +148,16 @@ async function onImageSettled(event: Event) {
   font-size: 52px;
   font-weight: 500;
   fill: #fff;
+}
+.splash .splash-sound-button {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  --bs-btn-bg: rgba(0, 0, 0, 0.55);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-border-color: rgba(255, 255, 255, 0.5);
+  --bs-btn-hover-border-color: rgba(255, 255, 255, 0.8);
 }
 .splash-leave-active {
   transition: opacity 0.6s ease;

@@ -1,6 +1,10 @@
+mod chats;
+mod chats_files;
+mod chats_scan;
 mod claude;
 mod clipboard;
 mod files;
+mod forge_cache;
 mod git;
 mod history;
 mod legacy;
@@ -12,6 +16,7 @@ mod skills;
 mod status_item;
 mod status_item_goat;
 mod status_item_picture;
+mod topic_clusters;
 mod usage;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
@@ -196,6 +201,23 @@ fn show_main_window(app: AppHandle) {
     show_main_window_once(&app);
 }
 
+/// The command line option that starts Heidrun without the splash screen. A program that drives Heidrun, for example to
+/// take a screenshot, uses it so that it never waits for the splash screen to close.
+const NO_SPLASH_SCREEN_OPTION: &str = "--no-splash-screen";
+
+/// True when `arguments` holds `option`.
+fn has_option(arguments: &[String], option: &str) -> bool {
+    arguments.iter().any(|argument| argument == option)
+}
+
+/// Called by the web page at the start: true when Heidrun was started with the option `--no-splash-screen`. The web
+/// page then does not show the splash screen, and shows the main window at once.
+#[tauri::command]
+fn is_splash_screen_disabled() -> bool {
+    let arguments: Vec<String> = std::env::args().collect();
+    has_option(&arguments, NO_SPLASH_SCREEN_OPTION)
+}
+
 /// The setting "Keep agents running after quit": when true, quitting Heidrun does not stop the Herdr session `heidrun`.
 /// The web page sends the value at the start and at each change. Until then the value is false, the default.
 static KEEP_AGENTS_RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -266,6 +288,7 @@ pub fn run() {
             set_keep_agents_running,
             quit_now,
             show_main_window,
+            is_splash_screen_disabled,
             status_item::status_item_update,
             status_item::status_item_set_visible,
             herdr_request,
@@ -284,6 +307,10 @@ pub fn run() {
             project::project_refs,
             git::git_status,
             git::forge_cli,
+            forge_cache::forge_cli_cached,
+            topic_clusters::topic_clusters_read,
+            topic_clusters::topic_clusters_write,
+            topic_clusters::coding_agent_ask,
             git::forge_merge,
             git::git_diff,
             git::git_file,
@@ -296,6 +323,8 @@ pub fn run() {
             claude::claude_commands,
             claude::claude_agents,
             claude::claude_session_agents,
+            chats::chats_list,
+            chats_files::chats_files_exist,
             history::history_append,
             history::history_read,
             history::history_export,
@@ -375,6 +404,26 @@ mod tests {
         let window = &config["app"]["windows"][0];
         assert_eq!(window["width"], json!(1440));
         assert_eq!(window["height"], json!(900));
+    }
+
+    #[test]
+    fn the_option_that_disables_the_splash_screen_is_no_splash_screen() {
+        assert_eq!(NO_SPLASH_SCREEN_OPTION, "--no-splash-screen");
+    }
+
+    #[test]
+    fn an_option_in_the_arguments_is_found_wherever_it_is() {
+        let arguments: Vec<String> = ["heidrun", "--no-splash-screen"].map(String::from).to_vec();
+        assert!(has_option(&arguments, NO_SPLASH_SCREEN_OPTION));
+        let arguments: Vec<String> = ["heidrun", "--no-splash-screen", "--other"].map(String::from).to_vec();
+        assert!(has_option(&arguments, NO_SPLASH_SCREEN_OPTION));
+    }
+
+    #[test]
+    fn an_option_that_is_not_in_the_arguments_is_not_found() {
+        let arguments: Vec<String> = ["heidrun", "--no-splash", "--splash-screen"].map(String::from).to_vec();
+        assert!(!has_option(&arguments, NO_SPLASH_SCREEN_OPTION));
+        assert!(!has_option(&[], NO_SPLASH_SCREEN_OPTION));
     }
 
     #[test]

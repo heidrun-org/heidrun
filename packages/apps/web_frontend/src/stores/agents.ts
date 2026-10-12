@@ -7,6 +7,7 @@ import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
 import { withBackground } from "../lib/terminal_background";
+import { chatResumeCommand } from "../lib/chat_links";
 
 export interface AgentDef {
   name: string;
@@ -61,10 +62,20 @@ export async function launchAgent(o: {
   model: string | null;
   label: string;
   prompt: string;
+  /** The session identifier of a saved chat to resume: the tab starts `claude --resume` or `codex resume` with it. */
+  resumeId?: string | null;
 }): Promise<"ok" | "failed" | "closed"> {
   let command: string;
   try {
-    command = agentCommand(o.tool, o.agent, o.model);
+    if (o.resumeId !== undefined && o.resumeId !== null) {
+      const resumeCommand = chatResumeCommand(o.tool, o.resumeId);
+      if (resumeCommand === null) {
+        throw new Error(t("agentsStore.invalidSessionId", { name: o.resumeId }));
+      }
+      command = resumeCommand;
+    } else {
+      command = agentCommand(o.tool, o.agent, o.model);
+    }
     // Codex colours its input area from the background that Herdr reports: see terminal_background.ts.
     if (o.tool === "codex") command = withBackground(command, getComputedStyle(document.documentElement).getPropertyValue("--bg"));
   } catch (e) {

@@ -3,6 +3,7 @@ import { markRaw, reactive, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "./session";
+import { settings } from "./settings";
 import { t } from "../i18n/index";
 
 interface FileList {
@@ -22,7 +23,6 @@ export const files = reactive({
   list: [] as string[],
   status: {} as Record<string, string>,
   truncated: false,
-  showIgnored: false,
   /** Open tabs (relative paths) and the one shown. */
   tabs: [] as string[],
   active: null as string | null,
@@ -187,7 +187,7 @@ export async function loadFiles(cwd: string): Promise<boolean> {
   files.error = "";
   const my = ++loadSeq;
   try {
-    const r = await invoke<FileList>("files_list", { cwd, ignored: files.showIgnored });
+    const r = await invoke<FileList>("files_list", { cwd, ignored: settings.filesShowIgnored });
     // A later request (another project) won: this answer is dropped.
     if (my !== loadSeq) return false;
     const sameRoot = r.root === files.root;
