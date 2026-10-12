@@ -17,7 +17,9 @@ import { chatReferences } from "../lib/chat_references";
 import { dynamicTopicBarTopics, dynamicTopicChatCounts } from "../lib/dynamic_topic_bar";
 import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
+import { clusteredTopicsByChat } from "../lib/topic_clusters";
 import { keywordTopicsOf, prepareKeywordTopics } from "../stores/dynamic_topics";
+import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
@@ -54,15 +56,32 @@ watch(
   { immediate: true },
 );
 
-/** Makes the cache of the dynamic topics hold the chats that the list shows, each time the list or the method changes. */
+/**
+ * Makes the cache of the dynamic topics hold the chats that the list shows, each time the list or the method changes.
+ * Then it gives the raw dynamic topics of the list to the clustering, which asks a coding agent for the new ones when the
+ * option "Clustered dynamic topics" is on.
+ */
 watch(
   () => [shownChats.value, repository.value, chats.root, settings.dynamicTopicExtraction] as const,
-  ([list, context, root, method]) => {
-    if (method === "keyword") {
-      void prepareKeywordTopics(list, { folder: chats.folder, root, forge: context.forge });
+  async ([list, context, root, method]) => {
+    if (method !== "keyword") {
+      return;
+    }
+    await prepareKeywordTopics(list, { folder: chats.folder, root, forge: context.forge });
+    if (list === shownChats.value) {
+      void prepareTopicClusters([...keywordTopicsOf(list).values()].flat());
     }
   },
   { immediate: true },
+);
+// Switching the option on asks for the clusters of the raw dynamic topics that the list already shows.
+watch(
+  () => settings.clusteredDynamicTopics,
+  (isOn) => {
+    if (isOn && settings.dynamicTopicExtraction === "keyword") {
+      void prepareTopicClusters([...keywordTopicsOf(shownChats.value).values()].flat());
+    }
+  },
 );
 const refreshTimer = setInterval(() => loadChats(folder.value), REFRESH_DELAY);
 onBeforeUnmount(() => clearInterval(refreshTimer));
@@ -72,9 +91,17 @@ function agentLabel(agent: ChatAgent): string {
   return t(`chatsPanel.agent.${agent}`);
 }
 
-/** The dynamic topics of the chats that the list shows, by identifier of chat. The method "languageModel" gives none yet. */
-const topics = computed(() =>
+/** The raw dynamic topics of the chats that the list shows, by identifier of chat. The method "languageModel" gives none yet. */
+const rawTopics = computed(() =>
   settings.dynamicTopicExtraction === "keyword" ? keywordTopicsOf(shownChats.value) : new Map<string, string[]>(),
+);
+
+/**
+ * The dynamic topics that the rows and the dynamic topic bar show, by identifier of chat. They are the raw dynamic topics,
+ * or the clustered dynamic topics when the option "Clustered dynamic topics" is on.
+ */
+const topics = computed(() =>
+  settings.clusteredDynamicTopics ? clusteredTopicsByChat(rawTopics.value, topicClusterTable.value) : rawTopics.value,
 );
 
 /** The topics of the dynamic topic bar, the strongest first. */

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { settings } from "../../stores/settings";
+import { rebuildTopicClusters, topicClusterStatus } from "../../stores/topic_clusters";
 import { t } from "../../i18n/index";
 
 /**
@@ -36,6 +37,34 @@ const EXTRACTIONS = [
     </div>
     <div class="keys">{{ t("settingsDynamicTopics.keywordHelp") }}</div>
     <div class="keys">{{ t("settingsDynamicTopics.languageModelHelp") }}</div>
+
+    <h4>{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
+    <div class="form-check form-switch">
+      <input
+        id="clustered-dynamic-topics"
+        v-model="settings.clusteredDynamicTopics"
+        class="form-check-input"
+        type="checkbox"
+        role="switch"
+      />
+      <label class="form-check-label" for="clustered-dynamic-topics">{{ t("settingsDynamicTopics.clusteredLabel") }}</label>
+    </div>
+    <div class="keys">{{ t("settingsDynamicTopics.clusteredHelp") }}</div>
+    <div class="rebuild">
+      <button
+        type="button"
+        class="btn"
+        :title="t('settingsDynamicTopics.rebuildTitle')"
+        :disabled="settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning"
+        @click="rebuildTopicClusters()"
+      >
+        <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        {{ t("settingsDynamicTopics.rebuildLabel") }}
+      </button>
+    </div>
+    <div v-if="settings.clusteredDynamicTopics && topicClusterStatus.error !== null" class="keys" role="status">
+      {{ t(`settingsDynamicTopics.error.${topicClusterStatus.error}`) }}
+    </div>
   </div>
 </template>
 
@@ -43,4 +72,6 @@ const EXTRACTIONS = [
 .section { display: flex; flex-direction: column; gap: 10px; }
 h4 { margin: 0; font-size: var(--font-size); font-weight: 600; color: var(--text-2); }
 .seg button:disabled { opacity: 0.45; }
+.rebuild { display: flex; align-items: center; gap: 8px; }
+.btn:disabled { opacity: 0.45; }
 </style>

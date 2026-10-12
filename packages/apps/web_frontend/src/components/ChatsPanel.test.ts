@@ -6,11 +6,16 @@ import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 import { keywordEntries } from "../stores/dynamic_topics";
+import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
 import { launchAgent } from "../stores/agents";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
+vi.mock("../stores/topic_clusters", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../stores/topic_clusters")>()),
+  prepareTopicClusters: vi.fn(async () => {}),
+}));
 vi.mock("../stores/agents", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../stores/agents")>()),
   launchAgent: vi.fn(async () => "ok"),
@@ -68,6 +73,9 @@ beforeEach(() => {
     delete keywordEntries[id];
   }
   settings.dynamicTopicExtraction = "keyword";
+  settings.clusteredDynamicTopics = false;
+  topicClusterTable.value = new Map();
+  vi.mocked(prepareTopicClusters).mockClear();
   chats.folder = null;
   chats.claude = [];
   chats.codex = [];
@@ -597,6 +605,108 @@ describe("ChatsPanel", () => {
       const wrapper = mount(ChatsPanel);
       await flushPromises();
       expect(wrapper.find(".topic-bar").exists()).toBe(false);
+    });
+  });
+
+  describe("the clustered dynamic topics", () => {
+    /** Three chats: "Sidebar panel" and "Tabs panel" share the raw dynamic topic "panel", and "Cache" has its own. */
+    function answerWithSharedTopics() {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+    }
+
+    /** The raw dynamic topics "sidebar" and "tab" both mean "navigation". */
+    const NAVIGATION = new Map([
+      ["sidebar", "navigation"],
+      ["tab", "navigation"],
+    ]);
+
+    /** The texts of the buttons of the dynamic topic bar, in the alphabetical order. */
+    function sortedBarButtons(wrapper: ReturnType<typeof mount>) {
+      return wrapper
+        .findAll(".topic-chip")
+        .map((button) => button.text())
+        .sort();
+    }
+
+    it("shows the raw dynamic topics on the rows and in the dynamic topic bar while the option is off, even when the table knows clusters", async () => {
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "panel", "sidebar", "tab"]);
+      expect(wrapper.findAll(".chat-topics")[0].findAll(".badge").map((badge) => badge.text()).sort()).toEqual(["panel", "sidebar"]);
+    });
+
+    it("shows the clustered dynamic topics in the dynamic topic bar and on the rows when the option is on", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel"]);
+      const rows = wrapper.findAll(".chat-topics").map((line) => line.findAll(".badge").map((badge) => badge.text()).sort());
+      expect(rows).toEqual([["navigation", "panel"], ["navigation", "panel"], ["cache"]]);
+    });
+
+    it("shows only the chats of a cluster after a click on its button, and gives the number of its chats in the tooltip", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const button = wrapper.findAll(".topic-chip").find((candidate) => candidate.text() === "navigation");
+      expect(button?.attributes("title")).toBe("Show only the chats about “navigation” (2 chats)");
+      await button?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+    });
+
+    it("shows a raw dynamic topic that the table does not know yet as its own cluster", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = new Map([["sidebar", "navigation"]]);
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel", "tab"]);
+    });
+
+    it("changes the buttons when the table gets its clusters, and when the developer switches the option", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      topicClusterTable.value = NAVIGATION;
+      settings.clusteredDynamicTopics = true;
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel"]);
+      settings.clusteredDynamicTopics = false;
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "panel", "sidebar", "tab"]);
+    });
+
+    it("gives the raw dynamic topics of the chats that the list shows to the clustering, once the keyword topics are ready", async () => {
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      const lastCall = vi.mocked(prepareTopicClusters).mock.calls[vi.mocked(prepareTopicClusters).mock.calls.length - 1];
+      expect([...(lastCall?.[0] ?? [])].sort()).toEqual(["cache", "panel", "panel", "sidebar", "tab"]);
+    });
+
+    it("gives the raw dynamic topics to the clustering again when the developer switches the option on", async () => {
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      vi.mocked(prepareTopicClusters).mockClear();
+      settings.clusteredDynamicTopics = true;
+      await flushPromises();
+      expect(prepareTopicClusters).toHaveBeenCalledTimes(1);
+    });
+
+    it("gives nothing to the clustering when the method is Language model, which gives no topic", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      settings.clusteredDynamicTopics = true;
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      expect(prepareTopicClusters).not.toHaveBeenCalled();
     });
   });
 

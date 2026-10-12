@@ -62,6 +62,8 @@ const defaults = {
   chatsView: "compact" as "compact" | "expanded",
   /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
   dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
+  /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
+  clusteredDynamicTopics: false,
   /** Sidebar section Chats: what the list is sorted by. */
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
   /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */

@@ -70,6 +70,18 @@ The dropdown menu at the top of the Chats sidebar section, at the left of the tw
 
 One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Chats sidebar section shows them on the row of the chat.
 
+### Raw dynamic topic
+
+A dynamic topic exactly as it comes out of one chat. Heidrun computes it from this chat and the other chats of the list, and it never asks a coding agent. The same subject can get several raw dynamic topics, for example "sidebar" and "side bar".
+
+### Clustered dynamic topic
+
+The name of a cluster, which is a group of raw dynamic topics that have a close meaning. A clustered dynamic topic gives one label to one subject. The option "Clustered dynamic topics" of the Settings window makes the dynamic topic bar and the rows of the chats show clustered dynamic topics instead of raw dynamic topics.
+
+### Translation table
+
+The table, saved on the disk in the file `topic_clusters.json`, that gives the cluster of each raw dynamic topic. A coding agent, `codex` or `claude`, fills it, one call for all the new raw dynamic topics. A saved row never changes, except at a rebuild.
+
 ### Dynamic topic source information
 
 The data that Heidrun reads in a chat to compute its dynamic topics. It has four parts: the title of the chat, the first messages that the developer typed, the folders of the files that the coding agent wrote, and the titles of the GitHub issues and of the pull requests that the chat mentioned. The messages of the coding agent are not part of it.
@@ -108,6 +120,7 @@ The first status bar section, at the left end of the status bar. It shows the st
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
 - Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.
-- Write "dynamic topic source information" in full. Do not write "source", "metadata", or "meta information" for it.
+- Write "dynamic topic source information" in full.
+- Write "raw dynamic topic" and "clustered dynamic topic" in full, and "translation table" for the table of the clusters. Do not write "category", "group name", or "mapping" for them. Do not write "source", "metadata", or "meta information" for it.
 - The word "section" is never alone. Write "sidebar section" or "status bar section".
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".

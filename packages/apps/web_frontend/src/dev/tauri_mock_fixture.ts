@@ -77,6 +77,47 @@ export class TauriMockFixture {
 		});
 	}
 
+	/** The translation table of the clustered dynamic topics that the mock keeps, as the file on the disk does. */
+	private static _topicClusterRows: Record<string, string> = {};
+
+	/**
+	 * The translation table of the clustered dynamic topics.
+	 *
+	 * @returns A copy of the rows that the last call of `setTopicClusterRows` saved.
+	 */
+	static getTopicClusterRows(): Record<string, string> {
+		return { ...TauriMockFixture._topicClusterRows };
+	}
+
+	/**
+	 * Replaces the translation table of the clustered dynamic topics.
+	 *
+	 * @param rows - The cluster of each raw dynamic topic.
+	 * @returns Nothing.
+	 */
+	static setTopicClusterRows(rows: Record<string, string>): void {
+		TauriMockFixture._topicClusterRows = { ...rows };
+	}
+
+	/**
+	 * The answer of the Tauri command `coding_agent_ask` for the prompt of the clustered dynamic topics. There is no
+	 * coding agent in a browser, so the mock groups the new labels that start with the same four letters under the
+	 * shortest of them, for example "sidebar" and "sidebars" under "sidebar".
+	 *
+	 * @param prompt - The prompt, which ends with the line `New labels: ["a","b"]`.
+	 * @returns The coding agent that answered, and the JSON array that it printed.
+	 */
+	static buildCodingAgentAnswer(prompt: string): { agent: string; text: string } {
+		const line = prompt.split('\n').find((candidate) => candidate.startsWith('New labels: ')) ?? 'New labels: []';
+		const newTopics = JSON.parse(line.slice('New labels: '.length)) as string[];
+		const items = newTopics.map((topic) => {
+			const group = newTopics.filter((other) => other.slice(0, 4) === topic.slice(0, 4));
+			const cluster = group.reduce((shortest, other) => (other.length < shortest.length ? other : shortest));
+			return { topic, cluster };
+		});
+		return { agent: 'codex', text: JSON.stringify(items) };
+	}
+
 	/**
 	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, sorted as asked.
 	 * Claude has 60 conversations, so that the list needs the button "Show more". Codex has two.

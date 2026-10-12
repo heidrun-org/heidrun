@@ -253,6 +253,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
+  ["clusteredDynamicTopics", false, true],
   ["chatsSortKey", "last_updated", "files_written"],
   ["chatsOrder", "descending", "ascending"],
 ];
