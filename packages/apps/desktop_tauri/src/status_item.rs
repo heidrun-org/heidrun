@@ -28,6 +28,10 @@ const OPEN_MENU_ID: &str = "hd-status-open";
 /// Start of the identifier of the menu item of an agent. The pane identifier follows.
 const PANE_MENU_ID_PREFIX: &str = "hd-status-pane:";
 
+/// Start of the identifier of the menu item of a section title or of a quota line. The position of the line in the menu
+/// follows.
+const INFORMATION_MENU_ID_PREFIX: &str = "hd-status-information:";
+
 /// Time between two pictures while a slot moves: twenty pictures per second.
 const FRAME_INTERVAL: Duration = Duration::from_millis(50);
 
@@ -220,6 +224,17 @@ fn pane_id_from_menu_id(menu_id: &str) -> Option<&str> {
     menu_id.strip_prefix(PANE_MENU_ID_PREFIX)
 }
 
+/// The identifier of the menu item of a section title or of a quota line, at the place `position` in the menu, from the
+/// top, with the separators counted.
+fn information_menu_id(position: usize) -> String {
+    format!("{INFORMATION_MENU_ID_PREFIX}{position}")
+}
+
+/// True when the identifier of a menu item is the identifier of a section title or of a quota line.
+fn is_information_menu_id(menu_id: &str) -> bool {
+    menu_id.starts_with(INFORMATION_MENU_ID_PREFIX)
+}
+
 /// The three sections of the menu, from top to bottom, each with the color of the dots of its agents. The colors are
 /// the colors of the discs of the picture.
 fn sections_with_colors(payload: &StatusItemPayload) -> [(&StatusSection, [u8; 3]); 3] {
@@ -250,7 +265,8 @@ enum MenuLine {
     Open(String),
     /// A line between two groups of lines.
     Separator,
-    /// The title of a section, already translated, with the number of agents.
+    /// The title of a section, already translated, with the number of agents. The item is enabled, so that macOS draws
+    /// it in normal black.
     Title(String),
     /// The text of a section without agent, already translated, with a thin gray circle before it so that the line is
     /// indented like the lines of the agents.
@@ -264,7 +280,8 @@ enum MenuLine {
         /// Color of the dot.
         color: [u8; 3],
     },
-    /// A quota: its name, already translated, and a badge with the percentage in the color of its level.
+    /// A quota: its name, already translated, and a badge with the percentage in the color of its level. The item is
+    /// enabled, so that macOS draws it in normal black.
     Quota {
         /// Name shown in the menu, already translated.
         text: String,
@@ -300,19 +317,25 @@ fn menu_lines(payload: &StatusItemPayload) -> Vec<MenuLine> {
 }
 
 /// The menu that opens on a click, built from `menu_lines`. Each agent has a dot in the color of its section.
+///
+/// macOS draws a disabled menu item in gray, whatever color its text has. The section titles and the quota lines are
+/// enabled, so that they show the normal black text of the other lines. Only the lines "None" are disabled, and gray.
 fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
     let mut builder = MenuBuilder::new(app);
-    for line in menu_lines(payload) {
+    for (position, line) in menu_lines(payload).into_iter().enumerate() {
         builder = match line {
             MenuLine::Open(text) => builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, text).build(app)?),
             MenuLine::Separator => builder.separator(),
-            MenuLine::Title(text) => builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?),
+            MenuLine::Title(text) => {
+                builder.item(&MenuItemBuilder::with_id(information_menu_id(position), text).build(app)?)
+            }
             MenuLine::Empty(text) => {
                 let item = IconMenuItemBuilder::new(text).icon(empty_dot_image()).enabled(false);
                 builder.item(&item.build(app)?)
             }
             MenuLine::Quota { text, percent, color } => {
-                let item = IconMenuItemBuilder::new(text).icon(badge_image(percent, color)).enabled(false);
+                let badge = badge_image(percent, color);
+                let item = IconMenuItemBuilder::with_id(information_menu_id(position), text).icon(badge);
                 builder.item(&item.build(app)?)
             }
             MenuLine::Agent { pane_id, name, color } => {
@@ -333,9 +356,10 @@ fn focus_main_window(app: &AppHandle) {
     }
 }
 
-/// The user chose an item of the menu: the main window comes forward, and the web page selects the agent.
+/// The user chose an item of the menu: the main window comes forward, and the web page selects the agent. A section
+/// title or a quota line only brings the main window forward.
 fn handle_menu_event(app: &AppHandle, menu_id: &str) {
-    if menu_id == OPEN_MENU_ID {
+    if menu_id == OPEN_MENU_ID || is_information_menu_id(menu_id) {
         focus_main_window(app);
     } else if let Some(pane_id) = pane_id_from_menu_id(menu_id) {
         focus_main_window(app);
@@ -641,6 +665,16 @@ mod tests {
             let image = badge_image(percent, QUOTA_OK_COLOR);
             assert_eq!((image.width(), image.height()), (picture::BADGE_WIDTH, picture::BADGE_HEIGHT));
         }
+    }
+
+    #[test]
+    fn the_menu_item_of_a_title_or_of_a_quota_line_has_its_own_kind_of_identifier() {
+        let id = information_menu_id(4);
+        assert!(is_information_menu_id(&id));
+        assert_ne!(id, information_menu_id(5));
+        assert_eq!(pane_id_from_menu_id(&id), None);
+        assert!(!is_information_menu_id(OPEN_MENU_ID));
+        assert!(!is_information_menu_id(&pane_menu_id("w1-p2")));
     }
 
     #[test]
