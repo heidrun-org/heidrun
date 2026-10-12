@@ -249,17 +249,21 @@ pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
     }
 }
 
-/// Runs `glab` / `gh` in the repository through the login shell (Homebrew PATH,
-/// accounts already connected). `exec "$0" "$@"` passes arguments as is.
-pub(crate) async fn run_forge(cwd: &str, tool: &str, args: &[String], timeout: u64) -> Result<String, String> {
-    // It needs a POSIX shell: fish and friends fall back to zsh (login PATH too).
+/// The shell that runs a tool through the login: the shell of the user when it is a POSIX shell, `/bin/zsh` otherwise.
+/// It needs a POSIX shell: fish and friends fall back to zsh (login PATH too).
+pub(crate) fn login_shell() -> String {
     let user_shell = std::env::var("SHELL").unwrap_or_default();
-    let shell = if user_shell.ends_with("/zsh") || user_shell.ends_with("/bash") || user_shell.ends_with("/sh") {
+    if user_shell.ends_with("/zsh") || user_shell.ends_with("/bash") || user_shell.ends_with("/sh") {
         user_shell
     } else {
         "/bin/zsh".into()
-    };
-    let mut cmd = Command::new(shell);
+    }
+}
+
+/// Runs `glab` / `gh` in the repository through the login shell (Homebrew PATH,
+/// accounts already connected). `exec "$0" "$@"` passes arguments as is.
+pub(crate) async fn run_forge(cwd: &str, tool: &str, args: &[String], timeout: u64) -> Result<String, String> {
+    let mut cmd = Command::new(login_shell());
     cmd.arg("-lc").arg("exec \"$0\" \"$@\"").arg(tool).args(args).current_dir(cwd).kill_on_drop(true);
     cmd.env("NO_COLOR", "1").env("NO_PROMPT", "1").env("GLAB_NO_PROMPT", "1").env("GH_PROMPT_DISABLED", "1");
     let out = tokio::time::timeout(Duration::from_secs(timeout), cmd.output())

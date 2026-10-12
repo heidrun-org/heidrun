@@ -5,11 +5,17 @@ import ChatsPanel from "./ChatsPanel.vue";
 import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
+import { keywordEntries } from "../stores/dynamic_topics";
+import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
 import { launchAgent } from "../stores/agents";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
+vi.mock("../stores/topic_clusters", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../stores/topic_clusters")>()),
+  prepareTopicClusters: vi.fn(async () => {}),
+}));
 vi.mock("../stores/agents", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../stores/agents")>()),
   launchAgent: vi.fn(async () => "ok"),
@@ -62,6 +68,14 @@ function shownTitles(wrapper: ReturnType<typeof mount>) {
 
 beforeEach(() => {
   vi.mocked(invoke).mockReset();
+  localStorage.clear();
+  for (const id of Object.keys(keywordEntries)) {
+    delete keywordEntries[id];
+  }
+  settings.dynamicTopicExtraction = "keyword";
+  settings.clusteredDynamicTopics = false;
+  topicClusterTable.value = new Map();
+  vi.mocked(prepareTopicClusters).mockClear();
   chats.folder = null;
   chats.claude = [];
   chats.codex = [];
@@ -91,17 +105,19 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "descending" });
   });
 
-  it("shows the agent group and the right side first, then a separator, then the title of each conversation of Claude", async () => {
+  it("shows the header first, with the agent group and the right side, then a separator, then the title of each conversation of Claude", async () => {
     answer(["Fix the tab bar", "Add the Chats sidebar section"], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     const header = wrapper.element.firstElementChild as HTMLElement;
-    expect([...header.children].map((child) => child.getAttribute("role"))).toEqual(["group", null]);
-    const rightSide = header.lastElementChild as HTMLElement;
+    expect(header.classList.contains("chats-header")).toBe(true);
+    const row = header.firstElementChild as HTMLElement;
+    expect([...row.children].map((child) => child.getAttribute("role"))).toEqual(["group", null]);
+    const rightSide = row.lastElementChild as HTMLElement;
     expect([...rightSide.children].map((child) => child.tagName)).toEqual(["BUTTON", "DIV"]);
     expect(rightSide.lastElementChild?.getAttribute("role")).toBe("group");
-    expect(header.nextElementSibling?.getAttribute("role")).toBe("separator");
-    expect(header.nextElementSibling?.nextElementSibling?.tagName).toBe("UL");
+    expect(header.lastElementChild?.getAttribute("role")).toBe("separator");
+    expect(header.nextElementSibling?.tagName).toBe("UL");
     expect(shownTitles(wrapper)).toEqual(["Fix the tab bar", "Add the Chats sidebar section"]);
   });
 
@@ -306,6 +322,7 @@ describe("ChatsPanel", () => {
       first_at: new Date(year, 9, 11, 17, 55).getTime(),
       last_at: new Date(year, 9, 11, 18, 20).getTime(),
       user_messages: 4,
+      first_messages: [],
       folders: [],
       issues: [250],
       pull_requests: [249],
@@ -340,7 +357,7 @@ describe("ChatsPanel", () => {
   });
 
   it("opens a card with the files of a chat, each one once, with its folders below the root of the repository, when the files line is clicked", async () => {
-    const meta = { first_at: null, last_at: null, user_messages: 0, folders: [], issues: [], pull_requests: [], files_written: ["/work/app/.claude/worktrees/fix/src/chats.rs", "/work/app/src/chats.rs"] };
+    const meta = { first_at: null, last_at: null, user_messages: 0, first_messages: [], folders: [], issues: [], pull_requests: [], files_written: ["/work/app/.claude/worktrees/fix/src/chats.rs", "/work/app/src/chats.rs"] };
     vi.mocked(invoke).mockResolvedValue({
       root: "/work/app",
       claude: { chats: [{ id: "a", title: "Fix the tab bar", updated_at: 1, meta }], has_more: false },
@@ -414,6 +431,283 @@ describe("ChatsPanel", () => {
     await wrapper.get("#chats-agent-codex").setValue();
     await wrapper.get('li .chat-actions button[title="Open in Heidrun"]').trigger("click");
     expect(launchAgent).toHaveBeenLastCalledWith(expect.objectContaining({ tool: "codex", label: "Describe image", resumeId: "x0" }));
+  });
+
+  it("shows the dynamic topics of each chat on one single line under its title, from the words that the other chats do not hold", async () => {
+    answer(["Sidebar cache", "Sidebar tabs"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const lines = wrapper.findAll(".list-group-item .chat-topics");
+    expect(lines).toHaveLength(2);
+    expect(lines[0].findAll(".badge").map((badge) => badge.text())).toEqual(["cache"]);
+    expect(lines[1].findAll(".badge").map((badge) => badge.text())).toEqual(["tab"]);
+    expect(lines[0].attributes("aria-label")).toBe("Dynamic topics of this chat");
+    expect(lines[0].element.previousElementSibling?.querySelector(".chat-title")).not.toBeNull();
+  });
+
+  it("shows no line of topics for a chat that has no topic", async () => {
+    answer(["Please"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.find(".chat-topics").exists()).toBe(false);
+  });
+
+  it("shows no topic when the method is Language model, which is not ready yet", async () => {
+    settings.dynamicTopicExtraction = "languageModel";
+    answer(["Sidebar cache", "Sidebar tabs"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.find(".chat-topics").exists()).toBe(false);
+    expect(Object.keys(keywordEntries)).toEqual([]);
+  });
+
+  it("shows the topics when the developer changes the method back to Keyword", async () => {
+    settings.dynamicTopicExtraction = "languageModel";
+    answer(["Sidebar cache", "Sidebar tabs"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    settings.dynamicTopicExtraction = "keyword";
+    await flushPromises();
+    expect(wrapper.findAll(".chat-topics")).toHaveLength(2);
+  });
+
+  it("reads the titles of the issues of a chat on the forge, and shows their words as topics", async () => {
+    const meta = { first_at: null, last_at: 100, user_messages: 0, first_messages: [], folders: [], issues: [260], pull_requests: [], files_written: [] };
+    const plain = { ...meta, issues: [] };
+    vi.mocked(invoke).mockImplementation(async (command) => {
+      if (command === "forge_cli_cached") {
+        return JSON.stringify({ title: "Zebra", state: "OPEN", body: "", labels: [], author: { login: "me" }, createdAt: "2026-10-11T10:00:00Z" });
+      }
+      return {
+        root: "/work/app",
+        claude: {
+          chats: [
+            { id: "c0", title: "Sidebar", updated_at: 1, meta },
+            { id: "c1", title: "Cache", updated_at: 1, meta: plain },
+          ],
+          has_more: false,
+        },
+        codex: { chats: [], has_more: false },
+      };
+    });
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.findAll(".chat-topics")[0].findAll(".badge").map((badge) => badge.text())).toEqual(["sidebar", "zebra"]);
+  });
+
+  describe("the dynamic topic bar", () => {
+    /** Three chats whose titles give these topics: a "sidebar" chat and a "tabs" chat share "panel". */
+    function answerWithSharedTopics() {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+    }
+
+    /** The texts of the buttons of the dynamic topic bar. */
+    function barButtons(wrapper: ReturnType<typeof mount>) {
+      return wrapper.findAll(".topic-chip").map((button) => button.text());
+    }
+
+    it("shows the button All first, then the topics, the topic that most chats have first, at the bottom of the header", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(barButtons(wrapper)).toEqual(["All", "panel", "cache", "sidebar", "tab"]);
+      const header = wrapper.get(".chats-header").element;
+      const children = [...header.children];
+      const bar = wrapper.get(".topic-bar").element;
+      expect(children.indexOf(bar)).toBe(children.length - 2);
+      expect(children[children.length - 1].getAttribute("role")).toBe("separator");
+    });
+
+    it("gives the number of chats of each topic in the title of its button, not on the button", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const buttons = wrapper.findAll(".topic-chip");
+      expect(buttons.map((button) => button.attributes("title"))).toEqual([
+        "Show all the chats",
+        "Show only the chats about “panel” (2 chats)",
+        "Show only the chats about “cache” (1 chat)",
+        "Show only the chats about “sidebar” (1 chat)",
+        "Show only the chats about “tab” (1 chat)",
+      ]);
+      await buttons[1].trigger("click");
+      expect(wrapper.findAll(".topic-chip")[1].attributes("title")).toBe("Show only the chats about “panel” (2 chats)");
+      expect(wrapper.findAll(".topic-chip")[2].attributes("title")).toBe("Show only the chats about “cache” (1 chat)");
+    });
+
+    it("selects the button All at first, and shows every chat", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(wrapper.findAll(".topic-chip").map((button) => button.attributes("aria-pressed"))).toEqual(["true", "false", "false", "false", "false"]);
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+    });
+
+    it("shows only the chats of a topic after a click on the topic, and every chat again after a click on All", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".topic-chip")[1].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+      expect(wrapper.findAll(".topic-chip").map((button) => button.attributes("aria-pressed"))).toEqual(["false", "true", "false", "false", "false"]);
+      await wrapper.findAll(".topic-chip")[2].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Cache"]);
+      await wrapper.findAll(".topic-chip")[0].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+    });
+
+    it("keeps the bar and its buttons while a topic filters the list", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".topic-chip")[2].trigger("click");
+      expect(barButtons(wrapper)).toEqual(["All", "panel", "cache", "sidebar", "tab"]);
+    });
+
+    it("forgets the topic when the developer chooses the other coding agent", async () => {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], ["Sidebar panel", "Zebra crossing"]);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".topic-chip")[2].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Cache"]);
+      await wrapper.get("#chats-agent-codex").setValue();
+      await flushPromises();
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Zebra crossing"]);
+      expect(wrapper.findAll(".topic-chip")[0].attributes("aria-pressed")).toBe("true");
+    });
+
+    it("forgets a topic that the chats of the list do not have any more, so it does not filter again when it comes back", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const original = [...chats.claude];
+      await wrapper.findAll(".topic-chip")[1].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+      chats.claude = original.filter((chat) => chat.title === "Cache");
+      await flushPromises();
+      expect(shownTitles(wrapper)).toEqual(["Cache"]);
+      chats.claude = original;
+      await flushPromises();
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+      expect(wrapper.findAll(".topic-chip")[0].attributes("aria-pressed")).toBe("true");
+    });
+
+    it("shows no bar when no chat has a topic", async () => {
+      answer(["Please"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(wrapper.find(".topic-bar").exists()).toBe(false);
+    });
+
+    it("shows no bar when the method is Language model", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(wrapper.find(".topic-bar").exists()).toBe(false);
+    });
+  });
+
+  describe("the clustered dynamic topics", () => {
+    /** Three chats: "Sidebar panel" and "Tabs panel" share the raw dynamic topic "panel", and "Cache" has its own. */
+    function answerWithSharedTopics() {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+    }
+
+    /** The raw dynamic topics "sidebar" and "tab" both mean "navigation". */
+    const NAVIGATION = new Map([
+      ["sidebar", "navigation"],
+      ["tab", "navigation"],
+    ]);
+
+    /** The texts of the buttons of the dynamic topic bar, in the alphabetical order. */
+    function sortedBarButtons(wrapper: ReturnType<typeof mount>) {
+      return wrapper
+        .findAll(".topic-chip")
+        .map((button) => button.text())
+        .sort();
+    }
+
+    it("shows the raw dynamic topics on the rows and in the dynamic topic bar while the option is off, even when the table knows clusters", async () => {
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "panel", "sidebar", "tab"]);
+      expect(wrapper.findAll(".chat-topics")[0].findAll(".badge").map((badge) => badge.text()).sort()).toEqual(["panel", "sidebar"]);
+    });
+
+    it("shows the clustered dynamic topics in the dynamic topic bar and on the rows when the option is on", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel"]);
+      const rows = wrapper.findAll(".chat-topics").map((line) => line.findAll(".badge").map((badge) => badge.text()).sort());
+      expect(rows).toEqual([["navigation", "panel"], ["navigation", "panel"], ["cache"]]);
+    });
+
+    it("shows only the chats of a cluster after a click on its button, and gives the number of its chats in the tooltip", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = NAVIGATION;
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const button = wrapper.findAll(".topic-chip").find((candidate) => candidate.text() === "navigation");
+      expect(button?.attributes("title")).toBe("Show only the chats about “navigation” (2 chats)");
+      await button?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+    });
+
+    it("shows a raw dynamic topic that the table does not know yet as its own cluster", async () => {
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = new Map([["sidebar", "navigation"]]);
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel", "tab"]);
+    });
+
+    it("changes the buttons when the table gets its clusters, and when the developer switches the option", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      topicClusterTable.value = NAVIGATION;
+      settings.clusteredDynamicTopics = true;
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "navigation", "panel"]);
+      settings.clusteredDynamicTopics = false;
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "cache", "panel", "sidebar", "tab"]);
+    });
+
+    it("gives the raw dynamic topics of the chats that the list shows to the clustering, once the keyword topics are ready", async () => {
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      const lastCall = vi.mocked(prepareTopicClusters).mock.calls[vi.mocked(prepareTopicClusters).mock.calls.length - 1];
+      expect([...(lastCall?.[0] ?? [])].sort()).toEqual(["cache", "panel", "panel", "sidebar", "tab"]);
+    });
+
+    it("gives the raw dynamic topics to the clustering again when the developer switches the option on", async () => {
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      vi.mocked(prepareTopicClusters).mockClear();
+      settings.clusteredDynamicTopics = true;
+      await flushPromises();
+      expect(prepareTopicClusters).toHaveBeenCalledTimes(1);
+    });
+
+    it("gives nothing to the clustering when the method is Language model, which gives no topic", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      settings.clusteredDynamicTopics = true;
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      expect(prepareTopicClusters).not.toHaveBeenCalled();
+    });
   });
 
   describe("the sort dropdown menu", () => {

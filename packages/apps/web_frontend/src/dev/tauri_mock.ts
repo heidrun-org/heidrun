@@ -89,6 +89,13 @@ export class TauriMock {
 				};
 			case 'forge_cli_cached':
 				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
+			case 'topic_clusters_read':
+				return TauriMockFixture.getTopicClusterRows();
+			case 'topic_clusters_write':
+				TauriMockFixture.setTopicClusterRows((payload as { rows: Record<string, string> }).rows);
+				return null;
+			case 'coding_agent_ask':
+				return TauriMockFixture.buildCodingAgentAnswer((payload as { prompt: string }).prompt);
 			case 'chats_files_exist':
 				return (payload as { paths: string[] }).paths.map((path) => ({
 					path,

@@ -97,6 +97,22 @@ describe('TauriMock', () => {
 		).rejects.toThrow();
 	});
 
+	it('keeps a translation table of the clustered dynamic topics, and answers a fake coding agent that groups by the first four letters', async () => {
+		TauriMock.install();
+		expect(await invoke('topic_clusters_read')).toEqual({});
+		await invoke('topic_clusters_write', { rows: { sidebar: 'sidebar' } });
+		expect(await invoke('topic_clusters_read')).toEqual({ sidebar: 'sidebar' });
+		await invoke('topic_clusters_write', { rows: {} });
+		const prompt = 'Existing clusters: []\nNew labels: ["sidebars","sidebar","cache"]';
+		const answer = await invoke<{ agent: string; text: string }>('coding_agent_ask', { prompt });
+		expect(answer.agent).toBe('codex');
+		expect(JSON.parse(answer.text)).toEqual([
+			{ topic: 'sidebars', cluster: 'sidebar' },
+			{ topic: 'sidebar', cluster: 'sidebar' },
+			{ topic: 'cache', cluster: 'cache' },
+		]);
+	});
+
 	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
 		TauriMock.install();
 		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });

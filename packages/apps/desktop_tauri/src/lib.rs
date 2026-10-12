@@ -16,6 +16,7 @@ mod skills;
 mod status_item;
 mod status_item_goat;
 mod status_item_picture;
+mod topic_clusters;
 mod usage;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
@@ -307,6 +308,9 @@ pub fn run() {
             git::git_status,
             git::forge_cli,
             forge_cache::forge_cli_cached,
+            topic_clusters::topic_clusters_read,
+            topic_clusters::topic_clusters_write,
+            topic_clusters::coding_agent_ask,
             git::forge_merge,
             git::git_diff,
             git::git_file,

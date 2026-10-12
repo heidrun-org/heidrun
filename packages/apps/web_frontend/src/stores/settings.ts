@@ -60,6 +60,10 @@ const defaults = {
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
+  /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
+  dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
+  /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
+  clusteredDynamicTopics: false,
   /** Sidebar section Chats: what the list is sorted by. */
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
   /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
@@ -171,6 +175,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
+  dynamicTopicExtraction: ["keyword", "languageModel"],
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -303,7 +308,8 @@ export type SettingsSection =
   | "notifications"
   | "general"
   | "mobileAccess"
-  | "agents";
+  | "agents"
+  | "dynamicTopics";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({
