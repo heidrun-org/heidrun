@@ -1,19 +1,19 @@
 # The status dot
 
-The status dot is a small colored circle. It shows the status of a pane, of a tab, of a workspace, and of the application, so that the developer sees at a glance which coding agents work, which one waits for an answer, and which one has finished. The three levels (workspace, tab, pane) have the definitions of [the glossary](../agents_rules/glossary.md).
+The status dot is a small colored circle. It shows the status of a pane, of a tab, of a workspace, and of the application, so that the developer sees at a glance which panes work, which one waits for an answer, and which one has finished. The three levels (workspace, tab, pane) have the definitions of [the glossary](../agents_rules/glossary.md).
 
 ## The statuses
 
-A pane has one status at a time. Herdr computes the status, and Heidrun shows it.
+A pane has one status at a time.
 
 | Status | Color | Meaning |
 | --- | --- | --- |
 | Blocked | Red | The coding agent stopped, and it needs an answer from the developer: a question or a permission. |
-| Working | Teal (a green-blue) | The coding agent works. The dot fades in and out slowly while the agent works. |
-| Finished | Blue | The coding agent ended its work, and the developer did not see the result yet. The value in the code is `done`. |
-| Idle | Gray | The coding agent waits for the first message of the developer, or the developer has seen the result. |
+| Working | Blue | The coding agent works, or a command runs in a plain terminal. The dot fades in and out slowly while the pane works. |
+| Finished | Green | The coding agent or the command ended its work, and the developer did not acknowledge it yet. The value in the code is `done`. |
+| Idle | Gray | The pane waits for work: the developer did not send a message to the coding agent, or did not start a command. It is also the status after the developer acknowledged or deleted the card of a finished pane. |
 
-- The colors are the variables `--blocked`, `--working`, `--done`, and `--idle` in `packages/apps/web_frontend/src/styles.css`. Each variable has a value for the dark theme and a value for the light theme.
+- The code sets the colors with the variables `--blocked`, `--working`, `--done`, and `--idle` in `packages/apps/web_frontend/src/styles.css`.
 - Herdr has a fifth value, `unknown`. Herdr gives it when no rule matches the pane. The dot of this status is gray.
 - A hollow gray ring is not a status. It shows that no coding agent runs in the workspace.
 
@@ -29,9 +29,9 @@ When the developer starts a coding agent in a pane, the pane is idle. The next t
 | Working | Blocked | The coding agent needs an answer, and it waits. |
 | Blocked | Working | The developer answers, and the coding agent continues. |
 | Working | Finished | The coding agent ends its answer. |
-| Finished | Idle | The developer sees the pane. |
+| Finished | Idle | The developer acknowledges or deletes the card of the pane in the To handle sidebar section. |
 
-Heidrun also handles a change from Blocked to Finished, and a change from Working or Blocked straight to Idle, as the end of the work (`applySnapshot` in `packages/apps/web_frontend/src/stores/session.ts`).
+A finished pane stays finished until the developer acknowledges or deletes its card.
 
 ```
 idle ──▶ working ──▶ finished ──▶ idle
@@ -40,13 +40,15 @@ idle ──▶ working ──▶ finished ──▶ idle
           blocked
 ```
 
-### The change from Finished to Idle
+### A pane with a plain terminal
 
-Herdr makes this change, when the developer has seen the result of the coding agent. Heidrun never sets a status by itself: it only shows the status that Herdr gives. Heidrun does not tell Herdr what is on the screen, and selecting a pane in Heidrun changes only the selection in Heidrun (`selectPane` in `session.ts`).
+A pane that runs a plain terminal follows the same state machine, so that every pane works in the same way.
 
-### A pane without a coding agent
-
-A pane that runs a plain terminal has no coding agent. Herdr gives the status `unknown` to this pane. Heidrun does not show this status: the dot of the pane card is the class `process`, which has the gray color of idle (`status` in `PaneCard.vue`). A command that runs in the terminal, such as `htop`, does not change the dot.
+- The pane starts idle.
+- The pane becomes working when the developer starts a command that is not a coding agent, for example `htop`.
+- The pane becomes finished when the command ends.
+- A finished pane becomes idle in the same way as a pane with a coding agent: the developer acknowledges or deletes its card in the To handle sidebar section.
+- When the command is a coding agent, the pane stays idle until the developer sends a message to the agent.
 
 ## The status of a tab
 
@@ -72,10 +74,10 @@ A workspace in which no pane runs a coding agent shows the hollow ring in the pl
 
 The application has one status dot, before the name of the selected workspace in the workspace status bar section, at the left end of the status bar (`dotClasses` in `WorkspaceStatusSummary.vue`). Two rules choose its color, in this order:
 
-1. When a coding agent in **another** workspace is blocked, the dot is red. Otherwise, when a coding agent in another workspace has finished, the dot is blue. The coding agents of the selected workspace never count here, because the developer sees them.
+1. When a coding agent in **another** workspace is blocked, the dot is red. Otherwise, when a coding agent in another workspace has finished, the dot is green. The coding agents of the selected workspace never count here.
 2. Otherwise, the dot shows the status of the selected workspace, or the hollow ring when no coding agent runs in it.
 
-A coding agent in another workspace counts for the first rule only when its card is in the To handle sidebar section (`otherWorkspaceStatus` in `session.ts`). A card is not there when the developer hides it with its close button, or when the coding agent finished longer ago than the delay of the section "Finished items" of the Settings window (15 minutes at the start). A coding agent that works in another workspace does not change the dot.
+A coding agent in another workspace counts for the first rule only when its card is in the To handle sidebar section (`otherWorkspaceStatus` in `session.ts`). A card leaves the section when the developer acknowledges or deletes it, and its pane becomes idle. The card of a finished coding agent also leaves the section when it is older than the delay of the section "Finished items" of the Settings window (15 minutes at the start), and an old card does not count for the dot. A coding agent that works in another workspace does not change the dot.
 
 ## The levels together
 
@@ -86,12 +88,12 @@ Workspace   ◀── the tabs of the workspace
      │
 Tab         ◀── the panes of the tab
      │
-Pane        ◀── Herdr reads the coding agent
+Pane        ◀── the state machine of the pane
 ```
 
-| Dot | Where it shows | Source of its status |
+| Dot | Where it shows | How its status is chosen |
 | --- | --- | --- |
-| Pane | The header of the pane (`PaneCard.vue`) | Herdr, for the pane. |
+| Pane | The header of the pane (`PaneCard.vue`) | The state machine of the pane. |
 | Tab | The tab bar (`TabBar.vue`) | Herdr, from the panes of the tab. |
 | Workspace | The list of workspaces in the information card (`WorkspaceStatusSummary.vue`) | Herdr, from the tabs of the workspace. |
 | Application | The workspace status bar section (`WorkspaceStatusSummary.vue`) | Heidrun, from the cards of the To handle sidebar section, then from the selected workspace. |
