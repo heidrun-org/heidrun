@@ -4,7 +4,7 @@
 //! The web page sends the data with the command `status_item_update`. This module draws the picture, builds the
 //! menu, and tells the web page which agent the user chose in the menu.
 
-use crate::status_item_goat as goat;
+use crate::status_item_icon as icon;
 use crate::status_item_picture::{self as picture, Effect, Slot, PICTURE_HEIGHT};
 use serde::Deserialize;
 use std::sync::{Mutex, MutexGuard};
@@ -152,8 +152,8 @@ impl StatusItemState {
 // Picture
 ///////////////////////////////////////////////////////////////////////////////
 
-/// The slots for the data of the web page: the baby goat, then blocked, finished, working, and the quota.
-/// The baby goat walks while an agent works.
+/// The slots for the data of the web page: the icon of Heidrun, then blocked, finished, working, and the quota.
+/// The icon of Heidrun does not move.
 pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
     let (quota_percent, quota_color, is_quota_urgent) = match &payload.quota {
         Some(quota) => match quota.level {
@@ -164,9 +164,9 @@ pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
         None => (None, QUOTA_OK_COLOR, false),
     };
     let mut slots = Vec::new();
-    let goat = goat::frames();
-    if !goat.is_empty() {
-        slots.push(Slot::Sprite { frames: goat, is_walking: !payload.working.agents.is_empty() });
+    let icon = icon::frames();
+    if !icon.is_empty() {
+        slots.push(Slot::Sprite { frames: icon, is_walking: false });
     }
     slots.push(Slot::Disc { count: payload.blocked.agents.len(), color: BLOCKED_COLOR, effect: Effect::Pulse });
     slots.push(Slot::Disc { count: payload.done.agents.len(), color: DONE_COLOR, effect: Effect::None });
@@ -422,16 +422,17 @@ mod tests {
     }
 
     #[test]
-    fn the_baby_goat_walks_while_an_agent_works_and_stands_still_otherwise() {
+    fn the_first_slot_is_the_icon_of_heidrun_and_it_does_not_move_while_an_agent_works() {
         let section = StatusSection { title: String::new(), agents: vec![agent("p1")] };
         let working = StatusItemPayload { working: section, ..StatusItemPayload::default() };
-        let is_walking = |payload: &StatusItemPayload| match slots_for(payload).first() {
-            Some(Slot::Sprite { is_walking, .. }) => *is_walking,
-            _ => panic!("the first slot is the baby goat"),
-        };
-        assert!(is_walking(&working));
-        assert!(!is_walking(&StatusItemPayload::default()));
-        assert!(picture::is_animated(&slots_for(&working)));
+        match slots_for(&working).first() {
+            Some(Slot::Sprite { frames, is_walking }) => {
+                assert_eq!(frames.len(), 1);
+                assert!(!is_walking);
+            }
+            _ => panic!("the first slot is the icon of Heidrun"),
+        }
+        assert!(!picture::is_animated(&slots_for(&working)));
     }
 
     #[test]

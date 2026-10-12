@@ -80,7 +80,7 @@ pub enum Slot {
         /// `true` makes the ring pulse.
         is_urgent: bool,
     },
-    /// A small picture with several frames, for example the baby goat. The slot is as wide as the frames.
+    /// A small picture with one or several frames, for example the icon of Heidrun. The slot is as wide as the frames.
     Sprite {
         /// The frames of the walk. All the frames have the same size.
         frames: &'static [Sprite],
