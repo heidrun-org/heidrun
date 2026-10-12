@@ -3,7 +3,6 @@ import { computed } from "vue";
 import { quotas, state } from "../stores/session";
 import { settings } from "../stores/settings";
 import { claudeLink, enableClaudeLink } from "../stores/claude";
-import AgentStatusSummary from "./AgentStatusSummary.vue";
 import GitStatusSummary from "./GitStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
 import WorkspaceStatusSummary from "./WorkspaceStatusSummary.vue";
@@ -35,8 +34,6 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
     <span v-if="ownedQuotas.length > 0 || isClaudeOwned" class="sep"></span>
     <GitStatusSummary />
     <span class="grow"></span>
-    <AgentStatusSummary />
-    <span class="sep"></span>
     <span class="machine" :title="state.error || t('statusBar.connectedTitle')">
       <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
       {{ t("statusBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("statusBar.offline") }}
