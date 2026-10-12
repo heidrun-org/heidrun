@@ -8,13 +8,21 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 // keyboard focus leaves, and on a click outside. The card does not open when the pointer only moves over the part.
 // The card is placed again each time its height changes, for example when a row of its list expands, and each time the
 // window changes its size, so that the card always stays inside the window.
+// The property "placement" chooses the side of the card: "start" (the default) puts it at the left of the part, and
+// "bottom" puts it below the part, with its arrow under the middle of the part, for a part that is not in a sidebar at
+// the right edge of the window, for example the circled question mark of a page of the Settings window.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
 // decides its padding. The event "open" tells that the card just opened.
 
-const props = defineProps<{
-  /** The name of the card, for the screen reader. */
-  label: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    /** The name of the card, for the screen reader. */
+    label: string;
+    /** The side of the part where the card opens: at the left of the part, or below the part. */
+    placement?: "start" | "bottom";
+  }>(),
+  { placement: "start" },
+);
 
 const emit = defineEmits<{
   /** The card just opened. */
@@ -35,13 +43,25 @@ const card = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
 const cardStyle = ref<Record<string, string>>({});
 const arrowStyle = ref<Record<string, string>>({});
-/** Puts the card at the left of the part, as high as the part, and inside the window. */
+/** Puts the card at the left of the part, as high as the part, or below the part, and inside the window. */
 function place() {
   if (root.value === null || card.value === null) {
     return;
   }
   const part = root.value.getBoundingClientRect();
-  const height = card.value.getBoundingClientRect().height;
+  const { height, width } = card.value.getBoundingClientRect();
+  if (props.placement === "bottom") {
+    const bottomTop = Math.max(GAP, Math.min(part.bottom + GAP, window.innerHeight - height - GAP));
+    const bottomLeft = Math.max(GAP, Math.min(part.left, window.innerWidth - width - GAP));
+    const arrowLeft = Math.max(GAP, part.left + part.width / 2 - bottomLeft - ARROW_HALF_WIDTH);
+    cardStyle.value = {
+      top: `${bottomTop}px`,
+      left: `${bottomLeft}px`,
+      "--bs-popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, window.innerWidth - 2 * GAP))}px`,
+    };
+    arrowStyle.value = { left: `${arrowLeft}px` };
+    return;
+  }
   const top = Math.max(GAP, Math.min(part.top, window.innerHeight - height - GAP));
   const arrowTop = Math.max(GAP, part.top + part.height / 2 - top - ARROW_HALF_WIDTH);
   cardStyle.value = {
@@ -130,7 +150,8 @@ onBeforeUnmount(() => {
     <div
       v-if="isOpen"
       ref="card"
-      class="popover bs-popover-start position-fixed"
+      class="popover position-fixed"
+      :class="props.placement === 'bottom' ? 'bs-popover-bottom' : 'bs-popover-start'"
       role="group"
       :aria-label="props.label"
       :style="cardStyle"
