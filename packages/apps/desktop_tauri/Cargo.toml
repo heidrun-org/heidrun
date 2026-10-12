@@ -35,3 +35,15 @@ tauri-plugin-dialog = "2"
 tauri-plugin-window-state = "2"
 # Skills: the search on skills.sh and the download from GitHub
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# The percentage of a quota in the menu of the status item is drawn with the system font of macOS
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std", "NSAttributedString", "NSBitmapImageRep", "NSColor", "NSFont", "NSFontDescriptor", "NSGraphics",
+  "NSGraphicsContext", "NSImageRep", "NSStringDrawing", "objc2-core-foundation",
+] }
+objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFCGTypes"] }
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std", "NSDictionary", "NSGeometry", "NSString", "NSObject",
+] }
