@@ -3,12 +3,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { t } from "../i18n/index";
 import { quotaRingWindow } from "../lib/format";
+import { requestQuotaCard } from "../lib/quota_card_request";
 import { buildStatusItemPayload } from "../lib/status_item";
 import { allPanes, paneFullName, quotas, selectPane, state } from "./session";
 import { settings } from "./settings";
 
 /** Name of the event that the Rust side sends when the user chooses an agent in the menu of the status item. */
 const SELECT_PANE_EVENT = "status-item-select-pane";
+
+/**
+ * Name of the event that the Rust side sends when the user chooses a quota line in the menu of the status item. The
+ * value is the label of the quota.
+ */
+const SHOW_QUOTA_EVENT = "status-item-show-quota";
 
 /** Time between two readings of the clock, in milliseconds: the status item turns red within this time. */
 const CLOCK_INTERVAL_MS = 15_000;
@@ -25,7 +32,13 @@ const shownQuotas = computed(() => {
     if (ringWindow === undefined) {
       return [];
     }
-    return [{ percent: ringWindow.percent, text: t("statusItem.quota", { name: quota.label.split(" · ")[0] }) }];
+    return [
+      {
+        label: quota.label,
+        percent: ringWindow.percent,
+        text: t("statusItem.quota", { name: quota.label.split(" · ")[0] }),
+      },
+    ];
   });
 });
 
@@ -59,7 +72,8 @@ let started = false;
 
 /**
  * Starts the status item in the macOS menu bar: sends the agents and the quota to the Rust side each time they change,
- * and selects the agent that the user chooses in the menu. Outside of the Tauri window, nothing happens.
+ * selects the agent that the user chooses in the menu, and opens the information card of the quota that the user
+ * chooses in the menu. Outside of the Tauri window, nothing happens.
  */
 export function startStatusItem() {
   if (started) {
@@ -88,5 +102,8 @@ export function startStatusItem() {
     if (pane !== undefined) {
       selectPane(pane);
     }
+  }).catch(() => {});
+  listen<string>(SHOW_QUOTA_EVENT, (event) => {
+    requestQuotaCard(event.payload);
   }).catch(() => {});
 }

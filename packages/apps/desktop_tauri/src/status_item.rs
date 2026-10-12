@@ -22,11 +22,21 @@ pub const STATUS_ITEM_ID: &str = "hd-status-item";
 /// Name of the event that tells the web page which agent the user chose in the menu. The value is the pane identifier.
 pub const SELECT_PANE_EVENT: &str = "status-item-select-pane";
 
+/// Name of the event that tells the web page which quota line the user chose in the menu, so that the web page opens
+/// the information card of the status bar section of this quota. The value is the label of the quota.
+pub const SHOW_QUOTA_EVENT: &str = "status-item-show-quota";
+
 /// Menu item that shows the main window.
 const OPEN_MENU_ID: &str = "hd-status-open";
 
 /// Start of the identifier of the menu item of an agent. The pane identifier follows.
 const PANE_MENU_ID_PREFIX: &str = "hd-status-pane:";
+
+/// Start of the identifier of the menu item of a section title. The position of the title in the menu follows.
+const TITLE_MENU_ID_PREFIX: &str = "hd-status-title:";
+
+/// Start of the identifier of the menu item of a quota line. The label of the quota follows.
+const QUOTA_MENU_ID_PREFIX: &str = "hd-status-quota:";
 
 /// Time between two pictures while a slot moves: twenty pictures per second.
 const FRAME_INTERVAL: Duration = Duration::from_millis(50);
@@ -78,6 +88,9 @@ pub enum QuotaLevel {
 #[derive(Deserialize, Clone, Default, Debug, PartialEq)]
 #[serde(default)]
 pub struct StatusQuota {
+    /// Label of the quota, the same as in the status bar of the web page, for example `Claude`. The web page opens the
+    /// information card of the status bar section with this label when the user chooses the line of the quota.
+    pub label: String,
     /// Share of the quota already used, from 0 to 100.
     pub percent: f64,
     /// How much of the quota is used.
@@ -140,8 +153,18 @@ fn demo_payload() -> StatusItemPayload {
         done: section("Finished", 1),
         working: section("Working", 3),
         quotas: vec![
-            StatusQuota { percent: 85.0, level: QuotaLevel::Crit, text: "Demo Claude: 85 % used".to_string() },
-            StatusQuota { percent: 40.0, level: QuotaLevel::Ok, text: "Demo Codex: 40 % used".to_string() },
+            StatusQuota {
+                label: "Claude".to_string(),
+                percent: 85.0,
+                level: QuotaLevel::Crit,
+                text: "Demo Claude: 85 % used".to_string(),
+            },
+            StatusQuota {
+                label: "Codex".to_string(),
+                percent: 40.0,
+                level: QuotaLevel::Ok,
+                text: "Demo Codex: 40 % used".to_string(),
+            },
         ],
         open_label: "Open Heidrun".to_string(),
         empty_label: "No agent".to_string(),
@@ -220,6 +243,27 @@ fn pane_id_from_menu_id(menu_id: &str) -> Option<&str> {
     menu_id.strip_prefix(PANE_MENU_ID_PREFIX)
 }
 
+/// The identifier of the menu item of a section title, at the place `position` in the menu, from the top, with the
+/// separators counted.
+fn title_menu_id(position: usize) -> String {
+    format!("{TITLE_MENU_ID_PREFIX}{position}")
+}
+
+/// True when the identifier of a menu item is the identifier of a section title.
+fn is_title_menu_id(menu_id: &str) -> bool {
+    menu_id.starts_with(TITLE_MENU_ID_PREFIX)
+}
+
+/// The identifier of the menu item of the quota with the label `label`.
+fn quota_menu_id(label: &str) -> String {
+    format!("{QUOTA_MENU_ID_PREFIX}{label}")
+}
+
+/// The label of the quota inside the identifier of a menu item, or `None` when the item is not a quota line.
+fn quota_label_from_menu_id(menu_id: &str) -> Option<&str> {
+    menu_id.strip_prefix(QUOTA_MENU_ID_PREFIX)
+}
+
 /// The three sections of the menu, from top to bottom, each with the color of the dots of its agents. The colors are
 /// the colors of the discs of the picture.
 fn sections_with_colors(payload: &StatusItemPayload) -> [(&StatusSection, [u8; 3]); 3] {
@@ -250,7 +294,8 @@ enum MenuLine {
     Open(String),
     /// A line between two groups of lines.
     Separator,
-    /// The title of a section, already translated, with the number of agents.
+    /// The title of a section, already translated, with the number of agents. The item is enabled, so that macOS draws
+    /// it in normal black.
     Title(String),
     /// The text of a section without agent, already translated, with a thin gray circle before it so that the line is
     /// indented like the lines of the agents.
@@ -264,8 +309,11 @@ enum MenuLine {
         /// Color of the dot.
         color: [u8; 3],
     },
-    /// A quota: its name, already translated, and a badge with the percentage in the color of its level.
+    /// A quota: its name, already translated, and a badge with the percentage in the color of its level. The item is
+    /// enabled, so that macOS draws it in normal black.
     Quota {
+        /// Label of the quota, the key of its status bar section in the web page.
+        label: String,
         /// Name shown in the menu, already translated.
         text: String,
         /// Share of the quota already used, from 0 to 100.
@@ -294,25 +342,36 @@ fn menu_lines(payload: &StatusItemPayload) -> Vec<MenuLine> {
         }
     }
     for quota in &payload.quotas {
-        lines.push(MenuLine::Quota { text: quota.text.clone(), percent: quota.percent, color: quota_style(quota.level).0 });
+        lines.push(MenuLine::Quota {
+            label: quota.label.clone(),
+            text: quota.text.clone(),
+            percent: quota.percent,
+            color: quota_style(quota.level).0,
+        });
     }
     lines
 }
 
 /// The menu that opens on a click, built from `menu_lines`. Each agent has a dot in the color of its section.
+///
+/// macOS draws a disabled menu item in gray, whatever color its text has. The section titles and the quota lines are
+/// enabled, so that they show the normal black text of the other lines. Only the lines "None" are disabled, and gray.
 fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
     let mut builder = MenuBuilder::new(app);
-    for line in menu_lines(payload) {
+    for (position, line) in menu_lines(payload).into_iter().enumerate() {
         builder = match line {
             MenuLine::Open(text) => builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, text).build(app)?),
             MenuLine::Separator => builder.separator(),
-            MenuLine::Title(text) => builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?),
+            MenuLine::Title(text) => {
+                builder.item(&MenuItemBuilder::with_id(title_menu_id(position), text).build(app)?)
+            }
             MenuLine::Empty(text) => {
                 let item = IconMenuItemBuilder::new(text).icon(empty_dot_image()).enabled(false);
                 builder.item(&item.build(app)?)
             }
-            MenuLine::Quota { text, percent, color } => {
-                let item = IconMenuItemBuilder::new(text).icon(badge_image(percent, color)).enabled(false);
+            MenuLine::Quota { label, text, percent, color } => {
+                let badge = badge_image(percent, color);
+                let item = IconMenuItemBuilder::with_id(quota_menu_id(&label), text).icon(badge);
                 builder.item(&item.build(app)?)
             }
             MenuLine::Agent { pane_id, name, color } => {
@@ -333,13 +392,18 @@ fn focus_main_window(app: &AppHandle) {
     }
 }
 
-/// The user chose an item of the menu: the main window comes forward, and the web page selects the agent.
+/// The user chose an item of the menu: the main window comes forward. The web page selects the agent of an agent line,
+/// and opens the information card of the status bar section of a quota line. A section title only brings the main
+/// window forward.
 fn handle_menu_event(app: &AppHandle, menu_id: &str) {
-    if menu_id == OPEN_MENU_ID {
+    if menu_id == OPEN_MENU_ID || is_title_menu_id(menu_id) {
         focus_main_window(app);
     } else if let Some(pane_id) = pane_id_from_menu_id(menu_id) {
         focus_main_window(app);
         let _ = app.emit(SELECT_PANE_EVENT, pane_id);
+    } else if let Some(label) = quota_label_from_menu_id(menu_id) {
+        focus_main_window(app);
+        let _ = app.emit(SHOW_QUOTA_EVENT, label);
     }
 }
 
@@ -480,7 +544,7 @@ mod tests {
     #[test]
     fn the_ring_has_the_color_of_the_quota_level_and_a_critical_quota_moves() {
         let quota = |level: QuotaLevel| StatusItemPayload {
-            quotas: vec![StatusQuota { percent: 90.0, level, text: String::new() }],
+            quotas: vec![StatusQuota { percent: 90.0, level, ..StatusQuota::default() }],
             ..StatusItemPayload::default()
         };
         let ring = |payload: &StatusItemPayload| match slots_for(payload).pop() {
@@ -494,7 +558,7 @@ mod tests {
 
     #[test]
     fn each_quota_has_its_own_ring_in_the_order_of_the_data() {
-        let quota = |percent: f64| StatusQuota { percent, level: QuotaLevel::Ok, text: String::new() };
+        let quota = |percent: f64| StatusQuota { percent, level: QuotaLevel::Ok, ..StatusQuota::default() };
         let rings = |quotas: Vec<StatusQuota>| -> Vec<Option<f64>> {
             let payload = StatusItemPayload { quotas, ..StatusItemPayload::default() };
             slots_for(&payload)
@@ -613,18 +677,28 @@ mod tests {
     fn a_section_without_agent_shows_the_empty_text_and_the_quotas_come_last() {
         let payload = StatusItemPayload {
             empty_label: "No agent".into(),
-            quotas: vec![StatusQuota { percent: 1.0, level: QuotaLevel::Ok, text: "Codex quota".into() }],
+            quotas: vec![StatusQuota {
+                label: "Codex".into(),
+                percent: 1.0,
+                level: QuotaLevel::Ok,
+                text: "Codex quota".into(),
+            }],
             ..StatusItemPayload::default()
         };
         let lines = menu_lines(&payload);
         assert_eq!(lines.iter().filter(|line| **line == MenuLine::Empty("No agent".into())).count(), 3);
-        let quota = MenuLine::Quota { text: "Codex quota".into(), percent: 1.0, color: QUOTA_OK_COLOR };
+        let quota = MenuLine::Quota {
+            label: "Codex".into(),
+            text: "Codex quota".into(),
+            percent: 1.0,
+            color: QUOTA_OK_COLOR,
+        };
         assert_eq!(lines.last(), Some(&quota));
     }
 
     #[test]
     fn the_badge_of_a_quota_has_the_color_of_its_level_and_the_picture_has_the_same_size_for_every_percentage() {
-        let quota = |percent: f64, level: QuotaLevel| StatusQuota { percent, level, text: String::new() };
+        let quota = |percent: f64, level: QuotaLevel| StatusQuota { percent, level, ..StatusQuota::default() };
         let payload = StatusItemPayload {
             quotas: vec![quota(5.0, QuotaLevel::Ok), quota(70.0, QuotaLevel::Warn), quota(97.0, QuotaLevel::Crit)],
             ..StatusItemPayload::default()
@@ -641,6 +715,46 @@ mod tests {
             let image = badge_image(percent, QUOTA_OK_COLOR);
             assert_eq!((image.width(), image.height()), (picture::BADGE_WIDTH, picture::BADGE_HEIGHT));
         }
+    }
+
+    #[test]
+    fn the_menu_item_of_a_title_has_its_own_kind_of_identifier() {
+        let id = title_menu_id(4);
+        assert!(is_title_menu_id(&id));
+        assert_ne!(id, title_menu_id(5));
+        assert_eq!(pane_id_from_menu_id(&id), None);
+        assert_eq!(quota_label_from_menu_id(&id), None);
+        assert!(!is_title_menu_id(OPEN_MENU_ID));
+        assert!(!is_title_menu_id(&pane_menu_id("w1-p2")));
+        assert!(!is_title_menu_id(&quota_menu_id("Claude")));
+    }
+
+    #[test]
+    fn the_menu_item_of_a_quota_line_gives_back_the_label_of_its_quota() {
+        assert_eq!(quota_label_from_menu_id(&quota_menu_id("Claude")), Some("Claude"));
+        assert_ne!(quota_menu_id("Claude"), quota_menu_id("Codex"));
+        assert_eq!(quota_label_from_menu_id(OPEN_MENU_ID), None);
+        assert_eq!(quota_label_from_menu_id(&pane_menu_id("w1-p2")), None);
+        assert_eq!(pane_id_from_menu_id(&quota_menu_id("Claude")), None);
+    }
+
+    #[test]
+    fn the_quota_lines_of_the_menu_carry_the_label_of_their_quota() {
+        let labels: Vec<String> = menu_lines(&demo_payload())
+            .into_iter()
+            .filter_map(|line| match line {
+                MenuLine::Quota { label, .. } => Some(label),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(labels, vec!["Claude".to_string(), "Codex".to_string()]);
+    }
+
+    #[test]
+    fn the_label_of_a_quota_is_read_from_json() {
+        let json = r#"{ "quotas": [{ "label": "Claude", "percent": 35.0, "level": "ok", "text": "Claude quota" }] }"#;
+        let payload: StatusItemPayload = serde_json::from_str(json).expect("the data is valid");
+        assert_eq!(payload.quotas[0].label, "Claude");
     }
 
     #[test]
