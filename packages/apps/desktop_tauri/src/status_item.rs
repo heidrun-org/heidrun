@@ -225,28 +225,71 @@ fn dot_image(color: [u8; 3]) -> Image<'static> {
     Image::new_owned(picture::draw_dot(color), picture::DOT_SIZE, picture::DOT_SIZE)
 }
 
-/// The menu that opens on a click: one section per status, then the quotas, then the item that shows the main window.
-/// Each agent has a dot in the color of its section.
-fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
-    let mut builder = MenuBuilder::new(app);
-    for (section, color) in sections_with_colors(payload) {
-        builder = builder.item(&MenuItemBuilder::new(&section.title).enabled(false).build(app)?);
+/// One line of the menu of the status item.
+#[derive(Debug, PartialEq)]
+enum MenuLine {
+    /// The item that shows the main window. The text is already translated.
+    Open(String),
+    /// A line between two groups of lines.
+    Separator,
+    /// The title of a section, already translated, with the number of agents.
+    Title(String),
+    /// The text of a section without agent, already translated.
+    Empty(String),
+    /// An agent, with the dot in the color of its section.
+    Agent {
+        /// Identifier of the pane of the agent.
+        pane_id: String,
+        /// Name shown in the menu.
+        name: String,
+        /// Color of the dot.
+        color: [u8; 3],
+    },
+    /// A quota, already translated.
+    Quota(String),
+}
+
+/// The lines of the menu that opens on a click, from top to bottom: the item that shows the main window and a
+/// separator, then one section per status, then the quotas. The menu never ends with a separator.
+fn menu_lines(payload: &StatusItemPayload) -> Vec<MenuLine> {
+    let mut lines = vec![MenuLine::Open(payload.open_label.clone()), MenuLine::Separator];
+    let sections = sections_with_colors(payload);
+    for (index, (section, color)) in sections.iter().enumerate() {
+        lines.push(MenuLine::Title(section.title.clone()));
         if section.agents.is_empty() {
-            builder = builder.item(&MenuItemBuilder::new(&payload.empty_label).enabled(false).build(app)?);
+            lines.push(MenuLine::Empty(payload.empty_label.clone()));
         }
         for agent in &section.agents {
-            let item = IconMenuItemBuilder::with_id(pane_menu_id(&agent.pane_id), &agent.name).icon(dot_image(color));
-            builder = builder.item(&item.build(app)?);
+            lines.push(MenuLine::Agent { pane_id: agent.pane_id.clone(), name: agent.name.clone(), color: *color });
         }
-        builder = builder.separator();
+        let is_last_section = index + 1 == sections.len();
+        if !is_last_section || !payload.quotas.is_empty() {
+            lines.push(MenuLine::Separator);
+        }
     }
     for quota in &payload.quotas {
-        builder = builder.item(&MenuItemBuilder::new(&quota.text).enabled(false).build(app)?);
+        lines.push(MenuLine::Quota(quota.text.clone()));
     }
-    if !payload.quotas.is_empty() {
-        builder = builder.separator();
+    lines
+}
+
+/// The menu that opens on a click, built from `menu_lines`. Each agent has a dot in the color of its section.
+fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
+    let mut builder = MenuBuilder::new(app);
+    for line in menu_lines(payload) {
+        builder = match line {
+            MenuLine::Open(text) => builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, text).build(app)?),
+            MenuLine::Separator => builder.separator(),
+            MenuLine::Title(text) | MenuLine::Empty(text) | MenuLine::Quota(text) => {
+                builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?)
+            }
+            MenuLine::Agent { pane_id, name, color } => {
+                let item = IconMenuItemBuilder::with_id(pane_menu_id(&pane_id), name).icon(dot_image(color));
+                builder.item(&item.build(app)?)
+            }
+        };
     }
-    builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, &payload.open_label).build(app)?).build()
+    builder.build()
 }
 
 /// Shows the main window and gives it the keyboard focus.
@@ -487,6 +530,63 @@ mod tests {
             ..StatusItemPayload::default()
         };
         assert!(!picture::is_animated(&slots_for(&payload)));
+    }
+
+    #[test]
+    fn the_menu_starts_with_the_item_that_opens_heidrun_and_a_separator() {
+        let payload = StatusItemPayload { open_label: "Open Heidrun".into(), ..demo_payload() };
+        let lines = menu_lines(&payload);
+        assert_eq!(lines[0], MenuLine::Open("Open Heidrun".into()));
+        assert_eq!(lines[1], MenuLine::Separator);
+        assert!(matches!(lines[2], MenuLine::Title(_)));
+        let open_count = lines.iter().filter(|line| matches!(line, MenuLine::Open(_))).count();
+        assert_eq!(open_count, 1);
+    }
+
+    #[test]
+    fn the_menu_has_no_separator_at_its_end() {
+        assert_ne!(menu_lines(&StatusItemPayload::default()).last(), Some(&MenuLine::Separator));
+        assert_ne!(menu_lines(&demo_payload()).last(), Some(&MenuLine::Separator));
+    }
+
+    #[test]
+    fn a_separator_stands_between_two_sections_and_before_the_quotas() {
+        let separators = |payload: &StatusItemPayload| {
+            menu_lines(payload).iter().filter(|line| **line == MenuLine::Separator).count()
+        };
+        assert_eq!(separators(&StatusItemPayload::default()), 3);
+        assert_eq!(separators(&demo_payload()), 4);
+    }
+
+    #[test]
+    fn each_agent_line_has_the_color_of_its_section() {
+        let section = |name: &str| StatusSection { title: name.to_string(), agents: vec![agent(name)] };
+        let payload = StatusItemPayload {
+            blocked: section("blocked"),
+            done: section("done"),
+            working: section("working"),
+            ..StatusItemPayload::default()
+        };
+        let colors: Vec<[u8; 3]> = menu_lines(&payload)
+            .into_iter()
+            .filter_map(|line| match line {
+                MenuLine::Agent { color, .. } => Some(color),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(colors, vec![BLOCKED_COLOR, DONE_COLOR, WORKING_COLOR]);
+    }
+
+    #[test]
+    fn a_section_without_agent_shows_the_empty_text_and_the_quotas_come_last() {
+        let payload = StatusItemPayload {
+            empty_label: "No agent".into(),
+            quotas: vec![StatusQuota { percent: 1.0, level: QuotaLevel::Ok, text: "Codex: 1 % used".into() }],
+            ..StatusItemPayload::default()
+        };
+        let lines = menu_lines(&payload);
+        assert_eq!(lines.iter().filter(|line| **line == MenuLine::Empty("No agent".into())).count(), 3);
+        assert_eq!(lines.last(), Some(&MenuLine::Quota("Codex: 1 % used".into())));
     }
 
     #[test]
