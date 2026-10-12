@@ -45,12 +45,12 @@ const payloadJson = computed(() =>
       blockedLimitMs: settings.notifBlockedMin * 60_000,
       quotas: shownQuotas.value,
       titles: {
-        blocked: t("statusBar.blockedTitle"),
-        done: t("statusBar.doneTitle"),
-        working: t("statusBar.workingTitle"),
+        blocked: t("statusItem.blocked"),
+        done: t("statusItem.done"),
+        working: t("statusItem.working"),
       },
       openLabel: t("statusItem.open"),
-      emptyLabel: t("statusBar.noAgent"),
+      emptyLabel: t("statusItem.none"),
     }),
   ),
 );

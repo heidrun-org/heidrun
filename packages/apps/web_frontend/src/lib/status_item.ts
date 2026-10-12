@@ -10,7 +10,7 @@ export type StatusItemAgent = {
 
 /** The agents of one status, with the title of the section of the menu. */
 export type StatusItemSection = {
-  /** Translated title, with the number of agents. */
+  /** Translated title, without the number of agents. */
   title: string;
   /** The agents of the section. */
   agents: StatusItemAgent[];
@@ -54,7 +54,7 @@ export type StatusItemInput = {
   blockedLimitMs: number;
   /** The quotas to show, in the order of the rings. Empty when no quota is known. */
   quotas: { percent: number; text: string }[];
-  /** Translated section titles, without the number of agents. */
+  /** Translated section titles. */
   titles: { blocked: string; done: string; working: string };
   openLabel: string;
   emptyLabel: string;
@@ -64,7 +64,7 @@ function section(input: StatusItemInput, status: "blocked" | "done" | "working")
   const agents = input.agents
     .filter((agent) => agent.status === status)
     .map((agent) => ({ paneId: agent.paneId, name: agent.name }));
-  return { title: `${input.titles[status]} (${agents.length})`, agents };
+  return { title: input.titles[status], agents };
 }
 
 /** True when an agent has been blocked for at least the limit. */

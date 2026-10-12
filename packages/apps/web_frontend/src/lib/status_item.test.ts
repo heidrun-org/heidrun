@@ -25,15 +25,16 @@ describe("buildStatusItemPayload", () => {
     expect(payload.working.agents.map((agent) => agent.paneId)).toEqual(["p3", "p4"]);
   });
 
-  it("writes the number of agents in the title of each section", () => {
+  it("gives each section its title without the number of agents", () => {
     const payload = buildStatusItemPayload(input);
-    expect(payload.blocked.title).toBe("Blocked (1)");
-    expect(payload.working.title).toBe("Working (2)");
+    expect(payload.blocked.title).toBe("Blocked");
+    expect(payload.done.title).toBe("Finished");
+    expect(payload.working.title).toBe("Working");
   });
 
-  it("gives a section without agent the number zero", () => {
+  it("keeps the title of a section without agent and gives it no agent", () => {
     const payload = buildStatusItemPayload({ ...input, agents: [] });
-    expect(payload.done.title).toBe("Finished (0)");
+    expect(payload.done.title).toBe("Finished");
     expect(payload.done.agents).toEqual([]);
   });
 
