@@ -43,7 +43,7 @@ async function mountApp() {
   settingsStore.settings.leftOpen = true;
   settingsStore.settings.rightOpen = true;
   settingsStore.settings.leftSidebarSection = "actions";
-  settingsStore.settings.rightSidebarSection = "pane";
+  settingsStore.settings.rightSidebarSection = "toHandle";
   const wrapper = shallowMount(App, { attachTo: document.body, global: { stubs: { TopBar: false, Icon: false, MoreMenu: true, ThemeMenu: true } } });
   mountedWindows.push(wrapper);
   await flushPromises();

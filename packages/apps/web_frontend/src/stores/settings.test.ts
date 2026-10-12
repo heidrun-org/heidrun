@@ -168,7 +168,7 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.leftSidebarSection).toBe(section);
-    expect(restarted.settings.rightSidebarSection).toBe("pane");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
   it("does the same for the name rightTab, that is older still", async () => {
@@ -176,7 +176,7 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.leftSidebarSection).toBe("git");
-    expect(restarted.settings.rightSidebarSection).toBe("pane");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
   it("keeps the sidebar section that the left sidebar already had", async () => {
@@ -184,7 +184,7 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.leftSidebarSection).toBe("actions");
-    expect(restarted.settings.rightSidebarSection).toBe("pane");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
   it("keeps the sidebar sections that belong to the right sidebar", async () => {
@@ -193,6 +193,28 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("notes");
     expect(restarted.settings.leftSidebarSection).toBe("actions");
+  });
+});
+
+describe("sidebar section of the right sidebar that was called Pane", () => {
+  it("shows the sidebar section To handle when the saved sidebar section was pane, because the Pane sidebar section is gone", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "pane" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
+  });
+
+  it("shows the sidebar section To handle when nothing was saved", async () => {
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe("toHandle");
+  });
+
+  it.each(["toHandle", "notes", "chats"])("keeps the saved sidebar section %s", async (section) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: section }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.rightSidebarSection).toBe(section);
   });
 });
 
