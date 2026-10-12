@@ -7,6 +7,7 @@
 
 use crate::status_item_icon as icon;
 use crate::status_item_picture::{self as picture, Slot, PICTURE_HEIGHT};
+use crate::status_item_text as text;
 use serde::Deserialize;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
@@ -230,9 +231,11 @@ fn dot_image(color: [u8; 3]) -> Image<'static> {
     Image::new_owned(picture::draw_dot(color), picture::DOT_SIZE, picture::DOT_SIZE)
 }
 
-/// The picture of the badge that the menu shows before the name of a quota: the percentage in a pill of `color`.
+/// The picture of the badge that the menu shows before the name of a quota: the percentage in a pill of `color`,
+/// drawn with the system font when the system can.
 fn badge_image(percent: f64, color: [u8; 3]) -> Image<'static> {
-    Image::new_owned(picture::draw_quota_badge(percent, color), picture::BADGE_WIDTH, picture::BADGE_HEIGHT)
+    let mask = text::render(&picture::badge_text(percent), picture::BADGE_FONT_SIZE);
+    Image::new_owned(picture::draw_quota_badge(percent, color, mask.as_ref()), picture::BADGE_WIDTH, picture::BADGE_HEIGHT)
 }
 
 /// One line of the menu of the status item.

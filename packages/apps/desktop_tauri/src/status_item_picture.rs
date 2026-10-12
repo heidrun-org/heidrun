@@ -439,31 +439,74 @@ pub fn draw_dot(color: [u8; 3]) -> Vec<u8> {
 const PERCENT_ROWS: [u8; 5] = [0b101, 0b001, 0b010, 0b100, 0b101];
 
 /// Width of the picture of a quota badge, in pixels. All the badges have the same width, so that the badges of
-/// several quotas line up in the menu.
-pub const BADGE_WIDTH: u32 = 90;
+/// several quotas line up in the menu. The pill holds the text of the widest percentage in the system font.
+pub const BADGE_WIDTH: u32 = 128;
 
 /// Height of the picture of a quota badge, in pixels. The library that shows the menu scales the picture to 18 points
-/// high, and the pill of the badge fills a part of this height.
+/// high, so four pixels make one point.
 pub const BADGE_HEIGHT: u32 = 72;
 
 /// Height of the pill of a quota badge, in pixels.
-const BADGE_PILL_HEIGHT: f32 = 44.0;
+const BADGE_PILL_HEIGHT: f32 = 52.0;
 
-/// Size of one pixel of the font in a quota badge, in pixels of the picture.
+/// Size of one pixel of the picture font in a quota badge, in pixels of the picture. Only used when the system font
+/// cannot draw the text.
 const BADGE_FONT_SCALE: u32 = 6;
 
 /// Empty space on the right of the text of a quota badge, inside the pill, in pixels.
-const BADGE_PADDING: u32 = 12;
+const BADGE_PADDING: u32 = 16;
 
-/// The glyphs of the percentage of a badge: the digits, then the percent sign. A percentage of 100 or more has no
-/// percent sign, because three glyphs is the most that the pill holds.
-fn badge_glyphs(percent: f64) -> Vec<[u8; 5]> {
-    let rounded = percent.clamp(0.0, 100.0).round() as usize;
-    let mut glyphs: Vec<[u8; 5]> = rounded.to_string().bytes().map(|byte| DIGIT_ROWS[(byte - b'0') as usize]).collect();
-    if rounded < 100 {
-        glyphs.push(PERCENT_ROWS);
+/// Size of the system font in a quota badge, in pixels of the picture: 10 points.
+pub const BADGE_FONT_SIZE: f64 = 40.0;
+
+/// A text drawn by the system, as white on a transparent background: one byte of opacity for each pixel, row by row.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TextMask {
+    /// Width in pixels.
+    pub width: u32,
+    /// Height in pixels.
+    pub height: u32,
+    /// The opacity of each pixel, `width * height` bytes.
+    pub alpha: Vec<u8>,
+}
+
+impl TextMask {
+    /// The smallest rectangle that holds every visible pixel, as (left, top, right, bottom) with the right and the
+    /// bottom sides outside, or `None` when no pixel is visible.
+    pub fn ink_bounds(&self) -> Option<(u32, u32, u32, u32)> {
+        let mut bounds: Option<(u32, u32, u32, u32)> = None;
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if self.alpha[(y * self.width + x) as usize] == 0 {
+                    continue;
+                }
+                bounds = Some(match bounds {
+                    None => (x, y, x + 1, y + 1),
+                    Some((left, top, right, bottom)) => (left.min(x), top.min(y), right.max(x + 1), bottom.max(y + 1)),
+                });
+            }
+        }
+        bounds
     }
-    glyphs
+}
+
+/// The text of the percentage of a badge: the number and the percent sign. A percentage of 100 or more has no percent
+/// sign, because the pill holds three characters at most.
+pub fn badge_text(percent: f64) -> String {
+    let rounded = percent.clamp(0.0, 100.0).round() as usize;
+    if rounded < 100 {
+        format!("{rounded}%")
+    } else {
+        rounded.to_string()
+    }
+}
+
+/// The glyphs of the picture font for the text of a badge.
+fn badge_glyphs(percent: f64) -> Vec<[u8; 5]> {
+    badge_text(percent)
+        .bytes()
+        .map(|byte| if byte == b'%' { PERCENT_ROWS } else { DIGIT_ROWS[(byte - b'0') as usize] })
+        .collect()
 }
 
 /// The color of the pixel (`x`, `y`) of the pill of a quota badge: a capsule in `color`, without the text.
@@ -476,31 +519,55 @@ fn badge_pill_color(x: f32, y: f32, color: [u8; 3]) -> Color {
     [base[0], base[1], base[2], (radius + 0.5 - distance).clamp(0.0, 1.0)]
 }
 
-/// Draws the badge of a quota for a menu item: a flat pill in `color`, with the percentage in white, aligned to the
-/// right. The badge is `BADGE_WIDTH` pixels wide whatever the percentage, so that the percent signs of the badges of
-/// several quotas stand in the same column. Returns the pixels as red, green, blue, alpha bytes, row by row.
-pub fn draw_quota_badge(percent: f64, color: [u8; 3]) -> Vec<u8> {
+/// The opacity of the white text at the pixel (`x`, `y`) of a badge, from 0 to 1. The text is drawn by the system when
+/// `mask` is given, and with the picture font when not. In both cases the right side of the text stands at the same
+/// place, so that the percent signs of several badges stand in the same column, and the text is centered in the height.
+fn badge_text_opacity(x: u32, y: u32, percent: f64, mask: Option<&TextMask>) -> f32 {
+    if let Some(mask) = mask {
+        let Some((left, top, right, bottom)) = mask.ink_bounds() else {
+            return 0.0;
+        };
+        let origin_x = (BADGE_WIDTH - BADGE_PADDING) as i64 - right as i64;
+        let origin_y = ((BADGE_HEIGHT as i64 - (bottom - top) as i64) / 2) - top as i64;
+        let (mask_x, mask_y) = (x as i64 - origin_x, y as i64 - origin_y);
+        if mask_x < left as i64 || mask_x >= right as i64 || mask_y < top as i64 || mask_y >= bottom as i64 {
+            return 0.0;
+        }
+        return mask.alpha[(mask_y as u32 * mask.width + mask_x as u32) as usize] as f32 / 255.0;
+    }
     let glyphs = badge_glyphs(percent);
     let scale = BADGE_FONT_SCALE;
-    let glyph_width = 3 * scale;
-    let text_width = glyphs.len() as u32 * glyph_width + (glyphs.len() as u32 - 1) * scale;
+    let text_width = glyphs.len() as u32 * 3 * scale + (glyphs.len() as u32 - 1) * scale;
     let text_left = BADGE_WIDTH - BADGE_PADDING - text_width;
     let text_top = (BADGE_HEIGHT - 5 * scale) / 2;
+    if x < text_left || y < text_top || y >= text_top + 5 * scale {
+        return 0.0;
+    }
+    let column = (x - text_left) / scale;
+    let glyph_index = (column / 4) as usize;
+    let column_in_glyph = column % 4;
+    if glyph_index >= glyphs.len() || column_in_glyph >= 3 {
+        return 0.0;
+    }
+    let row = ((y - text_top) / scale) as usize;
+    if glyphs[glyph_index][row] >> (2 - column_in_glyph) & 1 == 1 {
+        1.0
+    } else {
+        0.0
+    }
+}
+
+/// Draws the badge of a quota for a menu item: a flat pill in `color`, with the percentage in white, aligned to the
+/// right. The badge is `BADGE_WIDTH` pixels wide whatever the percentage, so that the percent signs of the badges of
+/// several quotas stand in the same column. `mask` is the text `badge_text(percent)` drawn with the system font; when
+/// it is `None`, the picture font draws the text. Returns the pixels as red, green, blue, alpha bytes, row by row.
+pub fn draw_quota_badge(percent: f64, color: [u8; 3], mask: Option<&TextMask>) -> Vec<u8> {
     let mut pixels = vec![0u8; (BADGE_WIDTH * BADGE_HEIGHT * 4) as usize];
     for y in 0..BADGE_HEIGHT {
         for x in 0..BADGE_WIDTH {
-            let mut drawn = badge_pill_color(x as f32 + 0.5, y as f32 + 0.5, color);
-            if x >= text_left && y >= text_top && y < text_top + 5 * scale {
-                let column = (x - text_left) / scale;
-                let glyph_index = (column / 4) as usize;
-                let column_in_glyph = column % 4;
-                if glyph_index < glyphs.len() && column_in_glyph < 3 {
-                    let row = ((y - text_top) / scale) as usize;
-                    if glyphs[glyph_index][row] >> (2 - column_in_glyph) & 1 == 1 {
-                        drawn = [1.0, 1.0, 1.0, 1.0];
-                    }
-                }
-            }
+            let pill = badge_pill_color(x as f32 + 0.5, y as f32 + 0.5, color);
+            let text = badge_text_opacity(x, y, percent, mask);
+            let drawn = over([1.0, 1.0, 1.0, text], pill);
             let offset = ((y * BADGE_WIDTH + x) * 4) as usize;
             for channel in 0..4 {
                 pixels[offset + channel] = (drawn[channel].clamp(0.0, 1.0) * 255.0).round() as u8;
@@ -637,21 +704,53 @@ mod tests {
         assert!(brightness(inside) > brightness(border) + 60, "border: {border:?}, inside: {inside:?}");
     }
 
+    /// A text mask that is white everywhere inside a rectangle of `width` by `height` pixels, with transparent space
+    /// of 3 pixels around.
+    fn solid_mask(width: u32, height: u32) -> TextMask {
+        let (full_width, full_height) = (width + 6, height + 6);
+        let mut alpha = vec![0u8; (full_width * full_height) as usize];
+        for y in 3..3 + height {
+            for x in 3..3 + width {
+                alpha[(y * full_width + x) as usize] = 255;
+            }
+        }
+        TextMask { width: full_width, height: full_height, alpha }
+    }
+
     #[test]
     fn a_quota_badge_is_a_pill_in_the_color_of_the_level_with_the_text_in_white() {
-        let pixels = draw_quota_badge(34.0, BLUE);
-        assert_eq!(pixels.len() as u32, BADGE_WIDTH * BADGE_HEIGHT * 4);
-        let left_of_the_text = pixel(&pixels, BADGE_WIDTH, 6, BADGE_HEIGHT / 2);
-        assert_eq!(left_of_the_text, [BLUE[0], BLUE[1], BLUE[2], 255]);
-        assert_eq!(pixel(&pixels, BADGE_WIDTH, 0, 0)[3], 0);
-        let white = pixels.chunks(4).filter(|pixel| pixel == &[255, 255, 255, 255]).count();
-        assert!(white > 100, "the text has {white} white pixels");
+        for mask in [None, Some(solid_mask(40, 28))] {
+            let pixels = draw_quota_badge(34.0, BLUE, mask.as_ref());
+            assert_eq!(pixels.len() as u32, BADGE_WIDTH * BADGE_HEIGHT * 4);
+            let left_of_the_text = pixel(&pixels, BADGE_WIDTH, 8, BADGE_HEIGHT / 2);
+            assert_eq!(left_of_the_text, [BLUE[0], BLUE[1], BLUE[2], 255]);
+            assert_eq!(pixel(&pixels, BADGE_WIDTH, 0, 0)[3], 0);
+            let white = pixels.chunks(4).filter(|pixel| pixel == &[255, 255, 255, 255]).count();
+            assert!(white > 100, "the text has {white} white pixels");
+        }
+    }
+
+    #[test]
+    fn the_text_of_a_badge_drawn_by_the_system_is_right_aligned_and_centered_in_the_height() {
+        let mask = solid_mask(40, 28);
+        let pixels = draw_quota_badge(34.0, BLUE, Some(&mask));
+        let white = |x: u32, y: u32| pixel(&pixels, BADGE_WIDTH, x, y) == [255, 255, 255, 255];
+        let right = BADGE_WIDTH - BADGE_PADDING;
+        assert!(white(right - 1, BADGE_HEIGHT / 2));
+        assert!(!white(right, BADGE_HEIGHT / 2));
+        assert!(white(right - 40, BADGE_HEIGHT / 2));
+        assert!(!white(right - 41, BADGE_HEIGHT / 2));
+        let top = (BADGE_HEIGHT - 28) / 2;
+        assert!(white(right - 20, top));
+        assert!(!white(right - 20, top - 1));
+        assert!(white(right - 20, top + 27));
+        assert!(!white(right - 20, top + 28));
     }
 
     #[test]
     fn the_percent_signs_of_two_badges_stand_in_the_same_column() {
         let sign = |percent: f64| {
-            let pixels = draw_quota_badge(percent, BLUE);
+            let pixels = draw_quota_badge(percent, BLUE, None);
             let first_column = BADGE_WIDTH - BADGE_PADDING - 3 * BADGE_FONT_SCALE;
             let mut sign = Vec::new();
             for y in 0..BADGE_HEIGHT {
@@ -666,13 +765,22 @@ mod tests {
     }
 
     #[test]
-    fn a_badge_of_100_percent_shows_three_digits_and_no_percent_sign() {
-        assert_eq!(badge_glyphs(100.0).len(), 3);
-        assert_eq!(badge_glyphs(100.0)[0], DIGIT_ROWS[1]);
-        assert_eq!(badge_glyphs(99.4).len(), 3);
-        assert_eq!(badge_glyphs(99.4).last(), Some(&PERCENT_ROWS));
+    fn the_text_of_a_badge_has_no_percent_sign_from_100() {
+        assert_eq!(badge_text(1.0), "1%");
+        assert_eq!(badge_text(34.4), "34%");
+        assert_eq!(badge_text(99.4), "99%");
+        assert_eq!(badge_text(100.0), "100");
+        assert_eq!(badge_text(250.0), "100");
+        assert_eq!(badge_text(-5.0), "0%");
         assert_eq!(badge_glyphs(1.0), vec![DIGIT_ROWS[1], PERCENT_ROWS]);
-        assert_eq!(badge_glyphs(250.0), badge_glyphs(100.0));
+        assert_eq!(badge_glyphs(100.0).len(), 3);
+    }
+
+    #[test]
+    fn the_ink_of_a_text_mask_is_the_rectangle_of_its_visible_pixels() {
+        assert_eq!(solid_mask(10, 4).ink_bounds(), Some((3, 3, 13, 7)));
+        let empty = TextMask { width: 2, height: 2, alpha: vec![0; 4] };
+        assert_eq!(empty.ink_bounds(), None);
     }
 
     #[test]

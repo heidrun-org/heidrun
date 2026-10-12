@@ -16,6 +16,7 @@ mod skills;
 mod status_item;
 mod status_item_icon;
 mod status_item_picture;
+mod status_item_text;
 mod topic_clusters;
 mod usage;
 
