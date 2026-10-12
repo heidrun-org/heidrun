@@ -68,6 +68,28 @@ function clamp(value: number, lowest: number, highest: number): number {
 }
 
 /**
+ * Where the strip scrolls so that one button is fully visible, with no arrow over it. The button is left where it is when it
+ * is already fully visible.
+ * @param chip - the place of the button
+ * @param scrollLeft - how far the strip is scrolled now
+ * @param viewWidth - the visible width of the strip
+ * @param scrollWidth - the full width of the strip
+ * @returns the new `scrollLeft`, the same as now when the button is already fully visible
+ */
+export function scrollLeftToShow(chip: TopicChipBox, scrollLeft: number, viewWidth: number, scrollWidth: number): number {
+  const highest = Math.max(0, scrollWidth - viewWidth);
+  const leftLimit = scrollLeft + (scrollLeft > 0 ? ARROW_ZONE : 0);
+  const rightLimit = scrollLeft + viewWidth - (scrollLeft < highest ? ARROW_ZONE : 0);
+  if (chip.left < leftLimit) {
+    return clamp(chip.left - ARROW_ZONE, 0, highest);
+  }
+  if (chip.right > rightLimit) {
+    return clamp(chip.right + ARROW_ZONE - viewWidth, 0, highest);
+  }
+  return scrollLeft;
+}
+
+/**
  * Where the strip scrolls after a click on the arrow at its end: the first button that is not fully visible, and the two
  * after it, come into view. The last button comes flush with the end of the strip, because no arrow covers it then.
  * @param chips - the place of each button, in the order of the strip

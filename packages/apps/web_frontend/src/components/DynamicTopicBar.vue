@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "./Icon.vue";
-import { nextTopicsScrollLeft, previousTopicsScrollLeft, type TopicChipBox } from "../lib/dynamic_topic_bar";
+import {
+  nextTopicsScrollLeft,
+  previousTopicsScrollLeft,
+  scrollLeftToShow,
+  type TopicChipBox,
+} from "../lib/dynamic_topic_bar";
 import { t } from "../i18n/index";
 
 const props = defineProps<{
@@ -90,6 +95,22 @@ watch(
   () => props.topics,
   () => nextTick(measure),
 );
+
+/** Moves the strip so that the selected button is fully visible, when the selection comes from outside the bar. */
+async function showSelected(): Promise<void> {
+  await nextTick();
+  const element = strip.value;
+  const selectedChip = element?.querySelector<HTMLElement>(".topic-chip.is-selected");
+  if (element === undefined || selectedChip === null || selectedChip === undefined) {
+    return;
+  }
+  const chip = { left: selectedChip.offsetLeft, right: selectedChip.offsetLeft + selectedChip.offsetWidth };
+  const left = scrollLeftToShow(chip, element.scrollLeft, element.clientWidth, element.scrollWidth);
+  if (left !== element.scrollLeft) {
+    scrollStripTo(left);
+  }
+}
+watch(() => props.selected, showSelected);
 </script>
 
 <template>
