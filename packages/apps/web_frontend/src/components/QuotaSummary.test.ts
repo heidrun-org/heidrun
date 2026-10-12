@@ -114,6 +114,17 @@ describe("QuotaSummary", () => {
     expect(wrapper.findAll(".progress").map((progress) => progress.attributes("aria-valuenow"))).toEqual(["25", "60"]);
   });
 
+  it("makes the information card 408 pixels wide, which is 20 percent more than the 340 pixels of Bootstrap, for Claude and for Codex", async () => {
+    const codex: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [{ id: "week", name: "Week", percent: 1 }] };
+    for (const quota of [claude, codex]) {
+      const wrapper = mount(QuotaSummary, { props: { quota } });
+      await wrapper.trigger("click");
+      const popover = wrapper.get(".popover").element as HTMLElement;
+      expect(popover.style.width).toBe("408px");
+      expect(popover.style.getPropertyValue("--bs-popover-max-width")).toBe("408px");
+    }
+  });
+
   it("shows the first window in the ring when there is no week", () => {
     const week = { id: "week" as const, name: "Week", percent: 44 };
     expect(quotaRingWindow([week])).toBe(week);

@@ -23,6 +23,11 @@ const LEVEL_CLASSES = {
 const RING_RADIUS = 7;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
+// The width of the information card, in pixels: 20 percent more than the 340 pixels of `$popover-max-width` in
+// `bootstrap_parts.scss`, which the other information cards of the status bar keep.
+const CARD_WIDTH_PIXELS = 408;
+const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--bs-popover-max-width": `${CARD_WIDTH_PIXELS}px` };
+
 const nowSeconds = ref(Date.now() / 1000);
 const clock = window.setInterval(() => {
   nowSeconds.value = Date.now() / 1000;
@@ -74,7 +79,13 @@ function formatCost(cost: number) {
       />
     </svg>
     <span v-if="ringWindow" class="mono percent">{{ Math.round(ringWindow.percent) }}<span class="unit">%</span></span>
-    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
+    <div
+      v-if="isOpen"
+      class="popover bs-popover-top position-absolute bottom-100"
+      role="tooltip"
+      :style="cardStyle"
+      @click.stop
+    >
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-3">
         <div v-for="(w, index) in quota.windows" :key="w.id" class="d-flex flex-column gap-2" data-field="window">

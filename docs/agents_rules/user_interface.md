@@ -139,6 +139,7 @@ This document says where each part of the window goes and how each part works. T
 - The status bar sits at the bottom of the window, over the whole width.
 - Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, the usage of Codex, the Git branch, and the connection to Herdr. The number of agents that are blocked, working, or done is not in the status bar: the top right corner of the window already shows it.
 - A click on a status bar section opens its information card above the section.
+- The information card of the usage of Claude and the information card of the usage of Codex are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290)).
 
 ## Position and size of the window
 
