@@ -63,5 +63,12 @@
   "viewExpanded": "Vue aérée",
   "agentUnavailableTitle": "Aucune conversation de cet agent de code dans ce workspace.",
   "chatActionsLabel": "Ouvrir cette conversation",
-  "openInAppTitle": "Ouvrir dans l’app {app}"
+  "openInAppTitle": "Ouvrir dans l’app {app}",
+  "topicsLabel": "Sujets dynamiques de cette conversation",
+  "topicBarLabel": "Filtrer les conversations par sujet dynamique",
+  "topicAll": "Tout",
+  "topicAllTitle": "Afficher toutes les conversations",
+  "topicTitle": "Afficher seulement les conversations sur « {topic} »",
+  "topicsPreviousTitle": "Afficher les sujets précédents",
+  "topicsNextTitle": "Afficher les sujets suivants"
 }

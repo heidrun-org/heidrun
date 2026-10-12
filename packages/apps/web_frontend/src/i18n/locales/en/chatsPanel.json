@@ -63,5 +63,12 @@
   "viewExpanded": "Expanded view",
   "agentUnavailableTitle": "No chat of this coding agent in this workspace.",
   "chatActionsLabel": "Open this chat",
-  "openInAppTitle": "Open in the {app} app"
+  "openInAppTitle": "Open in the {app} app",
+  "topicsLabel": "Dynamic topics of this chat",
+  "topicBarLabel": "Filter the chats by dynamic topic",
+  "topicAll": "All",
+  "topicAllTitle": "Show all the chats",
+  "topicTitle": "Show only the chats about “{topic}”",
+  "topicsPreviousTitle": "Show the previous topics",
+  "topicsNextTitle": "Show the next topics"
 }

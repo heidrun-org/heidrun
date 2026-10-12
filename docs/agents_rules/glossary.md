@@ -60,7 +60,23 @@ One saved conversation between the developer and a coding agent, for example Cla
 
 ### Chats sidebar section
 
-The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a selector that chooses the coding agent, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+
+### Dynamic topic
+
+One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Chats sidebar section shows them on the row of the chat.
+
+### Dynamic topic source information
+
+The data that Heidrun reads in a chat to compute its dynamic topics. It has four parts: the title of the chat, the first messages that the developer typed, the folders of the files that the coding agent wrote, and the titles of the GitHub issues and of the pull requests that the chat mentioned. The messages of the coding agent are not part of it.
+
+### Dynamic topic extraction
+
+The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model". The Settings window holds the choice, in its section "Dynamic topics".
+
+### Dynamic topic bar
+
+The row of small rounded buttons in the header of the Chats sidebar section, below the selector of the coding agent. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
 
 ### Navigation bar
 
@@ -87,5 +103,7 @@ The first status bar section, at the left end of the status bar. It shows the st
 - The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
+- Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.
+- Write "dynamic topic source information" in full. Do not write "source", "metadata", or "meta information" for it.
 - The word "section" is never alone. Write "sidebar section" or "status bar section".
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".

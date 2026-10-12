@@ -22,10 +22,10 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the sections in the sidebar, without the section Skills", async () => {
+  it("lists the sections in the sidebar, with the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll(".side .entry").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents"]);
+    expect(entries).toEqual(["General", "Terminal", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
     wrapper.unmount();
   });
 });

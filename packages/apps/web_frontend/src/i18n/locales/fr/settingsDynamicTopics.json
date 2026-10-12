@@ -1,0 +1,10 @@
+{
+  "extractionTitle": "Extraction des sujets dynamiques",
+  "extractionLabel": "Extraction des sujets dynamiques",
+  "keywordLabel": "Mots-clés",
+  "keywordTitle": "Trouver les sujets de chaque conversation à partir des mots de son titre, de ses premiers messages, des dossiers de ses fichiers, et de ses issues et pull requests",
+  "languageModelLabel": "Modèle de langage",
+  "languageModelTitle": "Pas encore prêt : cette méthode vient après la méthode Mots-clés",
+  "keywordHelp": "Mots-clés : les sujets de chaque conversation viennent des mots de son titre, des premiers messages que vous avez tapés, des dossiers des fichiers que l’agent de code a écrits, et des titres de ses issues et pull requests. Rien ne quitte cet ordinateur.",
+  "languageModelHelp": "Modèle de langage : un modèle de langage trouve les sujets. Cette méthode n’est pas encore prête."
+}

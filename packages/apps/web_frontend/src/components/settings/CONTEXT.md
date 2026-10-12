@@ -11,6 +11,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), the working days, and the checkbox "Keep agents running after quit" (the setting `keepAgentsRunningAfterQuit`, sent to the Rust side by `../../stores/settings.ts`).
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 - `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. The whole row of an agent is the switch: a click anywhere on the row, or the Space key or the Enter key on the focused row, changes it. A switched on agent means the user has a valid subscription or access for it. The status bar `../StatusBar.vue` shows the quota of a coding agent only when this agent is switched on, and it changes at once when a switch moves.
+- `SettingsDynamicTopicsSection.vue`: the choice "Dynamic topic extraction", two radio buttons ("Keyword" and "Language model", which is disabled until that method is built), saved in the setting `dynamicTopicExtraction`. The Chats sidebar section `../ChatsPanel.vue` reads it.
 
 ## Rules
 - A section component shows the content only. The title, the sidebar and the close button belong to `SettingsModal.vue`.
@@ -21,3 +22,4 @@ The content of each section of the Settings window. The Settings window itself i
 - The section Agents comes from [issue 122](https://github.com/heidrun-org/heidrun/issues/122). Every agent starts switched off. The whole row is the switch: [issue 139](https://github.com/heidrun-org/heidrun/issues/139).
 - The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).
 - The checkbox "Keep agents running after quit" comes from [issue 175](https://github.com/heidrun-org/heidrun/issues/175).
+- The section Dynamic topics comes from [issue 260](https://github.com/heidrun-org/heidrun/issues/260).

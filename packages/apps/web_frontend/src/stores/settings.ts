@@ -60,6 +60,8 @@ const defaults = {
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
+  /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
+  dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -167,6 +169,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
+  dynamicTopicExtraction: ["keyword", "languageModel"],
 };
 
 /**
@@ -297,7 +300,8 @@ export type SettingsSection =
   | "notifications"
   | "general"
   | "mobileAccess"
-  | "agents";
+  | "agents"
+  | "dynamicTopics";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({

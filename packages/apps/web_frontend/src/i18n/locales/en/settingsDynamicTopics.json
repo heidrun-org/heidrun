@@ -1,0 +1,10 @@
+{
+  "extractionTitle": "Dynamic topic extraction",
+  "extractionLabel": "Dynamic topic extraction",
+  "keywordLabel": "Keyword",
+  "keywordTitle": "Find the topics of each chat from the words of its title, of its first messages, of the folders of its files, and of its issues and pull requests",
+  "languageModelLabel": "Language model",
+  "languageModelTitle": "Not ready yet: this method comes after the method Keyword",
+  "keywordHelp": "Keyword: the topics of each chat come from the words of its title, of the first messages that you typed, of the folders of the files that the coding agent wrote, and of the titles of its issues and pull requests. Nothing leaves this computer.",
+  "languageModelHelp": "Language model: a language model finds the topics. This method is not ready yet."
+}

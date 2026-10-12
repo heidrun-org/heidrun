@@ -252,6 +252,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["notesShowAll", false, true],
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
+  ["dynamicTopicExtraction", "keyword", "languageModel"],
 ];
 
 describe("the last state of each option", () => {
@@ -326,6 +327,7 @@ describe("a corrupted saved value", () => {
         historyGroupBy: "year",
         chatsAgent: "gemini",
         chatsView: "wide",
+        dynamicTopicExtraction: "oracle",
         searchRegex: true,
       }),
     );
@@ -337,6 +339,7 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.historyGroupBy).toBe("ws");
     expect(restarted.settings.chatsAgent).toBe("claude");
     expect(restarted.settings.chatsView).toBe("compact");
+    expect(restarted.settings.dynamicTopicExtraction).toBe("keyword");
     expect(restarted.settings.searchRegex).toBe(true);
   });
 });
