@@ -1,22 +1,15 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
+import { languageModelStatus } from "../../stores/language_model_topics";
 import { settings } from "../../stores/settings";
 import { rebuildTopicClusters, topicClusterStatus } from "../../stores/topic_clusters";
 import { t } from "../../i18n/index";
 
-/**
- * The two methods that compute the dynamic topics, in the order of the buttons. The method "languageModel" is not ready
- * yet, so its button is disabled.
- */
+/** The two methods that compute the dynamic topics, in the order of the buttons. */
 const EXTRACTIONS = [
-  { id: "keyword", labelKey: "settingsDynamicTopics.keywordLabel", titleKey: "settingsDynamicTopics.keywordTitle", isDisabled: false },
-  {
-    id: "languageModel",
-    labelKey: "settingsDynamicTopics.languageModelLabel",
-    titleKey: "settingsDynamicTopics.languageModelTitle",
-    isDisabled: true,
-  },
+  { id: "keyword", labelKey: "settingsDynamicTopics.keywordLabel", titleKey: "settingsDynamicTopics.keywordTitle" },
+  { id: "languageModel", labelKey: "settingsDynamicTopics.languageModelLabel", titleKey: "settingsDynamicTopics.languageModelTitle" },
 ] as const;
 
 /** The three blocks of the information card of the clustered dynamic topics, in the order of the card. */
@@ -61,11 +54,13 @@ const CLUSTERED_HELP_BLOCKS = [
         :title="t(method.titleKey)"
         :aria-checked="settings.dynamicTopicExtraction === method.id"
         :class="{ on: settings.dynamicTopicExtraction === method.id }"
-        :disabled="method.isDisabled"
         @click="settings.dynamicTopicExtraction = method.id"
       >
         {{ t(method.labelKey) }}
       </button>
+    </div>
+    <div v-if="settings.dynamicTopicExtraction === 'languageModel' && languageModelStatus.error !== null" class="keys" role="status">
+      {{ t(`settingsDynamicTopics.languageModelError.${languageModelStatus.error}`) }}
     </div>
 
     <h4>{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
@@ -119,7 +114,6 @@ const CLUSTERED_HELP_BLOCKS = [
 <style scoped>
 .section { display: flex; flex-direction: column; gap: 10px; }
 h4 { margin: 0; font-size: var(--font-size); font-weight: 600; color: var(--text-2); }
-.seg button:disabled { opacity: 0.45; }
 .rebuild { display: flex; align-items: center; gap: 8px; }
 .btn:disabled { opacity: 0.45; }
 </style>

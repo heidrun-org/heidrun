@@ -10,7 +10,8 @@ async function mountSection() {
   const { settings } = await import("../../stores/settings");
   const { default: SettingsDynamicTopicsSection } = await import("./SettingsDynamicTopicsSection.vue");
   const clusters = await import("../../stores/topic_clusters");
-  return { wrapper: mount(SettingsDynamicTopicsSection), settings, ...clusters };
+  const { languageModelStatus } = await import("../../stores/language_model_topics");
+  return { wrapper: mount(SettingsDynamicTopicsSection), settings, languageModelStatus, ...clusters };
 }
 
 beforeEach(() => {
@@ -33,12 +34,21 @@ describe("SettingsDynamicTopicsSection", () => {
     expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["true", "false"]);
   });
 
-  it("disables the radio button Language model, with a title that says it is not ready yet", async () => {
+  it("enables the radio button Language model, with a title that names the coding agents, and a click chooses it", async () => {
     const { wrapper, settings } = await mountSection();
     const languageModel = wrapper.findAll('[role="radio"]')[1];
-    expect(languageModel.attributes("disabled")).toBeDefined();
-    expect(languageModel.attributes("title")).toContain("Not ready yet");
+    expect(languageModel.attributes("disabled")).toBeUndefined();
+    expect(languageModel.attributes("title")).toContain("codex or claude");
+    expect(languageModel.attributes("title")).not.toContain("Not ready yet");
     await languageModel.trigger("click");
+    expect(settings.dynamicTopicExtraction).toBe("languageModel");
+    expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["false", "true"]);
+  });
+
+  it("chooses Keyword again with a click on the radio button Keyword", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ dynamicTopicExtraction: "languageModel" }));
+    const { wrapper, settings } = await mountSection();
+    await wrapper.findAll('[role="radio"]')[0].trigger("click");
     expect(settings.dynamicTopicExtraction).toBe("keyword");
   });
 
@@ -77,7 +87,11 @@ describe("SettingsDynamicTopicsSection", () => {
     expect(blocks[0]).toContain("Keyword");
     expect(blocks[0]).toContain("Nothing leaves this computer");
     expect(blocks[1]).toContain("Language model");
-    expect(blocks[1]).toContain("This method is not ready yet");
+    expect(blocks[1]).toContain("A language model finds the topics");
+    expect(blocks[1]).toContain("the title and the first messages that you typed");
+    expect(blocks[1]).toContain("and nothing else");
+    expect(blocks[1]).toContain("codex or claude");
+    expect(blocks[1]).not.toContain("not ready yet");
   });
 
   it("closes the information card of the extraction method on a second click and on the key Escape", async () => {
@@ -89,6 +103,51 @@ describe("SettingsDynamicTopicsSection", () => {
     await mark.trigger("click");
     await mark.trigger("keydown", { key: "Escape" });
     expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+});
+
+describe("SettingsDynamicTopicsSection, the method Language model", () => {
+  it("says nothing under the choice while the last call gave topics, and while the method is Keyword", async () => {
+    const { wrapper, settings, languageModelStatus } = await mountSection();
+    languageModelStatus.error = "failed";
+    await wrapper.vm.$nextTick();
+    expect(settings.dynamicTopicExtraction).toBe("keyword");
+    expect(wrapper.findAll("[role=status]")).toHaveLength(0);
+    settings.dynamicTopicExtraction = "languageModel";
+    languageModelStatus.error = null;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll("[role=status]")).toHaveLength(0);
+  });
+
+  it("says, under the choice, why the last call gave no topic, only while the method is Language model", async () => {
+    const { wrapper, settings, languageModelStatus } = await mountSection();
+    settings.dynamicTopicExtraction = "languageModel";
+    await wrapper.vm.$nextTick();
+    languageModelStatus.error = "noCodingAgent";
+    await wrapper.vm.$nextTick();
+    const status = wrapper.get("[role=status]");
+    expect(status.text()).toContain("Neither codex nor claude is installed");
+    expect(status.element.previousElementSibling).toBe(wrapper.get('[role="radiogroup"]').element);
+    languageModelStatus.error = "wrongAnswer";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get("[role=status]").text()).toContain("answer that Heidrun cannot use");
+    languageModelStatus.error = "failed";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get("[role=status]").text()).toContain("did not answer");
+  });
+
+  it("keeps the line of the clustered dynamic topics apart from the line of the method Language model", async () => {
+    const { wrapper, settings, languageModelStatus, topicClusterStatus } = await mountSection();
+    settings.dynamicTopicExtraction = "languageModel";
+    settings.clusteredDynamicTopics = true;
+    await wrapper.vm.$nextTick();
+    languageModelStatus.error = "failed";
+    topicClusterStatus.error = "noCodingAgent";
+    await wrapper.vm.$nextTick();
+    const lines = wrapper.findAll("[role=status]").map((line) => line.text());
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain("language model found no new topic");
+    expect(lines[1]).toContain("Neither codex nor claude is installed");
   });
 });
 

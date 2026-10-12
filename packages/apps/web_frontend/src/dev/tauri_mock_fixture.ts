@@ -100,14 +100,28 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * The answer of the Tauri command `coding_agent_ask` for the prompt of the clustered dynamic topics. There is no
-	 * coding agent in a browser, so the mock groups the new labels that start with the same four letters under the
-	 * shortest of them, for example "sidebar" and "sidebars" under "sidebar".
+	 * The answer of the Tauri command `coding_agent_ask`. There is no coding agent in a browser, so the mock answers two
+	 * kinds of prompt. For the prompt of the clustered dynamic topics, it groups the new labels that start with the same
+	 * four letters under the shortest of them, for example "sidebar" and "sidebars" under "sidebar". For the prompt of the
+	 * method "Language model", it gives each conversation the first two words of its title that have at least five
+	 * letters, in lower case, or the topic "general" when the title has none.
 	 *
-	 * @param prompt - The prompt, which ends with the line `New labels: ["a","b"]`.
+	 * @param prompt - The prompt, which ends with the line `New labels: ["a","b"]` or with the line `Conversations: [...]`.
 	 * @returns The coding agent that answered, and the JSON array that it printed.
 	 */
 	static buildCodingAgentAnswer(prompt: string): { agent: string; text: string } {
+		const conversationsLine = prompt.split('\n').find((candidate) => candidate.startsWith('Conversations: '));
+		if (conversationsLine !== undefined) {
+			const conversations = JSON.parse(conversationsLine.slice('Conversations: '.length)) as {
+				conversation: number;
+				title: string;
+			}[];
+			const conversationItems = conversations.map(({ conversation, title }) => {
+				const words = (title.toLowerCase().match(/[a-z]{5,}/g) ?? []).filter((word, index, list) => list.indexOf(word) === index);
+				return { conversation, topics: words.length === 0 ? ['general'] : words.slice(0, 2) };
+			});
+			return { agent: 'codex', text: JSON.stringify(conversationItems) };
+		}
 		const line = prompt.split('\n').find((candidate) => candidate.startsWith('New labels: ')) ?? 'New labels: []';
 		const newTopics = JSON.parse(line.slice('New labels: '.length)) as string[];
 		const items = newTopics.map((topic) => {

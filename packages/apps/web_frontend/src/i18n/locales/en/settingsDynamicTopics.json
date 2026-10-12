@@ -4,9 +4,9 @@
   "keywordLabel": "Keyword",
   "keywordTitle": "Find the topics of each chat from the words of its title, of its first messages, of the folders of its files, and of its issues and pull requests",
   "languageModelLabel": "Language model",
-  "languageModelTitle": "Not ready yet: this method comes after the method Keyword",
+  "languageModelTitle": "Find the topics of each chat with a language model: the coding agent codex or claude that is installed on this computer",
   "keywordHelp": "The topics of each chat come from the words of its title, of the first messages that you typed, of the folders of the files that the coding agent wrote, and of the titles of its issues and pull requests. Nothing leaves this computer.",
-  "languageModelHelp": "A language model finds the topics. This method is not ready yet.",
+  "languageModelHelp": "A language model finds the topics. Heidrun sends the title and the first messages that you typed, of the chats that the list shows, and nothing else, to the coding agent codex or claude that is installed on this computer.",
   "extractionHelpLabel": "About the extraction method",
   "clusteredTitle": "Clustered dynamic topics",
   "clusteredLabel": "Enable clustered dynamic topics",
@@ -21,5 +21,8 @@
   "rebuildTitle": "Empty the translation table, and cluster all the raw dynamic topics again, in one call",
   "error.noCodingAgent": "Neither codex nor claude is installed on this computer, so Heidrun shows the raw dynamic topics.",
   "error.failed": "The coding agent did not answer, so Heidrun shows the raw dynamic topics for now. Heidrun tries again when the topics change, and at the next start.",
-  "error.wrongAnswer": "The coding agent gave an answer that Heidrun cannot use, so Heidrun saved nothing and shows the raw dynamic topics for now. Heidrun tries again when the topics change, and at the next start."
+  "error.wrongAnswer": "The coding agent gave an answer that Heidrun cannot use, so Heidrun saved nothing and shows the raw dynamic topics for now. Heidrun tries again when the topics change, and at the next start.",
+  "languageModelError.noCodingAgent": "Neither codex nor claude is installed on this computer, so the language model finds no topic.",
+  "languageModelError.failed": "The coding agent did not answer, so the language model found no new topic for now. Heidrun tries again when the chats change, and at the next start.",
+  "languageModelError.wrongAnswer": "The coding agent gave an answer that Heidrun cannot use, so Heidrun saved nothing for now. Heidrun tries again when the chats change, and at the next start."
 }
