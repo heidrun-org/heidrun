@@ -6,6 +6,7 @@ import { CHAT_LIMITS, chats } from "../stores/chats";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 import { keywordEntries } from "../stores/dynamic_topics";
+import { languageModelEntries, prepareLanguageModelTopics } from "../stores/language_model_topics";
 import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
 import { launchAgent } from "../stores/agents";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -15,6 +16,10 @@ vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }))
 vi.mock("../stores/topic_clusters", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../stores/topic_clusters")>()),
   prepareTopicClusters: vi.fn(async () => {}),
+}));
+vi.mock("../stores/language_model_topics", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../stores/language_model_topics")>()),
+  prepareLanguageModelTopics: vi.fn(async () => {}),
 }));
 vi.mock("../stores/agents", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../stores/agents")>()),
@@ -72,10 +77,14 @@ beforeEach(() => {
   for (const id of Object.keys(keywordEntries)) {
     delete keywordEntries[id];
   }
+  for (const id of Object.keys(languageModelEntries)) {
+    delete languageModelEntries[id];
+  }
   settings.dynamicTopicExtraction = "keyword";
   settings.clusteredDynamicTopics = false;
   topicClusterTable.value = new Map();
   vi.mocked(prepareTopicClusters).mockClear();
+  vi.mocked(prepareLanguageModelTopics).mockClear();
   chats.folder = null;
   chats.claude = [];
   chats.codex = [];
@@ -452,13 +461,55 @@ describe("ChatsPanel", () => {
     expect(wrapper.find(".chat-topics").exists()).toBe(false);
   });
 
-  it("shows no topic when the method is Language model, which is not ready yet", async () => {
+  it("shows no topic, and asks the language model for the chats that the list shows, when the method is Language model and the cache is empty", async () => {
     settings.dynamicTopicExtraction = "languageModel";
     answer(["Sidebar cache", "Sidebar tabs"], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.find(".chat-topics").exists()).toBe(false);
     expect(Object.keys(keywordEntries)).toEqual([]);
+    const modelCalls = vi.mocked(prepareLanguageModelTopics).mock.calls;
+    expect(modelCalls[modelCalls.length - 1]?.[0].map((chat: { id: string }) => chat.id)).toEqual(["c0", "c1"]);
+  });
+
+  it("shows the topics that the language model gave, on the row of each chat, when the method is Language model", async () => {
+    settings.dynamicTopicExtraction = "languageModel";
+    languageModelEntries.c0 = { lastAt: 1, topics: ["cache", "storage"] };
+    languageModelEntries.c1 = { lastAt: 1, topics: ["tab bar"] };
+    answer(["Sidebar cache", "Sidebar tabs"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const lines = wrapper.findAll(".list-group-item .chat-topics");
+    expect(lines.map((line) => line.findAll(".badge").map((badge) => badge.text()))).toEqual([["cache", "storage"], ["tab bar"]]);
+    expect(Object.keys(keywordEntries)).toEqual([]);
+  });
+
+  it("shows the topics of the language model as soon as its cache changes", async () => {
+    settings.dynamicTopicExtraction = "languageModel";
+    answer(["Sidebar cache"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    expect(wrapper.find(".chat-topics").exists()).toBe(false);
+    languageModelEntries.c0 = { lastAt: 1, topics: ["cache"] };
+    await flushPromises();
+    expect(wrapper.get(".chat-topics").findAll(".badge").map((badge) => badge.text())).toEqual(["cache"]);
+  });
+
+  it("asks the language model again when the developer changes the method to Language model", async () => {
+    answer(["Sidebar cache"], []);
+    mount(ChatsPanel);
+    await flushPromises();
+    expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
+    settings.dynamicTopicExtraction = "languageModel";
+    await flushPromises();
+    expect(prepareLanguageModelTopics).toHaveBeenCalledTimes(1);
+  });
+
+  it("never asks the language model while the method is Keyword", async () => {
+    answer(["Sidebar cache", "Sidebar tabs"], []);
+    mount(ChatsPanel);
+    await flushPromises();
+    expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
   });
 
   it("shows the topics when the developer changes the method back to Keyword", async () => {
@@ -646,7 +697,20 @@ describe("ChatsPanel", () => {
       expect(wrapper.find(".topic-bar").exists()).toBe(false);
     });
 
-    it("shows no bar when the method is Language model", async () => {
+    it("shows the bar with the topics of the language model when the method is Language model", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      languageModelEntries.c0 = { lastAt: 1, topics: ["panel", "sidebar"] };
+      languageModelEntries.c1 = { lastAt: 1, topics: ["panel"] };
+      languageModelEntries.c2 = { lastAt: 1, topics: ["cache"] };
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(barButtons(wrapper)).toEqual(["All", "panel", "cache", "sidebar"]);
+      await wrapper.findAll(".topic-chip")[1].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+    });
+
+    it("shows no bar when the method is Language model and the language model gave no topic yet", async () => {
       settings.dynamicTopicExtraction = "languageModel";
       answerWithSharedTopics();
       const wrapper = mount(ChatsPanel);
@@ -747,13 +811,46 @@ describe("ChatsPanel", () => {
       expect(prepareTopicClusters).toHaveBeenCalledTimes(1);
     });
 
-    it("gives nothing to the clustering when the method is Language model, which gives no topic", async () => {
+    it("gives the raw dynamic topics of the language model to the clustering, and again when they change", async () => {
       settings.dynamicTopicExtraction = "languageModel";
       settings.clusteredDynamicTopics = true;
+      languageModelEntries.c0 = { lastAt: 1, topics: ["panel", "sidebar"] };
       answerWithSharedTopics();
       mount(ChatsPanel);
       await flushPromises();
-      expect(prepareTopicClusters).not.toHaveBeenCalled();
+      const lastTopics = () => {
+        const clusterCalls = vi.mocked(prepareTopicClusters).mock.calls;
+        return [...(clusterCalls[clusterCalls.length - 1]?.[0] ?? [])].sort();
+      };
+      expect(lastTopics()).toEqual(["panel", "sidebar"]);
+      languageModelEntries.c1 = { lastAt: 1, topics: ["cache"] };
+      await flushPromises();
+      expect(lastTopics()).toEqual(["cache", "panel", "sidebar"]);
+    });
+
+    it("gives the raw dynamic topics of the language model to the clustering when the developer switches the option on", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      languageModelEntries.c0 = { lastAt: 1, topics: ["panel"] };
+      answerWithSharedTopics();
+      mount(ChatsPanel);
+      await flushPromises();
+      vi.mocked(prepareTopicClusters).mockClear();
+      settings.clusteredDynamicTopics = true;
+      await flushPromises();
+      expect(prepareTopicClusters).toHaveBeenCalledTimes(1);
+      expect([...(vi.mocked(prepareTopicClusters).mock.calls[0]?.[0] ?? [])]).toEqual(["panel"]);
+    });
+
+    it("shows the clustered dynamic topics of the language model when the option is on", async () => {
+      settings.dynamicTopicExtraction = "languageModel";
+      settings.clusteredDynamicTopics = true;
+      topicClusterTable.value = NAVIGATION;
+      languageModelEntries.c0 = { lastAt: 1, topics: ["panel", "sidebar"] };
+      languageModelEntries.c1 = { lastAt: 1, topics: ["tab"] };
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(sortedBarButtons(wrapper)).toEqual(["All", "navigation", "panel"]);
     });
   });
 

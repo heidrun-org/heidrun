@@ -72,7 +72,7 @@ One short label of one or two words that Heidrun computes from the content of a 
 
 ### Raw dynamic topic
 
-A dynamic topic exactly as it comes out of one chat. Heidrun computes it from this chat and the other chats of the list, and it never asks a coding agent. The same subject can get several raw dynamic topics, for example "sidebar" and "side bar".
+A dynamic topic exactly as it comes out of one chat. With the method "Keyword", Heidrun computes it from this chat and the other chats of the list, and it never asks a coding agent. With the method "Language model", a coding agent finds it from the title and the first messages of this chat. The same subject can get several raw dynamic topics, for example "sidebar" and "side bar".
 
 ### Clustered dynamic topic
 
@@ -88,7 +88,7 @@ The data that Heidrun reads in a chat to compute its dynamic topics. It has four
 
 ### Dynamic topic extraction
 
-The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model". The Settings window holds the choice, in its section "Dynamic topics", under the title "Extraction method".
+The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model" (from the title and the first messages of each chat, with a coding agent, `codex` or `claude`, that is installed on this computer). The Settings window holds the choice, in its section "Dynamic topics", under the title "Extraction method".
 
 ### Dynamic topic bar
 

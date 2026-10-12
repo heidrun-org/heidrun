@@ -113,6 +113,21 @@ describe('TauriMock', () => {
 		]);
 	});
 
+	it('answers the prompt of the method Language model with a fake coding agent that takes the long words of each title', async () => {
+		TauriMock.install();
+		const conversations = [
+			{ conversation: 1, title: 'Fix the Sidebar cache bug', firstMessages: [] },
+			{ conversation: 2, title: 'Do it', firstMessages: [] },
+		];
+		const prompt = `Existing topics: []\nConversations: ${JSON.stringify(conversations)}`;
+		const answer = await invoke<{ agent: string; text: string }>('coding_agent_ask', { prompt });
+		expect(answer.agent).toBe('codex');
+		expect(JSON.parse(answer.text)).toEqual([
+			{ conversation: 1, topics: ['sidebar', 'cache'] },
+			{ conversation: 2, topics: ['general'] },
+		]);
+	});
+
 	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
 		TauriMock.install();
 		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });

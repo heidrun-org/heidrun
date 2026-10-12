@@ -19,6 +19,7 @@ import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { clusteredTopicsByChat } from "../lib/topic_clusters";
 import { keywordTopicsOf, prepareKeywordTopics } from "../stores/dynamic_topics";
+import { languageModelTopicsOf, prepareLanguageModelTopics } from "../stores/language_model_topics";
 import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
 import { workspaceCwd } from "../stores/project";
 import { state } from "../stores/session";
@@ -57,7 +58,7 @@ watch(
 );
 
 /**
- * Makes the cache of the dynamic topics hold the chats that the list shows, each time the list or the method changes.
+ * Makes the cache of the method "Keyword" hold the chats that the list shows, each time the list or the method changes.
  * Then it gives the raw dynamic topics of the list to the clustering, which asks a coding agent for the new ones when the
  * option "Clustered dynamic topics" is on.
  */
@@ -74,12 +75,39 @@ watch(
   },
   { immediate: true },
 );
+/**
+ * Asks a coding agent for the topics of the chats that the list shows and that have none yet, each time the list or the
+ * method changes. The method "Language model" is the only one that asks.
+ */
+watch(
+  () => [shownChats.value, settings.dynamicTopicExtraction] as const,
+  ([list, method]) => {
+    if (method === "languageModel") {
+      void prepareLanguageModelTopics(list);
+    }
+  },
+  { immediate: true },
+);
+// The topics of the method "Language model" come one call after another, so the clustering gets the raw dynamic topics
+// each time they change.
+watch(
+  () =>
+    settings.dynamicTopicExtraction === "languageModel"
+      ? [...languageModelTopicsOf(shownChats.value).values()].flat()
+      : null,
+  (languageModelRawTopics) => {
+    if (languageModelRawTopics !== null) {
+      void prepareTopicClusters(languageModelRawTopics);
+    }
+  },
+  { immediate: true },
+);
 // Switching the option on asks for the clusters of the raw dynamic topics that the list already shows.
 watch(
   () => settings.clusteredDynamicTopics,
   (isOn) => {
-    if (isOn && settings.dynamicTopicExtraction === "keyword") {
-      void prepareTopicClusters([...keywordTopicsOf(shownChats.value).values()].flat());
+    if (isOn) {
+      void prepareTopicClusters([...rawTopics.value.values()].flat());
     }
   },
 );
@@ -91,9 +119,9 @@ function agentLabel(agent: ChatAgent): string {
   return t(`chatsPanel.agent.${agent}`);
 }
 
-/** The raw dynamic topics of the chats that the list shows, by identifier of chat. The method "languageModel" gives none yet. */
+/** The raw dynamic topics of the chats that the list shows, by identifier of chat, from the method that the developer chose. */
 const rawTopics = computed(() =>
-  settings.dynamicTopicExtraction === "keyword" ? keywordTopicsOf(shownChats.value) : new Map<string, string[]>(),
+  settings.dynamicTopicExtraction === "keyword" ? keywordTopicsOf(shownChats.value) : languageModelTopicsOf(shownChats.value),
 );
 
 /**
