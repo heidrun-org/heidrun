@@ -70,5 +70,17 @@
   "topicAllTitle": "Afficher toutes les conversations",
   "topicTitle": "Afficher seulement les conversations sur « {topic} »",
   "topicsPreviousTitle": "Afficher les sujets précédents",
-  "topicsNextTitle": "Afficher les sujets suivants"
+  "topicsNextTitle": "Afficher les sujets suivants",
+  "sortLabel": "Tri de la liste",
+  "sortTitle": "Trier les conversations",
+  "sortByHeading": "Trier par",
+  "sortOrderHeading": "Ordre",
+  "sortKey.created_on": "Date de création",
+  "sortKey.last_updated": "Dernière mise à jour",
+  "sortKey.messages": "Messages de ta part",
+  "sortKey.issues": "Issues",
+  "sortKey.pull_requests": "Pull requests",
+  "sortKey.files_written": "Fichiers écrits",
+  "sortOrder.ascending": "Croissant",
+  "sortOrder.descending": "Décroissant"
 }

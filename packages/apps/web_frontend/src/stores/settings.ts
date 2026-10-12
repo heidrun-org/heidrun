@@ -62,6 +62,10 @@ const defaults = {
   chatsView: "compact" as "compact" | "expanded",
   /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
   dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
+  /** Sidebar section Chats: what the list is sorted by. */
+  chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
+  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  chatsOrder: "descending" as "ascending" | "descending",
   /** Tab Scripts: the section Custom Scripts is folded. */
   scriptsCustomFolded: false,
   /** Tab Scripts: the section Recent is folded. */
@@ -170,6 +174,8 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
+  chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
+  chatsOrder: ["ascending", "descending"],
 };
 
 /**

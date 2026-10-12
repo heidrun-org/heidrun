@@ -119,6 +119,12 @@ describe('bootstrap_parts.scss', () => {
 		]);
 	});
 
+	it('has the utility class invisible, which keeps the room of an element and hides it, in the layer', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
+		expect(layerText).toMatch(/^ {2}\.invisible \{\s*visibility: hidden !important;/m);
+	});
+
 	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm', '.btn-group', '.badge']) {
