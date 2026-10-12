@@ -29,6 +29,10 @@
   --pane-ring-selected: #33506f;
   --pane-ring-blocked: #5c2826;
   --pane-ring-blocked-selected: #7d3330;
+  --choice-bg: #2a1514;
+  --choice-border: #4a2523;
+  --choice-hover-bg: #3a1c1b;
+  --choice-number-bg: #4a2523;
   --pane-head-line: #1a1d20;
   --pane-head-line-blocked: #2f1b1a;
   --line-soft: #262a2f;
@@ -83,6 +87,10 @@
   --pane-ring-selected: #aec3de;
   --pane-ring-blocked: #e6bcb9;
   --pane-ring-blocked-selected: #d98d89;
+  --choice-bg: #ffffff;
+  --choice-border: #e6bcb9;
+  --choice-hover-bg: #fff3f2;
+  --choice-number-bg: #f8d6d3;
   --pane-head-line: #e4e4df;
   --pane-head-line-blocked: #f0d2d0;
   --line-soft: #e4e4df;

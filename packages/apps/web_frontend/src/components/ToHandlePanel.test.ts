@@ -198,3 +198,38 @@ describe("ToHandlePanel place in the window", () => {
     expect(sidebarText).not.toContain("margin-top: auto");
   });
 });
+
+describe("ToHandlePanel colors of a blocked card", () => {
+  const panelText = Fs.readFileSync(Path.resolve(import.meta.dirname, "ToHandlePanel.vue"), "utf8");
+  const stylesText = Fs.readFileSync(Path.resolve(import.meta.dirname, "..", "styles.css"), "utf8");
+
+  /** The rules of the panel that style the card and the rows of the choices of a blocked agent. */
+  const blockedRules = panelText
+    .split("\n")
+    .filter((line) => /^\.(card\.blocked|choice)/.test(line) === true)
+    .join("\n");
+
+  it("has no fixed color in the rules of the blocked card and of the choice rows, so that the light theme can change them", () => {
+    expect(blockedRules.length).toBeGreaterThan(0);
+    expect(blockedRules).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
+  });
+
+  it("gives the choice rows a color in the dark theme and in the light theme", () => {
+    const lightStart = stylesText.indexOf(':root[data-theme="light"] {');
+    expect(lightStart).toBeGreaterThan(0);
+    const darkText = stylesText.slice(0, lightStart);
+    const lightText = stylesText.slice(lightStart, stylesText.indexOf("}", lightStart));
+    for (const name of ["--choice-bg", "--choice-border", "--choice-hover-bg", "--choice-number-bg"]) {
+      expect(darkText).toContain(`${name}:`);
+      expect(lightText).toContain(`${name}:`);
+    }
+  });
+
+  it("gives the choice rows a light color in the light theme, so that the dark text can be read", () => {
+    const lightText = stylesText.slice(stylesText.indexOf(':root[data-theme="light"] {'));
+    const background = /--choice-bg:\s*#([0-9a-fA-F]{6})/.exec(lightText);
+    expect(background).not.toBeNull();
+    const red = parseInt((background as RegExpExecArray)[1].slice(0, 2), 16);
+    expect(red).toBeGreaterThan(200);
+  });
+});
