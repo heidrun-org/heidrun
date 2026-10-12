@@ -238,6 +238,11 @@ fn badge_image(percent: f64, color: [u8; 3]) -> Image<'static> {
     Image::new_owned(picture::draw_quota_badge(percent, color, mask.as_ref()), picture::BADGE_WIDTH, picture::BADGE_HEIGHT)
 }
 
+/// The picture of the thin gray circle that the menu shows before the text of a section without agent.
+fn empty_dot_image() -> Image<'static> {
+    Image::new_owned(picture::draw_empty_dot(), picture::DOT_SIZE, picture::DOT_SIZE)
+}
+
 /// One line of the menu of the status item.
 #[derive(Debug, PartialEq)]
 enum MenuLine {
@@ -247,7 +252,8 @@ enum MenuLine {
     Separator,
     /// The title of a section, already translated, with the number of agents.
     Title(String),
-    /// The text of a section without agent, already translated.
+    /// The text of a section without agent, already translated, with a thin gray circle before it so that the line is
+    /// indented like the lines of the agents.
     Empty(String),
     /// An agent, with the dot in the color of its section.
     Agent {
@@ -300,8 +306,10 @@ fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Men
         builder = match line {
             MenuLine::Open(text) => builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, text).build(app)?),
             MenuLine::Separator => builder.separator(),
-            MenuLine::Title(text) | MenuLine::Empty(text) => {
-                builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?)
+            MenuLine::Title(text) => builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?),
+            MenuLine::Empty(text) => {
+                let item = IconMenuItemBuilder::new(text).icon(empty_dot_image()).enabled(false);
+                builder.item(&item.build(app)?)
             }
             MenuLine::Quota { text, percent, color } => {
                 let item = IconMenuItemBuilder::new(text).icon(badge_image(percent, color)).enabled(false);

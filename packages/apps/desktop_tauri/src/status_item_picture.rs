@@ -414,6 +414,35 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
 /// dot small beside the text of the menu item.
 pub const DOT_SIZE: u32 = 72;
 
+/// Color of the thin circle that stands before a section without agent: gray, red, green, blue.
+pub const EMPTY_DOT_COLOR: [u8; 3] = [142, 142, 147];
+
+/// Width of the line of the thin circle of an empty section, in pixels.
+const EMPTY_DOT_LINE_WIDTH: f32 = 3.0;
+
+/// Draws the picture that stands before the text of a section without agent: a thin gray circle, transparent in the
+/// middle, at the place and with the size of a dot. Returns the pixels as red, green, blue, alpha bytes, row by row,
+/// `DOT_SIZE` pixels wide.
+pub fn draw_empty_dot() -> Vec<u8> {
+    let center = DOT_SIZE as f32 / 2.0;
+    let base = to_float(EMPTY_DOT_COLOR);
+    let mut pixels = vec![0u8; (DOT_SIZE * DOT_SIZE * 4) as usize];
+    for y in 0..DOT_SIZE {
+        for x in 0..DOT_SIZE {
+            let (dx, dy) = (x as f32 + 0.5 - center, y as f32 + 0.5 - center);
+            let distance = (dx * dx + dy * dy).sqrt();
+            let outside = (RADIUS + 0.5 - distance).clamp(0.0, 1.0);
+            let inside = (distance - (RADIUS - EMPTY_DOT_LINE_WIDTH) + 0.5).clamp(0.0, 1.0);
+            let drawn = [base[0], base[1], base[2], outside * inside];
+            let offset = ((y * DOT_SIZE + x) * 4) as usize;
+            for channel in 0..4 {
+                pixels[offset + channel] = (drawn[channel].clamp(0.0, 1.0) * 255.0).round() as u8;
+            }
+        }
+    }
+    pixels
+}
+
 /// Draws a dot for a menu item: the flat disc of a slot with one agent, without number, in the middle of a square
 /// picture. Returns the pixels as red, green, blue, alpha bytes, row by row, `DOT_SIZE` pixels wide.
 pub fn draw_dot(color: [u8; 3]) -> Vec<u8> {
@@ -613,6 +642,28 @@ mod tests {
         assert!(center[0] > center[1] && center[0] > center[2], "the center is red: {center:?}");
         assert_eq!(pixel(&pixels, DOT_SIZE, 0, 0)[3], 0);
         assert_eq!(pixel(&pixels, DOT_SIZE, DOT_SIZE - 1, DOT_SIZE - 1)[3], 0);
+    }
+
+    #[test]
+    fn the_empty_dot_is_a_thin_gray_circle_with_a_transparent_middle() {
+        let pixels = draw_empty_dot();
+        assert_eq!(pixels.len() as u32, DOT_SIZE * DOT_SIZE * 4);
+        let middle = DOT_SIZE / 2;
+        assert_eq!(pixel(&pixels, DOT_SIZE, middle, middle)[3], 0);
+        assert_eq!(pixel(&pixels, DOT_SIZE, middle + 8, middle)[3], 0);
+        let line = pixel(&pixels, DOT_SIZE, middle + 16, middle);
+        assert_eq!(line, [EMPTY_DOT_COLOR[0], EMPTY_DOT_COLOR[1], EMPTY_DOT_COLOR[2], 255]);
+        assert_eq!(pixel(&pixels, DOT_SIZE, middle + 19, middle)[3], 0);
+        assert_eq!(pixel(&pixels, DOT_SIZE, 0, 0)[3], 0);
+    }
+
+    #[test]
+    fn the_empty_dot_has_the_size_of_a_dot() {
+        let outer = |pixels: &[u8]| {
+            let middle = DOT_SIZE / 2;
+            (0..DOT_SIZE).filter(|x| pixel(pixels, DOT_SIZE, *x, middle)[3] > 0).max()
+        };
+        assert_eq!(outer(&draw_empty_dot()), outer(&draw_dot(RED)));
     }
 
     #[test]
