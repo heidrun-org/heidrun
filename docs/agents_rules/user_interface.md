@@ -137,7 +137,7 @@ This document says where each part of the window goes and how each part works. T
 ## Status bar
 
 - The status bar sits at the bottom of the window, over the whole width.
-- Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, the usage of Codex, the Git branch, the number of agents that are blocked, working, or done, and the connection to Herdr.
+- Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, the usage of Codex, the Git branch, and the connection to Herdr. The number of agents that are blocked, working, or done is not in the status bar: the top right corner of the window already shows it.
 - A click on a status bar section opens its information card above the section.
 
 ## Position and size of the window

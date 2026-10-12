@@ -265,17 +265,6 @@ export const otherWorkspaceStatus = computed<"blocked" | "done" | null>(() => {
   return null;
 });
 
-export const counts = computed(() => {
-  const c = { blocked: 0, working: 0, done: 0 };
-  for (const p of allPanes.value) {
-    if (!p.agent) continue;
-    if (p.agent_status === "blocked") c.blocked++;
-    else if (p.agent_status === "working") c.working++;
-    else if (p.agent_status === "done") c.done++;
-  }
-  return c;
-});
-
 export function tabLabel(id: string): string {
   const tab = state.snapshot?.tabs.find((x) => x.tab_id === id);
   return tab ? tab.label || t("sessionStore.tabNumber", { number: tab.number }) : "";

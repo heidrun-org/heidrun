@@ -21,6 +21,5 @@
   "gitToUpload": "Commits to upload",
   "gitChangedFiles": "Changed files",
   "gitUntrackedFiles": "Untracked files",
-  "gitLastCommit": "Last commit",
-  "noAgent": "No agent"
+  "gitLastCommit": "Last commit"
 }
