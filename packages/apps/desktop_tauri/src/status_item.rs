@@ -10,7 +10,7 @@ use serde::Deserialize;
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 use tauri::image::Image;
-use tauri::menu::{Menu, MenuBuilder, MenuItemBuilder};
+use tauri::menu::{IconMenuItemBuilder, Menu, MenuBuilder, MenuItemBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::{AppHandle, Emitter, Manager, State, Wry};
 
@@ -209,16 +209,29 @@ fn pane_id_from_menu_id(menu_id: &str) -> Option<&str> {
     menu_id.strip_prefix(PANE_MENU_ID_PREFIX)
 }
 
+/// The three sections of the menu, from top to bottom, each with the color of the dots of its agents. The colors are
+/// the colors of the discs of the picture.
+fn sections_with_colors(payload: &StatusItemPayload) -> [(&StatusSection, [u8; 3]); 3] {
+    [(&payload.blocked, BLOCKED_COLOR), (&payload.done, DONE_COLOR), (&payload.working, WORKING_COLOR)]
+}
+
+/// The picture of the dot that the menu shows before the name of an agent, in `color`.
+fn dot_image(color: [u8; 3]) -> Image<'static> {
+    Image::new_owned(picture::draw_dot(color), picture::DOT_SIZE, picture::DOT_SIZE)
+}
+
 /// The menu that opens on a click: one section per status, then the quota, then the item that shows the main window.
+/// Each agent has a dot in the color of its section.
 fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Menu<Wry>> {
     let mut builder = MenuBuilder::new(app);
-    for section in [&payload.blocked, &payload.done, &payload.working] {
+    for (section, color) in sections_with_colors(payload) {
         builder = builder.item(&MenuItemBuilder::new(&section.title).enabled(false).build(app)?);
         if section.agents.is_empty() {
             builder = builder.item(&MenuItemBuilder::new(&payload.empty_label).enabled(false).build(app)?);
         }
         for agent in &section.agents {
-            builder = builder.item(&MenuItemBuilder::with_id(pane_menu_id(&agent.pane_id), &agent.name).build(app)?);
+            let item = IconMenuItemBuilder::with_id(pane_menu_id(&agent.pane_id), &agent.name).icon(dot_image(color));
+            builder = builder.item(&item.build(app)?);
         }
         builder = builder.separator();
     }
@@ -339,6 +352,29 @@ mod tests {
         let payload: StatusItemPayload = serde_json::from_str(r#"{ "quota": null }"#).expect("the data is valid");
         assert_eq!(payload.quota, None);
         assert!(payload.blocked.agents.is_empty());
+    }
+
+    #[test]
+    fn the_dots_of_the_menu_have_the_color_of_the_section_of_the_agent() {
+        let section = |title: &str| StatusSection { title: title.to_string(), agents: vec![agent(title)] };
+        let payload = StatusItemPayload {
+            blocked: section("blocked"),
+            done: section("done"),
+            working: section("working"),
+            ..StatusItemPayload::default()
+        };
+        let colors: Vec<(&str, [u8; 3])> = sections_with_colors(&payload)
+            .iter()
+            .map(|(section, color)| (section.title.as_str(), *color))
+            .collect();
+        assert_eq!(colors, vec![("blocked", BLOCKED_COLOR), ("done", DONE_COLOR), ("working", WORKING_COLOR)]);
+    }
+
+    #[test]
+    fn the_dot_of_the_menu_is_a_square_picture() {
+        let image = dot_image(DONE_COLOR);
+        assert_eq!((image.width(), image.height()), (picture::DOT_SIZE, picture::DOT_SIZE));
+        assert_eq!(image.rgba().len() as u32, picture::DOT_SIZE * picture::DOT_SIZE * 4);
     }
 
     #[test]

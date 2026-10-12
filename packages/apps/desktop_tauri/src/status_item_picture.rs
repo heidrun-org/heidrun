@@ -483,6 +483,32 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
     pixels
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Dots
+///////////////////////////////////////////////////////////////////////////////
+
+/// Width and height of the picture of a dot, in pixels. The library that shows the menu scales the picture of a menu
+/// item to 18 points high. The disc is 36 pixels wide, so it is 9 points wide, and the empty space around it keeps the
+/// dot small beside the text of the menu item.
+pub const DOT_SIZE: u32 = 72;
+
+/// Draws a dot for a menu item: the glossy disc of a slot, without number and without animation, in the middle of a
+/// square picture. Returns the pixels as red, green, blue, alpha bytes, row by row, `DOT_SIZE` pixels wide.
+pub fn draw_dot(color: [u8; 3]) -> Vec<u8> {
+    let center = DOT_SIZE as f32 / 2.0;
+    let mut pixels = vec![0u8; (DOT_SIZE * DOT_SIZE * 4) as usize];
+    for y in 0..DOT_SIZE {
+        for x in 0..DOT_SIZE {
+            let drawn = disc_color(x as f32 + 0.5 - center, y as f32 + 0.5 - center, color, false, Effect::None, 0.0);
+            let offset = ((y * DOT_SIZE + x) * 4) as usize;
+            for channel in 0..4 {
+                pixels[offset + channel] = (drawn[channel].clamp(0.0, 1.0) * 255.0).round() as u8;
+            }
+        }
+    }
+    pixels
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -504,6 +530,27 @@ mod tests {
 
     fn brightness(color: [u8; 4]) -> u32 {
         color[0] as u32 + color[1] as u32 + color[2] as u32
+    }
+
+    #[test]
+    fn a_dot_is_a_lit_disc_in_the_middle_of_a_transparent_square() {
+        let pixels = draw_dot(RED);
+        assert_eq!(pixels.len() as u32, DOT_SIZE * DOT_SIZE * 4);
+        let middle = DOT_SIZE / 2;
+        let center = pixel(&pixels, DOT_SIZE, middle, middle);
+        assert_eq!(center[3], 255);
+        assert!(center[0] > center[1] && center[0] > center[2], "the center is red: {center:?}");
+        assert_eq!(pixel(&pixels, DOT_SIZE, 0, 0)[3], 0);
+        assert_eq!(pixel(&pixels, DOT_SIZE, DOT_SIZE - 1, DOT_SIZE - 1)[3], 0);
+    }
+
+    #[test]
+    fn dots_of_different_colors_look_different() {
+        let middle = DOT_SIZE / 2;
+        let red = pixel(&draw_dot(RED), DOT_SIZE, middle, middle);
+        let blue = pixel(&draw_dot(BLUE), DOT_SIZE, middle, middle);
+        assert!(red[0] > red[2]);
+        assert!(blue[2] > blue[0]);
     }
 
     #[test]
