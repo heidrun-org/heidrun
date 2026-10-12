@@ -254,8 +254,23 @@ const VIEWS = [
               </button>
             </div>
           </div>
-          <div v-if="row.topics.length > 0" class="chat-topics" role="list" :aria-label="t('chatsPanel.topicsLabel')">
-            <span v-for="topic in row.topics" :key="topic" class="badge me-2" role="listitem">{{ topic }}</span>
+          <div v-if="row.topics.length > 0" class="chat-topics" role="group" :aria-label="t('chatsPanel.topicsLabel')">
+            <button
+              v-for="topic in row.topics"
+              :key="topic"
+              type="button"
+              class="badge me-2"
+              :class="{ 'is-selected': activeTopic === topic }"
+              :aria-pressed="activeTopic === topic"
+              :title="
+                activeTopic === topic
+                  ? t('chatsPanel.topicAllTitle')
+                  : t('chatsPanel.topicTitle', { topic, count: barChatCounts.get(topic) ?? 0 })
+              "
+              @click="selectedTopic = activeTopic === topic ? null : topic"
+            >
+              {{ topic }}
+            </button>
           </div>
           <div class="chat-summary d-flex flex-column text-body-secondary">
             <ChatDatesLine
@@ -322,7 +337,13 @@ const VIEWS = [
 .is-expanded { --bs-list-group-item-padding-y: 1rem; }
 .is-expanded .chat-title { min-width: 0; }
 .chat-topics { margin-top: 6px; overflow: hidden; white-space: nowrap; }
-.chat-topics .badge { --bs-badge-color: var(--bs-body-color); background-color: var(--bs-secondary-bg); }
+/* The reset of the rule "button:where(:not(.btn))" in styles.css is not in a layer, so it wins over the layer of Bootstrap: the label gives the badge values back. */
+.chat-topics .badge {
+  --bs-badge-color: var(--bs-body-color); background-color: var(--bs-secondary-bg); border: 0;
+  color: var(--bs-badge-color); font-size: var(--bs-badge-font-size); font-weight: var(--bs-badge-font-weight); line-height: 1;
+}
+.chat-topics .badge:hover { background-color: var(--bs-border-color); }
+.chat-topics .badge.is-selected { --bs-badge-color: var(--bs-body-bg); background-color: var(--bs-body-color); }
 .chat-actions .btn { height: 26px; --bs-btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
 .btn-check:checked + .btn {

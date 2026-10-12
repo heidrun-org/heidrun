@@ -140,6 +140,25 @@ describe("DynamicTopicBar", () => {
     expect(scrollTo).toHaveBeenLastCalledWith({ left: 220, behavior: "smooth" });
   });
 
+  it("moves the strip to a selected topic that is hidden, when the selection changes from outside the bar", async () => {
+    layoutTenButtons();
+    const { wrapper, scrollTo } = await mountBar();
+    await wrapper.setProps({ selected: "chat" });
+    await wrapper.vm.$nextTick();
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith({ left: SCROLL_WIDTH - VIEW_WIDTH, behavior: "smooth" });
+  });
+
+  it("does not move the strip to a selected topic that is already visible, nor when no topic is selected", async () => {
+    layoutTenButtons();
+    const { wrapper, scrollTo } = await mountBar();
+    await wrapper.setProps({ selected: "cache" });
+    await wrapper.vm.$nextTick();
+    await wrapper.setProps({ selected: null });
+    await wrapper.vm.$nextTick();
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
   it("hides the arrow at the start when the strip is back at its start", async () => {
     layoutTenButtons();
     const { wrapper } = await mountBar();

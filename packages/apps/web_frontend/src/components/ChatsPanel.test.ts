@@ -556,6 +556,53 @@ describe("ChatsPanel", () => {
       expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
     });
 
+    it("shows the topics of a row as buttons, with the number of chats in the tooltip", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const labels = wrapper.findAll(".chat-topics button.badge");
+      expect(labels.map((label) => label.text()).sort()).toEqual(["cache", "panel", "panel", "sidebar", "tab"]);
+      const panel = labels.find((label) => label.text() === "panel");
+      expect(panel?.attributes("title")).toBe("Show only the chats about “panel” (2 chats)");
+      expect(panel?.attributes("aria-pressed")).toBe("false");
+      expect(wrapper.get(".chat-topics").attributes("role")).toBe("group");
+    });
+
+    it("selects the topic in the dynamic topic bar and filters the list after a click on the topic of a row", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      const cache = wrapper.findAll(".chat-topics button.badge").find((label) => label.text() === "cache");
+      await cache?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Cache"]);
+      const pressed = wrapper.findAll(".topic-chip").filter((button) => button.attributes("aria-pressed") === "true");
+      expect(pressed.map((button) => button.text())).toEqual(["cache"]);
+      const label = wrapper.get(".chat-topics button.badge");
+      expect(label.attributes("aria-pressed")).toBe("true");
+      expect(label.classes()).toContain("is-selected");
+      expect(label.attributes("title")).toBe("Show all the chats");
+    });
+
+    it("shows every chat again after a second click on the selected topic of a row", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".chat-topics button.badge").find((label) => label.text() === "panel")?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+      await wrapper.findAll(".chat-topics button.badge").find((label) => label.text() === "panel")?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+      expect(wrapper.get(".topic-chip").attributes("aria-pressed")).toBe("true");
+    });
+
+    it("keeps the selection of the bar when the developer clicks another topic of a row, and changes the topic", async () => {
+      answerWithSharedTopics();
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".chat-topics button.badge").find((label) => label.text() === "panel")?.trigger("click");
+      await wrapper.findAll(".chat-topics button.badge").find((label) => label.text() === "sidebar")?.trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel"]);
+    });
+
     it("keeps the bar and its buttons while a topic filters the list", async () => {
       answerWithSharedTopics();
       const wrapper = mount(ChatsPanel);

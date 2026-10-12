@@ -5,6 +5,7 @@ import {
   dynamicTopicChatCounts,
   nextTopicsScrollLeft,
   previousTopicsScrollLeft,
+  scrollLeftToShow,
   TOPICS_PER_CLICK,
   type TopicChipBox,
 } from "./dynamic_topic_bar";
@@ -77,6 +78,34 @@ describe("dynamicTopicChatCounts", () => {
   it("counts a chat once for a topic, and gives nothing for no chat", () => {
     expect(dynamicTopicChatCounts(new Map([["a", ["x", "x"]]])).get("x")).toBe(1);
     expect(dynamicTopicChatCounts(new Map()).size).toBe(0);
+  });
+});
+
+describe("scrollLeftToShow", () => {
+  it("does not move when the button is fully visible", () => {
+    expect(scrollLeftToShow(tenChips()[2], 0, VIEW_WIDTH, SCROLL_WIDTH)).toBe(0);
+    expect(scrollLeftToShow(tenChips()[6], 400, VIEW_WIDTH, SCROLL_WIDTH)).toBe(400);
+  });
+
+  it("moves so that a button after the strip comes into view, with room for the arrow after it", () => {
+    const chips = tenChips();
+    expect(scrollLeftToShow(chips[5], 0, VIEW_WIDTH, SCROLL_WIDTH)).toBe(chips[5].right + ARROW_ZONE - VIEW_WIDTH);
+  });
+
+  it("moves so that a button before the strip comes into view, with room for the arrow before it", () => {
+    const chips = tenChips();
+    expect(scrollLeftToShow(chips[3], 400, VIEW_WIDTH, SCROLL_WIDTH)).toBe(chips[3].left - ARROW_ZONE);
+  });
+
+  it("puts the first button flush with the start and the last button flush with the end of the strip", () => {
+    const chips = tenChips();
+    expect(scrollLeftToShow(chips[0], 300, VIEW_WIDTH, SCROLL_WIDTH)).toBe(0);
+    expect(scrollLeftToShow(chips[9], 0, VIEW_WIDTH, SCROLL_WIDTH)).toBe(SCROLL_WIDTH - VIEW_WIDTH);
+  });
+
+  it("moves a button that hides under an arrow, even though it is inside the strip", () => {
+    const chips = tenChips();
+    expect(scrollLeftToShow(chips[4], 330, VIEW_WIDTH, SCROLL_WIDTH)).toBe(chips[4].left - ARROW_ZONE);
   });
 });
 
