@@ -66,7 +66,7 @@ This document says where each part of the window goes and how each part works. T
 
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 - The left sidebar holds the Scripts sidebar section and the Git sidebar section.
-- The right sidebar holds the To handle sidebar section, the Pane sidebar section, the Notes sidebar section, and the Chats sidebar section.
+- The right sidebar holds the To handle sidebar section, the Notes sidebar section, and the Chats sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar. In each sidebar, the line of the navigation bar reaches the left border and the right border, and the space between the top border and the selected button of the navigation bar is 5 pixels. A button of the navigation bar has the same height as a tab of the tab bar, so the three bars have the same height.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
 - The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.

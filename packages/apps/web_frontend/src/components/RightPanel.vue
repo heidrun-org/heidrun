@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import ChatsPanel from "./ChatsPanel.vue";
 import { attention } from "../stores/session";
-import Inspector from "./Inspector.vue";
 import NavigationBar from "./NavigationBar.vue";
 import NotesPanel from "./NotesPanel.vue";
 import ToHandlePanel from "./ToHandlePanel.vue";
@@ -11,7 +10,7 @@ import { openSidebarSection } from "../stores/sidebar_sections";
 import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
-/** The buttons of the navigation bar of the right sidebar: the To handle, Pane, and Notes sidebar sections. */
+/** The buttons of the navigation bar of the right sidebar: the To handle, Notes, and Chats sidebar sections. */
 const sidebarSections = computed(() => [
   {
     id: "toHandle",
@@ -19,13 +18,12 @@ const sidebarSections = computed(() => [
     badge: attention.value.length,
     isAlert: attention.value.some((pane) => pane.agent_status === "blocked"),
   },
-  { id: "pane", label: t("rightPanel.sidebarSection.pane"), badge: 0 },
   { id: "notes", label: t("rightPanel.sidebarSection.notes"), badge: visibleNotes.value.length },
   { id: "chats", label: t("rightPanel.sidebarSection.chats"), badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "toHandle" || id === "notes" || id === "chats" ? id : "pane");
+  openSidebarSection(id === "notes" || id === "chats" ? id : "toHandle");
 }
 </script>
 
@@ -39,7 +37,6 @@ function selectSidebarSection(id: string) {
       @select="selectSidebarSection"
     />
     <ToHandlePanel v-if="settings.rightSidebarSection === 'toHandle'" />
-    <Inspector v-else-if="settings.rightSidebarSection === 'pane'" />
     <ChatsPanel v-else-if="settings.rightSidebarSection === 'chats'" />
     <NotesPanel v-else />
   </aside>

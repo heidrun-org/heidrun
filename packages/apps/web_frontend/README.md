@@ -4,7 +4,7 @@ The user interface of [Heidrun](../../../README.md), written with Vue 3, TypeScr
 
 ## What it contains
 
-- `src/components`: the left sidebar, the tab bar, the panes, the inspector, the right sidebar, and the windows.
+- `src/components`: the left sidebar, the tab bar, the panes, the right sidebar, and the windows.
 - `src/stores`: the state of the application.
 - `src/lib`: shared logic, including `shortcuts.json`, the list of keyboard shortcuts.
 - `src/i18n`: the translations.

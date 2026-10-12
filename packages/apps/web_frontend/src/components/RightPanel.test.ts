@@ -7,7 +7,6 @@ import { allPanes, dismiss, state } from "../stores/session";
 import type { SessionSnapshot } from "../lib/types";
 
 const stubs = {
-  Inspector: true,
   NotesPanel: true,
   ChatsPanel: true,
   ToHandlePanel: true,
@@ -35,7 +34,7 @@ function snapshotWithCalls(): SessionSnapshot {
 
 describe("RightPanel", () => {
   afterEach(() => {
-    settings.rightSidebarSection = "pane";
+    settings.rightSidebarSection = "toHandle";
     notes.list = [];
     settings.notesShowAll = false;
     state.snapshot = null;
@@ -45,18 +44,18 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons To handle, Pane, Notes, and Chats in the navigation bar, and not the buttons Scripts and Git", () => {
+  it("shows the buttons To handle, Notes, and Chats in the navigation bar, and not the buttons Pane, Scripts, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".navigation-bar").attributes("role")).toBe("tablist");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["To handle", "Pane", "Notes", "Chats"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["To handle", "Notes", "Chats"]);
   });
 
   it("does not call a button of the navigation bar a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("title"))).toEqual(
-      Array(4).fill("Show this sidebar section"),
+      Array(3).fill("Show this sidebar section"),
     );
   });
 
@@ -64,30 +63,30 @@ describe("RightPanel", () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.classes("on"))).toEqual([false, false, true, false]);
-    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "true", "false"]);
+    expect(buttons.map((button) => button.classes("on"))).toEqual([false, true, false]);
+    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false"]);
   });
 
-  it("shows the sidebar section Pane first, and the sidebar section Notes after a click on its button", async () => {
+  it("shows the sidebar section To handle first, and the sidebar section Notes after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.find("inspector-stub").exists()).toBe(true);
+    expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
-    expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
-    await wrapper.findAll(".navigation-bar button")[2].trigger("click");
+    expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
+    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
     expect(settings.rightSidebarSection).toBe("notes");
-    expect(wrapper.findAll(".navigation-bar button")[2].classes("on")).toBe(true);
-    expect(wrapper.find("inspector-stub").exists()).toBe(false);
+    expect(wrapper.findAll(".navigation-bar button")[1].classes("on")).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(true);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
   });
 
   it("shows the sidebar section To handle after a click on its button, and remembers it", async () => {
+    settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
     expect(settings.rightSidebarSection).toBe("toHandle");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false, false]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
-    expect(wrapper.find("inspector-stub").exists()).toBe(false);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
     const restarted = mount(RightPanel, { global: { stubs } });
     expect(restarted.find("to-handle-panel-stub").exists()).toBe(true);
@@ -95,25 +94,17 @@ describe("RightPanel", () => {
 
   it("shows the sidebar section Chats, and no other sidebar section, after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".navigation-bar button")[3].trigger("click");
+    await wrapper.findAll(".navigation-bar button")[2].trigger("click");
     expect(settings.rightSidebarSection).toBe("chats");
-    expect(wrapper.findAll(".navigation-bar button")[3].classes("on")).toBe(true);
+    expect(wrapper.findAll(".navigation-bar button")[2].classes("on")).toBe(true);
     expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
-    expect(wrapper.find("inspector-stub").exists()).toBe(false);
+    expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
   });
 
   it("shows no number on the button Chats", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button")[3].find(".badge").exists()).toBe(false);
-  });
-
-  it("shows the sidebar section Pane again after a click on its button", async () => {
-    settings.rightSidebarSection = "notes";
-    const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
-    expect(settings.rightSidebarSection).toBe("pane");
-    expect(wrapper.find("inspector-stub").exists()).toBe(true);
+    expect(wrapper.findAll(".navigation-bar button")[2].find(".badge").exists()).toBe(false);
   });
 
   it("counts on the button Notes the notes of the selected workspace, and every note when All workspaces is checked", async () => {
@@ -130,7 +121,7 @@ describe("RightPanel", () => {
     const note = { id: "n1", title: "a", text: "a", workspaceLabel: "heidrun", origin: "heidrun – codex · heidrun", createdAt: 1 };
     notes.list = [note, { ...note, id: "n2", workspaceLabel: "teamwright" }];
     const wrapper = mount(RightPanel, { global: { stubs } });
-    const badge = () => wrapper.findAll(".navigation-bar button")[2].find(".badge").text();
+    const badge = () => wrapper.findAll(".navigation-bar button")[1].find(".badge").text();
     expect(badge()).toBe("1");
     settings.notesShowAll = true;
     await wrapper.vm.$nextTick();
