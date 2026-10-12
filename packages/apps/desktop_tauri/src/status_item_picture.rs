@@ -431,6 +431,85 @@ pub fn draw_dot(color: [u8; 3]) -> Vec<u8> {
     pixels
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Quota badges
+///////////////////////////////////////////////////////////////////////////////
+
+/// The percent sign of the font that is 3 pixels wide and 5 pixels high, in the same format as `DIGIT_ROWS`.
+const PERCENT_ROWS: [u8; 5] = [0b101, 0b001, 0b010, 0b100, 0b101];
+
+/// Width of the picture of a quota badge, in pixels. All the badges have the same width, so that the badges of
+/// several quotas line up in the menu.
+pub const BADGE_WIDTH: u32 = 90;
+
+/// Height of the picture of a quota badge, in pixels. The library that shows the menu scales the picture to 18 points
+/// high, and the pill of the badge fills a part of this height.
+pub const BADGE_HEIGHT: u32 = 72;
+
+/// Height of the pill of a quota badge, in pixels.
+const BADGE_PILL_HEIGHT: f32 = 44.0;
+
+/// Size of one pixel of the font in a quota badge, in pixels of the picture.
+const BADGE_FONT_SCALE: u32 = 6;
+
+/// Empty space on the right of the text of a quota badge, inside the pill, in pixels.
+const BADGE_PADDING: u32 = 12;
+
+/// The glyphs of the percentage of a badge: the digits, then the percent sign. A percentage of 100 or more has no
+/// percent sign, because three glyphs is the most that the pill holds.
+fn badge_glyphs(percent: f64) -> Vec<[u8; 5]> {
+    let rounded = percent.clamp(0.0, 100.0).round() as usize;
+    let mut glyphs: Vec<[u8; 5]> = rounded.to_string().bytes().map(|byte| DIGIT_ROWS[(byte - b'0') as usize]).collect();
+    if rounded < 100 {
+        glyphs.push(PERCENT_ROWS);
+    }
+    glyphs
+}
+
+/// The color of the pixel (`x`, `y`) of the pill of a quota badge: a capsule in `color`, without the text.
+fn badge_pill_color(x: f32, y: f32, color: [u8; 3]) -> Color {
+    let radius = BADGE_PILL_HEIGHT / 2.0;
+    let center_y = BADGE_HEIGHT as f32 / 2.0;
+    let clamped_x = x.clamp(radius, BADGE_WIDTH as f32 - radius);
+    let distance = ((x - clamped_x).powi(2) + (y - center_y).powi(2)).sqrt();
+    let base = to_float(color);
+    [base[0], base[1], base[2], (radius + 0.5 - distance).clamp(0.0, 1.0)]
+}
+
+/// Draws the badge of a quota for a menu item: a flat pill in `color`, with the percentage in white, aligned to the
+/// right. The badge is `BADGE_WIDTH` pixels wide whatever the percentage, so that the percent signs of the badges of
+/// several quotas stand in the same column. Returns the pixels as red, green, blue, alpha bytes, row by row.
+pub fn draw_quota_badge(percent: f64, color: [u8; 3]) -> Vec<u8> {
+    let glyphs = badge_glyphs(percent);
+    let scale = BADGE_FONT_SCALE;
+    let glyph_width = 3 * scale;
+    let text_width = glyphs.len() as u32 * glyph_width + (glyphs.len() as u32 - 1) * scale;
+    let text_left = BADGE_WIDTH - BADGE_PADDING - text_width;
+    let text_top = (BADGE_HEIGHT - 5 * scale) / 2;
+    let mut pixels = vec![0u8; (BADGE_WIDTH * BADGE_HEIGHT * 4) as usize];
+    for y in 0..BADGE_HEIGHT {
+        for x in 0..BADGE_WIDTH {
+            let mut drawn = badge_pill_color(x as f32 + 0.5, y as f32 + 0.5, color);
+            if x >= text_left && y >= text_top && y < text_top + 5 * scale {
+                let column = (x - text_left) / scale;
+                let glyph_index = (column / 4) as usize;
+                let column_in_glyph = column % 4;
+                if glyph_index < glyphs.len() && column_in_glyph < 3 {
+                    let row = ((y - text_top) / scale) as usize;
+                    if glyphs[glyph_index][row] >> (2 - column_in_glyph) & 1 == 1 {
+                        drawn = [1.0, 1.0, 1.0, 1.0];
+                    }
+                }
+            }
+            let offset = ((y * BADGE_WIDTH + x) * 4) as usize;
+            for channel in 0..4 {
+                pixels[offset + channel] = (drawn[channel].clamp(0.0, 1.0) * 255.0).round() as u8;
+            }
+        }
+    }
+    pixels
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -556,6 +635,44 @@ mod tests {
         let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
         let inside = pixel(&pixels, SLOT_WIDTH, CENTER + 14, MIDDLE);
         assert!(brightness(inside) > brightness(border) + 60, "border: {border:?}, inside: {inside:?}");
+    }
+
+    #[test]
+    fn a_quota_badge_is_a_pill_in_the_color_of_the_level_with_the_text_in_white() {
+        let pixels = draw_quota_badge(34.0, BLUE);
+        assert_eq!(pixels.len() as u32, BADGE_WIDTH * BADGE_HEIGHT * 4);
+        let left_of_the_text = pixel(&pixels, BADGE_WIDTH, 6, BADGE_HEIGHT / 2);
+        assert_eq!(left_of_the_text, [BLUE[0], BLUE[1], BLUE[2], 255]);
+        assert_eq!(pixel(&pixels, BADGE_WIDTH, 0, 0)[3], 0);
+        let white = pixels.chunks(4).filter(|pixel| pixel == &[255, 255, 255, 255]).count();
+        assert!(white > 100, "the text has {white} white pixels");
+    }
+
+    #[test]
+    fn the_percent_signs_of_two_badges_stand_in_the_same_column() {
+        let sign = |percent: f64| {
+            let pixels = draw_quota_badge(percent, BLUE);
+            let first_column = BADGE_WIDTH - BADGE_PADDING - 3 * BADGE_FONT_SCALE;
+            let mut sign = Vec::new();
+            for y in 0..BADGE_HEIGHT {
+                for x in first_column..BADGE_WIDTH - BADGE_PADDING {
+                    sign.push(pixel(&pixels, BADGE_WIDTH, x, y));
+                }
+            }
+            sign
+        };
+        assert_eq!(sign(1.0), sign(34.0));
+        assert_eq!(sign(7.0), sign(99.0));
+    }
+
+    #[test]
+    fn a_badge_of_100_percent_shows_three_digits_and_no_percent_sign() {
+        assert_eq!(badge_glyphs(100.0).len(), 3);
+        assert_eq!(badge_glyphs(100.0)[0], DIGIT_ROWS[1]);
+        assert_eq!(badge_glyphs(99.4).len(), 3);
+        assert_eq!(badge_glyphs(99.4).last(), Some(&PERCENT_ROWS));
+        assert_eq!(badge_glyphs(1.0), vec![DIGIT_ROWS[1], PERCENT_ROWS]);
+        assert_eq!(badge_glyphs(250.0), badge_glyphs(100.0));
     }
 
     #[test]

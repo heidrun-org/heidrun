@@ -25,13 +25,7 @@ const shownQuotas = computed(() => {
     if (ringWindow === undefined) {
       return [];
     }
-    const percent = Math.round(ringWindow.percent);
-    return [
-      {
-        percent: ringWindow.percent,
-        text: t("statusItem.quota", { name: quota.label.split(" · ")[0], percent }),
-      },
-    ];
+    return [{ percent: ringWindow.percent, text: t("statusItem.quota", { name: quota.label.split(" · ")[0] }) }];
   });
 });
 

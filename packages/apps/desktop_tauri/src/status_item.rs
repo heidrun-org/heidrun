@@ -170,14 +170,19 @@ pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
     slots.push(Slot::Disc { count: payload.done.agents.len(), color: DONE_COLOR });
     slots.push(Slot::Disc { count: payload.working.agents.len(), color: WORKING_COLOR });
     for quota in &payload.quotas {
-        let (color, is_urgent) = match quota.level {
-            QuotaLevel::Ok => (QUOTA_OK_COLOR, false),
-            QuotaLevel::Warn => (QUOTA_WARN_COLOR, false),
-            QuotaLevel::Crit => (BLOCKED_COLOR, true),
-        };
+        let (color, is_urgent) = quota_style(quota.level);
         slots.push(Slot::Ring { percent: Some(quota.percent), color, is_urgent });
     }
     slots
+}
+
+/// The color of a quota, and whether the quota is critical so that its ring moves.
+fn quota_style(level: QuotaLevel) -> ([u8; 3], bool) {
+    match level {
+        QuotaLevel::Ok => (QUOTA_OK_COLOR, false),
+        QuotaLevel::Warn => (QUOTA_WARN_COLOR, false),
+        QuotaLevel::Crit => (BLOCKED_COLOR, true),
+    }
 }
 
 /// Draws the picture of the status item for the data of the web page, at `time` seconds after the start.
@@ -225,6 +230,11 @@ fn dot_image(color: [u8; 3]) -> Image<'static> {
     Image::new_owned(picture::draw_dot(color), picture::DOT_SIZE, picture::DOT_SIZE)
 }
 
+/// The picture of the badge that the menu shows before the name of a quota: the percentage in a pill of `color`.
+fn badge_image(percent: f64, color: [u8; 3]) -> Image<'static> {
+    Image::new_owned(picture::draw_quota_badge(percent, color), picture::BADGE_WIDTH, picture::BADGE_HEIGHT)
+}
+
 /// One line of the menu of the status item.
 #[derive(Debug, PartialEq)]
 enum MenuLine {
@@ -245,8 +255,15 @@ enum MenuLine {
         /// Color of the dot.
         color: [u8; 3],
     },
-    /// A quota, already translated.
-    Quota(String),
+    /// A quota: its name, already translated, and a badge with the percentage in the color of its level.
+    Quota {
+        /// Name shown in the menu, already translated.
+        text: String,
+        /// Share of the quota already used, from 0 to 100.
+        percent: f64,
+        /// Color of the badge.
+        color: [u8; 3],
+    },
 }
 
 /// The lines of the menu that opens on a click, from top to bottom: the item that shows the main window and a
@@ -268,7 +285,7 @@ fn menu_lines(payload: &StatusItemPayload) -> Vec<MenuLine> {
         }
     }
     for quota in &payload.quotas {
-        lines.push(MenuLine::Quota(quota.text.clone()));
+        lines.push(MenuLine::Quota { text: quota.text.clone(), percent: quota.percent, color: quota_style(quota.level).0 });
     }
     lines
 }
@@ -280,8 +297,12 @@ fn build_menu(app: &AppHandle, payload: &StatusItemPayload) -> tauri::Result<Men
         builder = match line {
             MenuLine::Open(text) => builder.item(&MenuItemBuilder::with_id(OPEN_MENU_ID, text).build(app)?),
             MenuLine::Separator => builder.separator(),
-            MenuLine::Title(text) | MenuLine::Empty(text) | MenuLine::Quota(text) => {
+            MenuLine::Title(text) | MenuLine::Empty(text) => {
                 builder.item(&MenuItemBuilder::new(text).enabled(false).build(app)?)
+            }
+            MenuLine::Quota { text, percent, color } => {
+                let item = IconMenuItemBuilder::new(text).icon(badge_image(percent, color)).enabled(false);
+                builder.item(&item.build(app)?)
             }
             MenuLine::Agent { pane_id, name, color } => {
                 let item = IconMenuItemBuilder::with_id(pane_menu_id(&pane_id), name).icon(dot_image(color));
@@ -581,12 +602,34 @@ mod tests {
     fn a_section_without_agent_shows_the_empty_text_and_the_quotas_come_last() {
         let payload = StatusItemPayload {
             empty_label: "No agent".into(),
-            quotas: vec![StatusQuota { percent: 1.0, level: QuotaLevel::Ok, text: "Codex: 1 % used".into() }],
+            quotas: vec![StatusQuota { percent: 1.0, level: QuotaLevel::Ok, text: "Codex quota".into() }],
             ..StatusItemPayload::default()
         };
         let lines = menu_lines(&payload);
         assert_eq!(lines.iter().filter(|line| **line == MenuLine::Empty("No agent".into())).count(), 3);
-        assert_eq!(lines.last(), Some(&MenuLine::Quota("Codex: 1 % used".into())));
+        let quota = MenuLine::Quota { text: "Codex quota".into(), percent: 1.0, color: QUOTA_OK_COLOR };
+        assert_eq!(lines.last(), Some(&quota));
+    }
+
+    #[test]
+    fn the_badge_of_a_quota_has_the_color_of_its_level_and_the_picture_has_the_same_size_for_every_percentage() {
+        let quota = |percent: f64, level: QuotaLevel| StatusQuota { percent, level, text: String::new() };
+        let payload = StatusItemPayload {
+            quotas: vec![quota(5.0, QuotaLevel::Ok), quota(70.0, QuotaLevel::Warn), quota(97.0, QuotaLevel::Crit)],
+            ..StatusItemPayload::default()
+        };
+        let colors: Vec<[u8; 3]> = menu_lines(&payload)
+            .into_iter()
+            .filter_map(|line| match line {
+                MenuLine::Quota { color, .. } => Some(color),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(colors, vec![QUOTA_OK_COLOR, QUOTA_WARN_COLOR, BLOCKED_COLOR]);
+        for percent in [0.0, 1.0, 34.0, 100.0] {
+            let image = badge_image(percent, QUOTA_OK_COLOR);
+            assert_eq!((image.width(), image.height()), (picture::BADGE_WIDTH, picture::BADGE_HEIGHT));
+        }
     }
 
     #[test]
