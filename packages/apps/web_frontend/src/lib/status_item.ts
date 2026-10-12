@@ -18,6 +18,8 @@ export type StatusItemSection = {
 
 /** The quota that one ring of the status item shows. */
 export type StatusItemQuota = {
+  /** Label of the quota in the status bar. The web page opens the information card of the status bar section with it. */
+  label: string;
   /** Share of the quota already used, from 0 to 100. */
   percent: number;
   /** Colour level of the quota. */
@@ -53,7 +55,7 @@ export type StatusItemInput = {
   /** How long an agent may stay blocked before the status item glows red, in milliseconds. 0 switches it off. */
   blockedLimitMs: number;
   /** The quotas to show, in the order of the rings. Empty when no quota is known. */
-  quotas: { percent: number; text: string }[];
+  quotas: { label: string; percent: number; text: string }[];
   /** Translated section titles. */
   titles: { blocked: string; done: string; working: string };
   openLabel: string;
@@ -81,7 +83,7 @@ function isUrgent(input: StatusItemInput): boolean {
 export function buildStatusItemPayload(input: StatusItemInput): StatusItemPayload {
   const quotas = input.quotas.map((quota) => {
     const percent = Math.min(100, Math.max(0, quota.percent));
-    return { percent, level: gaugeLevel(percent), text: quota.text };
+    return { label: quota.label, percent, level: gaugeLevel(percent), text: quota.text };
   });
   return {
     isUrgent: isUrgent(input),

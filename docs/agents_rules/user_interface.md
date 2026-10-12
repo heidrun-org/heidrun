@@ -141,6 +141,13 @@ This document says where each part of the window goes and how each part works. T
 - A click on a status bar section opens its information card above the section.
 - The information card of the usage of Claude and the information card of the usage of Codex are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290)).
 
+## Menu of the status item
+
+- The status item sits in the macOS menu bar. A click on it opens a menu. From top to bottom, the menu has the line "Open Heidrun", the three sections "Blocked", "Finished", and "Working", and one line for each quota: "Claude quota" and "Codex quota". Each quota line starts with a badge that shows the percentage.
+- The three section titles and the quota lines show the normal black text with the normal weight, like "Open Heidrun" and the names of the agents. They are not gray and not bold. The lines "None" are gray.
+- macOS draws every disabled menu item in gray, and no text color changes this. So the section titles and the quota lines are enabled menu items, and the lines "None" are the only disabled lines. The cost is that macOS turns an enabled line blue while the pointer is over it ([issue #293](https://github.com/heidrun-org/heidrun/issues/293)).
+- A click on "Open Heidrun" or on a section title shows the main window. A click on an agent shows the main window and selects the pane of the agent. A click on a quota line shows the main window and opens the information card of the status bar section of the same quota: "Claude quota" opens the information card of the usage of Claude, and "Codex quota" opens the information card of the usage of Codex. It is the same information card as the one that a click on the status bar section opens.
+
 ## Position and size of the window
 
 - When Heidrun quits, it saves the position and the size of the window, and whether the window was maximized or full screen. The window-state plugin of Tauri does this work, and keeps the file `.window-state.json` in the configuration folder of the application.
