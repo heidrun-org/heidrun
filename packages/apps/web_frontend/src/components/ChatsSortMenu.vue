@@ -96,7 +96,7 @@ onBeforeUnmount(close);
   >
     <span v-if="chats.isSorting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     <Icon v-else :name="ORDER_ICONS[settings.chatsOrder]" />
-    {{ t(`chatsPanel.sortOrder.${settings.chatsOrder}`) }}
+    {{ t(`chatsPanel.sortKey.${settings.chatsSortKey}`) }}
   </button>
   <Teleport to="body">
     <div
