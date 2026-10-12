@@ -63,6 +63,24 @@ describe('TauriMock', () => {
 		expect(everything.claude.has_more).toBe(false);
 	});
 
+	it('sorts the fake conversations of the Tauri command chats_list by the sort key and the order that it receives', async () => {
+		TauriMock.install();
+		type Answer = Record<'claude' | 'codex', { chats: { id: string }[]; has_more: boolean }>;
+		const firstClaudeId = async (sortKey: string, order: string) => {
+			const result = await invoke<Answer>('chats_list', { folder: '/x', limit: 3, sortKey, order });
+			return result.claude.chats.map((chat) => chat.id);
+		};
+		expect(await firstClaudeId('last_updated', 'newest')).toEqual(['claude_1', 'claude_2', 'claude_3']);
+		expect(await firstClaudeId('messages', 'newest')).toEqual(['claude_1', 'claude_2', 'claude_4']);
+		expect(await firstClaudeId('messages', 'oldest')).toEqual(['claude_5', 'claude_6', 'claude_7']);
+		expect(await firstClaudeId('issues', 'newest')).toEqual(['claude_3', 'claude_1', 'claude_2']);
+		expect((await firstClaudeId('pull_requests', 'newest'))[0]).toBe('claude_4');
+		expect((await firstClaudeId('files_written', 'newest'))[0]).toBe('claude_1');
+		expect((await firstClaudeId('created_on', 'oldest'))[0]).toBe('claude_60');
+		const withoutSort = await invoke<Answer>('chats_list', { folder: '/x', limit: 1 });
+		expect(withoutSort.claude.chats[0].id).toBe('claude_1');
+	});
+
 	it('answers the cached forge command with the JSON of an issue and of a pull request, and fails for the issue 123', async () => {
 		TauriMock.install();
 		const issue = JSON.parse(

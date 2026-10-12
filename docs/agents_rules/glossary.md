@@ -60,7 +60,11 @@ One saved conversation between the developer and a coding agent, for example Cla
 
 ### Chats sidebar section
 
-The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a selector chooses the coding agent. Below the selector, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats. The Chats sort dropdown menu, at the top, changes the order of the list.
+
+### Chats sort dropdown menu
+
+The dropdown menu at the top of the Chats sidebar section, at the left of the two view buttons. Its button shows the chosen order. It has two parts: "Sort by" chooses what the chats are sorted by (created on, last updated, messages from you, issues, pull requests, or files written), and "Order" chooses "Oldest" or "Newest". It works like the sort dropdown menu of the list of issues of GitHub.
 
 ### Navigation bar
 

@@ -252,6 +252,8 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["notesShowAll", false, true],
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
+  ["chatsSortKey", "last_updated", "files_written"],
+  ["chatsOrder", "newest", "oldest"],
 ];
 
 describe("the last state of each option", () => {
@@ -326,6 +328,8 @@ describe("a corrupted saved value", () => {
         historyGroupBy: "year",
         chatsAgent: "gemini",
         chatsView: "wide",
+        chatsSortKey: "best_match",
+        chatsOrder: "random",
         searchRegex: true,
       }),
     );
@@ -337,6 +341,8 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.historyGroupBy).toBe("ws");
     expect(restarted.settings.chatsAgent).toBe("claude");
     expect(restarted.settings.chatsView).toBe("compact");
+    expect(restarted.settings.chatsSortKey).toBe("last_updated");
+    expect(restarted.settings.chatsOrder).toBe("newest");
     expect(restarted.settings.searchRegex).toBe(true);
   });
 });

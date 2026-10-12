@@ -8,6 +8,28 @@ export type ChatAgent = "claude" | "codex";
 /** The coding agents of the selector of the Chats sidebar section, in this order. */
 export const CHAT_AGENTS: readonly ChatAgent[] = ["claude", "codex"];
 
+/**
+ * What the list of chats is sorted by, in the order of the dropdown menu. The names are the ones that the Tauri command
+ * `chats_list` reads.
+ */
+export const CHAT_SORT_KEYS = [
+  "created_on",
+  "last_updated",
+  "messages",
+  "issues",
+  "pull_requests",
+  "files_written",
+] as const;
+
+/** One way to sort the list of chats. */
+export type ChatSortKey = (typeof CHAT_SORT_KEYS)[number];
+
+/** The two orders of the dropdown menu, in this order. "newest" puts the largest value of the sort key first. */
+export const CHAT_SORT_ORDERS = ["oldest", "newest"] as const;
+
+/** One order of the list of chats. */
+export type ChatSortOrder = (typeof CHAT_SORT_ORDERS)[number];
+
 /** The coding agent that the developer chose the last time, or the first coding agent when the saved choice is not valid. */
 function savedChatAgent(): ChatAgent {
   return CHAT_AGENTS.find((agent) => agent === settings.chatsAgent) ?? CHAT_AGENTS[0];
@@ -81,6 +103,8 @@ export const chats = reactive({
   agent: savedChatAgent(),
   /** True while a click on "Show more" waits for its answer. */
   isShowingMore: false,
+  /** True while a new sort key or a new order waits for its answer. */
+  isSorting: false,
   /** True until the first answer for the folder arrives. */
   isLoading: false,
   /** The reason why the conversations could not be read, or null. */
@@ -91,6 +115,35 @@ export const chats = reactive({
 export function chooseChatAgent(agent: ChatAgent) {
   chats.agent = agent;
   settings.chatsAgent = agent;
+}
+
+/**
+ * Saves the sort key that the developer chose in the dropdown menu, for the next start, and reads the chats again in the
+ * new order.
+ */
+export async function chooseChatSortKey(key: ChatSortKey): Promise<void> {
+  settings.chatsSortKey = key;
+  await reloadAfterSortChange();
+}
+
+/** Saves the order that the developer chose in the dropdown menu, for the next start, and reads the chats again. */
+export async function chooseChatSortOrder(order: ChatSortOrder): Promise<void> {
+  settings.chatsOrder = order;
+  await reloadAfterSortChange();
+}
+
+/** Reads the chats again with the saved sort key and order, and tells while it waits. */
+async function reloadAfterSortChange(): Promise<void> {
+  const key = settings.chatsSortKey;
+  const order = settings.chatsOrder;
+  chats.isSorting = true;
+  try {
+    await loadChats(chats.folder);
+  } finally {
+    if (settings.chatsSortKey === key && settings.chatsOrder === order) {
+      chats.isSorting = false;
+    }
+  }
 }
 
 /** The coding agents that have at least one conversation in the folder, in the order of the selector. */
@@ -160,9 +213,9 @@ export async function showMoreChats(): Promise<void> {
 }
 
 /**
- * Reads the newest conversations of a folder again. A change of folder empties the lists first, and starts again with
- * the first limit, so that the Chats sidebar section never shows the conversations of another workspace. An answer for a
- * folder that is no longer the current one is dropped.
+ * Reads the first conversations of a folder again, in the order that the settings say. A change of folder empties the
+ * lists first, and starts again with the first limit, so that the Chats sidebar section never shows the conversations of
+ * another workspace. An answer for a folder, a limit, a sort key, or an order that is no longer the current one is dropped.
  * @param folder - the folder of the selected workspace, or null when no workspace is selected
  */
 export async function loadChats(folder: string | null): Promise<void> {
@@ -181,9 +234,12 @@ export async function loadChats(folder: string | null): Promise<void> {
   }
   chats.isLoading = chats.claude.length === 0 && chats.codex.length === 0;
   const limit = chats.limit;
+  const sortKey = settings.chatsSortKey;
+  const order = settings.chatsOrder;
   try {
-    const found = await invoke<ChatsOfFolder>("chats_list", { folder, limit });
-    if (chats.folder !== folder || chats.limit !== limit) {
+    const found = await invoke<ChatsOfFolder>("chats_list", { folder, limit, sortKey, order });
+    const isSortChanged = settings.chatsSortKey !== sortKey || settings.chatsOrder !== order;
+    if (chats.folder !== folder || chats.limit !== limit || isSortChanged) {
       return;
     }
     chats.root = found.root;

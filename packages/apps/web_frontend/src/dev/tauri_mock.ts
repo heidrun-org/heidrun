@@ -1,5 +1,6 @@
 import type { InvokeArgs } from '@tauri-apps/api/core';
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
+import type { ChatSortKey, ChatSortOrder } from '../stores/chats';
 import { TauriMockFixture } from './tauri_mock_fixture';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,7 +76,11 @@ export class TauriMock {
 			case 'history_read':
 				return [];
 			case 'chats_list':
-				return TauriMockFixture.buildChats((payload as { limit: number }).limit);
+				return TauriMockFixture.buildChats(
+					(payload as { limit: number }).limit,
+					(payload as { sortKey?: ChatSortKey }).sortKey,
+					(payload as { order?: ChatSortOrder }).order,
+				);
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',

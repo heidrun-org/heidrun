@@ -11,15 +11,16 @@
 //! A conversation without a title shows its first message. A conversation without a title and without a message is not
 //! listed.
 //!
-//! The list is read on demand: the files of a folder are sorted by their modification date, and only the newest `limit`
-//! conversations are opened. What a file holds is found by `chats_scan` and kept on the disk, in `chats_cache.json`, until
-//! the size or the modification date of the file changes. A file that only grew is not read again from its start: the scan
-//! continues from where it stopped.
+//! The list is read on demand. With the sort key "last updated", the files of a folder are sorted by their modification
+//! date, and only the first `limit` conversations are opened. Every other sort key needs what each file holds, so every file
+//! of the folder is opened, then the conversations are sorted and cut to `limit`. What a file holds is found by
+//! `chats_scan` and kept on the disk, in `chats_cache.json`, until the size or the modification date of the file changes.
+//! A file that only grew is not read again from its start: the scan continues from where it stopped.
 
 use crate::chats_scan::{feed_claude_line, feed_codex_line, read_lines_from, scan_file, ChatMeta, Scan};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -68,6 +69,41 @@ pub struct Chats {
     pub root: String,
     pub claude: AgentChats,
     pub codex: AgentChats,
+}
+
+/// What the list is sorted by. The names are the ones that the front end sends.
+#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SortKey {
+    /// The date of the first record that has a date, or the modification date of the file when no record has a date.
+    CreatedOn,
+    /// The modification date of the file of the conversation.
+    #[default]
+    LastUpdated,
+    /// The number of messages that the developer typed.
+    Messages,
+    /// The number of issues that the conversation mentions.
+    Issues,
+    /// The number of pull requests that the conversation mentions.
+    PullRequests,
+    /// The number of different files that the coding agent wrote.
+    FilesWritten,
+}
+
+/// Which end of the sort key comes first. "Newest" is the largest value first, "oldest" is the smallest value first.
+#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SortOrder {
+    Oldest,
+    #[default]
+    Newest,
+}
+
+/// How the list is sorted: by which key, and from which end.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct Sorting {
+    pub key: SortKey,
+    pub order: SortOrder,
 }
 
 // ---- Cache on the disk -------------------------------------------------------------------------------------------
@@ -191,15 +227,16 @@ fn cache_path() -> PathBuf {
 
 // ---- The command -------------------------------------------------------------------------------------------------
 
-/// The newest `limit` conversations of Claude Code and of Codex whose folder is the root of the repository that holds
-/// `folder`.
+/// The first `limit` conversations of Claude Code and of Codex whose folder is the root of the repository that holds
+/// `folder`, sorted by `sort_key` from the end that `order` says.
 #[tauri::command]
-pub async fn chats_list(folder: String, limit: usize) -> Result<Chats, String> {
+pub async fn chats_list(folder: String, limit: usize, sort_key: SortKey, order: SortOrder) -> Result<Chats, String> {
+    let sorting = Sorting { key: sort_key, order };
     // Off the main thread: the first read of the files of a coding agent takes a moment.
-    tauri::async_runtime::spawn_blocking(move || list(&folder, limit)).await.map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(move || list(&folder, limit, sorting)).await.map_err(|e| e.to_string())
 }
 
-fn list(folder: &str, limit: usize) -> Chats {
+fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
     let root = crate::project::find_root(Path::new(folder)).display().to_string();
     let mut guard = CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let cache = guard.get_or_insert_with(|| ChatsCache::open(cache_path()));
@@ -209,17 +246,25 @@ fn list(folder: &str, limit: usize) -> Chats {
         &crate::usage::codex_home(),
         &root,
         limit,
+        sorting,
     );
     cache.save();
     chats
 }
 
-fn list_in(cache: &mut ChatsCache, projects: &Path, codex_home: &Path, folder: &str, limit: usize) -> Chats {
+fn list_in(
+    cache: &mut ChatsCache,
+    projects: &Path,
+    codex_home: &Path,
+    folder: &str,
+    limit: usize,
+    sorting: Sorting,
+) -> Chats {
     let limit = limit.clamp(1, MAX_LIMIT);
     Chats {
         root: folder.to_string(),
-        claude: claude_chats(cache, projects, folder, limit),
-        codex: codex_chats(cache, codex_home, folder, limit),
+        claude: claude_chats(cache, projects, folder, limit, sorting),
+        codex: codex_chats(cache, codex_home, folder, limit, sorting),
     }
 }
 
@@ -246,28 +291,105 @@ impl FileInfo {
     }
 }
 
-/// Opens the files from the newest one, and stops when `limit` conversations have a title. A file without a title and
-/// without a message is skipped, and does not count.
+/// The first `limit` conversations of `files`, in the order of `sorting`. `root` is the root of the repository, for the
+/// count of the written files. A file without a title and without a message is skipped, and does not count.
+///
+/// With the key "last updated", the files are sorted by their modification date, and the files are opened in this order
+/// until `limit` conversations have a title. Every other key needs what the files hold, so every file is opened.
 fn take_chats(
     cache: &mut ChatsCache,
     mut files: Vec<FileInfo>,
     limit: usize,
+    root: &str,
+    sorting: Sorting,
     title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta)>,
 ) -> AgentChats {
-    files.sort_by(|a, b| b.modified.cmp(&a.modified).then_with(|| a.id.cmp(&b.id)));
     let mut found = AgentChats::default();
-    for file in &files {
-        if found.chats.len() == limit {
-            found.has_more = true;
-            break;
+    if sorting.key == SortKey::LastUpdated {
+        files.sort_by(|a, b| {
+            let by_date = match sorting.order {
+                SortOrder::Newest => b.modified.cmp(&a.modified),
+                SortOrder::Oldest => a.modified.cmp(&b.modified),
+            };
+            by_date.then_with(|| a.id.cmp(&b.id))
+        });
+        for file in &files {
+            if found.chats.len() == limit {
+                found.has_more = true;
+                break;
+            }
+            if let Some(chat) = chat_of(cache, file, title_of) {
+                found.chats.push(chat);
+            }
         }
-        let Some((text, meta)) = title_of(cache, file) else { continue };
-        let title = crate::claude::short(&text, TITLE_LENGTH);
-        if !title.is_empty() {
-            found.chats.push(Chat { id: file.id.clone(), title, updated_at: file.modified, meta });
+        return found;
+    }
+    let mut keyed: Vec<(i64, Chat)> = Vec::new();
+    for file in &files {
+        if let Some(chat) = chat_of(cache, file, title_of) {
+            keyed.push((sort_value(&chat, root, sorting.key), chat));
         }
     }
+    keyed.sort_by(|a, b| {
+        let by_value = match sorting.order {
+            SortOrder::Newest => b.0.cmp(&a.0),
+            SortOrder::Oldest => a.0.cmp(&b.0),
+        };
+        by_value.then_with(|| b.1.updated_at.cmp(&a.1.updated_at)).then_with(|| a.1.id.cmp(&b.1.id))
+    });
+    found.has_more = keyed.len() > limit;
+    found.chats = keyed.into_iter().take(limit).map(|(_, chat)| chat).collect();
     found
+}
+
+/// The conversation of a file, or `None` when the file has no title and no message.
+fn chat_of(
+    cache: &mut ChatsCache,
+    file: &FileInfo,
+    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta)>,
+) -> Option<Chat> {
+    let (text, meta) = title_of(cache, file)?;
+    let title = crate::claude::short(&text, TITLE_LENGTH);
+    if title.is_empty() {
+        return None;
+    }
+    Some(Chat { id: file.id.clone(), title, updated_at: file.modified, meta })
+}
+
+/// The number that a conversation is sorted by: a date in milliseconds since 1970, or a count.
+fn sort_value(chat: &Chat, root: &str, key: SortKey) -> i64 {
+    match key {
+        SortKey::CreatedOn => chat.meta.first_at.unwrap_or(chat.updated_at),
+        SortKey::LastUpdated => chat.updated_at,
+        SortKey::Messages => i64::from(chat.meta.user_messages),
+        SortKey::Issues => chat.meta.issues.len() as i64,
+        SortKey::PullRequests => chat.meta.pull_requests.len() as i64,
+        SortKey::FilesWritten => written_file_count(&chat.meta.files_written, root) as i64,
+    }
+}
+
+/// The number of different files that a conversation wrote. A file written in a worktree of the repository
+/// (`.claude/worktrees/<name>/...` below `root`) and the same file at the root count as one, as the summary of the
+/// conversation counts them.
+fn written_file_count(files: &BTreeSet<String>, root: &str) -> usize {
+    let prefix = format!("{}/", root.trim_end_matches('/'));
+    let names: HashSet<String> = files
+        .iter()
+        .map(|path| match path.strip_prefix(&prefix) {
+            Some(relative) => strip_worktree(relative).to_string(),
+            None => path.clone(),
+        })
+        .collect();
+    names.len()
+}
+
+/// The path without its first part `.claude/worktrees/<name>/`, when it starts with this part.
+fn strip_worktree(relative: &str) -> &str {
+    relative
+        .strip_prefix(".claude/worktrees/")
+        .and_then(|rest| rest.split_once('/'))
+        .filter(|(name, _)| name.is_empty() == false)
+        .map_or(relative, |(_, path)| path)
 }
 
 /// The title of a scan, or its first message.
@@ -282,7 +404,7 @@ fn claude_folder_name(folder: &str) -> String {
     folder.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect()
 }
 
-fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: usize) -> AgentChats {
+fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: usize, sorting: Sorting) -> AgentChats {
     let dir = projects.join(claude_folder_name(folder));
     let mut files = Vec::new();
     if let Ok(entries) = std::fs::read_dir(&dir) {
@@ -298,7 +420,7 @@ fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: us
     }
     let present: HashSet<String> = files.iter().map(|file| file.path.display().to_string()).collect();
     cache.forget_missing(&dir, &present);
-    take_chats(cache, files, limit, &mut |cache, file| {
+    take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_claude_line);
         title_of_scan(&scan).map(|text| (text, scan.meta))
     })
@@ -306,7 +428,7 @@ fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: us
 
 // ---- Codex -------------------------------------------------------------------------------------------------------
 
-fn codex_chats(cache: &mut ChatsCache, home: &Path, folder: &str, limit: usize) -> AgentChats {
+fn codex_chats(cache: &mut ChatsCache, home: &Path, folder: &str, limit: usize, sorting: Sorting) -> AgentChats {
     let titles = codex_titles(&home.join("session_index.jsonl"));
     let mut rollouts = Vec::new();
     collect_rollouts(&home.join("sessions"), 0, &mut rollouts);
@@ -322,7 +444,7 @@ fn codex_chats(cache: &mut ChatsCache, home: &Path, folder: &str, limit: usize) 
         let Ok(metadata) = std::fs::metadata(&path) else { continue };
         files.push(FileInfo::new(path, id, &metadata));
     }
-    take_chats(cache, files, limit, &mut |cache, file| {
+    take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
         titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta))
     })
@@ -405,7 +527,7 @@ mod tests {
     }
 
     fn claude(cache: &mut ChatsCache, dir: &Path, limit: usize) -> AgentChats {
-        claude_chats(cache, &dir.join("projects"), "/work/app", limit)
+        claude_chats(cache, &dir.join("projects"), "/work/app", limit, Sorting::default())
     }
 
     #[test]
@@ -454,7 +576,7 @@ mod tests {
         write(&claude_folder(&dir).join("b.jsonl"), "", 5);
         assert_eq!(claude(&mut ChatsCache::in_memory(), &dir, 10), AgentChats::default());
         assert_eq!(
-            claude_chats(&mut ChatsCache::in_memory(), &dir.join("projects"), "/work/other", 10),
+            claude_chats(&mut ChatsCache::in_memory(), &dir.join("projects"), "/work/other", 10, Sorting::default()),
             AgentChats::default()
         );
         let _ = std::fs::remove_dir_all(&dir);
@@ -644,7 +766,7 @@ mod tests {
             "{{\"id\":\"{a}\",\"thread_name\":\"Old name\"}}\n{{\"id\":\"{a}\",\"thread_name\":\"Describe image\"}}\n{{\"id\":\"{b}\",\"thread_name\":\"Newer\"}}\n{{\"id\":\"{c}\",\"thread_name\":\"Elsewhere\"}}\n"
         );
         write(&dir.join("session_index.jsonl"), &index, 1);
-        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 10);
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Newer", "Describe image"]);
         assert_eq!(found.chats[1].id, a);
         let _ = std::fs::remove_dir_all(&dir);
@@ -657,7 +779,7 @@ mod tests {
         let real = codex_message("Please fix issue 250");
         codex_file(&dir, "2026/10/10", id, "/work/app", &[&real], 5);
         write(&dir.join("session_index.jsonl"), &format!("{{\"id\":\"{id}\",\"thread_name\":\"Fix it\"}}\n"), 1);
-        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5);
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, Sorting::default());
         assert_eq!(titles(&found), vec!["Fix it"]);
         assert_eq!(found.chats[0].meta.user_messages, 1);
         assert_eq!(found.chats[0].meta.issues.iter().collect::<Vec<_>>(), vec![&250]);
@@ -673,7 +795,7 @@ mod tests {
         let environment = codex_message("<environment_context>cwd</environment_context>");
         let real = codex_message("Write the   change log");
         codex_file(&dir, "2026/10/10", id, "/work/app", &[&agents, &environment, &real], 5);
-        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 10);
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Write the change log"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -693,7 +815,7 @@ mod tests {
         }
         write(&dir.join("session_index.jsonl"), &index, 1);
         let mut cache = ChatsCache::in_memory();
-        let found = codex_chats(&mut cache, &dir, "/work/app", 2);
+        let found = codex_chats(&mut cache, &dir, "/work/app", 2, Sorting::default());
         assert_eq!(titles(&found), vec!["Chat 2", "Chat 1"]);
         assert!(found.has_more);
         assert_eq!(cache.content.codex_folders.len(), 3);
@@ -703,7 +825,7 @@ mod tests {
     #[test]
     fn lists_nothing_when_the_folders_of_the_coding_agents_do_not_exist() {
         let dir = scratch("nothing");
-        let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5);
+        let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5, Sorting::default());
         assert_eq!(found.claude, AgentChats::default());
         assert_eq!(found.codex, AgentChats::default());
         let _ = std::fs::remove_dir_all(&dir);
@@ -712,7 +834,7 @@ mod tests {
     #[test]
     fn answers_the_root_of_the_repository_that_it_listed() {
         let dir = scratch("root");
-        let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5);
+        let found = list_in(&mut ChatsCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5, Sorting::default());
         assert_eq!(found.root, "/work/app");
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -724,6 +846,197 @@ mod tests {
         let title = claude(&mut ChatsCache::in_memory(), &dir, 5).chats[0].title.clone();
         assert_eq!(title.chars().count(), TITLE_LENGTH + 1);
         assert!(title.ends_with('…'));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    // ---- Sorting ----
+
+    /// A message that the developer typed, at `timestamp`.
+    fn user_line(timestamp: &str, text: &str) -> String {
+        format!(r#"{{"type":"user","timestamp":"{timestamp}","message":{{"role":"user","content":"{text}"}}}}"#)
+    }
+
+    /// A record where Claude Code writes the file `path`.
+    fn write_tool_line(path: &str) -> String {
+        format!(
+            r#"{{"type":"assistant","timestamp":"2026-10-11T10:00:05.000Z","message":{{"role":"assistant","content":[{{"type":"tool_use","name":"Write","input":{{"file_path":"{path}"}}}}]}}}}"#
+        )
+    }
+
+    /// Writes a conversation of Claude Code in the folder of `/work/app`. `name` is its title and its identifier.
+    fn write_chat(dir: &Path, name: &str, lines: &[String], age_seconds: u64) {
+        let mut all = vec![claude_title_line(name)];
+        all.extend(lines.iter().cloned());
+        write(&claude_folder(dir).join(format!("{name}.jsonl")), &format!("{}\n", all.join("\n")), age_seconds);
+    }
+
+    fn sorted(dir: &Path, limit: usize, key: SortKey, order: SortOrder) -> AgentChats {
+        claude_chats(&mut ChatsCache::in_memory(), &dir.join("projects"), "/work/app", limit, Sorting { key, order })
+    }
+
+    #[test]
+    fn reads_the_sort_key_and_the_order_that_the_front_end_sends() {
+        let keys = ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"];
+        let read: Vec<SortKey> = keys.iter().map(|key| serde_json::from_str(&format!("\"{key}\"")).unwrap()).collect();
+        assert_eq!(
+            read,
+            vec![
+                SortKey::CreatedOn,
+                SortKey::LastUpdated,
+                SortKey::Messages,
+                SortKey::Issues,
+                SortKey::PullRequests,
+                SortKey::FilesWritten
+            ]
+        );
+        assert_eq!(serde_json::from_str::<SortOrder>("\"oldest\"").unwrap(), SortOrder::Oldest);
+        assert_eq!(serde_json::from_str::<SortOrder>("\"newest\"").unwrap(), SortOrder::Newest);
+        assert!(serde_json::from_str::<SortKey>("\"best_match\"").is_err());
+        assert_eq!(Sorting::default(), Sorting { key: SortKey::LastUpdated, order: SortOrder::Newest });
+    }
+
+    #[test]
+    fn sorts_by_the_modification_date_from_the_oldest_and_opens_only_the_oldest_files() {
+        let dir = scratch("sort-oldest");
+        for (index, age) in [(1, 400), (2, 300), (3, 200), (4, 100)] {
+            write_chat(&dir, &format!("Chat {index}"), &[], age);
+        }
+        let mut cache = ChatsCache::in_memory();
+        let sorting = Sorting { key: SortKey::LastUpdated, order: SortOrder::Oldest };
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
+        assert_eq!(titles(&found), vec!["Chat 1", "Chat 2"]);
+        assert!(found.has_more);
+        assert_eq!(cache.content.scans.len(), 2, "the two newer files were not opened");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sorts_by_the_number_of_messages_and_puts_the_newest_file_first_among_equal_numbers() {
+        let dir = scratch("sort-messages");
+        let messages = |count: usize| -> Vec<String> {
+            (0..count).map(|_| user_line("2026-10-11T10:00:00.000Z", "hello")).collect()
+        };
+        write_chat(&dir, "A", &messages(1), 400);
+        write_chat(&dir, "B", &messages(3), 300);
+        write_chat(&dir, "C", &messages(2), 200);
+        write_chat(&dir, "D", &messages(3), 100);
+        let newest = sorted(&dir, 10, SortKey::Messages, SortOrder::Newest);
+        assert_eq!(titles(&newest), vec!["D", "B", "C", "A"]);
+        let oldest = sorted(&dir, 10, SortKey::Messages, SortOrder::Oldest);
+        assert_eq!(titles(&oldest), vec!["A", "C", "D", "B"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sorts_by_the_date_of_the_first_message_and_not_by_the_modification_date() {
+        let dir = scratch("sort-created");
+        write_chat(&dir, "A", &[user_line("2026-10-11T10:00:00.000Z", "hello")], 300);
+        write_chat(&dir, "B", &[user_line("2026-10-09T10:00:00.000Z", "hello")], 100);
+        write_chat(&dir, "C", &[user_line("2026-10-10T10:00:00.000Z", "hello")], 200);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Newest)), vec!["A", "C", "B"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Oldest)), vec!["B", "C", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::LastUpdated, SortOrder::Newest)), vec!["B", "C", "A"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn uses_the_modification_date_as_the_creation_date_of_a_chat_without_dated_records() {
+        let dir = scratch("sort-created-fallback");
+        write_chat(&dir, "Dated", &[user_line("2020-01-01T00:00:00.000Z", "hello")], 100);
+        write_chat(&dir, "Undated", &[USER_LINE.to_string()], 50);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::CreatedOn, SortOrder::Newest)), vec!["Undated", "Dated"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sorts_by_the_number_of_issues_and_by_the_number_of_pull_requests() {
+        let dir = scratch("sort-references");
+        let time = "2026-10-11T10:00:00.000Z";
+        write_chat(&dir, "A", &[user_line(time, "Fix issue 1")], 400);
+        write_chat(&dir, "B", &[user_line(time, "Fix issue 2 and issue 3")], 300);
+        write_chat(&dir, "C", &[user_line(time, "Merge pull request 5")], 200);
+        write_chat(&dir, "D", &[user_line(time, "Merge pull request 6 and pull request 7")], 100);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Newest)), vec!["B", "A", "D", "C"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::Issues, SortOrder::Oldest)), vec!["D", "C", "A", "B"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Newest)), vec!["D", "C", "B", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::PullRequests, SortOrder::Oldest)), vec!["B", "A", "C", "D"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sorts_by_the_number_of_files_and_counts_a_file_of_a_worktree_once() {
+        let dir = scratch("sort-files");
+        let worktree_copy = write_tool_line("/work/app/.claude/worktrees/fix-1/a.ts");
+        write_chat(&dir, "A", &[write_tool_line("/work/app/a.ts"), worktree_copy], 300);
+        write_chat(&dir, "B", &[write_tool_line("/work/app/a.ts"), write_tool_line("/work/app/b.ts")], 200);
+        let outside = [write_tool_line("/elsewhere/x.ts"), write_tool_line("/elsewhere/y.ts"), write_tool_line("/work/app/z.ts")];
+        write_chat(&dir, "C", &outside, 100);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Newest)), vec!["C", "B", "A"]);
+        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Oldest)), vec!["A", "B", "C"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn counts_the_written_files_with_the_worktrees_of_the_repository_removed() {
+        let files: BTreeSet<String> = [
+            "/work/app/a.ts",
+            "/work/app/.claude/worktrees/fix-1/a.ts",
+            "/work/app/.claude/worktrees/fix-2/src/b.ts",
+            "/work/app/.claude/worktrees//c.ts",
+            "/other/a.ts",
+        ]
+        .iter()
+        .map(|path| path.to_string())
+        .collect();
+        assert_eq!(written_file_count(&files, "/work/app"), 4);
+        assert_eq!(written_file_count(&files, "/work/app/"), 4);
+        assert_eq!(written_file_count(&BTreeSet::new(), "/work/app"), 0);
+    }
+
+    #[test]
+    fn opens_every_file_for_a_sort_key_that_needs_the_content_and_tells_when_there_are_more() {
+        let dir = scratch("sort-opens-all");
+        for (index, age) in [(1, 400), (2, 300), (3, 200), (4, 100)] {
+            write_chat(&dir, &format!("Chat {index}"), &[user_line("2026-10-11T10:00:00.000Z", "hello")], age);
+        }
+        let mut cache = ChatsCache::in_memory();
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Newest };
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
+        assert_eq!(found.chats.len(), 2);
+        assert!(found.has_more);
+        assert_eq!(cache.content.scans.len(), 4, "every file was opened");
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 4, sorting);
+        assert_eq!(found.chats.len(), 4);
+        assert!(!found.has_more);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn does_not_count_a_chat_without_title_and_without_message_when_it_sorts_by_content() {
+        let dir = scratch("sort-empty");
+        write_chat(&dir, "Only", &[user_line("2026-10-11T10:00:00.000Z", "hello")], 300);
+        write(&claude_folder(&dir).join("empty.jsonl"), "", 100);
+        let found = sorted(&dir, 5, SortKey::Messages, SortOrder::Newest);
+        assert_eq!(titles(&found), vec!["Only"]);
+        assert!(!found.has_more);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sorts_the_chats_of_codex_too() {
+        let dir = scratch("sort-codex");
+        let one = "01a12c31-175b-7513-b12c-bba764f46431";
+        let two = "01a12c31-175b-7513-b12c-bba764f46432";
+        codex_file(&dir, "2026/10/10", one, "/work/app", &[&codex_message("first")], 100);
+        codex_file(&dir, "2026/10/10", two, "/work/app", &[&codex_message("first"), &codex_message("second")], 300);
+        let index = format!("{{\"id\":\"{one}\",\"thread_name\":\"One\"}}\n{{\"id\":\"{two}\",\"thread_name\":\"Two\"}}\n");
+        write(&dir.join("session_index.jsonl"), &index, 1);
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Newest };
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, sorting);
+        assert_eq!(titles(&found), vec!["Two", "One"]);
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Oldest };
+        let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, sorting);
+        assert_eq!(titles(&found), vec!["One", "Two"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
