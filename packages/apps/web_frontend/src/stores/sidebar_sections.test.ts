@@ -6,7 +6,7 @@ beforeEach(() => {
   settings.leftOpen = true;
   settings.rightOpen = true;
   settings.leftSidebarSection = "actions";
-  settings.rightSidebarSection = "pane";
+  settings.rightSidebarSection = "notes";
 });
 
 describe("openSidebarSection", () => {
@@ -21,12 +21,12 @@ describe("openSidebarSection", () => {
     expect(settings.leftOpen).toBe(true);
   });
 
-  it.each(["toHandle", "pane", "notes", "chats"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
+  it.each(["toHandle", "notes", "chats"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.rightSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["toHandle", "pane", "notes", "chats"] as const)("shows the right sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
+  it.each(["toHandle", "notes", "chats"] as const)("shows the right sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
     settings.rightOpen = false;
     openSidebarSection(sidebarSection);
     expect(settings.rightOpen).toBe(true);
@@ -36,7 +36,7 @@ describe("openSidebarSection", () => {
     settings.rightOpen = false;
     openSidebarSection("git");
     expect(settings.rightOpen).toBe(false);
-    expect(settings.rightSidebarSection).toBe("pane");
+    expect(settings.rightSidebarSection).toBe("notes");
     settings.leftOpen = false;
     openSidebarSection("notes");
     expect(settings.leftOpen).toBe(false);

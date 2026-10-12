@@ -40,7 +40,7 @@ const KEY = "heidrun.settings";
 export type LeftSidebarSection = "actions" | "git";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
-export type RightSidebarSection = "toHandle" | "pane" | "notes" | "chats";
+export type RightSidebarSection = "toHandle" | "notes" | "chats";
 
 const defaults = {
   fontId: "geist",
@@ -55,7 +55,7 @@ const defaults = {
   /** Sidebar section that the left sidebar shows. */
   leftSidebarSection: "actions" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
-  rightSidebarSection: "pane" as RightSidebarSection,
+  rightSidebarSection: "toHandle" as RightSidebarSection,
   /** Sidebar section Chats: the coding agent whose chats the list shows. */
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
@@ -169,6 +169,7 @@ const defaults = {
 
 /** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */
 const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
+  rightSidebarSection: ["toHandle", "notes", "chats"],
   filesSideMode: ["tree", "grep"],
   agentsActivityScope: ["all", "pane"],
   historyPeriod: ["today", "7", "30", "90", "365"],
@@ -225,7 +226,7 @@ function load(): typeof defaults {
       if (!("leftSidebarSection" in stored)) {
         stored.leftSidebarSection = stored.rightSidebarSection;
       }
-      stored.rightSidebarSection = "pane";
+      stored.rightSidebarSection = "toHandle";
     }
     // The workspaces and the tabs left the left sidebar for the tab bar: its Workspaces sidebar section is gone.
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {

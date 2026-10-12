@@ -101,11 +101,6 @@ describe('horizontal padding of the sidebar sections of the right sidebar', () =
 		expect(padding).toBe('8px 6px 16px');
 	});
 
-	it('is 14px on each side for the Pane sidebar section, as for the Scripts sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/Inspector.vue', '.insp', 'padding');
-		expect(padding).toBe('20px 14px');
-	});
-
 	it('is 14px on each side for the Notes sidebar section, as for the Scripts sidebar section', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/NotesPanel.vue', '.panel', 'padding');
 		expect(padding).toBe('18px 14px');
