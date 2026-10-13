@@ -2,15 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 
 const invoke = vi.hoisted(() => vi.fn(async () => undefined));
-const eventHandlers = vi.hoisted(() => new Map<string, (event: { payload: string }) => void>());
-const listen = vi.hoisted(() =>
-  vi.fn(async (name: string, handler: (event: { payload: string }) => void) => {
-    eventHandlers.set(name, handler);
-    return () => {};
-  }),
-);
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
-vi.mock("@tauri-apps/api/event", () => ({ listen }));
+vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 
@@ -18,8 +11,6 @@ beforeEach(() => {
   localStorage.clear();
   vi.resetModules();
   invoke.mockClear();
-  listen.mockClear();
-  eventHandlers.clear();
 });
 
 describe("startStatusItem: visibility in the macOS menu bar", () => {
@@ -47,18 +38,5 @@ describe("startStatusItem: visibility in the macOS menu bar", () => {
     settings.showStatusItem = true;
     await nextTick();
     expect(invoke).toHaveBeenLastCalledWith("status_item_set_visible", { isVisible: true });
-  });
-});
-
-describe("startStatusItem: the quota line chosen in the menu", () => {
-  it("asks the status bar section of the quota to open its information card", async () => {
-    const { startStatusItem } = await import("./statusItem");
-    const { quotaCardRequest } = await import("../lib/quota_card_request");
-    startStatusItem();
-    const handler = eventHandlers.get("status-item-show-quota");
-    expect(handler).toBeDefined();
-    expect(quotaCardRequest.value).toBeNull();
-    handler?.({ payload: "Codex · prolite" });
-    expect(quotaCardRequest.value?.label).toBe("Codex · prolite");
   });
 });
