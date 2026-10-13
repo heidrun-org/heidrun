@@ -525,6 +525,21 @@ pub fn file_create(root: String, path: String, dir: bool) -> Result<(), String> 
     }
 }
 
+/// The paths, among `paths`, that are folders of the project today (not symlinks). The sidebar section Files asks it
+/// to drop the new empty folders that the developer removed outside Heidrun, because Git does not list empty folders.
+#[tauri::command(async)]
+pub fn dirs_existing(root: String, paths: Vec<String>) -> Result<Vec<String>, String> {
+    known_root(&root)?;
+    let base = std::fs::canonicalize(&root).map_err(|e| e.to_string())?;
+    Ok(paths
+        .into_iter()
+        .filter(|path| {
+            safe_rel(path).is_ok()
+                && std::fs::symlink_metadata(base.join(path)).map(|meta| meta.file_type().is_dir()).unwrap_or(false)
+        })
+        .collect())
+}
+
 /// Existing file or folder of the project (not a symlink, not .git, not the root).
 fn existing(root: &str, path: &str) -> Result<PathBuf, String> {
     not_in_git_dir(path)?;
@@ -673,6 +688,20 @@ mod helper_tests {
         assert_ne!(fingerprint(b"abc"), fingerprint(b"abd"));
         assert!(fingerprint(b"abc").ends_with("-3"));
         assert!(fingerprint(b"").ends_with("-0"));
+    }
+
+    #[test]
+    fn keeps_only_the_paths_that_are_folders_today() {
+        let dir = std::env::temp_dir().join(format!("hd-dirs-existing-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("kept/inner")).unwrap();
+        std::fs::write(dir.join("file.txt"), "x").unwrap();
+        let root = std::fs::canonicalize(&dir).unwrap().display().to_string();
+        remember_root(&root);
+        let paths = vec!["kept".to_string(), "kept/inner".to_string(), "gone".to_string(), "file.txt".to_string(), "../out".to_string()];
+        assert_eq!(dirs_existing(root.clone(), paths).unwrap(), vec!["kept", "kept/inner"]);
+        assert!(dirs_existing("/not/a/known/root".into(), vec![]).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
