@@ -76,6 +76,8 @@ import InstalledSkillModal from "./components/InstalledSkillModal.vue";
 import FindNewSkillsModal from "./components/FindNewSkillsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
+import ThreeJsDemoModal from "./components/ThreeJsDemoModal.vue";
+import { threeJsDemoModal } from "./stores/three_js_demo_modal";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
@@ -337,6 +339,7 @@ onBeforeUnmount(() => {
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
     <MacroEditor v-if="macroEditor.open" />
+    <ThreeJsDemoModal v-if="threeJsDemoModal.open" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
