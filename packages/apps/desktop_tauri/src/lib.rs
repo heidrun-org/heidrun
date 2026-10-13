@@ -323,6 +323,7 @@ pub fn run() {
             git_source_control::git_sync,
             git_source_control::git_branches,
             git_source_control::git_remote_branches,
+            git_source_control::git_synchronize,
             git_source_control::git_checkout,
             git_source_control::git_commit_diff,
             claude::claude_statusline_state,

@@ -5,7 +5,7 @@ import { currentGit } from "../stores/git";
 import { checkoutGitBranch, filterGitBranches, listGitBranches, selectedRoot, type GitBranch } from "../stores/git_branches";
 import { isOnRemote, loadRemoteBranchNames } from "../stores/git_remote_branches";
 import { ago } from "../lib/format";
-import { branchUrl, remoteToWeb } from "../lib/refs";
+import { branchUrl, webOfRemote } from "../lib/refs";
 import { useStatusCard } from "../lib/status_card";
 import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
@@ -31,14 +31,7 @@ const isDirty = computed(() => currentGit.value !== null && currentGit.value.cha
 const shownBranches = computed(() => filterGitBranches(branches.value, query.value));
 
 /** The web page of the remote repository, and the forge that hosts it, or null when the remote is unknown. */
-const web = computed(() => {
-  const remote = currentGit.value?.remote ?? null;
-  const address = remote === null ? null : remoteToWeb(remote);
-  if (address === null) {
-    return null;
-  }
-  return { base: address.base, forge: address.host.includes("github") ? ("github" as const) : ("gitlab" as const) };
-});
+const web = computed(() => webOfRemote(currentGit.value?.remote ?? null));
 
 /** The address of the page of a branch on the forge, or null when the remote is unknown. */
 function pageOf(branch: GitBranch): string | null {
@@ -176,8 +169,8 @@ function chooseFirst() {
 </template>
 
 <style scoped>
-/* The inner side of the zone keeps 4 pixels of background: the counts zone touches it. */
-.git-branch-zone { margin-right: -4px; padding-right: 4px; }
+/* The zone is the first of a button group: its left corners are round, and its right corners, where the next zone touches it, are square. */
+.git-branch-zone { margin-right: -4px; padding-right: 4px; border-radius: 6px 0 0 6px; }
 /* The list touches the borders of the card: the body has no padding, so the separators and the scroll bar reach the edges. */
 .branch-picker-body { padding: 0; overflow: hidden; }
 .branch-search { padding: 12px; }

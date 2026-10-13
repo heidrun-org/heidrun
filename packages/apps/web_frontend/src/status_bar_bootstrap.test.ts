@@ -131,6 +131,33 @@ describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 	});
 });
 
+describe('the button group of the three zones of the Git section', () => {
+	it('rounds only the two ends of the group: the inner corners, where two zones touch, are square', () => {
+		const branchText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+		const mergeText = StatusBarBootstrapTestHelper.readComponent('GitSynchronize.vue');
+		const countsText = StatusBarBootstrapTestHelper.readComponent('GitStatusSummary.vue');
+		expect(branchText).toMatch(/\.git-branch-zone\s*\{[^}]*border-radius:\s*6px 0 0 6px/);
+		expect(mergeText).toMatch(/\.git-synchronize-zone\s*\{[^}]*border-radius:\s*0\s*;/);
+		expect(countsText).toMatch(/\.git-counts-zone\s*\{[^}]*border-radius:\s*0 6px 6px 0/);
+	});
+});
+
+describe('the synchronize zone (GitSynchronize.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitSynchronize.vue');
+
+	it('uses the Bootstrap popover, spinner, and alert classes', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'spinner-border', 'alert']) {
+			expect(sourceText).toContain(className);
+		}
+	});
+
+	it('writes style rules only for the zone in the status bar', () => {
+		const allowedClassNameList = ['git-synchronize-zone', 'git-synchronize-zone-disabled'];
+		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
 describe('the card of the workspaces (WorkspaceStatusSummary.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('WorkspaceStatusSummary.vue');
 
