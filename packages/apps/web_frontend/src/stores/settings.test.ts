@@ -91,6 +91,47 @@ describe("keep agents running after quit", () => {
   });
 });
 
+describe("saved searches of the Code hosting sidebar section", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(saved: unknown) {
+    localStorage.setItem("heidrun.settings", JSON.stringify(saved));
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("are none by default", () => {
+    expect(settings.codeHostingSavedSearches).toEqual([]);
+  });
+
+  it("are read again when the application starts again", async () => {
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: [{ name: "Mine", query: "author:@me" }] });
+    expect(reloaded.codeHostingSavedSearches).toEqual([{ name: "Mine", query: "author:@me" }]);
+  });
+
+  it("drop an entry without a name or a search as text, and keep the others", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: [
+        { name: "Mine", query: "author:@me" },
+        { name: "", query: "label:bug" },
+        { name: "No search" },
+        { name: 4, query: "x" },
+        null,
+        "text",
+        { name: "Mentions me", query: "mentions:@me", extra: true },
+      ],
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual([
+      { name: "Mine", query: "author:@me" },
+      { name: "Mentions me", query: "mentions:@me" },
+    ]);
+  });
+
+  it("are none when the saved value is not a list", async () => {
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: "Mine" });
+    expect(reloaded.codeHostingSavedSearches).toEqual([]);
+  });
+});
+
 describe("time format", () => {
   it("follows the language by default", () => {
     expect(settings.timeFormat).toBe("auto");

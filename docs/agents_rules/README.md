@@ -8,4 +8,4 @@
 
 This folder holds the rules that every coding agent follows when it works on Heidrun.
 
-Read the glossary first, because it defines the words that the other files use. Then read only the files of the folder `user_interface` that match the part that you change. The file `AGENTS.md` at the root of the repository lists every file of this folder.
+Read the glossary first, because it defines the words that the other files use. The words of the search in the Code hosting sidebar section have their own glossary file. Then read only the files of the folder `user_interface` that match the part that you change. The file `AGENTS.md` at the root of the repository lists every file of this folder.
