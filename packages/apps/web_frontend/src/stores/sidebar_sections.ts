@@ -2,8 +2,8 @@ import { settings, type LeftSidebarSection, type RightSidebarSection } from "./s
 
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section opens if it is hidden, and shows the sidebar
- * section. The Scripts and Source control sidebar sections belong to the left sidebar. The To handle, Notes, and Chats sidebar
- * sections belong to the right sidebar.
+ * section. The Scripts and Source control sidebar sections belong to the left sidebar. The Needs you, Notes, and Chats
+ * sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
   if (sidebarSection === "actions" || sidebarSection === "sourceControl") {

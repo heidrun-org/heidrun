@@ -44,11 +44,11 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons To handle, Notes, and Chats in the navigation bar, and not the buttons Pane, Scripts, and Git", () => {
+  it("shows the buttons Needs you, Notes, and Chats in the navigation bar, and not the buttons Pane, Scripts, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".navigation-bar").attributes("role")).toBe("tablist");
     expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["To handle", "Notes", "Chats"]);
+    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["Needs you", "Notes", "Chats"]);
   });
 
   it("does not call a button of the navigation bar a tab", () => {
@@ -67,7 +67,7 @@ describe("RightPanel", () => {
     expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false"]);
   });
 
-  it("shows the sidebar section To handle first, and the sidebar section Notes after a click on its button", async () => {
+  it("shows the sidebar section Needs you first, and the sidebar section Notes after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
@@ -80,7 +80,7 @@ describe("RightPanel", () => {
     expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
   });
 
-  it("shows the sidebar section To handle after a click on its button, and remembers it", async () => {
+  it("shows the sidebar section Needs you after a click on its button, and remembers it", async () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     await wrapper.findAll(".navigation-bar button")[0].trigger("click");
@@ -129,7 +129,7 @@ describe("RightPanel", () => {
   });
 });
 
-describe("RightPanel button To handle", () => {
+describe("RightPanel button Needs you", () => {
   it("shows no number when no agent calls", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.findAll(".navigation-bar button")[0].find(".badge").exists()).toBe(false);

@@ -76,7 +76,7 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar navigation bar", () => {
-  it("shows the buttons Scripts and Source Control, and not the buttons To handle, Workspaces, Pane, and Notes", async () => {
+  it("shows the buttons Scripts and Source Control, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".navigation-bar button");
     expect(buttons.map((button) => button.text())).toEqual(["Scripts", "Source Control"]);

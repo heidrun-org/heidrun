@@ -65,11 +65,11 @@ export class TauriMockFixture {
 		return JSON.stringify({
 			title: isIssue
 				? 'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex'
-				: 'Move the To handle sidebar section from the left sidebar to the right sidebar',
+				: 'Move the Needs you sidebar section from the left sidebar to the right sidebar',
 			state,
 			body: isIssue
-				? '## Goal\n\nMove the To handle sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
-				: 'The To handle sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
+				? '## Goal\n\nMove the Needs you sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
+				: 'The Needs you sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
 			labels: isIssue ? [{ name: 'Simple Work', color: '2ea043' }, { name: 'Design', color: '1d76db' }] : [],
 			author: { login: 'jeromeetienne' },
 			createdAt: '2026-10-11T09:30:00Z',

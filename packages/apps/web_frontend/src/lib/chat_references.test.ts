@@ -79,8 +79,8 @@ describe("repositoryName", () => {
 
 describe("referenceExcerpt", () => {
   it("removes the marks of Markdown for a heading, a link, an image, a code span, and a bold word", () => {
-    const body = "## Goal\n\nMove the **To handle** section, see [the issue](https://x.y/1) and `code`.\n\n![shot](a.png)";
-    expect(referenceExcerpt(body)).toBe("Goal\nMove the To handle section, see the issue and code.");
+    const body = "## Goal\n\nMove the **Needs you** section, see [the issue](https://x.y/1) and `code`.\n\n![shot](a.png)";
+    expect(referenceExcerpt(body)).toBe("Goal\nMove the Needs you section, see the issue and code.");
   });
 
   it("removes a comment of HTML and the lines of a code fence, and keeps the text of the code", () => {

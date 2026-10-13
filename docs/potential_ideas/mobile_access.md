@@ -25,7 +25,7 @@ Heidrun Mobile grows this page into a real application. The pairing key, the Tai
 
 ### Needs your attention
 
-The first screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the To handle sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
+The first screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the Needs you sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
 
 ### Panes
 

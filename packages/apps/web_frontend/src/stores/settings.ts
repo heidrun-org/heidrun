@@ -39,7 +39,7 @@ const KEY = "heidrun.settings";
 /** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
 export type LeftSidebarSection = "actions" | "sourceControl";
 
-/** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
+/** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";
 
 const defaults = {
@@ -232,7 +232,7 @@ function load(): typeof defaults {
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
       stored.leftSidebarSection = "actions";
     }
-    // The To handle sidebar section moved from the left sidebar to the right sidebar.
+    // The Needs you sidebar section moved from the left sidebar to the right sidebar.
     if (stored.leftSidebarSection === "toHandle") {
       stored.leftSidebarSection = "actions";
     }

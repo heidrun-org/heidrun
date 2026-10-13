@@ -29,7 +29,7 @@
   "finished": "Finished items",
   "finishedLabel": "Hide the finished items after",
   "finishedTitle": "Hide finished jobs after this delay",
-  "finishedHelp": "Finished jobs (Activity, “To handle” cards) disappear after this delay. Blocked agents stay.",
+  "finishedHelp": "Finished jobs (Activity, “Needs you” cards) disappear after this delay. Blocked agents stay.",
   "notifyBlocked": "Reminder if an agent stays blocked",
   "neverLower": "never",
   "minutes": "{minutes} min",

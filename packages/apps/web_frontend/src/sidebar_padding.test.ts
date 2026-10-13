@@ -96,7 +96,7 @@ describe('padding of the right sidebar', () => {
 });
 
 describe('horizontal padding of the sidebar sections of the right sidebar', () => {
-	it('is 6px on each side for the To handle sidebar section, with 8px above and 16px below', () => {
+	it('is 6px on each side for the Needs you sidebar section, with 8px above and 16px below', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/ToHandlePanel.vue', '.to-handle', 'padding');
 		expect(padding).toBe('8px 6px 16px');
 	});

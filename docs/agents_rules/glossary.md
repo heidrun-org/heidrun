@@ -52,7 +52,7 @@ The panel on the right of the viewport. It holds sidebar sections.
 
 ### Sidebar section
 
-One part of a sidebar, for example the To handle, the Scripts, or the Source control sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+One part of a sidebar, for example the Needs you, the Scripts, or the Source control sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 
 ### Source control sidebar section
 

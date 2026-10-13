@@ -200,14 +200,14 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
 });
 
 describe("sidebar section of the right sidebar that was called Pane", () => {
-  it("shows the sidebar section To handle when the saved sidebar section was pane, because the Pane sidebar section is gone", async () => {
+  it("shows the sidebar section Needs you when the saved sidebar section was pane, because the Pane sidebar section is gone", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "pane" }));
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
-  it("shows the sidebar section To handle when nothing was saved", async () => {
+  it("shows the sidebar section Needs you when nothing was saved", async () => {
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
@@ -229,7 +229,7 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
-  it("shows the sidebar section Scripts when the saved sidebar section was To handle, because the To handle sidebar section moved to the right sidebar", async () => {
+  it("shows the sidebar section Scripts when the saved sidebar section was Needs you, because the Needs you sidebar section moved to the right sidebar", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle", rightSidebarSection: "notes" }));
     vi.resetModules();
     const restarted = await import("./settings");
@@ -237,7 +237,7 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.rightSidebarSection).toBe("notes");
   });
 
-  it("keeps the sidebar section To handle in the right sidebar when it was saved there", async () => {
+  it("keeps the sidebar section Needs you in the right sidebar when it was saved there", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "toHandle" }));
     vi.resetModules();
     const restarted = await import("./settings");
