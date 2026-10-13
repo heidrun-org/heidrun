@@ -27,5 +27,6 @@
   "gitBranchPickerPlaceholder": "Choisir une branche à extraire",
   "gitBranchPickerEmpty": "Aucune branche ne correspond",
   "gitBranchPickerCurrent": "Branche courante",
-  "gitCountsTitle": "Détails du dépôt Git"
+  "gitCountsTitle": "Détails du dépôt Git",
+  "gitBranchPickerOpenOn": "Ouvrir sur {forge}"
 }

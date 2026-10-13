@@ -27,5 +27,6 @@
   "gitBranchPickerPlaceholder": "Select a branch to check out",
   "gitBranchPickerEmpty": "No branch matches",
   "gitBranchPickerCurrent": "Current branch",
-  "gitCountsTitle": "Details of the Git repository"
+  "gitCountsTitle": "Details of the Git repository",
+  "gitBranchPickerOpenOn": "Open on {forge}"
 }

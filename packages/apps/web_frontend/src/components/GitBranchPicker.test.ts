@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
 vi.mock("../stores/git", async (importOriginal) => {
   const original = await importOriginal<typeof import("../stores/git")>();
   return { ...original, refreshGit: vi.fn() };
@@ -12,6 +14,7 @@ import GitBranchPicker from "./GitBranchPicker.vue";
 import { git, refreshGit, type GitStatus } from "../stores/git";
 import { filterGitBranches, type GitBranch } from "../stores/git_branches";
 import { state } from "../stores/session";
+import { branchUrl } from "../lib/refs";
 
 function makeStatus(overrides: Partial<GitStatus>): GitStatus {
   return {
@@ -26,7 +29,7 @@ function makeStatus(overrides: Partial<GitStatus>): GitStatus {
     last_sha: null,
     last_subject: null,
     last_time: null,
-    remote: null,
+    remote: "git@github.com:heidrun-org/heidrun.git",
     ...overrides,
   };
 }
@@ -157,6 +160,31 @@ describe("GitBranchPicker", () => {
     expect(state.toast).toContain("would be overwritten by checkout");
     expect(state.toastKind).toBe("error");
     expect(refreshGit).toHaveBeenCalledWith("w1");
+  });
+
+  it("opens the page of a branch on GitHub from the link of its row, without checking the branch out", async () => {
+    const wrapper = mount(GitBranchPicker);
+    await wrapper.trigger("click");
+    await flushPromises();
+    await wrapper.get("[data-link=dev_jerome]").trigger("click");
+    await flushPromises();
+    expect(openUrl).toHaveBeenCalledWith("https://github.com/heidrun-org/heidrun/tree/dev_jerome");
+    expect(calls.map((call) => call.command)).toEqual(["git_branches"]);
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("keeps the slashes of a branch name in its address, and uses GitLab addresses for a GitLab remote", () => {
+    expect(branchUrl("https://github.com/o/r", "github", "fix/a b")).toBe("https://github.com/o/r/tree/fix/a%20b");
+    expect(branchUrl("https://gitlab.com/g/r", "gitlab", "main")).toBe("https://gitlab.com/g/r/-/tree/main");
+    expect(branchUrl(null, "github", "main")).toBeNull();
+  });
+
+  it("shows no link when the repository has no remote", async () => {
+    git.status = { w1: makeStatus({ remote: null }) };
+    const wrapper = mount(GitBranchPicker);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.findAll("[data-link]")).toEqual([]);
   });
 
   it("closes the picker with the key Escape and with a second click", async () => {

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentGit } from "../stores/git";
 import { checkoutGitBranch, filterGitBranches, listGitBranches, type GitBranch } from "../stores/git_branches";
 import { ago } from "../lib/format";
+import { branchUrl, remoteToWeb } from "../lib/refs";
 import { useStatusCard } from "../lib/status_card";
 import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
@@ -26,6 +28,29 @@ const query = ref("");
 
 const isDirty = computed(() => currentGit.value !== null && currentGit.value.changed + currentGit.value.untracked > 0);
 const shownBranches = computed(() => filterGitBranches(branches.value, query.value));
+
+/** The web page of the remote repository, and the forge that hosts it, or null when the remote is unknown. */
+const web = computed(() => {
+  const remote = currentGit.value?.remote ?? null;
+  const address = remote === null ? null : remoteToWeb(remote);
+  if (address === null) {
+    return null;
+  }
+  return { base: address.base, forge: address.host.includes("github") ? ("github" as const) : ("gitlab" as const) };
+});
+
+/** The address of the page of a branch on the forge, or null when the remote is unknown. */
+function pageOf(branch: GitBranch): string | null {
+  return web.value === null ? null : branchUrl(web.value.base, web.value.forge, branch.name);
+}
+
+/** Opens the page of the branch on the forge in the web browser. The picker stays open. */
+async function openPage(branch: GitBranch) {
+  const address = pageOf(branch);
+  if (address !== null) {
+    await openUrl(address).catch(() => {});
+  }
+}
 
 watch(isOpen, async (isNowOpen) => {
   if (isNowOpen === false) {
@@ -82,37 +107,50 @@ function chooseFirst() {
       @click.stop
     >
       <div class="popover-arrow position-absolute ms-3"></div>
-      <div class="popover-body d-flex flex-column gap-2">
-        <input
-          ref="searchField"
-          v-model="query"
-          type="text"
-          class="form-control form-control-sm"
-          :placeholder="t('statusBar.gitBranchPickerPlaceholder')"
-          :aria-label="t('statusBar.gitBranchPickerPlaceholder')"
-          @keydown.enter.prevent="chooseFirst"
-        />
+      <div class="popover-body branch-picker-body d-flex flex-column">
+        <div class="branch-search">
+          <input
+            ref="searchField"
+            v-model="query"
+            type="text"
+            class="form-control form-control-sm"
+            :placeholder="t('statusBar.gitBranchPickerPlaceholder')"
+            :aria-label="t('statusBar.gitBranchPickerPlaceholder')"
+            @keydown.enter.prevent="chooseFirst"
+          />
+        </div>
         <div class="list-group list-group-flush branch-list" role="listbox">
-          <button
-            v-for="branch in shownBranches"
-            :key="branch.name"
-            type="button"
-            class="list-group-item list-group-item-action branch-row d-flex flex-column text-start"
-            role="option"
-            :aria-selected="branch.is_current"
-            :data-branch="branch.name"
-            @click="choose(branch)"
-          >
-            <span class="d-flex align-items-center gap-2">
-              <Icon name="git" />
-              <span class="fw-semibold branch-name">{{ branch.name }}</span>
-              <Icon v-if="branch.is_current" name="check2" :title="t('statusBar.gitBranchPickerCurrent')" />
-              <span class="text-body-secondary branch-time">{{ ago(branch.last_time * 1000) }}</span>
-            </span>
-            <span class="text-body-secondary branch-subject">
-              {{ branch.last_author }} • {{ branch.last_sha }} • {{ branch.last_subject }}
-            </span>
-          </button>
+          <div v-for="branch in shownBranches" :key="branch.name" class="branch-item">
+            <button
+              type="button"
+              class="list-group-item list-group-item-action branch-row d-flex flex-column text-start"
+              role="option"
+              :aria-selected="branch.is_current"
+              :data-branch="branch.name"
+              @click="choose(branch)"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <Icon name="git" />
+                <span class="fw-semibold branch-name">{{ branch.name }}</span>
+                <Icon v-if="branch.is_current" name="check2" :title="t('statusBar.gitBranchPickerCurrent')" />
+                <span class="text-body-secondary branch-time">{{ ago(branch.last_time * 1000) }}</span>
+              </span>
+              <span class="text-body-secondary branch-subject">
+                {{ branch.last_author }} • {{ branch.last_sha }} • {{ branch.last_subject }}
+              </span>
+            </button>
+            <button
+              v-if="web !== null"
+              type="button"
+              class="btn branch-link"
+              :data-link="branch.name"
+              :title="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
+              :aria-label="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
+              @click.stop="openPage(branch)"
+            >
+              <Icon :name="web.forge" />
+            </button>
+          </div>
           <div v-if="shownBranches.length === 0" class="text-body-secondary branch-row" data-field="no-branch">
             {{ t("statusBar.gitBranchPickerEmpty") }}
           </div>
@@ -125,8 +163,15 @@ function chooseFirst() {
 <style scoped>
 /* The inner side of the zone keeps 4 pixels of background: the counts zone touches it. */
 .git-branch-zone { margin-right: -4px; padding-right: 4px; }
+/* The list touches the borders of the card: the body has no padding, so the separators and the scroll bar reach the edges. */
+.branch-picker-body { padding: 0; overflow: hidden; }
+.branch-search { padding: 8px; }
 .branch-list { max-height: 320px; overflow-y: auto; }
+.branch-item { position: relative; }
 .branch-row { padding: 4px 8px; }
+/* Each row sits in its own wrapper, so the rows draw their own separator: one line under each row, edge to edge. */
+.branch-item .branch-row { width: 100%; padding-right: 40px; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
+.branch-link { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); padding: 2px 6px; }
 .branch-name, .branch-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .branch-time { margin-left: auto; white-space: nowrap; }
 </style>
