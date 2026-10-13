@@ -45,8 +45,6 @@ export type RightSidebarSection = "toHandle" | "notes" | "chats";
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
-  leftOpen: true,
-  rightOpen: true,
   /** The left sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
   leftCollapsed: false,
   /** The right sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
@@ -246,6 +244,15 @@ function load(): typeof defaults {
     if (stored.leftSidebarSection === "git") {
       stored.leftSidebarSection = "sourceControl";
     }
+    // The hide buttons of the sidebars are gone (issue #315): a sidebar that was hidden is now collapsed.
+    if (stored.leftOpen === false) {
+      stored.leftCollapsed = true;
+    }
+    if (stored.rightOpen === false) {
+      stored.rightCollapsed = true;
+    }
+    delete stored.leftOpen;
+    delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {

@@ -85,9 +85,9 @@ This document says where each part of the window goes and how each part works. T
 - A click on the icon of the sidebar section that an expanded sidebar shows collapses the sidebar. A click on any other icon expands the sidebar, if it is collapsed, and shows that sidebar section.
 - The first button of the sidebar icon bar, above the icons, collapses or expands the sidebar. In an expanded sidebar, it is the collapse button, with an arrow toward the edge of the window: `chevron-bar-left` in the left sidebar, `chevron-bar-right` in the right sidebar. In a collapsed sidebar, it is the expand button, with an arrow toward the viewport: `chevron-bar-right` in the left sidebar, `chevron-bar-left` in the right sidebar. The expand button expands the sidebar to its selected sidebar section.
 - A collapsed sidebar has no line to drag: its width does not change. The width of an expanded sidebar includes the sidebar icon bar.
-- A button hides each sidebar completely, collapsed or not. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width. When the sidebar shows again, it is collapsed or expanded as before.
-- The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
-- When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section opens if it is hidden, and expands if it is collapsed to the sidebar icon bar. A sidebar that holds another sidebar section does not change.
+- A sidebar is never hidden completely: the top bar has no button that hides a sidebar, and the sidebar icon bar stays on the screen, collapsed or expanded.
+- The shortcut ⌘B collapses or expands the left sidebar, and the shortcut ⌥⌘B collapses or expands the right sidebar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
+- When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section expands if it is collapsed to the sidebar icon bar. A sidebar that holds another sidebar section does not change.
 - The sidebars hold no tabs. The word "tab" belongs to the tab bar only.
 
 ## Source control

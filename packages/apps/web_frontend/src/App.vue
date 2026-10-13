@@ -82,9 +82,9 @@ import type { PaneOuterEdge } from "./lib/pane_separators";
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
-// A hidden sidebar takes no width, and a sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
-const leftTakenWidth = computed(() => (settings.leftOpen ? (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth) : 0));
-const rightTakenWidth = computed(() => (settings.rightOpen ? (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth) : 0));
+// A sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
+const leftTakenWidth = computed(() => (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth));
+const rightTakenWidth = computed(() => (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth));
 const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTakenWidth.value : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
@@ -100,8 +100,8 @@ const columnOfPinnedPanesReserve = computed(() => leftTakenWidth.value + rightTa
 // The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
 // A sidebar collapsed to the sidebar icon bar has a fixed width: nobody drags it.
 const paneOuterEdges = computed(() => ({
-  left: settings.leftOpen && settings.leftCollapsed === false,
-  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen && settings.rightCollapsed === false),
+  left: settings.leftCollapsed === false,
+  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightCollapsed === false),
 }));
 
 // The column that a corner of the panes under the pointer touches: its line is drawn in colour.
@@ -234,8 +234,8 @@ function onKey(e: KeyboardEvent) {
       });
     case "KeyB":
       return run(() => {
-        if (e.altKey) settings.rightOpen = !settings.rightOpen;
-        else settings.leftOpen = !settings.leftOpen;
+        if (e.altKey) settings.rightCollapsed = !settings.rightCollapsed;
+        else settings.leftCollapsed = !settings.leftCollapsed;
       });
     // ⌘+ / ⌘− / ⌘0 zoom the whole window, whatever window is open.
     case "Equal":
@@ -288,10 +288,8 @@ onBeforeUnmount(() => {
     <AboutModal />
     <TopBar />
     <div class="body">
-      <template v-if="settings.leftOpen">
-        <Sidebar />
-        <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
-      </template>
+      <Sidebar />
+      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
@@ -314,7 +312,7 @@ onBeforeUnmount(() => {
         </template>
         <Offline v-else />
       </main>
-      <template v-if="state.snapshot && settings.rightOpen">
+      <template v-if="state.snapshot">
         <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <RightPanel />
       </template>
