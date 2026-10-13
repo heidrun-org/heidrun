@@ -10,3 +10,4 @@ This file lists the files and the subfolders of this folder, for agents and tool
 
 - [README.md](README.md): the overview of this folder, for people.
 - [mobile_access.md](mobile_access.md): Heidrun Mobile, a phone front end for Heidrun.
+- [usage_statistics.md](usage_statistics.md): statistics about the repositories, the issues, and the logs of the AI coding agents.
