@@ -112,6 +112,24 @@ describe('TauriMock', () => {
 		]);
 	});
 
+	it('keeps, in the fake list of the cached forge command, the items that match the words author:, label:, and no:label of --search', async () => {
+		TauriMock.install();
+		const numbersFor = async (tool: 'issue' | 'pr', search: string): Promise<number[]> => {
+			const args = [tool, 'list', '--state', 'open', '--search', search, '--json', 'number'];
+			const items = JSON.parse(await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args }));
+			return items.map((item: { number: number }) => item.number);
+		};
+		expect(await numbersFor('issue', 'author:@me')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'author:erictang')).toEqual([366]);
+		expect(await numbersFor('issue', '-author:erictang')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'label:bug')).toEqual([351]);
+		expect(await numbersFor('issue', 'label:"Simple Work" -label:bug')).toEqual([370]);
+		expect(await numbersFor('issue', 'no:label')).toEqual([366]);
+		expect(await numbersFor('issue', 'mentions:@me')).toEqual([370, 366, 351]);
+		expect(await numbersFor('pr', 'author:erictang')).toEqual([365]);
+		expect(await numbersFor('pr', 'label:bug')).toEqual([]);
+	});
+
 	it('keeps a translation table of the clustered dynamic topics, and answers a fake coding agent that groups by the first four letters', async () => {
 		TauriMock.install();
 		expect(await invoke('topic_clusters_read')).toEqual({});

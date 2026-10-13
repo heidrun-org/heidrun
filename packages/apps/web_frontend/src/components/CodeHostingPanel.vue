@@ -3,9 +3,11 @@
 // requests (GitLab), of the repository of the selected workspace, in two collapsible lists. A row has three lines of the
 // same height: the number and the title, then two small detail lines. A click on a row opens an information card at its
 // right, with the details that the forge gives (see `ChatReferenceDetails.vue`), and a button that opens the web page of
-// the item in the web browser.
+// the item in the web browser. A search field above the lists filters them, and the developer keeps a search under a
+// name as a saved search.
 // - issue #370
-import { computed, ref, watch } from "vue";
+// - issue #374
+import { computed, nextTick, ref, watch } from "vue";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
 import Icon from "./Icon.vue";
 import InformationCard from "./InformationCard.vue";
@@ -21,14 +23,17 @@ import {
 } from "../stores/chat_references";
 import { currentGit } from "../stores/git";
 import { state } from "../stores/session";
+import { settings } from "../stores/settings";
 import {
   CODE_HOSTING_LIMIT,
   codeHosting,
   itemPrefix,
   loadCodeHosting,
+  searchCodeHosting,
   type CodeHostingGroup,
   type CodeHostingItem,
 } from "../stores/code_hosting";
+import { deleteSavedSearch, saveSearch, updateSavedSearch } from "../stores/code_hosting_searches";
 import { t } from "../i18n/index";
 
 /** The two lists, from the top. */
@@ -100,12 +105,75 @@ function groupTitle(group: CodeHostingGroup): string {
   return t(codeHosting.forge === "gitlab" ? "codeHostingPanel.group.mergeRequests" : "codeHostingPanel.group.pullRequests");
 }
 
-/** The text of an empty list. */
+/** The text of an empty list: "No open issue.", or "No issue matches the search." while a search runs. */
 function emptyText(group: CodeHostingGroup): string {
+  const kind = codeHosting.search === "" ? "empty" : "emptySearch";
   if (group === "issues") {
-    return t("codeHostingPanel.empty.issues");
+    return t(`codeHostingPanel.${kind}.issues`);
   }
-  return t(codeHosting.forge === "gitlab" ? "codeHostingPanel.empty.mergeRequests" : "codeHostingPanel.empty.pullRequests");
+  return t(`codeHostingPanel.${kind}.${codeHosting.forge === "gitlab" ? "mergeRequests" : "pullRequests"}`);
+}
+
+/** The text of the search field. It is the search that runs after the key Enter, not always the search that runs now. */
+const searchText = ref(codeHosting.search);
+
+/** True while the row that asks for the name of a new saved search is shown. */
+const isSaving = ref(false);
+
+/** The name that the developer writes for a new saved search. */
+const savingName = ref("");
+
+/** True while the saved searches show their name, their search, and a button to delete them. */
+const isEditing = ref(false);
+
+/** The field of the name of a new saved search. */
+const nameInput = ref<HTMLInputElement | null>(null);
+
+/** Runs the search of the search field. */
+function runSearch() {
+  void searchCodeHosting(currentGit.value?.root ?? null, searchText.value);
+}
+
+/**
+ * Puts a search in the search field and runs it.
+ * @param query - the search, or an empty text for all the open items
+ */
+function applySearch(query: string) {
+  searchText.value = query;
+  runSearch();
+}
+
+/** Shows the row that asks for the name of a new saved search. */
+async function startSaving() {
+  savingName.value = "";
+  isSaving.value = true;
+  await nextTick();
+  nameInput.value?.focus();
+}
+
+/** Keeps the search of the search field under the name that was written, and hides the row of the name. */
+function confirmSaving() {
+  if (saveSearch(savingName.value, searchText.value)) {
+    isSaving.value = false;
+  }
+}
+
+/**
+ * Keeps the change of a field of a saved search. A change that is not valid (an empty text, or the name of another
+ * saved search) is undone in the field.
+ * @param index - the place of the saved search in the list
+ * @param field - the field that changed
+ * @param event - the event of the change of the field
+ */
+function commitEdit(index: number, field: "name" | "query", event: Event) {
+  const input = event.target as HTMLInputElement;
+  const saved = settings.codeHostingSavedSearches[index];
+  if (field === "name") {
+    updateSavedSearch(index, input.value, saved.query);
+  } else {
+    updateSavedSearch(index, saved.name, input.value);
+  }
+  input.value = saved[field];
 }
 
 function toggleGroup(group: CodeHostingGroup) {
@@ -143,6 +211,142 @@ async function readDetails(row: Row) {
           <Icon name="arrow-clockwise" />
         </button>
       </header>
+
+      <template v-if="codeHosting.status !== 'noRemote'">
+        <form class="search d-flex align-items-center gap-1" role="search" @submit.prevent="runSearch">
+          <input
+            v-model="searchText"
+            type="text"
+            class="form-control form-control-sm"
+            spellcheck="false"
+            autocomplete="off"
+            :placeholder="t('codeHostingPanel.searchPlaceholder')"
+            :title="t('codeHostingPanel.searchHint')"
+            :aria-label="t('codeHostingPanel.searchLabel')"
+          />
+          <button
+            type="submit"
+            class="btn btn-sm icon-button"
+            :aria-label="t('codeHostingPanel.searchRun')"
+            :title="t('codeHostingPanel.searchRun')"
+          >
+            <Icon name="search" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm icon-button"
+            :aria-label="t('codeHostingPanel.saveSearch')"
+            :title="t('codeHostingPanel.saveSearch')"
+            :disabled="searchText.trim() === ''"
+            @click="startSaving"
+          >
+            <Icon name="bookmark-plus" />
+          </button>
+        </form>
+        <form v-if="isSaving" class="saving d-flex align-items-center gap-1" @submit.prevent="confirmSaving">
+          <input
+            ref="nameInput"
+            v-model="savingName"
+            type="text"
+            class="form-control form-control-sm"
+            spellcheck="false"
+            autocomplete="off"
+            :aria-label="t('codeHostingPanel.savedName')"
+            :placeholder="t('codeHostingPanel.savedName')"
+            @keydown.esc.prevent="isSaving = false"
+          />
+          <button
+            type="submit"
+            class="btn btn-sm icon-button"
+            :aria-label="t('codeHostingPanel.saveConfirm')"
+            :title="t('codeHostingPanel.saveConfirm')"
+            :disabled="savingName.trim() === ''"
+          >
+            <Icon name="check-lg" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm icon-button"
+            :aria-label="t('codeHostingPanel.cancel')"
+            :title="t('codeHostingPanel.cancel')"
+            @click="isSaving = false"
+          >
+            <Icon name="x-lg" />
+          </button>
+        </form>
+        <div
+          v-if="settings.codeHostingSavedSearches.length > 0"
+          class="saved d-flex flex-wrap align-items-center gap-1"
+          role="group"
+          :aria-label="t('codeHostingPanel.savedSearches')"
+        >
+          <button
+            type="button"
+            class="btn btn-sm saved-button"
+            data-saved-search="all"
+            :class="{ active: codeHosting.search === '' }"
+            :aria-pressed="codeHosting.search === ''"
+            @click="applySearch('')"
+          >
+            {{ t("codeHostingPanel.allItems") }}
+          </button>
+          <button
+            v-for="saved in settings.codeHostingSavedSearches"
+            :key="saved.name"
+            type="button"
+            class="btn btn-sm saved-button"
+            data-saved-search
+            :class="{ active: codeHosting.search === saved.query }"
+            :aria-pressed="codeHosting.search === saved.query"
+            :title="saved.query"
+            @click="applySearch(saved.query)"
+          >
+            <span class="saved-name">{{ saved.name }}</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm icon-button ms-auto"
+            data-edit-saved-searches
+            :aria-label="isEditing ? t('codeHostingPanel.doneEditing') : t('codeHostingPanel.editSearches')"
+            :title="isEditing ? t('codeHostingPanel.doneEditing') : t('codeHostingPanel.editSearches')"
+            :aria-pressed="isEditing"
+            @click="isEditing = isEditing === false"
+          >
+            <Icon :name="isEditing ? 'check-lg' : 'pencil'" />
+          </button>
+        </div>
+        <div v-if="isEditing && settings.codeHostingSavedSearches.length > 0" class="editing d-flex flex-column">
+          <div v-for="(saved, index) in settings.codeHostingSavedSearches" :key="index" class="editing-row" data-editing-row>
+            <input
+              type="text"
+              class="form-control form-control-sm editing-name"
+              spellcheck="false"
+              autocomplete="off"
+              :value="saved.name"
+              :aria-label="t('codeHostingPanel.savedSearchName')"
+              @change="commitEdit(index, 'name', $event)"
+            />
+            <input
+              type="text"
+              class="form-control form-control-sm editing-query"
+              spellcheck="false"
+              autocomplete="off"
+              :value="saved.query"
+              :aria-label="t('codeHostingPanel.savedSearchQuery')"
+              @change="commitEdit(index, 'query', $event)"
+            />
+            <button
+              type="button"
+              class="btn btn-sm icon-button editing-delete"
+              :aria-label="t('codeHostingPanel.deleteSearch', { name: saved.name })"
+              :title="t('codeHostingPanel.deleteSearch', { name: saved.name })"
+              @click="deleteSavedSearch(index)"
+            >
+              <Icon name="trash" />
+            </button>
+          </div>
+        </div>
+      </template>
 
       <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
       <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
@@ -225,6 +429,20 @@ async function readDetails(row: Row) {
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .code-hosting :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .code-hosting :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
+.search .form-control, .saving .form-control { flex: 1 1 auto; min-width: 0; }
+/* A saved search is a small button with a round border: the one that runs now is filled. */
+.saved-button { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--line); border-radius: 11px; color: var(--text-2); max-width: 100%; white-space: nowrap; }
+/* A name that does not fit ends with an ellipsis. A button cannot show one itself, so the name is in its own span. */
+.saved-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.saved-button:hover { background: var(--hover-soft); color: var(--text); }
+.saved-button.active { background: var(--hover); border-color: var(--line-strong); color: var(--text); }
+/* A saved search in the edit mode takes two lines: its name and the button to delete it, then its search. */
+.editing { gap: 8px; }
+.editing-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+.editing-row .form-control { min-width: 0; }
+.editing-name { grid-column: 1; grid-row: 1; }
+.editing-delete { grid-column: 2; grid-row: 1; }
+.editing-query { grid-column: 1 / -1; grid-row: 2; }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -16px; }
 .group-header { height: 26px; margin: 0 8px; padding: 0 8px; border-radius: 5px; }
 .group-header:hover { background: var(--hover-soft); }

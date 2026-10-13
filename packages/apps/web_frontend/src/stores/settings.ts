@@ -45,6 +45,14 @@ export type LeftSidebarSection = "actions" | "sourceControl" | "files" | "codeHo
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";
 
+/** A saved search of the Code hosting sidebar section (issue #374): a search under a name. */
+export type SavedSearch = {
+  /** The name that the button of the saved search shows. Two saved searches never have the same name. */
+  name: string;
+  /** The search, written in the search language of GitHub. */
+  query: string;
+};
+
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
@@ -184,6 +192,8 @@ const defaults = {
   scriptsShowAllSuggestions: false,
   /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
+  /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
+  codeHostingSavedSearches: [] as SavedSearch[],
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -225,6 +235,22 @@ function dropCorruptedValues(saved: Record<string, unknown>): Record<string, unk
     }
   }
   return result;
+}
+
+/**
+ * Keeps the saved searches that have a name and a search that are texts, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches that can be used
+ */
+function keepSavedSearches(value: unknown[]): SavedSearch[] {
+  const kept: SavedSearch[] = [];
+  for (const entry of value) {
+    const candidate = entry as Partial<SavedSearch> | null;
+    if (typeof candidate?.name === "string" && candidate.name !== "" && typeof candidate.query === "string") {
+      kept.push({ name: candidate.name, query: candidate.query });
+    }
+  }
+  return kept;
 }
 
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
@@ -274,6 +300,7 @@ function load(): typeof defaults {
     delete stored.leftOpen;
     delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
+    saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {
       saved.codeTheme = "auto";

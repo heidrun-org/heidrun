@@ -224,8 +224,9 @@ pub async fn git_file(root: String, path: String, rev: Option<String>) -> Result
     }
 }
 
-/// Read-only calls the app makes, and nothing else: `glab api <path>` (GET only)
-/// and `gh pr list` / `gh issue list` / `gh run list`. Anything that could change the forge or run
+/// Read-only calls the app makes, and nothing else: `glab api <path>` (GET only, a path of a project, or the
+/// user who is signed in) and `gh pr list` / `gh issue list` / `gh run list`. `gh issue list` and `gh pr list`
+/// also accept `--search <text>` (issue #374). Anything that could change the forge or run
 /// code (`gh alias set --shell`, `glab mr merge`, `api -X DELETE`…) is refused.
 pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
     let a: Vec<&str> = args.iter().map(String::as_str).collect();
@@ -233,21 +234,30 @@ pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
         "glab" => {
             a.first() == Some(&"api")
                 && a.len() == 2
-                && a[1].starts_with("projects/")
+                && (a[1].starts_with("projects/") || a[1] == "user")
         }
         "gh" => {
-            let read_only = matches!(
-                a.get(..2),
-                Some(["pr", "list"])
-                    | Some(["run", "list"])
-                    | Some(["issue", "list"])
-                    | Some(["issue", "view"])
-                    | Some(["pr", "view"])
-            );
-            let flags_ok = a.iter().skip(2).all(|x| {
-                !x.starts_with('-') || matches!(*x, "--json" | "--limit" | "--branch" | "--state" | "--repo")
-            });
-            read_only && flags_ok
+            let is_list = matches!(a.get(..2), Some(["pr", "list"]) | Some(["issue", "list"]));
+            let read_only = is_list
+                || matches!(a.get(..2), Some(["run", "list"]) | Some(["issue", "view"]) | Some(["pr", "view"]));
+            let mut index = 2;
+            while index < a.len() {
+                let x = a[index];
+                if is_list && matches!(x, "--search" | "-S") {
+                    // The next argument is the text of a search. It may start with "-" ("-label:bug"), and `gh`
+                    // reads it as the value of the flag, never as another flag.
+                    if index + 1 >= a.len() {
+                        return false;
+                    }
+                    index += 2;
+                    continue;
+                }
+                if x.starts_with('-') && !matches!(x, "--json" | "--limit" | "--branch" | "--state" | "--repo") {
+                    return false;
+                }
+                index += 1;
+            }
+            read_only
         }
         _ => false,
     }
@@ -385,6 +395,18 @@ mod tests {
         assert!(allowed("gh", &v(&["pr", "list", "--limit", "20", "--json", "number,title"])));
         assert!(allowed("gh", &v(&["issue", "list", "--state", "open", "--limit", "100", "--json", "number,title,url"])));
         assert!(!allowed("gh", &v(&["issue", "list", "--web"])));
+        assert!(allowed("gh", &v(&["issue", "list", "--search", "author:@me label:bug", "--state", "open", "--json", "number"])));
+        assert!(allowed("gh", &v(&["issue", "list", "--search", "-label:bug", "--limit", "100"])));
+        assert!(allowed("gh", &v(&["pr", "list", "-S", "review-requested:@me", "--json", "number"])));
+        assert!(!allowed("gh", &v(&["issue", "list", "--search"])));
+        assert!(!allowed("gh", &v(&["issue", "list", "--search", "x", "--web"])));
+        assert!(!allowed("gh", &v(&["issue", "list", "--search", "x", "--search"])));
+        assert!(!allowed("gh", &v(&["issue", "view", "12", "--search", "x"])));
+        assert!(!allowed("gh", &v(&["run", "list", "--search", "x"])));
+        assert!(allowed("glab", &v(&["api", "user"])));
+        assert!(!allowed("glab", &v(&["api", "users"])));
+        assert!(!allowed("glab", &v(&["api", "user/keys"])));
+        assert!(!allowed("glab", &v(&["api", "user", "-X", "DELETE"])));
         assert!(allowed("glab", &v(&["api", "projects/:fullpath/issues?state=opened&per_page=100&with_labels_details=true"])));
         assert!(allowed("gh", &v(&["run", "list", "--branch", "x", "--limit", "1", "--json", "status"])));
         assert!(!allowed("gh", &v(&["alias", "set", "--shell", "x", "rm -rf ~"])));

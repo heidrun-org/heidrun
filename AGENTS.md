@@ -23,6 +23,7 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
 
 - [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
+- [docs/agents_rules/glossary_code_hosting.md](docs/agents_rules/glossary_code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it with the glossary when you change the Code hosting sidebar section.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -40,7 +41,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
   - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
   - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
-  - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section.
+  - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the two lists, the rows, the information card, the cache, the search field, and the saved searches.
   - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the Files sidebar section.
 - The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
