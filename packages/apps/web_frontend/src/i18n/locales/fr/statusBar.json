@@ -21,5 +21,11 @@
   "gitToUpload": "Commits à envoyer",
   "gitChangedFiles": "Fichiers modifiés",
   "gitUntrackedFiles": "Fichiers non suivis",
-  "gitLastCommit": "Dernier commit"
+  "gitLastCommit": "Dernier commit",
+  "gitBranchPickerLabel": "Branches",
+  "gitBranchPickerTitle": "Changer de branche Git",
+  "gitBranchPickerPlaceholder": "Choisir une branche à extraire",
+  "gitBranchPickerEmpty": "Aucune branche ne correspond",
+  "gitBranchPickerCurrent": "Branche courante",
+  "gitCountsTitle": "Détails du dépôt Git"
 }

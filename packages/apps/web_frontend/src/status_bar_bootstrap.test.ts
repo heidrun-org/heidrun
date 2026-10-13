@@ -65,7 +65,23 @@ describe('the card of the git branch (GitStatusSummary.vue)', () => {
 	});
 
 	it('writes style rules only for the item in the status bar, and not for the card', () => {
-		const allowedClassNameList = ['git-status', 'behind', 'ahead', 'count'];
+		const allowedClassNameList = ['git-status', 'git-counts-zone', 'behind', 'ahead', 'count'];
+		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
+describe('the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('uses the Bootstrap popover, list group, and form control classes', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'list-group', 'list-group-item-action', 'form-control']) {
+			expect(sourceText).toContain(className);
+		}
+	});
+
+	it('writes style rules only for the zone in the status bar and for the height of the list', () => {
+		const allowedClassNameList = ['git-branch-zone', 'branch-list'];
 		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
 		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
 	});
