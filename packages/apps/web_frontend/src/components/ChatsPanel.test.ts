@@ -161,7 +161,7 @@ describe("ChatsPanel", () => {
     const inputs = wrapper.get('[aria-label="Coding agent"]').findAll("input");
     expect(inputs.map((input) => input.attributes("disabled") !== undefined)).toEqual([true, false]);
     expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true]);
-    expect(wrapper.get('label[for="chats-agent-claude"]').attributes("title")).toBe(
+    expect(wrapper.get("#chats-agent-claude").element.closest("label")?.getAttribute("title")).toBe(
       "No chat of this coding agent in this workspace.",
     );
     expect(shownTitles(wrapper)).toEqual(["Describe image"]);
@@ -389,7 +389,7 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar"], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.findAll(".btn-group > input.btn-check + label.btn")).toHaveLength(4);
+    expect(wrapper.findAll(".btn-group > label.btn.btn-check > input[type=radio]")).toHaveLength(4);
     expect(wrapper.get("ul").classes()).toEqual(expect.arrayContaining(["list-group", "list-group-flush"]));
     expect(wrapper.get("li").classes()).toEqual(expect.arrayContaining(["list-group-item", "list-group-item-action"]));
   });

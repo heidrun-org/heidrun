@@ -207,44 +207,39 @@ const VIEWS = [
       <div class="chats-header d-flex flex-column gap-3">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
           <div class="btn-group" role="group" :aria-label="t('chatsPanel.agentLabel')">
-            <template v-for="choice in CHAT_AGENTS" :key="choice">
+            <label
+              v-for="choice in CHAT_AGENTS"
+              :key="choice"
+              class="btn btn-check"
+              :title="chats[choice].length === 0 ? t('chatsPanel.agentUnavailableTitle') : undefined"
+            >
               <input
                 :id="`chats-agent-${choice}`"
                 v-model="agent"
                 type="radio"
-                class="btn-check"
                 name="chats-agent"
                 autocomplete="off"
                 :value="choice"
                 :disabled="chats[choice].length === 0"
               />
-              <label
-                class="btn"
-                :for="`chats-agent-${choice}`"
-                :title="chats[choice].length === 0 ? t('chatsPanel.agentUnavailableTitle') : undefined"
-              >
-                {{ agentLabel(choice) }}
-              </label>
-            </template>
+              {{ agentLabel(choice) }}
+            </label>
           </div>
           <div class="d-flex align-items-center gap-2">
             <ChatsSortMenu />
             <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
-              <template v-for="choice in VIEWS" :key="choice.id">
+              <label v-for="choice in VIEWS" :key="choice.id" class="btn btn-check" :title="t(choice.title)">
                 <input
                   :id="`chats-view-${choice.id}`"
                   v-model="view"
                   type="radio"
-                  class="btn-check"
                   name="chats-view"
                   autocomplete="off"
                   :value="choice.id"
                   :aria-label="t(choice.title)"
                 />
-                <label class="btn" :for="`chats-view-${choice.id}`" :title="t(choice.title)">
-                  <Icon :name="choice.icon" />
-                </label>
-              </template>
+                <Icon :name="choice.icon" />
+              </label>
             </div>
           </div>
         </div>
@@ -374,15 +369,15 @@ const VIEWS = [
 .chat-topics .badge.is-selected { --badge-color: var(--bg-body); background-color: var(--fg-body); }
 .chat-actions .btn { height: 26px; --btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
-.btn-check:checked + .btn {
+.btn-check:has(input:checked) {
   --btn-color: var(--text);
   --btn-hover-color: var(--text);
   --btn-active-color: var(--text);
   --btn-hover-bg: var(--bg-2);
   --btn-active-bg: var(--bg-2);
 }
-.btn-check:focus-visible + .btn { outline: 2px solid var(--done); outline-offset: 1px; }
-.btn-check:disabled + .btn { opacity: 0.45; }
+.btn-check:has(input:focus-visible) { outline: 2px solid var(--done); outline-offset: 1px; }
+.btn-check:has(input:disabled) { opacity: 0.45; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 .busy-spinner { --spinner-width: 0.75rem; --spinner-height: 0.75rem; --spinner-border-width: 0.15em; }
