@@ -1,4 +1,4 @@
-import { readCodexModels, type CodingAgentModel } from "./coding_agent_models";
+import { readAntigravityModels, readCodexModels, type CodingAgentModel } from "./coding_agent_models";
 
 /** What the window Create a custom script needs to know to start one coding agent with a prompt. */
 export type CodingAgentDefinition = {
@@ -101,6 +101,36 @@ export const CODING_AGENTS: CodingAgentDefinition[] = [
         words.push("-c", quote(`model_reasoning_effort="${effort}"`));
       }
       return [...words, prompt];
+    },
+  },
+  {
+    id: "agy",
+    label: "Antigravity",
+    // Bootstrap Icons has no icon of its own for Antigravity, and Google makes Antigravity.
+    icon: "google",
+    executable: "agy",
+    canStartInteractiveWithPrompt: true,
+    // The models that `agy models` printed for one account. The list depends on the account, so the tool gives the real one.
+    models: [
+      { id: "gemini-3.8-flash-high", label: "Gemini 3.8 Flash (High)", efforts: [] },
+      { id: "gemini-3.8-flash-medium", label: "Gemini 3.8 Flash (Medium)", efforts: [] },
+      { id: "gemini-3.8-flash-low", label: "Gemini 3.8 Flash (Low)", efforts: [] },
+      { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6 (Thinking)", efforts: [] },
+      { id: "claude-opus-4-6-thinking", label: "Claude Opus 4.6 (Thinking)", efforts: [] },
+      { id: "gpt-oss-120b-medium", label: "GPT-OSS 120B (Medium)", efforts: [] },
+    ],
+    modelsFromTool: { arguments: ["models"], read: readAntigravityModels },
+    efforts: ["low", "medium", "high", "xhigh", "max"],
+    // The option `-i` takes the prompt as its value: it runs the prompt, then stays interactive. The option `-p` runs once.
+    buildArguments: (model, effort, quote, prompt) => {
+      const words: string[] = [];
+      if (model !== "") {
+        words.push("--model", quote(model));
+      }
+      if (effort !== "") {
+        words.push("--effort", quote(effort));
+      }
+      return [...words, "-i", prompt];
     },
   },
 ];

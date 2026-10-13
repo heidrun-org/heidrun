@@ -42,6 +42,29 @@ export function readCodexModels(output: string): CodingAgentModel[] {
 }
 
 /**
+ * Reads the output of the command `agy models`: one model on each line, the identifier, a tab, then the name that the
+ * person reads. A line without a tab, such as a message of progress, is not a model, so it is left out. The tool does not
+ * say the efforts of each model, so the efforts of the coding agent apply.
+ *
+ * @param output - What the command printed on its standard output.
+ * @returns The models, in the order of Antigravity.
+ * @throws When no line of the output holds a model.
+ */
+export function readAntigravityModels(output: string): CodingAgentModel[] {
+  const models: CodingAgentModel[] = [];
+  for (const line of output.split("\n")) {
+    const [id, label] = line.split("\t").map((part) => part.trim());
+    if (id !== undefined && id !== "" && label !== undefined && label !== "") {
+      models.push({ id, label, efforts: [] });
+    }
+  }
+  if (models.length === 0) {
+    throw new Error("The output of agy models holds no model.");
+  }
+  return models;
+}
+
+/**
  * The efforts that the window offers for the chosen model.
  *
  * - A model that lists its own efforts gives them.
