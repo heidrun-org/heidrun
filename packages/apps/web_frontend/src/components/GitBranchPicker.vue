@@ -169,15 +169,18 @@ function chooseFirst() {
 .branch-list { max-height: min(560px, 60vh); overflow-y: auto; }
 .branch-item { position: relative; }
 .branch-row { padding: 10px 12px; row-gap: 4px; }
-.branch-first-line { min-height: 28px; }
+/* The first line leaves room for the link: 32 pixels, so the link ends 44 pixels from the edge. The second line goes to the edge. */
+.branch-first-line { min-height: 28px; padding-right: 32px; }
 /* Each row sits in its own wrapper, so the rows draw their own separator: one line under each row, edge to edge. */
-.branch-item .branch-row { width: 100%; padding-right: 44px; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
+.branch-item .branch-row { width: 100%; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
 .branch-name, .branch-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .branch-time { margin-left: auto; white-space: nowrap; }
 /* The link is only the icon, always visible, on the first line of the row, just after the time. Bootstrap draws the button:
    the classes "btn btn-outline theme-secondary border-0" (Bootstrap 6 writes the outline button this way). */
 .branch-link {
   position: absolute; right: 8px; top: 10px; width: 28px; height: 28px; padding: 0;
+  /* Bootstrap raises a hovered row of a list group to z-index 1: the link stays above it. */
+  z-index: 2;
   display: flex; align-items: center; justify-content: center;
 }
 </style>

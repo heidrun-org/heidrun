@@ -116,6 +116,15 @@ describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 		expect(sourceText).not.toMatch(/\.branch-link[^{]*\{[^}]*opacity:\s*0/);
 	});
 
+	it('stays above the hovered row, which Bootstrap raises to z-index 1', () => {
+		expect(sourceText).toMatch(/\.branch-link\s*\{[^}]*z-index:\s*2/);
+	});
+
+	it('leaves room for the link on the first line only, so the second line goes to the edge of the row', () => {
+		expect(sourceText).toMatch(/\.branch-first-line\s*\{[^}]*padding-right:\s*32px/);
+		expect(sourceText).not.toMatch(/\.branch-row\s*\{[^}]*padding-right:\s*44px/);
+	});
+
 	it('lets the list grow to 560 pixels, and at most 60 percent of the window height', () => {
 		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:\s*min\(560px, 60vh\)/);
 	});
