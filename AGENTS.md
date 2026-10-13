@@ -24,16 +24,17 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`.
+Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
 The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub" for how to create an issue.
 
 ### Issue Fix Setup
 
 1. Read the issue.
-2. Create a temporary branch, or a temporary worktree, for the fix. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
-   - To create a temporary worktree, run `pnpm worktree:create <name>` at the root of the repository, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree.
-3. Make the change on the temporary branch. Every commit message mentions the issue number.
+2. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
+   - To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree.
+   - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
+3. Make the change in the temporary worktree. Every commit message mentions the issue number.
 
 ### Issue Fix Completion
 
@@ -42,7 +43,7 @@ The Issue Fix Completion starts when the developer is satisfied with the change.
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
 2. Create a pull request from the temporary branch.
 3. Merge the pull request into the personal development branch of the developer, for example `dev_jerome`.
-4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree if one was created.
+4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
 5. Close the issue.
 
 ## GitHub
