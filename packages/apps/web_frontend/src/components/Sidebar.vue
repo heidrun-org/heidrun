@@ -2,9 +2,9 @@
 import { computed } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
-import GitPanel from "./GitPanel.vue";
 import NavigationBar from "./NavigationBar.vue";
-import { currentForge } from "../stores/git";
+import SourceControlPanel from "./SourceControlPanel.vue";
+import { currentGit } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
 import { openSidebarSection } from "../stores/sidebar_sections";
@@ -20,14 +20,18 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the navigation bar of the left sidebar: the Scripts and Git sidebar sections. */
+/** The buttons of the navigation bar of the left sidebar: the Scripts and Source control sidebar sections. */
 const sidebarSections = computed(() => [
   { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
-  { id: "git", label: "Git", badge: currentForge.value?.requests.length ?? 0 },
+  {
+    id: "sourceControl",
+    label: t("sourceControlPanel.sidebarSection"),
+    badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
+  },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "git" ? "git" : "actions");
+  openSidebarSection(id === "sourceControl" ? "sourceControl" : "actions");
 }
 </script>
 
@@ -43,7 +47,7 @@ function selectSidebarSection(id: string) {
       />
       <div class="sidebar-section-body">
         <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
-        <GitPanel v-else />
+        <SourceControlPanel v-else />
       </div>
     </div>
   </aside>

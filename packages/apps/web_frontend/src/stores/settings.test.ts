@@ -163,11 +163,14 @@ describe("settings that got a new name to follow the glossary", () => {
 });
 
 describe("sidebar sections that moved from the right sidebar to the left sidebar", () => {
-  it.each(["actions", "git"])("shows the sidebar section %s in the left sidebar when an older version saved it for the right sidebar", async (section) => {
+  it.each([
+    ["actions", "actions"],
+    ["git", "sourceControl"],
+  ])("shows the sidebar section %s in the left sidebar when an older version saved it for the right sidebar", async (section, leftSection) => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: section }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe(section);
+    expect(restarted.settings.leftSidebarSection).toBe(leftSection);
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
@@ -175,7 +178,7 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightTab: "git" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("git");
+    expect(restarted.settings.leftSidebarSection).toBe("sourceControl");
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
@@ -242,11 +245,18 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("actions");
   });
 
-  it("keeps the sidebar section Git when it was saved", async () => {
+  it("keeps the sidebar section Source control when it was saved", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "sourceControl" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("sourceControl");
+  });
+
+  it("shows the Source control sidebar section when an older version saved the Git sidebar section", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "git" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("git");
+    expect(restarted.settings.leftSidebarSection).toBe("sourceControl");
   });
 
   it("is the sidebar section Scripts that the left sidebar shows first", async () => {
