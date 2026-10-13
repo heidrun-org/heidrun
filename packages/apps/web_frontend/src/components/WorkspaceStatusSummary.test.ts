@@ -78,6 +78,17 @@ describe("WorkspaceStatusSummary section", () => {
     expect(sectionName(wrapper)).toBe("heidrun");
   });
 
+  it("is a status bar section that keeps the background of a button while its card is open", async () => {
+    const { wrapper } = await mountSection();
+    const section = wrapper.get(".workspace-status");
+    expect(section.classes()).toContain("status-section");
+    expect(section.classes()).not.toContain("show");
+    await section.trigger("click");
+    expect(section.classes()).toContain("show");
+    await section.trigger("click");
+    expect(section.classes()).not.toContain("show");
+  });
+
   it("follows the selected workspace", async () => {
     const { wrapper, session } = await mountSection();
     session.selectWorkspace("w2");

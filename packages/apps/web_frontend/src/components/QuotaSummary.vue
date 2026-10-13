@@ -57,7 +57,8 @@ function formatCost(cost: number) {
 <template>
   <div
     ref="root"
-    class="quota"
+    class="quota status-section"
+    :class="{ show: isOpen }"
     tabindex="0"
     :data-provider="quota.provider"
     @click="toggle"
@@ -134,7 +135,7 @@ function formatCost(cost: number) {
 </template>
 
 <style scoped>
-.quota { align-self: stretch; margin: 0 -11px; padding: 0 11px; display: flex; align-items: center; gap: 10px; cursor: pointer; outline-offset: 3px; }
+.quota { display: flex; align-items: center; gap: 10px; }
 .label { font-weight: 600; font-size: var(--font-size); color: var(--text-2); }
 .percent { font-size: var(--font-size); }
 .percent { color: var(--text-2); }

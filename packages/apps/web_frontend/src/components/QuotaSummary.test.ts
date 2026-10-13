@@ -21,6 +21,16 @@ describe("QuotaSummary", () => {
     expect(wrapper.get(".percent").text()).toBe("60%");
   });
 
+  it("is a status bar section that keeps the background of a button while its popover is open", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    expect(wrapper.classes()).toContain("status-section");
+    expect(wrapper.classes()).not.toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).not.toContain("show");
+  });
+
   it("shows neither the subscription nor the name of the account in the popover, because the item already shows the name", async () => {
     const quota: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [{ id: "week", name: "Week", percent: 44 }] };
     const wrapper = mount(QuotaSummary, { props: { quota } });

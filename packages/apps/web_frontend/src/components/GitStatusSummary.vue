@@ -33,7 +33,8 @@ const detailRows = computed(() => {
   <div
     v-if="currentGit !== null && currentGit.branch !== null"
     ref="root"
-    class="git-status"
+    class="git-status status-section"
+    :class="{ show: isOpen }"
     tabindex="0"
     @click="toggle"
     @keydown.enter.self.prevent="toggle"
@@ -63,9 +64,7 @@ const detailRows = computed(() => {
 
 <style scoped>
 .git-status {
-  align-self: stretch; margin: 0 -11px; padding: 0 11px;
   display: flex; align-items: center; gap: 8px; color: var(--muted-2); font-weight: 600;
-  cursor: pointer; outline-offset: 3px;
 }
 .behind, .ahead { display: flex; align-items: center; gap: 1px; }
 .count { font-variant-numeric: tabular-nums; }

@@ -187,7 +187,8 @@ watch(isRenaming, (renaming) => {
 <template>
   <div
     ref="root"
-    class="workspace-status"
+    class="workspace-status status-section"
+    :class="{ show: isOpen }"
     tabindex="0"
     @click="toggle"
     @keydown.enter.self.prevent="toggle"
@@ -294,9 +295,8 @@ watch(isRenaming, (renaming) => {
 
 <style scoped>
 .workspace-status {
-  align-self: stretch; margin: 0 -11px; padding: 0 11px; max-width: 260px;
+  max-width: 260px;
   display: flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 600;
-  cursor: pointer; outline-offset: 3px;
 }
 .workspace-rename { width: 180px; height: 26px; }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
