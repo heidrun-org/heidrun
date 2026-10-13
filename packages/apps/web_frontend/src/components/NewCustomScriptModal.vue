@@ -7,7 +7,9 @@ import { addAction, updateAction } from "../stores/project";
 import { closeNewCustomScriptModal, newCustomScriptModal } from "../stores/newCustomScript";
 import { state, toast } from "../stores/session";
 import { project } from "../stores/project";
+import { effortsOf } from "../lib/coding_agent_models";
 import { CUSTOM_SCRIPT_CODING_AGENTS, findCodingAgent } from "../lib/coding_agents";
+import { isLoadingModels, loadCodingAgentModels, modelsOf } from "../stores/coding_agent_models";
 import { scriptAgentCommand } from "../lib/script_agent_command";
 import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
@@ -114,8 +116,26 @@ async function chooseFolder() {
   folder.value = relativeFolder() ?? "";
 }
 
-const efforts = computed(() => findCodingAgent(agentName.value)?.efforts ?? []);
-const models = computed(() => findCodingAgent(agentName.value)?.models ?? []);
+const models = computed(() => modelsOf(agentName.value));
+const efforts = computed(() => effortsOf(findCodingAgent(agentName.value)?.efforts ?? [], models.value, model.value));
+
+/** The models of the select: the models of the coding agent, and the saved model of an edited script that is no longer listed. */
+const modelChoices = computed(() => {
+  const choices = models.value.map(({ id, label }) => ({ id, label }));
+  if (isEditing && model.value !== "" && choices.some((choice) => choice.id === model.value) === false) {
+    choices.push({ id: model.value, label: model.value });
+  }
+  return choices;
+});
+
+/** The efforts of the select: the efforts of the model, and the saved effort of an edited script that is no longer listed. */
+const effortChoices = computed(() => {
+  const choices = [...efforts.value];
+  if (isEditing && effort.value !== "" && choices.includes(effort.value) === false) {
+    choices.push(effort.value);
+  }
+  return choices;
+});
 const isContentFilled = computed(() => (kind.value === "commandLine" ? command.value.trim() !== "" : prompt.value.trim() !== ""));
 const canCreate = computed(() => name.value.trim() !== "" && isContentFilled.value && isFolderValid.value);
 
@@ -123,6 +143,29 @@ watch(agentName, () => {
   model.value = "";
   effort.value = "";
 });
+
+// Asks the tool of each coding agent for its models, now, so that a remembered model is not dropped before the answer.
+for (const agent of CUSTOM_SCRIPT_CODING_AGENTS) {
+  void loadCodingAgentModels(agent.id);
+}
+
+// A remembered model or effort that the coding agent does not list now is dropped, once the tool has answered. A script
+// that is edited keeps its saved values: the selects show them.
+watch(
+  [models, efforts, () => isLoadingModels(agentName.value)],
+  () => {
+    if (isEditing || isLoadingModels(agentName.value)) {
+      return;
+    }
+    if (model.value !== "" && models.value.some((candidate) => candidate.id === model.value) === false) {
+      model.value = "";
+    }
+    if (effort.value !== "" && efforts.value.includes(effort.value) === false) {
+      effort.value = "";
+    }
+  },
+  { immediate: true },
+);
 
 /** Text that tells the coding agent everything that the person filled in, to write the name from it. */
 function describeForm(): string {
@@ -257,12 +300,6 @@ function onKey(e: KeyboardEvent) {
 }
 onMounted(() => {
   window.addEventListener("keydown", onKey, true);
-  if (models.value.includes(model.value) === false) {
-    model.value = "";
-  }
-  if (efforts.value.includes(effort.value) === false) {
-    effort.value = "";
-  }
   nextTick(() => nameField.value?.focus());
 });
 onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
@@ -366,18 +403,18 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             </div>
           </div>
           <div class="d-flex gap-2">
-            <div v-if="models.length > 0" class="field">
+            <div v-if="modelChoices.length > 0" class="field">
               <label class="form-label" for="new-script-model">{{ t("newCustomScriptModal.model") }}</label>
               <select id="new-script-model" v-model="model" class="form-control">
                 <option value="">{{ t("newCustomScriptModal.modelDefault") }}</option>
-                <option v-for="suggestion in models" :key="suggestion" :value="suggestion">{{ suggestion }}</option>
+                <option v-for="choice in modelChoices" :key="choice.id" :value="choice.id">{{ choice.label }}</option>
               </select>
             </div>
-            <div v-if="efforts.length > 0" class="field">
+            <div v-if="effortChoices.length > 0" class="field">
               <label class="form-label" for="new-script-effort">{{ t("newCustomScriptModal.effort") }}</label>
               <select id="new-script-effort" v-model="effort" class="form-control">
                 <option value="">{{ t("newCustomScriptModal.effortDefault") }}</option>
-                <option v-for="level in efforts" :key="level" :value="level">{{ level }}</option>
+                <option v-for="level in effortChoices" :key="level" :value="level">{{ level }}</option>
               </select>
             </div>
           </div>

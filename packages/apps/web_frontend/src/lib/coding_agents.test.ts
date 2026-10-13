@@ -19,12 +19,26 @@ describe("CODING_AGENTS", () => {
   it("builds the command line of each coding agent with each of its models and each of its efforts", () => {
     for (const agent of CODING_AGENTS) {
       for (const model of agent.models) {
-        expect(scriptAgentCommand({ name: agent.id, model, prompt: "Hi" })).toContain(`'${model}'`);
+        expect(scriptAgentCommand({ name: agent.id, model: model.id, prompt: "Hi" })).toContain(`'${model.id}'`);
       }
       for (const effort of agent.efforts) {
         expect(scriptAgentCommand({ name: agent.id, effort, prompt: "Hi" })).toContain(effort);
       }
     }
+  });
+});
+
+describe("the models of the coding agents", () => {
+  it("gives each coding agent a different identifier for each fixed model, and no effort that the tool does not accept", () => {
+    for (const agent of CODING_AGENTS) {
+      expect(new Set(agent.models.map((model) => model.id)).size).toBe(agent.models.length);
+      expect(agent.efforts).not.toContain("minimal");
+    }
+  });
+
+  it("reads the models of Codex from the command codex debug models", () => {
+    const codex = findCodingAgent("codex");
+    expect(codex?.modelsFromTool?.arguments).toEqual(["debug", "models"]);
   });
 });
 

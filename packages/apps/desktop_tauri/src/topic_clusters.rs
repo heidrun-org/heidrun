@@ -50,23 +50,23 @@ pub struct CodingAgentAnswer {
 }
 
 /// The shell that starts a coding agent, and the PATH that it sees.
-struct AgentShell {
+pub(crate) struct AgentShell {
     /// The shell program.
-    shell: String,
+    pub(crate) shell: String,
     /// The flag that gives the script to the shell: `-lc` for the login shell.
-    flag: &'static str,
+    pub(crate) flag: &'static str,
     /// The value of the PATH of the command, or `None` to keep the PATH that the shell makes.
-    path: Option<String>,
+    pub(crate) path: Option<String>,
 }
 
 impl AgentShell {
     /// The login shell of the developer: the commands that the developer installed are found, as in a terminal.
-    fn login() -> Self {
+    pub(crate) fn login() -> Self {
         AgentShell { shell: crate::git::login_shell(), flag: "-lc", path: None }
     }
 
     /// A command that runs the script `script` with the arguments `args` in this shell.
-    fn command(&self, script: &str, args: &[&str]) -> Command {
+    pub(crate) fn command(&self, script: &str, args: &[&str]) -> Command {
         let mut command = Command::new(&self.shell);
         command.arg(self.flag).arg(script).args(args).kill_on_drop(true).env("NO_COLOR", "1");
         if let Some(path) = &self.path {

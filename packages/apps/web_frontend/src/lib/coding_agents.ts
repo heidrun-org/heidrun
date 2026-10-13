@@ -1,3 +1,5 @@
+import { readCodexModels, type CodingAgentModel } from "./coding_agent_models";
+
 /** What the window Create a custom script needs to know to start one coding agent with a prompt. */
 export type CodingAgentDefinition = {
   /** The identifier saved in the file `.heidrun/config.json`. */
@@ -13,9 +15,25 @@ export type CodingAgentDefinition = {
    * pane. The window Create a custom script offers only the coding agents for which this is true.
    */
   canStartInteractiveWithPrompt: boolean;
-  /** The models that the window suggests. Empty when the coding agent has no option to choose the model. */
-  models: string[];
-  /** The efforts that the coding agent accepts, from the weakest to the strongest. Empty when it has no effort. */
+  /**
+   * The models that the window offers when the tool cannot list them, or before it has listed them. Empty when the
+   * coding agent has no option to choose the model.
+   */
+  models: CodingAgentModel[];
+  /**
+   * The command line that makes the tool print its own list of models. Absent when the tool has no such command: the
+   * fixed `models` are then the list. The tool says better than a hand-written list which models exist now.
+   */
+  modelsFromTool?: {
+    /** The words after the executable, for example `debug` and `models`. */
+    arguments: string[];
+    /** Reads what the command printed. Throws when the output is not what the tool prints. */
+    read: (output: string) => CodingAgentModel[];
+  };
+  /**
+   * The efforts that the coding agent accepts for any model, from the weakest to the strongest. Empty when it has no
+   * effort. A model that lists its own efforts overrides them.
+   */
   efforts: string[];
   /**
    * Builds the words of the command line after the executable: the options, and the prompt where the coding agent
@@ -38,7 +56,13 @@ export const CODING_AGENTS: CodingAgentDefinition[] = [
     icon: "claude",
     executable: "claude",
     canStartInteractiveWithPrompt: true,
-    models: ["opus", "sonnet", "haiku"],
+    // The command `claude` has no command that lists the models: the aliases come from the text of `claude --help`.
+    models: [
+      { id: "fable", label: "Fable", efforts: [] },
+      { id: "opus", label: "Opus", efforts: [] },
+      { id: "sonnet", label: "Sonnet", efforts: [] },
+      { id: "haiku", label: "Haiku", efforts: [] },
+    ],
     efforts: ["low", "medium", "high", "xhigh", "max"],
     buildArguments: (model, effort, quote, prompt) => {
       const words: string[] = [];
@@ -57,8 +81,17 @@ export const CODING_AGENTS: CodingAgentDefinition[] = [
     icon: "openai",
     executable: "codex",
     canStartInteractiveWithPrompt: true,
-    models: ["gpt-5", "gpt-5-codex"],
-    efforts: ["minimal", "low", "medium", "high"],
+    models: [
+      { id: "gpt-6.1-sol", label: "GPT-6.1-Sol", efforts: [] },
+      { id: "gpt-6-astra", label: "GPT-6-Astra", efforts: [] },
+      { id: "gpt-6-sol", label: "GPT-6-Sol", efforts: [] },
+      { id: "gpt-6-luna", label: "GPT-6-Luna", efforts: [] },
+      { id: "gpt-5.6-sol", label: "GPT-5.6-Sol", efforts: [] },
+      { id: "gpt-5.6-terra", label: "GPT-5.6-Terra", efforts: [] },
+      { id: "gpt-5.6-luna", label: "GPT-5.6-Luna", efforts: [] },
+    ],
+    modelsFromTool: { arguments: ["debug", "models"], read: readCodexModels },
+    efforts: ["low", "medium", "high", "xhigh", "max"],
     buildArguments: (model, effort, quote, prompt) => {
       const words: string[] = [];
       if (model !== "") {
