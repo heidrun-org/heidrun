@@ -1,27 +1,17 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { settings } from "../stores/settings";
 import { clockTime, gaugeLevel, quotaPace, quotaRingWindow } from "../lib/format";
 import { locale, t } from "../i18n/index";
-import { quotaCardRequest } from "../lib/quota_card_request";
 import { useStatusCard } from "../lib/status_card";
 import type { QuotaBlock } from "../lib/types";
 
 // One account in the status bar: its name and a small ring that fills with the usage of its shortest window.
-// A click on it shows a Bootstrap popover with every window, its percentage, and its reset time. A click on the line of
-// its quota in the menu of the status item in the macOS menu bar opens the same popover.
+// A click on it shows a Bootstrap popover with every window, its percentage, and its reset time.
 const props = defineProps<{ quota: QuotaBlock }>();
 
 const root = ref<HTMLElement | null>(null);
-const { isOpen, toggle, open, onFocusOut } = useStatusCard(root);
-
-watch(quotaCardRequest, (request) => {
-  if (request === null || request.label !== props.quota.label) {
-    return;
-  }
-  open();
-  root.value?.focus();
-});
+const { isOpen, toggle, onFocusOut } = useStatusCard(root);
 
 // The Bootstrap classes of each level: the color of the percentage, the color of the usage bar, and the kind of notice.
 const LEVEL_CLASSES = {

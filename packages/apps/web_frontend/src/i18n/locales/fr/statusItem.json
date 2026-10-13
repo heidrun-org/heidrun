@@ -3,6 +3,5 @@
   "blocked": "Bloqués",
   "done": "Terminés",
   "working": "En cours",
-  "none": "Aucun",
-  "quota": "Quota {name}"
+  "none": "Aucun"
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import QuotaSummary from "./QuotaSummary.vue";
-import { quotaCardRequest, requestQuotaCard } from "../lib/quota_card_request";
 import { advanceWorking, perHour, quotaPace, quotaRingWindow, workingSeconds } from "../lib/format";
 import type { QuotaBlock } from "../lib/types";
 
@@ -39,40 +38,6 @@ describe("QuotaSummary", () => {
     await wrapper.trigger("click");
     expect(wrapper.find(".popover").exists()).toBe(true);
     await wrapper.trigger("click");
-    expect(wrapper.find(".popover").exists()).toBe(false);
-  });
-
-  it("opens the popover when the menu of the status item asks for the quota of this item", async () => {
-    const wrapper = mount(QuotaSummary, { props: { quota: claude }, attachTo: document.body });
-    expect(wrapper.find(".popover").exists()).toBe(false);
-    requestQuotaCard("Claude");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.find(".popover").exists()).toBe(true);
-    expect(document.activeElement).toBe(wrapper.element);
-    wrapper.unmount();
-  });
-
-  it("keeps the popover open when the menu of the status item asks again for the same quota", async () => {
-    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
-    requestQuotaCard("Claude");
-    await wrapper.vm.$nextTick();
-    requestQuotaCard("Claude");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.find(".popover").exists()).toBe(true);
-  });
-
-  it("does not open the popover when the menu of the status item asks for the quota of another item", async () => {
-    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
-    requestQuotaCard("Codex");
-    await wrapper.vm.$nextTick();
-    expect(wrapper.find(".popover").exists()).toBe(false);
-  });
-
-  it("does not open the popover for a request that was made before the item existed", async () => {
-    requestQuotaCard("Claude");
-    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
-    await wrapper.vm.$nextTick();
-    expect(quotaCardRequest.value?.label).toBe("Claude");
     expect(wrapper.find(".popover").exists()).toBe(false);
   });
 
