@@ -6,8 +6,9 @@ import { ResizerWidth } from "../lib/resizer_width";
 // Vertical drag handle between two columns. `side` says which column it resizes:
 // "left" grows when dragged right, "right" grows when dragged left.
 // `highlighted` draws the line in colour although the pointer is not on it: a corner of the panes that touches it
-// is under the pointer.
-const props = defineProps<{ side: "left" | "right"; width: number; min: number; max: number; defaultWidth: number; reserve?: number; highlighted?: boolean }>();
+// is under the pointer. `inside` is for a column that touches the panes: the handle takes no room, because the border of the
+// panes is the line, and the place to grab it goes over the two columns.
+const props = defineProps<{ side: "left" | "right"; width: number; min: number; max: number; defaultWidth: number; reserve?: number; highlighted?: boolean; inside?: boolean }>();
 const emit = defineEmits<{ "update:width": [value: number] }>();
 
 const active = ref(false);
@@ -54,7 +55,7 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 <template>
   <div
     class="resizer"
-    :class="{ active, highlighted }"
+    :class="{ active, highlighted, inside }"
     role="separator"
     aria-orientation="vertical"
     :aria-valuenow="width"
@@ -80,4 +81,13 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 }
 .resizer:hover, .resizer.active, .resizer.highlighted, .resizer:focus-visible { background: var(--done); }
 .resizer:focus-visible { outline: none; }
+/* The place to grab the line between two columns that touch: it takes no room, and its colour fills the width of the sash. */
+.resizer.inside { width: 0; border-radius: 0; background: transparent; }
+.resizer.inside::before {
+  content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--pane-gap) / -2 - 0.5px); width: var(--pane-gap);
+  transition: background 0.15s;
+}
+.resizer.inside:hover::before, .resizer.inside.active::before, .resizer.inside.highlighted::before,
+.resizer.inside:focus-visible::before { background: var(--done); }
+.resizer.inside:hover, .resizer.inside.active, .resizer.inside.highlighted, .resizer.inside:focus-visible { background: transparent; }
 </style>

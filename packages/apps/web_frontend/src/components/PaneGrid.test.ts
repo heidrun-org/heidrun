@@ -277,23 +277,20 @@ describe("PaneGrid corners", () => {
   });
 });
 
-describe("PaneGrid pane at the top left corner", () => {
-  it("tells only the pane that touches the top left corner of the area, under the first tab", () => {
-    const wrapper = mountPaneGrid(THREE_PANES);
-    const cells = wrapper.findAll(".cell");
-    expect(cells.map((cell) => cell.get("div").attributes("is-top-left"))).toEqual(["true", "false", "false"]);
-  });
-
-  it("does not tell a pane that is below another pane at the left edge", () => {
-    const wrapper = mountPaneGrid({
-      ...THREE_PANES,
-      panes: [
-        { pane_id: "w1:p1", focused: true, rect: { x: 0, y: 0, width: 120, height: 20 } },
-        { pane_id: "w1:p2", focused: false, rect: { x: 0, y: 20, width: 120, height: 20 } },
-      ],
+describe("PaneGrid panes that touch", () => {
+  const cellStyles = (wrapper: ReturnType<typeof mountPaneGrid>) =>
+    wrapper.findAll(".cell").map((cell) => {
+      const style = (cell.element as HTMLElement).style;
+      return { left: style.left, top: style.top, width: style.width, height: style.height };
     });
-    const cells = wrapper.findAll(".cell");
-    expect(cells.map((cell) => cell.get("div").attributes("is-top-left"))).toEqual(["true", "false"]);
+
+  it("starts a pane that has a neighbour on its left or above it 1 pixel early, so that the borders of two panes make one line", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(cellStyles(wrapper)).toEqual([
+      { left: "0px", top: "0px", width: "50%", height: "100%" },
+      { left: "calc(50% - 1px)", top: "0px", width: "calc(50% + 1px)", height: "50%" },
+      { left: "calc(50% - 1px)", top: "calc(50% - 1px)", width: "calc(50% + 1px)", height: "calc(50% + 1px)" },
+    ]);
   });
 });
 
