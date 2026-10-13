@@ -1,26 +1,26 @@
 # Directory Context: `/packages/auxiliary/raw_coding_agent_cli`
 
 ## Purpose
-A library and a command line tool that send one prompt to a coding agent command line tool (`codex` or `claude`), wait for the answer, and return the answer as text. The scripts of this repository use the library when they need the help of a coding agent. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
+A Rust library and a command line tool that send one prompt to a coding agent command line tool (`codex` or `claude`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
-- `src/index.ts`: the only public interface of the library. It exports the class `RawCodingAgent` and the types `RawCodingAgentName` and `RawCodingAgentRunOptions`. It does not export the command line.
-- `src/library/`: the code of the class `RawCodingAgent` — see its own CONTEXT.md.
-- `src/cli.ts`: the command line, and the executable `raw_coding_agent_cli` of the `bin` entry in `package.json`.
-- `tests/`: the Vitest tests, which use fake `codex` and `claude` commands put at the start of the PATH.
+- `src/lib.rs`: the only public interface of the library. It exports `ask`, `run_tool`, `AgentShell`, `login_shell`, `Answer`, `CODING_AGENTS`, and `NO_CODING_AGENT`.
+- `src/main.rs`: the command line, and the executable `raw_coding_agent_cli`. The module `src/command_line.rs` reads its arguments.
+- `tests/`: the tests of the executable, with fake `codex` and `claude` commands put at the start of the PATH. The tests of the library sit at the end of each source file.
 - Command to run this folder: `pnpm --silent --filter raw_coding_agent_cli cli --help`
 - Command to test this folder: `pnpm --filter raw_coding_agent_cli test`
 
 ## Rules
-- `claude` runs as `claude -p`, and `codex` runs as `codex exec --skip-git-repo-check -`.
+- `claude` runs as `claude -p`, and `codex` runs as `codex exec --skip-git-repo-check -`. These arguments are written only in `src/ask.rs`.
 - The prompt always goes through the standard input of the coding agent, never through an argument, so a long prompt does not reach the size limit of the command line.
-- The command line uses `codex` when the option `--agent` is missing. The library has no default: the caller always gives `agentName`.
-- The command line prints the answer on the standard output, prints an error message on the standard error output, and exits with code 1 when an error happens.
+- A call goes through an `AgentShell`. The desktop application gives the login shell (`AgentShell::login`), because an application that starts from the Finder does not have the PATH of a terminal. The command line gives a plain shell (`AgentShell::plain`), because a terminal already has the right PATH.
+- `ask` without a coding agent name runs the first of `codex` and `claude` that exists, and gives the error `no_coding_agent` when none exists. The web frontend of the desktop application tests this exact text.
+- The command line uses `codex` when the option `--agent` is missing. It prints the answer on the standard output, prints an error message on the standard error output, and exits with code 1 when an error happens.
 - The library keeps no conversation: one call is one prompt and one answer.
-- Nothing in this folder imports from another package of the workspace.
-- The application cannot run this library, because the web frontend has no Node.js. The file `packages/apps/desktop_tauri/src/topic_clusters.rs` runs the two commands with the same arguments and the same rules. A change of the arguments here needs the same change there.
+- This package knows nothing about Tauri and imports nothing from another package of the workspace. The Tauri commands stay in `packages/apps/desktop_tauri`.
+- The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
 
 ## Background
-- The package was created by [issue #113](https://github.com/heidrun-org/heidrun/issues/113). The first user of the library is the script of [issue #114](https://github.com/heidrun-org/heidrun/issues/114).
+- The package was created by [issue #113](https://github.com/heidrun-org/heidrun/issues/113) in TypeScript. [Issue #265](https://github.com/heidrun-org/heidrun/issues/265) wrote the same rules again in Rust for the desktop application.
+- [Issue #394](https://github.com/heidrun-org/heidrun/issues/394) replaced both by this Rust package, so each new coding agent needs one change.
 - `codex exec` refuses to run outside a trusted Git repository without `--skip-git-repo-check`, so the package always passes the flag.
-- [Issue #265](https://github.com/heidrun-org/heidrun/issues/265) is the first use of the two commands inside the application, for the clustered dynamic topics.

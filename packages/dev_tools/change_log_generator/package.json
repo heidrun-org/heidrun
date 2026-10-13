@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "commander": "^15.0.0",
-    "raw_coding_agent_cli": "workspace:*",
     "tsx": "^4.23.15"
   },
   "devDependencies": {

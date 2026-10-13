@@ -2,7 +2,7 @@ import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Os from 'node:os';
 import Path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { GenerateChangeLog } from '../src/generation/generate_change_log.ts';
 import { TestRepository } from './test_repository.ts';
 
@@ -318,6 +318,16 @@ describe('GenerateChangeLog', () => {
 	});
 
 	describe('the script in a new process', () => {
+		beforeAll(() => {
+			// The option --ai runs the executable of the package raw_coding_agent_cli with `cargo run`. Building it here, once,
+			// keeps the compilation out of the tests, which then run the executable that is already built.
+			const packagePath = Path.join(__dirname, '..', '..', '..', 'auxiliary', 'raw_coding_agent_cli');
+			const build = ChildProcess.spawnSync('cargo', ['build', '--quiet'], { cwd: packagePath, encoding: 'utf8' });
+			if (build.status !== 0) {
+				throw new Error(`The build of raw_coding_agent_cli failed.\n${build.stderr}`);
+			}
+		}, 600_000);
+
 		it('prints the new section on the standard output, and writes the file', () => {
 			const repositoryPath = TestRepository.createWithRelease();
 			const result = ScriptRunner.run(repositoryPath, [], Path.join(repositoryPath, 'prompt.txt'));
@@ -326,7 +336,7 @@ describe('GenerateChangeLog', () => {
 			expect(Fs.readFileSync(Path.join(repositoryPath, 'CHANGELOG.md'), 'utf8')).toContain(MECHANICAL_SECTION);
 		});
 
-		it('runs the real package raw_coding_agent_cli with the option --ai, with codex by default', () => {
+		it('runs the real executable of raw_coding_agent_cli with the option --ai, with codex by default', () => {
 			const repositoryPath = TestRepository.createWithRelease();
 			const promptFilePath = Path.join(Os.tmpdir(), `change_log_prompt_${process.pid}_codex.txt`);
 			const result = ScriptRunner.run(repositoryPath, ['--ai'], promptFilePath);

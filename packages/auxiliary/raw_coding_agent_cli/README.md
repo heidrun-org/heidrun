@@ -1,26 +1,26 @@
 # raw_coding_agent_cli
 
-A library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex` or `claude`), wait for the answer, and return the answer as text. The scripts of this repository use the library when they need the help of a coding agent. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex` or `claude`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
 
 ## What it contains
 
-- `src/index.ts`: the public interface of the library. It exports the class `RawCodingAgent` and the types `RawCodingAgentName` and `RawCodingAgentRunOptions`.
-- `src/library/raw_coding_agent.ts`: the code of the class `RawCodingAgent`.
-- `src/cli.ts`: the command line. It is the executable `raw_coding_agent_cli`.
-- `tests/`: the Vitest tests. They use fake `codex` and `claude` commands.
+- `src/lib.rs`: the public interface of the library.
+- `src/ask.rs`: the function `ask`, which sends one prompt to a coding agent.
+- `src/run_tool.rs`: the function `run_tool`, which runs a tool with arguments and gives what it printed, for example the list of the models of a coding agent.
+- `src/agent_shell.rs`: the type `AgentShell`, the shell that starts a tool.
+- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `raw_coding_agent_cli`.
+- `tests/`: the tests of the executable. They use fake `codex` and `claude` commands.
 
 ## Command line
 
-Run the command from the root of the repository. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer.
+Run the command from the root of the repository. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer. The first run builds the executable, which takes some time. The command runs in the folder of the package, so give a prompt file with an absolute path.
 
 ```sh
 pnpm --silent --filter raw_coding_agent_cli cli "Write one sentence that explains a change log."
 pnpm --silent --filter raw_coding_agent_cli cli --agent claude "Write one sentence about Git."
-pnpm --silent --filter raw_coding_agent_cli cli --prompt-file prompt.md
+pnpm --silent --filter raw_coding_agent_cli cli --prompt-file /path/to/prompt.md
 git log --oneline -20 | pnpm --silent --filter raw_coding_agent_cli cli "Summarize these commits:"
 ```
-
-You can also run the file directly: `tsx packages/auxiliary/raw_coding_agent_cli/src/cli.ts --help`.
 
 ```text
 Usage: raw_coding_agent_cli [options] [prompt]
@@ -54,28 +54,35 @@ Exit codes:
 
 ## Library
 
-```ts
-import { RawCodingAgent } from 'raw_coding_agent_cli';
+The package `desktop_tauri` uses the library with a path dependency in its file `Cargo.toml`.
 
-const answer = await RawCodingAgent.run({
-	prompt: 'Write one sentence that explains a change log.',
-	agentName: 'codex',
-});
+```rust
+use raw_coding_agent_cli::{ask, AgentShell};
+
+let answer = ask(&AgentShell::login(), Some("codex"), "Write one sentence that explains a change log.", None, None).await?;
+println!("{}", answer.text);
 ```
 
-The method `RawCodingAgent.run` takes two options. The library has no default for the coding agent: you always give `agentName`.
+The function `ask` takes these arguments.
 
-| Option | Meaning |
+| Argument | Meaning |
 | --- | --- |
+| `shell` | The `AgentShell` that starts the tool: `AgentShell::login()` for the login shell of the developer, `AgentShell::plain()` for a plain shell. |
+| `agent` | `Some("codex")` runs `codex exec --skip-git-repo-check -`. `Some("claude")` runs `claude -p`. `None` runs the first of the two that exists, and gives the error `no_coding_agent` when none exists. |
 | `prompt` | The text to send to the coding agent. |
-| `agentName` | `codex` runs `codex exec --skip-git-repo-check -`. `claude` runs `claude -p`. |
+| `folder` | The folder where the coding agent runs. The function makes it when it does not exist. `None` keeps the folder of the program. |
+| `timeout` | How long the function waits for the answer, in seconds. `None` waits without end. |
 
-The method sends the prompt through the standard input, so a long prompt does not reach the size limit of the command line. The method returns the text that the coding agent prints on the standard output, without the spaces and the line breaks at the start and at the end.
+The function sends the prompt through the standard input, so a long prompt does not reach the size limit of the command line. It returns the name of the coding agent and the text that the coding agent printed on the standard output, without the spaces and the line breaks at the start and at the end.
 
-The method throws an error in these cases:
+The function gives an error in these cases:
 
+- The coding agent name is not `codex` or `claude`.
 - The command is not installed, or is not in the `PATH`.
-- The command exits with an error code. The message of the error contains the standard error output of the command.
+- The command exits with an error code. The error is the first line that the command printed on its standard error output.
+- The command does not answer in the time of `timeout`.
+
+The function `run_tool` runs a tool with arguments and gives its standard output. The desktop application uses it to read the list of the models of a coding agent.
 
 ## Limits
 
@@ -87,5 +94,5 @@ The method throws an error in these cases:
 Run this command from the root of the repository.
 
 ```sh
-pnpm --filter raw_coding_agent_cli test   # run the Vitest tests
+pnpm --filter raw_coding_agent_cli test   # run the Rust tests with cargo test
 ```
