@@ -44,6 +44,7 @@
   --chip: #1d2024;
   --muted-2: #9aa0a6;
   --hover-soft: #16191c;
+  --files-row-hover: #22262a;
   --sel: #24406a;
   --tint-ok: #132a1c;
   --tint-warn: #2b2213;
@@ -108,6 +109,7 @@
   --chip: #e9e9e5;
   --muted-2: #62676d;
   --hover-soft: #ececE8;
+  --files-row-hover: #ececE8;
   --sel: #cfe0fa;
   --tint-ok: #dcf3e4;
   --tint-warn: #fbefd2;
