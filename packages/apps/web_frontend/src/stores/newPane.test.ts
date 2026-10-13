@@ -75,3 +75,15 @@ describe("the plus button of the tab bar (issue #328)", () => {
     expect(newTerminal).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("the shortcut Command+T (issue #340)", () => {
+  it("starts the default command of a new tab, the same command as the plus button", async () => {
+    const { settings } = await import("./settings");
+    settings.newTabCommand = "codex";
+    const { startDefaultNewTab } = await import("./newPane");
+    await startDefaultNewTab();
+    expect(launchAgent).toHaveBeenCalledTimes(1);
+    expect(launchAgent).toHaveBeenCalledWith(expect.objectContaining({ tool: "codex", agent: null, prompt: "" }));
+    expect(newTerminal).not.toHaveBeenCalled();
+  });
+});
