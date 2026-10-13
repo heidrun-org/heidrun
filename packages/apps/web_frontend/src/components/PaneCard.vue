@@ -5,7 +5,7 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
-import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state, tabs } from "../stores/session";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
 import { mosaic } from "../stores/mosaic";
@@ -15,15 +15,7 @@ import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
 // `isInColumnOfPinnedPanes`: shown in the column of pinned panes, in every tab, the tab of the pane included.
-// `isTopLeft`: the pane touches the top left corner of the area of the panes, under the first tab of the tab bar.
-const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean; isTopLeft?: boolean }>();
-
-// The left border of the first tab, when it is selected, goes straight down into the left border of the pane at the top left
-// corner. A round corner there would leave a notch at the joint, so the corner of that pane is square.
-const isFirstTabSelected = computed(() => tabs.value.length > 0 && tabs.value[0].tab_id === state.selectedTabId);
-const isSquareTopLeft = computed(
-  () => props.isTopLeft === true && props.isInColumnOfPinnedPanes !== true && isFirstTabSelected.value === true,
-);
+const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
 // A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
 const selected = computed(() =>
@@ -59,7 +51,7 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes, 'square-top-left': isSquareTopLeft }]"
+    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
@@ -141,16 +133,17 @@ const subtitle = computed(() => {
 </template>
 
 <style scoped>
+/* A pane has no rounded corner: the panes touch each other and the border of the viewport, and the viewport clips the
+   corners that touch its own rounded corners. The border of a pane is the line between two panes. */
 .pane {
   height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative;
-  border: 1px solid var(--line); border-radius: var(--pane-radius); overflow: hidden;
+  border: 1px solid var(--line); overflow: hidden;
 }
 /* The ring of a blocked pane and of the selected pane is the border itself, so that the outline of the selected tab of the tab bar
-   joins the border of the pane without an offset. */
-.pane.blocked { border-color: var(--pane-ring-blocked); }
-.pane.selected { border-color: var(--pane-ring-selected); }
+   joins the border of the pane without an offset. The ring goes over the border of the next pane that it touches. */
+.pane.blocked { border-color: var(--pane-ring-blocked); z-index: 1; }
+.pane.selected { border-color: var(--pane-ring-selected); z-index: 1; }
 .pane.blocked.selected { border-color: var(--pane-ring-blocked-selected); }
-.pane.square-top-left { border-top-left-radius: 0; }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;

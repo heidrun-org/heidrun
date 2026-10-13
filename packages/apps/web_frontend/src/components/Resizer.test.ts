@@ -14,4 +14,14 @@ describe("Resizer", () => {
     const wrapper = mount(Resizer, { props });
     expect(wrapper.classes()).not.toContain("highlighted");
   });
+
+  it("takes no room, because the border of the panes is its line, when it is inside", () => {
+    const wrapper = mount(Resizer, { props: { ...props, inside: true } });
+    expect(wrapper.classes()).toContain("inside");
+  });
+
+  it("takes its own room when it is not inside", () => {
+    const wrapper = mount(Resizer, { props });
+    expect(wrapper.classes()).not.toContain("inside");
+  });
 });

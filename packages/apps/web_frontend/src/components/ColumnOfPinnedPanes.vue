@@ -13,6 +13,8 @@ import { t } from "../i18n/index";
 </template>
 
 <style scoped>
-.column-of-pinned-panes { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; gap: var(--pane-gap); }
+/* The pinned panes touch each other: each one is 1 pixel over the next one, so that two borders make one line. */
+.column-of-pinned-panes { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; }
 .cell { flex: 1; min-height: 0; }
+.cell + .cell { margin-top: -1px; }
 </style>

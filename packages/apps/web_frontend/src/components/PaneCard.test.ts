@@ -52,59 +52,6 @@ async function mountPaneCard(
   });
 }
 
-/** Two tabs in the workspace w1, with the tab `selectedTabId` selected. */
-async function selectTab(selectedTabId: string) {
-  const { state } = await import("../stores/session");
-  state.snapshot = {
-    workspaces: [],
-    tabs: [
-      { tab_id: "w1:t1", workspace_id: "w1" },
-      { tab_id: "w1:t2", workspace_id: "w1" },
-    ],
-    panes: [],
-    layouts: [],
-    agents: [],
-  } as never;
-  state.selectedWorkspaceId = "w1";
-  state.selectedTabId = selectedTabId;
-}
-
-describe("PaneCard corner under the first tab", () => {
-  it("has a square top left corner when it is at the top left and the first tab is selected, so that the tab joins the pane without a notch", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).toContain("square-top-left");
-    expect(styleRule(".pane.square-top-left")).toContain("border-top-left-radius: 0");
-  });
-
-  it("keeps the round corner when another tab than the first tab is selected", async () => {
-    await selectTab("w1:t2");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("keeps the round corner of a pane that is not at the top left, also when the first tab is selected", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: false });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("keeps the round corner of a pane of the column of pinned panes, because no tab joins it", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, true, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("follows the selected tab", async () => {
-    await selectTab("w1:t2");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    const { state } = await import("../stores/session");
-    state.selectedTabId = "w1:t1";
-    await nextTick();
-    expect(wrapper.get(".pane").classes()).toContain("square-top-left");
-  });
-});
-
 describe("PaneCard", () => {
   it("lets the name get narrower than its text and ends it with an ellipsis, so it never runs under the buttons", () => {
     const rule = styleRule(".name");

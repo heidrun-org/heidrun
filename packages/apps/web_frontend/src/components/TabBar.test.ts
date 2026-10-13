@@ -455,8 +455,8 @@ describe("TabBar join with the panes", () => {
 
   it("draws the ring of the selected pane and of a blocked pane with the border of the pane, so that it joins the selected tab", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
-    expect(sourceText).toMatch(/\.pane\.selected \{ border-color: var\(--pane-ring-selected\); \}/);
-    expect(sourceText).toMatch(/\.pane\.blocked \{ border-color: var\(--pane-ring-blocked\); \}/);
+    expect(sourceText).toMatch(/\.pane\.selected \{ border-color: var\(--pane-ring-selected\);[^}]*\}/);
+    expect(sourceText).toMatch(/\.pane\.blocked \{ border-color: var\(--pane-ring-blocked\);[^}]*\}/);
     expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
     expect(sourceText).not.toMatch(/\.pane[^{]*\{[^}]*box-shadow: inset/);
   });

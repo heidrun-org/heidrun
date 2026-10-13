@@ -302,6 +302,7 @@ onBeforeUnmount(() => {
                 :width="columnOfPinnedPanesShownWidth"
                 @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
                 side="right"
+                inside
                 :min="COLUMN_OF_PINNED_PANES.min"
                 :max="COLUMN_OF_PINNED_PANES.max"
                 :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
@@ -354,13 +355,17 @@ onBeforeUnmount(() => {
 <style scoped>
 .app { height: 100%; display: flex; flex-direction: column; background: var(--shell); }
 .body { flex: 1; min-height: 0; display: flex; padding: 0 var(--pane-gap); }
-/* The viewport is a frame like the two sidebars: same border, same corners, same background. The tab bar is inside the frame. */
+/* The viewport is a frame like the two sidebars: same border, same corners, same background. The tab bar is inside the frame.
+   The frame has no padding: the panes touch its border, and the frame clips the corners of the panes that touch its own rounded
+   corners. */
 .center {
-  flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 0 var(--pane-gap) var(--pane-gap);
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
 }
 .sidebar-gap { width: var(--pane-gap); flex-shrink: 0; }
-.stage { flex: 1; min-height: 0; display: flex; }
+/* The border of the panes goes 1 pixel past the frame on the left, on the right, and at the bottom: the frame clips it, so the
+   border of the frame is the only line there. At the top, the border of the panes is the line under the tab bar. */
+.stage { flex: 1; min-height: 0; display: flex; margin: 0 -1px -1px; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
   position: fixed; right: 16px; bottom: 52px;

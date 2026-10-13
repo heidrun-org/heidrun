@@ -21,14 +21,22 @@ const emit = defineEmits<{
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
 // so the grid matches the tab's real split layout at any window size.
+// Each pane is 1 pixel wider and 1 pixel taller than its share, so that its border on the right and at the bottom covers the
+// border of the next pane: two panes that touch have one line between them, and no gap.
+const BORDER = "1px";
+
 const placed = computed(() => {
   const layout = gridLayout.value;
   const panes = gridPanes.value;
   if (!layout || !layout.area.width || !layout.area.height) {
     return panes.map((p, i) => ({
       pane: p,
-      isTopLeft: i === 0,
-      style: { left: `${(i / panes.length) * 100}%`, top: "0", width: `${100 / panes.length}%`, height: "100%" },
+      style: {
+        left: `${(i / panes.length) * 100}%`,
+        top: "0",
+        width: `calc(${100 / panes.length}% + ${BORDER})`,
+        height: `calc(100% + ${BORDER})`,
+      },
     }));
   }
   const { area } = layout;
@@ -39,12 +47,11 @@ const placed = computed(() => {
       const r = rects.get(p.pane_id)!;
       return {
         pane: p,
-        isTopLeft: r.x === area.x && r.y === area.y,
         style: {
           left: `${((r.x - area.x) / area.width) * 100}%`,
           top: `${((r.y - area.y) / area.height) * 100}%`,
-          width: `${(r.width / area.width) * 100}%`,
-          height: `${(r.height / area.height) * 100}%`,
+          width: `calc(${(r.width / area.width) * 100}% + ${BORDER})`,
+          height: `calc(${(r.height / area.height) * 100}% + ${BORDER})`,
         },
       };
     });
@@ -70,8 +77,8 @@ const separatorItems = computed(() => {
   const percentX = (cells: number) => ((cells - area.x) / area.width) * 100;
   const percentY = (cells: number) => ((cells - area.y) / area.height) * 100;
   return separators.value.map((separator) => {
-    // The line is as thick as the space between two panes. At each end it reaches the middle of the space where it
-    // meets another line, so that the round ends of two lines drawn together join without a notch.
+    // The place to grab the line is as thick as the space that Visual Studio Code gives its sash. At each end it reaches
+    // the middle of the place where it meets another line.
     const style =
       separator.direction === "down"
         ? {
@@ -244,7 +251,7 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 <template>
   <div ref="gridEl" class="grid">
     <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
-      <PaneCard :pane="item.pane" :is-top-left="item.isTopLeft" />
+      <PaneCard :pane="item.pane" />
     </div>
     <div v-if="!placed.length" class="empty"><EmptyTabScreen /></div>
     <div
@@ -282,18 +289,17 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 <style scoped>
 .grid {
   --corner-size: max(16px, calc(var(--pane-gap) * 2));
-  flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2);
+  flex: 1; min-height: 0; position: relative;
 }
-.cell { position: absolute; padding: calc(var(--pane-gap) / 2); }
+.cell { position: absolute; }
 .empty {
-  position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
-  color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
-  overflow: hidden;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); background: var(--bg); border: 1px solid var(--line); overflow: hidden;
 }
-/* Like the sash of Visual Studio Code: the colour fills the whole space between two panes. */
+/* Like the sash of Visual Studio Code: the line between two panes is the border of the panes. This element, as wide as the space
+   that the sash of Visual Studio Code has, is the place where the pointer grabs the line, and it shows a colour under the pointer. */
 .separator {
   position: absolute; z-index: 5; touch-action: none; background: transparent; transition: background 0.15s;
-  border-radius: calc(var(--pane-gap) / 2);
 }
 .separator.down { height: var(--pane-gap); cursor: row-resize; }
 .separator.right { width: var(--pane-gap); cursor: col-resize; }
