@@ -102,7 +102,7 @@ describe('the card of the workspaces (WorkspaceStatusSummary.vue)', () => {
 describe('the theme of Bootstrap', () => {
 	it('gives the Bootstrap variables of the popover, the progress bar, and the alert the colors of the application', () => {
 		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');
-		for (const variableName of ['--bs-secondary-bg', '--bs-success', '--bs-warning', '--bs-danger', '--bs-popover-zindex']) {
+		for (const variableName of ['--bg-2', '--success-bg', '--warning-bg', '--danger-bg', '--popover-zindex']) {
 			expect(stylesText).toContain(`${variableName}:`);
 		}
 	});

@@ -105,57 +105,69 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
 </script>
 
 <template>
-  <div class="modal-backdrop show"></div>
-  <div class="modal d-block" role="dialog" aria-labelledby="macro-editor-title" @mousedown.self="close">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div id="macro-editor-title" class="modal-title fw-semibold" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
-          <button type="button" class="btn-close" :aria-label="t('macroEditor.close')" :title="t('macroEditor.close')" @click="close"></button>
-        </div>
+  <div class="overlay" role="dialog" aria-labelledby="macro-editor-title" @mousedown.self="close">
+    <div class="dialog">
+      <div class="dialog-header d-flex align-items-center justify-content-between">
+        <div id="macro-editor-title" class="fw-semibold" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
+        <button type="button" class="btn-close" :aria-label="t('macroEditor.close')" :title="t('macroEditor.close')" @click="close"></button>
+      </div>
 
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label" for="macro-editor-select">{{ t("macroEditor.macro") }}</label>
-            <div class="d-flex align-items-center gap-2">
-              <select id="macro-editor-select" v-model="selected" class="form-select">
-                <option :value="NEW">{{ t("macroEditor.newOption") }}</option>
-                <option v-for="choice in choices" :key="choice.value" :value="choice.value">
-                  {{ choice.macro.label }}{{ choice.fromProject ? ` (${t("macroEditor.project")})` : "" }}
-                </option>
-              </select>
-              <button type="button" class="btn" :title="t('macroEditor.newTitle')" @click="startNew"><Icon name="plus-lg" /> {{ t("macroEditor.new") }}</button>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="macro-editor-label">{{ t("macroEditor.labelField") }}</label>
-            <input id="macro-editor-label" v-model="label" class="form-control" autocomplete="off" spellcheck="false" />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="macro-editor-description">{{ t("macroEditor.description") }}</label>
-            <input id="macro-editor-description" v-model="description" class="form-control" autocomplete="off" spellcheck="false" />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="macro-editor-text">{{ t("macroEditor.text") }}</label>
-            <textarea id="macro-editor-text" v-model="text" class="form-control" rows="7" spellcheck="false"></textarea>
-            <div class="form-text mono" :title="t('macroEditor.variablesTitle')">{{ VARIABLES.join(" ") }}</div>
-          </div>
-
-          <div v-if="isNew && currentProject" class="form-check">
-            <input id="macro-editor-in-project" v-model="inProject" class="form-check-input" type="checkbox" />
-            <label class="form-check-label" for="macro-editor-in-project">{{ t("macroEditor.inProject") }}</label>
+      <div class="dialog-body">
+        <div class="mb-3">
+          <label class="form-label" for="macro-editor-select">{{ t("macroEditor.macro") }}</label>
+          <div class="d-flex align-items-center gap-2">
+            <select id="macro-editor-select" v-model="selected" class="form-control">
+              <option :value="NEW">{{ t("macroEditor.newOption") }}</option>
+              <option v-for="choice in choices" :key="choice.value" :value="choice.value">
+                {{ choice.macro.label }}{{ choice.fromProject ? ` (${t("macroEditor.project")})` : "" }}
+              </option>
+            </select>
+            <button type="button" class="btn" :title="t('macroEditor.newTitle')" @click="startNew"><Icon name="plus-lg" /> {{ t("macroEditor.new") }}</button>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button v-if="!isNew" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
-          <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
-          <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
+        <div class="mb-3">
+          <label class="form-label" for="macro-editor-label">{{ t("macroEditor.labelField") }}</label>
+          <input id="macro-editor-label" v-model="label" class="form-control" autocomplete="off" spellcheck="false" />
         </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="macro-editor-description">{{ t("macroEditor.description") }}</label>
+          <input id="macro-editor-description" v-model="description" class="form-control" autocomplete="off" spellcheck="false" />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="macro-editor-text">{{ t("macroEditor.text") }}</label>
+          <textarea id="macro-editor-text" v-model="text" class="form-control" rows="7" spellcheck="false"></textarea>
+          <div class="form-text mono" :title="t('macroEditor.variablesTitle')">{{ VARIABLES.join(" ") }}</div>
+        </div>
+
+        <div v-if="isNew && currentProject" class="d-flex align-items-center gap-2">
+          <input id="macro-editor-in-project" v-model="inProject" type="checkbox" />
+          <label for="macro-editor-in-project">{{ t("macroEditor.inProject") }}</label>
+        </div>
+      </div>
+
+      <div class="dialog-footer d-flex align-items-center justify-content-end gap-2">
+        <button v-if="!isNew" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
+        <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
+        <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.overlay {
+  position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.dialog {
+  width: min(500px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: auto;
+  border-radius: var(--radius-7); background: var(--bg-body); color: var(--fg-body);
+  border: 1px solid var(--border-color-translucent); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+.dialog-header { padding: 1rem; border-bottom: 1px solid var(--border-color-translucent); }
+.dialog-body { padding: 1rem; }
+.dialog-footer { padding: 1rem; border-top: 1px solid var(--border-color-translucent); }
+</style>

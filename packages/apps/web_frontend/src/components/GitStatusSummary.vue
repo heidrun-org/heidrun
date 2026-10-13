@@ -44,7 +44,7 @@ const detailRows = computed(() => {
     <span class="branch">{{ currentGit.branch }}<span v-if="isDirty" class="dirty">*</span></span>
     <span class="behind"><span class="count">{{ currentGit.behind }}</span><Icon name="arrow-down" /></span>
     <span class="ahead"><span class="count">{{ currentGit.ahead }}</span><Icon name="arrow-up" /></span>
-    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
+    <div v-if="isOpen" class="popover popover-instant show bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-2">
         <div v-for="row in detailRows" :key="row.field" class="d-flex justify-content-between gap-3">

@@ -121,24 +121,22 @@
 
 /* Bootstrap theme ---------------------------------------------------------- */
 /* Bootstrap draws its components from its own theme variables. These lines give the variables the colors of the application, in the
-   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The four z-index lines keep a
-   popover, a dropdown, a modal, and the dark layer behind a modal below the confirmation window (z-index 60) that opens above them. */
+   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The two z-index lines keep a
+   popover and a dropdown menu below the confirmation window (z-index 60) that opens above them. */
 :root {
-  --bs-body-color: var(--text);
-  --bs-body-bg: var(--panel);
-  --bs-border-color: var(--line-strong);
-  --bs-border-color-translucent: var(--line-modal);
-  --bs-secondary-color: var(--muted);
-  --bs-secondary-bg: var(--gauge-track);
-  --bs-tertiary-bg: var(--hover);
-  --bs-success: #5fbf7a;
-  --bs-warning: #f0a63a;
-  --bs-danger: #ea6a5f;
+  --fg-body: var(--text);
+  --bg-body: var(--panel);
+  --border-color: var(--line-strong);
+  --border-color-translucent: var(--line-modal);
+  --fg-3: var(--muted);
+  --bg-2: var(--gauge-track);
+  --bg-1: var(--hover);
+  --success-bg: #5fbf7a;
+  --warning-bg: #f0a63a;
+  --danger-bg: #ea6a5f;
 }
-.popover { --bs-popover-zindex: 20; }
-.dropdown-menu { --bs-dropdown-zindex: 50; }
-.modal { --bs-modal-zindex: 60; }
-.modal-backdrop { --bs-backdrop-zindex: 59; }
+.popover { --popover-zindex: 20; }
+.menu { --menu-zindex: 50; }
 
 * { box-sizing: border-box; }
 html, body, #app { height: 100%; margin: 0; }
@@ -218,32 +216,31 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 /* The base look of a button is made of the Bootstrap button variables. Bootstrap draws the button from them, in the layer "bootstrap".
    This rule keeps only what Bootstrap cannot express: the height, the display, the alignment, the gap, the line height, and the text selection. */
 .btn {
-  --bs-btn-padding-x: 12px;
-  --bs-btn-padding-y: 0;
-  --bs-btn-font-size: var(--font-size);
-  --bs-btn-font-weight: 500;
-  --bs-btn-border-width: 1px;
-  --bs-btn-border-radius: 7px;
-  --bs-btn-color: var(--text-2);
-  --bs-btn-bg: transparent;
-  --bs-btn-border-color: var(--line-strong);
-  --bs-btn-hover-color: var(--text-2);
-  --bs-btn-hover-bg: var(--hover);
-  --bs-btn-hover-border-color: var(--line-strong);
-  --bs-btn-active-color: var(--text-2);
-  --bs-btn-active-bg: var(--hover);
-  --bs-btn-active-border-color: var(--line-strong);
-  --bs-btn-disabled-color: var(--text-2);
-  --bs-btn-disabled-bg: var(--hover);
-  --bs-btn-disabled-border-color: var(--line-strong);
-  --bs-btn-focus-box-shadow: none;
+  --btn-padding-x: 12px;
+  --btn-padding-y: 0;
+  --btn-font-size: var(--font-size);
+  --btn-font-weight: 500;
+  --btn-border-width: 1px;
+  --btn-border-radius: 7px;
+  --btn-color: var(--text-2);
+  --btn-bg: transparent;
+  --btn-border-color: var(--line-strong);
+  --btn-hover-color: var(--text-2);
+  --btn-hover-bg: var(--hover);
+  --btn-hover-border-color: var(--line-strong);
+  --btn-active-color: var(--text-2);
+  --btn-active-bg: var(--hover);
+  --btn-active-border-color: var(--line-strong);
+  --btn-disabled-color: var(--text-2);
+  --btn-disabled-bg: var(--hover);
+  --btn-disabled-border-color: var(--line-strong);
   height: 30px; display: inline-flex; align-items: center; gap: 6px; line-height: inherit; user-select: inherit;
 }
 /* The application never had a pressed look, a disabled look, or a focus background: only the mouse hover changes the background. */
 .btn:not(:hover) {
-  --bs-btn-hover-bg: transparent;
-  --bs-btn-active-bg: transparent;
-  --bs-btn-disabled-bg: transparent;
+  --btn-hover-bg: transparent;
+  --btn-active-bg: transparent;
+  --btn-disabled-bg: transparent;
 }
 .btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
 .btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }

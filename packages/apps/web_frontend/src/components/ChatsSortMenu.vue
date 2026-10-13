@@ -84,7 +84,7 @@ onBeforeUnmount(close);
   <button
     ref="button"
     type="button"
-    class="btn dropdown-toggle d-flex align-items-center gap-2"
+    class="btn d-flex align-items-center gap-2"
     :class="{ show: isOpen }"
     aria-haspopup="menu"
     :aria-expanded="isOpen"
@@ -94,22 +94,23 @@ onBeforeUnmount(close);
   >
     <Icon :name="ORDER_ICONS[settings.chatsOrder]" />
     {{ t(`chatsPanel.sortKey.${settings.chatsSortKey}`) }}
+    <Icon name="caret-down-fill" />
   </button>
   <Teleport to="body">
     <div
       v-if="isOpen"
       ref="menu"
-      class="dropdown-menu show position-fixed"
+      class="menu show position-fixed"
       role="menu"
       :aria-label="t('chatsPanel.sortLabel')"
       :style="{ top: `${position.top}px`, right: `${position.right}px` }"
     >
-      <div class="dropdown-header">{{ t("chatsPanel.sortByHeading") }}</div>
+      <div class="menu-header">{{ t("chatsPanel.sortByHeading") }}</div>
       <button
         v-for="key in CHAT_SORT_KEYS"
         :key="key"
         type="button"
-        class="dropdown-item d-flex align-items-center gap-2"
+        class="menu-item d-flex align-items-center gap-2"
         role="menuitemradio"
         :aria-checked="settings.chatsSortKey === key"
         @click="chooseKey(key)"
@@ -117,13 +118,13 @@ onBeforeUnmount(close);
         <Icon name="check2" :class="{ invisible: settings.chatsSortKey !== key }" />
         {{ t(`chatsPanel.sortKey.${key}`) }}
       </button>
-      <div class="dropdown-divider" role="separator"></div>
-      <div class="dropdown-header">{{ t("chatsPanel.sortOrderHeading") }}</div>
+      <div class="menu-divider" role="separator"></div>
+      <div class="menu-header">{{ t("chatsPanel.sortOrderHeading") }}</div>
       <button
         v-for="order in CHAT_SORT_ORDERS"
         :key="order"
         type="button"
-        class="dropdown-item d-flex align-items-center gap-2"
+        class="menu-item d-flex align-items-center gap-2"
         role="menuitemradio"
         :aria-checked="settings.chatsOrder === order"
         @click="chooseOrder(order)"

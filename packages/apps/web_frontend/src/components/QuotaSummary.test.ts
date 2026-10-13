@@ -156,7 +156,7 @@ describe("QuotaSummary", () => {
       await wrapper.trigger("click");
       const popover = wrapper.get(".popover").element as HTMLElement;
       expect(popover.style.width).toBe("408px");
-      expect(popover.style.getPropertyValue("--bs-popover-max-width")).toBe("408px");
+      expect(popover.style.getPropertyValue("--popover-max-width")).toBe("408px");
     }
   });
 
@@ -222,7 +222,7 @@ describe("QuotaSummary pace", () => {
     };
     const wrapper = mount(QuotaSummary, { props: { quota } });
     await wrapper.trigger("click");
-    expect(wrapper.get("[data-field=pace]").classes()).toEqual(["alert", "alert-danger"]);
+    expect(wrapper.get("[data-field=pace]").classes()).toEqual(["alert", "theme-danger"]);
     expect(wrapper.find(".progress [data-field=expected-usage]").exists()).toBe(true);
   });
 });

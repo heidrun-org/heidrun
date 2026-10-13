@@ -153,11 +153,11 @@ async function onImageSettled(event: Event) {
   position: absolute;
   right: 24px;
   bottom: 24px;
-  --bs-btn-bg: rgba(0, 0, 0, 0.55);
-  --bs-btn-color: #fff;
-  --bs-btn-hover-color: #fff;
-  --bs-btn-border-color: rgba(255, 255, 255, 0.5);
-  --bs-btn-hover-border-color: rgba(255, 255, 255, 0.8);
+  --btn-bg: rgba(0, 0, 0, 0.55);
+  --btn-color: #fff;
+  --btn-hover-color: #fff;
+  --btn-border-color: rgba(255, 255, 255, 0.5);
+  --btn-hover-border-color: rgba(255, 255, 255, 0.8);
 }
 .splash-leave-active {
   transition: opacity 0.6s ease;

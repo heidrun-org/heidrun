@@ -23,8 +23,7 @@ class BootstrapPartsTestHelper {
 		const result = Sass.compile(Path.resolve(__dirname, 'bootstrap_parts.scss'), {
 			loadPaths: [Path.resolve(__dirname, '../node_modules')],
 			quietDeps: true,
-			silenceDeprecations: ['import'],
-		});
+					});
 		return result.css;
 	}
 
@@ -60,15 +59,33 @@ class BootstrapPartsTestHelper {
 }
 
 describe('bootstrap_parts.scss', () => {
-	it('puts every Bootstrap rule in the layer, so that a rule of the application always wins', () => {
+	it('puts every Bootstrap component rule in a cascade layer, so that a rule of the application always wins', () => {
 		const headList = BootstrapPartsTestHelper.listTopLevelHeads(BootstrapPartsTestHelper.compile());
-		expect(headList).toEqual(['@layer bootstrap', '.btn', '.btn:disabled']);
+		const layerHeadList = headList.filter((head) => head.startsWith('@layer') === true);
+		expect(layerHeadList.length).toBeGreaterThan(10);
+		const ruleHeadList = headList.filter((head) => head.startsWith('@layer') === false);
+		expect(ruleHeadList).toEqual([
+			':root,\n:host',
+			':root,\n:host',
+			'@media (prefers-color-scheme: dark)',
+			'[data-bs-theme=dark]',
+			'[data-bs-theme=light]',
+			'.form-control,\nselect.form-control',
+			'.menu',
+			'.popover',
+			'.progress',
+			'.alert',
+			'.badge',
+			'.list-group',
+			'.btn',
+			'.btn:disabled',
+		]);
 	});
 
-	it('has only the utility classes that the web frontend uses, and they sit in the layer', () => {
+	it('has only the utility classes that the web frontend uses, and they sit in the layer utilities', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
-		const utilityRuleList = layerText.match(/^ {2}\.(d|flex|h|align-items|align-self|gap|ms|me|my|mb|pt|fw|fst|text|bg|position|top|end|bottom|overflow-y|justify-content|border)-[a-z0-9-]+ \{/gm) ?? [];
+		const layerText = cssText.slice(cssText.indexOf('@layer utilities {'), cssText.indexOf('\n.form-control,'));
+		const utilityRuleList = layerText.match(/^ {2}\.[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
 			'.justify-content-center',
 			'.justify-content-between',
@@ -116,52 +133,62 @@ describe('bootstrap_parts.scss', () => {
 			'.bottom-100',
 			'.h-auto',
 			'.overflow-y-auto',
+			'.invisible',
 		]);
 	});
 
-	it('has the utility class invisible, which keeps the room of an element and hides it, in the layer', () => {
+	it('keeps the rule that a utility class wins over a rule of the application: every utility carries important', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		const layerText = cssText.slice(cssText.indexOf('@layer bootstrap'), cssText.indexOf('\n.btn {'));
+		const layerText = cssText.slice(cssText.indexOf('@layer utilities {'), cssText.indexOf('\n.form-control,'));
 		expect(layerText).toMatch(/^ {2}\.invisible \{\s*visibility: hidden !important;/m);
+		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
 	});
 
-	it('has the Bootstrap parts of the dropdown, the modal, the close button, the form fields, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+	it('has the Bootstrap parts of the menu, the close button, the form fields, the switch, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.dropdown-menu', '.dropdown-item', '.modal', '.modal-content', '.btn-close', '.form-control', '.form-select', '.form-check-input', '.form-label', '.popover', '.popover-body', '.popover-arrow', '.progress', '.progress-bar', '.alert', '.alert-success', '.alert-warning', '.alert-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-border-sm', '.btn-group', '.badge']) {
-			expect(cssText).toContain(`${selector} {`);
+		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
+		for (const selector of ['.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
+	});
+
+	it('does not have the Bootstrap parts dialog and check, because the application already uses the class names dialog and check', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).not.toMatch(/^\s*\.dialog[ ,{]/m);
+		expect(cssText).not.toMatch(/^\s*\.check[ ,{]/m);
 	});
 
 	it('gives a row of a list group no background of its own, so that the sidebar shows through in both themes', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-bg: transparent/);
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-bg: transparent/);
 	});
 
 	it('gives a row of a list group under the pointer the soft hover background, so that a line or a button inside it still shows', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-action-hover-bg: var\(--hover-soft\)/);
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-action-hover-bg: var\(--hover-soft\)/);
 	});
 
 	it('gives a row of a list group the same background when it is pressed as when it is hovered, so that a click does not darken it', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.list-group \{[^}]*--bs-list-group-action-active-bg: var\(--hover-soft\)/);
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-action-active-bg: var\(--hover-soft\)/);
 	});
 
 	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.nav', '.nav-link', '.nav-tabs', '.nav-tabs .nav-link']) {
-			expect(cssText).toContain(`${selector} {`);
+		for (const selector of ['.nav', '.nav-link', '.nav-tabs']) {
+			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
-		expect(cssText).not.toContain('transition: color 0.15s');
+		expect(cssText).not.toContain('transition-duration: var(--nav-link-transition-duration)');
 	});
 
 	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.form-control \{[^}]*font-size: var\(--font-size\)/);
+		expect(cssText).toMatch(/\.form-control,\nselect\.form-control \{[^}]*--control-font-size: var\(--font-size\)/);
 	});
 
 	it('gives the button no transition, as the application has none', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).not.toContain('transition: color 0.15s');
+		expect(cssText).not.toContain('transition-property: var(--btn-transition-property)');
 	});
 });

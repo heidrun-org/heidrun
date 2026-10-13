@@ -201,7 +201,7 @@ watch(isRenaming, (renaming) => {
     </template>
     <div
       v-if="isOpen"
-      class="popover bs-popover-top position-absolute bottom-100"
+      class="popover popover-instant show bs-popover-top position-absolute bottom-100"
       role="dialog"
       :aria-label="t('workspaceStatusSummary.listLabel')"
       @click.stop

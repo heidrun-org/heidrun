@@ -6,14 +6,9 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	DialogBoxClassTest — the boxes of the windows never use the class `modal` of Bootstrap
+//	DialogBoxClassTest — the boxes of the windows never use the class `modal`
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-/**
- * The file that is allowed to use the class `modal`, because it is the real Bootstrap modal.
- */
-const BOOTSTRAP_MODAL_FILE_NAME = 'MacroEditor.vue';
 
 /**
  * The windows that had their own box with the class `modal` before the issue 204.
@@ -46,13 +41,13 @@ class DialogBoxClassTestHelper {
 	}
 
 	/**
-	 * Lists the components that are not the real Bootstrap modal.
+	 * Lists the components.
 	 *
-	 * @returns The file names of the folder `components` that end with `.vue`, without the Bootstrap modal.
+	 * @returns The file names of the folder `components` that end with `.vue`.
 	 */
 	static listOwnComponentFileNames(): string[] {
 		return Fs.readdirSync(Path.resolve(__dirname, 'components')).filter((fileName) => {
-			return fileName.endsWith('.vue') === true && fileName !== BOOTSTRAP_MODAL_FILE_NAME;
+			return fileName.endsWith('.vue') === true;
 		});
 	}
 
@@ -90,7 +85,7 @@ describe('the boxes of the windows (issue 204: the Shortcuts window sat against 
 		}
 	});
 
-	it('no component, except the real Bootstrap modal, writes the class modal in its template', () => {
+	it('no component writes the class modal in its template', () => {
 		for (const fileName of DialogBoxClassTestHelper.listOwnComponentFileNames()) {
 			const classNameList = DialogBoxClassTestHelper.listTemplateClassNames(
 				DialogBoxClassTestHelper.readComponent(fileName),
@@ -102,7 +97,7 @@ describe('the boxes of the windows (issue 204: the Shortcuts window sat against 
 		}
 	});
 
-	it('no component, except the real Bootstrap modal, styles the class modal', () => {
+	it('no component styles the class modal', () => {
 		for (const fileName of DialogBoxClassTestHelper.listOwnComponentFileNames()) {
 			const ruleList = DialogBoxClassTestHelper.listModalStyleRules(
 				DialogBoxClassTestHelper.readComponent(fileName),
@@ -127,12 +122,5 @@ describe('the boxes of the windows (issue 204: the Shortcuts window sat against 
 				isStyled: true,
 			});
 		}
-	});
-
-	it('the real Bootstrap modal keeps the class modal, because the style of Bootstrap is meant for it', () => {
-		const classNameList = DialogBoxClassTestHelper.listTemplateClassNames(
-			DialogBoxClassTestHelper.readComponent(BOOTSTRAP_MODAL_FILE_NAME),
-		);
-		expect(classNameList).toContain('modal');
 	});
 });

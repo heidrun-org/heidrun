@@ -198,7 +198,7 @@ const VIEWS = [
 
 <template>
   <section class="chats-panel d-flex flex-column gap-3 overflow-y-auto" :aria-label="t('chatsPanel.label')">
-    <div v-if="chats.error !== null" class="alert alert-danger" role="alert">{{ chats.error }}</div>
+    <div v-if="chats.error !== null" class="alert theme-danger" role="alert">{{ chats.error }}</div>
     <div v-else-if="chats.isLoading" class="text-body-secondary">{{ t("chatsPanel.loading") }}</div>
     <div v-else-if="selectedChatAgent === null" class="text-body-secondary">
       {{ folder === null ? t("chatsPanel.noWorkspace") : t("chatsPanel.empty") }}
@@ -360,30 +360,30 @@ const VIEWS = [
   position: sticky; top: -18px; z-index: 2; margin: -18px calc(-1 * var(--chats-inset)) -0.5rem;
   padding: 18px var(--chats-inset) 0; background: var(--side);
 }
-.list-group { margin: 0 calc(-1 * var(--chats-inset)); --bs-list-group-item-padding-x: var(--chats-inset); }
+.list-group { margin: 0 calc(-1 * var(--chats-inset)); --list-group-item-padding-x: var(--chats-inset); }
 .chats-separator { margin: 0 calc(-1 * var(--chats-inset)); }
-.is-expanded { --bs-list-group-item-padding-y: 1rem; }
+.is-expanded { --list-group-item-padding-y: 1rem; }
 .is-expanded .chat-title { min-width: 0; }
 .chat-topics { margin-top: 6px; overflow: hidden; white-space: nowrap; }
 /* The reset of the rule "button:where(:not(.btn))" in styles.css is not in a layer, so it wins over the layer of Bootstrap: the label gives the badge values back. */
 .chat-topics .badge {
-  --bs-badge-color: var(--bs-body-color); background-color: var(--bs-secondary-bg); border: 0;
-  color: var(--bs-badge-color); font-size: var(--bs-badge-font-size); font-weight: var(--bs-badge-font-weight); line-height: 1;
+  --badge-color: var(--fg-body); background-color: var(--bg-2); border: 0;
+  color: var(--badge-color); font-size: var(--badge-font-size); font-weight: var(--badge-font-weight); line-height: 1;
 }
-.chat-topics .badge:hover { background-color: var(--bs-border-color); }
-.chat-topics .badge.is-selected { --bs-badge-color: var(--bs-body-bg); background-color: var(--bs-body-color); }
-.chat-actions .btn { height: 26px; --bs-btn-padding-x: 8px; }
+.chat-topics .badge:hover { background-color: var(--border-color); }
+.chat-topics .badge.is-selected { --badge-color: var(--bg-body); background-color: var(--fg-body); }
+.chat-actions .btn { height: 26px; --btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
 .btn-check:checked + .btn {
-  --bs-btn-color: var(--text);
-  --bs-btn-hover-color: var(--text);
-  --bs-btn-active-color: var(--text);
-  --bs-btn-hover-bg: var(--bs-secondary-bg);
-  --bs-btn-active-bg: var(--bs-secondary-bg);
+  --btn-color: var(--text);
+  --btn-hover-color: var(--text);
+  --btn-active-color: var(--text);
+  --btn-hover-bg: var(--bg-2);
+  --btn-active-bg: var(--bg-2);
 }
 .btn-check:focus-visible + .btn { outline: 2px solid var(--done); outline-offset: 1px; }
 .btn-check:disabled + .btn { opacity: 0.45; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
 .btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
-.busy-spinner { --bs-spinner-width: 0.75rem; --bs-spinner-height: 0.75rem; --bs-spinner-border-width: 0.15em; }
+.busy-spinner { --spinner-width: 0.75rem; --spinner-height: 0.75rem; --spinner-border-width: 0.15em; }
 </style>

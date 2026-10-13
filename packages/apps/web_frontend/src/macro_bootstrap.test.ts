@@ -42,8 +42,8 @@ class MacroBootstrapTestHelper {
 describe('the dropdown of the macros (MacroMenu.vue)', () => {
 	const sourceText = MacroBootstrapTestHelper.readComponent('MacroMenu.vue');
 
-	it('uses the Bootstrap dropdown classes', () => {
-		for (const className of ['dropdown-menu', 'dropdown-item', 'dropdown-header', 'dropdown-divider', 'dropdown-item-text']) {
+	it('uses the Bootstrap menu classes', () => {
+		for (const className of ['menu', 'menu-item', 'menu-header', 'menu-divider', 'menu-text']) {
 			expect(sourceText).toContain(className);
 		}
 	});
@@ -57,37 +57,29 @@ describe('the dropdown of the macros (MacroMenu.vue)', () => {
 describe('the pop-up of the macros (MacroEditor.vue)', () => {
 	const sourceText = MacroBootstrapTestHelper.readComponent('MacroEditor.vue');
 
-	it('uses the Bootstrap modal classes, and the Bootstrap form classes', () => {
-		const classNameList = [
-			'modal-backdrop',
-			'modal-dialog',
-			'modal-content',
-			'modal-header',
-			'modal-title',
-			'btn-close',
-			'modal-body',
-			'modal-footer',
-			'form-label',
-			'form-control',
-			'form-select',
-			'form-check',
-			'form-check-input',
-			'form-text',
-		];
+	it('uses the Bootstrap close button, and the Bootstrap form classes', () => {
+		const classNameList = ['btn-close', 'form-label', 'form-control', 'form-text'];
 		for (const className of classNameList) {
 			expect(sourceText).toContain(className);
 		}
 	});
 
-	it('has no style block: the layout comes from the Bootstrap utility classes', () => {
-		expect(sourceText).not.toContain('<style');
+	it('does not use the Bootstrap parts dialog and check, whose class names the windows and the labels of the application already use', () => {
+		for (const className of ['modal', 'form-select', 'form-check']) {
+			expect(sourceText).not.toContain(className);
+		}
+	});
+
+	it('styles only the box of the window, because the application has its own class dialog', () => {
+		const classNameList = MacroBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect([...new Set(classNameList)]).toEqual(['overlay', 'dialog', 'dialog-header', 'dialog-body', 'dialog-footer']);
 	});
 });
 
 describe('the theme of Bootstrap', () => {
 	it('is the theme of the application: styles.css gives the Bootstrap variables the colors of the application', () => {
 		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');
-		for (const variableName of ['--bs-body-color', '--bs-body-bg', '--bs-border-color', '--bs-secondary-color']) {
+		for (const variableName of ['--fg-body', '--bg-body', '--border-color', '--fg-3']) {
 			expect(stylesText).toContain(`${variableName}:`);
 		}
 	});

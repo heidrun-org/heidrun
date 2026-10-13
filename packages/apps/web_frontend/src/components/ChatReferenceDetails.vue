@@ -58,7 +58,7 @@ function labelStyle(color: string | null): Record<string, string> {
     return {};
   }
   return {
-    color: `color-mix(in srgb, #${color} 70%, var(--bs-body-color))`,
+    color: `color-mix(in srgb, #${color} 70%, var(--fg-body))`,
     backgroundColor: `color-mix(in srgb, #${color} 15%, transparent)`,
     borderColor: `color-mix(in srgb, #${color} 50%, transparent)`,
   };
@@ -149,10 +149,10 @@ async function openOnForge() {
 .heading { min-width: 0; }
 .small-text { font-size: 0.85em; }
 .state-done { background-color: #8957e5; }
-.state-other { background-color: var(--bs-secondary-bg); color: var(--bs-body-color); }
+.state-other { background-color: var(--bg-2); color: var(--fg-body); }
 .excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; white-space: pre-line; }
-.branch { max-width: 45%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0.15rem 0.5rem; border-radius: var(--bs-border-radius); background-color: var(--bs-tertiary-bg); font-family: var(--bs-font-monospace, monospace); font-size: 0.85em; }
+.branch { max-width: 45%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0.15rem 0.5rem; border-radius: var(--radius-5); background-color: var(--bg-1); font-family: var(--font-mono, monospace); font-size: 0.85em; }
 .label { border: 1px solid; }
-.btn { --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-active-bg: var(--bs-secondary-bg); }
+.btn { --btn-hover-bg: var(--bg-2); --btn-active-bg: var(--bg-2); }
 .btn:disabled { opacity: 0.45; }
 </style>

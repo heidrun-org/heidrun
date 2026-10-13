@@ -16,7 +16,7 @@ const __dirname = import.meta.dirname;
 type CssRule = {
 	/** The text before the opening brace, for example `.btn:not(:hover)`. */
 	selector: string;
-	/** The names of the properties that the rule declares, for example `--bs-btn-color` or `height`. */
+	/** The names of the properties that the rule declares, for example `--btn-color` or `height`. */
 	propertyNameList: string[];
 };
 
@@ -136,14 +136,14 @@ describe('the base rules of a button in styles.css', () => {
 	it('has a rule for the class btn, which holds the Bootstrap button variables', () => {
 		const rule = baseRuleList.find((item) => item.selector === '.btn');
 		expect(rule).toBeDefined();
-		expect(rule?.propertyNameList.filter((name) => name.startsWith('--bs-btn-')).length).toBeGreaterThan(10);
+		expect(rule?.propertyNameList.filter((name) => name.startsWith('--btn-')).length).toBeGreaterThan(10);
 	});
 
 	it('declares nothing but the Bootstrap button variables, the height, the display, the alignment, the gap, the line height, and the text selection', () => {
 		const offenderList: string[] = [];
 		for (const rule of baseRuleList) {
 			for (const name of rule.propertyNameList) {
-				if (name.startsWith('--bs-btn-') === false && ALLOWED_PROPERTY_NAME_LIST.includes(name) === false) {
+				if (name.startsWith('--btn-') === false && ALLOWED_PROPERTY_NAME_LIST.includes(name) === false) {
 					offenderList.push(`${rule.selector} { ${name} }`);
 				}
 			}
