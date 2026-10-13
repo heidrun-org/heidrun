@@ -6,7 +6,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
-import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
+import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
@@ -25,6 +25,9 @@ const selected = computed(() =>
       (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
     : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
 );
+// The highlight of the selected pane shows only when the viewport shows several panes: the panes of the selected tab that the
+// grid draws, and the pinned panes of the column of pinned panes.
+const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
@@ -52,7 +55,7 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
+    :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
@@ -171,12 +174,13 @@ const subtitle = computed(() => {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
 }
-/* The header of the selected pane has a tinted background, and the name and the folder of every other pane are dimmed, so that
-   the selected pane is the one pane with a full contrast. A blocked pane keeps the red look of its header and its text. */
-.pane.selected .head { background: var(--pane-head-selected); }
+/* When the viewport shows several panes, the header of the selected pane has a tinted background, and the name and the folder of
+   every other pane are dimmed, so that the selected pane is the one pane with a full contrast. A blocked pane keeps the red look
+   of its header and its text. A viewport with one pane has no highlight, because there is no other pane to tell it from. */
+.pane.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
-.pane:not(.selected):not(.blocked) .name { color: var(--muted); }
-.pane:not(.selected):not(.blocked) .sub { color: var(--faint); }
+.pane.several-panes:not(.selected):not(.blocked) .name { color: var(--muted); }
+.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--faint); }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -192,5 +196,5 @@ const subtitle = computed(() => {
 .tool.txt { font-size: var(--font-size); line-height: 1; }
 .tool.on { color: var(--accent); }
 .pane.in-column-of-pinned-panes .head { background: var(--bar); }
-.pane.in-column-of-pinned-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
+.pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 </style>

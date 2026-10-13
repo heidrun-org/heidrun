@@ -147,20 +147,56 @@ describe("PaneCard", () => {
   });
 
   it("gives the header of the selected pane a tinted background, in the grid and in the column of pinned panes", () => {
-    expect(styleRule(".pane.selected .head")).toContain("background: var(--pane-head-selected)");
-    expect(styleRule(".pane.in-column-of-pinned-panes.selected:not(.blocked) .head")).toContain(
+    expect(styleRule(".pane.several-panes.selected:not(.blocked) .head")).toContain("background: var(--pane-head-selected)");
+    expect(styleRule(".pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head")).toContain(
       "background: var(--pane-head-selected)",
     );
   });
 
   it("dims the name and the folder in the header of a pane that is not selected and not blocked", () => {
-    expect(styleRule(".pane:not(.selected):not(.blocked) .name")).toContain("color: var(--muted)");
-    expect(styleRule(".pane:not(.selected):not(.blocked) .sub")).toContain("color: var(--faint)");
+    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .name")).toContain("color: var(--muted)");
+    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .sub")).toContain("color: var(--faint)");
   });
 
-  it("keeps the red header of a blocked pane over the tinted header of the selected pane", () => {
-    const style = paneCardSource.slice(paneCardSource.indexOf("<style"));
-    expect(style.indexOf("\n.pane.blocked .head {")).toBeGreaterThan(style.indexOf("\n.pane.selected .head {"));
+  it("never tints the header of a blocked pane, so that it keeps its red header", () => {
+    expect(paneCardSource).not.toMatch(/\.pane\.several-panes\.selected \.head \{/);
+    expect(styleRule(".pane.blocked .head")).toContain("background: var(--tint-err)");
+  });
+
+  it("has no highlight when the viewport shows one pane", async () => {
+    const { state } = await import("../stores/session");
+    state.snapshot = { panes: [{ pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" }] } as never;
+    state.selectedTabId = "w1:t1";
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).not.toContain("several-panes");
+  });
+
+  it("has the highlight when the selected tab has two panes", async () => {
+    const { state } = await import("../stores/session");
+    state.snapshot = {
+      panes: [
+        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: "w1:p2", tab_id: "w1:t1", workspace_id: "w1" },
+      ],
+    } as never;
+    state.selectedTabId = "w1:t1";
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).toContain("several-panes");
+  });
+
+  it("has the highlight when the selected tab has one pane and a pinned pane of another tab is in the column", async () => {
+    const { state } = await import("../stores/session");
+    const { settings } = await import("../stores/settings");
+    state.snapshot = {
+      panes: [
+        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: "w1:p9", tab_id: "w1:t2", workspace_id: "w1" },
+      ],
+    } as never;
+    state.selectedTabId = "w1:t1";
+    settings.pinnedPanes = ["w1:p9"];
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).toContain("several-panes");
   });
 });
 
