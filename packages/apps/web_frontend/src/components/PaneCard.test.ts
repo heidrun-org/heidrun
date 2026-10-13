@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import paneCardSource from "./PaneCard.vue?raw";
 
@@ -9,6 +9,13 @@ vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }))
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 // The terminal needs a real browser (xterm, the colour scheme query): the pane header is the subject of these tests.
 vi.mock("./TerminalView.vue", () => ({ default: { template: "<div></div>" } }));
+vi.mock("../lib/api", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ...original,
+    closePane: vi.fn(async () => ({})),
+  };
+});
 
 const LONG_NAME = "jetienne@Jeromes-Macbook-Pro:~/webwork/heidrun";
 
@@ -137,5 +144,51 @@ describe("PaneCard", () => {
     pinnedPaneState.focus = "w1:p2";
     const wrapper = await mountPaneCard({}, true);
     expect(wrapper.get("section").classes()).not.toContain("selected");
+  });
+});
+
+describe("PaneCard close", () => {
+  // The store of the settings saves itself in the local storage, so the value of the previous test comes back: reset it.
+  // The mocked function `closePane` keeps the calls of the previous test: clear them.
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { settings } = await import("../stores/settings");
+    settings.confirmPaneClose = true;
+  });
+
+  it("closes the pane at once, without the confirmation dialog, when the setting confirmPaneClose is off", async () => {
+    const { settings } = await import("../stores/settings");
+    settings.confirmPaneClose = false;
+    const wrapper = await mountPaneCard();
+    const { confirmDialog } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
+  });
+
+  it("asks for confirmation before it closes the pane, and does not close before the answer", async () => {
+    const wrapper = await mountPaneCard();
+    const { confirmDialog } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    expect(confirmDialog.open).toBe(true);
+    expect(confirmDialog.title).toBe("Close the pane (⌘W)");
+    expect(api.closePane).not.toHaveBeenCalled();
+  });
+
+  it("closes the pane after the user confirms, and does not close it when the user cancels", async () => {
+    const wrapper = await mountPaneCard();
+    const { answerConfirm } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    answerConfirm(false);
+    await flushPromises();
+    expect(api.closePane).not.toHaveBeenCalled();
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    answerConfirm(true);
+    await flushPromises();
+    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
   });
 });

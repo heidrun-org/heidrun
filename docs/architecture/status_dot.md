@@ -1,5 +1,11 @@
 # The status dot
 
+- Created: 12 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained description of the status dot
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../agents_rules/glossary.md)
+
 The status dot is a small colored circle. It shows the status of a pane, of a tab, of a workspace, and of the application, so that the developer sees at a glance which panes work, which one waits for an answer, and which one has finished. The three levels (workspace, tab, pane) have the definitions of [the glossary](../agents_rules/glossary.md).
 
 ## The statuses

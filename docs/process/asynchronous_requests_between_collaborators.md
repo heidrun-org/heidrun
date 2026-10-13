@@ -1,5 +1,11 @@
 # Asynchronous requests between collaborators
 
+- Created: 12 October 2026
+- Last updated: 13 October 2026
+- Status: Proposal with open points
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274), [issue 278](https://github.com/heidrun-org/heidrun/issues/278)
+
 This document describes a way for collaborators on one repository to send requests to each other without a meeting and without a call. A coding agent writes the request as a GitHub issue, and a coding agent helps the receiver read it. The idea comes from [issue 278](https://github.com/heidrun-org/heidrun/issues/278), which comes from [issue 274](https://github.com/heidrun-org/heidrun/issues/274).
 
 ## What is already agreed

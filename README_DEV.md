@@ -90,11 +90,12 @@ A Git worktree is a second folder of the same repository, on its own branch. Eac
 pnpm worktree:create <name>
 ```
 
-The command creates the worktree `.claude/worktrees/<name>` on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone. The clone takes about 10 seconds and 14 MB of disk space. The first build in the worktree then takes 23 to 32 seconds and about 883 MB of disk space. The command is the package [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools).
+The command creates the worktree `.claude/worktrees/<name>` on a new branch with the same name. On macOS, it then clones the folder `packages/apps/desktop_tauri/target/debug` of the main checkout into the worktree, with a copy-on-write clone. The clone takes about 10 seconds and 14 MB of disk space. The first build in the worktree then takes 23 to 32 seconds and about 883 MB of disk space. At the end, the command runs `pnpm install --frozen-lockfile` in the worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. The command is the package [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools).
 
 - Build the main checkout before you create a worktree. When the main checkout has no folder `target/debug`, the command creates the worktree without the clone and says so.
 - The clone needs macOS and the Apple File System. The worktree is inside the main checkout, so both folders are on the same disk.
 - The clone shares its files with the main checkout only at the start. Each file that Cargo rewrites becomes a real copy.
+- The installation reads `pnpm-lock.yaml` and never changes it. When the installation fails, the command prints the error of `pnpm` and exits with the code 1. The worktree stays, so fix the cause and run `pnpm install --frozen-lockfile` in the worktree.
 - To start the new branch from a commit other than the current commit of the main checkout, add the option `--base <ref>`.
 
 ```bash
