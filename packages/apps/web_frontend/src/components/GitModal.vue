@@ -187,7 +187,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 
 <template>
   <div class="overlay" @mousedown.self="git.modal.open = false">
-    <div ref="modalEl" class="dialog" role="dialog" aria-label="Git" tabindex="-1">
+    <div ref="modalEl" class="window-box" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
           <button :title="t('gitModal.openRepositoryTitle')" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
@@ -369,7 +369,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 
 <style scoped>
 .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
-.dialog {
+.window-box {
   outline: none;
   width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);

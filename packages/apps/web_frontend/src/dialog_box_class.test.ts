@@ -109,15 +109,15 @@ describe('the boxes of the windows (issue 204: the Shortcuts window sat against 
 		}
 	});
 
-	it('each of the ten windows has a box with the class dialog, and styles it', () => {
+	it('each of the ten windows has a box with the class window-box, and styles it', () => {
 		for (const fileName of WINDOW_FILE_NAME_LIST) {
 			const sourceText = DialogBoxClassTestHelper.readComponent(fileName);
-			expect({ fileName, isUsed: DialogBoxClassTestHelper.listTemplateClassNames(sourceText).includes('dialog') })
+			expect({ fileName, isUsed: DialogBoxClassTestHelper.listTemplateClassNames(sourceText).includes('window-box') })
 				.toEqual({
 					fileName,
 					isUsed: true,
 				});
-			expect({ fileName, isStyled: /^\.dialog\s*\{/m.test(sourceText) }).toEqual({
+			expect({ fileName, isStyled: /^\.window-box\s*\{/m.test(sourceText) }).toEqual({
 				fileName,
 				isStyled: true,
 			});

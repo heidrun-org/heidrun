@@ -36,7 +36,7 @@ onUnmounted(() => unlisten?.());
 
 <template>
   <div v-if="isOpen" class="overlay" @mousedown.self="close" @keydown.esc.stop.prevent="close">
-    <div class="dialog" role="dialog" aria-labelledby="about-title">
+    <div class="window-box" role="dialog" aria-labelledby="about-title">
       <figure class="figure">
         <img class="image" :src="aboutImage" alt="" />
         <figcaption class="legend">{{ t("identity.motto") }}</figcaption>
@@ -65,7 +65,7 @@ onUnmounted(() => unlisten?.());
   position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.55);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.dialog {
+.window-box {
   width: min(460px, 100%); border-radius: 14px; background: var(--panel); overflow: hidden;
   border: 1px solid var(--border, #2a2c31); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

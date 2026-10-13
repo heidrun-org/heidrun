@@ -105,10 +105,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
 </script>
 
 <template>
-  <div class="overlay" role="dialog" aria-labelledby="macro-editor-title" @mousedown.self="close">
-    <div class="dialog">
-      <div class="dialog-header d-flex align-items-center justify-content-between">
-        <div id="macro-editor-title" class="fw-semibold" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
+  <div class="overlay" @mousedown.self="close">
+    <dialog class="dialog dialog-instant dialog-nonmodal" open aria-labelledby="macro-editor-title">
+      <div class="dialog-header">
+        <div id="macro-editor-title" class="dialog-title" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
         <button type="button" class="btn-close" :aria-label="t('macroEditor.close')" :title="t('macroEditor.close')" @click="close"></button>
       </div>
 
@@ -148,26 +148,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
         </div>
       </div>
 
-      <div class="dialog-footer d-flex align-items-center justify-content-end gap-2">
+      <div class="dialog-footer">
         <button v-if="!isNew" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
         <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
         <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
       </div>
-    </div>
+    </dialog>
   </div>
 </template>
 
 <style scoped>
-.overlay {
-  position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
-  display: flex; align-items: center; justify-content: center; padding: 24px;
-}
-.dialog {
-  width: min(500px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: auto;
-  border-radius: var(--radius-7); background: var(--bg-body); color: var(--fg-body);
-  border: 1px solid var(--border-color-translucent); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
-}
-.dialog-header { padding: 1rem; border-bottom: 1px solid var(--border-color-translucent); }
-.dialog-body { padding: 1rem; }
-.dialog-footer { padding: 1rem; border-top: 1px solid var(--border-color-translucent); }
+.overlay { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, 0.55); }
 </style>

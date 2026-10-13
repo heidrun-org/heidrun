@@ -584,7 +584,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close()">
-    <div class="dialog" role="dialog" :aria-label="t('filesModal.dialogLabel')" @mousedown="menu && !($event.target as HTMLElement).closest('.ctxmenu') && (menu = null)">
+    <div class="window-box" role="dialog" :aria-label="t('filesModal.dialogLabel')" @mousedown="menu && !($event.target as HTMLElement).closest('.ctxmenu') && (menu = null)">
       <header class="top">
         <span class="title">{{ t("filesModal.title") }}</span>
         <span class="root mono" :title="files.root">{{ shortPath(files.root) }}</span>
@@ -822,7 +822,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 :where(button) { background: transparent; border: 0; color: inherit; font: inherit; }
 .overlay { position: fixed; inset: 0; z-index: 56; background: rgba(0, 0, 0, 0.55); display: flex; padding: 24px; }
-.dialog { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); }
+.window-box { flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); }
 .top { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); min-width: 0; }
 .title { font-weight: 600; font-size: var(--font-size); }
 .root { font-size: var(--font-size); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }

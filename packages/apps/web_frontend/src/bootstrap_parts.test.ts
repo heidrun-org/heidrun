@@ -144,17 +144,16 @@ describe('bootstrap_parts.scss', () => {
 		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
 	});
 
-	it('has the Bootstrap parts of the menu, the close button, the form fields, the switch, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
-		for (const selector of ['.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
 			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
 	});
 
-	it('does not have the Bootstrap parts dialog and check, because the application already uses the class names dialog and check', () => {
+	it('does not have the Bootstrap part check, because the application already uses the class name check', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).not.toMatch(/^\s*\.dialog[ ,{]/m);
 		expect(cssText).not.toMatch(/^\s*\.check[ ,{]/m);
 	});
 

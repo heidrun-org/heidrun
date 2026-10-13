@@ -43,7 +43,7 @@ describe("AboutModal", () => {
     expect(button.text()).not.toBe("");
     await button.trigger("click");
     expect(playNextGoatBleat).toHaveBeenCalledTimes(1);
-    expect(wrapper.find(".dialog").exists()).toBe(true);
+    expect(wrapper.find(".window-box").exists()).toBe(true);
     wrapper.unmount();
   });
 
@@ -69,7 +69,7 @@ describe("AboutModal", () => {
     const wrapper = await openAboutModal();
     const closeButton = wrapper.findAll("button").find((button) => button.classes("play-goat-sound") === false);
     await closeButton?.trigger("click");
-    expect(wrapper.find(".dialog").exists()).toBe(false);
+    expect(wrapper.find(".window-box").exists()).toBe(false);
     wrapper.unmount();
   });
 });

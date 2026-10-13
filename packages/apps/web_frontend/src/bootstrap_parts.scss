@@ -11,8 +11,7 @@
   $enable-shadows: false,
 );
 @use "bootstrap/scss/mixins/utilities" as utility-mixins;
-// The parts "dialog" and "check" of Bootstrap are not here: the application already uses the class names "dialog" and "check" for its own
-// windows and labels, and the class "dialog" of Bootstrap hides every element that does not have the attribute "open".
+// The part "check" of Bootstrap is not here: the application already uses the class name "check" for its own labels.
 @use "bootstrap/scss/root";
 @use "bootstrap/scss/buttons/index" as buttons;
 @use "bootstrap/scss/forms/labels";
@@ -20,6 +19,7 @@
 @use "bootstrap/scss/forms/form-control";
 @use "bootstrap/scss/forms/switch";
 @use "bootstrap/scss/helpers/theme-colors";
+@use "bootstrap/scss/dialog";
 @use "bootstrap/scss/menu";
 @use "bootstrap/scss/nav";
 @use "bootstrap/scss/popover";

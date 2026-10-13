@@ -58,21 +58,23 @@ describe('the pop-up of the macros (MacroEditor.vue)', () => {
 	const sourceText = MacroBootstrapTestHelper.readComponent('MacroEditor.vue');
 
 	it('uses the Bootstrap close button, and the Bootstrap form classes', () => {
-		const classNameList = ['btn-close', 'form-label', 'form-control', 'form-text'];
+		const classNameList = ['dialog-header', 'dialog-title', 'dialog-body', 'dialog-footer', 'btn-close', 'form-label', 'form-control', 'form-text'];
 		for (const className of classNameList) {
 			expect(sourceText).toContain(className);
 		}
 	});
 
-	it('does not use the Bootstrap parts dialog and check, whose class names the windows and the labels of the application already use', () => {
-		for (const className of ['modal', 'form-select', 'form-check']) {
+	it('is a real Bootstrap dialog, and does not use the Bootstrap check part, whose class name the labels of the application already use', () => {
+		expect(sourceText).toContain('<dialog class="dialog ');
+		expect(sourceText).not.toMatch(/(?<![\w-])modal(?![\w-])/);
+		for (const className of ['form-select', 'form-check']) {
 			expect(sourceText).not.toContain(className);
 		}
 	});
 
-	it('styles only the box of the window, because the application has its own class dialog', () => {
+	it('styles only the dark layer behind the dialog', () => {
 		const classNameList = MacroBootstrapTestHelper.listStyledClassNames(sourceText);
-		expect([...new Set(classNameList)]).toEqual(['overlay', 'dialog', 'dialog-header', 'dialog-body', 'dialog-footer']);
+		expect([...new Set(classNameList)]).toEqual(['overlay']);
 	});
 });
 

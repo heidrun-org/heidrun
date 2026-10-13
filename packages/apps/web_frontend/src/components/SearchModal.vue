@@ -105,7 +105,7 @@ function parts(line: string, s: number, e: number) {
 
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
-    <div class="dialog" role="dialog" :aria-label="t('searchModal.dialogLabel')">
+    <div class="window-box" role="dialog" :aria-label="t('searchModal.dialogLabel')">
       <div class="bar">
         <input ref="input" v-model="q" class="q" :placeholder="t('searchModal.placeholder')" spellcheck="false" />
         <label class="opt"><input v-model="here" type="checkbox" />{{ t("searchModal.thisWorkspace") }}</label>
@@ -149,7 +149,7 @@ function parts(line: string, s: number, e: number) {
 /* No grey system background on buttons: each style below sets its own. */
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; padding: 56px 24px 24px; }
-.dialog {
+.window-box {
   width: min(980px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

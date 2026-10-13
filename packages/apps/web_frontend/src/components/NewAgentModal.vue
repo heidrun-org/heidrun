@@ -94,7 +94,7 @@ function onKey(e: KeyboardEvent) {
 
 <template>
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
-    <div class="dialog" role="dialog" aria-labelledby="na-title">
+    <div class="window-box" role="dialog" aria-labelledby="na-title">
       <div class="eyebrow top">
         <span>{{ t("newAgentModal.eyebrow") }}</span>
         <button class="forget" :title="t('newAgentModal.forgetTitle')" :aria-label="t('newAgentModal.forgetTitle')" @click="forget">{{ t("newAgentModal.forget") }}</button>
@@ -159,7 +159,7 @@ function onKey(e: KeyboardEvent) {
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.dialog {
+.window-box {
   width: min(620px, 100%); max-height: calc(100vh - 48px); overflow: auto; padding: 22px; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   display: flex; flex-direction: column; gap: 10px;

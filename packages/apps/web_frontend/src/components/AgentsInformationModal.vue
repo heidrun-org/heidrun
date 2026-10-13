@@ -94,7 +94,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="dialog" role="dialog" :aria-label="t('agentsInformationModal.dialogLabel')" tabindex="-1">
+    <div ref="el" class="window-box" role="dialog" :aria-label="t('agentsInformationModal.dialogLabel')" tabindex="-1">
       <header>
         <h2>{{ t("agentsInformationModal.title") }}</h2>
         <span class="detail">{{ t("agentsInformationModal.detail") }}</span>
@@ -168,7 +168,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /* No grey system background on buttons: each style below sets its own. */
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
-.dialog {
+.window-box {
   width: min(560px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
