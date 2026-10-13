@@ -222,7 +222,7 @@ async function askReview(ref: string, url: string, title: string) {
           <Icon name="check2" /> {{ t("sourceControlPanel.commit") }}
         </button>
         <SourceControlMenu
-          button-class="btn btn-primary"
+          button-class="btn btn-primary commit-arrow"
           icon="chevron-down"
           :label="t('sourceControlPanel.commitActions')"
           :items="commitItems"
@@ -419,11 +419,19 @@ async function askReview(ref: string, url: string, title: string) {
 
 <style scoped>
 .source-control { flex: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-.title { font-weight: 600; text-transform: uppercase; font-size: var(--font-size); color: var(--text-2); }
-.icon-button { padding: 2px 6px; color: var(--muted); border: none; }
-.icon-button:hover:not(:disabled) { background: var(--hover); color: var(--text); }
+.title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.source-control :deep(.icon-button) { padding: 2px 6px; color: var(--muted); border: none; }
+.source-control :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .message textarea { resize: vertical; padding-right: 32px; min-height: 34px; }
 .write-message { top: 4px; right: 4px; }
+/* The commit button is blue, as in VS Code: the rule .btn of styles.css makes every other button transparent. */
+.btn-group :deep(.btn-primary) {
+  --bs-btn-color: #fff; --bs-btn-bg: #2c63a8; --bs-btn-border-color: #2c63a8;
+  --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #3672bd; --bs-btn-hover-border-color: #3672bd;
+  --bs-btn-active-color: #fff; --bs-btn-active-bg: #3672bd; --bs-btn-active-border-color: #3672bd;
+  --bs-btn-disabled-color: #fff; --bs-btn-disabled-bg: #2c63a8; --bs-btn-disabled-border-color: #2c63a8;
+}
+.btn-group :deep(.commit-arrow) { flex: 0 0 auto; border-left-color: rgba(255, 255, 255, 0.4); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -8px; }
 .group-header { padding: 2px 8px; border-radius: 5px; min-height: 26px; }
 .group-header:hover { background: var(--hover-soft); }

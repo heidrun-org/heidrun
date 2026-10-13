@@ -107,8 +107,9 @@ export class TauriMock {
 					root: '/Users/demo/webwork/heidrun',
 					path: (payload as { path: string }).path.replace('/Users/demo/webwork/heidrun/', ''),
 				};
-			case 'file_open_external':
 			case 'git_status':
+				return TauriMockFixture.buildGitStatus();
+			case 'file_open_external':
 			case 'mobile_status':
 			case 'herdr_watch_panes':
 			case 'show_main_window':

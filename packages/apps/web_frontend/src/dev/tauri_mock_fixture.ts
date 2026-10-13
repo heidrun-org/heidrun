@@ -100,6 +100,39 @@ export class TauriMockFixture {
 	}
 
 	/**
+	 * The answer of the Tauri command `git_status`: one staged file and one changed file, as in the screenshots of the
+	 * Source control sidebar section.
+	 * - issue #305
+	 *
+	 * @returns The Git status of the repository of the fake workspace.
+	 */
+	static buildGitStatus(): unknown {
+		return {
+			root: '/Users/demo/webwork/heidrun',
+			branch: 'dev_jerome',
+			upstream: 'origin/dev_jerome',
+			ahead: 1,
+			behind: 0,
+			changed: 2,
+			untracked: 0,
+			files: [
+				{
+					status: 'M.',
+					path: 'docs/agents_rules/user_interface.md',
+				},
+				{
+					status: '.M',
+					path: 'CHANGELOG.md',
+				},
+			],
+			last_sha: 'f853124',
+			last_subject: 'Merge pull request #294',
+			last_time: null,
+			remote: null,
+		};
+	}
+
+	/**
 	 * The answer of the Tauri command `coding_agent_ask`. There is no coding agent in a browser, so the mock answers two
 	 * kinds of prompt. For the prompt of the clustered dynamic topics, it groups the new labels that start with the same
 	 * four letters under the shortest of them, for example "sidebar" and "sidebars" under "sidebar". For the prompt of the
