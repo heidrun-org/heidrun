@@ -64,6 +64,39 @@ describe('WorktreeCreate', () => {
 			expect(Fs.readFileSync(sourceFilePath, 'utf8')).toBe('compiled dependency');
 		});
 
+		it('installs the packages: the new worktree has a folder node_modules', () => {
+			const mainCheckoutPath = TestRepository.create();
+			const result = WorktreeCreate.run({
+				workingDirectory: mainCheckoutPath,
+				name: 'with-packages',
+			});
+			expect(Fs.existsSync(Path.join(result.worktreePath, 'node_modules'))).toBe(true);
+			expect(Fs.existsSync(Path.join(mainCheckoutPath, 'node_modules'))).toBe(false);
+		});
+
+		it('installs the packages from the lockfile and does not change the lockfile', () => {
+			const mainCheckoutPath = TestRepository.create();
+			const result = WorktreeCreate.run({
+				workingDirectory: mainCheckoutPath,
+				name: 'lockfile-kept',
+			});
+			const status = TestRepository.git(result.worktreePath, ['status', '--porcelain', '--', 'pnpm-lock.yaml']);
+			expect(status.trim()).toBe('');
+		});
+
+		it('throws with the output of pnpm when the installation fails, and keeps the worktree', () => {
+			const mainCheckoutPath = TestRepository.createWithOutdatedLockfile();
+			const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'bad-lockfile');
+			expect(() => {
+				WorktreeCreate.run({
+					workingDirectory: mainCheckoutPath,
+					name: 'bad-lockfile',
+				});
+			}).toThrow(/was created, but "pnpm install --frozen-lockfile" failed[\s\S]*lockfile/);
+			expect(Fs.existsSync(worktreePath)).toBe(true);
+			expect(Fs.existsSync(Path.join(worktreePath, 'node_modules'))).toBe(false);
+		});
+
 		it('creates the worktree without a clone when the main checkout has no debug folder', () => {
 			const mainCheckoutPath = TestRepository.create();
 			const result = WorktreeCreate.run({
