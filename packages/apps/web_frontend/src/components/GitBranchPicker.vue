@@ -142,7 +142,7 @@ function chooseFirst() {
             <button
               v-if="web !== null"
               type="button"
-              class="btn branch-link"
+              class="btn btn-outline theme-secondary border-0 branch-link"
               :data-link="branch.name"
               :title="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
               :aria-label="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
@@ -166,20 +166,18 @@ function chooseFirst() {
 /* The list touches the borders of the card: the body has no padding, so the separators and the scroll bar reach the edges. */
 .branch-picker-body { padding: 0; overflow: hidden; }
 .branch-search { padding: 12px; }
-.branch-list { max-height: 400px; overflow-y: auto; }
+.branch-list { max-height: min(560px, 60vh); overflow-y: auto; }
 .branch-item { position: relative; }
 .branch-row { padding: 10px 12px; row-gap: 4px; }
-.branch-first-line { min-height: 24px; }
+.branch-first-line { min-height: 28px; }
 /* Each row sits in its own wrapper, so the rows draw their own separator: one line under each row, edge to edge. */
 .branch-item .branch-row { width: 100%; padding-right: 44px; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
 .branch-name, .branch-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .branch-time { margin-left: auto; white-space: nowrap; }
-/* The link is only the icon, on the first line of the row, at the right edge. It shows while the pointer is over the row, and
-   while the keyboard focus is on it. */
+/* The link is only the icon, always visible, on the first line of the row, just after the time. Bootstrap draws the button:
+   the classes "btn btn-outline theme-secondary border-0" (Bootstrap 6 writes the outline button this way). */
 .branch-link {
-  position: absolute; right: 12px; top: 10px; height: 24px; display: flex; align-items: center;
-  padding: 0 4px; border: 0; background: transparent; color: var(--muted-2); opacity: 0;
+  position: absolute; right: 8px; top: 10px; width: 28px; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
 }
-.branch-item:hover .branch-link, .branch-link:focus-visible { opacity: 1; }
-.branch-link:hover { color: var(--fg-body); }
 </style>

@@ -111,9 +111,13 @@ describe('the list of the branch picker (GitBranchPicker.vue)', () => {
 describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
 
-	it('is only an icon, without border, and shows only while the pointer is over the row', () => {
-		expect(sourceText).toMatch(/\.branch-link\s*\{[^}]*border:\s*0[^}]*opacity:\s*0/);
-		expect(sourceText).toMatch(/\.branch-item:hover \.branch-link[^{]*\{\s*opacity:\s*1/);
+	it('is an outline Bootstrap button without border, and is always visible', () => {
+		expect(sourceText).toContain('btn btn-outline theme-secondary border-0 branch-link');
+		expect(sourceText).not.toMatch(/\.branch-link[^{]*\{[^}]*opacity:\s*0/);
+	});
+
+	it('lets the list grow to 560 pixels, and at most 60 percent of the window height', () => {
+		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:\s*min\(560px, 60vh\)/);
 	});
 });
 
