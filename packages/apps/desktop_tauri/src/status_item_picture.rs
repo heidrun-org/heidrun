@@ -21,6 +21,9 @@ const RADIUS: f32 = 18.0;
 /// agents.
 const BORDER_WIDTH: f32 = 2.0;
 
+/// Width of the border of a disc without agent, in pixels: thicker than `BORDER_WIDTH`.
+const EMPTY_BORDER_WIDTH: f32 = 3.5;
+
 /// Width of the glow around a disc that shows three agents or more, in pixels.
 const HALO_WIDTH: f32 = 4.0;
 
@@ -210,15 +213,22 @@ impl Digits {
 
 /// The color of the pixel at (`dx`, `dy`) from the center of a disc, without the digits. The disc is flat, with a thin
 /// border in its normal color. The number of agents sets how lit the inside of the disc is:
-/// - zero: the color is very faded;
+/// - zero: the disc is gray inside and on its border, the same gray for every status, with a thicker border;
 /// - one: the normal color;
 /// - two: a brighter color;
 /// - three or more: the brighter color, with a glow around the disc.
 fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
     let distance = (dx * dx + dy * dy).sqrt();
     let base = to_float(color);
-    let lit = if count >= 2 { base.map(|channel| channel + (1.0 - channel) * BRIGHT_WHITE_SHARE) } else { base };
-    let opacity = if count == 0 { FADED_OPACITY } else { 1.0 };
+    let is_empty = count == 0;
+    let edge = if is_empty { to_float(EMPTY_DOT_COLOR) } else { base };
+    let border_width = if is_empty { EMPTY_BORDER_WIDTH } else { BORDER_WIDTH };
+    let lit = match count {
+        0 => edge,
+        1 => base,
+        _ => base.map(|channel| channel + (1.0 - channel) * BRIGHT_WHITE_SHARE),
+    };
+    let opacity = if is_empty { FADED_OPACITY } else { 1.0 };
 
     let mut halo = TRANSPARENT;
     if count >= 3 {
@@ -227,8 +237,8 @@ fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
     }
 
     let coverage = (RADIUS + 0.5 - distance).clamp(0.0, 1.0);
-    let inside = (RADIUS - BORDER_WIDTH + 0.5 - distance).clamp(0.0, 1.0);
-    let border = [base[0], base[1], base[2], coverage * (1.0 - inside)];
+    let inside = (RADIUS - border_width + 0.5 - distance).clamp(0.0, 1.0);
+    let border = [edge[0], edge[1], edge[2], coverage * (1.0 - inside)];
     let fill = [lit[0], lit[1], lit[2], inside * opacity];
     over(fill, over(border, halo))
 }
@@ -515,8 +525,31 @@ mod tests {
     #[test]
     fn a_disc_without_agent_has_a_very_faded_color() {
         let faded = disc_pixel(0);
-        assert_eq!(&faded[..3], &RED[..]);
+        assert_eq!(&faded[..3], &EMPTY_DOT_COLOR[..]);
         assert!(faded[3] > 0 && faded[3] < 100, "the disc is faded: {faded:?}");
+    }
+
+    #[test]
+    fn the_empty_discs_of_every_status_have_the_same_gray_inside_and_on_the_border() {
+        let green: [u8; 3] = [52, 199, 89];
+        let blue: [u8; 3] = [10, 132, 255];
+        let at = |color: [u8; 3], offset: u32| {
+            let pixels = draw_slots(&[Slot::Disc { count: 0, color }], 0.0);
+            pixel(&pixels, SLOT_WIDTH, CENTER + offset, MIDDLE)
+        };
+        for offset in [12, 16] {
+            assert_eq!(at(RED, offset), at(green, offset));
+            assert_eq!(at(RED, offset), at(blue, offset));
+            assert_eq!(&at(RED, offset)[..3], &EMPTY_DOT_COLOR[..]);
+        }
+    }
+
+    #[test]
+    fn the_border_of_an_empty_disc_is_thicker_than_the_border_of_a_disc_with_agents() {
+        let inside_border = |count: usize| pixel(&draw_slots(&[disc(count)], 0.0), SLOT_WIDTH, CENTER + 15, MIDDLE);
+        assert!(inside_border(0)[3] > 250 && inside_border(1)[3] > 250);
+        assert_eq!(&inside_border(0)[..3], &EMPTY_DOT_COLOR[..]);
+        assert_ne!(&inside_border(1)[..3], &EMPTY_DOT_COLOR[..]);
     }
 
     #[test]
@@ -541,8 +574,8 @@ mod tests {
     }
 
     #[test]
-    fn a_disc_has_a_thin_border_in_its_normal_color_whatever_the_number_of_agents() {
-        for count in [0, 1, 2, 3] {
+    fn a_disc_has_a_thin_border_in_its_normal_color_for_one_agent_or_more() {
+        for count in [1, 2, 3] {
             let pixels = draw_slots(&[disc(count)], 0.0);
             let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
             assert_eq!(border, [RED[0], RED[1], RED[2], 255], "the border of {count} agents");
