@@ -83,7 +83,7 @@ Example, for the file `docs/process/index.md`:
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [team_workflow_on_a_shared_repository.md](team_workflow_on_a_shared_repository.md): the way several developers work on one repository.
+- [team_workflow.md](team_workflow.md): the way several developers work on one repository.
 ```
 
 ## Documentation folders

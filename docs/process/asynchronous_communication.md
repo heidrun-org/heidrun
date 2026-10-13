@@ -1,4 +1,4 @@
-# Asynchronous requests between collaborators
+# Asynchronous communication
 
 - Created: 12 October 2026
 - Last updated: 13 October 2026
@@ -16,15 +16,15 @@ This document describes a way for collaborators on one repository to send reques
 
 ## Method
 
-Example: Eric sends a request to Jérôme.
+Example: Alice sends a request to Bob.
 
-1. Eric opens a chat with a coding agent, Claude or Codex, and speaks to it with the push-to-talk key.
-2. Eric speaks for as long as needed. Five minutes is normal. Eric can add screenshots.
-3. Eric ends with a sentence like: "Create an issue for Jérôme. Include the screenshots. Write a document that explains what I just said." Then Eric presses enter.
+1. Alice opens a chat with a coding agent, Claude or Codex, and speaks to it with the push-to-talk key.
+2. Alice speaks for as long as needed. Five minutes is normal. Alice can add screenshots.
+3. Alice ends with a sentence like: "Create an issue for Bob. Include the screenshots. Write a document that explains what I just said." Then Alice presses enter.
 4. The coding agent writes a document that explains the request, and creates a GitHub issue with this document and, if wanted, the screenshots.
-5. The document tags Jérôme, the receiver. Jérôme finds the issues that wait for him with a GitHub search.
-6. The document can be very long, for example five pages. Jérôme does not read it by hand. Jérôme gives the address of the issue to a coding agent, Claude or Codex, and writes "read this, we are going to talk about it".
-7. The coding agent gives a summary. Then Jérôme speaks with the coding agent about the document, with the push-to-talk key. Jérôme reads the document through this conversation.
+5. The document tags Bob, the receiver. Bob finds the issues that are addressed to Bob with a GitHub search.
+6. The document can be very long, for example five pages. Bob does not read it by hand. Bob gives the address of the issue to a coding agent, Claude or Codex, and writes "read this, we are going to talk about it".
+7. The coding agent gives a summary. Then Bob speaks with the coding agent about the document, with the push-to-talk key. Bob reads the document through this conversation.
 
 ## Why
 
@@ -34,7 +34,7 @@ Example: Eric sends a request to Jérôme.
 
 ## Test
 
-[Issue 278](https://github.com/heidrun-org/heidrun/issues/278) is the first test of the method. Jérôme dictated the request to a coding agent, and the coding agent wrote the document and created the issue.
+[Issue 278](https://github.com/heidrun-org/heidrun/issues/278) is the first test of the method. A collaborator dictated the request to a coding agent, and the coding agent wrote the document and created the issue.
 
 ## Open points
 

@@ -7,5 +7,6 @@
 
 This folder describes how the people who work on Heidrun work together. Each document in this folder explains one part of the process.
 
-- [team_workflow_on_a_shared_repository.md](team_workflow_on_a_shared_repository.md): the way several developers work on one repository when coding agents write much of the code, with a full test before every merge.
-- [asynchronous_requests_between_collaborators.md](asynchronous_requests_between_collaborators.md): the way collaborators send requests to each other without a meeting, with a GitHub issue that a coding agent writes and a coding agent helps to read.
+- [team_workflow.md](team_workflow.md): the way several developers work on one repository when coding agents write much of the code, with a full test before every merge.
+- [agreement_on_product_decisions.md](agreement_on_product_decisions.md): the way collaborators agree on product decisions without a meeting, with a GitHub issue that each collaborator answers in a comment.
+- [asynchronous_communication.md](asynchronous_communication.md): the way collaborators send requests to each other without a meeting, with a GitHub issue that a coding agent writes and a coding agent helps to read.
