@@ -45,7 +45,7 @@ The command runs the tests of the six packages, and ends with a non-zero exit co
 | `pnpm --filter web_frontend test` | The Vitest tests of `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`. |
 | `pnpm --filter desktop_tauri test` | The `cargo test` tests of `packages/apps/desktop_tauri`. The tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
-| `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
+| `pnpm --filter raw_coding_agent_cli test` | The Rust tests (`cargo test`) of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter change_log_generator test` | The Vitest tests of `packages/dev_tools/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
 | `pnpm --filter worktree_tools test` | The Vitest tests of `packages/dev_tools/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
 
@@ -134,8 +134,8 @@ Options:
 | --- | --- |
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
-| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli). You need `codex` or `claude` installed and signed in. |
-| `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default) or `claude`. |
+| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the executable of the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. You need `codex`, `claude`, or `agy` installed and signed in, and the Rust tools. |
+| `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default), `claude`, or `agy`. |
 | `--help` | Shows the description of the command and its options. |
 
 The command exits with code 1 and prints an error message when a tag does not exist.

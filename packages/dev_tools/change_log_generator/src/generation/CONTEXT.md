@@ -8,7 +8,7 @@ Runs the whole generation: resolves the range, reads the pull requests, writes t
 
 ## Rules
 - This folder uses `git/` to read, and `rendering/` to write the texts.
-- Only this folder imports the package `raw_coding_agent_cli`, and only when the option `--ai` is used.
+- Only this folder runs the executable of the package `raw_coding_agent_cli`, with `cargo run`, and only when the option `--ai` is used.
 - Nothing here imports from `src/cli.ts`.
 
 ## Background

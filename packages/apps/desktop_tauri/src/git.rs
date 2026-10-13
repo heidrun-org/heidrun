@@ -4,6 +4,7 @@
 //! found (Homebrew paths) and use the accounts already connected on the Mac:
 //! the app never handles a token.
 
+use raw_coding_agent_cli::login_shell;
 use serde::Serialize;
 use std::time::Duration;
 use tokio::process::Command;
@@ -260,17 +261,6 @@ pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
             read_only
         }
         _ => false,
-    }
-}
-
-/// The shell that runs a tool through the login: the shell of the user when it is a POSIX shell, `/bin/zsh` otherwise.
-/// It needs a POSIX shell: fish and friends fall back to zsh (login PATH too).
-pub(crate) fn login_shell() -> String {
-    let user_shell = std::env::var("SHELL").unwrap_or_default();
-    if user_shell.ends_with("/zsh") || user_shell.ends_with("/bash") || user_shell.ends_with("/sh") {
-        user_shell
-    } else {
-        "/bin/zsh".into()
     }
 }
 
