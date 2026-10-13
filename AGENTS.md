@@ -20,6 +20,7 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
 
 - [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
+- [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
 
@@ -98,7 +99,7 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
-The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub" for how to create an issue.
+The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
 
 ### Issue Fix Setup
 
@@ -113,16 +114,18 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 The Issue Fix Completion starts when the developer is satisfied with the change.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
-2. Create a pull request from the temporary branch.
-3. Merge the pull request into the personal development branch of the developer, for example `dev_jerome`.
+2. Create a pull request (on GitLab, a merge request) from the temporary branch.
+3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome`.
 4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
 5. Close the issue.
 
-## GitHub
+## GitHub and GitLab
+
+Every command for GitHub in this section has a matching command for GitLab, as [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) requires. This repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab.
 
 ### Creating an issue
 
-Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
+Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
 
 ### Attaching an image to an issue
 
@@ -130,6 +133,11 @@ Attach every screenshot, image, or video related to an issue with the `--attach`
 
 - When you create the issue: `gh issue create --title "<title>" --body "<body>" --attach './screenshot.png#Alt text'`
 - When the issue already exists: `gh issue edit <issue number> --attach './screenshot.png#Alt text'`
+
+On GitLab, the `--attach` option of the `glab` command works in the same way, but it is experimental, and it takes a file path without alternative text.
+
+- When you create the issue: `glab issue create --title "<title>" --description "<body>" --attach './screenshot.png'`
+- When the issue already exists: `glab issue update <issue number> --attach './screenshot.png'`
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
 
