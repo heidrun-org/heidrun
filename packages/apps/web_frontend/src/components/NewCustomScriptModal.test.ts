@@ -268,6 +268,71 @@ describe("NewCustomScriptModal", () => {
     expect(newCustomScriptModal.open).toBe(false);
   });
 
+  it("puts the current work directory below the description and above the command line", async () => {
+    const { wrapper } = await mountNewCustomScriptModal();
+    const description = wrapper.get("#new-script-description").element;
+    const folder = wrapper.get("#new-script-folder").element;
+    const command = wrapper.get("#new-script-command").element;
+    expect(wrapper.get("label[for=new-script-folder]").text()).toBe("Current work directory");
+    expect(description.compareDocumentPosition(folder) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(folder.compareDocumentPosition(command) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("creates a script of the kind Command line that runs in the chosen folder", async () => {
+    const { wrapper, project } = await mountNewCustomScriptModal();
+    await wrapper.get("#new-script-name").setValue("dev");
+    await wrapper.get("#new-script-folder").setValue("packages/apps/desktop_tauri");
+    await wrapper.get("#new-script-command").setValue("pnpm dev");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(project.byWorkspace["w1"]!.config.actions[1]).toMatchObject({ command: "pnpm dev", cwd: "packages/apps/desktop_tauri" });
+  });
+
+  it("creates a script of the kind Command line without a work directory when the field is empty", async () => {
+    const { wrapper, project } = await mountNewCustomScriptModal();
+    await wrapper.get("#new-script-name").setValue("test");
+    await wrapper.get("#new-script-command").setValue("make test");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(project.byWorkspace["w1"]!.config.actions[1].cwd).toBeUndefined();
+  });
+
+  it("does not allow Create for a script of the kind Command line whose folder is outside the repository", async () => {
+    const { wrapper } = await mountNewCustomScriptModal();
+    await wrapper.get("#new-script-name").setValue("test");
+    await wrapper.get("#new-script-command").setValue("make test");
+    await wrapper.get("#new-script-folder").setValue("../other");
+    expect(wrapper.get("button[type=submit]").attributes("disabled")).toBeDefined();
+    expect(wrapper.get("#new-script-folder").classes()).toContain("is-invalid");
+  });
+
+  it("fills the work directory of an imported script, and saves a change or a cleared field", async () => {
+    const first = await mountNewCustomScriptModal();
+    first.wrapper.unmount();
+    document.body.innerHTML = "";
+    const { project } = await import("../stores/project");
+    const { newCustomScriptModal } = await import("../stores/newCustomScript");
+    const { default: NewCustomScriptModal } = await import("./NewCustomScriptModal.vue");
+    project.byWorkspace["w1"]!.config.actions[0].cwd = "packages/web";
+    newCustomScriptModal.editedId = "dev";
+    newCustomScriptModal.open = true;
+    const wrapper = mount(NewCustomScriptModal, { attachTo: document.body });
+    await flushPromises();
+    expect((wrapper.get("#new-script-folder").element as HTMLInputElement).value).toBe("packages/web");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(project.byWorkspace["w1"]!.config.actions[0].cwd).toBe("packages/web");
+
+    newCustomScriptModal.editedId = "dev";
+    newCustomScriptModal.open = true;
+    const second = mount(NewCustomScriptModal, { attachTo: document.body });
+    await flushPromises();
+    await second.get("#new-script-folder").setValue("");
+    await second.get("form").trigger("submit");
+    await flushPromises();
+    expect(project.byWorkspace["w1"]!.config.actions[0].cwd).toBeUndefined();
+  });
+
   it("closes without creating a script when the person clicks Cancel", async () => {
     const { wrapper, project, newCustomScriptModal } = await mountNewCustomScriptModal();
     await wrapper.get("#new-script-command").setValue("make test");
