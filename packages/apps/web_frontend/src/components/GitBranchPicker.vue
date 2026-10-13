@@ -176,8 +176,8 @@ function chooseFirst() {
 </template>
 
 <style scoped>
-/* The inner side of the zone keeps 4 pixels of background: the counts zone touches it. */
-.git-branch-zone { margin-right: -4px; padding-right: 4px; }
+/* The zone is the first of a button group: its left corners are round, and its right corners, where the next zone touches it, are square. */
+.git-branch-zone { margin-right: -4px; padding-right: 4px; border-radius: 6px 0 0 6px; }
 /* The list touches the borders of the card: the body has no padding, so the separators and the scroll bar reach the edges. */
 .branch-picker-body { padding: 0; overflow: hidden; }
 .branch-search { padding: 12px; }

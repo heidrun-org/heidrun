@@ -71,9 +71,10 @@ const detailRows = computed(() => {
 
 <style scoped>
 .git-status { align-self: stretch; color: var(--muted-2); font-weight: 600; }
-/* The two zones touch each other: the inner sides keep 4 pixels of background, the outer sides keep the 11 pixels of the
-   other status bar sections, so the text of the zones stays in place. */
-.git-counts-zone { margin-left: -4px; padding-left: 4px; }
+/* The three zones are one button group: the zones touch each other, and only the two ends of the group have round corners. The
+   inner sides keep 4 pixels of background, the outer sides keep the 11 pixels of the other status bar sections, so the text of
+   the zones stays in place. The counts zone is the last: its right corners are round, and its left corners are square. */
+.git-counts-zone { margin-left: -4px; padding-left: 4px; border-radius: 0 6px 6px 0; }
 .behind, .ahead { display: flex; align-items: center; gap: 1px; }
 .count { font-variant-numeric: tabular-nums; }
 </style>

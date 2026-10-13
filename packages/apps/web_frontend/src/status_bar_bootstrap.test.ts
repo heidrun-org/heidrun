@@ -131,6 +131,17 @@ describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 	});
 });
 
+describe('the button group of the three zones of the Git section', () => {
+	it('rounds only the two ends of the group: the inner corners, where two zones touch, are square', () => {
+		const branchText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+		const mergeText = StatusBarBootstrapTestHelper.readComponent('GitMergeUpstream.vue');
+		const countsText = StatusBarBootstrapTestHelper.readComponent('GitStatusSummary.vue');
+		expect(branchText).toMatch(/\.git-branch-zone\s*\{[^}]*border-radius:\s*6px 0 0 6px/);
+		expect(mergeText).toMatch(/\.git-merge-zone\s*\{[^}]*border-radius:\s*0\s*;/);
+		expect(countsText).toMatch(/\.git-counts-zone\s*\{[^}]*border-radius:\s*0 6px 6px 0/);
+	});
+});
+
 describe('the merge zone (GitMergeUpstream.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitMergeUpstream.vue');
 
