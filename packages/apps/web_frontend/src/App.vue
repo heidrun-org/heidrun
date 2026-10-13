@@ -25,6 +25,7 @@ import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
+import { goBackInPaneFocusHistory, goForwardInPaneFocusHistory } from "./stores/pane_focus_history";
 import { search } from "./stores/search";
 import { COLLAPSED_SIDEBAR_WIDTH, openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
@@ -191,6 +192,14 @@ function onKey(e: KeyboardEvent) {
   // ⌘1 … ⌘9: workspace by position.
   const digit = /^Digit([1-9])$/.exec(e.code);
   if (digit && !e.altKey && !e.shiftKey) return run(() => selectWorkspaceAt(Number(digit[1]) - 1));
+  // ⌘[ / ⌘]: back / forward through the panes that had the focus, as in Chrome. By e.key: on a French keyboard,
+  // "[" and "]" need ⇧⌥, and the physical key of "[" is another character.
+  if (e.key === "[") {
+    return run(() => goBackInPaneFocusHistory());
+  }
+  if (e.key === "]") {
+    return run(() => goForwardInPaneFocusHistory());
+  }
 
   switch (e.code) {
     case "KeyP":

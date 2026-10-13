@@ -24,6 +24,7 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 
 - [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
 - [docs/agents_rules/glossary_code_hosting.md](docs/agents_rules/glossary_code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it with the glossary when you change the Code hosting sidebar section.
+- [docs/agents_rules/glossary_pane_focus_history.md](docs/agents_rules/glossary_pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it with the glossary when you change the top bar or the focus of the panes.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -38,6 +39,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
+  - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
   - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
   - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
