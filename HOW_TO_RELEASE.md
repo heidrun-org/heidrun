@@ -19,7 +19,7 @@ Replace `<version>` with the new version, for example `0.2.5`.
 7. Run `pnpm release:change_log --ai --to v<version>` after step 6, because the command needs the git tag. Always use `--ai` for a release, so that a coding agent sorts the pull requests into the categories of Keep a Changelog. Read the new section of `CHANGELOG.md`, then commit and push. For the release 0.2.5, the section `[Unreleased]` was out of date: it stopped at [pull request 119](https://github.com/heidrun-org/heidrun/pull/119), while the last merged pull request was [pull request 244](https://github.com/heidrun-org/heidrun/pull/244).
 8. Know that the text of the GitHub release page does not come from `CHANGELOG.md`. It is the file `docs/release_notes/prefix.md`, then the notes file of step 4, then the list of pull requests that GitHub generates. To publish the change log, push `CHANGELOG.md`.
 9. Open the release page on GitHub. Check that the disk image is attached and that the release is marked Latest. Download the disk image and open it once.
-10. Open a pull request from `dev_jerome` to `main`, and merge it. The git tag stays on its commit, and `main` then contains that commit.
+10. Open a pull request from `dev_jerome` to `dev`, and merge it. Then open a pull request from `dev` to `main`, and merge it. The branch `dev` collects the finished changes before they go to `main`, as `CONTRIBUTING.md` says. The git tag stays on its commit, and `main` then contains that commit. Never delete the branch `dev_jerome`.
 
 ## Open points
 
