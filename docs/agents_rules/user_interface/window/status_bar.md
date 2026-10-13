@@ -21,8 +21,8 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 - The Git branch status bar section has three click zones, from left to right. Each zone is a status bar section with its own rounded background ([issue #350](https://github.com/heidrun-org/heidrun/issues/350)).
   - The branch zone shows the Git icon, the branch name, and a star when the working folder has an uncommitted change. A click on it opens the branch picker.
-  - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository.
   - The merge zone shows a turning-arrows icon (`arrow-repeat`), like "Synchronize Changes" of Visual Studio Code. See the section "Merge with the upstream branch" below.
+  - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository.
 - The zones touch each other: each side between two zones has 4 pixels of background, and the two outer sides have the 11 pixels of the other status bar sections. The text of the zones does not move.
 - The branch picker is a card above the branch zone, 408 pixels wide. At the top it has a search field with the text "Select a branch to check out". Under it, the local branches, the most recently committed first. Each row shows the Git icon, the name of the branch, a check mark for the current branch, and the time of the last commit on the first line, then the author, the short hash, and the subject of the last commit on the second line.
 - The card has no padding around the list: the separators between the rows touch the left and right borders of the card, and the scroll bar of the list touches the right border. Only the search field has space around it. The list scrolls inside the card when it is longer than 560 pixels, and the list is at most 60 percent of the window height.

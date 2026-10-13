@@ -85,8 +85,8 @@ function onClick() {
 </template>
 
 <style scoped>
-/* The inner side of the zone keeps 4 pixels of background: the counts zone touches it. */
-.git-merge-zone { margin-left: -4px; padding-left: 4px; }
+/* Both sides of the zone keep 4 pixels of background: the branch zone and the counts zone touch it. */
+.git-merge-zone { margin: 6px -4px; padding: 0 4px; }
 /* The merge cannot start without upstream branch: the icon fades itself, because the application never fades a disabled control. */
 .git-merge-zone-disabled { opacity: 0.35; }
 </style>
