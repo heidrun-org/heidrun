@@ -19,6 +19,16 @@ describe("TopBar", () => {
     expect(wrapper.text()).not.toContain("Heidrun");
   });
 
+  it("shows the buttons Back and Forward, in this order, just on the left of the search button", () => {
+    const wrapper = mount(TopBar);
+    const back = wrapper.get('[data-direction="back"]').element;
+    const forward = wrapper.get('[data-direction="forward"]').element;
+    const search = wrapper.get(".search").element;
+    expect(back.compareDocumentPosition(forward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(forward.compareDocumentPosition(search) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(forward.parentElement?.nextElementSibling).toBe(search);
+  });
+
   it("still shows the button of the left sidebar and the search button", () => {
     const wrapper = mount(TopBar);
     expect(wrapper.find(".icon-btn").exists()).toBe(true);

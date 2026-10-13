@@ -9,4 +9,4 @@
 
 This folder holds the rules of the three levels of Heidrun: the workspace, the tabs, and the panes.
 
-A workspace holds tabs, and a tab holds panes. Read `workspace.md`, then `tabs.md`, then `panes.md`.
+A workspace holds tabs, and a tab holds panes. Read `workspace.md`, then `tabs.md`, then `panes.md`. The file `pane_focus_history.md` says how Heidrun remembers the panes that had the focus, and how the Back button and the Forward button of the top bar return to them.
