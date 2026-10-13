@@ -47,6 +47,10 @@ const defaults = {
   fontSize: FONT_DEFAULT,
   leftOpen: true,
   rightOpen: true,
+  /** The left sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
+  leftCollapsed: false,
+  /** The right sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
+  rightCollapsed: false,
   /**
    * "select": dragging selects text in the terminal (⌘C to copy).
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.

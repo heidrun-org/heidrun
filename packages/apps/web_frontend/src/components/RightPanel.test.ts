@@ -35,6 +35,7 @@ function snapshotWithCalls(): SessionSnapshot {
 describe("RightPanel", () => {
   afterEach(() => {
     settings.rightSidebarSection = "toHandle";
+    settings.rightCollapsed = false;
     notes.list = [];
     settings.notesShowAll = false;
     state.snapshot = null;
@@ -168,5 +169,31 @@ describe("RightPanel button Needs you", () => {
     dismiss(allPanes.value.find((pane) => pane.pane_id === "p9")!);
     await wrapper.vm.$nextTick();
     expect(wrapper.findAll(".navigation-bar button")[0].get(".badge").text()).toBe("1");
+  });
+
+  it("shows an icon before the title of each sidebar section: a bell, a note, and a speech bubble", () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    expect(wrapper.findAll(".navigation-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
+  });
+
+  it("collapses to the sidebar icon bar after a click on the collapse button, and expands after a click on the expand button", async () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.get(".collapse-button").trigger("click");
+    expect(settings.rightCollapsed).toBe(true);
+    expect(wrapper.find(".navigation-bar").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar .icons button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
+    expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
+    await wrapper.get(".expand-button").trigger("click");
+    expect(settings.rightCollapsed).toBe(false);
+    expect(wrapper.find(".navigation-bar").exists()).toBe(true);
+  });
+
+  it("expands to the sidebar section of an icon after a click on the icon", async () => {
+    settings.rightCollapsed = true;
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.findAll(".sidebar-icon-bar .icons button")[2].trigger("click");
+    expect(settings.rightCollapsed).toBe(false);
+    expect(settings.rightSidebarSection).toBe("chats");
+    expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
   });
 });

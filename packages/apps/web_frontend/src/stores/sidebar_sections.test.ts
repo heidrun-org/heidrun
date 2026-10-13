@@ -5,6 +5,8 @@ import { openSidebarSection } from "./sidebar_sections";
 beforeEach(() => {
   settings.leftOpen = true;
   settings.rightOpen = true;
+  settings.leftCollapsed = false;
+  settings.rightCollapsed = false;
   settings.leftSidebarSection = "actions";
   settings.rightSidebarSection = "notes";
 });
@@ -44,5 +46,21 @@ describe("openSidebarSection", () => {
     openSidebarSection("toHandle");
     expect(settings.leftOpen).toBe(false);
     expect(settings.leftSidebarSection).toBe("git");
+  });
+
+  it.each(["actions", "git"] as const)("expands the collapsed left sidebar when the sidebar section is %s", (sidebarSection) => {
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
+    openSidebarSection(sidebarSection);
+    expect(settings.leftCollapsed).toBe(false);
+    expect(settings.rightCollapsed).toBe(true);
+  });
+
+  it.each(["toHandle", "notes", "chats"] as const)("expands the collapsed right sidebar when the sidebar section is %s", (sidebarSection) => {
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
+    openSidebarSection(sidebarSection);
+    expect(settings.rightCollapsed).toBe(false);
+    expect(settings.leftCollapsed).toBe(true);
   });
 });

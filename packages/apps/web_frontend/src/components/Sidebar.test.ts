@@ -49,6 +49,7 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   settings.leftSidebarSection = "actions";
+  settings.leftCollapsed = false;
 });
 
 describe("Sidebar without the list of workspaces", () => {
@@ -109,5 +110,39 @@ describe("Sidebar navigation bar", () => {
     expect(settings.leftSidebarSection).toBe("actions");
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
+  });
+});
+
+describe("Sidebar collapsed to the sidebar icon bar", () => {
+  it("shows an icon before the title of each sidebar section: a play button for Scripts, and the Git logo for Git", async () => {
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.findAll(".navigation-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
+  });
+
+  it("collapses after a click on the collapse button, and shows only one icon for each sidebar section", async () => {
+    const { wrapper } = await mountSidebar();
+    await wrapper.get(".collapse-button").trigger("click");
+    expect(settings.leftCollapsed).toBe(true);
+    expect(wrapper.find(".navigation-bar").exists()).toBe(false);
+    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar .icons button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
+    expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
+  });
+
+  it("expands to the sidebar section of an icon after a click on the icon", async () => {
+    settings.leftCollapsed = true;
+    const { wrapper } = await mountSidebar();
+    await wrapper.findAll(".sidebar-icon-bar .icons button")[1].trigger("click");
+    expect(settings.leftCollapsed).toBe(false);
+    expect(settings.leftSidebarSection).toBe("git");
+    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+  });
+
+  it("expands to the selected sidebar section after a click on the expand button", async () => {
+    settings.leftCollapsed = true;
+    const { wrapper } = await mountSidebar();
+    await wrapper.get(".expand-button").trigger("click");
+    expect(settings.leftCollapsed).toBe(false);
+    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
   });
 });

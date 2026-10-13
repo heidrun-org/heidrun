@@ -98,6 +98,10 @@ The row of small rounded buttons in the header of the Chats sidebar section, bel
 
 A row of buttons inside a sidebar. Each button shows one sidebar section of that sidebar.
 
+### Sidebar icon bar
+
+The narrow vertical bar that a sidebar becomes when the developer collapses the sidebar, like the bar of icons of Visual Studio Code. It shows the expand button, then one icon for each sidebar section of that sidebar. A click on an icon expands the sidebar to that sidebar section.
+
 ### Status bar
 
 The horizontal row at the bottom of the window. It holds status bar sections.
