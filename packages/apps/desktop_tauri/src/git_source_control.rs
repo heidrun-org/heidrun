@@ -1,5 +1,6 @@
 //! The Git actions of the Source control sidebar section: stage, unstage, discard, commit, stash, pull, push,
-//! fetch, and the diff that a coding agent reads to write the commit message.
+//! fetch, the list and the checkout of the local branches (the branch picker of the status bar), and the diff that a
+//! coding agent reads to write the commit message.
 //!
 //! Each command accepts only a root that `git_status` gave before (`known_root`), and only paths inside it
 //! (`safe_rel`). The paths are literal: no globs, no pathspec magic.
@@ -145,6 +146,81 @@ pub async fn git_sync(root: String, action: String) -> Result<String, String> {
     }
 }
 
+/// One local branch, as the branch picker of the status bar shows it.
+#[derive(serde::Serialize, Debug, PartialEq)]
+pub struct GitBranch {
+    /// The name of the branch.
+    pub name: String,
+    /// True for the branch that is checked out.
+    pub is_current: bool,
+    /// The short hash of the last commit of the branch.
+    pub last_sha: String,
+    /// The subject of the last commit of the branch.
+    pub last_subject: String,
+    /// The author of the last commit of the branch.
+    pub last_author: String,
+    /// The time of the last commit of the branch, in seconds since 1970.
+    pub last_time: i64,
+    /// True when this computer knows a branch of the same name on the remote repository `origin`: the remote-tracking
+    /// branch exists. A push makes it exist at once, and a fetch updates it. It is a local and fast answer, and it can
+    /// be out of date.
+    pub has_remote_tracking: bool,
+}
+
+/// Lists the local branches, the most recently committed first.
+#[tauri::command]
+pub async fn git_branches(root: String) -> Result<Vec<GitBranch>, String> {
+    known_root(&root)?;
+    let separator = "\u{1f}";
+    let format = format!(
+        "--format=%(HEAD){separator}%(refname:short){separator}%(objectname:short){separator}%(authorname){separator}%(committerdate:unix){separator}%(contents:subject)"
+    );
+    let text = run(&root, &["for-each-ref", "--sort=-committerdate", &format, "refs/heads"], LOCAL_TIMEOUT).await?;
+    let tracked = run(&root, &["for-each-ref", "--format=%(refname:short)", "refs/remotes/origin"], LOCAL_TIMEOUT)
+        .await
+        .unwrap_or_default();
+    let tracked_names: std::collections::HashSet<&str> =
+        tracked.lines().filter_map(|name| name.strip_prefix("origin/")).collect();
+    let mut branches: Vec<GitBranch> = text.lines().filter_map(|line| parse_branch(line, separator)).collect();
+    for branch in branches.iter_mut() {
+        branch.has_remote_tracking = tracked_names.contains(branch.name.as_str());
+    }
+    Ok(branches)
+}
+
+/// Lists the branches that the remote repository `origin` has, by asking the remote repository (`git ls-remote`). It
+/// needs the network, so the caller keeps the answer for a day.
+#[tauri::command]
+pub async fn git_remote_branches(root: String) -> Result<Vec<String>, String> {
+    known_root(&root)?;
+    let text = run(&root, &["ls-remote", "--heads", "origin"], REMOTE_TIMEOUT).await?;
+    Ok(text.lines().filter_map(|line| line.split('\t').nth(1)).filter_map(|reference| reference.strip_prefix("refs/heads/")).map(str::to_string).collect())
+}
+
+/// Parses one line of `git for-each-ref` that `git_branches` asked for.
+fn parse_branch(line: &str, separator: &str) -> Option<GitBranch> {
+    let mut fields = line.splitn(6, separator);
+    let head = fields.next()?;
+    let name = fields.next()?.to_string();
+    let last_sha = fields.next()?.to_string();
+    let last_author = fields.next()?.to_string();
+    let last_time = fields.next()?.parse().unwrap_or(0);
+    let last_subject = fields.next().unwrap_or("").to_string();
+    Some(GitBranch { name, is_current: head == "*", last_sha, last_subject, last_author, last_time, has_remote_tracking: false })
+}
+
+/// Checks out the local branch `branch`. Git refuses when a change of the working folder would be lost, and its
+/// message is the error.
+#[tauri::command]
+pub async fn git_checkout(root: String, branch: String) -> Result<String, String> {
+    known_root(&root)?;
+    let reference = format!("refs/heads/{branch}");
+    run(&root, &["rev-parse", "--verify", "--quiet", &reference], LOCAL_TIMEOUT)
+        .await
+        .map_err(|_| format!("unknown branch: {branch}"))?;
+    run(&root, &["switch", "--quiet", &branch], LOCAL_TIMEOUT).await
+}
+
 /// The diff of the staged files, or of every change when nothing is staged, cut to `MAX_DIFF` bytes. A coding
 /// agent reads it to write the commit message.
 #[tauri::command]
@@ -277,6 +353,73 @@ mod tests {
         let staged = git_commit_diff(repository.root()).await.unwrap();
         assert!(staged.contains("+other"));
         assert!(staged.contains("+second") == false);
+    }
+
+    #[tokio::test]
+    async fn lists_the_local_branches_and_checks_one_out() {
+        let repository = Repository::new("branches");
+        repository.git(&["branch", "other"]);
+        let branches = git_branches(repository.root()).await.unwrap();
+        let names: Vec<&str> = branches.iter().map(|branch| branch.name.as_str()).collect();
+        assert_eq!(names.len(), 2);
+        assert!(names.contains(&"main") && names.contains(&"other"));
+        let main = branches.iter().find(|branch| branch.name == "main").unwrap();
+        assert!(main.is_current);
+        assert_eq!(main.last_subject, "first");
+        assert_eq!(main.last_author, "Test");
+        git_checkout(repository.root(), "other".into()).await.unwrap();
+        assert_eq!(repository.git(&["branch", "--show-current"]), "other\n");
+    }
+
+    #[tokio::test]
+    async fn tells_which_local_branches_have_a_remote_tracking_branch() {
+        let repository = Repository::new("remote_tracking");
+        repository.git(&["branch", "pushed"]);
+        repository.git(&["branch", "only_local"]);
+        repository.git(&["update-ref", "refs/remotes/origin/pushed", "HEAD"]);
+        let branches = git_branches(repository.root()).await.unwrap();
+        let has_remote = |name: &str| branches.iter().find(|branch| branch.name == name).unwrap().has_remote_tracking;
+        assert!(has_remote("pushed"));
+        assert!(has_remote("only_local") == false);
+        assert!(has_remote("main") == false);
+    }
+
+    #[tokio::test]
+    async fn lists_the_branches_of_the_remote_repository() {
+        let repository = Repository::new("remote_branches");
+        let remote = std::env::temp_dir().join(format!("heidrun_source_control_remote_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&remote);
+        std::process::Command::new("git").args(["init", "--quiet", "--bare"]).arg(&remote).output().unwrap();
+        repository.git(&["remote", "add", "origin", &remote.to_string_lossy()]);
+        repository.git(&["branch", "other"]);
+        repository.git(&["push", "--quiet", "origin", "main", "other"]);
+        repository.git(&["branch", "only_local"]);
+        let mut names = git_remote_branches(repository.root()).await.unwrap();
+        names.sort();
+        assert_eq!(names, vec!["main".to_string(), "other".to_string()]);
+        let _ = std::fs::remove_dir_all(&remote);
+    }
+
+    #[tokio::test]
+    async fn refuses_to_check_out_an_unknown_branch_and_a_branch_that_looks_like_an_option() {
+        let repository = Repository::new("checkout_refused");
+        assert!(git_checkout(repository.root(), "missing".into()).await.is_err());
+        assert!(git_checkout(repository.root(), "--detach".into()).await.is_err());
+        assert_eq!(repository.git(&["branch", "--show-current"]), "main\n");
+    }
+
+    #[tokio::test]
+    async fn keeps_the_branch_when_a_change_would_be_lost() {
+        let repository = Repository::new("checkout_conflict");
+        repository.git(&["switch", "--quiet", "--create", "other"]);
+        repository.write("kept.txt", "other\n");
+        repository.git(&["commit", "--quiet", "--all", "--message", "other"]);
+        repository.git(&["switch", "--quiet", "main"]);
+        repository.write("kept.txt", "local\n");
+        let answer = git_checkout(repository.root(), "other".into()).await;
+        assert!(answer.is_err());
+        assert_eq!(repository.git(&["branch", "--show-current"]), "main\n");
+        assert_eq!(repository.read("kept.txt").as_deref(), Some("local\n"));
     }
 
     #[tokio::test]

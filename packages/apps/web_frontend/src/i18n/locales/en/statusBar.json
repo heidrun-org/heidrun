@@ -21,5 +21,13 @@
   "gitToUpload": "Commits to upload",
   "gitChangedFiles": "Changed files",
   "gitUntrackedFiles": "Untracked files",
-  "gitLastCommit": "Last commit"
+  "gitLastCommit": "Last commit",
+  "gitBranchPickerLabel": "Branches",
+  "gitBranchPickerTitle": "Switch the Git branch",
+  "gitBranchPickerPlaceholder": "Select a branch to check out",
+  "gitBranchPickerEmpty": "No branch matches",
+  "gitBranchPickerCurrent": "Current branch",
+  "gitCountsTitle": "Details of the Git repository",
+  "gitBranchPickerOpenOn": "Open on {forge}",
+  "gitBranchPickerOnlyLocal": "This branch is only on your computer: push it to see its page"
 }

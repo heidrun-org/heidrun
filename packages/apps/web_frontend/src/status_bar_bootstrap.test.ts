@@ -65,9 +65,69 @@ describe('the card of the git branch (GitStatusSummary.vue)', () => {
 	});
 
 	it('writes style rules only for the item in the status bar, and not for the card', () => {
-		const allowedClassNameList = ['git-status', 'behind', 'ahead', 'count'];
+		const allowedClassNameList = ['git-status', 'git-counts-zone', 'behind', 'ahead', 'count'];
 		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
 		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
+describe('the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('uses the Bootstrap popover, list group, and form control classes', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'list-group', 'list-group-item-action', 'form-control']) {
+			expect(sourceText).toContain(className);
+		}
+	});
+
+	it('writes style rules only for the zone in the status bar and for the rows of the list', () => {
+		const allowedClassNameList = [
+			'git-branch-zone',
+			'branch-picker-body',
+			'branch-search',
+			'branch-list',
+			'branch-item',
+			'branch-row',
+			'branch-first-line',
+			'branch-name',
+			'branch-subject',
+			'branch-time',
+			'branch-link',
+		];
+		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
+describe('the list of the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('scrolls inside the card, and cuts the long lines, because the utility classes of Bootstrap for this are not built', () => {
+		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto/);
+		expect(sourceText).toMatch(/\.branch-name, \.branch-subject\s*\{[^}]*text-overflow:\s*ellipsis/);
+	});
+});
+
+describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('is an outline Bootstrap button without border, and is always visible', () => {
+		expect(sourceText).toContain('btn btn-outline theme-secondary border-0 branch-link');
+		expect(sourceText).not.toMatch(/\.branch-link\s*\{[^}]*opacity:\s*0\s*;/);
+		expect(sourceText).not.toMatch(/\.branch-item:hover \.branch-link/);
+	});
+
+	it('stays above the hovered row, which Bootstrap raises to z-index 1', () => {
+		expect(sourceText).toMatch(/\.branch-link\s*\{[^}]*z-index:\s*2/);
+	});
+
+	it('leaves room for the link on the first line only, so the second line goes to the edge of the row', () => {
+		expect(sourceText).toMatch(/\.branch-first-line\s*\{[^}]*padding-right:\s*32px/);
+		expect(sourceText).not.toMatch(/\.branch-row\s*\{[^}]*padding-right:\s*44px/);
+	});
+
+	it('lets the list grow to 560 pixels, and at most 60 percent of the window height', () => {
+		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:\s*min\(560px, 60vh\)/);
 	});
 });
 

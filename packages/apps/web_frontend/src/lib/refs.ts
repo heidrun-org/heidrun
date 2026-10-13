@@ -111,6 +111,15 @@ export function issueUrl(base: string | null, forge: Forge | null, n: string): s
   return forge === "github" ? `${base}/issues/${n}` : `${base}/-/issues/${n}`;
 }
 
+/** The web page of a branch: `base/tree/branch` on GitHub, `base/-/tree/branch` on GitLab. The slashes of the name stay. */
+export function branchUrl(base: string | null, forge: Forge | null, branch: string): string | null {
+  if (base === null) {
+    return null;
+  }
+  const path = branch.split("/").map(encodeURIComponent).join("/");
+  return forge === "github" ? `${base}/tree/${path}` : `${base}/-/tree/${path}`;
+}
+
 export function mrUrl(base: string | null, forge: Forge | null, n: string): string | null {
   if (!base) return null;
   return forge === "github" ? `${base}/pull/${n}` : `${base}/-/merge_requests/${n}`;

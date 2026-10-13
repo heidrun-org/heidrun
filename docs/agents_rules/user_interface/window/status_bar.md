@@ -1,11 +1,11 @@
 # User interface of Heidrun: status bar
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary.md)
-- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324)
+- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 350](https://github.com/heidrun-org/heidrun/issues/350)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
 
@@ -16,6 +16,21 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - A click on a status bar section opens its information card above the section.
 - Each status bar section looks like a button of the status bar of Visual Studio Code: while the mouse pointer is over it, and while its information card is open, it has a rounded background (6 pixels radius), white at 12 percent strength in the dark theme and black at 12 percent strength in the light theme. The background leaves 6 pixels of the status bar above and below it. The three components of the status bar sections share the class `status-section` of the file `styles.css` ([issue #324](https://github.com/heidrun-org/heidrun/issues/324)).
 - The information card of the usage of Claude, the information card of the usage of Codex, and the information card of the Workspace status bar section are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290), [issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
+
+## Git branch section
+
+- The Git branch status bar section has two click zones, from left to right. Each zone is a status bar section with its own rounded background ([issue #350](https://github.com/heidrun-org/heidrun/issues/350)).
+  - The branch zone shows the Git icon, the branch name, and a star when the working folder has an uncommitted change. A click on it opens the branch picker.
+  - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository.
+- The two zones touch each other: the side between them has 4 pixels of background, and the two outer sides have the 11 pixels of the other status bar sections. The text of the zones does not move.
+- The branch picker is a card above the branch zone, 408 pixels wide. At the top it has a search field with the text "Select a branch to check out". Under it, the local branches, the most recently committed first. Each row shows the Git icon, the name of the branch, a check mark for the current branch, and the time of the last commit on the first line, then the author, the short hash, and the subject of the last commit on the second line.
+- The card has no padding around the list: the separators between the rows touch the left and right borders of the card, and the scroll bar of the list touches the right border. Only the search field has space around it. The list scrolls inside the card when it is longer than 560 pixels, and the list is at most 60 percent of the window height.
+- On the first line of each row, at the right end, just after the time, a button that is only the icon of GitHub (or GitLab) is always visible. It is a Bootstrap outline button with no border (classes `btn btn-outline theme-secondary border-0`). It opens the page of the branch on the forge, in the web browser, and does not check out the branch. The button is absent when the repository has no remote. The button is disabled, with the title "This branch is only on your computer: push it to see its page", when the branch is only local: this computer has no remote-tracking branch of that name, and the list of the remote repository (`git ls-remote`, command `git_remote_branches`) does not have it. That list is kept for one day, in memory and in the local storage (key `heidrun.gitRemoteBranches`), and is asked again after one day. When the remote repository cannot answer, an older list is used, and while nothing is known the button stays enabled. The address is `<repository>/tree/<branch>` on GitHub and `<repository>/-/tree/<branch>` on GitLab. The rows have 10 pixels of space above and below, and 4 pixels between their two lines. While the picker is open, the title of the zone does not show over it. The page does not exist for a branch that was never pushed.
+- The search field keeps the branches whose name, author, hash, or subject contains every word typed. The key Enter checks out the first branch of the list. The key Escape closes the picker.
+- A click on a branch checks it out with `git switch`, closes the picker, and reads the Git status again. A click on the current branch only closes the picker.
+- When Git refuses the checkout, for example because an uncommitted change would be overwritten, a message shows the text of Git, and the current branch does not change.
+- Nothing reacts to the pointer that only moves over a zone, except the background. Visual Studio Code does the same.
+- The turning-arrows icon that merges with the upstream branch is not part of this section yet: it is the subject of [issue 348](https://github.com/heidrun-org/heidrun/issues/348).
 
 ## Menu of the status item
 
