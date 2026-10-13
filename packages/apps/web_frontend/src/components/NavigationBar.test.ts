@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { flushPromises, mount } from "@vue/test-utils";
+import { describe, expect, it } from "vitest";
+import { mount } from "@vue/test-utils";
 import NavigationBar from "./NavigationBar.vue";
 
 const sidebarSections = [
@@ -64,6 +64,11 @@ describe("NavigationBar", () => {
     expect(buttons.map((button) => button.element.firstElementChild?.tagName.toLowerCase())).toEqual(["i", "i", "i"]);
   });
 
+  it("shows the title of every sidebar section, selected or not", () => {
+    const wrapper = mountNavigationBar("second");
+    expect(wrapper.findAll(".navigation-bar button .sidebar-section-label").map((label) => label.text())).toEqual(["First", "Second", "Third"]);
+  });
+
   it("has a collapse button after the buttons of the sidebar sections, outside the list of sidebar sections", () => {
     const wrapper = mountNavigationBar();
     const collapseButton = wrapper.get(".navigation-row > .collapse-button");
@@ -84,43 +89,5 @@ describe("NavigationBar", () => {
     await wrapper.get(".collapse-button").trigger("click");
     expect(wrapper.emitted("collapse")).toEqual([[]]);
     expect(wrapper.emitted("select")).toBeUndefined();
-  });
-
-  describe("when the titles do not fit", () => {
-    afterEach(() => {
-      vi.restoreAllMocks();
-    });
-
-    /** Gives each button a width of 100 px, each title a whole width of 60 px, and the navigation bar `barWidth` px. */
-    function fakeLayout(barWidth: number) {
-      vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(100);
-      vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(60);
-      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (this: HTMLElement) {
-        return this.classList.contains("navigation-bar") ? barWidth : 60;
-      });
-    }
-
-    it.each([
-      [300, false],
-      [299, true],
-    ])("with a navigation bar of %i px, hides the titles of the other sidebar sections: %s", async (barWidth, isCompact) => {
-      fakeLayout(barWidth);
-      const wrapper = mountNavigationBar();
-      await wrapper.setProps({ selectedId: "second" });
-      await flushPromises();
-      expect(wrapper.get(".navigation-bar").classes("compact")).toBe(isCompact);
-    });
-
-    it("gives the title of a sidebar section as the tooltip of its button when the title is hidden", async () => {
-      fakeLayout(200);
-      const wrapper = mountNavigationBar();
-      await wrapper.setProps({ selectedId: "second" });
-      await flushPromises();
-      expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("title"))).toEqual([
-        "First",
-        "Show this sidebar section",
-        "Third",
-      ]);
-    });
   });
 });

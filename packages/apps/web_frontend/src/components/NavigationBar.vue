@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "./Icon.vue";
 import type { SidebarSectionButton } from "../stores/sidebar_sections";
 import { t } from "../i18n/index";
 
-const props = defineProps<{
+defineProps<{
   /** The buttons of the navigation bar, one for each sidebar section of the sidebar. */
   sidebarSections: SidebarSectionButton[];
   /** The identifier of the selected sidebar section. */
@@ -21,66 +20,15 @@ const emit = defineEmits<{
   /** The person clicked the collapse button: the sidebar becomes the sidebar icon bar. */
   collapse: [];
 }>();
-
-/** The element of the list of the buttons of the sidebar sections. */
-const navigationBar = ref<HTMLElement | null>(null);
-
-/** The titles of all the sidebar sections do not fit: only the selected sidebar section shows its title. */
-const isCompact = ref(false);
-
-/**
- * Compares the width that the buttons need to show every title with the width of the navigation bar. A title is always
- * in the page, cut at its edge, so its `scrollWidth` gives its whole width in both states.
- */
-function measure() {
-  const element = navigationBar.value;
-  if (element === null) {
-    return;
-  }
-  const buttons = Array.from(element.querySelectorAll<HTMLElement>(":scope > button"));
-  if (buttons.length === 0) {
-    return;
-  }
-  const gap = parseFloat(getComputedStyle(element).columnGap) || 0;
-  let neededWidth = gap * (buttons.length - 1);
-  for (const button of buttons) {
-    const label = button.querySelector<HTMLElement>(".sidebar-section-label");
-    neededWidth += button.offsetWidth + (label === null ? 0 : label.scrollWidth - label.clientWidth);
-  }
-  isCompact.value = neededWidth > element.clientWidth + 0.5;
-}
-
-let resizeObserver: ResizeObserver | null = null;
-
-onMounted(() => {
-  if (typeof ResizeObserver === "undefined" || navigationBar.value === null) {
-    return;
-  }
-  resizeObserver = new ResizeObserver(measure);
-  resizeObserver.observe(navigationBar.value);
-});
-
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect();
-});
-
-watch(
-  () => [props.sidebarSections, props.selectedId],
-  async () => {
-    await nextTick();
-    measure();
-  },
-  { deep: true },
-);
 </script>
 
 <template>
   <div class="navigation-row">
-    <div ref="navigationBar" class="navigation-bar" :class="{ compact: isCompact }" role="tablist" :aria-label="label">
+    <div class="navigation-bar" role="tablist" :aria-label="label">
       <button
         v-for="sidebarSection in sidebarSections"
         :key="sidebarSection.id"
-        :title="isCompact && selectedId !== sidebarSection.id ? sidebarSection.label : t('navigationBar.showSidebarSection')"
+        :title="t('navigationBar.showSidebarSection')"
         role="tab"
         :aria-selected="selectedId === sidebarSection.id"
         :class="{ on: selectedId === sidebarSection.id }"
@@ -112,8 +60,6 @@ watch(
 .navigation-bar button.on { background: var(--side); color: var(--text); border-color: var(--line-strong) var(--line-strong) var(--side); }
 .sidebar-section-icon { flex-shrink: 0; }
 .sidebar-section-label { min-width: 0; overflow: hidden; white-space: nowrap; }
-.navigation-bar.compact button:not(.on) { flex: 0 0 auto; }
-.navigation-bar.compact button:not(.on) .sidebar-section-label { max-width: 0; }
 .collapse-button {
   flex-shrink: 0; width: 28px; height: 28px; margin-bottom: 6px; padding: 0; border: none; border-radius: 6px;
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center;
