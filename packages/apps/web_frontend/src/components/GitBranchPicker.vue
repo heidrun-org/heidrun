@@ -5,7 +5,7 @@ import { currentGit } from "../stores/git";
 import { checkoutGitBranch, filterGitBranches, listGitBranches, selectedRoot, type GitBranch } from "../stores/git_branches";
 import { isOnRemote, loadRemoteBranchNames } from "../stores/git_remote_branches";
 import { ago } from "../lib/format";
-import { branchUrl, remoteToWeb } from "../lib/refs";
+import { branchUrl, webOfRemote } from "../lib/refs";
 import { useStatusCard } from "../lib/status_card";
 import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
@@ -31,14 +31,7 @@ const isDirty = computed(() => currentGit.value !== null && currentGit.value.cha
 const shownBranches = computed(() => filterGitBranches(branches.value, query.value));
 
 /** The web page of the remote repository, and the forge that hosts it, or null when the remote is unknown. */
-const web = computed(() => {
-  const remote = currentGit.value?.remote ?? null;
-  const address = remote === null ? null : remoteToWeb(remote);
-  if (address === null) {
-    return null;
-  }
-  return { base: address.base, forge: address.host.includes("github") ? ("github" as const) : ("gitlab" as const) };
-});
+const web = computed(() => webOfRemote(currentGit.value?.remote ?? null));
 
 /** The address of the page of a branch on the forge, or null when the remote is unknown. */
 function pageOf(branch: GitBranch): string | null {

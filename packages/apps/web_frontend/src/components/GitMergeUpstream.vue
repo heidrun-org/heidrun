@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentGit } from "../stores/git";
 import { mergeUpstream, runMergeUpstream } from "../stores/git_merge_upstream";
 import { useStatusCard } from "../lib/status_card";
+import { branchUrl, webOfRemote } from "../lib/refs";
 import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
 
@@ -16,6 +18,68 @@ const { isOpen, toggle, close, onFocusOut } = useStatusCard(root);
 
 /** True when the current branch has an upstream branch to merge. */
 const hasUpstream = computed(() => currentGit.value?.upstream !== null && currentGit.value?.upstream !== undefined);
+
+// The width of the card, in pixels: the same as the card of the usage of Claude, so the sentences have room.
+const CARD_WIDTH_PIXELS = 408;
+const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--popover-max-width": `${CARD_WIDTH_PIXELS}px` };
+
+/** The marker of the name of the upstream branch in the texts. */
+const UPSTREAM_MARKER = "{upstream}";
+
+/** One sentence of the card, cut in two around the name of the upstream branch, which is a link when the forge is known. */
+interface Sentence {
+  /** The name of the `data-field` of the sentence. */
+  field: string;
+  /** The text before the name of the upstream branch. */
+  before: string;
+  /** The text after the name of the upstream branch. */
+  after: string;
+  /** The name of the upstream branch, for example `origin/dev_jerome`. */
+  upstream: string;
+}
+
+/** The address of the page of the upstream branch on the forge, or null when the remote is unknown. The remote name is cut. */
+function upstreamPage(upstream: string): string | null {
+  const web = webOfRemote(currentGit.value?.remote ?? null);
+  if (web === null) {
+    return null;
+  }
+  const branchName = upstream.includes("/") ? upstream.slice(upstream.indexOf("/") + 1) : upstream;
+  return branchUrl(web.base, web.forge, branchName);
+}
+
+/** Opens the page of the upstream branch on the forge in the web browser. */
+async function openUpstreamPage(upstream: string) {
+  const address = upstreamPage(upstream);
+  if (address !== null) {
+    await openUrl(address).catch(() => {});
+  }
+}
+
+/** Cuts a text at the marker of the upstream branch. */
+function sentenceOf(field: string, key: string, upstream: string, params: Record<string, string | number>): Sentence {
+  const [before, after] = t(key, params).split(UPSTREAM_MARKER);
+  return { field, before: before ?? "", after: after ?? "", upstream };
+}
+
+/** The sentence of the card for the state of the merge: busy, merged, up to date, or in conflict. Null for the others. */
+const sentence = computed<Sentence | null>(() => {
+  const upstream = currentGit.value?.upstream ?? "";
+  if (mergeUpstream.isBusy === true) {
+    return sentenceOf("merge-busy", "statusBar.gitMergeBusy", upstream, {});
+  }
+  const result = mergeUpstream.result;
+  if (mergeUpstream.error !== null || result === null) {
+    return null;
+  }
+  if (result.outcome === "merged") {
+    return sentenceOf("merge-merged", "statusBar.gitMergeMerged", result.upstream, { branch: currentGit.value?.branch ?? "" });
+  }
+  if (result.outcome === "up_to_date") {
+    return sentenceOf("merge-up-to-date", "statusBar.gitMergeUpToDate", result.upstream, {});
+  }
+  return sentenceOf("merge-conflict", "statusBar.gitMergeConflict", result.upstream, { count: result.conflicts.length });
+});
 
 /** Opens the card and starts the merge, or closes the card when it is open. */
 function onClick() {
@@ -51,6 +115,7 @@ function onClick() {
     <div
       v-if="isOpen"
       class="popover popover-instant show bs-popover-top position-absolute bottom-100"
+      :style="cardStyle"
       role="dialog"
       :aria-label="t('statusBar.gitMergeUpstreamTitle')"
       @click.stop
@@ -58,22 +123,18 @@ function onClick() {
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-2" data-field="merge-card">
         <span v-if="hasUpstream === false" data-field="merge-no-upstream">{{ t("statusBar.gitMergeNoUpstream") }}</span>
-        <span v-else-if="mergeUpstream.isBusy" data-field="merge-busy">
-          {{ t("statusBar.gitMergeBusy", { upstream: currentGit?.upstream ?? "" }) }}
-        </span>
         <div v-else-if="mergeUpstream.error !== null" class="alert theme-danger text-break" data-field="merge-error">
           {{ mergeUpstream.error }}
         </div>
-        <span v-else-if="mergeUpstream.result?.outcome === 'merged'" data-field="merge-merged">
-          {{ t("statusBar.gitMergeMerged", { upstream: mergeUpstream.result.upstream, branch: currentGit?.branch ?? "" }) }}
+        <span v-else-if="sentence !== null" :data-field="sentence.field">
+          {{ sentence.before }}<a
+            v-if="upstreamPage(sentence.upstream) !== null"
+            :href="upstreamPage(sentence.upstream) ?? undefined"
+            data-field="merge-upstream-link"
+            @click.prevent="openUpstreamPage(sentence.upstream)"
+          >{{ sentence.upstream }}</a><template v-else>{{ sentence.upstream }}</template>{{ sentence.after }}
         </span>
-        <span v-else-if="mergeUpstream.result?.outcome === 'up_to_date'" data-field="merge-up-to-date">
-          {{ t("statusBar.gitMergeUpToDate", { upstream: mergeUpstream.result.upstream }) }}
-        </span>
-        <template v-else-if="mergeUpstream.result?.outcome === 'conflict'">
-          <span data-field="merge-conflict">
-            {{ t("statusBar.gitMergeConflict", { upstream: mergeUpstream.result.upstream, count: mergeUpstream.result.conflicts.length }) }}
-          </span>
+        <template v-if="mergeUpstream.isBusy === false && mergeUpstream.error === null && mergeUpstream.result?.outcome === 'conflict'">
           <ul class="list-unstyled mb-0 text-break" data-field="merge-conflict-files">
             <li v-for="path in mergeUpstream.result.conflicts" :key="path">{{ path }}</li>
           </ul>

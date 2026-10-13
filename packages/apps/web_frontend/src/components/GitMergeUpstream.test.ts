@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
 vi.mock("../stores/git", async (importOriginal) => {
   const original = await importOriginal<typeof import("../stores/git")>();
   return { ...original, refreshGit: vi.fn() };
@@ -26,7 +28,7 @@ function makeStatus(overrides: Partial<GitStatus>): GitStatus {
     last_sha: null,
     last_subject: null,
     last_time: null,
-    remote: null,
+    remote: "git@github.com:heidrun-org/heidrun.git",
     ...overrides,
   };
 }
@@ -59,6 +61,7 @@ describe("GitMergeUpstream", () => {
       return answer;
     });
     vi.mocked(refreshGit).mockClear();
+    vi.mocked(openUrl).mockClear();
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };
   });
@@ -142,6 +145,44 @@ describe("GitMergeUpstream", () => {
     expect(wrapper.get("[data-field=merge-no-upstream]").text()).toBe(
       "This branch has no upstream branch. Push it first, so it has one.",
     );
+  });
+
+  it("makes the name of the upstream branch a link to its page on GitHub, without the name of the remote", async () => {
+    answer = { outcome: "up_to_date", upstream: "origin/dev_jerome", conflicts: [] };
+    const wrapper = mount(GitMergeUpstream);
+    await wrapper.trigger("click");
+    await flushPromises();
+    const link = wrapper.get("[data-field=merge-upstream-link]");
+    expect(link.text()).toBe("origin/dev_jerome");
+    expect(link.attributes("href")).toBe("https://github.com/heidrun-org/heidrun/tree/dev_jerome");
+    await link.trigger("click");
+    expect(openUrl).toHaveBeenCalledWith("https://github.com/heidrun-org/heidrun/tree/dev_jerome");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("makes the name of the upstream branch a link in the sentence of the conflicts too", async () => {
+    answer = { outcome: "conflict", upstream: "origin/dev_jerome", conflicts: ["a.ts"] };
+    const wrapper = mount(GitMergeUpstream);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.get("[data-field=merge-conflict] [data-field=merge-upstream-link]").text()).toBe("origin/dev_jerome");
+  });
+
+  it("shows the name of the upstream branch as plain text when the repository has no known remote", async () => {
+    git.status = { w1: makeStatus({ remote: null }) };
+    const wrapper = mount(GitMergeUpstream);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.find("[data-field=merge-upstream-link]").exists()).toBe(false);
+    expect(wrapper.get("[data-field=merge-merged]").text()).toBe("Merged origin/dev_jerome into dev_jerome.");
+  });
+
+  it("is 408 pixels wide, like the cards of the usage, so the sentences have room", async () => {
+    const wrapper = mount(GitMergeUpstream);
+    await wrapper.trigger("click");
+    const card = wrapper.get(".popover").element as HTMLElement;
+    expect(card.style.width).toBe("408px");
+    expect(card.style.getPropertyValue("--popover-max-width")).toBe("408px");
   });
 
   it("closes the card with the next click, without starting a second merge", async () => {
