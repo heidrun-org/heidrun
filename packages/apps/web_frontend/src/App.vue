@@ -290,6 +290,8 @@ onBeforeUnmount(() => {
     <div class="body">
       <Sidebar />
       <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+      <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
+      <div v-else class="sidebar-gap"></div>
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
@@ -314,6 +316,7 @@ onBeforeUnmount(() => {
       </main>
       <template v-if="state.snapshot">
         <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+        <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>
     </div>
@@ -356,6 +359,7 @@ onBeforeUnmount(() => {
   flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 0 var(--pane-gap) var(--pane-gap);
   border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
 }
+.sidebar-gap { width: var(--pane-gap); flex-shrink: 0; }
 .stage { flex: 1; min-height: 0; display: flex; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
