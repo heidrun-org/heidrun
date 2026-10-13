@@ -275,7 +275,7 @@ function letterClass(letter: string): string {
         <li v-for="row in rows" :key="row.path + (row.dir ? '/' : '')">
           <button
             type="button"
-            class="row btn d-flex align-items-center w-100 text-start"
+            class="row btn d-flex align-items-center text-start"
             :class="{ selected: row.path === filesPanelSelection.path, ignored: row.ignored }"
             :title="row.path"
             :aria-expanded="row.dir && row.ignored === false ? files.expanded.has(row.path) : undefined"
@@ -309,7 +309,7 @@ function letterClass(letter: string): string {
 .files-panel :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .files-panel :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .rows { list-style: none; margin: 0; padding: 0; }
-.row { height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
+.row { width: 100%; height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
 .row:hover { background: var(--hover-soft); }
 /* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
 .row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }

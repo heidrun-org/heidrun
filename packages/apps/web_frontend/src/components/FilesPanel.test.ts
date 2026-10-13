@@ -184,6 +184,12 @@ describe("FilesPanel", () => {
     expect(git.modal.open).toBe(false);
   });
 
+  it("gives a row the full width of the sidebar section, so its background is not limited to the file name", () => {
+    const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+    const rule = source.match(/\n\.row \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toContain("width: 100%");
+  });
+
   it("keeps the header at the top while the rows scroll: the rule of the header sticks it, with its own background", () => {
     const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
     const rule = source.match(/\.panel-header \{([^}]*)\}/)?.[1] ?? "";
