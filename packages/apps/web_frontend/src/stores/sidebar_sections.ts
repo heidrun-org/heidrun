@@ -21,11 +21,11 @@ export type SidebarSectionButton = {
 
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section opens if it is hidden, expands if it is collapsed
- * to the sidebar icon bar, and shows the sidebar section. The Scripts and Git sidebar sections belong to the left
- * sidebar. The Needs you, Notes, and Chats sidebar sections belong to the right sidebar.
+ * to the sidebar icon bar, and shows the sidebar section. The Scripts and Source control sidebar sections belong to the
+ * left sidebar. The Needs you, Notes, and Chats sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
-  if (sidebarSection === "actions" || sidebarSection === "git") {
+  if (sidebarSection === "actions" || sidebarSection === "sourceControl") {
     settings.leftOpen = true;
     settings.leftCollapsed = false;
     settings.leftSidebarSection = sidebarSection;
@@ -41,7 +41,7 @@ export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSid
  * that an expanded sidebar shows collapses the sidebar. A click on any other icon shows that sidebar section.
  */
 export function clickSidebarSectionIcon(sidebarSection: LeftSidebarSection | RightSidebarSection) {
-  const isLeft = sidebarSection === "actions" || sidebarSection === "git";
+  const isLeft = sidebarSection === "actions" || sidebarSection === "sourceControl";
   if (isLeft && settings.leftCollapsed === false && settings.leftSidebarSection === sidebarSection) {
     settings.leftCollapsed = true;
     return;

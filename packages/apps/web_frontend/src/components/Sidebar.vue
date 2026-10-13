@@ -2,9 +2,9 @@
 import { computed } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
-import GitPanel from "./GitPanel.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
-import { currentForge } from "../stores/git";
+import SourceControlPanel from "./SourceControlPanel.vue";
+import { currentGit } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
 import { clickSidebarSectionIcon, COLLAPSED_SIDEBAR_WIDTH, type SidebarSectionButton } from "../stores/sidebar_sections";
@@ -20,14 +20,19 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the sidebar icon bar of the left sidebar: the Scripts and Git sidebar sections. */
+/** The buttons of the sidebar icon bar of the left sidebar: the Scripts and Source control sidebar sections. */
 const sidebarSections = computed((): SidebarSectionButton[] => [
   { id: "actions", label: t("sidebar.sidebarSection.actions"), icon: "play-circle", badge: runningScripts.value, isLive: true },
-  { id: "git", label: "Git", icon: "git", badge: currentForge.value?.requests.length ?? 0 },
+  {
+    id: "sourceControl",
+    label: t("sourceControlPanel.sidebarSection"),
+    icon: "git",
+    badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
+  },
 ]);
 
 function selectSidebarSection(id: string) {
-  clickSidebarSectionIcon(id === "git" ? "git" : "actions");
+  clickSidebarSectionIcon(id === "sourceControl" ? "sourceControl" : "actions");
 }
 </script>
 
@@ -44,7 +49,7 @@ function selectSidebarSection(id: string) {
     />
     <div v-if="settings.leftCollapsed === false" class="sidebar-section-body">
       <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
-      <GitPanel v-else />
+      <SourceControlPanel v-else />
     </div>
   </aside>
 </template>

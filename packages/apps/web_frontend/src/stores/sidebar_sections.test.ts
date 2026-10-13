@@ -12,12 +12,12 @@ beforeEach(() => {
 });
 
 describe("openSidebarSection", () => {
-  it.each(["actions", "git"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
+  it.each(["actions", "sourceControl"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.leftSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["actions", "git"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
+  it.each(["actions", "sourceControl"] as const)("shows the left sidebar when it is hidden and the sidebar section is %s", (sidebarSection) => {
     settings.leftOpen = false;
     openSidebarSection(sidebarSection);
     expect(settings.leftOpen).toBe(true);
@@ -36,19 +36,19 @@ describe("openSidebarSection", () => {
 
   it("does not show a hidden sidebar that holds another sidebar section, and does not change its sidebar section", () => {
     settings.rightOpen = false;
-    openSidebarSection("git");
+    openSidebarSection("sourceControl");
     expect(settings.rightOpen).toBe(false);
     expect(settings.rightSidebarSection).toBe("notes");
     settings.leftOpen = false;
     openSidebarSection("notes");
     expect(settings.leftOpen).toBe(false);
-    expect(settings.leftSidebarSection).toBe("git");
+    expect(settings.leftSidebarSection).toBe("sourceControl");
     openSidebarSection("toHandle");
     expect(settings.leftOpen).toBe(false);
-    expect(settings.leftSidebarSection).toBe("git");
+    expect(settings.leftSidebarSection).toBe("sourceControl");
   });
 
-  it.each(["actions", "git"] as const)("expands the collapsed left sidebar when the sidebar section is %s", (sidebarSection) => {
+  it.each(["actions", "sourceControl"] as const)("expands the collapsed left sidebar when the sidebar section is %s", (sidebarSection) => {
     settings.leftCollapsed = true;
     settings.rightCollapsed = true;
     openSidebarSection(sidebarSection);
@@ -75,7 +75,7 @@ describe("clickSidebarSectionIcon", () => {
   });
 
   it.each([
-    ["git", "leftCollapsed", "leftSidebarSection"],
+    ["sourceControl", "leftCollapsed", "leftSidebarSection"],
     ["chats", "rightCollapsed", "rightSidebarSection"],
   ] as const)("shows the sidebar section %s when the sidebar shows another one", (sidebarSection, collapsedName, sectionName) => {
     clickSidebarSectionIcon(sidebarSection);

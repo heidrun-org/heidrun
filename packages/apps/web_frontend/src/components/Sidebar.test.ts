@@ -29,7 +29,7 @@ async function mountSidebar(snapshot: SessionSnapshot = SNAPSHOT) {
   for (const paneId of Object.keys(session.state.dismissed)) {
     delete session.state.dismissed[paneId];
   }
-  const wrapper = mount(Sidebar, { global: { stubs: { ActionsPanel: true, GitPanel: true } } });
+  const wrapper = mount(Sidebar, { global: { stubs: { ActionsPanel: true, SourceControlPanel: true } } });
   return { session, wrapper };
 }
 
@@ -77,15 +77,15 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar icon bar of the left sidebar", () => {
-  it("shows the buttons Scripts and Git, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
+  it("shows the buttons Scripts and Source Control, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Scripts", "Git"]);
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Scripts", "Source Control"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab"]);
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows one icon for each sidebar section: a play button for Scripts, and the Git logo for Git", async () => {
+  it("shows one icon for each sidebar section: a play button for Scripts, and the Git logo for Source control", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
   });
@@ -100,18 +100,18 @@ describe("Sidebar icon bar of the left sidebar", () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
-    expect(wrapper.find("git-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
   });
 
-  it("shows the sidebar section Git after a click on its button, and remembers it", async () => {
+  it("shows the sidebar section Source control after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
-    expect(settings.leftSidebarSection).toBe("git");
+    expect(settings.leftSidebarSection).toBe("sourceControl");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
-    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
     const restarted = (await mountSidebar()).wrapper;
-    expect(restarted.find("git-panel-stub").exists()).toBe(true);
+    expect(restarted.find("source-control-panel-stub").exists()).toBe(true);
   });
 
   it("collapses after a click on the icon of the sidebar section that it shows, and then selects no icon", async () => {
@@ -129,8 +129,8 @@ describe("Sidebar icon bar of the left sidebar", () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
-    expect(settings.leftSidebarSection).toBe("git");
-    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+    expect(settings.leftSidebarSection).toBe("sourceControl");
+    expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true]);
   });
 
@@ -154,7 +154,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
   });
 
   it("shows the expand button in place of the collapse button when collapsed, and expands to the selected sidebar section after a click on it", async () => {
-    settings.leftSidebarSection = "git";
+    settings.leftSidebarSection = "sourceControl";
     const { wrapper } = await mountSidebar();
     expect(wrapper.find(".expand-button").exists()).toBe(false);
     settings.leftCollapsed = true;
@@ -164,6 +164,32 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(expandButton.get("i").classes()).toContain("bi-chevron-bar-right");
     await expandButton.trigger("click");
     expect(settings.leftCollapsed).toBe(false);
-    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
+  });
+
+  it("shows the number of changed files on the button of the Source control sidebar section", async () => {
+    const { git } = await import("../stores/git");
+    git.status = {
+      w1: {
+        root: "/work/heidrun",
+        branch: "main",
+        upstream: null,
+        ahead: 0,
+        behind: 0,
+        changed: 1,
+        untracked: 1,
+        files: [
+          { path: "CHANGELOG.md", status: ".M" },
+          { path: "new.txt", status: "??" },
+        ],
+        last_sha: null,
+        last_subject: null,
+        last_time: null,
+        remote: null,
+      },
+    };
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].get(".badge").text()).toBe("2");
+    git.status = {};
   });
 });

@@ -67,9 +67,9 @@ describe('horizontal padding of the sidebar sections of the left sidebar', () =>
 		expect(padding).toBe('18px 14px');
 	});
 
-	it('is 16px on each side for the Git sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/GitPanel.vue', '.gitp', 'padding');
-		expect(padding).toBe('20px 16px');
+	it('is 16px on each side for the Source control sidebar section', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/SourceControlPanel.vue', '.source-control', 'padding');
+		expect(padding).toBe('12px 16px');
 	});
 });
 
