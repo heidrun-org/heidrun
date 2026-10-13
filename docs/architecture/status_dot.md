@@ -29,7 +29,7 @@ When the developer starts a coding agent in a pane, the pane is idle. The next t
 | Working | Blocked | The coding agent needs an answer, and it waits. |
 | Blocked | Working | The developer answers, and the coding agent continues. |
 | Working | Finished | The coding agent ends its answer. |
-| Finished | Idle | The developer acknowledges or deletes the card of the pane in the To handle sidebar section. |
+| Finished | Idle | The developer acknowledges or deletes the card of the pane in the Needs you sidebar section. |
 
 A finished pane stays finished until the developer acknowledges or deletes its card.
 
@@ -47,7 +47,7 @@ A pane that runs a plain terminal follows the same state machine, so that every 
 - The pane starts idle.
 - The pane becomes working when the developer starts a command that is not a coding agent, for example `htop`.
 - The pane becomes finished when the command ends.
-- A finished pane becomes idle in the same way as a pane with a coding agent: the developer acknowledges or deletes its card in the To handle sidebar section.
+- A finished pane becomes idle in the same way as a pane with a coding agent: the developer acknowledges or deletes its card in the Needs you sidebar section.
 - When the command is a coding agent, the pane stays idle until the developer sends a message to the agent.
 
 ## The status of a tab
@@ -77,7 +77,7 @@ The application has one status dot, before the name of the selected workspace in
 1. When a coding agent in **another** workspace is blocked, the dot is red. Otherwise, when a coding agent in another workspace has finished, the dot is green. The coding agents of the selected workspace never count here.
 2. Otherwise, the dot shows the status of the selected workspace, or the hollow ring when no coding agent runs in it.
 
-A coding agent in another workspace counts for the first rule only when its card is in the To handle sidebar section (`otherWorkspaceStatus` in `session.ts`). A card leaves the section when the developer acknowledges or deletes it, and its pane becomes idle. The card of a finished coding agent also leaves the section when it is older than the delay of the section "Finished items" of the Settings window (15 minutes at the start), and an old card does not count for the dot. A coding agent that works in another workspace does not change the dot.
+A coding agent in another workspace counts for the first rule only when its card is in the Needs you sidebar section (`otherWorkspaceStatus` in `session.ts`). A card leaves the section when the developer acknowledges or deletes it, and its pane becomes idle. The card of a finished coding agent also leaves the section when it is older than the delay of the section "Finished items" of the Settings window (15 minutes at the start), and an old card does not count for the dot. A coding agent that works in another workspace does not change the dot.
 
 ## The levels together
 
@@ -96,4 +96,4 @@ Pane        ◀── the state machine of the pane
 | Pane | The header of the pane (`PaneCard.vue`) | The state machine of the pane. |
 | Tab | The tab bar (`TabBar.vue`) | Herdr, from the panes of the tab. |
 | Workspace | The list of workspaces in the information card (`WorkspaceStatusSummary.vue`) | Herdr, from the tabs of the workspace. |
-| Application | The workspace status bar section (`WorkspaceStatusSummary.vue`) | Heidrun, from the cards of the To handle sidebar section, then from the selected workspace. |
+| Application | The workspace status bar section (`WorkspaceStatusSummary.vue`) | Heidrun, from the cards of the Needs you sidebar section, then from the selected workspace. |

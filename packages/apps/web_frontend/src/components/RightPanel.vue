@@ -10,7 +10,7 @@ import { openSidebarSection } from "../stores/sidebar_sections";
 import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
-/** The buttons of the navigation bar of the right sidebar: the To handle, Notes, and Chats sidebar sections. */
+/** The buttons of the navigation bar of the right sidebar: the Needs you, Notes, and Chats sidebar sections. */
 const sidebarSections = computed(() => [
   {
     id: "toHandle",
