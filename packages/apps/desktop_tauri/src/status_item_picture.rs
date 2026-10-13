@@ -213,7 +213,7 @@ impl Digits {
 
 /// The color of the pixel at (`dx`, `dy`) from the center of a disc, without the digits. The disc is flat, with a thin
 /// border in its normal color. The number of agents sets how lit the inside of the disc is:
-/// - zero: the disc is gray inside and on its border, the same gray for every status, with a thicker border;
+/// - zero: the inside is gray, the same gray for every status, and the border is thicker;
 /// - one: the normal color;
 /// - two: a brighter color;
 /// - three or more: the brighter color, with a glow around the disc.
@@ -221,10 +221,9 @@ fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
     let distance = (dx * dx + dy * dy).sqrt();
     let base = to_float(color);
     let is_empty = count == 0;
-    let edge = if is_empty { to_float(EMPTY_DOT_COLOR) } else { base };
     let border_width = if is_empty { EMPTY_BORDER_WIDTH } else { BORDER_WIDTH };
     let lit = match count {
-        0 => edge,
+        0 => to_float(EMPTY_DOT_COLOR),
         1 => base,
         _ => base.map(|channel| channel + (1.0 - channel) * BRIGHT_WHITE_SHARE),
     };
@@ -238,7 +237,7 @@ fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
 
     let coverage = (RADIUS + 0.5 - distance).clamp(0.0, 1.0);
     let inside = (RADIUS - border_width + 0.5 - distance).clamp(0.0, 1.0);
-    let border = [edge[0], edge[1], edge[2], coverage * (1.0 - inside)];
+    let border = [base[0], base[1], base[2], coverage * (1.0 - inside)];
     let fill = [lit[0], lit[1], lit[2], inside * opacity];
     over(fill, over(border, halo))
 }
@@ -530,26 +529,27 @@ mod tests {
     }
 
     #[test]
-    fn the_empty_discs_of_every_status_have_the_same_gray_inside_and_on_the_border() {
+    fn the_empty_discs_of_every_status_have_the_same_gray_inside_and_their_own_color_on_the_border() {
         let green: [u8; 3] = [52, 199, 89];
         let blue: [u8; 3] = [10, 132, 255];
         let at = |color: [u8; 3], offset: u32| {
             let pixels = draw_slots(&[Slot::Disc { count: 0, color }], 0.0);
             pixel(&pixels, SLOT_WIDTH, CENTER + offset, MIDDLE)
         };
-        for offset in [12, 16] {
-            assert_eq!(at(RED, offset), at(green, offset));
-            assert_eq!(at(RED, offset), at(blue, offset));
-            assert_eq!(&at(RED, offset)[..3], &EMPTY_DOT_COLOR[..]);
-        }
+        assert_eq!(at(RED, 12), at(green, 12));
+        assert_eq!(at(RED, 12), at(blue, 12));
+        assert_eq!(&at(RED, 12)[..3], &EMPTY_DOT_COLOR[..]);
+        assert_eq!(at(RED, 16), [RED[0], RED[1], RED[2], 255]);
+        assert_eq!(at(green, 16), [green[0], green[1], green[2], 255]);
+        assert_eq!(at(blue, 16), [blue[0], blue[1], blue[2], 255]);
     }
 
     #[test]
     fn the_border_of_an_empty_disc_is_thicker_than_the_border_of_a_disc_with_agents() {
         let inside_border = |count: usize| pixel(&draw_slots(&[disc(count)], 0.0), SLOT_WIDTH, CENTER + 15, MIDDLE);
         assert!(inside_border(0)[3] > 250 && inside_border(1)[3] > 250);
-        assert_eq!(&inside_border(0)[..3], &EMPTY_DOT_COLOR[..]);
-        assert_ne!(&inside_border(1)[..3], &EMPTY_DOT_COLOR[..]);
+        assert_eq!(&inside_border(0)[..3], &RED[..]);
+        assert_ne!(inside_border(1), [RED[0], RED[1], RED[2], 255]);
     }
 
     #[test]
@@ -574,8 +574,8 @@ mod tests {
     }
 
     #[test]
-    fn a_disc_has_a_thin_border_in_its_normal_color_for_one_agent_or_more() {
-        for count in [1, 2, 3] {
+    fn a_disc_has_a_thin_border_in_its_normal_color_whatever_the_number_of_agents() {
+        for count in [0, 1, 2, 3] {
             let pixels = draw_slots(&[disc(count)], 0.0);
             let border = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
             assert_eq!(border, [RED[0], RED[1], RED[2], 255], "the border of {count} agents");
