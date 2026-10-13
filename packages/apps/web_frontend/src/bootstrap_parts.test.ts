@@ -218,4 +218,9 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:first-child\) \{\s*margin-inline-start: calc\(-1 \* var\(--btn-border-width\)\)/);
 		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:last-child\) \{\s*border-start-end-radius: 0/);
 	});
+
+	it('aligns the content of a button to the start, as Bootstrap 5 did, and not to the center as Bootstrap 6 does', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\n\.btn \{[^}]*justify-content: flex-start/);
+	});
 });

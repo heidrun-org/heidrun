@@ -341,6 +341,9 @@ select.form-control {
 .btn {
   // Bootstrap gives a button a minimum height. The application sets the height of each button.
   --btn-min-height: 0;
+  // Bootstrap 6 centers the content of a button. Bootstrap 5 did not, and the application aligns the content to the start: a button
+  // that has to center its content says so itself, as the class "lg" does.
+  justify-content: flex-start;
   // Bootstrap fades a disabled button to 65 percent. The application never did.
   --btn-disabled-opacity: 1;
   // Bootstrap aligns a button with the middle of its text line. The application has always used the baseline.
