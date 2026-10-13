@@ -103,18 +103,18 @@ function isRemoteControlled(tabId: string): boolean {
 /* Bootstrap draws the tabs: a border around the selected tab and around the tab under the
    mouse. These variables give Bootstrap the colors of the application. The selected tab has the color of the panes. */
 .nav-tabs {
-  --bs-nav-tabs-border-width: 1px;
-  --bs-nav-tabs-border-color: var(--line-strong);
-  --bs-nav-tabs-border-radius: 8px;
-  --bs-nav-tabs-link-hover-border-color: var(--line) var(--line) transparent;
-  --bs-nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);
-  --bs-nav-tabs-link-active-color: var(--text);
-  --bs-nav-tabs-link-active-bg: var(--bg);
-  --bs-nav-link-padding-x: 18px;
-  --bs-nav-link-padding-y: 0;
-  --bs-nav-link-font-weight: 500;
-  --bs-nav-link-color: var(--muted);
-  --bs-nav-link-hover-color: var(--text-2);
+  --nav-tabs-border-width: 1px;
+  --nav-tabs-border-color: var(--line-strong);
+  --nav-tabs-border-radius: 8px;
+  --nav-tabs-link-hover-border-color: var(--line) var(--line) transparent;
+  --nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);
+  --nav-tabs-link-active-color: var(--text);
+  --nav-tabs-link-active-bg: var(--bg);
+  --nav-link-padding-x: 18px;
+  --nav-link-padding-y: 0;
+  --nav-link-font-weight: 500;
+  --nav-link-color: var(--muted);
+  --nav-link-hover-color: var(--text-2);
   flex-wrap: nowrap; align-items: flex-start; min-width: 0; margin: 0; gap: 2px; border-bottom: 0; overflow-x: auto; scrollbar-width: none;
 }
 .nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }
@@ -166,28 +166,27 @@ function isRemoteControlled(tabId: string): boolean {
 .nav-link:not(.active):hover .confirm, .nav-link:not(.active):focus-within .confirm { opacity: 1; }
 .nav-link .confirm:hover { background: var(--overlay-hover); color: var(--text); }
 .add {
-  --bs-btn-padding-x: 0;
-  --bs-btn-padding-y: 0;
-  --bs-btn-font-size: var(--font-size);
-  --bs-btn-font-weight: 400;
-  --bs-btn-border-radius: 6px;
-  --bs-btn-color: var(--muted);
-  --bs-btn-hover-color: var(--text);
-  --bs-btn-hover-bg: rgba(var(--wash), 0.08);
-  --bs-btn-active-color: var(--text);
-  --bs-btn-active-bg: rgba(var(--wash), 0.08);
-  --bs-btn-disabled-color: var(--text);
-  --bs-btn-disabled-bg: rgba(var(--wash), 0.08);
-  --bs-btn-focus-box-shadow: none;
+  --btn-padding-x: 0;
+  --btn-padding-y: 0;
+  --btn-font-size: var(--font-size);
+  --btn-font-weight: 400;
+  --btn-border-radius: 6px;
+  --btn-color: var(--muted);
+  --btn-hover-color: var(--text);
+  --btn-hover-bg: rgba(var(--wash), 0.08);
+  --btn-active-color: var(--text);
+  --btn-active-bg: rgba(var(--wash), 0.08);
+  --btn-disabled-color: var(--text);
+  --btn-disabled-bg: rgba(var(--wash), 0.08);
   flex-shrink: 0; width: 34px; height: 34px; margin-bottom: 4px; line-height: 1;
 }
 /* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
 .add:not(:hover) {
-  --bs-btn-hover-color: var(--muted);
-  --bs-btn-hover-bg: transparent;
-  --bs-btn-active-color: var(--muted);
-  --bs-btn-active-bg: transparent;
-  --bs-btn-disabled-color: var(--muted);
-  --bs-btn-disabled-bg: transparent;
+  --btn-hover-color: var(--muted);
+  --btn-hover-bg: transparent;
+  --btn-active-color: var(--muted);
+  --btn-active-bg: transparent;
+  --btn-disabled-color: var(--muted);
+  --btn-disabled-bg: transparent;
 }
 </style>

@@ -15,9 +15,9 @@ const { isOpen, toggle, onFocusOut } = useStatusCard(root);
 
 // The Bootstrap classes of each level: the color of the percentage, the color of the usage bar, and the kind of notice.
 const LEVEL_CLASSES = {
-  ok: { text: "text-success-emphasis", bar: "bg-success", alert: "alert-success" },
-  warn: { text: "text-warning-emphasis", bar: "bg-warning", alert: "alert-warning" },
-  crit: { text: "text-danger-emphasis", bar: "bg-danger", alert: "alert-danger" },
+  ok: { text: "text-success-emphasis", bar: "bg-success", alert: "theme-success" },
+  warn: { text: "text-warning-emphasis", bar: "bg-warning", alert: "theme-warning" },
+  crit: { text: "text-danger-emphasis", bar: "bg-danger", alert: "theme-danger" },
 };
 
 const RING_RADIUS = 7;
@@ -26,7 +26,7 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 // The width of the information card, in pixels: 20 percent more than the 340 pixels of `$popover-max-width` in
 // `bootstrap_parts.scss`, which the other information cards of the status bar keep.
 const CARD_WIDTH_PIXELS = 408;
-const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--bs-popover-max-width": `${CARD_WIDTH_PIXELS}px` };
+const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--popover-max-width": `${CARD_WIDTH_PIXELS}px` };
 
 const nowSeconds = ref(Date.now() / 1000);
 const clock = window.setInterval(() => {
@@ -81,7 +81,7 @@ function formatCost(cost: number) {
     <span v-if="ringWindow" class="mono percent">{{ Math.round(ringWindow.percent) }}<span class="unit">%</span></span>
     <div
       v-if="isOpen"
-      class="popover bs-popover-top position-absolute bottom-100"
+      class="popover popover-instant show bs-popover-top position-absolute bottom-100"
       role="tooltip"
       :style="cardStyle"
       @click.stop

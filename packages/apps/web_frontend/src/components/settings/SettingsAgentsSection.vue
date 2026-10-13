@@ -40,7 +40,7 @@ function onKeydown(event: KeyboardEvent, agent: AgentDefinition) {
         @keydown="onKeydown($event, agent)"
       >
         <span :id="`agent-${agent.id}`" class="name">{{ agent.name }}</span>
-        <span class="switch" :class="{ on: isOwned(agent) }" aria-hidden="true"><span class="knob"></span></span>
+        <span class="toggle-switch" :class="{ on: isOwned(agent) }" aria-hidden="true"><span class="knob"></span></span>
       </div>
     </div>
   </div>
@@ -54,8 +54,8 @@ function onKeydown(event: KeyboardEvent, agent: AgentDefinition) {
 .row:last-child { border-bottom: 0; }
 .row:focus-visible { outline: 2px solid var(--done); outline-offset: -2px; border-radius: 10px; }
 .name { font-size: var(--font-size); font-weight: 600; }
-.switch { position: relative; flex-shrink: 0; width: 38px; height: 22px; border-radius: 11px; background: var(--line-strong); transition: background 0.15s; }
-.switch.on { background: var(--done); }
+.toggle-switch { position: relative; flex-shrink: 0; width: 38px; height: 22px; border-radius: 11px; background: var(--line-strong); transition: background 0.15s; }
+.toggle-switch.on { background: var(--done); }
 .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
-.switch.on .knob { transform: translateX(16px); }
+.toggle-switch.on .knob { transform: translateX(16px); }
 </style>

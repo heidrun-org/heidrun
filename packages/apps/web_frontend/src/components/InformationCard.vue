@@ -57,7 +57,7 @@ function place() {
     cardStyle.value = {
       top: `${bottomTop}px`,
       left: `${bottomLeft}px`,
-      "--bs-popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, window.innerWidth - 2 * GAP))}px`,
+      "--popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, window.innerWidth - 2 * GAP))}px`,
     };
     arrowStyle.value = { left: `${arrowLeft}px` };
     return;
@@ -68,7 +68,7 @@ function place() {
     top: `${top}px`,
     left: "auto",
     right: `${window.innerWidth - part.left + GAP}px`,
-    "--bs-popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, part.left - 2 * GAP))}px`,
+    "--popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, part.left - 2 * GAP))}px`,
   };
   arrowStyle.value = { top: `${arrowTop}px` };
 }
@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
     <div
       v-if="isOpen"
       ref="card"
-      class="popover position-fixed"
+      class="popover popover-instant show position-fixed"
       :class="props.placement === 'bottom' ? 'bs-popover-bottom' : 'bs-popover-start'"
       role="group"
       :aria-label="props.label"
@@ -166,16 +166,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.popover { --bs-popover-body-padding-x: 0; --bs-popover-body-padding-y: 0; width: 34rem; }
-.popover-body :deep(.list-group)::-webkit-scrollbar { width: 10px; background: transparent; }
-.popover-body :deep(.list-group)::-webkit-scrollbar-track { background: transparent; }
-.popover-body :deep(.list-group)::-webkit-scrollbar-thumb {
-  border: 2px solid transparent; border-radius: 5px; background-clip: padding-box;
-  background-color: color-mix(in srgb, var(--bs-body-color) 8%, transparent);
-}
-.popover-body :deep(.list-group:hover)::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--bs-body-color) 22%, transparent); }
-.popover-body :deep(.list-group)::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--bs-body-color) 38%, transparent); }
-.popover-body { overflow: hidden; border-radius: var(--bs-popover-inner-border-radius); }
-.information-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--bs-border-radius); cursor: pointer; }
-.information-card-part:hover, .information-card-part.is-open { background-color: var(--bs-secondary-bg); }
+.popover { --popover-body-padding-x: 0; --popover-body-padding-y: 0; width: 34rem; }
+.popover-body { overflow: hidden; border-radius: var(--popover-inner-border-radius); }
+.information-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--radius-5); cursor: pointer; }
+.information-card-part:hover, .information-card-part.is-open { background-color: var(--bg-2); }
 </style>

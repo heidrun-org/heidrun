@@ -65,15 +65,16 @@ const CLUSTERED_HELP_BLOCKS = [
 
     <h4>{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
     <div class="d-flex align-items-center gap-2">
-      <div class="form-check form-switch mb-0">
-        <input
-          id="clustered-dynamic-topics"
-          v-model="settings.clusteredDynamicTopics"
-          class="form-check-input"
-          type="checkbox"
-          role="switch"
-        />
-        <label class="form-check-label" for="clustered-dynamic-topics">{{ t("settingsDynamicTopics.clusteredLabel") }}</label>
+      <div class="d-inline-flex align-items-center gap-2 mb-0">
+        <span class="switch">
+          <input
+            id="clustered-dynamic-topics"
+            v-model="settings.clusteredDynamicTopics"
+            type="checkbox"
+            role="switch"
+          />
+        </span>
+        <label for="clustered-dynamic-topics">{{ t("settingsDynamicTopics.clusteredLabel") }}</label>
       </div>
       <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
         <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.clusteredHelpLabel')">
@@ -101,7 +102,7 @@ const CLUSTERED_HELP_BLOCKS = [
         :disabled="settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning"
         @click="rebuildTopicClusters()"
       >
-        <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-sm" aria-hidden="true"></span>
         {{ t("settingsDynamicTopics.rebuildLabel") }}
       </button>
     </div>

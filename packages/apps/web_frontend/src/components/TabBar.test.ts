@@ -424,7 +424,7 @@ describe("TabBar height", () => {
 
   it("gives a tab 18px of horizontal padding and a width of 170px at least, so that the tabs are not tightly packed", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
-    expect(sourceText).toContain("--bs-nav-link-padding-x: 18px;");
+    expect(sourceText).toContain("--nav-link-padding-x: 18px;");
     expect(sourceText).toContain(".nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }");
   });
 
@@ -448,7 +448,7 @@ describe("TabBar join with the panes", () => {
   it("draws the outline of the selected tab with the color of the ring of the selected pane, and has no border at its bottom", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
     expect(sourceText).toContain(
-      "--bs-nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);",
+      "--nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);",
     );
     expect(sourceText).toMatch(/\.nav-tabs \.nav-link\.active \{[^}]*border-bottom-width: 0/);
   });

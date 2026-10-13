@@ -7,11 +7,9 @@ export default defineConfig({
   clearScreen: false,
   css: {
     preprocessorOptions: {
-      // Bootstrap 5 still uses Sass `@import`; the warnings come from its code, not from ours.
       scss: {
         api: "modern-compiler",
         quietDeps: true,
-        silenceDeprecations: ["import"],
       },
     },
   },

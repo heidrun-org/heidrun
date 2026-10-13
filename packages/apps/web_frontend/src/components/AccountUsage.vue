@@ -9,7 +9,7 @@ import { t } from "../i18n/index";
 const props = defineProps<{ provider: "claude" | "codex" }>();
 
 const block = computed(() => quotas.value.find((q) => q.provider === props.provider) ?? null);
-const title = computed(() => (props.provider === "claude" ? t("accountUsage.claudeAccount") : block.value?.label ?? t("accountUsage.codexAccount")));
+const title = computed(() => (props.provider === "claude" ? t("accountUsage.claudeAccount") : t("accountUsage.codexAccount")));
 </script>
 
 <template>

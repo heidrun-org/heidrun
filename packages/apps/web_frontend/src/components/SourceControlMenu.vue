@@ -100,7 +100,7 @@ onBeforeUnmount(close);
     <div
       v-if="isOpen"
       ref="menu"
-      class="dropdown-menu show position-fixed"
+      class="menu show position-fixed"
       role="menu"
       :aria-label="props.label"
       :style="{ top: `${position.top}px`, left: `${position.left}px` }"
@@ -109,7 +109,7 @@ onBeforeUnmount(close);
         v-for="item in props.items"
         :key="item.id"
         type="button"
-        class="dropdown-item"
+        class="menu-item"
         role="menuitem"
         :disabled="item.isDisabled"
         @click="choose(item.id)"

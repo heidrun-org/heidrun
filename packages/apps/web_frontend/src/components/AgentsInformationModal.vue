@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef } from "vue"
 import AccountUsage from "./AccountUsage.vue";
 import { closeAgentsInformationModal } from "../stores/agentsInformation";
 import { history, hm, todaySummary } from "../stores/history";
-import { allPanes, clearFinishedRuns, dismissRun, selectPane, selectedPane, state, tabLabel, workspaceLabel } from "../stores/session";
+import { allPanes, clearFinishedRuns, dismissRun, quotas, selectPane, selectedPane, state, tabLabel, workspaceLabel } from "../stores/session";
 import { settings } from "../stores/settings";
 import { agentKind, clockTime, duration, paneName } from "../lib/format";
 import { t } from "../i18n/index";
@@ -65,12 +65,14 @@ function runLabel(a: (typeof state.activity)[number]): string {
   return closed ? t("agentsInformationModal.run.closed") : t("agentsInformationModal.run.done");
 }
 
-// Account quotas are shared by all agents of a provider: shown for every provider in use.
+// Account quotas are shared by all agents of a provider: shown for every provider in use, and for every provider whose quota is known
+// (the status bar shows it), even when no pane runs an agent of that provider now.
 const providers = computed(() => {
   const list: ("claude" | "codex")[] = [];
   const kinds = allPanes.value.map((x) => x.agent ?? "");
-  if (kinds.some((k) => k.includes("claude"))) list.push("claude");
-  if (kinds.some((k) => k.includes("codex"))) list.push("codex");
+  const hasQuota = (provider: "claude" | "codex") => quotas.value.some((block) => block.provider === provider);
+  if (kinds.some((k) => k.includes("claude")) || hasQuota("claude")) list.push("claude");
+  if (kinds.some((k) => k.includes("codex")) || hasQuota("codex")) list.push("codex");
   return list;
 });
 
@@ -94,7 +96,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="dialog" role="dialog" :aria-label="t('agentsInformationModal.dialogLabel')" tabindex="-1">
+    <div ref="el" class="window-box" role="dialog" :aria-label="t('agentsInformationModal.dialogLabel')" tabindex="-1">
       <header>
         <h2>{{ t("agentsInformationModal.title") }}</h2>
         <span class="detail">{{ t("agentsInformationModal.detail") }}</span>
@@ -168,7 +170,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /* No grey system background on buttons: each style below sets its own. */
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
-.dialog {
+.window-box {
   width: min(560px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
