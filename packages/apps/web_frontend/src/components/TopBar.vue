@@ -22,8 +22,8 @@ import { t } from "../i18n/index";
 
 <style scoped>
 .top {
-  height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
-  padding: 0 16px 0 84px; background: var(--shell);
+  height: 43px; flex-shrink: 0; display: flex; align-items: center; gap: 12px;
+  padding: 9px 16px 4px 84px; background: var(--shell);
 }
 .search-wrap { flex: 1; display: flex; justify-content: center; min-width: 120px; }
 .search {

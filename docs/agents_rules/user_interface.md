@@ -21,6 +21,7 @@ This document says where each part of the window goes and how each part works. T
 - The viewport gets the most width, because the developer reads and writes text there.
 - The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background. The tab bar is inside the frame of the viewport.
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
+- The top bar is 43 pixels high. The gap above the search box, the theme button, and the more button is 9 pixels, and the gap below them is also 9 pixels, down to the first tab of the tab bar and to the first button of each sidebar icon bar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
 
 ## Text that must stay on one line
 
