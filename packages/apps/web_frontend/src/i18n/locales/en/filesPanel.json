@@ -15,5 +15,11 @@
   "menu.rowHeight.comfortable": "Comfortable",
   "menu.guides": "Indent guides",
   "menu.guides.on": "Show",
-  "menu.guides.off": "Hide"
+  "menu.guides.off": "Hide",
+  "newFile": "New file",
+  "newFolder": "New folder",
+  "expandAll": "Expand all folders",
+  "collapseAll": "Collapse all folders",
+  "namingHint": "Enter creates it. Escape cancels.",
+  "tooManyFiles": "Too many files to unfold every folder (more than {count})."
 }

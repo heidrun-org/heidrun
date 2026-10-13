@@ -15,5 +15,11 @@
   "menu.rowHeight.comfortable": "Aérée",
   "menu.guides": "Repères d’indentation",
   "menu.guides.on": "Afficher",
-  "menu.guides.off": "Masquer"
+  "menu.guides.off": "Masquer",
+  "newFile": "Nouveau fichier",
+  "newFolder": "Nouveau dossier",
+  "expandAll": "Déplier tous les dossiers",
+  "collapseAll": "Replier tous les dossiers",
+  "namingHint": "Entrée le crée. Échap annule.",
+  "tooManyFiles": "Trop de fichiers pour déplier tous les dossiers (plus de {count})."
 }

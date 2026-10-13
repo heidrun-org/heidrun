@@ -95,9 +95,66 @@ describe("FilesPanel", () => {
     expect(row?.get(".letter").text()).toBe("M");
   });
 
-  it("has no button to create, rename, move, delete, or edit a file: only the buttons Refresh and More options", async () => {
+  it("has no button to rename, move, delete, or edit a file", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh", "More options"]);
+    expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual([
+      "New file", "New folder", "Refresh", "Expand all folders", "Collapse all folders", "More options",
+    ]);
+  });
+
+  it("unfolds every folder with the button Expand all folders, and folds them all with the button Collapse all folders", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='Expand all folders']").trigger("click");
+    expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["src", "lib", "util.ts", "main.ts", "README.md"]);
+    await wrapper.get("[aria-label='Collapse all folders']").trigger("click");
+    expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["src", "README.md"]);
+  });
+
+  it("creates a new file in the folder that was clicked last, and opens it in the large Git window", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    const input = wrapper.get(".naming input");
+    expect((input.element as HTMLInputElement).value).toBe("src/");
+    await input.setValue("src/new_file.ts");
+    await wrapper.get(".naming").trigger("submit");
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "src/new_file.ts", dir: false }));
+    await vi.waitFor(() => expect(git.modal.path).toBe("src/new_file.ts"));
+    expect(git.modal.open).toBe(true);
+    expect(wrapper.find(".naming").exists()).toBe(false);
+  });
+
+  it("creates a new folder at the root when no folder was clicked, and does not open the large Git window", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='New folder']").trigger("click");
+    await wrapper.get(".naming input").setValue("assets");
+    await wrapper.get(".naming").trigger("submit");
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "assets", dir: true }));
+    expect(git.modal.open).toBe(false);
+  });
+
+  it("cancels the new name with the key Escape, and creates nothing", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    await wrapper.get(".naming input").trigger("keydown", { key: "Escape" });
+    expect(wrapper.find(".naming").exists()).toBe(false);
+    expect(invokeMock).not.toHaveBeenCalledWith("file_create", expect.anything());
+  });
+
+  it("keeps the name box open and creates nothing more when the backend refuses the name", async () => {
+    const wrapper = await mountPanel();
+    invokeMock.mockImplementation(async (command: string) => {
+      if (command === "file_create") {
+        throw new Error("already exists");
+      }
+      return { root: "/work/heidrun", git: true, files: ["README.md"], status: {}, truncated: false };
+    });
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    await wrapper.get(".naming input").setValue("README.md");
+    await wrapper.get(".naming").trigger("submit");
+    await vi.waitFor(() => expect(state.toast).toContain("already exists"));
+    expect(wrapper.find(".naming").exists()).toBe(true);
+    expect(git.modal.open).toBe(false);
   });
 
   it("keeps the header at the top while the rows scroll: the rule of the header sticks it, with its own background", () => {
@@ -142,7 +199,7 @@ describe("FilesPanel", () => {
 
   it("changes the options with the menu of the three dots, and marks the choice that is on", async () => {
     const wrapper = await mountPanel();
-    await wrapper.findAll("header button")[1].trigger("click");
+    await wrapper.get("[aria-label='More options']").trigger("click");
     const items = () => Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]"));
     expect(items().map((item) => item.textContent?.trim())).toEqual([
       "Indentation", "Small", "✓ Medium", "Large", "Row height", "Compact", "✓ Comfortable", "Indent guides", "✓ Show", "Hide",

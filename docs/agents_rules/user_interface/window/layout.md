@@ -43,5 +43,5 @@ The other files of the folder `docs/agents_rules/user_interface` give the rules 
 ## Files
 
 - Heidrun never modifies a file of the developer. Only the coding agents that run in the panes modify files.
-- A part of the window that shows files, for example a file explorer, only reads them. It has no button to create, rename, move, delete, or edit a file.
+- A part of the window that shows files, for example a file explorer, only reads them. It has no button to rename, move, delete, or edit a file. The only exception is the Files sidebar section, which can create a new empty file and a new empty folder ([files.md](../sidebars/files.md)).
 

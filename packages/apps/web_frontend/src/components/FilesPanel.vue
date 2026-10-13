@@ -1,14 +1,16 @@
 <script setup lang="ts">
 // The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
-// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The section
-// only reads files: it has no button to create, rename, move, delete, or edit a file.
+// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
+// changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
+// delete, or edit a file.
 // - issue #349
-import { computed, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
 import { currentGit, git, openGitModal } from "../stores/git";
 import { buildTree, files, loadFiles, visibleRows, type TreeRow } from "../stores/files";
-import { state } from "../stores/session";
+import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
 import { t } from "../i18n/index";
@@ -73,6 +75,87 @@ watch(
   { immediate: true },
 );
 
+/** The largest number of files for which "Expand all" unfolds every folder: more rows would freeze the window. */
+const EXPAND_ALL_LIMIT = 3000;
+
+/** The folder that a new file or a new folder goes into: the folder, or the folder of the file, that was clicked last. */
+const targetFolder = ref("");
+
+/** The name that the developer is typing for a new file or a new folder, or null when no name is being typed. */
+const naming = ref<{ kind: "file" | "dir"; value: string } | null>(null);
+const nameInput = ref<HTMLInputElement>();
+
+function startNaming(kind: "file" | "dir") {
+  const folder = targetFolder.value;
+  if (folder !== "") {
+    files.expanded = new Set([...files.expanded, folder]);
+  }
+  naming.value = { kind, value: folder === "" ? "" : `${folder}/` };
+  void nextTick(() => {
+    const input = nameInput.value;
+    if (input !== undefined) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  });
+}
+
+function cancelNaming() {
+  naming.value = null;
+}
+
+async function submitNaming() {
+  const current = naming.value;
+  if (current === null) {
+    return;
+  }
+  const path = current.value.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  if (path === "") {
+    return;
+  }
+  try {
+    await invoke("file_create", { root: files.root, path, dir: current.kind === "dir" });
+  } catch (error) {
+    toast(String(error), "error");
+    return;
+  }
+  naming.value = null;
+  const parts = path.split("/");
+  const folders = new Set(files.expanded);
+  for (let index = 1; index < parts.length; index++) {
+    folders.add(parts.slice(0, index).join("/"));
+  }
+  if (current.kind === "dir") {
+    folders.add(path);
+    targetFolder.value = path;
+  }
+  files.expanded = folders;
+  await loadFiles(files.root);
+  if (current.kind === "file") {
+    openGitModal(path);
+  }
+}
+
+function collapseAll() {
+  files.expanded = new Set();
+  targetFolder.value = "";
+}
+
+function expandAll() {
+  if (files.list.length > EXPAND_ALL_LIMIT) {
+    toast(t("filesPanel.tooManyFiles", { count: EXPAND_ALL_LIMIT }));
+    return;
+  }
+  const folders = new Set<string>();
+  for (const path of files.list) {
+    const parts = path.split("/");
+    for (let index = 1; index < parts.length; index++) {
+      folders.add(parts.slice(0, index).join("/"));
+    }
+  }
+  files.expanded = folders;
+}
+
 function refresh() {
   const root = currentGit.value?.root;
   if (root !== undefined) {
@@ -95,9 +178,11 @@ function toggleFolder(row: TreeRow) {
 
 function chooseRow(row: TreeRow) {
   if (row.dir) {
+    targetFolder.value = row.path;
     toggleFolder(row);
     return;
   }
+  targetFolder.value = row.path.includes("/") ? row.path.slice(0, row.path.lastIndexOf("/")) : "";
   openGitModal(row.path);
 }
 
@@ -141,12 +226,48 @@ function letterClass(letter: string): string {
         <button
           type="button"
           class="btn btn-sm icon-button"
+          :aria-label="t('filesPanel.newFile')"
+          :title="t('filesPanel.newFile')"
+          @click="startNaming('file')"
+        >
+          <Icon name="file-earmark-plus" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm icon-button"
+          :aria-label="t('filesPanel.newFolder')"
+          :title="t('filesPanel.newFolder')"
+          @click="startNaming('dir')"
+        >
+          <Icon name="folder-plus" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm icon-button"
           :aria-label="t('filesPanel.refresh')"
           :title="t('filesPanel.refresh')"
           :disabled="files.loading"
           @click="refresh()"
         >
           <Icon name="arrow-clockwise" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm icon-button"
+          :aria-label="t('filesPanel.expandAll')"
+          :title="t('filesPanel.expandAll')"
+          @click="expandAll()"
+        >
+          <Icon name="arrows-expand" />
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm icon-button"
+          :aria-label="t('filesPanel.collapseAll')"
+          :title="t('filesPanel.collapseAll')"
+          @click="collapseAll()"
+        >
+          <Icon name="arrows-collapse" />
         </button>
         <SourceControlMenu
           button-class="btn btn-sm icon-button"
@@ -156,6 +277,18 @@ function letterClass(letter: string): string {
           @choose="chooseMenuItem"
         />
       </header>
+      <form v-if="naming !== null" class="naming" @submit.prevent="submitNaming">
+        <label class="muted" for="files-panel-name">{{ naming.kind === "dir" ? t("filesPanel.newFolder") : t("filesPanel.newFile") }}</label>
+        <input
+          id="files-panel-name"
+          ref="nameInput"
+          v-model="naming.value"
+          class="form-control form-control-sm"
+          spellcheck="false"
+          @keydown.esc.prevent="cancelNaming"
+        />
+        <span class="muted">{{ t("filesPanel.namingHint") }}</span>
+      </form>
       <div v-if="files.error !== ''" class="error">{{ files.error }}</div>
       <ul v-else class="rows" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
         <li v-for="row in rows" :key="row.path + (row.dir ? '/' : '')">
@@ -210,6 +343,7 @@ function letterClass(letter: string): string {
 .letter.added { color: var(--ok); }
 .letter.deleted { color: var(--blocked); }
 .letter.renamed { color: var(--done); }
+.naming { display: flex; flex-direction: column; gap: 4px; padding: 0 8px; }
 .error { font-size: var(--font-size); color: var(--fail); }
 .muted { font-size: var(--font-size); color: var(--muted); padding: 0 8px; }
 </style>
