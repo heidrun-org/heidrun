@@ -1,11 +1,11 @@
 # User interface of Heidrun: sidebars and notes
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary.md)
-- Related issue: [issue 315](https://github.com/heidrun-org/heidrun/issues/315)
+- Related issue: [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 371](https://github.com/heidrun-org/heidrun/issues/371)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
 
@@ -20,6 +20,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - A click on the icon of the sidebar section that an expanded sidebar shows collapses the sidebar. A click on any other icon expands the sidebar, if it is collapsed, and shows that sidebar section.
 - The first button of the sidebar icon bar, above the icons, collapses or expands the sidebar. In an expanded sidebar, it is the collapse button, with an arrow toward the edge of the window: `chevron-bar-left` in the left sidebar, `chevron-bar-right` in the right sidebar. In a collapsed sidebar, it is the expand button, with an arrow toward the viewport: `chevron-bar-right` in the left sidebar, `chevron-bar-left` in the right sidebar. The expand button expands the sidebar to its selected sidebar section.
 - A collapsed sidebar has no line to drag: its width does not change, and the gap between it and the viewport stays. The width of an expanded sidebar includes the sidebar icon bar.
+- An expanded sidebar has a minimum width: 200 pixels for the left sidebar, and 260 pixels for the right sidebar. It has no fixed maximum width: the rule of the layout, in [layout.md](../window/layout.md), says how far the developer can make it wider ([issue #371](https://github.com/heidrun-org/heidrun/issues/371)).
 - A sidebar is never hidden completely: the top bar has no button that hides a sidebar, and the sidebar icon bar stays on the screen, collapsed or expanded.
 - The shortcut ⌘B collapses or expands the left sidebar, and the shortcut ⌥⌘B collapses or expands the right sidebar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
 - When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section expands if it is collapsed to the sidebar icon bar. A sidebar that holds another sidebar section does not change.

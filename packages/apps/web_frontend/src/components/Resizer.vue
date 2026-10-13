@@ -8,7 +8,7 @@ import { ResizerWidth } from "../lib/resizer_width";
 // `highlighted` draws the line in colour although the pointer is not on it: a corner of the panes that touches it
 // is under the pointer. `inside` is for a column that touches the panes: the handle takes no room, because the border of the
 // panes is the line, and the place to grab it goes over the two columns.
-const props = defineProps<{ side: "left" | "right"; width: number; min: number; max: number; defaultWidth: number; reserve?: number; highlighted?: boolean; inside?: boolean }>();
+const props = defineProps<{ side: "left" | "right"; width: number; min: number; max?: number; defaultWidth: number; reserve?: number; highlighted?: boolean; inside?: boolean }>();
 const emit = defineEmits<{ "update:width": [value: number] }>();
 
 const active = ref(false);
