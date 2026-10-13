@@ -84,8 +84,12 @@ const defaults = {
   autoStartHerdr: true,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
   keepAgentsRunningAfterQuit: false,
+  /** A click on the cross of a workspace in the information card of the Workspace status bar section opens the confirmation dialog "Close the workspace". Off: the workspace closes at once. */
+  confirmWorkspaceClose: true,
   /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
   confirmTabClose: true,
+  /** A click on the close button in the header of a pane opens the confirmation dialog "Close the pane". Off: the pane closes at once. */
+  confirmPaneClose: true,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */

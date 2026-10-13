@@ -8,6 +8,7 @@ import MacroMenu from "./MacroMenu.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
 import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
+import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
@@ -116,7 +117,13 @@ const subtitle = computed(() => {
         <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
-        <ConfirmButton icon="x-lg" :confirm-label="t('paneCard.closeConfirm')" :question="t('paneCard.close')" @confirm="closePane(pane.pane_id)" />
+        <ConfirmButton
+          icon="x-lg"
+          :confirm-label="t('paneCard.closeConfirm')"
+          :question="t('paneCard.close')"
+          :is-confirm-required="settings.confirmPaneClose"
+          @confirm="closePane(pane.pane_id)"
+        />
         </template>
       </span>
     </header>

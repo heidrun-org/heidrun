@@ -6,6 +6,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import ScrollingLine from "./ScrollingLine.vue";
 import { askConfirm } from "../stores/confirm";
+import { settings } from "../stores/settings";
 import { currentGit, workspaceCwd } from "../stores/git";
 import {
   allPanes,
@@ -146,15 +147,18 @@ function renameFromList(workspaceId: string): void {
 
 /**
  * Asks for a confirmation, then closes a workspace. The question lives in the status bar section and not in the card, because
- * the card closes when the keyboard focus goes to the confirmation dialog.
+ * the card closes when the keyboard focus goes to the confirmation dialog. When the setting `confirmWorkspaceClose` is off,
+ * the workspace closes at once, without the question.
  *
  * @param workspace - The workspace to close.
  */
 async function askClose(workspace: WorkspaceInfo): Promise<void> {
-  const isConfirmed = await askConfirm(
-    t("workspaceStatusSummary.close", { name: workspace.label }),
-    t("workspaceStatusSummary.closeConfirm"),
-  );
+  const isConfirmed =
+    settings.confirmWorkspaceClose === false ||
+    (await askConfirm(
+      t("workspaceStatusSummary.close", { name: workspace.label }),
+      t("workspaceStatusSummary.closeConfirm"),
+    ));
   if (isConfirmed === true) {
     await closeWorkspace(workspace.workspace_id);
   }
