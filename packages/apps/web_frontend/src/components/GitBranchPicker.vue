@@ -92,12 +92,12 @@ function chooseFirst() {
           :aria-label="t('statusBar.gitBranchPickerPlaceholder')"
           @keydown.enter.prevent="chooseFirst"
         />
-        <div class="list-group list-group-flush overflow-auto branch-list" role="listbox">
+        <div class="list-group list-group-flush branch-list" role="listbox">
           <button
             v-for="branch in shownBranches"
             :key="branch.name"
             type="button"
-            class="list-group-item list-group-item-action d-flex flex-column px-2 py-1"
+            class="list-group-item list-group-item-action branch-row d-flex flex-column text-start"
             role="option"
             :aria-selected="branch.is_current"
             :data-branch="branch.name"
@@ -105,15 +105,15 @@ function chooseFirst() {
           >
             <span class="d-flex align-items-center gap-2">
               <Icon name="git" />
-              <span class="fw-semibold text-truncate">{{ branch.name }}</span>
+              <span class="fw-semibold branch-name">{{ branch.name }}</span>
               <Icon v-if="branch.is_current" name="check2" :title="t('statusBar.gitBranchPickerCurrent')" />
-              <span class="ms-auto text-body-secondary text-nowrap">{{ ago(branch.last_time * 1000) }}</span>
+              <span class="text-body-secondary branch-time">{{ ago(branch.last_time * 1000) }}</span>
             </span>
-            <span class="text-body-secondary text-truncate">
+            <span class="text-body-secondary branch-subject">
               {{ branch.last_author }} • {{ branch.last_sha }} • {{ branch.last_subject }}
             </span>
           </button>
-          <div v-if="shownBranches.length === 0" class="text-body-secondary px-2 py-1" data-field="no-branch">
+          <div v-if="shownBranches.length === 0" class="text-body-secondary branch-row" data-field="no-branch">
             {{ t("statusBar.gitBranchPickerEmpty") }}
           </div>
         </div>
@@ -125,5 +125,8 @@ function chooseFirst() {
 <style scoped>
 /* The inner side of the zone keeps 4 pixels of background: the counts zone touches it. */
 .git-branch-zone { margin-right: -4px; padding-right: 4px; }
-.branch-list { max-height: 320px; }
+.branch-list { max-height: 320px; overflow-y: auto; }
+.branch-row { padding: 4px 8px; }
+.branch-name, .branch-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.branch-time { margin-left: auto; white-space: nowrap; }
 </style>

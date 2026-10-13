@@ -80,10 +80,19 @@ describe('the branch picker (GitBranchPicker.vue)', () => {
 		}
 	});
 
-	it('writes style rules only for the zone in the status bar and for the height of the list', () => {
-		const allowedClassNameList = ['git-branch-zone', 'branch-list'];
+	it('writes style rules only for the zone in the status bar and for the rows of the list', () => {
+		const allowedClassNameList = ['git-branch-zone', 'branch-list', 'branch-row', 'branch-name', 'branch-subject', 'branch-time'];
 		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
 		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
+describe('the list of the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('scrolls inside the card, and cuts the long lines, because the utility classes of Bootstrap for this are not built', () => {
+		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto/);
+		expect(sourceText).toMatch(/\.branch-name, \.branch-subject\s*\{[^}]*text-overflow:\s*ellipsis/);
 	});
 });
 
