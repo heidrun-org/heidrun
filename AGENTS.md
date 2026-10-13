@@ -69,10 +69,10 @@ Every documentation file in the folder `docs`, and in all its subfolders, has a 
 - Write each link as a relative link that works from the folder of the file.
 - The file `docs/release_notes/prefix.md` has no header. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
 
-Example, for the file `docs/process/index.md`:
+Example, for the file `docs/team_collaboration_process/index.md`:
 
 ```markdown
-# Process index
+# Team collaboration process index
 
 - Created: 4 October 2026
 - Last updated: 8 October 2026

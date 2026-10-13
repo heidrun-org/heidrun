@@ -14,5 +14,5 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [architecture/](architecture/index.md): how Heidrun is built.
 - [marketing/](marketing/index.md): the marketing rules, the mythology texts, and the method to record videos.
 - [potential_ideas/](potential_ideas/index.md): the ideas that nobody has decided to build yet.
-- [process/](process/index.md): how the people who work on Heidrun work together.
 - [release_notes/](release_notes/index.md): the text that starts every GitHub release.
+- [team_collaboration_process/](team_collaboration_process/index.md): how the people who work on Heidrun work together.

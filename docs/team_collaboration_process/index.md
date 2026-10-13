@@ -1,4 +1,4 @@
-# Process documentation index
+# Team collaboration process index
 
 - Created: 13 October 2026
 - Last updated: 13 October 2026

@@ -1,4 +1,4 @@
-# Process of the team
+# Team collaboration process
 
 - Created: 12 October 2026
 - Last updated: 13 October 2026
