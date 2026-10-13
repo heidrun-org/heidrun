@@ -80,6 +80,10 @@ describe('bootstrap_parts.scss', () => {
 			'.list-group',
 			'.btn',
 			'.btn:disabled',
+			'.btn-group > .btn',
+			'.btn-group > .btn:hover',
+			'.btn-group > .btn:not(:first-child)',
+			'.btn-group > .btn:not(:last-child)',
 		]);
 	});
 
@@ -207,5 +211,11 @@ describe('bootstrap_parts.scss', () => {
 				isClassUsed: false,
 			});
 		}
+	});
+
+	it('joins the buttons that have only the class btn inside a button group, because Bootstrap 6 joins only the classes that contain btn-', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:first-child\) \{\s*margin-inline-start: calc\(-1 \* var\(--btn-border-width\)\)/);
+		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:last-child\) \{\s*border-start-end-radius: 0/);
 	});
 });
