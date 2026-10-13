@@ -3,6 +3,7 @@ mod chats_files;
 mod chats_scan;
 mod claude;
 mod clipboard;
+mod coding_agent_models;
 mod files;
 mod forge_cache;
 mod git;
@@ -313,6 +314,7 @@ pub fn run() {
             topic_clusters::topic_clusters_read,
             topic_clusters::topic_clusters_write,
             topic_clusters::coding_agent_ask,
+            coding_agent_models::coding_agent_models_run,
             git::forge_merge,
             git::git_diff,
             git::git_file,

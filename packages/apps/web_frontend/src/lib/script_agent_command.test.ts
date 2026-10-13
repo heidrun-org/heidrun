@@ -19,8 +19,8 @@ describe("scriptAgentCommand", () => {
   });
 
   it("starts codex with the model and the effort", () => {
-    expect(scriptAgentCommand({ name: "codex", model: "gpt-5", effort: "low", prompt: "Hi" })).toBe(
-      `codex -m 'gpt-5' -c 'model_reasoning_effort="low"' 'Hi'`,
+    expect(scriptAgentCommand({ name: "codex", model: "gpt-6-luna", effort: "low", prompt: "Hi" })).toBe(
+      `codex -m 'gpt-6-luna' -c 'model_reasoning_effort="low"' 'Hi'`,
     );
   });
 

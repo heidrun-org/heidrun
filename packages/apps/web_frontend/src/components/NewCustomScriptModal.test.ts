@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => null) }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
@@ -222,23 +224,41 @@ describe("NewCustomScriptModal", () => {
     expect(state.toast).toContain("both filled");
   });
 
+  it("offers the models and the efforts that the tool of the coding agent lists, with the efforts of the chosen model", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const codexOutput = readFileSync(resolve(import.meta.dirname, "../lib/codex_debug_models.fixture.json"), "utf8");
+    vi.mocked(invoke).mockImplementation(async (command: string) => (command === "coding_agent_models_run" ? codexOutput : null));
+    const { wrapper } = await mountNewCustomScriptModal();
+    await wrapper.get("input[value=codingAgent]").setValue();
+    await wrapper.get("input[name=new-script-agent][value=codex]").setValue();
+    await flushPromises();
+    expect(vi.mocked(invoke)).toHaveBeenCalledWith("coding_agent_models_run", { executable: "codex", arguments: ["debug", "models"] });
+    const modelTexts = wrapper.findAll("#new-script-model option").map((option) => option.text());
+    expect(modelTexts).toContain("GPT-6.1-Sol");
+    expect(modelTexts).not.toContain("GPT-Reserve");
+    await wrapper.get("#new-script-model").setValue("gpt-6.1-sol");
+    expect(wrapper.findAll("#new-script-effort option").map((option) => option.text())).toContain("ultra");
+    await wrapper.get("#new-script-model").setValue("gpt-6-luna");
+    expect(wrapper.findAll("#new-script-effort option").map((option) => option.text())).not.toContain("ultra");
+  });
+
   it("remembers the kind, the coding agent, the model, and the effort, and nothing else", async () => {
     const first = await mountNewCustomScriptModal();
     await first.wrapper.get("input[value=codingAgent]").setValue();
     await first.wrapper.get("input[name=new-script-agent][value=codex]").setValue();
-    await first.wrapper.get("#new-script-model").setValue("gpt-5");
+    await first.wrapper.get("#new-script-model").setValue("gpt-6-luna");
     await first.wrapper.get("#new-script-effort").setValue("low");
     await first.wrapper.get("#new-script-name").setValue("not remembered");
     await first.wrapper.get("#new-script-prompt").setValue("not remembered");
     const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
-    expect(saved).toMatchObject({ customScriptKind: "codingAgent", customScriptAgent: "codex", customScriptModel: "gpt-5", customScriptEffort: "low" });
+    expect(saved).toMatchObject({ customScriptKind: "codingAgent", customScriptAgent: "codex", customScriptModel: "gpt-6-luna", customScriptEffort: "low" });
     first.wrapper.unmount();
     document.body.innerHTML = "";
     vi.resetModules();
     const second = await mountNewCustomScriptModal();
     expect((second.wrapper.get("input[value=codingAgent]").element as HTMLInputElement).checked).toBe(true);
     expect((second.wrapper.get("input[name=new-script-agent][value=codex]").element as HTMLInputElement).checked).toBe(true);
-    expect((second.wrapper.get("#new-script-model").element as HTMLSelectElement).value).toBe("gpt-5");
+    expect((second.wrapper.get("#new-script-model").element as HTMLSelectElement).value).toBe("gpt-6-luna");
     expect((second.wrapper.get("#new-script-effort").element as HTMLSelectElement).value).toBe("low");
     expect((second.wrapper.get("#new-script-name").element as HTMLInputElement).value).toBe("");
     expect((second.wrapper.get("#new-script-prompt").element as HTMLTextAreaElement).value).toBe("");
