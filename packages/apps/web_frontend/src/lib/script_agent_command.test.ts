@@ -24,6 +24,16 @@ describe("scriptAgentCommand", () => {
     );
   });
 
+  it("starts agy with the option -i before the prompt, so that the session stays interactive", () => {
+    expect(scriptAgentCommand({ name: "agy", prompt: " Review the last commit. " })).toBe("agy -i 'Review the last commit.'");
+  });
+
+  it("starts agy with the model and the effort before the option -i", () => {
+    expect(scriptAgentCommand({ name: "agy", model: "claude-sonnet-4-6", effort: "high", prompt: "Hi" })).toBe(
+      "agy --model 'claude-sonnet-4-6' --effort 'high' -i 'Hi'",
+    );
+  });
+
   it("keeps the lines of a prompt of several lines inside one word", () => {
     expect(scriptAgentCommand({ name: "codex", prompt: "a\nb" })).toBe("codex 'a\nb'");
   });

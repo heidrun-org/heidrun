@@ -40,6 +40,20 @@ describe("the models of the coding agents", () => {
     const codex = findCodingAgent("codex");
     expect(codex?.modelsFromTool?.arguments).toEqual(["debug", "models"]);
   });
+
+  it("reads the models of Antigravity from the command agy models", () => {
+    const antigravity = findCodingAgent("agy");
+    expect(antigravity?.modelsFromTool?.arguments).toEqual(["models"]);
+  });
+});
+
+describe("the coding agent Antigravity", () => {
+  it("runs the executable agy, and starts interactive with a prompt", () => {
+    const antigravity = findCodingAgent("agy");
+    expect(antigravity?.executable).toBe("agy");
+    expect(antigravity?.canStartInteractiveWithPrompt).toBe(true);
+    expect(CUSTOM_SCRIPT_CODING_AGENT_IDS).toContain("agy");
+  });
 });
 
 describe("CUSTOM_SCRIPT_CODING_AGENTS", () => {

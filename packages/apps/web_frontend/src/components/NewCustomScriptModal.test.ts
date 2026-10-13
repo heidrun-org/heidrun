@@ -117,7 +117,7 @@ describe("NewCustomScriptModal", () => {
     const { wrapper } = await mountNewCustomScriptModal();
     await wrapper.get("input[value=codingAgent]").setValue();
     expect(wrapper.find("#new-script-command").exists()).toBe(false);
-    expect(wrapper.findAll("input[name=new-script-agent]").map((radio) => radio.attributes("value"))).toEqual(["claude", "codex"]);
+    expect(wrapper.findAll("input[name=new-script-agent]").map((radio) => radio.attributes("value"))).toEqual(["claude", "codex", "agy"]);
     for (const id of ["folder", "model", "effort", "prompt"]) {
       expect(wrapper.find(`#new-script-${id}`).exists()).toBe(true);
     }
@@ -240,6 +240,27 @@ describe("NewCustomScriptModal", () => {
     expect(wrapper.findAll("#new-script-effort option").map((option) => option.text())).toContain("ultra");
     await wrapper.get("#new-script-model").setValue("gpt-6-luna");
     expect(wrapper.findAll("#new-script-effort option").map((option) => option.text())).not.toContain("ultra");
+  });
+
+  it("offers the models that agy models lists, and builds the command line of Antigravity", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const output = "Fetching available models...\nclaude-sonnet-4-6\tClaude Sonnet 4.6 (Thinking)\ngemini-3.8-flash-low\tGemini 3.8 Flash (Low)\n";
+    vi.mocked(invoke).mockImplementation(async (command: string) => (command === "coding_agent_models_run" ? output : null));
+    const { wrapper, project } = await mountNewCustomScriptModal();
+    await wrapper.get("input[value=codingAgent]").setValue();
+    await wrapper.get("input[name=new-script-agent][value=agy]").setValue();
+    await flushPromises();
+    expect(vi.mocked(invoke)).toHaveBeenCalledWith("coding_agent_models_run", { executable: "agy", arguments: ["models"] });
+    expect(wrapper.findAll("#new-script-model option").map((option) => option.text())).toContain("Gemini 3.8 Flash (Low)");
+    await wrapper.get("#new-script-name").setValue("ask");
+    await wrapper.get("#new-script-model").setValue("gemini-3.8-flash-low");
+    await wrapper.get("#new-script-prompt").setValue("Hi");
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+    expect(project.byWorkspace["w1"]!.config.actions[1]).toMatchObject({
+      command: "agy --model 'gemini-3.8-flash-low' -i 'Hi'",
+      agent: { name: "agy", model: "gemini-3.8-flash-low", prompt: "Hi" },
+    });
   });
 
   it("remembers the kind, the coding agent, the model, and the effort, and nothing else", async () => {
