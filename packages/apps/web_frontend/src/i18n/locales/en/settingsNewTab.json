@@ -1,0 +1,10 @@
+{
+  "commandTitle": "Default command of a new tab",
+  "terminalLabel": "Terminal",
+  "terminalTitle": "The pane of a new tab runs a terminal",
+  "claudeLabel": "Claude Code",
+  "claudeTitle": "The pane of a new tab runs Claude Code, with no specific role, with the default model, and with no starting prompt",
+  "codexLabel": "Codex",
+  "codexTitle": "The pane of a new tab runs Codex, with the default model and with no starting prompt",
+  "help": "A click on the plus button of the tab bar creates a new tab, and starts this command in its pane."
+}
