@@ -37,7 +37,7 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 const KEY = "heidrun.settings";
 
 /** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "actions" | "git";
+export type LeftSidebarSection = "actions" | "sourceControl";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";
@@ -235,6 +235,10 @@ function load(): typeof defaults {
     // The To handle sidebar section moved from the left sidebar to the right sidebar.
     if (stored.leftSidebarSection === "toHandle") {
       stored.leftSidebarSection = "actions";
+    }
+    // The Source control sidebar section replaced the Git sidebar section (issue #305).
+    if (stored.leftSidebarSection === "git") {
+      stored.leftSidebarSection = "sourceControl";
     }
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     // "github-dark" was the only default before themes existed: it now means "auto".

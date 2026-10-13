@@ -6,6 +6,7 @@ mod clipboard;
 mod files;
 mod forge_cache;
 mod git;
+mod git_source_control;
 mod history;
 mod legacy;
 mod herdr;
@@ -315,6 +316,13 @@ pub fn run() {
             git::forge_merge,
             git::git_diff,
             git::git_file,
+            git_source_control::git_stage,
+            git_source_control::git_unstage,
+            git_source_control::git_discard,
+            git_source_control::git_commit,
+            git_source_control::git_stash,
+            git_source_control::git_sync,
+            git_source_control::git_commit_diff,
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
