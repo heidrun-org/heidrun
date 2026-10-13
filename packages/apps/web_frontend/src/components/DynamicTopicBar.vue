@@ -166,16 +166,16 @@ watch(() => props.selected, showSelected);
 .topic-bar { position: relative; }
 .topic-strip { position: relative; overflow: hidden; }
 .topic-chip {
-  flex: none; white-space: nowrap; border: 0; border-radius: var(--bs-border-radius-pill); padding: 0.2rem 0.75rem;
-  background: var(--bs-secondary-bg); color: var(--bs-body-color); font-size: 0.9em;
+  flex: none; white-space: nowrap; border: 0; border-radius: var(--radius-pill); padding: 0.2rem 0.75rem;
+  background: var(--bg-2); color: var(--fg-body); font-size: 0.9em;
 }
-.topic-chip:hover { background: var(--bs-border-color); }
-.topic-chip.is-selected { background: var(--bs-body-color); color: var(--bs-body-bg); }
+.topic-chip:hover { background: var(--border-color); }
+.topic-chip.is-selected { background: var(--fg-body); color: var(--bg-body); }
 .topic-arrow {
-  position: absolute; top: 0; bottom: 0; width: 44px; border: 0; padding: 0; color: var(--bs-body-color);
+  position: absolute; top: 0; bottom: 0; width: 44px; border: 0; padding: 0; color: var(--fg-body);
   display: flex; align-items: center;
 }
 .topic-arrow.is-previous { left: 0; justify-content: flex-start; background: linear-gradient(to right, var(--side) 55%, transparent); }
 .topic-arrow.is-next { right: 0; justify-content: flex-end; background: linear-gradient(to left, var(--side) 55%, transparent); }
-.topic-arrow:hover { color: var(--bs-emphasis-color); }
+.topic-arrow:hover { color: var(--fg-body); }
 </style>

@@ -6,6 +6,7 @@ mod clipboard;
 mod files;
 mod forge_cache;
 mod git;
+mod git_source_control;
 mod history;
 mod legacy;
 mod herdr;
@@ -14,7 +15,7 @@ mod project;
 mod pty;
 mod skills;
 mod status_item;
-mod status_item_goat;
+mod status_item_icon;
 mod status_item_picture;
 mod topic_clusters;
 mod usage;
@@ -314,6 +315,17 @@ pub fn run() {
             git::forge_merge,
             git::git_diff,
             git::git_file,
+            git_source_control::git_stage,
+            git_source_control::git_unstage,
+            git_source_control::git_discard,
+            git_source_control::git_commit,
+            git_source_control::git_stash,
+            git_source_control::git_sync,
+            git_source_control::git_branches,
+            git_source_control::git_remote_branches,
+            git_source_control::git_synchronize,
+            git_source_control::git_checkout,
+            git_source_control::git_commit_diff,
             claude::claude_statusline_state,
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
@@ -338,6 +350,7 @@ pub fn run() {
             files::file_write,
             files::files_grep,
             files::file_create,
+            files::dirs_existing,
             files::file_rename,
             files::file_trash,
             mobile::mobile_reply,

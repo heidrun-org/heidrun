@@ -50,19 +50,14 @@ class SidebarPaddingTestHelper {
 }
 
 describe('padding of the left sidebar', () => {
-	it('is 5px at the top, 0 on the left and on the right, and 16px at the bottom', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/Sidebar.vue', '.side', 'padding');
+	it('has no padding of its own, so the sidebar icon bar reaches the borders of the frame', () => {
+		const rule = SidebarPaddingTestHelper.readRule('components/Sidebar.vue', '.side');
+		expect(rule).not.toContain('padding');
+	});
+
+	it('leaves 5px at the top, 0 on the left and on the right, and 16px at the bottom of the content', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/Sidebar.vue', '.sidebar-section-body', 'padding');
 		expect(padding).toBe('5px 0 16px');
-	});
-
-	it('leaves the navigation bar without a margin, so its line reaches the left border and the right border', () => {
-		const rule = SidebarPaddingTestHelper.readRule('components/Sidebar.vue', '.left-navigation-bar');
-		expect(rule).not.toContain('margin');
-	});
-
-	it('keeps the buttons of the navigation bar 16px from each border, through the padding of the navigation bar', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/Sidebar.vue', '.left-navigation-bar', 'padding');
-		expect(padding).toBe('0 16px');
 	});
 });
 
@@ -72,38 +67,28 @@ describe('horizontal padding of the sidebar sections of the left sidebar', () =>
 		expect(padding).toBe('18px 14px');
 	});
 
-	it('is 16px on each side for the Git sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/GitPanel.vue', '.gitp', 'padding');
-		expect(padding).toBe('20px 16px');
+	it('is 16px on each side for the Source control sidebar section', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/SourceControlPanel.vue', '.source-control', 'padding');
+		expect(padding).toBe('12px 16px');
 	});
 });
 
 describe('padding of the right sidebar', () => {
-	it('has no padding of its own, so the line of the navigation bar reaches the left border and the right border', () => {
+	it('has no padding of its own, so the sidebar icon bar reaches the borders of the frame', () => {
 		const rule = SidebarPaddingTestHelper.readRule('components/RightPanel.vue', '.right');
 		expect(rule).not.toContain('padding');
 	});
 
-	it('leaves 5px above the navigation bar, as the left sidebar does, and nothing on the left and on the right', () => {
-		const margin = SidebarPaddingTestHelper.readDeclaration('components/RightPanel.vue', '.right-navigation-bar', 'margin');
-		expect(margin).toBe('5px 0 0');
-	});
-
-	it('keeps the buttons of the navigation bar 16px from each border, through the padding of the navigation bar', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/RightPanel.vue', '.right-navigation-bar', 'padding');
-		expect(padding).toBe('0 16px');
+	it('leaves 5px above the content, as the left sidebar does', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/RightPanel.vue', '.sidebar-section-body', 'padding-top');
+		expect(padding).toBe('5px');
 	});
 });
 
 describe('horizontal padding of the sidebar sections of the right sidebar', () => {
-	it('is 6px on each side for the To handle sidebar section, with 8px above and 16px below', () => {
+	it('is 6px on each side for the Needs you sidebar section, with 8px above and 16px below', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/ToHandlePanel.vue', '.to-handle', 'padding');
 		expect(padding).toBe('8px 6px 16px');
-	});
-
-	it('is 14px on each side for the Pane sidebar section, as for the Scripts sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/Inspector.vue', '.insp', 'padding');
-		expect(padding).toBe('20px 14px');
 	});
 
 	it('is 14px on each side for the Notes sidebar section, as for the Scripts sidebar section', () => {

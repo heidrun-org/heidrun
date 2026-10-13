@@ -37,7 +37,7 @@ Think of Valhalla: the agents are the einherjar (the warriors who feast and figh
 
 ## Why you will like it
 
-- **One work window.** A tab bar above the panes, the workspace selector in the status bar, and a "To handle" queue of blocked or finished agents in the right sidebar.
+- **One work window.** A tab bar above the panes, the workspace selector in the status bar, and a "Needs you" queue of blocked or finished agents in the right sidebar.
 - **Real terminals.** Every pane shows the real Herdr terminal, so Claude Code, Codex, and all the colors look exactly as in Herdr.
 - **Macros.** One click writes a ready text into a pane. The agents never wait for a developer who is typing.
 - **Inspector.** Allow or deny an agent request in one click, read the context of the agent, and ask another agent to fix a problem.

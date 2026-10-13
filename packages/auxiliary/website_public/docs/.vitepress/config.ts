@@ -1,9 +1,18 @@
 import { defineConfig } from 'vitepress';
 import identity from '../../../../../data/identity.json';
 
+const base = '/heidrun/';
+
 export default defineConfig({
 	title: identity.title,
 	description: identity.description.en,
+	head: [
+		['link', {
+			rel: 'icon',
+			type: 'image/svg+xml',
+			href: `${base}favicon.svg`,
+		}],
+	],
 	transformPageData(pageData) {
 		if (pageData.relativePath === 'index.md') {
 			pageData.frontmatter.hero = {
@@ -14,7 +23,7 @@ export default defineConfig({
 			};
 		}
 	},
-	base: '/heidrun/',
+	base,
 	themeConfig: {
 		nav: [
 			{ text: 'Home', link: '/' },

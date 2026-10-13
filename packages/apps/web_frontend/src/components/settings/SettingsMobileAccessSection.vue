@@ -22,7 +22,7 @@ onBeforeUnmount(() => {
       {{ t("mobileModal.lead") }}
     </p>
 
-    <label class="switch">
+    <label class="toggle-switch">
       <input type="checkbox" :checked="st?.enabled" :disabled="mobile.busy" @change="setMobile(($event.target as HTMLInputElement).checked)" />
       <span>{{ t("mobileModal.enable") }}</span>
     </label>
@@ -67,8 +67,8 @@ onBeforeUnmount(() => {
 .section { display: flex; flex-direction: column; gap: 12px; }
 .eyebrow { color: var(--done); }
 .lead { margin: 0; font-size: var(--font-size); color: var(--text-2); line-height: 1.5; }
-.switch { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); font-weight: 600; }
-.switch input { width: 16px; height: 16px; accent-color: var(--done); }
+.toggle-switch { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); font-weight: 600; }
+.toggle-switch input { width: 16px; height: 16px; accent-color: var(--done); }
 .err { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--tint-err); color: var(--fail); font-size: var(--font-size); }
 .pair { display: flex; gap: 18px; align-items: center; }
 .qr { flex-shrink: 0; width: 220px; height: 220px; padding: 10px; border-radius: 10px; background: #fff; }

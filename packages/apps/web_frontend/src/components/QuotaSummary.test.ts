@@ -21,6 +21,16 @@ describe("QuotaSummary", () => {
     expect(wrapper.get(".percent").text()).toBe("60%");
   });
 
+  it("is a status bar section that keeps the background of a button while its popover is open", async () => {
+    const wrapper = mount(QuotaSummary, { props: { quota: claude } });
+    expect(wrapper.classes()).toContain("status-section");
+    expect(wrapper.classes()).not.toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).not.toContain("show");
+  });
+
   it("shows neither the subscription nor the name of the account in the popover, because the item already shows the name", async () => {
     const quota: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [{ id: "week", name: "Week", percent: 44 }] };
     const wrapper = mount(QuotaSummary, { props: { quota } });
@@ -114,6 +124,17 @@ describe("QuotaSummary", () => {
     expect(wrapper.findAll(".progress").map((progress) => progress.attributes("aria-valuenow"))).toEqual(["25", "60"]);
   });
 
+  it("makes the information card 408 pixels wide, which is 20 percent more than the 340 pixels of Bootstrap, for Claude and for Codex", async () => {
+    const codex: QuotaBlock = { provider: "codex", label: "Codex · prolite", windows: [{ id: "week", name: "Week", percent: 1 }] };
+    for (const quota of [claude, codex]) {
+      const wrapper = mount(QuotaSummary, { props: { quota } });
+      await wrapper.trigger("click");
+      const popover = wrapper.get(".popover").element as HTMLElement;
+      expect(popover.style.width).toBe("408px");
+      expect(popover.style.getPropertyValue("--popover-max-width")).toBe("408px");
+    }
+  });
+
   it("shows the first window in the ring when there is no week", () => {
     const week = { id: "week" as const, name: "Week", percent: 44 };
     expect(quotaRingWindow([week])).toBe(week);
@@ -176,7 +197,7 @@ describe("QuotaSummary pace", () => {
     };
     const wrapper = mount(QuotaSummary, { props: { quota } });
     await wrapper.trigger("click");
-    expect(wrapper.get("[data-field=pace]").classes()).toEqual(["alert", "alert-danger"]);
+    expect(wrapper.get("[data-field=pace]").classes()).toEqual(["alert", "theme-danger"]);
     expect(wrapper.find(".progress [data-field=expected-usage]").exists()).toBe(true);
   });
 });

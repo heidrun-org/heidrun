@@ -6,5 +6,5 @@
   "remoteControlBadge": "RC",
   "closeConfirm": "Fermer",
   "close": "Fermer l’onglet {name}",
-  "newTabTitle": "Créer un onglet : un terminal, Claude Code ou Codex (clic avec majuscule : relancer l’onglet précédent)"
+  "newTabTitle": "Créer un onglet avec la commande par défaut d’un nouvel onglet (clic avec majuscule : relancer l’onglet précédent)"
 }

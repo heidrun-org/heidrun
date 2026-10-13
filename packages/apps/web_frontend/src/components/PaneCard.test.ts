@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 import paneCardSource from "./PaneCard.vue?raw";
 
@@ -9,6 +9,13 @@ vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }))
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 // The terminal needs a real browser (xterm, the colour scheme query): the pane header is the subject of these tests.
 vi.mock("./TerminalView.vue", () => ({ default: { template: "<div></div>" } }));
+vi.mock("../lib/api", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../lib/api")>();
+  return {
+    ...original,
+    closePane: vi.fn(async () => ({})),
+  };
+});
 
 const LONG_NAME = "jetienne@Jeromes-Macbook-Pro:~/webwork/heidrun";
 
@@ -20,7 +27,7 @@ beforeEach(() => {
 /** The declarations of the style rule of `selector`, in the style block of the component PaneCard. */
 function styleRule(selector: string): string {
   const style = paneCardSource.slice(paneCardSource.indexOf("<style"));
-  const escaped = selector.replace(/[.]/g, "\\.");
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = new RegExp(`(?:^|\\n)${escaped} \\{([^}]*)\\}`).exec(style);
   expect(match, `the style rule ${selector}`).not.toBeNull();
   return match![1];
@@ -51,59 +58,6 @@ async function mountPaneCard(
     global: { stubs: { MacroMenu: true } },
   });
 }
-
-/** Two tabs in the workspace w1, with the tab `selectedTabId` selected. */
-async function selectTab(selectedTabId: string) {
-  const { state } = await import("../stores/session");
-  state.snapshot = {
-    workspaces: [],
-    tabs: [
-      { tab_id: "w1:t1", workspace_id: "w1" },
-      { tab_id: "w1:t2", workspace_id: "w1" },
-    ],
-    panes: [],
-    layouts: [],
-    agents: [],
-  } as never;
-  state.selectedWorkspaceId = "w1";
-  state.selectedTabId = selectedTabId;
-}
-
-describe("PaneCard corner under the first tab", () => {
-  it("has a square top left corner when it is at the top left and the first tab is selected, so that the tab joins the pane without a notch", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).toContain("square-top-left");
-    expect(styleRule(".pane.square-top-left")).toContain("border-top-left-radius: 0");
-  });
-
-  it("keeps the round corner when another tab than the first tab is selected", async () => {
-    await selectTab("w1:t2");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("keeps the round corner of a pane that is not at the top left, also when the first tab is selected", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: false });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("keeps the round corner of a pane of the column of pinned panes, because no tab joins it", async () => {
-    await selectTab("w1:t1");
-    const wrapper = await mountPaneCard({}, true, { isTopLeft: true });
-    expect(wrapper.get(".pane").classes()).not.toContain("square-top-left");
-  });
-
-  it("follows the selected tab", async () => {
-    await selectTab("w1:t2");
-    const wrapper = await mountPaneCard({}, false, { isTopLeft: true });
-    const { state } = await import("../stores/session");
-    state.selectedTabId = "w1:t1";
-    await nextTick();
-    expect(wrapper.get(".pane").classes()).toContain("square-top-left");
-  });
-});
 
 describe("PaneCard", () => {
   it("lets the name get narrower than its text and ends it with an ellipsis, so it never runs under the buttons", () => {
@@ -190,5 +144,104 @@ describe("PaneCard", () => {
     pinnedPaneState.focus = "w1:p2";
     const wrapper = await mountPaneCard({}, true);
     expect(wrapper.get("section").classes()).not.toContain("selected");
+  });
+
+  it("gives the header of the selected pane a tinted background, in the grid and in the column of pinned panes", () => {
+    expect(styleRule(".pane.several-panes.selected:not(.blocked) .head")).toContain("background: var(--pane-head-selected)");
+    expect(styleRule(".pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head")).toContain(
+      "background: var(--pane-head-selected)",
+    );
+  });
+
+  it("dims the name and the folder in the header of a pane that is not selected and not blocked", () => {
+    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .name")).toContain("color: var(--muted)");
+    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .sub")).toContain("color: var(--faint)");
+  });
+
+  it("never tints the header of a blocked pane, so that it keeps its red header", () => {
+    expect(paneCardSource).not.toMatch(/\.pane\.several-panes\.selected \.head \{/);
+    expect(styleRule(".pane.blocked .head")).toContain("background: var(--tint-err)");
+  });
+
+  it("has no highlight when the viewport shows one pane", async () => {
+    const { state } = await import("../stores/session");
+    state.snapshot = { panes: [{ pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" }] } as never;
+    state.selectedTabId = "w1:t1";
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).not.toContain("several-panes");
+  });
+
+  it("has the highlight when the selected tab has two panes", async () => {
+    const { state } = await import("../stores/session");
+    state.snapshot = {
+      panes: [
+        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: "w1:p2", tab_id: "w1:t1", workspace_id: "w1" },
+      ],
+    } as never;
+    state.selectedTabId = "w1:t1";
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).toContain("several-panes");
+  });
+
+  it("has the highlight when the selected tab has one pane and a pinned pane of another tab is in the column", async () => {
+    const { state } = await import("../stores/session");
+    const { settings } = await import("../stores/settings");
+    state.snapshot = {
+      panes: [
+        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: "w1:p9", tab_id: "w1:t2", workspace_id: "w1" },
+      ],
+    } as never;
+    state.selectedTabId = "w1:t1";
+    settings.pinnedPanes = ["w1:p9"];
+    const wrapper = await mountPaneCard();
+    expect(wrapper.get("section").classes()).toContain("several-panes");
+  });
+});
+
+describe("PaneCard close", () => {
+  // The store of the settings saves itself in the local storage, so the value of the previous test comes back: reset it.
+  // The mocked function `closePane` keeps the calls of the previous test: clear them.
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { settings } = await import("../stores/settings");
+    settings.confirmPaneClose = true;
+  });
+
+  it("closes the pane at once, without the confirmation dialog, when the setting confirmPaneClose is off", async () => {
+    const { settings } = await import("../stores/settings");
+    settings.confirmPaneClose = false;
+    const wrapper = await mountPaneCard();
+    const { confirmDialog } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
+  });
+
+  it("asks for confirmation before it closes the pane, and does not close before the answer", async () => {
+    const wrapper = await mountPaneCard();
+    const { confirmDialog } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    expect(confirmDialog.open).toBe(true);
+    expect(confirmDialog.title).toBe("Close the pane (⌘W)");
+    expect(api.closePane).not.toHaveBeenCalled();
+  });
+
+  it("closes the pane after the user confirms, and does not close it when the user cancels", async () => {
+    const wrapper = await mountPaneCard();
+    const { answerConfirm } = await import("../stores/confirm");
+    const api = await import("../lib/api");
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    answerConfirm(false);
+    await flushPromises();
+    expect(api.closePane).not.toHaveBeenCalled();
+    await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
+    answerConfirm(true);
+    await flushPromises();
+    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
   });
 });

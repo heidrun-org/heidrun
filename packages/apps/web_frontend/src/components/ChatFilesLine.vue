@@ -177,7 +177,7 @@ async function openOnForge(url: string) {
 
 <style scoped>
 .files-list { max-height: 50vh; overflow-y: auto; }
-.files-list .btn { --bs-btn-hover-bg: var(--bs-secondary-bg); --bs-btn-active-bg: var(--bs-secondary-bg); }
+.files-list .btn { --btn-hover-bg: var(--bg-2); --btn-active-bg: var(--bg-2); }
 .files-list .btn:disabled { opacity: 0.45; }
 .file-text { flex: 1 1 0; min-width: 0; }
 .folder { font-size: 0.85em; }

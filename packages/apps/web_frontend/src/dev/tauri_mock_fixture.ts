@@ -65,11 +65,11 @@ export class TauriMockFixture {
 		return JSON.stringify({
 			title: isIssue
 				? 'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex'
-				: 'Move the To handle sidebar section from the left sidebar to the right sidebar',
+				: 'Move the Needs you sidebar section from the left sidebar to the right sidebar',
 			state,
 			body: isIssue
-				? '## Goal\n\nMove the To handle sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
-				: 'The To handle sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
+				? '## Goal\n\nMove the Needs you sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
+				: 'The Needs you sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
 			labels: isIssue ? [{ name: 'Simple Work', color: '2ea043' }, { name: 'Design', color: '1d76db' }] : [],
 			author: { login: 'jeromeetienne' },
 			createdAt: '2026-10-11T09:30:00Z',
@@ -97,6 +97,39 @@ export class TauriMockFixture {
 	 */
 	static setTopicClusterRows(rows: Record<string, string>): void {
 		TauriMockFixture._topicClusterRows = { ...rows };
+	}
+
+	/**
+	 * The answer of the Tauri command `git_status`: one staged file and one changed file, as in the screenshots of the
+	 * Source control sidebar section.
+	 * - issue #305
+	 *
+	 * @returns The Git status of the repository of the fake workspace.
+	 */
+	static buildGitStatus(): unknown {
+		return {
+			root: '/Users/demo/webwork/heidrun',
+			branch: 'dev_jerome',
+			upstream: 'origin/dev_jerome',
+			ahead: 1,
+			behind: 0,
+			changed: 2,
+			untracked: 0,
+			files: [
+				{
+					status: 'M.',
+					path: 'docs/agents_rules/user_interface.md',
+				},
+				{
+					status: '.M',
+					path: 'CHANGELOG.md',
+				},
+			],
+			last_sha: 'f853124',
+			last_subject: 'Merge pull request #294',
+			last_time: null,
+			remote: null,
+		};
 	}
 
 	/**

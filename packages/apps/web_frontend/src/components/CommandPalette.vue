@@ -20,6 +20,7 @@ import {
   state,
   workspaceLabel,
 } from "../stores/session";
+import { startDefaultNewTab } from "../stores/newPane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runAction } from "../stores/project";
@@ -102,7 +103,8 @@ const items = computed<Item[]>(() => {
   }
   const actions: Item[] = [
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.newAgent"), hint: "⇧⌘T", run: () => (newAgent.open = true) },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), hint: "⌘T", run: () => newTerminal() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => startDefaultNewTab() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), run: () => newTerminal() },
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => splitPane("right") },
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => splitPane("down") },
     ...(sel ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closePane", { pane: paneName(sel) }), hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
@@ -133,8 +135,8 @@ const items = computed<Item[]>(() => {
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomIn"), hint: "⌘+", run: () => zoom(0.5) },
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomOut"), hint: "⌘−", run: () => zoom(-0.5) },
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomReset"), hint: "⌘0", run: () => resetZoom() },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.leftSidebar"), hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.rightSidebar"), hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.leftSidebar"), hint: "⌘B", run: () => (settings.leftCollapsed = !settings.leftCollapsed) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.rightSidebar"), hint: "⌥⌘B", run: () => (settings.rightCollapsed = !settings.rightCollapsed) },
     ...FONTS.map((f) => ({ section: t("commandPalette.section.display"), label: t("commandPalette.font", { font: f.label }), hintIcon: f.id === settings.fontId ? "check-lg" : undefined, run: () => (settings.fontId = f.id) })),
   ];
   list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower)));

@@ -1,6 +1,7 @@
-import { launchAgent, newAgent } from "./agents";
+import { launchAgent } from "./agents";
 import { newTerminal, selectedPane, selectedWorkspace } from "./session";
 import { insertIntoFocusedPane } from "./input";
+import { settings } from "./settings";
 
 const KEY = "heidrun.newPane";
 
@@ -61,12 +62,30 @@ export async function startNewPane(values: NewPaneValues) {
   if (res === "failed" && prompt.trim()) insertIntoFocusedPane(prompt);
 }
 
-/** Plain click on the plus icon opens the window; shift click starts the previous pane again. */
+/** The values of the pane that the default command of a new tab starts: a free agent, with the default model and no starting prompt. */
+export function defaultNewTabValues(): NewPaneValues {
+  const tool = settings.newTabCommand;
+  return {
+    tool,
+    agent: null,
+    model: "",
+    label: tool,
+    labelTouched: false,
+    text: "",
+  };
+}
+
+/** Plain click on the plus button starts the default command of a new tab; shift click starts the previous pane again. */
 export function onNewPaneClick(e: MouseEvent) {
   const previous = loadNewPaneValues();
   if (e.shiftKey && previous !== null) {
     startNewPane(previous);
     return;
   }
-  newAgent.open = true;
+  startDefaultNewTab();
+}
+
+/** Starts the default command of a new tab: the plus button of the tab bar and the shortcut Command+T do the same. */
+export function startDefaultNewTab() {
+  return startNewPane(defaultNewTabValues());
 }

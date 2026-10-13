@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	PaneGapTest — the space between two panes is thin, like in Visual Studio Code
+//	PaneGapTest — the space to grab a line between two columns or two panes is thin, like in Visual Studio Code
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +32,7 @@ class PaneGapTestHelper {
 	}
 }
 
-describe('space between two panes', () => {
+describe('space to grab a line between two columns or two panes', () => {
 	it('is 5 pixels wide', () => {
 		expect(PaneGapTestHelper.readPaneGap()).toBe('5px');
 	});

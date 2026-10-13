@@ -1,6 +1,11 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import SettingsGeneralSection from './SettingsGeneralSection.vue';
+import { settings } from '../../stores/settings';
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(async () => null) }));
 
 const __dirname = import.meta.dirname;
 
@@ -34,5 +39,45 @@ describe('question mark button of the setting Keep agents running after quit', (
 		const ruleText = SettingsGeneralSectionTestHelper.readHelpButtonRule();
 		expect(ruleText).toMatch(/background:\s*transparent/);
 		expect(ruleText).toMatch(/border:\s*0/);
+	});
+});
+
+describe('heading Ask before closing', () => {
+	beforeEach(() => {
+		settings.confirmWorkspaceClose = true;
+		settings.confirmTabClose = true;
+		settings.confirmPaneClose = true;
+	});
+
+	it('replaces the heading Tabs, and holds three checkboxes: workspace, then tab, then pane', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const headingTextList = wrapper.findAll('h4').map((heading) => heading.text());
+		expect(headingTextList).toContain('Ask before closing');
+		expect(headingTextList).not.toContain('Tabs');
+		const labelTextList = wrapper
+			.findAll('label.check')
+			.map((label) => label.text())
+			.filter((text) => text.startsWith('Ask before closing'));
+		expect(labelTextList).toEqual([
+			'Ask before closing a workspace',
+			'Ask before closing a tab',
+			'Ask before closing a pane',
+		]);
+	});
+
+	it('links each checkbox to its own setting', async () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const checkboxList = wrapper
+			.findAll('label.check')
+			.filter((label) => label.text().startsWith('Ask before closing'))
+			.map((label) => label.get('input'));
+		await checkboxList[0].setValue(false);
+		expect(settings.confirmWorkspaceClose).toBe(false);
+		expect(settings.confirmTabClose).toBe(true);
+		expect(settings.confirmPaneClose).toBe(true);
+		await checkboxList[1].setValue(false);
+		expect(settings.confirmTabClose).toBe(false);
+		await checkboxList[2].setValue(false);
+		expect(settings.confirmPaneClose).toBe(false);
 	});
 });

@@ -1,5 +1,10 @@
 # Glossary of Heidrun
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained glossary for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+
 This document gives one short definition for each word that Heidrun uses for a part of its window. Use these words in the code, in the documents, and in the conversations. One word means one thing, and one thing has one word.
 
 ## The three levels that come from Herdr
@@ -52,7 +57,15 @@ The panel on the right of the viewport. It holds sidebar sections.
 
 ### Sidebar section
 
-One part of a sidebar, for example the To handle, the Scripts, or the Git sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+One part of a sidebar, for example the Needs you, the Scripts, the Source control, or the Files sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+
+### Source control sidebar section
+
+The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository, nothing of GitHub or GitLab. It replaces the Git sidebar section.
+
+### Files sidebar section
+
+The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. It only reads files.
 
 ### Chat
 
@@ -94,9 +107,9 @@ The choice of the method that computes the dynamic topics: "Keyword" (from the w
 
 The row of small rounded buttons in the header of the Chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
 
-### Navigation bar
+### Sidebar icon bar
 
-A row of buttons inside a sidebar. Each button shows one sidebar section of that sidebar.
+The narrow vertical bar of icons at the outer edge of each sidebar, like the bar of icons of Visual Studio Code. It shows one icon for each sidebar section of that sidebar. A click on an icon shows that sidebar section. When the sidebar is collapsed, the sidebar icon bar is the only part of the sidebar that stays visible.
 
 ### Status bar
 
@@ -116,7 +129,7 @@ The first status bar section, at the left end of the status bar. It shows the st
 
 ## Rules
 
-- The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
+- The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
 - Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.

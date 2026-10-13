@@ -5,6 +5,7 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
 import { onNewPaneClick } from "../stores/newPane";
+import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -197,7 +198,7 @@ describe("TabBar plus button", () => {
   it("is after the last tab, and has an accessible name", async () => {
     const { wrapper } = await mountTabBar();
     const plus = wrapper.get("button.add");
-    expect(plus.attributes("aria-label")).toBe("Create a tab: a terminal, Claude Code, or Codex (shift click: start the previous tab again)");
+    expect(plus.attributes("aria-label")).toBe("Create a tab with the default command of a new tab (shift click: start the previous tab again)");
     expect(plus.attributes("title")).toBe(plus.attributes("aria-label"));
     const tabRow = wrapper.get("[role=tablist]").element;
     expect(tabRow.compareDocumentPosition(plus.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -253,6 +254,19 @@ describe("TabBar rename in place", () => {
 });
 
 describe("TabBar close", () => {
+  beforeEach(() => {
+    settings.confirmTabClose = true;
+  });
+
+  it("closes the tab at once, without the confirmation dialog, when the setting confirmTabClose is off", async () => {
+    settings.confirmTabClose = false;
+    const { wrapper, api } = await mountTabBar();
+    await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closeTab).toHaveBeenCalledWith("t2");
+  });
+
   it("asks for confirmation before it closes the tab, and does not close before the answer", async () => {
     const { wrapper, api } = await mountTabBar();
     await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
@@ -410,7 +424,7 @@ describe("TabBar height", () => {
 
   it("gives a tab 18px of horizontal padding and a width of 170px at least, so that the tabs are not tightly packed", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
-    expect(sourceText).toContain("--bs-nav-link-padding-x: 18px;");
+    expect(sourceText).toContain("--nav-link-padding-x: 18px;");
     expect(sourceText).toContain(".nav-item { flex: 0 1 auto; min-width: 170px; max-width: 260px; }");
   });
 
@@ -434,17 +448,25 @@ describe("TabBar join with the panes", () => {
   it("draws the outline of the selected tab with the color of the ring of the selected pane, and has no border at its bottom", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "TabBar.vue"), "utf8");
     expect(sourceText).toContain(
-      "--bs-nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);",
+      "--nav-tabs-link-active-border-color: var(--pane-ring-selected) var(--pane-ring-selected) var(--bg);",
     );
     expect(sourceText).toMatch(/\.nav-tabs \.nav-link\.active \{[^}]*border-bottom-width: 0/);
   });
 
-  it("draws the ring of the selected pane and of a blocked pane with the border of the pane, so that it joins the selected tab", () => {
+  it("draws the ring of the selected pane and of a blocked pane with the top border of the pane, so that it joins the selected tab", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
-    expect(sourceText).toMatch(/\.pane\.selected \{ border-color: var\(--pane-ring-selected\); \}/);
-    expect(sourceText).toMatch(/\.pane\.blocked \{ border-color: var\(--pane-ring-blocked\); \}/);
-    expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
+    expect(sourceText).toMatch(/\.pane\.selected \{ border-top-color: var\(--pane-ring-selected\);[^}]*\}/);
+    expect(sourceText).toMatch(/\.pane\.blocked \{ border-top-color: var\(--pane-ring-blocked\);[^}]*\}/);
+    expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-top-color: var\(--pane-ring-blocked-selected\);[^}]*\}/);
     expect(sourceText).not.toMatch(/\.pane[^{]*\{[^}]*box-shadow: inset/);
+  });
+
+  it("draws the ring of the selected pane and of a blocked pane on the left, on the right, and at the bottom just inside the border, because the viewport hides the border there", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
+    expect(sourceText).toMatch(/\.pane::after \{[^}]*inset: 0;[^}]*pointer-events: none;[^}]*border-width: 0 1px 1px;/);
+    expect(sourceText).toMatch(/\.pane\.selected::after \{ border-color: var\(--pane-ring-selected\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked::after \{ border-color: var\(--pane-ring-blocked\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked\.selected::after \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
   });
 });
 

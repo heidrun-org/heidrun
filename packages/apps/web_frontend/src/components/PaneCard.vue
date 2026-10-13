@@ -5,9 +5,10 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
-import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state, tabs } from "../stores/session";
-import { isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
+import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { git } from "../stores/git";
+import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
 import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
@@ -15,15 +16,7 @@ import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
 // `isInColumnOfPinnedPanes`: shown in the column of pinned panes, in every tab, the tab of the pane included.
-// `isTopLeft`: the pane touches the top left corner of the area of the panes, under the first tab of the tab bar.
-const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean; isTopLeft?: boolean }>();
-
-// The left border of the first tab, when it is selected, goes straight down into the left border of the pane at the top left
-// corner. A round corner there would leave a notch at the joint, so the corner of that pane is square.
-const isFirstTabSelected = computed(() => tabs.value.length > 0 && tabs.value[0].tab_id === state.selectedTabId);
-const isSquareTopLeft = computed(
-  () => props.isTopLeft === true && props.isInColumnOfPinnedPanes !== true && isFirstTabSelected.value === true,
-);
+const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
 // A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
 const selected = computed(() =>
@@ -32,6 +25,9 @@ const selected = computed(() =>
       (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
     : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
 );
+// The highlight of the selected pane shows only when the viewport shows several panes: the panes of the selected tab that the
+// grid draws, and the pinned panes of the column of pinned panes.
+const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
@@ -59,7 +55,7 @@ const subtitle = computed(() => {
 <template>
   <section
     class="pane"
-    :class="[status, { selected, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes, 'square-top-left': isSquareTopLeft }]"
+    :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
@@ -124,7 +120,13 @@ const subtitle = computed(() => {
         <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
-        <ConfirmButton icon="x-lg" :confirm-label="t('paneCard.closeConfirm')" :question="t('paneCard.close')" @confirm="closePane(pane.pane_id)" />
+        <ConfirmButton
+          icon="x-lg"
+          :confirm-label="t('paneCard.closeConfirm')"
+          :question="t('paneCard.close')"
+          :is-confirm-required="settings.confirmPaneClose"
+          @confirm="closePane(pane.pane_id)"
+        />
         </template>
       </span>
     </header>
@@ -141,16 +143,27 @@ const subtitle = computed(() => {
 </template>
 
 <style scoped>
+/* A pane has no rounded corner: the panes touch each other and the border of the viewport, and the viewport clips the
+   corners that touch its own rounded corners. The border of a pane is the line between two panes. At the edge of the viewport,
+   the border of the pane is hidden under the border of the viewport. */
 .pane {
-  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative;
-  border: 1px solid var(--line); border-radius: var(--pane-radius); overflow: hidden;
+  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; z-index: 0;
+  border: 1px solid var(--line); overflow: hidden;
 }
-/* The ring of a blocked pane and of the selected pane is the border itself, so that the outline of the selected tab of the tab bar
-   joins the border of the pane without an offset. */
-.pane.blocked { border-color: var(--pane-ring-blocked); }
-.pane.selected { border-color: var(--pane-ring-selected); }
-.pane.blocked.selected { border-color: var(--pane-ring-blocked-selected); }
-.pane.square-top-left { border-top-left-radius: 0; }
+/* The ring of a blocked pane and of the selected pane has two parts. At the top, the ring is the border itself, so that the outline
+   of the selected tab of the tab bar joins the ring without an offset. On the left, on the right, and at the bottom, the ring is
+   drawn just inside the border, so that it also shows where the viewport hides the border. The ring goes over the border of the
+   next pane that it touches. */
+.pane::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border: 0 solid transparent; border-width: 0 1px 1px;
+}
+.pane.blocked { border-top-color: var(--pane-ring-blocked); z-index: 1; }
+.pane.selected { border-top-color: var(--pane-ring-selected); z-index: 1; }
+.pane.blocked.selected { border-top-color: var(--pane-ring-blocked-selected); }
+.pane.blocked::after { border-color: var(--pane-ring-blocked); }
+.pane.selected::after { border-color: var(--pane-ring-selected); }
+.pane.blocked.selected::after { border-color: var(--pane-ring-blocked-selected); }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;
@@ -161,7 +174,13 @@ const subtitle = computed(() => {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
 }
+/* When the viewport shows several panes, the header of the selected pane has a tinted background, and the name and the folder of
+   every other pane are dimmed, so that the selected pane is the one pane with a full contrast. A blocked pane keeps the red look
+   of its header and its text. A viewport with one pane has no highlight, because there is no other pane to tell it from. */
+.pane.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
+.pane.several-panes:not(.selected):not(.blocked) .name { color: var(--muted); }
+.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--faint); }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -177,4 +196,5 @@ const subtitle = computed(() => {
 .tool.txt { font-size: var(--font-size); line-height: 1; }
 .tool.on { color: var(--accent); }
 .pane.in-column-of-pinned-panes .head { background: var(--bar); }
+.pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 </style>

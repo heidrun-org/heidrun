@@ -1,4 +1,7 @@
 {
   "open": "Open Heidrun",
-  "quota": "{name}: {percent} % of the quota used"
+  "blocked": "Blocked",
+  "done": "Finished",
+  "working": "Working",
+  "none": "None"
 }

@@ -5,6 +5,7 @@ import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
+import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
@@ -15,6 +16,7 @@ import { t } from "../i18n/index";
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
+  { id: "newTab", icon: "plus-lg", labelKey: "settingsModal.newTab" },
   { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
   { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
@@ -43,7 +45,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div class="dialog" role="dialog" aria-labelledby="settings-title">
+    <div class="window-box" role="dialog" aria-labelledby="settings-title">
       <nav class="side" :aria-label="t('settingsModal.sectionsLabel')">
         <h2 id="settings-title">{{ t("settingsModal.title") }}</h2>
         <button
@@ -65,6 +67,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </header>
         <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
         <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
+        <SettingsNewTabSection v-else-if="settingsModal.section === 'newTab'" />
         <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
         <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
         <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
@@ -79,7 +82,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.dialog {
+.window-box {
   width: min(820px, 100%); height: min(560px, calc(100vh - 48px)); display: flex; overflow: hidden; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

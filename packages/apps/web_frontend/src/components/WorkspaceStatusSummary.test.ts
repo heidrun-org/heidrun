@@ -5,6 +5,7 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
+import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -76,6 +77,17 @@ describe("WorkspaceStatusSummary section", () => {
     expect(children.map((child) => child.classList.contains("dot"))).toEqual([true, false]);
     expect(children[1].classList.contains("name")).toBe(true);
     expect(sectionName(wrapper)).toBe("heidrun");
+  });
+
+  it("is a status bar section that keeps the background of a button while its card is open", async () => {
+    const { wrapper } = await mountSection();
+    const section = wrapper.get(".workspace-status");
+    expect(section.classes()).toContain("status-section");
+    expect(section.classes()).not.toContain("show");
+    await section.trigger("click");
+    expect(section.classes()).toContain("show");
+    await section.trigger("click");
+    expect(section.classes()).not.toContain("show");
   });
 
   it("follows the selected workspace", async () => {
@@ -213,7 +225,7 @@ describe("WorkspaceStatusSummary card", () => {
     expect(wrapper.find(".popover").exists()).toBe(false);
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
     expect(sourceText).not.toMatch(/@mouse(enter|over|move)/);
-    expect(sourceText).not.toMatch(/@pointer(enter|over|move)/);
+    expect(sourceText).not.toMatch(/@pointer(enter|over|move)(?!="startScrolling")/);
   });
 
   it("has no native tooltip on the section, because the card gives the information", async () => {
@@ -287,6 +299,67 @@ describe("WorkspaceStatusSummary details of the selected workspace", () => {
     session.state.selectedWorkspaceId = null;
     await wrapper.get(".workspace-status").trigger("click");
     expect(wrapper.find("[data-field=details]").exists()).toBe(false);
+  });
+});
+
+describe("WorkspaceStatusSummary card width and folder path", () => {
+  /** Makes the text of the folder path 300 pixels wide in a box of 100 pixels, as the layout of a browser would. */
+  function makeTooWide(line: Element, scrollWidth = 300, clientWidth = 100) {
+    Object.defineProperty(line.firstElementChild, "scrollWidth", { configurable: true, value: scrollWidth });
+    Object.defineProperty(line, "clientWidth", { configurable: true, value: clientWidth });
+  }
+
+  it("is 408 pixels wide, 20 percent more than the 340 pixels of the other cards, so the folder path fits", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    const card = wrapper.get(".popover").element as HTMLElement;
+    expect(card.style.width).toBe("408px");
+    expect(card.style.getPropertyValue("--popover-max-width")).toBe("408px");
+  });
+
+  it("has no minimum width that is smaller than its width", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    expect((wrapper.get(".popover-body").element as HTMLElement).style.minWidth).toBe("");
+  });
+
+  it("shows the folder path as a line on one line, cut with an ellipsis, and never broken in the middle of a word", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    const folder = wrapper.get("[data-field=folder]");
+    expect(folder.classes()).toContain("scrolling-line");
+    expect(folder.attributes("data-scroll")).toBeDefined();
+    expect(folder.find(".scrolling-line-text").text()).toBe("/work/heidrun");
+    expect(folder.classes()).not.toContain("text-break");
+  });
+
+  it("keeps the other details as they were", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    for (const field of ["branch", "tabs", "agents"]) {
+      expect(wrapper.get(`[data-field=${field}]`).classes()).not.toContain("scrolling-line");
+    }
+  });
+
+  it("scrolls a folder path that does not fit while the pointer is over the card, and stops when the pointer leaves", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    const folder = wrapper.get("[data-field=folder]").element as HTMLElement;
+    makeTooWide(folder, 300, 100);
+    await wrapper.get(".popover").trigger("pointerenter");
+    expect(folder.classList.contains("is-scrolling")).toBe(true);
+    expect(folder.style.getPropertyValue("--scroll-distance")).toBe("200px");
+    await wrapper.get(".popover").trigger("pointerleave");
+    expect(folder.classList.contains("is-scrolling")).toBe(false);
+  });
+
+  it("does not scroll a folder path that fits", async () => {
+    const { wrapper } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    const folder = wrapper.get("[data-field=folder]").element as HTMLElement;
+    makeTooWide(folder, 100, 100);
+    await wrapper.get(".popover").trigger("pointerenter");
+    expect(folder.classList.contains("is-scrolling")).toBe(false);
   });
 });
 
@@ -475,6 +548,20 @@ describe("WorkspaceStatusSummary rename", () => {
 });
 
 describe("WorkspaceStatusSummary close", () => {
+  beforeEach(() => {
+    settings.confirmWorkspaceClose = true;
+  });
+
+  it("closes the workspace at once, without the confirmation dialog, when the setting confirmWorkspaceClose is off", async () => {
+    settings.confirmWorkspaceClose = false;
+    const { wrapper, api } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    await wrapper.findAll(".workspace-row .row-button")[3].trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closeWorkspace).toHaveBeenCalledWith("w2");
+  });
+
   it("asks for confirmation before it closes the workspace, and does not close before the answer", async () => {
     const { wrapper, api } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");

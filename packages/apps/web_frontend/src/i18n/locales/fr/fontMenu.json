@@ -29,7 +29,7 @@
   "finished": "Éléments terminés",
   "finishedLabel": "Masquer les éléments terminés après",
   "finishedTitle": "Masquer les travaux terminés après ce délai",
-  "finishedHelp": "Les travaux terminés (Activité, cartes « À traiter ») disparaissent après ce délai. Les agents bloqués restent.",
+  "finishedHelp": "Les travaux terminés (Activité, cartes « Vous attend ») disparaissent après ce délai. Les agents bloqués restent.",
   "notifyBlocked": "Rappel si un agent reste bloqué",
   "neverLower": "jamais",
   "minutes": "{minutes} min",

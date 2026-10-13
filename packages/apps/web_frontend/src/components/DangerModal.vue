@@ -16,7 +16,7 @@ const hintParts = computed(() =>
 
 <template>
   <div class="overlay" @mousedown.self="answerDanger(false)" @keydown.esc.stop.prevent="answerDanger(false)">
-    <div class="dialog" role="alertdialog" aria-labelledby="danger-title" aria-describedby="danger-why">
+    <div class="window-box" role="alertdialog" aria-labelledby="danger-title" aria-describedby="danger-why">
       <div class="eyebrow" :class="danger.level">{{ danger.level === "block" ? t("dangerModal.forbidden") : t("dangerModal.risky") }}</div>
       <h2 id="danger-title">{{ danger.level === "block" ? t("dangerModal.notSent") : t("dangerModal.runQuestion") }}</h2>
       <p id="danger-why" class="why">{{ danger.why }}<template v-if="danger.where"> · {{ danger.where }}</template></p>
@@ -35,7 +35,7 @@ const hintParts = computed(() =>
   position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.dialog {
+.window-box {
   width: min(620px, 100%); padding: 22px; border-radius: 14px; background: var(--panel);
   border: 1px solid #5c2826; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   display: flex; flex-direction: column; gap: 12px;

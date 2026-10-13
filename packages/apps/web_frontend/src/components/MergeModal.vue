@@ -27,9 +27,9 @@ async function go() {
 
 <template>
   <div class="overlay" @mousedown.self="!merging.busy && (merging.open = false)" @keydown.esc.stop.prevent="!merging.busy && (merging.open = false)">
-    <div class="dialog" role="alertdialog" aria-labelledby="merge-title">
+    <div class="window-box" role="alertdialog" aria-labelledby="synchronize-title">
       <div class="eyebrow">{{ t("mergeModal.eyebrow") }}</div>
-      <h2 id="merge-title">{{ t(merging.forge === "github" ? "mergeModal.titlePr" : "mergeModal.titleMr", { ref: r.ref }) }}</h2>
+      <h2 id="synchronize-title">{{ t(merging.forge === "github" ? "mergeModal.titlePr" : "mergeModal.titleMr", { ref: r.ref }) }}</h2>
       <p class="title">{{ r.title }}</p>
       <p class="branches mono">{{ r.branch }} → {{ r.target || t("mergeModal.targetBranch") }}</p>
       <div class="chips">
@@ -39,8 +39,8 @@ async function go() {
       <p v-if="risky" class="warn">{{ t("mergeModal.notReady") }}</p>
 
       <div class="opts">
-        <label class="sr" for="merge-method">{{ t("mergeModal.method") }}</label>
-        <select id="merge-method" v-model="merging.method" :disabled="merging.busy">
+        <label class="sr" for="synchronize-method">{{ t("mergeModal.method") }}</label>
+        <select id="synchronize-method" v-model="merging.method" :disabled="merging.busy">
           <option value="merge">{{ t("mergeModal.methodMerge") }}</option>
           <option value="squash">{{ t("mergeModal.methodSquash") }}</option>
           <option value="rebase">{{ t("mergeModal.methodRebase") }}</option>
@@ -63,7 +63,7 @@ async function go() {
 
 <style scoped>
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.dialog {
+.window-box {
   width: min(560px, 100%); padding: 22px; border-radius: 14px; background: var(--panel); border: 1px solid #3a3150;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; gap: 10px;
 }

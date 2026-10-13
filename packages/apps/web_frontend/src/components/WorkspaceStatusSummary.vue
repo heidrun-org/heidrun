@@ -4,7 +4,9 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { homeDir } from "@tauri-apps/api/path";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
+import ScrollingLine from "./ScrollingLine.vue";
 import { askConfirm } from "../stores/confirm";
+import { settings } from "../stores/settings";
 import { currentGit, workspaceCwd } from "../stores/git";
 import {
   allPanes,
@@ -20,6 +22,7 @@ import {
   orderedWorkspaces as workspaces,
 } from "../stores/session";
 import { useReorder } from "../lib/reorder";
+import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
 import { useStatusCard } from "../lib/status_card";
 import type { WorkspaceInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -29,6 +32,11 @@ import { t } from "../i18n/index";
 // "New workspace…". A click on a workspace of the list selects it.
 const root = ref<HTMLElement | null>(null);
 const { isOpen, toggle, close, onFocusOut } = useStatusCard(root);
+
+// The width of the card, in pixels: 20 percent more than the 340 pixels of `$popover-max-width` in `bootstrap_parts.scss`,
+// the same width as the card of the usage of Claude and of the usage of Codex. The folder path fits on one line in it.
+const CARD_WIDTH_PIXELS = 408;
+const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--popover-max-width": `${CARD_WIDTH_PIXELS}px` };
 
 const workspaceReorder = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
 
@@ -139,15 +147,18 @@ function renameFromList(workspaceId: string): void {
 
 /**
  * Asks for a confirmation, then closes a workspace. The question lives in the status bar section and not in the card, because
- * the card closes when the keyboard focus goes to the confirmation dialog.
+ * the card closes when the keyboard focus goes to the confirmation dialog. When the setting `confirmWorkspaceClose` is off,
+ * the workspace closes at once, without the question.
  *
  * @param workspace - The workspace to close.
  */
 async function askClose(workspace: WorkspaceInfo): Promise<void> {
-  const isConfirmed = await askConfirm(
-    t("workspaceStatusSummary.close", { name: workspace.label }),
-    t("workspaceStatusSummary.closeConfirm"),
-  );
+  const isConfirmed =
+    settings.confirmWorkspaceClose === false ||
+    (await askConfirm(
+      t("workspaceStatusSummary.close", { name: workspace.label }),
+      t("workspaceStatusSummary.closeConfirm"),
+    ));
   if (isConfirmed === true) {
     await closeWorkspace(workspace.workspace_id);
   }
@@ -180,7 +191,8 @@ watch(isRenaming, (renaming) => {
 <template>
   <div
     ref="root"
-    class="workspace-status"
+    class="workspace-status status-section"
+    :class="{ show: isOpen }"
     tabindex="0"
     @click="toggle"
     @keydown.enter.self.prevent="toggle"
@@ -201,17 +213,21 @@ watch(isRenaming, (renaming) => {
     </template>
     <div
       v-if="isOpen"
-      class="popover bs-popover-top position-absolute bottom-100"
+      class="popover popover-instant show bs-popover-top position-absolute bottom-100"
       role="dialog"
+      :style="cardStyle"
       :aria-label="t('workspaceStatusSummary.listLabel')"
       @click.stop
+      @pointerenter="startScrolling"
+      @pointerleave="stopScrolling"
     >
       <div class="popover-arrow position-absolute ms-3"></div>
-      <div class="popover-body d-flex flex-column gap-2 overflow-y-auto" :style="{ maxHeight: '70vh', minWidth: '260px' }">
+      <div class="popover-body d-flex flex-column gap-2 overflow-y-auto" :style="{ maxHeight: '70vh' }">
         <div v-if="detailRows.length > 0" class="d-flex flex-column gap-2" data-field="details">
           <div v-for="row in detailRows" :key="row.field" class="d-flex justify-content-between gap-3">
-            <span class="text-body-secondary">{{ row.name }}</span>
-            <span class="text-end text-break" :data-field="row.field">{{ row.value }}</span>
+            <span class="text-body-secondary flex-shrink-0">{{ row.name }}</span>
+            <ScrollingLine v-if="row.field === 'folder'" class="text-end" :data-field="row.field">{{ row.value }}</ScrollingLine>
+            <span v-else class="text-end text-break" :data-field="row.field">{{ row.value }}</span>
           </div>
         </div>
         <div
@@ -283,9 +299,8 @@ watch(isRenaming, (renaming) => {
 
 <style scoped>
 .workspace-status {
-  align-self: stretch; margin: 0 -11px; padding: 0 11px; max-width: 260px;
+  max-width: 260px;
   display: flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 600;
-  cursor: pointer; outline-offset: 3px;
 }
 .workspace-rename { width: 180px; height: 26px; }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

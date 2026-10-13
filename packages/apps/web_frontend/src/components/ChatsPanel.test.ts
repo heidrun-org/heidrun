@@ -161,7 +161,7 @@ describe("ChatsPanel", () => {
     const inputs = wrapper.get('[aria-label="Coding agent"]').findAll("input");
     expect(inputs.map((input) => input.attributes("disabled") !== undefined)).toEqual([true, false]);
     expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true]);
-    expect(wrapper.get('label[for="chats-agent-claude"]').attributes("title")).toBe(
+    expect(wrapper.get("#chats-agent-claude").element.closest("label")?.getAttribute("title")).toBe(
       "No chat of this coding agent in this workspace.",
     );
     expect(shownTitles(wrapper)).toEqual(["Describe image"]);
@@ -227,7 +227,7 @@ describe("ChatsPanel", () => {
     vi.mocked(invoke).mockRejectedValue("boom");
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.get(".alert-danger").text()).toBe("boom");
+    expect(wrapper.get(".alert.theme-danger").text()).toBe("boom");
     expect(wrapper.find(".btn-group").exists()).toBe(false);
   });
 
@@ -389,7 +389,7 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar"], []);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    expect(wrapper.findAll(".btn-group > input.btn-check + label.btn")).toHaveLength(4);
+    expect(wrapper.findAll(".btn-group > label.btn.btn-check > input[type=radio]")).toHaveLength(4);
     expect(wrapper.get("ul").classes()).toEqual(expect.arrayContaining(["list-group", "list-group-flush"]));
     expect(wrapper.get("li").classes()).toEqual(expect.arrayContaining(["list-group-item", "list-group-item-action"]));
   });
@@ -884,7 +884,7 @@ describe("ChatsPanel", () => {
       const wrapper = mount(ChatsPanel);
       await flushPromises();
       const button = sortButton(wrapper);
-      expect(button.classes()).toContain("dropdown-toggle");
+      expect(button.find(".bi-caret-down-fill").exists()).toBe(true);
       expect(button.text()).toBe("Last updated");
       expect(button.get(".bi").classes()).toContain("bi-sort-down");
       expect(button.attributes("aria-label")).toBe("Sort the list");
@@ -899,7 +899,7 @@ describe("ChatsPanel", () => {
       await sortButton(wrapper).trigger("click");
       expect(sortMenu()).not.toBeNull();
       expect(sortButton(wrapper).attributes("aria-expanded")).toBe("true");
-      expect([...document.body.querySelectorAll(".dropdown-header")].map((header) => header.textContent)).toEqual([
+      expect([...document.body.querySelectorAll(".menu-header")].map((header) => header.textContent)).toEqual([
         "Sort by",
         "Order",
       ]);
@@ -965,7 +965,7 @@ describe("ChatsPanel", () => {
       await flushPromises();
       await sortButton(wrapper).trigger("click");
       await flushPromises();
-      document.body.querySelector(".dropdown-header")?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+      document.body.querySelector(".menu-header")?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
       await flushPromises();
       expect(sortMenu()).not.toBeNull();
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

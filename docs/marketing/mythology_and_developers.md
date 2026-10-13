@@ -1,6 +1,12 @@
 # Heidrun and the developer with artificial intelligence
 
-This document links the Norse mythology of Heidrun to the situation of developers who work with artificial intelligence today. It defines six words that the public texts use: Vikings, Valhalla, mead, the einherjar, Ragnarök, and "Skål!". The rules for the jokes are in [README.md](README.md). Every statement about the mythology in this document comes from the *Poetic Edda* and the *Prose Edda*.
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained reference for the public texts
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related rules: [The jokes](jokes.md) and [The name of Heidrun](name_of_heidrun.md)
+
+This document links the Norse mythology of Heidrun to the situation of developers who work with artificial intelligence today. It defines six words that the public texts use: Vikings, Valhalla, mead, the einherjar, Ragnarök, and "Skål!". The rules for the jokes are in [jokes.md](jokes.md). Every statement about the mythology in this document comes from the *Poetic Edda* and the *Prose Edda*.
 
 ## The situation of developers today
 
@@ -71,7 +77,7 @@ This is the same picture as the myth. The warriors do the fighting, and the goat
 | --- | --- | --- |
 | The Vikings | The developers who sail into new land with a crew of agents | The people who use Heidrun |
 | Valhalla | The place where all the agents work together | The work window |
-| The mead | The answers of the developer, and the quota of tokens | The "To handle" queue, the inspector, and the quotas in the status bar |
+| The mead | The answers of the developer, and the quota of tokens | The "Needs you" queue, the inspector, and the quotas in the status bar |
 | The einherjar | The agents | The panes and the terminals of the session |
 | The goat Heiðrún | The developer who keeps the agents supplied | The motto: "With AI, every developer is THE GOAT!" |
 | Ragnarök | A merge conflict | The words "Report a Ragnarök" on the link to the issues |

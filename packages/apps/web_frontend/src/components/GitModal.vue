@@ -39,7 +39,14 @@ const truncated = ref(false);
 const rendered = ref("");
 const md = computed(() => isMarkdown(selected.value));
 // "Lecture" only exists for Markdown: elsewhere it falls back to the file view.
-const mode = computed(() => (settings.diffMode === "read" && !md.value ? "file" : settings.diffMode));
+// A file that the Files sidebar section opens, and that has no change, has no diff: it shows as a whole file.
+const isUnchanged = computed(() => selected.value !== null && selectedFile.value === null);
+const mode = computed(() => {
+  if (isUnchanged.value && settings.diffMode !== "read") {
+    return "file";
+  }
+  return settings.diffMode === "read" && !md.value ? "file" : settings.diffMode;
+});
 const error = ref("");
 const loading = ref(false);
 let seq = 0;
@@ -57,7 +64,7 @@ async function load() {
   const my = ++seq;
   loading.value = true;
   try {
-    const d = await invoke<string>("git_diff", { root, path });
+    const d = isUnchanged.value ? "" : await invoke<string>("git_diff", { root, path });
     if (my !== seq) return;
     const lines = parseDiff(d);
     truncated.value = lines.length > MAX_ROWS;
@@ -187,7 +194,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 
 <template>
   <div class="overlay" @mousedown.self="git.modal.open = false">
-    <div ref="modalEl" class="dialog" role="dialog" aria-label="Git" tabindex="-1">
+    <div ref="modalEl" class="window-box" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
           <button :title="t('gitModal.openRepositoryTitle')" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
@@ -247,8 +254,8 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               <span v-if="selected && diff.length" class="stats"><span class="plus">+{{ stats.added }}</span> <span class="minus">−{{ stats.removed }}</span></span>
             </div>
             <div class="seg" role="radiogroup" :aria-label="t('gitModal.display')">
-              <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
-              <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
+              <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" :disabled="isUnchanged" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
+              <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" :disabled="isUnchanged" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
               <button :title="t('gitModal.fileTitle')" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">{{ t("gitModal.file") }}</button>
               <button v-if="md" :class="{ on: mode === 'read' }" :title="t('gitModal.readTitle')" @click="settings.diffMode = 'read'">{{ t("gitModal.read") }}</button>
             </div>
@@ -355,7 +362,11 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             <div v-if="truncated" class="empty">{{ t("gitModal.truncated", { count: MAX_ROWS }) }}</div>
             <div v-if="selected && !error && !loading && mode !== 'file' && mode !== 'read' && !diff.length" class="empty">{{ t("gitModal.noTextDiff") }}</div>
           </div>
-          <div v-if="selectedFile" class="foot muted">
+          <div v-if="selected && isUnchanged" class="foot muted">
+            <template v-if="mode === 'read'">{{ t("gitModal.readTitle") }} · </template>
+            {{ t("gitModal.unchanged") }} · {{ t("gitModal.footerKeys") }}
+          </div>
+          <div v-else-if="selectedFile" class="foot muted">
             <template v-if="mode === 'read'">{{ t("gitModal.readTitle") }} · </template>
             {{ selectedFile.status === "??" ? t("gitModal.untracked") : t("gitModal.comparedToHead") }}
             <template v-if="st?.last_time"> · {{ t("gitModal.lastCommit", { time: ago(st.last_time * 1000) }) }}</template>
@@ -369,7 +380,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 
 <style scoped>
 .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
-.dialog {
+.window-box {
   outline: none;
   width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);

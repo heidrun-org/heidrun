@@ -1,5 +1,10 @@
 # The technology
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained description of the technology
+- Related framing: [Project instructions](../../AGENTS.md)
+
 Heidrun is a desktop application built with [Tauri](https://tauri.app). The backend is written in Rust, and the user interface is written with Vue 3 and TypeScript. See [packages/apps/CONTEXT.md](../../packages/apps/CONTEXT.md).
 
 ## A fast and small client

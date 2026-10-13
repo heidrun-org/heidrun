@@ -1,19 +1,20 @@
 :root {
-  --bg: #0b0c0e;
+  --bg: #1f1f1f;
   --panel: #0f1113;
   --bar: #111316;
-  --shell: #1b1d20;
-  --side: #121417;
+  --shell: #181818;
+  --side: #181818;
   --pane-radius: 8px;
   --pane-gap: 5px;
   --field: #16181b;
   --hover: #1d2024;
-  --line: #22262a;
+  --line: #2b2b2b;
   --line-strong: #2a2e33;
-  --text: #e8e6e1;
+  --text: #cccccc;
   --text-2: #c9cdd1;
-  --muted: #8e949a;
+  --muted: #8f8f8f;
   --faint: #6b7177;
+  --icon: #888888;
 
   --working: #3fb8af;
   --blocked: #f0645f;
@@ -29,10 +30,17 @@
   --pane-ring-selected: #33506f;
   --pane-ring-blocked: #5c2826;
   --pane-ring-blocked-selected: #7d3330;
-  --pane-head-line: #1a1d20;
+  --pane-head-selected: #1f3452;
+  --choice-bg: #2a1514;
+  --choice-border: #4a2523;
+  --choice-hover-bg: #3a1c1b;
+  --choice-number-bg: #4a2523;
+  --pane-head-line: #2b2b2b;
   --pane-head-line-blocked: #2f1b1a;
   --line-soft: #262a2f;
   --raised: #1b1e22;
+  --toast-bg: #23272c;
+  --toast-shadow: rgba(0, 0, 0, 0.5);
   --chip: #1d2024;
   --muted-2: #9aa0a6;
   --hover-soft: #16191c;
@@ -47,8 +55,10 @@
   --gauge-track: #23272c;
   --wash: 255, 255, 255;
   --overlay-hover: rgba(255, 255, 255, 0.08);
-  --editor-caret: #e8e6e1;
+  --editor-caret: #cccccc;
   --editor-active-line: rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: rgba(121, 121, 121, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --mono: "Geist Mono", "SF Mono", Menlo, monospace;
   color-scheme: dark;
@@ -56,19 +66,20 @@
 
 /* Light theme: the theme store sets data-theme="light" on <html>. */
 :root[data-theme="light"] {
-  --bg: #f6f6f4;
+  --bg: #ffffff;
   --panel: #ffffff;
   --bar: #efefec;
-  --shell: #dededa;
-  --side: #efefec;
+  --shell: #f8f8f8;
+  --side: #f8f8f8;
   --field: #ffffff;
   --hover: #e8e8e4;
-  --line: #deded9;
+  --line: #e5e5e5;
   --line-strong: #cbcbc4;
-  --text: #1c1d1f;
+  --text: #3b3b3b;
   --text-2: #3a3d41;
-  --muted: #62676d;
+  --muted: #737373;
   --faint: #8a8f95;
+  --icon: #5d5d5d;
 
   --working: #12807a;
   --blocked: #cc3a35;
@@ -83,10 +94,17 @@
   --pane-ring-selected: #aec3de;
   --pane-ring-blocked: #e6bcb9;
   --pane-ring-blocked-selected: #d98d89;
+  --pane-head-selected: #dbe7fb;
+  --choice-bg: var(--side);
+  --choice-border: #e6bcb9;
+  --choice-hover-bg: #fff3f2;
+  --choice-number-bg: #f8d6d3;
   --pane-head-line: #e4e4df;
   --pane-head-line-blocked: #f0d2d0;
   --line-soft: #e4e4df;
   --raised: #ffffff;
+  --toast-bg: #ffffff;
+  --toast-shadow: rgba(0, 0, 0, 0.16);
   --chip: #e9e9e5;
   --muted-2: #62676d;
   --hover-soft: #ececE8;
@@ -101,8 +119,10 @@
   --gauge-track: #dcdcd6;
   --wash: 0, 0, 0;
   --overlay-hover: rgba(0, 0, 0, 0.07);
-  --editor-caret: #1c1d1f;
+  --editor-caret: #3b3b3b;
   --editor-active-line: rgba(0, 0, 0, 0.04);
+  --scrollbar-thumb: rgba(100, 100, 100, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   color-scheme: light;
 }
 :root[data-theme="light"] .btn.primary { color: #fff; }
@@ -113,26 +133,42 @@
 
 /* Bootstrap theme ---------------------------------------------------------- */
 /* Bootstrap draws its components from its own theme variables. These lines give the variables the colors of the application, in the
-   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The four z-index lines keep a
-   popover, a dropdown, a modal, and the dark layer behind a modal below the confirmation window (z-index 60) that opens above them. */
+   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The two z-index lines keep a
+   popover and a dropdown menu below the confirmation window (z-index 60) that opens above them. */
 :root {
-  --bs-body-color: var(--text);
-  --bs-body-bg: var(--panel);
-  --bs-border-color: var(--line-strong);
-  --bs-border-color-translucent: var(--line-modal);
-  --bs-secondary-color: var(--muted);
-  --bs-secondary-bg: var(--gauge-track);
-  --bs-tertiary-bg: var(--hover);
-  --bs-success: #5fbf7a;
-  --bs-warning: #f0a63a;
-  --bs-danger: #ea6a5f;
+  --fg-body: var(--text);
+  --bg-body: var(--panel);
+  --border-color: var(--line-strong);
+  --border-color-translucent: var(--line-modal);
+  --fg-3: var(--muted);
+  --bg-2: var(--gauge-track);
+  --bg-1: var(--hover);
+  --success-bg: #5fbf7a;
+  --warning-bg: #f0a63a;
+  --danger-bg: #ea6a5f;
 }
-.popover { --bs-popover-zindex: 20; }
-.dropdown-menu { --bs-dropdown-zindex: 50; }
-.modal { --bs-modal-zindex: 60; }
-.modal-backdrop { --bs-backdrop-zindex: 59; }
+.popover { --popover-zindex: 20; }
+.menu { --menu-zindex: 50; }
+
+/* Status bar sections ------------------------------------------------------ */
+/* Each status bar section looks like a button of the status bar of Visual Studio Code: a rounded background while the pointer is over it,
+   and while its information card is open. The class "show" is the Bootstrap name of an open toggle. The background is white at 12 %
+   strength in the dark theme and black at 12 % strength in the light theme, through the variable "--wash". The vertical margin leaves 6
+   pixels of the status bar above and below the background. The 11 negative pixels at each side cancel the 11 pixels of padding, so the
+   text stays in place. The information card is placed from the status bar, so the vertical margin does not move it. */
+.status-section { align-self: stretch; margin: 6px -11px; padding: 0 11px; border-radius: 6px; cursor: pointer; outline-offset: 3px; }
+.status-section:hover, .status-section.show { background: rgba(var(--wash), 0.12); }
 
 * { box-sizing: border-box; }
+
+/* Scroll bars ------------------------------------------------------------- */
+/* Every scroll bar of the application has the look of the scroll bar of VS Code: narrow, with no track, and a thumb made of a gray at 40 %
+   strength, which is stronger (70 %) while the pointer is over the thumb. The two colors are variables of the dark theme and of the light
+   theme. Nothing else sets "scrollbar-width" or "scrollbar-color": these two standard properties would replace the pseudo-elements below. */
+*::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
 html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
@@ -210,32 +246,31 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 /* The base look of a button is made of the Bootstrap button variables. Bootstrap draws the button from them, in the layer "bootstrap".
    This rule keeps only what Bootstrap cannot express: the height, the display, the alignment, the gap, the line height, and the text selection. */
 .btn {
-  --bs-btn-padding-x: 12px;
-  --bs-btn-padding-y: 0;
-  --bs-btn-font-size: var(--font-size);
-  --bs-btn-font-weight: 500;
-  --bs-btn-border-width: 1px;
-  --bs-btn-border-radius: 7px;
-  --bs-btn-color: var(--text-2);
-  --bs-btn-bg: transparent;
-  --bs-btn-border-color: var(--line-strong);
-  --bs-btn-hover-color: var(--text-2);
-  --bs-btn-hover-bg: var(--hover);
-  --bs-btn-hover-border-color: var(--line-strong);
-  --bs-btn-active-color: var(--text-2);
-  --bs-btn-active-bg: var(--hover);
-  --bs-btn-active-border-color: var(--line-strong);
-  --bs-btn-disabled-color: var(--text-2);
-  --bs-btn-disabled-bg: var(--hover);
-  --bs-btn-disabled-border-color: var(--line-strong);
-  --bs-btn-focus-box-shadow: none;
+  --btn-padding-x: 12px;
+  --btn-padding-y: 0;
+  --btn-font-size: var(--font-size);
+  --btn-font-weight: 500;
+  --btn-border-width: 1px;
+  --btn-border-radius: 7px;
+  --btn-color: var(--text-2);
+  --btn-bg: transparent;
+  --btn-border-color: var(--line-strong);
+  --btn-hover-color: var(--text-2);
+  --btn-hover-bg: var(--hover);
+  --btn-hover-border-color: var(--line-strong);
+  --btn-active-color: var(--text-2);
+  --btn-active-bg: var(--hover);
+  --btn-active-border-color: var(--line-strong);
+  --btn-disabled-color: var(--text-2);
+  --btn-disabled-bg: var(--hover);
+  --btn-disabled-border-color: var(--line-strong);
   height: 30px; display: inline-flex; align-items: center; gap: 6px; line-height: inherit; user-select: inherit;
 }
 /* The application never had a pressed look, a disabled look, or a focus background: only the mouse hover changes the background. */
 .btn:not(:hover) {
-  --bs-btn-hover-bg: transparent;
-  --bs-btn-active-bg: transparent;
-  --bs-btn-disabled-bg: transparent;
+  --btn-hover-bg: transparent;
+  --btn-active-bg: transparent;
+  --btn-disabled-bg: transparent;
 }
 .btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
 .btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }

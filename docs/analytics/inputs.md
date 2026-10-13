@@ -1,5 +1,10 @@
 # Inputs for code analytics
 
+- Created: 10 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained description of the inputs for code analytics
+- Related framing: [Project instructions](../../AGENTS.md)
+
 The code reflects a piece of work. To understand where the code came from and how the work progressed, connect it to these three inputs:
 
 1. **Source code and its history** — the code and its changes recorded in Git commits over time.

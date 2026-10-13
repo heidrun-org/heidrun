@@ -36,17 +36,19 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section. */
-export type LeftSidebarSection = "actions" | "git";
+/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one. */
+export type LeftSidebarSection = "actions" | "sourceControl" | "files";
 
-/** The sidebar sections of the right sidebar: "toHandle" is the To handle sidebar section. */
-export type RightSidebarSection = "toHandle" | "pane" | "notes" | "chats";
+/** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
+export type RightSidebarSection = "toHandle" | "notes" | "chats";
 
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
-  leftOpen: true,
-  rightOpen: true,
+  /** The left sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
+  leftCollapsed: false,
+  /** The right sidebar is collapsed to the sidebar icon bar: a narrow vertical bar with one icon for each sidebar section. */
+  rightCollapsed: false,
   /**
    * "select": dragging selects text in the terminal (⌘C to copy).
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
@@ -55,7 +57,7 @@ const defaults = {
   /** Sidebar section that the left sidebar shows. */
   leftSidebarSection: "actions" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
-  rightSidebarSection: "pane" as RightSidebarSection,
+  rightSidebarSection: "toHandle" as RightSidebarSection,
   /** Sidebar section Chats: the coding agent whose chats the list shows. */
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
@@ -82,6 +84,14 @@ const defaults = {
   autoStartHerdr: true,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
   keepAgentsRunningAfterQuit: false,
+  /** A click on the cross of a workspace in the information card of the Workspace status bar section opens the confirmation dialog "Close the workspace". Off: the workspace closes at once. */
+  confirmWorkspaceClose: true,
+  /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
+  confirmTabClose: true,
+  /** A click on the close button in the header of a pane opens the confirmation dialog "Close the pane". Off: the pane closes at once. */
+  confirmPaneClose: true,
+  /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
+  newTabCommand: "terminal" as "terminal" | "claude" | "codex",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Notifications. */
@@ -147,6 +157,12 @@ const defaults = {
   filesGrepCase: false,
   /** Window Files: the file tree shows the files that Git ignores. */
   filesShowIgnored: false,
+  /** Sidebar section Files: the space that each level of a folder adds at the left of a row. */
+  filesPanelIndent: "medium" as "small" | "medium" | "large",
+  /** Sidebar section Files: the height of a row. */
+  filesPanelRowHeight: "comfortable" as "compact" | "comfortable",
+  /** Sidebar section Files: a thin vertical line under each unfolded folder links its rows. */
+  filesPanelIndentGuides: true,
   /** Window Agents information: the activity list shows all the panes ("all") or only the selected pane ("pane"). */
   agentsActivityScope: "all" as "all" | "pane",
   /** Window History: the period of the runs. */
@@ -165,17 +181,23 @@ const defaults = {
   scriptsShowAllSuggestions: false,
   /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
+  /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
+  selectedWorkspaceId: "",
 };
 
 /** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */
 const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
+  rightSidebarSection: ["toHandle", "notes", "chats"],
   filesSideMode: ["tree", "grep"],
+  filesPanelIndent: ["small", "medium", "large"],
+  filesPanelRowHeight: ["compact", "comfortable"],
   agentsActivityScope: ["all", "pane"],
   historyPeriod: ["today", "7", "30", "90", "365"],
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
+  newTabCommand: ["terminal", "claude", "codex"],
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -225,16 +247,29 @@ function load(): typeof defaults {
       if (!("leftSidebarSection" in stored)) {
         stored.leftSidebarSection = stored.rightSidebarSection;
       }
-      stored.rightSidebarSection = "pane";
+      stored.rightSidebarSection = "toHandle";
     }
     // The workspaces and the tabs left the left sidebar for the tab bar: its Workspaces sidebar section is gone.
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
       stored.leftSidebarSection = "actions";
     }
-    // The To handle sidebar section moved from the left sidebar to the right sidebar.
+    // The Needs you sidebar section moved from the left sidebar to the right sidebar.
     if (stored.leftSidebarSection === "toHandle") {
       stored.leftSidebarSection = "actions";
     }
+    // The Source control sidebar section replaced the Git sidebar section (issue #305).
+    if (stored.leftSidebarSection === "git") {
+      stored.leftSidebarSection = "sourceControl";
+    }
+    // The hide buttons of the sidebars are gone (issue #315): a sidebar that was hidden is now collapsed.
+    if (stored.leftOpen === false) {
+      stored.leftCollapsed = true;
+    }
+    if (stored.rightOpen === false) {
+      stored.rightCollapsed = true;
+    }
+    delete stored.leftOpen;
+    delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {
@@ -303,6 +338,7 @@ export function resetZoom() {
 /** The sections of the Settings window. */
 export type SettingsSection =
   | "terminal"
+  | "newTab"
   | "mouse"
   | "finishedItems"
   | "notifications"

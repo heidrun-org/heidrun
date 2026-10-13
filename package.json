@@ -2,7 +2,7 @@
   "name": "heidrun",
   "private": true,
   "license": "MIT",
-  "version": "0.2.0",
+  "version": "0.2.5",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter desktop_tauri tauri dev",
@@ -10,7 +10,7 @@
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",
     "tauri": "pnpm --filter desktop_tauri tauri",
-    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test",
+    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "docs:identity": "node scripts/identity-texts.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --",

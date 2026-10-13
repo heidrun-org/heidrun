@@ -1,8 +1,4 @@
 {
-  "leftSidebarLabel": "Show the left sidebar",
-  "leftSidebarTitle": "Left sidebar (⌘B)",
   "searchTitle": "Search or run a command",
-  "searchPlaceholder": "Search, run a command…",
-  "rightSidebarLabel": "Show the right sidebar",
-  "rightSidebarTitle": "Right sidebar (⌥⌘B)"
+  "searchPlaceholder": "Search, run a command…"
 }
