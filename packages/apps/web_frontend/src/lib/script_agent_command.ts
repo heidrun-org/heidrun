@@ -12,6 +12,6 @@ export function scriptAgentCommand(agent: ScriptAgent): string {
   if (definition === undefined) {
     throw new Error(`Unknown coding agent: ${agent.name}`);
   }
-  const words = definition.buildWords(agent.model ?? "", agent.effort ?? "", shellQuote, shellQuote(agent.prompt.trim()));
-  return words.join(" ");
+  const words = definition.buildArguments(agent.model ?? "", agent.effort ?? "", shellQuote, shellQuote(agent.prompt.trim()));
+  return [definition.executable, ...words].join(" ");
 }

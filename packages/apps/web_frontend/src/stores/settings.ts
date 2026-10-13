@@ -1,7 +1,7 @@
 import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { CODING_AGENT_IDS } from "../lib/coding_agents";
+import { CUSTOM_SCRIPT_CODING_AGENT_IDS } from "../lib/coding_agents";
 
 export interface FontOption {
   id: string;
@@ -103,7 +103,7 @@ const defaults = {
   /** Window Create a custom script: the last kind, "commandLine" or "codingAgent". */
   customScriptKind: "commandLine" as "commandLine" | "codingAgent",
   /** Window Create a custom script: the identifier of the last coding agent. */
-  customScriptAgent: CODING_AGENT_IDS[0] as string,
+  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS[0] as string,
   /** Window Create a custom script: the last model. An empty text is the default model. */
   customScriptModel: "",
   /** Window Create a custom script: the last effort. An empty text is the default effort. */
@@ -215,7 +215,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   dynamicTopicExtraction: ["keyword", "languageModel"],
   newTabCommand: ["terminal", "claude", "codex"],
   customScriptKind: ["commandLine", "codingAgent"],
-  customScriptAgent: CODING_AGENT_IDS,
+  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
