@@ -63,6 +63,10 @@ One part of a sidebar, for example the Needs you, the Scripts, the Source contro
 
 The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository, nothing of GitHub or GitLab. It replaces the Git sidebar section.
 
+### Code hosting sidebar section
+
+The sidebar section of the left sidebar that shows what lives on GitHub or on GitLab for the repository of the selected workspace: a list of the open issues, and a list of the open pull requests (GitHub) or merge requests (GitLab). A row has three lines and no button. A click on a row opens an information card, which has a button that opens the web page of the item in the web browser.
+
 ### Files sidebar section
 
 The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. It only reads files.
@@ -121,7 +125,7 @@ One part of the status bar. It shows one piece of information, for example the u
 
 ### Information card
 
-A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, at the left of a part of a sidebar, or below a circled question mark of a page of the Settings window. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
+A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, at the left of a part of the right sidebar, at the right of a part of the left sidebar, or below a circled question mark of a page of the Settings window. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
 
 ### Workspace status bar section
 

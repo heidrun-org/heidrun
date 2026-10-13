@@ -1,0 +1,21 @@
+{
+  "selectWorkspace": "Sélectionne un workspace.",
+  "notRepository": "Ce workspace n’est pas un dépôt Git.",
+  "noRemote": "Ce dépôt n’a pas d’adresse distante, donc il n’est pas sur GitHub ni sur GitLab.",
+  "loading": "Chargement…",
+  "title": "Hébergement du code",
+  "sidebarSection": "Hébergement du code",
+  "refresh": "Rafraîchir",
+  "truncated": "La liste est trop longue : seuls les {limit} premiers sont affichés.",
+  "group.issues": "Issues",
+  "group.pullRequests": "Pull requests",
+  "group.mergeRequests": "Merge requests",
+  "empty.issues": "Aucune issue ouverte.",
+  "empty.pullRequests": "Aucune pull request ouverte.",
+  "empty.mergeRequests": "Aucune merge request ouverte.",
+  "openedBy": "{author} a ouvert {when}",
+  "opened": "Ouvert {when}",
+  "draft": "Brouillon",
+  "noLabel": "Aucun label",
+  "cardLabel": "Détails de {name}"
+}

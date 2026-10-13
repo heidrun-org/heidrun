@@ -97,6 +97,21 @@ describe('TauriMock', () => {
 		).rejects.toThrow();
 	});
 
+	it('answers the cached forge command with the list of the open issues and the list of the open pull requests', async () => {
+		TauriMock.install();
+		const issues = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(issues.map((issue: { number: number }) => issue.number)).toEqual([370, 366, 351]);
+		const pullRequests = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['pr', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(pullRequests).toEqual([
+			expect.objectContaining({ number: 369, url: expect.stringContaining('/pull/369') }),
+			expect.objectContaining({ number: 365, url: expect.stringContaining('/pull/365') }),
+		]);
+	});
+
 	it('keeps a translation table of the clustered dynamic topics, and answers a fake coding agent that groups by the first four letters', async () => {
 		TauriMock.install();
 		expect(await invoke('topic_clusters_read')).toEqual({});

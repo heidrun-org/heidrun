@@ -25,6 +25,8 @@ export type ChatReferenceDetails = {
   labels: ChatReferenceLabel[];
   /** The login of the person who opened it, or null. */
   author: string | null;
+  /** The address of the picture of the person who opened it, or null when it is not known. */
+  authorAvatarUrl: string | null;
   /** The date of the creation, in milliseconds since 1970, or null. */
   createdAt: number | null;
   /** The branch that holds the changes of a pull request, or null for an issue. */
@@ -57,6 +59,19 @@ function timeOf(text: string | undefined | null): number | null {
   return text === undefined || text === null ? null : Date.parse(text) || null;
 }
 
+/**
+ * The address of the picture of a person on GitHub. `gh` gives the login only, and GitHub gives the picture of a person
+ * at `https://github.com/<login>.png`.
+ * @param login - the login of the person, or nothing
+ * @returns the address, or null when there is no login or the login is not a login of a person (for example "app/name")
+ */
+function githubAvatarUrl(login: string | undefined): string | null {
+  if (login === undefined || /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(login) === false) {
+    return null;
+  }
+  return `https://github.com/${login}.png?size=48`;
+}
+
 /** The details of an issue or of a pull request, read with `gh`. */
 async function readGithub(folder: string, reference: ChatReference): Promise<ChatReferenceDetails> {
   const isIssue = reference.kind === "issue";
@@ -80,6 +95,7 @@ async function readGithub(folder: string, reference: ChatReference): Promise<Cha
     body: answer.body ?? "",
     labels: (answer.labels ?? []).map((label) => ({ name: label.name, color: label.color ?? null })),
     author: answer.author?.login ?? null,
+    authorAvatarUrl: githubAvatarUrl(answer.author?.login),
     createdAt: timeOf(answer.createdAt),
     headBranch: answer.headRefName ?? null,
     baseBranch: answer.baseRefName ?? null,
@@ -95,7 +111,7 @@ async function readGitlab(folder: string, reference: ChatReference): Promise<Cha
     state: string;
     description?: string | null;
     labels?: string[];
-    author?: { username?: string };
+    author?: { username?: string; avatar_url?: string };
     created_at?: string;
     source_branch?: string;
     target_branch?: string;
@@ -106,6 +122,7 @@ async function readGitlab(folder: string, reference: ChatReference): Promise<Cha
     body: answer.description ?? "",
     labels: (answer.labels ?? []).map((name) => ({ name, color: null })),
     author: answer.author?.username ?? null,
+    authorAvatarUrl: /^https?:\/\//.test(answer.author?.avatar_url ?? "") ? (answer.author?.avatar_url ?? null) : null,
     createdAt: timeOf(answer.created_at),
     headBranch: answer.source_branch ?? null,
     baseBranch: answer.target_branch ?? null,

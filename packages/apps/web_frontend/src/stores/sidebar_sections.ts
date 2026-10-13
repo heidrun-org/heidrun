@@ -1,5 +1,13 @@
 import { settings, type LeftSidebarSection, type RightSidebarSection } from "./settings";
 
+/** The sidebar sections of the left sidebar. The other sidebar sections belong to the right sidebar. */
+const LEFT_SIDEBAR_SECTIONS: readonly string[] = ["actions", "sourceControl", "files", "codeHosting"];
+
+/** True when the sidebar section belongs to the left sidebar, false when it belongs to the right sidebar. */
+function isLeftSidebarSection(sidebarSection: string): sidebarSection is LeftSidebarSection {
+  return LEFT_SIDEBAR_SECTIONS.includes(sidebarSection);
+}
+
 /** The width of a collapsed sidebar, in px, borders included: the sidebar icon bar alone. */
 export const COLLAPSED_SIDEBAR_WIDTH = 48;
 
@@ -21,11 +29,11 @@ export type SidebarSectionButton = {
 
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section expands if it is collapsed to the sidebar icon
- * bar, and shows the sidebar section. The Scripts, Source control, and Files sidebar sections
+ * bar, and shows the sidebar section. The Scripts, Source control, Code hosting, and Files sidebar sections
  * belong to the left sidebar. The Needs you, Notes, and Chats sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
-  if (sidebarSection === "actions" || sidebarSection === "sourceControl" || sidebarSection === "files") {
+  if (isLeftSidebarSection(sidebarSection)) {
     settings.leftCollapsed = false;
     settings.leftSidebarSection = sidebarSection;
     return;
@@ -39,7 +47,7 @@ export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSid
  * that an expanded sidebar shows collapses the sidebar. A click on any other icon shows that sidebar section.
  */
 export function clickSidebarSectionIcon(sidebarSection: LeftSidebarSection | RightSidebarSection) {
-  const isLeft = sidebarSection === "actions" || sidebarSection === "sourceControl" || sidebarSection === "files";
+  const isLeft = isLeftSidebarSection(sidebarSection);
   if (isLeft && settings.leftCollapsed === false && settings.leftSidebarSection === sidebarSection) {
     settings.leftCollapsed = true;
     return;

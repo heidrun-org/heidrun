@@ -10,6 +10,6 @@
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [sidebars/](sidebars/index.md): the sidebars, the Source control section, and the Chats section.
+- [sidebars/](sidebars/index.md): the sidebars, the Source control section, the Code hosting section, and the Chats section.
 - [window/](window/index.md): the layout, the colors, the status bar, and the state of the window.
 - [workspaces_tabs_and_panes/](workspaces_tabs_and_panes/index.md): the workspace, the tabs, and the panes.

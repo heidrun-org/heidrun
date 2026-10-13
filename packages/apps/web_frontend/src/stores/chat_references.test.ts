@@ -35,6 +35,7 @@ describe("loadChatReferenceDetails", () => {
       body: "Goal",
       labels: [{ name: "Simple Work", color: "2ea043" }],
       author: "jerome",
+      authorAvatarUrl: "https://github.com/jerome.png?size=48",
       createdAt: Date.parse("2026-10-11T09:30:00Z"),
       headBranch: null,
       baseBranch: null,
@@ -76,6 +77,27 @@ describe("loadChatReferenceDetails", () => {
     expect(vi.mocked(invoke).mock.lastCall?.[1]).toMatchObject({ args: ["api", "projects/:fullpath/merge_requests/249"] });
   });
 
+  it("gives the picture of the author of a GitLab item as the address that GitLab sends, and null for an address that is not a web address", async () => {
+    vi.mocked(invoke).mockResolvedValue(
+      JSON.stringify({ title: "Fix", state: "opened", author: { username: "jerome", avatar_url: "https://gitlab.com/uploads/-/system/user/avatar/1/a.png" } }),
+    );
+    expect(await loadChatReferenceDetails("/work/app", "gitlab", ISSUE)).toMatchObject({
+      authorAvatarUrl: "https://gitlab.com/uploads/-/system/user/avatar/1/a.png",
+    });
+    vi.mocked(invoke).mockResolvedValue(
+      JSON.stringify({ title: "Fix", state: "opened", author: { username: "jerome", avatar_url: "javascript:alert(1)" } }),
+    );
+    expect(await loadChatReferenceDetails("/work/app", "gitlab", ISSUE)).toMatchObject({ authorAvatarUrl: null });
+  });
+
+  it("gives no picture for an author of GitHub that is not a person, for example a bot such as app/dependabot", async () => {
+    vi.mocked(invoke).mockResolvedValue(JSON.stringify({ title: "Bump", state: "OPEN", author: { login: "app/dependabot" } }));
+    expect(await loadChatReferenceDetails("/work/app", "github", PULL_REQUEST)).toMatchObject({
+      author: "app/dependabot",
+      authorAvatarUrl: null,
+    });
+  });
+
   it("gives null when the forge does not answer, or answers with something that is not JSON", async () => {
     vi.mocked(invoke).mockRejectedValueOnce("gh: not logged in");
     expect(await loadChatReferenceDetails("/work/app", "github", ISSUE)).toBeNull();
@@ -91,6 +113,7 @@ describe("loadChatReferenceDetails", () => {
       body: "",
       labels: [],
       author: null,
+      authorAvatarUrl: null,
       createdAt: null,
       headBranch: null,
       baseBranch: null,

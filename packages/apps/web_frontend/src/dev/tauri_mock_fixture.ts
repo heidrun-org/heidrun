@@ -49,6 +49,67 @@ export class TauriMockFixture {
 	}
 
 	/**
+	 * The answer of `gh issue list` or `gh pr list`: three fake issues, or two fake pull requests.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'list', '--state', 'open', '--json', 'number,title,url']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeListAnswer(args: string[]): string {
+		const baseUrl = 'https://github.com/heidrun-org/heidrun';
+		const daysAgo = (days: number): string => new Date(Date.now() - days * 86_400_000).toISOString();
+		if (args[0] === 'issue') {
+			return JSON.stringify([
+				{
+					number: 370,
+					title: 'Add the Code hosting sidebar section: a list of issues and a list of pull requests',
+					url: `${baseUrl}/issues/370`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(1),
+					labels: [{ name: 'Design', color: '1d76db' }, { name: 'Simple Work', color: '2ea043' }],
+				},
+				{
+					number: 366,
+					title: 'Show the branch of each pane in the status bar',
+					url: `${baseUrl}/issues/366`,
+					author: { login: 'erictang' },
+					createdAt: daysAgo(3),
+					labels: [],
+				},
+				{
+					number: 351,
+					title: 'A very long title that does not fit in the width of the left sidebar, so that the end of it is cut',
+					url: `${baseUrl}/issues/351`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(40),
+					labels: [{ name: 'A very long label name that does not fit either', color: 'd4c5f9' }, { name: 'Bug', color: 'd73a4a' }],
+				},
+			]);
+		}
+		return JSON.stringify([
+			{
+				number: 369,
+				title: 'Move the Needs you sidebar section to the right sidebar',
+				url: `${baseUrl}/pull/369`,
+				author: { login: 'jeromeetienne' },
+				createdAt: daysAgo(0.1),
+				isDraft: false,
+				headRefName: 'move-to-handle-to-the-right-sidebar-251',
+				baseRefName: 'dev_jerome',
+			},
+			{
+				number: 365,
+				title: 'Merge dev into main',
+				url: `${baseUrl}/pull/365`,
+				author: { login: 'erictang' },
+				createdAt: daysAgo(2),
+				isDraft: true,
+				headRefName: 'dev',
+				baseRefName: 'main',
+			},
+		]);
+	}
+
+	/**
 	 * The answer of `gh issue view` or `gh pr view` for one number. The issue 123 fails, so the card shows the failure.
 	 *
 	 * @param args - The arguments of `gh`, for example `['issue', 'view', '250', '--json', 'title,state']`.
