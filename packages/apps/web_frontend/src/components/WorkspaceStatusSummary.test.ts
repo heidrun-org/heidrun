@@ -5,6 +5,7 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
+import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -547,6 +548,20 @@ describe("WorkspaceStatusSummary rename", () => {
 });
 
 describe("WorkspaceStatusSummary close", () => {
+  beforeEach(() => {
+    settings.confirmWorkspaceClose = true;
+  });
+
+  it("closes the workspace at once, without the confirmation dialog, when the setting confirmWorkspaceClose is off", async () => {
+    settings.confirmWorkspaceClose = false;
+    const { wrapper, api } = await mountSection();
+    await wrapper.get(".workspace-status").trigger("click");
+    await wrapper.findAll(".workspace-row .row-button")[3].trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closeWorkspace).toHaveBeenCalledWith("w2");
+  });
+
   it("asks for confirmation before it closes the workspace, and does not close before the answer", async () => {
     const { wrapper, api } = await mountSection();
     await wrapper.get(".workspace-status").trigger("click");
