@@ -7,14 +7,16 @@ import type { WorktreeCreateResult } from './worktree_tools_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WorktreeCreate — creates a Git worktree and clones the compiled Rust files of the main checkout into it
+//	WorktreeCreate — creates a Git worktree, clones the compiled Rust files into it, and installs its packages
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
  * Creates a Git worktree in the folder `.claude/worktrees` of the main checkout. Then, on macOS, it clones the `debug`
  * folder of the Cargo target folder of the main checkout into the worktree, with a copy-on-write clone. The first
- * build in the worktree then compiles only the crates of Heidrun, and not every Rust dependency again.
+ * build in the worktree then compiles only the crates of Heidrun, and not every Rust dependency again. At the end, it
+ * installs the packages of the worktree with `pnpm install --frozen-lockfile`, so the worktree has a folder
+ * `node_modules` and `pnpm dev` runs at once.
  */
 export class WorktreeCreate {
 	/** The folder of the main checkout that holds the worktrees. */
@@ -23,14 +25,19 @@ export class WorktreeCreate {
 	/** The commit where the new branch starts when the caller gives none. */
 	static readonly defaultBaseRef = 'HEAD';
 
+	/** The arguments of the `pnpm` command that installs the packages of a new worktree. */
+	static readonly installArguments = ['install', '--frozen-lockfile'];
+
 	/**
-	 * Creates the worktree on a new branch, then clones the compiled Rust files into it when it is possible.
+	 * Creates the worktree on a new branch, clones the compiled Rust files into it when it is possible, then installs
+	 * its packages.
 	 * @param options.workingDirectory A folder inside the main checkout or inside a worktree.
 	 * @param options.name The name of the new branch, and the name of the folder of the worktree.
 	 * @param options.baseRef The commit, the branch, or the tag where the new branch starts. The default is the
 	 * current commit of the main checkout.
 	 * @returns The path of the worktree, and whether the clone happened.
-	 * @throws An error when the name is not a valid branch name, or when the worktree folder or the branch exists.
+	 * @throws An error when the name is not a valid branch name, or when the worktree folder or the branch exists. Also
+	 * an error when the installation of the packages fails: the worktree then exists, without a folder `node_modules`.
 	 */
 	static run(options: {
 		workingDirectory: string;
@@ -54,6 +61,7 @@ export class WorktreeCreate {
 		);
 
 		const skipReason = WorktreeCreate._cloneTarget(mainCheckoutPath, worktreePath);
+		WorktreeCreate._installPackages(worktreePath);
 		return {
 			worktreePath,
 			branchName: options.name,
@@ -89,5 +97,32 @@ export class WorktreeCreate {
 			return `The clone failed: ${result.stderr.trim()}`;
 		}
 		return null;
+	}
+
+	/**
+	 * Installs the packages of the worktree with `pnpm install --frozen-lockfile`. The command reads the file
+	 * `pnpm-lock.yaml` of the worktree and never changes it.
+	 * @param worktreePath The absolute path of the new worktree.
+	 * @returns Nothing.
+	 * @throws An error that holds the output of `pnpm` when the installation fails, or when `pnpm` does not start.
+	 */
+	private static _installPackages(worktreePath: string): void {
+		const commandText = `pnpm ${WorktreeCreate.installArguments.join(' ')}`;
+		const result = ChildProcess.spawnSync('pnpm', WorktreeCreate.installArguments, {
+			cwd: worktreePath,
+			encoding: 'utf8',
+		});
+		if (result.error !== undefined) {
+			throw new Error(
+				`The worktree ${worktreePath} was created, but "${commandText}" did not start: ${result.error.message}`,
+			);
+		}
+		if (result.status !== 0) {
+			const output = `${result.stdout}${result.stderr}`.trim();
+			throw new Error(
+				`The worktree ${worktreePath} was created, but "${commandText}" failed with the exit code `
+					+ `${result.status}. Fix the cause, then run the command in the worktree.\n${output}`,
+			);
+		}
 	}
 }

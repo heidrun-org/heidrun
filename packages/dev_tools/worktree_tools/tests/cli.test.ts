@@ -73,6 +73,24 @@ describe('worktree_create_cli', () => {
 		expect(Fs.existsSync(Path.join(TargetPaths.debugPath(worktreePath), 'heidrun'))).toBe(true);
 	});
 
+	it('installs the packages and says so', () => {
+		const mainCheckoutPath = TestRepository.create();
+		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['with-packages']);
+		expect(result.exitCode).toBe(0);
+		expect(result.stdout).toContain('Installed the packages in the worktree');
+		const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'with-packages');
+		expect(Fs.existsSync(Path.join(worktreePath, 'node_modules'))).toBe(true);
+	});
+
+	it('prints the error of pnpm and exits with code 1 when the installation fails', () => {
+		const mainCheckoutPath = TestRepository.createWithOutdatedLockfile();
+		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['bad-lockfile']);
+		expect(result.exitCode).toBe(1);
+		expect(result.stderr).toContain('"pnpm install --frozen-lockfile" failed');
+		expect(result.stderr).toContain('lockfile');
+		expect(result.stdout).not.toContain('Installed the packages');
+	});
+
 	it('says that it did not clone when the main checkout is not built', () => {
 		const mainCheckoutPath = TestRepository.create();
 		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['no-build']);

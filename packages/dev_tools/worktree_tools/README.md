@@ -27,6 +27,8 @@ The command creates the worktree `.claude/worktrees/<name>` of the main checkout
 cp -c -R -p <main checkout>/packages/apps/desktop_tauri/target/debug <worktree>/packages/apps/desktop_tauri/target/debug
 ```
 
+At the end, the command runs `pnpm install --frozen-lockfile` in the worktree, so the worktree has a folder `node_modules` and `pnpm dev` runs at once. The command reads `pnpm-lock.yaml` and never changes it. When the installation fails, the command prints the error of `pnpm` and exits with the code 1. The worktree stays, so fix the cause and run `pnpm install --frozen-lockfile` in the worktree.
+
 Measured on 2026-10-11:
 
 - The clone takes 10.8 seconds and 14 MB of real disk space.
@@ -38,6 +40,7 @@ Limits:
 - The main checkout must be built first. Without a folder `target/debug`, the command creates the worktree without the clone and says so.
 - The clone needs macOS and the Apple File System, with both folders on the same disk. A worktree inside the main checkout is always on the same disk.
 - A clone shares its files only at the start. Each file that Cargo rewrites becomes a real copy.
+- The installation needs the command `pnpm` in the `PATH`.
 
 ## Clean the old target folders
 
