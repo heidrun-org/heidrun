@@ -7,7 +7,7 @@ import { addAction, updateAction } from "../stores/project";
 import { closeNewCustomScriptModal, newCustomScriptModal } from "../stores/newCustomScript";
 import { state, toast } from "../stores/session";
 import { project } from "../stores/project";
-import { CODING_AGENTS, findCodingAgent } from "../lib/coding_agents";
+import { CUSTOM_SCRIPT_CODING_AGENTS, findCodingAgent } from "../lib/coding_agents";
 import { scriptAgentCommand } from "../lib/script_agent_command";
 import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
@@ -358,7 +358,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <div>
             <div class="form-label">{{ t("newCustomScriptModal.codingAgent") }}</div>
             <div class="btn-group d-flex" role="group" :aria-label="t('newCustomScriptModal.codingAgent')">
-              <label v-for="choice in CODING_AGENTS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
+              <label v-for="choice in CUSTOM_SCRIPT_CODING_AGENTS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
                 <input v-model="agentName" type="radio" name="new-script-agent" autocomplete="off" :value="choice.id" />
                 <Icon :name="choice.icon" />
                 {{ choice.label }}

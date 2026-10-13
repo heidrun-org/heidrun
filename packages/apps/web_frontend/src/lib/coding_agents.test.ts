@@ -1,0 +1,47 @@
+import { describe, expect, it } from "vitest";
+import { CODING_AGENTS, CODING_AGENT_IDS, CUSTOM_SCRIPT_CODING_AGENTS, CUSTOM_SCRIPT_CODING_AGENT_IDS, findCodingAgent } from "./coding_agents";
+import { scriptAgentCommand } from "./script_agent_command";
+
+describe("CODING_AGENTS", () => {
+  it("gives each coding agent a different identifier, and an executable", () => {
+    expect(new Set(CODING_AGENT_IDS).size).toBe(CODING_AGENTS.length);
+    for (const agent of CODING_AGENTS) {
+      expect(agent.executable).not.toBe("");
+    }
+  });
+
+  it("starts the command line of each coding agent with its executable", () => {
+    for (const agent of CODING_AGENTS) {
+      expect(scriptAgentCommand({ name: agent.id, prompt: "Hi" })).toMatch(new RegExp(`^${agent.executable} `));
+    }
+  });
+
+  it("builds the command line of each coding agent with each of its models and each of its efforts", () => {
+    for (const agent of CODING_AGENTS) {
+      for (const model of agent.models) {
+        expect(scriptAgentCommand({ name: agent.id, model, prompt: "Hi" })).toContain(`'${model}'`);
+      }
+      for (const effort of agent.efforts) {
+        expect(scriptAgentCommand({ name: agent.id, effort, prompt: "Hi" })).toContain(effort);
+      }
+    }
+  });
+});
+
+describe("CUSTOM_SCRIPT_CODING_AGENTS", () => {
+  it("keeps only the coding agents that start interactive with a prompt", () => {
+    expect(CUSTOM_SCRIPT_CODING_AGENTS.every((agent) => agent.canStartInteractiveWithPrompt)).toBe(true);
+    expect(CUSTOM_SCRIPT_CODING_AGENT_IDS).toEqual(CUSTOM_SCRIPT_CODING_AGENTS.map((agent) => agent.id));
+  });
+
+  it("is not empty, so that the window always has a default coding agent", () => {
+    expect(CUSTOM_SCRIPT_CODING_AGENTS.length).toBeGreaterThan(0);
+  });
+});
+
+describe("findCodingAgent", () => {
+  it("finds a coding agent by its identifier, and gives undefined for an unknown identifier", () => {
+    expect(findCodingAgent("claude")?.executable).toBe("claude");
+    expect(findCodingAgent("unknown")).toBeUndefined();
+  });
+});
