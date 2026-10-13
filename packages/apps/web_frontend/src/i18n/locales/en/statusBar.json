@@ -28,5 +28,6 @@
   "gitBranchPickerEmpty": "No branch matches",
   "gitBranchPickerCurrent": "Current branch",
   "gitCountsTitle": "Details of the Git repository",
-  "gitBranchPickerOpenOn": "Open on {forge}"
+  "gitBranchPickerOpenOn": "Open on {forge}",
+  "gitBranchPickerOnlyLocal": "This branch is only on your computer: push it to see its page"
 }

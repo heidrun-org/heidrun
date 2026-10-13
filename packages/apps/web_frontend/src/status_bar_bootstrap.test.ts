@@ -113,7 +113,8 @@ describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 
 	it('is an outline Bootstrap button without border, and is always visible', () => {
 		expect(sourceText).toContain('btn btn-outline theme-secondary border-0 branch-link');
-		expect(sourceText).not.toMatch(/\.branch-link[^{]*\{[^}]*opacity:\s*0/);
+		expect(sourceText).not.toMatch(/\.branch-link\s*\{[^}]*opacity:\s*0\s*;/);
+		expect(sourceText).not.toMatch(/\.branch-item:hover \.branch-link/);
 	});
 
 	it('stays above the hovered row, which Bootstrap raises to z-index 1', () => {

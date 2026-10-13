@@ -2,7 +2,8 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentGit } from "../stores/git";
-import { checkoutGitBranch, filterGitBranches, listGitBranches, type GitBranch } from "../stores/git_branches";
+import { checkoutGitBranch, filterGitBranches, listGitBranches, selectedRoot, type GitBranch } from "../stores/git_branches";
+import { isOnRemote, loadRemoteBranchNames } from "../stores/git_remote_branches";
 import { ago } from "../lib/format";
 import { branchUrl, remoteToWeb } from "../lib/refs";
 import { useStatusCard } from "../lib/status_card";
@@ -44,6 +45,11 @@ function pageOf(branch: GitBranch): string | null {
   return web.value === null ? null : branchUrl(web.value.base, web.value.forge, branch.name);
 }
 
+/** True when the page of the branch can exist: the branch is not known to be only local. */
+function isLinkEnabled(branch: GitBranch): boolean {
+  return isOnRemote(selectedRoot(), branch.name, branch.has_remote_tracking);
+}
+
 /** Opens the page of the branch on the forge in the web browser. The picker stays open. */
 async function openPage(branch: GitBranch) {
   const address = pageOf(branch);
@@ -58,6 +64,10 @@ watch(isOpen, async (isNowOpen) => {
   }
   query.value = "";
   branches.value = await listGitBranches();
+  const root = selectedRoot();
+  if (root !== null) {
+    void loadRemoteBranchNames(root);
+  }
   await nextTick();
   searchField.value?.focus();
 });
@@ -144,7 +154,12 @@ function chooseFirst() {
               type="button"
               class="btn btn-outline theme-secondary border-0 branch-link"
               :data-link="branch.name"
-              :title="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
+              :disabled="isLinkEnabled(branch) === false"
+              :title="
+                isLinkEnabled(branch)
+                  ? t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })
+                  : t('statusBar.gitBranchPickerOnlyLocal')
+              "
               :aria-label="t('statusBar.gitBranchPickerOpenOn', { forge: web.forge === 'github' ? 'GitHub' : 'GitLab' })"
               @click.stop="openPage(branch)"
             >
@@ -183,4 +198,6 @@ function chooseFirst() {
   z-index: 2;
   display: flex; align-items: center; justify-content: center;
 }
+/* The application never fades a disabled button, so the link of a branch that is only local fades itself. */
+.branch-link:disabled { opacity: 0.35; cursor: default; }
 </style>

@@ -28,5 +28,6 @@
   "gitBranchPickerEmpty": "Aucune branche ne correspond",
   "gitBranchPickerCurrent": "Branche courante",
   "gitCountsTitle": "Détails du dépôt Git",
-  "gitBranchPickerOpenOn": "Ouvrir sur {forge}"
+  "gitBranchPickerOpenOn": "Ouvrir sur {forge}",
+  "gitBranchPickerOnlyLocal": "Cette branche est seulement sur votre ordinateur : envoyez-la pour voir sa page"
 }

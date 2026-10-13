@@ -19,10 +19,12 @@ export interface GitBranch {
   last_author: string;
   /** The time of the last commit of the branch, in seconds since 1970. */
   last_time: number;
+  /** True when this computer knows a branch of the same name on the remote repository `origin`. */
+  has_remote_tracking: boolean;
 }
 
 /** The root folder of the Git repository of the selected workspace, or null when there is none. */
-function selectedRoot(): string | null {
+export function selectedRoot(): string | null {
   const workspaceId = session.selectedWorkspaceId;
   if (workspaceId === null) {
     return null;

@@ -15,6 +15,7 @@ import { git, refreshGit, type GitStatus } from "../stores/git";
 import { filterGitBranches, type GitBranch } from "../stores/git_branches";
 import { state } from "../stores/session";
 import { branchUrl } from "../lib/refs";
+import { remoteBranches } from "../stores/git_remote_branches";
 
 function makeStatus(overrides: Partial<GitStatus>): GitStatus {
   return {
@@ -42,6 +43,7 @@ function makeBranch(overrides: Partial<GitBranch>): GitBranch {
     last_subject: "Merge pull request",
     last_author: "Jerome Etienne",
     last_time: Math.floor(Date.now() / 1000) - 600,
+    has_remote_tracking: true,
     ...overrides,
   };
 }
@@ -55,15 +57,27 @@ const BRANCHES = [
 /** The Tauri commands that the component called, with their arguments, in order. */
 let calls: { command: string; args: unknown }[] = [];
 let checkoutError: string | null = null;
+let remoteNames: string[] = [];
+let trackedNames: string[] | null = null;
 
 describe("GitBranchPicker", () => {
   beforeEach(() => {
     calls = [];
     checkoutError = null;
+    remoteNames = [];
+    trackedNames = null;
+    localStorage.clear();
+    remoteBranches.namesByRoot = {};
     vi.mocked(invoke).mockImplementation(async (command: string, args?: unknown) => {
+      if (command === "git_remote_branches") {
+        return remoteNames;
+      }
       calls.push({ command, args });
       if (command === "git_branches") {
-        return BRANCHES;
+        return BRANCHES.map((branch) => ({
+          ...branch,
+          has_remote_tracking: trackedNames === null ? true : trackedNames.includes(branch.name),
+        }));
       }
       if (command === "git_checkout" && checkoutError !== null) {
         throw checkoutError;
@@ -71,6 +85,7 @@ describe("GitBranchPicker", () => {
       return "";
     });
     vi.mocked(refreshGit).mockClear();
+    vi.mocked(openUrl).mockClear();
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };
   });
@@ -178,6 +193,45 @@ describe("GitBranchPicker", () => {
     expect(wrapper.attributes("title")).toBe("Switch the Git branch");
     await wrapper.trigger("click");
     expect(wrapper.attributes("title")).toBeUndefined();
+  });
+
+  it("disables the link of a branch that is only local, and keeps the others enabled", async () => {
+    trackedNames = [];
+    remoteNames = ["main", "docs-architecture"];
+    const wrapper = mount(GitBranchPicker);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.get("[data-link=main]").attributes("disabled")).toBeUndefined();
+    expect(wrapper.get("[data-link=docs-architecture]").attributes("disabled")).toBeUndefined();
+    expect(wrapper.get("[data-link=dev_jerome]").attributes("disabled")).toBeDefined();
+    expect(wrapper.get("[data-link=dev_jerome]").attributes("title")).toBe(
+      "This branch is only on your computer: push it to see its page",
+    );
+    await wrapper.get("[data-link=dev_jerome]").trigger("click");
+    expect(openUrl).not.toHaveBeenCalled();
+  });
+
+  it("keeps the link enabled for a branch with a remote-tracking branch, even when the remote list lacks it", async () => {
+    trackedNames = ["main"];
+    remoteNames = [];
+    const wrapper = mount(GitBranchPicker);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.get("[data-link=main]").attributes("disabled")).toBeUndefined();
+    expect(wrapper.get("[data-link=dev_jerome]").attributes("disabled")).toBeDefined();
+  });
+
+  it("keeps the links enabled while nothing is known, for example without network", async () => {
+    vi.mocked(invoke).mockImplementation(async (command: string) => {
+      if (command === "git_branches") {
+        return BRANCHES.map((branch) => ({ ...branch, has_remote_tracking: false }));
+      }
+      throw "network down";
+    });
+    const wrapper = mount(GitBranchPicker);
+    await wrapper.trigger("click");
+    await flushPromises();
+    expect(wrapper.findAll("[data-link]").every((link) => link.attributes("disabled") === undefined)).toBe(true);
   });
 
   it("keeps the slashes of a branch name in its address, and uses GitLab addresses for a GitLab remote", () => {

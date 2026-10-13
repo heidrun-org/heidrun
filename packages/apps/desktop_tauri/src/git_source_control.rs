@@ -161,6 +161,10 @@ pub struct GitBranch {
     pub last_author: String,
     /// The time of the last commit of the branch, in seconds since 1970.
     pub last_time: i64,
+    /// True when this computer knows a branch of the same name on the remote repository `origin`: the remote-tracking
+    /// branch exists. A push makes it exist at once, and a fetch updates it. It is a local and fast answer, and it can
+    /// be out of date.
+    pub has_remote_tracking: bool,
 }
 
 /// Lists the local branches, the most recently committed first.
@@ -172,7 +176,25 @@ pub async fn git_branches(root: String) -> Result<Vec<GitBranch>, String> {
         "--format=%(HEAD){separator}%(refname:short){separator}%(objectname:short){separator}%(authorname){separator}%(committerdate:unix){separator}%(contents:subject)"
     );
     let text = run(&root, &["for-each-ref", "--sort=-committerdate", &format, "refs/heads"], LOCAL_TIMEOUT).await?;
-    Ok(text.lines().filter_map(|line| parse_branch(line, separator)).collect())
+    let tracked = run(&root, &["for-each-ref", "--format=%(refname:short)", "refs/remotes/origin"], LOCAL_TIMEOUT)
+        .await
+        .unwrap_or_default();
+    let tracked_names: std::collections::HashSet<&str> =
+        tracked.lines().filter_map(|name| name.strip_prefix("origin/")).collect();
+    let mut branches: Vec<GitBranch> = text.lines().filter_map(|line| parse_branch(line, separator)).collect();
+    for branch in branches.iter_mut() {
+        branch.has_remote_tracking = tracked_names.contains(branch.name.as_str());
+    }
+    Ok(branches)
+}
+
+/// Lists the branches that the remote repository `origin` has, by asking the remote repository (`git ls-remote`). It
+/// needs the network, so the caller keeps the answer for a day.
+#[tauri::command]
+pub async fn git_remote_branches(root: String) -> Result<Vec<String>, String> {
+    known_root(&root)?;
+    let text = run(&root, &["ls-remote", "--heads", "origin"], REMOTE_TIMEOUT).await?;
+    Ok(text.lines().filter_map(|line| line.split('\t').nth(1)).filter_map(|reference| reference.strip_prefix("refs/heads/")).map(str::to_string).collect())
 }
 
 /// Parses one line of `git for-each-ref` that `git_branches` asked for.
@@ -184,7 +206,7 @@ fn parse_branch(line: &str, separator: &str) -> Option<GitBranch> {
     let last_author = fields.next()?.to_string();
     let last_time = fields.next()?.parse().unwrap_or(0);
     let last_subject = fields.next().unwrap_or("").to_string();
-    Some(GitBranch { name, is_current: head == "*", last_sha, last_subject, last_author, last_time })
+    Some(GitBranch { name, is_current: head == "*", last_sha, last_subject, last_author, last_time, has_remote_tracking: false })
 }
 
 /// Checks out the local branch `branch`. Git refuses when a change of the working folder would be lost, and its
@@ -347,6 +369,35 @@ mod tests {
         assert_eq!(main.last_author, "Test");
         git_checkout(repository.root(), "other".into()).await.unwrap();
         assert_eq!(repository.git(&["branch", "--show-current"]), "other\n");
+    }
+
+    #[tokio::test]
+    async fn tells_which_local_branches_have_a_remote_tracking_branch() {
+        let repository = Repository::new("remote_tracking");
+        repository.git(&["branch", "pushed"]);
+        repository.git(&["branch", "only_local"]);
+        repository.git(&["update-ref", "refs/remotes/origin/pushed", "HEAD"]);
+        let branches = git_branches(repository.root()).await.unwrap();
+        let has_remote = |name: &str| branches.iter().find(|branch| branch.name == name).unwrap().has_remote_tracking;
+        assert!(has_remote("pushed"));
+        assert!(has_remote("only_local") == false);
+        assert!(has_remote("main") == false);
+    }
+
+    #[tokio::test]
+    async fn lists_the_branches_of_the_remote_repository() {
+        let repository = Repository::new("remote_branches");
+        let remote = std::env::temp_dir().join(format!("heidrun_source_control_remote_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&remote);
+        std::process::Command::new("git").args(["init", "--quiet", "--bare"]).arg(&remote).output().unwrap();
+        repository.git(&["remote", "add", "origin", &remote.to_string_lossy()]);
+        repository.git(&["branch", "other"]);
+        repository.git(&["push", "--quiet", "origin", "main", "other"]);
+        repository.git(&["branch", "only_local"]);
+        let mut names = git_remote_branches(repository.root()).await.unwrap();
+        names.sort();
+        assert_eq!(names, vec!["main".to_string(), "other".to_string()]);
+        let _ = std::fs::remove_dir_all(&remote);
     }
 
     #[tokio::test]
