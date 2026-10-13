@@ -90,7 +90,7 @@ function chooseFirst() {
     aria-haspopup="listbox"
     :aria-expanded="isOpen"
     :aria-label="t('statusBar.gitBranchPickerLabel')"
-    :title="t('statusBar.gitBranchPickerTitle')"
+    :title="isOpen ? undefined : t('statusBar.gitBranchPickerTitle')"
     @click="toggle"
     @keydown.enter.self.prevent="toggle"
     @keydown.space.self.prevent="toggle"
@@ -129,7 +129,7 @@ function chooseFirst() {
               :data-branch="branch.name"
               @click="choose(branch)"
             >
-              <span class="d-flex align-items-center gap-2">
+              <span class="branch-first-line d-flex align-items-center gap-2">
                 <Icon name="git" />
                 <span class="fw-semibold branch-name">{{ branch.name }}</span>
                 <Icon v-if="branch.is_current" name="check2" :title="t('statusBar.gitBranchPickerCurrent')" />
@@ -165,13 +165,21 @@ function chooseFirst() {
 .git-branch-zone { margin-right: -4px; padding-right: 4px; }
 /* The list touches the borders of the card: the body has no padding, so the separators and the scroll bar reach the edges. */
 .branch-picker-body { padding: 0; overflow: hidden; }
-.branch-search { padding: 8px; }
-.branch-list { max-height: 320px; overflow-y: auto; }
+.branch-search { padding: 12px; }
+.branch-list { max-height: 400px; overflow-y: auto; }
 .branch-item { position: relative; }
-.branch-row { padding: 4px 8px; }
+.branch-row { padding: 10px 12px; row-gap: 4px; }
+.branch-first-line { min-height: 24px; }
 /* Each row sits in its own wrapper, so the rows draw their own separator: one line under each row, edge to edge. */
-.branch-item .branch-row { width: 100%; padding-right: 40px; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
-.branch-link { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); padding: 2px 6px; }
+.branch-item .branch-row { width: 100%; padding-right: 44px; border-width: 0 0 var(--border-width) 0; border-radius: 0; }
 .branch-name, .branch-subject { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .branch-time { margin-left: auto; white-space: nowrap; }
+/* The link is only the icon, on the first line of the row, at the right edge. It shows while the pointer is over the row, and
+   while the keyboard focus is on it. */
+.branch-link {
+  position: absolute; right: 12px; top: 10px; height: 24px; display: flex; align-items: center;
+  padding: 0 4px; border: 0; background: transparent; color: var(--muted-2); opacity: 0;
+}
+.branch-item:hover .branch-link, .branch-link:focus-visible { opacity: 1; }
+.branch-link:hover { color: var(--fg-body); }
 </style>

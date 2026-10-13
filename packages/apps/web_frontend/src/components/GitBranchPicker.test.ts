@@ -173,6 +173,13 @@ describe("GitBranchPicker", () => {
     expect(wrapper.find(".popover").exists()).toBe(true);
   });
 
+  it("does not show the title of the zone over the open picker", async () => {
+    const wrapper = mount(GitBranchPicker);
+    expect(wrapper.attributes("title")).toBe("Switch the Git branch");
+    await wrapper.trigger("click");
+    expect(wrapper.attributes("title")).toBeUndefined();
+  });
+
   it("keeps the slashes of a branch name in its address, and uses GitLab addresses for a GitLab remote", () => {
     expect(branchUrl("https://github.com/o/r", "github", "fix/a b")).toBe("https://github.com/o/r/tree/fix/a%20b");
     expect(branchUrl("https://gitlab.com/g/r", "gitlab", "main")).toBe("https://gitlab.com/g/r/-/tree/main");

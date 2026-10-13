@@ -88,6 +88,7 @@ describe('the branch picker (GitBranchPicker.vue)', () => {
 			'branch-list',
 			'branch-item',
 			'branch-row',
+			'branch-first-line',
 			'branch-name',
 			'branch-subject',
 			'branch-time',
@@ -104,6 +105,15 @@ describe('the list of the branch picker (GitBranchPicker.vue)', () => {
 	it('scrolls inside the card, and cuts the long lines, because the utility classes of Bootstrap for this are not built', () => {
 		expect(sourceText).toMatch(/\.branch-list\s*\{[^}]*max-height:[^}]*overflow-y:\s*auto/);
 		expect(sourceText).toMatch(/\.branch-name, \.branch-subject\s*\{[^}]*text-overflow:\s*ellipsis/);
+	});
+});
+
+describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitBranchPicker.vue');
+
+	it('is only an icon, without border, and shows only while the pointer is over the row', () => {
+		expect(sourceText).toMatch(/\.branch-link\s*\{[^}]*border:\s*0[^}]*opacity:\s*0/);
+		expect(sourceText).toMatch(/\.branch-item:hover \.branch-link[^{]*\{\s*opacity:\s*1/);
 	});
 });
 
