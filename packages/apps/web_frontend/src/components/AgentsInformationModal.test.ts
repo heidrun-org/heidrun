@@ -89,7 +89,7 @@ describe("AgentsInformationModal", () => {
 
   it("shows the Codex account when the quota of Codex is known, even when no pane runs Codex", async () => {
     const { wrapper } = await mountAgentsInformationModal();
-    expect(wrapper.text()).not.toContain("Codex ·");
+    expect(wrapper.text()).not.toContain("Codex account");
     const { state } = await import("../stores/session");
     state.codex = {
       plan: "prolite",
@@ -97,7 +97,7 @@ describe("AgentsInformationModal", () => {
       secondary: null,
     } as never;
     await flushPromises();
-    expect(wrapper.findAll(".block .eyebrow").map((eyebrow) => eyebrow.text())).toContain("Codex · prolite");
+    expect(wrapper.findAll(".block .eyebrow").map((eyebrow) => eyebrow.text())).toContain("Codex account");
     wrapper.unmount();
   });
 });
