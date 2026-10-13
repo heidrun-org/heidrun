@@ -7,18 +7,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### Added
-
-- Add a command-line tool and library for coding agents. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
-- Add a script to generate the change log from merged pull requests, with options to choose the range. ([#117](https://github.com/heidrun-org/heidrun/pull/117), [#119](https://github.com/heidrun-org/heidrun/pull/119))
-- Add a script to create a disk image for releases. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
+- Add dynamic topics to the Chats sidebar and extract topics with a language model. ([#268](https://github.com/heidrun-org/heidrun/pull/268), [#273](https://github.com/heidrun-org/heidrun/pull/273))
+- Add a sort menu to the Chats sidebar. ([#263](https://github.com/heidrun-org/heidrun/pull/263))
+- Add goat sounds in the About window, on the splash screen, and on the empty tab screen. ([#258](https://github.com/heidrun-org/heidrun/pull/258))
+- Add the Chats sidebar section. ([#259](https://github.com/heidrun-org/heidrun/pull/259))
+- Add an option to start Heidrun without the splash screen. ([#255](https://github.com/heidrun-org/heidrun/pull/255))
+- Add a workspace selector to the status bar. ([#244](https://github.com/heidrun-org/heidrun/pull/244))
+- Add a tab bar and a workspace button. ([#212](https://github.com/heidrun-org/heidrun/pull/212), [#213](https://github.com/heidrun-org/heidrun/pull/213))
+- Add a document about Norse mythology and developers using artificial intelligence. ([#191](https://github.com/heidrun-org/heidrun/pull/191))
+- Add a goat application icon and web page icon. ([#183](https://github.com/heidrun-org/heidrun/pull/183))
+- Add a setting to show or hide the status item in the macOS menu bar. ([#170](https://github.com/heidrun-org/heidrun/pull/170))
+- Add the status item to the macOS menu bar, showing agent states and the Claude quota. ([#164](https://github.com/heidrun-org/heidrun/pull/164))
+- Add a baby goat, its name, and a joke with a firework to the empty tab screen. ([#185](https://github.com/heidrun-org/heidrun/pull/185))
+- Add a window for creating custom scripts. ([#151](https://github.com/heidrun-org/heidrun/pull/151))
+- Add a menu to the top bar and separate the skills into two windows. ([#144](https://github.com/heidrun-org/heidrun/pull/144))
+- Add an Agents section to Settings. ([#123](https://github.com/heidrun-org/heidrun/pull/123))
+- Add a command line tool and library for coding agents. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
+- Add the ability to paste an image into a terminal by dropping it there. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
+- Add a release script for disk images. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
 
 ### Changed
+- Make Claude and Codex usage cards wider. ([#291](https://github.com/heidrun-org/heidrun/pull/291))
+- Show colored status dots and quota badges in the status item menu. ([#287](https://github.com/heidrun-org/heidrun/pull/287))
+- Replace the help text on the Dynamic topics page with information cards. ([#267](https://github.com/heidrun-org/heidrun/pull/267))
+- Move the To handle section from the left sidebar to the right sidebar. ([#214](https://github.com/heidrun-org/heidrun/pull/214), [#253](https://github.com/heidrun-org/heidrun/pull/253))
+- Save the last state of each setting option. ([#256](https://github.com/heidrun-org/heidrun/pull/256))
+- Allow tabs, workspaces, and notes to be reordered with the mouse while dragging images into terminals. ([#249](https://github.com/heidrun-org/heidrun/pull/249))
+- Move the workspace selector to the status bar and show its list in an information card. ([#244](https://github.com/heidrun-org/heidrun/pull/244))
+- Make the workspace button and tabs larger, add icons, and make the whole tab clickable. ([#241](https://github.com/heidrun-org/heidrun/pull/241), [#236](https://github.com/heidrun-org/heidrun/pull/236))
+- Show pinned notes in their own workspace and keep pinned panes the same width across tabs. ([#221](https://github.com/heidrun-org/heidrun/pull/221), [#218](https://github.com/heidrun-org/heidrun/pull/218))
+- Make both sidebars hide completely. ([#215](https://github.com/heidrun-org/heidrun/pull/215))
+- Open the four information cards above the status bar when clicked. ([#194](https://github.com/heidrun-org/heidrun/pull/194))
+- Rename prompt templates to macros. ([#192](https://github.com/heidrun-org/heidrun/pull/192))
+- Show the empty tab screen in light colors when using the light theme. ([#187](https://github.com/heidrun-org/heidrun/pull/187))
+- Use a separate named Herdr session for Heidrun and stop the session when Heidrun quits. ([#182](https://github.com/heidrun-org/heidrun/pull/182))
+- Name shell panes after their folder or running command. ([#171](https://github.com/heidrun-org/heidrun/pull/171))
+- Show quotas in the status bar only for coding agents enabled in Settings. ([#140](https://github.com/heidrun-org/heidrun/pull/140))
+- Link installed skills when an agent is enabled later. ([#128](https://github.com/heidrun-org/heidrun/pull/128))
+- Manage skill files with the skills.sh service. ([#124](https://github.com/heidrun-org/heidrun/pull/124))
+- Zoom the whole window when changing the font size. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
 
-- Make font size zoom apply to the whole window. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
+### Removed
+- Remove the agent count section from the status bar. ([#288](https://github.com/heidrun-org/heidrun/pull/288))
+- Remove the Pane section from the right sidebar. ([#282](https://github.com/heidrun-org/heidrun/pull/282))
+- Remove the unused text and update documents after the layout redesign. ([#222](https://github.com/heidrun-org/heidrun/pull/222))
+- Remove the Heidrun name from the window title bar. ([#159](https://github.com/heidrun-org/heidrun/pull/159))
+- Remove the splash screen subtitle. ([#155](https://github.com/heidrun-org/heidrun/pull/155))
 
 ### Fixed
+- Show the status item menu in black and open quota cards. ([#294](https://github.com/heidrun-org/heidrun/pull/294))
+- Restore the window position and size when Heidrun starts. ([#227](https://github.com/heidrun-org/heidrun/pull/227))
+- Center the Shortcuts window. ([#216](https://github.com/heidrun-org/heidrun/pull/216))
+- Show the workspace button at the left end of the tab bar. ([#213](https://github.com/heidrun-org/heidrun/pull/213))
+- Show the splash screen without a black window beforehand. ([#145](https://github.com/heidrun-org/heidrun/pull/145))
+- Keep narrow terminal pane names clear of the buttons. ([#153](https://github.com/heidrun-org/heidrun/pull/153))
+- Stop terminal text from blinking or shifting when the window is resized. ([#158](https://github.com/heidrun-org/heidrun/pull/158))
+- Show a four-arrow cursor when dragging a corner between panes. ([#179](https://github.com/heidrun-org/heidrun/pull/179))
 
-- Allow pasting an image by dropping it on a terminal. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
+### Security
 
 ## [0.2.0] - 2026-10-10
 
