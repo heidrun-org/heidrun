@@ -50,9 +50,9 @@ async function mountApp() {
   return { wrapper, session, settings: settingsStore.settings, notes };
 }
 
-/** The names of the children of the area under the top bar, from the left to the right. */
+/** The names of the children of the area under the top bar, from the left to the right. The gap of a collapsed sidebar is named "gap". */
 function bodyChildren(wrapper: Awaited<ReturnType<typeof mountApp>>["wrapper"]): string[] {
-  return Array.from(wrapper.get(".body").element.children).map((child) => child.tagName.toLowerCase());
+  return Array.from(wrapper.get(".body").element.children).map((child) => (child.classList.contains("sidebar-gap") ? "gap" : child.tagName.toLowerCase()));
 }
 
 /** Presses a shortcut of the window. */
@@ -90,7 +90,7 @@ describe("the shortcut Command+B", () => {
     press("KeyB");
     await wrapper.vm.$nextTick();
     expect(settings.leftCollapsed).toBe(true);
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "gap", "main", "resizer-stub", "right-panel-stub"]);
   });
 
   it("expands the left sidebar again with a second press", async () => {
@@ -117,7 +117,7 @@ describe("the shortcut Option+Command+B", () => {
     press("KeyB", { altKey: true });
     await wrapper.vm.$nextTick();
     expect(settings.rightCollapsed).toBe(true);
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "gap", "right-panel-stub"]);
   });
 
   it("expands the right sidebar again with a second press", async () => {
@@ -144,7 +144,7 @@ describe("collapsing both sidebars", () => {
     press("KeyB");
     press("KeyB", { altKey: true });
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "gap", "main", "gap", "right-panel-stub"]);
     expect(wrapper.find("resizer-stub").exists()).toBe(false);
   });
 
@@ -163,7 +163,7 @@ describe("opening a sidebar section while its sidebar is collapsed", () => {
     const { wrapper, settings, notes } = await mountApp();
     settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "gap", "right-panel-stub"]);
     notes.selectionReaders.set("p1", () => "text to keep");
     press("KeyP", { shiftKey: true });
     await wrapper.vm.$nextTick();
@@ -181,7 +181,7 @@ describe("opening a sidebar section while its sidebar is collapsed", () => {
     press("KeyP", { shiftKey: true });
     await wrapper.vm.$nextTick();
     expect(settings.leftCollapsed).toBe(true);
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "gap", "main", "resizer-stub", "right-panel-stub"]);
   });
 });
 
@@ -214,14 +214,26 @@ describe("collapsing a sidebar to the sidebar icon bar", () => {
     const { wrapper, settings } = await mountApp();
     settings.leftCollapsed = true;
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "gap", "main", "resizer-stub", "right-panel-stub"]);
   });
 
   it("keeps the collapsed right sidebar, without its line to drag", async () => {
     const { wrapper, settings } = await mountApp();
     settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "gap", "right-panel-stub"]);
+  });
+
+  it("keeps the gap between the viewport and each collapsed sidebar, as wide as the line to drag", async () => {
+    const { wrapper, settings } = await mountApp();
+    const widthsBefore = bodyChildren(wrapper).filter((name) => name === "resizer-stub" || name === "gap").length;
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
+    await wrapper.vm.$nextTick();
+    const widthsAfter = bodyChildren(wrapper).filter((name) => name === "resizer-stub" || name === "gap").length;
+    expect(widthsBefore).toBe(2);
+    expect(widthsAfter).toBe(2);
+    expect(wrapper.findAll(".sidebar-gap")).toHaveLength(2);
   });
 
   it("remembers the collapsed sidebars for the next start", async () => {
