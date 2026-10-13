@@ -1,7 +1,7 @@
 //! The status item of Heidrun in the macOS menu bar: one wide picture with four slots, and a menu that opens on click.
 //!
-//! The slots, from left to right: the icon of Heidrun, blocked agents, finished agents, working agents, then one ring
-//! for each quota (Claude, then Codex).
+//! The slots, from left to right: the icon of Heidrun, blocked agents, finished agents, working agents. The
+//! quota is not in the picture: the menu shows it.
 //! The web page sends the data with the command `status_item_update`. This module draws the picture, builds the
 //! menu, and tells the web page which agent the user chose in the menu.
 
@@ -84,7 +84,7 @@ pub enum QuotaLevel {
     Crit,
 }
 
-/// The quota that a ring shows.
+/// The quota that a menu line shows.
 #[derive(Deserialize, Clone, Default, Debug, PartialEq)]
 #[serde(default)]
 pub struct StatusQuota {
@@ -109,7 +109,7 @@ pub struct StatusItemPayload {
     pub done: StatusSection,
     /// Agents that work now.
     pub working: StatusSection,
-    /// The quotas to show, one ring and one menu line each: Claude first, then Codex. The list is empty when no quota
+    /// The quotas to show, one menu line each: Claude first, then Codex. The list is empty when no quota
     /// is known.
     pub quotas: Vec<StatusQuota>,
     /// Text of the menu item that shows the main window, already translated.
@@ -182,8 +182,9 @@ impl StatusItemState {
 // Picture
 ///////////////////////////////////////////////////////////////////////////////
 
-/// The slots for the data of the web page: the icon of Heidrun, then blocked, finished, working, and one ring for each
-/// quota. The icon of Heidrun does not move.
+/// The slots for the data of the web page: the icon of Heidrun, then blocked, finished, and working. The quota is not
+/// in the picture: the status bar of the Heidrun window and the menu of the status item show it. The icon of Heidrun
+/// does not move.
 pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
     let mut slots = Vec::new();
     let icon = icon::frames();
@@ -193,19 +194,15 @@ pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
     slots.push(Slot::Disc { count: payload.blocked.agents.len(), color: BLOCKED_COLOR });
     slots.push(Slot::Disc { count: payload.done.agents.len(), color: DONE_COLOR });
     slots.push(Slot::Disc { count: payload.working.agents.len(), color: WORKING_COLOR });
-    for quota in &payload.quotas {
-        let (color, is_urgent) = quota_style(quota.level);
-        slots.push(Slot::Ring { percent: Some(quota.percent), color, is_urgent });
-    }
     slots
 }
 
-/// The color of a quota, and whether the quota is critical so that its ring moves.
-fn quota_style(level: QuotaLevel) -> ([u8; 3], bool) {
+/// The color of the badge of a quota in the menu.
+fn quota_color(level: QuotaLevel) -> [u8; 3] {
     match level {
-        QuotaLevel::Ok => (QUOTA_OK_COLOR, false),
-        QuotaLevel::Warn => (QUOTA_WARN_COLOR, false),
-        QuotaLevel::Crit => (BLOCKED_COLOR, true),
+        QuotaLevel::Ok => QUOTA_OK_COLOR,
+        QuotaLevel::Warn => QUOTA_WARN_COLOR,
+        QuotaLevel::Crit => BLOCKED_COLOR,
     }
 }
 
@@ -346,7 +343,7 @@ fn menu_lines(payload: &StatusItemPayload) -> Vec<MenuLine> {
             label: quota.label.clone(),
             text: quota.text.clone(),
             percent: quota.percent,
-            color: quota_style(quota.level).0,
+            color: quota_color(quota.level),
         });
     }
     lines
@@ -535,43 +532,21 @@ mod tests {
             .iter()
             .map(|slot| match slot {
                 Slot::Disc { count, .. } => Some(*count),
-                Slot::Ring { .. } | Slot::Sprite { .. } => None,
+                Slot::Sprite { .. } => None,
             })
             .collect();
         assert_eq!(counts, vec![None, Some(2), Some(1), Some(0)]);
     }
 
     #[test]
-    fn the_ring_has_the_color_of_the_quota_level_and_a_critical_quota_moves() {
-        let quota = |level: QuotaLevel| StatusItemPayload {
-            quotas: vec![StatusQuota { percent: 90.0, level, ..StatusQuota::default() }],
-            ..StatusItemPayload::default()
-        };
-        let ring = |payload: &StatusItemPayload| match slots_for(payload).pop() {
-            Some(Slot::Ring { color, is_urgent, .. }) => (color, is_urgent),
-            _ => panic!("the last slot is a ring"),
-        };
-        assert_eq!(ring(&quota(QuotaLevel::Ok)), (QUOTA_OK_COLOR, false));
-        assert_eq!(ring(&quota(QuotaLevel::Warn)), (QUOTA_WARN_COLOR, false));
-        assert_eq!(ring(&quota(QuotaLevel::Crit)), (BLOCKED_COLOR, true));
-    }
-
-    #[test]
-    fn each_quota_has_its_own_ring_in_the_order_of_the_data() {
-        let quota = |percent: f64| StatusQuota { percent, level: QuotaLevel::Ok, ..StatusQuota::default() };
-        let rings = |quotas: Vec<StatusQuota>| -> Vec<Option<f64>> {
-            let payload = StatusItemPayload { quotas, ..StatusItemPayload::default() };
-            slots_for(&payload)
-                .iter()
-                .filter_map(|slot| match slot {
-                    Slot::Ring { percent, .. } => Some(*percent),
-                    _ => None,
-                })
-                .collect()
-        };
-        assert_eq!(rings(vec![]), Vec::<Option<f64>>::new());
-        assert_eq!(rings(vec![quota(20.0)]), vec![Some(20.0)]);
-        assert_eq!(rings(vec![quota(20.0), quota(60.0)]), vec![Some(20.0), Some(60.0)]);
+    fn the_picture_has_no_ring_for_the_quotas() {
+        let quota = |percent: f64| StatusQuota { percent, level: QuotaLevel::Crit, ..StatusQuota::default() };
+        let without_quota = StatusItemPayload::default();
+        let with_quotas = StatusItemPayload { quotas: vec![quota(20.0), quota(95.0)], ..StatusItemPayload::default() };
+        let width = |payload: &StatusItemPayload| picture::picture_width(&slots_for(payload));
+        assert_eq!(slots_for(&with_quotas).len(), slots_for(&without_quota).len());
+        assert_eq!(width(&with_quotas), width(&without_quota));
+        assert!(!picture::is_animated(&slots_for(&with_quotas)));
     }
 
     #[test]
@@ -616,7 +591,7 @@ mod tests {
     fn the_demo_has_blocked_agents_and_makes_the_picture_move() {
         let payload = demo_payload();
         assert_eq!(payload.blocked.agents.len(), 2);
-        assert!(picture::is_animated(&slots_for(&payload)));
+        assert!(is_animated(&payload));
     }
 
     #[test]

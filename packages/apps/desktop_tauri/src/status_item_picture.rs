@@ -1,4 +1,4 @@
-//! Draws the picture of the status item in the macOS menu bar: flat discs and rings side by side.
+//! Draws the picture of the status item in the macOS menu bar: the icon of Heidrun and flat discs side by side.
 //!
 //! Every function here is pure: the same slots and the same time always give the same pixels. The module
 //! `status_item` owns the timer and gives the time of each frame.
@@ -6,19 +6,16 @@
 use std::f32::consts::PI;
 
 /// Width of one slot, in pixels. The picture is drawn at twice the size of the menu bar, for Retina screens. The disc is
-/// 36 pixels wide, so 20 pixels of empty space separate two discs.
-pub const SLOT_WIDTH: u32 = 56;
+/// 36 pixels wide, so 10 pixels of empty space separate two discs.
+pub const SLOT_WIDTH: u32 = 46;
 
 /// Height of the picture, in pixels. The library that shows the picture in the menu bar always scales it to 18 points
 /// high. Empty space above and below the discs would make the discs smaller than the icons of the other applications,
 /// so the discs nearly fill the height.
 pub const PICTURE_HEIGHT: u32 = 44;
 
-/// Outer radius of the disc or the ring of a slot, in pixels.
+/// Radius of the disc of a slot, in pixels.
 const RADIUS: f32 = 18.0;
-
-/// Inner radius of the ring of a slot, in pixels. The band of the ring is 8 pixels thick.
-const RING_INNER_RADIUS: f32 = 10.0;
 
 /// Width of the thin border of a disc, in pixels. The border has the normal color of the disc, whatever the number of
 /// agents.
@@ -37,10 +34,10 @@ const FADED_OPACITY: f32 = 0.22;
 const BRIGHT_WHITE_SHARE: f32 = 0.35;
 
 /// Empty space on the left and on the right of the whole picture, in pixels.
-pub const PICTURE_PADDING: u32 = 16;
+pub const PICTURE_PADDING: u32 = 4;
 
 /// Empty space on each side of a sprite, in pixels. The same space as between two discs.
-const SPRITE_MARGIN: u32 = 10;
+const SPRITE_MARGIN: u32 = 5;
 
 /// Number of frames of a walking sprite per second.
 const WALK_FRAMES_PER_SECOND: f32 = 8.0;
@@ -64,15 +61,6 @@ pub enum Slot {
         count: usize,
         /// Normal color of the disc: red, green, blue.
         color: [u8; 3],
-    },
-    /// A flat ring that fills clockwise from the top with a percentage.
-    Ring {
-        /// Share of the ring that is filled, from 0 to 100. `None` draws an empty ring.
-        percent: Option<f64>,
-        /// Color of the filled part: red, green, blue.
-        color: [u8; 3],
-        /// `true` makes the ring pulse.
-        is_urgent: bool,
     },
     /// A small picture with one or several frames, for example the icon of Heidrun. The slot is as wide as the frames.
     Sprite {
@@ -107,7 +95,6 @@ impl Slot {
     pub fn is_animated(&self) -> bool {
         match self {
             Slot::Disc { .. } => false,
-            Slot::Ring { is_urgent, .. } => *is_urgent,
             Slot::Sprite { frames, is_walking } => *is_walking && frames.len() > 1,
         }
     }
@@ -247,35 +234,6 @@ fn disc_color(dx: f32, dy: f32, color: [u8; 3], count: usize) -> Color {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Rings
-///////////////////////////////////////////////////////////////////////////////
-
-/// The color of the pixel at (`dx`, `dy`) from the center of a ring. The ring is flat.
-fn ring_color(dx: f32, dy: f32, percent: Option<f64>, color: [u8; 3], is_urgent: bool, time: f32) -> Color {
-    let distance = (dx * dx + dy * dy).sqrt();
-    let coverage = (RADIUS + 0.5 - distance).clamp(0.0, 1.0) * (distance - RING_INNER_RADIUS + 0.5).clamp(0.0, 1.0);
-    if coverage <= 0.0 {
-        return TRANSPARENT;
-    }
-    let mut turn = dx.atan2(-dy) / (2.0 * PI);
-    if turn < 0.0 {
-        turn += 1.0;
-    }
-    let is_filled = match percent {
-        Some(percent) => (turn as f64) * 100.0 <= percent.clamp(0.0, 100.0),
-        None => false,
-    };
-    if is_filled {
-        let urgency = if is_urgent { 1.0 + 0.25 * (0.5 + 0.5 * (2.0 * PI * 1.5 * time).sin()) } else { 1.0 };
-        let base = to_float(color);
-        let lit = |channel: f32| (channel * urgency).clamp(0.0, 1.0);
-        [lit(base[0]), lit(base[1]), lit(base[2]), coverage]
-    } else {
-        [0.6, 0.6, 0.63, 0.4 * coverage]
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // Sprites
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -374,7 +332,7 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
         let center_x = slot_width as f32 / 2.0;
         let digits = match slot {
             Slot::Disc { count, .. } => Digits::of(*count),
-            Slot::Ring { .. } | Slot::Sprite { .. } => None,
+            Slot::Sprite { .. } => None,
         };
         for y in 0..PICTURE_HEIGHT {
             for local_x in 0..slot_width {
@@ -382,7 +340,6 @@ fn draw_slots(slots: &[Slot], time: f32) -> Vec<u8> {
                 let dy = y as f32 + 0.5 - center_y;
                 let mut color = match slot {
                     Slot::Disc { count, color } => disc_color(dx, dy, *color, *count),
-                    Slot::Ring { percent, color, is_urgent } => ring_color(dx, dy, *percent, *color, *is_urgent, time),
                     Slot::Sprite { frames, is_walking } => sprite_color(frames, *is_walking, time, local_x, y),
                 };
                 if let Some(digits) = &digits {
@@ -860,20 +817,10 @@ mod tests {
 
     #[test]
     fn the_picture_moves_only_when_a_slot_moves() {
-        let still = vec![disc(2), Slot::Ring { percent: Some(50.0), color: BLUE, is_urgent: false }];
-        let urgent = vec![Slot::Ring { percent: Some(95.0), color: RED, is_urgent: true }];
+        let still = vec![disc(2), Slot::Sprite { frames: sprite_frames(), is_walking: false }];
+        let walking = vec![Slot::Sprite { frames: sprite_frames(), is_walking: true }];
         assert!(!is_animated(&still));
-        assert!(is_animated(&urgent));
-    }
-
-    #[test]
-    fn a_ring_fills_clockwise_from_the_top() {
-        let slots = [Slot::Ring { percent: Some(50.0), color: BLUE, is_urgent: false }];
-        let pixels = draw_slots(&slots, 0.0);
-        let right = pixel(&pixels, SLOT_WIDTH, CENTER + 15, MIDDLE);
-        let left = pixel(&pixels, SLOT_WIDTH, CENTER - 15, MIDDLE);
-        assert_eq!(right[3], 255);
-        assert!(left[3] < 140);
+        assert!(is_animated(&walking));
     }
 
     fn sprite_frames() -> &'static [Sprite] {
@@ -1010,24 +957,5 @@ mod tests {
         let still = [disc(0)];
         assert!(!is_frame_animated(&still, false));
         assert!(is_frame_animated(&still, true));
-    }
-
-    #[test]
-    fn the_middle_of_a_ring_is_transparent() {
-        let slots = [Slot::Ring { percent: Some(100.0), color: BLUE, is_urgent: false }];
-        let pixels = draw_slots(&slots, 0.0);
-        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER, MIDDLE)[3], 0);
-    }
-
-    #[test]
-    fn the_band_of_a_ring_is_eight_pixels_thick_and_flat() {
-        let slots = [Slot::Ring { percent: Some(100.0), color: BLUE, is_urgent: false }];
-        let pixels = draw_slots(&slots, 0.0);
-        let inner = pixel(&pixels, SLOT_WIDTH, CENTER + 11, MIDDLE);
-        let outer = pixel(&pixels, SLOT_WIDTH, CENTER + 16, MIDDLE);
-        assert_eq!(inner, [BLUE[0], BLUE[1], BLUE[2], 255]);
-        assert_eq!(outer, inner);
-        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER + 8, MIDDLE)[3], 0);
-        assert_eq!(pixel(&pixels, SLOT_WIDTH, CENTER + 19, MIDDLE)[3], 0);
     }
 }
