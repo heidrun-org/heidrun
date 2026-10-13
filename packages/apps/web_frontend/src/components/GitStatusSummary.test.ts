@@ -108,6 +108,18 @@ describe("GitStatusSummary", () => {
     expect(wrapper.find("[data-field=upstream]").exists()).toBe(false);
   });
 
+  it("has the merge zone, with the turning-arrows icon, after the counts zone", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    const mergeZone = wrapper.get(".git-merge-zone");
+    expect(mergeZone.classes()).toContain("status-section");
+    expect(mergeZone.find(".bi-arrow-repeat").exists()).toBe(true);
+    expect(wrapper.get(".git-counts-zone").element.compareDocumentPosition(mergeZone.element)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("has two status bar zones, the branch and the counts, that keep the background of a button while open", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };

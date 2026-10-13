@@ -131,6 +131,22 @@ describe('the link of a row of the branch picker (GitBranchPicker.vue)', () => {
 	});
 });
 
+describe('the merge zone (GitMergeUpstream.vue)', () => {
+	const sourceText = StatusBarBootstrapTestHelper.readComponent('GitMergeUpstream.vue');
+
+	it('uses the Bootstrap popover, spinner, and alert classes', () => {
+		for (const className of ['popover', 'popover-arrow', 'popover-body', 'spinner-border', 'alert']) {
+			expect(sourceText).toContain(className);
+		}
+	});
+
+	it('writes style rules only for the zone in the status bar', () => {
+		const allowedClassNameList = ['git-merge-zone', 'git-merge-zone-disabled'];
+		const classNameList = StatusBarBootstrapTestHelper.listStyledClassNames(sourceText);
+		expect(classNameList.filter((className) => allowedClassNameList.includes(className) === false)).toEqual([]);
+	});
+});
+
 describe('the card of the workspaces (WorkspaceStatusSummary.vue)', () => {
 	const sourceText = StatusBarBootstrapTestHelper.readComponent('WorkspaceStatusSummary.vue');
 

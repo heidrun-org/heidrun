@@ -29,5 +29,13 @@
   "gitBranchPickerCurrent": "Current branch",
   "gitCountsTitle": "Details of the Git repository",
   "gitBranchPickerOpenOn": "Open on {forge}",
-  "gitBranchPickerOnlyLocal": "This branch is only on your computer: push it to see its page"
+  "gitBranchPickerOnlyLocal": "This branch is only on your computer: push it to see its page",
+  "gitMergeUpstreamTitle": "Merge with the upstream branch",
+  "gitMergeNoUpstream": "This branch has no upstream branch. Push it first, so it has one.",
+  "gitMergeBusy": "Fetching and merging {upstream}…",
+  "gitMergeMerged": "Merged {upstream} into {branch}.",
+  "gitMergeUpToDate": "Already up to date with {upstream}.",
+  "gitMergeConflictHelp": "Fix them in the Source control sidebar section, then commit.",
+  "gitMergeConflict_one": "{upstream} conflicts in 1 file:",
+  "gitMergeConflict_other": "{upstream} conflicts in {count} files:"
 }
