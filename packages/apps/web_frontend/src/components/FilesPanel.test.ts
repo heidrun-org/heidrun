@@ -98,6 +98,11 @@ describe("FilesPanel", () => {
     expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh", "More options"]);
   });
 
+  it("keeps the header at the top while the rows scroll", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.get("header").classes()).toContain("sticky-top");
+  });
+
   it("gives a file and a folder of the same level the same space at the left, so their names line up", async () => {
     const wrapper = await mountPanel();
     const folderRow = wrapper.findAll(".row")[0];
