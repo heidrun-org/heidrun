@@ -16,6 +16,7 @@ import { refContext } from "../lib/refs";
 import { codeHosting, CODE_HOSTING_LIMIT } from "../stores/code_hosting";
 import { git, type GitStatus } from "../stores/git";
 import { state } from "../stores/session";
+import { savedSearchModal } from "../stores/saved_search_modal";
 import { settings } from "../stores/settings";
 
 function makeStatus(): GitStatus {
@@ -105,6 +106,7 @@ beforeEach(() => {
   codeHosting.folded.requests = false;
   codeHosting.search = "";
   settings.codeHostingSavedSearches = [];
+  savedSearchModal.open = false;
 });
 
 afterEach(() => {
@@ -438,40 +440,91 @@ describe("CodeHostingPanel searches", () => {
     const wrapper = await mountPanel();
     await search(wrapper, "label:bug");
     vi.mocked(invoke).mockClear();
-    await wrapper.get("header button").trigger("click");
+    await wrapper.get("button[aria-label='Refresh']").trigger("click");
     await flushPromises();
     expect(issueSearches()).toEqual(["label:bug"]);
     expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("label:bug");
   });
 
-  it("asks the name of a new saved search, keeps the saved search, and shows it as a button", async () => {
+  it("shows, on the title line, one button group with the buttons Save this search, Edit the saved search, and Refresh, in this order", async () => {
     answerSearches();
     const wrapper = await mountPanel();
-    expect(wrapper.get("button[aria-label='Save this search']").attributes("disabled")).toBeDefined();
-    await wrapper.get("form.search input").setValue("label:bug");
-    await wrapper.get("button[aria-label='Save this search']").trigger("click");
-    const nameField = wrapper.get("form.saving input");
-    expect(document.activeElement).toBe(nameField.element);
-    expect(wrapper.get("form.saving button[type='submit']").attributes("disabled")).toBeDefined();
-    await nameField.setValue("Bugs");
-    await wrapper.get("form.saving").trigger("submit");
-    expect(settings.codeHostingSavedSearches).toEqual([{ name: "Bugs", query: "label:bug" }]);
-    expect(wrapper.find("form.saving").exists()).toBe(false);
-    expect(wrapper.findAll(".saved-button").map((button) => button.text())).toEqual(["All", "Bugs"]);
+    const group = wrapper.get("header .btn-group");
+    expect(group.attributes("role")).toBe("group");
+    expect(group.findAll("button").map((button) => button.attributes("aria-label"))).toEqual([
+      "Save this search",
+      "Edit the saved search",
+      "Refresh",
+    ]);
+    expect(group.findAll("button i").map((icon) => icon.classes()[1])).toEqual(["bi-bookmark-plus", "bi-pencil", "bi-arrow-clockwise"]);
+    expect(wrapper.get("header .title").text()).toBe("Code hosting");
   });
 
-  it("keeps nothing when the row of the name is cancelled with the key Escape or with its cross", async () => {
+  it("keeps only the field and the button Search on the line of the search field, and only All and the saved searches on the next line", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
+    const wrapper = await mountPanel();
+    expect(wrapper.get("form.search").findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Search"]);
+    expect(wrapper.get(".saved").findAll("button").map((button) => button.text())).toEqual(["All", "Bugs"]);
+    expect(wrapper.find(".saved .bi-pencil").exists()).toBe(false);
+  });
+
+  it("disables Save this search while the search field is empty, and while its text is already a saved search", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
+    const wrapper = await mountPanel();
+    const save = () => wrapper.get("button[data-save-search]");
+    expect(save().attributes("disabled")).toBeDefined();
+    await wrapper.get("form.search input").setValue("author:@me");
+    expect(save().attributes("disabled")).toBeUndefined();
+    await wrapper.get("form.search input").setValue("  label:bug ");
+    expect(save().attributes("disabled")).toBeDefined();
+  });
+
+  it("opens the window Save this search with the text of the search field when Save this search is clicked", async () => {
     answerSearches();
     const wrapper = await mountPanel();
-    await wrapper.get("form.search input").setValue("label:bug");
-    await wrapper.get("button[aria-label='Save this search']").trigger("click");
-    await wrapper.get("form.saving input").setValue("Bugs");
-    await wrapper.get("form.saving input").trigger("keydown.esc");
-    expect(wrapper.find("form.saving").exists()).toBe(false);
-    await wrapper.get("button[aria-label='Save this search']").trigger("click");
-    await wrapper.get("form.saving button[aria-label='Cancel']").trigger("click");
-    expect(wrapper.find("form.saving").exists()).toBe(false);
-    expect(settings.codeHostingSavedSearches).toEqual([]);
+    await wrapper.get("form.search input").setValue("  label:bug -author:eric ");
+    await wrapper.get("button[data-save-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "save", query: "label:bug -author:eric" });
+  });
+
+  it("disables Edit the saved search while no saved search runs: All is pressed, or the search is not saved", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
+    const wrapper = await mountPanel();
+    const edit = () => wrapper.get("button[data-edit-saved-search]");
+    expect(edit().attributes("disabled")).toBeDefined();
+    await search(wrapper, "author:@me");
+    expect(edit().attributes("disabled")).toBeDefined();
+  });
+
+  it("opens the window Edit the saved search for the saved search that runs now", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = [
+      { name: "Mine", query: "author:@me" },
+      { name: "Bugs", query: "label:bug" },
+    ];
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".saved-button")[2].trigger("click");
+    await flushPromises();
+    expect(wrapper.get("button[data-edit-saved-search]").attributes("disabled")).toBeUndefined();
+    await wrapper.get("button[data-edit-saved-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", name: "Bugs" });
+  });
+
+  it("shows in the search field a search that runs from elsewhere, such as the window Save this search", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    codeHosting.search = "label:bug";
+    await flushPromises();
+    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("label:bug");
+  });
+
+  it("shows no button Save this search and no button Edit the saved search for a repository without a remote address", async () => {
+    vi.mocked(refContext).mockResolvedValue({ ...contextOf("github"), base: null, forge: null });
+    const wrapper = await mountPanel();
+    expect(wrapper.get("header .btn-group").findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh"]);
   });
 
   it("fills the search field and runs the search at a click on a saved search, and runs no search at a click on All", async () => {
@@ -502,69 +555,6 @@ describe("CodeHostingPanel searches", () => {
     await flushPromises();
     expect(wrapper.findAll(".saved-button").map((button) => button.attributes("aria-pressed"))).toEqual(["false", "true"]);
     expect(wrapper.findAll(".saved-button")[1].classes()).toContain("active");
-  });
-
-  it("shows the name, the search, and a button to delete for each saved search while the pencil is pressed", async () => {
-    answerSearches();
-    settings.codeHostingSavedSearches = [
-      { name: "Bugs", query: "label:bug" },
-      { name: "Mine", query: "author:@me" },
-    ];
-    const wrapper = await mountPanel();
-    expect(wrapper.find("[data-editing-row]").exists()).toBe(false);
-    await wrapper.get("[data-edit-saved-searches]").trigger("click");
-    const rows = wrapper.findAll("[data-editing-row]");
-    expect(rows.map((row) => row.findAll("input").map((input) => (input.element as HTMLInputElement).value))).toEqual([
-      ["Bugs", "label:bug"],
-      ["Mine", "author:@me"],
-    ]);
-    await wrapper.get("[data-edit-saved-searches]").trigger("click");
-    expect(wrapper.find("[data-editing-row]").exists()).toBe(false);
-  });
-
-  it("renames a saved search and changes its search from the fields of its row", async () => {
-    answerSearches();
-    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
-    const wrapper = await mountPanel();
-    await wrapper.get("[data-edit-saved-searches]").trigger("click");
-    const [nameField, queryField] = wrapper.get("[data-editing-row]").findAll("input");
-    await nameField.setValue("Defects");
-    await nameField.trigger("change");
-    await queryField.setValue("label:defect");
-    await queryField.trigger("change");
-    expect(settings.codeHostingSavedSearches).toEqual([{ name: "Defects", query: "label:defect" }]);
-    expect(wrapper.findAll(".saved-button").map((button) => button.text())).toEqual(["All", "Defects"]);
-  });
-
-  it("puts the old text back in a field when the change is not valid: an empty text, or the name of another saved search", async () => {
-    answerSearches();
-    settings.codeHostingSavedSearches = [
-      { name: "Bugs", query: "label:bug" },
-      { name: "Mine", query: "author:@me" },
-    ];
-    const wrapper = await mountPanel();
-    await wrapper.get("[data-edit-saved-searches]").trigger("click");
-    const [nameField, queryField] = wrapper.get("[data-editing-row]").findAll("input");
-    await nameField.setValue("Mine");
-    await nameField.trigger("change");
-    await queryField.setValue("   ");
-    await queryField.trigger("change");
-    expect(settings.codeHostingSavedSearches[0]).toEqual({ name: "Bugs", query: "label:bug" });
-    expect((nameField.element as HTMLInputElement).value).toBe("Bugs");
-    expect((queryField.element as HTMLInputElement).value).toBe("label:bug");
-  });
-
-  it("deletes a saved search with the button of its row", async () => {
-    answerSearches();
-    settings.codeHostingSavedSearches = [
-      { name: "Bugs", query: "label:bug" },
-      { name: "Mine", query: "author:@me" },
-    ];
-    const wrapper = await mountPanel();
-    await wrapper.get("[data-edit-saved-searches]").trigger("click");
-    await wrapper.get("button[aria-label='Delete the saved search Bugs']").trigger("click");
-    expect(settings.codeHostingSavedSearches).toEqual([{ name: "Mine", query: "author:@me" }]);
-    expect(wrapper.findAll(".saved-button").map((button) => button.text())).toEqual(["All", "Mine"]);
   });
 
   it("shows the message of GitLab for a word that it cannot do, and keeps the search field", async () => {

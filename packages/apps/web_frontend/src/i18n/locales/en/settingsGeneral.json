@@ -14,6 +14,8 @@
   "confirmWorkspaceClose": "Ask before closing a workspace",
   "confirmTabClose": "Ask before closing a tab",
   "confirmPaneClose": "Ask before closing a pane",
+  "askBeforeDeletingTitle": "Ask before deleting",
+  "confirmSavedSearchDelete": "Ask before deleting a saved search",
   "quitTitle": "Quit",
   "keepAgentsRunning": "Keep agents running after quit",
   "keepAgentsRunningHelpLabel": "What does this setting do?",

@@ -81,3 +81,20 @@ describe('heading Ask before closing', () => {
 		expect(settings.confirmPaneClose).toBe(false);
 	});
 });
+
+describe('heading Ask before deleting', () => {
+	beforeEach(() => {
+		settings.confirmSavedSearchDelete = true;
+	});
+
+	it('holds the checkbox Ask before deleting a saved search, linked to its setting, after the heading Ask before closing', async () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const headingTextList = wrapper.findAll('h4').map((heading) => heading.text());
+		expect(headingTextList.indexOf('Ask before deleting')).toBe(headingTextList.indexOf('Ask before closing') + 1);
+		const label = wrapper.findAll('label.check').find((item) => item.text() === 'Ask before deleting a saved search');
+		expect(label).toBeDefined();
+		expect((label!.get('input').element as HTMLInputElement).checked).toBe(true);
+		await label!.get('input').setValue(false);
+		expect(settings.confirmSavedSearchDelete).toBe(false);
+	});
+});

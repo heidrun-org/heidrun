@@ -50,6 +50,7 @@ import { startDefaultNewTab } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomScriptModal } from "./stores/newCustomScript";
+import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
@@ -64,6 +65,7 @@ import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import AgentsInformationModal from "./components/AgentsInformationModal.vue";
 import NewCustomScriptModal from "./components/NewCustomScriptModal.vue";
+import SavedSearchModal from "./components/SavedSearchModal.vue";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import SkillFileModal from "./components/SkillFileModal.vue";
@@ -335,6 +337,7 @@ onBeforeUnmount(() => {
     <MosaicModal v-if="mosaic.paneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
     <NewCustomScriptModal v-if="newCustomScriptModal.open" />
+    <SavedSearchModal v-if="savedSearchModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
     <InstalledSkillModal v-if="installedSkillModal.open" />
