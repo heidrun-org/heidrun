@@ -21,8 +21,9 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the sidebar icon bar of the left sidebar: the Scripts, Source control, and Files sidebar sections. */
+/** The buttons of the sidebar icon bar of the left sidebar: the Files, Scripts, and Source control sidebar sections, in this order. */
 const sidebarSections = computed((): SidebarSectionButton[] => [
+  { id: "files", label: t("filesPanel.sidebarSection"), icon: "folder2", badge: 0 },
   { id: "actions", label: t("sidebar.sidebarSection.actions"), icon: "play-circle", badge: runningScripts.value, isLive: true },
   {
     id: "sourceControl",
@@ -30,7 +31,6 @@ const sidebarSections = computed((): SidebarSectionButton[] => [
     icon: "git",
     badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
   },
-  { id: "files", label: t("filesPanel.sidebarSection"), icon: "folder2", badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {

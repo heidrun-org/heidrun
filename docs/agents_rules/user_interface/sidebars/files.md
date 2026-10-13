@@ -20,4 +20,4 @@ The Files sidebar section shows the whole folder tree of the Git repository of t
 - A click on a folder folds or unfolds it. The folds stay when the developer changes the sidebar section.
 - A click on a file opens the file in the large Git window, the same window as the Source control sidebar section. The large Git window shows a file that has no change as a whole file, with no diff, and disables the buttons "Diff" and "Side by side" for it.
 - The tree is read again when the repository changes, when the number of changed files changes, and at a click on "Refresh".
-- The icon `folder2` of the Files sidebar section in the sidebar icon bar shows no number.
+- The icon `folder2` of the Files sidebar section is the first icon of the sidebar icon bar of the left sidebar, above the Scripts icon. It shows no number.
