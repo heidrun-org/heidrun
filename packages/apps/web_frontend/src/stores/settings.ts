@@ -181,6 +181,8 @@ const defaults = {
   scriptsShowAllSuggestions: false,
   /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
+  /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
+  selectedWorkspaceId: "",
 };
 
 /** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */

@@ -18,4 +18,5 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
 - Each workspace of the list offers the rename of the workspace, the close of the workspace, and the move of the workspace by drag and drop. The rename puts a text field in the place of the name in the status bar. A double click on the workspace status bar section does not rename the workspace.
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
+- Heidrun saves the identifier of the selected workspace each time that the selection changes, in the option `selectedWorkspaceId` of the store `settings.ts`. At the next start, Heidrun selects this workspace again, with its last tab and its last pane. When this workspace does not exist any more, Heidrun selects the workspace that Herdr has focused, or the first workspace.
 
