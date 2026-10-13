@@ -13,18 +13,16 @@ const COMMANDS = [
 <template>
   <div class="d-flex flex-column gap-2">
     <h4 class="h6 fw-semibold text-body-secondary mb-0">{{ t("settingsNewTab.commandTitle") }}</h4>
-    <div class="seg" role="radiogroup" :aria-label="t('settingsNewTab.commandTitle')">
-      <button
+    <div class="btn-group" role="group" :aria-label="t('settingsNewTab.commandTitle')">
+      <label
         v-for="command in COMMANDS"
         :key="command.id"
-        role="radio"
+        class="btn-check btn-outline theme-secondary"
         :title="t(command.titleKey)"
-        :aria-checked="settings.newTabCommand === command.id"
-        :class="{ on: settings.newTabCommand === command.id }"
-        @click="settings.newTabCommand = command.id"
       >
+        <input v-model="settings.newTabCommand" type="radio" name="new-tab-command" autocomplete="off" :value="command.id" />
         {{ t(command.labelKey) }}
-      </button>
+      </label>
     </div>
     <div class="keys">{{ t("settingsNewTab.help") }}</div>
   </div>

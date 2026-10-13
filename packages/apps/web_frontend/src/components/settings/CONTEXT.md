@@ -5,7 +5,7 @@ The content of each section of the Settings window. The Settings window itself i
 
 ## Key Exports & Entry Points
 - `SettingsTerminalSection.vue`: the font, and the font size that zooms the whole window.
-- `SettingsNewTabSection.vue`: the choice "Default command of a new tab", three radio buttons ("Terminal", "Claude Code", and "Codex"), saved in the setting `newTabCommand`. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
+- `SettingsNewTabSection.vue`: the choice "Default command of a new tab", a Bootstrap 6 button group of three radio inputs ("Terminal", "Claude Code", and "Codex"), saved in the setting `newTabCommand`. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
 - `SettingsNotificationsSection.vue`: the notification settings, and the checkbox that shows or hides the status item in the macOS menu bar (the setting `showStatusItem`, handled by `../../stores/statusItem.ts`).

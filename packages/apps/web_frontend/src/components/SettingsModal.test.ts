@@ -31,17 +31,22 @@ describe("SettingsModal: sections", () => {
 });
 
 describe("SettingsModal: section New tab (issue #328)", () => {
-  it("shows the three commands as radio buttons, with Terminal chosen by default", async () => {
+  it("shows the three commands as a Bootstrap button group of radio inputs, in the secondary color, with Terminal chosen by default", async () => {
     const wrapper = await mountSettings();
     const { settingsModal } = await import("../stores/settings");
     settingsModal.section = "newTab";
     await flushPromises();
     expect(wrapper.get("h3").text()).toBe("New tab");
-    const group = wrapper.get("[role=radiogroup]");
+    const group = wrapper.get(".btn-group");
+    expect(group.attributes("role")).toBe("group");
     expect(group.attributes("aria-label")).toBe("Default command of a new tab");
-    const radios = group.findAll("[role=radio]");
-    expect(radios.map((radio) => radio.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
-    expect(radios.map((radio) => radio.attributes("aria-checked"))).toEqual(["true", "false", "false"]);
+    const labels = group.findAll("label");
+    expect(labels.map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+    for (const label of labels) {
+      expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
+    }
+    const radios = group.findAll("input[type=radio]");
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false, false]);
     wrapper.unmount();
   });
 
@@ -49,15 +54,15 @@ describe("SettingsModal: section New tab (issue #328)", () => {
     [1, "claude"],
     [2, "codex"],
     [0, "terminal"],
-  ] as const)("saves the command of the radio button %i as %s", async (index, command) => {
+  ] as const)("saves the command of the radio input %i as %s", async (index, command) => {
     const wrapper = await mountSettings();
     const { settings, settingsModal } = await import("../stores/settings");
     settingsModal.section = "newTab";
     await flushPromises();
-    const radios = wrapper.get("[role=radiogroup]").findAll("[role=radio]");
-    await radios[index].trigger("click");
+    const radios = wrapper.get(".btn-group").findAll("input[type=radio]");
+    await radios[index].setValue(true);
     expect(settings.newTabCommand).toBe(command);
-    expect(radios.map((radio) => radio.attributes("aria-checked") === "true")).toEqual([0, 1, 2].map((position) => position === index));
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([0, 1, 2].map((position) => position === index));
     wrapper.unmount();
   });
 });
