@@ -281,84 +281,91 @@ async function readDetails(row: Row) {
         </div>
       </template>
 
-      <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
-      <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
-      <div v-else-if="codeHosting.status !== 'ready'" class="muted">{{ t("codeHostingPanel.loading") }}</div>
-      <div v-else class="groups">
-        <section v-for="section in sections" :key="section.group" class="group">
-          <div class="group-header d-flex align-items-center">
-            <button
-              type="button"
-              class="group-toggle d-flex align-items-center gap-2 me-auto"
-              :aria-expanded="codeHosting.folded[section.group] === false"
-              @click="toggleGroup(section.group)"
-            >
-              <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
-              {{ groupTitle(section.group) }}
-            </button>
-            <span class="badge count">{{ section.rows.length }}</span>
-          </div>
-          <template v-if="codeHosting.folded[section.group] === false">
-            <ul v-if="section.rows.length > 0" class="items">
-              <li v-for="row in section.rows" :key="row.key">
-                <InformationCard
-                  class="row-card"
-                  placement="end"
-                  :label="t('codeHostingPanel.cardLabel', { name: row.name })"
-                  @open="readDetails(row)"
-                >
-                  <div
-                    class="item d-flex align-items-center gap-2"
-                    data-code-hosting-item
-                    @pointerenter="startScrolling"
-                    @pointerleave="stopScrolling"
-                  >
-                    <div class="item-lines">
-                      <div class="title-line">
-                        <span class="number">{{ row.name }}</span>
-                        <ScrollingLine class="title-text">{{ row.item.title }}</ScrollingLine>
-                      </div>
-                      <div class="detail-line">{{ row.opened }}</div>
-                      <div v-if="row.labels.length > 0" class="detail-line labels-line">
-                        <span
-                          v-for="label in row.labels"
-                          :key="label.name"
-                          class="badge label-badge"
-                          :style="referenceLabelStyle(label.color)"
-                        >
-                          {{ label.name }}
-                        </span>
-                      </div>
-                      <div v-else class="detail-line">{{ row.extra }}</div>
-                    </div>
-                  </div>
-                  <template #card>
-                    <div class="card-content">
-                      <ChatReferenceDetails
-                        :reference="row.reference"
-                        :details="answers[row.key]"
-                        :folder="currentGit.root"
-                        :forge="forge"
-                        :web-base="codeHosting.webBase"
-                      />
-                    </div>
-                  </template>
-                </InformationCard>
-              </li>
-            </ul>
-            <div v-else class="muted empty">{{ emptyText(section.group) }}</div>
-            <div v-if="section.rows.length >= CODE_HOSTING_LIMIT" class="muted empty">
-              {{ t("codeHostingPanel.truncated", { limit: CODE_HOSTING_LIMIT }) }}
+      <div class="scroll-area">
+        <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
+        <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
+        <div v-else-if="codeHosting.status !== 'ready'" class="muted">{{ t("codeHostingPanel.loading") }}</div>
+        <div v-else class="groups">
+          <section v-for="section in sections" :key="section.group" class="group">
+            <div class="group-header d-flex align-items-center">
+              <button
+                type="button"
+                class="group-toggle d-flex align-items-center gap-2 me-auto"
+                :aria-expanded="codeHosting.folded[section.group] === false"
+                @click="toggleGroup(section.group)"
+              >
+                <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
+                {{ groupTitle(section.group) }}
+              </button>
+              <span class="badge count">{{ section.rows.length }}</span>
             </div>
-          </template>
-        </section>
+            <template v-if="codeHosting.folded[section.group] === false">
+              <ul v-if="section.rows.length > 0" class="items">
+                <li v-for="row in section.rows" :key="row.key">
+                  <InformationCard
+                    class="row-card"
+                    placement="end"
+                    :label="t('codeHostingPanel.cardLabel', { name: row.name })"
+                    @open="readDetails(row)"
+                  >
+                    <div
+                      class="item d-flex align-items-center gap-2"
+                      data-code-hosting-item
+                      @pointerenter="startScrolling"
+                      @pointerleave="stopScrolling"
+                    >
+                      <div class="item-lines">
+                        <div class="title-line">
+                          <span class="number">{{ row.name }}</span>
+                          <ScrollingLine class="title-text">{{ row.item.title }}</ScrollingLine>
+                        </div>
+                        <div class="detail-line">{{ row.opened }}</div>
+                        <div v-if="row.labels.length > 0" class="detail-line labels-line">
+                          <span
+                            v-for="label in row.labels"
+                            :key="label.name"
+                            class="badge label-badge"
+                            :style="referenceLabelStyle(label.color)"
+                          >
+                            {{ label.name }}
+                          </span>
+                        </div>
+                        <div v-else class="detail-line">{{ row.extra }}</div>
+                      </div>
+                    </div>
+                    <template #card>
+                      <div class="card-content">
+                        <ChatReferenceDetails
+                          :reference="row.reference"
+                          :details="answers[row.key]"
+                          :folder="currentGit.root"
+                          :forge="forge"
+                          :web-base="codeHosting.webBase"
+                        />
+                      </div>
+                    </template>
+                  </InformationCard>
+                </li>
+              </ul>
+              <div v-else class="muted empty">{{ emptyText(section.group) }}</div>
+              <div v-if="section.rows.length >= CODE_HOSTING_LIMIT" class="muted empty">
+                {{ t("codeHostingPanel.truncated", { limit: CODE_HOSTING_LIMIT }) }}
+              </div>
+            </template>
+          </section>
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <style scoped>
-.code-hosting { flex: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.code-hosting { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.code-hosting > .muted { padding: 12px 16px; }
+/* The header, the search field, and the saved searches stay at the top of the sidebar section: only the scroll area under them scrolls. */
+.code-hosting > header { flex: 0 0 auto; padding: 12px 16px 8px; }
+.code-hosting > .search, .code-hosting > .saved { flex: 0 0 auto; padding: 0 16px 8px; }
+.scroll-area { flex: 1; min-height: 0; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .code-hosting :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .code-hosting :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }

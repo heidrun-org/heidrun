@@ -127,6 +127,21 @@ describe("CodeHostingPanel on GitHub", () => {
     expect(headers.map((header) => header.get(".count").text())).toEqual(["2", "1"]);
   });
 
+  it("keeps the header, the search field, and the saved searches outside of the scroll area, so that only the lists scroll", async () => {
+    settings.codeHostingSavedSearches = [{ name: "Mine", query: "author:@me" }];
+    answerGithub();
+    const wrapper = await mountPanel();
+    const scrollArea = wrapper.get(".scroll-area");
+    const panel = wrapper.get(".code-hosting").element;
+    expect(scrollArea.find("header").exists()).toBe(false);
+    expect(scrollArea.find("[role='search']").exists()).toBe(false);
+    expect(scrollArea.find("[data-saved-search]").exists()).toBe(false);
+    expect(wrapper.get("header").element.parentElement).toBe(panel);
+    expect(wrapper.get("[role='search']").element.parentElement).toBe(panel);
+    expect(wrapper.get("[data-saved-search='all']").element.parentElement?.parentElement).toBe(panel);
+    expect(scrollArea.findAll(".group")).toHaveLength(2);
+  });
+
   it("shows one row for each item, with its number and its title on the first line", async () => {
     answerGithub();
     const wrapper = await mountPanel();
