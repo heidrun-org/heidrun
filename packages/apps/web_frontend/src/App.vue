@@ -95,8 +95,8 @@ const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(sett
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
-const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
-const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
+const LEFT_COLUMN = { min: 200, defaultWidth: 280 };
+const RIGHT_COLUMN = { min: 260, defaultWidth: 320 };
 const COLUMN_OF_PINNED_PANES = { min: 320, max: 1400, defaultWidth: 560 };
 const leftReserve = computed(() => rightTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
 const rightReserve = computed(() => leftTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
     <TopBar />
     <div class="body">
       <Sidebar />
-      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
       <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
       <div v-else class="sidebar-gap"></div>
       <main class="center">
@@ -329,7 +329,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot">
-        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>

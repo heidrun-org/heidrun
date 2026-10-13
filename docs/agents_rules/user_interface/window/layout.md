@@ -1,11 +1,11 @@
 # User interface of Heidrun: layout of the window
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary.md)
-- Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323), [issue 380](https://github.com/heidrun-org/heidrun/issues/380)
+- Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323), [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 371](https://github.com/heidrun-org/heidrun/issues/371)
 
 This document says where each part of the window goes and how each part works. The words are defined in [glossary.md](../../glossary.md). The layout below is the layout of the window.
 
@@ -28,6 +28,7 @@ The other files of the folder `docs/agents_rules/user_interface` give the rules 
 ## Rules of the layout
 
 - The viewport gets the most width, because the developer reads and writes text there.
+- A sidebar has no fixed maximum width. The developer drags the line of a sidebar to make the sidebar wider, until the viewport, without the column of pinned panes, is 400 pixels wide. Then the sidebar cannot get wider. The same rule holds for the left sidebar and for the right sidebar ([issue #371](https://github.com/heidrun-org/heidrun/issues/371)).
 - The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background (`--side`). The tab bar is inside the frame of the viewport. The panes inside the frame of the viewport have a lighter background (`--bg`), as the editor of VS Code is lighter than its sidebar, and they have no frame of their own: see the section "Panes".
 - The gap between the viewport and a sidebar is 5 pixels (`--pane-gap`), whether the sidebar is expanded or collapsed. An expanded sidebar fills the gap with its line to drag, and a collapsed sidebar, which has no line to drag, keeps an empty gap of the same width, so the viewport does not move when the developer collapses or expands a sidebar ([issue #323](https://github.com/heidrun-org/heidrun/issues/323)).
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
