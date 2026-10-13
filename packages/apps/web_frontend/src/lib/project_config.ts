@@ -1,13 +1,26 @@
 import { z } from "zod";
+import { CODING_AGENT_IDS } from "./coding_agents";
 
 // Schema of the project configuration file `.heidrun/config.json`, at the root of the repository.
 // Every object is strict: an unknown field is a typo, and the file is rejected with its path.
+
+/** The coding agent of a custom script of the kind Coding agent. The script keeps the command line that starts it. */
+export const scriptAgentSchema = z.strictObject({
+  name: z.enum(CODING_AGENT_IDS),
+  model: z.string().optional(),
+  effort: z.string().optional(),
+  prompt: z.string().min(1),
+});
 
 /** A custom script of the tab Scripts. It is stored under the key `actions`, which keeps older files valid. */
 export const actionSchema = z.strictObject({
   id: z.string().min(1),
   label: z.string().min(1),
   command: z.string().min(1),
+  /** Optional description of the script, on several lines. */
+  description: z.string().optional(),
+  /** Present only for a custom script of the kind Coding agent. `command` then holds the generated command line. */
+  agent: scriptAgentSchema.optional(),
   /** Optional sub-folder, relative to the project root. */
   cwd: z.string().optional(),
 });
@@ -52,6 +65,7 @@ export const projectConfigSchema = z.strictObject({
   prompts: z.array(macroSchema).optional(),
 });
 
+export type ScriptAgent = z.infer<typeof scriptAgentSchema>;
 export type Action = z.infer<typeof actionSchema>;
 export type ProjectReferences = z.infer<typeof referencesSchema>;
 export type ProjectGuardsConfig = z.infer<typeof guardsSchema>;

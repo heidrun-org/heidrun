@@ -7,7 +7,7 @@ import Icon from "./Icon.vue";
 
 const props = defineProps<{
   /** The items of the dropdown menu. */
-  items: { id: string; label: string; isDisabled?: boolean }[];
+  items: { id: string; label: string; isDisabled?: boolean; icon?: string; isDanger?: boolean; hasDividerBefore?: boolean }[];
   /** The Bootstrap Icons name of the button. */
   icon: string;
   /** The accessible name and the tooltip of the button. */
@@ -108,17 +108,19 @@ onBeforeUnmount(close);
       :aria-label="props.label"
       :style="{ top: `${position.top}px`, left: `${position.left}px` }"
     >
-      <button
-        v-for="item in props.items"
-        :key="item.id"
-        type="button"
-        class="menu-item"
-        role="menuitem"
-        :disabled="item.isDisabled"
-        @click="choose(item.id)"
-      >
-        {{ item.label }}
-      </button>
+      <template v-for="item in props.items" :key="item.id">
+        <div v-if="item.hasDividerBefore === true" class="menu-divider" role="separator"></div>
+        <button
+          type="button"
+          class="menu-item"
+          :class="{ 'theme-danger': item.isDanger === true }"
+          role="menuitem"
+          :disabled="item.isDisabled"
+          @click="choose(item.id)"
+        >
+          <Icon v-if="item.icon !== undefined" :name="item.icon" />{{ item.label }}
+        </button>
+      </template>
     </div>
   </Teleport>
 </template>

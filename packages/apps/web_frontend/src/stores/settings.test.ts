@@ -321,7 +321,6 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["searchRegex", false, true],
   ["searchAgentsOnly", false, true],
   ["searchThisWorkspace", false, true],
-  ["scriptsShowAllSuggestions", false, true],
   ["notesShowAll", false, true],
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
