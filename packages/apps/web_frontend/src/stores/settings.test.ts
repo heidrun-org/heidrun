@@ -365,6 +365,7 @@ describe("a corrupted saved value", () => {
         dynamicTopicExtraction: "oracle",
         chatsSortKey: "best_match",
         chatsOrder: "random",
+        newTabCommand: "emacs",
         searchRegex: true,
       }),
     );
@@ -379,7 +380,24 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.dynamicTopicExtraction).toBe("keyword");
     expect(restarted.settings.chatsSortKey).toBe("last_updated");
     expect(restarted.settings.chatsOrder).toBe("descending");
+    expect(restarted.settings.newTabCommand).toBe("terminal");
     expect(restarted.settings.searchRegex).toBe(true);
+  });
+});
+
+describe("the default command of a new tab (issue #328)", () => {
+  it("is a terminal when nothing is saved", async () => {
+    localStorage.clear();
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.newTabCommand).toBe("terminal");
+  });
+
+  it.each(["terminal", "claude", "codex"] as const)("keeps the saved command %s after a restart", async (command) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.newTabCommand).toBe(command);
   });
 });
 

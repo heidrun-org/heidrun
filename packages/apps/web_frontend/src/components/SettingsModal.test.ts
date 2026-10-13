@@ -25,7 +25,39 @@ describe("SettingsModal: sections", () => {
   it("lists the sections in the sidebar, with the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll(".side .entry").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: section New tab (issue #328)", () => {
+  it("shows the three commands as radio buttons, with Terminal chosen by default", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    settingsModal.section = "newTab";
+    await flushPromises();
+    expect(wrapper.get("h3").text()).toBe("New tab");
+    const group = wrapper.get("[role=radiogroup]");
+    expect(group.attributes("aria-label")).toBe("Default command of a new tab");
+    const radios = group.findAll("[role=radio]");
+    expect(radios.map((radio) => radio.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+    expect(radios.map((radio) => radio.attributes("aria-checked"))).toEqual(["true", "false", "false"]);
+    wrapper.unmount();
+  });
+
+  it.each([
+    [1, "claude"],
+    [2, "codex"],
+    [0, "terminal"],
+  ] as const)("saves the command of the radio button %i as %s", async (index, command) => {
+    const wrapper = await mountSettings();
+    const { settings, settingsModal } = await import("../stores/settings");
+    settingsModal.section = "newTab";
+    await flushPromises();
+    const radios = wrapper.get("[role=radiogroup]").findAll("[role=radio]");
+    await radios[index].trigger("click");
+    expect(settings.newTabCommand).toBe(command);
+    expect(radios.map((radio) => radio.attributes("aria-checked") === "true")).toEqual([0, 1, 2].map((position) => position === index));
     wrapper.unmount();
   });
 });

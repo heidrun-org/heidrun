@@ -86,6 +86,8 @@ const defaults = {
   keepAgentsRunningAfterQuit: false,
   /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
   confirmTabClose: true,
+  /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
+  newTabCommand: "terminal" as "terminal" | "claude" | "codex",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Notifications. */
@@ -181,6 +183,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
+  newTabCommand: ["terminal", "claude", "codex"],
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -321,6 +324,7 @@ export function resetZoom() {
 /** The sections of the Settings window. */
 export type SettingsSection =
   | "terminal"
+  | "newTab"
   | "mouse"
   | "finishedItems"
   | "notifications"

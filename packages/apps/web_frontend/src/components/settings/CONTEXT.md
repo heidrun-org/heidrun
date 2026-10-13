@@ -5,6 +5,7 @@ The content of each section of the Settings window. The Settings window itself i
 
 ## Key Exports & Entry Points
 - `SettingsTerminalSection.vue`: the font, and the font size that zooms the whole window.
+- `SettingsNewTabSection.vue`: the choice "Default command of a new tab", three radio buttons ("Terminal", "Claude Code", and "Codex"), saved in the setting `newTabCommand`. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
 - `SettingsNotificationsSection.vue`: the notification settings, and the checkbox that shows or hides the status item in the macOS menu bar (the setting `showStatusItem`, handled by `../../stores/statusItem.ts`).
@@ -23,6 +24,7 @@ The content of each section of the Settings window. The Settings window itself i
 - The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).
 - The checkbox "Keep agents running after quit" comes from [issue 175](https://github.com/heidrun-org/heidrun/issues/175).
 - The checkbox "Ask before closing a tab" comes from [issue 309](https://github.com/heidrun-org/heidrun/issues/309).
+- The section New tab comes from [issue 328](https://github.com/heidrun-org/heidrun/issues/328).
 - The section Dynamic topics comes from [issue 260](https://github.com/heidrun-org/heidrun/issues/260).
 - The switch "Clustered dynamic topics" comes from [issue 265](https://github.com/heidrun-org/heidrun/issues/265).
 - The two information cards that replace the help paragraphs of the section Dynamic topics come from [issue 266](https://github.com/heidrun-org/heidrun/issues/266).
