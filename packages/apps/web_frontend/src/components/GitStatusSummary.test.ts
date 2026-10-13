@@ -108,11 +108,11 @@ describe("GitStatusSummary", () => {
     expect(wrapper.find("[data-field=upstream]").exists()).toBe(false);
   });
 
-  it("has the merge zone, with the turning-arrows icon, between the branch zone and the counts zone", () => {
+  it("has the synchronize zone, with the turning-arrows icon, between the branch zone and the counts zone", () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };
     const wrapper = mount(GitStatusSummary);
-    const mergeZone = wrapper.get(".git-merge-zone");
+    const mergeZone = wrapper.get(".git-synchronize-zone");
     expect(mergeZone.classes()).toContain("status-section");
     expect(mergeZone.find(".bi-arrow-repeat").exists()).toBe(true);
     expect(wrapper.get(".git-branch-zone").element.compareDocumentPosition(mergeZone.element)).toBe(

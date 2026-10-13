@@ -27,9 +27,9 @@ async function go() {
 
 <template>
   <div class="overlay" @mousedown.self="!merging.busy && (merging.open = false)" @keydown.esc.stop.prevent="!merging.busy && (merging.open = false)">
-    <div class="window-box" role="alertdialog" aria-labelledby="merge-title">
+    <div class="window-box" role="alertdialog" aria-labelledby="synchronize-title">
       <div class="eyebrow">{{ t("mergeModal.eyebrow") }}</div>
-      <h2 id="merge-title">{{ t(merging.forge === "github" ? "mergeModal.titlePr" : "mergeModal.titleMr", { ref: r.ref }) }}</h2>
+      <h2 id="synchronize-title">{{ t(merging.forge === "github" ? "mergeModal.titlePr" : "mergeModal.titleMr", { ref: r.ref }) }}</h2>
       <p class="title">{{ r.title }}</p>
       <p class="branches mono">{{ r.branch }} → {{ r.target || t("mergeModal.targetBranch") }}</p>
       <div class="chips">
@@ -39,8 +39,8 @@ async function go() {
       <p v-if="risky" class="warn">{{ t("mergeModal.notReady") }}</p>
 
       <div class="opts">
-        <label class="sr" for="merge-method">{{ t("mergeModal.method") }}</label>
-        <select id="merge-method" v-model="merging.method" :disabled="merging.busy">
+        <label class="sr" for="synchronize-method">{{ t("mergeModal.method") }}</label>
+        <select id="synchronize-method" v-model="merging.method" :disabled="merging.busy">
           <option value="merge">{{ t("mergeModal.methodMerge") }}</option>
           <option value="squash">{{ t("mergeModal.methodSquash") }}</option>
           <option value="rebase">{{ t("mergeModal.methodRebase") }}</option>

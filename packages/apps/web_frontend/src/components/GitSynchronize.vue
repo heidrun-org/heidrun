@@ -2,15 +2,15 @@
 import { computed, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentGit } from "../stores/git";
-import { mergeUpstream, runMergeUpstream } from "../stores/git_merge_upstream";
+import { synchronize, runSynchronize } from "../stores/git_synchronize";
 import { useStatusCard } from "../lib/status_card";
 import { branchUrl, webOfRemote } from "../lib/refs";
 import { t } from "../i18n/index";
 import Icon from "./Icon.vue";
 
-// The merge zone of the Git status bar section: the turning-arrows icon, like "Synchronize Changes" of Visual Studio
-// Code. A click on it opens its information card and starts the merge with the upstream branch: the upstream branch is
-// fetched, then merged into the current branch. The next click closes the card. A branch without upstream branch has
+// The synchronize zone of the Git status bar section: the turning-arrows icon, like "Synchronize Changes" of Visual Studio
+// Code. A click on it opens its information card and starts the synchronization with the upstream branch, as "Synchronize
+// Changes" of Visual Studio Code does: the upstream branch is fetched, merged into the current branch, then the new commits are pushed. The next click closes the card. A branch without upstream branch has
 // the icon faded, and the card says why, and nothing starts.
 // - issue #348
 const root = ref<HTMLElement | null>(null);
@@ -62,26 +62,32 @@ function sentenceOf(field: string, key: string, upstream: string, params: Record
   return { field, before: before ?? "", after: after ?? "", upstream };
 }
 
-/** The sentence of the card for the state of the merge: busy, merged, up to date, or in conflict. Null for the others. */
-const sentence = computed<Sentence | null>(() => {
+/** The sentences of the card for the state of the synchronization: busy, then the merge result, then the push result. */
+const sentences = computed<Sentence[]>(() => {
   const upstream = currentGit.value?.upstream ?? "";
-  if (mergeUpstream.isBusy === true) {
-    return sentenceOf("merge-busy", "statusBar.gitMergeBusy", upstream, {});
+  if (synchronize.isBusy === true) {
+    return [sentenceOf("synchronize-busy", "statusBar.gitSynchronizeBusy", upstream, {})];
   }
-  const result = mergeUpstream.result;
-  if (mergeUpstream.error !== null || result === null) {
-    return null;
+  const result = synchronize.result;
+  if (synchronize.error !== null || result === null) {
+    return [];
   }
+  if (result.outcome === "conflict") {
+    return [sentenceOf("synchronize-conflict", "statusBar.gitSynchronizeConflict", result.upstream, { count: result.conflicts.length })];
+  }
+  const list: Sentence[] = [];
   if (result.outcome === "merged") {
-    return sentenceOf("merge-merged", "statusBar.gitMergeMerged", result.upstream, { branch: currentGit.value?.branch ?? "" });
+    list.push(sentenceOf("synchronize-merged", "statusBar.gitSynchronizeMerged", result.upstream, { branch: currentGit.value?.branch ?? "" }));
+  } else {
+    list.push(sentenceOf("synchronize-up-to-date", "statusBar.gitSynchronizeUpToDate", result.upstream, {}));
   }
-  if (result.outcome === "up_to_date") {
-    return sentenceOf("merge-up-to-date", "statusBar.gitMergeUpToDate", result.upstream, {});
+  if (result.pushed > 0) {
+    list.push(sentenceOf("synchronize-pushed", "statusBar.gitSynchronizePushed", result.upstream, { count: result.pushed }));
   }
-  return sentenceOf("merge-conflict", "statusBar.gitMergeConflict", result.upstream, { count: result.conflicts.length });
+  return list;
 });
 
-/** Opens the card and starts the merge, or closes the card when it is open. */
+/** Opens the card and starts the synchronization, or closes the card when it is open. */
 function onClick() {
   if (isOpen.value === true) {
     close();
@@ -89,7 +95,7 @@ function onClick() {
   }
   toggle();
   if (hasUpstream.value === true) {
-    void runMergeUpstream();
+    void runSynchronize();
   }
 }
 </script>
@@ -97,48 +103,57 @@ function onClick() {
 <template>
   <div
     ref="root"
-    class="git-merge-zone status-section d-flex align-items-center"
-    :class="{ show: isOpen, 'git-merge-zone-disabled': hasUpstream === false }"
+    class="git-synchronize-zone status-section d-flex align-items-center"
+    :class="{ show: isOpen, 'git-synchronize-zone-disabled': hasUpstream === false }"
     role="button"
     tabindex="0"
     aria-haspopup="dialog"
     :aria-expanded="isOpen"
     :aria-disabled="hasUpstream === false"
-    :title="isOpen ? undefined : t('statusBar.gitMergeUpstreamTitle')"
+    :title="isOpen ? undefined : t('statusBar.gitSynchronizeTitle')"
     @click="onClick"
     @keydown.enter.self.prevent="onClick"
     @keydown.space.self.prevent="onClick"
     @focusout="onFocusOut"
   >
-    <span v-if="mergeUpstream.isBusy" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    <span v-if="synchronize.isBusy" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     <Icon v-else name="arrow-repeat" />
     <div
       v-if="isOpen"
       class="popover popover-instant show bs-popover-top position-absolute bottom-100"
       :style="cardStyle"
       role="dialog"
-      :aria-label="t('statusBar.gitMergeUpstreamTitle')"
+      :aria-label="t('statusBar.gitSynchronizeTitle')"
       @click.stop
     >
       <div class="popover-arrow position-absolute ms-3"></div>
-      <div class="popover-body d-flex flex-column gap-2" data-field="merge-card">
-        <span v-if="hasUpstream === false" data-field="merge-no-upstream">{{ t("statusBar.gitMergeNoUpstream") }}</span>
-        <div v-else-if="mergeUpstream.error !== null" class="alert theme-danger text-break" data-field="merge-error">
-          {{ mergeUpstream.error }}
+      <div class="popover-body d-flex flex-column gap-2" data-field="synchronize-card">
+        <span v-if="hasUpstream === false" data-field="synchronize-no-upstream">{{ t("statusBar.gitSynchronizeNoUpstream") }}</span>
+        <div v-else-if="synchronize.error !== null" class="alert theme-danger text-break" data-field="synchronize-error">
+          {{ synchronize.error }}
         </div>
-        <span v-else-if="sentence !== null" :data-field="sentence.field">
+        <template v-else>
+        <span v-for="sentence in sentences" :key="sentence.field" :data-field="sentence.field">
           {{ sentence.before }}<a
             v-if="upstreamPage(sentence.upstream) !== null"
             :href="upstreamPage(sentence.upstream) ?? undefined"
-            data-field="merge-upstream-link"
+            data-field="synchronize-upstream-link"
             @click.prevent="openUpstreamPage(sentence.upstream)"
           >{{ sentence.upstream }}</a><template v-else>{{ sentence.upstream }}</template>{{ sentence.after }}
         </span>
-        <template v-if="mergeUpstream.isBusy === false && mergeUpstream.error === null && mergeUpstream.result?.outcome === 'conflict'">
-          <ul class="list-unstyled mb-0 text-break" data-field="merge-conflict-files">
-            <li v-for="path in mergeUpstream.result.conflicts" :key="path">{{ path }}</li>
+        <div
+          v-if="synchronize.isBusy === false && synchronize.result?.push_error"
+          class="alert theme-danger text-break"
+          data-field="synchronize-push-error"
+        >
+          {{ t("statusBar.gitSynchronizePushFailed") }} {{ synchronize.result.push_error }}
+        </div>
+        </template>
+        <template v-if="synchronize.isBusy === false && synchronize.error === null && synchronize.result?.outcome === 'conflict'">
+          <ul class="list-unstyled mb-0 text-break" data-field="synchronize-conflict-files">
+            <li v-for="path in synchronize.result.conflicts" :key="path">{{ path }}</li>
           </ul>
-          <span class="text-body-secondary">{{ t("statusBar.gitMergeConflictHelp") }}</span>
+          <span class="text-body-secondary">{{ t("statusBar.gitSynchronizeConflictHelp") }}</span>
         </template>
       </div>
     </div>
@@ -148,7 +163,7 @@ function onClick() {
 <style scoped>
 /* The zone is in the middle of a button group: it has no round corner. Both sides keep 4 pixels of background, and the two
    other zones touch it. */
-.git-merge-zone { margin: 6px -4px; padding: 0 4px; border-radius: 0; }
-/* The merge cannot start without upstream branch: the icon fades itself, because the application never fades a disabled control. */
-.git-merge-zone-disabled { opacity: 0.35; }
+.git-synchronize-zone { margin: 6px -4px; padding: 0 4px; border-radius: 0; }
+/* The synchronization cannot start without upstream branch: the icon fades itself, because the application never fades a disabled control. */
+.git-synchronize-zone-disabled { opacity: 0.35; }
 </style>

@@ -4,13 +4,13 @@ import { ago } from "../lib/format";
 import { computed, ref } from "vue";
 import Icon from "./Icon.vue";
 import GitBranchPicker from "./GitBranchPicker.vue";
-import GitMergeUpstream from "./GitMergeUpstream.vue";
+import GitSynchronize from "./GitSynchronize.vue";
 import { t } from "../i18n/index";
 import { useStatusCard } from "../lib/status_card";
 
 // The Git state of the selected workspace in the status bar, in the order of the Visual Studio Code status bar:
-// the branch zone (the Git icon and the branch name, see GitBranchPicker.vue), then the merge zone
-// (the turning-arrows icon, see GitMergeUpstream.vue), then the counts zone.
+// the branch zone (the Git icon and the branch name, see GitBranchPicker.vue), then the synchronize zone
+// (the turning-arrows icon, see GitSynchronize.vue), then the counts zone.
 // The counts zone shows the commits to download, then the commits to upload. A click on it shows a Bootstrap popover
 // with the details of the Git repository.
 
@@ -34,7 +34,7 @@ const detailRows = computed(() => {
 <template>
   <div v-if="currentGit !== null && currentGit.branch !== null" class="git-status d-flex align-items-center gap-2">
     <GitBranchPicker />
-    <GitMergeUpstream />
+    <GitSynchronize />
     <div
       ref="root"
       class="git-counts-zone status-section d-flex align-items-center gap-2"

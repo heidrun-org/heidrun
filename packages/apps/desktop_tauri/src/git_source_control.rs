@@ -1,7 +1,7 @@
 //! The Git actions of the Source control sidebar section: stage, unstage, discard, commit, stash, pull, push,
 //! fetch, the list and the checkout of the local branches (the branch picker of the status bar), and the diff that a
-//! coding agent reads to write the commit message, and the merge with the upstream branch (the turning-arrows icon of
-//! the status bar).
+//! coding agent reads to write the commit message, and the synchronization with the upstream branch, a merge then a push (the turning-arrows
+//! icon of the status bar).
 //!
 //! Each command accepts only a root that `git_status` gave before (`known_root`), and only paths inside it
 //! (`safe_rel`). The paths are literal: no globs, no pathspec magic.
@@ -222,9 +222,9 @@ pub async fn git_checkout(root: String, branch: String) -> Result<String, String
     run(&root, &["switch", "--quiet", &branch], LOCAL_TIMEOUT).await
 }
 
-/// What a merge with the upstream branch did.
+/// What a synchronization with the upstream branch did.
 #[derive(serde::Serialize, Debug, PartialEq)]
-pub struct MergeUpstreamResult {
+pub struct SynchronizeResult {
     /// `merged` when new commits came in, `up_to_date` when there was nothing to merge, `conflict` when Git stopped on
     /// conflicts and left the merge to finish by hand.
     pub outcome: String,
@@ -232,14 +232,21 @@ pub struct MergeUpstreamResult {
     pub upstream: String,
     /// The files in conflict. Empty unless the outcome is `conflict`.
     pub conflicts: Vec<String>,
+    /// The number of commits sent to the upstream branch after the merge. Zero when there was nothing to send, and when
+    /// the merge stopped on conflicts.
+    pub pushed: u32,
+    /// The message of Git when the commits could not be sent, for example because the remote repository refused them.
+    /// The merge is done in this case.
+    pub push_error: Option<String>,
 }
 
-/// Fetches the upstream branch of the current branch, then merges it into the current branch. It never pushes. When the
-/// merge stops on conflicts, Git keeps the merge open, as `git merge` does in a terminal, and the files in conflict are
-/// in the answer. Any other failure, for example no upstream branch, or a change of the working folder that the merge
-/// would overwrite, is the error, with the message of Git.
+/// Does what "Synchronize Changes" of Visual Studio Code does: fetches the upstream branch of the current branch, merges
+/// it into the current branch, then pushes the commits that the upstream branch does not have. When the merge stops on
+/// conflicts, Git keeps the merge open, as `git merge` does in a terminal, nothing is pushed, and the files in conflict
+/// are in the answer. Any other failure before the push, for example no upstream branch, or a change of the working
+/// folder that the merge would overwrite, is the error, with the message of Git. A failure of the push is in `push_error`.
 #[tauri::command]
-pub async fn git_merge_upstream(root: String) -> Result<MergeUpstreamResult, String> {
+pub async fn git_synchronize(root: String) -> Result<SynchronizeResult, String> {
     known_root(&root)?;
     let upstream = run(&root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], LOCAL_TIMEOUT)
         .await
@@ -252,7 +259,8 @@ pub async fn git_merge_upstream(root: String) -> Result<MergeUpstreamResult, Str
         Ok(_) => {
             let after = run(&root, &["rev-parse", "HEAD"], LOCAL_TIMEOUT).await?;
             let outcome = if after == before { "up_to_date" } else { "merged" };
-            Ok(MergeUpstreamResult { outcome: outcome.into(), upstream, conflicts: Vec::new() })
+            let (pushed, push_error) = push_new_commits(&root, &upstream).await;
+            Ok(SynchronizeResult { outcome: outcome.into(), upstream, conflicts: Vec::new(), pushed, push_error })
         }
         Err(message) => {
             let listed = run(&root, &["diff", "--name-only", "--diff-filter=U"], LOCAL_TIMEOUT).await.unwrap_or_default();
@@ -260,8 +268,26 @@ pub async fn git_merge_upstream(root: String) -> Result<MergeUpstreamResult, Str
             if conflicts.is_empty() {
                 return Err(message);
             }
-            Ok(MergeUpstreamResult { outcome: "conflict".into(), upstream, conflicts })
+            Ok(SynchronizeResult { outcome: "conflict".into(), upstream, conflicts, pushed: 0, push_error: None })
         }
+    }
+}
+
+/// Pushes the commits of the current branch that `upstream` (for example `origin/main`) does not have, to the branch of
+/// that name on its remote repository. Gives the number of commits sent, and the message of Git when the push failed.
+async fn push_new_commits(root: &str, upstream: &str) -> (u32, Option<String>) {
+    let counted = run(root, &["rev-list", "--count", "@{upstream}..HEAD"], LOCAL_TIMEOUT).await;
+    let ahead: u32 = counted.ok().and_then(|text| text.trim().parse().ok()).unwrap_or(0);
+    if ahead == 0 {
+        return (0, None);
+    }
+    let Some((remote, branch)) = upstream.split_once('/') else {
+        return (0, Some(format!("unknown upstream branch: {upstream}")));
+    };
+    let target = format!("HEAD:refs/heads/{branch}");
+    match run(root, &["push", remote, &target], REMOTE_TIMEOUT).await {
+        Ok(_) => (ahead, None),
+        Err(message) => (0, Some(message)),
     }
 }
 
@@ -459,6 +485,12 @@ mod tests {
             Remote { bare }
         }
 
+        /// The commit that the branch `main` of the remote repository points to.
+        fn head_of_main(&self) -> String {
+            let output = std::process::Command::new("git").arg("-C").arg(&self.bare).args(["rev-parse", "main"]).output().unwrap();
+            String::from_utf8_lossy(&output.stdout).trim().to_string()
+        }
+
         /// Makes a commit of `text` in the file `path` from a second clone, and pushes it.
         fn push_from_another_clone(&self, path: &str, text: &str) {
             let clone = self.bare.with_extension("clone");
@@ -484,21 +516,87 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn merges_the_upstream_branch_after_fetching_it() {
+    async fn synchronizes_by_fetching_then_merging_the_upstream_branch() {
         let repository = Repository::new("merge_upstream");
         let remote = Remote::new(&repository);
         remote.push_from_another_clone("new.txt", "new\n");
-        let result = git_merge_upstream(repository.root()).await.unwrap();
+        let result = git_synchronize(repository.root()).await.unwrap();
         assert_eq!(result.outcome, "merged");
         assert_eq!(result.upstream, "origin/main");
         assert_eq!(repository.read("new.txt").as_deref(), Some("new\n"));
+        assert_eq!(result.pushed, 0);
+        assert_eq!(result.push_error, None);
+    }
+
+    #[tokio::test]
+    async fn pushes_the_commits_that_the_upstream_branch_does_not_have() {
+        let repository = Repository::new("synchronize_push");
+        let remote = Remote::new(&repository);
+        repository.write("kept.txt", "local\n");
+        repository.git(&["commit", "--quiet", "--all", "--message", "local"]);
+        repository.write("second.txt", "second\n");
+        repository.git(&["add", "second.txt"]);
+        repository.git(&["commit", "--quiet", "--message", "second"]);
+        let result = git_synchronize(repository.root()).await.unwrap();
+        assert_eq!(result.outcome, "up_to_date");
+        assert_eq!(result.pushed, 2);
+        assert_eq!(result.push_error, None);
+        assert_eq!(remote.head_of_main(), repository.git(&["rev-parse", "HEAD"]).trim());
+    }
+
+    #[tokio::test]
+    async fn merges_then_pushes_the_merge_and_the_local_commits() {
+        let repository = Repository::new("synchronize_merge_push");
+        let remote = Remote::new(&repository);
+        remote.push_from_another_clone("new.txt", "new\n");
+        repository.write("local.txt", "local\n");
+        repository.git(&["add", "local.txt"]);
+        repository.git(&["commit", "--quiet", "--message", "local"]);
+        let result = git_synchronize(repository.root()).await.unwrap();
+        assert_eq!(result.outcome, "merged");
+        assert_eq!(result.pushed, 2);
+        assert_eq!(remote.head_of_main(), repository.git(&["rev-parse", "HEAD"]).trim());
+    }
+
+    #[tokio::test]
+    async fn pushes_nothing_when_the_merge_stops_on_conflicts() {
+        let repository = Repository::new("synchronize_conflict_no_push");
+        let remote = Remote::new(&repository);
+        let remote_head_before = remote.head_of_main();
+        remote.push_from_another_clone("kept.txt", "remote\n");
+        let remote_head_after_other = remote.head_of_main();
+        repository.write("kept.txt", "local\n");
+        repository.git(&["commit", "--quiet", "--all", "--message", "local"]);
+        let result = git_synchronize(repository.root()).await.unwrap();
+        assert_eq!(result.outcome, "conflict");
+        assert_eq!(result.pushed, 0);
+        assert_ne!(remote_head_before, remote_head_after_other);
+        assert_eq!(remote.head_of_main(), remote_head_after_other);
+    }
+
+    #[tokio::test]
+    async fn keeps_the_merge_and_tells_why_the_push_failed() {
+        let repository = Repository::new("synchronize_push_refused");
+        let remote = Remote::new(&repository);
+        let hooks = remote.bare.join("hooks");
+        std::fs::create_dir_all(&hooks).unwrap();
+        let hook = hooks.join("pre-receive");
+        std::fs::write(&hook, "#!/bin/sh\necho refused by the test >&2\nexit 1\n").unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+        repository.write("kept.txt", "local\n");
+        repository.git(&["commit", "--quiet", "--all", "--message", "local"]);
+        let result = git_synchronize(repository.root()).await.unwrap();
+        assert_eq!(result.outcome, "up_to_date");
+        assert_eq!(result.pushed, 0);
+        assert!(result.push_error.unwrap().contains("refused by the test"));
     }
 
     #[tokio::test]
     async fn says_up_to_date_when_there_is_nothing_to_merge() {
         let repository = Repository::new("merge_up_to_date");
         let _remote = Remote::new(&repository);
-        let result = git_merge_upstream(repository.root()).await.unwrap();
+        let result = git_synchronize(repository.root()).await.unwrap();
         assert_eq!(result.outcome, "up_to_date");
         assert!(result.conflicts.is_empty());
     }
@@ -510,7 +608,7 @@ mod tests {
         remote.push_from_another_clone("kept.txt", "remote\n");
         repository.write("kept.txt", "local\n");
         repository.git(&["commit", "--quiet", "--all", "--message", "local"]);
-        let result = git_merge_upstream(repository.root()).await.unwrap();
+        let result = git_synchronize(repository.root()).await.unwrap();
         assert_eq!(result.outcome, "conflict");
         assert_eq!(result.conflicts, vec!["kept.txt".to_string()]);
         assert!(repository.status().starts_with("UU kept.txt"));
@@ -519,7 +617,7 @@ mod tests {
     #[tokio::test]
     async fn refuses_to_merge_without_an_upstream_branch() {
         let repository = Repository::new("merge_no_upstream");
-        let answer = git_merge_upstream(repository.root()).await;
+        let answer = git_synchronize(repository.root()).await;
         assert_eq!(answer, Err("no upstream branch".to_string()));
     }
 
@@ -529,7 +627,7 @@ mod tests {
         let remote = Remote::new(&repository);
         remote.push_from_another_clone("kept.txt", "remote\n");
         repository.write("kept.txt", "local\n");
-        let answer = git_merge_upstream(repository.root()).await;
+        let answer = git_synchronize(repository.root()).await;
         assert!(answer.is_err());
         assert_eq!(repository.read("kept.txt").as_deref(), Some("local\n"));
     }

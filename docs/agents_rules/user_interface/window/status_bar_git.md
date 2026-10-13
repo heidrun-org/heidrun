@@ -13,7 +13,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 - The Git branch status bar section has three click zones, from left to right. Each zone is a status bar section with its own rounded background ([issue #350](https://github.com/heidrun-org/heidrun/issues/350)).
   - The branch zone shows the Git icon, the branch name, and a star when the working folder has an uncommitted change. A click on it opens the branch picker.
-  - The merge zone shows a turning-arrows icon (`arrow-repeat`), like "Synchronize Changes" of Visual Studio Code. See the section "Merge with the upstream branch" below.
+  - The synchronize zone shows a turning-arrows icon (`arrow-repeat`), like "Synchronize Changes" of Visual Studio Code. See the section "Synchronize with the upstream branch" below.
   - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository.
 - The zones touch each other: each side between two zones has 4 pixels of background, and the two outer sides have the 11 pixels of the other status bar sections. The text of the zones does not move. The three zones are one button group, as in Bootstrap: only the left corners of the branch zone and the right corners of the counts zone are round (6 pixels), and the corners where two zones touch are square, also in the hover background and in the open state.
 - The branch picker is a card above the branch zone, 408 pixels wide. At the top it has a search field with the text "Select a branch to check out". Under it, the local branches, the most recently committed first. Each row shows the Git icon, the name of the branch, a check mark for the current branch, and the time of the last commit on the first line, then the author, the short hash, and the subject of the last commit on the second line.
@@ -24,12 +24,14 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - When Git refuses the checkout, for example because an uncommitted change would be overwritten, a message shows the text of Git, and the current branch does not change.
 - Nothing reacts to the pointer that only moves over a zone, except the background. Visual Studio Code does the same.
 
-### Merge with the upstream branch
+### Synchronize with the upstream branch
 
-- A click on the merge zone opens its information card and starts the merge ([issue #348](https://github.com/heidrun-org/heidrun/issues/348)). The next click, a click outside, or the key Escape closes the card. A click that closes the card does not start a second merge.
-- The merge is the Tauri command `git_merge_upstream`: it fetches the upstream branch of the current branch (`git fetch --prune`), then merges it into the current branch (`git merge --no-edit`). It never pushes. The Git status is read again after it.
+- The synchronize zone does what "Synchronize Changes" of Visual Studio Code does: it merges, then pushes. A click on it opens its information card and starts the synchronization ([issue #348](https://github.com/heidrun-org/heidrun/issues/348)). The next click, a click outside, or the key Escape closes the card. A click that closes the card does not start a second synchronization.
+- The synchronization is the Tauri command `git_synchronize`. It fetches the upstream branch of the current branch (`git fetch --prune`), merges it into the current branch (`git merge --no-edit`), then pushes the commits that the upstream branch does not have, to the branch of the same name on its remote repository. The Git status is read again after it.
+- When the merge stops on conflicts, nothing is pushed.
 - The card is 408 pixels wide, like the cards of the usage of Claude and of Codex. In every sentence, the name of the upstream branch (for example `origin/dev_jerome`) is a link that opens the page of that branch on the forge, in the web browser, without the name of the remote in the address. When the repository has no known remote, the name is plain text.
-- While the merge runs, a spinner replaces the icon, and the card says "Fetching and merging" with the name of the upstream branch. A second merge cannot start during this time.
-- The card then shows one of these results: "Merged" (new commits came in), "Already up to date", or the number of files in conflict with the list of these files and the advice to fix them in the Source control sidebar section, then commit. When Git stops on conflicts, the merge stays open, as it does in a terminal.
-- When Git refuses, for example because a change of the working folder would be overwritten, the card shows the message of Git in a red notice, and nothing changes.
+- While the synchronization runs, a spinner replaces the icon, and the card says "Synchronizing with" and the name of the upstream branch. A second synchronization cannot start during this time.
+- The card then shows, one under the other: "Merged" (new commits came in) or "Already up to date"; then "Sent N commits" when commits were pushed (nothing is said when no commit was pushed). With conflicts, the card shows instead the number of files in conflict with the list of these files and the advice to fix them in the Source control sidebar section, then commit. The merge then stays open, as it does in a terminal.
+- When the push fails, for example because the remote repository refuses it, a red notice shows the message of Git after the sentence of the merge, which is done.
+- When Git refuses before the push, for example because a change of the working folder would be overwritten, the card shows the message of Git in a red notice, and nothing changes.
 - When the current branch has no upstream branch, the icon is faded to 35 percent, nothing starts, and the card says "This branch has no upstream branch. Push it first, so it has one."

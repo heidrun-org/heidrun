@@ -30,12 +30,15 @@
   "gitCountsTitle": "Détails du dépôt Git",
   "gitBranchPickerOpenOn": "Ouvrir sur {forge}",
   "gitBranchPickerOnlyLocal": "Cette branche est seulement sur votre ordinateur : envoyez-la pour voir sa page",
-  "gitMergeUpstreamTitle": "Fusionner avec la branche amont",
-  "gitMergeNoUpstream": "Cette branche n'a pas de branche amont. Envoyez-la d'abord, pour qu'elle en ait une.",
-  "gitMergeBusy": "Téléchargement et fusion de {upstream}…",
-  "gitMergeMerged": "{upstream} fusionnée dans {branch}.",
-  "gitMergeUpToDate": "Déjà à jour avec {upstream}.",
-  "gitMergeConflictHelp": "Réglez-les dans la section Source control de la barre latérale, puis faites un commit.",
-  "gitMergeConflict_one": "{upstream} est en conflit dans 1 fichier :",
-  "gitMergeConflict_other": "{upstream} est en conflit dans {count} fichiers :"
+  "gitSynchronizeTitle": "Synchroniser avec la branche amont",
+  "gitSynchronizeNoUpstream": "Cette branche n'a pas de branche amont. Envoyez-la d'abord, pour qu'elle en ait une.",
+  "gitSynchronizeBusy": "Synchronisation avec {upstream}…",
+  "gitSynchronizeMerged": "{upstream} fusionnée dans {branch}.",
+  "gitSynchronizeUpToDate": "Déjà à jour avec {upstream}.",
+  "gitSynchronizeConflictHelp": "Réglez-les dans la section Source control de la barre latérale, puis faites un commit.",
+  "gitSynchronizeConflict_one": "{upstream} est en conflit dans 1 fichier :",
+  "gitSynchronizeConflict_other": "{upstream} est en conflit dans {count} fichiers :",
+  "gitSynchronizePushed_one": "1 commit envoyé vers {upstream}.",
+  "gitSynchronizePushed_other": "{count} commits envoyés vers {upstream}.",
+  "gitSynchronizePushFailed": "La fusion est faite, mais les commits n'ont pas pu être envoyés :"
 }
