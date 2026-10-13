@@ -76,72 +76,68 @@ describe("Sidebar without the list of workspaces", () => {
   });
 });
 
-describe("Sidebar navigation bar", () => {
+describe("Sidebar icon bar of the left sidebar", () => {
   it("shows the buttons Scripts and Git, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
     const { wrapper } = await mountSidebar();
-    const buttons = wrapper.findAll(".navigation-bar button");
-    expect(buttons.map((button) => button.text())).toEqual(["Scripts", "Git"]);
+    const buttons = wrapper.findAll(".sidebar-icon-bar button");
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Scripts", "Git"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab"]);
-    expect(wrapper.get(".navigation-bar").attributes("aria-label")).toBe("Left sidebar");
+    expect(wrapper.get(".sidebar-icon-bar").attributes("aria-label")).toBe("Left sidebar");
+  });
+
+  it("shows one icon for each sidebar section: a play button for Scripts, and the Git logo for Git", async () => {
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.findAll(".sidebar-icon-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
+  });
+
+  it("puts the sidebar icon bar at the left edge, before the content of the sidebar section, in the same frame", async () => {
+    const { wrapper } = await mountSidebar();
+    const children = Array.from(wrapper.get("aside").element.children).map((child) => child.className);
+    expect(children).toEqual(["sidebar-icon-bar", "sidebar-section-body"]);
   });
 
   it("shows the sidebar section Scripts first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([true, false]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
   });
 
   it("shows the sidebar section Git after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[1].trigger("click");
     expect(settings.leftSidebarSection).toBe("git");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([false, true]);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, true]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
     expect(wrapper.find("git-panel-stub").exists()).toBe(true);
     const restarted = (await mountSidebar()).wrapper;
     expect(restarted.find("git-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the sidebar section Scripts again after a click on its button", async () => {
-    settings.leftSidebarSection = "git";
+  it("collapses after a click on the icon of the sidebar section that it shows, and then selects no icon", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".navigation-bar button")[0].trigger("click");
-    expect(settings.leftSidebarSection).toBe("actions");
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
-    expect(wrapper.find("git-panel-stub").exists()).toBe(false);
-  });
-});
-
-describe("Sidebar collapsed to the sidebar icon bar", () => {
-  it("shows an icon before the title of each sidebar section: a play button for Scripts, and the Git logo for Git", async () => {
-    const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".navigation-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
-  });
-
-  it("collapses after a click on the collapse button, and shows only one icon for each sidebar section", async () => {
-    const { wrapper } = await mountSidebar();
-    await wrapper.get(".collapse-button").trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
     expect(settings.leftCollapsed).toBe(true);
-    expect(wrapper.find(".navigation-bar").exists()).toBe(false);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar .icons button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
+    expect(wrapper.find(".sidebar-section-body").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.attributes("aria-selected"))).toEqual(["false", "false"]);
     expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
   });
 
   it("expands to the sidebar section of an icon after a click on the icon", async () => {
     settings.leftCollapsed = true;
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".sidebar-icon-bar .icons button")[1].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
     expect(settings.leftSidebarSection).toBe("git");
     expect(wrapper.find("git-panel-stub").exists()).toBe(true);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, true]);
   });
 
-  it("expands to the selected sidebar section after a click on the expand button", async () => {
-    settings.leftCollapsed = true;
+  it("expands to the same sidebar section after a click on the icon that collapsed it", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.get(".expand-button").trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
   });

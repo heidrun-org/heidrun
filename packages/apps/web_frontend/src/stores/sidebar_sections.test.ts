@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { settings } from "./settings";
-import { openSidebarSection } from "./sidebar_sections";
+import { clickSidebarSectionIcon, openSidebarSection } from "./sidebar_sections";
 
 beforeEach(() => {
   settings.leftOpen = true;
@@ -61,6 +61,42 @@ describe("openSidebarSection", () => {
     settings.rightCollapsed = true;
     openSidebarSection(sidebarSection);
     expect(settings.rightCollapsed).toBe(false);
+    expect(settings.leftCollapsed).toBe(true);
+  });
+});
+
+describe("clickSidebarSectionIcon", () => {
+  it.each([
+    ["actions", "leftCollapsed"],
+    ["notes", "rightCollapsed"],
+  ] as const)("collapses the expanded sidebar that shows the sidebar section %s", (sidebarSection, collapsedName) => {
+    clickSidebarSectionIcon(sidebarSection);
+    expect(settings[collapsedName]).toBe(true);
+  });
+
+  it.each([
+    ["git", "leftCollapsed", "leftSidebarSection"],
+    ["chats", "rightCollapsed", "rightSidebarSection"],
+  ] as const)("shows the sidebar section %s when the sidebar shows another one", (sidebarSection, collapsedName, sectionName) => {
+    clickSidebarSectionIcon(sidebarSection);
+    expect(settings[collapsedName]).toBe(false);
+    expect(settings[sectionName]).toBe(sidebarSection);
+  });
+
+  it.each([
+    ["actions", "leftCollapsed", "leftSidebarSection"],
+    ["notes", "rightCollapsed", "rightSidebarSection"],
+  ] as const)("expands the collapsed sidebar to the sidebar section %s", (sidebarSection, collapsedName, sectionName) => {
+    settings[collapsedName] = true;
+    clickSidebarSectionIcon(sidebarSection);
+    expect(settings[collapsedName]).toBe(false);
+    expect(settings[sectionName]).toBe(sidebarSection);
+  });
+
+  it("does not change the other sidebar", () => {
+    clickSidebarSectionIcon("actions");
+    expect(settings.rightCollapsed).toBe(false);
+    clickSidebarSectionIcon("notes");
     expect(settings.leftCollapsed).toBe(true);
   });
 });

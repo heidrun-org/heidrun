@@ -45,25 +45,23 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons Needs you, Notes, and Chats in the navigation bar, and not the buttons Pane, Scripts, and Git", () => {
+  it("shows the buttons Needs you, Notes, and Chats in the sidebar icon bar, and not the buttons Pane, Scripts, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.get(".navigation-bar").attributes("role")).toBe("tablist");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.text())).toEqual(["Needs you", "Notes", "Chats"]);
+    expect(wrapper.get(".sidebar-icon-bar").attributes("role")).toBe("tablist");
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Notes", "Chats"]);
   });
 
-  it("does not call a button of the navigation bar a tab", () => {
+  it("gives each button the title of its sidebar section as its tooltip, and does not call it a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.attributes("title"))).toEqual(
-      Array(3).fill("Show this sidebar section"),
-    );
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.attributes("title"))).toEqual(["Needs you", "Notes", "Chats"]);
   });
 
   it("marks only the selected sidebar section as active", async () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
-    const buttons = wrapper.findAll(".navigation-bar button");
+    const buttons = wrapper.findAll(".sidebar-icon-bar button");
     expect(buttons.map((button) => button.classes("on"))).toEqual([false, true, false]);
     expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false"]);
   });
@@ -73,9 +71,9 @@ describe("RightPanel", () => {
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
     expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
-    await wrapper.findAll(".navigation-bar button")[1].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[1].trigger("click");
     expect(settings.rightSidebarSection).toBe("notes");
-    expect(wrapper.findAll(".navigation-bar button")[1].classes("on")).toBe(true);
+    expect(wrapper.findAll(".sidebar-icon-bar button")[1].classes("on")).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(true);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
     expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
@@ -84,9 +82,9 @@ describe("RightPanel", () => {
   it("shows the sidebar section Needs you after a click on its button, and remembers it", async () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".navigation-bar button")[0].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
     expect(settings.rightSidebarSection).toBe("toHandle");
-    expect(wrapper.findAll(".navigation-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([true, false, false]);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
     const restarted = mount(RightPanel, { global: { stubs } });
@@ -95,9 +93,9 @@ describe("RightPanel", () => {
 
   it("shows the sidebar section Chats, and no other sidebar section, after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".navigation-bar button")[2].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[2].trigger("click");
     expect(settings.rightSidebarSection).toBe("chats");
-    expect(wrapper.findAll(".navigation-bar button")[2].classes("on")).toBe(true);
+    expect(wrapper.findAll(".sidebar-icon-bar button")[2].classes("on")).toBe(true);
     expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
@@ -105,7 +103,7 @@ describe("RightPanel", () => {
 
   it("shows no number on the button Chats", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button")[2].find(".badge").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar button")[2].find(".badge").exists()).toBe(false);
   });
 
   it("counts on the button Notes the notes of the selected workspace, and every note when All workspaces is checked", async () => {
@@ -122,7 +120,7 @@ describe("RightPanel", () => {
     const note = { id: "n1", title: "a", text: "a", workspaceLabel: "heidrun", origin: "heidrun – codex · heidrun", createdAt: 1 };
     notes.list = [note, { ...note, id: "n2", workspaceLabel: "teamwright" }];
     const wrapper = mount(RightPanel, { global: { stubs } });
-    const badge = () => wrapper.findAll(".navigation-bar button")[1].find(".badge").text();
+    const badge = () => wrapper.findAll(".sidebar-icon-bar button")[1].find(".badge").text();
     expect(badge()).toBe("1");
     settings.notesShowAll = true;
     await wrapper.vm.$nextTick();
@@ -133,7 +131,7 @@ describe("RightPanel", () => {
 describe("RightPanel button Needs you", () => {
   it("shows no number when no agent calls", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button")[0].find(".badge").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar button")[0].find(".badge").exists()).toBe(false);
   });
 
   it("shows the number of cards, whatever the sidebar section that is shown", () => {
@@ -141,14 +139,14 @@ describe("RightPanel button Needs you", () => {
     state.selectedWorkspaceId = "w1";
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button")[0].get(".badge").text()).toBe("2");
+    expect(wrapper.findAll(".sidebar-icon-bar button")[0].get(".badge").text()).toBe("2");
   });
 
   it("shows the number in red when an agent is blocked", () => {
     state.snapshot = snapshotWithCalls();
     state.selectedWorkspaceId = "w1";
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button")[0].get(".badge").classes()).toContain("alert");
+    expect(wrapper.findAll(".sidebar-icon-bar button")[0].get(".badge").classes()).toContain("alert");
   });
 
   it("shows the number in the normal color when every agent that calls has finished", () => {
@@ -157,7 +155,7 @@ describe("RightPanel button Needs you", () => {
     state.snapshot = snapshot;
     state.selectedWorkspaceId = "w1";
     const wrapper = mount(RightPanel, { global: { stubs } });
-    const badge = wrapper.findAll(".navigation-bar button")[0].get(".badge");
+    const badge = wrapper.findAll(".sidebar-icon-bar button")[0].get(".badge");
     expect(badge.text()).toBe("1");
     expect(badge.classes()).not.toContain("alert");
   });
@@ -168,32 +166,39 @@ describe("RightPanel button Needs you", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     dismiss(allPanes.value.find((pane) => pane.pane_id === "p9")!);
     await wrapper.vm.$nextTick();
-    expect(wrapper.findAll(".navigation-bar button")[0].get(".badge").text()).toBe("1");
+    expect(wrapper.findAll(".sidebar-icon-bar button")[0].get(".badge").text()).toBe("1");
   });
 
-  it("shows an icon before the title of each sidebar section: a bell, a note, and a speech bubble", () => {
+  it("shows one icon for each sidebar section: a bell, a note, and a speech bubble", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".navigation-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
+    expect(wrapper.findAll(".sidebar-icon-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
   });
 
-  it("collapses to the sidebar icon bar after a click on the collapse button, and expands after a click on the expand button", async () => {
+  it("puts the sidebar icon bar at the right edge, after the content of the sidebar section, in the same frame", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.get(".collapse-button").trigger("click");
+    const children = Array.from(wrapper.get("aside").element.children).map((child) => child.className);
+    expect(children).toEqual(["sidebar-section-body", "sidebar-icon-bar"]);
+  });
+
+  it("collapses after a click on the icon of the sidebar section that it shows, and then selects no icon", async () => {
+    settings.rightSidebarSection = "toHandle";
+    settings.rightCollapsed = false;
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
     expect(settings.rightCollapsed).toBe(true);
-    expect(wrapper.find(".navigation-bar").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar .icons button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
+    expect(wrapper.find(".sidebar-section-body").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, false, false]);
     expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
-    await wrapper.get(".expand-button").trigger("click");
-    expect(settings.rightCollapsed).toBe(false);
-    expect(wrapper.find(".navigation-bar").exists()).toBe(true);
   });
 
   it("expands to the sidebar section of an icon after a click on the icon", async () => {
     settings.rightCollapsed = true;
     const wrapper = mount(RightPanel, { global: { stubs } });
-    await wrapper.findAll(".sidebar-icon-bar .icons button")[2].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar button")[2].trigger("click");
     expect(settings.rightCollapsed).toBe(false);
     expect(settings.rightSidebarSection).toBe("chats");
     expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
+    expect(wrapper.findAll(".sidebar-icon-bar button")[2].classes("on")).toBe(true);
+    settings.rightSidebarSection = "toHandle";
   });
 });

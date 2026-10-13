@@ -94,13 +94,9 @@ The choice of the method that computes the dynamic topics: "Keyword" (from the w
 
 The row of small rounded buttons in the header of the Chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
 
-### Navigation bar
-
-A row of buttons inside a sidebar. Each button shows one sidebar section of that sidebar.
-
 ### Sidebar icon bar
 
-The narrow vertical bar that a sidebar becomes when the developer collapses the sidebar, like the bar of icons of Visual Studio Code. It shows the expand button, then one icon for each sidebar section of that sidebar. A click on an icon expands the sidebar to that sidebar section.
+The narrow vertical bar of icons at the outer edge of each sidebar, like the bar of icons of Visual Studio Code. It shows one icon for each sidebar section of that sidebar. A click on an icon shows that sidebar section. When the sidebar is collapsed, the sidebar icon bar is the only part of the sidebar that stays visible.
 
 ### Status bar
 
@@ -120,7 +116,7 @@ The first status bar section, at the left end of the status bar. It shows the st
 
 ## Rules
 
-- The word "tab" means only a tab of Herdr, as defined above. A button of a navigation bar is not a tab.
+- The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
 - Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.

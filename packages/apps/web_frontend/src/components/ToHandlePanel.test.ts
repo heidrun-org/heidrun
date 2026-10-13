@@ -110,7 +110,7 @@ describe("ToHandlePanel cards", () => {
     expect(wrapper.find(".empty").exists()).toBe(false);
   });
 
-  it("has no heading Needs you: the button of the navigation bar says it", async () => {
+  it("has no heading Needs you: the icon of the sidebar icon bar says it", async () => {
     const { wrapper } = await mountToHandlePanel();
     expect(wrapper.find(".eyebrow").exists()).toBe(false);
     expect(wrapper.text()).not.toContain("Needs you");

@@ -1,9 +1,9 @@
 import { settings, type LeftSidebarSection, type RightSidebarSection } from "./settings";
 
-/** The width of a collapsed sidebar, in px: the sidebar icon bar. */
+/** The width of a collapsed sidebar, in px, borders included: the sidebar icon bar alone. */
 export const COLLAPSED_SIDEBAR_WIDTH = 48;
 
-/** One button of the navigation bar, or of the sidebar icon bar, of a sidebar: one sidebar section. */
+/** One button of the sidebar icon bar of a sidebar: one sidebar section. */
 export type SidebarSectionButton = {
   /** The identifier of the sidebar section. */
   id: string;
@@ -34,4 +34,21 @@ export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSid
   settings.rightOpen = true;
   settings.rightCollapsed = false;
   settings.rightSidebarSection = sidebarSection;
+}
+
+/**
+ * Answers a click on the icon of a sidebar section in the sidebar icon bar. A click on the icon of the sidebar section
+ * that an expanded sidebar shows collapses the sidebar. A click on any other icon shows that sidebar section.
+ */
+export function clickSidebarSectionIcon(sidebarSection: LeftSidebarSection | RightSidebarSection) {
+  const isLeft = sidebarSection === "actions" || sidebarSection === "git";
+  if (isLeft && settings.leftCollapsed === false && settings.leftSidebarSection === sidebarSection) {
+    settings.leftCollapsed = true;
+    return;
+  }
+  if (isLeft === false && settings.rightCollapsed === false && settings.rightSidebarSection === sidebarSection) {
+    settings.rightCollapsed = true;
+    return;
+  }
+  openSidebarSection(sidebarSection);
 }
