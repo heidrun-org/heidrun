@@ -7,8 +7,8 @@ pub const DEFAULT_AGENT: &str = "codex";
 /// The text of the option `--help`.
 pub const HELP: &str = r#"Usage: raw_coding_agent_cli [options] [prompt]
 
-Sends one prompt to a coding agent (codex or claude), waits for the answer, and
-prints the answer on the standard output.
+Sends one prompt to a coding agent (codex, claude, or agy), waits for the answer,
+and prints the answer on the standard output.
 
 Arguments:
   prompt                    A short prompt, written directly on the command
@@ -18,8 +18,8 @@ Arguments:
 
 Options:
   -a, --agent <name>        The coding agent to run: "codex" runs "codex exec",
-                            "claude" runs "claude -p". (choices: "codex",
-                            "claude", default: "codex")
+                            "claude" runs "claude -p", "agy" runs "agy -p".
+                            (choices: "codex", "claude", "agy", default: "codex")
   -f, --prompt-file <path>  Read a long prompt from a file, in place of the
                             argument.
   -v, --version             Print the version number.

@@ -134,8 +134,8 @@ Options:
 | --- | --- |
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
-| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the executable of the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. You need `codex` or `claude` installed and signed in, and the Rust tools. |
-| `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default) or `claude`. |
+| `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. The command sends the messages of the merged pull requests to the executable of the package [`raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. You need `codex`, `claude`, or `agy` installed and signed in, and the Rust tools. |
+| `--agent <name>` | The coding agent for the option `--ai`: `codex` (the default), `claude`, or `agy`. |
 | `--help` | Shows the description of the command and its options. |
 
 The command exits with code 1 and prints an error message when a tag does not exist.

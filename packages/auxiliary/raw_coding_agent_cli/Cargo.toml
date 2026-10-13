@@ -1,7 +1,7 @@
 [package]
 name = "raw_coding_agent_cli"
 version = "0.2.5"
-description = "Sends one prompt to a coding agent command line tool (codex or claude) and returns the answer"
+description = "Sends one prompt to a coding agent command line tool (codex, claude, or agy) and returns the answer"
 license = "MIT"
 edition = "2021"
 publish = false

@@ -30,7 +30,7 @@ pnpm release:change_log --ai --from v0.2.0                # a coding agent write
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
 | `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. Without this option, the section is a plain list of the pull requests. |
-| `--agent <name>` | The coding agent for `--ai`: `codex` (the default) or `claude`. |
+| `--agent <name>` | The coding agent for `--ai`: `codex` (the default), `claude`, or `agy`. |
 | `--help` | Shows the description and the options. |
 
 How the command works:

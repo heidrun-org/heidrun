@@ -385,7 +385,7 @@ describe('GenerateChangeLog', () => {
 			const promptFilePath = Path.join(repositoryPath, 'prompt.txt');
 			const result = ScriptRunner.run(repositoryPath, ['--ai', '--agent', 'gemini'], promptFilePath);
 			expect(result.exitCode).toBe(1);
-			expect(result.stderr).toContain('Unknown coding agent "gemini". Use codex or claude.');
+			expect(result.stderr).toContain('Unknown coding agent "gemini". Use codex, claude or agy.');
 			expect(Fs.existsSync(Path.join(repositoryPath, 'CHANGELOG.md'))).toBe(false);
 		});
 

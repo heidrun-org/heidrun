@@ -16,7 +16,7 @@ const __dirname = import.meta.dirname;
 /**
  * Runs a coding agent: gives it a prompt and returns its answer.
  * @param prompt The prompt to send.
- * @param agentName The name of the coding agent, `codex` or `claude`.
+ * @param agentName The name of the coding agent, `codex`, `claude`, or `agy`.
  * @returns The answer of the coding agent.
  */
 export type RunAgentFn = (prompt: string, agentName: string) => Promise<string>;
@@ -156,7 +156,7 @@ export class GenerateChangeLog {
 	 * so `cargo run` builds it when needed, then runs it. The prompt goes through the standard input of the executable,
 	 * and the answer comes from its standard output. The mode without the option `--ai` does not need the Rust tools.
 	 * @param prompt The prompt to send.
-	 * @param agentName The name of the coding agent, `codex` or `claude`. The executable refuses another name.
+	 * @param agentName The name of the coding agent, `codex`, `claude`, or `agy`. The executable refuses another name.
 	 * @returns The answer of the coding agent, without the spaces and the line breaks at the start and at the end.
 	 * @throws An error when `cargo` is not installed, or when the executable exits with an error code. The message of
 	 * the error is the message that the executable printed.

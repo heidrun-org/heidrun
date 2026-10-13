@@ -1,6 +1,6 @@
 # raw_coding_agent_cli
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex` or `claude`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex`, `claude`, or `agy`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
 
 ## What it contains
 
@@ -25,8 +25,8 @@ git log --oneline -20 | pnpm --silent --filter raw_coding_agent_cli cli "Summari
 ```text
 Usage: raw_coding_agent_cli [options] [prompt]
 
-Sends one prompt to a coding agent (codex or claude), waits for the answer, and
-prints the answer on the standard output.
+Sends one prompt to a coding agent (codex, claude, or agy), waits for the answer,
+and prints the answer on the standard output.
 
 Arguments:
   prompt                    A short prompt, written directly on the command
@@ -36,8 +36,8 @@ Arguments:
 
 Options:
   -a, --agent <name>        The coding agent to run: "codex" runs "codex exec",
-                            "claude" runs "claude -p". (choices: "codex",
-                            "claude", default: "codex")
+                            "claude" runs "claude -p", "agy" runs "agy -p".
+                            (choices: "codex", "claude", "agy", default: "codex")
   -f, --prompt-file <path>  Read a long prompt from a file, in place of the
                             argument.
   -v, --version             Print the version number.
@@ -68,16 +68,16 @@ The function `ask` takes these arguments.
 | Argument | Meaning |
 | --- | --- |
 | `shell` | The `AgentShell` that starts the tool: `AgentShell::login()` for the login shell of the developer, `AgentShell::plain()` for a plain shell. |
-| `agent` | `Some("codex")` runs `codex exec --skip-git-repo-check -`. `Some("claude")` runs `claude -p`. `None` runs the first of the two that exists, and gives the error `no_coding_agent` when none exists. |
+| `agent` | `Some("codex")` runs `codex exec --skip-git-repo-check -`. `Some("claude")` runs `claude -p`. `Some("agy")` runs `agy -p` with the prompt as the value of the option. `None` runs the first of `codex` and `claude` that exists, and gives the error `no_coding_agent` when none exists: `agy` is never chosen alone. |
 | `prompt` | The text to send to the coding agent. |
 | `folder` | The folder where the coding agent runs. The function makes it when it does not exist. `None` keeps the folder of the program. |
 | `timeout` | How long the function waits for the answer, in seconds. `None` waits without end. |
 
-The function sends the prompt through the standard input, so a long prompt does not reach the size limit of the command line. It returns the name of the coding agent and the text that the coding agent printed on the standard output, without the spaces and the line breaks at the start and at the end.
+The function sends the prompt through the standard input, so a long prompt does not reach the size limit of the command line. The one exception is `agy`: its option `-p` needs the prompt as an argument, so a prompt larger than the limit of the command line gives the error "Argument list too long". The function returns the name of the coding agent and the text that the coding agent printed on the standard output, without the spaces and the line breaks at the start and at the end.
 
 The function gives an error in these cases:
 
-- The coding agent name is not `codex` or `claude`.
+- The coding agent name is not `codex`, `claude`, or `agy`.
 - The command is not installed, or is not in the `PATH`.
 - The command exits with an error code. The error is the first line that the command printed on its standard error output.
 - The command does not answer in the time of `timeout`.
@@ -87,7 +87,7 @@ The function `run_tool` runs a tool with arguments and gives its standard output
 ## Limits
 
 - Each call is one prompt and one answer. The package keeps no conversation.
-- The package does not install `codex` or `claude`. You must install them and sign in before you use the package.
+- The package does not install `codex`, `claude`, or `agy`. You must install them and sign in before you use the package.
 
 ## Commands
 

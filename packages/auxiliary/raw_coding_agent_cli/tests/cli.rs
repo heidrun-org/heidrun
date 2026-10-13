@@ -42,6 +42,11 @@ impl FakeCommands {
         FakeCommands::new(name, &[("codex", ECHO_SCRIPT), ("claude", ECHO_SCRIPT)])
     }
 
+    /// The three coding agents print their arguments, then their standard input.
+    fn echoing_with_agy(name: &str) -> Self {
+        FakeCommands::new(name, &[("codex", ECHO_SCRIPT), ("claude", ECHO_SCRIPT), ("agy", ECHO_SCRIPT)])
+    }
+
     /// Runs the executable with `arguments`, writes `standard_input` on its standard input, and waits for it to exit.
     fn run(&self, arguments: &[&str], standard_input: &str) -> CliResult {
         let mut child = Command::new(env!("CARGO_BIN_EXE_raw_coding_agent_cli"))
@@ -92,7 +97,7 @@ fn prints_the_help_text() {
         let help = result.stdout.split_whitespace().collect::<Vec<_>>().join(" ");
         assert!(result.stdout.contains("Usage: raw_coding_agent_cli [options] [prompt]"), "{}", result.stdout);
         assert!(result.stdout.contains("-a, --agent <name>"));
-        assert!(help.contains("(choices: \"codex\", \"claude\", default: \"codex\")"), "{help}");
+        assert!(help.contains("(choices: \"codex\", \"claude\", \"agy\", default: \"codex\")"), "{help}");
         assert!(result.stdout.contains("-f, --prompt-file <path>"));
         assert!(result.stdout.contains("-v, --version"));
         assert!(result.stdout.contains("Exit codes:"));
@@ -116,6 +121,22 @@ fn runs_claude_with_the_option_agent() {
         assert_eq!(result.exit_code, Some(0));
         assert_eq!(result.stdout, "arguments:-p\nstandard input:the prompt text\n");
     }
+}
+
+#[test]
+fn runs_agy_with_the_prompt_as_the_value_of_the_option_p() {
+    let fake = FakeCommands::echoing_with_agy("agy");
+    let result = fake.run(&["--agent", "agy", "the prompt text"], "");
+    assert_eq!(result.exit_code, Some(0));
+    assert_eq!(result.stdout, "arguments:-p the prompt text\nstandard input:\n");
+}
+
+#[test]
+fn gives_agy_the_text_of_the_standard_input_inside_the_prompt_argument() {
+    let fake = FakeCommands::echoing_with_agy("agy_standard_input");
+    let result = fake.run(&["--agent", "agy", "Summarize these commits:"], "commit one\ncommit two\n");
+    assert_eq!(result.exit_code, Some(0));
+    assert_eq!(result.stdout, "arguments:-p Summarize these commits:\n\ncommit one\ncommit two\nstandard input:\n");
 }
 
 #[test]
@@ -170,7 +191,7 @@ fn exits_with_code_1_when_the_agent_name_is_not_known() {
     let fake = FakeCommands::echoing("unknown_agent");
     let result = fake.run(&["--agent", "gemini", "the prompt text"], "");
     assert_eq!(result.exit_code, Some(1));
-    assert!(result.stderr.contains("Unknown coding agent \"gemini\". Use codex or claude."), "{}", result.stderr);
+    assert!(result.stderr.contains("Unknown coding agent \"gemini\". Use codex, claude or agy."), "{}", result.stderr);
 }
 
 #[test]
