@@ -15,6 +15,7 @@
   "section.terminals": "Terminaux",
   "newAgent": "Nouvel agent (Claude, Codex, agents du projet)…",
   "newTerminal": "Nouveau terminal",
+  "newTab": "Nouvel onglet (commande par défaut)",
   "splitRight": "Diviser à droite",
   "splitDown": "Diviser en bas",
   "closePane": "Fermer le panneau {pane}",
