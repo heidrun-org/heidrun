@@ -14,6 +14,7 @@ This file gives the rules for working on this repository. The file `README.md` d
 This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 - The branch `dev_jerome` is the personal development branch of Jérôme Étienne. Jérôme's work goes on `dev_jerome`.
+- **NEVER delete or remove the branches `dev`, `dev_jerome`, or `dev_eric`. Never, in any case, locally or on the remote repository.** These branches are permanent. When you merge a pull request (on GitLab, a merge request) from one of these branches, never use the option `--delete-branch` of `gh pr merge`, and never use the option `--remove-source-branch` of `glab mr merge`. Delete only a temporary branch of the Issue Fix Workflow.
 - The branch `dev_eric` is the personal development branch of Eric. Eric's work goes on `dev_eric`.
 - Each developer works on the personal development branch of that developer only. Never put the work of Jérôme on `dev_eric`, and never put the work of Eric on `dev_jerome`.
 
