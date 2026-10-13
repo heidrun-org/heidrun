@@ -111,6 +111,15 @@ export function issueUrl(base: string | null, forge: Forge | null, n: string): s
   return forge === "github" ? `${base}/issues/${n}` : `${base}/-/issues/${n}`;
 }
 
+/** The web page of the repository of a remote address, and the forge that hosts it, or null when the address is unknown. */
+export function webOfRemote(remote: string | null): { base: string; forge: Forge } | null {
+  const address = remote === null ? null : remoteToWeb(remote);
+  if (address === null) {
+    return null;
+  }
+  return { base: address.base, forge: address.host.includes("github") ? "github" : "gitlab" };
+}
+
 /** The web page of a branch: `base/tree/branch` on GitHub, `base/-/tree/branch` on GitLab. The slashes of the name stay. */
 export function branchUrl(base: string | null, forge: Forge | null, branch: string): string | null {
   if (base === null) {
