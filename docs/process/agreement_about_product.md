@@ -1,4 +1,4 @@
-# Agreement on product decisions
+# Agreement about product
 
 - Created: 13 October 2026
 - Last updated: 13 October 2026
@@ -10,6 +10,15 @@ This document describes a way for collaborators on one repository to agree on pr
 ## What is a product decision
 
 A product decision is a decision about the direction or the priorities of the product. A technical decision is not a product decision: the technical decisions are in the rules of the coding agents, for example in `AGENTS.md`.
+
+## Scope of the agreement
+
+Coding agents write code very fast, and writing code is now easy. A small detail that is wrong is simple and quick to fix later. So the collaborators agree only at the highest level. The scope decides how much the collaborators talk about a decision, and when they stop.
+
+- The collaborators agree on which feature the product has, and on how the product exposes the feature to the user.
+- The collaborators do not discuss small details, for example where a button goes. They do not spend hours on such a detail.
+- For each small detail, a collaborator or a coding agent makes a reasonable choice. The choice must be reasonable, but it does not need to be the best choice.
+- If a choice is not good, someone changes it later.
 
 ## Method
 

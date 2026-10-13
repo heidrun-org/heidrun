@@ -10,7 +10,7 @@ This document describes a way for several developers to work on one repository w
 
 ## Workflow
 
-1. The team agrees on the product level (direction and priorities) with the method of [Asynchronous communication](asynchronous_communication.md).
+1. The team agrees on the product level (direction and priorities) with the method of [Agreement about product](agreement_about_product.md).
 2. Each developer builds a feature on a separate branch.
 3. When the feature is done, the developer runs the full test.
 4. The developer merges the current development branch into the feature branch, fixes the merge errors, and runs the full test again.
@@ -27,4 +27,4 @@ All the members of the team agree on the full test. It has two parts:
 ## Open points
 
 - What Heidrun does to support this workflow is not decided.
-- The way the team agrees on the product level is not fully specified. Step 1 uses the method of asynchronous communication, but how the team reaches a decision with this method is not described.
+- The open points of [Agreement about product](agreement_about_product.md) also apply to step 1.
