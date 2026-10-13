@@ -171,7 +171,12 @@ const subtitle = computed(() => {
   height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
   border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
 }
+/* The header of the selected pane has a tinted background, and the name and the folder of every other pane are dimmed, so that
+   the selected pane is the one pane with a full contrast. A blocked pane keeps the red look of its header and its text. */
+.pane.selected .head { background: var(--pane-head-selected); }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
+.pane:not(.selected):not(.blocked) .name { color: var(--muted); }
+.pane:not(.selected):not(.blocked) .sub { color: var(--faint); }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -187,4 +192,5 @@ const subtitle = computed(() => {
 .tool.txt { font-size: var(--font-size); line-height: 1; }
 .tool.on { color: var(--accent); }
 .pane.in-column-of-pinned-panes .head { background: var(--bar); }
+.pane.in-column-of-pinned-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 </style>

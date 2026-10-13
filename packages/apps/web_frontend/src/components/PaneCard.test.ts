@@ -27,7 +27,7 @@ beforeEach(() => {
 /** The declarations of the style rule of `selector`, in the style block of the component PaneCard. */
 function styleRule(selector: string): string {
   const style = paneCardSource.slice(paneCardSource.indexOf("<style"));
-  const escaped = selector.replace(/[.]/g, "\\.");
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const match = new RegExp(`(?:^|\\n)${escaped} \\{([^}]*)\\}`).exec(style);
   expect(match, `the style rule ${selector}`).not.toBeNull();
   return match![1];
@@ -144,6 +144,23 @@ describe("PaneCard", () => {
     pinnedPaneState.focus = "w1:p2";
     const wrapper = await mountPaneCard({}, true);
     expect(wrapper.get("section").classes()).not.toContain("selected");
+  });
+
+  it("gives the header of the selected pane a tinted background, in the grid and in the column of pinned panes", () => {
+    expect(styleRule(".pane.selected .head")).toContain("background: var(--pane-head-selected)");
+    expect(styleRule(".pane.in-column-of-pinned-panes.selected:not(.blocked) .head")).toContain(
+      "background: var(--pane-head-selected)",
+    );
+  });
+
+  it("dims the name and the folder in the header of a pane that is not selected and not blocked", () => {
+    expect(styleRule(".pane:not(.selected):not(.blocked) .name")).toContain("color: var(--muted)");
+    expect(styleRule(".pane:not(.selected):not(.blocked) .sub")).toContain("color: var(--faint)");
+  });
+
+  it("keeps the red header of a blocked pane over the tinted header of the selected pane", () => {
+    const style = paneCardSource.slice(paneCardSource.indexOf("<style"));
+    expect(style.indexOf("\n.pane.blocked .head {")).toBeGreaterThan(style.indexOf("\n.pane.selected .head {"));
   });
 });
 

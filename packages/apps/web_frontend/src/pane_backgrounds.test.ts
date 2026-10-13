@@ -49,5 +49,12 @@ describe('background colours of the window', () => {
 			const viewport = PaneBackgroundsTestHelper.readVariable(selector, '--bg');
 			expect(viewport > side).toBe(true);
 		});
+
+		it(`gives the header of the selected pane its own tint, different from the pane background, in ${selector}`, () => {
+			const selectedHeader = PaneBackgroundsTestHelper.readVariable(selector, '--pane-head-selected');
+			const viewport = PaneBackgroundsTestHelper.readVariable(selector, '--bg');
+			expect(selectedHeader).toMatch(/^#[0-9a-f]{6}$/i);
+			expect(selectedHeader).not.toBe(viewport);
+		});
 	}
 });
