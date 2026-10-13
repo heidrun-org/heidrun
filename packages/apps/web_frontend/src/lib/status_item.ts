@@ -1,5 +1,3 @@
-import { gaugeLevel } from "./format";
-
 /** One agent in the menu of the status item. */
 export type StatusItemAgent = {
   /** Identifier of the pane of the agent. */
@@ -16,25 +14,11 @@ export type StatusItemSection = {
   agents: StatusItemAgent[];
 };
 
-/** The quota that one ring of the status item shows. */
-export type StatusItemQuota = {
-  /** Label of the quota in the status bar. The web page opens the information card of the status bar section with it. */
-  label: string;
-  /** Share of the quota already used, from 0 to 100. */
-  percent: number;
-  /** Colour level of the quota. */
-  level: "ok" | "warn" | "crit";
-  /** Translated line shown in the menu. */
-  text: string;
-};
-
 /** Everything the status item in the macOS menu bar shows. The Rust module `status_item.rs` reads the same shape. */
 export type StatusItemPayload = {
   blocked: StatusItemSection;
   done: StatusItemSection;
   working: StatusItemSection;
-  /** The quotas to show, one ring and one menu line each: Claude first, then Codex. Empty when no quota is known. */
-  quotas: StatusItemQuota[];
   /** Translated text of the menu item that shows the main window. */
   openLabel: string;
   /** Translated text of a section without agent. */
@@ -54,8 +38,6 @@ export type StatusItemInput = {
   now: number;
   /** How long an agent may stay blocked before the status item glows red, in milliseconds. 0 switches it off. */
   blockedLimitMs: number;
-  /** The quotas to show, in the order of the rings. Empty when no quota is known. */
-  quotas: { label: string; percent: number; text: string }[];
   /** Translated section titles. */
   titles: { blocked: string; done: string; working: string };
   openLabel: string;
@@ -79,18 +61,13 @@ function isUrgent(input: StatusItemInput): boolean {
   );
 }
 
-/** Builds the data that the status item shows from the agents and the quotas of the session. */
+/** Builds the data that the status item shows from the agents of the session. */
 export function buildStatusItemPayload(input: StatusItemInput): StatusItemPayload {
-  const quotas = input.quotas.map((quota) => {
-    const percent = Math.min(100, Math.max(0, quota.percent));
-    return { label: quota.label, percent, level: gaugeLevel(percent), text: quota.text };
-  });
   return {
     isUrgent: isUrgent(input),
     blocked: section(input, "blocked"),
     done: section(input, "done"),
     working: section(input, "working"),
-    quotas,
     openLabel: input.openLabel,
     emptyLabel: input.emptyLabel,
   };

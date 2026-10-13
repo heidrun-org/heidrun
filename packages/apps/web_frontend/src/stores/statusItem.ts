@@ -2,45 +2,18 @@ import { computed, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { t } from "../i18n/index";
-import { quotaRingWindow } from "../lib/format";
-import { requestQuotaCard } from "../lib/quota_card_request";
 import { buildStatusItemPayload } from "../lib/status_item";
-import { allPanes, paneFullName, quotas, selectPane, state } from "./session";
+import { allPanes, paneFullName, selectPane, state } from "./session";
 import { settings } from "./settings";
 
 /** Name of the event that the Rust side sends when the user chooses an agent in the menu of the status item. */
 const SELECT_PANE_EVENT = "status-item-select-pane";
-
-/**
- * Name of the event that the Rust side sends when the user chooses a quota line in the menu of the status item. The
- * value is the label of the quota.
- */
-const SHOW_QUOTA_EVENT = "status-item-show-quota";
 
 /** Time between two readings of the clock, in milliseconds: the status item turns red within this time. */
 const CLOCK_INTERVAL_MS = 15_000;
 
 /** The current time in milliseconds, updated every `CLOCK_INTERVAL_MS`. */
 const now = ref(Date.now());
-
-/** The quotas of the accounts that the rings of the status item show: Claude first, then Codex. */
-const shownQuotas = computed(() => {
-  const owned = quotas.value.filter((quota) => settings.ownedAgents.includes(quota.provider));
-  const ordered = ["claude", "codex"].flatMap((provider) => owned.filter((quota) => quota.provider === provider));
-  return ordered.flatMap((quota) => {
-    const ringWindow = quotaRingWindow(quota.windows);
-    if (ringWindow === undefined) {
-      return [];
-    }
-    return [
-      {
-        label: quota.label,
-        percent: ringWindow.percent,
-        text: t("statusItem.quota", { name: quota.label.split(" · ")[0] }),
-      },
-    ];
-  });
-});
 
 /** The data of the status item, as text: the status item is updated only when this text changes. */
 const payloadJson = computed(() =>
@@ -56,7 +29,6 @@ const payloadJson = computed(() =>
         })),
       now: now.value,
       blockedLimitMs: settings.notifBlockedMin * 60_000,
-      quotas: shownQuotas.value,
       titles: {
         blocked: t("statusItem.blocked"),
         done: t("statusItem.done"),
@@ -71,9 +43,8 @@ const payloadJson = computed(() =>
 let started = false;
 
 /**
- * Starts the status item in the macOS menu bar: sends the agents and the quota to the Rust side each time they change,
- * selects the agent that the user chooses in the menu, and opens the information card of the quota that the user
- * chooses in the menu. Outside of the Tauri window, nothing happens.
+ * Starts the status item in the macOS menu bar: sends the agents to the Rust side each time they change, and selects
+ * the agent that the user chooses in the menu. Outside of the Tauri window, nothing happens.
  */
 export function startStatusItem() {
   if (started) {
@@ -102,8 +73,5 @@ export function startStatusItem() {
     if (pane !== undefined) {
       selectPane(pane);
     }
-  }).catch(() => {});
-  listen<string>(SHOW_QUOTA_EVENT, (event) => {
-    requestQuotaCard(event.payload);
   }).catch(() => {});
 }

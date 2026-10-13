@@ -3,6 +3,5 @@
   "blocked": "Blocked",
   "done": "Finished",
   "working": "Working",
-  "none": "None",
-  "quota": "{name} quota"
+  "none": "None"
 }
