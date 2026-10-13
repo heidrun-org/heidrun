@@ -42,6 +42,8 @@ async function mountApp() {
   session.state.selectedPaneId = "p1";
   settingsStore.settings.leftOpen = true;
   settingsStore.settings.rightOpen = true;
+  settingsStore.settings.leftCollapsed = false;
+  settingsStore.settings.rightCollapsed = false;
   settingsStore.settings.leftSidebarSection = "actions";
   settingsStore.settings.rightSidebarSection = "toHandle";
   const wrapper = shallowMount(App, { attachTo: document.body, global: { stubs: { TopBar: false, Icon: false, MoreMenu: true, ThemeMenu: true } } });
@@ -237,5 +239,41 @@ describe("texts that name a sidebar", () => {
     expect(t("topBar.rightSidebarLabel")).toBe("Show the right sidebar");
     expect(t("topBar.leftSidebarTitle")).toBe("Left sidebar (⌘B)");
     expect(t("topBar.rightSidebarTitle")).toBe("Right sidebar (⌥⌘B)");
+  });
+});
+
+describe("collapsing a sidebar to the sidebar icon bar", () => {
+  it("keeps the collapsed left sidebar, without its line to drag", async () => {
+    const { wrapper, settings } = await mountApp();
+    settings.leftCollapsed = true;
+    await wrapper.vm.$nextTick();
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
+  });
+
+  it("keeps the collapsed right sidebar, without its line to drag", async () => {
+    const { wrapper, settings } = await mountApp();
+    settings.rightCollapsed = true;
+    await wrapper.vm.$nextTick();
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
+  });
+
+  it("still hides a collapsed sidebar completely with its hide button", async () => {
+    const { wrapper, settings } = await mountApp();
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
+    await wrapper.findAll(".top .icon-btn[aria-pressed]")[0].trigger("click");
+    await wrapper.findAll(".top .icon-btn[aria-pressed]")[1].trigger("click");
+    expect(bodyChildren(wrapper)).toEqual(["main"]);
+  });
+
+  it("remembers the collapsed sidebars for the next start", async () => {
+    const { wrapper, settings } = await mountApp();
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
+    await wrapper.vm.$nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
+    expect(saved.leftCollapsed).toBe(true);
+    expect(saved.rightCollapsed).toBe(true);
   });
 });

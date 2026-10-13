@@ -26,7 +26,7 @@ import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { search } from "./stores/search";
-import { openSidebarSection } from "./stores/sidebar_sections";
+import { COLLAPSED_SIDEBAR_WIDTH, openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
@@ -82,7 +82,10 @@ import type { PaneOuterEdge } from "./lib/pane_separators";
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
-const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
+// A hidden sidebar takes no width, and a sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
+const leftTakenWidth = computed(() => (settings.leftOpen ? (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth) : 0));
+const rightTakenWidth = computed(() => (settings.rightOpen ? (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth) : 0));
+const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTakenWidth.value : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
@@ -90,14 +93,15 @@ const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.lengt
 const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
 const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
 const COLUMN_OF_PINNED_PANES = { min: 320, max: 1400, defaultWidth: 560 };
-const leftReserve = computed(() => (settings.rightOpen ? settings.rightWidth : 0) + columnOfPinnedPanesTakenWidth.value);
-const rightReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + columnOfPinnedPanesTakenWidth.value);
-const columnOfPinnedPanesReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0));
+const leftReserve = computed(() => rightTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
+const rightReserve = computed(() => leftTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
+const columnOfPinnedPanesReserve = computed(() => leftTakenWidth.value + rightTakenWidth.value);
 
 // The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
+// A sidebar collapsed to the sidebar icon bar has a fixed width: nobody drags it.
 const paneOuterEdges = computed(() => ({
-  left: settings.leftOpen,
-  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
+  left: settings.leftOpen && settings.leftCollapsed === false,
+  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen && settings.rightCollapsed === false),
 }));
 
 // The column that a corner of the panes under the pointer touches: its line is drawn in colour.
@@ -286,7 +290,7 @@ onBeforeUnmount(() => {
     <div class="body">
       <template v-if="settings.leftOpen">
         <Sidebar />
-        <Resizer v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+        <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
       </template>
       <main class="center">
         <template v-if="state.snapshot">
@@ -311,7 +315,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <RightPanel />
       </template>
     </div>

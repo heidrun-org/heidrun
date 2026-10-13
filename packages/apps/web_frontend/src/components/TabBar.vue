@@ -98,7 +98,7 @@ function isRemoteControlled(tabId: string): boolean {
   position: relative; z-index: 2; flex-shrink: 0; min-width: 0; align-items: flex-end; padding: 4px var(--pane-radius) 0 0;
   margin-bottom: -1px;
 }
-/* Bootstrap draws the tabs, as the navigation bar of a sidebar looks: a border around the selected tab and around the tab under the
+/* Bootstrap draws the tabs: a border around the selected tab and around the tab under the
    mouse. These variables give Bootstrap the colors of the application. The selected tab has the color of the panes. */
 .nav-tabs {
   --bs-nav-tabs-border-width: 1px;

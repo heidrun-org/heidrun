@@ -2,12 +2,12 @@
 import { computed } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
-import NavigationBar from "./NavigationBar.vue";
+import SidebarIconBar from "./SidebarIconBar.vue";
 import SourceControlPanel from "./SourceControlPanel.vue";
 import { currentGit } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
-import { openSidebarSection } from "../stores/sidebar_sections";
+import { clickSidebarSectionIcon, COLLAPSED_SIDEBAR_WIDTH, type SidebarSectionButton } from "../stores/sidebar_sections";
 import { t } from "../i18n/index";
 
 /** The number of scripts of the selected workspace that are running. */
@@ -20,45 +20,47 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the navigation bar of the left sidebar: the Scripts and Source control sidebar sections. */
-const sidebarSections = computed(() => [
-  { id: "actions", label: t("sidebar.sidebarSection.actions"), badge: runningScripts.value, isLive: true },
+/** The buttons of the sidebar icon bar of the left sidebar: the Scripts and Source control sidebar sections. */
+const sidebarSections = computed((): SidebarSectionButton[] => [
+  { id: "actions", label: t("sidebar.sidebarSection.actions"), icon: "play-circle", badge: runningScripts.value, isLive: true },
   {
     id: "sourceControl",
     label: t("sourceControlPanel.sidebarSection"),
+    icon: "git",
     badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
   },
 ]);
 
 function selectSidebarSection(id: string) {
-  openSidebarSection(id === "sourceControl" ? "sourceControl" : "actions");
+  clickSidebarSectionIcon(id === "sourceControl" ? "sourceControl" : "actions");
 }
 </script>
 
 <template>
-  <aside class="side" :style="{ width: `${settings.leftWidth}px` }">
-    <div class="sidebar-sections">
-      <NavigationBar
-        class="left-navigation-bar"
-        :sidebar-sections="sidebarSections"
-        :selected-id="settings.leftSidebarSection"
-        :label="t('sidebar.navigationBarLabel')"
-        @select="selectSidebarSection"
-      />
-      <div class="sidebar-section-body">
-        <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
-        <SourceControlPanel v-else />
-      </div>
+  <aside class="side" :style="{ width: `${settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth}px` }">
+    <SidebarIconBar
+      :sidebar-sections="sidebarSections"
+      :selected-id="settings.leftCollapsed ? null : settings.leftSidebarSection"
+      :label="t('sidebar.navigationBarLabel')"
+      side="left"
+      :is-collapsed="settings.leftCollapsed"
+      @select="selectSidebarSection"
+      @toggle="settings.leftCollapsed = !settings.leftCollapsed"
+    />
+    <div v-if="settings.leftCollapsed === false" class="sidebar-section-body">
+      <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
+      <SourceControlPanel v-else />
     </div>
   </aside>
 </template>
 
 <style scoped>
 .side {
-  flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
-  display: flex; flex-direction: column; gap: 24px; padding: 5px 0 16px; overflow-y: auto;
+  flex-shrink: 0; min-width: 0; border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side); overflow: hidden;
+  display: flex;
 }
-.sidebar-sections { flex: 1 0 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.left-navigation-bar { padding: 0 16px; }
-.sidebar-section-body { flex: 1 0 280px; min-height: 0; display: flex; flex-direction: column; }
+.sidebar-section-body {
+  flex: 1 1 auto; min-width: 0; border-left: 1px solid var(--line); padding: 5px 0 16px; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
 </style>
