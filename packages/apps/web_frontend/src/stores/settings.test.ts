@@ -91,6 +91,12 @@ describe("keep agents running after quit", () => {
   });
 });
 
+describe("ask before deleting a saved search", () => {
+  it("is on by default, so the button Delete asks for a confirmation", () => {
+    expect(settings.confirmSavedSearchDelete).toBe(true);
+  });
+});
+
 describe("saved searches of the Code hosting sidebar section", () => {
   /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
   async function settingsFrom(saved: unknown) {

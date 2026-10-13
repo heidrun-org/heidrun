@@ -102,6 +102,12 @@ const timeExample = computed(() => {
       <span>{{ t("settingsGeneral.confirmPaneClose") }}</span>
     </label>
 
+    <h4>{{ t("settingsGeneral.askBeforeDeletingTitle") }}</h4>
+    <label class="check">
+      <input v-model="settings.confirmSavedSearchDelete" type="checkbox" />
+      <span>{{ t("settingsGeneral.confirmSavedSearchDelete") }}</span>
+    </label>
+
     <h4>{{ t("settingsGeneral.quitTitle") }}</h4>
     <div class="checkRow">
       <label class="check">

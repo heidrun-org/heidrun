@@ -9,7 +9,15 @@ vi.mock("../lib/refs", async (importOriginal) => {
 });
 
 import { refContext } from "../lib/refs";
-import { codeHosting, itemPrefix, loadCodeHosting, searchCodeHosting, type CodeHostingItem } from "./code_hosting";
+import {
+  codeHosting,
+  forgeOfContext,
+  itemPrefix,
+  loadCodeHosting,
+  readCodeHostingForge,
+  searchCodeHosting,
+  type CodeHostingItem,
+} from "./code_hosting";
 
 /** The context of a repository on `forge`, with a remote address. */
 function contextOf(forge: "github" | "gitlab" | null, base: string | null = "https://example.com/team/app"): RefContext {
@@ -413,6 +421,38 @@ describe("loadCodeHosting when nothing can be read", () => {
     answerOlder(JSON.stringify([{ number: 1, title: "older", url: "https://x/1" }]));
     await older;
     expect(codeHosting.issues.map((item) => item.title)).toEqual(["newer"]);
+  });
+});
+
+describe("forgeOfContext", () => {
+  it("is github for a remote address on GitHub, and gitlab for any other host", () => {
+    expect(forgeOfContext(contextOf("github"))).toBe("github");
+    expect(forgeOfContext(contextOf("gitlab"))).toBe("gitlab");
+    expect(forgeOfContext(contextOf(null))).toBe("gitlab");
+  });
+
+  it("is null for a repository without a remote address", () => {
+    expect(forgeOfContext(contextOf("github", null))).toBeNull();
+    expect(forgeOfContext(contextOf(null, null))).toBeNull();
+  });
+});
+
+describe("readCodeHostingForge", () => {
+  it("reads the hosting service from the remote address, with no call to gh or glab", async () => {
+    vi.mocked(refContext).mockResolvedValue(contextOf("github"));
+    expect(await readCodeHostingForge("/work/heidrun")).toBe("github");
+    vi.mocked(refContext).mockResolvedValue(contextOf(null));
+    expect(await readCodeHostingForge("/work/app")).toBe("gitlab");
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("is null for no folder, for a repository without a remote address, and when the remote address cannot be read", async () => {
+    expect(await readCodeHostingForge(null)).toBeNull();
+    expect(refContext).not.toHaveBeenCalled();
+    vi.mocked(refContext).mockResolvedValue(contextOf(null, null));
+    expect(await readCodeHostingForge("/work/app")).toBeNull();
+    vi.mocked(refContext).mockRejectedValue(new Error("no remote"));
+    expect(await readCodeHostingForge("/work/app")).toBeNull();
   });
 });
 

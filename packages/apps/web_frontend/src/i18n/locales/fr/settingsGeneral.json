@@ -14,6 +14,8 @@
   "confirmWorkspaceClose": "Demander avant de fermer un espace de travail",
   "confirmTabClose": "Demander avant de fermer un onglet",
   "confirmPaneClose": "Demander avant de fermer un panneau",
+  "askBeforeDeletingTitle": "Demander avant de supprimer",
+  "confirmSavedSearchDelete": "Demander avant de supprimer une recherche enregistrée",
   "quitTitle": "Quitter",
   "keepAgentsRunning": "Garder les agents actifs après avoir quitté",
   "keepAgentsRunningHelpLabel": "Que fait ce réglage ?",

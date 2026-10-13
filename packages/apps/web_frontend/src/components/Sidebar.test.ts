@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
+import type { RefContext } from "../lib/refs";
 import type { SessionSnapshot } from "../lib/types";
+import type { GitStatus } from "../stores/git";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
+vi.mock("../lib/refs", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../lib/refs")>();
+  return { ...original, refContext: vi.fn() };
+});
 
 const SNAPSHOT = {
   workspaces: [
@@ -45,9 +51,22 @@ function snapshotWithCalls(): SessionSnapshot {
   } as unknown as SessionSnapshot;
 }
 
-beforeEach(() => {
+/** The context of a repository with a remote address on `forge`, or without a remote address for a null forge. */
+function contextOf(forge: "github" | "gitlab" | null, base: string | null = "https://example.com/team/app"): RefContext {
+  return { base, origin: "https://example.com", forge, ticketUrl: null, ticketPrefixes: [], enabled: true };
+}
+
+/** The class of the icon of the button Code hosting of the sidebar icon bar. */
+function codeHostingIconClass(wrapper: Awaited<ReturnType<typeof mountSidebar>>["wrapper"]): string {
+  return wrapper.get(".sidebar-icon-bar [role=tab][aria-label='Code hosting'] i.bi").classes()[1];
+}
+
+beforeEach(async () => {
   localStorage.clear();
   vi.clearAllMocks();
+  const { refContext } = await import("../lib/refs");
+  vi.mocked(refContext).mockResolvedValue(contextOf(null, null));
+  (await import("../stores/git")).git.status = {};
   settings.leftSidebarSection = "actions";
   settings.leftCollapsed = false;
 });
@@ -88,6 +107,56 @@ describe("Sidebar icon bar of the left sidebar", () => {
   it("shows one icon for each sidebar section, Files first: a folder for Files, a play button for Scripts, the Git logo for Source control, and a cloud for Code hosting", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-folder2", "bi-play-circle", "bi-git", "bi-cloud"]);
+  });
+
+  it("shows a cloud for Code hosting while the hosting service is not known: no workspace, no Git repository, or no remote address", async () => {
+    const { wrapper, session } = await mountSidebar();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+    const gitStore = await import("../stores/git");
+    gitStore.git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+    session.state.selectedWorkspaceId = null;
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+  });
+
+  it("shows the GitHub logo for Code hosting when the repository of the selected workspace is on GitHub", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockResolvedValue(contextOf("github"));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    const { wrapper } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-github");
+    expect(wrapper.get(".sidebar-icon-bar [aria-label='Code hosting']").attributes("title")).toBe("Code hosting");
+  });
+
+  it("shows the GitLab logo for Code hosting when the repository is on GitLab, and for every host that is not GitHub", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockResolvedValue(contextOf(null));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    const { wrapper } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
+    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/other" } as GitStatus };
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
+  });
+
+  it("changes the logo of Code hosting when another workspace is selected, and reads no list to do it", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockImplementation(async (folder) => contextOf(folder === "/work/heidrun" ? "github" : "gitlab"));
+    (await import("../stores/git")).git.status = {
+      w1: { root: "/work/heidrun" } as GitStatus,
+      w2: { root: "/work/teamwright" } as GitStatus,
+    };
+    const { wrapper, session } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-github");
+    session.state.selectedWorkspaceId = "w2";
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
   });
 
   it("puts the sidebar icon bar at the left edge, before the content of the sidebar section, in the same frame", async () => {

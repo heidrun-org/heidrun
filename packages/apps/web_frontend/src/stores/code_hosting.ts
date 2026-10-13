@@ -4,6 +4,7 @@
 // A search filters the two lists: `gh` takes it as it is, and for GitLab it is translated into filters.
 // - issue #370
 // - issue #374
+// - issue #378
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../i18n/index";
@@ -14,7 +15,7 @@ import {
   usesCurrentUser,
   type GitlabTranslation,
 } from "../lib/code_hosting_search";
-import { refContext, type Forge } from "../lib/refs";
+import { refContext, type Forge, type RefContext } from "../lib/refs";
 import type { ChatReferenceLabel } from "./chat_references";
 
 /** The most items that one list reads from GitHub or GitLab. A list that reaches it may hold more items. */
@@ -67,6 +68,36 @@ export const codeHosting = reactive({
   /** The lists that are folded. */
   folded: { issues: false, requests: false } as Record<CodeHostingGroup, boolean>,
 });
+
+/**
+ * The hosting service of a repository, from its remote address. A host that is not GitHub is read as GitLab, as
+ * everywhere else.
+ * @param context - the context of the folder of the repository
+ * @returns the hosting service, or null when the repository has no remote address
+ */
+export function forgeOfContext(context: RefContext): Forge | null {
+  if (context.base === null) {
+    return null;
+  }
+  return context.forge ?? "gitlab";
+}
+
+/**
+ * Reads the hosting service of the repository of a folder, for the icon of the Code hosting sidebar section. It reads
+ * the remote address only: no call to `gh` or `glab`, and no network call.
+ * @param folder - the root folder of the Git repository of the selected workspace, or null when there is none
+ * @returns the hosting service, or null when it is not known
+ */
+export async function readCodeHostingForge(folder: string | null): Promise<Forge | null> {
+  if (folder === null) {
+    return null;
+  }
+  try {
+    return forgeOfContext(await refContext(folder));
+  } catch {
+    return null;
+  }
+}
 
 /** The number of the last load: an older load that ends later does not replace the lists. */
 let lastLoad = 0;
@@ -308,13 +339,13 @@ export async function loadCodeHosting(folder: string | null, isRefresh = false):
     if (thisLoad !== lastLoad) {
       return;
     }
-    if (context.base === null) {
+    const forge = forgeOfContext(context);
+    if (forge === null || context.base === null) {
       codeHosting.forge = null;
       codeHosting.webBase = null;
       codeHosting.status = "noRemote";
       return;
     }
-    const forge: Forge = context.forge ?? "gitlab";
     const search = codeHosting.search;
     const lists =
       forge === "github" ? await readGithub(folder, isRefresh, search) : await readGitlab(folder, isRefresh, search);

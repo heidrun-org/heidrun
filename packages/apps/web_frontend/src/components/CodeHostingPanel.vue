@@ -4,10 +4,12 @@
 // same height: the number and the title, then two small detail lines. A click on a row opens an information card at its
 // right, with the details that the forge gives (see `ChatReferenceDetails.vue`), and a button that opens the web page of
 // the item in the web browser. A search field above the lists filters them, and the developer keeps a search under a
-// name as a saved search.
+// name as a saved search. The buttons of the header save a search, edit the saved search that runs, and refresh the
+// lists. Saving and editing open a modal window (see `SavedSearchModal.vue`).
 // - issue #370
 // - issue #374
-import { computed, nextTick, ref, watch } from "vue";
+// - issue #378
+import { computed, ref, watch } from "vue";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
 import Icon from "./Icon.vue";
 import InformationCard from "./InformationCard.vue";
@@ -33,7 +35,7 @@ import {
   type CodeHostingGroup,
   type CodeHostingItem,
 } from "../stores/code_hosting";
-import { deleteSavedSearch, saveSearch, updateSavedSearch } from "../stores/code_hosting_searches";
+import { openEditSavedSearchModal, openSaveSearchModal } from "../stores/saved_search_modal";
 import { t } from "../i18n/index";
 
 /** The two lists, from the top. */
@@ -117,17 +119,27 @@ function emptyText(group: CodeHostingGroup): string {
 /** The text of the search field. It is the search that runs after the key Enter, not always the search that runs now. */
 const searchText = ref(codeHosting.search);
 
-/** True while the row that asks for the name of a new saved search is shown. */
-const isSaving = ref(false);
+// A search that runs from elsewhere (the window "Save this search", a saved search button) shows in the search field.
+watch(
+  () => codeHosting.search,
+  (search) => {
+    searchText.value = search;
+  },
+);
 
-/** The name that the developer writes for a new saved search. */
-const savingName = ref("");
+/** The saved search that runs now, or undefined when no saved search runs. */
+const runningSearch = computed(() => {
+  if (codeHosting.search === "") {
+    return undefined;
+  }
+  return settings.codeHostingSavedSearches.find((saved) => saved.query === codeHosting.search);
+});
 
-/** True while the saved searches show their name, their search, and a button to delete them. */
-const isEditing = ref(false);
-
-/** The field of the name of a new saved search. */
-const nameInput = ref<HTMLInputElement | null>(null);
+/** The button "Save this search" works when the field holds a search that no saved search already holds. */
+const canSaveSearch = computed(() => {
+  const search = searchText.value.trim();
+  return search !== "" && settings.codeHostingSavedSearches.some((saved) => saved.query === search) === false;
+});
 
 /** Runs the search of the search field. */
 function runSearch() {
@@ -143,39 +155,17 @@ function applySearch(query: string) {
   runSearch();
 }
 
-/** Shows the row that asks for the name of a new saved search. */
-async function startSaving() {
-  savingName.value = "";
-  isSaving.value = true;
-  await nextTick();
-  nameInput.value?.focus();
+/** Opens the window "Save this search" for the search of the search field. */
+function saveCurrentSearch() {
+  openSaveSearchModal(searchText.value.trim());
 }
 
-/** Keeps the search of the search field under the name that was written, and hides the row of the name. */
-function confirmSaving() {
-  if (saveSearch(savingName.value, searchText.value)) {
-    isSaving.value = false;
+/** Opens the window "Edit the saved search" for the saved search that runs now. */
+function editRunningSearch() {
+  if (runningSearch.value !== undefined) {
+    openEditSavedSearchModal(runningSearch.value.name);
   }
 }
-
-/**
- * Keeps the change of a field of a saved search. A change that is not valid (an empty text, or the name of another
- * saved search) is undone in the field.
- * @param index - the place of the saved search in the list
- * @param field - the field that changed
- * @param event - the event of the change of the field
- */
-function commitEdit(index: number, field: "name" | "query", event: Event) {
-  const input = event.target as HTMLInputElement;
-  const saved = settings.codeHostingSavedSearches[index];
-  if (field === "name") {
-    updateSavedSearch(index, input.value, saved.query);
-  } else {
-    updateSavedSearch(index, saved.name, input.value);
-  }
-  input.value = saved[field];
-}
-
 function toggleGroup(group: CodeHostingGroup) {
   codeHosting.folded[group] = codeHosting.folded[group] === false;
 }
@@ -200,16 +190,42 @@ async function readDetails(row: Row) {
     <template v-else>
       <header class="d-flex align-items-center">
         <span class="title me-auto">{{ t("codeHostingPanel.title") }}</span>
-        <button
-          type="button"
-          class="btn btn-sm icon-button"
-          :aria-label="t('codeHostingPanel.refresh')"
-          :title="t('codeHostingPanel.refresh')"
-          :disabled="codeHosting.status === 'loading'"
-          @click="loadCodeHosting(currentGit.root, true)"
-        >
-          <Icon name="arrow-clockwise" />
-        </button>
+        <div class="btn-group" role="group" :aria-label="t('codeHostingPanel.buttonsLabel')">
+          <template v-if="codeHosting.status !== 'noRemote'">
+            <button
+              type="button"
+              class="btn btn-sm icon-button"
+              data-save-search
+              :aria-label="t('codeHostingPanel.saveSearch')"
+              :title="t('codeHostingPanel.saveSearch')"
+              :disabled="canSaveSearch === false"
+              @click="saveCurrentSearch"
+            >
+              <Icon name="bookmark-plus" />
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm icon-button"
+              data-edit-saved-search
+              :aria-label="t('codeHostingPanel.editSearch')"
+              :title="t('codeHostingPanel.editSearch')"
+              :disabled="runningSearch === undefined"
+              @click="editRunningSearch"
+            >
+              <Icon name="pencil" />
+            </button>
+          </template>
+          <button
+            type="button"
+            class="btn btn-sm icon-button"
+            :aria-label="t('codeHostingPanel.refresh')"
+            :title="t('codeHostingPanel.refresh')"
+            :disabled="codeHosting.status === 'loading'"
+            @click="loadCodeHosting(currentGit.root, true)"
+          >
+            <Icon name="arrow-clockwise" />
+          </button>
+        </div>
       </header>
 
       <template v-if="codeHosting.status !== 'noRemote'">
@@ -231,47 +247,6 @@ async function readDetails(row: Row) {
             :title="t('codeHostingPanel.searchRun')"
           >
             <Icon name="search" />
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm icon-button"
-            :aria-label="t('codeHostingPanel.saveSearch')"
-            :title="t('codeHostingPanel.saveSearch')"
-            :disabled="searchText.trim() === ''"
-            @click="startSaving"
-          >
-            <Icon name="bookmark-plus" />
-          </button>
-        </form>
-        <form v-if="isSaving" class="saving d-flex align-items-center gap-1" @submit.prevent="confirmSaving">
-          <input
-            ref="nameInput"
-            v-model="savingName"
-            type="text"
-            class="form-control form-control-sm"
-            spellcheck="false"
-            autocomplete="off"
-            :aria-label="t('codeHostingPanel.savedName')"
-            :placeholder="t('codeHostingPanel.savedName')"
-            @keydown.esc.prevent="isSaving = false"
-          />
-          <button
-            type="submit"
-            class="btn btn-sm icon-button"
-            :aria-label="t('codeHostingPanel.saveConfirm')"
-            :title="t('codeHostingPanel.saveConfirm')"
-            :disabled="savingName.trim() === ''"
-          >
-            <Icon name="check-lg" />
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm icon-button"
-            :aria-label="t('codeHostingPanel.cancel')"
-            :title="t('codeHostingPanel.cancel')"
-            @click="isSaving = false"
-          >
-            <Icon name="x-lg" />
           </button>
         </form>
         <div
@@ -303,146 +278,104 @@ async function readDetails(row: Row) {
           >
             <span class="saved-name">{{ saved.name }}</span>
           </button>
-          <button
-            type="button"
-            class="btn btn-sm icon-button ms-auto"
-            data-edit-saved-searches
-            :aria-label="isEditing ? t('codeHostingPanel.doneEditing') : t('codeHostingPanel.editSearches')"
-            :title="isEditing ? t('codeHostingPanel.doneEditing') : t('codeHostingPanel.editSearches')"
-            :aria-pressed="isEditing"
-            @click="isEditing = isEditing === false"
-          >
-            <Icon :name="isEditing ? 'check-lg' : 'pencil'" />
-          </button>
-        </div>
-        <div v-if="isEditing && settings.codeHostingSavedSearches.length > 0" class="editing d-flex flex-column">
-          <div v-for="(saved, index) in settings.codeHostingSavedSearches" :key="index" class="editing-row" data-editing-row>
-            <input
-              type="text"
-              class="form-control form-control-sm editing-name"
-              spellcheck="false"
-              autocomplete="off"
-              :value="saved.name"
-              :aria-label="t('codeHostingPanel.savedSearchName')"
-              @change="commitEdit(index, 'name', $event)"
-            />
-            <input
-              type="text"
-              class="form-control form-control-sm editing-query"
-              spellcheck="false"
-              autocomplete="off"
-              :value="saved.query"
-              :aria-label="t('codeHostingPanel.savedSearchQuery')"
-              @change="commitEdit(index, 'query', $event)"
-            />
-            <button
-              type="button"
-              class="btn btn-sm icon-button editing-delete"
-              :aria-label="t('codeHostingPanel.deleteSearch', { name: saved.name })"
-              :title="t('codeHostingPanel.deleteSearch', { name: saved.name })"
-              @click="deleteSavedSearch(index)"
-            >
-              <Icon name="trash" />
-            </button>
-          </div>
         </div>
       </template>
 
-      <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
-      <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
-      <div v-else-if="codeHosting.status !== 'ready'" class="muted">{{ t("codeHostingPanel.loading") }}</div>
-      <div v-else class="groups">
-        <section v-for="section in sections" :key="section.group" class="group">
-          <div class="group-header d-flex align-items-center">
-            <button
-              type="button"
-              class="group-toggle d-flex align-items-center gap-2 me-auto"
-              :aria-expanded="codeHosting.folded[section.group] === false"
-              @click="toggleGroup(section.group)"
-            >
-              <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
-              {{ groupTitle(section.group) }}
-            </button>
-            <span class="badge count">{{ section.rows.length }}</span>
-          </div>
-          <template v-if="codeHosting.folded[section.group] === false">
-            <ul v-if="section.rows.length > 0" class="items">
-              <li v-for="row in section.rows" :key="row.key">
-                <InformationCard
-                  class="row-card"
-                  placement="end"
-                  :label="t('codeHostingPanel.cardLabel', { name: row.name })"
-                  @open="readDetails(row)"
-                >
-                  <div
-                    class="item d-flex align-items-center gap-2"
-                    data-code-hosting-item
-                    @pointerenter="startScrolling"
-                    @pointerleave="stopScrolling"
-                  >
-                    <div class="item-lines">
-                      <div class="title-line">
-                        <span class="number">{{ row.name }}</span>
-                        <ScrollingLine class="title-text">{{ row.item.title }}</ScrollingLine>
-                      </div>
-                      <div class="detail-line">{{ row.opened }}</div>
-                      <div v-if="row.labels.length > 0" class="detail-line labels-line">
-                        <span
-                          v-for="label in row.labels"
-                          :key="label.name"
-                          class="badge label-badge"
-                          :style="referenceLabelStyle(label.color)"
-                        >
-                          {{ label.name }}
-                        </span>
-                      </div>
-                      <div v-else class="detail-line">{{ row.extra }}</div>
-                    </div>
-                  </div>
-                  <template #card>
-                    <div class="card-content">
-                      <ChatReferenceDetails
-                        :reference="row.reference"
-                        :details="answers[row.key]"
-                        :folder="currentGit.root"
-                        :forge="forge"
-                        :web-base="codeHosting.webBase"
-                      />
-                    </div>
-                  </template>
-                </InformationCard>
-              </li>
-            </ul>
-            <div v-else class="muted empty">{{ emptyText(section.group) }}</div>
-            <div v-if="section.rows.length >= CODE_HOSTING_LIMIT" class="muted empty">
-              {{ t("codeHostingPanel.truncated", { limit: CODE_HOSTING_LIMIT }) }}
+      <div class="scroll-area">
+        <div v-if="codeHosting.status === 'noRemote'" class="muted">{{ t("codeHostingPanel.noRemote") }}</div>
+        <div v-else-if="codeHosting.status === 'failed'" class="failure">{{ codeHosting.error }}</div>
+        <div v-else-if="codeHosting.status !== 'ready'" class="muted">{{ t("codeHostingPanel.loading") }}</div>
+        <div v-else class="groups">
+          <section v-for="section in sections" :key="section.group" class="group">
+            <div class="group-header d-flex align-items-center">
+              <button
+                type="button"
+                class="group-toggle d-flex align-items-center gap-2 me-auto"
+                :aria-expanded="codeHosting.folded[section.group] === false"
+                @click="toggleGroup(section.group)"
+              >
+                <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
+                {{ groupTitle(section.group) }}
+              </button>
+              <span class="badge count">{{ section.rows.length }}</span>
             </div>
-          </template>
-        </section>
+            <template v-if="codeHosting.folded[section.group] === false">
+              <ul v-if="section.rows.length > 0" class="items">
+                <li v-for="row in section.rows" :key="row.key">
+                  <InformationCard
+                    class="row-card"
+                    placement="end"
+                    :label="t('codeHostingPanel.cardLabel', { name: row.name })"
+                    @open="readDetails(row)"
+                  >
+                    <div
+                      class="item d-flex align-items-center gap-2"
+                      data-code-hosting-item
+                      @pointerenter="startScrolling"
+                      @pointerleave="stopScrolling"
+                    >
+                      <div class="item-lines">
+                        <div class="title-line">
+                          <span class="number">{{ row.name }}</span>
+                          <ScrollingLine class="title-text">{{ row.item.title }}</ScrollingLine>
+                        </div>
+                        <div class="detail-line">{{ row.opened }}</div>
+                        <div v-if="row.labels.length > 0" class="detail-line labels-line">
+                          <span
+                            v-for="label in row.labels"
+                            :key="label.name"
+                            class="badge label-badge"
+                            :style="referenceLabelStyle(label.color)"
+                          >
+                            {{ label.name }}
+                          </span>
+                        </div>
+                        <div v-else class="detail-line">{{ row.extra }}</div>
+                      </div>
+                    </div>
+                    <template #card>
+                      <div class="card-content">
+                        <ChatReferenceDetails
+                          :reference="row.reference"
+                          :details="answers[row.key]"
+                          :folder="currentGit.root"
+                          :forge="forge"
+                          :web-base="codeHosting.webBase"
+                        />
+                      </div>
+                    </template>
+                  </InformationCard>
+                </li>
+              </ul>
+              <div v-else class="muted empty">{{ emptyText(section.group) }}</div>
+              <div v-if="section.rows.length >= CODE_HOSTING_LIMIT" class="muted empty">
+                {{ t("codeHostingPanel.truncated", { limit: CODE_HOSTING_LIMIT }) }}
+              </div>
+            </template>
+          </section>
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <style scoped>
-.code-hosting { flex: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.code-hosting { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.code-hosting > .muted { padding: 12px 16px; }
+/* The header, the search field, and the saved searches stay at the top of the sidebar section: only the scroll area under them scrolls. */
+.code-hosting > header { flex: 0 0 auto; padding: 12px 16px 8px; }
+.code-hosting > .search, .code-hosting > .saved { flex: 0 0 auto; padding: 0 16px 8px; }
+.scroll-area { flex: 1; min-height: 0; padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .code-hosting :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .code-hosting :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
-.search .form-control, .saving .form-control { flex: 1 1 auto; min-width: 0; }
+.search .form-control { flex: 1 1 auto; min-width: 0; }
 /* A saved search is a small button with a round border: the one that runs now is filled. */
 .saved-button { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--line); border-radius: 11px; color: var(--text-2); max-width: 100%; white-space: nowrap; }
 /* A name that does not fit ends with an ellipsis. A button cannot show one itself, so the name is in its own span. */
 .saved-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .saved-button:hover { background: var(--hover-soft); color: var(--text); }
 .saved-button.active { background: var(--hover); border-color: var(--line-strong); color: var(--text); }
-/* A saved search in the edit mode takes two lines: its name and the button to delete it, then its search. */
-.editing { gap: 8px; }
-.editing-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
-.editing-row .form-control { min-width: 0; }
-.editing-name { grid-column: 1; grid-row: 1; }
-.editing-delete { grid-column: 2; grid-row: 1; }
-.editing-query { grid-column: 1 / -1; grid-row: 2; }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -16px; }
 .group-header { height: 26px; margin: 0 8px; padding: 0 8px; border-radius: 5px; }
 .group-header:hover { background: var(--hover-soft); }
