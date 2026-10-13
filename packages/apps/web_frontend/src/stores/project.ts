@@ -13,8 +13,10 @@ export interface Detected {
   label: string;
   command: string;
   source: string;
-  /** What the project file says about the command, for example the body of a script of `package.json`. */
+  /** Where the command comes from, for example `from package.json`. */
   description?: string;
+  /** The folder in which the command runs, relative to the project root. Absent for the project root itself. */
+  cwd?: string;
 }
 
 interface Project {
@@ -82,12 +84,20 @@ export const currentProject = computed(() =>
   session.selectedWorkspaceId ? project.byWorkspace[session.selectedWorkspaceId] : undefined,
 );
 
-export const suggestions = computed(() => {
+/** Identifies a script by its command and its folder: the same command in two folders makes two scripts. */
+export function scriptKey(script: { command: string; cwd?: string }): string {
+  return `${script.cwd ?? ""}\n${script.command}`;
+}
+
+/** The detected scripts that are not yet scripts of the current project. */
+export function withoutImportedScripts(detected: Detected[]): Detected[] {
   const p = currentProject.value;
   if (!p) return [];
-  const taken = new Set(p.config.actions.map((a) => a.command));
-  return p.detected.filter((d) => !taken.has(d.command));
-});
+  const taken = new Set(p.config.actions.map(scriptKey));
+  return detected.filter((d) => !taken.has(scriptKey(d)));
+}
+
+export const suggestions = computed(() => withoutImportedScripts(currentProject.value?.detected ?? []));
 
 function slug(label: string): string {
   const base = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "action";

@@ -117,7 +117,7 @@ async function chooseFolder() {
 const efforts = computed(() => findCodingAgent(agentName.value)?.efforts ?? []);
 const models = computed(() => findCodingAgent(agentName.value)?.models ?? []);
 const isContentFilled = computed(() => (kind.value === "commandLine" ? command.value.trim() !== "" : prompt.value.trim() !== ""));
-const canCreate = computed(() => name.value.trim() !== "" && isContentFilled.value && (kind.value === "commandLine" || isFolderValid.value));
+const canCreate = computed(() => name.value.trim() !== "" && isContentFilled.value && isFolderValid.value);
 
 watch(agentName, () => {
   model.value = "";
@@ -214,15 +214,17 @@ async function create() {
   if (canCreate.value === false || workspaceId === null || workspaceId === undefined) {
     return;
   }
+  const cwd = relativeFolder() ?? "";
   if (kind.value === "commandLine") {
     if (editedAction !== undefined) {
       await updateAction(workspaceId, editedAction.id, {
         label: name.value.trim(),
         command: command.value.trim(),
         ...(description.value.trim() !== "" ? { description: description.value.trim() } : {}),
+        ...(cwd !== "" ? { cwd } : {}),
       });
     } else {
-      await addAction(workspaceId, name.value, command.value, undefined, undefined, description.value);
+      await addAction(workspaceId, name.value, command.value, undefined, cwd, description.value);
     }
   } else {
     const agent = {
@@ -231,7 +233,6 @@ async function create() {
       ...(model.value.trim() !== "" ? { model: model.value.trim() } : {}),
       ...(effort.value !== "" ? { effort: effort.value } : {}),
     };
-    const cwd = relativeFolder() ?? "";
     if (editedAction !== undefined) {
       await updateAction(workspaceId, editedAction.id, {
         label: name.value.trim(),
@@ -322,6 +323,23 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           ></textarea>
         </div>
 
+        <div>
+          <label class="form-label" for="new-script-folder">{{ t("newCustomScriptModal.folder") }}</label>
+          <div class="d-flex gap-2">
+            <input
+              id="new-script-folder"
+              v-model="folder"
+              class="form-control flex-fill"
+              :class="{ 'is-invalid': isFolderValid === false }"
+              :placeholder="t('newCustomScriptModal.folderPlaceholder')"
+              spellcheck="false"
+            />
+            <button type="button" class="btn write-name" :aria-label="t('newCustomScriptModal.chooseFolder')" :title="t('newCustomScriptModal.chooseFolder')" @click="chooseFolder()">
+              <Icon name="folder2-open" />
+            </button>
+          </div>
+        </div>
+
         <div v-if="kind === 'commandLine'">
           <label class="form-label" for="new-script-command">{{ t("newCustomScriptModal.command") }}</label>
           <textarea
@@ -361,22 +379,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <option value="">{{ t("newCustomScriptModal.effortDefault") }}</option>
                 <option v-for="level in efforts" :key="level" :value="level">{{ level }}</option>
               </select>
-            </div>
-          </div>
-          <div>
-            <label class="form-label" for="new-script-folder">{{ t("newCustomScriptModal.folder") }}</label>
-            <div class="d-flex gap-2">
-              <input
-                id="new-script-folder"
-                v-model="folder"
-                class="form-control flex-fill"
-                :class="{ 'is-invalid': isFolderValid === false }"
-                :placeholder="t('newCustomScriptModal.folderPlaceholder')"
-                spellcheck="false"
-              />
-              <button type="button" class="btn write-name" :aria-label="t('newCustomScriptModal.chooseFolder')" :title="t('newCustomScriptModal.chooseFolder')" @click="chooseFolder()">
-                <Icon name="folder2-open" />
-              </button>
             </div>
           </div>
           <div>

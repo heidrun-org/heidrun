@@ -304,6 +304,7 @@ pub fn run() {
             clipboard::clipboard_set_image,
             usage::codex_usage,
             project::project_load,
+            project::project_package_scripts,
             project::project_save,
             project::project_refs,
             git::git_status,
