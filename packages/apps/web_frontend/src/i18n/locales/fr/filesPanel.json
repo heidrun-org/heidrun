@@ -19,5 +19,5 @@
   "newFile": "Nouveau fichier",
   "newFolder": "Nouveau dossier",
   "collapseAll": "Replier tous les dossiers",
-  "namingHint": "Entrée le crée. Échap annule."
+  "nameHasSlash": "Un nom ne peut pas contenir le caractère /. Sélectionne d’abord un dossier."
 }

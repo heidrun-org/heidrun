@@ -9,13 +9,29 @@ import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
 import { currentGit, openGitModal } from "../stores/git";
-import { buildTree, files, filesPanelSelection, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles, visibleRows, type TreeRow } from "../stores/files";
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
 import { t } from "../i18n/index";
 
-const tree = computed(() => buildTree(files.list));
+/** The selected row of the selected workspace, or null. Each workspace has its own selected row. */
+const selection = computed(() => (state.selectedWorkspaceId === null ? null : filesPanelSelections[state.selectedWorkspaceId] ?? null));
+
+/** Selects a row of the selected workspace, or selects nothing when the path is null. */
+function select(path: string | null, isFolder: boolean) {
+  const workspaceId = state.selectedWorkspaceId;
+  if (workspaceId === null) {
+    return;
+  }
+  if (path === null) {
+    delete filesPanelSelections[workspaceId];
+    return;
+  }
+  filesPanelSelections[workspaceId] = { path, isFolder };
+}
+
+const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? []));
 const rows = computed(() => visibleRows(tree.value, files.expanded, files.status));
 
 /** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
@@ -60,47 +76,84 @@ function chooseMenuItem(id: string) {
   }
 }
 
-// The tree is read again when the repository changes, and when the number of changed files changes.
+/** Unfolds the folders above the selected row, so that the selected row shows after the tree is read again. */
+function revealSelection() {
+  const path = selection.value?.path ?? null;
+  if (path === null || path.includes("/") === false) {
+    return;
+  }
+  const parts = path.split("/");
+  const folders = new Set(files.expanded);
+  for (let index = 1; index < parts.length; index++) {
+    folders.add(parts.slice(0, index).join("/"));
+  }
+  files.expanded = folders;
+}
+
+// The tree is read again when the repository changes, and when the number of changed files changes. When the
+// repository changes, the folders above the selected row of the new workspace unfold.
 watch(
   () => [currentGit.value?.root, currentGit.value?.changed, currentGit.value?.untracked],
-  () => {
-    const root = currentGit.value?.root;
-    if (root !== undefined) {
-      void loadFiles(root);
+  ([root], previous) => {
+    if (typeof root !== "string") {
+      return;
     }
+    const isAnotherRepository = previous === undefined || previous[0] !== root;
+    void loadFiles(root).then(() => {
+      if (isAnotherRepository) {
+        revealSelection();
+      }
+    });
   },
   { immediate: true },
 );
 
 /** The folder that a new file or a new folder goes into: the selected folder, or the folder of the selected file. */
 const targetFolder = computed(() => {
-  const selected = filesPanelSelection.path;
+  const selected = selection.value?.path ?? null;
   if (selected === null) {
     return "";
   }
-  if (filesPanelSelection.isFolder) {
+  if (selection.value?.isFolder === true) {
     return selected;
   }
   return selected.includes("/") ? selected.slice(0, selected.lastIndexOf("/")) : "";
 });
 
 /** The name that the developer is typing for a new file or a new folder, or null when no name is being typed. */
-const naming = ref<{ kind: "file" | "dir"; value: string } | null>(null);
-const nameInput = ref<HTMLInputElement>();
+const naming = ref<{ kind: "file" | "dir"; value: string; folder: string } | null>(null);
+let nameInput: HTMLInputElement | null = null;
+
+/** One entry of the list under the header: a row of the tree, or the box where the developer types a new name. */
+type ListEntry = { type: "row"; row: TreeRow } | { type: "naming"; depth: number };
+
+/** The rows, with the name box as the first child of the folder that receives the new file or the new folder. */
+const entries = computed((): ListEntry[] => {
+  const list: ListEntry[] = rows.value.map((row) => ({ type: "row", row }));
+  const current = naming.value;
+  if (current === null) {
+    return list;
+  }
+  const depth = current.folder === "" ? 0 : current.folder.split("/").length;
+  const folderIndex = rows.value.findIndex((row) => row.dir && row.path === current.folder);
+  list.splice(current.folder === "" ? 0 : folderIndex + 1, 0, { type: "naming", depth });
+  return list;
+});
+
+function setNameInput(element: unknown) {
+  nameInput = element as HTMLInputElement | null;
+}
 
 function startNaming(kind: "file" | "dir") {
   const folder = targetFolder.value;
-  if (folder !== "") {
-    files.expanded = new Set([...files.expanded, folder]);
+  const folders = new Set(files.expanded);
+  const parts = folder === "" ? [] : folder.split("/");
+  for (let index = 1; index <= parts.length; index++) {
+    folders.add(parts.slice(0, index).join("/"));
   }
-  naming.value = { kind, value: folder === "" ? "" : `${folder}/` };
-  void nextTick(() => {
-    const input = nameInput.value;
-    if (input !== undefined) {
-      input.focus();
-      input.setSelectionRange(input.value.length, input.value.length);
-    }
-  });
+  files.expanded = folders;
+  naming.value = { kind, value: "", folder };
+  void nextTick(() => nameInput?.focus());
 }
 
 function cancelNaming() {
@@ -112,40 +165,41 @@ async function submitNaming() {
   if (current === null) {
     return;
   }
-  const path = current.value.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-  if (path === "") {
+  const name = current.value.trim();
+  if (name === "") {
+    naming.value = null;
     return;
   }
+  if (name.includes("/")) {
+    toast(t("filesPanel.nameHasSlash"), "error");
+    void nextTick(() => nameInput?.focus());
+    return;
+  }
+  const path = current.folder === "" ? name : `${current.folder}/${name}`;
   try {
     await invoke("file_create", { root: files.root, path, dir: current.kind === "dir" });
   } catch (error) {
     toast(String(error), "error");
+    void nextTick(() => nameInput?.focus());
     return;
   }
   naming.value = null;
-  const parts = path.split("/");
   const folders = new Set(files.expanded);
-  for (let index = 1; index < parts.length; index++) {
-    folders.add(parts.slice(0, index).join("/"));
-  }
   if (current.kind === "dir") {
     folders.add(path);
-    filesPanelSelection.path = path;
-    filesPanelSelection.isFolder = true;
+    filesPanelNewFolders[files.root] = [...(filesPanelNewFolders[files.root] ?? []), path];
   }
   files.expanded = folders;
+  select(path, current.kind === "dir");
   await loadFiles(files.root);
   if (current.kind === "file") {
-    filesPanelSelection.path = path;
-    filesPanelSelection.isFolder = false;
     openGitModal(path);
   }
 }
 
 /** A click on the empty space of the section selects nothing: a new file or a new folder then goes to the root. */
 function clearSelection() {
-  filesPanelSelection.path = null;
-  filesPanelSelection.isFolder = false;
+  select(null, false);
 }
 
 function collapseAll() {
@@ -173,8 +227,7 @@ function toggleFolder(row: TreeRow) {
 }
 
 function chooseRow(row: TreeRow) {
-  filesPanelSelection.path = row.path;
-  filesPanelSelection.isFolder = row.dir;
+  select(row.path, row.dir);
   if (row.dir) {
     toggleFolder(row);
     return;
@@ -264,42 +317,50 @@ function letterClass(letter: string): string {
           @choose="chooseMenuItem"
         />
       </header>
-      <form v-if="naming !== null" class="naming" @submit.prevent="submitNaming">
-        <label class="muted" for="files-panel-name">{{ naming.kind === "dir" ? t("filesPanel.newFolder") : t("filesPanel.newFile") }}</label>
-        <input
-          id="files-panel-name"
-          ref="nameInput"
-          v-model="naming.value"
-          class="form-control form-control-sm"
-          spellcheck="false"
-          @keydown.esc.prevent="cancelNaming"
-        />
-        <span class="muted">{{ t("filesPanel.namingHint") }}</span>
-      </form>
       <div v-if="files.error !== ''" class="error">{{ files.error }}</div>
       <ul v-else class="rows" @click.self="clearSelection" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
-        <li v-for="row in rows" :key="row.path + (row.dir ? '/' : '')">
-          <button
-            type="button"
-            class="row btn d-flex align-items-center text-start"
-            :class="{ selected: row.path === filesPanelSelection.path, ignored: row.ignored }"
-            :title="row.path"
-            :aria-expanded="row.dir && row.ignored === false ? files.expanded.has(row.path) : undefined"
-            @click="chooseRow(row)"
-          >
+        <template v-for="entry in entries" :key="entry.type === 'row' ? entry.row.path + (entry.row.dir ? '/' : '') : 'naming'">
+          <li v-if="entry.type === 'naming' && naming !== null" class="naming-row d-flex align-items-center">
             <template v-if="settings.filesPanelIndentGuides">
-              <span v-for="level in row.depth" :key="level" class="guide"></span>
+              <span v-for="level in entry.depth" :key="level" class="guide"></span>
             </template>
-            <span v-else :style="{ width: `${row.depth * indentWidth}px` }" class="flex-shrink-0"></span>
-            <span class="arrow">
-              <Icon v-if="arrowIcon(row) !== null" :name="arrowIcon(row) ?? ''" />
-            </span>
-            <Icon :name="rowIcon(row)" class="kind" />
-            <span class="name me-auto">{{ row.name }}</span>
-            <span v-if="row.status !== null && row.dir" class="letter modified">•</span>
-            <span v-else-if="row.status !== null" class="letter" :class="letterClass(row.status)">{{ row.status === "?" ? "U" : row.status }}</span>
-          </button>
-        </li>
+            <span v-else :style="{ width: `${entry.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+            <span class="arrow"></span>
+            <Icon :name="naming.kind === 'dir' ? 'folder2' : 'file-earmark'" class="kind" />
+            <input
+              :ref="setNameInput"
+              v-model="naming.value"
+              class="form-control form-control-sm"
+              spellcheck="false"
+              :aria-label="naming.kind === 'dir' ? t('filesPanel.newFolder') : t('filesPanel.newFile')"
+              @keydown.enter.prevent="submitNaming"
+              @keydown.esc.prevent="cancelNaming"
+              @blur="cancelNaming"
+            />
+          </li>
+          <li v-else-if="entry.type === 'row'">
+            <button
+              type="button"
+              class="row btn d-flex align-items-center text-start"
+              :class="{ selected: entry.row.path === selection?.path, ignored: entry.row.ignored }"
+              :title="entry.row.path"
+              :aria-expanded="entry.row.dir && entry.row.ignored === false ? files.expanded.has(entry.row.path) : undefined"
+              @click="chooseRow(entry.row)"
+            >
+              <template v-if="settings.filesPanelIndentGuides">
+                <span v-for="level in entry.row.depth" :key="level" class="guide"></span>
+              </template>
+              <span v-else :style="{ width: `${entry.row.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+              <span class="arrow">
+                <Icon v-if="arrowIcon(entry.row) !== null" :name="arrowIcon(entry.row) ?? ''" />
+              </span>
+              <Icon :name="rowIcon(entry.row)" class="kind" />
+              <span class="name me-auto">{{ entry.row.name }}</span>
+              <span v-if="entry.row.status !== null && entry.row.dir" class="letter modified">•</span>
+              <span v-else-if="entry.row.status !== null" class="letter" :class="letterClass(entry.row.status)">{{ entry.row.status === "?" ? "U" : entry.row.status }}</span>
+            </button>
+          </li>
+        </template>
       </ul>
       <div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
     </template>
@@ -331,7 +392,8 @@ function letterClass(letter: string): string {
 .letter.added { color: var(--ok); }
 .letter.deleted { color: var(--blocked); }
 .letter.renamed { color: var(--done); }
-.naming { display: flex; flex-direction: column; gap: 4px; padding: 0 8px; }
+.naming-row { height: var(--row-height); padding: 0 8px; }
+.naming-row .form-control { flex: 1 1 auto; min-width: 0; }
 .error { font-size: var(--font-size); color: var(--fail); }
 .muted { font-size: var(--font-size); color: var(--muted); padding: 0 8px; }
 </style>

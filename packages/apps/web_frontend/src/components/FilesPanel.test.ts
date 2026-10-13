@@ -9,7 +9,7 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) })
 
 import FilesPanel from "./FilesPanel.vue";
 import { git, type GitStatus } from "../stores/git";
-import { files, filesPanelSelection } from "../stores/files";
+import { files, filesPanelNewFolders, filesPanelSelections } from "../stores/files";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 
@@ -64,8 +64,12 @@ afterEach(() => {
   git.modal.path = null;
   files.root = "";
   files.expanded = new Set();
-  filesPanelSelection.path = null;
-  filesPanelSelection.isFolder = false;
+  for (const root of Object.keys(filesPanelNewFolders)) {
+    delete filesPanelNewFolders[root];
+  }
+  for (const workspaceId of Object.keys(filesPanelSelections)) {
+    delete filesPanelSelections[workspaceId];
+  }
   vi.clearAllMocks();
 });
 
@@ -136,7 +140,32 @@ describe("FilesPanel", () => {
     await wrapper.get(".files-panel").trigger("click");
     expect(wrapper.findAll(".row.selected")).toHaveLength(0);
     await wrapper.get("[aria-label='New file']").trigger("click");
-    expect((wrapper.get(".naming input").element as HTMLInputElement).value).toBe("");
+    expect(wrapper.findAll("ul.rows > li")[0].classes()).toContain("naming-row");
+  });
+
+  it("keeps a selected row for each workspace: the selection of a workspace comes back after the developer visits another workspace", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[1].trigger("click");
+    expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
+    state.selectedWorkspaceId = "w2";
+    git.status = { ...git.status, w2: { ...makeStatus(), root: "/work/other" } };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".row.selected")).toHaveLength(0);
+    await wrapper.findAll(".row")[0].trigger("click");
+    expect(filesPanelSelections.w2.path).toBe("src");
+    state.selectedWorkspaceId = "w1";
+    await wrapper.vm.$nextTick();
+    expect(filesPanelSelections.w1.path).toBe("README.md");
+    expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
+  });
+
+  it("unselects only in the selected workspace after a click on the empty space", async () => {
+    const wrapper = await mountPanel();
+    filesPanelSelections.w2 = { path: "docs", isFolder: true };
+    await wrapper.findAll(".row")[1].trigger("click");
+    await wrapper.get(".files-panel").trigger("click");
+    expect(filesPanelSelections.w1).toBeUndefined();
+    expect(filesPanelSelections.w2.path).toBe("docs");
   });
 
   it("keeps the selected row when the sidebar section is shown again", async () => {
@@ -147,38 +176,83 @@ describe("FilesPanel", () => {
     expect(again.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
   });
 
-  it("creates a new file in the selected folder, and opens it in the large Git window", async () => {
+  it("shows the name box as the first child of the selected folder, and the new file goes into that folder", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[0].trigger("click");
     await wrapper.get("[aria-label='New file']").trigger("click");
-    const input = wrapper.get(".naming input");
-    expect((input.element as HTMLInputElement).value).toBe("src/");
-    await input.setValue("src/new_file.ts");
-    await wrapper.get(".naming").trigger("submit");
+    const items = wrapper.findAll("ul.rows > li");
+    expect(items[0].text()).toContain("src");
+    expect(items[1].classes()).toContain("naming-row");
+    const input = wrapper.get(".naming-row input");
+    expect((input.element as HTMLInputElement).value).toBe("");
+    await input.setValue("new_file.ts");
+    await input.trigger("keydown", { key: "Enter" });
     await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "src/new_file.ts", dir: false }));
     await vi.waitFor(() => expect(git.modal.path).toBe("src/new_file.ts"));
     expect(git.modal.open).toBe(true);
-    expect(wrapper.find(".naming").exists()).toBe(false);
+    expect(wrapper.find(".naming-row").exists()).toBe(false);
   });
 
-  it("creates a new folder at the root when no folder was clicked, and does not open the large Git window", async () => {
+  it("puts a new file in the same folder as the selected file", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    const mainRow = wrapper.findAll(".row").find((row) => row.text().includes("main.ts"));
+    await mainRow?.trigger("click");
+    git.modal.open = false;
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    await wrapper.get(".naming-row input").setValue("other.ts");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "src/other.ts", dir: false }));
+  });
+
+  it("puts a new folder inside the selected folder, and in the same folder as the selected file", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.get("[aria-label='New folder']").trigger("click");
+    await wrapper.get(".naming-row input").setValue("assets");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "src/assets", dir: true }));
+    expect(git.modal.open).toBe(false);
+    await vi.waitFor(() => expect(wrapper.findAll(".row .name").map((name) => name.text())).toContain("assets"));
+    invokeMock.mockClear();
+    const readme = wrapper.findAll(".row").find((row) => row.text().includes("README.md"));
+    await readme?.trigger("click");
+    await wrapper.get("[aria-label='New folder']").trigger("click");
+    await wrapper.get(".naming-row input").setValue("top");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "top", dir: true }));
+  });
+
+  it("shows a new empty folder in the tree, although Git does not list it", async () => {
     const wrapper = await mountPanel();
     await wrapper.get("[aria-label='New folder']").trigger("click");
-    await wrapper.get(".naming input").setValue("assets");
-    await wrapper.get(".naming").trigger("submit");
-    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: "assets", dir: true }));
-    expect(git.modal.open).toBe(false);
+    await wrapper.get(".naming-row input").setValue("empty_folder");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["empty_folder", "src", "README.md"]));
   });
 
-  it("cancels the new name with the key Escape, and creates nothing", async () => {
+  it("cancels the new name with the key Escape or when the box loses the focus, and creates nothing", async () => {
     const wrapper = await mountPanel();
     await wrapper.get("[aria-label='New file']").trigger("click");
-    await wrapper.get(".naming input").trigger("keydown", { key: "Escape" });
-    expect(wrapper.find(".naming").exists()).toBe(false);
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Escape" });
+    expect(wrapper.find(".naming-row").exists()).toBe(false);
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    await wrapper.get(".naming-row input").trigger("blur");
+    expect(wrapper.find(".naming-row").exists()).toBe(false);
     expect(invokeMock).not.toHaveBeenCalledWith("file_create", expect.anything());
   });
 
-  it("keeps the name box open and creates nothing more when the backend refuses the name", async () => {
+  it("refuses a name with a slash, and creates nothing", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    await wrapper.get(".naming-row input").setValue("a/b.ts");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    expect(state.toast).toContain("cannot contain");
+    expect(invokeMock).not.toHaveBeenCalledWith("file_create", expect.anything());
+    expect(wrapper.find(".naming-row").exists()).toBe(true);
+  });
+
+  it("keeps the name box open when the backend refuses the name", async () => {
     const wrapper = await mountPanel();
     invokeMock.mockImplementation(async (command: string) => {
       if (command === "file_create") {
@@ -187,10 +261,10 @@ describe("FilesPanel", () => {
       return { root: "/work/heidrun", git: true, files: ["README.md"], status: {}, truncated: false };
     });
     await wrapper.get("[aria-label='New file']").trigger("click");
-    await wrapper.get(".naming input").setValue("README.md");
-    await wrapper.get(".naming").trigger("submit");
+    await wrapper.get(".naming-row input").setValue("README.md");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
     await vi.waitFor(() => expect(state.toast).toContain("already exists"));
-    expect(wrapper.find(".naming").exists()).toBe(true);
+    expect(wrapper.find(".naming-row").exists()).toBe(true);
     expect(git.modal.open).toBe(false);
   });
 
@@ -251,6 +325,7 @@ describe("FilesPanel", () => {
     expect(settings.filesPanelIndent).toBe("large");
     wrapper.unmount();
   });
+
 
   it("tells the developer to select a workspace when none is selected", () => {
     state.selectedWorkspaceId = null;

@@ -19,5 +19,5 @@
   "newFile": "New file",
   "newFolder": "New folder",
   "collapseAll": "Collapse all folders",
-  "namingHint": "Enter creates it. Escape cancels."
+  "nameHasSlash": "A name cannot contain the character /. Select a folder first."
 }
