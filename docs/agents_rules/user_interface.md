@@ -22,11 +22,23 @@ This document says where each part of the window goes and how each part works. T
 - The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background. The tab bar is inside the frame of the viewport.
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
 
+## Text that must stay on one line
+
+- A piece of information that must not go to the next line, for example a folder path, a file path, or a Git branch name, is always shown on one line.
+- When the container is too narrow to show the whole text on one line, the text does not wrap and does not break in the middle of a word. The container cuts the text at its edge.
+- While the pointer is over the container, the text scrolls sideways, so that the developer can read the whole text.
+- The folder path in the information card of the Workspace status bar section follows these rules ([issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
+
+## Files
+
+- Heidrun never modifies a file of the developer. Only the coding agents that run in the panes modify files.
+- A part of the window that shows files, for example a file explorer, only reads them. It has no button to create, rename, move, delete, or edit a file.
+
 ## Workspace
 
 - One workspace is selected at a time.
 - The workspace status bar section is the first status bar section, at the left end of the status bar. It shows a status dot and the name of the selected workspace. A click on it opens its information card above the section. The information card does not open when the mouse moves over the section.
-- The status dot is always visible, and it sits before the name, in the same place as the dot of a tab. When an agent in another workspace is blocked or has finished, the dot has the color of that status, and it follows the cards of the To handle sidebar section. Otherwise, the dot shows the status of the selected workspace. A workspace without an agent gets a hollow ring.
+- The status dot is always visible, and it sits before the name, in the same place as the dot of a tab. When an agent in another workspace is blocked or has finished, the dot has the color of that status, and it follows the cards of the Needs you sidebar section. Otherwise, the dot shows the status of the selected workspace. A workspace without an agent gets a hollow ring.
 - The information card of the workspace status bar section gives the folder, the Git branch, the number of tabs, and the number of agents of the selected workspace. Under the details, it lists the workspaces. A click on a workspace selects it, and closes the information card.
 - The list of workspaces has no separator line between the workspaces, and no space between two rows: between the two separator lines, the pointer is always on a workspace. Each row is 32 pixels tall, with the padding inside the row. One separator line sits between the list and the entry "New workspace…" at the end of the information card.
 - The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
@@ -55,18 +67,18 @@ This document says where each part of the window goes and how each part works. T
 - The header of a pinned pane in the column shows the pressed pin button, as in the panes of the selected tab. A click on the pressed pin button unpins the pane.
 - A pinned pane does not change when the developer selects another tab or another workspace. Only the panes of the selected tab change.
 
-## To handle
+## Needs you
 
-- The To handle sidebar section is a sidebar section of the right sidebar. It holds one card for each agent that is blocked, that asks a question, or that has finished, with the blocked agents first.
+- The Needs you sidebar section is a sidebar section of the right sidebar. It holds one card for each agent that is blocked, that asks a question, or that has finished, with the blocked agents first.
 - A click on a card shows the pane of the agent. A card also lets the developer answer a blocked agent, pin the pane, and hide the card.
-- The button of the To handle sidebar section shows the number of cards. The number is red when an agent is blocked.
+- The button of the Needs you sidebar section shows the number of cards. The number is red when an agent is blocked.
 - A hidden card comes back at the next change of the agent. A finished agent leaves the sidebar section after the delay that the settings give.
 
 ## Sidebars
 
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 - The left sidebar holds the Scripts sidebar section and the Git sidebar section.
-- The right sidebar holds the To handle sidebar section, the Notes sidebar section, and the Chats sidebar section.
+- The right sidebar holds the Needs you sidebar section, the Notes sidebar section, and the Chats sidebar section.
 - Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar. In each sidebar, the line of the navigation bar reaches the left border and the right border, and the space between the top border and the selected button of the navigation bar is 5 pixels. A button of the navigation bar has the same height as a tab of the tab bar, so the three bars have the same height.
 - A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
 - The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
