@@ -7,8 +7,8 @@ vi.mock("./git", async (importOriginal) => {
   return { ...original, refreshGit: vi.fn() };
 });
 
-import { commit, discardFiles, newPullRequestUrl, sourceControl, splitFiles, stageFiles, writeCommitMessage } from "./source_control";
-import { git, type ForgeInfo, type GitStatus } from "./git";
+import { commit, discardFiles, sourceControl, splitFiles, stageFiles, writeCommitMessage } from "./source_control";
+import { git, type GitStatus } from "./git";
 import { answerConfirm, confirmDialog } from "./confirm";
 import { state } from "./session";
 
@@ -29,18 +29,6 @@ function makeStatus(files: { status: string; path: string }[]): GitStatus {
     last_subject: "first",
     last_time: null,
     remote: null,
-  };
-}
-
-function makeForge(forge: "github" | "gitlab"): ForgeInfo {
-  return {
-    forge,
-    base: forge === "github" ? "https://github.com/heidrun-org/heidrun" : "https://gitlab.com/group/project",
-    requests: [],
-    recent: [],
-    ci: null,
-    error: null,
-    at: 0,
   };
 }
 
@@ -115,20 +103,6 @@ describe("splitFiles", () => {
     ).changes;
     expect([nested.name, nested.folder]).toEqual(["user_interface.md", "docs/agents_rules"]);
     expect([root.name, root.folder]).toEqual(["CHANGELOG.md", ""]);
-  });
-});
-
-describe("newPullRequestUrl", () => {
-  it("gives the compare page of GitHub and the new merge request page of GitLab", () => {
-    expect(newPullRequestUrl(makeForge("github"), "fix/305")).toBe("https://github.com/heidrun-org/heidrun/compare/fix%2F305?expand=1");
-    expect(newPullRequestUrl(makeForge("gitlab"), "fix")).toBe(
-      "https://gitlab.com/group/project/-/merge_requests/new?merge_request%5Bsource_branch%5D=fix",
-    );
-  });
-
-  it("gives nothing without a forge or without a branch", () => {
-    expect(newPullRequestUrl(undefined, "main")).toBeNull();
-    expect(newPullRequestUrl(makeForge("github"), null)).toBeNull();
   });
 });
 

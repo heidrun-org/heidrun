@@ -56,7 +56,7 @@ One part of a sidebar, for example the To handle, the Scripts, or the Source con
 
 ### Source control sidebar section
 
-The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", the group "Changes", then the open pull requests. It replaces the Git sidebar section.
+The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository, nothing of GitHub or GitLab. It replaces the Git sidebar section.
 
 ### Chat
 

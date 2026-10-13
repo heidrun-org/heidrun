@@ -3,7 +3,7 @@
 // - issue #305
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { git, refreshGit, type ForgeInfo, type GitStatus } from "./git";
+import { git, refreshGit, type GitStatus } from "./git";
 import { askConfirm } from "./confirm";
 import { state as session, toast } from "./session";
 import { t } from "../i18n/index";
@@ -47,7 +47,7 @@ export const sourceControl = reactive({
   /** True while a coding agent writes the commit message. */
   isWritingMessage: false,
   /** The groups that are folded. */
-  folded: { staged: false, changes: false, pullRequests: false } as Record<SourceControlGroup | "pullRequests", boolean>,
+  folded: { staged: false, changes: false } as Record<SourceControlGroup, boolean>,
 });
 
 /** The status letters of the index and of the working folder that mean a conflict. */
@@ -82,18 +82,6 @@ export function splitFiles(status: GitStatus | null): Record<SourceControlGroup,
     }
   }
   return groups;
-}
-
-/** The address of the forge page that creates a pull request (GitHub) or a merge request (GitLab) for `branch`. */
-export function newPullRequestUrl(forge: ForgeInfo | undefined, branch: string | null): string | null {
-  if (forge === undefined || forge.base === null || branch === null) {
-    return null;
-  }
-  const encodedBranch = encodeURIComponent(branch);
-  if (forge.forge === "github") {
-    return `${forge.base}/compare/${encodedBranch}?expand=1`;
-  }
-  return `${forge.base}/-/merge_requests/new?merge_request%5Bsource_branch%5D=${encodedBranch}`;
 }
 
 /** Stages the files `paths`. */

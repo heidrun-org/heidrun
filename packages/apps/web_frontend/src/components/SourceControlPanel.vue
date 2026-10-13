@@ -1,18 +1,15 @@
 <script setup lang="ts">
 // The Source control sidebar section of the left sidebar, as the source control view of VS Code: the message box, the
-// commit button, the group "Staged Changes", the group "Changes", then the open pull requests of the forge.
+// commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository.
 // - issue #305
 import { computed } from "vue";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
-import { askMerge, currentForge, currentGit, git, openGitModal, refreshGit } from "../stores/git";
-import { openIssue } from "../stores/issues";
+import { currentGit, git, openGitModal, refreshGit } from "../stores/git";
 import { openFiles } from "../stores/files";
 import {
   commit,
   discardFiles,
-  newPullRequestUrl,
   sourceControl,
   splitFiles,
   stageFiles,
@@ -25,15 +22,11 @@ import {
   type SourceControlGroup,
   type SyncAction,
 } from "../stores/source_control";
-import { selectedPane, sendPrompt, state, toast, workspaceLabel, workspacePanes } from "../stores/session";
+import { state } from "../stores/session";
 import { fileIconName } from "../lib/chat_files";
-import { ago, paneName } from "../lib/format";
 import { t } from "../i18n/index";
 
 const groups = computed(() => splitFiles(currentGit.value));
-const forgeLabel = computed(() => (currentForge.value?.forge === "github" ? "GitHub" : "GitLab"));
-const kind = computed(() => (currentForge.value?.forge === "github" ? "PR" : "MR"));
-const pullRequestUrl = computed(() => newPullRequestUrl(currentForge.value, currentGit.value?.branch ?? null));
 
 /** The commit message of the selected workspace. */
 const message = computed({
@@ -61,15 +54,6 @@ const moreItems = computed(() => [
   { id: "fetch", label: t("sourceControlPanel.moreMenu.fetch") },
   { id: "openLarge", label: t("sourceControlPanel.moreMenu.openLarge") },
 ]);
-
-/** The agent that gets "review this": the selected one, else the first agent of the workspace. */
-const reviewer = computed(() => {
-  const pane = selectedPane.value;
-  if (pane?.agent) {
-    return pane;
-  }
-  return workspacePanes.value.find((workspacePane) => workspacePane.agent) ?? null;
-});
 
 /** The class that gives a status letter its color. */
 function letterClass(letter: string): string {
@@ -105,7 +89,7 @@ function letterKey(letter: string): string {
   return keys[letter] ?? "modified";
 }
 
-function toggleGroup(group: SourceControlGroup | "pullRequests") {
+function toggleGroup(group: SourceControlGroup) {
   sourceControl.folded[group] = sourceControl.folded[group] === false;
 }
 
@@ -132,21 +116,6 @@ function chooseMore(id: string) {
   void syncRepository(id as SyncAction);
 }
 
-function open(url: string | null | undefined) {
-  if (url) {
-    openUrl(url).catch(() => {});
-  }
-}
-
-async function askReview(ref: string, url: string, title: string) {
-  const agentPane = reviewer.value;
-  if (agentPane === null) {
-    toast(t("sourceControlPanel.noAgent"));
-    return;
-  }
-  await sendPrompt(agentPane.pane_id, t("sourceControlPanel.reviewPrompt", { kind: kind.value, ref, title, url }));
-  toast(t("sourceControlPanel.reviewSent", { agent: paneName(agentPane) }));
-}
 </script>
 
 <template>
@@ -164,16 +133,6 @@ async function askReview(ref: string, url: string, title: string) {
           @click="commit('commit')"
         >
           <Icon name="check2" />
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm icon-button"
-          :aria-label="t('sourceControlPanel.createPullRequest', { kind })"
-          :title="t('sourceControlPanel.createPullRequest', { kind })"
-          :disabled="pullRequestUrl === null"
-          @click="open(pullRequestUrl)"
-        >
-          <Icon name="git" />
         </button>
         <button
           type="button"
@@ -363,54 +322,6 @@ async function askReview(ref: string, url: string, title: string) {
           </section>
         </template>
 
-        <section class="group">
-          <div class="group-header d-flex align-items-center">
-            <button
-              type="button"
-              class="group-toggle d-flex align-items-center gap-2 me-auto"
-              :aria-expanded="sourceControl.folded.pullRequests === false"
-              @click="toggleGroup('pullRequests')"
-            >
-              <Icon :name="sourceControl.folded.pullRequests ? 'chevron-right' : 'chevron-down'" />
-              {{ t("sourceControlPanel.openRequests", { kind }) }}
-            </button>
-            <span v-if="currentForge" class="badge count">{{ currentForge.requests.length }}</span>
-          </div>
-          <div v-if="sourceControl.folded.pullRequests === false" class="requests d-flex flex-column gap-2">
-            <div v-if="!currentGit.remote" class="muted">{{ t("sourceControlPanel.noRemote") }}</div>
-            <div v-else-if="!currentForge" class="muted">{{ t("sourceControlPanel.loading") }}</div>
-            <div v-else-if="currentForge.error" class="err">{{ currentForge.error }}</div>
-            <div v-else-if="!currentForge.requests.length" class="muted">{{ t("sourceControlPanel.noOpenRequest", { kind }) }}</div>
-            <div v-for="request in currentForge?.requests ?? []" :key="request.ref" class="req" :class="{ mine: request.branch === currentGit.branch }">
-              <button class="req-main" :title="t('sourceControlPanel.openRefOn', { ref: request.ref, forge: forgeLabel })" @click="open(request.url)">
-                <span class="req-top">
-                  <span class="mono ref">{{ request.ref }}</span>
-                  <span class="chip sm" :class="request.level">{{ request.state }}</span>
-                  <span v-if="request.review" class="chip sm" :class="request.review.level">{{ request.review.label }}</span>
-                </span>
-                <span class="req-title">{{ request.title }}</span>
-                <span class="muted mono">{{ request.branch }}<template v-if="request.author"> · {{ request.author }}</template></span>
-              </button>
-              <span class="req-actions">
-                <button class="link" :title="t('sourceControlPanel.previewTitle')" @click="openIssue(currentGit.root, { type: 'mr', number: request.number }, request.url)">{{ t("sourceControlPanel.preview") }}</button>
-                <button
-                  v-if="reviewer"
-                  class="link"
-                  :title="t('sourceControlPanel.askReviewTitle', { agent: paneName(reviewer) })"
-                  @click="askReview(request.ref, request.url, request.title)"
-                >{{ t("sourceControlPanel.askReview") }}</button>
-                <button
-                  v-if="!request.draft"
-                  class="link merge"
-                  :class="{ ready: request.level === 'ok' }"
-                  :title="t('sourceControlPanel.mergeTitle', { ref: request.ref })"
-                  @click="askMerge(state.selectedWorkspaceId!, request)"
-                >{{ t("sourceControlPanel.merge") }}</button>
-              </span>
-            </div>
-            <div v-if="currentForge && !currentForge.error" class="muted">{{ forgeLabel }} · {{ t("sourceControlPanel.updated", { time: ago(currentForge.at) }) }} · {{ workspaceLabel(state.selectedWorkspaceId) }}</div>
-          </div>
-        </section>
       </div>
     </template>
     <div v-else class="muted">{{ t("sourceControlPanel.notRepository") }}</div>
@@ -420,7 +331,7 @@ async function askReview(ref: string, url: string, title: string) {
 <style scoped>
 .source-control { flex: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.source-control :deep(.icon-button) { padding: 2px 6px; color: var(--muted); border: none; }
+.source-control :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .source-control :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .message textarea { resize: vertical; padding-right: 32px; min-height: 34px; }
 .write-message { top: 4px; right: 4px; }
@@ -433,15 +344,16 @@ async function askReview(ref: string, url: string, title: string) {
 }
 .btn-group :deep(.commit-arrow) { flex: 0 0 auto; border-left-color: rgba(255, 255, 255, 0.4); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -8px; }
-.group-header { padding: 2px 8px; border-radius: 5px; min-height: 26px; }
+.group-header { height: 26px; padding: 0 8px; border-radius: 5px; }
 .group-header:hover { background: var(--hover-soft); }
 .group-toggle, .file-main { border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); text-align: left; min-width: 0; }
 .group-toggle { font-weight: 600; }
 .count { background: var(--line-strong); color: var(--text-2); margin-left: 4px; }
-.hover-actions { display: none; align-items: center; }
-.group-header:hover .hover-actions, .file:hover .hover-actions, .hover-actions:focus-within { display: inline-flex; }
+/* The buttons keep their place while they are hidden, so the line does not move when the pointer comes over it. */
+.hover-actions { display: inline-flex; align-items: center; visibility: hidden; }
+.group-header:hover .hover-actions, .file:hover .hover-actions, .hover-actions:focus-within { visibility: visible; }
 .files { list-style: none; margin: 0; padding: 0; }
-.file { padding: 1px 8px 1px 24px; border-radius: 5px; min-height: 24px; }
+.file { height: 24px; padding: 0 8px 0 24px; border-radius: 5px; }
 .file:hover { background: var(--hover-soft); }
 .file-main { flex: 1 1 auto; overflow: hidden; white-space: nowrap; }
 .name { flex-shrink: 0; }
@@ -451,18 +363,7 @@ async function askReview(ref: string, url: string, title: string) {
 .letter.added { color: var(--ok); }
 .letter.deleted { color: var(--blocked); }
 .letter.renamed { color: var(--done); }
-.requests { padding: 4px 8px; }
-.link { border: none; background: none; padding: 0; color: var(--faint); font-size: var(--font-size); }
-.link:hover:not(:disabled) { color: var(--text-2); }
-.chip {
-  height: 18px; padding: 0 7px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600;
-  background: var(--chip); color: var(--text-2); border: none;
-}
-.chip.ok { background: var(--tint-ok); color: var(--ok); }
-.chip.warn { background: var(--tint-warn); color: var(--accent); }
-.chip.crit { background: var(--tint-crit); color: var(--blocked); }
-.chip.pending { background: var(--tint-working); color: var(--working); }
-.chip.muted { color: var(--muted); }
+.muted { color: var(--muted); }
 .req { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); }
 .req.mine { box-shadow: inset 0 0 0 1px #33506f; }
 .req-main { display: flex; flex-direction: column; gap: 4px; border: none; background: none; padding: 0; text-align: left; color: var(--text); }
