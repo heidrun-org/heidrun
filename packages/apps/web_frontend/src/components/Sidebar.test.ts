@@ -142,17 +142,18 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
   });
 
-  it("collapses after a click on the collapse button at the top right of the content, with an arrow toward the left edge", async () => {
+  it("collapses after a click on the collapse button, the first button of the sidebar icon bar, with an arrow toward the left edge", async () => {
     const { wrapper } = await mountSidebar();
-    const collapseButton = wrapper.get(".sidebar-section-body > .sidebar-section-header > .collapse-button");
+    const collapseButton = wrapper.get(".sidebar-icon-bar > .collapse-button");
     expect(collapseButton.get("i").classes()).toContain("bi-chevron-bar-left");
     expect(collapseButton.attributes("aria-label")).toBe("Collapse the sidebar to a bar of icons");
+    expect(wrapper.get(".sidebar-icon-bar").element.firstElementChild).toBe(collapseButton.element);
     await collapseButton.trigger("click");
     expect(settings.leftCollapsed).toBe(true);
     expect(wrapper.find(".collapse-button").exists()).toBe(false);
   });
 
-  it("shows the expand button above the icons only when collapsed, and expands to the selected sidebar section after a click on it", async () => {
+  it("shows the expand button in place of the collapse button when collapsed, and expands to the selected sidebar section after a click on it", async () => {
     settings.leftSidebarSection = "git";
     const { wrapper } = await mountSidebar();
     expect(wrapper.find(".expand-button").exists()).toBe(false);

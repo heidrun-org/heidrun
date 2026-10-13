@@ -206,7 +206,7 @@ describe("RightPanel button Needs you", () => {
     settings.rightSidebarSection = "notes";
     settings.rightCollapsed = false;
     const wrapper = mount(RightPanel, { global: { stubs } });
-    const collapseButton = wrapper.get(".sidebar-section-body > .sidebar-section-header > .collapse-button");
+    const collapseButton = wrapper.get(".sidebar-icon-bar > .collapse-button");
     expect(collapseButton.get("i").classes()).toContain("bi-chevron-bar-right");
     await collapseButton.trigger("click");
     expect(settings.rightCollapsed).toBe(true);

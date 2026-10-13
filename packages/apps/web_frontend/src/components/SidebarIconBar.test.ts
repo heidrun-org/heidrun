@@ -66,9 +66,18 @@ describe("SidebarIconBar", () => {
     expect(wrapper.emitted("select")).toEqual([["second"], ["first"]]);
   });
 
-  it("shows no expand button while the sidebar is expanded", () => {
-    const wrapper = mountSidebarIconBar("first", false);
+  it.each([
+    ["left", "bi-chevron-bar-left"],
+    ["right", "bi-chevron-bar-right"],
+  ] as const)("shows above the icons of the expanded %s sidebar a collapse button with an arrow toward the edge", async (side, iconClass) => {
+    const wrapper = mountSidebarIconBar("first", false, side);
     expect(wrapper.find(".expand-button").exists()).toBe(false);
+    const collapseButton = wrapper.get(".sidebar-icon-bar > .collapse-button");
+    expect(wrapper.get(".sidebar-icon-bar").element.firstElementChild).toBe(collapseButton.element);
+    expect(collapseButton.get("i").classes()).toContain(iconClass);
+    expect(collapseButton.attributes("aria-label")).toBe("Collapse the sidebar to a bar of icons");
+    await collapseButton.trigger("click");
+    expect(wrapper.emitted("toggle")).toEqual([[]]);
   });
 
   it.each([
@@ -80,7 +89,8 @@ describe("SidebarIconBar", () => {
     expect(wrapper.get(".sidebar-icon-bar").element.firstElementChild).toBe(expandButton.element);
     expect(expandButton.get("i").classes()).toContain(iconClass);
     expect(expandButton.attributes("aria-label")).toBe("Expand the sidebar");
+    expect(wrapper.find(".collapse-button").exists()).toBe(false);
     await expandButton.trigger("click");
-    expect(wrapper.emitted("expand")).toEqual([[]]);
+    expect(wrapper.emitted("toggle")).toEqual([[]]);
   });
 });

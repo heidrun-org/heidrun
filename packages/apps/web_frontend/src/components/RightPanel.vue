@@ -3,7 +3,6 @@ import { computed } from "vue";
 import ChatsPanel from "./ChatsPanel.vue";
 import { attention } from "../stores/session";
 import NotesPanel from "./NotesPanel.vue";
-import SidebarCollapseButton from "./SidebarCollapseButton.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
 import ToHandlePanel from "./ToHandlePanel.vue";
 import { settings } from "../stores/settings";
@@ -32,9 +31,6 @@ function selectSidebarSection(id: string) {
 <template>
   <aside class="right" :style="{ width: `${settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth}px` }">
     <div v-if="settings.rightCollapsed === false" class="sidebar-section-body">
-      <div class="sidebar-section-header">
-        <SidebarCollapseButton side="right" @collapse="settings.rightCollapsed = true" />
-      </div>
       <ToHandlePanel v-if="settings.rightSidebarSection === 'toHandle'" />
       <ChatsPanel v-else-if="settings.rightSidebarSection === 'chats'" />
       <NotesPanel v-else />
@@ -46,7 +42,7 @@ function selectSidebarSection(id: string) {
       side="right"
       :is-collapsed="settings.rightCollapsed"
       @select="selectSidebarSection"
-      @expand="settings.rightCollapsed = false"
+      @toggle="settings.rightCollapsed = !settings.rightCollapsed"
     />
   </aside>
 </template>
@@ -60,5 +56,4 @@ function selectSidebarSection(id: string) {
   flex: 1 1 auto; min-width: 0; min-height: 0; border-right: 1px solid var(--line); padding-top: 5px;
   display: flex; flex-direction: column;
 }
-.sidebar-section-header { flex-shrink: 0; display: flex; justify-content: flex-end; padding: 0 8px; }
 </style>

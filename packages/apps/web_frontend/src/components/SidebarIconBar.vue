@@ -10,17 +10,17 @@ defineProps<{
   selectedId: string | null;
   /** The accessible name of the sidebar icon bar. */
   label: string;
-  /** The side of the sidebar: the expand button shows an arrow toward the viewport. */
+  /** The side of the sidebar: the arrow of the first button points toward the viewport or toward the edge. */
   side: "left" | "right";
-  /** The sidebar is collapsed: the expand button sits above the icons. */
+  /** The sidebar is collapsed: the first button expands it. Otherwise the first button collapses it. */
   isCollapsed: boolean;
 }>();
 
 const emit = defineEmits<{
   /** The person clicked the icon of a sidebar section. */
   select: [id: string];
-  /** The person clicked the expand button: the sidebar expands to its selected sidebar section. */
-  expand: [];
+  /** The person clicked the first button: the sidebar collapses, or expands to its selected sidebar section. */
+  toggle: [];
 }>();
 </script>
 
@@ -31,9 +31,18 @@ const emit = defineEmits<{
       class="expand-button"
       :title="t('sidebarIconBar.expandSidebar')"
       :aria-label="t('sidebarIconBar.expandSidebar')"
-      @click="emit('expand')"
+      @click="emit('toggle')"
     >
       <Icon :name="side === 'left' ? 'chevron-bar-right' : 'chevron-bar-left'" />
+    </button>
+    <button
+      v-else
+      class="collapse-button"
+      :title="t('sidebarIconBar.collapseSidebar')"
+      :aria-label="t('sidebarIconBar.collapseSidebar')"
+      @click="emit('toggle')"
+    >
+      <Icon :name="side === 'left' ? 'chevron-bar-left' : 'chevron-bar-right'" />
     </button>
     <div class="icons" role="tablist" aria-orientation="vertical" :aria-label="label">
       <button
