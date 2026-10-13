@@ -19,5 +19,9 @@
   "newFile": "Nouveau fichier",
   "newFolder": "Nouveau dossier",
   "collapseAll": "Replier tous les dossiers",
-  "nameHasSlash": "Un nom ne peut pas contenir le caractère /. Sélectionne d’abord un dossier."
+  "nameHasSlash": "Un nom ne peut pas contenir le caractère /. Sélectionne d’abord un dossier.",
+  "copied": "Copié : {path}",
+  "fileMenu.label": "Menu du fichier",
+  "fileMenu.copyAbsolutePath": "Copier le chemin absolu",
+  "fileMenu.copyRelativePath": "Copier le chemin relatif"
 }

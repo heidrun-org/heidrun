@@ -2,9 +2,11 @@
 // The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
 // workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
 // changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
-// delete, or edit a file.
+// delete, or edit a file. A right click on the row of a file opens a context menu that copies the absolute path or the
+// relative path of the file to the clipboard.
 // - issue #349
-import { computed, nextTick, ref, watch } from "vue";
+// - issue #383
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
@@ -13,6 +15,7 @@ import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
+import { copy } from "../lib/clipboard";
 import { t } from "../i18n/index";
 
 /** The selected row of the selected workspace, or null. Each workspace has its own selected row. */
@@ -252,6 +255,82 @@ function chooseRow(row: TreeRow) {
   openGitModal(row.path);
 }
 
+/** The context menu of the row of a file: the relative path of the file, and where the pointer was. Null when closed. */
+const fileMenu = ref<{ path: string; top: number; left: number } | null>(null);
+const fileMenuElement = ref<HTMLElement>();
+
+/** The space in pixels that the context menu keeps between itself and the edge of the window. */
+const FILE_MENU_MARGIN = 8;
+
+/** Opens the context menu at the pointer for the row of a file. The row of a folder keeps the default behavior. */
+function openFileMenu(event: MouseEvent, row: TreeRow) {
+  if (row.dir) {
+    return;
+  }
+  event.preventDefault();
+  fileMenu.value = { path: row.path, top: event.clientY, left: event.clientX };
+  document.addEventListener("mousedown", onDocumentMouseDown, true);
+  document.addEventListener("keydown", onDocumentKeyDown, true);
+  void nextTick(() => {
+    const menuElement = fileMenuElement.value;
+    const current = fileMenu.value;
+    if (menuElement === undefined || current === null) {
+      return;
+    }
+    // The context menu stays inside the window, whatever the place of the pointer.
+    fileMenu.value = {
+      ...current,
+      top: Math.max(FILE_MENU_MARGIN, Math.min(current.top, window.innerHeight - menuElement.offsetHeight - FILE_MENU_MARGIN)),
+      left: Math.max(FILE_MENU_MARGIN, Math.min(current.left, window.innerWidth - menuElement.offsetWidth - FILE_MENU_MARGIN)),
+    };
+  });
+}
+
+/** Closes the context menu. */
+function closeFileMenu() {
+  fileMenu.value = null;
+  document.removeEventListener("mousedown", onDocumentMouseDown, true);
+  document.removeEventListener("keydown", onDocumentKeyDown, true);
+}
+
+/** Closes the context menu on a click outside the context menu. */
+function onDocumentMouseDown(event: MouseEvent) {
+  if (fileMenuElement.value?.contains(event.target as Node) === true) {
+    return;
+  }
+  closeFileMenu();
+}
+
+/** Closes the context menu on the key Escape. */
+function onDocumentKeyDown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    event.stopPropagation();
+    closeFileMenu();
+  }
+}
+
+/** Puts the absolute path or the relative path of the file of the context menu on the clipboard, and closes the menu. */
+async function copyPath(kind: "absolute" | "relative") {
+  const relativePath = fileMenu.value?.path ?? null;
+  closeFileMenu();
+  if (relativePath === null) {
+    return;
+  }
+  let text = relativePath;
+  if (kind === "absolute") {
+    try {
+      text = await invoke<string>("file_full_path", { root: files.root, path: relativePath });
+    } catch (error) {
+      toast(String(error), "error");
+      return;
+    }
+  }
+  await copy(text);
+  toast(t("filesPanel.copied", { path: text }));
+}
+
+onBeforeUnmount(closeFileMenu);
+
 /** The icon of a row: a folder that is closed or open, or the kind of the file. */
 function rowIcon(row: TreeRow): string {
   if (row.dir) {
@@ -363,6 +442,7 @@ function letterClass(letter: string): string {
               :title="entry.row.path"
               :aria-expanded="entry.row.dir && entry.row.ignored === false ? files.expanded.has(entry.row.path) : undefined"
               @click="chooseRow(entry.row)"
+              @contextmenu="openFileMenu($event, entry.row)"
             >
               <template v-if="settings.filesPanelIndentGuides">
                 <span v-for="level in entry.row.depth" :key="level" class="guide"></span>
@@ -382,6 +462,23 @@ function letterClass(letter: string): string {
       <div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
     </template>
     <div v-else class="muted">{{ t("filesPanel.notRepository") }}</div>
+    <Teleport to="body">
+      <div
+        v-if="fileMenu !== null"
+        ref="fileMenuElement"
+        class="menu show position-fixed"
+        role="menu"
+        :aria-label="t('filesPanel.fileMenu.label')"
+        :style="{ top: `${fileMenu.top}px`, left: `${fileMenu.left}px` }"
+      >
+        <button type="button" class="menu-item" role="menuitem" @click="copyPath('absolute')">
+          {{ t("filesPanel.fileMenu.copyAbsolutePath") }}
+        </button>
+        <button type="button" class="menu-item" role="menuitem" @click="copyPath('relative')">
+          {{ t("filesPanel.fileMenu.copyRelativePath") }}
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -394,7 +491,7 @@ function letterClass(letter: string): string {
 .files-panel :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .rows { list-style: none; margin: 0; padding: 0; }
 .row { width: 100%; height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
-.row:hover { background: var(--hover-soft); }
+.row:hover { background: var(--files-row-hover); }
 /* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
 .row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }
 .row.ignored { color: var(--muted); }

@@ -69,7 +69,7 @@ The sidebar section of the left sidebar that shows what lives on GitHub or on Gi
 
 ### Files sidebar section
 
-The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. It only reads files.
+The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. A right click on a file opens a context menu that copies the path of the file. It only reads files.
 
 ### Chat
 
