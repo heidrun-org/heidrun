@@ -37,7 +37,6 @@ import {
   closePane,
   cycleTab,
   cycleWorkspace,
-  newTerminal,
   selectWorkspaceAt,
   selectedPane,
   shiftTab,
@@ -47,6 +46,7 @@ import {
   state,
   toast,
 } from "./stores/session";
+import { startDefaultNewTab } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomScriptModal } from "./stores/newCustomScript";
@@ -213,7 +213,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
-      return run(() => (e.shiftKey ? (newAgent.open = true) : newTerminal()));
+      return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
     case "KeyD":
       return run(() => splitPane(e.shiftKey ? "down" : "right"));
     case "KeyW":

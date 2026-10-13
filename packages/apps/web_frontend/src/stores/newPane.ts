@@ -82,5 +82,10 @@ export function onNewPaneClick(e: MouseEvent) {
     startNewPane(previous);
     return;
   }
-  startNewPane(defaultNewTabValues());
+  startDefaultNewTab();
+}
+
+/** Starts the default command of a new tab: the plus button of the tab bar and the shortcut Command+T do the same. */
+export function startDefaultNewTab() {
+  return startNewPane(defaultNewTabValues());
 }

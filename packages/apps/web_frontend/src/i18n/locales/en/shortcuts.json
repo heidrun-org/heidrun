@@ -9,7 +9,7 @@
   "action.closeWindow": "Close the open window",
   "keys.escape": "Esc",
   "group.terminalsAndAgents": "Terminals and agents",
-  "action.newTerminal": "New terminal (new tab)",
+  "action.newTerminal": "New tab (default command of a new tab)",
   "action.newAgent": "New agent (Claude, Codex, project agents)",
   "action.splitPane": "Split the pane to the right / to the bottom",
   "action.closePane": "Close the selected pane (twice, to avoid accidents)",
