@@ -21,23 +21,36 @@ const emit = defineEmits<{
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
 // so the grid matches the tab's real split layout at any window size.
-// Each pane is 1 pixel wider and 1 pixel taller than its share, so that its border on the right and at the bottom covers the
-// border of the next pane: two panes that touch have one line between them, and no gap.
+// A pane that has a neighbour on its left, or above it, starts 1 pixel early, so that its border covers the border of the
+// neighbour: two panes that touch have one line between them, and no gap. The right edge and the bottom edge of a pane stay
+// exactly at the edge of its share.
 const BORDER = "1px";
+
+/**
+ * Gives the start and the size of a pane along one axis.
+ *
+ * @param start The share of the start of the pane, in percent.
+ * @param size The share of the size of the pane, in percent.
+ * @returns The start and the size, as CSS values. A pane that does not start at the edge goes 1 pixel over its neighbour.
+ */
+function overlapNeighbour(start: number, size: number) {
+  if (start <= 0) {
+    return { start: "0", size: `${size}%` };
+  }
+  return { start: `calc(${start}% - ${BORDER})`, size: `calc(${size}% + ${BORDER})` };
+}
 
 const placed = computed(() => {
   const layout = gridLayout.value;
   const panes = gridPanes.value;
   if (!layout || !layout.area.width || !layout.area.height) {
-    return panes.map((p, i) => ({
-      pane: p,
-      style: {
-        left: `${(i / panes.length) * 100}%`,
-        top: "0",
-        width: `calc(${100 / panes.length}% + ${BORDER})`,
-        height: `calc(100% + ${BORDER})`,
-      },
-    }));
+    return panes.map((p, i) => {
+      const horizontal = overlapNeighbour((i / panes.length) * 100, 100 / panes.length);
+      return {
+        pane: p,
+        style: { left: horizontal.start, top: "0", width: horizontal.size, height: "100%" },
+      };
+    });
   }
   const { area } = layout;
   const rects = new Map(layout.panes.map((lp) => [lp.pane_id, lp.rect]));
@@ -45,14 +58,11 @@ const placed = computed(() => {
     .filter((p) => rects.has(p.pane_id))
     .map((p) => {
       const r = rects.get(p.pane_id)!;
+      const horizontal = overlapNeighbour(((r.x - area.x) / area.width) * 100, (r.width / area.width) * 100);
+      const vertical = overlapNeighbour(((r.y - area.y) / area.height) * 100, (r.height / area.height) * 100);
       return {
         pane: p,
-        style: {
-          left: `${((r.x - area.x) / area.width) * 100}%`,
-          top: `${((r.y - area.y) / area.height) * 100}%`,
-          width: `calc(${(r.width / area.width) * 100}% + ${BORDER})`,
-          height: `calc(${(r.height / area.height) * 100}% + ${BORDER})`,
-        },
+        style: { left: horizontal.start, top: vertical.start, width: horizontal.size, height: vertical.size },
       };
     });
 });
@@ -82,12 +92,12 @@ const separatorItems = computed(() => {
     const style =
       separator.direction === "down"
         ? {
-            top: `calc(${percentY(separator.position)}% - ${GAP} / 2)`,
+            top: `calc(${percentY(separator.position)}% - ${GAP} / 2 - ${BORDER} / 2)`,
             left: `${percentX(separator.start)}%`,
             width: `${percentX(separator.end) - percentX(separator.start)}%`,
           }
         : {
-            left: `calc(${percentX(separator.position)}% - ${GAP} / 2)`,
+            left: `calc(${percentX(separator.position)}% - ${GAP} / 2 - ${BORDER} / 2)`,
             top: `${percentY(separator.start)}%`,
             height: `${percentY(separator.end) - percentY(separator.start)}%`,
           };

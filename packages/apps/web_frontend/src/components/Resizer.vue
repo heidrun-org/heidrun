@@ -84,7 +84,7 @@ onBeforeUnmount(() => (document.body.style.cursor = ""));
 /* The place to grab the line between two columns that touch: it takes no room, and its colour fills the width of the sash. */
 .resizer.inside { width: 0; border-radius: 0; background: transparent; }
 .resizer.inside::before {
-  content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--pane-gap) / -2 + 0.5px); width: var(--pane-gap);
+  content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--pane-gap) / -2 - 0.5px); width: var(--pane-gap);
   transition: background 0.15s;
 }
 .resizer.inside:hover::before, .resizer.inside.active::before, .resizer.inside.highlighted::before,

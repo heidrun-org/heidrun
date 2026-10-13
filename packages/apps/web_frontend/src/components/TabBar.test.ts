@@ -453,12 +453,20 @@ describe("TabBar join with the panes", () => {
     expect(sourceText).toMatch(/\.nav-tabs \.nav-link\.active \{[^}]*border-bottom-width: 0/);
   });
 
-  it("draws the ring of the selected pane and of a blocked pane with the border of the pane, so that it joins the selected tab", () => {
+  it("draws the ring of the selected pane and of a blocked pane with the top border of the pane, so that it joins the selected tab", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
-    expect(sourceText).toMatch(/\.pane\.selected \{ border-color: var\(--pane-ring-selected\);[^}]*\}/);
-    expect(sourceText).toMatch(/\.pane\.blocked \{ border-color: var\(--pane-ring-blocked\);[^}]*\}/);
-    expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
+    expect(sourceText).toMatch(/\.pane\.selected \{ border-top-color: var\(--pane-ring-selected\);[^}]*\}/);
+    expect(sourceText).toMatch(/\.pane\.blocked \{ border-top-color: var\(--pane-ring-blocked\);[^}]*\}/);
+    expect(sourceText).toMatch(/\.pane\.blocked\.selected \{ border-top-color: var\(--pane-ring-blocked-selected\);[^}]*\}/);
     expect(sourceText).not.toMatch(/\.pane[^{]*\{[^}]*box-shadow: inset/);
+  });
+
+  it("draws the ring of the selected pane and of a blocked pane on the left, on the right, and at the bottom just inside the border, because the viewport hides the border there", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "PaneCard.vue"), "utf8");
+    expect(sourceText).toMatch(/\.pane::after \{[^}]*inset: 0;[^}]*pointer-events: none;[^}]*border-width: 0 1px 1px;/);
+    expect(sourceText).toMatch(/\.pane\.selected::after \{ border-color: var\(--pane-ring-selected\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked::after \{ border-color: var\(--pane-ring-blocked\); \}/);
+    expect(sourceText).toMatch(/\.pane\.blocked\.selected::after \{ border-color: var\(--pane-ring-blocked-selected\); \}/);
   });
 });
 

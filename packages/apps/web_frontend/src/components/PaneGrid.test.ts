@@ -278,26 +278,19 @@ describe("PaneGrid corners", () => {
 });
 
 describe("PaneGrid panes that touch", () => {
-  it("makes each pane 1 pixel wider and 1 pixel taller than its share, so that the borders of two panes make one line", () => {
-    const wrapper = mountPaneGrid(THREE_PANES);
-    const cells = wrapper.findAll(".cell");
-    expect(cells.map((cell) => (cell.element as HTMLElement).style.width)).toEqual([
-      "calc(50% + 1px)",
-      "calc(50% + 1px)",
-      "calc(50% + 1px)",
-    ]);
-    expect(cells.map((cell) => (cell.element as HTMLElement).style.height)).toEqual([
-      "calc(100% + 1px)",
-      "calc(50% + 1px)",
-      "calc(50% + 1px)",
-    ]);
-  });
+  const cellStyles = (wrapper: ReturnType<typeof mountPaneGrid>) =>
+    wrapper.findAll(".cell").map((cell) => {
+      const style = (cell.element as HTMLElement).style;
+      return { left: style.left, top: style.top, width: style.width, height: style.height };
+    });
 
-  it("places each pane at its share, with no space around it", () => {
+  it("starts a pane that has a neighbour on its left or above it 1 pixel early, so that the borders of two panes make one line", () => {
     const wrapper = mountPaneGrid(THREE_PANES);
-    const cells = wrapper.findAll(".cell");
-    expect(cells.map((cell) => (cell.element as HTMLElement).style.left)).toEqual(["0%", "50%", "50%"]);
-    expect(cells.map((cell) => (cell.element as HTMLElement).style.top)).toEqual(["0%", "0%", "50%"]);
+    expect(cellStyles(wrapper)).toEqual([
+      { left: "0px", top: "0px", width: "50%", height: "100%" },
+      { left: "calc(50% - 1px)", top: "0px", width: "calc(50% + 1px)", height: "50%" },
+      { left: "calc(50% - 1px)", top: "calc(50% - 1px)", width: "calc(50% + 1px)", height: "calc(50% + 1px)" },
+    ]);
   });
 });
 

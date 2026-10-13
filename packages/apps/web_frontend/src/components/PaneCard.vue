@@ -134,16 +134,26 @@ const subtitle = computed(() => {
 
 <style scoped>
 /* A pane has no rounded corner: the panes touch each other and the border of the viewport, and the viewport clips the
-   corners that touch its own rounded corners. The border of a pane is the line between two panes. */
+   corners that touch its own rounded corners. The border of a pane is the line between two panes. At the edge of the viewport,
+   the border of the pane is hidden under the border of the viewport. */
 .pane {
-  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative;
+  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; z-index: 0;
   border: 1px solid var(--line); overflow: hidden;
 }
-/* The ring of a blocked pane and of the selected pane is the border itself, so that the outline of the selected tab of the tab bar
-   joins the border of the pane without an offset. The ring goes over the border of the next pane that it touches. */
-.pane.blocked { border-color: var(--pane-ring-blocked); z-index: 1; }
-.pane.selected { border-color: var(--pane-ring-selected); z-index: 1; }
-.pane.blocked.selected { border-color: var(--pane-ring-blocked-selected); }
+/* The ring of a blocked pane and of the selected pane has two parts. At the top, the ring is the border itself, so that the outline
+   of the selected tab of the tab bar joins the ring without an offset. On the left, on the right, and at the bottom, the ring is
+   drawn just inside the border, so that it also shows where the viewport hides the border. The ring goes over the border of the
+   next pane that it touches. */
+.pane::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border: 0 solid transparent; border-width: 0 1px 1px;
+}
+.pane.blocked { border-top-color: var(--pane-ring-blocked); z-index: 1; }
+.pane.selected { border-top-color: var(--pane-ring-selected); z-index: 1; }
+.pane.blocked.selected { border-top-color: var(--pane-ring-blocked-selected); }
+.pane.blocked::after { border-color: var(--pane-ring-blocked); }
+.pane.selected::after { border-color: var(--pane-ring-selected); }
+.pane.blocked.selected::after { border-color: var(--pane-ring-blocked-selected); }
 .sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;

@@ -86,6 +86,13 @@ describe('pane', () => {
 	it('has a border of 1 pixel, which is the line between two panes', () => {
 		expect(PaneJointsTestHelper.readValue(rule, 'border')).toBe('1px solid var(--line)');
 	});
+
+	it('draws its ring on the left, on the right, and at the bottom inside its border, so that the ring shows where the viewport hides the border', () => {
+		const ringRule = PaneJointsTestHelper.readRule('components/PaneCard.vue', '.pane::after');
+		expect(PaneJointsTestHelper.readValue(ringRule, 'inset')).toBe('0');
+		expect(PaneJointsTestHelper.readValue(ringRule, 'border-width')).toBe('0 1px 1px');
+		expect(PaneJointsTestHelper.readValue(ringRule, 'pointer-events')).toBe('none');
+	});
 });
 
 describe('grid of panes', () => {

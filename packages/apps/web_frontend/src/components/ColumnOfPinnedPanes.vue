@@ -13,8 +13,9 @@ import { t } from "../i18n/index";
 </template>
 
 <style scoped>
-/* The pinned panes touch each other: each one is 1 pixel over the next one, so that two borders make one line. */
-.column-of-pinned-panes { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; }
+/* The pinned panes touch each other, and they touch the panes of the tab: each one starts 1 pixel over the previous one, so that
+   two borders make one line. */
+.column-of-pinned-panes { flex-shrink: 0; min-width: 0; display: flex; flex-direction: column; margin-left: -1px; }
 .cell { flex: 1; min-height: 0; }
 .cell + .cell { margin-top: -1px; }
 </style>
