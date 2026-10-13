@@ -5,14 +5,58 @@
 // - issue #349
 import { computed, watch } from "vue";
 import Icon from "./Icon.vue";
+import SourceControlMenu from "./SourceControlMenu.vue";
 import { currentGit, git, openGitModal } from "../stores/git";
 import { buildTree, files, loadFiles, visibleRows, type TreeRow } from "../stores/files";
 import { state } from "../stores/session";
+import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
 import { t } from "../i18n/index";
 
 const tree = computed(() => buildTree(files.list));
 const rows = computed(() => visibleRows(tree.value, files.expanded, files.status));
+
+/** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
+const INDENT_WIDTHS = { small: 12, medium: 20, large: 28 } as const;
+
+/** The height in pixels of a row, for each choice of the menu. */
+const ROW_HEIGHTS = { compact: 24, comfortable: 30 } as const;
+
+const indentWidth = computed(() => INDENT_WIDTHS[settings.filesPanelIndent]);
+const rowHeight = computed(() => ROW_HEIGHTS[settings.filesPanelRowHeight]);
+
+/** The mark that the menu puts before the choice that is on. */
+function mark(isOn: boolean): string {
+  return isOn ? "✓ " : "\u2003";
+}
+
+/** The items of the menu of the three dots: the indentation, the row height, and the indent guides. */
+const menuItems = computed(() => [
+  { id: "indentTitle", label: t("filesPanel.menu.indent"), isDisabled: true },
+  ...(["small", "medium", "large"] as const).map((choice) => ({
+    id: `indent:${choice}`,
+    label: mark(settings.filesPanelIndent === choice) + t(`filesPanel.menu.indent.${choice}`),
+  })),
+  { id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true },
+  ...(["compact", "comfortable"] as const).map((choice) => ({
+    id: `rowHeight:${choice}`,
+    label: mark(settings.filesPanelRowHeight === choice) + t(`filesPanel.menu.rowHeight.${choice}`),
+  })),
+  { id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true },
+  { id: "guides:on", label: mark(settings.filesPanelIndentGuides) + t("filesPanel.menu.guides.on") },
+  { id: "guides:off", label: mark(settings.filesPanelIndentGuides === false) + t("filesPanel.menu.guides.off") },
+]);
+
+function chooseMenuItem(id: string) {
+  const [name, choice] = id.split(":");
+  if (name === "indent") {
+    settings.filesPanelIndent = choice as typeof settings.filesPanelIndent;
+  } else if (name === "rowHeight") {
+    settings.filesPanelRowHeight = choice as typeof settings.filesPanelRowHeight;
+  } else if (name === "guides") {
+    settings.filesPanelIndentGuides = choice === "on";
+  }
+}
 
 /** The file that the large Git window shows, when the window is open. */
 const openedPath = computed(() => (git.modal.open ? git.modal.path : null));
@@ -57,12 +101,20 @@ function chooseRow(row: TreeRow) {
   openGitModal(row.path);
 }
 
-/** The icon of a row: a folder, or the kind of the file. */
+/** The icon of a row: a folder that is closed or open, or the kind of the file. */
 function rowIcon(row: TreeRow): string {
   if (row.dir) {
-    return files.expanded.has(row.path) ? "chevron-down" : "chevron-right";
+    return files.expanded.has(row.path) ? "folder2-open" : "folder2";
   }
   return fileIconName(row.name);
+}
+
+/** The name of the arrow of a folder row. A file row has no arrow, but it keeps the space of the arrow. */
+function arrowIcon(row: TreeRow): string | null {
+  if (row.dir === false || row.ignored) {
+    return null;
+  }
+  return files.expanded.has(row.path) ? "chevron-down" : "chevron-right";
 }
 
 /** The class that gives a status letter its color. */
@@ -96,20 +148,33 @@ function letterClass(letter: string): string {
         >
           <Icon name="arrow-clockwise" />
         </button>
+        <SourceControlMenu
+          button-class="btn btn-sm icon-button"
+          icon="three-dots-vertical"
+          :label="t('filesPanel.menu.label')"
+          :items="menuItems"
+          @choose="chooseMenuItem"
+        />
       </header>
       <div v-if="files.error !== ''" class="error">{{ files.error }}</div>
-      <ul v-else class="rows">
+      <ul v-else class="rows" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
         <li v-for="row in rows" :key="row.path + (row.dir ? '/' : '')">
           <button
             type="button"
-            class="row btn d-flex align-items-center gap-2 w-100 text-start"
+            class="row btn d-flex align-items-center w-100 text-start"
             :class="{ opened: row.path === openedPath, ignored: row.ignored }"
-            :style="{ paddingLeft: `${8 + row.depth * 14}px` }"
             :title="row.path"
             :aria-expanded="row.dir && row.ignored === false ? files.expanded.has(row.path) : undefined"
             @click="chooseRow(row)"
           >
-            <Icon :name="rowIcon(row)" />
+            <template v-if="settings.filesPanelIndentGuides">
+              <span v-for="level in row.depth" :key="level" class="guide"></span>
+            </template>
+            <span v-else :style="{ width: `${row.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+            <span class="arrow">
+              <Icon v-if="arrowIcon(row) !== null" :name="arrowIcon(row) ?? ''" />
+            </span>
+            <Icon :name="rowIcon(row)" class="kind" />
             <span class="name me-auto">{{ row.name }}</span>
             <span v-if="row.status !== null && row.dir" class="letter modified">•</span>
             <span v-else-if="row.status !== null" class="letter" :class="letterClass(row.status)">{{ row.status === "?" ? "U" : row.status }}</span>
@@ -128,10 +193,15 @@ function letterClass(letter: string): string {
 .files-panel :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .files-panel :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .rows { list-style: none; margin: 0; padding: 0; }
-.row { height: 24px; padding-top: 0; padding-bottom: 0; padding-right: 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
+.row { height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
 .row:hover { background: var(--hover-soft); }
 .row.opened { background: var(--hover); }
 .row.ignored { color: var(--muted); }
+/* One guide for each level: its line sits under the arrow of the folder of that level. */
+.guide { position: relative; flex: 0 0 var(--indent-width); align-self: stretch; }
+.guide::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; border-left: 1px solid var(--line); }
+.arrow { flex: 0 0 16px; width: 16px; display: inline-flex; justify-content: center; color: var(--muted); }
+.kind { flex: 0 0 auto; margin-right: 6px; color: var(--muted); }
 .name { overflow: hidden; text-overflow: ellipsis; }
 .letter { width: 18px; flex-shrink: 0; text-align: center; font: 600 var(--font-size) var(--mono); }
 .letter.modified { color: var(--accent); }

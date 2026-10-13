@@ -4,5 +4,16 @@
   "title": "Files",
   "sidebarSection": "Files",
   "refresh": "Refresh",
-  "truncated": "The list is too long: only the first files are shown."
+  "truncated": "The list is too long: only the first files are shown.",
+  "menu.label": "More options",
+  "menu.indent": "Indentation",
+  "menu.indent.small": "Small",
+  "menu.indent.medium": "Medium",
+  "menu.indent.large": "Large",
+  "menu.rowHeight": "Row height",
+  "menu.rowHeight.compact": "Compact",
+  "menu.rowHeight.comfortable": "Comfortable",
+  "menu.guides": "Indent guides",
+  "menu.guides.on": "Show",
+  "menu.guides.off": "Hide"
 }

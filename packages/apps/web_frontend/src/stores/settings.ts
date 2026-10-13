@@ -157,6 +157,12 @@ const defaults = {
   filesGrepCase: false,
   /** Window Files: the file tree shows the files that Git ignores. */
   filesShowIgnored: false,
+  /** Sidebar section Files: the space that each level of a folder adds at the left of a row. */
+  filesPanelIndent: "medium" as "small" | "medium" | "large",
+  /** Sidebar section Files: the height of a row. */
+  filesPanelRowHeight: "comfortable" as "compact" | "comfortable",
+  /** Sidebar section Files: a thin vertical line under each unfolded folder links its rows. */
+  filesPanelIndentGuides: true,
   /** Window Agents information: the activity list shows all the panes ("all") or only the selected pane ("pane"). */
   agentsActivityScope: "all" as "all" | "pane",
   /** Window History: the period of the runs. */
@@ -181,6 +187,8 @@ const defaults = {
 const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   rightSidebarSection: ["toHandle", "notes", "chats"],
   filesSideMode: ["tree", "grep"],
+  filesPanelIndent: ["small", "medium", "large"],
+  filesPanelRowHeight: ["compact", "comfortable"],
   agentsActivityScope: ["all", "pane"],
   historyPeriod: ["today", "7", "30", "90", "365"],
   historyGroupBy: ["ws", "feature"],

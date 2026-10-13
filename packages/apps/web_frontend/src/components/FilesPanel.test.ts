@@ -9,6 +9,7 @@ import FilesPanel from "./FilesPanel.vue";
 import { git, type GitStatus } from "../stores/git";
 import { files } from "../stores/files";
 import { state } from "../stores/session";
+import { settings } from "../stores/settings";
 
 function makeStatus(): GitStatus {
   return {
@@ -52,6 +53,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  settings.filesPanelIndent = "medium";
+  settings.filesPanelRowHeight = "comfortable";
+  settings.filesPanelIndentGuides = true;
   state.selectedWorkspaceId = null;
   git.status = {};
   git.modal.open = false;
@@ -89,10 +93,53 @@ describe("FilesPanel", () => {
     expect(row?.get(".letter").text()).toBe("M");
   });
 
-  it("has no button to create, rename, move, delete, or edit a file", async () => {
+  it("has no button to create, rename, move, delete, or edit a file: only the buttons Refresh and More options", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.findAll("header button")).toHaveLength(1);
-    expect(wrapper.get("header button").attributes("aria-label")).toBe("Refresh");
+    expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh", "More options"]);
+  });
+
+  it("gives a file and a folder of the same level the same space at the left, so their names line up", async () => {
+    const wrapper = await mountPanel();
+    const folderRow = wrapper.findAll(".row")[0];
+    const fileRow = wrapper.findAll(".row")[1];
+    expect(folderRow.findAll(".arrow")).toHaveLength(1);
+    expect(fileRow.findAll(".arrow")).toHaveLength(1);
+    expect(fileRow.get(".arrow").findAll("i")).toHaveLength(0);
+  });
+
+  it("draws one indent guide for each level of depth, and none when the guides are hidden", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.findAll(".row")[1].trigger("click");
+    expect(wrapper.findAll(".row")[0].findAll(".guide")).toHaveLength(0);
+    expect(wrapper.findAll(".row")[1].findAll(".guide")).toHaveLength(1);
+    expect(wrapper.findAll(".row")[2].findAll(".guide")).toHaveLength(2);
+    settings.filesPanelIndentGuides = false;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".guide")).toHaveLength(0);
+  });
+
+  it("sets the space of each level and the height of a row from the options", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.get(".rows").attributes("style")).toContain("--indent-width: 20px");
+    expect(wrapper.get(".rows").attributes("style")).toContain("--row-height: 30px");
+    settings.filesPanelIndent = "small";
+    settings.filesPanelRowHeight = "compact";
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".rows").attributes("style")).toContain("--indent-width: 12px");
+    expect(wrapper.get(".rows").attributes("style")).toContain("--row-height: 24px");
+  });
+
+  it("changes the options with the menu of the three dots, and marks the choice that is on", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll("header button")[1].trigger("click");
+    const items = () => Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]"));
+    expect(items().map((item) => item.textContent?.trim())).toEqual([
+      "Indentation", "Small", "✓ Medium", "Large", "Row height", "Compact", "✓ Comfortable", "Indent guides", "✓ Show", "Hide",
+    ]);
+    items()[3].click();
+    expect(settings.filesPanelIndent).toBe("large");
+    wrapper.unmount();
   });
 
   it("tells the developer to select a workspace when none is selected", () => {

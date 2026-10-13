@@ -4,5 +4,16 @@
   "title": "Fichiers",
   "sidebarSection": "Fichiers",
   "refresh": "Rafraîchir",
-  "truncated": "La liste est trop longue : seuls les premiers fichiers sont affichés."
+  "truncated": "La liste est trop longue : seuls les premiers fichiers sont affichés.",
+  "menu.label": "Plus d’options",
+  "menu.indent": "Indentation",
+  "menu.indent.small": "Petite",
+  "menu.indent.medium": "Moyenne",
+  "menu.indent.large": "Grande",
+  "menu.rowHeight": "Hauteur des lignes",
+  "menu.rowHeight.compact": "Compacte",
+  "menu.rowHeight.comfortable": "Aérée",
+  "menu.guides": "Repères d’indentation",
+  "menu.guides.on": "Afficher",
+  "menu.guides.off": "Masquer"
 }
