@@ -5,6 +5,7 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
 import { onNewPaneClick } from "../stores/newPane";
+import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -253,6 +254,19 @@ describe("TabBar rename in place", () => {
 });
 
 describe("TabBar close", () => {
+  beforeEach(() => {
+    settings.confirmTabClose = true;
+  });
+
+  it("closes the tab at once, without the confirmation dialog, when the setting confirmTabClose is off", async () => {
+    settings.confirmTabClose = false;
+    const { wrapper, api } = await mountTabBar();
+    await wrapper.findAll(".nav-link .confirm")[1].trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closeTab).toHaveBeenCalledWith("t2");
+  });
+
   it("asks for confirmation before it closes the tab, and does not close before the answer", async () => {
     const { wrapper, api } = await mountTabBar();
     await wrapper.findAll(".nav-link .confirm")[1].trigger("click");

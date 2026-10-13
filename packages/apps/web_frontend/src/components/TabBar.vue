@@ -5,6 +5,7 @@ import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import { allPanes, closeTab, finishRename, moveTab, selectTab, startRename, state, tabLabel, tabs } from "../stores/session";
 import { remote } from "../stores/claude";
+import { settings } from "../stores/settings";
 import { useReorder } from "../lib/reorder";
 import { tabIconName } from "../lib/tab_icon";
 import { onNewPaneClick } from "../stores/newPane";
@@ -75,6 +76,7 @@ function isRemoteControlled(tabId: string): boolean {
             icon="x-lg"
             :confirm-label="t('tabBar.closeConfirm')"
             :question="t('tabBar.close', { name: tabLabel(tab.tab_id) })"
+            :is-confirm-required="settings.confirmTabClose"
             @confirm="closeTab(tab.tab_id)"
           />
         </div>

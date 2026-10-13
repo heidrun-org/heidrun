@@ -4,12 +4,16 @@ import { askConfirm } from "../stores/confirm";
 
 // Button for destructive actions: a click opens a confirmation modal dialog, and the action runs only after the
 // user confirms in that dialog. Closing a pane ends the process running in it, so it is worth a question.
-const props = defineProps<{ label?: string; icon?: string; confirmLabel: string; question: string }>();
+// When `isConfirmRequired` is false, a click runs the action at once, without the confirmation modal dialog.
+const props = withDefaults(
+  defineProps<{ label?: string; icon?: string; confirmLabel: string; question: string; isConfirmRequired?: boolean }>(),
+  { isConfirmRequired: true },
+);
 const emit = defineEmits<{ confirm: [] }>();
 
 async function click(e: MouseEvent) {
   e.stopPropagation();
-  if (await askConfirm(props.question, props.confirmLabel)) {
+  if (props.isConfirmRequired === false || (await askConfirm(props.question, props.confirmLabel))) {
     emit("confirm");
   }
 }
