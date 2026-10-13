@@ -88,6 +88,15 @@ impl ForgeCache {
         self.content.answers.get(key).filter(|entry| now - entry.at < FRESH_FOR).map(|entry| entry.output.clone())
     }
 
+    /// The answer for `key` that a call uses before it asks the forge: the fresh answer, except when `is_refresh` is true,
+    /// because a refresh must ask the forge again.
+    fn fresh_unless_refresh(&self, key: &str, now: i64, is_refresh: bool) -> Option<String> {
+        if is_refresh {
+            return None;
+        }
+        self.fresh(key, now)
+    }
+
     /// The answer for `key` when it is at most seven days old at `now`.
     fn kept(&self, key: &str, now: i64) -> Option<String> {
         self.content.answers.get(key).filter(|entry| now - entry.at < KEPT_FOR).map(|entry| entry.output.clone())
@@ -125,14 +134,21 @@ fn with_cache<T>(body: impl FnOnce(&mut ForgeCache) -> T) -> T {
 }
 
 /// The same read-only call as `forge_cli`, with the answer kept on the disk for ten minutes. A call that fails gives the
-/// last answer of the same call when it is at most seven days old.
+/// last answer of the same call when it is at most seven days old. With `refresh` true, the forge is asked again even
+/// when a fresh answer exists, and the new answer replaces the kept one.
 #[tauri::command]
-pub async fn forge_cli_cached(cwd: String, tool: String, args: Vec<String>) -> Result<String, String> {
+pub async fn forge_cli_cached(
+    cwd: String,
+    tool: String,
+    args: Vec<String>,
+    refresh: Option<bool>,
+) -> Result<String, String> {
     if !crate::git::allowed(&tool, &args) {
         return Err(format!("forge_cli_cached : appel non autorisé ({tool} {})", args.join(" ")));
     }
     let key = key_of(&crate::project::find_root(Path::new(&cwd)), &tool, &args);
-    if let Some(output) = with_cache(|cache| cache.fresh(&key, now_ms())) {
+    let is_refresh = refresh == Some(true);
+    if let Some(output) = with_cache(|cache| cache.fresh_unless_refresh(&key, now_ms(), is_refresh)) {
         return Ok(output);
     }
     match crate::git::run_forge(&cwd, &tool, &args, 20).await {
@@ -158,6 +174,15 @@ mod tests {
         let mut cache = ForgeCache::in_memory();
         cache.put("a".into(), "{}".into(), NOW);
         assert_eq!(cache.fresh("a", NOW + FRESH_FOR - 1), Some("{}".to_string()));
+    }
+
+    #[test]
+    fn gives_the_fresh_answer_unless_the_call_is_a_refresh() {
+        let mut cache = ForgeCache::in_memory();
+        cache.put("a".into(), "{}".into(), NOW);
+        assert_eq!(cache.fresh_unless_refresh("a", NOW, false), Some("{}".to_string()));
+        assert_eq!(cache.fresh_unless_refresh("a", NOW, true), None);
+        assert_eq!(cache.kept("a", NOW), Some("{}".to_string()));
     }
 
     #[test]

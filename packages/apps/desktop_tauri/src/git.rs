@@ -225,7 +225,7 @@ pub async fn git_file(root: String, path: String, rev: Option<String>) -> Result
 }
 
 /// Read-only calls the app makes, and nothing else: `glab api <path>` (GET only)
-/// and `gh pr list` / `gh run list`. Anything that could change the forge or run
+/// and `gh pr list` / `gh issue list` / `gh run list`. Anything that could change the forge or run
 /// code (`gh alias set --shell`, `glab mr merge`, `api -X DELETE`…) is refused.
 pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
     let a: Vec<&str> = args.iter().map(String::as_str).collect();
@@ -238,7 +238,11 @@ pub(crate) fn allowed(tool: &str, args: &[String]) -> bool {
         "gh" => {
             let read_only = matches!(
                 a.get(..2),
-                Some(["pr", "list"]) | Some(["run", "list"]) | Some(["issue", "view"]) | Some(["pr", "view"])
+                Some(["pr", "list"])
+                    | Some(["run", "list"])
+                    | Some(["issue", "list"])
+                    | Some(["issue", "view"])
+                    | Some(["pr", "view"])
             );
             let flags_ok = a.iter().skip(2).all(|x| {
                 !x.starts_with('-') || matches!(*x, "--json" | "--limit" | "--branch" | "--state" | "--repo")
@@ -379,6 +383,9 @@ mod tests {
         assert!(!allowed("glab", &v(&["api", "-X", "DELETE", "projects/:fullpath"])));
         assert!(!allowed("glab", &v(&["mr", "merge", "1"])));
         assert!(allowed("gh", &v(&["pr", "list", "--limit", "20", "--json", "number,title"])));
+        assert!(allowed("gh", &v(&["issue", "list", "--state", "open", "--limit", "100", "--json", "number,title,url"])));
+        assert!(!allowed("gh", &v(&["issue", "list", "--web"])));
+        assert!(allowed("glab", &v(&["api", "projects/:fullpath/issues?state=opened&per_page=100&with_labels_details=true"])));
         assert!(allowed("gh", &v(&["run", "list", "--branch", "x", "--limit", "1", "--json", "status"])));
         assert!(!allowed("gh", &v(&["alias", "set", "--shell", "x", "rm -rf ~"])));
         assert!(!allowed("gh", &v(&["pr", "merge", "1"])));

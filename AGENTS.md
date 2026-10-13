@@ -40,6 +40,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
   - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
   - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
+  - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section.
   - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the Files sidebar section.
 - The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.

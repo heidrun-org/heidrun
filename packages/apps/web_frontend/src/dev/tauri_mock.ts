@@ -87,8 +87,10 @@ export class TauriMock {
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
-			case 'forge_cli_cached':
-				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
+			case 'forge_cli_cached': {
+				const args = (payload as { args: string[] }).args;
+				return args[1] === 'list' ? TauriMockFixture.buildForgeListAnswer(args) : TauriMockFixture.buildForgeAnswer(args);
+			}
 			case 'topic_clusters_read':
 				return TauriMockFixture.getTopicClusterRows();
 			case 'topic_clusters_write':

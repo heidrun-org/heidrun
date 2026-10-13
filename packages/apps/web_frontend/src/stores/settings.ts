@@ -36,8 +36,11 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one. */
-export type LeftSidebarSection = "actions" | "sourceControl" | "files";
+/**
+ * The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one, and
+ * "codeHosting" is the Code hosting one.
+ */
+export type LeftSidebarSection = "actions" | "sourceControl" | "files" | "codeHosting";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";

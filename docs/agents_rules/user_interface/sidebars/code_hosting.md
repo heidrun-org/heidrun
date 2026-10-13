@@ -1,0 +1,26 @@
+# User interface of Heidrun: code hosting
+
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
+- Related issue: [issue 370](https://github.com/heidrun-org/heidrun/issues/370)
+
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+
+## Code hosting
+
+The Code hosting sidebar section shows what lives on GitHub or on GitLab for the repository of the selected workspace ([issue #370](https://github.com/heidrun-org/heidrun/issues/370)). The Source control sidebar section shows only the local Git repository.
+
+- The header holds the title "Code hosting" and one button that shows only an icon: "Refresh".
+- Below the header, two collapsible lists, one above the other. Each list header has an arrow that folds the list, the title, and a badge with the number of items.
+- The top list is "Issues". The bottom list is "Pull requests" for a repository on GitHub, and "Merge requests" for a repository on GitLab. A list that has no item says "No open issue.", "No open pull request.", or "No open merge request.".
+- Each list shows the open items only. A list reads at most 100 items. When a list reaches 100 items, a line under it says that the list is too long.
+- A row has three lines, and every row has the same height, whatever the text. The first line shows the number in grey, then the title. The number starts with `#`, except for a merge request of GitLab, which starts with `!`. The second line is a small detail line in grey: who opened the item and how long ago ("jeromeetienne opened 3 days ago"), with " · Draft" added for a draft pull request or merge request. The third line is a small detail line in grey: the labels of an issue, each one as a small pill in its own color, as GitHub draws it (a label without a color uses the neutral color), as high as its line less one pixel above and below, so that its border is never cut, or "No label", or, for a pull request or a merge request, the branch with the changes, an arrow, and the branch that receives them. A line that does not fit ends with an ellipsis. While the pointer is over a row, a title that does not fit scrolls to its end, like the lines of the information cards of the Chats sidebar section. The number does not scroll.
+- A row has no button: the whole row is one part that opens the information card. A row takes the whole width of the sidebar section, from its left line to its right line. Its corners are square, and a very light line separates it from the next row. The row gets a background while the pointer is over it.
+- A row is the part of an information card, the same kind of card as the cards of the Chats sidebar section. The row keeps its background while the card is open. A click on the row opens the card at the right of the row, because the sidebar is the left sidebar. A second click closes it. The card has the content of the details of a reference in the information card of the references line ([references_line.md](chats/information_cards/references_line.md)): the repository and the date of the creation, the state in a pill, the beginning of the description, the labels or the two branches, the person who opened it, and two buttons "Open in Heidrun" and "Open in GitHub" (or "Open in GitLab"). The button "Open in GitHub" is the only way to open the web page of the item in the web browser.
+- The card reads the details from the hosting service each time it opens, through the Tauri command `forge_cli_cached`, which keeps each answer for ten minutes.
+- The lists are read when the sidebar section is shown and when the repository of the selected workspace changes, through the Tauri command `forge_cli_cached`: each answer stays on the disk for ten minutes, so a second reading is immediate. A click on "Refresh" asks GitHub or GitLab again, whatever the age of the kept answer, and keeps the new answer. When the hosting service does not answer, an answer that is at most seven days old replaces the failure.
+- When the workspace is not a Git repository, or when the repository has no remote address, the sidebar section says so, and shows no list. When `gh` or `glab` fails (no login, no network), the sidebar section shows the first line of the failure, and shows no list.
+- The lists are read with `gh issue list` and `gh pr list` on GitHub, and with `glab api` on GitLab, with the author, the date, and the labels or the branches of each item. These calls only read. The icon of the Code hosting sidebar section in the sidebar icon bar has no number.

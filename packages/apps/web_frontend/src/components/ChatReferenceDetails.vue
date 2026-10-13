@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import Icon from "./Icon.vue";
 import {
   chatReferenceState,
   referenceDay,
   referenceExcerpt,
+  referenceLabelStyle,
   repositoryName,
   type ChatReference,
 } from "../lib/chat_references";
@@ -33,6 +34,16 @@ const props = defineProps<{
   webBase: string | null;
 }>();
 
+/** True when the browser could not load the picture of the author: the generic icon of a person takes its place. */
+const isAvatarBroken = ref(false);
+
+watch(
+  () => props.details?.authorAvatarUrl,
+  () => {
+    isAvatarBroken.value = false;
+  },
+);
+
 /** The name of the forge on the button. The names of the products are not translated. */
 const forgeName = computed(() => (props.forge === "gitlab" ? "GitLab" : "GitHub"));
 
@@ -51,18 +62,6 @@ const state = computed(() => chatReferenceState(props.reference.kind, props.deta
 
 /** The beginning of the description as plain text, or an empty text. */
 const excerpt = computed(() => referenceExcerpt(props.details?.body ?? ""));
-
-/** The style of a label: its color for the text, a tint of it for the background and the border. */
-function labelStyle(color: string | null): Record<string, string> {
-  if (color === null) {
-    return {};
-  }
-  return {
-    color: `color-mix(in srgb, #${color} 70%, var(--fg-body))`,
-    backgroundColor: `color-mix(in srgb, #${color} 15%, transparent)`,
-    borderColor: `color-mix(in srgb, #${color} 50%, transparent)`,
-  };
-}
 
 /** Opens the description and the comments of the issue or of the pull request in the window of Heidrun. */
 function openInHeidrun() {
@@ -129,12 +128,20 @@ async function openOnForge() {
         <span class="branch" :title="details.headBranch">{{ details.headBranch }}</span>
       </div>
       <div v-else-if="details.labels.length > 0" class="d-flex flex-wrap gap-2">
-        <span v-for="label in details.labels" :key="label.name" class="badge label" :style="labelStyle(label.color)">
+        <span v-for="label in details.labels" :key="label.name" class="badge label" :style="referenceLabelStyle(label.color)">
           {{ label.name }}
         </span>
       </div>
       <div v-if="details.author !== null" class="d-flex align-items-center gap-2 text-body-secondary">
-        <Icon name="person-circle" />
+        <img
+          v-if="details.authorAvatarUrl !== null && isAvatarBroken === false"
+          class="avatar"
+          :src="details.authorAvatarUrl"
+          alt=""
+          referrerpolicy="no-referrer"
+          @error="isAvatarBroken = true"
+        />
+        <Icon v-else name="person-circle" />
         {{
           t(reference.kind === "issue" ? "chatsPanel.referenceOpenedIssue" : "chatsPanel.referenceOpenedPullRequest", {
             author: details.author,
@@ -153,6 +160,7 @@ async function openOnForge() {
 .excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; white-space: pre-line; }
 .branch { max-width: 45%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0.15rem 0.5rem; border-radius: var(--radius-5); background-color: var(--bg-1); font-family: var(--font-mono, monospace); font-size: 0.85em; }
 .label { border: 1px solid; }
+.avatar { width: 1.25em; height: 1.25em; flex-shrink: 0; border-radius: 50%; object-fit: cover; }
 .btn { --btn-hover-bg: var(--bg-2); --btn-active-bg: var(--bg-2); }
 .btn:disabled { opacity: 0.45; }
 </style>

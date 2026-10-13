@@ -12,5 +12,6 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [README.md](README.md): the overview of this folder, for people.
 - [sidebars.md](sidebars.md): the sidebars and the notes.
 - [source_control.md](source_control.md): the Source control sidebar section.
+- [code_hosting.md](code_hosting.md): the Code hosting sidebar section.
 - [files.md](files.md): the Files sidebar section.
 - [chats/](chats/index.md): the Chats sidebar section.
