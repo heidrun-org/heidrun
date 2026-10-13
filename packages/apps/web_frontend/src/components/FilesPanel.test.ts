@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
 const invokeMock = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
@@ -98,9 +100,12 @@ describe("FilesPanel", () => {
     expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh", "More options"]);
   });
 
-  it("keeps the header at the top while the rows scroll", async () => {
-    const wrapper = await mountPanel();
-    expect(wrapper.get("header").classes()).toContain("sticky-top");
+  it("keeps the header at the top while the rows scroll: the rule of the header sticks it, with its own background", () => {
+    const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+    const rule = source.match(/\.panel-header \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toContain("position: sticky");
+    expect(rule).toContain("top: 0");
+    expect(rule).toContain("background:");
   });
 
   it("gives a file and a folder of the same level the same space at the left, so their names line up", async () => {

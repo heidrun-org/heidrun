@@ -136,7 +136,7 @@ function letterClass(letter: string): string {
   <div class="files-panel">
     <div v-if="state.selectedWorkspaceId === null" class="muted">{{ t("filesPanel.selectWorkspace") }}</div>
     <template v-else-if="currentGit">
-      <header class="panel-header sticky-top d-flex align-items-center">
+      <header class="panel-header d-flex align-items-center">
         <span class="title me-auto">{{ t("filesPanel.title") }}</span>
         <button
           type="button"
@@ -190,7 +190,7 @@ function letterClass(letter: string): string {
 <style scoped>
 .files-panel { flex: 1; min-height: 0; padding: 0 8px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 /* The header stays at the top while the rows scroll under it. Its own padding replaces the top padding of the panel, so no row shows above it. */
-.panel-header { padding: 12px 0 8px; background: var(--side); }
+.panel-header { position: sticky; top: 0; z-index: 2; padding: 12px 0 8px; background: var(--side); }
 .title { font-weight: 600; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .files-panel :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .files-panel :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
