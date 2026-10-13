@@ -1,5 +1,12 @@
 # User interface of Heidrun: sidebars and notes
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related issue: [issue 315](https://github.com/heidrun-org/heidrun/issues/315)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
 
 ## Sidebars

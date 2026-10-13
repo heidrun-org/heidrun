@@ -1,5 +1,11 @@
 # Chats sidebar section: the files line
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - The files line has an information card. The files line gets a background while the pointer is over it, and the information card opens at the left of the files line on a click, or on the key Enter or the key Space when the files line has the keyboard focus. A press on a row of the list does not change the background of the row. The background of the files line stops at the end of the widest of the three lines of the summary, and does not go to the edge of the column. The information card does not open when the pointer only moves over the files line. The program places the information card again each time its height changes (for example when a row expands) and each time the window changes its size, so the information card never goes out of the window. The information card stays open until a second click on the files line, the key Escape, a click outside, or the loss of the keyboard focus closes it.

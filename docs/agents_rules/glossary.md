@@ -1,5 +1,10 @@
 # Glossary of Heidrun
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained glossary for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+
 This document gives one short definition for each word that Heidrun uses for a part of its window. Use these words in the code, in the documents, and in the conversations. One word means one thing, and one thing has one word.
 
 ## The three levels that come from Herdr

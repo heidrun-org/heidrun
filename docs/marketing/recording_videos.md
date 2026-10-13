@@ -1,5 +1,11 @@
 # Recording marketing videos of Heidrun
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained method for recording videos
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related issue: [issue 211](https://github.com/heidrun-org/heidrun/issues/211)
+
 The package `packages/dev_tools/video_recorder` records a short video of the Heidrun window, with the mouse and a circle at each click, and cuts it around the clicks. The first video was made for [issue #211](https://github.com/heidrun-org/heidrun/issues/211). The raw videos and the cut videos stay out of the repository.
 
 ## Method

@@ -1,5 +1,12 @@
 # Chats sidebar section: the list of chats
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../glossary.md)
+- Related issue: [issue 250](https://github.com/heidrun-org/heidrun/issues/250)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../glossary.md).
 
 - The Chats sidebar section is a sidebar section of the right sidebar. It lists the chats of the selected workspace.

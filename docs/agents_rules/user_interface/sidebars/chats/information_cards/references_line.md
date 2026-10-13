@@ -1,5 +1,11 @@
 # Chats sidebar section: the references line
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - The references line has an information card, opened the same way as the information card of the files line: the whole line is the part that gets a background under the pointer, and a click on the line opens the information card. A repository without a remote has no forge to read, so its references line has no information card.

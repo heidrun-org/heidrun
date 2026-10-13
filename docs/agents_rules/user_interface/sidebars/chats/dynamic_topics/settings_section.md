@@ -1,5 +1,11 @@
 # Chats sidebar section: the section "Dynamic topics" of the Settings window
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - The Settings window has a section "Dynamic topics", the last section of its sidebar (icon `tags`). The section holds the choice "Extraction method": two radio buttons, "Keyword" and "Language model". The choice is the option `dynamicTopicExtraction` of the settings, and the default is "keyword". Both radio buttons are enabled. The title of the radio button "Language model" says that the coding agent `codex` or `claude` that is installed on this computer finds the topics. The more menu has no entry for it.
