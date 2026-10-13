@@ -8,14 +8,14 @@ const sidebarSections = [
   { id: "third", label: "Third", icon: "git", badge: 5, isAlert: true },
 ];
 
-function mountSidebarIconBar(selectedId: string | null = "first") {
-  return mount(SidebarIconBar, { props: { sidebarSections, selectedId, label: "Test sidebar" } });
+function mountSidebarIconBar(selectedId: string | null = "first", isCollapsed = false, side: "left" | "right" = "left") {
+  return mount(SidebarIconBar, { props: { sidebarSections, selectedId, label: "Test sidebar", side, isCollapsed } });
 }
 
 describe("SidebarIconBar", () => {
   it("shows one icon for each sidebar section, in the given order, without its title", () => {
     const wrapper = mountSidebarIconBar();
-    const buttons = wrapper.findAll("button");
+    const buttons = wrapper.findAll("[role=tab]");
     expect(buttons.map((button) => button.get("i.bi").classes())).toEqual([
       expect.arrayContaining(["bi-bell"]),
       expect.arrayContaining(["bi-sticky"]),
@@ -26,14 +26,14 @@ describe("SidebarIconBar", () => {
 
   it("gives each icon the title of its sidebar section, as a tooltip and as an accessible name", () => {
     const wrapper = mountSidebarIconBar();
-    const buttons = wrapper.findAll("button");
+    const buttons = wrapper.findAll("[role=tab]");
     expect(buttons.map((button) => button.attributes("title"))).toEqual(["First", "Second", "Third"]);
     expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["First", "Second", "Third"]);
   });
 
   it("is a vertical list of tabs with the accessible name that its sidebar gives", () => {
     const wrapper = mountSidebarIconBar();
-    const bar = wrapper.get(".sidebar-icon-bar");
+    const bar = wrapper.get(".sidebar-icon-bar .icons");
     expect(bar.attributes("role")).toBe("tablist");
     expect(bar.attributes("aria-orientation")).toBe("vertical");
     expect(bar.attributes("aria-label")).toBe("Test sidebar");
@@ -41,14 +41,14 @@ describe("SidebarIconBar", () => {
 
   it("marks only the selected sidebar section as active", () => {
     const wrapper = mountSidebarIconBar("third");
-    const buttons = wrapper.findAll("button");
+    const buttons = wrapper.findAll("[role=tab]");
     expect(buttons.map((button) => button.classes("on"))).toEqual([false, false, true]);
     expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "true"]);
   });
 
   it("marks no sidebar section as active when nothing is selected", () => {
     const wrapper = mountSidebarIconBar(null);
-    expect(wrapper.findAll("button").map((button) => button.classes("on"))).toEqual([false, false, false]);
+    expect(wrapper.findAll("[role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false]);
   });
 
   it("gives the color of the working status to a live number, and the color of the blocked status to an alert number", () => {
@@ -61,8 +61,26 @@ describe("SidebarIconBar", () => {
 
   it("says the identifier of the sidebar section when the person clicks its icon", async () => {
     const wrapper = mountSidebarIconBar();
-    await wrapper.findAll("button")[1].trigger("click");
-    await wrapper.findAll("button")[0].trigger("click");
+    await wrapper.findAll("[role=tab]")[1].trigger("click");
+    await wrapper.findAll("[role=tab]")[0].trigger("click");
     expect(wrapper.emitted("select")).toEqual([["second"], ["first"]]);
+  });
+
+  it("shows no expand button while the sidebar is expanded", () => {
+    const wrapper = mountSidebarIconBar("first", false);
+    expect(wrapper.find(".expand-button").exists()).toBe(false);
+  });
+
+  it.each([
+    ["left", "bi-chevron-bar-right"],
+    ["right", "bi-chevron-bar-left"],
+  ] as const)("shows above the icons of the collapsed %s sidebar an expand button with an arrow toward the viewport", async (side, iconClass) => {
+    const wrapper = mountSidebarIconBar(null, true, side);
+    const expandButton = wrapper.get(".sidebar-icon-bar > .expand-button");
+    expect(wrapper.get(".sidebar-icon-bar").element.firstElementChild).toBe(expandButton.element);
+    expect(expandButton.get("i").classes()).toContain(iconClass);
+    expect(expandButton.attributes("aria-label")).toBe("Expand the sidebar");
+    await expandButton.trigger("click");
+    expect(wrapper.emitted("expand")).toEqual([[]]);
   });
 });

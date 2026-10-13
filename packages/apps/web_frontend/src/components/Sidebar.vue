@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
 import GitPanel from "./GitPanel.vue";
+import SidebarCollapseButton from "./SidebarCollapseButton.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
 import { currentForge } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
@@ -37,9 +38,15 @@ function selectSidebarSection(id: string) {
       :sidebar-sections="sidebarSections"
       :selected-id="settings.leftCollapsed ? null : settings.leftSidebarSection"
       :label="t('sidebar.navigationBarLabel')"
+      side="left"
+      :is-collapsed="settings.leftCollapsed"
       @select="selectSidebarSection"
+      @expand="settings.leftCollapsed = false"
     />
     <div v-if="settings.leftCollapsed === false" class="sidebar-section-body">
+      <div class="sidebar-section-header">
+        <SidebarCollapseButton side="left" @collapse="settings.leftCollapsed = true" />
+      </div>
       <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
       <GitPanel v-else />
     </div>
@@ -55,4 +62,5 @@ function selectSidebarSection(id: string) {
   flex: 1 1 auto; min-width: 0; border-left: 1px solid var(--line); padding: 5px 0 16px; overflow-y: auto;
   display: flex; flex-direction: column;
 }
+.sidebar-section-header { flex-shrink: 0; display: flex; justify-content: flex-end; padding: 0 8px; }
 </style>

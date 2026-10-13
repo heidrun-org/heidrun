@@ -79,15 +79,15 @@ describe("Sidebar without the list of workspaces", () => {
 describe("Sidebar icon bar of the left sidebar", () => {
   it("shows the buttons Scripts and Git, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
     const { wrapper } = await mountSidebar();
-    const buttons = wrapper.findAll(".sidebar-icon-bar button");
+    const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
     expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Scripts", "Git"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab"]);
-    expect(wrapper.get(".sidebar-icon-bar").attributes("aria-label")).toBe("Left sidebar");
+    expect(wrapper.get(".sidebar-icon-bar .icons").attributes("aria-label")).toBe("Left sidebar");
   });
 
   it("shows one icon for each sidebar section: a play button for Scripts, and the Git logo for Git", async () => {
     const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".sidebar-icon-bar button i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-play-circle", "bi-git"]);
   });
 
   it("puts the sidebar icon bar at the left edge, before the content of the sidebar section, in the same frame", async () => {
@@ -98,16 +98,16 @@ describe("Sidebar icon bar of the left sidebar", () => {
 
   it("shows the sidebar section Scripts first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([true, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
     expect(wrapper.find("git-panel-stub").exists()).toBe(false);
   });
 
   it("shows the sidebar section Git after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".sidebar-icon-bar button")[1].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftSidebarSection).toBe("git");
-    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, true]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true]);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
     expect(wrapper.find("git-panel-stub").exists()).toBe(true);
     const restarted = (await mountSidebar()).wrapper;
@@ -116,29 +116,53 @@ describe("Sidebar icon bar of the left sidebar", () => {
 
   it("collapses after a click on the icon of the sidebar section that it shows, and then selects no icon", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.leftCollapsed).toBe(true);
     expect(wrapper.find(".sidebar-section-body").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, false]);
-    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.attributes("aria-selected"))).toEqual(["false", "false"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-selected"))).toEqual(["false", "false"]);
     expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
   });
 
   it("expands to the sidebar section of an icon after a click on the icon", async () => {
     settings.leftCollapsed = true;
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".sidebar-icon-bar button")[1].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
     expect(settings.leftSidebarSection).toBe("git");
     expect(wrapper.find("git-panel-stub").exists()).toBe(true);
-    expect(wrapper.findAll(".sidebar-icon-bar button").map((button) => button.classes("on"))).toEqual([false, true]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true]);
   });
 
   it("expands to the same sidebar section after a click on the icon that collapsed it", async () => {
     const { wrapper } = await mountSidebar();
-    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
-    await wrapper.findAll(".sidebar-icon-bar button")[0].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
     expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
+  });
+
+  it("collapses after a click on the collapse button at the top right of the content, with an arrow toward the left edge", async () => {
+    const { wrapper } = await mountSidebar();
+    const collapseButton = wrapper.get(".sidebar-section-body > .sidebar-section-header > .collapse-button");
+    expect(collapseButton.get("i").classes()).toContain("bi-chevron-bar-left");
+    expect(collapseButton.attributes("aria-label")).toBe("Collapse the sidebar to a bar of icons");
+    await collapseButton.trigger("click");
+    expect(settings.leftCollapsed).toBe(true);
+    expect(wrapper.find(".collapse-button").exists()).toBe(false);
+  });
+
+  it("shows the expand button above the icons only when collapsed, and expands to the selected sidebar section after a click on it", async () => {
+    settings.leftSidebarSection = "git";
+    const { wrapper } = await mountSidebar();
+    expect(wrapper.find(".expand-button").exists()).toBe(false);
+    settings.leftCollapsed = true;
+    await wrapper.vm.$nextTick();
+    const expandButton = wrapper.get(".sidebar-icon-bar > .expand-button");
+    expect(wrapper.get(".sidebar-icon-bar").element.firstElementChild).toBe(expandButton.element);
+    expect(expandButton.get("i").classes()).toContain("bi-chevron-bar-right");
+    await expandButton.trigger("click");
+    expect(settings.leftCollapsed).toBe(false);
+    expect(wrapper.find("git-panel-stub").exists()).toBe(true);
   });
 });
