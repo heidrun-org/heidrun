@@ -4,7 +4,7 @@ import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
-import { parseProjectConfig, type Action, type ProjectConfig } from "../lib/project_config";
+import { parseProjectConfig, type Action, type ProjectConfig, type ScriptAgent } from "../lib/project_config";
 import { scriptNameFromCommand } from "../lib/script_name";
 
 export type { Action };
@@ -13,6 +13,8 @@ export interface Detected {
   label: string;
   command: string;
   source: string;
+  /** What the project file says about the command, for example the body of a script of `package.json`. */
+  description?: string;
 }
 
 interface Project {
@@ -24,43 +26,7 @@ interface Project {
 
 export type ActionStatus = "idle" | "running" | "finished";
 
-export interface RecentRun {
-  label: string;
-  command: string;
-  at: number;
-}
-
 const CONFIG_PATH = ".heidrun/config.json";
-
-// History is personal: kept on this Mac, not in the repo.
-// Keyed by project root, so it follows the project rather than a workspace id.
-const LOCAL_KEY = "heidrun.project-local";
-
-interface LocalData {
-  recent: Record<string, RecentRun[]>;
-}
-
-function loadLocal(): LocalData {
-  try {
-    return { recent: {}, ...JSON.parse(localStorage.getItem(LOCAL_KEY) ?? "{}") };
-  } catch {
-    return { recent: {} };
-  }
-}
-
-export const local = reactive<LocalData>(loadLocal());
-
-watch(
-  () => local,
-  (v) => {
-    try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(v));
-    } catch {
-      /* ignore */
-    }
-  },
-  { deep: true },
-);
 
 export const project = reactive({
   byWorkspace: {} as Record<string, Project | undefined>,
@@ -70,7 +36,6 @@ export const project = reactive({
   /** pane id → is a command in the foreground. */
   busy: {} as Record<string, boolean>,
   /** Panes being restarted (ctrl+C then the command again). */
-  restarting: {} as Record<string, boolean>,
 });
 
 /** Folder of a workspace: its worktree path, else the cwd of one of its panes. */
@@ -124,35 +89,31 @@ export const suggestions = computed(() => {
   return p.detected.filter((d) => !taken.has(d.command));
 });
 
-export const recentRuns = computed(() => {
-  const p = currentProject.value;
-  return p ? local.recent[p.root] ?? [] : [];
-});
-
-function recordRun(workspaceId: string, label: string, command: string) {
-  const p = project.byWorkspace[workspaceId];
-  if (!p) return;
-  const list = (local.recent[p.root] ?? []).filter((r) => r.command !== command);
-  list.unshift({ label, command, at: Date.now() });
-  local.recent[p.root] = list.slice(0, 8);
-}
-
-export function clearRecent(workspaceId: string) {
-  const p = project.byWorkspace[workspaceId];
-  if (p) delete local.recent[p.root];
-}
-
 function slug(label: string): string {
   const base = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "action";
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-/** Adds a custom script. Without a name, the name is the first 20 characters of the command. */
-export async function addAction(workspaceId: string, label: string, command: string) {
+/**
+ * Adds a custom script. Without a name, the name is the first 20 characters of the command. With `agent`, the script is of
+ * the kind Coding agent: its command is the command line that starts the coding agent, and `cwd` is its folder.
+ * `description` is optional text on several lines.
+ */
+export async function addAction(workspaceId: string, label: string, command: string, agent?: ScriptAgent, cwd?: string, description?: string) {
   const p = project.byWorkspace[workspaceId];
   if (!p || !command.trim()) return;
   const name = label.trim() || scriptNameFromCommand(command);
-  p.config.actions.push({ id: slug(name), label: name, command: command.trim() });
+  const action: Action = { id: slug(name), label: name, command: command.trim() };
+  if (agent !== undefined) {
+    action.agent = agent;
+  }
+  if (description !== undefined && description.trim() !== "") {
+    action.description = description.trim();
+  }
+  if (cwd !== undefined && cwd.trim() !== "") {
+    action.cwd = cwd.trim();
+  }
+  p.config.actions.push(action);
   await saveProject(workspaceId);
 }
 
@@ -164,10 +125,12 @@ export async function removeAction(workspaceId: string, id: string) {
   await saveProject(workspaceId);
 }
 
-export async function renameAction(workspaceId: string, id: string, label: string) {
-  const a = project.byWorkspace[workspaceId]?.config.actions.find((x) => x.id === id);
-  if (!a) return;
-  a.label = label;
+/** Replaces the values of the custom script `id`. A field that `values` does not have is removed from the script. */
+export async function updateAction(workspaceId: string, id: string, values: Omit<Action, "id">) {
+  const p = project.byWorkspace[workspaceId];
+  const index = p?.config.actions.findIndex((x) => x.id === id) ?? -1;
+  if (p === undefined || index === -1) return;
+  p.config.actions[index] = { id, ...values };
   await saveProject(workspaceId);
 }
 
@@ -193,7 +156,6 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   // A click that will type the command: through the guards first.
   const willType = !existing || (rerun && !project.busy[existing.pane_id]);
   if (willType && !(await allowCommand(action.command, p.root, `${workspaceLabel(workspaceId)} · ${action.label}`))) return;
-  if (!existing || rerun) recordRun(workspaceId, action.label, action.command);
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);
@@ -219,12 +181,6 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   }
 }
 
-/** Runs a command once without saving it (suggestions, history); reuses a saved action if any. */
-export function runDetected(workspaceId: string, d: { label: string; command: string }) {
-  const saved = project.byWorkspace[workspaceId]?.config.actions.find((a) => a.command === d.command);
-  return runAction(workspaceId, saved ?? { id: `once-${d.command}`, label: d.label, command: d.command });
-}
-
 export async function stopAction(workspaceId: string, action: Action) {
   const pane = actionPane(workspaceId, action);
   if (pane) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
@@ -241,42 +197,6 @@ async function paneBusy(paneId: string): Promise<boolean | null> {
     return (info.foreground_processes ?? []).some((proc) => proc.pid !== info.shell_pid);
   } catch {
     return null;
-  }
-}
-
-/**
- * Stops the running command (ctrl+C), waits for the shell to be back, then runs
- * it again in the same tab: "make dev" restarted after a config change.
- */
-export async function restartAction(workspaceId: string, action: Action) {
-  const p = project.byWorkspace[workspaceId];
-  const pane = actionPane(workspaceId, action);
-  if (!p || !pane) return runAction(workspaceId, action, true);
-  if (!(await allowCommand(action.command, p.root, `${workspaceLabel(workspaceId)} · ${action.label}`))) return;
-  project.restarting[pane.pane_id] = true;
-  try {
-    await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
-    // Some servers need a second ctrl+C, or a few seconds to shut down.
-    let stopped = false;
-    for (let i = 0; i < 40; i++) {
-      await new Promise((r) => setTimeout(r, 250));
-      if ((await paneBusy(pane.pane_id)) === false) {
-        stopped = true;
-        break;
-      }
-      if (i === 16) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
-    }
-    if (!stopped) {
-      toast(t("projectStore.restartCancelled", { name: action.label }));
-      return;
-    }
-    await new Promise((r) => setTimeout(r, 250));
-    recordRun(workspaceId, action.label, action.command);
-    await api.run(pane.pane_id, action.command).catch((e) => toast(String(e)));
-    project.busy[pane.pane_id] = true;
-    toast(t("projectStore.restarted", { name: action.label }));
-  } finally {
-    delete project.restarting[pane.pane_id];
   }
 }
 

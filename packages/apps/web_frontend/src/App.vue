@@ -66,6 +66,8 @@ import { history, loadHistory } from "./stores/history";
 import AgentsInformationModal from "./components/AgentsInformationModal.vue";
 import NewCustomScriptModal from "./components/NewCustomScriptModal.vue";
 import SavedSearchModal from "./components/SavedSearchModal.vue";
+import ImportScriptsModal from "./components/ImportScriptsModal.vue";
+import { importScriptsModal } from "./stores/importScripts";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import SkillFileModal from "./components/SkillFileModal.vue";
@@ -338,6 +340,7 @@ onBeforeUnmount(() => {
     <AgentsInformationModal v-if="agentsInformationModal.open" />
     <NewCustomScriptModal v-if="newCustomScriptModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />
+    <ImportScriptsModal v-if="importScriptsModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
     <InstalledSkillModal v-if="installedSkillModal.open" />

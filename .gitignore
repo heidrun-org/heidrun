@@ -5,3 +5,4 @@ packages/apps/desktop_tauri/gen
 .DS_Store
 *.log
 packages/auxiliary/website_public/docs/.vitepress/cache
+.heidrun/config.json

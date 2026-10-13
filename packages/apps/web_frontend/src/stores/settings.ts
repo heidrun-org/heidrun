@@ -1,6 +1,7 @@
 import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { CODING_AGENT_IDS } from "../lib/coding_agents";
 
 export interface FontOption {
   id: string;
@@ -81,12 +82,6 @@ const defaults = {
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
   /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
   chatsOrder: "descending" as "ascending" | "descending",
-  /** Tab Scripts: the section Custom Scripts is folded. */
-  scriptsCustomFolded: false,
-  /** Tab Scripts: the section Recent is folded. */
-  scriptsRecentFolded: false,
-  /** Tab Scripts: the section Existing Scripts is folded. */
-  scriptsExistingFolded: false,
   /** Last size of the note window, in px. */
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */
@@ -105,6 +100,14 @@ const defaults = {
   confirmSavedSearchDelete: true,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
+  /** Window Create a custom script: the last kind, "commandLine" or "codingAgent". */
+  customScriptKind: "commandLine" as "commandLine" | "codingAgent",
+  /** Window Create a custom script: the identifier of the last coding agent. */
+  customScriptAgent: CODING_AGENT_IDS[0] as string,
+  /** Window Create a custom script: the last model. An empty text is the default model. */
+  customScriptModel: "",
+  /** Window Create a custom script: the last effort. An empty text is the default effort. */
+  customScriptEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Notifications. */
@@ -190,8 +193,6 @@ const defaults = {
   searchAgentsOnly: false,
   /** Window Search: look only in the selected workspace. */
   searchThisWorkspace: false,
-  /** Sidebar section Scripts: the list of suggestions shows all the suggestions, not only the first six. */
-  scriptsShowAllSuggestions: false,
   /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
   /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
@@ -213,6 +214,8 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   newTabCommand: ["terminal", "claude", "codex"],
+  customScriptKind: ["commandLine", "codingAgent"],
+  customScriptAgent: CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
