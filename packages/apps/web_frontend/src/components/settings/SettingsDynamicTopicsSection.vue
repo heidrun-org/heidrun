@@ -66,13 +66,14 @@ const CLUSTERED_HELP_BLOCKS = [
     <h4>{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
     <div class="d-flex align-items-center gap-2">
       <div class="d-inline-flex align-items-center gap-2 mb-0">
-        <input
-          id="clustered-dynamic-topics"
-          v-model="settings.clusteredDynamicTopics"
-          class="switch"
-          type="checkbox"
-          role="switch"
-        />
+        <span class="switch">
+          <input
+            id="clustered-dynamic-topics"
+            v-model="settings.clusteredDynamicTopics"
+            type="checkbox"
+            role="switch"
+          />
+        </span>
         <label for="clustered-dynamic-topics">{{ t("settingsDynamicTopics.clusteredLabel") }}</label>
       </div>
       <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
