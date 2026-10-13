@@ -63,7 +63,7 @@ const emit = defineEmits<{
 
 <style scoped>
 .sidebar-icon-bar {
-  flex-shrink: 0; width: 46px; padding: 6px 0; background: var(--shell);
+  flex-shrink: 0; width: 46px; padding: 4px 0 6px; background: var(--shell);
   display: flex; flex-direction: column; align-items: center; gap: 4px;
 }
 .icons { display: flex; flex-direction: column; align-items: center; gap: 4px; }

@@ -40,8 +40,6 @@ async function mountApp() {
   session.state.selectedWorkspaceId = "w1";
   session.state.selectedTabId = "t1";
   session.state.selectedPaneId = "p1";
-  settingsStore.settings.leftOpen = true;
-  settingsStore.settings.rightOpen = true;
   settingsStore.settings.leftCollapsed = false;
   settingsStore.settings.rightCollapsed = false;
   settingsStore.settings.leftSidebarSection = "actions";
@@ -79,130 +77,111 @@ describe("window with the two sidebars", () => {
     expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "resizer-stub", "right-panel-stub"]);
   });
 
-  it("has one hide button for each sidebar in the top bar, of the same kind, the left one at the left and the right one at the right", async () => {
+  it("has no hide button for a sidebar in the top bar", async () => {
     const { wrapper } = await mountApp();
-    const buttons = wrapper.findAll(".top .icon-btn[aria-pressed]");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Show the left sidebar", "Show the right sidebar"]);
-    expect(buttons.map((button) => button.attributes("title"))).toEqual(["Left sidebar (⌘B)", "Right sidebar (⌥⌘B)"]);
-    expect(buttons.map((button) => button.attributes("aria-pressed"))).toEqual(["true", "true"]);
-    expect(buttons[0].element.compareDocumentPosition(buttons[1].element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(wrapper.get(".top > .icon-btn").attributes("aria-label")).toBe("Show the left sidebar");
-    expect(wrapper.get(".top > .tools > .icon-btn:last-child").attributes("aria-label")).toBe("Show the right sidebar");
+    expect(wrapper.find(".top [aria-pressed]").exists()).toBe(false);
+    expect(wrapper.findAll(".top button").map((button) => button.attributes("title"))).toEqual(["Search or run a command"]);
   });
 });
 
-describe("hiding the left sidebar", () => {
-  it("removes the left sidebar and its line to drag after a click on its button, and leaves no strip", async () => {
+describe("the shortcut Command+B", () => {
+  it("collapses the left sidebar to the sidebar icon bar, without its line to drag", async () => {
     const { wrapper, settings } = await mountApp();
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[0].trigger("click");
-    expect(settings.leftOpen).toBe(false);
-    expect(bodyChildren(wrapper)).toEqual(["main", "resizer-stub", "right-panel-stub"]);
-    expect(wrapper.findAll(".top .icon-btn[aria-pressed]")[0].attributes("aria-pressed")).toBe("false");
-  });
-
-  it("shows the left sidebar again after a second click", async () => {
-    const { wrapper } = await mountApp();
-    const button = wrapper.findAll(".top .icon-btn[aria-pressed]")[0];
-    await button.trigger("click");
-    await button.trigger("click");
-    expect(bodyChildren(wrapper)[0]).toBe("sidebar-stub");
-  });
-
-  it("hides and shows with the shortcut Command+B", async () => {
-    const { wrapper } = await mountApp();
     press("KeyB");
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["main", "resizer-stub", "right-panel-stub"]);
+    expect(settings.leftCollapsed).toBe(true);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
+  });
+
+  it("expands the left sidebar again with a second press", async () => {
+    const { wrapper, settings } = await mountApp();
     press("KeyB");
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)[0]).toBe("sidebar-stub");
+    press("KeyB");
+    await wrapper.vm.$nextTick();
+    expect(settings.leftCollapsed).toBe(false);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "resizer-stub", "right-panel-stub"]);
   });
-});
 
-describe("hiding the right sidebar", () => {
-  it("removes the right sidebar and its line to drag after a click on its button, and leaves no strip", async () => {
+  it("does not change the right sidebar", async () => {
     const { wrapper, settings } = await mountApp();
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[1].trigger("click");
-    expect(settings.rightOpen).toBe(false);
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main"]);
-    expect(wrapper.findAll(".top .icon-btn[aria-pressed]")[1].attributes("aria-pressed")).toBe("false");
-  });
-
-  it("shows the right sidebar again after a second click", async () => {
-    const { wrapper } = await mountApp();
-    const button = wrapper.findAll(".top .icon-btn[aria-pressed]")[1];
-    await button.trigger("click");
-    await button.trigger("click");
-    expect(bodyChildren(wrapper).slice(-1)[0]).toBe("right-panel-stub");
-  });
-
-  it("hides and shows with the shortcut Option+Command+B", async () => {
-    const { wrapper } = await mountApp();
-    press("KeyB", { altKey: true });
+    press("KeyB");
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main"]);
-    press("KeyB", { altKey: true });
-    await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper).slice(-1)[0]).toBe("right-panel-stub");
+    expect(settings.rightCollapsed).toBe(false);
   });
 });
 
-describe("hiding both sidebars", () => {
-  it("leaves only the viewport, so the viewport takes the whole width", async () => {
+describe("the shortcut Option+Command+B", () => {
+  it("collapses the right sidebar to the sidebar icon bar, without its line to drag", async () => {
+    const { wrapper, settings } = await mountApp();
+    press("KeyB", { altKey: true });
+    await wrapper.vm.$nextTick();
+    expect(settings.rightCollapsed).toBe(true);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
+  });
+
+  it("expands the right sidebar again with a second press", async () => {
+    const { wrapper, settings } = await mountApp();
+    press("KeyB", { altKey: true });
+    await wrapper.vm.$nextTick();
+    press("KeyB", { altKey: true });
+    await wrapper.vm.$nextTick();
+    expect(settings.rightCollapsed).toBe(false);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "resizer-stub", "right-panel-stub"]);
+  });
+
+  it("does not change the left sidebar", async () => {
+    const { wrapper, settings } = await mountApp();
+    press("KeyB", { altKey: true });
+    await wrapper.vm.$nextTick();
+    expect(settings.leftCollapsed).toBe(false);
+  });
+});
+
+describe("collapsing both sidebars", () => {
+  it("keeps the two sidebar icon bars, and the viewport takes the rest of the width", async () => {
     const { wrapper } = await mountApp();
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[0].trigger("click");
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[1].trigger("click");
-    expect(bodyChildren(wrapper)).toEqual(["main"]);
-    expect(wrapper.find("sidebar-stub").exists()).toBe(false);
-    expect(wrapper.find("right-panel-stub").exists()).toBe(false);
+    press("KeyB");
+    press("KeyB", { altKey: true });
+    await wrapper.vm.$nextTick();
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "right-panel-stub"]);
     expect(wrapper.find("resizer-stub").exists()).toBe(false);
   });
 
   it("keeps the tab bar and the panes in the viewport", async () => {
     const { wrapper, settings } = await mountApp();
-    settings.leftOpen = false;
-    settings.rightOpen = false;
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
     expect(wrapper.get("main").find("tab-bar-stub").exists()).toBe(true);
     expect(wrapper.get("main").find("pane-grid-stub").exists()).toBe(true);
   });
-
-  it("remembers the choice for the next start", async () => {
-    const { wrapper, settings } = await mountApp();
-    settings.leftOpen = false;
-    settings.rightOpen = false;
-    await wrapper.vm.$nextTick();
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
-    expect(saved.leftOpen).toBe(false);
-    expect(saved.rightOpen).toBe(false);
-  });
 });
 
-describe("opening a sidebar section while its sidebar is hidden", () => {
-  it("shows the right sidebar, with the Notes sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
+describe("opening a sidebar section while its sidebar is collapsed", () => {
+  it("expands the right sidebar, with the Notes sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
     const { wrapper, settings, notes } = await mountApp();
-    settings.rightOpen = false;
+    settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
-    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main"]);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
     notes.selectionReaders.set("p1", () => "text to keep");
     press("KeyP", { shiftKey: true });
     await wrapper.vm.$nextTick();
-    expect(settings.rightOpen).toBe(true);
+    expect(settings.rightCollapsed).toBe(false);
     expect(settings.rightSidebarSection).toBe("notes");
-    expect(bodyChildren(wrapper).slice(-1)[0]).toBe("right-panel-stub");
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "resizer-stub", "right-panel-stub"]);
   });
 
-  it("does not show the left sidebar when the right sidebar holds the sidebar section", async () => {
+  it("does not expand the left sidebar when the right sidebar holds the sidebar section", async () => {
     const { wrapper, settings, notes } = await mountApp();
-    settings.leftOpen = false;
-    settings.rightOpen = false;
+    settings.leftCollapsed = true;
+    settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
     notes.selectionReaders.set("p1", () => "text to keep");
     press("KeyP", { shiftKey: true });
     await wrapper.vm.$nextTick();
-    expect(settings.leftOpen).toBe(false);
-    expect(bodyChildren(wrapper)).toEqual(["main", "resizer-stub", "right-panel-stub"]);
+    expect(settings.leftCollapsed).toBe(true);
+    expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "main", "resizer-stub", "right-panel-stub"]);
   });
 });
 
@@ -212,17 +191,13 @@ describe("texts that name a sidebar", () => {
     const { t } = await import("./i18n/index");
     settingsStore.settings.language = language;
     const keys = [
-      "topBar.leftSidebarLabel",
-      "topBar.leftSidebarTitle",
-      "topBar.rightSidebarLabel",
-      "topBar.rightSidebarTitle",
       "commandPalette.leftSidebar",
       "commandPalette.rightSidebar",
       "resizer.leftWidth",
       "resizer.rightWidth",
       "rightPanel.label",
       "sidebar.navigationBarLabel",
-      "shortcuts.action.hideSidebars",
+      "shortcuts.action.collapseSidebars",
     ];
     const word = language === "en" ? /sidebar/i : /barre latérale/i;
     for (const key of keys) {
@@ -231,14 +206,6 @@ describe("texts that name a sidebar", () => {
       expect(text, key).not.toMatch(/panel|panneau/i);
     }
     settingsStore.settings.language = "en";
-  });
-
-  it("gives the same shape to the left and the right hide buttons: a label that starts with Show, and a title with the name and the shortcut", async () => {
-    const { t } = await import("./i18n/index");
-    expect(t("topBar.leftSidebarLabel")).toBe("Show the left sidebar");
-    expect(t("topBar.rightSidebarLabel")).toBe("Show the right sidebar");
-    expect(t("topBar.leftSidebarTitle")).toBe("Left sidebar (⌘B)");
-    expect(t("topBar.rightSidebarTitle")).toBe("Right sidebar (⌥⌘B)");
   });
 });
 
@@ -255,15 +222,6 @@ describe("collapsing a sidebar to the sidebar icon bar", () => {
     settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();
     expect(bodyChildren(wrapper)).toEqual(["sidebar-stub", "resizer-stub", "main", "right-panel-stub"]);
-  });
-
-  it("still hides a collapsed sidebar completely with its hide button", async () => {
-    const { wrapper, settings } = await mountApp();
-    settings.leftCollapsed = true;
-    settings.rightCollapsed = true;
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[0].trigger("click");
-    await wrapper.findAll(".top .icon-btn[aria-pressed]")[1].trigger("click");
-    expect(bodyChildren(wrapper)).toEqual(["main"]);
   });
 
   it("remembers the collapsed sidebars for the next start", async () => {

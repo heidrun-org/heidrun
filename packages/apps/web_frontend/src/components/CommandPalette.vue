@@ -133,8 +133,8 @@ const items = computed<Item[]>(() => {
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomIn"), hint: "⌘+", run: () => zoom(0.5) },
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomOut"), hint: "⌘−", run: () => zoom(-0.5) },
     { section: t("commandPalette.section.display"), label: t("commandPalette.zoomReset"), hint: "⌘0", run: () => resetZoom() },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.leftSidebar"), hint: "⌘B", run: () => (settings.leftOpen = !settings.leftOpen) },
-    { section: t("commandPalette.section.display"), label: t("commandPalette.rightSidebar"), hint: "⌥⌘B", run: () => (settings.rightOpen = !settings.rightOpen) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.leftSidebar"), hint: "⌘B", run: () => (settings.leftCollapsed = !settings.leftCollapsed) },
+    { section: t("commandPalette.section.display"), label: t("commandPalette.rightSidebar"), hint: "⌥⌘B", run: () => (settings.rightCollapsed = !settings.rightCollapsed) },
     ...FONTS.map((f) => ({ section: t("commandPalette.section.display"), label: t("commandPalette.font", { font: f.label }), hintIcon: f.id === settings.fontId ? "check-lg" : undefined, run: () => (settings.fontId = f.id) })),
   ];
   list.push(...actions.filter((a) => !lower || a.label.toLowerCase().includes(lower)));

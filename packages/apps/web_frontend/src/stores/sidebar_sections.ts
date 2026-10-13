@@ -20,18 +20,16 @@ export type SidebarSectionButton = {
 };
 
 /**
- * Shows a sidebar section. The sidebar that holds the sidebar section opens if it is hidden, expands if it is collapsed
- * to the sidebar icon bar, and shows the sidebar section. The Scripts and Source control sidebar sections belong to the
+ * Shows a sidebar section. The sidebar that holds the sidebar section expands if it is collapsed to the sidebar icon
+ * bar, and shows the sidebar section. The Scripts and Source control sidebar sections belong to the
  * left sidebar. The Needs you, Notes, and Chats sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
   if (sidebarSection === "actions" || sidebarSection === "sourceControl") {
-    settings.leftOpen = true;
     settings.leftCollapsed = false;
     settings.leftSidebarSection = sidebarSection;
     return;
   }
-  settings.rightOpen = true;
   settings.rightCollapsed = false;
   settings.rightSidebarSection = sidebarSection;
 }

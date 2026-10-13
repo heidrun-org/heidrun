@@ -382,3 +382,33 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.searchRegex).toBe(true);
   });
 });
+
+describe("sidebars that an older version hid completely (issue #315)", () => {
+  it.each([
+    ["leftOpen", "leftCollapsed"],
+    ["rightOpen", "rightCollapsed"],
+  ] as const)("collapses the sidebar when the saved %s is false", async (oldName, collapsedName) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ [oldName]: false }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings[collapsedName]).toBe(true);
+  });
+
+  it.each([
+    ["leftOpen", "leftCollapsed"],
+    ["rightOpen", "rightCollapsed"],
+  ] as const)("keeps the sidebar expanded when the saved %s is true", async (oldName, collapsedName) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ [oldName]: true }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings[collapsedName]).toBe(false);
+  });
+
+  it("forgets the old names leftOpen and rightOpen, so that the saved value does not keep them", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftOpen: false, rightOpen: false }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(Object.keys(restarted.settings)).not.toContain("leftOpen");
+    expect(Object.keys(restarted.settings)).not.toContain("rightOpen");
+  });
+});
