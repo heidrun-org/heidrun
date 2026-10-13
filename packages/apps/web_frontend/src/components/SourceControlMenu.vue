@@ -43,6 +43,9 @@ function toggle() {
   position.value = { top: rect.bottom + 4, left: Math.max(8, rect.right - 220) };
   isOpen.value = true;
   nextTick(() => {
+    // The right edge of the dropdown menu lines up with the right edge of the button, whatever the width of the menu.
+    const menuWidth = menu.value?.offsetWidth ?? 220;
+    position.value = { top: rect.bottom + 4, left: Math.max(8, rect.right - menuWidth) };
     document.addEventListener("mousedown", onDocumentMouseDown, true);
     document.addEventListener("keydown", onKeyDown, true);
   });
