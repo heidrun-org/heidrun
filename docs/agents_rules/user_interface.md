@@ -79,10 +79,15 @@ This document says where each part of the window goes and how each part works. T
 - A sidebar holds several sidebar sections, and shows one sidebar section at a time.
 - The left sidebar holds the Scripts sidebar section and the Source control sidebar section.
 - The right sidebar holds the Needs you sidebar section, the Notes sidebar section, and the Chats sidebar section.
-- Each sidebar has a navigation bar. Each button of the navigation bar shows one sidebar section. The two sidebars use the same kind of navigation bar. In each sidebar, the line of the navigation bar reaches the left border and the right border, and the space between the top border and the selected button of the navigation bar is 5 pixels. A button of the navigation bar has the same height as a tab of the tab bar, so the three bars have the same height.
-- A button hides each sidebar completely. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width.
+- Each sidebar has a sidebar icon bar, always visible, like the bar of icons of Visual Studio Code. The sidebar icon bar sits at the outer edge of the sidebar: at the left of the left sidebar, and at the right of the right sidebar. The two sidebars use the same kind of sidebar icon bar.
+- The sidebar icon bar shows one icon for each sidebar section, one under the other: `play-circle` for the Scripts sidebar section, `git` for the Source control sidebar section, `bell` for the Needs you sidebar section, `sticky` for the Notes sidebar section, and `chat-left-text` for the Chats sidebar section. The title of the sidebar section is the tooltip of its icon. The number of a sidebar section sits on the top right corner of its icon.
+- A sidebar is expanded or collapsed. An expanded sidebar shows the sidebar icon bar and the content of the selected sidebar section, side by side, in one frame, with a line between them. The icon of the selected sidebar section has a background. A collapsed sidebar shows only the sidebar icon bar, 48 pixels wide, and no icon has a background.
+- A click on the icon of the sidebar section that an expanded sidebar shows collapses the sidebar. A click on any other icon expands the sidebar, if it is collapsed, and shows that sidebar section.
+- The first button of the sidebar icon bar, above the icons, collapses or expands the sidebar. In an expanded sidebar, it is the collapse button, with an arrow toward the edge of the window: `chevron-bar-left` in the left sidebar, `chevron-bar-right` in the right sidebar. In a collapsed sidebar, it is the expand button, with an arrow toward the viewport: `chevron-bar-right` in the left sidebar, `chevron-bar-left` in the right sidebar. The expand button expands the sidebar to its selected sidebar section.
+- A collapsed sidebar has no line to drag: its width does not change. The width of an expanded sidebar includes the sidebar icon bar.
+- A button hides each sidebar completely, collapsed or not. A hidden sidebar leaves no strip of icons, so the viewport takes the whole width. When the sidebar shows again, it is collapsed or expanded as before.
 - The two hide buttons are of the same kind, and sit in the top bar: the button of the left sidebar at the left, and the button of the right sidebar at the right. The shortcut ⌘B hides or shows the left sidebar, and the shortcut ⌥⌘B hides or shows the right sidebar.
-- When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section opens if it is hidden. A hidden sidebar that holds another sidebar section stays hidden.
+- When the developer or the code opens a sidebar section, for example the Notes sidebar section after the shortcut ⇧⌘P pins a text, the sidebar that holds the sidebar section opens if it is hidden, and expands if it is collapsed to the sidebar icon bar. A sidebar that holds another sidebar section does not change.
 - The sidebars hold no tabs. The word "tab" belongs to the tab bar only.
 
 ## Source control
@@ -97,7 +102,7 @@ The Source control sidebar section copies the source control view of VS Code ([i
 - The buttons of a group header and of a file line show only while the pointer is over the header or the line. On "Staged Changes": Stash, View the changes, Unstage all. On "Changes": Stash, View the changes, Discard all, Stage all. On a file line of "Changes": Open the file, Discard, Stage. On a file line of "Staged Changes": Open the file, Unstage.
 - A file line shows the icon of the kind of the file, the file name, its folders in grey (nothing for a file at the root of the repository), and a colored status letter at the right: M modified, A added, D deleted, R renamed, U untracked, ! conflict. Its tooltip gives the full path and the status in words. A click on the line opens the diff of the file in the large Git window.
 - A discard asks for a confirmation first, because the changes cannot come back. A file that Git does not know is deleted.
-- The button of the Source control sidebar section in the navigation bar shows the number of changed files.
+- The icon of the Source control sidebar section in the sidebar icon bar shows the number of changed files.
 
 ## Notes
 
