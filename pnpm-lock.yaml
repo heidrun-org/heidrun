@@ -218,6 +218,15 @@ importers:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
 
+  packages/dev_tools/agents_rules_checker:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
+
   packages/dev_tools/change_log_generator:
     dependencies:
       commander:

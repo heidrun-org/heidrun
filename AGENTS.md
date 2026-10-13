@@ -17,10 +17,39 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 ## Agent rules
 
-The folder `docs/agents_rules` holds all the rules that every agent follows. Read these documents before you change the code, and keep them up to date when a rule changes.
+The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
 
 - [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
-- [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md): the rules of the user interface: where each part goes, and how each part works.
+
+The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
+
+- The window, in the folder `docs/agents_rules/user_interface/window`:
+  - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
+  - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
+  - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
+  - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
+- The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
+  - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
+  - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
+  - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
+- The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
+  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
+  - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
+- The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
+  - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
+  - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
+  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, its cache, and the width of an information card.
+  - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
+    - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
+    - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
+    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card.
+  - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
+    - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
+    - [clusters.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md): the clustered dynamic topics, the translation table, and the button "Rebuild the clusters".
+    - [display.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/display.md): the dynamic topics on the row of each chat, and the dynamic topic bar.
+    - [extraction_methods.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/extraction_methods.md): the methods "Keyword" and "Language model", and their caches.
+
+The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 10000 bytes. When a file is larger, split it by topic into smaller files, and list the new files here. The test of the package `agents_rules_checker` fails when a file is larger.
 
 ## Issue Fix Workflow
 
@@ -67,7 +96,7 @@ Always start Heidrun with the command line option `--no-splash-screen` when you 
 
 - In development, run `pnpm dev -- -- --no-splash-screen` at the root of the repository or of the worktree. The command `tauri dev` gives the arguments after its second `--` to the application.
 - For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
-- The rules of the splash screen are in [docs/agents_rules/user_interface.md](docs/agents_rules/user_interface.md), in the section "Splash screen".
+- The rules of the splash screen are in [docs/agents_rules/user_interface/window/window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md), in the section "Splash screen".
 
 ## Tests
 
@@ -79,4 +108,5 @@ Always start Heidrun with the command line option `--no-splash-screen` when you 
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
+- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it. The test files sit in the folder `tests`.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.
