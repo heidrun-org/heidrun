@@ -14,6 +14,8 @@ This file gives the rules for working on this repository. The file `README.md` d
 This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 - The branch `dev_jerome` is the personal development branch of Jérôme Étienne. Jérôme's work goes on `dev_jerome`.
+- The branch `dev_eric` is the personal development branch of Eric. Eric's work goes on `dev_eric`.
+- Each developer works on the personal development branch of that developer only. Never put the work of Jérôme on `dev_eric`, and never put the work of Eric on `dev_jerome`.
 
 ## Agent rules
 
@@ -116,7 +118,7 @@ The Issue Fix Completion starts when the developer is satisfied with the change.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
 2. Create a pull request (on GitLab, a merge request) from the temporary branch.
-3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome`.
+3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
 4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
 5. Close the issue.
 
