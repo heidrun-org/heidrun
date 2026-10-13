@@ -312,6 +312,8 @@ select.form-control {
 }
 
 .alert {
+  // Bootstrap 6 lays the children of a notice side by side. Bootstrap 5 stacked them, and the application writes a notice as lines.
+  display: block;
   --alert-padding-y: 0.5rem;
   --alert-padding-x: 0.75rem;
   margin-bottom: 0;

@@ -223,4 +223,9 @@ describe('bootstrap_parts.scss', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).toMatch(/\n\.btn \{[^}]*justify-content: flex-start/);
 	});
+
+	it('stacks the lines of a notice one under the other, as Bootstrap 5 did, and not side by side as Bootstrap 6 does', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\n\.alert \{[^}]*display: block/);
+	});
 });
