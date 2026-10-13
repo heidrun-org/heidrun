@@ -35,7 +35,7 @@ const FRAME_INTERVAL: Duration = Duration::from_millis(50);
 
 const BLOCKED_COLOR: [u8; 3] = [235, 64, 52];
 const DONE_COLOR: [u8; 3] = [52, 199, 89];
-const WORKING_COLOR: [u8; 3] = [10, 132, 255];
+const WORKING_COLOR: [u8; 3] = [191, 90, 242];
 
 ///////////////////////////////////////////////////////////////////////////////
 // Data from the web page
@@ -427,7 +427,7 @@ mod tests {
     }
 
     #[test]
-    fn the_blocked_finished_and_working_discs_are_red_green_and_blue() {
+    fn the_blocked_finished_and_working_discs_are_red_green_and_violet() {
         let colors: Vec<[u8; 3]> = slots_for(&StatusItemPayload::default())
             .iter()
             .filter_map(|slot| match slot {
@@ -435,7 +435,7 @@ mod tests {
                 _ => None,
             })
             .collect();
-        assert_eq!(colors, vec![[235, 64, 52], [52, 199, 89], [10, 132, 255]]);
+        assert_eq!(colors, vec![[235, 64, 52], [52, 199, 89], [191, 90, 242]]);
     }
 
     #[test]
