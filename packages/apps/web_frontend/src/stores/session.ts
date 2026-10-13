@@ -695,7 +695,15 @@ function applySnapshot(snap: SessionSnapshot) {
 function fixSelection(snap: SessionSnapshot) {
   const ws = snap.workspaces;
   if (!ws.some((w) => w.workspace_id === state.selectedWorkspaceId)) {
-    state.selectedWorkspaceId = snap.focused_workspace_id ?? ws[0]?.workspace_id ?? null;
+    const savedId = settings.selectedWorkspaceId;
+    const isSavedWorkspaceToRestore = state.selectedWorkspaceId === null && ws.some((w) => w.workspace_id === savedId);
+    if (isSavedWorkspaceToRestore) {
+      state.selectedWorkspaceId = savedId;
+      state.selectedTabId = last.tab[savedId] ?? null;
+      state.selectedPaneId = state.selectedTabId ? last.pane[state.selectedTabId] ?? null : null;
+    } else {
+      state.selectedWorkspaceId = snap.focused_workspace_id ?? ws[0]?.workspace_id ?? null;
+    }
   }
   const wsInfo = ws.find((w) => w.workspace_id === state.selectedWorkspaceId);
   const wsTabs = snap.tabs.filter((t) => t.workspace_id === state.selectedWorkspaceId);
@@ -752,6 +760,16 @@ watch(
       localStorage.setItem(LAST_KEY, JSON.stringify(last));
     } catch {
       /* ignore */
+    }
+  },
+);
+
+// The selected workspace is saved at each change, so the next start selects it again (issue #355).
+watch(
+  () => state.selectedWorkspaceId,
+  (id) => {
+    if (id !== null) {
+      settings.selectedWorkspaceId = id;
     }
   },
 );
