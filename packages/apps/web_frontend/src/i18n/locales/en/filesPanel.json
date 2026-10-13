@@ -1,0 +1,8 @@
+{
+  "selectWorkspace": "Select a workspace.",
+  "notRepository": "This workspace is not a Git repository.",
+  "title": "Files",
+  "sidebarSection": "Files",
+  "refresh": "Refresh",
+  "truncated": "The list is too long: only the first files are shown."
+}

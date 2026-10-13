@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
+import FilesPanel from "./FilesPanel.vue";
 import SourceControlPanel from "./SourceControlPanel.vue";
 import { currentGit } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
@@ -20,7 +21,7 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the sidebar icon bar of the left sidebar: the Scripts and Source control sidebar sections. */
+/** The buttons of the sidebar icon bar of the left sidebar: the Scripts, Source control, and Files sidebar sections. */
 const sidebarSections = computed((): SidebarSectionButton[] => [
   { id: "actions", label: t("sidebar.sidebarSection.actions"), icon: "play-circle", badge: runningScripts.value, isLive: true },
   {
@@ -29,10 +30,15 @@ const sidebarSections = computed((): SidebarSectionButton[] => [
     icon: "git",
     badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
   },
+  { id: "files", label: t("filesPanel.sidebarSection"), icon: "folder2", badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  clickSidebarSectionIcon(id === "sourceControl" ? "sourceControl" : "actions");
+  if (id === "sourceControl" || id === "files") {
+    clickSidebarSectionIcon(id);
+    return;
+  }
+  clickSidebarSectionIcon("actions");
 }
 </script>
 
@@ -49,7 +55,8 @@ function selectSidebarSection(id: string) {
     />
     <div v-if="settings.leftCollapsed === false" class="sidebar-section-body">
       <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
-      <SourceControlPanel v-else />
+      <SourceControlPanel v-else-if="settings.leftSidebarSection === 'sourceControl'" />
+      <FilesPanel v-else />
     </div>
   </aside>
 </template>

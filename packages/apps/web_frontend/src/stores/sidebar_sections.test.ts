@@ -10,7 +10,7 @@ beforeEach(() => {
 });
 
 describe("openSidebarSection", () => {
-  it.each(["actions", "sourceControl"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
+  it.each(["actions", "sourceControl", "files"] as const)("shows the sidebar section %s in the left sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.leftSidebarSection).toBe(sidebarSection);
   });
@@ -20,7 +20,7 @@ describe("openSidebarSection", () => {
     expect(settings.rightSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["actions", "sourceControl"] as const)("expands the collapsed left sidebar when the sidebar section is %s", (sidebarSection) => {
+  it.each(["actions", "sourceControl", "files"] as const)("expands the collapsed left sidebar when the sidebar section is %s", (sidebarSection) => {
     settings.leftCollapsed = true;
     settings.rightCollapsed = true;
     openSidebarSection(sidebarSection);
@@ -48,6 +48,7 @@ describe("clickSidebarSectionIcon", () => {
 
   it.each([
     ["sourceControl", "leftCollapsed", "leftSidebarSection"],
+    ["files", "leftCollapsed", "leftSidebarSection"],
     ["chats", "rightCollapsed", "rightSidebarSection"],
   ] as const)("shows the sidebar section %s when the sidebar shows another one", (sidebarSection, collapsedName, sectionName) => {
     clickSidebarSectionIcon(sidebarSection);
