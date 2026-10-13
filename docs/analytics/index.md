@@ -1,0 +1,12 @@
+# Analytics documentation index
+
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained index for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337)
+
+This file lists the files and the subfolders of this folder, for agents and tools.
+
+- [README.md](README.md): the overview of this folder, for people.
+- [inputs.md](inputs.md): the three inputs that connect the code to the work that produced it.

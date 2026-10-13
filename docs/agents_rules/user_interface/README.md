@@ -1,0 +1,12 @@
+# Rules of the user interface
+
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained overview for people
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../glossary.md)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337)
+
+This folder holds the rules of the user interface of Heidrun: where each part goes, and how each part works.
+
+Pick the subfolder of the part that you change, and read only the files that match. The words are defined in the [glossary](../glossary.md).

@@ -1,5 +1,10 @@
 # Architecture of Heidrun
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained overview for people
+- Related framing: [Project instructions](../../AGENTS.md)
+
 This folder describes how Heidrun is built. Each document in this folder explains one part of the product.
 
 - [product.md](product.md): what the product is, what the product is not, and what the user can inspect.

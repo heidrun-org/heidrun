@@ -1,5 +1,11 @@
 # Chats sidebar section: dynamic topics on the rows and the dynamic topic bar
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - Under the title of each chat, one single line shows its dynamic topics: at most three small rounded labels (Bootstrap `badge`). The line sits between the title and the summary. A chat without a dynamic topic has no line. While the method is "Language model", a chat shows its line when the language model has given its topics, and shows no line before. The topics come only from the chats that the list shows, never from the other chats of the workspace.

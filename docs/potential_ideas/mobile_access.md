@@ -1,5 +1,11 @@
 # Heidrun Mobile
 
+- Created: 12 October 2026
+- Last updated: 13 October 2026
+- Status: Idea that nobody has decided to build yet
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274)
+
 Heidrun Mobile is an idea for a second front end of Heidrun. It is a small application for a phone. It lets the developer keep the agents working when the developer is away from the desk. The idea comes from the meeting notes in [issue #274](https://github.com/heidrun-org/heidrun/issues/274).
 
 ## What exists today

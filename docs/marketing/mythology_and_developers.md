@@ -1,6 +1,12 @@
 # Heidrun and the developer with artificial intelligence
 
-This document links the Norse mythology of Heidrun to the situation of developers who work with artificial intelligence today. It defines six words that the public texts use: Vikings, Valhalla, mead, the einherjar, Ragnarök, and "Skål!". The rules for the jokes are in [README.md](README.md). Every statement about the mythology in this document comes from the *Poetic Edda* and the *Prose Edda*.
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained reference for the public texts
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related rules: [The jokes](jokes.md) and [The name of Heidrun](name_of_heidrun.md)
+
+This document links the Norse mythology of Heidrun to the situation of developers who work with artificial intelligence today. It defines six words that the public texts use: Vikings, Valhalla, mead, the einherjar, Ragnarök, and "Skål!". The rules for the jokes are in [jokes.md](jokes.md). Every statement about the mythology in this document comes from the *Poetic Edda* and the *Prose Edda*.
 
 ## The situation of developers today
 

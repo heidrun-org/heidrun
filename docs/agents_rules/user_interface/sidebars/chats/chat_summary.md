@@ -1,5 +1,11 @@
 # Chats sidebar section: the summary of a chat
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../glossary.md).
 
 - Under the title, each chat shows a summary in muted color, in up to three lines. A line has no indent: its icon starts at the same place as the first letter of the title. A line that has nothing to say is left out. Each line starts with a small icon.

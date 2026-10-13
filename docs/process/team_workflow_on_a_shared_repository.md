@@ -1,5 +1,11 @@
 # Team workflow on a shared repository
 
+- Created: 12 October 2026
+- Last updated: 13 October 2026
+- Status: Proposal with open points
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274), [issue 277](https://github.com/heidrun-org/heidrun/issues/277)
+
 This document describes a way for several developers to work on one repository when coding agents write much of the code. A full test runs before every merge. The idea comes from [issue 277](https://github.com/heidrun-org/heidrun/issues/277), which comes from [issue 274](https://github.com/heidrun-org/heidrun/issues/274).
 
 ## Workflow

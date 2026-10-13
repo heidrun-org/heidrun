@@ -1,5 +1,10 @@
 # The information sources
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained description of the information sources
+- Related framing: [Project instructions](../../AGENTS.md)
+
 Heidrun assumes that the project has a Git repository, and a Git hosting service such as GitHub or GitLab. The conversations around the project live in these places. This gives Heidrun much information. The source code is the key, and it is not the only source.
 
 ## The three sources

@@ -1,5 +1,11 @@
 # Chats sidebar section: the methods of the dynamic topic extraction
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - The method "Keyword" reads the dynamic topic source information of each chat: the title, the first messages that the developer typed, the folders of the files that the coding agent wrote (below the root of the repository), and the titles of the issues and of the pull requests that the chat mentioned (the three highest issue numbers and the three highest pull request numbers, read on the forge with `gh` or `glab`, four reads at a time). The messages of the coding agent are not used. It cuts the text into words in lower case, without accents, in the singular, and drops the numbers, the addresses, the words of one or two letters, and the stop words of English and of French (`lib/dynamic_topic_words.ts`). A word of the title counts 3, a word of the title of an issue or of a pull request counts 2, a word of the first messages or of a folder counts 1. The score of a word in a chat is `(1 + ln(weight)) × ln(number of chats that the list shows ÷ number of those chats that hold the word)`, so a word that every chat holds scores nothing. A list of one chat uses only the weight. The best three words, by score and then by alphabetical order, are the topics (`lib/dynamic_topics.ts`).

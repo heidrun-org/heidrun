@@ -51,6 +51,48 @@ The rules of the user interface: where each part goes, and how each part works. 
 
 The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 10000 bytes. When a file is larger, split it by topic into smaller files, and list the new files here. The test of the package `agents_rules_checker` fails when a file is larger.
 
+## Documentation metadata
+
+Every documentation file in the folder `docs`, and in all its subfolders, has a metadata header immediately after its title.
+
+- The header has these lines, in this order:
+  - `Created`: the date on which the file was created.
+  - `Last updated`: the date of the last change of the file.
+  - `Status`: one short phrase that says what the file is, for example "Maintained index for agents and tools".
+  - `Related framing`: a link to the document that sets the frame of this file, for example the project instructions.
+  - `Related rules`: a link to each rule file that applies to this file. Add this line only when a rule file applies.
+  - `Related issue`: a link to the GitHub issue that this file comes from. Add this line only when an issue exists.
+- Write each date as day, month name, and year, for example `13 October 2026`.
+- Update `Last updated` in every change of the file, and keep the date accurate.
+- Write each link as a relative link that works from the folder of the file.
+- The file `docs/release_notes/prefix.md` has no header. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
+
+Example, for the file `docs/process/index.md`:
+
+```markdown
+# Process index
+
+- Created: 4 October 2026
+- Last updated: 8 October 2026
+- Status: Maintained index for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../agents_rules/glossary.md)
+
+This file lists the files and the subfolders of this folder, for agents and tools.
+
+- [README.md](README.md): the overview of this folder, for people.
+- [team_workflow_on_a_shared_repository.md](team_workflow_on_a_shared_repository.md): the way several developers work on one repository.
+```
+
+## Documentation folders
+
+Every folder in the folder `docs`, at every depth, has two files that describe the folder. The folder `docs` itself has them too.
+
+- `README.md` is for people. It says in plain words what the folder is for, and how to read the files of the folder. It has the metadata header, and its `Status` is "Maintained overview for people".
+- `index.md` is for agents and tools. It has the metadata header, and its `Status` is "Maintained index for agents and tools". After the header, it has one introduction sentence, then one bullet for each file and each subfolder of the folder, in this form: a relative link, a colon, and one sentence that says what the file or the subfolder holds. The bullet for a subfolder links to the file `index.md` of that subfolder. The bullet for `README.md` is included. The file does not repeat the content of the files that it lists.
+- When you add, rename, move, or delete a file or a subfolder of the folder `docs`, update the file `index.md` of its folder in the same change.
+- When you create a new folder in the folder `docs`, create its two files in the same change, and add a bullet for the new folder in the file `index.md` of its parent folder.
+
 ## Issue Fix Workflow
 
 Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.

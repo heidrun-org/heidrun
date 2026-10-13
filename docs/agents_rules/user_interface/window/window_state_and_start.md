@@ -1,5 +1,11 @@
 # User interface of Heidrun: state of the window, splash screen, and goat sounds
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
 
 ## Position and size of the window

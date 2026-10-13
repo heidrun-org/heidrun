@@ -1,5 +1,11 @@
 # Chats sidebar section: clustered dynamic topics
 
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
 
 - The section "Dynamic topics" of the Settings window has a second part, "Clustered dynamic topics": a Bootstrap switch (`form-check form-switch`) with the label "Enable clustered dynamic topics", a circled question mark just after the label, and a button "Rebuild the clusters". The switch is the option `clusteredDynamicTopics` of the settings, and the default is off, because the method makes calls to a coding agent. The part has no help paragraph under the switch. A click on the circled question mark opens an information card below it, with a title (the question mark icon and the text "Clustered dynamic topics"), then three blocks: "What it is" (a clustered dynamic topic is the name of a group of dynamic topics that have a close meaning, so one subject has one label), "What Heidrun sends" (only the short labels of the raw dynamic topics, and never the text of a chat, to the coding agent `codex` or `claude` that is installed on this computer), and "When the option is off" (Heidrun shows the raw dynamic topics and makes no call). The button is disabled while the option is off and while a call runs, and it shows a Bootstrap spinning wheel while a call runs. A line under the button says why the last call gave no cluster (no coding agent, a failure, or a wrong answer), only while the option is on.
