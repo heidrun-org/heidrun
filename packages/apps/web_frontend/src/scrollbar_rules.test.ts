@@ -37,12 +37,22 @@ class ScrollbarRulesTestHelper {
 }
 
 describe('the scroll bars', () => {
-	it('have one global rule in styles.css: narrow, no track, and a thumb made of the text color at low strength', () => {
+	it('have one global rule in styles.css: narrow, no track, and a thumb made of the two scroll bar variables', () => {
 		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');
 		expect(stylesText).toMatch(/\*::-webkit-scrollbar \{ width: 8px; height: 8px; background: transparent; \}/);
-		expect(stylesText).toMatch(/\*::-webkit-scrollbar-thumb \{ background-color: color-mix\(in srgb, var\(--text\) 12%, transparent\)/);
-		expect(stylesText).toContain('*:hover::-webkit-scrollbar-thumb');
-		expect(stylesText).toContain('*::-webkit-scrollbar-thumb:hover');
+		expect(stylesText).toMatch(/\*::-webkit-scrollbar-thumb \{ background-color: var\(--scrollbar-thumb\)/);
+		expect(stylesText).toMatch(/\*::-webkit-scrollbar-thumb:hover \{ background-color: var\(--scrollbar-thumb-hover\)/);
+	});
+
+	it('take the gray of VS Code at 40 percent in both themes, and 70 percent while the pointer is over the thumb', () => {
+		const stylesText = Fs.readFileSync(Path.resolve(__dirname, 'styles.css'), 'utf8');
+		const lightStart = stylesText.indexOf(':root[data-theme="light"] {');
+		const darkText = stylesText.slice(0, lightStart);
+		const lightText = stylesText.slice(lightStart, stylesText.indexOf('}', lightStart));
+		expect(darkText).toContain('--scrollbar-thumb: rgba(121, 121, 121, 0.4);');
+		expect(lightText).toContain('--scrollbar-thumb: rgba(100, 100, 100, 0.4);');
+		expect(darkText).toContain('--scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);');
+		expect(lightText).toContain('--scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);');
 	});
 
 	it('are never styled by a component: no other file writes a scrollbar pseudo-element', () => {

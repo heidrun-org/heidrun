@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	PaneBackgroundsTest — the window shell, the sidebar, and the viewport keep three different backgrounds
+//	PaneBackgroundsTest — the window shell and the sidebar share one background, and the pane has a lighter one, as in VS Code
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,19 +36,18 @@ class PaneBackgroundsTestHelper {
 
 describe('background colours of the window', () => {
 	for (const selector of [':root', ':root[data-theme="light"]']) {
-		it(`uses three different backgrounds for the shell, the sidebar, and the viewport in ${selector}`, () => {
+		it(`gives the shell and the sidebar the same background, and the pane another one, in ${selector}`, () => {
 			const shell = PaneBackgroundsTestHelper.readVariable(selector, '--shell');
 			const side = PaneBackgroundsTestHelper.readVariable(selector, '--side');
 			const viewport = PaneBackgroundsTestHelper.readVariable(selector, '--bg');
-			expect(new Set([shell, side, viewport]).size).toBe(3);
+			expect(side).toBe(shell);
+			expect(viewport).not.toBe(shell);
+		});
+
+		it(`makes the pane background lighter than the shell and the sidebar background in ${selector}`, () => {
+			const side = PaneBackgroundsTestHelper.readVariable(selector, '--side');
+			const viewport = PaneBackgroundsTestHelper.readVariable(selector, '--bg');
+			expect(viewport > side).toBe(true);
 		});
 	}
-
-	it('makes the dark shell lighter than the dark sidebar, and the dark sidebar lighter than the dark viewport', () => {
-		const shell = PaneBackgroundsTestHelper.readVariable(':root', '--shell');
-		const side = PaneBackgroundsTestHelper.readVariable(':root', '--side');
-		const viewport = PaneBackgroundsTestHelper.readVariable(':root', '--bg');
-		expect(shell > side).toBe(true);
-		expect(side > viewport).toBe(true);
-	});
 });
