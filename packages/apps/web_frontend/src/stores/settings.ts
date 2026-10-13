@@ -86,6 +86,8 @@ const defaults = {
   autoStartHerdr: true,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
   keepAgentsRunningAfterQuit: false,
+  /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
+  confirmTabClose: true,
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Notifications. */

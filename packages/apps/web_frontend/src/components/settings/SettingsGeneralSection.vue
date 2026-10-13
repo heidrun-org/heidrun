@@ -88,6 +88,12 @@ const timeExample = computed(() => {
     </div>
     <div class="keys">{{ t("settingsGeneral.workingDaysHelp") }}</div>
 
+    <h4>{{ t("settingsGeneral.tabsTitle") }}</h4>
+    <label class="check">
+      <input v-model="settings.confirmTabClose" type="checkbox" />
+      <span>{{ t("settingsGeneral.confirmTabClose") }}</span>
+    </label>
+
     <h4>{{ t("settingsGeneral.quitTitle") }}</h4>
     <div class="checkRow">
       <label class="check">
