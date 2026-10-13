@@ -369,12 +369,6 @@ const VIEWS = [
 .chat-topics .badge.is-selected { --badge-color: var(--bg-body); background-color: var(--fg-body); }
 .chat-actions .btn { height: 26px; --btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
-/* A discreet scrollbar: narrow, with no track, and a thumb made of the text color at low strength, so that it is dark in the dark theme and light in the light theme. */
-.chats-panel::-webkit-scrollbar { width: 8px; background: transparent; }
-.chats-panel::-webkit-scrollbar-track { background: transparent; }
-.chats-panel::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--fg-body) 12%, transparent); border-radius: 4px; }
-.chats-panel:hover::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--fg-body) 20%, transparent); }
-.chats-panel::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--fg-body) 35%, transparent); }
 .btn-check:has(input:checked) {
   --btn-color: var(--text);
   --btn-hover-color: var(--text);

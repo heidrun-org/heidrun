@@ -167,14 +167,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .popover { --popover-body-padding-x: 0; --popover-body-padding-y: 0; width: 34rem; }
-.popover-body :deep(.list-group)::-webkit-scrollbar { width: 10px; background: transparent; }
-.popover-body :deep(.list-group)::-webkit-scrollbar-track { background: transparent; }
-.popover-body :deep(.list-group)::-webkit-scrollbar-thumb {
-  border: 2px solid transparent; border-radius: 5px; background-clip: padding-box;
-  background-color: color-mix(in srgb, var(--fg-body) 8%, transparent);
-}
-.popover-body :deep(.list-group:hover)::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--fg-body) 22%, transparent); }
-.popover-body :deep(.list-group)::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--fg-body) 38%, transparent); }
 .popover-body { overflow: hidden; border-radius: var(--popover-inner-border-radius); }
 .information-card-part { margin: 0 -4px; padding: 0 4px; border-radius: var(--radius-5); cursor: pointer; }
 .information-card-part:hover, .information-card-part.is-open { background-color: var(--bg-2); }

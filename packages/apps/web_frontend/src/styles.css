@@ -139,6 +139,17 @@
 .menu { --menu-zindex: 50; }
 
 * { box-sizing: border-box; }
+
+/* Scroll bars ------------------------------------------------------------- */
+/* Every scroll bar of the application is discreet: narrow, with no track, and a thumb made of the text color at low strength, so that it
+   is dark in the dark theme and light in the light theme. The thumb is a little stronger while the pointer is over the scrolling element,
+   and stronger again while the pointer is over the thumb. Nothing else sets "scrollbar-width" or "scrollbar-color": these two standard
+   properties would replace the pseudo-elements below. */
+*::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--text) 12%, transparent); border-radius: 4px; }
+*:hover::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--text) 20%, transparent); }
+*::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--text) 35%, transparent); }
 html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
