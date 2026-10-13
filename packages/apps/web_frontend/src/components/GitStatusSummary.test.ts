@@ -99,6 +99,18 @@ describe("GitStatusSummary", () => {
     expect(wrapper.find(".popover").exists()).toBe(false);
   });
 
+  it("is a status bar section that keeps the background of a button while its popover is open", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.classes()).toContain("status-section");
+    expect(wrapper.classes()).not.toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).toContain("show");
+    await wrapper.trigger("click");
+    expect(wrapper.classes()).not.toContain("show");
+  });
+
   it("closes the popover with the key Escape", async () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: makeStatus({}) };

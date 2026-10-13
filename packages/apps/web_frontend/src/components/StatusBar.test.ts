@@ -51,6 +51,12 @@ describe("StatusBar", () => {
     expect(sourceText).toContain(".workspace-sep { margin: 0 6px; }");
   });
 
+  it("gives every status bar section a rounded background like a button, while the pointer is over it and while its card is open", () => {
+    const stylesText = Fs.readFileSync(Path.resolve(import.meta.dirname, "..", "styles.css"), "utf8");
+    expect(stylesText).toMatch(/\.status-section \{[^}]*margin: 6px -11px;[^}]*border-radius: 6px;/);
+    expect(stylesText).toContain(".status-section:hover, .status-section.show { background: rgba(var(--wash), 0.12); }");
+  });
+
   it("has no section with the number of agents that are blocked, working, or done: the connection to Herdr follows the free space", async () => {
     const { wrapper } = await mountStatusBar();
     const children = Array.from(wrapper.get("footer").element.children);

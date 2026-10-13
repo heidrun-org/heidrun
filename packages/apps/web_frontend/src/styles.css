@@ -144,6 +144,15 @@
 .popover { --popover-zindex: 20; }
 .menu { --menu-zindex: 50; }
 
+/* Status bar sections ------------------------------------------------------ */
+/* Each status bar section looks like a button of the status bar of Visual Studio Code: a rounded background while the pointer is over it,
+   and while its information card is open. The class "show" is the Bootstrap name of an open toggle. The background is white at 12 %
+   strength in the dark theme and black at 12 % strength in the light theme, through the variable "--wash". The vertical margin leaves 6
+   pixels of the status bar above and below the background. The 11 negative pixels at each side cancel the 11 pixels of padding, so the
+   text stays in place. The information card is placed from the status bar, so the vertical margin does not move it. */
+.status-section { align-self: stretch; margin: 6px -11px; padding: 0 11px; border-radius: 6px; cursor: pointer; outline-offset: 3px; }
+.status-section:hover, .status-section.show { background: rgba(var(--wash), 0.12); }
+
 * { box-sizing: border-box; }
 
 /* Scroll bars ------------------------------------------------------------- */
