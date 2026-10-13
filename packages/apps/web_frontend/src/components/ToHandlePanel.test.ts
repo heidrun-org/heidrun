@@ -228,6 +228,6 @@ describe("ToHandlePanel colors of a blocked card", () => {
   it("gives the choice rows the background of the sidebar section in the light theme", () => {
     const lightText = stylesText.slice(stylesText.indexOf(':root[data-theme="light"] {'));
     expect(lightText).toMatch(/--choice-bg:\s*var\(--side\);/);
-    expect(lightText).toMatch(/--side:\s*#efefec;/);
+    expect(lightText).toMatch(/--side:\s*#f8f8f8;/);
   });
 });

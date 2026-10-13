@@ -1,19 +1,20 @@
 :root {
-  --bg: #0b0c0e;
+  --bg: #1f1f1f;
   --panel: #0f1113;
   --bar: #111316;
-  --shell: #1b1d20;
-  --side: #121417;
+  --shell: #181818;
+  --side: #181818;
   --pane-radius: 8px;
   --pane-gap: 5px;
   --field: #16181b;
   --hover: #1d2024;
-  --line: #22262a;
+  --line: #2b2b2b;
   --line-strong: #2a2e33;
-  --text: #e8e6e1;
+  --text: #cccccc;
   --text-2: #c9cdd1;
-  --muted: #8e949a;
+  --muted: #8f8f8f;
   --faint: #6b7177;
+  --icon: #888888;
 
   --working: #3fb8af;
   --blocked: #f0645f;
@@ -51,8 +52,10 @@
   --gauge-track: #23272c;
   --wash: 255, 255, 255;
   --overlay-hover: rgba(255, 255, 255, 0.08);
-  --editor-caret: #e8e6e1;
+  --editor-caret: #cccccc;
   --editor-active-line: rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: rgba(121, 121, 121, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --mono: "Geist Mono", "SF Mono", Menlo, monospace;
   color-scheme: dark;
@@ -60,19 +63,20 @@
 
 /* Light theme: the theme store sets data-theme="light" on <html>. */
 :root[data-theme="light"] {
-  --bg: #f6f6f4;
+  --bg: #ffffff;
   --panel: #ffffff;
   --bar: #efefec;
-  --shell: #dededa;
-  --side: #efefec;
+  --shell: #f8f8f8;
+  --side: #f8f8f8;
   --field: #ffffff;
   --hover: #e8e8e4;
-  --line: #deded9;
+  --line: #e5e5e5;
   --line-strong: #cbcbc4;
-  --text: #1c1d1f;
+  --text: #3b3b3b;
   --text-2: #3a3d41;
-  --muted: #62676d;
+  --muted: #737373;
   --faint: #8a8f95;
+  --icon: #5d5d5d;
 
   --working: #12807a;
   --blocked: #cc3a35;
@@ -109,8 +113,10 @@
   --gauge-track: #dcdcd6;
   --wash: 0, 0, 0;
   --overlay-hover: rgba(0, 0, 0, 0.07);
-  --editor-caret: #1c1d1f;
+  --editor-caret: #3b3b3b;
   --editor-active-line: rgba(0, 0, 0, 0.04);
+  --scrollbar-thumb: rgba(100, 100, 100, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
   color-scheme: light;
 }
 :root[data-theme="light"] .btn.primary { color: #fff; }
@@ -141,15 +147,13 @@
 * { box-sizing: border-box; }
 
 /* Scroll bars ------------------------------------------------------------- */
-/* Every scroll bar of the application is discreet: narrow, with no track, and a thumb made of the text color at low strength, so that it
-   is dark in the dark theme and light in the light theme. The thumb is a little stronger while the pointer is over the scrolling element,
-   and stronger again while the pointer is over the thumb. Nothing else sets "scrollbar-width" or "scrollbar-color": these two standard
-   properties would replace the pseudo-elements below. */
+/* Every scroll bar of the application has the look of the scroll bar of VS Code: narrow, with no track, and a thumb made of a gray at 40 %
+   strength, which is stronger (70 %) while the pointer is over the thumb. The two colors are variables of the dark theme and of the light
+   theme. Nothing else sets "scrollbar-width" or "scrollbar-color": these two standard properties would replace the pseudo-elements below. */
 *::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
 *::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
-*::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--text) 12%, transparent); border-radius: 4px; }
-*:hover::-webkit-scrollbar-thumb { background-color: color-mix(in srgb, var(--text) 20%, transparent); }
-*::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--text) 35%, transparent); }
+*::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
 html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);

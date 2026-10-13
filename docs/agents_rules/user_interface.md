@@ -19,7 +19,7 @@ This document says where each part of the window goes and how each part works. T
 ## Rules of the layout
 
 - The viewport gets the most width, because the developer reads and writes text there.
-- The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background. The tab bar is inside the frame of the viewport.
+- The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background (`--side`). The tab bar is inside the frame of the viewport. The panes inside the frame of the viewport have a lighter background (`--bg`), as the editor of VS Code is lighter than its sidebar.
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
 - The top bar is 43 pixels high. The gap above the search box, the theme button, and the more button is 9 pixels, and the gap below them is also 9 pixels, down to the first tab of the tab bar and to the first button of each sidebar icon bar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
 
@@ -166,9 +166,19 @@ The Source control sidebar section copies the source control view of VS Code ([i
 - The list reads the chats again when the Chats sidebar section opens, when the developer selects another workspace, and every 10 seconds while the Chats sidebar section is on the screen.
 - The ideas for later are in [issue #250](https://github.com/heidrun-org/heidrun/issues/250).
 
+## Colors
+
+- The main colors of the window are the colors of VS Code, measured on a screenshot of VS Code in Dark Modern and in Light Modern ([issue #320](https://github.com/heidrun-org/heidrun/issues/320)). They are CSS variables in `packages/apps/web_frontend/src/styles.css`, one value for the dark theme and one value for the light theme.
+- `--shell` is the color of the top bar, of the sidebar icon bars, of the status bar, and of the window behind the sidebars and the viewport. It is #181818 in the dark theme and #f8f8f8 in the light theme.
+- `--side` is the color of the left sidebar, of the right sidebar, of the frame of the viewport, and of the tab bar. It has the same value as `--shell`, as in VS Code, so only the border line (`--line`) separates a sidebar icon bar from its sidebar.
+- `--bg` is the color of a pane, and the background of the terminal in a pane has the same value: #1f1f1f in the dark theme and #ffffff in the light theme. A change of `--bg` changes the background of the terminal themes in `TerminalView.vue` too, because Codex reads `--bg` when it starts.
+- `--text` is #cccccc in the dark theme and #3b3b3b in the light theme. `--muted` is #8f8f8f in the dark theme and #737373 in the light theme. `--line`, the color of the border lines, is #2b2b2b in the dark theme and #e5e5e5 in the light theme.
+- `--icon` is the color of the icons of the sidebar icon bars: #888888 in the dark theme and #5d5d5d in the light theme. The icon of the selected entry has the text color (`--text`).
+- The hover colors, the accent color, the status colors, and the other grays keep their own values.
+
 ## Scroll bars
 
-- Every scroll bar of the application has the same discreet look, in the dark theme and in the light theme: 8 pixels wide, no track, no background, and a rounded thumb made of the text color (`--text`) at 12 percent. The thumb is at 20 percent while the pointer is over the scrolling element, and at 35 percent while the pointer is over the thumb. So the scroll bar is dark in the dark theme, and light in the light theme.
+- Every scroll bar of the application has the same look as the scroll bar of VS Code, in the dark theme and in the light theme: 8 pixels wide, no track, no background, and a rounded thumb. The thumb has the color `--scrollbar-thumb`, a gray at 40 percent (`rgba(121, 121, 121, 0.4)` in the dark theme, `rgba(100, 100, 100, 0.4)` in the light theme). It has the color `--scrollbar-thumb-hover`, `rgba(100, 100, 100, 0.7)`, while the pointer is over the thumb.
 - The look is one global rule in `packages/apps/web_frontend/src/styles.css`, made with the `::-webkit-scrollbar` pseudo-elements on every element. A component never writes a rule for its own scroll bar.
 - Nothing sets the CSS properties `scrollbar-width` or `scrollbar-color` to a value other than `none`: in Chrome, these two properties replace the pseudo-elements, so the scroll bar would lose the look. The value `none`, which hides a scroll bar, is allowed.
 

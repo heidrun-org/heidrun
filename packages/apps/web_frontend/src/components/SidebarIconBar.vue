@@ -69,7 +69,7 @@ const emit = defineEmits<{
 .icons { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .sidebar-icon-bar button {
   position: relative; width: 36px; height: 36px; padding: 0; border: none; border-radius: 6px; background: transparent;
-  color: var(--muted); font-size: calc(var(--font-size) * 1.15); display: inline-flex; align-items: center; justify-content: center;
+  color: var(--icon); font-size: calc(var(--font-size) * 1.15); display: inline-flex; align-items: center; justify-content: center;
 }
 .sidebar-icon-bar button:hover:not(.on) { background: var(--line); color: var(--text-2); }
 .icons button.on { background: var(--line-strong); color: var(--text); }

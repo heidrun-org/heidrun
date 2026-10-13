@@ -35,7 +35,7 @@ import { t } from "../i18n/index";
 
 const TERMINAL_THEMES = {
   dark: {
-    background: "#0b0c0e",
+    background: "#1f1f1f",
     foreground: "#c9cdd1",
     cursor: "#c9cdd1",
     selectionBackground: "#2a3b4d",
