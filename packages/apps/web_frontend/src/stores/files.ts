@@ -178,6 +178,14 @@ export function discardAll() {
   files.edits = {};
 }
 
+/** Sidebar section Files: the file or the folder that the developer clicked last, as a path relative to the root. */
+export const filesPanelSelection = reactive({
+  /** The path of the file or of the folder, or null when nothing is selected. */
+  path: null as string | null,
+  /** True when the selected path is a folder. */
+  isFolder: false,
+});
+
 let cwdOpen: string | null = null;
 let loadSeq = 0;
 

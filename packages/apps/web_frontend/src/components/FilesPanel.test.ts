@@ -9,7 +9,7 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) })
 
 import FilesPanel from "./FilesPanel.vue";
 import { git, type GitStatus } from "../stores/git";
-import { files } from "../stores/files";
+import { files, filesPanelSelection } from "../stores/files";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 
@@ -64,6 +64,8 @@ afterEach(() => {
   git.modal.path = null;
   files.root = "";
   files.expanded = new Set();
+  filesPanelSelection.path = null;
+  filesPanelSelection.isFolder = false;
   vi.clearAllMocks();
 });
 
@@ -98,19 +100,44 @@ describe("FilesPanel", () => {
   it("has no button to rename, move, delete, or edit a file", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.findAll("header button").map((button) => button.attributes("aria-label"))).toEqual([
-      "New file", "New folder", "Refresh", "Expand all folders", "Collapse all folders", "More options",
+      "New file", "New folder", "Refresh", "Collapse all folders", "More options",
     ]);
   });
 
-  it("unfolds every folder with the button Expand all folders, and folds them all with the button Collapse all folders", async () => {
+  it("folds every folder with the button Collapse all folders", async () => {
     const wrapper = await mountPanel();
-    await wrapper.get("[aria-label='Expand all folders']").trigger("click");
-    expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["src", "lib", "util.ts", "main.ts", "README.md"]);
+    await wrapper.findAll(".row")[0].trigger("click");
+    expect(wrapper.findAll(".row")).toHaveLength(4);
     await wrapper.get("[aria-label='Collapse all folders']").trigger("click");
     expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["src", "README.md"]);
   });
 
-  it("creates a new file in the folder that was clicked last, and opens it in the large Git window", async () => {
+  it("has no button Expand all folders", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.find("[aria-label='Expand all folders']").exists()).toBe(false);
+  });
+
+  it("selects the row that was clicked, a folder or a file, and only that row, and keeps it after the Git window closes", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.findAll(".row.selected")).toHaveLength(0);
+    await wrapper.findAll(".row")[0].trigger("click");
+    expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["src•"]);
+    await wrapper.findAll(".row")[3].trigger("click");
+    expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
+    git.modal.open = false;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".row.selected")).toHaveLength(1);
+  });
+
+  it("keeps the selected row when the sidebar section is shown again", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[1].trigger("click");
+    wrapper.unmount();
+    const again = await mountPanel();
+    expect(again.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
+  });
+
+  it("creates a new file in the selected folder, and opens it in the large Git window", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[0].trigger("click");
     await wrapper.get("[aria-label='New file']").trigger("click");

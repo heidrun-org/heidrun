@@ -18,8 +18,6 @@
   "menu.guides.off": "Hide",
   "newFile": "New file",
   "newFolder": "New folder",
-  "expandAll": "Expand all folders",
   "collapseAll": "Collapse all folders",
-  "namingHint": "Enter creates it. Escape cancels.",
-  "tooManyFiles": "Too many files to unfold every folder (more than {count})."
+  "namingHint": "Enter creates it. Escape cancels."
 }

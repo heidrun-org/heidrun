@@ -8,8 +8,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
-import { currentGit, git, openGitModal } from "../stores/git";
-import { buildTree, files, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+import { currentGit, openGitModal } from "../stores/git";
+import { buildTree, files, filesPanelSelection, loadFiles, visibleRows, type TreeRow } from "../stores/files";
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
@@ -60,9 +60,6 @@ function chooseMenuItem(id: string) {
   }
 }
 
-/** The file that the large Git window shows, when the window is open. */
-const openedPath = computed(() => (git.modal.open ? git.modal.path : null));
-
 // The tree is read again when the repository changes, and when the number of changed files changes.
 watch(
   () => [currentGit.value?.root, currentGit.value?.changed, currentGit.value?.untracked],
@@ -75,11 +72,17 @@ watch(
   { immediate: true },
 );
 
-/** The largest number of files for which "Expand all" unfolds every folder: more rows would freeze the window. */
-const EXPAND_ALL_LIMIT = 3000;
-
-/** The folder that a new file or a new folder goes into: the folder, or the folder of the file, that was clicked last. */
-const targetFolder = ref("");
+/** The folder that a new file or a new folder goes into: the selected folder, or the folder of the selected file. */
+const targetFolder = computed(() => {
+  const selected = filesPanelSelection.path;
+  if (selected === null) {
+    return "";
+  }
+  if (filesPanelSelection.isFolder) {
+    return selected;
+  }
+  return selected.includes("/") ? selected.slice(0, selected.lastIndexOf("/")) : "";
+});
 
 /** The name that the developer is typing for a new file or a new folder, or null when no name is being typed. */
 const naming = ref<{ kind: "file" | "dir"; value: string } | null>(null);
@@ -127,33 +130,20 @@ async function submitNaming() {
   }
   if (current.kind === "dir") {
     folders.add(path);
-    targetFolder.value = path;
+    filesPanelSelection.path = path;
+    filesPanelSelection.isFolder = true;
   }
   files.expanded = folders;
   await loadFiles(files.root);
   if (current.kind === "file") {
+    filesPanelSelection.path = path;
+    filesPanelSelection.isFolder = false;
     openGitModal(path);
   }
 }
 
 function collapseAll() {
   files.expanded = new Set();
-  targetFolder.value = "";
-}
-
-function expandAll() {
-  if (files.list.length > EXPAND_ALL_LIMIT) {
-    toast(t("filesPanel.tooManyFiles", { count: EXPAND_ALL_LIMIT }));
-    return;
-  }
-  const folders = new Set<string>();
-  for (const path of files.list) {
-    const parts = path.split("/");
-    for (let index = 1; index < parts.length; index++) {
-      folders.add(parts.slice(0, index).join("/"));
-    }
-  }
-  files.expanded = folders;
 }
 
 function refresh() {
@@ -177,12 +167,12 @@ function toggleFolder(row: TreeRow) {
 }
 
 function chooseRow(row: TreeRow) {
+  filesPanelSelection.path = row.path;
+  filesPanelSelection.isFolder = row.dir;
   if (row.dir) {
-    targetFolder.value = row.path;
     toggleFolder(row);
     return;
   }
-  targetFolder.value = row.path.includes("/") ? row.path.slice(0, row.path.lastIndexOf("/")) : "";
   openGitModal(row.path);
 }
 
@@ -254,20 +244,11 @@ function letterClass(letter: string): string {
         <button
           type="button"
           class="btn btn-sm icon-button"
-          :aria-label="t('filesPanel.expandAll')"
-          :title="t('filesPanel.expandAll')"
-          @click="expandAll()"
-        >
-          <Icon name="arrows-expand" />
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm icon-button"
           :aria-label="t('filesPanel.collapseAll')"
           :title="t('filesPanel.collapseAll')"
           @click="collapseAll()"
         >
-          <Icon name="arrows-collapse" />
+          <Icon name="dash-square" />
         </button>
         <SourceControlMenu
           button-class="btn btn-sm icon-button"
@@ -295,7 +276,7 @@ function letterClass(letter: string): string {
           <button
             type="button"
             class="row btn d-flex align-items-center w-100 text-start"
-            :class="{ opened: row.path === openedPath, ignored: row.ignored }"
+            :class="{ selected: row.path === filesPanelSelection.path, ignored: row.ignored }"
             :title="row.path"
             :aria-expanded="row.dir && row.ignored === false ? files.expanded.has(row.path) : undefined"
             @click="chooseRow(row)"
@@ -330,7 +311,8 @@ function letterClass(letter: string): string {
 .rows { list-style: none; margin: 0; padding: 0; }
 .row { height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
 .row:hover { background: var(--hover-soft); }
-.row.opened { background: var(--hover); }
+/* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
+.row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }
 .row.ignored { color: var(--muted); }
 /* One guide for each level: its line sits under the arrow of the folder of that level. */
 .guide { position: relative; flex: 0 0 var(--indent-width); align-self: stretch; }
