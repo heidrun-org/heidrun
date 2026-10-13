@@ -29,6 +29,7 @@
   "openFile": "Open a project file…",
   "section.help": "Help",
   "shortcuts": "Keyboard and mouse shortcuts",
+  "threeJsDemo": "Three.js demo (WebGL)…",
   "section.display": "Display",
   "mobile": "Mobile access (iPhone, iPad)…",
   "installedSkill": "Installed skill (inspect, delete)…",

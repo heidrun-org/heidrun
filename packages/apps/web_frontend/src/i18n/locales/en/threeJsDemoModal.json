@@ -1,0 +1,7 @@
+{
+  "title": "Three.js demo",
+  "close": "Close (Escape)",
+  "canvasLabel": "A 3D shape that turns, drawn with WebGL",
+  "version": "Drawn with {version}",
+  "notAvailable": "WebGL is not available in this window: {error}"
+}

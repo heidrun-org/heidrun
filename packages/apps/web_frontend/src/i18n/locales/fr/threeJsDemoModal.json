@@ -1,0 +1,7 @@
+{
+  "title": "Démo Three.js",
+  "close": "Fermer (Échap)",
+  "canvasLabel": "Une forme 3D qui tourne, dessinée avec WebGL",
+  "version": "Dessiné avec {version}",
+  "notAvailable": "WebGL n'est pas disponible dans cette fenêtre : {error}"
+}
