@@ -1,3 +1,4 @@
+import Fs from 'node:fs';
 import Path from 'node:path';
 import * as Sass from 'sass';
 import { describe, expect, it } from 'vitest';
@@ -189,5 +190,22 @@ describe('bootstrap_parts.scss', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).not.toContain('transition: color 0.15s');
 		expect(cssText).not.toContain('transition-property: var(--btn-transition-property)');
+	});
+
+	it('does not clash with the class names of the components of the application: those components use no Bootstrap class name for their own box', () => {
+		const componentFolder = Path.resolve(__dirname, 'components');
+		for (const [fileName, className] of [
+			['MoreMenu.vue', 'menu'],
+			['ThemeMenu.vue', 'menu'],
+			['SettingsAgentsSection.vue', 'switch'],
+			['SettingsMobileAccessSection.vue', 'switch'],
+		]) {
+			const filePath = fileName.startsWith('Settings') ? Path.join(componentFolder, 'settings', fileName) : Path.join(componentFolder, fileName);
+			const sourceText = Fs.readFileSync(filePath, 'utf8');
+			expect({ fileName, isClassUsed: new RegExp(`class="${className}[" ]`).test(sourceText) }).toEqual({
+				fileName,
+				isClassUsed: false,
+			});
+		}
 	});
 });

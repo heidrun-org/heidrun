@@ -48,7 +48,7 @@ describe("SettingsAgentsSection", () => {
     expect(settings.ownedAgents).toEqual(["claude"]);
     await row.trigger("click");
     expect(settings.ownedAgents).toEqual([]);
-    await row.get(".switch").trigger("click");
+    await row.get(".toggle-switch").trigger("click");
     expect(settings.ownedAgents).toEqual(["claude"]);
     await row.get(".knob").trigger("click");
     expect(settings.ownedAgents).toEqual([]);
@@ -79,7 +79,7 @@ describe("SettingsAgentsSection", () => {
     const { wrapper } = await mountSection();
     const first = wrapper.get("[role=switch]");
     expect(first.attributes("aria-labelledby")).toBe("agent-claude");
-    expect(wrapper.get(".switch").attributes("aria-hidden")).toBe("true");
+    expect(wrapper.get(".toggle-switch").attributes("aria-hidden")).toBe("true");
     expect(wrapper.get("#agent-claude").text()).toBe("Claude Code");
     expect(wrapper.get(".row").text()).toBe("Claude Code");
   });
