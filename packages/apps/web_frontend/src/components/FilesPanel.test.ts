@@ -129,6 +129,16 @@ describe("FilesPanel", () => {
     expect(wrapper.findAll(".row.selected")).toHaveLength(1);
   });
 
+  it("selects nothing after a click on the empty space of the section, and then a new file goes to the root", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    expect(wrapper.findAll(".row.selected")).toHaveLength(1);
+    await wrapper.get(".files-panel").trigger("click");
+    expect(wrapper.findAll(".row.selected")).toHaveLength(0);
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    expect((wrapper.get(".naming input").element as HTMLInputElement).value).toBe("");
+  });
+
   it("keeps the selected row when the sidebar section is shown again", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[1].trigger("click");

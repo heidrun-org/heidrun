@@ -142,6 +142,12 @@ async function submitNaming() {
   }
 }
 
+/** A click on the empty space of the section selects nothing: a new file or a new folder then goes to the root. */
+function clearSelection() {
+  filesPanelSelection.path = null;
+  filesPanelSelection.isFolder = false;
+}
+
 function collapseAll() {
   files.expanded = new Set();
 }
@@ -208,7 +214,7 @@ function letterClass(letter: string): string {
 </script>
 
 <template>
-  <div class="files-panel">
+  <div class="files-panel" @click.self="clearSelection">
     <div v-if="state.selectedWorkspaceId === null" class="muted">{{ t("filesPanel.selectWorkspace") }}</div>
     <template v-else-if="currentGit">
       <header class="panel-header d-flex align-items-center">
@@ -271,7 +277,7 @@ function letterClass(letter: string): string {
         <span class="muted">{{ t("filesPanel.namingHint") }}</span>
       </form>
       <div v-if="files.error !== ''" class="error">{{ files.error }}</div>
-      <ul v-else class="rows" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
+      <ul v-else class="rows" @click.self="clearSelection" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
         <li v-for="row in rows" :key="row.path + (row.dir ? '/' : '')">
           <button
             type="button"
