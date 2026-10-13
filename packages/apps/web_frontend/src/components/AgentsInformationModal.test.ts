@@ -86,4 +86,18 @@ describe("AgentsInformationModal", () => {
     expect(agentsInformationModal.open).toBe(true);
     wrapper.unmount();
   });
+
+  it("shows the Codex account when the quota of Codex is known, even when no pane runs Codex", async () => {
+    const { wrapper } = await mountAgentsInformationModal();
+    expect(wrapper.text()).not.toContain("Codex ·");
+    const { state } = await import("../stores/session");
+    state.codex = {
+      plan: "prolite",
+      primary: { used_percent: 9, window_minutes: 300, resets_at: Math.floor(Date.now() / 1000) + 3600 },
+      secondary: null,
+    } as never;
+    await flushPromises();
+    expect(wrapper.findAll(".block .eyebrow").map((eyebrow) => eyebrow.text())).toContain("Codex · prolite");
+    wrapper.unmount();
+  });
 });

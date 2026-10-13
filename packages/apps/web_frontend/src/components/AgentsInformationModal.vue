@@ -4,7 +4,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef } from "vue"
 import AccountUsage from "./AccountUsage.vue";
 import { closeAgentsInformationModal } from "../stores/agentsInformation";
 import { history, hm, todaySummary } from "../stores/history";
-import { allPanes, clearFinishedRuns, dismissRun, selectPane, selectedPane, state, tabLabel, workspaceLabel } from "../stores/session";
+import { allPanes, clearFinishedRuns, dismissRun, quotas, selectPane, selectedPane, state, tabLabel, workspaceLabel } from "../stores/session";
 import { settings } from "../stores/settings";
 import { agentKind, clockTime, duration, paneName } from "../lib/format";
 import { t } from "../i18n/index";
@@ -65,12 +65,14 @@ function runLabel(a: (typeof state.activity)[number]): string {
   return closed ? t("agentsInformationModal.run.closed") : t("agentsInformationModal.run.done");
 }
 
-// Account quotas are shared by all agents of a provider: shown for every provider in use.
+// Account quotas are shared by all agents of a provider: shown for every provider in use, and for every provider whose quota is known
+// (the status bar shows it), even when no pane runs an agent of that provider now.
 const providers = computed(() => {
   const list: ("claude" | "codex")[] = [];
   const kinds = allPanes.value.map((x) => x.agent ?? "");
-  if (kinds.some((k) => k.includes("claude"))) list.push("claude");
-  if (kinds.some((k) => k.includes("codex"))) list.push("codex");
+  const hasQuota = (provider: "claude" | "codex") => quotas.value.some((block) => block.provider === provider);
+  if (kinds.some((k) => k.includes("claude")) || hasQuota("claude")) list.push("claude");
+  if (kinds.some((k) => k.includes("codex")) || hasQuota("codex")) list.push("codex");
   return list;
 });
 
