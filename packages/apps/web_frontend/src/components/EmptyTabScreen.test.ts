@@ -1,10 +1,17 @@
 import Fs from "node:fs";
 import Path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import EmptyTabScreen from "./EmptyTabScreen.vue";
 
 const originalResizeObserver = globalThis.ResizeObserver;
+const playNextGoatBleat = vi.fn();
+
+vi.mock("../lib/goat_sounds", () => ({ playNextGoatBleat: () => playNextGoatBleat() }));
+
+beforeEach(() => {
+  playNextGoatBleat.mockReset();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -247,6 +254,33 @@ describe("EmptyTabScreen", () => {
     await wrapper.get(".empty-tab-emoji-hit-area").trigger("click");
     await flushPromises();
     expect(wrapper.get(".empty-tab-emoji").element.parentElement).not.toBe(groupOfSecondLaugh);
+    wrapper.unmount();
+  });
+
+  it("plays a goat bleat at each click on the emoji that starts the laugh again", async () => {
+    stubPlaceOfCharacter();
+    const { wrapper, resizeScreen } = mountEmptyTabScreen();
+    await resizeScreen(1000, 600);
+    await flushPromises();
+    for (let clickCount = 1; clickCount <= 3; clickCount += 1) {
+      finishLaughAnimations(wrapper);
+      await flushPromises();
+      await wrapper.get(".empty-tab-emoji-hit-area").trigger("click");
+      await flushPromises();
+      expect(playNextGoatBleat).toHaveBeenCalledTimes(clickCount);
+    }
+    wrapper.unmount();
+  });
+
+  it("plays no goat bleat for the laugh that starts by itself, nor for a click while the laugh is still running", async () => {
+    stubPlaceOfCharacter();
+    const { wrapper, resizeScreen } = mountEmptyTabScreen();
+    await resizeScreen(1000, 600);
+    await flushPromises();
+    expect(playNextGoatBleat).not.toHaveBeenCalled();
+    await wrapper.get(".empty-tab-emoji-hit-area").trigger("click");
+    await flushPromises();
+    expect(playNextGoatBleat).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 

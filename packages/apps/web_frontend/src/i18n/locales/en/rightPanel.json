@@ -1,5 +1,6 @@
 {
   "label": "Right sidebar",
-  "sidebarSection.pane": "Pane",
-  "sidebarSection.notes": "Notes"
+  "sidebarSection.toHandle": "Needs you",
+  "sidebarSection.notes": "Notes",
+  "sidebarSection.chats": "Chats"
 }

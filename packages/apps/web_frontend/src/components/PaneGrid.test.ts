@@ -277,6 +277,23 @@ describe("PaneGrid corners", () => {
   });
 });
 
+describe("PaneGrid panes that touch", () => {
+  const cellStyles = (wrapper: ReturnType<typeof mountPaneGrid>) =>
+    wrapper.findAll(".cell").map((cell) => {
+      const style = (cell.element as HTMLElement).style;
+      return { left: style.left, top: style.top, width: style.width, height: style.height };
+    });
+
+  it("starts a pane that has a neighbour on its left or above it 1 pixel early, so that the borders of two panes make one line", () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    expect(cellStyles(wrapper)).toEqual([
+      { left: "0px", top: "0px", width: "50%", height: "100%" },
+      { left: "calc(50% - 1px)", top: "0px", width: "calc(50% + 1px)", height: "50%" },
+      { left: "calc(50% - 1px)", top: "calc(50% - 1px)", width: "calc(50% + 1px)", height: "calc(50% + 1px)" },
+    ]);
+  });
+});
+
 describe("PaneGrid without pane", () => {
   it("shows the screen with the goat, the name, and the joke, and shows no line", () => {
     mocks.gridLayout.value = null;

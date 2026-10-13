@@ -3,14 +3,16 @@ import { currentGit } from "../stores/git";
 import { ago } from "../lib/format";
 import { computed, ref } from "vue";
 import Icon from "./Icon.vue";
+import GitBranchPicker from "./GitBranchPicker.vue";
+import GitSynchronize from "./GitSynchronize.vue";
 import { t } from "../i18n/index";
 import { useStatusCard } from "../lib/status_card";
 
 // The Git state of the selected workspace in the status bar, in the order of the Visual Studio Code status bar:
-// the Git icon, the branch name, the commits to download, then the commits to upload.
-// A click on it shows a Bootstrap popover with the details.
-// A star after the branch name means the working folder has an uncommitted change: a changed or an untracked file.
-const isDirty = computed(() => currentGit.value !== null && currentGit.value.changed + currentGit.value.untracked > 0);
+// the branch zone (the Git icon and the branch name, see GitBranchPicker.vue), then the synchronize zone
+// (the turning-arrows icon, see GitSynchronize.vue), then the counts zone.
+// The counts zone shows the commits to download, then the commits to upload. A click on it shows a Bootstrap popover
+// with the details of the Git repository.
 
 const root = ref<HTMLElement | null>(null);
 const { isOpen, toggle, onFocusOut } = useStatusCard(root);
@@ -30,31 +32,37 @@ const detailRows = computed(() => {
 </script>
 
 <template>
-  <div
-    v-if="currentGit !== null && currentGit.branch !== null"
-    ref="root"
-    class="git-status"
-    tabindex="0"
-    @click="toggle"
-    @keydown.enter.self.prevent="toggle"
-    @keydown.space.self.prevent="toggle"
-    @focusout="onFocusOut"
-  >
-    <Icon name="git" />
-    <span class="branch">{{ currentGit.branch }}<span v-if="isDirty" class="dirty">*</span></span>
-    <span class="behind"><span class="count">{{ currentGit.behind }}</span><Icon name="arrow-down" /></span>
-    <span class="ahead"><span class="count">{{ currentGit.ahead }}</span><Icon name="arrow-up" /></span>
-    <div v-if="isOpen" class="popover bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
-      <div class="popover-arrow position-absolute ms-3"></div>
-      <div class="popover-body d-flex flex-column gap-2">
-        <div v-for="row in detailRows" :key="row.field" class="d-flex justify-content-between gap-3">
-          <span class="text-body-secondary">{{ row.name }}</span>
-          <span class="text-end text-break" :data-field="row.field">{{ row.value }}</span>
-        </div>
-        <div v-if="currentGit.last_subject !== null" class="d-flex flex-column border-top pt-2">
-          <span class="text-body-secondary">{{ t("statusBar.gitLastCommit") }}</span>
-          <span data-field="last-subject">{{ currentGit.last_subject }}</span>
-          <span v-if="currentGit.last_time !== null" class="text-body-secondary">{{ ago(currentGit.last_time * 1000) }}</span>
+  <div v-if="currentGit !== null && currentGit.branch !== null" class="git-status d-flex align-items-center gap-2">
+    <GitBranchPicker />
+    <GitSynchronize />
+    <div
+      ref="root"
+      class="git-counts-zone status-section d-flex align-items-center gap-2"
+      :class="{ show: isOpen }"
+      role="button"
+      tabindex="0"
+      aria-haspopup="dialog"
+      :aria-expanded="isOpen"
+      :title="t('statusBar.gitCountsTitle')"
+      @click="toggle"
+      @keydown.enter.self.prevent="toggle"
+      @keydown.space.self.prevent="toggle"
+      @focusout="onFocusOut"
+    >
+      <span class="behind"><span class="count">{{ currentGit.behind }}</span><Icon name="arrow-down" /></span>
+      <span class="ahead"><span class="count">{{ currentGit.ahead }}</span><Icon name="arrow-up" /></span>
+      <div v-if="isOpen" class="popover popover-instant show bs-popover-top position-absolute bottom-100" role="tooltip" @click.stop>
+        <div class="popover-arrow position-absolute ms-3"></div>
+        <div class="popover-body d-flex flex-column gap-2">
+          <div v-for="row in detailRows" :key="row.field" class="d-flex justify-content-between gap-3">
+            <span class="text-body-secondary">{{ row.name }}</span>
+            <span class="text-end text-break" :data-field="row.field">{{ row.value }}</span>
+          </div>
+          <div v-if="currentGit.last_subject !== null" class="d-flex flex-column border-top pt-2">
+            <span class="text-body-secondary">{{ t("statusBar.gitLastCommit") }}</span>
+            <span data-field="last-subject">{{ currentGit.last_subject }}</span>
+            <span v-if="currentGit.last_time !== null" class="text-body-secondary">{{ ago(currentGit.last_time * 1000) }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -62,11 +70,11 @@ const detailRows = computed(() => {
 </template>
 
 <style scoped>
-.git-status {
-  align-self: stretch; margin: 0 -11px; padding: 0 11px;
-  display: flex; align-items: center; gap: 8px; color: var(--muted-2); font-weight: 600;
-  cursor: pointer; outline-offset: 3px;
-}
+.git-status { align-self: stretch; color: var(--muted-2); font-weight: 600; }
+/* The three zones are one button group: the zones touch each other, and only the two ends of the group have round corners. The
+   inner sides keep 4 pixels of background, the outer sides keep the 11 pixels of the other status bar sections, so the text of
+   the zones stays in place. The counts zone is the last: its right corners are round, and its left corners are square. */
+.git-counts-zone { margin-left: -4px; padding-left: 4px; border-radius: 0 6px 6px 0; }
 .behind, .ahead { display: flex; align-items: center; gap: 1px; }
 .count { font-variant-numeric: tabular-nums; }
 </style>

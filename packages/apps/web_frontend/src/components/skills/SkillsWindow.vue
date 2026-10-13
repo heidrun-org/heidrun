@@ -36,7 +36,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="emit('close')">
-    <div class="dialog" role="dialog" :aria-labelledby="titleId">
+    <div class="window-box" role="dialog" :aria-labelledby="titleId">
       <header>
         <div class="heading">
           <h2 :id="titleId">{{ title }}</h2>
@@ -59,7 +59,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.dialog {
+.window-box {
   width: min(640px, 100%); height: min(560px, calc(100vh - 48px)); display: flex; flex-direction: column; overflow: hidden; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

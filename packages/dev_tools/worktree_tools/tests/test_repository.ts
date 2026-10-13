@@ -17,9 +17,24 @@ export class TestRepository {
 	/** The folders that the class created and did not remove yet. */
 	private static _createdPaths: string[] = [];
 
+	/** The text of a `pnpm-lock.yaml` for a project without dependencies. */
+	private static readonly _emptyLockfileText = [
+		'lockfileVersion: \'9.0\'',
+		'',
+		'settings:',
+		'  autoInstallPeers: true',
+		'  excludeLinksFromLockfile: false',
+		'',
+		'importers:',
+		'',
+		'  .: {}',
+		'',
+	].join('\n');
+
 	/**
-	 * Creates a Git repository with one commit. The path is the real path, without a symbolic link, because Git
-	 * prints real paths.
+	 * Creates a Git repository with one commit. The commit holds a `package.json` without dependencies and its
+	 * `pnpm-lock.yaml`, so `pnpm install --frozen-lockfile` works in a worktree without a network. The path is the real
+	 * path, without a symbolic link, because Git prints real paths.
 	 * @returns The absolute path of the new main checkout.
 	 */
 	static create(): string {
@@ -30,7 +45,23 @@ export class TestRepository {
 		TestRepository.git(repositoryPath, ['config', 'user.name', 'Test Author']);
 		TestRepository.git(repositoryPath, ['config', 'user.email', 'test@example.com']);
 		TestRepository.git(repositoryPath, ['config', 'commit.gpgsign', 'false']);
-		TestRepository.git(repositoryPath, ['commit', '--quiet', '--allow-empty', '-m', 'Initial commit']);
+		Fs.writeFileSync(Path.join(repositoryPath, 'package.json'), TestRepository._packageJsonText({}));
+		Fs.writeFileSync(Path.join(repositoryPath, 'pnpm-lock.yaml'), TestRepository._emptyLockfileText);
+		TestRepository.git(repositoryPath, ['add', 'package.json', 'pnpm-lock.yaml']);
+		TestRepository.git(repositoryPath, ['commit', '--quiet', '-m', 'Initial commit']);
+		return repositoryPath;
+	}
+
+	/**
+	 * Creates a repository whose `package.json` has a dependency that its `pnpm-lock.yaml` does not list. In this
+	 * repository, `pnpm install --frozen-lockfile` fails, and it fails before any network access.
+	 * @returns The absolute path of the new main checkout.
+	 */
+	static createWithOutdatedLockfile(): string {
+		const repositoryPath = TestRepository.create();
+		const packageJsonText = TestRepository._packageJsonText({ 'left-pad': '1.3.0' });
+		Fs.writeFileSync(Path.join(repositoryPath, 'package.json'), packageJsonText);
+		TestRepository.git(repositoryPath, ['commit', '--quiet', '-a', '-m', 'Add a dependency without the lockfile']);
 		return repositoryPath;
 	}
 
@@ -145,5 +176,20 @@ export class TestRepository {
 		for (const repositoryPath of TestRepository._createdPaths.splice(0)) {
 			Fs.rmSync(repositoryPath, { recursive: true, force: true });
 		}
+	}
+
+	/**
+	 * Builds the text of a `package.json` of a project that is not published.
+	 * @param dependencies The dependencies of the project, with the name of each package and its exact version.
+	 * @returns The text of the file.
+	 */
+	private static _packageJsonText(dependencies: Record<string, string>): string {
+		const packageJson = {
+			name: 'test_repository',
+			private: true,
+			version: '1.0.0',
+			dependencies,
+		};
+		return `${JSON.stringify(packageJson, null, '\t')}\n`;
 	}
 }

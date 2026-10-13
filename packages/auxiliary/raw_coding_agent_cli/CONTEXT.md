@@ -18,7 +18,9 @@ A library and a command line tool that send one prompt to a coding agent command
 - The command line prints the answer on the standard output, prints an error message on the standard error output, and exits with code 1 when an error happens.
 - The library keeps no conversation: one call is one prompt and one answer.
 - Nothing in this folder imports from another package of the workspace.
+- The application cannot run this library, because the web frontend has no Node.js. The file `packages/apps/desktop_tauri/src/topic_clusters.rs` runs the two commands with the same arguments and the same rules. A change of the arguments here needs the same change there.
 
 ## Background
 - The package was created by [issue #113](https://github.com/heidrun-org/heidrun/issues/113). The first user of the library is the script of [issue #114](https://github.com/heidrun-org/heidrun/issues/114).
 - `codex exec` refuses to run outside a trusted Git repository without `--skip-git-repo-check`, so the package always passes the flag.
+- [Issue #265](https://github.com/heidrun-org/heidrun/issues/265) is the first use of the two commands inside the application, for the clustered dynamic topics.

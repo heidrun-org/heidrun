@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
+import Fs from "node:fs";
+import Path from "node:path";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
@@ -21,7 +23,7 @@ async function mountStatusBar() {
   claudeLink.loaded = true;
   claudeLink.installed = true;
   const wrapper = mount(StatusBar, {
-    global: { stubs: { GitStatusSummary: true, AgentStatusSummary: true } },
+    global: { stubs: { GitStatusSummary: true, WorkspaceStatusSummary: true } },
   });
   return { wrapper, settings, claudeLink };
 }
@@ -32,6 +34,38 @@ beforeEach(() => {
 });
 
 describe("StatusBar", () => {
+  it("starts with the workspace status bar section, before the quotas, and separates it from the next section", async () => {
+    const { wrapper, settings } = await mountStatusBar();
+    settings.ownedAgents = ["codex"];
+    await nextTick();
+    const children = Array.from(wrapper.get("footer").element.children);
+    expect(children[0].tagName.toLowerCase()).toBe("workspace-status-summary-stub");
+    expect(children[1].classList.contains("sep")).toBe(true);
+    expect(children[2].classList.contains("quota")).toBe(true);
+  });
+
+  it("gives the line after the workspace status bar section 6 more pixels on each side than the other lines", async () => {
+    const { wrapper } = await mountStatusBar();
+    expect(wrapper.get(".sep").classes()).toContain("workspace-sep");
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "StatusBar.vue"), "utf8");
+    expect(sourceText).toContain(".workspace-sep { margin: 0 6px; }");
+  });
+
+  it("gives every status bar section a rounded background like a button, while the pointer is over it and while its card is open", () => {
+    const stylesText = Fs.readFileSync(Path.resolve(import.meta.dirname, "..", "styles.css"), "utf8");
+    expect(stylesText).toMatch(/\.status-section \{[^}]*margin: 6px -11px;[^}]*border-radius: 6px;/);
+    expect(stylesText).toContain(".status-section:hover, .status-section.show { background: rgba(var(--wash), 0.12); }");
+  });
+
+  it("has no section with the number of agents that are blocked, working, or done: the connection to Herdr follows the free space", async () => {
+    const { wrapper } = await mountStatusBar();
+    const children = Array.from(wrapper.get("footer").element.children);
+    const machineIndex = children.findIndex((child) => child.classList.contains("machine"));
+    expect(children[machineIndex - 1].classList.contains("grow")).toBe(true);
+    expect(wrapper.find(".agent-status").exists()).toBe(false);
+    expect(wrapper.text()).not.toMatch(/\d+ (blocked|working|done)/);
+  });
+
   it("shows no quota when no coding agent is switched on", async () => {
     const { wrapper } = await mountStatusBar();
     expect(wrapper.findAll(".quota")).toHaveLength(0);

@@ -2,8 +2,11 @@
 import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getVersion } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import aboutImage from "../assets/heidrun_splash_screen.jpg";
 import { t } from "../i18n/index";
+import { GOAT_SOUND_AUTHOR, GOAT_SOUND_SOURCE_URL, playNextGoatBleat } from "../lib/goat_sounds";
+import Icon from "./Icon.vue";
 
 const isOpen = ref(false);
 const version = ref("");
@@ -21,6 +24,10 @@ function close() {
   isOpen.value = false;
 }
 
+function openSoundSource() {
+  openUrl(GOAT_SOUND_SOURCE_URL).catch(() => {});
+}
+
 onMounted(async () => {
   unlisten = await listen("show-about", open).catch(() => null);
 });
@@ -29,16 +36,25 @@ onUnmounted(() => unlisten?.());
 
 <template>
   <div v-if="isOpen" class="overlay" @mousedown.self="close" @keydown.esc.stop.prevent="close">
-    <div class="dialog" role="dialog" aria-labelledby="about-title">
+    <div class="window-box" role="dialog" aria-labelledby="about-title">
       <figure class="figure">
         <img class="image" :src="aboutImage" alt="" />
-        <figcaption class="legend">{{ t("aboutModal.legend") }}</figcaption>
+        <figcaption class="legend">{{ t("identity.motto") }}</figcaption>
       </figure>
       <div class="info">
-        <h2 id="about-title">{{ t("aboutModal.title") }}</h2>
+        <h2 id="about-title">{{ t("identity.title") }}</h2>
         <p class="version">{{ t("aboutModal.version", { version }) }}</p>
-        <p class="description">{{ t("aboutModal.description") }}</p>
-        <button ref="closeButton" class="btn lg" @click="close">{{ t("aboutModal.close") }}</button>
+        <p class="description">{{ t("identity.description") }}</p>
+        <p class="sound-credit">
+          {{ t("aboutModal.soundCredit", { author: GOAT_SOUND_AUTHOR }) }}
+          <a :href="GOAT_SOUND_SOURCE_URL" @click.prevent="openSoundSource">{{ t("aboutModal.soundSource") }}</a>
+        </p>
+        <div class="actions">
+          <button class="btn lg play-goat-sound" @click="playNextGoatBleat">
+            <Icon name="volume-up" /> {{ t("aboutModal.playGoatSound") }}
+          </button>
+          <button ref="closeButton" class="btn lg" @click="close">{{ t("aboutModal.close") }}</button>
+        </div>
       </div>
     </div>
   </div>
@@ -49,7 +65,7 @@ onUnmounted(() => unlisten?.());
   position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.55);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.dialog {
+.window-box {
   width: min(460px, 100%); border-radius: 14px; background: var(--panel); overflow: hidden;
   border: 1px solid var(--border, #2a2c31); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
@@ -65,4 +81,6 @@ onUnmounted(() => unlisten?.());
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .version { margin: 0; font-size: var(--font-size); opacity: 0.7; }
 .description { margin: 4px 0 10px; font-size: var(--font-size); text-align: center; opacity: 0.85; }
+.sound-credit { margin: 0 0 10px; font-size: var(--font-size); text-align: center; opacity: 0.6; }
+.actions { display: flex; gap: 8px; }
 </style>

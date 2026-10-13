@@ -36,6 +36,7 @@
   "truncated_other": "Display limited to the first {count} lines.",
   "noTextDiff": "No text difference (binary file, rename or permissions).",
   "untracked": "New file, not tracked yet",
+  "unchanged": "No change since the last commit (HEAD)",
   "comparedToHead": "Compared to the last commit (HEAD)",
   "lastCommit": "last commit {time}",
   "footerKeys": "↑ / ↓ next file · ⌘+ / ⌘− code size · Escape to close"

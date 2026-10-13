@@ -57,7 +57,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
     >
       <Icon name="three-dots-vertical" />
     </button>
-    <div v-if="open" class="menu" role="menu" :aria-label="t('moreMenu.menuLabel')">
+    <div v-if="open" class="popup-menu" role="menu" :aria-label="t('moreMenu.menuLabel')">
       <button class="item" role="menuitem" :title="t('moreMenu.shortcutsHelpTitle')" @click="chooseShortcutsHelp()">
         <Icon name="question-lg" />
         <span class="label">{{ t("moreMenu.shortcutsHelpLabel") }}</span>
@@ -96,7 +96,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
 .icon-btn.on { color: var(--text-2); background: var(--field); }
-.menu {
+.popup-menu {
   position: absolute; right: 0; top: 38px; min-width: 240px; z-index: 30; padding: 6px; border-radius: 12px;
   border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
   display: flex; flex-direction: column; gap: 2px;

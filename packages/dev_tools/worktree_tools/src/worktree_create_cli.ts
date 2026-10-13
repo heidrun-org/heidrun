@@ -1,5 +1,5 @@
 #!/usr/bin/env tsx
-// Creates a Git worktree and clones the compiled Rust files of the main checkout into it.
+// Creates a Git worktree, clones the compiled Rust files of the main checkout into it, and installs its packages.
 // pnpm worktree:create <name>
 import { Command } from 'commander';
 import { WorktreeCreate } from './worktree_create.ts';
@@ -29,7 +29,9 @@ export class WorktreeCreateCli {
 					+ 'same name. On macOS, it then clones the folder packages/apps/desktop_tauri/target/debug of the '
 					+ 'main checkout into the worktree, with a copy-on-write clone. The first build in the worktree '
 					+ 'is then much faster and uses much less disk space. Build the main checkout before you create '
-					+ 'a worktree.',
+					+ 'a worktree. At the end, it runs pnpm install --frozen-lockfile in the worktree, so the '
+					+ 'worktree has a folder node_modules. When the installation fails, it prints the error and '
+					+ 'exits with the code 1.',
 			)
 			.argument('<name>', 'The name of the new branch, and the name of the folder of the worktree.')
 			.option(
@@ -62,6 +64,7 @@ Examples:
 			} else {
 				process.stdout.write(`The folder target/debug was not cloned. ${result.skipReason}\n`);
 			}
+			process.stdout.write('Installed the packages in the worktree with pnpm install --frozen-lockfile.\n');
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 			process.stderr.write(`Error: ${message}\n`);

@@ -21,14 +21,36 @@ const emit = defineEmits<{
 
 // Herdr gives pane rectangles in terminal cells: convert them to percentages
 // so the grid matches the tab's real split layout at any window size.
+// A pane that has a neighbour on its left, or above it, starts 1 pixel early, so that its border covers the border of the
+// neighbour: two panes that touch have one line between them, and no gap. The right edge and the bottom edge of a pane stay
+// exactly at the edge of its share.
+const BORDER = "1px";
+
+/**
+ * Gives the start and the size of a pane along one axis.
+ *
+ * @param start The share of the start of the pane, in percent.
+ * @param size The share of the size of the pane, in percent.
+ * @returns The start and the size, as CSS values. A pane that does not start at the edge goes 1 pixel over its neighbour.
+ */
+function overlapNeighbour(start: number, size: number) {
+  if (start <= 0) {
+    return { start: "0", size: `${size}%` };
+  }
+  return { start: `calc(${start}% - ${BORDER})`, size: `calc(${size}% + ${BORDER})` };
+}
+
 const placed = computed(() => {
   const layout = gridLayout.value;
   const panes = gridPanes.value;
   if (!layout || !layout.area.width || !layout.area.height) {
-    return panes.map((p, i) => ({
-      pane: p,
-      style: { left: `${(i / panes.length) * 100}%`, top: "0", width: `${100 / panes.length}%`, height: "100%" },
-    }));
+    return panes.map((p, i) => {
+      const horizontal = overlapNeighbour((i / panes.length) * 100, 100 / panes.length);
+      return {
+        pane: p,
+        style: { left: horizontal.start, top: "0", width: horizontal.size, height: "100%" },
+      };
+    });
   }
   const { area } = layout;
   const rects = new Map(layout.panes.map((lp) => [lp.pane_id, lp.rect]));
@@ -36,14 +58,11 @@ const placed = computed(() => {
     .filter((p) => rects.has(p.pane_id))
     .map((p) => {
       const r = rects.get(p.pane_id)!;
+      const horizontal = overlapNeighbour(((r.x - area.x) / area.width) * 100, (r.width / area.width) * 100);
+      const vertical = overlapNeighbour(((r.y - area.y) / area.height) * 100, (r.height / area.height) * 100);
       return {
         pane: p,
-        style: {
-          left: `${((r.x - area.x) / area.width) * 100}%`,
-          top: `${((r.y - area.y) / area.height) * 100}%`,
-          width: `${(r.width / area.width) * 100}%`,
-          height: `${(r.height / area.height) * 100}%`,
-        },
+        style: { left: horizontal.start, top: vertical.start, width: horizontal.size, height: vertical.size },
       };
     });
 });
@@ -68,17 +87,17 @@ const separatorItems = computed(() => {
   const percentX = (cells: number) => ((cells - area.x) / area.width) * 100;
   const percentY = (cells: number) => ((cells - area.y) / area.height) * 100;
   return separators.value.map((separator) => {
-    // The line is as thick as the space between two panes. At each end it reaches the middle of the space where it
-    // meets another line, so that the round ends of two lines drawn together join without a notch.
+    // The place to grab the line is as thick as the space that Visual Studio Code gives its sash. At each end it reaches
+    // the middle of the place where it meets another line.
     const style =
       separator.direction === "down"
         ? {
-            top: `calc(${percentY(separator.position)}% - ${GAP} / 2)`,
+            top: `calc(${percentY(separator.position)}% - ${GAP} / 2 - ${BORDER} / 2)`,
             left: `${percentX(separator.start)}%`,
             width: `${percentX(separator.end) - percentX(separator.start)}%`,
           }
         : {
-            left: `calc(${percentX(separator.position)}% - ${GAP} / 2)`,
+            left: `calc(${percentX(separator.position)}% - ${GAP} / 2 - ${BORDER} / 2)`,
             top: `${percentY(separator.start)}%`,
             height: `${percentY(separator.end) - percentY(separator.start)}%`,
           };
@@ -280,18 +299,17 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 <style scoped>
 .grid {
   --corner-size: max(16px, calc(var(--pane-gap) * 2));
-  flex: 1; min-height: 0; position: relative; margin: calc(var(--pane-gap) / -2);
+  flex: 1; min-height: 0; position: relative;
 }
-.cell { position: absolute; padding: calc(var(--pane-gap) / 2); }
+.cell { position: absolute; }
 .empty {
-  position: absolute; inset: calc(var(--pane-gap) / 2); display: flex; align-items: center; justify-content: center;
-  color: var(--muted); background: var(--bg); border: 1px solid var(--line); border-radius: var(--pane-radius);
-  overflow: hidden;
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: var(--muted); background: var(--bg); border: 1px solid var(--line); overflow: hidden;
 }
-/* Like the sash of Visual Studio Code: the colour fills the whole space between two panes. */
+/* Like the sash of Visual Studio Code: the line between two panes is the border of the panes. This element, as wide as the space
+   that the sash of Visual Studio Code has, is the place where the pointer grabs the line, and it shows a colour under the pointer. */
 .separator {
   position: absolute; z-index: 5; touch-action: none; background: transparent; transition: background 0.15s;
-  border-radius: calc(var(--pane-gap) / 2);
 }
 .separator.down { height: var(--pane-gap); cursor: row-resize; }
 .separator.right { width: var(--pane-gap); cursor: col-resize; }

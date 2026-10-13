@@ -1,5 +1,10 @@
 # The product
 
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained description of the product
+- Related framing: [Project instructions](../../AGENTS.md)
+
 Heidrun is an integrated development environment for the age of artificial intelligence. It works with many coding agents at the same time, and it is built on top of [Herdr](https://herdr.dev).
 
 ## What Heidrun is not

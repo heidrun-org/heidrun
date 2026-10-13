@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, toRef } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { allRuns, byFeature, byHour, daysAgo, history, hm, kpis, loadHistory, monthSpend, rework, startOfDay, tick, toCsv, type HistoryRun } from "../stores/history";
@@ -11,15 +11,14 @@ import { fold } from "../stores/search";
 import SpendTable from "./SpendTable.vue";
 import { t } from "../i18n/index";
 
-type Period = "today" | "7" | "30" | "90" | "365";
-const PERIODS: [Period, string][] = [
+const PERIODS: [(typeof settings)["historyPeriod"], string][] = [
   ["today", "historyModal.periodToday"],
   ["7", "historyModal.period7"],
   ["30", "historyModal.period30"],
   ["90", "historyModal.period90"],
   ["365", "historyModal.period365"],
 ];
-const period = ref<Period>("today");
+const period = toRef(settings, "historyPeriod");
 const ws = ref("");
 const kind = ref("");
 const q = ref("");
@@ -89,10 +88,10 @@ const costBy = computed(() => {
     allRuns.value.filter((r) => r.end >= since && (!ws.value || r.ws === ws.value) && matches(r)).reduce((s, r) => s + (r.cost ?? 0), 0);
   return { day: sum(startOfDay()), week: sum(daysAgo(6)), month: sum(daysAgo(29)) };
 });
-const showCalib = ref(false);
+const showCalib = toRef(settings, "historyShowAssumptions");
 
 // Left column: by workspace, or by feature (branch, with its issue / MR).
-const groupBy = ref<"ws" | "feature">("ws");
+const groupBy = toRef(settings, "historyGroupBy");
 const features = computed(() => byFeature(inPeriod.value.filter((r) => (!ws.value || r.ws === ws.value) && matches(r))));
 const featMax = computed(() => Math.max(1, ...features.value.map((f) => f.ms)));
 function pickFeature(branch: string) {
@@ -170,7 +169,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div ref="el" class="dialog" role="dialog" :aria-label="t('historyModal.title')" tabindex="-1">
+    <div ref="el" class="window-box" role="dialog" :aria-label="t('historyModal.title')" tabindex="-1">
       <header>
         <h2>{{ t("historyModal.title") }}</h2>
         <div class="seg" role="radiogroup" :aria-label="t('historyModal.periodLabel')">
@@ -333,7 +332,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.55); display: flex; padding: 28px; }
-.dialog {
+.window-box {
   flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

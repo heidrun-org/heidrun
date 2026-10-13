@@ -5,9 +5,11 @@
   "closeLabel": "Close (Escape)",
   "general": "General",
   "terminal": "Terminal",
+  "newTab": "New tab",
   "mouse": "Mouse",
   "finishedItems": "Finished items",
   "notifications": "Notifications",
   "mobileAccess": "Mobile access",
-  "agents": "Agents"
+  "agents": "Agents",
+  "dynamicTopics": "Dynamic topics"
 }

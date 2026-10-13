@@ -36,8 +36,29 @@ describe('website build', () => {
 		expect(html).toMatch(/<title>Heidrun/);
 	});
 
+	it('puts the title, the motto, and the description of data/identity.json in the home page', () => {
+		const identity = JSON.parse(Fs.readFileSync(Path.join(SiteFiles.repositoryDir, 'data/identity.json'), 'utf8'));
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		expect(html).toContain(identity.motto.en);
+		expect(html).toContain(identity.description.en);
+	});
+
 	it('copies the splash image', () => {
 		expect(Fs.existsSync(Path.join(outDir, 'heidrun_splash_screen.png'))).toBe(true);
+	});
+
+	it('copies the favicon', () => {
+		expect(Fs.existsSync(Path.join(outDir, 'favicon.svg'))).toBe(true);
+	});
+
+	it('links the favicon in every page', () => {
+		const pages = Fs.readdirSync(outDir, { recursive: true, encoding: 'utf8' })
+			.filter((file) => file.endsWith('.html') === true);
+		expect(pages.length).toBeGreaterThanOrEqual(5);
+		for (const page of pages) {
+			const html = Fs.readFileSync(Path.join(outDir, page), 'utf8');
+			expect(html, page).toContain('<link rel="icon" type="image/svg+xml" href="/heidrun/favicon.svg">');
+		}
 	});
 
 	it('renders the shortcuts table', () => {

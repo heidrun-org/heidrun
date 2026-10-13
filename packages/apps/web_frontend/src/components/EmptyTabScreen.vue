@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import babyGoatImage from "../assets/baby_goat.webp";
 import { t } from "../i18n/index";
+import { playNextGoatBleat } from "../lib/goat_sounds";
 
 const FIRST_LINE_PATH_ID = "empty-tab-first-line-path";
 const SECOND_LINE_PATH_ID = "empty-tab-second-line-path";
@@ -206,6 +207,7 @@ function replayLaugh() {
   isReplaying.value = true;
   laugh.value = buildLaugh();
   replayCount.value += 1;
+  playNextGoatBleat();
 }
 
 onMounted(() => {

@@ -4,21 +4,83 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.5] - 2026-10-13
 
 ### Added
 
-- Add a command-line tool and library for coding agents. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
-- Add a script to generate the change log from merged pull requests, with options to choose the range. ([#117](https://github.com/heidrun-org/heidrun/pull/117), [#119](https://github.com/heidrun-org/heidrun/pull/119))
-- Add a script to create a disk image for releases. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
+- Add a Files section to the sidebar. ([#351](https://github.com/heidrun-org/heidrun/pull/351))
+- Add a setting to choose the default command for new tabs. ([#330](https://github.com/heidrun-org/heidrun/pull/330))
+- Add a setting to ask before closing tabs, workspaces, or the application. ([#310](https://github.com/heidrun-org/heidrun/pull/310), [#334](https://github.com/heidrun-org/heidrun/pull/334))
+- Add icons to sidebar sections and let each sidebar collapse to an icon bar. ([#308](https://github.com/heidrun-org/heidrun/pull/308))
+- Add a Source control section to the sidebar. ([#307](https://github.com/heidrun-org/heidrun/pull/307))
+- Add dynamic topics to the Chats section, with a language model extraction method. ([#268](https://github.com/heidrun-org/heidrun/pull/268), [#273](https://github.com/heidrun-org/heidrun/pull/273))
+- Add a sort menu to the Chats section. ([#263](https://github.com/heidrun-org/heidrun/pull/263))
+- Add goat sounds to the About window, splash screen, and empty tab screen. ([#258](https://github.com/heidrun-org/heidrun/pull/258))
+- Add the Chats section to the sidebar. ([#259](https://github.com/heidrun-org/heidrun/pull/259))
+- Add a command line option to start without the splash screen. ([#255](https://github.com/heidrun-org/heidrun/pull/255))
+- Add a workspace selector to the status bar. ([#244](https://github.com/heidrun-org/heidrun/pull/244))
+- Add a tab bar and a workspace button. ([#213](https://github.com/heidrun-org/heidrun/pull/213), [#212](https://github.com/heidrun-org/heidrun/pull/212))
+- Add a setting to show or hide the status item in the macOS menu bar. ([#170](https://github.com/heidrun-org/heidrun/pull/170))
+- Add a macOS menu bar item showing agent states and Claude quota. ([#164](https://github.com/heidrun-org/heidrun/pull/164))
+- Add a custom script creation window. ([#151](https://github.com/heidrun-org/heidrun/pull/151))
+- Add an Agents information window. ([#148](https://github.com/heidrun-org/heidrun/pull/148))
+- Add a top bar menu for settings and skills. ([#144](https://github.com/heidrun-org/heidrun/pull/144))
+- Add an Agents section to Settings. ([#123](https://github.com/heidrun-org/heidrun/pull/123))
+- Add a tool for coding agents that can be used as a library or from the command line. ([#116](https://github.com/heidrun-org/heidrun/pull/116))
+- Add support for pasting an image by dropping it onto a terminal. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
+- Add a command to create a disk image for release. ([#110](https://github.com/heidrun-org/heidrun/pull/110))
 
 ### Changed
 
-- Make font size zoom apply to the whole window. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
+- Remember the selected workspace and restore it when Heidrun starts. ([#356](https://github.com/heidrun-org/heidrun/pull/356))
+- Synchronize with the upstream branch from the status bar and switch Git branches there. ([#354](https://github.com/heidrun-org/heidrun/pull/354), [#352](https://github.com/heidrun-org/heidrun/pull/352))
+- Make the selected pane easier to see. ([#347](https://github.com/heidrun-org/heidrun/pull/347))
+- Make Command+T start the default command in a new tab. ([#346](https://github.com/heidrun-org/heidrun/pull/346))
+- Use the theme colors for notifications in light mode. ([#344](https://github.com/heidrun-org/heidrun/pull/344))
+- Change the Working status color from blue to violet. ([#339](https://github.com/heidrun-org/heidrun/pull/339))
+- Update the public website shortcuts page. ([#358](https://github.com/heidrun-org/heidrun/pull/358))
+- Make panes meet the viewport border and each other, with thin lines and square corners. ([#329](https://github.com/heidrun-org/heidrun/pull/329))
+- Give each status bar section a rounded background when the pointer is over it. ([#327](https://github.com/heidrun-org/heidrun/pull/327))
+- Use the colors of Visual Studio Code Dark Modern and Light Modern. ([#321](https://github.com/heidrun-org/heidrun/pull/321))
+- Make the Workspace information card wider and scroll long folder paths. ([#322](https://github.com/heidrun-org/heidrun/pull/322))
+- Add the Heidrun favicon to the public website. ([#319](https://github.com/heidrun-org/heidrun/pull/319))
+- Collapse sidebars instead of hiding them. ([#318](https://github.com/heidrun-org/heidrun/pull/318))
+- Make the status item narrower so macOS does not hide it behind the camera notch. ([#314](https://github.com/heidrun-org/heidrun/pull/314))
+- Make the Claude and Codex usage information cards wider. ([#291](https://github.com/heidrun-org/heidrun/pull/291))
+- Show colored status dots and quota badges in the status item menu. ([#287](https://github.com/heidrun-org/heidrun/pull/287))
+- Show pinned notes in their own workspace and keep pinned panes the same width across tabs. ([#221](https://github.com/heidrun-org/heidrun/pull/221), [#218](https://github.com/heidrun-org/heidrun/pull/218))
+- Center the Shortcuts window. ([#216](https://github.com/heidrun-org/heidrun/pull/216))
+- Make both sidebars hide completely. ([#215](https://github.com/heidrun-org/heidrun/pull/215))
+- Create the workspace button at the left end of the tab bar. ([#213](https://github.com/heidrun-org/heidrun/pull/213))
+- Let users reorder tabs, workspaces, and notes with the mouse while keeping image drops working. ([#249](https://github.com/heidrun-org/heidrun/pull/249))
+- Move the workspace selector into the status bar and show its list in an information card. ([#244](https://github.com/heidrun-org/heidrun/pull/244))
+- Make the workspace button and tabs larger, with icons. ([#241](https://github.com/heidrun-org/heidrun/pull/241))
+- Make the whole tab clickable and move its close button closer to the right edge. ([#236](https://github.com/heidrun-org/heidrun/pull/236))
+- Show a pinned pane at the same width in every tab. ([#218](https://github.com/heidrun-org/heidrun/pull/218))
+- Show a baby goat, Heidrun's name, and a joke with a firework on an empty tab screen. ([#185](https://github.com/heidrun-org/heidrun/pull/185))
+- Replace the application icon with a goat that is clear at small sizes, and use it as the website favicon. ([#183](https://github.com/heidrun-org/heidrun/pull/183))
+- Resize panes by height and in two directions from a corner. ([#177](https://github.com/heidrun-org/heidrun/pull/177))
+- Name a shell pane after its folder or running command. ([#171](https://github.com/heidrun-org/heidrun/pull/171))
+- Show only the quotas for coding agents enabled in Settings. ([#140](https://github.com/heidrun-org/heidrun/pull/140))
+- Link installed skills when an agent is enabled later. ([#128](https://github.com/heidrun-org/heidrun/pull/128))
+- Drop the title bar name and splash screen subtitle. ([#159](https://github.com/heidrun-org/heidrun/pull/159), [#155](https://github.com/heidrun-org/heidrun/pull/155))
+- Apply font size zoom to the whole window. ([#111](https://github.com/heidrun-org/heidrun/pull/111))
+
+### Removed
+
+- Remove the status bar section showing the number of agents by state. ([#288](https://github.com/heidrun-org/heidrun/pull/288))
+- Remove the Pane section from the right sidebar. ([#282](https://github.com/heidrun-org/heidrun/pull/282))
+- Remove unused text after the layout redesign. ([#222](https://github.com/heidrun-org/heidrun/pull/222))
 
 ### Fixed
 
-- Allow pasting an image by dropping it on a terminal. ([#115](https://github.com/heidrun-org/heidrun/pull/115))
+- Increase the timeout for each web frontend test to 30 seconds. ([#362](https://github.com/heidrun-org/heidrun/pull/362))
+- Keep the gap between the viewport and a collapsed sidebar. ([#325](https://github.com/heidrun-org/heidrun/pull/325))
+- Keep the status item menu text black and open quota cards. ([#294](https://github.com/heidrun-org/heidrun/pull/294))
+- Show the empty tab screen in light colors when using the light theme. ([#187](https://github.com/heidrun-org/heidrun/pull/187))
+- Prevent terminal text from blinking or shifting while the window is resized. ([#158](https://github.com/heidrun-org/heidrun/pull/158))
+- Keep pane names clear of the buttons in narrow panes. ([#153](https://github.com/heidrun-org/heidrun/pull/153))
+- Remove the black window that appeared before the splash screen. ([#145](https://github.com/heidrun-org/heidrun/pull/145))
 
 ## [0.2.0] - 2026-10-10
 

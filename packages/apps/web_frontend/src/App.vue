@@ -26,7 +26,7 @@ import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { search } from "./stores/search";
-import { openSidebarSection } from "./stores/sidebar_sections";
+import { COLLAPSED_SIDEBAR_WIDTH, openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
 import { answerDanger, danger } from "./stores/guards";
 import StatusBar from "./components/StatusBar.vue";
@@ -37,7 +37,6 @@ import {
   closePane,
   cycleTab,
   cycleWorkspace,
-  newTerminal,
   selectWorkspaceAt,
   selectedPane,
   shiftTab,
@@ -47,6 +46,7 @@ import {
   state,
   toast,
 } from "./stores/session";
+import { startDefaultNewTab } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomScriptModal } from "./stores/newCustomScript";
@@ -82,7 +82,10 @@ import type { PaneOuterEdge } from "./lib/pane_separators";
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
-const sides = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen && state.snapshot ? settings.rightWidth : 0));
+// A sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
+const leftTakenWidth = computed(() => (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth));
+const rightTakenWidth = computed(() => (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth));
+const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTakenWidth.value : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
@@ -90,14 +93,15 @@ const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.lengt
 const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
 const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
 const COLUMN_OF_PINNED_PANES = { min: 320, max: 1400, defaultWidth: 560 };
-const leftReserve = computed(() => (settings.rightOpen ? settings.rightWidth : 0) + columnOfPinnedPanesTakenWidth.value);
-const rightReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + columnOfPinnedPanesTakenWidth.value);
-const columnOfPinnedPanesReserve = computed(() => (settings.leftOpen ? settings.leftWidth : 0) + (settings.rightOpen ? settings.rightWidth : 0));
+const leftReserve = computed(() => rightTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
+const rightReserve = computed(() => leftTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
+const columnOfPinnedPanesReserve = computed(() => leftTakenWidth.value + rightTakenWidth.value);
 
 // The sides of the panes that have a column against them: the drag handle of that column ends at the panes there.
+// A sidebar collapsed to the sidebar icon bar has a fixed width: nobody drags it.
 const paneOuterEdges = computed(() => ({
-  left: settings.leftOpen,
-  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightOpen),
+  left: settings.leftCollapsed === false,
+  right: allPinnedPanes.value.length > 0 || (state.snapshot !== null && settings.rightCollapsed === false),
 }));
 
 // The column that a corner of the panes under the pointer touches: its line is drawn in colour.
@@ -209,7 +213,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
-      return run(() => (e.shiftKey ? (newAgent.open = true) : newTerminal()));
+      return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
     case "KeyD":
       return run(() => splitPane(e.shiftKey ? "down" : "right"));
     case "KeyW":
@@ -230,8 +234,8 @@ function onKey(e: KeyboardEvent) {
       });
     case "KeyB":
       return run(() => {
-        if (e.altKey) settings.rightOpen = !settings.rightOpen;
-        else settings.leftOpen = !settings.leftOpen;
+        if (e.altKey) settings.rightCollapsed = !settings.rightCollapsed;
+        else settings.leftCollapsed = !settings.leftCollapsed;
       });
     // ⌘+ / ⌘− / ⌘0 zoom the whole window, whatever window is open.
     case "Equal":
@@ -284,10 +288,10 @@ onBeforeUnmount(() => {
     <AboutModal />
     <TopBar />
     <div class="body">
-      <template v-if="settings.leftOpen">
-        <Sidebar />
-        <Resizer v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
-      </template>
+      <Sidebar />
+      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+      <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
+      <div v-else class="sidebar-gap"></div>
       <main class="center">
         <template v-if="state.snapshot">
           <TabBar />
@@ -298,6 +302,7 @@ onBeforeUnmount(() => {
                 :width="columnOfPinnedPanesShownWidth"
                 @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
                 side="right"
+                inside
                 :min="COLUMN_OF_PINNED_PANES.min"
                 :max="COLUMN_OF_PINNED_PANES.max"
                 :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
@@ -310,8 +315,9 @@ onBeforeUnmount(() => {
         </template>
         <Offline v-else />
       </main>
-      <template v-if="state.snapshot && settings.rightOpen">
-        <Resizer v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+      <template v-if="state.snapshot">
+        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+        <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>
     </div>
@@ -349,17 +355,22 @@ onBeforeUnmount(() => {
 <style scoped>
 .app { height: 100%; display: flex; flex-direction: column; background: var(--shell); }
 .body { flex: 1; min-height: 0; display: flex; padding: 0 var(--pane-gap); }
-/* The viewport is a frame like the two sidebars: same border, same corners, same background. The tab bar is inside the frame. */
+/* The viewport is a frame like the two sidebars: same border, same corners, same background. The tab bar is inside the frame.
+   The frame has no padding: the panes touch its border, and the frame clips the corners of the panes that touch its own rounded
+   corners. */
 .center {
-  flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 0 var(--pane-gap) var(--pane-gap);
+  flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
 }
-.stage { flex: 1; min-height: 0; display: flex; }
+.sidebar-gap { width: var(--pane-gap); flex-shrink: 0; }
+/* The border of the panes goes 1 pixel past the frame on the left, on the right, and at the bottom: the frame clips it, so the
+   border of the frame is the only line there. At the top, the border of the panes is the line under the tab bar. */
+.stage { flex: 1; min-height: 0; display: flex; margin: 0 -1px -1px; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
   position: fixed; right: 16px; bottom: 52px;
-  padding: 10px 16px; border-radius: 10px; background: #23272c; border: 1px solid var(--line-strong);
-  color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); z-index: 50;
+  padding: 10px 16px; border-radius: 10px; background: var(--toast-bg); border: 1px solid var(--line-strong);
+  color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px var(--toast-shadow); z-index: 50;
 }
 .toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
 .toast-icon { margin-right: 8px; color: #fecaca; }

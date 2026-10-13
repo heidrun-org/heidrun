@@ -16,7 +16,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | ⇧⌘P | Pin the selected text in a note |
 | Esc | Close the open window |
 | **Terminals and agents** | |
-| ⌘T | New terminal (new tab) |
+| ⌘T | New tab (default command of a new tab) |
 | ⇧⌘T | New agent (Claude, Codex, project agents) |
 | ⌘D / ⇧⌘D | Split the pane to the right / to the bottom |
 | ⌘W ⌘W | Close the selected pane (twice, to avoid accidents) |
@@ -39,7 +39,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | ⌘W | Close the tab (confirmation if not saved) |
 | Right click | New file or folder, rename / move, Trash |
 | **Display** | |
-| ⌘B / ⌥⌘B | Hide the left sidebar / the right sidebar |
+| ⌘B / ⌥⌘B | Collapse or expand the left sidebar / the right sidebar |
 | ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font size of the whole window |
 | **Mouse** | |
 | ⌘-click | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |

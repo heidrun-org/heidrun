@@ -29,7 +29,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
     <button class="icon-btn" :class="{ on: open }" :aria-label="t('themeMenu.buttonLabel')" :title="t('themeMenu.buttonTitle')" @click="open = !open">
       <Icon :name="buttonIcon" />
     </button>
-    <div v-if="open" class="menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
+    <div v-if="open" class="popup-menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
       <button
         v-for="o in THEME_OPTIONS"
         :key="o.id"
@@ -55,7 +55,7 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 }
 .icon-btn:hover { background: var(--hover); color: var(--text); }
 .icon-btn.on { color: var(--text-2); background: var(--field); }
-.menu {
+.popup-menu {
   position: absolute; right: 0; top: 38px; min-width: 170px; z-index: 30; padding: 6px; border-radius: 12px;
   border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
   display: flex; flex-direction: column; gap: 2px;

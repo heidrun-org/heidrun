@@ -2,7 +2,7 @@
   "name": "video_recorder",
   "private": true,
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.2.5",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

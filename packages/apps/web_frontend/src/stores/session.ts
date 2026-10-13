@@ -250,7 +250,7 @@ export const attention = computed(() =>
 );
 
 /**
- * What the workspace button of the tab bar says about the other workspaces: "blocked" when an agent of another workspace
+ * What the workspace status bar section says about the other workspaces: "blocked" when an agent of another workspace
  * waits for an answer, "done" when an agent of another workspace has finished, and null when no agent calls. An agent of
  * the selected workspace never counts, because the developer sees it.
  */
@@ -263,17 +263,6 @@ export const otherWorkspaceStatus = computed<"blocked" | "done" | null>(() => {
     return "done";
   }
   return null;
-});
-
-export const counts = computed(() => {
-  const c = { blocked: 0, working: 0, done: 0 };
-  for (const p of allPanes.value) {
-    if (!p.agent) continue;
-    if (p.agent_status === "blocked") c.blocked++;
-    else if (p.agent_status === "working") c.working++;
-    else if (p.agent_status === "done") c.done++;
-  }
-  return c;
 });
 
 export function tabLabel(id: string): string {
@@ -706,7 +695,15 @@ function applySnapshot(snap: SessionSnapshot) {
 function fixSelection(snap: SessionSnapshot) {
   const ws = snap.workspaces;
   if (!ws.some((w) => w.workspace_id === state.selectedWorkspaceId)) {
-    state.selectedWorkspaceId = snap.focused_workspace_id ?? ws[0]?.workspace_id ?? null;
+    const savedId = settings.selectedWorkspaceId;
+    const isSavedWorkspaceToRestore = state.selectedWorkspaceId === null && ws.some((w) => w.workspace_id === savedId);
+    if (isSavedWorkspaceToRestore) {
+      state.selectedWorkspaceId = savedId;
+      state.selectedTabId = last.tab[savedId] ?? null;
+      state.selectedPaneId = state.selectedTabId ? last.pane[state.selectedTabId] ?? null : null;
+    } else {
+      state.selectedWorkspaceId = snap.focused_workspace_id ?? ws[0]?.workspace_id ?? null;
+    }
   }
   const wsInfo = ws.find((w) => w.workspace_id === state.selectedWorkspaceId);
   const wsTabs = snap.tabs.filter((t) => t.workspace_id === state.selectedWorkspaceId);
@@ -763,6 +760,16 @@ watch(
       localStorage.setItem(LAST_KEY, JSON.stringify(last));
     } catch {
       /* ignore */
+    }
+  },
+);
+
+// The selected workspace is saved at each change, so the next start selects it again (issue #355).
+watch(
+  () => state.selectedWorkspaceId,
+  (id) => {
+    if (id !== null) {
+      settings.selectedWorkspaceId = id;
     }
   },
 );

@@ -7,13 +7,17 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
  * keyboard focus leaves the item. So only one card stays open: a click on another item is a click outside this item.
  *
  * @param root - The element of the item of the status bar. The card is inside this element.
- * @returns The state `isOpen`, the functions `toggle` and `close`, and the handler `onFocusOut` for the item.
+ * @returns The state `isOpen`, the functions `toggle`, `open` and `close`, and the handler `onFocusOut` for the item.
  */
 export function useStatusCard(root: Ref<HTMLElement | null>) {
   const isOpen = ref(false);
 
   function toggle() {
     isOpen.value = isOpen.value === false;
+  }
+
+  function open() {
+    isOpen.value = true;
   }
 
   function close() {
@@ -53,5 +57,5 @@ export function useStatusCard(root: Ref<HTMLElement | null>) {
     document.removeEventListener("keydown", onDocumentKeyDown, true);
   });
 
-  return { isOpen, toggle, close, onFocusOut };
+  return { isOpen, toggle, open, close, onFocusOut };
 }

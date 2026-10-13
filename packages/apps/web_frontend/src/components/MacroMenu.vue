@@ -80,26 +80,26 @@ onBeforeUnmount(close);
     <div
       v-if="open"
       ref="menu"
-      class="dropdown-menu show position-fixed overflow-y-auto"
+      class="menu show position-fixed overflow-y-auto"
       role="menu"
       :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(320px, calc(100vw - 16px))', maxHeight: '70vh' }"
       @mousedown.stop
     >
       <template v-for="group in [{ id: 'project', title: t('macroMenu.project'), items: projectMacros }, { id: 'personal', title: t('macroMenu.personal'), items: macros.personal }]" :key="group.id">
         <template v-if="group.items.length > 0">
-          <div v-if="projectMacros.length > 0" class="dropdown-header">{{ group.title }}</div>
-          <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="dropdown-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
+          <div v-if="projectMacros.length > 0" class="menu-header">{{ group.title }}</div>
+          <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="menu-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
             <span class="d-block fw-medium">{{ macro.label }}</span>
             <span v-if="macro.description !== ''" class="d-block text-body-secondary">{{ macro.description }}</span>
           </button>
         </template>
       </template>
-      <div class="dropdown-divider" role="separator"></div>
-      <button type="button" class="dropdown-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit">
+      <div class="menu-divider" role="separator"></div>
+      <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit">
         <Icon name="pencil" /> {{ t("macroMenu.edit") }}
       </button>
-      <div class="dropdown-divider" role="separator"></div>
-      <div class="dropdown-item-text text-body-secondary">{{ t("macroMenu.hint") }}</div>
+      <div class="menu-divider" role="separator"></div>
+      <div class="menu-text text-body-secondary">{{ t("macroMenu.hint") }}</div>
     </div>
   </Teleport>
 </template>

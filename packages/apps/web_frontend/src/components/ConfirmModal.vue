@@ -10,7 +10,7 @@ onMounted(() => nextTick(() => confirmButton.value?.focus()));
 
 <template>
   <div class="overlay" @mousedown.self="answerConfirm(false)" @keydown.esc.stop.prevent="answerConfirm(false)" @keydown.enter.stop.prevent="answerConfirm(true)">
-    <div class="dialog" role="alertdialog" aria-labelledby="confirm-title">
+    <div class="window-box" role="alertdialog" aria-labelledby="confirm-title">
       <h2 id="confirm-title">{{ confirmDialog.title }}</h2>
       <div class="row">
         <button class="btn lg" :title="t('confirmModal.cancelTitle')" @click="answerConfirm(false)">{{ t("confirmModal.cancel") }}</button>
@@ -25,7 +25,7 @@ onMounted(() => nextTick(() => confirmButton.value?.focus()));
   position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
-.dialog {
+.window-box {
   width: min(440px, 100%); padding: 22px; border-radius: 14px; background: var(--panel);
   border: 1px solid #5c2826; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   display: flex; flex-direction: column; gap: 16px;

@@ -11,7 +11,7 @@ async function mountSettings() {
   const { settingsModal } = await import("../stores/settings");
   const { default: SettingsModal } = await import("./SettingsModal.vue");
   settingsModal.open = true;
-  const wrapper = mount(SettingsModal);
+  const wrapper = mount(SettingsModal, { attachTo: document.body });
   await flushPromises();
   return wrapper;
 }
@@ -22,10 +22,73 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the sections in the sidebar, without the section Skills", async () => {
+  it("lists the sections in the sidebar, with the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll(".side .entry").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents"]);
+    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: section New tab (issue #328)", () => {
+  it("shows the three commands as a Bootstrap button group of radio inputs, in the secondary color, with Terminal chosen by default", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    settingsModal.section = "newTab";
+    await flushPromises();
+    expect(wrapper.get("h3").text()).toBe("New tab");
+    const group = wrapper.get(".btn-group");
+    expect(group.attributes("role")).toBe("group");
+    expect(group.attributes("aria-label")).toBe("Default command of a new tab");
+    const labels = group.findAll("label");
+    expect(labels.map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+    for (const label of labels) {
+      expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
+    }
+    const radios = group.findAll("input[type=radio]");
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false, false]);
+    wrapper.unmount();
+  });
+
+  it.each([
+    [1, "claude"],
+    [2, "codex"],
+    [0, "terminal"],
+  ] as const)("saves the command of the radio input %i as %s", async (index, command) => {
+    const wrapper = await mountSettings();
+    const { settings, settingsModal } = await import("../stores/settings");
+    settingsModal.section = "newTab";
+    await flushPromises();
+    const radios = wrapper.get(".btn-group").findAll("input[type=radio]");
+    await radios[index].setValue(true);
+    expect(settings.newTabCommand).toBe(command);
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([0, 1, 2].map((position) => position === index));
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: key Escape", () => {
+  it("closes the Settings window on the key Escape", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(settingsModal.open).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("closes only the open information card of the section Dynamic topics on the first key Escape, and the window on the second", async () => {
+    const { settingsModal } = await import("../stores/settings");
+    const wrapper = await mountSettings();
+    settingsModal.section = "dynamicTopics";
+    await flushPromises();
+    const mark = wrapper.findAll(".information-card-part")[0];
+    await mark.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await mark.trigger("keydown", { key: "Escape" });
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    expect(settingsModal.open).toBe(true);
+    await mark.trigger("keydown", { key: "Escape" });
+    expect(settingsModal.open).toBe(false);
     wrapper.unmount();
   });
 });

@@ -1,3 +1,4 @@
+import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -45,6 +46,212 @@ export class TauriMockFixture {
 			throw new Error('split_not_found: split path not found');
 		}
 		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
+	/**
+	 * The answer of `gh issue view` or `gh pr view` for one number. The issue 123 fails, so the card shows the failure.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'view', '250', '--json', 'title,state']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeAnswer(args: string[]): string {
+		const isIssue = args[0] === 'issue';
+		const number = Number(args[2]);
+		if (number === 123) {
+			throw new Error('mock: GraphQL: Could not resolve to an issue or pull request with the number of 123.');
+		}
+		const isOpen = number % 3 === 0;
+		const state = isIssue ? (isOpen ? 'OPEN' : 'CLOSED') : isOpen ? 'OPEN' : 'MERGED';
+		return JSON.stringify({
+			title: isIssue
+				? 'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex'
+				: 'Move the Needs you sidebar section from the left sidebar to the right sidebar',
+			state,
+			body: isIssue
+				? '## Goal\n\nMove the Needs you sidebar section from the left sidebar to the right sidebar. The Pane sidebar section stays where it is, and the **Notes** section moves too.'
+				: 'The Needs you sidebar section now belongs to the right sidebar, with the Pane sidebar section.',
+			labels: isIssue ? [{ name: 'Simple Work', color: '2ea043' }, { name: 'Design', color: '1d76db' }] : [],
+			author: { login: 'jeromeetienne' },
+			createdAt: '2026-10-11T09:30:00Z',
+			...(isIssue ? {} : { headRefName: 'move-to-handle-to-the-right-sidebar-251', baseRefName: 'dev_jerome' }),
+		});
+	}
+
+	/** The translation table of the clustered dynamic topics that the mock keeps, as the file on the disk does. */
+	private static _topicClusterRows: Record<string, string> = {};
+
+	/**
+	 * The translation table of the clustered dynamic topics.
+	 *
+	 * @returns A copy of the rows that the last call of `setTopicClusterRows` saved.
+	 */
+	static getTopicClusterRows(): Record<string, string> {
+		return { ...TauriMockFixture._topicClusterRows };
+	}
+
+	/**
+	 * Replaces the translation table of the clustered dynamic topics.
+	 *
+	 * @param rows - The cluster of each raw dynamic topic.
+	 * @returns Nothing.
+	 */
+	static setTopicClusterRows(rows: Record<string, string>): void {
+		TauriMockFixture._topicClusterRows = { ...rows };
+	}
+
+	/**
+	 * The answer of the Tauri command `git_status`: one staged file and one changed file, as in the screenshots of the
+	 * Source control sidebar section.
+	 * - issue #305
+	 *
+	 * @returns The Git status of the repository of the fake workspace.
+	 */
+	static buildGitStatus(): unknown {
+		return {
+			root: '/Users/demo/webwork/heidrun',
+			branch: 'dev_jerome',
+			upstream: 'origin/dev_jerome',
+			ahead: 1,
+			behind: 0,
+			changed: 2,
+			untracked: 0,
+			files: [
+				{
+					status: 'M.',
+					path: 'docs/agents_rules/user_interface.md',
+				},
+				{
+					status: '.M',
+					path: 'CHANGELOG.md',
+				},
+			],
+			last_sha: 'f853124',
+			last_subject: 'Merge pull request #294',
+			last_time: null,
+			remote: null,
+		};
+	}
+
+	/**
+	 * The answer of the Tauri command `coding_agent_ask`. There is no coding agent in a browser, so the mock answers two
+	 * kinds of prompt. For the prompt of the clustered dynamic topics, it groups the new labels that start with the same
+	 * four letters under the shortest of them, for example "sidebar" and "sidebars" under "sidebar". For the prompt of the
+	 * method "Language model", it gives each conversation the first two words of its title that have at least five
+	 * letters, in lower case, or the topic "general" when the title has none.
+	 *
+	 * @param prompt - The prompt, which ends with the line `New labels: ["a","b"]` or with the line `Conversations: [...]`.
+	 * @returns The coding agent that answered, and the JSON array that it printed.
+	 */
+	static buildCodingAgentAnswer(prompt: string): { agent: string; text: string } {
+		const conversationsLine = prompt.split('\n').find((candidate) => candidate.startsWith('Conversations: '));
+		if (conversationsLine !== undefined) {
+			const conversations = JSON.parse(conversationsLine.slice('Conversations: '.length)) as {
+				conversation: number;
+				title: string;
+			}[];
+			const conversationItems = conversations.map(({ conversation, title }) => {
+				const words = (title.toLowerCase().match(/[a-z]{5,}/g) ?? []).filter((word, index, list) => list.indexOf(word) === index);
+				return { conversation, topics: words.length === 0 ? ['general'] : words.slice(0, 2) };
+			});
+			return { agent: 'codex', text: JSON.stringify(conversationItems) };
+		}
+		const line = prompt.split('\n').find((candidate) => candidate.startsWith('New labels: ')) ?? 'New labels: []';
+		const newTopics = JSON.parse(line.slice('New labels: '.length)) as string[];
+		const items = newTopics.map((topic) => {
+			const group = newTopics.filter((other) => other.slice(0, 4) === topic.slice(0, 4));
+			const cluster = group.reduce((shortest, other) => (other.length < shortest.length ? other : shortest));
+			return { topic, cluster };
+		});
+		return { agent: 'codex', text: JSON.stringify(items) };
+	}
+
+	/**
+	 * Builds the answer of the Tauri command `chats_list`: the same fake conversations for every folder, sorted as asked.
+	 * Claude has 60 conversations, so that the list needs the button "Show more". Codex has two.
+	 *
+	 * @param limit - The number of conversations to return for each coding agent.
+	 * @param sortKey - What the conversations are sorted by.
+	 * @param order - "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first.
+	 * @returns A new object each call, with the first conversations of Claude and of Codex.
+	 */
+	static buildChats(
+		limit: number,
+		sortKey: ChatSortKey = 'last_updated',
+		order: ChatSortOrder = 'descending',
+	): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
+		const now = Date.now();
+		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
+			id,
+			title,
+			updated_at: now - minutesAgo * 60_000,
+			meta: {
+				first_at: now - (minutesAgo + 90) * 60_000,
+				last_at: now - minutesAgo * 60_000,
+				user_messages: 0,
+				first_messages: [],
+				folders: [],
+				issues: [],
+				pull_requests: [],
+				files_written: [],
+				...meta,
+			},
+		});
+		const claudeChats: Chat[] = [
+			buildChat('claude_1', 'Workspace conversation navigation', 2, {
+				user_messages: 10,
+				first_messages: [
+					'Add a Chats section to the right sidebar, with the saved conversations of Claude Code and Codex.',
+					'Each row has a title and three lines of summary: the dates, the issues and the pull requests, and the files.',
+					'Can you make the information card wider? Then read the full text of this very long message that stops after three hundred characters, so that the card shows how a long message is cut.',
+				],
+				issues: [250, 251],
+				files_written: [
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats.rs',
+					'/Users/demo/webwork/heidrun/packages/apps/desktop_tauri/src/chats_scan.rs',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/add-chats-sidebar-section-250/packages/apps/web_frontend/src/components/ChatsPanel.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/InformationCard.vue',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
+					'/Users/demo/webwork/heidrun/AGENTS.md',
+					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
+					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_information_card/at_all/notes.md',
+					'/Users/demo/notes/scratch.md',
+					'/private/tmp/claude-501/-Users-demo-webwork-heidrun/e957b92e-4848-4b5b-849e-6618a7a326fd/scratchpad/issue_31_comment.md',
+				],
+			}),
+			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
+				first_at: now - 3_000 * 60_000,
+				user_messages: 4,
+				issues: [104, 247],
+				pull_requests: [230, 249],
+			}),
+			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400, {
+				user_messages: 1,
+				issues: [1, 2, 3, 4, 5, 6],
+				pull_requests: [7],
+				files_written: ['/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/TabBar.vue'],
+			}),
+			buildChat('claude_4', 'Issue #251', 1_500, { user_messages: 2, issues: [251], pull_requests: [230, 249, 253] }),
+			buildChat('claude_5', 'Herdr interface description', 3_000),
+		];
+		for (let index = 6; index <= 60; index++) {
+			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
+		}
+		const codexChats: Chat[] = [
+			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
+			buildChat('codex_2', 'Count up to 200', 600),
+		];
+		const cut = (chats: Chat[]) => {
+			const sortedChats = TauriMockFixture._sortChats(chats, sortKey, order);
+			return {
+				chats: sortedChats.slice(0, limit),
+				has_more: sortedChats.length > limit,
+			};
+		};
+		return {
+			root: '/Users/demo/webwork/heidrun',
+			claude: cut(claudeChats),
+			codex: cut(codexChats),
+		};
 	}
 
 	/**
@@ -245,6 +452,38 @@ export class TauriMockFixture {
 	//	Helpers
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Sorts fake conversations the way the Rust command does: by the value of the sort key, then the newest file first.
+	 *
+	 * @param chats - The conversations to sort. The array is not changed.
+	 * @param sortKey - What the conversations are sorted by.
+	 * @param order - "descending" puts the largest value first, and "ascending" puts the smallest value first.
+	 * @returns A new array with the conversations in order.
+	 */
+	private static _sortChats(chats: Chat[], sortKey: ChatSortKey, order: ChatSortOrder): Chat[] {
+		const valueOf = (chat: Chat): number => {
+			switch (sortKey) {
+				case 'created_on':
+					return chat.meta.first_at ?? chat.updated_at;
+				case 'last_updated':
+					return chat.updated_at;
+				case 'messages':
+					return chat.meta.user_messages;
+				case 'issues':
+					return chat.meta.issues.length;
+				case 'pull_requests':
+					return chat.meta.pull_requests.length;
+				case 'files_written':
+					return chat.meta.files_written.length;
+			}
+		};
+		const direction = order === 'descending' ? -1 : 1;
+		return [...chats].sort((a, b) => {
+			const byValue = (valueOf(a) - valueOf(b)) * direction;
+			return byValue !== 0 ? byValue : b.updated_at - a.updated_at;
+		});
+	}
 
 	/**
 	 * Builds one pane, with the fields that the application reads.

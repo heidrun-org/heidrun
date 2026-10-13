@@ -51,7 +51,8 @@ async function startStores(savedNotes: unknown[] = []) {
   vi.resetModules();
   const session = await import("./session");
   const notes = await import("./notes");
-  return { ...session, ...notes };
+  const settings = await import("./settings");
+  return { ...session, ...notes, ...settings };
 }
 
 beforeEach(() => {
@@ -83,21 +84,21 @@ describe("the notes of a workspace", () => {
   });
 
   it("shows every note when All workspaces is checked", async () => {
-    const { state, notes, visibleNotes } = await startStores([savedNote("n1", "heidrun"), savedNote("n2", "teamwright")]);
+    const { state, settings, visibleNotes } = await startStores([savedNote("n1", "heidrun"), savedNote("n2", "teamwright")]);
     state.snapshot = snapshotOf([workspace("w3", "heidrun")]);
     state.selectedWorkspaceId = "w3";
     expect(visibleNotes.value.map((note) => note.id)).toEqual(["n1"]);
-    notes.showAll = true;
+    settings.notesShowAll = true;
     expect(visibleNotes.value.map((note) => note.id)).toEqual(["n1", "n2"]);
   });
 
   it("keeps a note whose workspace does not exist any more, and shows it only when All workspaces is checked", async () => {
-    const { state, notes, visibleNotes } = await startStores([savedNote("n1", "closed project")]);
+    const { state, notes, settings, visibleNotes } = await startStores([savedNote("n1", "closed project")]);
     state.snapshot = snapshotOf([workspace("w3", "heidrun")]);
     state.selectedWorkspaceId = "w3";
     expect(notes.list).toHaveLength(1);
     expect(visibleNotes.value).toEqual([]);
-    notes.showAll = true;
+    settings.notesShowAll = true;
     expect(visibleNotes.value.map((note) => note.id)).toEqual(["n1"]);
   });
 

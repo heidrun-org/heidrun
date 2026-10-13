@@ -2,8 +2,10 @@
 import { onBeforeUnmount, onMounted } from "vue";
 import Icon from "./Icon.vue";
 import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
+import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
+import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
@@ -14,11 +16,13 @@ import { t } from "../i18n/index";
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
+  { id: "newTab", icon: "plus-lg", labelKey: "settingsModal.newTab" },
   { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
   { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
+  { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
 ];
 
 function close() {
@@ -26,6 +30,10 @@ function close() {
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") {
+    // An open information card closes first: the key reaches the card, which closes alone.
+    if (e.target instanceof Element && e.target.closest(".information-card-part.is-open") !== null) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     close();
@@ -37,7 +45,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <template>
   <div class="overlay" @mousedown.self="close">
-    <div class="dialog" role="dialog" aria-labelledby="settings-title">
+    <div class="window-box" role="dialog" aria-labelledby="settings-title">
       <nav class="side" :aria-label="t('settingsModal.sectionsLabel')">
         <h2 id="settings-title">{{ t("settingsModal.title") }}</h2>
         <button
@@ -59,11 +67,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </header>
         <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
         <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
+        <SettingsNewTabSection v-else-if="settingsModal.section === 'newTab'" />
         <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
         <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
         <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
         <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
         <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
+        <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />
       </section>
     </div>
   </div>
@@ -72,7 +82,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 :where(button) { background: transparent; border: 0; }
 .overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.dialog {
+.window-box {
   width: min(820px, 100%); height: min(560px, calc(100vh - 48px)); display: flex; overflow: hidden; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }

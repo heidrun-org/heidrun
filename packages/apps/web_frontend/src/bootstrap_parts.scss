@@ -1,41 +1,39 @@
 // Only the Bootstrap parts that the web frontend already uses. Add one part per migration step.
 // Issue: https://github.com/heidrun-org/heidrun/issues/141
-@import "bootstrap/scss/functions";
-
-// Variable values that keep the look of the application. They must come before the Bootstrap variables.
-$btn-transition: none;
-$nav-link-transition: none;
-
-// The size of the text follows the variable --font-size of the application, which a user can change. Bootstrap makes a
-// font size fluid with a calculation, and the calculation cannot work with a variable, so the calculation is off.
-$enable-rfs: false;
-$input-font-family: inherit;
-$input-font-size: var(--font-size);
-$dropdown-font-size: var(--font-size);
-$popover-max-width: 340px;
-$popover-font-size: var(--font-size);
-
-// The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.
-$progress-height: 0.5rem;
-$alert-padding-y: 0.5rem;
-$alert-padding-x: 0.75rem;
-$alert-margin-bottom: 0;
-
-// The keyboard focus of the application is the ring of the rule ":focus-visible" in styles.css, on every element. A field
-// does not add the blue glow of Bootstrap to it.
-$input-focus-box-shadow: none;
-$form-select-focus-box-shadow: none;
-$form-check-input-focus-box-shadow: none;
-
-@import "bootstrap/scss/variables";
-@import "bootstrap/scss/variables-dark";
-@import "bootstrap/scss/maps";
-@import "bootstrap/scss/mixins";
+// Bootstrap 6 draws every component from custom properties without the prefix "bs-", and puts every rule in its own cascade layer.
+// The rules of the application are in no layer, so they win over every rule of Bootstrap, whatever the specificity.
+// Issue: https://github.com/heidrun-org/heidrun/issues/299
+@use "sass:map";
+// The application has no transition, no gradient, and no shadow on a Bootstrap part.
+@use "bootstrap/scss/config" as * with (
+  $enable-transitions: false,
+  $enable-gradients: false,
+  $enable-shadows: false,
+);
+@use "bootstrap/scss/mixins/utilities" as utility-mixins;
+// The part "check" of Bootstrap is not here: the application already uses the class name "check" for its own labels.
+@use "bootstrap/scss/root";
+@use "bootstrap/scss/buttons/index" as buttons;
+@use "bootstrap/scss/forms/labels";
+@use "bootstrap/scss/forms/form-text";
+@use "bootstrap/scss/forms/form-control";
+@use "bootstrap/scss/forms/switch";
+@use "bootstrap/scss/helpers/theme-colors";
+@use "bootstrap/scss/dialog";
+@use "bootstrap/scss/menu";
+@use "bootstrap/scss/nav";
+@use "bootstrap/scss/popover";
+@use "bootstrap/scss/progress";
+@use "bootstrap/scss/alert";
+@use "bootstrap/scss/badge";
+@use "bootstrap/scss/list-group";
+@use "bootstrap/scss/spinner";
 
 // Only the utility classes that the web frontend uses. Add one value per migration step. A utility class carries
 // "!important", so the list stays short on purpose: a class name that the application already uses must not appear here.
-$utilities: (
+$application-utilities: (
   "justify-content": (
+    important: true,
     property: justify-content,
     class: justify-content,
     values: (
@@ -44,41 +42,72 @@ $utilities: (
     ),
   ),
   "border": (
+    important: true,
     property: border,
     values: (
       0: 0,
     ),
   ),
   "border-top": (
+    important: true,
     property: border-top,
     class: border-top,
     values: (
-      null: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color),
+      null: var(--border-width) var(--border-style) var(--border-color),
     ),
   ),
   "display": (
+    important: true,
     property: display,
     class: d,
     values: (
       block: block,
       flex: flex,
+      inline-flex: inline-flex,
     ),
   ),
   "flex-direction": (
+    important: true,
     property: flex-direction,
     class: flex,
     values: (
       column: column,
     ),
   ),
+  "flex-wrap": (
+    important: true,
+    property: flex-wrap,
+    class: flex,
+    values: (
+      wrap: wrap,
+    ),
+  ),
+  "flex": (
+    important: true,
+    property: flex,
+    class: flex,
+    values: (
+      fill: 1 1 auto,
+    ),
+  ),
   "align-items": (
+    important: true,
     property: align-items,
     class: align-items,
     values: (
       center: center,
     ),
   ),
+  "align-self": (
+    important: true,
+    property: align-self,
+    class: align-self,
+    values: (
+      start: flex-start,
+    ),
+  ),
   "gap": (
+    important: true,
     property: gap,
     class: gap,
     values: (
@@ -87,20 +116,33 @@ $utilities: (
     ),
   ),
   "margin-start": (
+    important: true,
     property: margin-left,
     class: ms,
     values: (
+      1: 0.25rem,
       3: 1rem,
     ),
   ),
   "margin-end": (
+    important: true,
     property: margin-right,
     class: me,
+    values: (
+      2: 0.5rem,
+      auto: auto,
+    ),
+  ),
+  "margin-y": (
+    important: true,
+    property: margin-top margin-bottom,
+    class: my,
     values: (
       auto: auto,
     ),
   ),
   "margin-bottom": (
+    important: true,
     property: margin-bottom,
     class: mb,
     values: (
@@ -108,6 +150,7 @@ $utilities: (
     ),
   ),
   "padding-top": (
+    important: true,
     property: padding-top,
     class: pt,
     values: (
@@ -115,6 +158,7 @@ $utilities: (
     ),
   ),
   "font-weight": (
+    important: true,
     property: font-weight,
     class: fw,
     values: (
@@ -122,7 +166,16 @@ $utilities: (
       semibold: 600,
     ),
   ),
+  "font-style": (
+    important: true,
+    property: font-style,
+    class: fst,
+    values: (
+      italic: italic,
+    ),
+  ),
   "text-align": (
+    important: true,
     property: text-align,
     class: text,
     values: (
@@ -131,6 +184,7 @@ $utilities: (
     ),
   ),
   "word-wrap": (
+    important: true,
     property: word-wrap word-break,
     class: text,
     values: (
@@ -138,6 +192,7 @@ $utilities: (
     ),
   ),
   "white-space": (
+    important: true,
     property: white-space,
     class: text,
     values: (
@@ -145,27 +200,30 @@ $utilities: (
     ),
   ),
   "color": (
+    important: true,
     property: color,
     class: text,
     values: (
-      primary-emphasis: var(--bs-primary-text-emphasis),
-      success-emphasis: var(--bs-success-text-emphasis),
-      warning-emphasis: var(--bs-warning-text-emphasis),
-      danger-emphasis: var(--bs-danger-text-emphasis),
-      body-secondary: var(--bs-secondary-color),
+      primary-emphasis: var(--primary-fg-emphasis),
+      success-emphasis: var(--success-fg-emphasis),
+      warning-emphasis: var(--warning-fg-emphasis),
+      danger-emphasis: var(--danger-fg-emphasis),
+      body-secondary: var(--fg-3),
     ),
   ),
   "background-color": (
+    important: true,
     property: background-color,
     class: bg,
     values: (
-      success: var(--bs-success),
-      warning: var(--bs-warning),
-      danger: var(--bs-danger),
-      body-emphasis: var(--bs-emphasis-color),
+      success: var(--success-bg),
+      warning: var(--warning-bg),
+      danger: var(--danger-bg),
+      body-emphasis: var(--fg-body),
     ),
   ),
   "position": (
+    important: true,
     property: position,
     class: position,
     values: (
@@ -175,13 +233,24 @@ $utilities: (
     ),
   ),
   "top": (
+    important: true,
     property: top,
     class: top,
     values: (
       0: 0,
     ),
   ),
+  "end": (
+    important: true,
+    property: inset-inline-end,
+    class: end,
+    values: (
+      0: 0,
+    ),
+  ),
+
   "bottom": (
+    important: true,
     property: bottom,
     class: bottom,
     values: (
@@ -190,6 +259,7 @@ $utilities: (
     ),
   ),
   "height": (
+    important: true,
     property: height,
     class: h,
     values: (
@@ -197,38 +267,87 @@ $utilities: (
     ),
   ),
   "overflow-y": (
+    important: true,
     property: overflow-y,
     class: overflow-y,
     values: (
       auto: auto,
     ),
   ),
+  "visibility": (
+    important: true,
+    property: visibility,
+    class: null,
+    values: (
+      invisible: hidden,
+    ),
+  ),
 );
 
-// Every Bootstrap rule sits in this layer. A rule that sits in no layer, which means every rule of the application,
-// wins over a rule of this layer, whatever the specificity. So Bootstrap changes only what the application never sets.
-@layer bootstrap {
-  @import "bootstrap/scss/root";
-  @import "bootstrap/scss/buttons";
-  @import "bootstrap/scss/close";
-  @import "bootstrap/scss/dropdown";
-  @import "bootstrap/scss/modal";
-  @import "bootstrap/scss/nav";
-  @import "bootstrap/scss/popover";
-  @import "bootstrap/scss/progress";
-  @import "bootstrap/scss/alert";
-  @import "bootstrap/scss/forms/labels";
-  @import "bootstrap/scss/forms/form-text";
-  @import "bootstrap/scss/forms/form-control";
-  @import "bootstrap/scss/forms/form-select";
-  @import "bootstrap/scss/forms/form-check";
-  @import "bootstrap/scss/utilities/api";
+@layer utilities {
+  @include utility-mixins.generate-utilities-loop($application-utilities, $breakpoints);
+}
+
+// Values that keep the look of the application. The rules sit in no layer, so they win over the rules of Bootstrap.
+// The size of the text follows the variable --font-size of the application, which a user can change.
+.form-control,
+select.form-control {
+  --control-font-size: var(--font-size);
+  font-family: inherit;
+  box-shadow: none;
+}
+
+.menu {
+  --menu-font-size: var(--font-size);
+}
+
+.popover {
+  --popover-max-width: 340px;
+  --popover-font-size: var(--font-size);
+}
+
+// The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.
+.progress {
+  --progress-height: 0.5rem;
+}
+
+.alert {
+  // Bootstrap 6 lays the children of a notice side by side. Bootstrap 5 stacked them, and the application writes a notice as lines.
+  display: block;
+  --alert-padding-y: 0.5rem;
+  --alert-padding-x: 0.75rem;
+  margin-bottom: 0;
+}
+
+// A badge is a pill, as the state and the labels of an issue are on GitHub.
+.badge {
+  --badge-border-radius: var(--radius-pill);
+  --badge-font-size: 0.85em;
+  --badge-font-weight: 500;
+  --badge-padding-y: 0.4em;
+  --badge-padding-x: 0.75em;
+}
+
+// A row of a list group shows the background of the sidebar that holds it, in the light theme as in the dark theme.
+// A row that reacts to the mouse keeps the color of the text of the application, and gets only a soft background, so that the part of
+// the row that is itself under the pointer (a line, a button) shows against it. A press on a row does not change its background.
+.list-group {
+  --list-group-bg: transparent;
+  --list-group-action-color: var(--fg-body);
+  --list-group-action-hover-color: var(--fg-body);
+  --list-group-action-hover-bg: var(--hover-soft);
+  --list-group-action-active-bg: var(--hover-soft);
 }
 
 // What the application never set on a button, and that Bootstrap sets in a different way:
 .btn {
+  // Bootstrap gives a button a minimum height. The application sets the height of each button.
+  --btn-min-height: 0;
+  // Bootstrap 6 centers the content of a button. Bootstrap 5 did not, and the application aligns the content to the start: a button
+  // that has to center its content says so itself, as the class "lg" does.
+  justify-content: flex-start;
   // Bootstrap fades a disabled button to 65 percent. The application never did.
-  --bs-btn-disabled-opacity: 1;
+  --btn-disabled-opacity: 1;
   // Bootstrap aligns a button with the middle of its text line. The application has always used the baseline.
   vertical-align: baseline;
 }
@@ -236,4 +355,26 @@ $utilities: (
 // Bootstrap blocks the mouse on a disabled button. The application keeps the mouse pointer and the title working.
 .btn:disabled {
   pointer-events: auto;
+}
+
+// A button group of Bootstrap 6 joins only the buttons whose class name contains "btn-". A button of the application has only the class
+// "btn", so these rules join it too: one shared border between two buttons, and rounded corners only at the two ends of the group.
+.btn-group > .btn {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.btn-group > .btn:hover {
+  z-index: 1;
+}
+
+.btn-group > .btn:not(:first-child) {
+  margin-inline-start: calc(-1 * var(--btn-border-width));
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.btn-group > .btn:not(:last-child) {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
 }

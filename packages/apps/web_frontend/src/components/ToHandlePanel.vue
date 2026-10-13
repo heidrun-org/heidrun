@@ -57,7 +57,7 @@ function summary(p: AgentInfo): string {
 </template>
 
 <style scoped>
-.to-handle { display: flex; flex-direction: column; gap: 8px; }
+.to-handle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 6px 16px; }
 .empty { margin: 0; padding: 8px; color: var(--muted); font-size: var(--font-size); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
 .card-main {
@@ -74,7 +74,7 @@ function summary(p: AgentInfo): string {
   background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-pin.on { color: var(--accent); }
-.card.blocked { border-color: #5c2826; background: var(--tint-err); }
+.card.blocked { border-color: var(--pane-ring-blocked); background: var(--tint-err); }
 .choices { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 10px; }
 .choice-d {
   margin: 0 0 2px; padding: 6px 8px; border-radius: 6px; background: var(--tint-err); color: var(--text-2);
@@ -83,10 +83,11 @@ function summary(p: AgentInfo): string {
 .choice-q { font-size: var(--font-size); color: var(--text-2); margin: 0 2px 2px; }
 .choice {
   display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 4px 8px; border-radius: 7px;
-  border: 1px solid #4a2523; background: #2a1514; color: var(--text); text-align: left; font-size: var(--font-size);
+  border: 1px solid var(--choice-border); background: var(--choice-bg); color: var(--text); text-align: left;
+  font-size: var(--font-size);
 }
-.choice:hover { background: #3a1c1b; border-color: #7d3330; }
-.choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: #4a2523; color: var(--blocked);
+.choice:hover { background: var(--choice-hover-bg); border-color: var(--pane-ring-blocked-selected); }
+.choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: var(--choice-number-bg); color: var(--blocked);
   font: 600 var(--font-size) var(--mono); display: inline-flex; align-items: center; justify-content: center; }
 .choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card.question { border-color: #4a3866; background: var(--tint-merged); }

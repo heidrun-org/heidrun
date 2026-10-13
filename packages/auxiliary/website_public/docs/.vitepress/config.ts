@@ -1,9 +1,29 @@
 import { defineConfig } from 'vitepress';
+import identity from '../../../../../data/identity.json';
+
+const base = '/heidrun/';
 
 export default defineConfig({
-	title: 'Heidrun',
-	description: 'A macOS graphical interface for Herdr: the agents and terminals of a Herdr session, in one work window.',
-	base: '/heidrun/',
+	title: identity.title,
+	description: identity.description.en,
+	head: [
+		['link', {
+			rel: 'icon',
+			type: 'image/svg+xml',
+			href: `${base}favicon.svg`,
+		}],
+	],
+	transformPageData(pageData) {
+		if (pageData.relativePath === 'index.md') {
+			pageData.frontmatter.hero = {
+				...pageData.frontmatter.hero,
+				name: identity.title,
+				text: identity.motto.en,
+				tagline: identity.description.en,
+			};
+		}
+	},
+	base,
 	themeConfig: {
 		nav: [
 			{ text: 'Home', link: '/' },

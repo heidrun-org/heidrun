@@ -3,6 +3,7 @@ import { markRaw, reactive, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "./session";
+import { settings } from "./settings";
 import { t } from "../i18n/index";
 
 interface FileList {
@@ -22,7 +23,6 @@ export const files = reactive({
   list: [] as string[],
   status: {} as Record<string, string>,
   truncated: false,
-  showIgnored: false,
   /** Open tabs (relative paths) and the one shown. */
   tabs: [] as string[],
   active: null as string | null,
@@ -178,6 +178,23 @@ export function discardAll() {
   files.edits = {};
 }
 
+/**
+ * Sidebar section Files: the empty folders that the developer created in this session, by root of repository. Git does
+ * not list an empty folder, so the tree adds them.
+ */
+export const filesPanelNewFolders = reactive({} as Record<string, string[]>);
+
+/** The selected row of the sidebar section Files: a path relative to the root, and whether the path is a folder. */
+export type FilesPanelSelection = {
+  /** The path of the file or of the folder. */
+  path: string;
+  /** True when the selected path is a folder. */
+  isFolder: boolean;
+};
+
+/** Sidebar section Files: the file or the folder that the developer clicked last, by workspace identifier. */
+export const filesPanelSelections = reactive({} as Record<string, FilesPanelSelection>);
+
 let cwdOpen: string | null = null;
 let loadSeq = 0;
 
@@ -187,7 +204,7 @@ export async function loadFiles(cwd: string): Promise<boolean> {
   files.error = "";
   const my = ++loadSeq;
   try {
-    const r = await invoke<FileList>("files_list", { cwd, ignored: files.showIgnored });
+    const r = await invoke<FileList>("files_list", { cwd, ignored: settings.filesShowIgnored });
     // A later request (another project) won: this answer is dropped.
     if (my !== loadSeq) return false;
     const sameRoot = r.root === files.root;
@@ -353,7 +370,7 @@ interface Node {
 
 const collator = new Intl.Collator("fr", { sensitivity: "base", numeric: true });
 
-export function buildTree(list: string[]): Node {
+export function buildTree(list: string[], emptyFolders: string[] = []): Node {
   const root: Node = { dirs: new Map(), files: [] };
   for (const path of list) {
     const ignoredDir = path.endsWith("/");
@@ -368,6 +385,14 @@ export function buildTree(list: string[]): Node {
     if (ignoredDir) {
       if (!node.dirs.has(last + "/")) node.dirs.set(last + "/", { dirs: new Map(), files: [] });
     } else node.files.push(last);
+  }
+  for (const folder of emptyFolders) {
+    let node = root;
+    for (const part of folder.split("/")) {
+      let next = node.dirs.get(part);
+      if (!next) node.dirs.set(part, (next = { dirs: new Map(), files: [] }));
+      node = next;
+    }
   }
   // Sorted once here, not at every expand.
   const sortNode = (n: Node) => {

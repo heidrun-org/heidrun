@@ -1,5 +1,6 @@
 import type { InvokeArgs } from '@tauri-apps/api/core';
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
+import type { ChatSortKey, ChatSortOrder } from '../stores/chats';
 import { TauriMockFixture } from './tauri_mock_fixture';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +75,41 @@ export class TauriMock {
 				};
 			case 'history_read':
 				return [];
+			case 'chats_list':
+				return TauriMockFixture.buildChats(
+					(payload as { limit: number }).limit,
+					(payload as { sortKey?: ChatSortKey }).sortKey,
+					(payload as { order?: ChatSortOrder }).order,
+				);
+			case 'project_refs':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					remote: 'git@github.com:heidrun-org/heidrun.git',
+					references: null,
+				};
+			case 'forge_cli_cached':
+				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
+			case 'topic_clusters_read':
+				return TauriMockFixture.getTopicClusterRows();
+			case 'topic_clusters_write':
+				TauriMockFixture.setTopicClusterRows((payload as { rows: Record<string, string> }).rows);
+				return null;
+			case 'coding_agent_ask':
+				return TauriMockFixture.buildCodingAgentAnswer((payload as { prompt: string }).prompt);
+			case 'chats_files_exist':
+				return (payload as { paths: string[] }).paths.map((path) => ({
+					path,
+					on_disk: path.includes('OldCard') === false,
+					on_remote: path.includes('OldCard') === false && path.includes('InformationCard') === false,
+				}));
+			case 'files_resolve':
+				return {
+					root: '/Users/demo/webwork/heidrun',
+					path: (payload as { path: string }).path.replace('/Users/demo/webwork/heidrun/', ''),
+				};
 			case 'git_status':
+				return TauriMockFixture.buildGitStatus();
+			case 'file_open_external':
 			case 'mobile_status':
 			case 'herdr_watch_panes':
 			case 'show_main_window':
