@@ -1,0 +1,10 @@
+{
+  "title": "Importer des scripts",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "empty": "Ce projet n’a aucun script à importer : aucun package.json, Makefile ou fichier semblable avec des scripts n’a été trouvé.",
+  "cancel": "Annuler",
+  "import_one": "Importer {count} script",
+  "import_other": "Importer {count} scripts",
+  "selectAll": "Tout sélectionner",
+  "selectNone": "Tout désélectionner"
+}

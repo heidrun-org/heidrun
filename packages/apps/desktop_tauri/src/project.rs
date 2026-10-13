@@ -19,6 +19,9 @@ pub struct Detected {
     pub label: String,
     pub command: String,
     pub source: String,
+    /// What the project file says about the command, for example the body of a script of `package.json`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -60,11 +63,12 @@ fn detect(root: &Path) -> Vec<Detected> {
     if let Ok(text) = std::fs::read_to_string(root.join("package.json")) {
         if let Ok(pkg) = serde_json::from_str::<Value>(&text) {
             let pm = package_manager(root);
-            out.push(Detected { label: format!("{pm} install"), command: format!("{pm} install"), source: "package.json".into() });
+            out.push(Detected { label: format!("{pm} install"), command: format!("{pm} install"), source: "package.json".into(), description: None });
             if let Some(scripts) = pkg.get("scripts").and_then(Value::as_object) {
-                for name in scripts.keys() {
+                for (name, body) in scripts {
                     let command = if pm == "npm" { format!("npm run {name}") } else { format!("{pm} {name}") };
-                    out.push(Detected { label: command.clone(), command, source: "package.json".into() });
+                    let description = body.as_str().map(str::to_string);
+                    out.push(Detected { label: command.clone(), command, source: "package.json".into(), description });
                 }
             }
         }
@@ -84,7 +88,7 @@ fn detect(root: &Path) -> Vec<Detected> {
                 continue;
             }
             if seen.insert(name.to_string()) {
-                out.push(Detected { label: format!("make {name}"), command: format!("make {name}"), source: file.into() });
+                out.push(Detected { label: format!("make {name}"), command: format!("make {name}"), source: file.into(), description: None });
             }
         }
         break;
@@ -96,7 +100,7 @@ fn detect(root: &Path) -> Vec<Detected> {
             if let Some((name, cmd)) = line.split_once(':') {
                 let (name, cmd) = (name.trim(), cmd.trim());
                 if !name.is_empty() && !cmd.is_empty() && !name.starts_with('#') {
-                    out.push(Detected { label: name.into(), command: cmd.into(), source: "Procfile".into() });
+                    out.push(Detected { label: name.into(), command: cmd.into(), source: "Procfile".into(), description: None });
                 }
             }
         }
@@ -105,16 +109,16 @@ fn detect(root: &Path) -> Vec<Detected> {
     // Flutter / Dart, Rust, Symfony: a few obvious entry points.
     if root.join("pubspec.yaml").exists() {
         for c in ["flutter pub get", "flutter run", "flutter test"] {
-            out.push(Detected { label: c.into(), command: c.into(), source: "pubspec.yaml".into() });
+            out.push(Detected { label: c.into(), command: c.into(), source: "pubspec.yaml".into(), description: None });
         }
     }
     if root.join("Cargo.toml").exists() {
         for c in ["cargo run", "cargo test"] {
-            out.push(Detected { label: c.into(), command: c.into(), source: "Cargo.toml".into() });
+            out.push(Detected { label: c.into(), command: c.into(), source: "Cargo.toml".into(), description: None });
         }
     }
     if root.join("bin/console").exists() {
-        out.push(Detected { label: "symfony serve".into(), command: "symfony serve".into(), source: "bin/console".into() });
+        out.push(Detected { label: "symfony serve".into(), command: "symfony serve".into(), source: "bin/console".into(), description: None });
     }
     out
 }
@@ -283,6 +287,17 @@ mod project_tests {
     fn detects_nothing_in_an_empty_folder() {
         let dir = scratch("empty");
         assert!(detect(&dir).is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn uses_the_body_of_a_package_script_as_its_description() {
+        let dir = scratch("package-description");
+        std::fs::write(dir.join("package.json"), r#"{ "scripts": { "dev": "tauri dev" } }"#).unwrap();
+        let detected = detect(&dir);
+        let dev = detected.iter().find(|d| d.command == "npm run dev").unwrap();
+        assert_eq!(dev.description.as_deref(), Some("tauri dev"));
+        assert_eq!(detected.iter().find(|d| d.command == "npm install").unwrap().description, None);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
