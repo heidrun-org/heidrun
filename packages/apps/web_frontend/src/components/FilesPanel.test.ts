@@ -40,7 +40,7 @@ async function mountPanel() {
 }
 
 beforeEach(() => {
-  invokeMock.mockImplementation(async (command: string) => {
+  invokeMock.mockImplementation(async (command: string, args: { paths: string[] }) => {
     if (command === "files_list") {
       return {
         root: "/work/heidrun",
@@ -49,6 +49,9 @@ beforeEach(() => {
         status: { "src/main.ts": "M" },
         truncated: false,
       };
+    }
+    if (command === "dirs_existing") {
+      return args.paths;
     }
     return null;
   });
@@ -229,6 +232,18 @@ describe("FilesPanel", () => {
     await wrapper.get(".naming-row input").setValue("empty_folder");
     await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
     await vi.waitFor(() => expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["empty_folder", "src", "README.md"]));
+  });
+
+  it("forgets a new empty folder that does not exist any more on the disk, after the button Refresh", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='New folder']").trigger("click");
+    await wrapper.get(".naming-row input").setValue("blabla");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(wrapper.findAll(".row .name").map((name) => name.text())).toContain("blabla"));
+    const previous = invokeMock.getMockImplementation();
+    invokeMock.mockImplementation(async (command: string, args: { paths: string[] }) => (command === "dirs_existing" ? [] : previous?.(command, args)));
+    await wrapper.get("[aria-label='Refresh']").trigger("click");
+    await vi.waitFor(() => expect(wrapper.findAll(".row .name").map((name) => name.text())).not.toContain("blabla"));
   });
 
   it("cancels the new name with the key Escape or when the box loses the focus, and creates nothing", async () => {

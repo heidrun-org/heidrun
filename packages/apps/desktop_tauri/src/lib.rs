@@ -346,6 +346,7 @@ pub fn run() {
             files::file_write,
             files::files_grep,
             files::file_create,
+            files::dirs_existing,
             files::file_rename,
             files::file_trash,
             mobile::mobile_reply,

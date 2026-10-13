@@ -76,6 +76,23 @@ function chooseMenuItem(id: string) {
   }
 }
 
+/**
+ * Reads the tree again, then forgets the new empty folders that do not exist any more on the disk, for example after the
+ * developer removed them in the Finder or in a terminal.
+ */
+async function loadTree(root: string) {
+  await loadFiles(root);
+  const remembered = filesPanelNewFolders[files.root] ?? [];
+  if (remembered.length === 0) {
+    return;
+  }
+  try {
+    filesPanelNewFolders[files.root] = await invoke<string[]>("dirs_existing", { root: files.root, paths: remembered });
+  } catch {
+    // The folders stay in the list when the backend cannot answer: the next reading tries again.
+  }
+}
+
 /** Unfolds the folders above the selected row, so that the selected row shows after the tree is read again. */
 function revealSelection() {
   const path = selection.value?.path ?? null;
@@ -99,7 +116,7 @@ watch(
       return;
     }
     const isAnotherRepository = previous === undefined || previous[0] !== root;
-    void loadFiles(root).then(() => {
+    void loadTree(root).then(() => {
       if (isAnotherRepository) {
         revealSelection();
       }
@@ -191,7 +208,7 @@ async function submitNaming() {
   }
   files.expanded = folders;
   select(path, current.kind === "dir");
-  await loadFiles(files.root);
+  await loadTree(files.root);
   if (current.kind === "file") {
     openGitModal(path);
   }
@@ -209,7 +226,7 @@ function collapseAll() {
 function refresh() {
   const root = currentGit.value?.root;
   if (root !== undefined) {
-    void loadFiles(root);
+    void loadTree(root);
   }
 }
 
