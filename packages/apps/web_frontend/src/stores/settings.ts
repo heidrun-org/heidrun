@@ -44,7 +44,7 @@ const KEY = "heidrun.settings";
 export type LeftSidebarSection = "launchers" | "sourceControl" | "files" | "codeHosting";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
-export type RightSidebarSection = "toHandle" | "notes" | "chats";
+export type RightSidebarSection = "toHandle" | "notes" | "chats" | "userActivity";
 
 /** A saved search of the Code hosting sidebar section (issue #374): a search under a name. */
 export type SavedSearch = {
@@ -219,7 +219,7 @@ const defaults = {
 
 /** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */
 const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
-  rightSidebarSection: ["toHandle", "notes", "chats"],
+  rightSidebarSection: ["toHandle", "notes", "chats", "userActivity"],
   filesSideMode: ["tree", "grep"],
   filesPanelIndent: ["small", "medium", "large"],
   filesPanelRowHeight: ["compact", "comfortable"],

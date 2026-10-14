@@ -10,6 +10,7 @@ const stubs = {
   NotesPanel: true,
   ChatsPanel: true,
   ToHandlePanel: true,
+  UserActivityPanel: true,
 };
 
 /** A snapshot with one agent that is blocked and one agent that has finished, in a workspace that is not selected. */
@@ -45,25 +46,25 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons Needs you, Clipboard, and Past chats in the sidebar icon bar, and not the buttons Pane, Launchers, and Git", () => {
+  it("shows the buttons Needs you, Clipboard, Past chats, and User activity in the sidebar icon bar, and not the buttons Pane, Launchers, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("role")).toBe("tablist");
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Clipboard", "Past chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Clipboard", "Past chats", "User activity"]);
   });
 
   it("gives each button the title of its sidebar section as its tooltip, and does not call it a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Clipboard", "Past chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Clipboard", "Past chats", "User activity"]);
   });
 
   it("marks only the selected sidebar section as active", async () => {
     settings.rightSidebarSection = "notes";
     const wrapper = mount(RightPanel, { global: { stubs } });
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
-    expect(buttons.map((button) => button.classes("on"))).toEqual([false, true, false]);
-    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false"]);
+    expect(buttons.map((button) => button.classes("on"))).toEqual([false, true, false, false]);
+    expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false", "false"]);
   });
 
   it("shows the sidebar section Needs you first, and the sidebar section Clipboard after a click on its button", async () => {
@@ -84,7 +85,7 @@ describe("RightPanel", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.rightSidebarSection).toBe("toHandle");
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false, false, false]);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
     const restarted = mount(RightPanel, { global: { stubs } });
@@ -99,6 +100,22 @@ describe("RightPanel", () => {
     expect(wrapper.find("chats-panel-stub").exists()).toBe(true);
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
+  });
+
+  it("shows the sidebar section User activity, and no other sidebar section, after a click on its button", async () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[3].trigger("click");
+    expect(settings.rightSidebarSection).toBe("userActivity");
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[3].classes("on")).toBe(true);
+    expect(wrapper.find("user-activity-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("to-handle-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("chats-panel-stub").exists()).toBe(false);
+  });
+
+  it("shows no number on the button User activity", () => {
+    const wrapper = mount(RightPanel, { global: { stubs } });
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[3].find(".badge").exists()).toBe(false);
   });
 
   it("shows no number on the button Past chats", () => {
@@ -169,9 +186,9 @@ describe("RightPanel button Needs you", () => {
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].get(".badge").text()).toBe("1");
   });
 
-  it("shows one icon for each sidebar section: a bell, a note, and a speech bubble", () => {
+  it("shows one icon for each sidebar section: a bell, a note, a speech bubble, and a stopwatch", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-bell", "bi-sticky", "bi-chat-left-text", "bi-stopwatch"]);
   });
 
   it("puts the sidebar icon bar at the right edge, after the content of the sidebar section, in the same frame", () => {
@@ -187,7 +204,7 @@ describe("RightPanel button Needs you", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.rightCollapsed).toBe(true);
     expect(wrapper.find(".sidebar-section-body").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false, false]);
     expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
   });
 

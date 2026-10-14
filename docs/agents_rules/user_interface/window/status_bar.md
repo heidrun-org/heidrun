@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324)
+- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 440](https://github.com/heidrun-org/heidrun/issues/440)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -26,4 +26,5 @@ The Git branch section has its own file, [status_bar_git.md](status_bar_git.md).
 - The three section titles show the normal black text with the normal weight, like "Open Heidrun" and the names of the agents. They are not gray and not bold. The lines "None" are gray.
 - macOS draws every disabled menu item in gray, and no text color changes this. So the section titles are enabled menu items, and the lines "None" are the only disabled lines. The cost is that macOS turns an enabled line blue while the pointer is over it ([issue #293](https://github.com/heidrun-org/heidrun/issues/293)).
 - A click on "Open Heidrun" or on a section title shows the main window. A click on an agent shows the main window and selects the pane of the agent.
+- While the environment variable `HEIDRUN_STATUS_ITEM_USER_ACTIVITY` is set, the icon of Heidrun in the picture is faded while the user is not active in front of Heidrun, and normal while the user is active. The user is active when the Heidrun window is in front and a keyboard action or a mouse action happened less than 5 seconds ago. This is a way to see by eye that the detection of the activity of the user works. It is off when the variable is not set ([issue #440](https://github.com/heidrun-org/heidrun/issues/440)).
 

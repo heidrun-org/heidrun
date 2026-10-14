@@ -23,6 +23,27 @@ pub fn frames() -> &'static [Sprite] {
     FRAMES.get_or_init(|| load(ICON_FILE))
 }
 
+/// Opacity of the faded icon, from 0 to 1: the icon shows that the user is not active in front of Heidrun.
+const INACTIVE_OPACITY: f32 = 0.25;
+
+/// The frames of the faded icon. Made once, at the first use.
+static FADED_FRAMES: OnceLock<Vec<Sprite>> = OnceLock::new();
+
+/// The frames of the icon, with a smaller opacity: the same pixels as `frames`, with the alpha of each pixel multiplied
+/// by `INACTIVE_OPACITY`.
+pub fn faded_frames() -> &'static [Sprite] {
+    FADED_FRAMES.get_or_init(|| frames().iter().map(faded).collect())
+}
+
+/// A copy of `sprite` with the alpha of each pixel multiplied by `INACTIVE_OPACITY`. The colors do not change.
+fn faded(sprite: &Sprite) -> Sprite {
+    let mut pixels = sprite.pixels.clone();
+    for pixel in pixels.chunks_exact_mut(4) {
+        pixel[3] = (pixel[3] as f32 * INACTIVE_OPACITY).round() as u8;
+    }
+    Sprite { width: sprite.width, height: sprite.height, pixels }
+}
+
 /// Reads the icon from a PNG file, and cuts and scales it.
 fn load(file: &[u8]) -> Vec<Sprite> {
     let Ok(image) = Image::from_bytes(file) else {
@@ -128,6 +149,17 @@ mod tests {
         assert!(pixels.iter().any(|pixel| pixel[0] > 200 && pixel[1] < 120 && pixel[2] < 60), "no orange pixel");
         assert!(pixels.iter().any(|pixel| pixel[0] > 240 && pixel[1] > 230 && pixel[2] > 200), "no white pixel");
         assert_eq!(frame.pixels[3], 0);
+    }
+
+    #[test]
+    fn the_faded_icon_has_the_size_and_the_colors_of_the_icon_and_a_smaller_alpha() {
+        let (icon, faded_icon) = (&frames()[0], &faded_frames()[0]);
+        assert_eq!((faded_icon.width, faded_icon.height), (icon.width, icon.height));
+        for (pixel, faded_pixel) in icon.pixels.chunks(4).zip(faded_icon.pixels.chunks(4)) {
+            assert_eq!(&pixel[..3], &faded_pixel[..3]);
+            assert_eq!(faded_pixel[3], (pixel[3] as f32 * INACTIVE_OPACITY).round() as u8);
+        }
+        assert!(faded_icon.pixels.chunks(4).all(|pixel| pixel[3] <= 64));
     }
 
     #[test]

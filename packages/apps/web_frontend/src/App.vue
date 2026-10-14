@@ -62,6 +62,7 @@ import { startGit } from "./stores/git";
 import { startGitBackgroundFetch } from "./stores/git_background_fetch";
 import { startAlerts } from "./stores/alerts";
 import { startStatusItem } from "./stores/statusItem";
+import { startUserActivity } from "./stores/user_activity";
 // Records Claude spend by workspace from the start, right sidebar open or not.
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
@@ -268,6 +269,8 @@ function onKey(e: KeyboardEvent) {
 
 let unlistenDrop: (() => void) | null = null;
 onMounted(async () => {
+  // First of all: the detection of the activity of the user must see every action before the other listeners do.
+  startUserActivity();
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", onResize);
   start();

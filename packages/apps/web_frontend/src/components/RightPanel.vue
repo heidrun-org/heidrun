@@ -5,12 +5,16 @@ import { attention } from "../stores/session";
 import NotesPanel from "./NotesPanel.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
 import ToHandlePanel from "./ToHandlePanel.vue";
+import UserActivityPanel from "./UserActivityPanel.vue";
 import { settings } from "../stores/settings";
 import { clickSidebarSectionIcon, COLLAPSED_SIDEBAR_WIDTH, type SidebarSectionButton } from "../stores/sidebar_sections";
 import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
-/** The buttons of the sidebar icon bar of the right sidebar: the Needs you, Clipboard, and Past chats sidebar sections. */
+/**
+ * The buttons of the sidebar icon bar of the right sidebar: the Needs you, Clipboard, Past chats, and User activity sidebar
+ * sections.
+ */
 const sidebarSections = computed((): SidebarSectionButton[] => [
   {
     id: "toHandle",
@@ -21,10 +25,11 @@ const sidebarSections = computed((): SidebarSectionButton[] => [
   },
   { id: "notes", label: t("rightPanel.sidebarSection.notes"), icon: "sticky", badge: visibleNotes.value.length },
   { id: "chats", label: t("rightPanel.sidebarSection.chats"), icon: "chat-left-text", badge: 0 },
+  { id: "userActivity", label: t("rightPanel.sidebarSection.userActivity"), icon: "stopwatch", badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  clickSidebarSectionIcon(id === "notes" || id === "chats" ? id : "toHandle");
+  clickSidebarSectionIcon(id === "notes" || id === "chats" || id === "userActivity" ? id : "toHandle");
 }
 </script>
 
@@ -33,6 +38,7 @@ function selectSidebarSection(id: string) {
     <div v-if="settings.rightCollapsed === false" class="sidebar-section-body">
       <ToHandlePanel v-if="settings.rightSidebarSection === 'toHandle'" />
       <ChatsPanel v-else-if="settings.rightSidebarSection === 'chats'" />
+      <UserActivityPanel v-else-if="settings.rightSidebarSection === 'userActivity'" />
       <NotesPanel v-else />
     </div>
     <SidebarIconBar
