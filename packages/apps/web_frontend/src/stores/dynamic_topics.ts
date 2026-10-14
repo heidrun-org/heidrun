@@ -15,6 +15,7 @@ import {
 } from "../lib/dynamic_topics";
 import { loadChatReferenceDetails } from "./chat_references";
 import type { Chat } from "./chats";
+import { settings } from "./settings";
 
 /** What the cache keeps for one chat. */
 export type DynamicTopicEntry = {
@@ -158,11 +159,14 @@ export type DynamicTopicContext = {
  * Makes the cache hold a fresh entry for each chat. A chat whose last message did not change keeps its entry, so nothing
  * is read again. A new or changed chat gets its entry at once from the title, the first messages, and the folders of the
  * files. Then the titles of its issues and of its pull requests are read on the forge, and the entry is made again with
- * them. A chat tries to read its titles once in each run.
+ * them. A chat tries to read its titles once in each run. It reads nothing while the option "Dynamic topics" is off.
  * @param chatList - the chats that the list shows
  * @param context - the folder, the root, and the forge of the selected workspace
  */
 export async function prepareKeywordTopics(chatList: Chat[], context: DynamicTopicContext): Promise<void> {
+  if (settings.dynamicTopics === false) {
+    return;
+  }
   const toRead: Chat[] = [];
   let isChanged = false;
   for (const chat of chatList) {

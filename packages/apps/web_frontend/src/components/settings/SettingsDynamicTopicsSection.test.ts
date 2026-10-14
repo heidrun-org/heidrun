@@ -20,6 +20,46 @@ beforeEach(() => {
   vi.mocked(invoke).mockClear();
 });
 
+describe("SettingsDynamicTopicsSection, the option Enable dynamic topics", () => {
+  it("shows a Bootstrap switch Enable dynamic topics, switched on at first", async () => {
+    const { wrapper, settings } = await mountSection();
+    const switchInput = wrapper.findAll('input[role="switch"]')[0];
+    expect(wrapper.get(`label[for="${switchInput.attributes("id")}"]`).text()).toBe("Enable dynamic topics");
+    expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
+    expect((switchInput.element as HTMLInputElement).checked).toBe(true);
+    expect(settings.dynamicTopics).toBe(true);
+  });
+
+  it("is the first control of the section, above the title Extraction method, and has no title of its own", async () => {
+    const { wrapper } = await mountSection();
+    const switchInput = wrapper.findAll('input[role="switch"]')[0];
+    const extractionTitle = wrapper.get("h4");
+    expect(extractionTitle.text()).toBe("Extraction method");
+    expect(wrapper.find("input, button, select")?.element).toBe(switchInput.element);
+    expect(switchInput.element.compareDocumentPosition(extractionTitle.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
+  });
+
+  it("saves the state of the switch in the option, and shows the saved state at the next start", async () => {
+    const first = await mountSection();
+    await first.wrapper.findAll('input[role="switch"]')[0].setValue(false);
+    expect(first.settings.dynamicTopics).toBe(false);
+    const second = await mountSection();
+    expect(second.settings.dynamicTopics).toBe(false);
+    expect((second.wrapper.findAll('input[role="switch"]')[0].element as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("does not change the other controls of the section while the option is off", async () => {
+    const { wrapper, settings } = await mountSection();
+    await wrapper.findAll('input[role="switch"]')[0].setValue(false);
+    expect(settings.dynamicTopics).toBe(false);
+    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
+    expect(wrapper.findAll("input[type=radio]").map((radio) => radio.attributes("disabled"))).toEqual([undefined, undefined]);
+    expect((wrapper.findAll('input[role="switch"]')[1].element as HTMLInputElement).disabled).toBe(false);
+    expect(wrapper.findAll(".information-card-part")).toHaveLength(2);
+  });
+});
+
 describe("SettingsDynamicTopicsSection", () => {
   it("shows the title Extraction method above a Bootstrap button group of two radio inputs, Keyword and Language model", async () => {
     const { wrapper } = await mountSection();
@@ -164,7 +204,7 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
   it("shows a switch Enable clustered dynamic topics under the choice of the method, switched off at first", async () => {
     const { wrapper, settings } = await mountSection();
     expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
-    const switchInput = wrapper.get('input[role="switch"]');
+    const switchInput = wrapper.findAll('input[role="switch"]')[1];
     expect(wrapper.get(`label[for="${switchInput.attributes("id")}"]`).text()).toBe("Enable clustered dynamic topics");
     expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
     expect((switchInput.element as HTMLInputElement).checked).toBe(false);
@@ -173,15 +213,15 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
 
   it("saves the state of the switch in the option, and shows the saved state at the next start", async () => {
     const first = await mountSection();
-    await first.wrapper.get('input[role="switch"]').setValue(true);
+    await first.wrapper.findAll('input[role="switch"]')[1].setValue(true);
     expect(first.settings.clusteredDynamicTopics).toBe(true);
     const second = await mountSection();
-    expect((second.wrapper.get('input[role="switch"]').element as HTMLInputElement).checked).toBe(true);
+    expect((second.wrapper.findAll('input[role="switch"]')[1].element as HTMLInputElement).checked).toBe(true);
   });
 
   it("shows a circled question mark just after the label of the switch, and no help paragraph under it", async () => {
     const { wrapper } = await mountSection();
-    const switchInput = wrapper.get('input[role="switch"]');
+    const switchInput = wrapper.findAll('input[role="switch"]')[1];
     const row = wrapper.get(`label[for="${switchInput.attributes("id")}"]`).element.closest(".d-flex") as HTMLElement;
     const mark = wrapper.findAll(".information-card-part")[1];
     expect(row.contains(mark.element)).toBe(true);

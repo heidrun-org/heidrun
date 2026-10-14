@@ -76,7 +76,7 @@ function errorOf(failure: unknown): TopicClusterError {
 
 /** Makes one call for the new raw dynamic topics, when there are some, and saves the answer when it is right. */
 async function clusterOnce(): Promise<void> {
-  if (settings.clusteredDynamicTopics === false) {
+  if (settings.dynamicTopics === false || settings.clusteredDynamicTopics === false) {
     return;
   }
   await readTable();
@@ -144,13 +144,13 @@ async function run(): Promise<void> {
 
 /**
  * Remembers the raw dynamic topics of the chats that the list shows, and asks a coding agent for the clusters of the new
- * ones, in one single call. It makes no call when the option "Clustered dynamic topics" is off, and when the translation
- * table already knows every raw dynamic topic.
+ * ones, in one single call. It makes no call when the option "Dynamic topics" is off, when the option "Clustered dynamic
+ * topics" is off, and when the translation table already knows every raw dynamic topic.
  * @param rawTopics - the raw dynamic topics of the chats that the list shows, with repeats
  */
 export async function prepareTopicClusters(rawTopics: Iterable<string>): Promise<void> {
   lastRawTopics = [...rawTopics];
-  if (settings.clusteredDynamicTopics === false) {
+  if (settings.dynamicTopics === false || settings.clusteredDynamicTopics === false) {
     return;
   }
   await run();

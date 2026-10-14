@@ -330,6 +330,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["notesShowAll", false, true],
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
+  ["dynamicTopics", true, false],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
   ["clusteredDynamicTopics", false, true],
   ["chatsSortKey", "last_updated", "files_written"],
@@ -384,11 +385,13 @@ describe("a corrupted saved value", () => {
         budgets: null,
         fontSize: "big",
         searchAgentsOnly: null,
+        dynamicTopics: "no",
         theme: "dark",
       }),
     );
     vi.resetModules();
     const restarted = await import("./settings");
+    expect(restarted.settings.dynamicTopics).toBe(true);
     expect(restarted.settings.filesGrepRegex).toBe(false);
     expect(restarted.settings.historyPeriod).toBe("today");
     expect(restarted.settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import { invoke } from "@tauri-apps/api/core";
+import { MOST_CHATS_PER_CALL } from "../lib/language_model_topics";
 import type { Chat } from "./chats";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
@@ -85,6 +86,38 @@ describe("prepareLanguageModelTopics", () => {
     await prepareLanguageModelTopics([chatOf("a", "Fix the cache")]);
     expect(calls()).toBe(0);
     expect(Object.keys(languageModelEntries)).toEqual([]);
+  });
+
+  it("makes no call while the option Dynamic topics is off, even when the method is Language model", async () => {
+    installBackend(answerWith(() => ["cache"]));
+    const { settings, prepareLanguageModelTopics, languageModelEntries } = await startRun("languageModel");
+    settings.dynamicTopics = false;
+    await prepareLanguageModelTopics([chatOf("a", "Fix the cache")]);
+    expect(calls()).toBe(0);
+    expect(Object.keys(languageModelEntries)).toEqual([]);
+  });
+
+  it("makes the call when the option Dynamic topics is switched on again", async () => {
+    installBackend(answerWith(() => ["cache"]));
+    const { settings, prepareLanguageModelTopics, languageModelTopicsOf } = await startRun("languageModel");
+    const list = [chatOf("a", "Fix the cache")];
+    settings.dynamicTopics = false;
+    await prepareLanguageModelTopics(list);
+    settings.dynamicTopics = true;
+    await prepareLanguageModelTopics(list);
+    expect(calls()).toBe(1);
+    expect(languageModelTopicsOf(list).get("a")).toEqual(["cache"]);
+  });
+
+  it("makes no second call when the developer switches the option Dynamic topics off during the first call", async () => {
+    const { settings, prepareLanguageModelTopics } = await startRun("languageModel");
+    installBackend(async (prompt) => {
+      settings.dynamicTopics = false;
+      return answerWith(() => ["cache"])(prompt);
+    });
+    const list = Array.from({ length: MOST_CHATS_PER_CALL + 1 }, (_value, index) => chatOf(`chat-${index}`, `Chat ${index}`));
+    await prepareLanguageModelTopics(list);
+    expect(calls()).toBe(1);
   });
 
   it("makes one single call for all the chats, and keeps the topics of each chat", async () => {
