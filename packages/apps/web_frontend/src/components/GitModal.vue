@@ -11,6 +11,7 @@ import { diffStats, parseDiff, splitDiff, type DiffLine } from "../lib/diff";
 import { CODE_THEMES, highlightFile, highlightLine, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import Resizer from "./Resizer.vue";
+import SettingsSwitchRow from "./settings/SettingsSwitchRow.vue";
 import { t } from "../i18n/index";
 
 const st = currentGit;
@@ -47,6 +48,26 @@ const mode = computed(() => {
   }
   return settings.diffMode === "preview" && !md.value ? "file" : settings.diffMode;
 });
+
+/** The choices of the radio button group of the title bar that picks the view of the file. */
+const VIEW_CHOICES = [
+  { id: "unified", labelKey: "gitModal.unified", titleKey: "gitModal.unifiedTitle" },
+  { id: "split", labelKey: "gitModal.split", titleKey: "gitModal.splitTitle" },
+  { id: "file", labelKey: "gitModal.file", titleKey: "gitModal.fileTitle" },
+  { id: "preview", labelKey: "gitModal.preview", titleKey: "gitModal.previewTitle" },
+] as const;
+/** The choices of the radio button group that picks the width of the preview. */
+const PREVIEW_WIDTH_CHOICES = [
+  { id: "center", labelKey: "gitModal.centered", titleKey: "gitModal.centeredTitle" },
+  { id: "full", labelKey: "gitModal.fullWidth", titleKey: "gitModal.fullWidthTitle" },
+] as const;
+// "Preview" shows for a Markdown file only. "Diff" and "Side by side" are off for a file that has no change.
+const viewChoices = computed(() =>
+  VIEW_CHOICES.filter((choice) => choice.id !== "preview" || md.value).map((choice) => ({
+    ...choice,
+    isDisabled: isUnchanged.value && (choice.id === "unified" || choice.id === "split"),
+  })),
+);
 const error = ref("");
 const loading = ref(false);
 let seq = 0;
@@ -211,21 +232,31 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           <button :title="t('gitModal.openCiTitle')" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div class="tools">
-          <div class="seg" role="radiogroup" :aria-label="t('gitModal.display')">
-            <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" :disabled="isUnchanged" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
-            <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" :disabled="isUnchanged" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
-            <button :title="t('gitModal.fileTitle')" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">{{ t("gitModal.file") }}</button>
-            <button v-if="md" :class="{ on: mode === 'preview' }" :title="t('gitModal.previewTitle')" @click="settings.diffMode = 'preview'">{{ t("gitModal.preview") }}</button>
+          <div class="btn-group" role="group" :aria-label="t('gitModal.display')">
+            <label v-for="choice in viewChoices" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+              <input
+                type="radio"
+                name="git-window-view"
+                autocomplete="off"
+                :value="choice.id"
+                :checked="mode === choice.id"
+                :disabled="choice.isDisabled"
+                @change="settings.diffMode = choice.id"
+              />
+              {{ t(choice.labelKey) }}
+            </label>
           </div>
-          <div v-if="mode === 'preview'" class="seg" role="radiogroup" :aria-label="t('gitModal.previewWidth')">
-            <button :class="{ on: settings.mdWidth === 'center' }" :title="t('gitModal.centeredTitle')" @click="settings.mdWidth = 'center'">{{ t("gitModal.centered") }}</button>
-            <button :class="{ on: settings.mdWidth === 'full' }" :title="t('gitModal.fullWidthTitle')" @click="settings.mdWidth = 'full'">{{ t("gitModal.fullWidth") }}</button>
+          <div v-if="mode === 'preview'" class="btn-group" role="group" :aria-label="t('gitModal.previewWidth')">
+            <label v-for="choice in PREVIEW_WIDTH_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+              <input v-model="settings.mdWidth" type="radio" name="git-window-preview-width" autocomplete="off" :value="choice.id" />
+              {{ t(choice.labelKey) }}
+            </label>
           </div>
           <label class="sr" for="code-theme">{{ t("gitModal.theme") }}</label>
-          <select id="code-theme" v-model="settings.codeTheme" class="theme">
+          <select id="code-theme" v-model="settings.codeTheme" class="theme" :title="t('gitModal.themeTitle')">
             <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
           </select>
-          <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("gitModal.wrap") }}</label>
+          <SettingsSwitchRow v-model="settings.codeWrap" :label="t('gitModal.wrap')" :title="t('gitModal.wrapTitle')" />
           <button :title="t('gitModal.refreshTitle')" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : t("gitModal.refresh") }}</button>
           <button :title="t('gitModal.closeTitle')" class="close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
@@ -417,12 +448,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .path { flex: 1; min-width: 0; font-size: var(--font-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stats { margin-left: 10px; font-size: var(--font-size); }
 .plus { color: var(--ok); } .minus { color: var(--blocked); }
-.seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
-.seg button { border: none; background: transparent; color: var(--muted); font-size: var(--font-size); padding: 4px 10px; border-radius: 6px; }
-.seg button.on { background: var(--hover); color: var(--text); }
 .theme { height: 28px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 6px; }
-.wrap-t { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
-.wrap-t input { accent-color: var(--done); }
 .code { flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
 /* Rendered Markdown: a reading column, GitHub-like. */
 .md { max-width: 860px; margin: 0 auto; padding: 28px 36px 60px; font: var(--font-size)/1.7 var(--sans);  color: var(--c-fg); user-select: text; }

@@ -66,17 +66,17 @@ describe("GitModal", () => {
     git.modal.path = "README.md";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(wrapper.text()).toContain("second line"));
-    const buttons = wrapper.findAll(".seg button");
-    expect(buttons[0].attributes("disabled")).toBeDefined();
-    expect(buttons[1].attributes("disabled")).toBeDefined();
-    expect(buttons[2].attributes("disabled")).toBeUndefined();
+    const inputs = wrapper.findAll("header.top .btn-group input");
+    expect(inputs[0].attributes("disabled")).toBeDefined();
+    expect(inputs[1].attributes("disabled")).toBeDefined();
+    expect(inputs[2].attributes("disabled")).toBeUndefined();
   });
 
   it("keeps the diff for a changed file", async () => {
     git.modal.path = "src/main.ts";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", { root: "/work/heidrun", path: "src/main.ts" }));
-    expect(wrapper.findAll(".seg button")[0].attributes("disabled")).toBeUndefined();
+    expect(wrapper.findAll("header.top .btn-group input")[0].attributes("disabled")).toBeUndefined();
   });
 
   it("puts the view buttons, the theme menu, the check box Wrap lines, and the button Refresh in the title bar", async () => {
@@ -84,11 +84,11 @@ describe("GitModal", () => {
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", expect.anything()));
     const titleBar = wrapper.find("header.top");
-    expect(titleBar.findAll(".seg button").map((button) => button.text())).toEqual(["Diff", "Side by side", "File"]);
+    expect(titleBar.findAll(".btn-group label").map((label) => label.text())).toEqual(["Diff", "Side by side", "File"]);
     expect(titleBar.find("select.theme").exists()).toBe(true);
     expect(titleBar.text()).toContain("Wrap lines");
     expect(titleBar.text()).toContain("Refresh");
-    expect(wrapper.find(".viewer .bar .seg").exists()).toBe(false);
+    expect(wrapper.find(".viewer .bar .btn-group").exists()).toBe(false);
     expect(wrapper.find(".viewer .bar select").exists()).toBe(false);
     expect(wrapper.find(".viewer .bar input").exists()).toBe(false);
   });
@@ -111,7 +111,7 @@ describe("GitModal", () => {
     git.modal.path = "README.md";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(wrapper.text()).toContain("second line"));
-    const labels = wrapper.findAll("header.top .seg button").map((button) => button.text());
+    const labels = wrapper.findAll("header.top .btn-group label").map((label) => label.text());
     expect(labels).toContain("Preview");
     expect(wrapper.text()).not.toContain("Reading");
   });
@@ -121,7 +121,60 @@ describe("GitModal", () => {
     settings.diffMode = "preview";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(wrapper.find("article.md").exists()).toBe(true));
-    const labels = wrapper.findAll("header.top .seg button").map((button) => button.text());
+    const labels = wrapper.findAll("header.top .btn-group label").map((label) => label.text());
     expect(labels).toEqual(expect.arrayContaining(["Preview", "Centered", "Full width"]));
+  });
+
+  it("makes the choice of the view a Bootstrap radio button group, and checks the radio button of the view that shows", async () => {
+    git.modal.path = "src/main.ts";
+    settings.diffMode = "split";
+    const wrapper = mount(GitModal);
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", expect.anything()));
+    const group = wrapper.find("header.top .btn-group");
+    expect(group.attributes("role")).toBe("group");
+    const inputs = group.findAll("label.btn-check input");
+    expect(inputs.map((input) => input.attributes("type"))).toEqual(["radio", "radio", "radio"]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([false, true, false]);
+    await inputs[2].trigger("change");
+    expect(settings.diffMode).toBe("file");
+  });
+
+  it("makes the choice of the width of the preview a Bootstrap radio button group", async () => {
+    git.modal.path = "README.md";
+    settings.diffMode = "preview";
+    settings.mdWidth = "center";
+    const wrapper = mount(GitModal);
+    await vi.waitFor(() => expect(wrapper.find("article.md").exists()).toBe(true));
+    const group = wrapper.findAll("header.top .btn-group")[1];
+    const inputs = group.findAll("label.btn-check input");
+    expect(inputs.map((input) => input.attributes("type"))).toEqual(["radio", "radio"]);
+    expect(inputs.map((input) => (input.element as HTMLInputElement).checked)).toEqual([true, false]);
+    await inputs[1].setValue(true);
+    expect(settings.mdWidth).toBe("full");
+  });
+
+  it("makes the option Wrap lines a Bootstrap switch, not a check box", async () => {
+    git.modal.path = "src/main.ts";
+    settings.codeWrap = false;
+    const wrapper = mount(GitModal);
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", expect.anything()));
+    const input = wrapper.find("header.top .switch input");
+    expect(input.attributes("role")).toBe("switch");
+    expect(wrapper.find("header.top label.wrap-t").exists()).toBe(false);
+    await input.setValue(true);
+    expect(settings.codeWrap).toBe(true);
+  });
+
+  it("gives a title to every button, radio button, menu, and switch of the title bar", async () => {
+    git.modal.path = "README.md";
+    settings.diffMode = "preview";
+    const wrapper = mount(GitModal);
+    await vi.waitFor(() => expect(wrapper.find("article.md").exists()).toBe(true));
+    const controls = wrapper.findAll("header.top button, header.top label.btn-check, header.top select, header.top .switch");
+    expect(controls.length).toBeGreaterThan(8);
+    for (const control of controls) {
+      const titledElement = control.element.closest("[title]");
+      expect(titledElement?.getAttribute("title") ?? "", control.html()).not.toBe("");
+    }
   });
 });
