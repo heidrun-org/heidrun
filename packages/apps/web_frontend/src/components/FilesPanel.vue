@@ -24,6 +24,7 @@ import {
   loadExpandedIgnoredFolders,
   loadFiles,
   loadIgnoredFolder,
+  openFiles,
   visibleRows,
   type TreeRow,
 } from "../stores/files";
@@ -300,7 +301,7 @@ function chooseRow(row: TreeRow) {
     toggleFolder(row);
     return;
   }
-  openGitModal(row.path);
+  void openFiles(files.root, { path: row.path });
 }
 
 /** The context menu of a file row or a folder row: the relative path, and where the pointer was. Null when closed. */

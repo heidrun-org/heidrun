@@ -517,3 +517,28 @@ describe("sidebars that an older version hid completely (issue #315)", () => {
     expect(Object.keys(restarted.settings)).not.toContain("rightOpen");
   });
 });
+
+describe("diff mode of the large Git window", () => {
+  it("reads the old saved value read as preview", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ diffMode: "read" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.diffMode).toBe("preview");
+  });
+
+  it("keeps the saved value preview", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ diffMode: "preview" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.diffMode).toBe("preview");
+  });
+});
+
+describe("code theme", () => {
+  it("is not a setting any more, and a saved choice is forgotten", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ codeTheme: "dracula" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(Object.keys(restarted.settings)).not.toContain("codeTheme");
+  });
+});

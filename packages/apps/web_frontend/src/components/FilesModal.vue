@@ -37,7 +37,7 @@ import { settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { toast } from "../stores/session";
 import { insertIntoFocusedPane } from "../stores/input";
-import { CODE_THEMES, highlightFile, languageFor } from "../lib/highlight";
+import { highlightFile, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import { shortPath } from "../lib/format";
 import { t } from "../i18n/index";
@@ -206,7 +206,7 @@ const error = ref("");
 const loading = ref(false);
 const truncated = ref(false);
 const md = computed(() => isMarkdown(files.active));
-const reading = computed(() => md.value && settings.filesMdRead);
+const isPreview = computed(() => md.value && settings.filesMdRead);
 let seq = 0;
 
 async function load() {
@@ -241,7 +241,7 @@ async function load() {
     }
     const text = (await invoke<string>("git_file", { root: files.root, path, rev: null })).replace(/\n$/, "");
     if (my !== seq) return;
-    if (reading.value) {
+    if (isPreview.value) {
       rendered.value = renderMarkdown(text);
       return;
     }
@@ -257,7 +257,7 @@ async function load() {
     if (my === seq) loading.value = false;
   }
 }
-watch([() => files.active, () => files.root, reading], load, { immediate: true });
+watch([() => files.active, () => files.root, isPreview], load, { immediate: true });
 // "file:line" chip for the file already shown: just scroll.
 watch(
   () => files.lineTick,
@@ -729,7 +729,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <button class="tb accent" :disabled="!dirty || edit.saving" :title="t('filesModal.saveTitle')" @click="save()">{{ edit.saving ? t("filesModal.saving") : t("filesModal.saveButton") }}</button>
                 <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" :title="t('filesModal.myChangesTitle')" @click="showDiff = showDiff === 'mine' ? null : 'mine'">{{ t("filesModal.diffButton") }}</button>
                 <label class="wrap-t" :title="t('filesModal.diffBeforeSaveTitle')"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />{{ t("filesModal.diffBeforeSave") }}</label>
-                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToReading')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
+                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToPreview')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
               </template>
               <button v-else-if="canEdit" class="tb edit" :title="t('filesModal.editTitle')" @click="beginEdit"><Icon name="pencil" /> {{ t("filesModal.edit") }}</button>
               <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" :title="t('filesModal.gitDiffTitle')" @click="toggleGitDiff">{{ t("filesModal.gitDiff") }}</button>
@@ -737,9 +737,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <button :title="t('filesModal.renderedTitle')" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">{{ t("filesModal.rendered") }}</button>
                 <button :title="t('filesModal.sourceTitle')" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">{{ t("filesModal.source") }}</button>
               </div>
-              <select v-model="settings.codeTheme" class="theme" :aria-label="t('filesModal.themeLabel')">
-                <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
-              </select>
               <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("filesModal.wrap") }}</label>
               <button class="tb" :title="t('filesModal.copyPathTitle')" @click="(e) => copyPath(e.altKey)">{{ t("filesModal.copyPath") }}</button>
               <button class="tb" :title="t('filesModal.finderTitle')" @click="finder">Finder</button>
@@ -793,7 +790,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading" class="empty">{{ t("filesModal.loading") }}</div>
             <div v-else-if="image" class="img"><img :src="image" :alt="files.active" /></div>
-            <article v-else-if="reading" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
+            <article v-else-if="isPreview" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
             <table v-else class="tbl">
               <tbody>
                 <tr v-for="(h, i) in lines" :key="i" :data-line="i + 1" :class="{ hit: files.line === i + 1 }">
@@ -869,7 +866,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
 .seg button { color: var(--muted); font-size: var(--font-size); padding: 3px 9px; border-radius: 6px; }
 .seg button.on { background: var(--hover); color: var(--text); }
-.theme { height: 26px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 6px; }
 .wrap-t { display: flex; align-items: center; gap: 5px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .tb { height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line-strong); font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .tb:hover { background: var(--hover); color: var(--text); }

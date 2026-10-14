@@ -72,6 +72,9 @@ afterEach(() => {
   git.status = {};
   git.modal.open = false;
   git.modal.path = null;
+  files.open = false;
+  files.tabs = [];
+  files.active = null;
   files.root = "";
   files.ignored = [];
   files.expanded = new Set();
@@ -101,11 +104,13 @@ describe("FilesPanel", () => {
     expect(git.modal.open).toBe(false);
   });
 
-  it("opens a file in the large Git window after a click on it", async () => {
+  it("opens a file in the Files window, and not in the large Git window, after a click on it", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[1].trigger("click");
-    expect(git.modal.open).toBe(true);
-    expect(git.modal.path).toBe("README.md");
+    await vi.waitFor(() => expect(files.active).toBe("README.md"));
+    expect(files.open).toBe(true);
+    expect(files.tabs).toContain("README.md");
+    expect(git.modal.open).toBe(false);
   });
 
   it("shows a status letter on a changed file", async () => {
@@ -135,14 +140,14 @@ describe("FilesPanel", () => {
     expect(wrapper.find("[aria-label='Expand all folders']").exists()).toBe(false);
   });
 
-  it("selects the row that was clicked, a folder or a file, and only that row, and keeps it after the Git window closes", async () => {
+  it("selects the row that was clicked, a folder or a file, and only that row, and keeps it after the Files window closes", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.findAll(".row.selected")).toHaveLength(0);
     await wrapper.findAll(".row")[0].trigger("click");
     expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["src•"]);
     await wrapper.findAll(".row")[3].trigger("click");
     expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
-    git.modal.open = false;
+    files.open = false;
     await wrapper.vm.$nextTick();
     expect(wrapper.findAll(".row.selected")).toHaveLength(1);
   });
@@ -588,14 +593,15 @@ describe("FilesPanel, the files and the folders that Git ignores", () => {
     expect(invokeMock.mock.calls.filter(([command]) => command === "folder_children")).toHaveLength(1);
   });
 
-  it("opens a file inside a folder that Git ignores in the large Git window after a click on it", async () => {
+  it("opens a file inside a folder that Git ignores in the Files window after a click on it", async () => {
     settings.filesShowIgnored = true;
     const wrapper = await mountPanel();
     await rowNamed(wrapper, ".heidrun")?.trigger("click");
     await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
     await rowNamed(wrapper, "config.json")?.trigger("click");
-    expect(git.modal.open).toBe(true);
-    expect(git.modal.path).toBe(".heidrun/config.json");
+    await vi.waitFor(() => expect(files.active).toBe(".heidrun/config.json"));
+    expect(files.open).toBe(true);
+    expect(git.modal.open).toBe(false);
   });
 
   it("reads again every unfolded ignored folder after the button Refresh", async () => {

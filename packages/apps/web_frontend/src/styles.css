@@ -291,12 +291,6 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 .code.github-light { --c-bg: #ffffff; --c-fg: #24292f; --c-gutter: #8c959f; --c-add: rgba(46, 160, 67, 0.15); --c-add-strong: rgba(46, 160, 67, 0.35);
   --c-del: rgba(255, 129, 130, 0.2); --c-del-strong: rgba(255, 129, 130, 0.45); --c-hunk: rgba(84, 174, 255, 0.15); --c-hunk-fg: #57606a;
   --k: #cf222e; --s: #0a3069; --c: #6e7781; --n: #0550ae; --f: #8250df; --t: #953800; --a: #116329; --v: #953800; --m: #0550ae; }
-.code.one-dark { --c-bg: #282c34; --c-fg: #abb2bf; --c-gutter: #636d83; --c-hunk-fg: #7f848e;
-  --k: #c678dd; --s: #98c379; --c: #7f848e; --n: #d19a66; --f: #61afef; --t: #e5c07b; --a: #e06c75; --v: #e06c75; --m: #56b6c2; }
-.code.dracula { --c-bg: #22212c; --c-fg: #f8f8f2; --c-gutter: #6272a4; --c-hunk-fg: #6272a4;
-  --k: #ff79c6; --s: #f1fa8c; --c: #6272a4; --n: #bd93f9; --f: #50fa7b; --t: #8be9fd; --a: #50fa7b; --v: #ffb86c; --m: #8be9fd; }
-.code.solarized { --c-bg: #002b36; --c-fg: #93a1a1; --c-gutter: #586e75; --c-hunk-fg: #657b83;
-  --k: #859900; --s: #2aa198; --c: #586e75; --n: #d33682; --f: #268bd2; --t: #b58900; --a: #b58900; --v: #cb4b16; --m: #6c71c4; }
 .code .hljs-keyword, .code .hljs-selector-tag, .code .hljs-literal, .code .hljs-doctag, .code .hljs-meta .hljs-keyword { color: var(--k); }
 .code .hljs-string, .code .hljs-regexp, .code .hljs-meta .hljs-string, .code .hljs-template-string { color: var(--s); }
 .code .hljs-comment, .code .hljs-quote { color: var(--c); font-style: italic; }
