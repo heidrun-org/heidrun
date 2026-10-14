@@ -6,6 +6,7 @@ import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
 import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
+import SettingsNeedsYouSection from "./settings/SettingsNeedsYouSection.vue";
 import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
@@ -20,6 +21,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "newTab", icon: "plus-lg", labelKey: "settingsModal.newTab" },
   { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
   { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
+  { id: "needsYou", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.needsYou" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
@@ -73,6 +75,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <SettingsNewTabSection v-else-if="settingsModal.section === 'newTab'" />
           <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
           <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
+          <SettingsNeedsYouSection v-else-if="settingsModal.section === 'needsYou'" />
           <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
           <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />

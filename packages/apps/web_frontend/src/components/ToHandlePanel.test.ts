@@ -231,3 +231,42 @@ describe("ToHandlePanel colors of a blocked card", () => {
     expect(lightText).toMatch(/--side:\s*#f8f8f8;/);
   });
 });
+
+describe("ToHandlePanel list of workspaces", () => {
+  it("shows the list of workspaces after the cards, by default", async () => {
+    const { wrapper } = await mountToHandlePanel();
+    const list = wrapper.find(".needs-you-workspaces");
+    expect(list.exists()).toBe(true);
+    expect(list.findAll(".workspace-row .name").map((name) => name.text())).toEqual(["heidrun", "website"]);
+    const children = Array.from(wrapper.element.children);
+    expect(children.indexOf(wrapper.get(".to-handle").element)).toBeLessThan(children.indexOf(list.element));
+  });
+
+  it("keeps the list at the bottom while the cards scroll above it", async () => {
+    const { wrapper } = await mountToHandlePanel();
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "ToHandlePanel.vue"), "utf8");
+    expect(sourceText).toMatch(/\.needs-you \{[^}]*flex-direction: column;/);
+    expect(sourceText).toMatch(/\.to-handle \{[^}]*overflow-y: auto;/);
+    expect(wrapper.get(".to-handle").findAll(".workspace-row")).toHaveLength(0);
+  });
+
+  it("shows only the cards when the setting is off, and the list again when the setting is on", async () => {
+    const { wrapper } = await mountToHandlePanel();
+    const { settings } = await import("../stores/settings");
+    settings.showWorkspacesInNeedsYou = false;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".needs-you-workspaces").exists()).toBe(false);
+    expect(wrapper.findAll(".card")).toHaveLength(2);
+    settings.showWorkspacesInNeedsYou = true;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".needs-you-workspaces").exists()).toBe(true);
+  });
+
+  it("shows the list when no agent calls, under the message that says so", async () => {
+    const snapshot = makeSnapshot();
+    snapshot.panes = [];
+    const { wrapper } = await mountToHandlePanel(snapshot);
+    expect(wrapper.find(".empty").exists()).toBe(true);
+    expect(wrapper.findAll(".needs-you-workspaces .workspace-row")).toHaveLength(2);
+  });
+});

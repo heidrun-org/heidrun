@@ -2,6 +2,8 @@
 import { answerChoice, attention, dismiss, selectPane, state, tabLabel, workspaceLabel } from "../stores/session";
 import { statusLabel, ago, paneName } from "../lib/format";
 import Icon from "./Icon.vue";
+import NeedsYouWorkspaces from "./NeedsYouWorkspaces.vue";
+import { settings } from "../stores/settings";
 import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -16,47 +18,51 @@ function summary(p: AgentInfo): string {
 </script>
 
 <template>
-  <section class="to-handle" :aria-label="t('toHandlePanel.label')">
-    <p v-if="attention.length === 0" class="empty">{{ t("toHandlePanel.empty") }}</p>
-    <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
-      <button :title="t('toHandlePanel.showPane')" class="card-main" @click="selectPane(p)">
-        <span class="row">
-          <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
-          <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">{{ t("toHandlePanel.question") }}</span>
-          <span v-else class="badge" :class="'t-' + p.agent_status">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
-        </span>
-        <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
-        <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
-      </button>
-      <!-- The agent's own menu: answer without opening its tab. -->
-      <div v-if="p.agent_status === 'blocked' && state.choices[p.pane_id]" class="choices">
-        <pre v-if="state.choices[p.pane_id].detail" class="choice-d mono">{{ state.choices[p.pane_id].detail }}</pre>
-        <span v-if="state.choices[p.pane_id].question" class="choice-q">{{ state.choices[p.pane_id].question }}</span>
+  <div class="needs-you">
+    <section class="to-handle" :aria-label="t('toHandlePanel.label')">
+      <p v-if="attention.length === 0" class="empty">{{ t("toHandlePanel.empty") }}</p>
+      <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
+        <button :title="t('toHandlePanel.showPane')" class="card-main" @click="selectPane(p)">
+          <span class="row">
+            <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
+            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">{{ t("toHandlePanel.question") }}</span>
+            <span v-else class="badge" :class="'t-' + p.agent_status">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
+          </span>
+          <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
+          <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
+        </button>
+        <!-- The agent's own menu: answer without opening its tab. -->
+        <div v-if="p.agent_status === 'blocked' && state.choices[p.pane_id]" class="choices">
+          <pre v-if="state.choices[p.pane_id].detail" class="choice-d mono">{{ state.choices[p.pane_id].detail }}</pre>
+          <span v-if="state.choices[p.pane_id].question" class="choice-q">{{ state.choices[p.pane_id].question }}</span>
+          <button
+            v-for="o in state.choices[p.pane_id].options"
+            :key="o.n"
+            class="choice"
+            :title="o.label"
+            @click="answerChoice(p.pane_id, o.n)"
+          >
+            <span class="choice-n">{{ o.n }}</span><span class="choice-l">{{ o.label }}</span>
+          </button>
+        </div>
         <button
-          v-for="o in state.choices[p.pane_id].options"
-          :key="o.n"
-          class="choice"
-          :title="o.label"
-          @click="answerChoice(p.pane_id, o.n)"
-        >
-          <span class="choice-n">{{ o.n }}</span><span class="choice-l">{{ o.label }}</span>
+          class="card-pin"
+          :class="{ on: isPinned(p.pane_id) }"
+          :aria-label="isPinned(p.pane_id) ? t('toHandlePanel.unpinLabel', { name: paneName(p) }) : t('toHandlePanel.pinLabel', { name: paneName(p) })"
+          :title="isPinned(p.pane_id) ? t('toHandlePanel.unpinTitle') : t('toHandlePanel.pinTitle')"
+          @click="togglePinnedPane(p.pane_id)"
+        ><Icon :name="isPinned(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
+        <button class="card-x" :aria-label="t('toHandlePanel.hideLabel', { name: paneName(p) })" :title="t('toHandlePanel.hideTitle')" @click="dismiss(p)">
+          <Icon name="x-lg" />
         </button>
       </div>
-      <button
-        class="card-pin"
-        :class="{ on: isPinned(p.pane_id) }"
-        :aria-label="isPinned(p.pane_id) ? t('toHandlePanel.unpinLabel', { name: paneName(p) }) : t('toHandlePanel.pinLabel', { name: paneName(p) })"
-        :title="isPinned(p.pane_id) ? t('toHandlePanel.unpinTitle') : t('toHandlePanel.pinTitle')"
-        @click="togglePinnedPane(p.pane_id)"
-      ><Icon :name="isPinned(p.pane_id) ? 'pin-fill' : 'pin'" /></button>
-      <button class="card-x" :aria-label="t('toHandlePanel.hideLabel', { name: paneName(p) })" :title="t('toHandlePanel.hideTitle')" @click="dismiss(p)">
-        <Icon name="x-lg" />
-      </button>
-    </div>
-  </section>
+    </section>
+    <NeedsYouWorkspaces v-if="settings.showWorkspacesInNeedsYou" />
+  </div>
 </template>
 
 <style scoped>
+.needs-you { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .to-handle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 6px 16px; }
 .empty { margin: 0; padding: 8px; color: var(--muted); font-size: var(--font-size); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }

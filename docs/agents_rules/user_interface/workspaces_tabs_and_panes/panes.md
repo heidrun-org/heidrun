@@ -30,4 +30,5 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - A click on a card shows the pane of the agent. A card also lets the developer answer a blocked agent, pin the pane, and hide the card.
 - The button of the Needs you sidebar section shows the number of cards. The number is red when an agent is blocked.
 - A hidden card comes back at the next change of the agent. A finished agent leaves the sidebar section after the delay that the settings give.
+- The list of all the workspaces sits at the bottom of the sidebar section, under the cards, when the option `showWorkspacesInNeedsYou` is on (the default). The rules are in [needs_you_workspaces.md](../sidebars/needs_you_workspaces.md) ([issue 417](https://github.com/heidrun-org/heidrun/issues/417)).
 
