@@ -990,7 +990,21 @@ export function shiftTab(delta: -1 | 1) {
   return moveTab(list[i].tab_id, delta > 0 ? target + 1 : target);
 }
 
-export function closeTab(tabId: string) {
+/** Tells if a tab is the only tab of its workspace. A workspace always has at least one tab. */
+function isLastTabOfItsWorkspace(tabId: string): boolean {
+  const allTabs = state.snapshot?.tabs ?? [];
+  const tab = allTabs.find((candidate) => candidate.tab_id === tabId);
+  if (tab === undefined) {
+    return false;
+  }
+  return allTabs.filter((candidate) => candidate.workspace_id === tab.workspace_id).length <= 1;
+}
+
+export async function closeTab(tabId: string) {
+  if (isLastTabOfItsWorkspace(tabId)) {
+    toast(t("sessionStore.error.lastTab"), "error");
+    return undefined;
+  }
   return guard(() => api.closeTab(tabId));
 }
 

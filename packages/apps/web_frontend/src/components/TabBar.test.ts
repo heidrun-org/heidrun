@@ -290,6 +290,49 @@ describe("TabBar close", () => {
     await flushPromises();
     expect(api.closeTab).not.toHaveBeenCalled();
   });
+
+  it("refuses to close the last tab of a workspace, shows an error notification, and asks no confirmation", async () => {
+    const { wrapper, api, session } = await mountTabBar();
+    session.state.selectedWorkspaceId = "w2";
+    session.state.toast = "";
+    await flushPromises();
+    await wrapper.findAll(".nav-link .confirm")[0].trigger("click");
+    await flushPromises();
+    expect(confirmDialog.open).toBe(false);
+    expect(api.closeTab).not.toHaveBeenCalled();
+    expect(session.state.toast).toBe("You cannot close the last tab of a workspace.");
+    expect(session.state.toastKind).toBe("error");
+  });
+
+  it("refuses to close the last tab of a workspace when the setting confirmTabClose is off", async () => {
+    settings.confirmTabClose = false;
+    const { wrapper, api, session } = await mountTabBar();
+    session.state.selectedWorkspaceId = "w2";
+    session.state.toast = "";
+    await flushPromises();
+    await wrapper.findAll(".nav-link .confirm")[0].trigger("click");
+    await flushPromises();
+    expect(api.closeTab).not.toHaveBeenCalled();
+    expect(session.state.toast).toBe("You cannot close the last tab of a workspace.");
+    expect(session.state.toastKind).toBe("error");
+  });
+
+  it("refuses to close the last tab of a workspace when the store function closeTab is called, as the command palette does", async () => {
+    const { api, session } = await mountTabBar();
+    session.state.toast = "";
+    await session.closeTab("t4");
+    expect(api.closeTab).not.toHaveBeenCalled();
+    expect(session.state.toast).toBe("You cannot close the last tab of a workspace.");
+    expect(session.state.toastKind).toBe("error");
+  });
+
+  it("closes a tab when the workspace has several tabs, and shows no error notification", async () => {
+    const { api, session } = await mountTabBar();
+    session.state.toast = "";
+    await session.closeTab("t3");
+    expect(api.closeTab).toHaveBeenCalledWith("t3");
+    expect(session.state.toast).toBe("");
+  });
 });
 
 /** Gives each tab a box of 100 by 40 pixels, side by side, because jsdom has no layout. */
