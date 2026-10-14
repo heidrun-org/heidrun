@@ -10,26 +10,23 @@
 //!
 //! The calls are blocking. A caller in an async program runs them in a blocking task.
 
-mod database;
-mod github_reader;
-mod query_formatter;
-mod schemas;
+mod github;
+mod model;
+mod storage;
 mod synchronization;
 #[cfg(test)]
 mod test_samples;
-mod types;
 
-pub use database::CodeHostingDatabase;
-pub use github_reader::{
-    find_repository, ignore_log, GhGraphqlRunner, GithubReader, GraphqlRunner, ISSUES_QUERY, PULL_REQUESTS_QUERY,
-};
-pub use query_formatter::{to_json, to_table, NO_ROW_TEXT};
-pub use schemas::{validate_issue_value, validate_pull_request_value};
-pub use synchronization::{describe_since, run as synchronize};
-pub use types::{
+pub use github::github_reader::{ignore_log, GithubReader, ISSUES_QUERY, PULL_REQUESTS_QUERY};
+pub use github::graphql_runner::{find_repository, GhGraphqlRunner, GraphqlRunner};
+pub use model::schemas::{validate_issue_value, validate_pull_request_value};
+pub use model::types::{
     CodeHostingTable, Issue, IssueState, IssueStateReason, PullRequest, PullRequestState, QueryRow, SynchronizationMode,
     SynchronizationReport,
 };
+pub use storage::database::CodeHostingDatabase;
+pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};
+pub use synchronization::{describe_since, run as synchronize};
 
 use std::path::PathBuf;
 

@@ -1,16 +1,16 @@
 //! Checks an issue and a pull request against their JSON schema. The two files of the folder `schemas` are the only place that
 //! says which fields the database stores. The program holds them inside, so it needs no file at run time.
 
-use crate::types::{Issue, PullRequest};
+use crate::model::types::{Issue, PullRequest};
 use jsonschema::Validator;
 use serde_json::Value;
 use std::sync::OnceLock;
 
 /// The text of the file `schemas/issue.schema.json`.
-const ISSUE_SCHEMA: &str = include_str!("../schemas/issue.schema.json");
+const ISSUE_SCHEMA: &str = include_str!("../../schemas/issue.schema.json");
 
 /// The text of the file `schemas/pull_request.schema.json`.
-const PULL_REQUEST_SCHEMA: &str = include_str!("../schemas/pull_request.schema.json");
+const PULL_REQUEST_SCHEMA: &str = include_str!("../../schemas/pull_request.schema.json");
 
 /// The compiled check of an issue. It is built at the first use.
 static ISSUE_VALIDATOR: OnceLock<Validator> = OnceLock::new();

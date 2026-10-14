@@ -6,12 +6,10 @@ A Rust library and a command line tool for [Heidrun](../../../README.md). Both r
 
 - `src/lib.rs`: the public interface of the library.
 - `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `data_layer_code_hosting`.
-- `src/github_reader.rs`: the only code that runs the command `gh`. It reads the pages of issues and of pull requests, and turns them into the stored shape.
-- `src/database.rs`: the SQLite file and its two tables.
-- `src/schemas.rs`: checks an issue and a pull request against their JSON schema.
+- `src/github/`: the reading of GitHub. The file `graphql_runner.rs` is the only code that runs the command `gh`. The file `github_reader.rs` reads the pages of issues and of pull requests, and turns them into the stored shape.
+- `src/storage/`: the SQLite file. The file `database.rs` holds the file and its two tables. The file `query_formatter.rs` writes the rows of a query as a text table or as JSON.
+- `src/model/`: the facts. The file `types.rs` holds the data shapes. The file `schemas.rs` checks an issue and a pull request against their JSON schema.
 - `src/synchronization.rs`: the two modes, `initialize` and `update`.
-- `src/query_formatter.rs`: writes the rows of a query as a text table or as JSON.
-- `src/types.rs`: the data shapes.
 - `schemas/`: the files `issue.schema.json` and `pull_request.schema.json`. They are the only place that says which fields the database stores.
 - `tests/`: the tests of the executable, with a fake `gh` command. The tests of the library sit at the end of each source file.
 

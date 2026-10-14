@@ -1,7 +1,7 @@
 //! Sample data and a fake GitHub for the tests of the package. Only the tests compile this file.
 
-use crate::github_reader::GraphqlRunner;
-use crate::types::{Issue, IssueState, IssueStateReason, PullRequest, PullRequestState};
+use crate::github::graphql_runner::GraphqlRunner;
+use crate::model::types::{Issue, IssueState, IssueStateReason, PullRequest, PullRequestState};
 use serde_json::{json, Value};
 use std::cell::RefCell;
 use std::path::PathBuf;
