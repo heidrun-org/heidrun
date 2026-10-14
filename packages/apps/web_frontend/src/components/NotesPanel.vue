@@ -36,10 +36,10 @@ function sendTo(n: Note, paneId: string) {
 
 <template>
   <div class="panel">
-    <div class="head">
-      <div class="eyebrow">{{ t("notesPanel.title") }}</div>
+    <header class="notes-title d-flex align-items-center">
+      <span class="fw-semibold text-truncate me-auto">{{ t("notesPanel.title") }}</span>
       <label class="toggle"><input v-model="settings.notesShowAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
-    </div>
+    </header>
 
     <p v-if="!list.length" class="empty">
       {{ t("notesPanel.emptyBefore") }}<kbd>⇧⌘P</kbd>{{ t("notesPanel.emptyAfter") }}
@@ -94,8 +94,7 @@ function sendTo(n: Note, paneId: string) {
 </template>
 
 <style scoped>
-.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 14px; display: flex; flex-direction: column; gap: 10px; }
-.head { display: flex; align-items: center; justify-content: space-between; }
+.panel { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
 .toggle { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--muted); }
 .toggle input { accent-color: var(--done); }
 .empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.6; }

@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -27,6 +27,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 ## Needs you
 
 - The Needs you sidebar section is a sidebar section of the right sidebar. It holds one card for each agent that is blocked, that asks a question, or that has finished, with the blocked agents first.
+- The Needs you sidebar section shows the title "Needs you" at its top, above the cards and above the message "No agent is blocked, no agent has finished, and no agent asks a question." The title has 12 pixels above it and 14 pixels at its left, the same space as the title of the Past chats sidebar section.
 - A click on a card shows the pane of the agent. A card also lets the developer answer a blocked agent, pin the pane, and hide the card.
 - The button of the Needs you sidebar section shows the number of cards. The number is red when an agent is blocked.
 - A hidden card comes back at the next change of the agent. A finished agent leaves the sidebar section after the delay that the settings give.

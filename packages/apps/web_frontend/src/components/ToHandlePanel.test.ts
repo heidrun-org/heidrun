@@ -110,10 +110,29 @@ describe("ToHandlePanel cards", () => {
     expect(wrapper.find(".empty").exists()).toBe(false);
   });
 
-  it("has no heading Needs you: the icon of the sidebar icon bar says it", async () => {
+  it("shows the title Needs you above the cards, in normal letters and in semibold, like the title of the Past chats sidebar section", async () => {
     const { wrapper } = await mountToHandlePanel();
+    const title = wrapper.get("header.needs-you-title span");
+    expect(title.text()).toBe("Needs you");
+    expect(title.classes()).toContain("fw-semibold");
     expect(wrapper.find(".eyebrow").exists()).toBe(false);
-    expect(wrapper.text()).not.toContain("Needs you");
+    expect(wrapper.element.children[0]).toBe(wrapper.get("header.needs-you-title").element);
+    expect(wrapper.element.children[1]).toBe(wrapper.get(".to-handle").element);
+  });
+
+  it("shows the title Needs you above the message when no agent calls", async () => {
+    const snapshot = makeSnapshot();
+    snapshot.panes = snapshot.panes.filter((pane) => pane.pane_id === "p3" || pane.pane_id === "p4");
+    const { wrapper } = await mountToHandlePanel(snapshot);
+    expect(wrapper.get("header.needs-you-title span").text()).toBe("Needs you");
+    expect(wrapper.get(".empty").text()).toBe("No agent is blocked, no agent has finished, and no agent asks a question.");
+    expect(wrapper.element.children[0]).toBe(wrapper.get("header.needs-you-title").element);
+  });
+
+  it("gives the title the same word as the tooltip of its icon in the sidebar icon bar", async () => {
+    const { wrapper } = await mountToHandlePanel();
+    const { t } = await import("../i18n/index");
+    expect(wrapper.get("header.needs-you-title span").text()).toBe(t("rightPanel.sidebarSection.toHandle"));
   });
 });
 
