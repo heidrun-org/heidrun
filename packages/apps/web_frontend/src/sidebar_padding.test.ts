@@ -91,8 +91,17 @@ describe('horizontal padding of the sidebar sections of the right sidebar', () =
 		expect(padding).toBe('8px 6px 16px');
 	});
 
-	it('is 14px on each side for the Notes sidebar section', () => {
+	it('is 14px on each side for the Notes sidebar section, with 12px above its title and 18px below', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/NotesPanel.vue', '.panel', 'padding');
-		expect(padding).toBe('18px 14px');
+		expect(padding).toBe('12px 14px 18px');
+	});
+
+	it('leaves the same space at the top and at the left of its title in the Needs you sidebar section, as in the Past chats sidebar section', () => {
+		const needsYouPadding = SidebarPaddingTestHelper.readDeclaration('components/ToHandlePanel.vue', '.needs-you-title', 'padding');
+		const pastChatsPadding = SidebarPaddingTestHelper.readDeclaration('components/ChatsPanel.vue', '.past-chats-title', 'padding');
+		const pastChatsInset = SidebarPaddingTestHelper.readDeclaration('components/ChatsPanel.vue', '.past-chats', '--chats-inset');
+		expect(needsYouPadding).toBe('12px 14px 0');
+		expect(pastChatsPadding).toBe('12px var(--chats-inset) 0');
+		expect(pastChatsInset).toBe('14px');
 	});
 });

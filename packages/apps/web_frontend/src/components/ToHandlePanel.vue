@@ -19,6 +19,9 @@ function summary(p: AgentInfo): string {
 
 <template>
   <div class="needs-you">
+    <header class="needs-you-title d-flex align-items-center">
+      <span class="fw-semibold text-truncate">{{ t("toHandlePanel.title") }}</span>
+    </header>
     <section class="to-handle" :aria-label="t('toHandlePanel.label')">
       <p v-if="attention.length === 0" class="empty">{{ t("toHandlePanel.empty") }}</p>
       <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
@@ -63,6 +66,7 @@ function summary(p: AgentInfo): string {
 
 <style scoped>
 .needs-you { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.needs-you-title { flex: 0 0 auto; padding: 12px 14px 0; }
 .to-handle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 6px 16px; }
 .empty { margin: 0; padding: 8px; color: var(--muted); font-size: var(--font-size); }
 .card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
