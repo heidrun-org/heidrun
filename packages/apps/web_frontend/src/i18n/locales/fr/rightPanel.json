@@ -2,5 +2,6 @@
   "label": "Barre latérale droite",
   "sidebarSection.toHandle": "Vous attend",
   "sidebarSection.notes": "Presse-papiers",
-  "sidebarSection.chats": "Conversations passées"
+  "sidebarSection.chats": "Conversations passées",
+  "sidebarSection.userActivity": "Activité de l’utilisateur"
 }

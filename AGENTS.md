@@ -31,6 +31,7 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
   - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
   - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
   - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
+  - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, and the User activity sidebar section. Read it when you change the detection of the activity of the developer or its sidebar section.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -53,6 +54,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
   - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the File explorer sidebar section.
   - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
+  - [user_activity.md](docs/agents_rules/user_interface/sidebars/user_activity.md): the User activity sidebar section, the detection of the activity of the developer, and the user activity records.
 - The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
   - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.

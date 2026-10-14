@@ -15,7 +15,7 @@ describe("openSidebarSection", () => {
     expect(settings.leftSidebarSection).toBe(sidebarSection);
   });
 
-  it.each(["toHandle", "notes", "chats"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
+  it.each(["toHandle", "notes", "chats", "userActivity"] as const)("shows the sidebar section %s in the right sidebar", (sidebarSection) => {
     openSidebarSection(sidebarSection);
     expect(settings.rightSidebarSection).toBe(sidebarSection);
   });
@@ -28,7 +28,7 @@ describe("openSidebarSection", () => {
     expect(settings.rightCollapsed).toBe(true);
   });
 
-  it.each(["toHandle", "notes", "chats"] as const)("expands the collapsed right sidebar when the sidebar section is %s", (sidebarSection) => {
+  it.each(["toHandle", "notes", "chats", "userActivity"] as const)("expands the collapsed right sidebar when the sidebar section is %s", (sidebarSection) => {
     settings.leftCollapsed = true;
     settings.rightCollapsed = true;
     openSidebarSection(sidebarSection);
@@ -51,6 +51,7 @@ describe("clickSidebarSectionIcon", () => {
     ["files", "leftCollapsed", "leftSidebarSection"],
     ["codeHosting", "leftCollapsed", "leftSidebarSection"],
     ["chats", "rightCollapsed", "rightSidebarSection"],
+    ["userActivity", "rightCollapsed", "rightSidebarSection"],
   ] as const)("shows the sidebar section %s when the sidebar shows another one", (sidebarSection, collapsedName, sectionName) => {
     clickSidebarSectionIcon(sidebarSection);
     expect(settings[collapsedName]).toBe(false);

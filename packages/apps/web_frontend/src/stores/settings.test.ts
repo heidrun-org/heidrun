@@ -260,7 +260,7 @@ describe("sidebar section of the right sidebar that was called Pane", () => {
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
-  it.each(["toHandle", "notes", "chats"])("keeps the saved sidebar section %s", async (section) => {
+  it.each(["toHandle", "notes", "chats", "userActivity"])("keeps the saved sidebar section %s", async (section) => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: section }));
     vi.resetModules();
     const restarted = await import("./settings");
