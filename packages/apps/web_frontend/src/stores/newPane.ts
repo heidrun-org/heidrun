@@ -1,7 +1,8 @@
 import { launchAgent } from "./agents";
-import { newTerminal, selectedPane, selectedWorkspace } from "./session";
+import { newTerminal, newWorkspace, selectedPane, selectedWorkspace } from "./session";
 import { insertIntoFocusedPane } from "./input";
 import { settings } from "./settings";
+import type { PaneInfo } from "../lib/types";
 
 const KEY = "heidrun.newPane";
 
@@ -40,12 +41,19 @@ export function forgetNewPaneValues() {
   }
 }
 
-/** Starts one pane from the given values, without any window. */
-export async function startNewPane(values: NewPaneValues) {
+/**
+ * Starts one pane from the given values, without any window.
+ * @param values - the command of the pane and its options
+ * @param existingPane - a pane that already exists, for example the first pane of a new workspace: the command runs in
+ *   this pane and no new tab is created. A terminal needs no command, so a terminal starts nothing in this pane.
+ */
+export async function startNewPane(values: NewPaneValues, existingPane?: PaneInfo) {
   const ws = selectedWorkspace.value;
   if (ws === null || ws === undefined) return;
   if (values.tool === "terminal") {
-    newTerminal();
+    if (existingPane === undefined) {
+      newTerminal();
+    }
     return;
   }
   const prompt = values.text;
@@ -57,6 +65,7 @@ export async function startNewPane(values: NewPaneValues) {
     model: values.model.trim() || null,
     label: values.label.trim(),
     prompt,
+    existingPane,
   });
   // Not sent: kept in the input bar so nothing is lost.
   if (res === "failed" && prompt.trim()) insertIntoFocusedPane(prompt);
@@ -88,4 +97,19 @@ export function onNewPaneClick(e: MouseEvent) {
 /** Starts the default command of a new tab: the plus button of the tab bar and the shortcut Command+T do the same. */
 export function startDefaultNewTab() {
   return startNewPane(defaultNewTabValues());
+}
+
+/**
+ * Creates a workspace for a folder, selects it, and starts the default command of a new tab in its first tab. Herdr creates
+ * this first tab with the workspace, so this function creates no other tab ([issue 379](https://github.com/heidrun-org/heidrun/issues/379)).
+ * @param cwd - the path of the folder of the workspace, absolute or starting with `~`
+ * @param label - the name of the workspace
+ * @returns a promise that ends when the command is started, or when the failure is shown
+ */
+export async function openNewWorkspace(cwd: string | null, label: string | null): Promise<void> {
+  const rootPane = await newWorkspace(cwd, label);
+  if (rootPane === undefined) {
+    return;
+  }
+  await startNewPane(defaultNewTabValues(), rootPane);
 }
