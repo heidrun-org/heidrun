@@ -8,6 +8,7 @@
 //! A conversation file only grows at its end. So a scan can stop at the end of the last complete line, and the next scan
 //! of the same file continues from there with the state that the first scan kept (`scan_file`).
 
+use crate::chats_tokens::TokenScan;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
@@ -52,6 +53,9 @@ pub struct Scan {
     pub title: Option<String>,
     pub first_message: Option<String>,
     pub meta: ChatMeta,
+    /// The tokens that the conversation used, and the state that lets the next scan of the file continue.
+    #[serde(default)]
+    pub tokens: TokenScan,
 }
 
 /// Which kind of reference a number is.
@@ -187,6 +191,7 @@ pub fn feed_claude_line(scan: &mut Scan, line: &str) {
         }
     } else if line.contains(r#""type":"assistant""#) {
         if let Ok(record) = serde_json::from_str::<Value>(line) {
+            scan.tokens.note_claude_answer(&record);
             feed_claude_assistant(scan, &record);
         }
     }
@@ -249,6 +254,12 @@ fn feed_claude_tool_use(scan: &mut Scan, part: &Value) {
 /// Reads one line of a file of Codex into `scan`.
 pub fn feed_codex_line(scan: &mut Scan, line: &str) {
     scan.meta.note_line(line);
+    if line.contains(r#""type":"turn_context""#) || line.contains(r#""type":"token_count""#) {
+        if let Ok(record) = serde_json::from_str::<Value>(line) {
+            scan.tokens.note_codex_record(&record);
+        }
+        return;
+    }
     if line.contains(r#""role":"user""#) || line.contains(r#""role":"assistant""#) {
         let Ok(record) = serde_json::from_str::<Value>(line) else { return };
         feed_codex_message(scan, &record);
@@ -547,6 +558,62 @@ mod tests {
         assert_eq!(meta.issues.into_iter().collect::<Vec<_>>(), vec![250]);
         assert_eq!(meta.pull_requests.into_iter().collect::<Vec<_>>(), vec![249]);
         assert_eq!(meta.files_written.into_iter().collect::<Vec<_>>(), vec!["/work/app/a.ts", "/work/app/b.ts"]);
+    }
+
+    #[test]
+    fn reads_the_tokens_of_a_conversation_of_claude_code_and_counts_an_answer_once() {
+        let answer = |id: &str, output: u64| {
+            format!(
+                r#"{{"type":"assistant","message":{{"id":"{id}","model":"claude-opus-5","role":"assistant","content":[{{"type":"text","text":"ok"}}],"usage":{{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":300,"output_tokens":{output}}}}}}}"#
+            )
+        };
+        let mut scan = Scan::default();
+        for line in [answer("msg_1", 5), answer("msg_1", 40), answer("msg_2", 7), answer("msg_1", 40)] {
+            feed_claude_line(&mut scan, &line);
+        }
+        let totals = scan.tokens.totals();
+        assert_eq!(totals.len(), 1);
+        let tokens = totals["claude-opus-5"];
+        assert_eq!((tokens.fresh_input, tokens.cached_input, tokens.cache_write_input, tokens.output), (20, 600, 40, 47));
+    }
+
+    #[test]
+    fn reads_the_tokens_of_a_conversation_of_codex_without_counting_the_other_lines() {
+        let token_count = |total: u64, input: u64, cached: u64, output: u64| {
+            format!(
+                r#"{{"timestamp":"2026-10-11T10:00:00.000Z","type":"event_msg","payload":{{"type":"token_count","info":{{"total_token_usage":{{"total_tokens":{total}}},"last_token_usage":{{"input_tokens":{input},"cached_input_tokens":{cached},"output_tokens":{output}}}}}}}}}"#
+            )
+        };
+        let lines = [
+            r#"{"timestamp":"2026-10-11T09:59:00.000Z","type":"turn_context","payload":{"model":"gpt-6-sol","cwd":"/work/app"}}"#.to_string(),
+            r#"{"timestamp":"2026-10-11T10:00:00.000Z","type":"event_msg","payload":{"type":"token_count","info":null,"rate_limits":{}}}"#.to_string(),
+            token_count(1_100, 1_000, 600, 100),
+            token_count(1_100, 1_000, 600, 100),
+            token_count(2_300, 1_000, 900, 200),
+        ];
+        let mut scan = Scan::default();
+        for line in &lines {
+            feed_codex_line(&mut scan, line);
+        }
+        let tokens = scan.tokens.totals()["gpt-6-sol"];
+        assert_eq!((tokens.fresh_input, tokens.cached_input, tokens.cache_write_input, tokens.output), (500, 1_500, 0, 300));
+        assert_eq!(scan.meta.folders.into_iter().collect::<Vec<_>>(), vec!["/work/app"]);
+    }
+
+    #[test]
+    fn does_not_count_the_tokens_of_a_line_twice_when_a_scan_continues() {
+        let line = |output: u64| {
+            format!(
+                r#"{{"type":"assistant","message":{{"id":"msg_1","model":"claude-opus-5","content":[],"usage":{{"input_tokens":1,"output_tokens":{output}}}}}}}"#
+            )
+        };
+        let path = scratch_file("tokens", &format!("{}\n", line(5)));
+        let mut scan = Scan::default();
+        let offset = scan_file(&path, 0, &mut scan, feed_claude_line);
+        std::fs::write(&path, format!("{}\n{}\n", line(5), line(30))).unwrap();
+        scan_file(&path, offset, &mut scan, feed_claude_line);
+        assert_eq!(scan.tokens.totals()["claude-opus-5"].output, 30);
+        let _ = std::fs::remove_file(&path);
     }
 
     fn scratch_file(name: &str, text: &str) -> std::path::PathBuf {

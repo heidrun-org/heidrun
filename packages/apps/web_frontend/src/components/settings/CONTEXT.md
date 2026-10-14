@@ -14,6 +14,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsNotificationsSection.vue`: the notification settings, and the switch for the status item in the macOS menu bar (`showStatusItem`, handled by `../../stores/statusItem.ts`).
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 - `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents`. The whole row is the label of its switch. `../StatusBar.vue` shows the quota of a coding agent only when its switch is on.
+- `SettingsPastChatsSection.vue`: the setting `chatsRefreshSeconds`, a button group of four radio inputs (5, 10, 30, or 60 seconds), the delay between two reads of the chats, read by `../ChatsPanel.vue`. [Issue 442](https://github.com/heidrun-org/heidrun/issues/442).
 - `SettingsDynamicTopicsSection.vue`: the switch `dynamicTopics` (first control; off: no dynamic topic bar, no label, no computation, no call, read by `../ChatsPanel.vue` and by the stores `dynamic_topics.ts`, `language_model_topics.ts`, `topic_clusters.ts`), the extraction method (`dynamicTopicExtraction`, read by `../ChatsPanel.vue`), the switch `clusteredDynamicTopics`, the button "Rebuild the clusters", and the lines that say why the last call gave nothing. Two information cards (`../InformationCard.vue`, placement "bottom") hold the help.
 
 ## Rules

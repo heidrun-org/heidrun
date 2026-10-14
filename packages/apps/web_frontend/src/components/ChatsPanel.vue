@@ -34,8 +34,8 @@ import DynamicTopicBar from "./DynamicTopicBar.vue";
 import Icon from "./Icon.vue";
 import { openChatInApp, openChatInHeidrun } from "../stores/chat_open";
 
-/** How often the list reads the files of the coding agents again while it is on the screen, in milliseconds. */
-const REFRESH_DELAY = 10_000;
+/** The number of milliseconds in one second. */
+const MILLISECONDS_PER_SECOND = 1_000;
 
 const folder = computed(() => (state.selectedWorkspaceId === null ? null : workspaceCwd(state.selectedWorkspaceId)));
 
@@ -113,8 +113,24 @@ watch(
     }
   },
 );
-const refreshTimer = setInterval(() => loadChats(folder.value), REFRESH_DELAY);
-onBeforeUnmount(() => clearInterval(refreshTimer));
+// The list reads the files of the coding agents again while it is on the screen, after the delay of the Settings window
+// (section Past chats). A change of the delay starts the timer again.
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+function stopRefreshTimer() {
+  if (refreshTimer !== null) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+watch(
+  () => settings.chatsRefreshSeconds,
+  (seconds) => {
+    stopRefreshTimer();
+    refreshTimer = setInterval(() => loadChats(folder.value), seconds * MILLISECONDS_PER_SECOND);
+  },
+  { immediate: true },
+);
+onBeforeUnmount(stopRefreshTimer);
 
 /** The name of a coding agent, as the selector shows it. */
 function agentLabel(agent: ChatAgent): string {
@@ -312,6 +328,7 @@ const VIEWS = [
                 v-if="row.lines.dates !== ''"
                 :text="row.lines.dates"
                 :meta="row.chat.meta"
+                :usage="row.chat.usage ?? null"
               />
               <ChatReferencesLine
                 v-if="row.references.length > 0"
