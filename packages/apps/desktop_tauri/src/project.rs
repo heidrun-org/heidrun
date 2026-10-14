@@ -62,10 +62,6 @@ fn lock_file_manager(dir: &Path) -> Option<&'static str> {
     }
 }
 
-fn package_manager(root: &Path) -> &'static str {
-    lock_file_manager(root).unwrap_or("npm")
-}
-
 /// The package manager of the package in `folder`: the nearest lock file, from `folder` up to `root`, because a
 /// monorepo keeps its one lock file at the root.
 fn package_manager_for(folder: &Path, root: &Path) -> &'static str {
@@ -283,15 +279,15 @@ mod project_tests {
     #[test]
     fn picks_the_package_manager_from_the_lock_file() {
         let dir = scratch("pm");
-        assert_eq!(package_manager(&dir), "npm");
+        assert_eq!(package_manager_for(&dir, &dir), "npm");
         std::fs::write(dir.join("yarn.lock"), "").unwrap();
-        assert_eq!(package_manager(&dir), "yarn");
+        assert_eq!(package_manager_for(&dir, &dir), "yarn");
         std::fs::remove_file(dir.join("yarn.lock")).unwrap();
         std::fs::write(dir.join("bun.lockb"), "").unwrap();
-        assert_eq!(package_manager(&dir), "bun");
+        assert_eq!(package_manager_for(&dir, &dir), "bun");
         std::fs::write(dir.join("pnpm-lock.yaml"), "").unwrap();
         std::fs::write(dir.join("yarn.lock"), "").unwrap();
-        assert_eq!(package_manager(&dir), "pnpm");
+        assert_eq!(package_manager_for(&dir, &dir), "pnpm");
         let _ = std::fs::remove_dir_all(&dir);
     }
 
