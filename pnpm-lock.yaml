@@ -186,6 +186,8 @@ importers:
 
   packages/auxiliary/data_layer_code_hosting: {}
 
+  packages/auxiliary/data_layer_source_control: {}
+
   packages/auxiliary/raw_coding_agent_cli: {}
 
   packages/auxiliary/website_public:

@@ -10,12 +10,13 @@
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",
     "tauri": "pnpm --filter desktop_tauri tauri",
-    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter data_layer_code_hosting test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test",
+    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter data_layer_code_hosting test && pnpm --filter data_layer_source_control test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test",
     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
     "docs:identity": "node scripts/identity-texts.mjs",
     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --",
     "release:change_log": "tsx packages/dev_tools/change_log_generator/src/cli.ts",
     "data_layer:code_hosting": "pnpm --silent --filter data_layer_code_hosting cli",
+    "data_layer:source_control": "pnpm --silent --filter data_layer_source_control cli",
     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts"
   },
   "devDependencies": {
