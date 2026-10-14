@@ -6,6 +6,10 @@ A Rust library and a command line tool that read every issue and every pull requ
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface of the library. It exports `CodeHostingDatabase`, `GithubReader`, `GraphqlRunner`, `GhGraphqlRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `default_database_path`, `validate_issue_value`, `validate_pull_request_value`, and the data types.
 - `src/main.rs`: the command line, and the executable `data_layer_code_hosting`. The module `src/command_line.rs` reads its arguments.
+- `src/github/`: the reading of the issues and of the pull requests of GitHub, through a `GraphqlRunner` — see its own CONTEXT.md.
+- `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.
+- `src/model/`: the data types, and the JSON schema checks — see its own CONTEXT.md.
+- `src/synchronization.rs`: the two modes, `initialize` and `update`.
 - `schemas/`: the two JSON schema files `issue.schema.json` and `pull_request.schema.json`. They are the only place that says which fields the database stores.
 - `tests/`: the tests of the executable, with a fake `gh` command put at the start of the PATH. The tests of the library sit at the end of each source file, and `src/test_samples.rs` holds their sample data and their fake GitHub.
 - Command to run this folder: `pnpm --silent data_layer:code_hosting --help`
@@ -16,11 +20,12 @@ A Rust library and a command line tool that read every issue and every pull requ
 - Every item is checked against its JSON schema before it is written, and a wrong item writes nothing. The program holds the two schema files inside with `include_str!`.
 - `initialize` reads every item since the beginning. `update` reads only the items that changed since the last read. Each mode can run again and again, and never writes a row two times.
 - The date of the last read is the largest `updatedAt` of the table for the repository. The package keeps no other state, and no extra table.
-- Only `src/github_reader.rs` runs the command `gh`, and only through a `GraphqlRunner`. The tests give a fake runner or a fake `gh` command, so they need no network.
+- Only `src/github/graphql_runner.rs` runs the command `gh`. The tests give a fake runner or a fake `gh` command, so they need no network.
 - The package stores facts only: no review, no reaction, no milestone, and no comment text.
-- `query` and `CodeHostingDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it. `src/query_formatter.rs` only turns rows into text.
+- `query` and `CodeHostingDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it. `src/storage/query_formatter.rs` only turns rows into text.
 - The default SQLite file is `~/.config/heidrun/data_layer.sqlite`. The option `--database` changes it.
 - The option `--verbose` prints the progress on the standard error output. The code sends the progress lines to a log function and never prints them itself, except `src/main.rs`.
+- The folder `src/model/` imports from no other folder of `src/`. The folder `src/github/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/github/` and `src/storage/` together.
 - The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
 - The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
 

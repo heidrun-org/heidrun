@@ -3,9 +3,9 @@
 //! The date of the last read is not stored anywhere else: it is the largest value of the column `updatedAt` of each table, for
 //! the repository. When a table has no row for the repository, the mode update reads everything, as the mode initialize does.
 
-use crate::database::CodeHostingDatabase;
-use crate::github_reader::GithubReader;
-use crate::types::{CodeHostingTable, SynchronizationMode, SynchronizationReport};
+use crate::github::github_reader::GithubReader;
+use crate::model::types::{CodeHostingTable, SynchronizationMode, SynchronizationReport};
+use crate::storage::database::CodeHostingDatabase;
 
 /// Reads the issues and the pull requests of a repository, and writes them in the database. `log` receives one line of
 /// progress for the date where each read starts and for each write.
@@ -60,9 +60,9 @@ pub fn describe_since(since: Option<&str>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::github_reader::ignore_log;
+    use crate::github::github_reader::ignore_log;
+    use crate::model::types::IssueState;
     use crate::test_samples::{date, issue, issue_node, pull_request_node, temp_folder, FakeGithub, FakeRequest};
-    use crate::types::IssueState;
     use serde_json::{json, Value};
     use std::cell::RefCell;
 

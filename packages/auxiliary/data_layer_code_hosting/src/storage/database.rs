@@ -4,8 +4,8 @@
 //! is `repository` and `number`. The column `data` holds the JSON text of the issue or of the pull request, so the facts are
 //! never split into more columns.
 
-use crate::schemas::{issue_to_checked_value, pull_request_to_checked_value};
-use crate::types::{CodeHostingTable, Issue, PullRequest, QueryRow};
+use crate::model::schemas::{issue_to_checked_value, pull_request_to_checked_value};
+use crate::model::types::{CodeHostingTable, Issue, PullRequest, QueryRow};
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
@@ -225,8 +225,8 @@ fn value_from_sqlite(value: ValueRef) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::types::{IssueState, PullRequestState};
     use crate::test_samples::{date, issue, pull_request, temp_folder};
-    use crate::types::{IssueState, PullRequestState};
 
     const REPOSITORY: &str = "heidrun-org/heidrun";
 

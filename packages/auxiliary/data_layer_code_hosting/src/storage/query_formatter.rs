@@ -1,6 +1,6 @@
 //! Writes the rows of a query as a table for a person, or as JSON for another program. It only turns data into text.
 
-use crate::types::QueryRow;
+use crate::model::types::QueryRow;
 use serde_json::Value;
 
 /// The text of a table with no row.
