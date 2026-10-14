@@ -7,11 +7,11 @@
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: dynamic topics](../user_interface/sidebars/chats/dynamic_topics/index.md)
 - Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
 
-This document gives one short definition for each word of the dynamic topics of the Chats sidebar section. The other words of Heidrun are in [index.md](index.md).
+This document gives one short definition for each word of the dynamic topics of the Past chats sidebar section. The other words of Heidrun are in [index.md](index.md).
 
 ### Dynamic topic
 
-One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Chats sidebar section shows them on the row of the chat.
+One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Past chats sidebar section shows them on the row of the chat.
 
 ### Raw dynamic topic
 
@@ -35,7 +35,7 @@ The choice of the method that computes the dynamic topics: "Keyword" (from the w
 
 ### Dynamic topic bar
 
-The row of small rounded buttons in the header of the Chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
+The row of small rounded buttons in the header of the Past chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
 
 ## Rules
 

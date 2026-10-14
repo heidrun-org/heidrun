@@ -10,7 +10,7 @@ import { clickSidebarSectionIcon, COLLAPSED_SIDEBAR_WIDTH, type SidebarSectionBu
 import { visibleNotes } from "../stores/notes";
 import { t } from "../i18n/index";
 
-/** The buttons of the sidebar icon bar of the right sidebar: the Needs you, Notes, and Chats sidebar sections. */
+/** The buttons of the sidebar icon bar of the right sidebar: the Needs you, Notes, and Past chats sidebar sections. */
 const sidebarSections = computed((): SidebarSectionButton[] => [
   {
     id: "toHandle",

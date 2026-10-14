@@ -26,8 +26,8 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
   - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
   - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, and the column of pinned panes.
   - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Source control, Code hosting, and Files sidebar sections, and the sidebar icon bar.
-  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the Chats sidebar section, and the Chats sort dropdown menu.
-  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Chats sidebar section or the dynamic topics.
+  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the Past chats sidebar section, and the Chats sort dropdown menu.
+  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Past chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Past chats sidebar section or the dynamic topics.
   - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
   - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
   - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
@@ -53,7 +53,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
   - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the Files sidebar section.
   - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
-- The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
+- The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
   - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
   - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, its cache, and the width of an information card.

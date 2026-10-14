@@ -1,4 +1,4 @@
-# Chats sidebar section: the methods of the dynamic topic extraction
+# Past chats sidebar section: the methods of the dynamic topic extraction
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

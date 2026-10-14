@@ -118,7 +118,7 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar", "Add the Chats sidebar section"], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    const header = wrapper.element.firstElementChild as HTMLElement;
+    const header = wrapper.get(".chats-panel").element.firstElementChild as HTMLElement;
     expect(header.classList.contains("chats-header")).toBe(true);
     const row = header.firstElementChild as HTMLElement;
     expect([...row.children].map((child) => child.getAttribute("role"))).toEqual(["group", null]);
@@ -212,7 +212,29 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.find(".btn-group").exists()).toBe(false);
-    expect(wrapper.text()).toBe("No chat of Claude or Codex was found for this workspace.");
+    expect(wrapper.get(".chats-panel").text()).toBe("No chat of Claude or Codex was found for this workspace.");
+  });
+
+  it("shows the title Past chats first, above the scroll area, with a list of chats", async () => {
+    answer(["Fix the tab bar"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const title = wrapper.element.firstElementChild as HTMLElement;
+    expect(title.tagName).toBe("HEADER");
+    expect(title.textContent?.trim()).toBe("Past chats");
+    expect(title.nextElementSibling).toBe(wrapper.get(".chats-panel").element);
+    expect(wrapper.get(".chats-panel").text()).not.toContain("Past chats");
+  });
+
+  it("shows the title Past chats when no chat was found and when no workspace is selected", async () => {
+    answer([], []);
+    const empty = mount(ChatsPanel);
+    await flushPromises();
+    expect(empty.get("header").text()).toBe("Past chats");
+    state.selectedWorkspaceId = null;
+    const withoutWorkspace = mount(ChatsPanel);
+    await flushPromises();
+    expect(withoutWorkspace.get("header").text()).toBe("Past chats");
   });
 
   it("asks for nothing and tells to select a workspace when no workspace is selected", async () => {
@@ -220,7 +242,7 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(invoke).not.toHaveBeenCalled();
-    expect(wrapper.text()).toBe("Select a workspace to see its chats.");
+    expect(wrapper.get(".chats-panel").text()).toBe("Select a workspace to see its chats.");
   });
 
   it("shows the reason in an alert when the conversations cannot be read", async () => {

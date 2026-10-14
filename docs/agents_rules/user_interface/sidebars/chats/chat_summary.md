@@ -1,4 +1,4 @@
-# Chats sidebar section: the summary of a chat
+# Past chats sidebar section: the summary of a chat
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

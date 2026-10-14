@@ -1,4 +1,4 @@
-# Chats sidebar section: clustered dynamic topics
+# Past chats sidebar section: clustered dynamic topics
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

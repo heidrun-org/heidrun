@@ -1,4 +1,4 @@
-# Chats sidebar section rules index
+# Past chats sidebar section rules index
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

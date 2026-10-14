@@ -5,7 +5,7 @@ import { settings } from "./settings";
 /** A coding agent that saves its conversations on this Mac. */
 export type ChatAgent = "claude" | "codex";
 
-/** The coding agents of the selector of the Chats sidebar section, in this order. */
+/** The coding agents of the selector of the Past chats sidebar section, in this order. */
 export const CHAT_AGENTS: readonly ChatAgent[] = ["claude", "codex"];
 
 /**
@@ -198,7 +198,7 @@ export async function showMoreChats(): Promise<void> {
 
 /**
  * Reads the first conversations of a folder again, in the order that the settings say. A change of folder empties the
- * lists first, and starts again with the first limit, so that the Chats sidebar section never shows the conversations of
+ * lists first, and starts again with the first limit, so that the Past chats sidebar section never shows the conversations of
  * another workspace. An answer for a folder, a limit, a sort key, or an order that is no longer the current one is dropped.
  * @param folder - the folder of the selected workspace, or null when no workspace is selected
  */

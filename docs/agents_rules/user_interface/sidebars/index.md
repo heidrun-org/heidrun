@@ -16,4 +16,4 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [code_hosting_search.md](code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
 - [files.md](files.md): the Files sidebar section.
 - [needs_you_workspaces.md](needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
-- [chats/](chats/index.md): the Chats sidebar section.
+- [chats/](chats/index.md): the Past chats sidebar section.

@@ -198,164 +198,171 @@ const VIEWS = [
 </script>
 
 <template>
-  <section class="chats-panel d-flex flex-column gap-3 overflow-y-auto" :aria-label="t('chatsPanel.label')">
-    <div v-if="chats.error !== null" class="alert theme-danger" role="alert">{{ chats.error }}</div>
-    <div v-else-if="chats.isLoading" class="text-body-secondary">{{ t("chatsPanel.loading") }}</div>
-    <div v-else-if="selectedChatAgent === null" class="text-body-secondary">
-      {{ folder === null ? t("chatsPanel.noWorkspace") : t("chatsPanel.empty") }}
-    </div>
-    <template v-else>
-      <div class="chats-header d-flex flex-column gap-3">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-          <div class="btn-group" role="group" :aria-label="t('chatsPanel.agentLabel')">
-            <label
-              v-for="choice in CHAT_AGENTS"
-              :key="choice"
-              class="btn btn-check"
-              :title="chats[choice].length === 0 ? t('chatsPanel.agentUnavailableTitle') : undefined"
-            >
-              <input
-                :id="`chats-agent-${choice}`"
-                v-model="agent"
-                type="radio"
-                name="chats-agent"
-                autocomplete="off"
-                :value="choice"
-                :disabled="chats[choice].length === 0"
-              />
-              {{ agentLabel(choice) }}
-            </label>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <ChatsSortMenu />
-            <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
-              <label v-for="choice in VIEWS" :key="choice.id" class="btn btn-check" :title="t(choice.title)">
+  <section class="past-chats d-flex flex-column" :aria-label="t('chatsPanel.label')">
+    <header class="past-chats-title d-flex align-items-center">
+      <span class="fw-semibold text-truncate">{{ t("chatsPanel.title") }}</span>
+    </header>
+    <div class="chats-panel d-flex flex-column gap-3 overflow-y-auto">
+      <div v-if="chats.error !== null" class="alert theme-danger" role="alert">{{ chats.error }}</div>
+      <div v-else-if="chats.isLoading" class="text-body-secondary">{{ t("chatsPanel.loading") }}</div>
+      <div v-else-if="selectedChatAgent === null" class="text-body-secondary">
+        {{ folder === null ? t("chatsPanel.noWorkspace") : t("chatsPanel.empty") }}
+      </div>
+      <template v-else>
+        <div class="chats-header d-flex flex-column gap-3">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="btn-group" role="group" :aria-label="t('chatsPanel.agentLabel')">
+              <label
+                v-for="choice in CHAT_AGENTS"
+                :key="choice"
+                class="btn btn-check"
+                :title="chats[choice].length === 0 ? t('chatsPanel.agentUnavailableTitle') : undefined"
+              >
                 <input
-                  :id="`chats-view-${choice.id}`"
-                  v-model="view"
+                  :id="`chats-agent-${choice}`"
+                  v-model="agent"
                   type="radio"
-                  name="chats-view"
+                  name="chats-agent"
                   autocomplete="off"
-                  :value="choice.id"
-                  :aria-label="t(choice.title)"
+                  :value="choice"
+                  :disabled="chats[choice].length === 0"
                 />
-                <Icon :name="choice.icon" />
+                {{ agentLabel(choice) }}
               </label>
             </div>
-          </div>
-        </div>
-        <DynamicTopicBar
-          v-if="barTopics.length > 0"
-          :topics="barTopics"
-          :chat-counts="barChatCounts"
-          :selected="activeTopic"
-          @select="selectedTopic = $event"
-        />
-        <div class="chats-separator border-top" role="separator"></div>
-      </div>
-      <ul class="list-group list-group-flush" :class="{ 'is-expanded': view === 'expanded' }">
-        <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
-          <div class="d-flex align-items-start gap-2">
-            <div class="chat-title flex-fill">{{ row.chat.title }}</div>
-            <div class="chat-actions btn-group" role="group" :aria-label="t('chatsPanel.chatActionsLabel')">
-              <button
-                type="button"
-                class="btn"
-                :title="appTitle"
-                :aria-label="appTitle"
-                @click="openChatInApp(agent, row.chat)"
-              >
-                <Icon :name="agentIcon" />
-              </button>
-              <button
-                type="button"
-                class="btn"
-                :title="t('chatsPanel.heidrunTitle')"
-                :aria-label="t('chatsPanel.heidrunTitle')"
-                @click="openChatInHeidrun(agent, row.chat, chats.folder)"
-              >
-                <Icon name="heidrun-goat-only" />
-              </button>
+            <div class="d-flex align-items-center gap-2">
+              <ChatsSortMenu />
+              <div class="btn-group" role="group" :aria-label="t('chatsPanel.viewLabel')">
+                <label v-for="choice in VIEWS" :key="choice.id" class="btn btn-check" :title="t(choice.title)">
+                  <input
+                    :id="`chats-view-${choice.id}`"
+                    v-model="view"
+                    type="radio"
+                    name="chats-view"
+                    autocomplete="off"
+                    :value="choice.id"
+                    :aria-label="t(choice.title)"
+                  />
+                  <Icon :name="choice.icon" />
+                </label>
+              </div>
             </div>
           </div>
-          <div v-if="row.topics.length > 0" class="chat-topics" role="group" :aria-label="t('chatsPanel.topicsLabel')">
-            <button
-              v-for="topic in row.topics"
-              :key="topic"
-              type="button"
-              class="badge me-2"
-              :class="{ 'is-selected': activeTopic === topic }"
-              :aria-pressed="activeTopic === topic"
-              :title="
-                activeTopic === topic
-                  ? t('chatsPanel.topicAllTitle')
-                  : t('chatsPanel.topicTitle', { topic, count: barChatCounts.get(topic) ?? 0 })
-              "
-              @click="selectedTopic = activeTopic === topic ? null : topic"
-            >
-              {{ topic }}
-            </button>
-          </div>
-          <div class="chat-summary d-flex flex-column text-body-secondary">
-            <ChatDatesLine
-              v-if="row.lines.dates !== ''"
-              :text="row.lines.dates"
-              :meta="row.chat.meta"
-            />
-            <ChatReferencesLine
-              v-if="row.references.length > 0"
-              :text="row.lines.references"
-              :references="row.references"
-              :folder="chats.folder ?? ''"
-              :forge="repository.forge"
-              :web-base="repository.base"
-            />
-            <ChatFilesLine
-              v-if="row.lines.files !== ''"
-              :text="row.lines.files"
-              :entries="row.lines.fileEntries"
-              :folder="chats.folder ?? ''"
-              :web-base="repository.base"
-              :forge="repository.forge"
-            />
-            <ChatWorktreesLine v-if="row.lines.worktrees !== ''" :entries="row.lines.worktreeEntries" />
-          </div>
-        </li>
-      </ul>
-      <div class="d-flex gap-2">
-        <button
-          type="button"
-          class="btn flex-fill justify-content-center position-relative"
-          :disabled="canShowMoreChats === false || chats.isShowingMore"
-          :aria-busy="chats.isShowingMore"
-          @click="showMoreChats"
-        >
-          {{ t("chatsPanel.showMore") }}
-          <span
-            v-if="chats.isShowingMore"
-            class="busy-spinner spinner-border position-absolute top-0 bottom-0 end-0 my-auto me-2"
-            role="status"
-            aria-hidden="true"
-          ></span>
-        </button>
-        <button
-          type="button"
-          class="btn flex-fill justify-content-center"
-          :disabled="canShowLessChats === false || chats.isShowingMore"
-          @click="showLessChats"
-        >
-          {{ t("chatsPanel.showLess") }}
-        </button>
-      </div>
-    </template>
+          <DynamicTopicBar
+            v-if="barTopics.length > 0"
+            :topics="barTopics"
+            :chat-counts="barChatCounts"
+            :selected="activeTopic"
+            @select="selectedTopic = $event"
+          />
+          <div class="chats-separator border-top" role="separator"></div>
+        </div>
+        <ul class="list-group list-group-flush" :class="{ 'is-expanded': view === 'expanded' }">
+          <li v-for="row in rows" :key="row.chat.id" class="list-group-item list-group-item-action text-break">
+            <div class="d-flex align-items-start gap-2">
+              <div class="chat-title flex-fill">{{ row.chat.title }}</div>
+              <div class="chat-actions btn-group" role="group" :aria-label="t('chatsPanel.chatActionsLabel')">
+                <button
+                  type="button"
+                  class="btn"
+                  :title="appTitle"
+                  :aria-label="appTitle"
+                  @click="openChatInApp(agent, row.chat)"
+                >
+                  <Icon :name="agentIcon" />
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :title="t('chatsPanel.heidrunTitle')"
+                  :aria-label="t('chatsPanel.heidrunTitle')"
+                  @click="openChatInHeidrun(agent, row.chat, chats.folder)"
+                >
+                  <Icon name="heidrun-goat-only" />
+                </button>
+              </div>
+            </div>
+            <div v-if="row.topics.length > 0" class="chat-topics" role="group" :aria-label="t('chatsPanel.topicsLabel')">
+              <button
+                v-for="topic in row.topics"
+                :key="topic"
+                type="button"
+                class="badge me-2"
+                :class="{ 'is-selected': activeTopic === topic }"
+                :aria-pressed="activeTopic === topic"
+                :title="
+                  activeTopic === topic
+                    ? t('chatsPanel.topicAllTitle')
+                    : t('chatsPanel.topicTitle', { topic, count: barChatCounts.get(topic) ?? 0 })
+                "
+                @click="selectedTopic = activeTopic === topic ? null : topic"
+              >
+                {{ topic }}
+              </button>
+            </div>
+            <div class="chat-summary d-flex flex-column text-body-secondary">
+              <ChatDatesLine
+                v-if="row.lines.dates !== ''"
+                :text="row.lines.dates"
+                :meta="row.chat.meta"
+              />
+              <ChatReferencesLine
+                v-if="row.references.length > 0"
+                :text="row.lines.references"
+                :references="row.references"
+                :folder="chats.folder ?? ''"
+                :forge="repository.forge"
+                :web-base="repository.base"
+              />
+              <ChatFilesLine
+                v-if="row.lines.files !== ''"
+                :text="row.lines.files"
+                :entries="row.lines.fileEntries"
+                :folder="chats.folder ?? ''"
+                :web-base="repository.base"
+                :forge="repository.forge"
+              />
+              <ChatWorktreesLine v-if="row.lines.worktrees !== ''" :entries="row.lines.worktreeEntries" />
+            </div>
+          </li>
+        </ul>
+        <div class="d-flex gap-2">
+          <button
+            type="button"
+            class="btn flex-fill justify-content-center position-relative"
+            :disabled="canShowMoreChats === false || chats.isShowingMore"
+            :aria-busy="chats.isShowingMore"
+            @click="showMoreChats"
+          >
+            {{ t("chatsPanel.showMore") }}
+            <span
+              v-if="chats.isShowingMore"
+              class="busy-spinner spinner-border position-absolute top-0 bottom-0 end-0 my-auto me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          </button>
+          <button
+            type="button"
+            class="btn flex-fill justify-content-center"
+            :disabled="canShowLessChats === false || chats.isShowingMore"
+            @click="showLessChats"
+          >
+            {{ t("chatsPanel.showLess") }}
+          </button>
+        </div>
+      </template>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.chats-panel { --chats-inset: 14px; flex: 1; min-height: 0; padding: 18px var(--chats-inset); }
+.past-chats { --chats-inset: 14px; --chats-top: 8px; flex: 1; min-height: 0; }
+.past-chats-title { flex: 0 0 auto; padding: 12px var(--chats-inset) 0; }
+.chats-panel { flex: 1; min-height: 0; padding: var(--chats-top) var(--chats-inset) 18px; }
 .chats-header {
-  position: sticky; top: -18px; z-index: 2; margin: -18px calc(-1 * var(--chats-inset)) -0.5rem;
-  padding: 18px var(--chats-inset) 0; background: var(--side);
+  position: sticky; top: calc(-1 * var(--chats-top)); z-index: 2; margin: calc(-1 * var(--chats-top)) calc(-1 * var(--chats-inset)) -0.5rem;
+  padding: var(--chats-top) var(--chats-inset) 0; background: var(--side);
 }
 .list-group { margin: 0 calc(-1 * var(--chats-inset)); --list-group-item-padding-x: var(--chats-inset); }
 .chats-separator { margin: 0 calc(-1 * var(--chats-inset)); }

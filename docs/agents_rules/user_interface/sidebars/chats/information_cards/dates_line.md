@@ -1,4 +1,4 @@
-# Chats sidebar section: the dates line
+# Past chats sidebar section: the dates line
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026
