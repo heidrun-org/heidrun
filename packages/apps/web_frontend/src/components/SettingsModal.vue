@@ -11,6 +11,7 @@ import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
+import SettingsPastChatsSection from "./settings/SettingsPastChatsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
 import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
@@ -25,6 +26,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
+  { id: "pastChats", icon: "chat-left-text", labelKey: "settingsModal.pastChats" },
   { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
 ];
 
@@ -79,6 +81,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
           <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
+          <SettingsPastChatsSection v-else-if="settingsModal.section === 'pastChats'" />
           <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />
         </section>
       </div>

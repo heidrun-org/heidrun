@@ -22,23 +22,36 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the sections in the sidebar, with the section Needs you after the section Finished items, the section Dynamic topics at the end, and without the section Skills", async () => {
+  it("lists the sections in the sidebar, with the section Needs you after the section Finished items, the section Past chats before the section Dynamic topics, the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Needs you", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Needs you", "Notifications", "Mobile access", "Agents", "Past chats", "Dynamic topics"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
     await links[3].trigger("click");
     expect(wrapper.get("h3").text()).toBe("Mouse");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false, false]);
     expect(links[3].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: section Past chats (issue #442)", () => {
+  it("opens the section Past chats with the delay between two reads of the chats, and the icon of the Past chats sidebar section", async () => {
+    const { settingsModal } = await import("../stores/settings");
+    settingsModal.section = "pastChats";
+    const wrapper = await mountSettings();
+    expect(wrapper.get("section h3").text()).toBe("Past chats");
+    expect(wrapper.findAll("section .btn-group label").map((label) => label.text())).toEqual(["5 seconds", "10 seconds", "30 seconds", "1 minute"]);
+    const link = wrapper.findAll("nav .nav-link").find((entry) => entry.text() === "Past chats");
+    expect(link?.find(".bi-chat-left-text").exists()).toBe(true);
     wrapper.unmount();
   });
 });

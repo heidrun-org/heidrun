@@ -15,6 +15,10 @@ This document gives one short definition for each word of the chats and the Past
 
 One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
 
+### Estimated cost of a chat
+
+The amount of money that the tokens of a chat would cost if each request were paid by token, at the public price of its model. It is an estimate: neither coding agent writes the cost in its files, and a developer on a fixed subscription pays something else. It shows in the information card "Dates and messages", with the input tokens, the cached input tokens, and the output tokens.
+
 ### Past chats sidebar section
 
 The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a line with the selector that chooses the coding agent, the Chats sort dropdown menu, and the two view buttons, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of up to four lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats. The words for the dynamic topics, such as "dynamic topic bar" and "translation table", are in [dynamic_topics.md](dynamic_topics.md).

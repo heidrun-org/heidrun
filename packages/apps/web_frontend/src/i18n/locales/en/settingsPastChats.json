@@ -1,0 +1,8 @@
+{
+  "refreshLabel": "Read the chats again every",
+  "refresh5": "5 seconds",
+  "refresh10": "10 seconds",
+  "refresh30": "30 seconds",
+  "refresh60": "1 minute",
+  "refreshHelp": "While the Past chats sidebar section is on the screen, Heidrun reads the files of the chats again after this delay, so that the numbers of a chat that is still running stay true. A shorter delay shows the changes sooner."
+}

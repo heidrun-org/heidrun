@@ -267,6 +267,26 @@ describe("ChatsPanel", () => {
     expect(invoke).toHaveBeenCalledTimes(2);
   });
 
+  it("reads the files again after the delay of the Settings window, and starts again when the delay changes", async () => {
+    vi.useFakeTimers();
+    settings.chatsRefreshSeconds = 30;
+    answer(["Fix the tab bar"], []);
+    mount(ChatsPanel);
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(29_000);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(invoke).toHaveBeenCalledTimes(2);
+    settings.chatsRefreshSeconds = 5;
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(invoke).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(invoke).toHaveBeenCalledTimes(5);
+    settings.chatsRefreshSeconds = 10;
+  });
+
   /** The two buttons under the list: Show more, then Show less. */
   function pagerButtons(wrapper: ReturnType<typeof mount>) {
     const buttons = wrapper.get("ul + div").findAll("button");

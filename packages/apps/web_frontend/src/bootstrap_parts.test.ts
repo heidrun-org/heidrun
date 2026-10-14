@@ -122,6 +122,7 @@ describe('bootstrap_parts.scss', () => {
 			'.fw-medium',
 			'.fw-semibold',
 			'.fst-italic',
+			'.font-monospace',
 			'.text-start',
 			'.text-end',
 			'.text-break',

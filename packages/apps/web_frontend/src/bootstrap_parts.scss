@@ -207,6 +207,15 @@ $application-utilities: (
       italic: italic,
     ),
   ),
+  // The monospace font of the application is the variable --mono, not the variable --font-mono of Bootstrap.
+  "font-family": (
+    important: true,
+    property: font-family,
+    class: font,
+    values: (
+      monospace: var(--mono),
+    ),
+  ),
   "text-align": (
     important: true,
     property: text-align,

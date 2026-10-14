@@ -1,4 +1,4 @@
-import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder } from '../stores/chats';
+import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -293,10 +293,17 @@ export class TauriMockFixture {
 		order: ChatSortOrder = 'descending',
 	): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
 		const now = Date.now();
-		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
+		const buildChat = (
+			id: string,
+			title: string,
+			minutesAgo: number,
+			meta: Partial<ChatMeta> = {},
+			usage: ChatUsage | null = null,
+		): Chat => ({
 			id,
 			title,
 			updated_at: now - minutesAgo * 60_000,
+			usage,
 			meta: {
 				first_at: now - (minutesAgo + 90) * 60_000,
 				last_at: now - minutesAgo * 60_000,
@@ -331,13 +338,14 @@ export class TauriMockFixture {
 					'/Users/demo/notes/scratch.md',
 					'/private/tmp/claude-501/-Users-demo-webwork-heidrun/e957b92e-4848-4b5b-849e-6618a7a326fd/scratchpad/issue_31_comment.md',
 				],
-			}),
+			},
+			{ input_tokens: 3_218_500, cached_input_tokens: 3_035_392, output_tokens: 3_287, cost_usd: 4.52 }),
 			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
 				first_at: now - 3_000 * 60_000,
 				user_messages: 4,
 				issues: [104, 247],
 				pull_requests: [230, 249],
-			}),
+			}, { input_tokens: 48_000, cached_input_tokens: 0, output_tokens: 1_900, cost_usd: null }),
 			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400, {
 				user_messages: 1,
 				issues: [1, 2, 3, 4, 5, 6],
@@ -351,7 +359,12 @@ export class TauriMockFixture {
 			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
 		}
 		const codexChats: Chat[] = [
-			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
+			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }, {
+				input_tokens: 134_683,
+				cached_input_tokens: 132_864,
+				output_tokens: 84,
+				cost_usd: 0.0031,
+			}),
 			buildChat('codex_2', 'Count up to 200', 600),
 		];
 		const cut = (chats: Chat[]) => {
