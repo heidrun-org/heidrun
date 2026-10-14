@@ -86,4 +86,9 @@ describe('about page', () => {
 	it('links to a source for the myth', () => {
 		expect(about).toMatch(/\]\(https:\/\/en\.wikipedia\.org\/wiki\//);
 	});
+
+	it('shows the video that explains how to pronounce Heiðrún', () => {
+		expect(about).toContain('## How to pronounce Heiðrún?');
+		expect(about).toContain('<YoutubeVideo video-id="NTIw_H7UUsU"');
+	});
 });
