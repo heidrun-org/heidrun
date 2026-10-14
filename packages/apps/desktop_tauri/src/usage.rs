@@ -52,12 +52,7 @@ struct Parsed {
 }
 
 pub(crate) fn codex_home() -> PathBuf {
-    if let Ok(p) = std::env::var("CODEX_HOME") {
-        if !p.is_empty() {
-            return PathBuf::from(p);
-        }
-    }
-    dirs::home_dir().unwrap_or_default().join(".codex")
+    data_layer_chat_sessions::codex_home()
 }
 
 fn collect_logs(dir: &Path, depth: u8, out: &mut Vec<(SystemTime, PathBuf)>) {

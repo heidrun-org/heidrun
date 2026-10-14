@@ -22,6 +22,8 @@ serde_json = { version = "1", features = ["preserve_order"] }
 tokio = { version = "1", features = ["net", "io-util", "time", "sync", "process", "macros"] }
 # Runs the coding agent tools (codex, claude): the package of the repository that the change log generator uses too
 raw_coding_agent_cli = { path = "../../auxiliary/raw_coding_agent_cli" }
+# Finds the chat session files of Claude Code and of Codex, and reads what each one holds
+data_layer_chat_sessions = { path = "../../auxiliary/data_layer_chat_sessions" }
 portable-pty = "0.9"
 base64 = "0.22"
 dirs = "6"
