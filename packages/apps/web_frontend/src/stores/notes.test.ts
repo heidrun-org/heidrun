@@ -83,7 +83,7 @@ describe("the notes of a workspace", () => {
     expect(visibleNotes.value).toEqual([]);
   });
 
-  it("shows every note when All workspaces is checked", async () => {
+  it("shows every note when All workspaces is switched on", async () => {
     const { state, settings, visibleNotes } = await startStores([savedNote("n1", "heidrun"), savedNote("n2", "teamwright")]);
     state.snapshot = snapshotOf([workspace("w3", "heidrun")]);
     state.selectedWorkspaceId = "w3";
@@ -92,7 +92,7 @@ describe("the notes of a workspace", () => {
     expect(visibleNotes.value.map((note) => note.id)).toEqual(["n1", "n2"]);
   });
 
-  it("keeps a note whose workspace does not exist any more, and shows it only when All workspaces is checked", async () => {
+  it("keeps a note whose workspace does not exist any more, and shows it only when All workspaces is switched on", async () => {
     const { state, notes, settings, visibleNotes } = await startStores([savedNote("n1", "closed project")]);
     state.snapshot = snapshotOf([workspace("w3", "heidrun")]);
     state.selectedWorkspaceId = "w3";
@@ -126,7 +126,7 @@ describe("the notes that an older version saved", () => {
     expect(visibleNotes.value.map((note) => note.id)).toEqual(["n1"]);
   });
 
-  it("keeps a note whose origin has no workspace name, and shows it only when All workspaces is checked", async () => {
+  it("keeps a note whose origin has no workspace name, and shows it only when All workspaces is switched on", async () => {
     const { state, notes, visibleNotes } = await startStores([{ id: "n1", title: "x", text: "x", workspaceId: "w2", origin: "", createdAt: 1 }]);
     state.snapshot = snapshotOf([workspace("w2", "heidrun")]);
     state.selectedWorkspaceId = "w2";

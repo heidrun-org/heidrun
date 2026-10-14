@@ -25,7 +25,7 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 - The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
   - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
   - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, and the column of pinned panes.
-  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, and the sidebar icon bar.
+  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, and the sidebar icon bar.
   - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the Past chats sidebar section, and the Chats sort dropdown menu.
   - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Past chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Past chats sidebar section or the dynamic topics.
   - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
@@ -47,7 +47,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
   - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
-  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
+  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the clipboard.
   - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
   - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
   - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".

@@ -10,7 +10,7 @@
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [sidebars.md](sidebars.md): the sidebars and the notes.
+- [sidebars.md](sidebars.md): the sidebars and the clipboard.
 - [source_control.md](source_control.md): the Source control sidebar section.
 - [code_hosting.md](code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
 - [code_hosting_search.md](code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".

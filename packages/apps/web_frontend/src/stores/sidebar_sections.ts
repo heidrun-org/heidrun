@@ -30,7 +30,7 @@ export type SidebarSectionButton = {
 /**
  * Shows a sidebar section. The sidebar that holds the sidebar section expands if it is collapsed to the sidebar icon
  * bar, and shows the sidebar section. The Launchers, Source control, Code hosting, and File explorer sidebar sections
- * belong to the left sidebar. The Needs you, Notes, and Past chats sidebar sections belong to the right sidebar.
+ * belong to the left sidebar. The Needs you, Clipboard, and Past chats sidebar sections belong to the right sidebar.
  */
 export function openSidebarSection(sidebarSection: LeftSidebarSection | RightSidebarSection) {
   if (isLeftSidebarSection(sidebarSection)) {

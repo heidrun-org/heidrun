@@ -205,7 +205,7 @@ const defaults = {
   searchAgentsOnly: false,
   /** Window Search: look only in the selected workspace. */
   searchThisWorkspace: false,
-  /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
+  /** Clipboard sidebar section: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
   /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
   codeHostingSavedSearches: [] as SavedSearch[],

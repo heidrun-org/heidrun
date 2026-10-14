@@ -96,7 +96,7 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar icon bar of the left sidebar", () => {
-  it("shows the buttons File explorer, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
+  it("shows the buttons File explorer, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Clipboard", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
     expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["File explorer", "Launchers", "Source Control", "Code hosting"]);

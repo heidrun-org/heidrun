@@ -67,8 +67,8 @@ watch(
 );
 
 /**
- * The notes that the Notes sidebar section lists, and that the number on its button counts: the notes pinned in the
- * selected workspace, or every note when "All workspaces" is checked.
+ * The notes that the Clipboard sidebar section lists, and that the number on its button counts: the notes pinned in the
+ * selected workspace, or every note when "All workspaces" is switched on.
  */
 export const visibleNotes = computed(() => {
   if (settings.notesShowAll) {
