@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 305](https://github.com/heidrun-org/heidrun/issues/305)
+- Related issue: [issue 305](https://github.com/heidrun-org/heidrun/issues/305), [issue 446](https://github.com/heidrun-org/heidrun/issues/446)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -22,4 +22,6 @@ The Source control sidebar section copies the source control view of VS Code ([i
 - A file line shows the icon of the kind of the file, the file name, its folders in grey (nothing for a file at the root of the repository), and a colored status letter at the right: M modified, A added, D deleted, R renamed, U untracked, ! conflict. Its tooltip gives the full path and the status in words. A click on the line opens the diff of the file in the large Git window.
 - A discard asks for a confirmation first, because the changes cannot come back. A file that Git does not know is deleted.
 - The icon of the Source control sidebar section in the sidebar icon bar shows the number of changed files.
+- The title bar of the large Git window holds all the controls of the window, on one line ([issue #446](https://github.com/heidrun-org/heidrun/issues/446)). At the left, it has the Left sidebar enable disable button, the name of the repository, the branch, and the continuous integration result. At the right, in this order, it has the buttons "Diff", "Side by side", and "File", the button "Preview" for a Markdown file, the buttons "Centered" and "Full width" while the preview shows, the theme dropdown menu, the check box "Wrap lines", the button "Refresh", and the close button. When the window is too narrow for one line, the controls of the right go to a second line.
+- The bar of the viewer, under the title bar, holds only the path of the file and the numbers of added and removed lines. It has no button.
 

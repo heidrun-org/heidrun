@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: sidebars](../user_interface/sidebars/index.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425), [issue 430](https://github.com/heidrun-org/heidrun/issues/430), [issue 435](https://github.com/heidrun-org/heidrun/issues/435)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425), [issue 430](https://github.com/heidrun-org/heidrun/issues/430), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 446](https://github.com/heidrun-org/heidrun/issues/446)
 
 This document gives one short definition for each word of the sidebars and their sidebar sections. The other words of Heidrun are in [index.md](index.md).
 
@@ -50,6 +50,10 @@ The sidebar section of the left sidebar that shows the whole folder tree of the 
 ### Sidebar icon bar
 
 The narrow vertical bar of icons at the outer edge of each sidebar, like the bar of icons of Visual Studio Code. It shows one icon for each sidebar section of that sidebar. A click on an icon shows that sidebar section. When the sidebar is collapsed, the sidebar icon bar is the only part of the sidebar that stays visible.
+
+### Left sidebar enable disable button
+
+The small arrow button at the left end of the title bar of the large Git window. A click on it hides the file list at the left of the large Git window, and a second click shows the file list again. In this name, "left sidebar" means the file list of the large Git window, not the left sidebar of the application.
 
 ## Rules
 

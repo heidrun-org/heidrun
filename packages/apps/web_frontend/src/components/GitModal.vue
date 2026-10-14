@@ -38,14 +38,14 @@ const fileLines = ref<string[]>([]);
 const truncated = ref(false);
 const rendered = ref("");
 const md = computed(() => isMarkdown(selected.value));
-// "Lecture" only exists for Markdown: elsewhere it falls back to the file view.
+// "Preview" only exists for Markdown: elsewhere it falls back to the file view.
 // A file that the File explorer sidebar section opens, and that has no change, has no diff: it shows as a whole file.
 const isUnchanged = computed(() => selected.value !== null && selectedFile.value === null);
 const mode = computed(() => {
-  if (isUnchanged.value && settings.diffMode !== "read") {
+  if (isUnchanged.value && settings.diffMode !== "preview") {
     return "file";
   }
-  return settings.diffMode === "read" && !md.value ? "file" : settings.diffMode;
+  return settings.diffMode === "preview" && !md.value ? "file" : settings.diffMode;
 });
 const error = ref("");
 const loading = ref(false);
@@ -70,13 +70,13 @@ async function load() {
     truncated.value = lines.length > MAX_ROWS;
     diff.value = lines.slice(0, MAX_ROWS);
     diffHtml.value = diff.value.map((l) => (l.kind === "hunk" ? "" : highlightLine(l.text, lang.value)));
-    if (mode.value === "file" || mode.value === "read") {
+    if (mode.value === "file" || mode.value === "preview") {
       // A deleted file: show it as it was in HEAD.
       const deleted = selectedFile.value?.status.includes("D") ?? false;
       const text = await invoke<string>("git_file", { root, path, rev: deleted ? "HEAD" : null });
       if (my !== seq) return;
       const all = text.replace(/\n$/, "");
-      if (mode.value === "read") {
+      if (mode.value === "preview") {
         rendered.value = renderMarkdown(all);
         return;
       }
@@ -197,6 +197,12 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
     <div ref="modalEl" class="window-box" role="dialog" aria-label="Git" tabindex="-1">
       <header class="top">
         <div class="title">
+          <button
+            type="button"
+            class="icon left-sidebar-enable-disable-button"
+            :title="settings.gitListHidden ? t('gitModal.showList') : t('gitModal.hideList')"
+            @click="settings.gitListHidden = !settings.gitListHidden"
+          >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
           <button :title="t('gitModal.openRepositoryTitle')" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
           <span v-else class="repo plain">{{ repoName }}</span>
           <span v-if="st" class="mono branch">{{ st.branch ?? t("gitModal.detached") }}</span>
@@ -205,6 +211,21 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           <button :title="t('gitModal.openCiTitle')" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div class="tools">
+          <div class="seg" role="radiogroup" :aria-label="t('gitModal.display')">
+            <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" :disabled="isUnchanged" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
+            <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" :disabled="isUnchanged" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
+            <button :title="t('gitModal.fileTitle')" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">{{ t("gitModal.file") }}</button>
+            <button v-if="md" :class="{ on: mode === 'preview' }" :title="t('gitModal.previewTitle')" @click="settings.diffMode = 'preview'">{{ t("gitModal.preview") }}</button>
+          </div>
+          <div v-if="mode === 'preview'" class="seg" role="radiogroup" :aria-label="t('gitModal.previewWidth')">
+            <button :class="{ on: settings.mdWidth === 'center' }" :title="t('gitModal.centeredTitle')" @click="settings.mdWidth = 'center'">{{ t("gitModal.centered") }}</button>
+            <button :class="{ on: settings.mdWidth === 'full' }" :title="t('gitModal.fullWidthTitle')" @click="settings.mdWidth = 'full'">{{ t("gitModal.fullWidth") }}</button>
+          </div>
+          <label class="sr" for="code-theme">{{ t("gitModal.theme") }}</label>
+          <select id="code-theme" v-model="settings.codeTheme" class="theme">
+            <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
+          </select>
+          <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("gitModal.wrap") }}</label>
           <button :title="t('gitModal.refreshTitle')" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : t("gitModal.refresh") }}</button>
           <button :title="t('gitModal.closeTitle')" class="close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
@@ -243,31 +264,10 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
         <Resizer v-show="!settings.gitListHidden" v-model:width="settings.gitListWidth" side="left" :min="220" :max="900" :default-width="340" />
         <section class="viewer">
           <div class="bar">
-            <button
-              type="button"
-              class="icon"
-              :title="settings.gitListHidden ? t('gitModal.showList') : t('gitModal.hideList')"
-              @click="settings.gitListHidden = !settings.gitListHidden"
-            >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
             <div class="path mono" :title="selected ?? ''">
               <template v-if="selected">{{ selected }}</template>
               <span v-if="selected && diff.length" class="stats"><span class="plus">+{{ stats.added }}</span> <span class="minus">−{{ stats.removed }}</span></span>
             </div>
-            <div class="seg" role="radiogroup" :aria-label="t('gitModal.display')">
-              <button :title="t('gitModal.unifiedTitle')" :class="{ on: mode === 'unified' }" :disabled="isUnchanged" @click="settings.diffMode = 'unified'">{{ t("gitModal.unified") }}</button>
-              <button :title="t('gitModal.splitTitle')" :class="{ on: mode === 'split' }" :disabled="isUnchanged" @click="settings.diffMode = 'split'">{{ t("gitModal.split") }}</button>
-              <button :title="t('gitModal.fileTitle')" :class="{ on: mode === 'file' }" @click="settings.diffMode = 'file'">{{ t("gitModal.file") }}</button>
-              <button v-if="md" :class="{ on: mode === 'read' }" :title="t('gitModal.readTitle')" @click="settings.diffMode = 'read'">{{ t("gitModal.read") }}</button>
-            </div>
-            <div v-if="mode === 'read'" class="seg" role="radiogroup" :aria-label="t('gitModal.readingWidth')">
-              <button :class="{ on: settings.mdWidth === 'center' }" :title="t('gitModal.centeredTitle')" @click="settings.mdWidth = 'center'">{{ t("gitModal.centered") }}</button>
-              <button :class="{ on: settings.mdWidth === 'full' }" :title="t('gitModal.fullWidthTitle')" @click="settings.mdWidth = 'full'">{{ t("gitModal.fullWidth") }}</button>
-            </div>
-            <label class="sr" for="code-theme">{{ t("gitModal.theme") }}</label>
-            <select id="code-theme" v-model="settings.codeTheme" class="theme">
-              <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
-            </select>
-            <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("gitModal.wrap") }}</label>
           </div>
 
           <div class="code" :class="[codeThemeClass, { wrap: settings.codeWrap }]">
@@ -276,7 +276,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             <div v-else-if="loading && !diff.length && !fileLines.length" class="empty">{{ t("gitModal.loading") }}</div>
 
             <!-- Markdown, rendered -->
-            <article v-else-if="mode === 'read'" class="md" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
+            <article v-else-if="mode === 'preview'" class="md" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
 
             <!-- Unified diff -->
             <table v-else-if="mode === 'unified'" class="tbl">
@@ -360,14 +360,14 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               </tbody>
             </table>
             <div v-if="truncated" class="empty">{{ t("gitModal.truncated", { count: MAX_ROWS }) }}</div>
-            <div v-if="selected && !error && !loading && mode !== 'file' && mode !== 'read' && !diff.length" class="empty">{{ t("gitModal.noTextDiff") }}</div>
+            <div v-if="selected && !error && !loading && mode !== 'file' && mode !== 'preview' && !diff.length" class="empty">{{ t("gitModal.noTextDiff") }}</div>
           </div>
           <div v-if="selected && isUnchanged" class="foot muted">
-            <template v-if="mode === 'read'">{{ t("gitModal.readTitle") }} · </template>
+            <template v-if="mode === 'preview'">{{ t("gitModal.previewTitle") }} · </template>
             {{ t("gitModal.unchanged") }} · {{ t("gitModal.footerKeys") }}
           </div>
           <div v-else-if="selectedFile" class="foot muted">
-            <template v-if="mode === 'read'">{{ t("gitModal.readTitle") }} · </template>
+            <template v-if="mode === 'preview'">{{ t("gitModal.previewTitle") }} · </template>
             {{ selectedFile.status === "??" ? t("gitModal.untracked") : t("gitModal.comparedToHead") }}
             <template v-if="st?.last_time"> · {{ t("gitModal.lastCommit", { time: ago(st.last_time * 1000) }) }}</template>
             · {{ t("gitModal.footerKeys") }}
@@ -385,13 +385,13 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
   width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
   background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
 }
-.top { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.top { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
 .repo { border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); font-weight: 600; }
 .repo:hover { color: var(--done); }
 .repo.plain:hover { color: var(--text); }
 .branch { font-size: var(--font-size); color: var(--text-2); }
-.tools { display: flex; align-items: center; gap: 8px; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
 .close:hover { background: var(--hover); color: var(--text); }
 .body { flex: 1; min-height: 0; display: flex; }

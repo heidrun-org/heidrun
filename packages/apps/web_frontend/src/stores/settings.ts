@@ -131,8 +131,8 @@ const defaults = {
   quietTo: "",
   /** The status item (the dots) is shown in the macOS menu bar. */
   showStatusItem: true,
-  /** Git viewer: "unified" | "split" diff, or the whole "file". */
-  diffMode: "unified" as "unified" | "split" | "file" | "read",
+  /** Git viewer: "unified" | "split" diff, the whole "file", or the "preview" of a Markdown file. */
+  diffMode: "unified" as "unified" | "split" | "file" | "preview",
   /** Side-by-side diff: share of the width for the old version (0.5 = middle). */
   splitRatio: 0.5,
   /** Markdown reading: centred column, or the whole width. */
@@ -316,6 +316,10 @@ function load(): typeof defaults {
     // The Scripts sidebar section became the Launchers sidebar section (issue #425): the saved value "actions" is now "launchers".
     if (stored.leftSidebarSection === "actions") {
       stored.leftSidebarSection = "launchers";
+    }
+    // The button "Reading" of the large Git window became the button "Preview" (issue #446): the saved value "read" is now "preview".
+    if (stored.diffMode === "read") {
+      stored.diffMode = "preview";
     }
     // The hide buttons of the sidebars are gone (issue #315): a sidebar that was hidden is now collapsed.
     if (stored.leftOpen === false) {
