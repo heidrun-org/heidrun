@@ -1,0 +1,15 @@
+# Directory Context: `/packages/auxiliary/data_layer_chat_sessions/src/storage`
+
+## Purpose
+Holds the SQLite file with its five tables, and turns the rows of a query into text.
+
+## Key Exports & Entry Points
+- `database.rs`: `ChatSessionsDatabase`, which writes the chat sessions with their link rows, finds a row, and runs a read-only query.
+- `query_formatter.rs`: `to_table`, `to_json`, and `NO_ROW_TEXT`.
+- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+
+## Rules
+- Nothing here imports from `src/coding_agents/`.
+- `database.rs` writes a chat session only after the JSON schema check of `src/model/schemas.rs` accepts it, and it writes the row and its link rows in one transaction.
+- `query` only works on a database that is open read only.
+- `query_formatter.rs` only turns rows into text, and never opens the database.

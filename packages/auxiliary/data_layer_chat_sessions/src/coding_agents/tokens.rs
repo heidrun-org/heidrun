@@ -1,4 +1,4 @@
-//! Chats tokens: how many tokens one conversation file of Claude Code or of Codex used, found without a model.
+//! Tokens: how many tokens one chat session file of Claude Code or of Codex used, found without a model.
 //!
 //! Both coding agents write the tokens of each request in the file of the conversation, with the model of the request.
 //!

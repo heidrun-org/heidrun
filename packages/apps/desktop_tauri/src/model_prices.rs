@@ -12,7 +12,7 @@
 //! The cost is an estimate. It assumes that every request was paid by token at the public price. A developer on a fixed
 //! subscription pays something else.
 
-use crate::chats_tokens::{TokenCounts, TokensByModel};
+use data_layer_chat_sessions::{TokenCounts, TokensByModel};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
