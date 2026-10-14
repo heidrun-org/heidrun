@@ -43,6 +43,16 @@ describe('website build', () => {
 		expect(html).toContain(identity.description.en);
 	});
 
+	it('puts the Flux Lines background in the home page only', () => {
+		const home = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		expect(home).toContain('home-flux-lines');
+		expect(home).toContain('aria-hidden="true"');
+		for (const page of ['about.html', 'documentation/index.html', 'documentation/shortcuts.html']) {
+			const html = Fs.readFileSync(Path.join(outDir, page), 'utf8');
+			expect(html, page).not.toContain('flux-lines');
+		}
+	});
+
 	it('copies the splash image', () => {
 		expect(Fs.existsSync(Path.join(outDir, 'heidrun_splash_screen.png'))).toBe(true);
 	});
