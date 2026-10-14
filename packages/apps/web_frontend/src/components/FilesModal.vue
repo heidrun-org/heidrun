@@ -37,7 +37,7 @@ import { settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { toast } from "../stores/session";
 import { insertIntoFocusedPane } from "../stores/input";
-import { CODE_THEMES, highlightFile, languageFor } from "../lib/highlight";
+import { highlightFile, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import { shortPath } from "../lib/format";
 import { t } from "../i18n/index";
@@ -737,9 +737,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <button :title="t('filesModal.renderedTitle')" :class="{ on: settings.filesMdRead }" @click="settings.filesMdRead = true">{{ t("filesModal.rendered") }}</button>
                 <button :title="t('filesModal.sourceTitle')" :class="{ on: !settings.filesMdRead }" @click="settings.filesMdRead = false">{{ t("filesModal.source") }}</button>
               </div>
-              <select v-model="settings.codeTheme" class="theme" :aria-label="t('filesModal.themeLabel')">
-                <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
-              </select>
               <label class="wrap-t"><input v-model="settings.codeWrap" type="checkbox" />{{ t("filesModal.wrap") }}</label>
               <button class="tb" :title="t('filesModal.copyPathTitle')" @click="(e) => copyPath(e.altKey)">{{ t("filesModal.copyPath") }}</button>
               <button class="tb" :title="t('filesModal.finderTitle')" @click="finder">Finder</button>
@@ -869,7 +866,6 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; }
 .seg button { color: var(--muted); font-size: var(--font-size); padding: 3px 9px; border-radius: 6px; }
 .seg button.on { background: var(--hover); color: var(--text); }
-.theme { height: 26px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 6px; }
 .wrap-t { display: flex; align-items: center; gap: 5px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .tb { height: 26px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line-strong); font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .tb:hover { background: var(--hover); color: var(--text); }
