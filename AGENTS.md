@@ -56,11 +56,12 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
   - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
-  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, its cache, and the width of an information card.
+  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, the tokens, and the estimated cost, its cache, and the width of an information card.
+  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the section "Past chats" of the Settings window, with the delay between two reads of the chats.
   - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
     - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
     - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
-    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card.
+    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card, with the tokens and the estimated cost of the chat.
     - [worktrees_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/worktrees_line.md): the worktrees line and its information card.
   - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
     - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.

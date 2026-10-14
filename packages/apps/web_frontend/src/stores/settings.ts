@@ -75,6 +75,11 @@ const defaults = {
   /** Sidebar section Past chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
   /**
+   * Settings window, section Past chats: how often the Past chats sidebar section reads the files of the chats again while it
+   * is on the screen, in seconds (issue #442).
+   */
+  chatsRefreshSeconds: 10,
+  /**
    * Settings window, section Dynamic topics: the dynamic topics are on. Off: the Past chats sidebar section shows no dynamic
    * topic bar and no dynamic topic label, and Heidrun computes no dynamic topic and calls no coding agent for them (issue #422).
    */
@@ -223,6 +228,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
+  chatsRefreshSeconds: [5, 10, 30, 60],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   gitFetchMinutes: [0, 1, 5, 10, 30],
   newTabCommand: ["terminal", "claude", "codex"],
@@ -404,6 +410,7 @@ export type SettingsSection =
   | "general"
   | "mobileAccess"
   | "agents"
+  | "pastChats"
   | "dynamicTopics";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */

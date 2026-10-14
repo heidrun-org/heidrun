@@ -18,6 +18,8 @@
 //! A file that only grew is not read again from its start: the scan continues from where it stopped.
 
 use crate::chats_scan::{feed_claude_line, feed_codex_line, read_lines_from, scan_file, ChatMeta, Scan};
+use crate::chats_tokens::TokensByModel;
+use crate::model_prices::PriceTable;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -39,7 +41,7 @@ const MAX_LIMIT: usize = 10_000;
 const CACHE_FILE: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 3;
+const CACHE_VERSION: u32 = 4;
 
 /// One conversation.
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -51,6 +53,38 @@ pub struct Chat {
     pub updated_at: i64,
     /// What the scan of the file found: the dates, the messages, the folders, the issues, the pull requests, the files.
     pub meta: ChatMeta,
+    /// The tokens that the conversation used, for each model. The front end gets `usage`, not this.
+    #[serde(skip)]
+    pub tokens: TokensByModel,
+    /// The tokens and the cost of the conversation, or `None` when the conversation used no token.
+    pub usage: Option<ChatUsage>,
+}
+
+/// The tokens that one conversation used, and what they cost.
+#[derive(Serialize, Debug, Clone, PartialEq)]
+pub struct ChatUsage {
+    /// Every input token that was sent, with the ones that the provider read from its cache and wrote to it.
+    pub input_tokens: u64,
+    /// The input tokens that the provider read from its cache. They are a part of `input_tokens`.
+    pub cached_input_tokens: u64,
+    /// The output tokens, with the tokens of the reasoning.
+    pub output_tokens: u64,
+    /// The estimated cost in US dollars, at the public price of each model. `None` when a model of the conversation has no
+    /// known price.
+    pub cost_usd: Option<f64>,
+}
+
+impl ChatUsage {
+    /// The tokens of `tokens`, without a cost. `None` when no token was used.
+    fn of(tokens: &TokensByModel) -> Option<ChatUsage> {
+        let mut usage = ChatUsage { input_tokens: 0, cached_input_tokens: 0, output_tokens: 0, cost_usd: None };
+        for counts in tokens.values() {
+            usage.input_tokens += counts.input_total();
+            usage.cached_input_tokens += counts.cached_input;
+            usage.output_tokens += counts.output;
+        }
+        (usage.input_tokens + usage.output_tokens > 0).then_some(usage)
+    }
 }
 
 /// The newest conversations of one coding agent in one folder.
@@ -249,6 +283,16 @@ fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
         sorting,
     );
     cache.save();
+    apply_prices(chats, &crate::model_prices::current())
+}
+
+/// Gives each conversation the cost of its tokens at the prices of `table`.
+fn apply_prices(mut chats: Chats, table: &PriceTable) -> Chats {
+    for chat in chats.claude.chats.iter_mut().chain(chats.codex.chats.iter_mut()) {
+        if let Some(usage) = chat.usage.as_mut() {
+            usage.cost_usd = table.cost(&chat.tokens);
+        }
+    }
     chats
 }
 
@@ -302,7 +346,7 @@ fn take_chats(
     limit: usize,
     root: &str,
     sorting: Sorting,
-    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta)>,
+    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta, TokensByModel)>,
 ) -> AgentChats {
     let mut found = AgentChats::default();
     if sorting.key == SortKey::LastUpdated {
@@ -346,14 +390,14 @@ fn take_chats(
 fn chat_of(
     cache: &mut ChatsCache,
     file: &FileInfo,
-    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta)>,
+    title_of: &mut dyn FnMut(&mut ChatsCache, &FileInfo) -> Option<(String, ChatMeta, TokensByModel)>,
 ) -> Option<Chat> {
-    let (text, meta) = title_of(cache, file)?;
+    let (text, meta, tokens) = title_of(cache, file)?;
     let title = crate::claude::short(&text, TITLE_LENGTH);
     if title.is_empty() {
         return None;
     }
-    Some(Chat { id: file.id.clone(), title, updated_at: file.modified, meta })
+    Some(Chat { id: file.id.clone(), title, updated_at: file.modified, meta, usage: ChatUsage::of(&tokens), tokens })
 }
 
 /// The number that a conversation is sorted by: a date in milliseconds since 1970, or a count.
@@ -422,7 +466,7 @@ fn claude_chats(cache: &mut ChatsCache, projects: &Path, folder: &str, limit: us
     cache.forget_missing(&dir, &present);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_claude_line);
-        title_of_scan(&scan).map(|text| (text, scan.meta))
+        title_of_scan(&scan).map(|text| (text, scan.meta, scan.tokens.totals()))
     })
 }
 
@@ -446,7 +490,7 @@ fn codex_chats(cache: &mut ChatsCache, home: &Path, folder: &str, limit: usize, 
     }
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
-        titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta))
+        titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens.totals()))
     })
 }
 
@@ -1037,6 +1081,61 @@ mod tests {
         let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Ascending };
         let found = codex_chats(&mut ChatsCache::in_memory(), &dir, "/work/app", 5, sorting);
         assert_eq!(titles(&found), vec!["One", "Two"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn price_table() -> PriceTable {
+        PriceTable::parse(
+            r#"{"claude-opus-5":{"litellm_provider":"anthropic","input_cost_per_token":5e-06,"output_cost_per_token":2.5e-05,
+                "cache_read_input_token_cost":5e-07,"cache_creation_input_token_cost":6.25e-06}}"#,
+            0,
+        )
+        .unwrap()
+    }
+
+    fn answer_line(id: &str, model: &str, output: u64) -> String {
+        format!(
+            r#"{{"type":"assistant","message":{{"id":"{id}","model":"{model}","content":[],"usage":{{"input_tokens":1000,"cache_creation_input_tokens":0,"cache_read_input_tokens":4000,"output_tokens":{output}}}}}}}"#
+        )
+    }
+
+    #[test]
+    fn gives_the_tokens_and_the_cost_of_a_chat_and_no_cost_for_a_model_without_a_price() {
+        let dir = scratch("usage");
+        let lines = [user_line("2026-10-11T10:00:00.000Z", "hello"), answer_line("msg_1", "claude-opus-5", 100), answer_line("msg_1", "claude-opus-5", 200)];
+        write_chat(&dir, "Priced", &lines, 100);
+        let lines = [user_line("2026-10-11T10:00:00.000Z", "hello"), answer_line("msg_1", "claude-unknown-9", 100)];
+        write_chat(&dir, "Not priced", &lines, 200);
+        write_chat(&dir, "No answer", &[user_line("2026-10-11T10:00:00.000Z", "hello")], 300);
+        let chats = Chats {
+            root: "/work/app".to_string(),
+            claude: claude(&mut ChatsCache::in_memory(), &dir, 5),
+            codex: AgentChats::default(),
+        };
+        let chats = apply_prices(chats, &price_table());
+        let usage: Vec<Option<ChatUsage>> = chats.claude.chats.iter().map(|chat| chat.usage.clone()).collect();
+        let cost = usage[0].as_ref().unwrap().cost_usd.unwrap();
+        // 1 000 × 5e-06 + 4 000 × 5e-07 + 200 × 2.5e-05
+        assert!((cost - 0.012).abs() < 1e-9, "{cost}");
+        assert_eq!(
+            usage[0].as_ref().map(|usage| (usage.input_tokens, usage.cached_input_tokens, usage.output_tokens)),
+            Some((5_000, 4_000, 200))
+        );
+        assert_eq!(usage[1].as_ref().map(|usage| (usage.input_tokens, usage.cost_usd)), Some((5_000, None)));
+        assert_eq!(usage[2], None);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn sends_the_usage_to_the_front_end_and_not_the_tokens_of_each_model() {
+        let dir = scratch("usage-json");
+        let lines = [user_line("2026-10-11T10:00:00.000Z", "hello"), answer_line("msg_1", "claude-opus-5", 100)];
+        write_chat(&dir, "Priced", &lines, 100);
+        let found = claude(&mut ChatsCache::in_memory(), &dir, 5);
+        let json = serde_json::to_value(&found.chats[0]).unwrap();
+        assert_eq!(json["usage"]["input_tokens"], 5_000);
+        assert_eq!(json["usage"]["cost_usd"], Value::Null);
+        assert!(json.get("tokens").is_none());
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

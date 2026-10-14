@@ -1,6 +1,7 @@
 mod chats;
 mod chats_files;
 mod chats_scan;
+mod chats_tokens;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
@@ -12,6 +13,7 @@ mod history;
 mod legacy;
 mod herdr;
 mod mobile;
+mod model_prices;
 mod project;
 mod pty;
 mod skills;

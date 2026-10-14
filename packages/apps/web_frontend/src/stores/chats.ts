@@ -55,6 +55,18 @@ export interface ChatMeta {
   files_written: string[];
 }
 
+/** The tokens that a chat used, and what they cost. The Rust side adds the tokens of the lines of the file of the chat. */
+export interface ChatUsage {
+  /** Every input token that was sent, with the ones that the provider read from its cache and wrote to it. */
+  input_tokens: number;
+  /** The input tokens that the provider read from its cache. They are a part of `input_tokens`. */
+  cached_input_tokens: number;
+  /** The output tokens, with the tokens of the reasoning. */
+  output_tokens: number;
+  /** The estimated cost in US dollars, at the public price of each model, or null when a model of the chat has no known price. */
+  cost_usd: number | null;
+}
+
 /** One saved conversation between the developer and a coding agent. */
 export interface Chat {
   /** The identifier that the coding agent gave to the conversation. */
@@ -65,6 +77,8 @@ export interface Chat {
   updated_at: number;
   /** What the scan of the file found. */
   meta: ChatMeta;
+  /** The tokens and the cost of the chat, or null when the chat used no token. */
+  usage?: ChatUsage | null;
 }
 
 /** The number of chats that the list shows at the start, then after each click on "Show more". The next clicks add 50. */

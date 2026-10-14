@@ -360,6 +360,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["notesShowAll", false, true],
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
+  ["chatsRefreshSeconds", 10, 30],
   ["dynamicTopics", true, false],
   ["gitFetchMinutes", 5, 0],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
@@ -418,6 +419,7 @@ describe("a corrupted saved value", () => {
         searchAgentsOnly: null,
         dynamicTopics: "no",
         gitFetchMinutes: "5",
+        chatsRefreshSeconds: "10",
         theme: "dark",
       }),
     );
@@ -425,6 +427,7 @@ describe("a corrupted saved value", () => {
     const restarted = await import("./settings");
     expect(restarted.settings.dynamicTopics).toBe(true);
     expect(restarted.settings.gitFetchMinutes).toBe(5);
+    expect(restarted.settings.chatsRefreshSeconds).toBe(10);
     expect(restarted.settings.filesGrepRegex).toBe(false);
     expect(restarted.settings.historyPeriod).toBe("today");
     expect(restarted.settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
