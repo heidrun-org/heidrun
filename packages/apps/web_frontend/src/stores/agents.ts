@@ -8,6 +8,7 @@ import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
 import { withBackground } from "../lib/terminal_background";
 import { chatResumeCommand } from "../lib/chat_links";
+import type { PaneInfo } from "../lib/types";
 
 export interface AgentDef {
   name: string;
@@ -64,6 +65,8 @@ export async function launchAgent(o: {
   prompt: string;
   /** The session identifier of a saved chat to resume: the tab starts `claude --resume` or `codex resume` with it. */
   resumeId?: string | null;
+  /** A pane that already exists, for example the first pane of a new workspace: the command runs in it, and no new tab is created. */
+  existingPane?: PaneInfo | null;
 }): Promise<"ok" | "failed" | "closed"> {
   let command: string;
   try {
@@ -82,9 +85,16 @@ export async function launchAgent(o: {
     toast(String((e as Error).message ?? e));
     return "failed";
   }
-  let pane;
+  let pane: PaneInfo;
   try {
-    pane = await api.newTab(o.workspaceId, o.cwd, o.label || undefined);
+    if (o.existingPane !== undefined && o.existingPane !== null) {
+      pane = o.existingPane;
+      if (o.label !== "") {
+        await api.renameTab(pane.tab_id, o.label);
+      }
+    } else {
+      pane = await api.newTab(o.workspaceId, o.cwd, o.label || undefined);
+    }
   } catch (e) {
     toast(t("agentsStore.tabNotCreated", { error: String(e) }));
     return "failed";

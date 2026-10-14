@@ -80,6 +80,25 @@ describe("openFolderAsWorkspace", () => {
     expect(session.state.selectedPaneId).toBe("w2-p1");
   });
 
+  it("expands the character ~ of the folder, and returns the first pane of the new workspace (issue #379)", async () => {
+    const session = await startHeidrun();
+    mocks.newWorkspace.mockResolvedValue({ workspace: { workspace_id: "w2" }, tab: {}, root_pane: rootPane("w2") });
+    mocks.snapshot.mockResolvedValue(buildSnapshot(["w1", "w2"]));
+    const pane = await session.newWorkspace("~/my_project", "my_project");
+    expect(mocks.newWorkspace).toHaveBeenCalledWith("/home/my_project", "my_project");
+    expect(pane).toEqual(rootPane("w2"));
+    expect(session.state.selectedWorkspaceId).toBe("w2");
+    expect(session.state.selectedTabId).toBe("w2-t1");
+    expect(session.state.selectedPaneId).toBe("w2-p1");
+  });
+
+  it("returns no pane when Herdr cannot create the workspace (issue #379)", async () => {
+    const session = await startHeidrun();
+    mocks.newWorkspace.mockRejectedValue("herdr_unreachable");
+    expect(await session.newWorkspace("/work/app", "app")).toBeUndefined();
+    expect(session.state.selectedWorkspaceId).toBe("w1");
+  });
+
   it("keeps the selection and shows a toast when Herdr cannot create the workspace", async () => {
     const session = await startHeidrun();
     mocks.newWorkspace.mockRejectedValue("herdr_unreachable");

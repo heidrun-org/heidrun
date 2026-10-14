@@ -869,30 +869,37 @@ export function splitPane(direction: "right" | "down" = "right", paneId?: string
   });
 }
 
-export async function newWorkspace(cwd: string | null, label: string | null) {
+/**
+ * Creates a workspace for a folder, then selects it with its first tab and its first pane, so that the developer sees that
+ * the workspace exists. A failure shows a toast.
+ * @param cwd - the path of the folder of the workspace, absolute or starting with `~`
+ * @param label - the name of the workspace
+ * @returns the first pane of the new workspace, or undefined when the workspace was not created
+ */
+export async function newWorkspace(cwd: string | null, label: string | null): Promise<PaneInfo | undefined> {
   // The raw socket API wants absolute paths.
   if (cwd?.startsWith("~")) {
     const home = (await homeDir()).replace(/\/$/, "");
     cwd = home + cwd.slice(1);
   }
-  return guard(() => api.newWorkspace(cwd, label));
-}
-
-/**
- * Creates a workspace for a folder, then selects it with its first tab and its first pane, so that the developer sees that
- * the workspace exists. A failure shows a toast.
- * @param cwd - the absolute path of the folder of the workspace
- * @param label - the name of the workspace
- * @returns a promise that ends when the workspace is selected, or when the failure is shown
- */
-export function openFolderAsWorkspace(cwd: string, label: string) {
   return guard(async () => {
     const created = await api.newWorkspace(cwd, label);
     await refresh();
     if (created.root_pane) {
       selectPane(created.root_pane);
     }
+    return created.root_pane;
   });
+}
+
+/**
+ * Creates a workspace for a folder, then selects it with its first tab and its first pane.
+ * @param cwd - the absolute path of the folder of the workspace
+ * @param label - the name of the workspace
+ * @returns a promise that ends when the workspace is selected, or when the failure is shown
+ */
+export async function openFolderAsWorkspace(cwd: string, label: string): Promise<void> {
+  await newWorkspace(cwd, label);
 }
 
 export function closePane(paneId: string) {

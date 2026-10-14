@@ -15,6 +15,10 @@ vi.mock("../lib/api", async (importOriginal) => {
   return {
     ...original,
     newWorkspace: vi.fn(async () => ({})),
+    newTab: vi.fn(async () => ({})),
+    renameTab: vi.fn(async () => ({})),
+    run: vi.fn(async () => ({})),
+    snapshot: vi.fn(async () => ({})),
     closeWorkspace: vi.fn(async () => ({})),
     renameWorkspace: vi.fn(async () => ({})),
     moveWorkspace: vi.fn(async () => ({})),
@@ -461,6 +465,51 @@ describe("WorkspaceStatusSummary new workspace", () => {
     await wrapper.get(".popover-body > button").trigger("click");
     await flushPromises();
     expect(api.newWorkspace).toHaveBeenCalledWith("/home/me/my_project", "my_project");
+  });
+
+  it("selects the new workspace and its first tab, and creates no other tab (issue #379)", async () => {
+    vi.mocked(openDialog).mockResolvedValueOnce("/home/me/my_project");
+    const { wrapper, api, session } = await mountSection();
+    const rootPane = { pane_id: "w4:p1", tab_id: "w4:t1", workspace_id: "w4" };
+    vi.mocked(api.newWorkspace).mockResolvedValueOnce({ workspace: {}, tab: {}, root_pane: rootPane } as never);
+    vi.mocked(api.snapshot).mockResolvedValueOnce({
+      ...makeSnapshot(),
+      workspaces: [...makeSnapshot().workspaces, { workspace_id: "w4", number: 4, label: "my_project", agent_status: "idle", tab_count: 1 }],
+      panes: [...makeSnapshot().panes, rootPane],
+    } as never);
+    await wrapper.get(".workspace-status").trigger("click");
+    await wrapper.get(".popover-body > button").trigger("click");
+    await flushPromises();
+    expect(session.state.selectedWorkspaceId).toBe("w4");
+    expect(session.state.selectedTabId).toBe("w4:t1");
+    expect(session.state.selectedPaneId).toBe("w4:p1");
+    expect(api.newTab).not.toHaveBeenCalled();
+    expect(api.run).not.toHaveBeenCalled();
+  });
+
+  it("starts the default command of a new tab in the first tab of the new workspace (issue #379)", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    try {
+      settings.newTabCommand = "claude";
+      vi.mocked(openDialog).mockResolvedValueOnce("/home/me/my_project");
+      const { wrapper, api } = await mountSection();
+      const rootPane = { pane_id: "w4:p1", tab_id: "w4:t1", workspace_id: "w4" };
+      vi.mocked(api.newWorkspace).mockResolvedValueOnce({ workspace: {}, tab: {}, root_pane: rootPane } as never);
+      vi.mocked(api.snapshot).mockResolvedValue({
+        ...makeSnapshot(),
+        workspaces: [...makeSnapshot().workspaces, { workspace_id: "w4", number: 4, label: "my_project", agent_status: "idle", tab_count: 1 }],
+        panes: [...makeSnapshot().panes, rootPane],
+      } as never);
+      await wrapper.get(".workspace-status").trigger("click");
+      await wrapper.get(".popover-body > button").trigger("click");
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(api.newTab).not.toHaveBeenCalled();
+      expect(api.renameTab).toHaveBeenCalledWith("w4:t1", "claude");
+      expect(api.run).toHaveBeenCalledWith("w4:p1", "claude");
+    } finally {
+      settings.newTabCommand = "terminal";
+      vi.useRealTimers();
+    }
   });
 
   it("creates no workspace when the user cancels the choice of the folder", async () => {
