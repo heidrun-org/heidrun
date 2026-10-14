@@ -21,3 +21,6 @@ packages/auxiliary/website_public/docs/.vitepress/cache
 
 # Local Heidrun configuration of one developer
 .heidrun/config.json
+
+# Environment variables of one developer, see the file .env.example
+.env
