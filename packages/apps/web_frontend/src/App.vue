@@ -59,6 +59,7 @@ import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
+import { startGitBackgroundFetch } from "./stores/git_background_fetch";
 import { startAlerts } from "./stores/alerts";
 import { startStatusItem } from "./stores/statusItem";
 // Records Claude spend by workspace from the start, right sidebar open or not.
@@ -272,6 +273,7 @@ onMounted(async () => {
   start();
   startProjects();
   startGit();
+  startGitBackgroundFetch();
   startAlerts();
   startStatusItem();
   loadHistory();

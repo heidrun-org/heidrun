@@ -331,6 +331,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["chatsAgent", "claude", "codex"],
   ["chatsView", "compact", "expanded"],
   ["dynamicTopics", true, false],
+  ["gitFetchMinutes", 5, 0],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
   ["clusteredDynamicTopics", false, true],
   ["chatsSortKey", "last_updated", "files_written"],
@@ -386,12 +387,14 @@ describe("a corrupted saved value", () => {
         fontSize: "big",
         searchAgentsOnly: null,
         dynamicTopics: "no",
+        gitFetchMinutes: "5",
         theme: "dark",
       }),
     );
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.dynamicTopics).toBe(true);
+    expect(restarted.settings.gitFetchMinutes).toBe(5);
     expect(restarted.settings.filesGrepRegex).toBe(false);
     expect(restarted.settings.historyPeriod).toBe("today");
     expect(restarted.settings.workingDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
@@ -412,6 +415,7 @@ describe("a corrupted saved value", () => {
         chatsAgent: "gemini",
         chatsView: "wide",
         dynamicTopicExtraction: "oracle",
+        gitFetchMinutes: 2,
         chatsSortKey: "best_match",
         chatsOrder: "random",
         newTabCommand: "emacs",
@@ -427,6 +431,7 @@ describe("a corrupted saved value", () => {
     expect(restarted.settings.chatsAgent).toBe("claude");
     expect(restarted.settings.chatsView).toBe("compact");
     expect(restarted.settings.dynamicTopicExtraction).toBe("keyword");
+    expect(restarted.settings.gitFetchMinutes).toBe(5);
     expect(restarted.settings.chatsSortKey).toBe("last_updated");
     expect(restarted.settings.chatsOrder).toBe("descending");
     expect(restarted.settings.newTabCommand).toBe("terminal");

@@ -182,3 +182,54 @@ describe('switch Keep agents running after quit', () => {
 		expect(settings.keepAgentsRunningAfterQuit).toBe(false);
 	});
 });
+
+describe('fetch in the background', () => {
+	beforeEach(() => {
+		settings.gitFetchMinutes = 5;
+	});
+
+	it('shows the heading Git last, then the name of the option, then a Bootstrap button group of five radio inputs', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const headings = wrapper.findAll('h4').map((heading) => heading.text());
+		expect(headings[headings.length - 1]).toBe('Git');
+		const group = wrapper.findAll('.btn-group')[3];
+		expect(group.attributes('aria-label')).toBe('Fetch the remote repository in the background');
+		expect(group.element.previousElementSibling?.textContent).toBe('Fetch the remote repository in the background');
+		expect(group.findAll('label').map((label) => label.text())).toEqual(['Off', '1 minute', '5 minutes', '10 minutes', '30 minutes']);
+		for (const label of group.findAll('label')) {
+			expect(label.classes()).toEqual(expect.arrayContaining(['btn-check', 'btn-outline', 'theme-secondary']));
+		}
+		expect(group.findAll('input[type=radio]')).toHaveLength(5);
+	});
+
+	it('checks the radio input of 5 minutes, which is the default', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const radios = wrapper.findAll('.btn-group')[3].findAll('input[type=radio]');
+		expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([false, false, true, false, false]);
+	});
+
+	it('saves the delay, in minutes, of the radio input that is chosen, and 0 for Off', async () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const radios = wrapper.findAll('.btn-group')[3].findAll('input[type=radio]');
+		await radios[4].setValue(true);
+		expect(settings.gitFetchMinutes).toBe(30);
+		await radios[1].setValue(true);
+		expect(settings.gitFetchMinutes).toBe(1);
+		await radios[0].setValue(true);
+		expect(settings.gitFetchMinutes).toBe(0);
+	});
+
+	it('checks the radio input of the saved delay', () => {
+		settings.gitFetchMinutes = 10;
+		const wrapper = mount(SettingsGeneralSection);
+		const radios = wrapper.findAll('.btn-group')[3].findAll('input[type=radio]');
+		expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([false, false, false, true, false]);
+	});
+
+	it('explains in one line that the counts of the Git branch section stay true, and that a failed fetch shows nothing', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const help = wrapper.findAll('.form-text').map((line) => line.text()).find((text) => text.includes('git fetch'));
+		expect(help).toContain('the two counts of the Git branch section of the status bar stay true');
+		expect(help).toContain('A fetch that fails shows nothing');
+	});
+});

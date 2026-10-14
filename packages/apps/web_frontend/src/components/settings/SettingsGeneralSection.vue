@@ -13,6 +13,15 @@ const TIME_FORMATS = [
   { id: "24h", labelKey: "settingsGeneral.time24" },
 ] as const;
 
+/** The choices of the delay of the fetch in the background, in minutes, in the order of the buttons. 0 is off. */
+const GIT_FETCH_CHOICES = [
+  { minutes: 0, labelKey: "settingsGeneral.gitFetchOff" },
+  { minutes: 1, labelKey: "settingsGeneral.gitFetch1" },
+  { minutes: 5, labelKey: "settingsGeneral.gitFetch5" },
+  { minutes: 10, labelKey: "settingsGeneral.gitFetch10" },
+  { minutes: 30, labelKey: "settingsGeneral.gitFetch30" },
+] as const;
+
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 const dayNames = computed(() =>
@@ -112,6 +121,18 @@ const timeExample = computed(() => {
           </template>
         </InformationCard>
       </SettingsSwitchRow>
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("settingsGeneral.gitTitle") }}</h4>
+      <div>{{ t("settingsGeneral.gitFetchLabel") }}</div>
+      <div class="btn-group" role="group" :aria-label="t('settingsGeneral.gitFetchLabel')">
+        <label v-for="choice in GIT_FETCH_CHOICES" :key="choice.minutes" class="btn-check btn-outline theme-secondary">
+          <input v-model="settings.gitFetchMinutes" type="radio" name="git-fetch-minutes" autocomplete="off" :value="choice.minutes" />
+          {{ t(choice.labelKey) }}
+        </label>
+      </div>
+      <div class="form-text">{{ t("settingsGeneral.gitFetchHelp") }}</div>
     </div>
   </div>
 </template>
