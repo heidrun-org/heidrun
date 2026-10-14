@@ -142,7 +142,7 @@ function errorOf(failure: unknown): LanguageModelTopicError {
  * @returns true when the call gave topics, so that other chats may still wait for a call
  */
 async function askOnce(): Promise<boolean> {
-  if (settings.dynamicTopicExtraction !== "languageModel") {
+  if (settings.dynamicTopics === false || settings.dynamicTopicExtraction !== "languageModel") {
     return false;
   }
   const batch = chatsToAsk().slice(0, MOST_CHATS_PER_CALL);
@@ -199,13 +199,13 @@ async function run(): Promise<void> {
 
 /**
  * Remembers the chats that the list shows, and asks a coding agent for the topics of the chats that have none, or whose
- * last message is newer than their topics. It makes no call when the method is not "Language model", and when every chat
- * of the list already has fresh topics. A long list is sent in several calls of at most `MOST_CHATS_PER_CALL` chats.
+ * last message is newer than their topics. It makes no call when the option "Dynamic topics" is off, when the method is
+ * not "Language model", and when every chat of the list already has fresh topics. A long list is sent in several calls of at most `MOST_CHATS_PER_CALL` chats.
  * @param chatList - the chats that the list shows
  */
 export async function prepareLanguageModelTopics(chatList: Chat[]): Promise<void> {
   lastChatList = chatList;
-  if (settings.dynamicTopicExtraction !== "languageModel") {
+  if (settings.dynamicTopics === false || settings.dynamicTopicExtraction !== "languageModel") {
     return;
   }
   await run();

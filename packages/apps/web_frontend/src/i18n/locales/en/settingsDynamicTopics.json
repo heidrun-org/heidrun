@@ -1,4 +1,5 @@
 {
+  "enableLabel": "Enable dynamic topics",
   "extractionTitle": "Extraction method",
   "extractionLabel": "Extraction method",
   "keywordLabel": "Keyword",

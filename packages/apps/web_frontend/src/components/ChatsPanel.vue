@@ -59,14 +59,14 @@ watch(
 );
 
 /**
- * Makes the cache of the method "Keyword" hold the chats that the list shows, each time the list or the method changes.
- * Then it gives the raw dynamic topics of the list to the clustering, which asks a coding agent for the new ones when the
- * option "Clustered dynamic topics" is on.
+ * Makes the cache of the method "Keyword" hold the chats that the list shows, each time the list, the method, or the option
+ * "Dynamic topics" changes. Then it gives the raw dynamic topics of the list to the clustering, which asks a coding agent
+ * for the new ones when the option "Clustered dynamic topics" is on. It does nothing while the option "Dynamic topics" is off.
  */
 watch(
-  () => [shownChats.value, repository.value, chats.root, settings.dynamicTopicExtraction] as const,
-  async ([list, context, root, method]) => {
-    if (method !== "keyword") {
+  () => [shownChats.value, repository.value, chats.root, settings.dynamicTopicExtraction, settings.dynamicTopics] as const,
+  async ([list, context, root, method, isEnabled]) => {
+    if (isEnabled === false || method !== "keyword") {
       return;
     }
     await prepareKeywordTopics(list, { folder: chats.folder, root, forge: context.forge });
@@ -77,13 +77,14 @@ watch(
   { immediate: true },
 );
 /**
- * Asks a coding agent for the topics of the chats that the list shows and that have none yet, each time the list or the
- * method changes. The method "Language model" is the only one that asks.
+ * Asks a coding agent for the topics of the chats that the list shows and that have none yet, each time the list, the
+ * method, or the option "Dynamic topics" changes. The method "Language model" is the only one that asks, and it never asks
+ * while the option "Dynamic topics" is off.
  */
 watch(
-  () => [shownChats.value, settings.dynamicTopicExtraction] as const,
-  ([list, method]) => {
-    if (method === "languageModel") {
+  () => [shownChats.value, settings.dynamicTopicExtraction, settings.dynamicTopics] as const,
+  ([list, method, isEnabled]) => {
+    if (isEnabled && method === "languageModel") {
       void prepareLanguageModelTopics(list);
     }
   },
@@ -93,7 +94,7 @@ watch(
 // each time they change.
 watch(
   () =>
-    settings.dynamicTopicExtraction === "languageModel"
+    settings.dynamicTopics && settings.dynamicTopicExtraction === "languageModel"
       ? [...languageModelTopicsOf(shownChats.value).values()].flat()
       : null,
   (languageModelRawTopics) => {
@@ -120,10 +121,16 @@ function agentLabel(agent: ChatAgent): string {
   return t(`chatsPanel.agent.${agent}`);
 }
 
-/** The raw dynamic topics of the chats that the list shows, by identifier of chat, from the method that the developer chose. */
-const rawTopics = computed(() =>
-  settings.dynamicTopicExtraction === "keyword" ? keywordTopicsOf(shownChats.value) : languageModelTopicsOf(shownChats.value),
-);
+/**
+ * The raw dynamic topics of the chats that the list shows, by identifier of chat, from the method that the developer chose.
+ * There is none while the option "Dynamic topics" is off, so the dynamic topic bar and the rows show nothing.
+ */
+const rawTopics = computed(() => {
+  if (settings.dynamicTopics === false) {
+    return new Map<string, string[]>();
+  }
+  return settings.dynamicTopicExtraction === "keyword" ? keywordTopicsOf(shownChats.value) : languageModelTopicsOf(shownChats.value);
+});
 
 /**
  * The dynamic topics that the rows and the dynamic topic bar show, by identifier of chat. They are the raw dynamic topics,

@@ -23,6 +23,8 @@ const CLUSTERED_HELP_BLOCKS = [
 
 <template>
   <div class="d-flex flex-column gap-3">
+    <SettingsSwitchRow v-model="settings.dynamicTopics" :label="t('settingsDynamicTopics.enableLabel')" />
+
     <div class="d-flex flex-column gap-2">
       <div class="d-flex align-items-center gap-2">
         <h4 class="form-label m-0">{{ t("settingsDynamicTopics.extractionTitle") }}</h4>

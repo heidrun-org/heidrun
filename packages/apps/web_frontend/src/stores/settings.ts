@@ -74,6 +74,11 @@ const defaults = {
   chatsAgent: "claude" as "claude" | "codex",
   /** Sidebar section Past chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
+  /**
+   * Settings window, section Dynamic topics: the dynamic topics are on. Off: the Past chats sidebar section shows no dynamic
+   * topic bar and no dynamic topic label, and Heidrun computes no dynamic topic and calls no coding agent for them (issue #422).
+   */
+  dynamicTopics: true,
   /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
   dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
   /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
