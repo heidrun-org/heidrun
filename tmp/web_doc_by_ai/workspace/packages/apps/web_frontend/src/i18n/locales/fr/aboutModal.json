@@ -1,0 +1,7 @@
+{
+  "version": "Version {version}",
+  "close": "Fermer",
+  "playGoatSound": "Écouter la chèvre",
+  "soundCredit": "Son de chèvre : « Cabra » de {author}, sous la licence Creative Commons Attribution - Pas d’utilisation commerciale 3.0.",
+  "soundSource": "Ouvrir le son sur Freesound"
+}

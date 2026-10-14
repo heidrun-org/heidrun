@@ -1,0 +1,5 @@
+
+> heidrun@0.2.5 docs:update_by_ai /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+> tsx packages/dev_tools/documentation_updater/src/cli.ts --dry-run --only docs/agents_rules/user_interface/sidebars/files.md
+
+ ELIFECYCLE  Command failed with exit code 1.

@@ -1,0 +1,19 @@
+# Judgement of the documentation: 3.6 out of 5
+
+| Page | Type | Mean | taskSuccess | usefulness | order | singleType | userLanguage | accuracy | Lines | Longest paragraph | Paragraph runs | Troubleshooting | Related pages |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| change_the_files_list_appearance.md | how-to | 3.8 | 3 | 3 | 4 | 4 | 4 | 5 | 15 | 2 sentences | 0 | no | 3 links |
+
+Site: navigation 3, consistency 4.
+
+- The section 'Related pages' of this page ends with 'Create a file or folder', which does not help a reader who just changed the appearance. Replace it with 'Open a file' or remove it, and put 'Browse files and folders' first, because the reader must open the folder tree to see the result.
+- The sidebar has no tutorial and no explanation page, and the only 'Get started' page 'Introduction' is a placeholder. A new reader has no first path into the five how-to pages. Write a short tutorial page and link it from 'Introduction'.
+- Several pages repeat the same facts: the 'More options' table appears on this page and in the reference page, and the ignored-folder sentence appears on both 'Browse files and folders' and the reference page. Only the Troubleshooting sections are uneven: 'Browse files and folders' and 'Create a file or folder' have one, and the other how-to pages have none.
+
+### change_the_files_list_appearance.md (3.8)
+
+Correct and short, but the first step is missing and the page leaves out the check mark, the defaults and the saved choices that the reader needs to change the look with confidence.
+
+- The page never says how to reach the Files sidebar section (Files icon in the left sidebar icon bar). A new user cannot do step 1 without a guess. Add the step 'Select the Files icon in the left sidebar icon bar' and link to 'Browse files and folders'.
+- Step 2 says 'Choose an option for the setting you want to change from the table below'. The reader has to map the table to the menu. The menu has three groups with titles 'Indentation', 'Row height' and 'Indent guides'. Write 'In the menu, under the group title, select a choice', and say that a check mark shows the active choice.
+- The page omits facts the sources give. The defaults are Medium, Comfortable and Show. The choices are saved. The table also copies the 'More options' table of the reference page. Replace the 'What changes' column with the defaults, drop the closing sentence 'repeat steps 1 and 2' (the reader knows how to repeat steps), and let the reference page keep the full list.

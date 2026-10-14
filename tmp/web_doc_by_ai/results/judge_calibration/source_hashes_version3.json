@@ -1,0 +1,11 @@
+{
+  "docs/agents_rules/glossary.md": "9171d65689b4e1a695eb01d8f216d3b54fe7ee1fbd045e77a0a24b02f4b76bbf",
+  "docs/agents_rules/user_interface/sidebars/files.md": "17175c68f783402d0fc700b8017389458f9be1f44498f1c45f2c597fe401173d",
+  "packages/apps/web_frontend/src/components/FilesPanel.vue": "2a1562fa6d687c5100c7175876b813c4912c82eab72e575dbf2f43a6f2dd53f3",
+  "packages/apps/web_frontend/src/components/GitModal.vue": "f6e423e696c0a202c3466f4152c4c8b441b0f4f2f95f655734a17fd5af660905",
+  "packages/auxiliary/website_public/docs/documentation/browse_project_files.md": "449bcaa2fa90fd36b15431a6e4310472297df4954a82a0135d737b33559aad75",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/copy_path.png": "c548a47c6dd8f6fdfcd06ec54efa4be505bdf59e3b7bd51bb6028cdf92c61e82",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/new_file.png": "0e9cdfed1023f3af2cabce828261d63f3fd36878a7d1e0db3569fc09c2b4a812",
+  "packages/dev_tools/documentation_updater/src/documentation_judge_rubric.ts": "9d327796bb9acd4cba77b8bd5bfeb1a56edcc8895fd3630cf14f62314d314090",
+  "packages/dev_tools/documentation_updater/src/documentation_judge_types.ts": "24487921d54d726d34bfe8ebae938d9f55a7a09afe022a673415bd555dd58686"
+}

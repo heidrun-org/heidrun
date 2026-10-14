@@ -1,0 +1,68 @@
+```json
+{
+  "rubricVersion": "2",
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "usefulness",
+          "severity": "suggestion",
+          "location": "Open a project file, paragraph after step 3",
+          "evidence": "The paragraph describes the File, Diff, Side by side and Reading modes of the large Git window, which belong to the Source control sidebar section.",
+          "impact": "Slightly more than the task needs, but the text is short, accurate and tied to the file the reader just opened. No deduction.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "The large Git window shows a file that has no change as a whole file, with no diff, and disables the buttons \"Diff\" and \"Side by side\" for it.",
+          "recommendation": "Optional: shorten to one sentence."
+        }
+      ],
+      "problems": [],
+      "verdict": "The steps match the source. The icon bar position, the status bar workspace card, the Refresh behaviour, the two error texts and the 50,000-entry limit are all correct. The screenshot caption matches the pixels."
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The task is achievable and accurate. The context menu items, the right-click-only trigger, the file-row-only limit and the \"Copied: <path>\" notification all match FilesPanel.vue and filesPanel.json. The screenshot shows the menu and the selected README.md as the caption says."
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The destination rules match the code: the selected folder, the folder of the selected file, or the repository root. The French duplicate-name error is real (files.rs line 511) and the page says so honestly. The slash error text, the cancel behaviour, and the empty-folder-after-restart limit all match the source. The screenshot matches its caption."
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "usefulness",
+          "severity": "suggestion",
+          "location": "Ignored files",
+          "evidence": "The section describes a checkbox in the Files window (⌘P), not a control of the Files sidebar section.",
+          "impact": "It is relevant because the setting changes the folder tree, and the page says where the checkbox is. No deduction.",
+          "source": "packages/apps/web_frontend/src/components/FilesModal.vue",
+          "sourceEvidence": "Line 661: the checkbox is bound to settings.filesShowIgnored and sits in the same block as the file-name search input.",
+          "recommendation": "Optional: none needed."
+        }
+      ],
+      "problems": [],
+      "verdict": "The lookup content is accurate. The five header buttons, the three option groups with defaults, the status letters (U for untracked) and the folder dot all match the rules file and code. The More options screenshot matches its caption."
+    }
+  ],
+  "site": {
+    "navigation": 5,
+    "consistency": 5,
+    "findings": [],
+    "problems": []
+  },
+  "limitations": [
+    "The pages were checked against the source code and the screenshots. The running application was not started.",
+    "The Introduction page and the rest of the site are outside this limited scope. No site-wide tutorial was required.",
+    "The text of the Reading mode of the large Git window and the exact layout of the Files view in the Files window were checked only lightly. The page statements about them are plausible but not exhaustively verified."
+  ]
+}
+```

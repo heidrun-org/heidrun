@@ -1,0 +1,418 @@
+{
+  "status": "Documentation corrections required; previous source-only full scores are not acceptance evidence.",
+  "app": "Current experimental worktree compiled Heidrun.app, launched with --no-splash-screen; native interface, not a headless substitute.",
+  "nestedWorkspace": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs",
+  "repositoryRoot": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375",
+  "selectedFile": "docs/README.md",
+  "relativePath": {
+    "notification": "Copied: docs/README.md",
+    "actualClipboardPaste": "docs/README.md",
+    "workspaceRelativeWouldBe": "README.md",
+    "conclusion": "Copy relative path is relative to the Git repository root, not the workspace folder when that folder is a repository subfolder."
+  },
+  "absolutePath": {
+    "notification": "Copied: /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+    "actualClipboardPaste": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+    "result": "Verified against the selected file."
+  },
+  "findings": [
+    {
+      "pages": [
+        "Copy a file path",
+        "Files sidebar section controls"
+      ],
+      "finding": "The workspace-folder definition of Copy relative path is false for a repository-subfolder workspace.",
+      "evidence": [
+        "nested_workspace.txt",
+        "relative_clipboard.txt",
+        "relative_notification.png"
+      ]
+    },
+    {
+      "pages": [
+        "Browse and open project files"
+      ],
+      "finding": "New workspace adds the chosen folder to the workspace list without selecting it. The instructions need an explicit selection of the new entry.",
+      "observed": "After choosing docs, the workspace list included docs while the status bar and pane still showed heidrun. Clicking docs selected the new folder.",
+      "source": "WorkspaceStatusSummary.createWorkspace awaits newWorkspace without a selection call."
+    }
+  ],
+  "verifiedInteractions": [
+    "Native New workspace folder chooser accepted the nested repository folder.",
+    "Clicking the new workspace selected its folder and correct Git branch.",
+    "The Files sidebar displayed the entire Git repository, including folders outside the workspace subfolder.",
+    "Right-clicking a file displayed both copy actions without opening the large Git window.",
+    "Both clipboard operations were checked by actual Command-V paste into a local search field.",
+    "Copy notifications appeared and later disappeared. Exact duration was not measured.",
+    "Clicking an unchanged Markdown file opened the large Git window with Diff and Side by side disabled.",
+    "Reading displayed formatted Markdown; Reading was absent for a non-Markdown file.",
+    "File mode was restored and Escape closed the large Git window.",
+    "New file revealed a name box within the selected folder. Escape cancelled the typed name; no file was created."
+  ],
+  "website": {
+    "productionBuild": "Passed, 1.92 seconds.",
+    "preview": "Freshly built production output served locally at port 5175 under /heidrun/. Temporary tab closed after evidence capture.",
+    "pages": [
+      {
+        "heading": "Browse and open project files \u200b",
+        "images": [
+          {
+            "alt": "Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.",
+            "complete": true,
+            "height": 900,
+            "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/files_sidebar.png",
+            "width": 870
+          }
+        ],
+        "links": [
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#browse-and-open-project-files"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#refresh-the-folder-tree"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#troubleshooting"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-a-workspace-appears"
+          },
+          {
+            "text": "Select an existing workspace",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#this-workspace-is-not-a-git-repository-appears"
+          },
+          {
+            "text": "Select an existing workspace",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#related-pages"
+          },
+          {
+            "text": "Create a file or folder",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+          },
+          {
+            "text": "Copy a file path",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+          },
+          {
+            "text": "Files sidebar section controls",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+          },
+          {
+            "text": "Keyboard shortcuts",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+          }
+        ],
+        "title": "Browse and open project files | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+      },
+      {
+        "heading": "Create a file or folder \u200b",
+        "images": [
+          {
+            "alt": "New file name box inside docs with example.md typed before Enter is pressed.",
+            "complete": true,
+            "height": 548,
+            "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/new_file.png",
+            "width": 870
+          }
+        ],
+        "links": [
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-a-file-or-folder"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#choose-the-destination"
+          },
+          {
+            "text": "select an existing workspace",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+          },
+          {
+            "text": "large Git window described in Browse and open project files",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#cancel-creation"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#troubleshooting"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#un-fichier-ou-dossier-porte-deja-ce-nom-appears-and-the-name-box-stays-open"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#a-name-cannot-contain-the-character-select-a-folder-first-appears"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#related-pages"
+          },
+          {
+            "text": "Browse and open project files",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+          },
+          {
+            "text": "Copy a file path",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+          },
+          {
+            "text": "Files sidebar section controls",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+          }
+        ],
+        "title": "Create a file or folder | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+      },
+      {
+        "heading": "Copy a file path \u200b",
+        "images": [
+          {
+            "alt": "Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.",
+            "complete": true,
+            "height": 1009,
+            "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/copy_path.png",
+            "width": 870
+          }
+        ],
+        "links": [
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-a-file-path"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#choose-the-path-format"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-the-path"
+          },
+          {
+            "text": "select an existing workspace",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#troubleshooting"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#the-path-copy-menu-does-not-appear-when-a-folder-row-is-right-clicked"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#related-pages"
+          },
+          {
+            "text": "Browse and open project files",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+          },
+          {
+            "text": "Create a file or folder",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+          },
+          {
+            "text": "File context menu",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+          }
+        ],
+        "title": "Copy a file path | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      },
+      {
+        "heading": "Files sidebar section controls \u200b",
+        "images": [
+          {
+            "alt": "Files sidebar section header buttons with the More options menu open.",
+            "complete": true,
+            "height": 783,
+            "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/more_options.png",
+            "width": 870
+          }
+        ],
+        "links": [
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#files-sidebar-section-controls"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#header-buttons"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#row-and-name-box-actions"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#more-options"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+          },
+          {
+            "text": "Copy a file path",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#folder-tree-indicators"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#selection"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#ignored-files"
+          },
+          {
+            "text": "Keyboard shortcuts",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+          },
+          {
+            "text": "Create a file or folder",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+          },
+          {
+            "text": "Browse and open project files",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+          },
+          {
+            "text": "\u200b",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#related-pages"
+          },
+          {
+            "text": "Browse and open project files",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+          },
+          {
+            "text": "Create a file or folder",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+          },
+          {
+            "text": "Copy a file path",
+            "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+          }
+        ],
+        "title": "Files sidebar section controls | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+      }
+    ],
+    "links": [
+      {
+        "anchor": "#select-an-existing-workspace",
+        "anchorExists": true,
+        "heading": "Browse and open project files \u200b",
+        "title": "Browse and open project files | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "anchor": "",
+        "anchorExists": true,
+        "heading": "Create a file or folder \u200b",
+        "title": "Create a file or folder | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+      },
+      {
+        "anchor": "",
+        "anchorExists": true,
+        "heading": "Copy a file path \u200b",
+        "title": "Copy a file path | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      },
+      {
+        "anchor": "",
+        "anchorExists": true,
+        "heading": "Files sidebar section controls \u200b",
+        "title": "Files sidebar section controls | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+      },
+      {
+        "anchor": "",
+        "anchorExists": true,
+        "heading": "Keyboard shortcuts \u200b",
+        "title": "Keyboard shortcuts | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+      },
+      {
+        "anchor": "",
+        "anchorExists": true,
+        "heading": "Browse and open project files \u200b",
+        "title": "Browse and open project files | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+      },
+      {
+        "anchor": "#file-context-menu",
+        "anchorExists": true,
+        "heading": "Files sidebar section controls \u200b",
+        "title": "Files sidebar section controls | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+      },
+      {
+        "anchor": "#create-the-file-or-folder",
+        "anchorExists": true,
+        "heading": "Create a file or folder \u200b",
+        "title": "Create a file or folder | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+      },
+      {
+        "anchor": "#long-file-lists",
+        "anchorExists": true,
+        "heading": "Browse and open project files \u200b",
+        "title": "Browse and open project files | Heidrun",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+      }
+    ],
+    "result": "All four pages, all four images and nine distinct prerequisite/related link targets and anchors verified."
+  },
+  "remainingLimits": [
+    "macOS only; clipboard denial/failure and other operating systems were not exercised.",
+    "Precise notification lifetime was not measured.",
+    "Valid file/folder creation, duplicate-name failure and restart persistence were not exercised in this run; creation was cancelled to preserve repository files.",
+    "The production output was tested locally, not deployed to public hosting.",
+    "The additional repository-root clipboard control paste was overwritten by an external clipboard change and is excluded from clipboard verification evidence. Its copy notification was correct. The nested relative and absolute clipboard checks had already succeeded."
+  ],
+  "preservation": {
+    "filesSidebarPages": "Unchanged; hashes match the prior judge inputs.",
+    "repositoryFilesBranchStatusAndIndex": "Before and after fingerprints match.",
+    "temporaryName": "verification_example.md was never created.",
+    "appState": "Original heidrun workspace restored, viewing mode restored to File and test search cleared. The added docs workspace remains available in the app.",
+    "gitActions": "No commits, pull requests or merges."
+  }
+}

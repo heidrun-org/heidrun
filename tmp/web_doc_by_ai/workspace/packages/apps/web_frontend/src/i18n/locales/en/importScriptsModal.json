@@ -1,0 +1,15 @@
+{
+  "title": "Import scripts",
+  "closeTitle": "Close the window (Escape)",
+  "empty": "This project has no script to import: no package.json, Makefile, or similar file with scripts was found.",
+  "cancel": "Cancel",
+  "import_one": "Import {count} script",
+  "import_other": "Import {count} scripts",
+  "selectAll": "Select all",
+  "selectNone": "Select none",
+  "choosePackageJson": "Choose a package.json",
+  "backToProject": "Back to the project",
+  "emptyPicked": "This package.json has no script left to import.",
+  "outsideRepository": "The package.json must be inside the repository.",
+  "notPackageJson": "Choose a file named package.json."
+}

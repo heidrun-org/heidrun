@@ -1,0 +1,20 @@
+
+> website_public@0.2.5 test /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/auxiliary/website_public
+> vitest run
+
+
+ RUN  v2.1.9 /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/auxiliary/website_public
+
+ ✓ tests/pages.test.ts (64 tests) 8ms
+ ✓ tests/shortcuts_page.test.ts (8 tests) 92ms
+ ✓ tests/favicon.test.ts (3 tests) 3ms
+ ✓ tests/config.test.ts (16 tests) 4ms
+ ✓ tests/identity.test.ts (7 tests) 85ms
+ ✓ tests/splash_image.test.ts (3 tests) 17ms
+ ✓ tests/build.test.ts (10 tests) 2614ms
+
+ Test Files  7 passed (7)
+      Tests  111 passed (111)
+   Start at  07:59:00
+   Duration  2.94s (transform 189ms, setup 0ms, collect 904ms, tests 2.82s, environment 467ms, prepare 370ms)
+

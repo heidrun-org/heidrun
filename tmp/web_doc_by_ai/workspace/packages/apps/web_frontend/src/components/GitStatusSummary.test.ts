@@ -1,0 +1,187 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { mount } from "@vue/test-utils";
+import GitStatusSummary from "./GitStatusSummary.vue";
+import { git, type GitStatus } from "../stores/git";
+import { state } from "../stores/session";
+
+function makeStatus(overrides: Partial<GitStatus>): GitStatus {
+  return {
+    root: "/work/heidrun",
+    branch: "main",
+    upstream: "origin/main",
+    ahead: 11,
+    behind: 0,
+    changed: 0,
+    untracked: 0,
+    files: [],
+    last_sha: null,
+    last_subject: null,
+    last_time: null,
+    remote: null,
+    ...overrides,
+  };
+}
+
+describe("GitStatusSummary", () => {
+  afterEach(() => {
+    state.selectedWorkspaceId = null;
+    git.status = {};
+  });
+
+  it("shows the branch, then the commits to download, then the commits to upload", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ ahead: 11, behind: 3 }) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".branch").text()).toBe("main");
+    expect(wrapper.get(".behind .count").text()).toBe("3");
+    expect(wrapper.get(".ahead .count").text()).toBe("11");
+    expect(wrapper.find(".behind").element.compareDocumentPosition(wrapper.get(".ahead").element)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("follows the branch when the branch changes", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ branch: "main" }) };
+    const wrapper = mount(GitStatusSummary);
+    git.status = { w1: makeStatus({ branch: "dev_jerome" }) };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".branch").text()).toBe("dev_jerome");
+  });
+
+  it("shows zero when there is nothing to download or to upload", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ ahead: 0, behind: 0 }) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".behind .count").text()).toBe("0");
+    expect(wrapper.get(".ahead .count").text()).toBe("0");
+  });
+
+  it("shows nothing when the workspace is not in a Git repository", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: null };
+    expect(mount(GitStatusSummary).find(".git-status").exists()).toBe(false);
+  });
+
+  it("lists the details of the repository in the popover", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = {
+      w1: makeStatus({
+        ahead: 11,
+        behind: 3,
+        changed: 4,
+        untracked: 2,
+        last_subject: "Fix the status bar",
+        last_time: Math.floor(Date.now() / 1000),
+      }),
+    };
+    const wrapper = mount(GitStatusSummary);
+    await wrapper.get(".git-counts-zone").trigger("click");
+    expect(wrapper.find(".popover-header").exists()).toBe(false);
+    expect(wrapper.get("[data-field=upstream]").text()).toBe("origin/main");
+    expect(wrapper.get("[data-field=to-download]").text()).toBe("3");
+    expect(wrapper.get("[data-field=to-upload]").text()).toBe("11");
+    expect(wrapper.get("[data-field=changed]").text()).toBe("4");
+    expect(wrapper.get("[data-field=untracked]").text()).toBe("2");
+    expect(wrapper.get("[data-field=last-subject]").text()).toBe("Fix the status bar");
+  });
+
+  it("opens the popover with a click on the counts zone, and closes it with the next click", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    const countsZone = wrapper.get(".git-counts-zone");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await countsZone.trigger("mouseenter");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await countsZone.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    await countsZone.trigger("click");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+  });
+
+  it("does not open the popover of the counts with a click on the branch zone", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    await wrapper.get(".git-branch-zone").trigger("click");
+    expect(wrapper.find("[data-field=upstream]").exists()).toBe(false);
+  });
+
+  it("has the synchronize zone, with the turning-arrows icon, between the branch zone and the counts zone", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    const mergeZone = wrapper.get(".git-synchronize-zone");
+    expect(mergeZone.classes()).toContain("status-section");
+    expect(mergeZone.find(".bi-arrow-repeat").exists()).toBe(true);
+    expect(wrapper.get(".git-branch-zone").element.compareDocumentPosition(mergeZone.element)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(mergeZone.element.compareDocumentPosition(wrapper.get(".git-counts-zone").element)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("has two status bar zones, the branch and the counts, that keep the background of a button while open", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary);
+    const branchZone = wrapper.get(".git-branch-zone");
+    const countsZone = wrapper.get(".git-counts-zone");
+    expect(branchZone.classes()).toContain("status-section");
+    expect(countsZone.classes()).toContain("status-section");
+    expect(branchZone.find(".branch").exists()).toBe(true);
+    expect(countsZone.find(".behind").exists()).toBe(true);
+    expect(countsZone.find(".ahead").exists()).toBe(true);
+    expect(countsZone.classes()).not.toContain("show");
+    await countsZone.trigger("click");
+    expect(countsZone.classes()).toContain("show");
+    expect(branchZone.classes()).not.toContain("show");
+    await countsZone.trigger("click");
+    expect(countsZone.classes()).not.toContain("show");
+  });
+
+  it("closes the popover with the key Escape", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({}) };
+    const wrapper = mount(GitStatusSummary, { attachTo: document.body });
+    await wrapper.get(".git-counts-zone").trigger("click");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("says there is no remote branch when the branch has no upstream", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ upstream: null }) };
+    const wrapper = mount(GitStatusSummary);
+    await wrapper.get(".git-counts-zone").trigger("click");
+    expect(wrapper.get("[data-field=upstream]").text()).toBe("none");
+  });
+
+  it.each([
+    { changed: 0, untracked: 0, isStarShown: false },
+    { changed: 1, untracked: 0, isStarShown: true },
+    { changed: 0, untracked: 1, isStarShown: true },
+    { changed: 2, untracked: 3, isStarShown: true },
+  ])("shows the star after the branch in the status bar, and does not repeat the branch in the popover: $changed changed, $untracked untracked", async (testCase) => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ changed: testCase.changed, untracked: testCase.untracked }) };
+    const wrapper = mount(GitStatusSummary);
+    await wrapper.get(".git-counts-zone").trigger("click");
+    expect(wrapper.get(".branch").find(".dirty").exists()).toBe(testCase.isStarShown);
+    expect(wrapper.get(".popover").find(".dirty").exists()).toBe(false);
+  });
+
+  it("shows or hides the star when the Git state changes", async () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: makeStatus({ untracked: 1 }) };
+    const wrapper = mount(GitStatusSummary);
+    expect(wrapper.get(".branch").text()).toBe("main*");
+    git.status = { w1: makeStatus({ untracked: 0 }) };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".branch").text()).toBe("main");
+  });
+});

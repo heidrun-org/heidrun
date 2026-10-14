@@ -1,0 +1,15 @@
+{
+  "name": "desktop_tauri",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.5",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "test": "cargo test",
+    "target:clean": "tsx ../../dev_tools/worktree_tools/src/target_clean_cli.ts"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  }
+}

@@ -1,0 +1,10 @@
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375/docs/agents_rules/user_interface/sidebars/files.md
+Bash cat packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json && wc -l packages/apps/web_frontend/src/components/FilesPanel.vue && ls packages/auxiliary/website_public/docs/documentation/ && grep -n -i "files\|large git window\|workspace\b" docs/agents_rules/glossary.md | head -40
+Bash grep -n "t('\|toast\|error\|Error\|exists\|isGit\|notRepository\|selectWorkspace\|truncated" packages/apps/web_frontend/src/components/FilesPanel.vue | head -80; grep -n "wholeFile\|disabled\|Diff\|Side by side" packages/apps/web_frontend/src/i18n/locales/en/gitModal.json | head
+Bash cat packages/auxiliary/website_public/docs/documentation/index.md; sed -n 1,40p packages/auxiliary/website_public/docs/documentation/shortcuts.md
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375/packages/apps/web_frontend/src/components/FilesPanel.vue
+Bash sed -n 1,150p packages/apps/web_frontend/src/components/FilesPanel.vue | grep -n -i "dot\|changed\|letter\|ignored\|truncated\|ShowIgnored\|showIgnored" ; sed -n 410,465p packages/apps/web_frontend/src/components/FilesPanel.vue; grep -rn "showIgnored\|show_ignored\|ignored" packages/apps/web_frontend/src/i18n/locales/en/*.json | head
+Bash grep -n -i "large git window\|Files window" docs/agents_rules/glossary.md | head; grep -n -i "large git window" -r docs/agents_rules | head -5; cat packages/apps/web_frontend/src/i18n/locales/en/gitModal.json | head -45; grep -n "openGitModal" -r packages/apps/web_frontend/src --include=*.ts --include=*.vue | head -5
+I've read the sources and the pages. One last check: where the "show ignored files" option lives, then I'll give the JSON.
+Bash grep -n "showIgnored" -r packages/apps/web_frontend/src | head -8; sed -n 50,60p packages/apps/web_frontend/src/i18n/locales/en/filesModal.json
+```json

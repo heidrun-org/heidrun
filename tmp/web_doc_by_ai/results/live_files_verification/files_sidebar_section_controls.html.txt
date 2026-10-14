@@ -1,0 +1,335 @@
+Browser tab: 2, Title: "Files sidebar section controls | Heidrun", URL: "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html".
+1 AXWebArea Files sidebar section controls | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+	2 container app
+		3 link Description: Skip to content, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#VPContent
+		4 container
+			5 link Description: Heidrun, Value: 127.0.0.1:5175/heidrun/
+			6 container
+				7 container Main Navigation
+					8 text Main Navigation
+					9 link Description: Home, Value: 127.0.0.1:5175/heidrun/
+					10 link Description: Documentation, Value: 127.0.0.1:5175/heidrun/documentation/
+					11 link Description: About, Value: 127.0.0.1:5175/heidrun/about.html
+				12 switch Description: Switch to light theme, Value: 0
+				13 link Description: github, Value: github.com/heidrun-org/heidrun
+		14 container
+			15 container Sidebar Navigation, ID: VPSidebarNav
+				16 text Sidebar Navigation
+				17 container
+					18 button Documentation
+						19 heading Documentation, Value: 2
+							20 text Documentation
+					21 link Description: Introduction, Value: 127.0.0.1:5175/heidrun/documentation/
+					22 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+				23 container
+					24 button Files
+						25 heading Files, Value: 2
+							26 text Files
+					27 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+					28 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+					29 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+					30 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+		31 container VPContent
+			32 container
+				33 container On this page
+					34 container
+						35 heading On this page, Value: 2, ID: doc-outline-aria-label
+							36 text On this page
+						37 content list
+							38 link Description: Header buttons, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#header-buttons
+							39 link Description: Row and name box actions, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#row-and-name-box-actions
+							40 link Description: More options, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#more-options
+							41 link Description: File context menu, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu
+							42 link Description: Folder tree indicators, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#folder-tree-indicators
+							43 link Description: Selection, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#selection
+							44 link Description: Ignored files, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#ignored-files
+							45 link Description: Related pages, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#related-pages
+			46 container
+				47 container
+					48 heading Files sidebar section controls Permalink to "Files sidebar section controls", Value: 1, ID: files-sidebar-section-controls
+						49 text Files sidebar section controls
+						50 link Description: Permalink to "Files sidebar section controls", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#files-sidebar-section-controls
+					51 text Look up the controls, appearance choices, and row indicators of the Files sidebar section.
+					52 heading Header buttons Permalink to "Header buttons", Value: 2, ID: header-buttons
+						53 text Header buttons
+						54 link Description: Permalink to "Header buttons", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#header-buttons
+					55 text The header stays at the top while the rows scroll. The five buttons show only icons, in this order from left to right.
+					56 table
+						57 row
+							58 cell
+								59 text Button
+							60 cell
+								61 text Icon
+							62 cell
+								63 text Purpose
+						64 row
+							65 cell
+								66 text New file
+							67 cell
+								68 text File with a plus sign
+							69 cell
+								70 text Opens a name box for an empty file in the selected destination.
+						71 row
+							72 cell
+								73 text New folder
+							74 cell
+								75 text Folder with a plus sign
+							76 cell
+								77 text Opens a name box for an empty folder in the selected destination.
+						78 row
+							79 cell
+								80 text Refresh
+							81 cell
+								82 text Circular arrow
+							83 cell
+								84 text Reads the folder tree again; disabled while the folder tree loads.
+						85 row
+							86 cell
+								87 text Collapse all folders
+							88 cell
+								89 text Square with a minus sign
+							90 cell
+								91 text Folds every folder.
+						92 row
+							93 cell
+								94 text More options
+							95 cell
+								96 text Three vertical dots
+							97 cell
+								98 text Opens the appearance choices for the folder tree.
+					99 image Files sidebar section header buttons with the More options menu open.
+					100 text There is no button to unfold every folder.
+					101 heading Row and name box actions Permalink to "Row and name box actions", Value: 2, ID: row-and-name-box-actions
+						102 text Row and name box actions
+						103 link Description: Permalink to "Row and name box actions", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#row-and-name-box-actions
+					104 table
+						105 row
+							106 cell
+								107 text Action
+							108 cell
+								109 text Result
+						110 row
+							111 cell
+								112 text Click a folder row
+							113 cell
+								114 text Selects the folder and folds or unfolds the folder, unless the folder is ignored.
+						115 row
+							116 cell
+								117 text Click a file row
+							118 cell
+								119 text Selects the file and opens the file in the large Git window.
+						120 row
+							121 cell
+								122 text Right-click a file row
+							123 cell
+								124 text Opens the file context menu without opening the large Git window.
+						125 row
+							126 cell
+								127 text Click empty space outside all rows
+							128 cell
+								129 text Clears the selection in the selected workspace.
+						130 row
+							131 cell
+								132 text Press 
+								133 text Enter
+								134 text  in the name box
+							135 cell
+								136 text Creates the file or folder for a valid, nonempty name; an error keeps the name box open.
+						137 row
+							138 cell
+								139 text Press 
+								140 text Escape
+								141 text  in the name box, or click outside the name box
+							142 cell
+								143 text Cancels creation.
+					144 heading More options Permalink to "More options", Value: 2, ID: more-options
+						145 text More options
+						146 link Description: Permalink to "More options", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#more-options
+					147 text A check mark identifies the active choice in each group. The appearance choices are saved.
+					148 table
+						149 row
+							150 cell
+								151 text Group
+							152 cell
+								153 text Choices
+							154 cell
+								155 text Default
+							156 cell
+								157 text Meaning
+						158 row
+							159 cell
+								160 text Indentation
+							161 cell
+								162 text Small
+								163 text , 
+								164 text Medium
+								165 text , 
+								166 text Large
+							167 cell
+								168 text Medium
+							169 cell
+								170 text The horizontal space added for each folder level.
+						171 row
+							172 cell
+								173 text Row height
+							174 cell
+								175 text Compact
+								176 text , 
+								177 text Comfortable
+							178 cell
+								179 text Comfortable
+							180 cell
+								181 text The vertical space occupied by each row.
+						182 row
+							183 cell
+								184 text Indent guides
+							185 cell
+								186 text Show
+								187 text , 
+								188 text Hide
+							189 cell
+								190 text Show
+							191 cell
+								192 text Whether lines mark the folder levels.
+					193 heading File context menu Permalink to "File context menu", Value: 2, ID: file-context-menu
+						194 text File context menu
+						195 link Description: Permalink to "File context menu", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu
+					196 text A context menu is a small menu of actions for a row. These items are available for file rows only.
+					197 table
+						198 row
+							199 cell
+								200 text Item
+							201 cell
+								202 text Copied text
+						203 row
+							204 cell
+								205 text Copy absolute path
+							206 cell
+								207 text The full path of the file.
+						208 row
+							209 cell
+								210 text Copy relative path
+							211 cell
+								212 text The path of the file relative to the workspace folder.
+					213 text See 
+					214 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+					215 text  for examples and copying steps.
+					216 heading Folder tree indicators Permalink to "Folder tree indicators", Value: 2, ID: folder-tree-indicators
+						217 text Folder tree indicators
+						218 link Description: Permalink to "Folder tree indicators", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#folder-tree-indicators
+					219 text Folders appear before files, with each group in alphabetical order.
+					220 table
+						221 row
+							222 cell
+								223 text Indicator
+							224 cell
+								225 text Meaning
+						226 row
+							227 cell
+								228 text Right-pointing folder arrow
+							229 cell
+								230 text The folder is folded.
+						231 row
+							232 cell
+								233 text Downward-pointing folder arrow
+							234 cell
+								235 text The folder is unfolded.
+						236 row
+							237 cell
+								238 text Row with a blue outline
+							239 cell
+								240 text The selected file or folder; only one row is selected.
+						241 row
+							242 cell
+								243 text M
+							244 cell
+								245 text A modified file.
+						246 row
+							247 cell
+								248 text A
+							249 cell
+								250 text An added file.
+						251 row
+							252 cell
+								253 text D
+							254 cell
+								255 text A deleted file.
+						256 row
+							257 cell
+								258 text R
+							259 cell
+								260 text A renamed file.
+						261 row
+							262 cell
+								263 text U
+							264 cell
+								265 text A new file that Git does not track yet.
+						266 row
+							267 cell
+								268 text Dot on a folder row
+							269 cell
+								270 text Changes exist inside the folder.
+					271 text Changed-file letters appear at the right of the file row.
+					272 heading Selection Permalink to "Selection", Value: 2, ID: selection
+						273 text Selection
+						274 link Description: Permalink to "Selection", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#selection
+					275 table
+						276 row
+							277 cell
+								278 text Item
+							279 cell
+								280 text Meaning
+						281 row
+							282 cell
+								283 text Selected row
+							284 cell
+								285 text Each workspace keeps a separate selection. Returning to a workspace restores the selected row with the folders above the row unfolded.
+						286 row
+							287 cell
+								288 text Closing the large Git window
+							289 cell
+								290 text The selected row remains selected.
+						291 row
+							292 cell
+								293 text Changing the sidebar section
+							294 cell
+								295 text The selected row and the folded or unfolded state of folders are retained.
+					296 heading Ignored files Permalink to "Ignored files", Value: 2, ID: ignored-files
+						297 text Ignored files
+						298 link Description: Permalink to "Ignored files", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#ignored-files
+					299 text The Files window is the project file browser opened with 
+					300 text ⌘P
+					301 text , as listed in 
+					302 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+					303 text . The 
+					304 text Ignored files
+					305 text  checkbox is below the file-name search field in the 
+					306 text Files
+					307 text  view on the left of the Files window. The choice is saved and also affects the Files sidebar section. Folders excluded by 
+					308 text .gitignore
+					309 text  appear when the checkbox is selected, but cannot unfold. See 
+					310 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder
+					311 text  for empty-folder behaviour and 
+					312 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists
+					313 text  for the long-list limitation.
+					314 heading Related pages Permalink to "Related pages", Value: 2, ID: related-pages
+						315 text Related pages
+						316 link Description: Permalink to "Related pages", Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#related-pages
+					317 content list
+						318 container
+							319 AXListMarker • 
+							320 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+							321 text : to find and view a file.
+						322 container
+							323 AXListMarker • 
+							324 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+							325 text : to choose a destination and create an empty file or folder.
+						326 container
+							327 AXListMarker • 
+							328 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+							329 text : to copy either form of a file path.
+				330 container Pager
+					331 text Pager
+					332 link Description: Previous page Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+
+The focused UI element is 1 AXWebArea Files sidebar section controls | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html

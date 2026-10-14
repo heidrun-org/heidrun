@@ -1,0 +1,2688 @@
+2026-10-14T06:10:27.547154Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-14T06:10:27.547181Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-10-14T06:10:27.575768Z  WARN codex_core::agents_md: project doc exceeds remaining budget; truncating path=file:///Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/AGENTS.md remaining_bytes=12663
+OpenAI Codex v
+0.162.1
+--------
+workdir: /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 01a13908-9a13-7fd3-888a-5e68330250f1
+--------
+user
+You plan the user documentation of the application Heidrun. You run inside the Git repository of Heidrun. In this pass you DO NOT edit any file: you only read, and you answer with an outline. A second pass writes the pages from your outline.
+## Scope
+Git history is read only in this process. Never stage files, create or switch branches, write commits, push, merge, or create a pull request or merge request. The developer handles those actions outside this process. Leave generated files uncommitted. Do not run docs:update_by_ai or another documentation writer recursively. Use no subagents. Preserve existing local changes outside the files allowed by this task.
+Do a full check of the user documentation. Compare ALL the documentation pages with ALL the current rules and with the code. For each feature of the application, add a page or a section for a new feature, change the section of a changed feature, remove the section of a removed feature, and do nothing for an internal change (refactor, test, build, developer tool). Remove a whole page when all its sections are removed.
+The hints at the end only say which parts to look at first. Do not trust the hints as the truth.
+## Limit of this run
+This run is NOT a full check. Plan and write only the pages for the features that these rule files describe, and the pages that name them as source. Do not add, change, or remove any other page.
+- `docs/agents_rules/user_interface/sidebars/files.md`
+## Where to read
+- The documentation pages are in the folder `packages/auxiliary/website_public/docs/documentation`.
+- The rules of the user interface are in the folder `docs/agents_rules/user_interface`, in many small files.
+- The glossary is the file `docs/agents_rules/glossary.md`. Use the words of the glossary, and no other word, for each part of the application.
+- The code of the application is in the folder `packages/apps`. Read it when a rule is not enough.
+- The sidebar of the website is in the file `packages/auxiliary/website_public/docs/.vitepress/config.ts`.
+## Source of truth, in this order
+1. The rule files in `docs/agents_rules/user_interface` and the glossary. The rules say what the application does now, so a removed feature is also removed from the rules.
+2. The code of the application.
+3. The pull requests and the issues in the hints. They say what changed and why. They are hints, not the source of truth. You may run `gh issue view <number>` to read an issue.
+Write only what the sources show. Never invent a feature. Never write about a feature that no rule or code shows.
+## Page types
+Each page has exactly ONE type, from the Diátaxis framework (https://diataxis.fr). Never mix two types in one page: a page that mixes steps and descriptions is the main reason why a page is hard to read.
+- **tutorial**: a lesson for a new user. A short path of steps that leads to a first success with Heidrun. Only the page `index.md` is a tutorial.
+- **how-to**: the steps that solve one task of a person who already uses Heidrun, for example "Copy the path of a file". The title starts with a verb. Most pages are how-to pages.
+- **reference**: a dry description to look up, mostly tables: the buttons of a header, the items of a menu, the options of a window. No steps and no story.
+- **explanation**: why a feature works the way it does, for example the state "Needs you". Write one only when a person cannot use a feature well without the idea.
+### Troubleshooting
+A how-to page ends with a section `## Troubleshooting` when the sources show a failure that the reader can meet: an error message, a button that is disabled, something that does not appear, or a change that is lost. Never invent a failure, and leave the section out when the sources show none. Write each problem in this shape:
+- A heading of level three that says the symptom as the reader sees it, for example "The name box stays open".
+- **Cause**: one sentence.
+- **Solution**: numbered steps.
+- **Check**: one sentence that says how the reader sees that it works now.
+### Related pages
+Every page ends with a section `## Related pages`: a bullet list of 2 to 4 links to the other pages that a reader of this page may need next, each with a few words that say why, for example `- [Copy a file path](/documentation/copy_a_file_path): to paste the path in a terminal`. A link starts with `/documentation/` and has no `.md` at the end. Link only to pages that exist after this run.
+Organize the pages by what the reader wants to do, not by the rule files. A page can use several rule files, and a rule file can feed several pages: for example, the rule file of a sidebar section can give two how-to pages and one reference page.
+## Style: the pages must be easy to read
+- Write for a person using Heidrun. Explain what the person can do and how, without describing how the program works internally.
+- Start each page with one sentence that says what the reader can do or find there.
+- Keep each page focused on its purpose. Avoid repeating information from another page; link to that page where it helps the reader continue.
+- Write the steps of a task as a numbered list, with one action in each step. Include enough information to find the control and begin, then say what result to expect or how to check that the task worked.
+- Name controls as they appear on screen. When a name alone is not enough to find a control, describe where it is or what it looks like. Put control names in bold.
+- Explain an unfamiliar term in plain words the first time it appears. Use the same name for the same part of Heidrun throughout the page.
+- Use a table when readers need to compare or look up several controls, choices, or meanings. Give each entry a clear name and a useful explanation.
+- A paragraph has at most three sentences.
+- Keep pages concise. Include details when they help a reader complete a task, choose an option, understand a result, or recover from a known problem. Do not add defaults, exact dimensions, internal implementation details, or remedies that are not supported by the sources.
+- Make links useful for the next step: say what the linked page helps the reader do or find.
+- Describe a known problem with its symptom and supported cause and solution. Include a check when the reader can verify that the solution worked.
+## Your final answer: the outline
+Read the current pages, the rule files, and the glossary first. Then answer with the outline of ALL the pages that must exist after this run, and nothing else, in this form:
+```
+### <file name, for example copy_a_file_path.md>
+- Action: add | change | keep | remove
+- Page type: tutorial | how-to | reference | explanation
+- Title: <the title of level one>
+- Reader goal: <one sentence: what the reader wants to do or know>
+- Sources: <the rule files, relative to the root of the repository>
+- Sections:
+- <heading of level two>: <one sentence on what it says>
+- Troubleshooting: <the symptoms that the sources show, or none>
+- Related pages: <the file names of 2 to 4 other pages>
+- Leave out: <the details of the rules that the reader does not need>
+```
+Then add one last part "### Sidebar" with the groups and the pages of the sidebar, in order.
+Check your outline before you answer: each page has one type and one reader goal, a how-to page holds one task or a few close tasks, and no page restates a rule file.
+## Hints
+This is the first run. There is no last documented commit, so there are no hints. Do the full check only.
+## Resumed task: correct the verified findings
+# Verified findings to correct
+1. Relative copying uses the Git repository root, not necessarily the workspace folder. With a workspace set to the repository docs subfolder, copying README.md yielded docs/README.md in the notification and in an actual clipboard paste. Correct Copy a file path and Files sidebar section controls. Describe a repository-subfolder example clearly and cite the captured implementation.
+2. New workspace… adds the chosen folder to the workspace list without selecting it. An explicit click on the new workspace entry selected the workspace. Browse and open project files must include this step.
+These findings come from the prior real native application verification, preserved in ../live_files_verification and ../../process/HANDOFF.md. Do not re-run the application or replace screenshots in this writing run. Keep all existing screenshot assets. Verify claims against the captured source; report any conflict rather than inventing behaviour.
+Use only the captured source tree at /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace. Git publication is forbidden.
+Do not edit source, rules, prompts, tests or unselected pages. Only fix the two known issues.
+Do not use subagents. Preserve existing images and page names.
+2026-10-14T06:10:27.760150Z  WARN codex_core::agents_md: project doc exceeds remaining budget; truncating path=file:///Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/AGENTS.md remaining_bytes=12663
+2026-10-14T06:10:27.956146Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-14T06:10:27.956166Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+codex
+I’ll read the handoff, current Files sidebar pages, rules, and captured code, then return an outline limited to the two verified corrections. I will not edit files or run the application.
+exec
+/bin/zsh -lc "pwd && rg -n 'documentation updater|Files sidebar|web_doc_by_ai' /Users/jetienne/.codex/memories/MEMORY.md" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+1:# Task Group: Heidrun documentation updater limited AI trials
+2:scope: Use when validating or running the Heidrun documentation updater, especially a narrow `docs:update_by_ai` writer trial and subsequent judging.
+5:## Task 1: Validate the documentation updater and start a limited Files sidebar writer trial, partial
+13:- heidrun, documentation_updater, docs:update_by_ai, docs:judge_by_ai, tsx, EPERM, IPC socket, sandbox permissions, Files sidebar, generate-docs-with-ai-375
+17:- The documentation updater writer is `pnpm docs:update_by_ai`; it performs an outline pass then an editing pass. `pnpm docs:judge_by_ai` is read-only. For a narrow Files sidebar trial use `pnpm docs:update_by_ai --verbose --effort high --no-pull-request --only docs/agents_rules/user_interface/sidebars/files.md`; this must not update `.last_documented_commit`. [Task 1]
+exec
+/bin/zsh -lc "cat README.md; cat ../../process/HANDOFF.md; rg --files -g 'AGENTS.md' -g 'HANDOFF.md' -g 'README.md' -g 'package.json' . | head -70" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+<div align="center">
+<img src="data/images/heidrun_splash_screen.png" alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron" width="720">
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+# Heidrun
+### With AI, every developer is THE GOAT!
+**Keep your agents working. Know which one needs you.**
+<!-- identity:end -->
+[![License: MIT](https://img.shields.io/github/license/heidrun-org/heidrun?color=blue)](LICENSE)
+[![Platform: macOS](https://img.shields.io/badge/platform-macOS-black?logo=apple)](https://github.com/heidrun-org/heidrun)
+[![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
+[![Rust](https://img.shields.io/badge/backend-Rust-DEA584?logo=rust&logoColor=black)](packages/apps/desktop_tauri)
+[![Vue 3](https://img.shields.io/badge/frontend-Vue%203-4FC08D?logo=vuedotjs&logoColor=white)](packages/apps/web_frontend)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](packages/apps/web_frontend)
+[![Issues](https://img.shields.io/github/issues/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/issues)
+[![Last commit](https://img.shields.io/github/last-commit/heidrun-org/heidrun)](https://github.com/heidrun-org/heidrun/commits)
+[![Mead: unlimited](https://img.shields.io/badge/mead-unlimited-f5b700)](https://heidrun-org.github.io/heidrun/about)
+[**Enter Valhalla (read the documentation)**](https://heidrun-org.github.io/heidrun/documentation/) · [Who is Heiðrún?](https://heidrun-org.github.io/heidrun/about) · [Report a Ragnarök](https://github.com/heidrun-org/heidrun/issues)
+</div>
+---
+## What it does
+You run many AI agents. Each agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
+Think of Valhalla: the agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
+## Why you will like it
+- **One work window.** A tab bar above the panes, the workspace selector in the status bar, and a "Needs you" queue of blocked or finished agents in the right sidebar.
+- **Real terminals.** Every pane shows the real Herdr terminal, so Claude Code, Codex, and all the colors look exactly as in Herdr.
+- **Macros.** One click writes a ready text into a pane. The agents never wait for a developer who is typing.
+- **Inspector.** Allow or deny an agent request in one click, read the context of the agent, and ask another agent to fix a problem.
+- **Quotas in view.** The status bar shows your Claude and Codex quotas. The mead never runs out by surprise.
+- **Command palette.** Press <kbd>⌘</kbd><kbd>K</kbd> for every action. A real Viking does not use the mouse.
+- **Phone access.** Answer a blocked agent from your iPhone, over Tailscale. Valhalla fits in a pocket.
+- **Safe by default.** Dangerous commands ask for confirmation before they run. Even a berserker needs a second thought.
+The full list of features, shortcuts, and settings is in the [documentation](https://heidrun-org.github.io/heidrun/documentation/).
+## Quick start
+You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, and [pnpm](https://pnpm.io).
+```sh
+git clone git@github.com:heidrun-org/heidrun.git
+cd heidrun
+pnpm install
+pnpm dev
+```
+To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Applications`.
+## What is in this repository
+| Package | What it is |
+| --- | --- |
+| [`packages/apps/desktop_tauri`](packages/apps/desktop_tauri) | The macOS application: the Rust backend and the Tauri shell. |
+| [`packages/apps/web_frontend`](packages/apps/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
+| [`packages/auxiliary/website_public`](packages/auxiliary/website_public) | The public website and documentation, built with VitePress. |
+| [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
+| [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
+| [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
+## Contributing
+Read [`AGENTS.md`](AGENTS.md) for the rules of this repository, then open an [issue](https://github.com/heidrun-org/heidrun/issues) before you start a change.
+## License
+[MIT](LICENSE). Skål! 🍻
+cat: ../../process/HANDOFF.md: No such file or directory
+./data/sounds/goat_bleat/README.md
+./AGENTS.md
+./packages/auxiliary/raw_coding_agent_cli/package.json
+./packages/auxiliary/raw_coding_agent_cli/README.md
+./packages/auxiliary/website_public/package.json
+./packages/auxiliary/website_public/README.md
+./packages/apps/desktop_tauri/package.json
+./packages/apps/desktop_tauri/README.md
+./package.json
+./README.md
+./packages/apps/web_frontend/README.md
+./packages/apps/web_frontend/package.json
+./docs/README.md
+./docs/analytics/README.md
+./docs/team_collaboration_process/README.md
+./docs/release_notes/README.md
+./docs/marketing/README.md
+./packages/dev_tools/agents_rules_checker/package.json
+./docs/agents_rules/README.md
+./docs/potential_ideas/README.md
+./packages/dev_tools/documentation_updater/README.md
+./packages/dev_tools/documentation_updater/package.json
+./packages/dev_tools/worktree_tools/README.md
+./packages/dev_tools/video_recorder/README.md
+./packages/dev_tools/video_recorder/package.json
+./packages/dev_tools/worktree_tools/package.json
+./packages/dev_tools/change_log_generator/package.json
+./packages/dev_tools/change_log_generator/README.md
+./docs/agents_rules/user_interface/README.md
+./docs/agents_rules/user_interface/window/README.md
+./docs/architecture/README.md
+./docs/agents_rules/user_interface/workspaces_tabs_and_panes/README.md
+./docs/agents_rules/user_interface/sidebars/README.md
+./docs/agents_rules/user_interface/sidebars/chats/information_cards/README.md
+./docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/README.md
+./docs/agents_rules/user_interface/sidebars/chats/README.md
+exec
+/bin/zsh -lc 'cat ../README.md; cat ../process/HANDOFF.md; rg --files ../live_files_verification; nl -ba /Users/jetienne/.codex/memories/MEMORY.md | head -28' in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+# Heidrun documentation experiment
+Parked on 14 October 2026. This folder contains the complete source snapshot, generated website, writing prompts, calibrated judge, data and results of the Files sidebar documentation experiment. Nothing here is integrated into the real website.
+## Start here
+Read [the handoff](process/HANDOFF.md) for the current state and [the process](process/PROCESS.md) for the workflow. The experiment is parked: no generation, evaluation, publication or Git operation runs automatically.
+| Folder | Contents |
+| --- | --- |
+| [workspace](workspace/) | Source snapshot including the generator, agent command support, application inputs, rules, assets and experiment website. |
+| [prompts](prompts/) | Saved learned writing style and source modules for writing and judging. |
+| [data](data/) | Calibration cases, expected results, protocols, provenance and preservation fingerprints. |
+| [results](results/) | Model comparisons, learning rounds, image-aware judgements, calibration and live checks. |
+| [history](history/) | Earlier trial source, patches, pre-parking versions and historical helper scripts. |
+| [process](process/) | Workflow, current findings and how to resume. |
+## Resume commands
+Run from the real repository root. The separate workspace has its own package manifests and lockfile. Installed dependencies and compiled Rust files are deliberately not copied; install dependencies when resuming.
+```sh
+pnpm --dir tmp/web_doc_by_ai/workspace install --frozen-lockfile --store-dir ../runtime/pnpm_store --cache-dir ../runtime/pnpm_cache
+pnpm --dir tmp/web_doc_by_ai/workspace docs:update_by_ai --dry-run --only docs/agents_rules/user_interface/sidebars/files.md
+pnpm --dir tmp/web_doc_by_ai/workspace docs:judge_by_ai --dry-run --only browse_project_files.md copy_a_file_path.md create_a_file_or_folder.md files_sidebar_section_controls.md
+pnpm --dir tmp/web_doc_by_ai/workspace --filter website_public dev --host 127.0.0.1 --port 5180
+```
+The experiment preview is at `http://127.0.0.1:5180/heidrun/documentation/` while that local server runs. These commands do not use the real website package. The parked writer and judge entry points use their own workspace directory rather than finding the enclosing repository root.
+A future authorised writing run uses the same command without `--dry-run`, with `--model gpt-6.1-sol --effort high` and the Files rule limit. A future judge run uses the same four-page limit without `--dry-run`; Claude defaults are pinned to `claude-sonnet-5-5` and `high` effort. Such runs can use paid model access and are not started by parking.
+## Boundaries
+- All edits, generated pages, screenshots and new reports stay in this folder.
+- No commits, staging, branch changes, pushes, pull requests, merges or deployment occur.
+- The normal repository workspace patterns do not include tmp, and the normal website and root commands are unchanged.
+- Do not execute historical runners from history or results. Their absolute paths and old behaviour are preserved as evidence.
+- Integration into the real website is a later, separately authorised decision.
+## Current result
+The calibrated judge caught the planted defects in its fresh-example checks. The subsequent source-only evaluation gave the real pages 5/5 with needs_review. Live checks then confirmed two documentation defects: relative paths use the Git repository root when the workspace is a repository subfolder, and New workspace… adds a workspace without selecting it. The generated pages have not been corrected for these findings.
+Original worktrees and external result folders remain as recovery copies. The source manifest records exact originals; relocated entry-point and context changes are documented in data/parking_changes.json.
+## Parked command verification
+The nested dependencies are installed. Both dry-run commands use `node --import tsx` to avoid the temporary socket required by the tsx command in a restricted environment. Original failed attempts are preserved with the successful checks in results/parked_folder_check. This changes only the parked package scripts. The dry runs, pure judge tests and website tests do not run a paid model or generate replacement user pages.
+Dependency installation, both dry runs, seven pure judge tests, 111 website tests, the production build, and browser loading of all four pages and screenshots passed. [Verification report](results/parked_folder_check/README.md) records evidence and limits. Generated Files pages and screenshot sources are unchanged. The check did not edit outside files; the report records outside fingerprint differences caused by intervening repository updates.
+# Files sidebar documentation experiment handoff
+## Parked state
+Date: 14 October 2026. The whole experiment is in tmp/web_doc_by_ai. The main checkout is on dev_jerome; the parked folder is uncommitted. No pull request, merge or deployment is authorised. The original codex/documentation-experiment-375 and generate-docs-with-ai-375 worktrees are recovery copies, not current execution targets.
+## What is preserved
+The workspace holds the latest generator, learned writing prompt, version 3 judge, their tests and local dependency source, all captured Heidrun source/rules/assets, generated Files pages and website configuration. Results include the learning rounds, model comparisons, three image-aware judging rounds, judge consistency review, calibration examples and actual-page evaluations. History includes the original trial implementation, old source-changing and judgement runners, screenshots before and after correction, original handoff and patches.
+## Evaluation findings
+Version 2 caught all eight planted defects in two runs but graded some severities inconsistently; one declared threshold failed. Version 3 added explicit severity decisions and blocked acceptance despite a high average. It caught all four fresh defects in each of two independent runs, with no false alarms on the two correct examples, and matching scores. Sixteen focused judge tests passed. This is narrow calibration evidence, not a universal accuracy claim.
+The actual-page version 3 run returned 5/5 with needs_review and runtime limits. That result was superseded by two concrete live findings:
+1. Copy relative path uses the Git repository root. With the workspace set to the captured repository's docs subfolder, copying docs/README.md produced docs/README.md in the notification and clipboard. A workspace-relative result would be README.md. Correct the workspace-folder description in Copy a file path and Files sidebar section controls.
+2. New workspace… opens the native folder chooser and adds the chosen folder to the list without selecting it. An explicit click on the new docs entry selected it. Browse and open project files omits that necessary selection after creation.
+Neither correction has been made. Do not treat the earlier 5/5 as acceptance.
+## Successful live checks
+The production website build passed in 1.92 seconds. All four generated pages and four PNGs loaded under /heidrun/, and nine distinct prerequisite/related targets and anchors were checked. Nested-workspace absolute copying produced the correct full path and was verified by an actual clipboard paste. File opening, Markdown Reading mode, disabled Diff and Side by side for an unchanged file, Escape closing, and cancellation of a typed new-file name were exercised without creating a file.
+The original heidrun workspace selection and File viewing mode were restored. The added docs workspace remains in the application's workspace list. Only the experiment's own app and preview processes are stopped for parking; unrelated Heidrun processes are left alone.
+## Inconclusive or remaining checks
+The initial copy notification appeared and later disappeared, but a later timed check still reported the notification in the accessibility tree at about 11.7 seconds while the source timeout is 4 seconds. The user stopped the run before this discrepancy was resolved. Treat notification timing as inconclusive, not as a confirmed application defect. The raw observations are in results/live_files_verification/notification_timing.json.
+The additional repository-root clipboard control was disturbed by another clipboard writer and is excluded from paste evidence. The nested relative and absolute pastes succeeded before that interference. Other operating systems, denied clipboard permissions, error paths, real creation/duplicate-name errors and restart persistence were not exercised in that live run. Public hosting was not deployed.
+The full documentation-updater package suite previously had two failures for metadata on the unselected Introduction page. Those failures were not repaired by editing the Files pages.
+## Resume
+Read README.md, install the nested workspace dependencies, and inspect dry-run prompts before a paid model run. First authorise and perform a Files-only writing pass to address the two live findings. Then judge the unchanged output with fixed settings and repeat the relevant native checks. Keep all new artifacts here and keep failed evidence. Do not run a model or edit a user page merely as part of parking.
+The current CLI relocation is a storage-boundary change only. Dependencies are now installed. On 14 October 2026, both relocated dry runs passed, seven pure judge tests and 111 website tests passed, and the production build and browser checks of all four pages and screenshots passed. The parked package scripts now use node --import tsx after the original tsx command failed to create a temporary socket. No paid model or page replacement was run. See ../results/parked_folder_check/README.md for evidence and verification limits, including outside fingerprint changes. Source history read from the parent Git repository is only a hint; data/provenance.json records the captured source version.
+rg: ../live_files_verification: IO error for operation on ../live_files_verification: No such file or directory (os error 2)
+1	# Task Group: Heidrun documentation updater limited AI trials
+2	scope: Use when validating or running the Heidrun documentation updater, especially a narrow `docs:update_by_ai` writer trial and subsequent judging.
+3	applies_to: cwd=/Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375; reuse_rule=use only the intended temporary worktree and recheck its branch/status before each writer run; commands and sandbox behavior are environment-specific.
+4
+5	## Task 1: Validate the documentation updater and start a limited Files sidebar writer trial, partial
+6
+7	### rollout_summary_files
+8
+9	- rollout_summaries/2026-10-13T19-45-31-XZmS-documentation_updater_files_trial_ipc_permission_failure.md (cwd=/Users/jetienne/webwork/heidrun, rollout_path=/Users/jetienne/.codex/sessions/2026/10/13/rollout-2026-10-13T21-45-31-01a136cc-758f-7153-aebc-8b6fc541be96.jsonl, updated_at=2026-10-13T19:49:16+00:00, thread_id=01a136cc-758f-7153-aebc-8b6fc541be96, package tests passed; writer outline began but user aborted the trial)
+10
+11	### keywords
+12
+13	- heidrun, documentation_updater, docs:update_by_ai, docs:judge_by_ai, tsx, EPERM, IPC socket, sandbox permissions, Files sidebar, generate-docs-with-ai-375
+14
+15	## Reusable knowledge
+16
+17	- The documentation updater writer is `pnpm docs:update_by_ai`; it performs an outline pass then an editing pass. `pnpm docs:judge_by_ai` is read-only. For a narrow Files sidebar trial use `pnpm docs:update_by_ai --verbose --effort high --no-pull-request --only docs/agents_rules/user_interface/sidebars/files.md`; this must not update `.last_documented_commit`. [Task 1]
+18	- Work only in `/Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375`, which was clean on `generate-docs-with-ai-375`; `pnpm --filter documentation_updater test` passed 34 tests in 4 files. Read `packages/dev_tools/documentation_updater/CONTEXT.md` and `src/documentation_prompt.ts` before changing the trial or prompt. [Task 1]
+19	- A writer run can switch the worktree to an `update-documentation-by-ai-*` branch when it finishes. Check branch state before edits, and never overlap documentation writes with another writer run or a commit. [Task 1]
+20
+21	## Failures and how to do differently
+22
+23	- Symptom: `tsx` stops before application code with `Error: listen EPERM: operation not permitted .../tsx-501/...pipe`. Cause: the managed sandbox blocks the IPC socket. `TMPDIR=/private/tmp` did not help. Fix: when authorized, retry the identical writer command with elevated permissions; that run reached `Step 1 of 5` (outline, no edit). [Task 1]
+24	- The elevated run was user-aborted during the outline pass. Do not claim pages, a commit, a judge score, or a comparison with the earlier 3.8/5 trial score; resume only with a fresh authorization and completion evidence. [Task 1]
+25
+26	# Task Group: Teamwright Capacity Access Control integration completion, merge, and closure
+27	scope: Use when changing or auditing chatbot Capacity Access Control approval binding, exact request enforcement, integration-branch reconciliation, or issue #556 closure evidence.
+28	applies_to: cwd=/Users/jetienne/webwork/teamwright and /Users/jetienne/.codex/worktrees/capacity-access-control-integration/teamwright; reuse_rule=source-level authorization procedures are reusable, but issue states, branch ancestry, service state, and provider acceptance must be rechecked.
+exec
+/bin/zsh -lc "cat docs/agents_rules/glossary.md; cat docs/agents_rules/user_interface/sidebars/files.md; cat packages/auxiliary/website_public/docs/.vitepress/config.ts; rg -n 'files\\.md|Files sidebar|Copy a file path|Browse and open project files|workspace folder|relative' packages/auxiliary/website_public/docs/documentation; cat AGENTS.md" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+# Glossary of Heidrun
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained glossary for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+This document gives one short definition for each word that Heidrun uses for a part of its window. Use these words in the code, in the documents, and in the conversations. One word means one thing, and one thing has one word.
+## The three levels that come from Herdr
+A workspace holds tabs. A tab holds panes.
+```
+Workspace
+└── Tab
+└── Pane
+```
+### Workspace
+One project folder. In most cases, the folder is one repository. A workspace holds tabs.
+### Tab
+One entry of the tab bar. A tab belongs to one workspace. A tab holds one or more panes.
+### Pane
+One terminal inside a tab. The terminal runs a shell or a coding agent, for example Claude Code or Codex. A pane belongs to one tab.
+## The parts of the window
+### Tab bar
+The horizontal row at the top of the viewport, inside the border of the viewport. It shows the tabs of the selected workspace, one entry for each tab.
+### Viewport
+The main area of the window, between the left sidebar and the right sidebar. It has a border, like each sidebar. It holds the tab bar, the panes of the selected tab that are not pinned, and the column of pinned panes.
+### Pinned pane
+A pane that the developer keeps visible. The pin button in the header of the pane pins the pane. A pinned pane stays visible, with the same width, when the developer changes tab or workspace.
+### Column of pinned panes
+The column at the right edge of the viewport. It holds the pinned panes, one above the other, in every tab.
+### Left sidebar
+The panel on the left of the viewport. It holds sidebar sections.
+### Right sidebar
+The panel on the right of the viewport. It holds sidebar sections.
+### Sidebar section
+One part of a sidebar, for example the Needs you, the Scripts, the Source control, or the Files sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+### Source control sidebar section
+The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository, nothing of GitHub or GitLab. It replaces the Git sidebar section.
+### Code hosting sidebar section
+The sidebar section of the left sidebar that shows what lives on GitHub or on GitLab for the repository of the selected workspace: a list of the open issues, and a list of the open pull requests (GitHub) or merge requests (GitLab). A row has three lines and no button. A click on a row opens an information card. The words for its search, such as "saved search", are in [glossary_code_hosting.md](glossary_code_hosting.md).
+### Files sidebar section
+The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. A right click on a file opens a context menu that copies the path of the file. It only reads files.
+### Chat
+One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
+### Chats sidebar section
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a line with the selector that chooses the coding agent, the Chats sort dropdown menu, and the two view buttons, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+### Chats sort dropdown menu
+The dropdown menu at the top of the Chats sidebar section, at the left of the two view buttons. Its button shows the name of the chosen sort key, with an icon that shows the chosen order. It has two parts: "Sort by" chooses what the chats are sorted by (created on, last updated, messages from you, issues, pull requests, or files written), and "Order" chooses "Ascending" (the smallest value first) or "Descending" (the largest value first), for the sort key that was chosen. It looks like the sort dropdown menu of the list of issues of GitHub.
+### Dynamic topic
+One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Chats sidebar section shows them on the row of the chat.
+### Raw dynamic topic
+A dynamic topic exactly as it comes out of one chat. With the method "Keyword", Heidrun computes it from this chat and the other chats of the list, and it never asks a coding agent. With the method "Language model", a coding agent finds it from the title and the first messages of this chat. The same subject can get several raw dynamic topics, for example "sidebar" and "side bar".
+### Clustered dynamic topic
+The name of a cluster, which is a group of raw dynamic topics that have a close meaning. A clustered dynamic topic gives one label to one subject. The option "Enable clustered dynamic topics" of the Settings window makes the dynamic topic bar and the rows of the chats show clustered dynamic topics instead of raw dynamic topics.
+### Translation table
+The table, saved on the disk in the file `topic_clusters.json`, that gives the cluster of each raw dynamic topic. A coding agent, `codex` or `claude`, fills it, one call for all the new raw dynamic topics. A saved row never changes, except at a rebuild.
+### Dynamic topic source information
+The data that Heidrun reads in a chat to compute its dynamic topics. It has four parts: the title of the chat, the first messages that the developer typed, the folders of the files that the coding agent wrote, and the titles of the GitHub issues and of the pull requests that the chat mentioned. The messages of the coding agent are not part of it.
+### Dynamic topic extraction
+The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model" (from the title and the first messages of each chat, with a coding agent, `codex` or `claude`, that is installed on this computer). The Settings window holds the choice, in its section "Dynamic topics", under the title "Extraction method".
+### Dynamic topic bar
+The row of small rounded buttons in the header of the Chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
+### Sidebar icon bar
+The narrow vertical bar of icons at the outer edge of each sidebar, like the bar of icons of Visual Studio Code. It shows one icon for each sidebar section of that sidebar. A click on an icon shows that sidebar section. When the sidebar is collapsed, the sidebar icon bar is the only part of the sidebar that stays visible.
+### Status bar
+The horizontal row at the bottom of the window. It holds status bar sections.
+### Status bar section
+One part of the status bar. It shows one piece of information, for example the usage of Claude, the usage of Codex, or the Git branch. A click on a status bar section opens its information card.
+### Information card
+A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, at the left of a part of the right sidebar, at the right of a part of the left sidebar, or below a circled question mark of a page of the Settings window. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
+### Workspace status bar section
+The first status bar section, at the left end of the status bar. It shows the status dot and the name of the selected workspace. Its information card gives the details of the selected workspace, and lists the workspaces to select, rename, close, move, or create.
+## Rules
+- The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
+- The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
+- The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
+- Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.
+- Write "dynamic topic source information" in full.
+- Write "raw dynamic topic" and "clustered dynamic topic" in full, and "translation table" for the table of the clusters. Do not write "category", "group name", or "mapping" for them. Do not write "source", "metadata", or "meta information" for it.
+- The word "section" is never alone. Write "sidebar section" or "status bar section".
+- Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".
+# User interface of Heidrun: files
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related issue: [issue 349](https://github.com/heidrun-org/heidrun/issues/349), [issue 383](https://github.com/heidrun-org/heidrun/issues/383)
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+## Files
+The Files sidebar section shows the whole folder tree of the Git repository of the selected workspace ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)).
+- The Files sidebar section changes nothing but one thing: it creates a new empty file or a new empty folder, because the developer asked for it ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)). It has no button to rename, move, delete, or edit a file.
+- The header stays at the top of the sidebar section while the rows scroll under it. It holds the title "Files" and five buttons that show only an icon, in this order: "New file", "New folder", "Refresh", "Collapse all folders" (the icon `dash-square`), and "More options" (three vertical dots).
+- The menu of "More options" has three groups, and a check mark shows the choice that is on. "Indentation": Small (12 pixels for each level), Medium (20 pixels, the default), Large (28 pixels). "Row height": Compact (24 pixels), Comfortable (30 pixels, the default). "Indent guides": Show (the default), Hide. The choices are saved in the settings `filesPanelIndent`, `filesPanelRowHeight`, and `filesPanelIndentGuides`.
+- The folder tree uses the same list of files as the Files window: the files that Git tracks, the new files, and the folders that `.gitignore` ignores only when the option to show ignored files is on, as folders that do not unfold. Folders come first, then files, in alphabetical order. Each row shows, from the left: one indent guide for each level of depth, a slot for the arrow of a folder, the icon of a folder or of the kind of the file, the name, and for a changed file a colored status letter at the right. A file keeps the slot of the arrow empty, so the names of the files and of the folders of one level line up. The icons are grey, not colored.
+- "New file" and "New folder" show a name box inside the tree, as the first child of the target folder, indented as the children of that folder. The target folder is the selected folder, or the folder of the selected file, or the root of the repository when nothing is selected. The developer types only the name, and the name cannot contain the character `/`. The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels. A new file opens in the large Git window. A name that exists already gives an error message, and the name box stays open. The new file or the new folder becomes the selected row.
+- Git does not list an empty folder, so the tree remembers the new empty folders that the developer created, until Heidrun restarts. At each reading of the tree, including the button "Refresh", the program asks the backend which of these folders still exist on the disk, and forgets the others, for example a folder that the developer removed in the Finder or in a terminal.
+- "Collapse all folders" folds every folder. There is no button that unfolds every folder.
+- A click on a file or on a folder selects its row. Only one row is selected. The selected row has a background that is darker than the background of a row under the pointer, and a blue line around it, as the selected row of VS Code. The selection belongs to the workspace: each workspace keeps its own selected row, and when the developer comes back to a workspace, its selected row is the one that the developer selected there, with the folders above it unfolded. The selection stays when the developer shows another sidebar section and comes back, and when the large Git window closes. A row under the pointer has a background that is lighter than the sidebar, in the dark theme and in the light theme: it has the color `--files-row-hover` (`#22262a` in the dark theme, `#ececE8` in the light theme), and the difference to the sidebar is at least 10 levels in one color channel, so the developer sees it without effort. A click on the empty space of the sidebar section, outside every row, selects nothing in the selected workspace only.
+- A click on a folder folds or unfolds it. The folds stay when the developer changes the sidebar section.
+- A right click on the row of a file opens a context menu at the pointer ([issue #383](https://github.com/heidrun-org/heidrun/issues/383)). A context menu is a small menu that opens at the pointer. It has two items, in this order: "Copy absolute path" puts the absolute path of the file on the clipboard, and "Copy relative path" puts the path of the file on the clipboard, relative to the folder of the workspace. After a copy, a toast shows the text that was copied. The key Escape, a click outside the context menu, or a click on an item closes the context menu. The context menu stays inside the window. The row of a folder has no context menu. A copy changes no file, so the Files sidebar section still only reads files.
+- A click on a file opens the file in the large Git window, the same window as the Source control sidebar section. The large Git window shows a file that has no change as a whole file, with no diff, and disables the buttons "Diff" and "Side by side" for it.
+- The tree is read again when the repository changes, when the number of changed files changes, and at a click on "Refresh".
+- The icon `folder2` of the Files sidebar section is the first icon of the sidebar icon bar of the left sidebar, above the Scripts icon. It shows no number.
+import { defineConfig } from 'vitepress';
+import identity from '../../../../../data/identity.json';
+const base = '/heidrun/';
+export default defineConfig({
+title: identity.title,
+description: identity.description.en,
+head: [
+['link', {
+rel: 'icon',
+type: 'image/svg+xml',
+href: `${base}favicon.svg`,
+}],
+],
+transformPageData(pageData) {
+if (pageData.relativePath === 'index.md') {
+pageData.frontmatter.hero = {
+...pageData.frontmatter.hero,
+name: identity.title,
+text: identity.motto.en,
+tagline: identity.description.en,
+};
+}
+},
+base,
+themeConfig: {
+nav: [
+{ text: 'Home', link: '/' },
+{ text: 'Documentation', link: '/documentation/' },
+{ text: 'About', link: '/about' },
+],
+sidebar: [
+{
+text: 'Documentation',
+items: [
+{ text: 'Introduction', link: '/documentation/' },
+{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
+],
+},
+{
+text: 'Files',
+items: [
+{
+text: 'Browse and open project files',
+link: '/documentation/browse_project_files',
+},
+{
+text: 'Create a file or folder',
+link: '/documentation/create_a_file_or_folder',
+},
+{
+text: 'Copy a file path',
+link: '/documentation/copy_a_file_path',
+},
+{
+text: 'Files sidebar section controls',
+link: '/documentation/files_sidebar_section_controls',
+},
+],
+},
+],
+socialLinks: [
+{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+],
+},
+});
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:1:# Browse and open project files
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:20:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:26:The Files sidebar section shows the folder tree of the selected workspace's Git repository.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:31:![Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.](/documentation_images/files/files_sidebar.png)
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:37:When finished viewing, you can press **Escape** or click **Close**, the cross at the top-right of the large Git window, to return to the Files sidebar section. The file row remains selected.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:40:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:44:1. Click **Refresh**, the circular arrow in the header of the Files sidebar section.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:50:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:62:**Check**: The Files sidebar section shows the folder tree when the selected workspace is a Git repository.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:72:**Check**: The Files sidebar section shows the repository's folder tree.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:88:- [Copy a file path](/documentation/copy_a_file_path): to use a file path outside Heidrun.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:89:- [Files sidebar section controls](/documentation/files_sidebar_section_controls): to look up buttons and folder tree indicators.
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:1:# Copy a file path
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:5:Copy a file path to paste into another application or a message.
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:11:For a workspace folder at `/Users/alex/projects/example`, these are the two forms of the path to `docs/README.md`.
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:16:| **Copy relative path** | `docs/README.md` | The receiving application or reader already knows the workspace folder. |
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:19:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:29:![Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.](/documentation_images/files/copy_path.png)
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:31:3. Choose **Copy absolute path** or **Copy relative path**, using the table above.
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:38:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:49:**Check**: The context menu shows **Copy absolute path** and **Copy relative path**.
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:53:- [Browse and open project files](/documentation/browse_project_files): to find the file whose path you need.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:1:# Files sidebar section controls
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:5:Look up the controls, appearance choices, and row indicators of the Files sidebar section.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:21:![Files sidebar section header buttons with the More options menu open.](/documentation_images/files/more_options.png)
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:26:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:39:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:50:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:58:| **Copy relative path** | The path of the file relative to the workspace folder. |
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:60:See [Copy a file path](/documentation/copy_a_file_path) for examples and copying steps.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:63:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:84:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:99:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:109:The choice is saved and also affects the Files sidebar section. Folders excluded by `.gitignore` appear when the checkbox is selected, but cannot unfold.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:111:See [Create a file or folder](/documentation/create_a_file_or_folder#create-the-file-or-folder) for empty-folder behaviour and [Browse and open project files](/documentation/browse_project_files#long-file-lists) for the long-list limitation.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:115:- [Browse and open project files](/documentation/browse_project_files): to find and view a file.
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:117:- [Copy a file path](/documentation/copy_a_file_path): to copy either form of a file path.
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:20:| At the repository root, outside any subfolder | If needed, click **Collapse all folders** to fold every folder, then click empty space outside all rows in the Files sidebar section to clear the selection. When nothing is selected, creation uses the repository root. |
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:22:If the rows still fill the Files sidebar section after folding, there is no separate control to clear the selection.
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:25:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:28:1. Click **New file**, the file icon with a plus sign, or **New folder**, the folder icon with a plus sign, in the header of the Files sidebar section.
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:35:The new empty file or folder becomes the selected row. A new file also opens in the [large Git window described in Browse and open project files](/documentation/browse_project_files#open-a-project-file).
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:40:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:47:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:78:- [Browse and open project files](/documentation/browse_project_files): to select a workspace and view the new file.
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:79:- [Copy a file path](/documentation/copy_a_file_path): to copy the path of the new file.
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:80:- [Files sidebar section controls](/documentation/files_sidebar_section_controls): to identify the header buttons and changed-file letters.
+# Parked documentation experiment boundary
+This source tree is a private experiment inside tmp/web_doc_by_ai/workspace. These rules override the historical project instructions below.
+- Keep every generated page, screenshot, sidebar edit, prompt change and result inside tmp/web_doc_by_ai.
+- Never write to the real repository packages/auxiliary/website_public or its normal commands.
+- Git history may be read from the enclosing repository; never stage, change branches, commit, push, create a pull request, merge or deploy.
+- Keep the scope limited to the Files sidebar rule until the user expands it.
+- Use the local fixed-directory writer and judge entry points. Never use an archived historical runner as a current command.
+- No issue completion, publication or integration is authorised. The original worktrees are recovery copies, not current execution targets.
+## Historical project instructions
+# Heidrun
+<!-- identity:start -->
+<!-- Generated from data/identity.json: pnpm docs:identity -->
+Keep your agents working. Know which one needs you.
+<!-- identity:end -->
+This file gives the rules for working on this repository. The file `README.md` describes the application itself.
+## Project memory
+This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
+- The branch `dev_jerome` is the personal development branch of Jérôme Étienne. Jérôme's work goes on `dev_jerome`.
+- **NEVER delete or remove the branches `dev`, `dev_jerome`, or `dev_eric`. Never, in any case, locally or on the remote repository.** These branches are permanent. When you merge a pull request (on GitLab, a merge request) from one of these branches, never use the option `--delete-branch` of `gh pr merge`, and never use the option `--remove-source-branch` of `glab mr merge`. Delete only a temporary branch of the Issue Fix Workflow.
+- The branch `dev_eric` is the personal development branch of Eric. Eric's work goes on `dev_eric`.
+- Each developer works on the personal development branch of that developer only. Never put the work of Jérôme on `dev_eric`, and never put the work of Eric on `dev_jerome`.
+## Agent rules
+The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
+- [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts. Use these words, and no other word, in the code, in the documents, and in the conversations.
+- [docs/agents_rules/glossary_code_hosting.md](docs/agents_rules/glossary_code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it with the glossary when you change the Code hosting sidebar section.
+- [docs/agents_rules/glossary_pane_focus_history.md](docs/agents_rules/glossary_pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it with the glossary when you change the top bar or the focus of the panes.
+- [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
+The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
+- The window, in the folder `docs/agents_rules/user_interface/window`:
+- [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
+- [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
+- [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
+- [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, and the counts.
+- [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
+- The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
+- [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
+- [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
+- [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
+- [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
+- The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
+- [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
+- [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
+- [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
+- [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
+- [files.md](docs/agents_rules/user_interface/sidebars/files.md): the Files sidebar section.
+- The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
+- [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
+- [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
+- [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, its cache, and the width of an information card.
+- The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
+- [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
+- [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
+- [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card.
+- The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
+- [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
+- [clusters.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md): the clustered dynamic topics, the translation table, and the button "Rebuild the clusters".
+- [display.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/display.md): the dynamic topics on the row of each chat, and the dynamic topic bar.
+- [extraction_methods.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/extraction_methods.md): the methods "Keyword" and "Language model", and their caches.
+The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 10000 bytes. When a file is larger, split it by topic into smaller files, and list the new files here. The test of the package `agents_rules_checker` fails when a file is larger.
+## Documentation metadata
+Every documentation file in the folder `docs`, and in all its subfolders, has a metadata header immediately after its title.
+- The header has these lines, in this order:
+- `Created`: the date on which the file was created.
+- `Last updated`: the date of the last change of the file.
+- `Status`: one short phrase that says what the file is, for example "Maintained index for agents and tools".
+- `Related framing`: a link to the document that sets the frame of this file, for example the project instructions.
+- `Related rules`: a link to each rule file that applies to this file. Add this line only when a rule file applies.
+- `Related issue`: a link to the GitHub issue that this file comes from. Add this line only when an issue exists.
+- Write each date as day, month name, and year, for example `13 October 2026`.
+- Update `Last updated` in every change of the file, and keep the date accurate.
+- Write each link as a relative link that works from the folder of the file.
+- The file `docs/release_notes/prefix.md` has no header. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
+Example, for the file `docs/team_collaboration_process/index.md`:
+```markdown
+# Team collaboration process index
+- Created: 4 October 2026
+- Last updated: 8 October 2026
+- Status: Maintained index for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../agents_rules/glossary.md)
+This file lists the files and the subfolders of this folder, for agents and tools.
+- [README.md](README.md): the overview of this folder, for people.
+- [team_workflow.md](team_workflow.md): the way several developers work on one repository.
+```
+## Documentation folders
+Every folder in the folder `docs`, at every depth, has two files that describe the folder. The folder `docs` itself has them too.
+- `README.md` is for people. It says in plain words what the folder is for, and how to read the files of the folder. It has the metadata header, and its `Status` is "Maintained overview for people".
+- `index.md` is for agents and tools. It has the metadata header, and its `Status` is "Maintained index for agents and tools". After the header, it has one introduction sentence, then one bullet for each file and each subfolder of the folder, in this form: a relative link, a colon, and one sentence that says what the file or the subfolder holds. The bullet for a subfolder links to the file `index.md` of that subfolder. The bullet for `README.md` is included. The file does not repeat the content of the files that it lists.
+- When you add, rename, move, or delete a file or a subfolder of the folder `docs`, update the file `index.md` of its folder in the same change.
+- When you create a new folder in the folder `docs`, create its two files in the same change, and add a bullet for the new folder in the file `index.md` of its parent folder.
+## Issue Fix Workflow
+Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
+### Issue Fix Setup
+1. Read the issue.
+2. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
+- To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
+- Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
+3. Make the change in the temporary worktree. Every commit message mentions the issue number.
+### Issue Fix Completion
+The Issue Fix Completion starts when the developer is satisfied with the change.
+1. Make the last commit. It uses `fixes #<issue number>` in its message.
+2. Create a pull request (on GitLab, a merge request) from the temporary branch.
+3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
+4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
+5. Close the issue.
+## GitHub and GitLab
+Every command for GitHub in this section has a matching command for GitLab, as [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) requires. This repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab.
+### Creating an issue
+Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
+### Attaching an image to an issue
+Attach every screenshot, image, or video related to an issue with the `--attach` flag of the `gh` command. The flag uploads the file to GitHub and adds it to the issue. The flag takes a file path, and an optional alt text after `#`. Repeat the flag to attach several files, up to 50 files per command.
+- When you create the issue: `gh issue create --title "<title>" --body "<body>" --attach './screenshot.png#Alt text'`
+- When the issue already exists: `gh issue edit <issue number> --attach './screenshot.png#Alt text'`
+On GitLab, the `--attach` option of the `glab` command works in the same way, but it is experimental, and it takes a file path without alternative text.
+- When you create the issue: `glab issue create --title "<title>" --description "<body>" --attach './screenshot.png'`
+- When the issue already exists: `glab issue update <issue number> --attach './screenshot.png'`
+Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
+## Updating the user documentation
+- The user documentation of the public website is written by a coding agent, never by hand. Run `pnpm docs:update_by_ai` to update it. The command and its rules are in [packages/dev_tools/documentation_updater/CONTEXT.md](packages/dev_tools/documentation_updater/CONTEXT.md).
+- Documentation generation reads Git history and leaves generated files uncommitted. The script and its coding agent never stage files, create or switch branches, write commits, push, merge, or create a pull request or merge request. The developer handles those actions outside this process.
+- When you add, change, or remove a feature, change the rule files in `docs/agents_rules/user_interface`. The coding agent writes the documentation from these rules, so a rule that is missing or old makes a documentation page wrong.
+## Starting Heidrun to test it or to take a screenshot
+Always start Heidrun with the command line option `--no-splash-screen` when you start it to test it, and above all when you take a screenshot. Without the option, the splash screen covers the application for 3 seconds after the main window appears, so a screenshot taken in this time shows the splash screen and not the application, and you wait for nothing.
+- In development, run `pnpm dev -- -- --no-splash-screen` at the root of the repository or of the worktree. The command `tauri dev` gives the arguments after its second `--` to the application.
+- For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
+- The rules of the splash screen are in [docs/agents_rules/user_interface/window/window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md), in the section "Splash screen".
+## Tests
+- `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
+- `pnpm --filter web_frontend test` runs the Vitest tests of the package `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`.
+- `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the splash image component, the favicon, and a complete build of the website. The test files sit in the folder `tests`.
+- `pnpm --filter raw_coding_agent_cli test` runs the Vitest tests of the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`.
+- `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
+- `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
+- `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
+- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it. The test files sit in the folder `tests`.
+- When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.
+exec
+/bin/zsh -lc 'cat docs/agents_rules/user_interface/sidebars/files.md; cat packages/auxiliary/website_public/docs/documentation/browse_project_files.md; cat packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md; cat packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md; cat packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md' in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+# User interface of Heidrun: files
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related issue: [issue 349](https://github.com/heidrun-org/heidrun/issues/349), [issue 383](https://github.com/heidrun-org/heidrun/issues/383)
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+## Files
+The Files sidebar section shows the whole folder tree of the Git repository of the selected workspace ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)).
+- The Files sidebar section changes nothing but one thing: it creates a new empty file or a new empty folder, because the developer asked for it ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)). It has no button to rename, move, delete, or edit a file.
+- The header stays at the top of the sidebar section while the rows scroll under it. It holds the title "Files" and five buttons that show only an icon, in this order: "New file", "New folder", "Refresh", "Collapse all folders" (the icon `dash-square`), and "More options" (three vertical dots).
+- The menu of "More options" has three groups, and a check mark shows the choice that is on. "Indentation": Small (12 pixels for each level), Medium (20 pixels, the default), Large (28 pixels). "Row height": Compact (24 pixels), Comfortable (30 pixels, the default). "Indent guides": Show (the default), Hide. The choices are saved in the settings `filesPanelIndent`, `filesPanelRowHeight`, and `filesPanelIndentGuides`.
+- The folder tree uses the same list of files as the Files window: the files that Git tracks, the new files, and the folders that `.gitignore` ignores only when the option to show ignored files is on, as folders that do not unfold. Folders come first, then files, in alphabetical order. Each row shows, from the left: one indent guide for each level of depth, a slot for the arrow of a folder, the icon of a folder or of the kind of the file, the name, and for a changed file a colored status letter at the right. A file keeps the slot of the arrow empty, so the names of the files and of the folders of one level line up. The icons are grey, not colored.
+- "New file" and "New folder" show a name box inside the tree, as the first child of the target folder, indented as the children of that folder. The target folder is the selected folder, or the folder of the selected file, or the root of the repository when nothing is selected. The developer types only the name, and the name cannot contain the character `/`. The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels. A new file opens in the large Git window. A name that exists already gives an error message, and the name box stays open. The new file or the new folder becomes the selected row.
+- Git does not list an empty folder, so the tree remembers the new empty folders that the developer created, until Heidrun restarts. At each reading of the tree, including the button "Refresh", the program asks the backend which of these folders still exist on the disk, and forgets the others, for example a folder that the developer removed in the Finder or in a terminal.
+- "Collapse all folders" folds every folder. There is no button that unfolds every folder.
+- A click on a file or on a folder selects its row. Only one row is selected. The selected row has a background that is darker than the background of a row under the pointer, and a blue line around it, as the selected row of VS Code. The selection belongs to the workspace: each workspace keeps its own selected row, and when the developer comes back to a workspace, its selected row is the one that the developer selected there, with the folders above it unfolded. The selection stays when the developer shows another sidebar section and comes back, and when the large Git window closes. A row under the pointer has a background that is lighter than the sidebar, in the dark theme and in the light theme: it has the color `--files-row-hover` (`#22262a` in the dark theme, `#ececE8` in the light theme), and the difference to the sidebar is at least 10 levels in one color channel, so the developer sees it without effort. A click on the empty space of the sidebar section, outside every row, selects nothing in the selected workspace only.
+- A click on a folder folds or unfolds it. The folds stay when the developer changes the sidebar section.
+- A right click on the row of a file opens a context menu at the pointer ([issue #383](https://github.com/heidrun-org/heidrun/issues/383)). A context menu is a small menu that opens at the pointer. It has two items, in this order: "Copy absolute path" puts the absolute path of the file on the clipboard, and "Copy relative path" puts the path of the file on the clipboard, relative to the folder of the workspace. After a copy, a toast shows the text that was copied. The key Escape, a click outside the context menu, or a click on an item closes the context menu. The context menu stays inside the window. The row of a folder has no context menu. A copy changes no file, so the Files sidebar section still only reads files.
+- A click on a file opens the file in the large Git window, the same window as the Source control sidebar section. The large Git window shows a file that has no change as a whole file, with no diff, and disables the buttons "Diff" and "Side by side" for it.
+- The tree is read again when the repository changes, when the number of changed files changes, and at a click on "Refresh".
+- The icon `folder2` of the Files sidebar section is the first icon of the sidebar icon bar of the left sidebar, above the Scripts icon. It shows no number.
+# Browse and open project files
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Find a file in the selected workspace and view the file in the large Git window.
+## Select an existing workspace
+<!-- source: docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue -->
+A workspace is a project folder. Choose a workspace that contains a Git repository.
+1. Click the workspace name at the left end of the status bar to open the workspace information card, a small card with details and a list of workspaces.
+2. Click the workspace you want in the list below the details. If no suitable workspace is listed, click **New workspace…** at the end of the workspace information card and choose the repository folder.
+The workspace information card closes, and the status bar shows the selected workspace name.
+## Open a project file
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/GitModal.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/gitModal.json -->
+<!-- source: packages/apps/web_frontend/src/stores/files.ts -->
+The Files sidebar section shows the folder tree of the selected workspace's Git repository.
+1. Click **Files**, the first folder icon in the left sidebar icon bar, the narrow vertical bar at the outer edge of the left sidebar, above **Scripts**.
+2. Click the containing folder rows to unfold the folders and locate the file.
+![Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.](/documentation_images/files/files_sidebar.png)
+3. Click the file row you want to open.
+The file row becomes selected, and the large Git window opens over the application to show the file. Use **File** to view the whole file, or **Diff** or **Side by side** to compare changes. For an unchanged file, **Diff** and **Side by side** are disabled; the whole file is shown, or formatted Markdown if **Reading** is selected.
+When finished viewing, you can press **Escape** or click **Close**, the cross at the top-right of the large Git window, to return to the Files sidebar section. The file row remains selected.
+## Refresh the folder tree
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+Use **Refresh** when a file or folder was added or removed outside Heidrun and the folder tree still shows the old list.
+1. Click **Refresh**, the circular arrow in the header of the Files sidebar section.
+2. If necessary, click the folder where the change was made to unfold the folder.
+Check that an added file now appears or a removed file no longer appears. Refresh also removes a remembered empty folder from the folder tree when the folder no longer exists on disk.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+### “Select a workspace.” appears
+**Cause**: No workspace is selected.
+**Solution**:
+1. [Select an existing workspace](#select-an-existing-workspace) that contains a Git repository.
+**Check**: The Files sidebar section shows the folder tree when the selected workspace is a Git repository.
+### “This workspace is not a Git repository.” appears
+**Cause**: The selected workspace is not a Git repository.
+**Solution**:
+1. [Select an existing workspace](#select-an-existing-workspace) that contains a Git repository.
+**Check**: The Files sidebar section shows the repository's folder tree.
+### Long file lists
+<!-- source: packages/apps/desktop_tauri/src/files.rs -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+<!-- source: packages/apps/web_frontend/src/components/FilesModal.vue -->
+<!-- source: packages/apps/web_frontend/src/stores/files.ts -->
+“The list is too long: only the first files are shown.” means that only the first 50,000 entries are available. Heidrun has no control to load the remaining entries.
+Check the selected workspace in the status bar and unfold the file's containing folders. If the file is still missing while the warning appears, the folder tree may be incomplete.
+## Related pages
+- [Create a file or folder](/documentation/create_a_file_or_folder): to add an empty file or folder in the intended location.
+- [Copy a file path](/documentation/copy_a_file_path): to use a file path outside Heidrun.
+- [Files sidebar section controls](/documentation/files_sidebar_section_controls): to look up buttons and folder tree indicators.
+- [Keyboard shortcuts](/documentation/shortcuts): to find the shortcut **⌘P** for opening a project file by name.
+# Copy a file path
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Copy a file path to paste into another application or a message.
+## Choose the path format
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+For a workspace folder at `/Users/alex/projects/example`, these are the two forms of the path to `docs/README.md`.
+| Choice | Example | Use when |
+| --- | --- | --- |
+| **Copy absolute path** | `/Users/alex/projects/example/docs/README.md` | The receiving application needs the full location on your computer. |
+| **Copy relative path** | `docs/README.md` | The receiving application or reader already knows the workspace folder. |
+## Copy the path
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+First, [select an existing workspace](/documentation/browse_project_files#select-an-existing-workspace).
+1. Click **Files**, the first folder icon in the left sidebar icon bar, above **Scripts**, and click the containing folder rows to unfold the folders and locate the file.
+2. Right-click the file row to open the context menu, a small menu of actions for the file. A left click opens the large Git window; you can right-click directly to copy the path.
+![Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.](/documentation_images/files/copy_path.png)
+3. Choose **Copy absolute path** or **Copy relative path**, using the table above.
+The path is copied, the context menu closes, and a small notification briefly shows **Copied:** followed by the copied path, for example `Copied: docs/README.md`.
+4. Paste the path in the other application with **⌘V**.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+### The path-copy menu does not appear when a folder row is right-clicked
+**Cause**: The path-copy context menu is available only for file rows.
+**Solution**:
+1. Click the folder row to unfold the folder if necessary.
+2. Right-click a file row inside the folder.
+**Check**: The context menu shows **Copy absolute path** and **Copy relative path**.
+## Related pages
+- [Browse and open project files](/documentation/browse_project_files): to find the file whose path you need.
+- [Create a file or folder](/documentation/create_a_file_or_folder): to add a file before copying the file path.
+- [File context menu](/documentation/files_sidebar_section_controls#file-context-menu): to look up the two path-copy actions.
+# Create a file or folder
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Create an empty file or folder in the intended location of the selected repository.
+## Choose the destination
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/GitModal.vue -->
+First, [select an existing workspace](/documentation/browse_project_files#select-an-existing-workspace).
+1. Click **Files**, the first folder icon in the left sidebar icon bar, above **Scripts**, and click the folder rows needed to unfold the destination folders. Then select the destination using the table below.
+| Destination | Action |
+| --- | --- |
+| Inside a folder | Click the folder row to select the folder. |
+| Beside an existing file | Click the file row, then press **Escape** to close the large Git window; creation uses the folder containing the selected file. |
+| At the repository root, outside any subfolder | If needed, click **Collapse all folders** to fold every folder, then click empty space outside all rows in the Files sidebar section to clear the selection. When nothing is selected, creation uses the repository root. |
+If the rows still fill the Files sidebar section after folding, there is no separate control to clear the selection.
+## Create the file or folder
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+1. Click **New file**, the file icon with a plus sign, or **New folder**, the folder icon with a plus sign, in the header of the Files sidebar section.
+2. Type only the new name in the name box at the top of the contents of the destination folder, or at the top of the folder tree when creating at the repository root.
+![New file name box inside docs with example.md typed before Enter is pressed.](/documentation_images/files/new_file.png)
+3. Press **Enter**.
+The new empty file or folder becomes the selected row. A new file also opens in the [large Git window described in Browse and open project files](/documentation/browse_project_files#open-a-project-file).
+A newly created folder that is still empty disappears from the folder tree when Heidrun restarts. The folder remains on disk.
+## Cancel creation
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+1. Press **Escape** while the name box is open, or click outside the name box.
+The name box closes without creating a file or folder.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/desktop_tauri/src/files.rs -->
+### “un fichier ou dossier porte déjà ce nom” appears and the name box stays open
+**Cause**: A file or folder with the entered name already exists in the destination folder.
+The error appears in a small notification and is always in French, even with the English interface. The message means “a file or folder already has this name”.
+**Solution**:
+1. Replace the entered name with a name that is not already used in the destination folder.
+2. Press **Enter**.
+**Check**: The name box closes and the new file or folder becomes the selected row.
+### “A name cannot contain the character /. Select a folder first.” appears
+**Cause**: The entered name contains `/` instead of being only a file or folder name.
+**Solution**:
+1. Remove `/` from the name in the name box, which remains open.
+2. Press **Enter**.
+**Check**: The new file or folder becomes the selected row inside the destination folder.
+## Related pages
+- [Browse and open project files](/documentation/browse_project_files): to select a workspace and view the new file.
+- [Copy a file path](/documentation/copy_a_file_path): to copy the path of the new file.
+- [Files sidebar section controls](/documentation/files_sidebar_section_controls): to identify the header buttons and changed-file letters.
+# Files sidebar section controls
+<!-- generated by docs:update_by_ai -->
+<!-- page type: reference -->
+Look up the controls, appearance choices, and row indicators of the Files sidebar section.
+## Header buttons
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+The header stays at the top while the rows scroll. The five buttons show only icons, in this order from left to right.
+| Button | Icon | Purpose |
+| --- | --- | --- |
+| **New file** | File with a plus sign | Opens a name box for an empty file in the selected destination. |
+| **New folder** | Folder with a plus sign | Opens a name box for an empty folder in the selected destination. |
+| **Refresh** | Circular arrow | Reads the folder tree again; disabled while the folder tree loads. |
+| **Collapse all folders** | Square with a minus sign | Folds every folder. |
+| **More options** | Three vertical dots | Opens the appearance choices for the folder tree. |
+![Files sidebar section header buttons with the More options menu open.](/documentation_images/files/more_options.png)
+There is no button to unfold every folder.
+## Row and name box actions
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+| Action | Result |
+| --- | --- |
+| Click a folder row | Selects the folder and folds or unfolds the folder, unless the folder is ignored. |
+| Click a file row | Selects the file and opens the file in the large Git window. |
+| Right-click a file row | Opens the file context menu without opening the large Git window. |
+| Click empty space outside all rows | Clears the selection in the selected workspace. |
+| Press **Enter** in the name box | Creates the file or folder for a valid, nonempty name; an error keeps the name box open. |
+| Press **Escape** in the name box, or click outside the name box | Cancels creation. |
+## More options
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+A check mark identifies the active choice in each group. The appearance choices are saved.
+| Group | Choices | Default | Meaning |
+| --- | --- | --- | --- |
+| **Indentation** | **Small**, **Medium**, **Large** | **Medium** | The horizontal space added for each folder level. |
+| **Row height** | **Compact**, **Comfortable** | **Comfortable** | The vertical space occupied by each row. |
+| **Indent guides** | **Show**, **Hide** | **Show** | Whether lines mark the folder levels. |
+## File context menu
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+A context menu is a small menu of actions for a row. These items are available for file rows only.
+| Item | Copied text |
+| --- | --- |
+| **Copy absolute path** | The full path of the file. |
+| **Copy relative path** | The path of the file relative to the workspace folder. |
+See [Copy a file path](/documentation/copy_a_file_path) for examples and copying steps.
+## Folder tree indicators
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/desktop_tauri/src/files.rs -->
+Folders appear before files, with each group in alphabetical order.
+| Indicator | Meaning |
+| --- | --- |
+| Right-pointing folder arrow | The folder is folded. |
+| Downward-pointing folder arrow | The folder is unfolded. |
+| Row with a blue outline | The selected file or folder; only one row is selected. |
+| **M** | A modified file. |
+| **A** | An added file. |
+| **D** | A deleted file. |
+| **R** | A renamed file. |
+| **U** | A new file that Git does not track yet. |
+| Dot on a folder row | Changes exist inside the folder. |
+Changed-file letters appear at the right of the file row.
+## Selection
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+<!-- source: packages/apps/web_frontend/src/components/FilesModal.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesModal.json -->
+<!-- source: packages/apps/web_frontend/src/stores/files.ts -->
+<!-- source: packages/apps/web_frontend/src/stores/settings.ts -->
+<!-- source: packages/apps/desktop_tauri/src/files.rs -->
+| Item | Meaning |
+| --- | --- |
+| Selected row | Each workspace keeps a separate selection. Returning to a workspace restores the selected row with the folders above the row unfolded. |
+| Closing the large Git window | The selected row remains selected. |
+| Changing the sidebar section | The selected row and the folded or unfolded state of folders are retained. |
+## Ignored files
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+<!-- source: packages/apps/web_frontend/src/components/FilesModal.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesModal.json -->
+<!-- source: packages/apps/web_frontend/src/stores/files.ts -->
+<!-- source: packages/apps/web_frontend/src/stores/settings.ts -->
+<!-- source: packages/apps/desktop_tauri/src/files.rs -->
+The Files window is the project file browser opened with **⌘P**, as listed in [Keyboard shortcuts](/documentation/shortcuts). The **Ignored files** checkbox is below the file-name search field in the **Files** view on the left of the Files window.
+The choice is saved and also affects the Files sidebar section. Folders excluded by `.gitignore` appear when the checkbox is selected, but cannot unfold.
+See [Create a file or folder](/documentation/create_a_file_or_folder#create-the-file-or-folder) for empty-folder behaviour and [Browse and open project files](/documentation/browse_project_files#long-file-lists) for the long-list limitation.
+## Related pages
+- [Browse and open project files](/documentation/browse_project_files): to find and view a file.
+- [Create a file or folder](/documentation/create_a_file_or_folder): to choose a destination and create an empty file or folder.
+- [Copy a file path](/documentation/copy_a_file_path): to copy either form of a file path.
+exec
+/bin/zsh -lc "cat packages/auxiliary/website_public/docs/.vitepress/config.ts; rg -n 'files\\.md' packages/auxiliary/website_public/docs/documentation; rg --files ../results/live_files_verification; rg -n 'copyRelative|Copy relative|copy_relative|New workspace|addWorkspace|createWorkspace|rev-parse|show-toplevel' packages/apps" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+import { defineConfig } from 'vitepress';
+import identity from '../../../../../data/identity.json';
+const base = '/heidrun/';
+export default defineConfig({
+title: identity.title,
+description: identity.description.en,
+head: [
+['link', {
+rel: 'icon',
+type: 'image/svg+xml',
+href: `${base}favicon.svg`,
+}],
+],
+transformPageData(pageData) {
+if (pageData.relativePath === 'index.md') {
+pageData.frontmatter.hero = {
+...pageData.frontmatter.hero,
+name: identity.title,
+text: identity.motto.en,
+tagline: identity.description.en,
+};
+}
+},
+base,
+themeConfig: {
+nav: [
+{ text: 'Home', link: '/' },
+{ text: 'Documentation', link: '/documentation/' },
+{ text: 'About', link: '/about' },
+],
+sidebar: [
+{
+text: 'Documentation',
+items: [
+{ text: 'Introduction', link: '/documentation/' },
+{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
+],
+},
+{
+text: 'Files',
+items: [
+{
+text: 'Browse and open project files',
+link: '/documentation/browse_project_files',
+},
+{
+text: 'Create a file or folder',
+link: '/documentation/create_a_file_or_folder',
+},
+{
+text: 'Copy a file path',
+link: '/documentation/copy_a_file_path',
+},
+{
+text: 'Files sidebar section controls',
+link: '/documentation/files_sidebar_section_controls',
+},
+],
+},
+],
+socialLinks: [
+{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+],
+},
+});
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:20:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:40:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md:50:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:19:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md:38:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:26:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:39:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:50:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:63:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:84:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md:99:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:8:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:25:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:40:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md:47:<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+../results/live_files_verification/browse_project_files.html.txt
+../results/live_files_verification/files_sidebar_section_controls.html.txt
+../results/live_files_verification/relative_clipboard.png
+../results/live_files_verification/rendered_links.json
+../results/live_files_verification/root_relative_notification.txt
+../results/live_files_verification/create_a_file_or_folder.html.txt
+../results/live_files_verification/absolute_notification.png
+../results/live_files_verification/root_workspace.txt
+../results/live_files_verification/relative_clipboard.txt
+../results/live_files_verification/after.json
+../results/live_files_verification/non_markdown_view.txt
+../results/live_files_verification/markdown_reading.png
+../results/live_files_verification/absolute_clipboard.png
+../results/live_files_verification/nested_workspace.txt
+../results/live_files_verification/results.json
+../results/live_files_verification/creation_before_cancel.png
+../results/live_files_verification/copy_a_file_path.html.txt
+../results/live_files_verification/notification_timing.json
+../results/live_files_verification/rendered_pages.json
+../results/live_files_verification/absolute_clipboard.txt
+../results/live_files_verification/nested_workspace.png
+../results/live_files_verification/rendered_copy_page.jpg
+../results/live_files_verification/relative_notification.png
+../results/live_files_verification/root_relative_clipboard.txt
+../results/live_files_verification/before.json
+packages/apps/desktop_tauri/src/chats_files.rs:73:        .args(["rev-parse", "--verify", "--quiet", &format!("{remote_head}^{{commit}}")])
+packages/apps/desktop_tauri/src/git_source_control.rs:62:    run(root, &["rev-parse", "--verify", "--quiet", "HEAD"], LOCAL_TIMEOUT).await.is_ok()
+packages/apps/desktop_tauri/src/git_source_control.rs:139:            let upstream = run(&root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], LOCAL_TIMEOUT).await;
+packages/apps/desktop_tauri/src/git_source_control.rs:219:    run(&root, &["rev-parse", "--verify", "--quiet", &reference], LOCAL_TIMEOUT)
+packages/apps/desktop_tauri/src/git_source_control.rs:251:    let upstream = run(&root, &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"], LOCAL_TIMEOUT)
+packages/apps/desktop_tauri/src/git_source_control.rs:257:    let before = run(&root, &["rev-parse", "HEAD"], LOCAL_TIMEOUT).await?;
+packages/apps/desktop_tauri/src/git_source_control.rs:260:            let after = run(&root, &["rev-parse", "HEAD"], LOCAL_TIMEOUT).await?;
+packages/apps/desktop_tauri/src/git_source_control.rs:490:            let output = std::process::Command::new("git").arg("-C").arg(&self.bare).args(["rev-parse", "main"]).output().unwrap();
+packages/apps/desktop_tauri/src/git_source_control.rs:544:        assert_eq!(remote.head_of_main(), repository.git(&["rev-parse", "HEAD"]).trim());
+packages/apps/desktop_tauri/src/git_source_control.rs:558:        assert_eq!(remote.head_of_main(), repository.git(&["rev-parse", "HEAD"]).trim());
+packages/apps/desktop_tauri/src/files.rs:123:    let top = run(&dir, &["rev-parse", "--show-toplevel"]).await.map(|b| String::from_utf8_lossy(&b).trim().to_string());
+packages/apps/desktop_tauri/src/files.rs:234:    let top = run(&dir, &["rev-parse", "--show-toplevel"]).await.map(|b| String::from_utf8_lossy(&b).trim().to_string()).filter(|t| !t.is_empty());
+packages/apps/desktop_tauri/src/files.rs:451:    let is_git = run(Path::new(&root), &["rev-parse", "--is-inside-work-tree"]).await.is_some();
+packages/apps/desktop_tauri/src/git.rs:119:    let root = git(&cwd, &["rev-parse", "--show-toplevel"]).await?.trim().to_string();
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:371:    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:395:  it("copies the path relative to the folder of the workspace with the item Copy relative path", async () => {
+packages/apps/web_frontend/src/stores/chats.test.ts:118:    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("c", "New workspace")]));
+packages/apps/web_frontend/src/stores/chats.test.ts:123:    expect(chats.claude).toEqual([chat("c", "New workspace")]);
+packages/apps/web_frontend/src/i18n/locales/en/workspaceStatusSummary.json:9:  "new": "New workspace…",
+packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json:26:  "fileMenu.copyRelativePath": "Copy relative path"
+packages/apps/web_frontend/src/components/FilesPanel.vue:478:          {{ t("filesPanel.fileMenu.copyRelativePath") }}
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.test.ts:430:  it("has the entry New workspace at the end of the card, after one separator line", async () => {
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.test.ts:438:    expect(entry.text()).toBe("New workspace…");
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.test.ts:475:  it("offers the entry New workspace, without a separator line, when Herdr has no workspace", async () => {
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue:32:// "New workspace…". A click on a workspace of the list selects it.
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue:168:async function createWorkspace(): Promise<void> {
+packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue:291:          @click="createWorkspace"
+packages/apps/web_frontend/src/i18n/locales/fr/filesPanel.json:26:  "fileMenu.copyRelativePath": "Copier le chemin relatif"
+codex
+The three affected pages contain the reported omissions. The captured Files rule says “relative to the folder of the workspace,” which conflicts with the preserved live finding. I’ll check the captured implementation and identify the conflict in the outline; Create a file or folder will stay unchanged.
+exec
+/bin/zsh -lc "nl -ba packages/apps/web_frontend/src/components/FilesPanel.vue | sed -n '1,110p;220,295p;450,490p'; nl -ba packages/apps/web_frontend/src/stores/files.ts | sed -n '1,200p'; nl -ba packages/apps/desktop_tauri/src/files.rs | sed -n '105,175p'; nl -ba packages/apps/desktop_tauri/src/git.rs | sed -n '100,150p'" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+1	<script setup lang="ts">
+2	// The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
+3	// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
+4	// changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
+5	// delete, or edit a file. A right click on the row of a file opens a context menu that copies the absolute path or the
+6	// relative path of the file to the clipboard.
+7	// - issue #349
+8	// - issue #383
+9	import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+10	import { invoke } from "@tauri-apps/api/core";
+11	import Icon from "./Icon.vue";
+12	import SourceControlMenu from "./SourceControlMenu.vue";
+13	import { currentGit, openGitModal } from "../stores/git";
+14	import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+15	import { state, toast } from "../stores/session";
+16	import { settings } from "../stores/settings";
+17	import { fileIconName } from "../lib/chat_files";
+18	import { copy } from "../lib/clipboard";
+19	import { t } from "../i18n/index";
+20
+21	/** The selected row of the selected workspace, or null. Each workspace has its own selected row. */
+22	const selection = computed(() => (state.selectedWorkspaceId === null ? null : filesPanelSelections[state.selectedWorkspaceId] ?? null));
+23
+24	/** Selects a row of the selected workspace, or selects nothing when the path is null. */
+25	function select(path: string | null, isFolder: boolean) {
+26	  const workspaceId = state.selectedWorkspaceId;
+27	  if (workspaceId === null) {
+28	    return;
+29	  }
+30	  if (path === null) {
+31	    delete filesPanelSelections[workspaceId];
+32	    return;
+33	  }
+34	  filesPanelSelections[workspaceId] = { path, isFolder };
+35	}
+36
+37	const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? []));
+38	const rows = computed(() => visibleRows(tree.value, files.expanded, files.status));
+39
+40	/** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
+41	const INDENT_WIDTHS = { small: 12, medium: 20, large: 28 } as const;
+42
+43	/** The height in pixels of a row, for each choice of the menu. */
+44	const ROW_HEIGHTS = { compact: 24, comfortable: 30 } as const;
+45
+46	const indentWidth = computed(() => INDENT_WIDTHS[settings.filesPanelIndent]);
+47	const rowHeight = computed(() => ROW_HEIGHTS[settings.filesPanelRowHeight]);
+48
+49	/** The mark that the menu puts before the choice that is on. */
+50	function mark(isOn: boolean): string {
+51	  return isOn ? "✓ " : "\u2003";
+52	}
+53
+54	/** The items of the menu of the three dots: the indentation, the row height, and the indent guides. */
+55	const menuItems = computed(() => [
+56	  { id: "indentTitle", label: t("filesPanel.menu.indent"), isDisabled: true },
+57	  ...(["small", "medium", "large"] as const).map((choice) => ({
+58	    id: `indent:${choice}`,
+59	    label: mark(settings.filesPanelIndent === choice) + t(`filesPanel.menu.indent.${choice}`),
+60	  })),
+61	  { id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true },
+62	  ...(["compact", "comfortable"] as const).map((choice) => ({
+63	    id: `rowHeight:${choice}`,
+64	    label: mark(settings.filesPanelRowHeight === choice) + t(`filesPanel.menu.rowHeight.${choice}`),
+65	  })),
+66	  { id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true },
+67	  { id: "guides:on", label: mark(settings.filesPanelIndentGuides) + t("filesPanel.menu.guides.on") },
+68	  { id: "guides:off", label: mark(settings.filesPanelIndentGuides === false) + t("filesPanel.menu.guides.off") },
+69	]);
+70
+71	function chooseMenuItem(id: string) {
+72	  const [name, choice] = id.split(":");
+73	  if (name === "indent") {
+74	    settings.filesPanelIndent = choice as typeof settings.filesPanelIndent;
+75	  } else if (name === "rowHeight") {
+76	    settings.filesPanelRowHeight = choice as typeof settings.filesPanelRowHeight;
+77	  } else if (name === "guides") {
+78	    settings.filesPanelIndentGuides = choice === "on";
+79	  }
+80	}
+81
+82	/**
+83	 * Reads the tree again, then forgets the new empty folders that do not exist any more on the disk, for example after the
+84	 * developer removed them in the Finder or in a terminal.
+85	 */
+86	async function loadTree(root: string) {
+87	  await loadFiles(root);
+88	  const remembered = filesPanelNewFolders[files.root] ?? [];
+89	  if (remembered.length === 0) {
+90	    return;
+91	  }
+92	  try {
+93	    filesPanelNewFolders[files.root] = await invoke<string[]>("dirs_existing", { root: files.root, paths: remembered });
+94	  } catch {
+95	    // The folders stay in the list when the backend cannot answer: the next reading tries again.
+96	  }
+97	}
+98
+99	/** Unfolds the folders above the selected row, so that the selected row shows after the tree is read again. */
+100	function revealSelection() {
+101	  const path = selection.value?.path ?? null;
+102	  if (path === null || path.includes("/") === false) {
+103	    return;
+104	  }
+105	  const parts = path.split("/");
+106	  const folders = new Set(files.expanded);
+107	  for (let index = 1; index < parts.length; index++) {
+108	    folders.add(parts.slice(0, index).join("/"));
+109	  }
+110	  files.expanded = folders;
+220	/** A click on the empty space of the section selects nothing: a new file or a new folder then goes to the root. */
+221	function clearSelection() {
+222	  select(null, false);
+223	}
+224
+225	function collapseAll() {
+226	  files.expanded = new Set();
+227	}
+228
+229	function refresh() {
+230	  const root = currentGit.value?.root;
+231	  if (root !== undefined) {
+232	    void loadTree(root);
+233	  }
+234	}
+235
+236	function toggleFolder(row: TreeRow) {
+237	  if (row.ignored) {
+238	    return;
+239	  }
+240	  const expanded = new Set(files.expanded);
+241	  if (expanded.has(row.path)) {
+242	    expanded.delete(row.path);
+243	  } else {
+244	    expanded.add(row.path);
+245	  }
+246	  files.expanded = expanded;
+247	}
+248
+249	function chooseRow(row: TreeRow) {
+250	  select(row.path, row.dir);
+251	  if (row.dir) {
+252	    toggleFolder(row);
+253	    return;
+254	  }
+255	  openGitModal(row.path);
+256	}
+257
+258	/** The context menu of the row of a file: the relative path of the file, and where the pointer was. Null when closed. */
+259	const fileMenu = ref<{ path: string; top: number; left: number } | null>(null);
+260	const fileMenuElement = ref<HTMLElement>();
+261
+262	/** The space in pixels that the context menu keeps between itself and the edge of the window. */
+263	const FILE_MENU_MARGIN = 8;
+264
+265	/** Opens the context menu at the pointer for the row of a file. The row of a folder keeps the default behavior. */
+266	function openFileMenu(event: MouseEvent, row: TreeRow) {
+267	  if (row.dir) {
+268	    return;
+269	  }
+270	  event.preventDefault();
+271	  fileMenu.value = { path: row.path, top: event.clientY, left: event.clientX };
+272	  document.addEventListener("mousedown", onDocumentMouseDown, true);
+273	  document.addEventListener("keydown", onDocumentKeyDown, true);
+274	  void nextTick(() => {
+275	    const menuElement = fileMenuElement.value;
+276	    const current = fileMenu.value;
+277	    if (menuElement === undefined || current === null) {
+278	      return;
+279	    }
+280	    // The context menu stays inside the window, whatever the place of the pointer.
+281	    fileMenu.value = {
+282	      ...current,
+283	      top: Math.max(FILE_MENU_MARGIN, Math.min(current.top, window.innerHeight - menuElement.offsetHeight - FILE_MENU_MARGIN)),
+284	      left: Math.max(FILE_MENU_MARGIN, Math.min(current.left, window.innerWidth - menuElement.offsetWidth - FILE_MENU_MARGIN)),
+285	    };
+286	  });
+287	}
+288
+289	/** Closes the context menu. */
+290	function closeFileMenu() {
+291	  fileMenu.value = null;
+292	  document.removeEventListener("mousedown", onDocumentMouseDown, true);
+293	  document.removeEventListener("keydown", onDocumentKeyDown, true);
+294	}
+295
+450	              <span v-else :style="{ width: `${entry.row.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+451	              <span class="arrow">
+452	                <Icon v-if="arrowIcon(entry.row) !== null" :name="arrowIcon(entry.row) ?? ''" />
+453	              </span>
+454	              <Icon :name="rowIcon(entry.row)" class="kind" />
+455	              <span class="name me-auto">{{ entry.row.name }}</span>
+456	              <span v-if="entry.row.status !== null && entry.row.dir" class="letter modified">•</span>
+457	              <span v-else-if="entry.row.status !== null" class="letter" :class="letterClass(entry.row.status)">{{ entry.row.status === "?" ? "U" : entry.row.status }}</span>
+458	            </button>
+459	          </li>
+460	        </template>
+461	      </ul>
+462	      <div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
+463	    </template>
+464	    <div v-else class="muted">{{ t("filesPanel.notRepository") }}</div>
+465	    <Teleport to="body">
+466	      <div
+467	        v-if="fileMenu !== null"
+468	        ref="fileMenuElement"
+469	        class="menu show position-fixed"
+470	        role="menu"
+471	        :aria-label="t('filesPanel.fileMenu.label')"
+472	        :style="{ top: `${fileMenu.top}px`, left: `${fileMenu.left}px` }"
+473	      >
+474	        <button type="button" class="menu-item" role="menuitem" @click="copyPath('absolute')">
+475	          {{ t("filesPanel.fileMenu.copyAbsolutePath") }}
+476	        </button>
+477	        <button type="button" class="menu-item" role="menuitem" @click="copyPath('relative')">
+478	          {{ t("filesPanel.fileMenu.copyRelativePath") }}
+479	        </button>
+480	      </div>
+481	    </Teleport>
+482	  </div>
+483	</template>
+484
+485	<style scoped>
+486	.files-panel { flex: 1; min-height: 0; padding: 0 8px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+487	/* The header stays at the top while the rows scroll under it. Its own padding replaces the top padding of the panel, so no row shows above it. */
+488	.panel-header { position: sticky; top: 0; z-index: 2; padding: 12px 0 8px; background: var(--side); }
+489	.title { font-weight: 600; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+490	.files-panel :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
+1	// File explorer (read only for now): the project of a pane, its tree, open tabs.
+2	import { markRaw, reactive, watch } from "vue";
+3	import { listen } from "@tauri-apps/api/event";
+4	import { invoke } from "@tauri-apps/api/core";
+5	import { toast } from "./session";
+6	import { settings } from "./settings";
+7	import { t } from "../i18n/index";
+8
+9	interface FileList {
+10	  root: string;
+11	  git: boolean;
+12	  files: string[];
+13	  status: Record<string, string>;
+14	  truncated: boolean;
+15	}
+16
+17	export const files = reactive({
+18	  open: false,
+19	  loading: false,
+20	  error: "",
+21	  root: "",
+22	  git: false,
+23	  list: [] as string[],
+24	  status: {} as Record<string, string>,
+25	  truncated: false,
+26	  /** Open tabs (relative paths) and the one shown. */
+27	  tabs: [] as string[],
+28	  active: null as string | null,
+29	  /** Line to show and highlight once the file is loaded. */
+30	  line: null as number | null,
+31	  expanded: new Set<string>(),
+32	  lineTick: 0,
+33	  /** Files being edited, by path. */
+34	  edits: {} as Record<string, Edit>,
+35	  /** ⌘Q (or closing the window) was stopped: unsaved files are shown first. */
+36	  quitting: false,
+37	  /** Bumped to focus the quick search (⌘P). */
+38	  searchTick: 0,
+39	});
+40
+41	export interface Edit {
+42	  /** Content when read from the disk, and its fingerprint (a save checks it). */
+43	  original: string;
+44	  /** null: the file was deleted on the disk. */
+45	  hash: string | null;
+46	  /** What the editor holds now. */
+47	  current: string;
+48	  /** The disk changed meanwhile (an agent?): what is there now, and its fingerprint. */
+49	  conflict: boolean;
+50	  disk: string | null;
+51	  diskHash: string | null;
+52	  saving: boolean;
+53	}
+54
+55	interface FileText {
+56	  text: string;
+57	  hash: string;
+58	}
+59
+60	export const isDirty = (path: string | null | undefined) => !!path && !!files.edits[path] && files.edits[path].current !== files.edits[path].original;
+61	/** Every edited file not saved, open in a tab or not. */
+62	export const dirtyTabs = () => Object.keys(files.edits).filter((t) => isDirty(t));
+63
+64	// The app asks before quitting (⌘Q, closing the window) while files are not saved.
+65	watch(
+66	  () => dirtyTabs().length > 0,
+67	  (on) => invoke("set_unsaved", { on }).catch(() => {}),
+68	);
+69
+70	const fresh = (r: FileText): Edit => ({ original: r.text, current: r.text, hash: r.hash, conflict: false, disk: null, diskHash: null, saving: false });
+71
+72	export async function startEdit(path: string) {
+73	  try {
+74	    files.edits[path] = fresh(await invoke<FileText>("file_read", { root: files.root, path }));
+75	  } catch (e) {
+76	    toast(String(e));
+77	  }
+78	}
+79
+80	/** Leaves edit mode (the caller asked first when there were changes). */
+81	export function stopEdit(path: string) {
+82	  delete files.edits[path];
+83	}
+84
+85	/** Back to what is on the disk now (changes dropped). */
+86	export async function reloadEdit(path: string) {
+87	  try {
+88	    files.edits[path] = fresh(await invoke<FileText>("file_read", { root: files.root, path }));
+89	  } catch (e) {
+90	    toast(String(e));
+91	  }
+92	}
+93
+94	/**
+95	 * Saves the edited file, only if the disk still holds the version the editor
+96	 * started from. `overwrite`: replace the disk version shown in the conflict (and
+97	 * only that one: if it changed again, the conflict is refreshed instead).
+98	 */
+99	export async function saveEdit(path: string, overwrite = false): Promise<boolean> {
+100	  const ed = files.edits[path];
+101	  if (!ed || ed.saving) return false;
+102	  ed.saving = true;
+103	  try {
+104	    const content = ed.current;
+105	    const st = await invoke<{ hash: string | null }>("file_write", {
+106	      root: files.root,
+107	      path,
+108	      content,
+109	      expected: overwrite ? ed.diskHash : ed.hash,
+110	    });
+111	    Object.assign(ed, { original: content, hash: st.hash, conflict: false, disk: null, diskHash: null });
+112	    toast(t("filesStore.saved", { name: path.split("/").pop() ?? path }));
+113	    // Git state of the tree (M, U…) follows.
+114	    reloadFiles();
+115	    return true;
+116	  } catch (e) {
+117	    if (String(e).includes("changed_on_disk")) {
+118	      if (overwrite) toast(t("filesStore.changedAgain"));
+119	      await markConflict(path);
+120	    } else toast(String(e));
+121	    return false;
+122	  } finally {
+123	    ed.saving = false;
+124	  }
+125	}
+126
+127	async function markConflict(path: string) {
+128	  const ed = files.edits[path];
+129	  if (!ed) return;
+130	  ed.conflict = true;
+131	  try {
+132	    const st = await invoke<{ hash: string | null }>("file_stat", { root: files.root, path });
+133	    if (st.hash === null) {
+134	      ed.disk = null;
+135	      ed.diskHash = null;
+136	      return;
+137	    }
+138	    const r = await invoke<FileText>("file_read", { root: files.root, path });
+139	    ed.disk = r.text;
+140	    ed.diskHash = r.hash;
+141	  } catch {
+142	    /* shown as "changed", without the other version */
+143	  }
+144	}
+145
+146	/**
+147	 * Looks at the edited file on the disk: untouched here → reloaded quietly; changes
+148	 * in progress (or typed during the reload) → the conflict is shown at once rather
+149	 * than at the save. While a conflict is shown, a new change on the disk refreshes it.
+150	 */
+151	export async function checkEdit(path: string) {
+152	  const ed = files.edits[path];
+153	  if (!ed || ed.saving) return;
+154	  let st: { hash: string | null };
+155	  try {
+156	    st = await invoke("file_stat", { root: files.root, path });
+157	  } catch {
+158	    return;
+159	  }
+160	  if (ed.conflict) {
+161	    if (st.hash !== ed.diskHash) await markConflict(path);
+162	    return;
+163	  }
+164	  if (st.hash === ed.hash) return;
+165	  if (!isDirty(path) && st.hash !== null) {
+166	    const r = await invoke<FileText>("file_read", { root: files.root, path }).catch(() => null);
+167	    const now = files.edits[path];
+168	    if (!r || !now) return;
+169	    // Typed something while the file was being read: not replaced, it is a conflict.
+170	    if (now.current !== now.original) return markConflict(path);
+171	    files.edits[path] = fresh(r);
+172	    toast(t("filesStore.reloaded", { name: path.split("/").pop() ?? path }));
+173	  } else await markConflict(path);
+174	}
+175
+176	/** Drops every unsaved change ("Abandonner"). */
+177	export function discardAll() {
+178	  files.edits = {};
+179	}
+180
+181	/**
+182	 * Sidebar section Files: the empty folders that the developer created in this session, by root of repository. Git does
+183	 * not list an empty folder, so the tree adds them.
+184	 */
+185	export const filesPanelNewFolders = reactive({} as Record<string, string[]>);
+186
+187	/** The selected row of the sidebar section Files: a path relative to the root, and whether the path is a folder. */
+188	export type FilesPanelSelection = {
+189	  /** The path of the file or of the folder. */
+190	  path: string;
+191	  /** True when the selected path is a folder. */
+192	  isFolder: boolean;
+193	};
+194
+195	/** Sidebar section Files: the file or the folder that the developer clicked last, by workspace identifier. */
+196	export const filesPanelSelections = reactive({} as Record<string, FilesPanelSelection>);
+197
+198	let cwdOpen: string | null = null;
+199	let loadSeq = 0;
+200
+105	            if HEAVY.contains(&name.as_str()) {
+106	                continue;
+107	            }
+108	            walk(base, &p, out, depth + 1);
+109	        } else if let Ok(rel) = p.strip_prefix(base) {
+110	            out.push(rel.to_string_lossy().replace('\\', "/"));
+111	        }
+112	        if out.len() >= MAX_FILES {
+113	            return;
+114	        }
+115	    }
+116	}
+117
+118	/// Files of the project containing `cwd`: the git repository (tracked and new files,
+119	/// .gitignore respected), or the folder itself when it is not a repository.
+120	#[tauri::command]
+121	pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, String> {
+122	    let dir = std::fs::canonicalize(&cwd).map_err(|_| "dossier introuvable".to_string())?;
+123	    let top = run(&dir, &["rev-parse", "--show-toplevel"]).await.map(|b| String::from_utf8_lossy(&b).trim().to_string());
+124	    let Some(root) = top.filter(|t| !t.is_empty()) else {
+125	        acceptable_root(&dir)?;
+126	        used_by_a_pane(&dir).await?;
+127	        let walk_dir = dir.clone();
+128	        let files = tokio::task::spawn_blocking(move || {
+129	            let mut files = Vec::new();
+130	            walk(&walk_dir, &walk_dir, &mut files, 0);
+131	            files
+132	        })
+133	        .await
+134	        .map_err(|e| e.to_string())?;
+135	        let root = dir.display().to_string();
+136	        remember_root(&root);
+137	        let truncated = files.len() >= MAX_FILES;
+138	        return Ok(FileList { root, git: false, files, status: HashMap::new(), truncated });
+139	    };
+140	    let rootp = std::fs::canonicalize(&root).unwrap_or_else(|_| PathBuf::from(&root));
+141	    acceptable_root(&rootp)?;
+142	    used_by_a_pane(&rootp).await?;
+143	    let listed = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
+144	    let mut files: Vec<String> = split_z(&listed).collect();
+145	    files.sort();
+146	    files.dedup();
+147	    if ignored.unwrap_or(false) {
+148	        // Ignored folders as one entry each ("node_modules/"), not their thousands of files.
+149	        let ign = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
+150	        files.extend(split_z(&ign));
+151	    }
+152	    let truncated = files.len() > MAX_FILES;
+153	    files.truncate(MAX_FILES);
+154	    let mut status = HashMap::new();
+155	    let st = run(&rootp, &["-c", "core.quotepath=off", "status", "--porcelain=v1", "-z", "--untracked-files=all"]).await.unwrap_or_default();
+156	    let mut it = split_z(&st);
+157	    while let Some(entry) = it.next() {
+158	        if entry.len() < 4 {
+159	            continue;
+160	        }
+161	        let (code, path) = entry.split_at(3);
+162	        let code = code.trim();
+163	        let letter = if code == "??" { "?" } else if code.contains('D') { "D" } else if code.contains('A') { "A" } else if code.contains('R') { "R" } else { "M" };
+164	        // A rename is followed by its old path: skip it.
+165	        if code.contains('R') || code.contains('C') {
+166	            it.next();
+167	        }
+168	        status.insert(path.to_string(), letter.to_string());
+169	        // A deleted file is still worth showing in the tree.
+170	        if letter == "D" && !files.iter().any(|f| f == path) {
+171	            files.push(path.to_string());
+172	        }
+173	    }
+174	    remember_root(&root);
+175	    Ok(FileList { root, git: true, files, status, truncated })
+100	            st.changed += 1;
+101	            let mut parts = line.split(' ');
+102	            let kind = parts.next().unwrap_or("");
+103	            let xy = parts.next().unwrap_or("").to_string();
+104	            // Fields before the path: 1 → 6 more, 2 → 7 more (+ "orig\tpath"), u → 8 more.
+105	            let skip = match kind { "1" => 6, "2" => 7, _ => 8 };
+106	            let path: String = parts.skip(skip).collect::<Vec<_>>().join(" ");
+107	            let path = unquote(path.split('\t').next().unwrap_or(""));
+108	            if st.files.len() < 500 {
+109	                st.files.push(GitFile { status: xy, path });
+110	            }
+111	        }
+112	    }
+113	}
+114
+115	/// Branch, ahead / behind, modified files and last commit of the repository
+116	/// containing `cwd`; `None` when it is not a Git repository.
+117	#[tauri::command]
+118	pub async fn git_status(cwd: String) -> Option<GitStatus> {
+119	    let root = git(&cwd, &["rev-parse", "--show-toplevel"]).await?.trim().to_string();
+120	    let mut st = GitStatus { root: root.clone(), ..Default::default() };
+121	    remember_root(&root);
+122	    if let Some(text) = git(&root, &["-c", "core.quotepath=off", "status", "--porcelain=v2", "--branch", "--untracked-files=all"]).await {
+123	        parse_status(&text, &mut st);
+124	    }
+125	    if let Some(log) = git(&root, &["log", "-1", "--format=%h%x1f%s%x1f%ct"]).await {
+126	        let mut it = log.trim().split('\u{1f}');
+127	        st.last_sha = it.next().map(str::to_string).filter(|s| !s.is_empty());
+128	        st.last_subject = it.next().map(str::to_string);
+129	        st.last_time = it.next().and_then(|t| t.parse().ok());
+130	    }
+131	    st.remote = git(&root, &["config", "--get", "remote.origin.url"]).await.map(|s| s.trim().to_string());
+132	    Some(st)
+133	}
+134
+135	/// A path inside the repository, as git prints it (relative, no "..").
+136	pub(crate) fn safe_rel(path: &str) -> Result<&str, String> {
+137	    let p = std::path::Path::new(path);
+138	    if path.is_empty() || p.is_absolute() || p.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+139	        return Err("chemin refusé".into());
+140	    }
+141	    Ok(path)
+142	}
+143
+144	const MAX_TEXT: usize = 1_500_000;
+145
+146	fn as_text(bytes: Vec<u8>) -> Result<String, String> {
+147	    if bytes.len() > MAX_TEXT {
+148	        return Err(format!("fichier trop gros pour l’aperçu ({} Ko)", bytes.len() / 1024));
+149	    }
+150	    if bytes.iter().take(8000).any(|b| *b == 0) {
+exec
+/bin/zsh -lc "nl -ba packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue | sed -n '1,75p;125,195p;245,300p'; rg -n 'workspace_create|create_workspace|workspace_select|selectWorkspace|select_workspace' packages/apps/web_frontend/src/stores/herdr.ts packages/apps/desktop_tauri/src; cat docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md; cat ../results/live_files_verification/results.json; cat ../results/live_files_verification/relative_clipboard.txt; cat ../results/live_files_verification/nested_workspace.txt" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+1	<script setup lang="ts">
+2	import { computed, ref, watch } from "vue";
+3	import { open as openDialog } from "@tauri-apps/plugin-dialog";
+4	import { homeDir } from "@tauri-apps/api/path";
+5	import Icon from "./Icon.vue";
+6	import InlineRename from "./InlineRename.vue";
+7	import ScrollingLine from "./ScrollingLine.vue";
+8	import { askConfirm } from "../stores/confirm";
+9	import { settings } from "../stores/settings";
+10	import { currentGit, workspaceCwd } from "../stores/git";
+11	import {
+12	  allPanes,
+13	  closeWorkspace,
+14	  finishRename,
+15	  moveWorkspaceInView,
+16	  newWorkspace,
+17	  otherWorkspaceStatus,
+18	  selectWorkspace,
+19	  startRename,
+20	  state,
+21	  workspaceLabel,
+22	  orderedWorkspaces as workspaces,
+23	} from "../stores/session";
+24	import { useReorder } from "../lib/reorder";
+25	import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
+26	import { useStatusCard } from "../lib/status_card";
+27	import type { WorkspaceInfo } from "../lib/types";
+28	import { t } from "../i18n/index";
+29
+30	// The workspace selector, at the left end of the status bar: the status dot and the name of the selected workspace.
+31	// A click on it shows a Bootstrap popover with the details of the selected workspace, the list of workspaces, and the entry
+32	// "New workspace…". A click on a workspace of the list selects it.
+33	const root = ref<HTMLElement | null>(null);
+34	const { isOpen, toggle, close, onFocusOut } = useStatusCard(root);
+35
+36	// The width of the card, in pixels: 20 percent more than the 340 pixels of `$popover-max-width` in `bootstrap_parts.scss`,
+37	// the same width as the card of the usage of Claude and of the usage of Codex. The folder path fits on one line in it.
+38	const CARD_WIDTH_PIXELS = 408;
+39	const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--popover-max-width": `${CARD_WIDTH_PIXELS}px` };
+40
+41	const workspaceReorder = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
+42
+43	/** The selected workspace, or null when Herdr has no workspace. */
+44	const selectedWorkspace = computed(
+45	  () => workspaces.value.find((workspace) => workspace.workspace_id === state.selectedWorkspaceId) ?? null,
+46	);
+47
+48	/** The name in the status bar: the selected workspace. */
+49	const selectedLabel = computed(() =>
+50	  state.selectedWorkspaceId === null ? t("workspaceStatusSummary.none") : workspaceLabel(state.selectedWorkspaceId),
+51	);
+52
+53	/** True while the name of the selected workspace is in a text field, in the place of the name. */
+54	const isRenaming = computed(
+55	  () => state.selectedWorkspaceId !== null && state.renaming === `ws:${state.selectedWorkspaceId}`,
+56	);
+57
+58	/**
+59	 * Tells if an agent runs in a workspace.
+60	 *
+61	 * @param workspaceId - The identifier of the workspace.
+62	 * @returns True when a pane of the workspace runs an agent.
+63	 */
+64	function hasAgent(workspaceId: string): boolean {
+65	  return allPanes.value.some((pane) => pane.workspace_id === workspaceId && pane.agent);
+66	}
+67
+68	/**
+69	 * Gives the classes of the status dot of a workspace: the color of its agents, or a hollow ring when no agent runs.
+70	 *
+71	 * @param workspace - The workspace.
+72	 * @returns The classes to add to the element with the class `dot`.
+73	 */
+74	function dotClassesOf(workspace: WorkspaceInfo): string[] {
+75	  if (hasAgent(workspace.workspace_id) === false) {
+125	  ];
+126	});
+127
+128	/**
+129	 * Selects a workspace and closes the card.
+130	 *
+131	 * @param workspaceId - The identifier of the workspace.
+132	 */
+133	function choose(workspaceId: string): void {
+134	  close();
+135	  selectWorkspace(workspaceId);
+136	}
+137
+138	/**
+139	 * Starts the rename of a workspace, with a text field in the status bar, and closes the card.
+140	 *
+141	 * @param workspaceId - The identifier of the workspace.
+142	 */
+143	function renameFromList(workspaceId: string): void {
+144	  close();
+145	  startRename("ws", workspaceId);
+146	}
+147
+148	/**
+149	 * Asks for a confirmation, then closes a workspace. The question lives in the status bar section and not in the card, because
+150	 * the card closes when the keyboard focus goes to the confirmation dialog. When the setting `confirmWorkspaceClose` is off,
+151	 * the workspace closes at once, without the question.
+152	 *
+153	 * @param workspace - The workspace to close.
+154	 */
+155	async function askClose(workspace: WorkspaceInfo): Promise<void> {
+156	  const isConfirmed =
+157	    settings.confirmWorkspaceClose === false ||
+158	    (await askConfirm(
+159	      t("workspaceStatusSummary.close", { name: workspace.label }),
+160	      t("workspaceStatusSummary.closeConfirm"),
+161	    ));
+162	  if (isConfirmed === true) {
+163	    await closeWorkspace(workspace.workspace_id);
+164	  }
+165	}
+166
+167	/** Asks for the folder of a new workspace, then creates the workspace with the name of the folder. */
+168	async function createWorkspace(): Promise<void> {
+169	  close();
+170	  const path = await openDialog({
+171	    directory: true,
+172	    multiple: false,
+173	    title: t("workspaceStatusSummary.chooseFolder"),
+174	    defaultPath: await homeDir(),
+175	  });
+176	  if (path === null) {
+177	    return;
+178	  }
+179	  const label = path.split("/").filter(Boolean).pop() ?? null;
+180	  await newWorkspace(path, label);
+181	}
+182
+183	// The command search renames the workspace too: the field replaces the name, so the card must not stay open.
+184	watch(isRenaming, (renaming) => {
+185	  if (renaming === true) {
+186	    close();
+187	  }
+188	});
+189	</script>
+190
+191	<template>
+192	  <div
+193	    ref="root"
+194	    class="workspace-status status-section"
+195	    :class="{ show: isOpen }"
+245	              quiet: !hasAgent(workspace.workspace_id),
+246	              dragging: workspaceReorder.dragging.value === workspace.workspace_id,
+247	              'drop-before': workspaceReorder.gap.value === workspaceIndex,
+248	              'drop-after': workspaceReorder.gap.value === workspaceIndex + 1 && workspaceIndex === workspaces.length - 1,
+249	            }"
+250	            :data-reorder-id="workspace.workspace_id"
+251	            @pointerdown="workspaceReorder.onPointerDown($event, workspaces.map((other) => other.workspace_id))"
+252	          >
+253	            <button
+254	              type="button"
+255	              class="btn border-0 d-flex align-items-center gap-2 h-auto text-start workspace-main"
+256	              :aria-current="workspace.workspace_id === state.selectedWorkspaceId"
+257	              :title="t('workspaceStatusSummary.rowTitle')"
+258	              @click="choose(workspace.workspace_id)"
+259	            >
+260	              <span class="dot" :class="dotClassesOf(workspace)"></span>
+261	              <span
+262	                class="name"
+263	                :class="{
+264	                  'text-body-secondary': !hasAgent(workspace.workspace_id) && workspace.workspace_id !== state.selectedWorkspaceId,
+265	                }"
+266	              >{{ workspace.label }}</span>
+267	            </button>
+268	            <span class="row-actions">
+269	              <button
+270	                type="button"
+271	                class="row-button"
+272	                :aria-label="t('workspaceStatusSummary.rename', { name: workspace.label })"
+273	                :title="t('workspaceStatusSummary.rename', { name: workspace.label })"
+274	                @click.stop="renameFromList(workspace.workspace_id)"
+275	              ><Icon name="pencil" /></button>
+276	              <button
+277	                type="button"
+278	                class="row-button"
+279	                :aria-label="t('workspaceStatusSummary.close', { name: workspace.label })"
+280	                :title="t('workspaceStatusSummary.close', { name: workspace.label })"
+281	                @click.stop="askClose(workspace)"
+282	              ><Icon name="x-lg" /></button>
+283	            </span>
+284	          </div>
+285	        </div>
+286	        <div v-if="workspaces.length > 0" class="border-top" role="separator"></div>
+287	        <button
+288	          type="button"
+289	          class="btn border-0 d-flex align-items-center gap-2 h-auto text-start"
+290	          :title="t('workspaceStatusSummary.newTitle')"
+291	          @click="createWorkspace"
+292	        >
+293	          <Icon name="plus-lg" /> {{ t("workspaceStatusSummary.new") }}
+294	        </button>
+295	      </div>
+296	    </div>
+297	  </div>
+298	</template>
+299
+300	<style scoped>
+rg: packages/apps/web_frontend/src/stores/herdr.ts: No such file or directory (os error 2)
+# User interface of Heidrun: workspace
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+## Workspace
+- One workspace is selected at a time.
+- The workspace status bar section is the first status bar section, at the left end of the status bar. It shows a status dot and the name of the selected workspace. A click on it opens its information card above the section. The information card does not open when the mouse moves over the section.
+- The status dot is always visible, and it sits before the name, in the same place as the dot of a tab. When an agent in another workspace is blocked or has finished, the dot has the color of that status, and it follows the cards of the Needs you sidebar section. Otherwise, the dot shows the status of the selected workspace. A workspace without an agent gets a hollow ring.
+- The information card of the workspace status bar section gives the folder, the Git branch, the number of tabs, and the number of agents of the selected workspace. The folder is shown on one line, under the rules of the section "Text that must stay on one line" (in [layout.md](../window/layout.md)): while the pointer is over the information card, a folder that does not fit scrolls sideways to its end, and it shows its beginning again when the pointer leaves. Under the details, it lists the workspaces. A click on a workspace selects it, and closes the information card.
+- The list of workspaces has no separator line between the workspaces, and no space between two rows: between the two separator lines, the pointer is always on a workspace. Each row is 32 pixels tall, with the padding inside the row. One separator line sits between the list and the entry "New workspace…" at the end of the information card.
+- The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
+- Each workspace of the list offers the rename of the workspace, the close of the workspace, and the move of the workspace by drag and drop. The rename puts a text field in the place of the name in the status bar. A double click on the workspace status bar section does not rename the workspace.
+- Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
+- Heidrun saves the identifier of the selected workspace each time that the selection changes, in the option `selectedWorkspaceId` of the store `settings.ts`. At the next start, Heidrun selects this workspace again, with its last tab and its last pane. When this workspace does not exist any more, Heidrun selects the workspace that Herdr has focused, or the first workspace.
+{
+"status": "Documentation corrections required; previous source-only full scores are not acceptance evidence.",
+"app": "Current experimental worktree compiled Heidrun.app, launched with --no-splash-screen; native interface, not a headless substitute.",
+"nestedWorkspace": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs",
+"repositoryRoot": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375",
+"selectedFile": "docs/README.md",
+"relativePath": {
+"notification": "Copied: docs/README.md",
+"actualClipboardPaste": "docs/README.md",
+"workspaceRelativeWouldBe": "README.md",
+"conclusion": "Copy relative path is relative to the Git repository root, not the workspace folder when that folder is a repository subfolder."
+},
+"absolutePath": {
+"notification": "Copied: /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+"actualClipboardPaste": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+"result": "Verified against the selected file."
+},
+"findings": [
+{
+"pages": [
+"Copy a file path",
+"Files sidebar section controls"
+],
+"finding": "The workspace-folder definition of Copy relative path is false for a repository-subfolder workspace.",
+"evidence": [
+"nested_workspace.txt",
+"relative_clipboard.txt",
+"relative_notification.png"
+]
+},
+{
+"pages": [
+"Browse and open project files"
+],
+"finding": "New workspace adds the chosen folder to the workspace list without selecting it. The instructions need an explicit selection of the new entry.",
+"observed": "After choosing docs, the workspace list included docs while the status bar and pane still showed heidrun. Clicking docs selected the new folder.",
+"source": "WorkspaceStatusSummary.createWorkspace awaits newWorkspace without a selection call."
+}
+],
+"verifiedInteractions": [
+"Native New workspace folder chooser accepted the nested repository folder.",
+"Clicking the new workspace selected its folder and correct Git branch.",
+"The Files sidebar displayed the entire Git repository, including folders outside the workspace subfolder.",
+"Right-clicking a file displayed both copy actions without opening the large Git window.",
+"Both clipboard operations were checked by actual Command-V paste into a local search field.",
+"Copy notifications appeared and later disappeared. Exact duration was not measured.",
+"Clicking an unchanged Markdown file opened the large Git window with Diff and Side by side disabled.",
+"Reading displayed formatted Markdown; Reading was absent for a non-Markdown file.",
+"File mode was restored and Escape closed the large Git window.",
+"New file revealed a name box within the selected folder. Escape cancelled the typed name; no file was created."
+],
+"website": {
+"productionBuild": "Passed, 1.92 seconds.",
+"preview": "Freshly built production output served locally at port 5175 under /heidrun/. Temporary tab closed after evidence capture.",
+"pages": [
+{
+"heading": "Browse and open project files \u200b",
+"images": [
+{
+"alt": "Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.",
+"complete": true,
+"height": 900,
+"src": "http://127.0.0.1:5175/heidrun/documentation_images/files/files_sidebar.png",
+"width": 870
+}
+],
+"links": [
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#browse-and-open-project-files"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#refresh-the-folder-tree"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#troubleshooting"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-a-workspace-appears"
+},
+{
+"text": "Select an existing workspace",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#this-workspace-is-not-a-git-repository-appears"
+},
+{
+"text": "Select an existing workspace",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#related-pages"
+},
+{
+"text": "Create a file or folder",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+},
+{
+"text": "Copy a file path",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+},
+{
+"text": "Files sidebar section controls",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+},
+{
+"text": "Keyboard shortcuts",
+"url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+}
+],
+"title": "Browse and open project files | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+},
+{
+"heading": "Create a file or folder \u200b",
+"images": [
+{
+"alt": "New file name box inside docs with example.md typed before Enter is pressed.",
+"complete": true,
+"height": 548,
+"src": "http://127.0.0.1:5175/heidrun/documentation_images/files/new_file.png",
+"width": 870
+}
+],
+"links": [
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-a-file-or-folder"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#choose-the-destination"
+},
+{
+"text": "select an existing workspace",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+},
+{
+"text": "large Git window described in Browse and open project files",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#cancel-creation"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#troubleshooting"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#un-fichier-ou-dossier-porte-deja-ce-nom-appears-and-the-name-box-stays-open"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#a-name-cannot-contain-the-character-select-a-folder-first-appears"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#related-pages"
+},
+{
+"text": "Browse and open project files",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+},
+{
+"text": "Copy a file path",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+},
+{
+"text": "Files sidebar section controls",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+}
+],
+"title": "Create a file or folder | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+},
+{
+"heading": "Copy a file path \u200b",
+"images": [
+{
+"alt": "Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.",
+"complete": true,
+"height": 1009,
+"src": "http://127.0.0.1:5175/heidrun/documentation_images/files/copy_path.png",
+"width": 870
+}
+],
+"links": [
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-a-file-path"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#choose-the-path-format"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-the-path"
+},
+{
+"text": "select an existing workspace",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#troubleshooting"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#the-path-copy-menu-does-not-appear-when-a-folder-row-is-right-clicked"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#related-pages"
+},
+{
+"text": "Browse and open project files",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+},
+{
+"text": "Create a file or folder",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+},
+{
+"text": "File context menu",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+}
+],
+"title": "Copy a file path | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+},
+{
+"heading": "Files sidebar section controls \u200b",
+"images": [
+{
+"alt": "Files sidebar section header buttons with the More options menu open.",
+"complete": true,
+"height": 783,
+"src": "http://127.0.0.1:5175/heidrun/documentation_images/files/more_options.png",
+"width": 870
+}
+],
+"links": [
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#files-sidebar-section-controls"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#header-buttons"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#row-and-name-box-actions"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#more-options"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+},
+{
+"text": "Copy a file path",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#folder-tree-indicators"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#selection"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#ignored-files"
+},
+{
+"text": "Keyboard shortcuts",
+"url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+},
+{
+"text": "Create a file or folder",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+},
+{
+"text": "Browse and open project files",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+},
+{
+"text": "\u200b",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#related-pages"
+},
+{
+"text": "Browse and open project files",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+},
+{
+"text": "Create a file or folder",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+},
+{
+"text": "Copy a file path",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+}
+],
+"title": "Files sidebar section controls | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+}
+],
+"links": [
+{
+"anchor": "#select-an-existing-workspace",
+"anchorExists": true,
+"heading": "Browse and open project files \u200b",
+"title": "Browse and open project files | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+},
+{
+"anchor": "",
+"anchorExists": true,
+"heading": "Create a file or folder \u200b",
+"title": "Create a file or folder | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+},
+{
+"anchor": "",
+"anchorExists": true,
+"heading": "Copy a file path \u200b",
+"title": "Copy a file path | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+},
+{
+"anchor": "",
+"anchorExists": true,
+"heading": "Files sidebar section controls \u200b",
+"title": "Files sidebar section controls | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+},
+{
+"anchor": "",
+"anchorExists": true,
+"heading": "Keyboard shortcuts \u200b",
+"title": "Keyboard shortcuts | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+},
+{
+"anchor": "",
+"anchorExists": true,
+"heading": "Browse and open project files \u200b",
+"title": "Browse and open project files | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+},
+{
+"anchor": "#file-context-menu",
+"anchorExists": true,
+"heading": "Files sidebar section controls \u200b",
+"title": "Files sidebar section controls | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+},
+{
+"anchor": "#create-the-file-or-folder",
+"anchorExists": true,
+"heading": "Create a file or folder \u200b",
+"title": "Create a file or folder | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+},
+{
+"anchor": "#long-file-lists",
+"anchorExists": true,
+"heading": "Browse and open project files \u200b",
+"title": "Browse and open project files | Heidrun",
+"url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+}
+],
+"result": "All four pages, all four images and nine distinct prerequisite/related link targets and anchors verified."
+},
+"remainingLimits": [
+"macOS only; clipboard denial/failure and other operating systems were not exercised.",
+"Precise notification lifetime was not measured.",
+"Valid file/folder creation, duplicate-name failure and restart persistence were not exercised in this run; creation was cancelled to preserve repository files.",
+"The production output was tested locally, not deployed to public hosting.",
+"The additional repository-root clipboard control paste was overwritten by an external clipboard change and is excluded from clipboard verification evidence. Its copy notification was correct. The nested relative and absolute clipboard checks had already succeeded."
+],
+"preservation": {
+"filesSidebarPages": "Unchanged; hashes match the prior judge inputs.",
+"repositoryFilesBranchStatusAndIndex": "Before and after fingerprints match.",
+"temporaryName": "verification_example.md was never created.",
+"appState": "Original heidrun workspace restored, viewing mode restored to File and test search cleared. The added docs workspace remains available in the app.",
+"gitActions": "No commits, pull requests or merges."
+}
+}There has been no change in the accessibility tree for Window: "Heidrun".There has been no change in the accessibility tree for Window: "Heidrun".
+exec
+/bin/zsh -lc "nl -ba packages/apps/web_frontend/src/components/FilesPanel.vue | sed -n '295,335p'; nl -ba packages/apps/desktop_tauri/src/files.rs | sed -n '115,170p'; rg -n 'async function loadFiles|r.root|res.root|result.root|file_list' packages/apps/web_frontend/src/stores/files.ts; nl -ba packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue | sed -n '140,185p;270,295p'; rg -n 'function newWorkspace|newWorkspace|function selectWorkspace|async function selectWorkspace' packages/apps/web_frontend/src/stores/*.ts; cat docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md; rg --files packages/auxiliary/website_public/docs/documentation" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+295
+296	/** Closes the context menu on a click outside the context menu. */
+297	function onDocumentMouseDown(event: MouseEvent) {
+298	  if (fileMenuElement.value?.contains(event.target as Node) === true) {
+299	    return;
+300	  }
+301	  closeFileMenu();
+302	}
+303
+304	/** Closes the context menu on the key Escape. */
+305	function onDocumentKeyDown(event: KeyboardEvent) {
+306	  if (event.key === "Escape") {
+307	    event.stopPropagation();
+308	    closeFileMenu();
+309	  }
+310	}
+311
+312	/** Puts the absolute path or the relative path of the file of the context menu on the clipboard, and closes the menu. */
+313	async function copyPath(kind: "absolute" | "relative") {
+314	  const relativePath = fileMenu.value?.path ?? null;
+315	  closeFileMenu();
+316	  if (relativePath === null) {
+317	    return;
+318	  }
+319	  let text = relativePath;
+320	  if (kind === "absolute") {
+321	    try {
+322	      text = await invoke<string>("file_full_path", { root: files.root, path: relativePath });
+323	    } catch (error) {
+324	      toast(String(error), "error");
+325	      return;
+326	    }
+327	  }
+328	  await copy(text);
+329	  toast(t("filesPanel.copied", { path: text }));
+330	}
+331
+332	onBeforeUnmount(closeFileMenu);
+333
+334	/** The icon of a row: a folder that is closed or open, or the kind of the file. */
+335	function rowIcon(row: TreeRow): string {
+115	    }
+116	}
+117
+118	/// Files of the project containing `cwd`: the git repository (tracked and new files,
+119	/// .gitignore respected), or the folder itself when it is not a repository.
+120	#[tauri::command]
+121	pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, String> {
+122	    let dir = std::fs::canonicalize(&cwd).map_err(|_| "dossier introuvable".to_string())?;
+123	    let top = run(&dir, &["rev-parse", "--show-toplevel"]).await.map(|b| String::from_utf8_lossy(&b).trim().to_string());
+124	    let Some(root) = top.filter(|t| !t.is_empty()) else {
+125	        acceptable_root(&dir)?;
+126	        used_by_a_pane(&dir).await?;
+127	        let walk_dir = dir.clone();
+128	        let files = tokio::task::spawn_blocking(move || {
+129	            let mut files = Vec::new();
+130	            walk(&walk_dir, &walk_dir, &mut files, 0);
+131	            files
+132	        })
+133	        .await
+134	        .map_err(|e| e.to_string())?;
+135	        let root = dir.display().to_string();
+136	        remember_root(&root);
+137	        let truncated = files.len() >= MAX_FILES;
+138	        return Ok(FileList { root, git: false, files, status: HashMap::new(), truncated });
+139	    };
+140	    let rootp = std::fs::canonicalize(&root).unwrap_or_else(|_| PathBuf::from(&root));
+141	    acceptable_root(&rootp)?;
+142	    used_by_a_pane(&rootp).await?;
+143	    let listed = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
+144	    let mut files: Vec<String> = split_z(&listed).collect();
+145	    files.sort();
+146	    files.dedup();
+147	    if ignored.unwrap_or(false) {
+148	        // Ignored folders as one entry each ("node_modules/"), not their thousands of files.
+149	        let ign = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
+150	        files.extend(split_z(&ign));
+151	    }
+152	    let truncated = files.len() > MAX_FILES;
+153	    files.truncate(MAX_FILES);
+154	    let mut status = HashMap::new();
+155	    let st = run(&rootp, &["-c", "core.quotepath=off", "status", "--porcelain=v1", "-z", "--untracked-files=all"]).await.unwrap_or_default();
+156	    let mut it = split_z(&st);
+157	    while let Some(entry) = it.next() {
+158	        if entry.len() < 4 {
+159	            continue;
+160	        }
+161	        let (code, path) = entry.split_at(3);
+162	        let code = code.trim();
+163	        let letter = if code == "??" { "?" } else if code.contains('D') { "D" } else if code.contains('A') { "A" } else if code.contains('R') { "R" } else { "M" };
+164	        // A rename is followed by its old path: skip it.
+165	        if code.contains('R') || code.contains('C') {
+166	            it.next();
+167	        }
+168	        status.insert(path.to_string(), letter.to_string());
+169	        // A deleted file is still worth showing in the tree.
+170	        if letter == "D" && !files.iter().any(|f| f == path) {
+202:export async function loadFiles(cwd: string): Promise<boolean> {
+210:    const sameRoot = r.root === files.root;
+216:    Object.assign(files, { root: r.root, git: r.git, list: markRaw(r.files), status: markRaw(r.status), truncated: r.truncated });
+299:    if ((r.root !== files.root || !files.list.length) && !(await loadFiles(r.root))) return;
+140	 *
+141	 * @param workspaceId - The identifier of the workspace.
+142	 */
+143	function renameFromList(workspaceId: string): void {
+144	  close();
+145	  startRename("ws", workspaceId);
+146	}
+147
+148	/**
+149	 * Asks for a confirmation, then closes a workspace. The question lives in the status bar section and not in the card, because
+150	 * the card closes when the keyboard focus goes to the confirmation dialog. When the setting `confirmWorkspaceClose` is off,
+151	 * the workspace closes at once, without the question.
+152	 *
+153	 * @param workspace - The workspace to close.
+154	 */
+155	async function askClose(workspace: WorkspaceInfo): Promise<void> {
+156	  const isConfirmed =
+157	    settings.confirmWorkspaceClose === false ||
+158	    (await askConfirm(
+159	      t("workspaceStatusSummary.close", { name: workspace.label }),
+160	      t("workspaceStatusSummary.closeConfirm"),
+161	    ));
+162	  if (isConfirmed === true) {
+163	    await closeWorkspace(workspace.workspace_id);
+164	  }
+165	}
+166
+167	/** Asks for the folder of a new workspace, then creates the workspace with the name of the folder. */
+168	async function createWorkspace(): Promise<void> {
+169	  close();
+170	  const path = await openDialog({
+171	    directory: true,
+172	    multiple: false,
+173	    title: t("workspaceStatusSummary.chooseFolder"),
+174	    defaultPath: await homeDir(),
+175	  });
+176	  if (path === null) {
+177	    return;
+178	  }
+179	  const label = path.split("/").filter(Boolean).pop() ?? null;
+180	  await newWorkspace(path, label);
+181	}
+182
+183	// The command search renames the workspace too: the field replaces the name, so the card must not stay open.
+184	watch(isRenaming, (renaming) => {
+185	  if (renaming === true) {
+270	                type="button"
+271	                class="row-button"
+272	                :aria-label="t('workspaceStatusSummary.rename', { name: workspace.label })"
+273	                :title="t('workspaceStatusSummary.rename', { name: workspace.label })"
+274	                @click.stop="renameFromList(workspace.workspace_id)"
+275	              ><Icon name="pencil" /></button>
+276	              <button
+277	                type="button"
+278	                class="row-button"
+279	                :aria-label="t('workspaceStatusSummary.close', { name: workspace.label })"
+280	                :title="t('workspaceStatusSummary.close', { name: workspace.label })"
+281	                @click.stop="askClose(workspace)"
+282	              ><Icon name="x-lg" /></button>
+283	            </span>
+284	          </div>
+285	        </div>
+286	        <div v-if="workspaces.length > 0" class="border-top" role="separator"></div>
+287	        <button
+288	          type="button"
+289	          class="btn border-0 d-flex align-items-center gap-2 h-auto text-start"
+290	          :title="t('workspaceStatusSummary.newTitle')"
+291	          @click="createWorkspace"
+292	        >
+293	          <Icon name="plus-lg" /> {{ t("workspaceStatusSummary.new") }}
+294	        </button>
+295	      </div>
+packages/apps/web_frontend/src/stores/session.ts:777:export function selectWorkspace(id: string) {
+packages/apps/web_frontend/src/stores/session.ts:808:export function selectWorkspaceAt(index: number) {
+packages/apps/web_frontend/src/stores/session.ts:867:export async function newWorkspace(cwd: string | null, label: string | null) {
+packages/apps/web_frontend/src/stores/session.ts:873:  return guard(() => api.newWorkspace(cwd, label));
+# User interface of Heidrun: workspace
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+## Workspace
+- One workspace is selected at a time.
+- The workspace status bar section is the first status bar section, at the left end of the status bar. It shows a status dot and the name of the selected workspace. A click on it opens its information card above the section. The information card does not open when the mouse moves over the section.
+- The status dot is always visible, and it sits before the name, in the same place as the dot of a tab. When an agent in another workspace is blocked or has finished, the dot has the color of that status, and it follows the cards of the Needs you sidebar section. Otherwise, the dot shows the status of the selected workspace. A workspace without an agent gets a hollow ring.
+- The information card of the workspace status bar section gives the folder, the Git branch, the number of tabs, and the number of agents of the selected workspace. The folder is shown on one line, under the rules of the section "Text that must stay on one line" (in [layout.md](../window/layout.md)): while the pointer is over the information card, a folder that does not fit scrolls sideways to its end, and it shows its beginning again when the pointer leaves. Under the details, it lists the workspaces. A click on a workspace selects it, and closes the information card.
+- The list of workspaces has no separator line between the workspaces, and no space between two rows: between the two separator lines, the pointer is always on a workspace. Each row is 32 pixels tall, with the padding inside the row. One separator line sits between the list and the entry "New workspace…" at the end of the information card.
+- The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
+- Each workspace of the list offers the rename of the workspace, the close of the workspace, and the move of the workspace by drag and drop. The rename puts a text field in the place of the name in the status bar. A double click on the workspace status bar section does not rename the workspace.
+- Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
+- Heidrun saves the identifier of the selected workspace each time that the selection changes, in the option `selectedWorkspaceId` of the store `settings.ts`. At the next start, Heidrun selects this workspace again, with its last tab and its last pane. When this workspace does not exist any more, Heidrun selects the workspace that Herdr has focused, or the first workspace.
+packages/auxiliary/website_public/docs/documentation/browse_project_files.md
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+packages/auxiliary/website_public/docs/documentation/index.md
+packages/auxiliary/website_public/docs/documentation/shortcuts.md
+exec
+/bin/zsh -lc "nl -ba packages/apps/web_frontend/src/stores/session.ts | sed -n '770,790p;860,878p'; nl -ba packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue | sed -n '110,137p;249,267p'; nl -ba packages/apps/web_frontend/src/stores/files.ts | sed -n '200,220p'; rg -n 'relative to|clipboard|workspace|docs/README' ../results/live_files_verification/results.json | head -28; cat packages/auxiliary/website_public/docs/documentation/index.md; head -35 packages/auxiliary/website_public/docs/documentation/shortcuts.md" in /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+succeeded in 0ms:
+770	  (id) => {
+771	    if (id !== null) {
+772	      settings.selectedWorkspaceId = id;
+773	    }
+774	  },
+775	);
+776
+777	export function selectWorkspace(id: string) {
+778	  state.selectedWorkspaceId = id;
+779	  state.selectedTabId = last.tab[id] ?? null;
+780	  state.selectedPaneId = state.selectedTabId ? last.pane[state.selectedTabId] ?? null : null;
+781	  // Gone since (closed tab or pane): fixSelection falls back to Herdr's active one.
+782	  if (state.snapshot) fixSelection(state.snapshot);
+783	}
+784
+785	export function selectTab(id: string) {
+786	  state.selectedTabId = id;
+787	  state.selectedPaneId = last.pane[id] ?? null;
+788	  if (state.snapshot) fixSelection(state.snapshot);
+789	}
+790
+860	  return guard(async () => {
+861	    const pane = await api.split(p.pane_id, direction, p.cwd);
+862	    await refresh();
+863	    if (pane) selectPane(pane);
+864	  });
+865	}
+866
+867	export async function newWorkspace(cwd: string | null, label: string | null) {
+868	  // The raw socket API wants absolute paths.
+869	  if (cwd?.startsWith("~")) {
+870	    const home = (await homeDir()).replace(/\/$/, "");
+871	    cwd = home + cwd.slice(1);
+872	  }
+873	  return guard(() => api.newWorkspace(cwd, label));
+874	}
+875
+876	export function closePane(paneId: string) {
+877	  return guard(() => api.closePane(paneId));
+878	}
+110	  }
+111	  const agentCount = allPanes.value.filter((pane) => pane.workspace_id === workspace.workspace_id && pane.agent).length;
+112	  return [
+113	    {
+114	      field: "folder",
+115	      name: t("workspaceStatusSummary.folder"),
+116	      value: workspaceCwd(workspace.workspace_id) ?? t("workspaceStatusSummary.noFolder"),
+117	    },
+118	    {
+119	      field: "branch",
+120	      name: t("workspaceStatusSummary.branch"),
+121	      value: currentGit.value?.branch ?? t("workspaceStatusSummary.noBranch"),
+122	    },
+123	    { field: "tabs", name: t("workspaceStatusSummary.tabs"), value: workspace.tab_count },
+124	    { field: "agents", name: t("workspaceStatusSummary.agents"), value: agentCount },
+125	  ];
+126	});
+127
+128	/**
+129	 * Selects a workspace and closes the card.
+130	 *
+131	 * @param workspaceId - The identifier of the workspace.
+132	 */
+133	function choose(workspaceId: string): void {
+134	  close();
+135	  selectWorkspace(workspaceId);
+136	}
+137
+249	            }"
+250	            :data-reorder-id="workspace.workspace_id"
+251	            @pointerdown="workspaceReorder.onPointerDown($event, workspaces.map((other) => other.workspace_id))"
+252	          >
+253	            <button
+254	              type="button"
+255	              class="btn border-0 d-flex align-items-center gap-2 h-auto text-start workspace-main"
+256	              :aria-current="workspace.workspace_id === state.selectedWorkspaceId"
+257	              :title="t('workspaceStatusSummary.rowTitle')"
+258	              @click="choose(workspace.workspace_id)"
+259	            >
+260	              <span class="dot" :class="dotClassesOf(workspace)"></span>
+261	              <span
+262	                class="name"
+263	                :class="{
+264	                  'text-body-secondary': !hasAgent(workspace.workspace_id) && workspace.workspace_id !== state.selectedWorkspaceId,
+265	                }"
+266	              >{{ workspace.label }}</span>
+267	            </button>
+200
+201	/** False when the project could not be shown (error, or unsaved files elsewhere). */
+202	export async function loadFiles(cwd: string): Promise<boolean> {
+203	  files.loading = true;
+204	  files.error = "";
+205	  const my = ++loadSeq;
+206	  try {
+207	    const r = await invoke<FileList>("files_list", { cwd, ignored: settings.filesShowIgnored });
+208	    // A later request (another project) won: this answer is dropped.
+209	    if (my !== loadSeq) return false;
+210	    const sameRoot = r.root === files.root;
+211	    if (!sameRoot && files.root && dirtyTabs().length) {
+212	      toast(t("filesStore.unsavedBeforeSwitch"));
+213	      return false;
+214	    }
+215	    // Large and read-only: not made deeply reactive (50 000 paths).
+216	    Object.assign(files, { root: r.root, git: r.git, list: markRaw(r.files), status: markRaw(r.status), truncated: r.truncated });
+217	    if (!sameRoot) {
+218	      // Another project: unsaved edits are not carried over (the caller asked first).
+219	      files.tabs = [];
+220	      files.active = null;
+6:  "selectedFile": "docs/README.md",
+8:    "notification": "Copied: docs/README.md",
+9:    "actualClipboardPaste": "docs/README.md",
+10:    "workspaceRelativeWouldBe": "README.md",
+11:    "conclusion": "Copy relative path is relative to the Git repository root, not the workspace folder when that folder is a repository subfolder."
+14:    "notification": "Copied: /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+15:    "actualClipboardPaste": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/docs/README.md",
+24:      "finding": "The workspace-folder definition of Copy relative path is false for a repository-subfolder workspace.",
+26:        "nested_workspace.txt",
+27:        "relative_clipboard.txt",
+35:      "finding": "New workspace adds the chosen folder to the workspace list without selecting it. The instructions need an explicit selection of the new entry.",
+36:      "observed": "After choosing docs, the workspace list included docs while the status bar and pane still showed heidrun. Clicking docs selected the new folder.",
+41:    "Native New workspace folder chooser accepted the nested repository folder.",
+42:    "Clicking the new workspace selected its folder and correct Git branch.",
+43:    "The Files sidebar displayed the entire Git repository, including folders outside the workspace subfolder.",
+45:    "Both clipboard operations were checked by actual Command-V paste into a local search field.",
+60:            "alt": "Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.",
+74:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+90:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-a-workspace-appears"
+93:            "text": "Select an existing workspace",
+94:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+98:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#this-workspace-is-not-a-git-repository-appears"
+101:            "text": "Select an existing workspace",
+102:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+153:            "text": "select an existing workspace",
+154:            "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+204:            "alt": "Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.",
+225:            "text": "select an existing workspace",
+# Introduction
+This page is a placeholder. The documentation of Heidrun will be written here.
+# Keyboard shortcuts
+In the application, press **⌘/** (or the **?** button at the top) to show this list, with a filter.
+<!-- shortcuts:start -->
+<!-- Generated from packages/apps/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
+| Shortcut | Action |
+| --- | --- |
+| **Windows** | |
+| ⌘K | Command palette |
+| ⌘/ | This list of shortcuts |
+| ⌘P | Open a project file (search by name) |
+| ⇧⌘F | Search the output of all terminals |
+| ⇧⌘H | History: agent jobs, time and cost per project, CSV export |
+| ⇧⌘P | Pin the selected text in a note |
+| Esc | Close the open window |
+| **Terminals and agents** | |
+| ⌘T | New tab (default command of a new tab) |
+| ⇧⌘T | New agent (Claude, Codex, project agents) |
+| ⌘D / ⇧⌘D | Split the pane to the right / to the bottom |
+| ⌘W ⌘W | Close the selected pane (twice, to avoid accidents) |
+| **Navigation** | |
+| ⌥⌘← / ⌥⌘→ | Previous / next tab |
+| ⌥⌘↑ / ⌥⌘↓ | Previous / next workspace |
+| ⌘[ / ⌘] | Back / forward through the panes that had the focus |
+| ⌘1 … ⌘9 | Go to workspace 1 to 9 (order of the list of workspaces) |
+| ⇧⌥⌘← / ⇧⌥⌘→ | Move the tab left / right |
+| ⇧⌥⌘↑ / ⇧⌥⌘↓ | Move the workspace up / down |
+| **Input** | |
+| ⇧↵ / ⌥↵ | New line in the terminal |
+| ⌘↵ | Launch (New agent window) |
+| ↑ / ↓ then ↵ | Choose a result (palette, search) then confirm |
+| **File explorer and editor** | |
+| ⇧⌘F | Search the whole project (explorer open) |
+codex
+### browse_project_files.md
+- Action: change
+- Page type: how-to
+- Title: Browse and open project files
+- Reader goal: Find and open a file in the selected workspace’s Git repository.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md`; `docs/agents_rules/glossary.md`; captured [WorkspaceStatusSummary.vue](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue:168) and [session.ts](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/web_frontend/src/stores/session.ts:867) confirm that creation and selection are separate actions.
+- Sections:
+- Select an existing workspace: Keep selection instructions, but make the **New workspace…** alternative separate numbered actions: choose the folder, reopen the workspace information card by clicking the workspace name in the status bar, click the newly added workspace entry, and check that the status bar shows the chosen workspace.
+- Open a project file: Keep the existing instructions and screenshot for locating and opening a file.
+- Refresh the folder tree: Keep the existing instructions for refreshing the displayed files.
+- Troubleshooting: Preserve the existing problems and guidance without adding new claims.
+- Related pages: Preserve the existing links and their purposes.
+- Troubleshooting: “Select a workspace.”; “This workspace is not a Git repository.”; “The list is too long: only the first files are shown.”
+- Related pages: `create_a_file_or_folder.md`, `copy_a_file_path.md`, `files_sidebar_section_controls.md`, `shortcuts.md`.
+- Leave out: Workspace creation implementation, unrelated workspace management, new screenshots, and changes beyond the missing workspace-selection step.
+### create_a_file_or_folder.md
+- Action: keep
+- Page type: how-to
+- Title: Create a file or folder
+- Reader goal: Create an empty file or folder in the intended repository folder.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`.
+- Sections:
+- Choose the destination: Preserve the existing destination choices.
+- Create the file or folder: Preserve the existing creation instructions and screenshot.
+- Cancel creation: Preserve the existing cancellation instructions.
+- Troubleshooting: Preserve the existing duplicate-name and invalid-name guidance.
+- Related pages: Preserve the existing links and their purposes.
+- Troubleshooting: “un fichier ou dossier porte déjà ce nom” appears and the name box stays open; “A name cannot contain the character /. Select a folder first.” appears.
+- Related pages: `browse_project_files.md`, `copy_a_file_path.md`, `files_sidebar_section_controls.md`.
+- Leave out: All changes to this page; neither verified correction requires an edit here.
+### copy_a_file_path.md
+- Action: change
+- Page type: how-to
+- Title: Copy a file path
+- Reader goal: Choose and copy a file path for use outside Heidrun.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; captured [files.rs](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/desktop_tauri/src/files.rs:121), [files.ts](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/web_frontend/src/stores/files.ts:202), and [FilesPanel.vue](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/web_frontend/src/components/FilesPanel.vue:313). **Source conflict:** the Files rule says workspace-relative, but the captured implementation and preserved live verification confirm repository-relative copying; follow the verified correction without editing the rule.
+- Sections:
+- Choose the path format: Define the Git repository root as the repository’s top folder and explain that, with repository `/Users/alex/projects/example` and workspace `/Users/alex/projects/example/docs`, copying the file `README.md` inside `docs` produces relative path `docs/README.md` and absolute path `/Users/alex/projects/example/docs/README.md`.
+- Copy the path: Preserve the existing instructions and screenshot, keeping the notification example `Copied: docs/README.md` consistent with the repository-subfolder example.
+- Troubleshooting: Preserve the existing guidance for a folder row without a path-copy menu.
+- Related pages: Preserve the existing links and their purposes.
+- Troubleshooting: The path-copy menu does not appear when a folder row is right-clicked.
+- Related pages: `browse_project_files.md`, `create_a_file_or_folder.md`, `files_sidebar_section_controls.md`.
+- Leave out: Internal path calculations, exact notification duration, new screenshots, and unrelated revisions.
+### files_sidebar_section_controls.md
+- Action: change
+- Page type: reference
+- Title: Files sidebar section controls
+- Reader goal: Look up the Files sidebar section’s controls and indicators.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; captured [files.rs](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/desktop_tauri/src/files.rs:121) and [FilesPanel.vue](/Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/apps/web_frontend/src/components/FilesPanel.vue:313) confirm repository-relative copying, contrary to the workspace-relative wording in the Files rule.
+- Sections:
+- Header buttons: Preserve the existing table and screenshot.
+- Row and name box actions: Preserve the existing action table.
+- More options: Preserve the existing appearance-choice table.
+- File context menu: Change **Copy relative path** to mean the path from the Git repository’s top folder, including the concise example that a workspace ending in `/docs` still copies `docs/README.md`.
+- Folder tree indicators: Preserve the existing indicator table.
+- Selection: Preserve the existing selection descriptions.
+- Ignored files: Preserve the existing description and links.
+- Related pages: Preserve the existing links and their purposes.
+- Troubleshooting: none; this reference page links to the existing how-to guidance.
+- Related pages: `browse_project_files.md`, `create_a_file_or_folder.md`, `copy_a_file_path.md`.
+- Leave out: Copying steps and extended examples covered by Copy a file path, internal implementation details, new screenshots, and unrelated revisions.
+### Sidebar
+Preserve the existing groups and order; no configuration change is needed.
+1. **Documentation**
+- Introduction — `index.md` — unchanged and outside the correction scope.
+- Keyboard shortcuts — `shortcuts.md` — unchanged and outside the correction scope.
+2. **Files**
+- Browse and open project files — `browse_project_files.md`.
+- Create a file or folder — `create_a_file_or_folder.md`.
+- Copy a file path — `copy_a_file_path.md`.
+- Files sidebar section controls — `files_sidebar_section_controls.md`.
+tokens used
+60,775

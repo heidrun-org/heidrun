@@ -1,0 +1,29 @@
+{
+  "name": "documentation_updater",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.5",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "documentation_updater": "./src/cli.ts",
+    "documentation_judge": "./src/judge_cli.ts"
+  },
+  "scripts": {
+    "cli": "tsx src/cli.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "change_log_generator": "workspace:*",
+    "commander": "^15.0.0",
+    "raw_coding_agent_cli": "workspace:*",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vitest": "^2.1.9"
+  }
+}

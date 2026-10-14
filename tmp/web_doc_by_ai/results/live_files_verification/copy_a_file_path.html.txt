@@ -1,0 +1,150 @@
+Browser tab: 2, Title: "Copy a file path | Heidrun", URL: "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html".
+1 AXWebArea Copy a file path | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+	2 container app
+		3 link Description: Skip to content, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#VPContent
+		4 container
+			5 link Description: Heidrun, Value: 127.0.0.1:5175/heidrun/
+			6 container
+				7 container Main Navigation
+					8 text Main Navigation
+					9 link Description: Home, Value: 127.0.0.1:5175/heidrun/
+					10 link Description: Documentation, Value: 127.0.0.1:5175/heidrun/documentation/
+					11 link Description: About, Value: 127.0.0.1:5175/heidrun/about.html
+				12 switch Description: Switch to light theme, Value: 0
+				13 link Description: github, Value: github.com/heidrun-org/heidrun
+		14 container
+			15 container Sidebar Navigation, ID: VPSidebarNav
+				16 text Sidebar Navigation
+				17 container
+					18 button Documentation
+						19 heading Documentation, Value: 2
+							20 text Documentation
+					21 link Description: Introduction, Value: 127.0.0.1:5175/heidrun/documentation/
+					22 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+				23 container
+					24 button Files
+						25 heading Files, Value: 2
+							26 text Files
+					27 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+					28 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+					29 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+					30 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+		31 container VPContent
+			32 container
+				33 container On this page
+					34 container
+						35 heading On this page, Value: 2, ID: doc-outline-aria-label
+							36 text On this page
+						37 content list
+							38 link Description: Choose the path format, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#choose-the-path-format
+							39 link Description: Copy the path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-the-path
+							40 link Description: Troubleshooting, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#troubleshooting
+							41 link Description: Related pages, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#related-pages
+			42 container
+				43 container
+					44 heading Copy a file path Permalink to "Copy a file path", Value: 1, ID: copy-a-file-path
+						45 text Copy a file path
+						46 link Description: Permalink to "Copy a file path", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-a-file-path
+					47 text Copy a file path to paste into another application or a message.
+					48 heading Choose the path format Permalink to "Choose the path format", Value: 2, ID: choose-the-path-format
+						49 text Choose the path format
+						50 link Description: Permalink to "Choose the path format", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#choose-the-path-format
+					51 text For a workspace folder at 
+					52 text /Users/alex/projects/example
+					53 text , these are the two forms of the path to 
+					54 text docs/README.md
+					55 text .
+					56 table
+						57 row
+							58 cell
+								59 text Choice
+							60 cell
+								61 text Example
+							62 cell
+								63 text Use when
+						64 row
+							65 cell
+								66 text Copy absolute path
+							67 cell
+								68 text /Users/alex/projects/example/docs/README.md
+							69 cell
+								70 text The receiving application needs the full location on your computer.
+						71 row
+							72 cell
+								73 text Copy relative path
+							74 cell
+								75 text docs/README.md
+							76 cell
+								77 text The receiving application or reader already knows the workspace folder.
+					78 heading Copy the path Permalink to "Copy the path", Value: 2, ID: copy-the-path
+						79 text Copy the path
+						80 link Description: Permalink to "Copy the path", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-the-path
+					81 text First, 
+					82 link Description: select an existing workspace, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+					83 text .
+					84 content list
+						85 container
+							86 AXListMarker 1. 
+							87 text Click  Files , the first folder icon in the left sidebar icon bar, above  Scripts , and click the containing folder rows to unfold the folders and locate the file.
+						88 container
+							89 AXListMarker 2. 
+							90 text Right-click the file row to open the context menu, a small menu of actions for the file. A left click opens the large Git window; you can right-click directly to copy the path.
+					91 image Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.
+					92 content list
+						93 container
+							94 AXListMarker 3. 
+							95 text Choose  Copy absolute path  or  Copy relative path , using the table above.
+					96 text The path is copied, the context menu closes, and a small notification briefly shows 
+					97 text Copied:
+					98 text  followed by the copied path, for example 
+					99 text Copied: docs/README.md
+					100 text .
+					101 content list
+						102 container
+							103 AXListMarker 4. 
+							104 text Paste the path in the other application with  ⌘V .
+					105 heading Troubleshooting Permalink to "Troubleshooting", Value: 2, ID: troubleshooting
+						106 text Troubleshooting
+						107 link Description: Permalink to "Troubleshooting", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#troubleshooting
+					108 heading Value: 3, ID: the-path-copy-menu-does-not-appear-when-a-folder-row-is-right-clicked, The path-copy menu does not appear when a folder row is right-clicked Permalink to "The path-copy menu does not appear when a folder row is right-clicked"
+						109 text The path-copy menu does not appear when a folder row is right-clicked
+						110 link Description: Permalink to "The path-copy menu does not appear when a folder row is right-clicked", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#the-path-copy-menu-does-not-appear-when-a-folder-row-is-right-clicked
+					111 text Cause
+					112 text : The path-copy context menu is available only for file rows.
+					113 text Solution
+					114 text :
+					115 content list
+						116 container
+							117 AXListMarker 1. 
+							118 text Click the folder row to unfold the folder if necessary.
+						119 container
+							120 AXListMarker 2. 
+							121 text Right-click a file row inside the folder.
+					122 text Check
+					123 text : The context menu shows 
+					124 text Copy absolute path
+					125 text  and 
+					126 text Copy relative path
+					127 text .
+					128 heading Related pages Permalink to "Related pages", Value: 2, ID: related-pages
+						129 text Related pages
+						130 link Description: Permalink to "Related pages", Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#related-pages
+					131 content list
+						132 container
+							133 AXListMarker • 
+							134 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+							135 text : to find the file whose path you need.
+						136 container
+							137 AXListMarker • 
+							138 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+							139 text : to add a file before copying the file path.
+						140 container
+							141 AXListMarker • 
+							142 link Description: File context menu, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu
+							143 text : to look up the two path-copy actions.
+				144 container Pager
+					145 text Pager
+					146 link Description: Previous page Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+					147 link Description: Next page Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+
+The focused UI element is 1 AXWebArea Copy a file path | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html

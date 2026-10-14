@@ -1,0 +1,200 @@
+{
+  "pages": [
+    {
+      "file": "browse_files.md",
+      "scores": {
+        "taskSuccess": 3,
+        "usefulness": 3,
+        "order": 4,
+        "singleType": 3,
+        "userLanguage": 4,
+        "accuracy": 5
+      },
+      "problems": [
+        "Step 1 does not say how to open the Files sidebar section. Say in plain words where its icon is: the first icon of the icon bar of the left sidebar, above the Scripts icon.",
+        "Step 2 describes the tree and is not an action. The paragraph after the steps ('The tree shows files tracked by Git... ignored folders...') is reference content that the reference page also holds. It also names 'the option to show ignored files' without saying where the option is. Move the paragraph to the reference page, or say where the option is.",
+        "Troubleshooting covers one symptom only. Add the messages that a reader can meet: 'Select a workspace.' when no workspace is selected, and 'The list is too long: only the first files are shown.' when the repository has too many files. Give each one a cause, a solution, and a check. Also describe the icons of the buttons 'Refresh' and 'Collapse all folders', because the buttons show only an icon."
+      ],
+      "verdict": "Accurate and in good shape, but it mixes description into a how-to page, leaves the reader without a way to open the section, and covers only one of the failures that a reader can meet.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 20,
+        "wordCount": 213,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 0,
+        "numberedStepCount": 5,
+        "bulletCount": 3,
+        "tableCount": 0,
+        "headingCount": 6,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 3.6666666666666665
+    },
+    {
+      "file": "change_the_files_list_appearance.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 4,
+        "accuracy": 5
+      },
+      "problems": [
+        "'More options' is a button that shows only three vertical dots. Say so in step 1, so the reader finds it.",
+        "The title and the first sentence say 'Files list'. The glossary word is 'Files sidebar section', which the other pages use. Rename the title and the first sentence.",
+        "The page does not say that Heidrun keeps the choices, and it does not give the default choices (Medium, Comfortable, Show). The reader cannot go back to the default. Add one sentence."
+      ],
+      "verdict": "Short, correct, and in the right order; it needs the icon of the button, the glossary word in the title, and the default choices.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 10,
+        "wordCount": 83,
+        "longestParagraphSentences": 1,
+        "paragraphRuns": 0,
+        "numberedStepCount": 4,
+        "bulletCount": 2,
+        "tableCount": 0,
+        "headingCount": 3,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 4.666666666666667
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 5,
+        "order": 4,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "problems": [
+        "The sentence 'Heidrun shows a message with the copied path' comes after step 3, but the message appears right after step 2. Attach it to step 2 and show the text that the reader sees: 'Copied: <path>'.",
+        "The page says 'file row' but does not say that a folder row has no menu. A reader who right-clicks a folder gets nothing. Add one short sentence.",
+        "The link 'Files sidebar section' says 'to look up what the tree shows', but the reference page does not describe the menu with 'Copy absolute path' and 'Copy relative path'. Fix the reference page, then say 'to look up the menu of a file row' here."
+      ],
+      "verdict": "A clear, correct three-step page; only the place of the confirmation message and one missing limit keep it from a 5.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 11,
+        "wordCount": 98,
+        "longestParagraphSentences": 1,
+        "paragraphRuns": 0,
+        "numberedStepCount": 3,
+        "bulletCount": 3,
+        "tableCount": 0,
+        "headingCount": 3,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 4.666666666666667
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 4,
+        "order": 4,
+        "singleType": 4,
+        "userLanguage": 4,
+        "accuracy": 5
+      },
+      "problems": [
+        "A failure that the reader can meet is missing: a new empty folder disappears from the tree after Heidrun restarts, because Git does not list empty folders. Add it to Troubleshooting with a cause, a solution, and a check.",
+        "The Troubleshooting entry has two causes with one solution, and its symptom does not show the message that the reader sees. Split it into two entries. For the slash, quote the message: 'A name cannot contain the character /. Select a folder first.'",
+        "'Choose where to create the item' is a prose paragraph before the steps. Make it step 1 of the list, so all actions are in one list. Move the cancel sentence and the result sentence out of the paragraph after step 2 into short separate lines."
+      ],
+      "verdict": "Good page with correct facts and a real Troubleshooting section; it needs the empty-folder case and a clearer split of the causes.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 19,
+        "wordCount": 208,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 0,
+        "numberedStepCount": 4,
+        "bulletCount": 3,
+        "tableCount": 0,
+        "headingCount": 6,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 4.166666666666667
+    },
+    {
+      "file": "files_sidebar_reference.md",
+      "scores": {
+        "taskSuccess": 3,
+        "usefulness": 3,
+        "order": 3,
+        "singleType": 4,
+        "userLanguage": 4,
+        "accuracy": 4
+      },
+      "problems": [
+        "The page leaves out what the sources say about the rows: a click on a folder folds or unfolds it, a click on a file opens it in the large Git window, and a right click on a file opens a menu with 'Copy absolute path' and 'Copy relative path'. The section 'Rows and selection' says only that a click selects a row, which is misleading by omission. Add a table 'Actions on a row' that also covers the click on empty space, and say that a folder row has no menu.",
+        "The section 'Folder tree' is one long paragraph, not a table, and its sentence about 'New folder' ('also appear while Heidrun remains open') is hard to understand. Use a table or bullets, and write: 'A new empty folder stays in the tree until Heidrun restarts, because Git does not list empty folders.' Also explain the status letters and the dot on a folder that holds changes.",
+        "The section 'Tree updates' repeats the row 'Collapse all folders' of the table of buttons. Remove the repeat. Add the default of each choice of 'More options' (Medium, Comfortable, Show) and say where the option to show ignored files is."
+      ],
+      "verdict": "Correct as far as it goes, but not complete enough to look things up, and the page that links here for the file menu finds nothing about it.",
+      "measures": {
+        "pageType": "reference",
+        "lineCount": 28,
+        "wordCount": 355,
+        "longestParagraphSentences": 4,
+        "paragraphRuns": 1,
+        "numberedStepCount": 0,
+        "bulletCount": 3,
+        "tableCount": 2,
+        "headingCount": 7,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 3.5
+    },
+    {
+      "file": "open_a_file.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 4,
+        "order": 5,
+        "singleType": 4,
+        "userLanguage": 4,
+        "accuracy": 5
+      },
+      "problems": [
+        "Steps 1 and 2 are conditions that the page 'Browse files and folders' already explains. Turn them into one sentence that links to that page, so the click is the main step.",
+        "The page does not say how to close the large Git window, which is a new window for the reader. The window shows 'Close (Escape)'. Add the key Escape and the close button.",
+        "The last sentence names 'Diff' and 'Side by side' without saying what they are. Say in one line what the reader sees for a changed file (the changes since the last commit) and for an unchanged file (the whole file)."
+      ],
+      "verdict": "Correct and easy to follow, but thin: it repeats a prerequisite and leaves the reader in a new window with no way out.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 11,
+        "wordCount": 110,
+        "longestParagraphSentences": 1,
+        "paragraphRuns": 0,
+        "numberedStepCount": 3,
+        "bulletCount": 3,
+        "tableCount": 0,
+        "headingCount": 3,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 4.333333333333333
+    }
+  ],
+  "site": {
+    "navigation": 3,
+    "consistency": 3,
+    "problems": [
+      "The group 'Get started' holds only the page 'Introduction', which is still a placeholder. No page tells a new reader how to show the Files sidebar section. Add a short tutorial, or add the icon of the section to the first page of the group.",
+      "The sections 'Related pages' are not symmetric. The reference page links to 'Browse', 'Open', and 'Copy', but not to 'Create a file or folder' or 'Change the Files list appearance', although it documents both. The page 'Copy a file path' links to the reference for a menu that the reference does not describe. No page links to 'Keyboard shortcuts'.",
+      "The words and the facts are not consistent. The title 'Change the Files list appearance' uses 'Files list', but the other pages use the glossary word 'Files sidebar section'. 'Large Git window' and 'name box' are not defined for the reader. The order of the tree, the ignored folders, and the buttons 'Refresh' and 'Collapse all folders' appear in several pages. The page 'Keyboard shortcuts' says that a right click in the file explorer gives 'New file or folder, rename / move, Trash', but the Files sidebar section has no rename, move, or Trash."
+    ]
+  },
+  "overallScore": 3.875
+}

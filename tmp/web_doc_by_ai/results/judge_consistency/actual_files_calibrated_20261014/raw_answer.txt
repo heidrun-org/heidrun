@@ -1,0 +1,60 @@
+```json
+{
+  "rubricVersion": "3",
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The how-to steps, the Refresh section and the troubleshooting messages match the rule file, FilesPanel.vue, GitModal.vue and files.rs, and the screenshot matches its caption."
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "Right-click, the two menu items, the Copied: notification and the file-rows-only limit all match FilesPanel.vue, and the screenshot shows the menu its caption describes."
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "taskSuccess",
+          "severity": "suggestion",
+          "location": "Choose the destination, row \"At the repository root, outside any subfolder\"",
+          "evidence": "The page says that when the folder tree is full, there is no separate control to clear the selection. A root-level file also works as a destination.",
+          "impact": "Optional only. The reader can already use the row \"Beside an existing file\" with a file at the top level, so the task is not blocked.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "targetFolder returns \"\" for a selected file whose path has no \"/\", so creation goes to the repository root.",
+          "recommendation": "Optionally add that selecting a file at the top level of the repository also creates the new item at the root."
+        }
+      ],
+      "problems": [],
+      "verdict": "The destination table, the name box steps, the cancel step and both error messages match the rule file, FilesPanel.vue and files.rs. This includes the French \"already exists\" message, and the screenshot matches its caption."
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The header buttons, the More options choices and defaults, the row actions, the indicators, the selection behaviour and the Ignored files location all match the rule file and the code. The More options screenshot shows the menu its caption describes."
+    }
+  ],
+  "site": {
+    "navigation": 5,
+    "consistency": 5,
+    "findings": [],
+    "problems": []
+  },
+  "limitations": [
+    "I did not run Heidrun or build the website. I checked behaviour by reading the rule file, the glossary, FilesPanel.vue, GitModal.vue, FilesModal.vue, WorkspaceStatusSummary.vue, the English locale files and files.rs.",
+    "I inspected all four screenshots in docs/public/documentation_images/files: files_sidebar.png, copy_path.png, new_file.png and more_options.png. Each matches its caption.",
+    "Absolute links such as /documentation/... and /documentation_images/... depend on VitePress applying the base /heidrun/. I did not verify the rendered site.",
+    "The code builds the relative path from the Git repository root, while the pages and the rule file say \"workspace folder\". They differ only if a workspace folder is a subfolder of a repository. I did not verify that case, so it is not a finding.",
+    "I did not verify that the button New workspace… lets the reader choose a repository folder. The page does not describe that flow in detail.",
+    "The sidebar lists the four selected pages under a Files group, with titles that match each page heading. The Introduction and Keyboard shortcuts pages are outside this scope."
+  ]
+}
+```

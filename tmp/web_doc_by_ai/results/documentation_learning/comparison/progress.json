@@ -1,0 +1,60 @@
+[
+  {
+    "label": "sol_high",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "score": 3.5833333333333335,
+    "minimumAccuracy": 3,
+    "minimumTaskSuccess": 3,
+    "generationSeconds": 394.701,
+    "reportedGenerationTokens": 140259,
+    "pageCount": 6
+  },
+  {
+    "label": "sol_medium",
+    "model": "gpt-6.1-sol",
+    "effort": "medium",
+    "score": 3.625,
+    "minimumAccuracy": 4,
+    "minimumTaskSuccess": 3,
+    "generationSeconds": 197.113,
+    "reportedGenerationTokens": 98876,
+    "pageCount": 6
+  },
+  {
+    "label": "luna_high",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "score": 3.7083333333333335,
+    "minimumAccuracy": 4,
+    "minimumTaskSuccess": 3,
+    "generationSeconds": 189.21996459960937,
+    "isGenerationTimeEstimated": true,
+    "reportedGenerationTokens": 126419,
+    "pageCount": 6
+  },
+  {
+    "label": "luna_medium",
+    "model": "gpt-6-luna",
+    "effort": "medium",
+    "score": 3.3749999999999996,
+    "minimumAccuracy": 3,
+    "minimumTaskSuccess": 3,
+    "generationSeconds": 74.899,
+    "isGenerationTimeEstimated": false,
+    "reportedGenerationTokens": 90364,
+    "pageCount": 6
+  },
+  {
+    "label": "luna_high_repeat",
+    "model": "gpt-6-luna",
+    "effort": "high",
+    "score": 3.9374999999999996,
+    "minimumAccuracy": 4,
+    "minimumTaskSuccess": 3,
+    "generationSeconds": 235.353,
+    "isGenerationTimeEstimated": false,
+    "reportedGenerationTokens": 161803,
+    "pageCount": 6
+  }
+]

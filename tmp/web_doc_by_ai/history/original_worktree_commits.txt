@@ -1,0 +1,60 @@
+Add the sections Troubleshooting and Related pages to the prompts and to the judge of docs:update_by_ai, for #375
+https://github.com/heidrun-org/heidrun/commit/a57eab7b39071518b40fda3202760b9c7aff3a4c
+
+Add the command docs:judge_by_ai, which scores the generated documentation pages with measures and a coding agent, for #375
+https://github.com/heidrun-org/heidrun/commit/5d2991958325e09ed71a0d1cc1b556ea836e9b0d
+
+Add the options --model and --effort to docs:update_by_ai and to raw_coding_agent_cli, for #375
+https://github.com/heidrun-org/heidrun/commit/9ebe6c3c870c7f648453c7eca83b92285dc54240
+
+Add the outline pass and the four page types of the Diátaxis framework to docs:update_by_ai, for #375
+https://github.com/heidrun-org/heidrun/commit/45cc059abb99757d6a16b10caeeab1f23a3d5a5f
+
+Add style rules to the prompt of docs:update_by_ai: short steps, tables, no internal details, for #375
+https://github.com/heidrun-org/heidrun/commit/83ffd0b9691f822f9dd84c4c61c2d706d05cdc3c
+
+Remove the partial documentation pages that a full run of docs:update_by_ai wrote by mistake into the last commit, for #375
+https://github.com/heidrun-org/heidrun/commit/d958d92964d86efa5ab7a77979455fe22b403760
+
+Add step messages, the options --verbose and --only, and the default agent codex to docs:update_by_ai, for #375
+https://github.com/heidrun-org/heidrun/commit/e687c431437862b588731ed91a3a67469a1dba39
+
+Make the error message of a dirty working tree explicit, for #375
+https://github.com/heidrun-org/heidrun/commit/0dae1b8f980c2c104b205941c33d9f14971bd0cd
+
+Add the command docs:update_by_ai, which updates the user documentation of the website with a coding agent, for #375
+https://github.com/heidrun-org/heidrun/commit/b7723fceca0237fd461ac5ae73c1c7b63d595503
+
+Merge pull request #385 from heidrun-org/add-files-context-menu-383
+https://github.com/heidrun-org/heidrun/commit/fe8f8f512a72fd774db0d73ef11b891275d26063
+
+Add a context menu to the row of a file in the Files sidebar section, to copy the absolute path or the relative path, and make the hover of a row visible in the dark theme, fixes #383
+https://github.com/heidrun-org/heidrun/commit/97cfb094208a47e7ad00ef544eb4b021c2a26366
+
+Merge pull request #384 from heidrun-org/improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/939b4d2981f9a9f774ce91873ca4964247e59ef5
+
+Improve the Code hosting sidebar section: the logo icon, the header buttons, the windows of the saved searches, and a fixed header, fixes #378
+https://github.com/heidrun-org/heidrun/commit/b06c238c717167c81208fe680fcf746c364e736a
+
+Merge branch 'dev_jerome' into improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/9d4e7c327c489eb762b2dbda020fc9eb7c78ba38
+
+Merge remote-tracking branch 'origin/dev_jerome' into improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/d2694cec25391547ae69e4a9623ddb9d34f49c10
+
+Work in progress: the logo icon, the header buttons, and the windows of the saved searches, refs #378
+https://github.com/heidrun-org/heidrun/commit/ec3864e57c38e83f21fd4571c1055892468ce49e
+
+Merge pull request #382 from heidrun-org/custom-script-prompt-kind-372
+https://github.com/heidrun-org/heidrun/commit/e0cbcbc23ce60d52387b7538a478aed87f2cd675
+
+Rebuild the Scripts sidebar section: custom scripts of the kind Command line or Coding agent, cards with a menu, and a window to import scripts, fixes #372
+https://github.com/heidrun-org/heidrun/commit/eb5096d3ba2988816102dce7eaa02c3d58604d47
+
+Add comments to .gitignore
+https://github.com/heidrun-org/heidrun/commit/6f6035a59f94fdf18900fc5016be53d526eae4e4
+
+Ignore .heidrun/config.json
+https://github.com/heidrun-org/heidrun/commit/0d209993ee4254f912e1652f6e3af76b188b314a
+

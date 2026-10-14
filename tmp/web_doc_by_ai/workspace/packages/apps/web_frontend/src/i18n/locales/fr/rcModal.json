@@ -1,0 +1,15 @@
+{
+  "linkCopied": "Lien de la session copié",
+  "claudeSession": "Session Claude",
+  "closeLabel": "Fermer",
+  "closeTitle": "Fermer (Échap)",
+  "qrLabel": "QR code de {url}",
+  "scanHint": "Scanne avec l’appareil photo de ton iPhone ou iPad : la session s’ouvre dans l’app Claude.",
+  "copyTitle": "Copier le lien",
+  "copy": "Copier le lien",
+  "openTitle": "Ouvrir le lien dans le navigateur",
+  "open": "Ouvrir dans le navigateur",
+  "manageTitle": "Ouvre le panneau de Claude Code dans le terminal (déconnexion…)",
+  "manage": "Gérer dans le terminal",
+  "noLink": "Le lien de la session n’est pas encore visible dans le terminal."
+}

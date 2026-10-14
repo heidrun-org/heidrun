@@ -1,0 +1,1273 @@
+2026-10-13T20:45:40.312544Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-13T20:45:40.312611Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+OpenAI Codex v
+0.162.1
+--------
+workdir: /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+model: gpt-6-luna
+provider: openai
+approval: on-request
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13703-85e3-77b3-aad3-ba0b0f962e69
+--------
+user
+You plan the user documentation of the application Heidrun. You run inside the Git repository of Heidrun. In this pass you DO NOT edit any file: you only read, and you answer with an outline. A second pass writes the pages from your outline.
+## Scope
+Do a full check of the user documentation. Compare ALL the documentation pages with ALL the current rules and with the code. For each feature of the application, add a page or a section for a new feature, change the section of a changed feature, remove the section of a removed feature, and do nothing for an internal change (refactor, test, build, developer tool). Remove a whole page when all its sections are removed.
+The hints at the end only say which parts to look at first. Do not trust the hints as the truth.
+## Limit of this run
+This run is NOT a full check. Plan and write only the pages for the features that these rule files describe, and the pages that name them as source. Do not add, change, or remove any other page.
+- `docs/agents_rules/user_interface/sidebars/files.md`
+## Where to read
+- The documentation pages are in the folder `packages/auxiliary/website_public/docs/documentation`.
+- The rules of the user interface are in the folder `docs/agents_rules/user_interface`, in many small files.
+- The glossary is the file `docs/agents_rules/glossary.md`. Use the words of the glossary, and no other word, for each part of the application.
+- The code of the application is in the folder `packages/apps`. Read it when a rule is not enough.
+- The sidebar of the website is in the file `packages/auxiliary/website_public/docs/.vitepress/config.ts`.
+## Source of truth, in this order
+1. The rule files in `docs/agents_rules/user_interface` and the glossary. The rules say what the application does now, so a removed feature is also removed from the rules.
+2. The code of the application.
+3. The pull requests and the issues in the hints. They say what changed and why. They are hints, not the source of truth. You may run `gh issue view <number>` to read an issue.
+Write only what the sources show. Never invent a feature. Never write about a feature that no rule or code shows.
+## Page types
+Each page has exactly ONE type, from the Diátaxis framework (https://diataxis.fr). Never mix two types in one page: a page that mixes steps and descriptions is the main reason why a page is hard to read.
+- **tutorial**: a lesson for a new user. A short path of steps that leads to a first success with Heidrun. Only the page `index.md` is a tutorial.
+- **how-to**: the steps that solve one task of a person who already uses Heidrun, for example "Copy the path of a file". The title starts with a verb. Most pages are how-to pages.
+- **reference**: a dry description to look up, mostly tables: the buttons of a header, the items of a menu, the options of a window. No steps and no story.
+- **explanation**: why a feature works the way it does, for example the state "Needs you". Write one only when a person cannot use a feature well without the idea.
+### Troubleshooting
+A how-to page ends with a section `## Troubleshooting` when the sources show a failure that the reader can meet: an error message, a button that is disabled, something that does not appear, or a change that is lost. Never invent a failure, and leave the section out when the sources show none. Write each problem in this shape:
+- A heading of level three that says the symptom as the reader sees it, for example "The name box stays open".
+- **Cause**: one sentence.
+- **Solution**: numbered steps.
+- **Check**: one sentence that says how the reader sees that it works now.
+### Related pages
+Every page ends with a section `## Related pages`: a bullet list of 2 to 4 links to the other pages that a reader of this page may need next, each with a few words that say why, for example `- [Copy a file path](/documentation/copy_a_file_path): to paste the path in a terminal`. A link starts with `/documentation/` and has no `.md` at the end. Link only to pages that exist after this run.
+Organize the pages by what the reader wants to do, not by the rule files. A page can use several rule files, and a rule file can feed several pages: for example, the rule file of a sidebar section can give two how-to pages and one reference page.
+## Style: the pages must be easy to read
+- Write for a person using Heidrun. Explain what the person can do and how, without describing how the program works internally.
+- Start each page with one sentence that says what the reader can do or find there.
+- Keep each page focused on its purpose. Avoid repeating information from another page; link to that page where it helps the reader continue.
+- Write the steps of a task as a numbered list, with one action in each step. Include enough information to find the control and begin, then say what result to expect or how to check that the task worked.
+- Name controls as they appear on screen. When a name alone is not enough to find a control, describe where it is or what it looks like. Put control names in bold.
+- Explain an unfamiliar term in plain words the first time it appears. Use the same name for the same part of Heidrun throughout the page.
+- Use a table when readers need to compare or look up several controls, choices, or meanings. Give each entry a clear name and a useful explanation.
+- A paragraph has at most three sentences.
+- Keep pages concise. Include details when they help a reader complete a task, choose an option, understand a result, or recover from a known problem. Do not add defaults, exact dimensions, internal implementation details, or remedies that are not supported by the sources.
+- Make links useful for the next step: say what the linked page helps the reader do or find.
+- Describe a known problem with its symptom and supported cause and solution. Include a check when the reader can verify that the solution worked.
+## Your final answer: the outline
+Read the current pages, the rule files, and the glossary first. Then answer with the outline of ALL the pages that must exist after this run, and nothing else, in this form:
+```
+### <file name, for example copy_a_file_path.md>
+- Action: add | change | keep | remove
+- Page type: tutorial | how-to | reference | explanation
+- Title: <the title of level one>
+- Reader goal: <one sentence: what the reader wants to do or know>
+- Sources: <the rule files, relative to the root of the repository>
+- Sections:
+- <heading of level two>: <one sentence on what it says>
+- Troubleshooting: <the symptoms that the sources show, or none>
+- Related pages: <the file names of 2 to 4 other pages>
+- Leave out: <the details of the rules that the reader does not need>
+```
+Then add one last part "### Sidebar" with the groups and the pages of the sidebar, in order.
+Check your outline before you answer: each page has one type and one reader goal, a how-to page holds one task or a few close tasks, and no page restates a rule file.
+## Hints
+This is the first run. There is no last documented commit, so there are no hints. Do the full check only.
+## Local learning experiment
+This invocation is one pass of an experiment managed by a separate process. Do not run docs:update_by_ai, docs:judge_by_ai, or another documentation writer. Do not change Git branches, stage files, commit, push, or create a pull request. Do not edit any source, rule, glossary, prompt, or configuration outside the permitted sidebar file. Do not modify index.md, shortcuts.md, or .last_documented_commit. The experiment manager runs verification and scores the pages. Use no subagents.
+2026-10-13T20:45:40.942773Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-13T20:45:40.942791Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+2026-10-13T20:45:43.581885Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="browser" marketplace="openai-bundled"
+2026-10-13T20:45:43.581916Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="chrome" marketplace="openai-bundled"
+2026-10-13T20:45:43.586021Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="code-review" marketplace="openai-bundled"
+2026-10-13T20:45:43.586027Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="codex-app-tools" marketplace="openai-bundled"
+2026-10-13T20:45:43.586032Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="computer-use" marketplace="openai-bundled"
+2026-10-13T20:45:43.586034Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="documents" marketplace="openai-primary-runtime"
+2026-10-13T20:45:43.586036Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="pdf" marketplace="openai-primary-runtime"
+2026-10-13T20:45:43.586037Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="presentations" marketplace="openai-primary-runtime"
+2026-10-13T20:45:43.586039Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="spreadsheets" marketplace="openai-primary-runtime"
+2026-10-13T20:45:43.586041Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="template-creator" marketplace="openai-primary-runtime"
+2026-10-13T20:45:43.586042Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="unified-computer-use" marketplace="openai-bundled"
+2026-10-13T20:45:43.586044Z  WARN codex_core_plugins::loader: configured non-curated plugin no longer exists in discovered marketplaces during cache refresh plugin="visualize" marketplace="openai-bundled"
+2026-10-13T20:45:43.613300Z  WARN codex_skills::interface: ignoring interface.icon_small: icon path with '..' must resolve under plugin assets/
+2026-10-13T20:45:43.613322Z  WARN codex_skills::interface: ignoring interface.icon_large: icon path with '..' must resolve under plugin assets/
+codex
+I’ll inspect the current documentation pages, the glossary, the Files sidebar rule, and any other rules or code that those pages cite for the same feature. I’ll return the requested outline only and leave the repository unchanged.
+exec
+/bin/zsh -lc "rg -n \"Files sidebar|sidebars/files|files\\.md|file path|Files\" /Users/jetienne/.codex/memories/MEMORY.md" in /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+succeeded in 0ms:
+1947:- issue-469, Sales conversation: review and improvements by topic, Product Definition, User Config Files, CRM, Codex, email, WhatsApp, direct messages, channel adapters, Additional findings
+2540:applies_to: cwd=/Users/jetienne/webwork/teamwright; reuse_rule=read current Team Web UI rules and route-to-renderer mapping first; file paths and local commits are checkout-specific.
+2610:- issue-443, History API, pushState, popstate, TeamWebuiPage, TeamUserConfigFilesPage, same-origin links, stale-request guard, return-to-tab, navigation.md, 2ac13f4d
+2666:- Same-origin Team Web UI links are intercepted in `packages/core/website_main/web/pages/team_webui/src/team_webui_page.ts`; update history and redraw only main content, preserving the header/sidebar shell. Embed User Config Files through `team_user_config_files_page.ts` and `team_user_config_files_view.ts`, with unsaved-change confirmation, Back/Forward, return-to-tab, cleanup, loading state, and stale async-response guards. `docs/rules_webui/team_page/navigation.md` records the contract. [Task 7]
+2727:- Audit `team_template_name` columns and stored job/schedule definition paths; migrate team instances, User Config Files, jobs, schedules, chat history, pending requests/actions, and old routes/links repeatably while preserving IDs and collision handling. Existing schema migration lists cover `real_secretary` -> `team_secretary` but not all current team-name-bearing tables. [Task 2]
+3044:- Update team links through the shared address builder, including workflow, performance, User Config Files, and team-card links; remove the old team-page Vite entry while retaining shared manager-editor code used by the WebUI. [Task 1]
+3291:- issue-409, issue-410, TeamWebuiUserTemplateSelectorView, EffectiveConfigurationPanel, effective_configuration_view.ts, Bootstrap split-button, selected-template label, User Config Files, 077a6a19823c864657c1875e5b7cfa7656f5c531
+3301:- TeamUserConfigFilesView, team_user_config_files_view.ts, user_templates, User Template (N), settings.md, tsx EPERM, 4b22e0d4
+3343:- team_social_media, team_item_view.ts, team_webui_tabs_view.ts, ActiveModeBadgeView, bi-recycle, border-0, Switch active mode to training/operation, User Config Files, ?tab=settings, aria-label=Workflows
+3377:- The earlier Social Media-only visible `User Config Files` label retained the stable `?tab=settings` address and did not change Overview text. A later refinement restored the visible label to `Settings`; treat the URL/query contract as durable, and inspect the current label before similar edits. [Task 2][Task 3]
+3386:- An over-broad label change broke `Review User Config Files` in Overview. Distinguish sidebar tabs from Overview sections before editing. [Task 2]
+3429:scope: Use when changing how Job Workflow inputs render across `/webui`, Kanban, schedules, User Config Files, or nested records, or when tracing input-description provenance.
+3439:- issue-411, issue-409, JobInputFieldView.renderConsistent, EffectiveConfigurationView, EffectiveConfigurationPanel, SocialMediaInputDisplay, Kanban, User Config Files, field_display, multiline, ee73108b
+3452:- when the user says “all job workflow inputs MUST use the same code everywhere and they must look the same” or asks if this applies “in all job workflow inputs, no matter where in the web app” -> change the shared renderer, covering WebUI, Kanban, schedules, User Config Files, and nested record fields rather than duplicating page-specific controls. [Task 1][Task 2]
+3459:- `JobInputFieldView.renderConsistent` is the central typed-input renderer: scalar lists use separate item rows, booleans use Bootstrap switches, and types render as muted monospace text. `EffectiveConfigurationView`, `EffectiveConfigurationPanel`, User Config Files, WebUI forms, Kanban forms, and redraws should delegate to it. [Task 1]
+3564:## Task 1: Match Settings User Config Files rows to the team page and show readable names, success
+3572:- TeamWebuiSettingsView, User Config Files, readable_name, text-body, list-group-item-action, team_webui_tabs_view.test.ts
+3699:- Job workflow catalogs sort by `display_order`, then id, then file path; User Config File catalogs sort by `display_order`, then name. Default is 10 and `-1` hides entries from lists while retaining catalog/direct-address availability. The validated requested values were Social Media `write_a_social_post=10`, LinkedIn=20, Twitter=30, Bluesky=40, `build_in_public_post=50`, `build_in_public_report=60`; Team Secretary `calendar_reminders=10`, `daily_briefing=20`, `address_book=30`. [Task 1]
+3700:- Verify through `JobWorkflowCatalogReader.readCatalog('../../../team_workspaces')` and `UserConfigFileCatalogReader.readUserConfigFilesOfTeam('../../../team_workspaces', 'team_secretary')`, then run `git diff --check`; do not alter frontend sorting when the catalog reader already propagates order. [Task 1]
+3744:- field_display, multiline, textarea, rows="3", TeamUserConfigFilesEditor, JobInputFieldView, UserTemplateListReader, social_media_author, configuration_schema, node --import tsx, EPERM, 09cf8bf
+3753:- Add optional `field_display: multiline` to configuration-property schemas/types and propagate it through `user_config_file_types.ts` → `user_template_list_reader.ts` → `user_template_api_types.ts` → `TeamUserConfigFilesEditor` → `JobInputFieldView`. [Task 1]
+4405:# Task Group: Teamwright User Config Files architecture
+4406:scope: Use to explain or design User Config Files for TeamInstance teams and workflows; distinguish schema from file-stored defaults and preserve unresolved storage/migration/secret decisions.
+4409:## Task 1: Establish User Config Files layered configuration model, success
+4417:- User Config Files, Configuration Schema, System Default, User Template, Runtime Override, Effective Configuration, Workflow Input Reference, One-shot Input, TeamInstance, issue-229, issue-185, issue-208
+4422:- when the user asked that every term be framed as “User Config Files” terminology -> use that umbrella consistently. [Task 1]
+4424:- when the user clarified that User Config Files address “any teams and the workflows inside it” -> treat them as TeamInstance-scoped configuration, not global user preferences. [Task 1]
+4708:scope: Use for sales User Config Files, SubitoFlash conversation behavior, conversion outcomes, or WhatsApp/email reuse; preserve human review, durable evidence, and no-real-send boundaries.
+4711:## Task 1: Split sales configuration into four User Config Files and defer CRM, success
+5075:- rollout_summaries/2026-10-05T14-50-05-86zs-commit_all_changes_and_search_env_files.md (cwd=/Users/jetienne/webwork/teamwright, rollout_path=/Users/jetienne/.codex/sessions/2026/10/05/rollout-2026-10-05T16-50-06-01a10c8b-1c3d-7542-87d2-dc321fd25cae.jsonl, updated_at=2026-10-05T16:59:10+00:00, thread_id=01a10c8b-1c3d-7542-87d2-dc321fd25cae, clean commit; not pushed)
+exec
+/bin/zsh -lc "pwd && git status --short && cat docs/agents_rules/glossary.md && cat docs/agents_rules/user_interface/sidebars/files.md && find packages/auxiliary/website_public/docs/documentation -maxdepth 2 -type f -name '*.md' -print | sort" in /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+succeeded in 0ms:
+/Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+M packages/auxiliary/website_public/docs/.vitepress/config.ts
+?? packages/auxiliary/website_public/docs/documentation/browse_files.md
+?? packages/auxiliary/website_public/docs/documentation/change_the_files_list_appearance.md
+?? packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+?? packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+?? packages/auxiliary/website_public/docs/documentation/files_sidebar_reference.md
+?? packages/auxiliary/website_public/docs/documentation/open_a_file.md
+# Glossary of Heidrun
+- Created: 11 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained glossary for agents and tools
+- Related framing: [Project instructions](../../AGENTS.md)
+This document gives one short definition for each word that Heidrun uses for a part of its window. Use these words in the code, in the documents, and in the conversations. One word means one thing, and one thing has one word.
+## The three levels that come from Herdr
+A workspace holds tabs. A tab holds panes.
+```
+Workspace
+└── Tab
+└── Pane
+```
+### Workspace
+One project folder. In most cases, the folder is one repository. A workspace holds tabs.
+### Tab
+One entry of the tab bar. A tab belongs to one workspace. A tab holds one or more panes.
+### Pane
+One terminal inside a tab. The terminal runs a shell or a coding agent, for example Claude Code or Codex. A pane belongs to one tab.
+## The parts of the window
+### Tab bar
+The horizontal row at the top of the viewport, inside the border of the viewport. It shows the tabs of the selected workspace, one entry for each tab.
+### Viewport
+The main area of the window, between the left sidebar and the right sidebar. It has a border, like each sidebar. It holds the tab bar, the panes of the selected tab that are not pinned, and the column of pinned panes.
+### Pinned pane
+A pane that the developer keeps visible. The pin button in the header of the pane pins the pane. A pinned pane stays visible, with the same width, when the developer changes tab or workspace.
+### Column of pinned panes
+The column at the right edge of the viewport. It holds the pinned panes, one above the other, in every tab.
+### Left sidebar
+The panel on the left of the viewport. It holds sidebar sections.
+### Right sidebar
+The panel on the right of the viewport. It holds sidebar sections.
+### Sidebar section
+One part of a sidebar, for example the Needs you, the Scripts, the Source control, or the Files sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+### Source control sidebar section
+The sidebar section of the left sidebar that shows the Git changes of the selected workspace, as the source control view of VS Code does. From the top: a header with the title "Source Control" and its buttons, the commit message box, the commit button, the group "Staged Changes", and the group "Changes". It shows only the local Git repository, nothing of GitHub or GitLab. It replaces the Git sidebar section.
+### Code hosting sidebar section
+The sidebar section of the left sidebar that shows what lives on GitHub or on GitLab for the repository of the selected workspace: a list of the open issues, and a list of the open pull requests (GitHub) or merge requests (GitLab). A row has three lines and no button. A click on a row opens an information card. The words for its search, such as "saved search", are in [glossary_code_hosting.md](glossary_code_hosting.md).
+### Files sidebar section
+The sidebar section of the left sidebar that shows the whole folder tree of the Git repository of the selected workspace. A click on a folder folds or unfolds it. A click on a file opens the file in the large Git window. A right click on a file opens a context menu that copies the path of the file. It only reads files.
+### Chat
+One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
+### Chats sidebar section
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a line with the selector that chooses the coding agent, the Chats sort dropdown menu, and the two view buttons, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats.
+### Chats sort dropdown menu
+The dropdown menu at the top of the Chats sidebar section, at the left of the two view buttons. Its button shows the name of the chosen sort key, with an icon that shows the chosen order. It has two parts: "Sort by" chooses what the chats are sorted by (created on, last updated, messages from you, issues, pull requests, or files written), and "Order" chooses "Ascending" (the smallest value first) or "Descending" (the largest value first), for the sort key that was chosen. It looks like the sort dropdown menu of the list of issues of GitHub.
+### Dynamic topic
+One short label of one or two words that Heidrun computes from the content of a chat, for example "sidebar" or "cache". Nobody writes it by hand. A chat has one to three dynamic topics. The Chats sidebar section shows them on the row of the chat.
+### Raw dynamic topic
+A dynamic topic exactly as it comes out of one chat. With the method "Keyword", Heidrun computes it from this chat and the other chats of the list, and it never asks a coding agent. With the method "Language model", a coding agent finds it from the title and the first messages of this chat. The same subject can get several raw dynamic topics, for example "sidebar" and "side bar".
+### Clustered dynamic topic
+The name of a cluster, which is a group of raw dynamic topics that have a close meaning. A clustered dynamic topic gives one label to one subject. The option "Enable clustered dynamic topics" of the Settings window makes the dynamic topic bar and the rows of the chats show clustered dynamic topics instead of raw dynamic topics.
+### Translation table
+The table, saved on the disk in the file `topic_clusters.json`, that gives the cluster of each raw dynamic topic. A coding agent, `codex` or `claude`, fills it, one call for all the new raw dynamic topics. A saved row never changes, except at a rebuild.
+### Dynamic topic source information
+The data that Heidrun reads in a chat to compute its dynamic topics. It has four parts: the title of the chat, the first messages that the developer typed, the folders of the files that the coding agent wrote, and the titles of the GitHub issues and of the pull requests that the chat mentioned. The messages of the coding agent are not part of it.
+### Dynamic topic extraction
+The choice of the method that computes the dynamic topics: "Keyword" (from the words of the dynamic topic source information, without a language model) or "Language model" (from the title and the first messages of each chat, with a coding agent, `codex` or `claude`, that is installed on this computer). The Settings window holds the choice, in its section "Dynamic topics", under the title "Extraction method".
+### Dynamic topic bar
+The row of small rounded buttons in the header of the Chats sidebar section, below the line of the selector of the coding agent, the Chats sort dropdown menu, and the two view buttons. The first button, "All", shows every chat. Each other button is one dynamic topic, the strongest first, and shows only the chats that have the topic. An arrow at its end, and an arrow at its start, move the bar by three topics.
+### Sidebar icon bar
+The narrow vertical bar of icons at the outer edge of each sidebar, like the bar of icons of Visual Studio Code. It shows one icon for each sidebar section of that sidebar. A click on an icon shows that sidebar section. When the sidebar is collapsed, the sidebar icon bar is the only part of the sidebar that stays visible.
+### Status bar
+The horizontal row at the bottom of the window. It holds status bar sections.
+### Status bar section
+One part of the status bar. It shows one piece of information, for example the usage of Claude, the usage of Codex, or the Git branch. A click on a status bar section opens its information card.
+### Information card
+A small card that opens on a click, never when the mouse pointer only moves over its part. It gives more detail about that part, and it can hold buttons. It opens above a status bar section, at the left of a part of the right sidebar, at the right of a part of the left sidebar, or below a circled question mark of a page of the Settings window. The part gets a background while the pointer is over it and while the information card is open. A second click on the part, the key Escape, a click outside, and the loss of the keyboard focus close the information card. The files line of a chat in the Chats sidebar section has the first information card that opens at the left of a part of a sidebar.
+### Workspace status bar section
+The first status bar section, at the left end of the status bar. It shows the status dot and the name of the selected workspace. Its information card gives the details of the selected workspace, and lists the workspaces to select, rename, close, move, or create.
+## Rules
+- The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
+- The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
+- The word "chat" means only a saved conversation, as defined above. A pane is not a chat.
+- Write "dynamic topic bar" in full. Do not write "filter bar" or "chips" for it.
+- Write "dynamic topic source information" in full.
+- Write "raw dynamic topic" and "clustered dynamic topic" in full, and "translation table" for the table of the clusters. Do not write "category", "group name", or "mapping" for them. Do not write "source", "metadata", or "meta information" for it.
+- The word "section" is never alone. Write "sidebar section" or "status bar section".
+- Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".
+# User interface of Heidrun: files
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related issue: [issue 349](https://github.com/heidrun-org/heidrun/issues/349), [issue 383](https://github.com/heidrun-org/heidrun/issues/383)
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+## Files
+The Files sidebar section shows the whole folder tree of the Git repository of the selected workspace ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)).
+- The Files sidebar section changes nothing but one thing: it creates a new empty file or a new empty folder, because the developer asked for it ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)). It has no button to rename, move, delete, or edit a file.
+- The header stays at the top of the sidebar section while the rows scroll under it. It holds the title "Files" and five buttons that show only an icon, in this order: "New file", "New folder", "Refresh", "Collapse all folders" (the icon `dash-square`), and "More options" (three vertical dots).
+- The menu of "More options" has three groups, and a check mark shows the choice that is on. "Indentation": Small (12 pixels for each level), Medium (20 pixels, the default), Large (28 pixels). "Row height": Compact (24 pixels), Comfortable (30 pixels, the default). "Indent guides": Show (the default), Hide. The choices are saved in the settings `filesPanelIndent`, `filesPanelRowHeight`, and `filesPanelIndentGuides`.
+- The folder tree uses the same list of files as the Files window: the files that Git tracks, the new files, and the folders that `.gitignore` ignores only when the option to show ignored files is on, as folders that do not unfold. Folders come first, then files, in alphabetical order. Each row shows, from the left: one indent guide for each level of depth, a slot for the arrow of a folder, the icon of a folder or of the kind of the file, the name, and for a changed file a colored status letter at the right. A file keeps the slot of the arrow empty, so the names of the files and of the folders of one level line up. The icons are grey, not colored.
+- "New file" and "New folder" show a name box inside the tree, as the first child of the target folder, indented as the children of that folder. The target folder is the selected folder, or the folder of the selected file, or the root of the repository when nothing is selected. The developer types only the name, and the name cannot contain the character `/`. The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels. A new file opens in the large Git window. A name that exists already gives an error message, and the name box stays open. The new file or the new folder becomes the selected row.
+- Git does not list an empty folder, so the tree remembers the new empty folders that the developer created, until Heidrun restarts. At each reading of the tree, including the button "Refresh", the program asks the backend which of these folders still exist on the disk, and forgets the others, for example a folder that the developer removed in the Finder or in a terminal.
+- "Collapse all folders" folds every folder. There is no button that unfolds every folder.
+- A click on a file or on a folder selects its row. Only one row is selected. The selected row has a background that is darker than the background of a row under the pointer, and a blue line around it, as the selected row of VS Code. The selection belongs to the workspace: each workspace keeps its own selected row, and when the developer comes back to a workspace, its selected row is the one that the developer selected there, with the folders above it unfolded. The selection stays when the developer shows another sidebar section and comes back, and when the large Git window closes. A row under the pointer has a background that is lighter than the sidebar, in the dark theme and in the light theme: it has the color `--files-row-hover` (`#22262a` in the dark theme, `#ececE8` in the light theme), and the difference to the sidebar is at least 10 levels in one color channel, so the developer sees it without effort. A click on the empty space of the sidebar section, outside every row, selects nothing in the selected workspace only.
+- A click on a folder folds or unfolds it. The folds stay when the developer changes the sidebar section.
+- A right click on the row of a file opens a context menu at the pointer ([issue #383](https://github.com/heidrun-org/heidrun/issues/383)). A context menu is a small menu that opens at the pointer. It has two items, in this order: "Copy absolute path" puts the absolute path of the file on the clipboard, and "Copy relative path" puts the path of the file on the clipboard, relative to the folder of the workspace. After a copy, a toast shows the text that was copied. The key Escape, a click outside the context menu, or a click on an item closes the context menu. The context menu stays inside the window. The row of a folder has no context menu. A copy changes no file, so the Files sidebar section still only reads files.
+- A click on a file opens the file in the large Git window, the same window as the Source control sidebar section. The large Git window shows a file that has no change as a whole file, with no diff, and disables the buttons "Diff" and "Side by side" for it.
+- The tree is read again when the repository changes, when the number of changed files changes, and at a click on "Refresh".
+- The icon `folder2` of the Files sidebar section is the first icon of the sidebar icon bar of the left sidebar, above the Scripts icon. It shows no number.
+packages/auxiliary/website_public/docs/documentation/browse_files.md
+packages/auxiliary/website_public/docs/documentation/change_the_files_list_appearance.md
+packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+packages/auxiliary/website_public/docs/documentation/files_sidebar_reference.md
+packages/auxiliary/website_public/docs/documentation/index.md
+packages/auxiliary/website_public/docs/documentation/open_a_file.md
+packages/auxiliary/website_public/docs/documentation/shortcuts.md
+exec
+/bin/zsh -lc 'for f in packages/auxiliary/website_public/docs/documentation/*.md; do echo "--- $f"; cat "$f"; done
+rg -n "Files sidebar|filesPanel|Copy absolute path|New file|Collapse all folders|Files" packages/auxiliary/website_public/docs/.vitepress/config.ts packages/apps docs/agents_rules/user_interface --glob '"'*.ts' --glob '*.tsx' --glob '*.md' --glob '*.rs' --glob '*.vue'" in /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+succeeded in 0ms:
+--- packages/auxiliary/website_public/docs/documentation/browse_files.md
+# Browse files and folders
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Find files and folders in the selected workspace and control which folders are open in the Files sidebar section.
+## Browse the folder tree
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+1. Open the **Files** sidebar section for a workspace that is a Git repository.
+2. Click a folder to fold or unfold it.
+3. Click a file to select its row and open it in the large Git window.
+Folders appear before files, and both are listed alphabetically.
+## Refresh or fold the tree
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+Select **Refresh** to read the folder tree again, or select **Collapse all folders** to fold every folder.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+### The Files sidebar section says the workspace is not a Git repository
+**Cause**: The selected workspace is not a Git repository.
+**Solution**:
+1. Select a workspace that is a Git repository.
+2. Open the **Files** sidebar section.
+**Check**: The folder tree appears.
+## Related pages
+- [Files sidebar section](/documentation/files_sidebar_reference): to look up the tree and its controls.
+- [Open a file](/documentation/open_a_file): to view a file in the large Git window.
+- [Create a file or folder](/documentation/create_a_file_or_folder): to add an empty item.
+--- packages/auxiliary/website_public/docs/documentation/change_the_files_list_appearance.md
+# Change the Files list appearance
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Adjust the indentation, row height, and indent guides in the Files sidebar section.
+## Choose the list appearance
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+1. Select **More options** in the Files sidebar section.
+2. Under **Indentation**, choose **Small**, **Medium**, or **Large**.
+3. Under **Row height**, choose **Compact** or **Comfortable**.
+4. Under **Indent guides**, choose **Show** or **Hide**.
+## Related pages
+- [Browse files and folders](/documentation/browse_files): to find files in the folder tree.
+- [Files sidebar section](/documentation/files_sidebar_reference): to look up the available choices.
+- [Create a file or folder](/documentation/create_a_file_or_folder): to add an item to the tree.
+--- packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+# Copy a file path
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Copy either the absolute path of a file or its path relative to the selected workspace.
+## Copy a file path
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+1. In the Files sidebar section, right-click a file row.
+2. Select **Copy absolute path** or **Copy relative path**.
+3. Paste the copied path where you need it.
+Heidrun shows the copied path in a message.
+## Related pages
+- [Browse files and folders](/documentation/browse_files): to find a file.
+- [Open a file](/documentation/open_a_file): to view a file in the large Git window.
+- [Files sidebar section](/documentation/files_sidebar_reference): to look up what the tree shows.
+--- packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+# Create a file or folder
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Create an empty file or folder in the repository of the selected workspace.
+## Choose where to create the item
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+Select a folder to create the item there, or select a file to create the item in that file's folder. With no row selected, the item goes in the repository root.
+## Create the file or folder
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+1. Select **New file** or **New folder** in the Files sidebar section.
+2. Enter a name without `/` and press **Enter**.
+The new row is selected. A new file also opens in the large Git window.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+### The name box stays open after Enter
+**Cause**: The name contains `/` or already exists in the selected folder.
+**Solution**:
+1. Remove `/` from the name or choose a name that is not already in the folder.
+2. Press **Enter**.
+**Check**: The new row appears in the folder tree and is selected.
+## Related pages
+- [Browse files and folders](/documentation/browse_files): to find the destination folder.
+- [Files sidebar section](/documentation/files_sidebar_reference): to look up the header controls.
+- [Open a file](/documentation/open_a_file): to open a file from the folder tree.
+--- packages/auxiliary/website_public/docs/documentation/files_sidebar_reference.md
+# Files sidebar section
+<!-- generated by docs:update_by_ai -->
+<!-- page type: reference -->
+Look up what the Files sidebar section shows and what its controls do.
+## Folder tree
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+The tree shows files tracked by Git and new files. Folders appear before files, and each group is listed alphabetically. A changed file has a status letter at the right of its row, and a folder containing changes has a dot.
+## Header buttons
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+| Name | What it does |
+| --- | --- |
+| **New file** | Starts creating an empty file in the selected folder, the folder of the selected file, or the repository root. |
+| **New folder** | Starts creating an empty folder in the selected folder, the folder of the selected file, or the repository root. |
+| **Refresh** | Reads the folder tree again. |
+| **Collapse all folders** | Folds every folder. |
+| **More options** | Opens the choices for indentation, row height, and indent guides. |
+## More options
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+| Name | Choices |
+| --- | --- |
+| **Indentation** | **Small**, **Medium**, or **Large** |
+| **Row height** | **Compact** or **Comfortable** |
+| **Indent guides** | **Show** or **Hide** |
+## Selecting rows
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+Clicking a file or folder selects its row; only one row is selected for the current workspace. Click empty space in the Files sidebar section to clear the selection.
+## Opening files
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/components/GitModal.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/gitModal.json -->
+Clicking a file opens it in the large Git window. An unchanged file appears as a whole file, with **Diff** and **Side by side** disabled.
+## Troubleshooting
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+<!-- source: packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json -->
+### The Files sidebar section says the workspace is not a Git repository
+**Cause**: The selected workspace is not a Git repository.
+**Solution**:
+1. Select a workspace that is a Git repository.
+2. Open the **Files** sidebar section.
+**Check**: The folder tree appears.
+## Related pages
+- [Browse files and folders](/documentation/browse_files): to find a file or folder.
+- [Open a file](/documentation/open_a_file): to view a file in the large Git window.
+- [Copy a file path](/documentation/copy_a_file_path): to copy a file path.
+--- packages/auxiliary/website_public/docs/documentation/index.md
+# Introduction
+<!-- generated by docs:update_by_ai -->
+<!-- page type: tutorial -->
+This page is a placeholder. The documentation of Heidrun will be written here.
+--- packages/auxiliary/website_public/docs/documentation/open_a_file.md
+# Open a file
+<!-- generated by docs:update_by_ai -->
+<!-- page type: how-to -->
+Open a file from the Files sidebar section in the large Git window.
+## Open a file from the Files sidebar section
+<!-- source: docs/agents_rules/user_interface/sidebars/files.md -->
+<!-- source: docs/agents_rules/glossary.md -->
+<!-- source: packages/apps/web_frontend/src/components/FilesPanel.vue -->
+1. Select a workspace that is a Git repository.
+2. Find the file in the **Files** sidebar section.
+3. Click the file row to open it in the large Git window.
+An unchanged file appears as a whole file, and **Diff** and **Side by side** are disabled.
+## Related pages
+- [Browse files and folders](/documentation/browse_files): to find a file in the folder tree.
+- [Files sidebar section](/documentation/files_sidebar_reference): to look up what the tree shows.
+- [Copy a file path](/documentation/copy_a_file_path): to copy the file path.
+--- packages/auxiliary/website_public/docs/documentation/shortcuts.md
+# Keyboard shortcuts
+In the application, press **⌘/** (or the **?** button at the top) to show this list, with a filter.
+<!-- shortcuts:start -->
+<!-- Generated from packages/apps/web_frontend/src/lib/shortcuts.json: pnpm docs:shortcuts -->
+| Shortcut | Action |
+| --- | --- |
+| **Windows** | |
+| ⌘K | Command palette |
+| ⌘/ | This list of shortcuts |
+| ⌘P | Open a project file (search by name) |
+| ⇧⌘F | Search the output of all terminals |
+| ⇧⌘H | History: agent jobs, time and cost per project, CSV export |
+| ⇧⌘P | Pin the selected text in a note |
+| Esc | Close the open window |
+| **Terminals and agents** | |
+| ⌘T | New tab (default command of a new tab) |
+| ⇧⌘T | New agent (Claude, Codex, project agents) |
+| ⌘D / ⇧⌘D | Split the pane to the right / to the bottom |
+| ⌘W ⌘W | Close the selected pane (twice, to avoid accidents) |
+| **Navigation** | |
+| ⌥⌘← / ⌥⌘→ | Previous / next tab |
+| ⌥⌘↑ / ⌥⌘↓ | Previous / next workspace |
+| ⌘1 … ⌘9 | Go to workspace 1 to 9 (order of the list of workspaces) |
+| ⇧⌥⌘← / ⇧⌥⌘→ | Move the tab left / right |
+| ⇧⌥⌘↑ / ⇧⌥⌘↓ | Move the workspace up / down |
+| **Input** | |
+| ⇧↵ / ⌥↵ | New line in the terminal |
+| ⌘↵ | Launch (New agent window) |
+| ↑ / ↓ then ↵ | Choose a result (palette, search) then confirm |
+| **File explorer and editor** | |
+| ⇧⌘F | Search the whole project (explorer open) |
+| ⌘S | Save the file |
+| ⌘F / ⌘⌥F | Search / replace in the file |
+| ⌘D | Select the next occurrence (multiple cursors) |
+| ⌘Z / ⇧⌘Z | Undo / redo |
+| ⌘W | Close the tab (confirmation if not saved) |
+| Right click | New file or folder, rename / move, Trash |
+| **Display** | |
+| ⌘B / ⌥⌘B | Collapse or expand the left sidebar / the right sidebar |
+| ⌘+ / ⌘− / ⌘0 | Increase / decrease / reset the font size of the whole window |
+| **Mouse** | |
+| ⌘-click | On #12 / !34: preview of the issue or merge request; on a URL or a commit: open it |
+| ⌘-click | On src/app.ts:42 quoted in a terminal: the file at that line, in the explorer |
+| Hover | Action buttons: ↗ Open, ⧉ Preview, ▷ Launch, ▷ Run, ▷ View &lt;agent&gt; |
+| Wheel | Scroll the pane history |
+| ⌥ + wheel | Send ↑ / ↓ (last commands or prompts) |
+| ⌥ + drag | Select text, even in "Mouse for the app" mode |
+| Double-click | Rename a workspace, a tab or a pane |
+| Drag and drop | Reorder workspaces and tabs |
+| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/pin.svg" alt="pin" width="14"> | Pin a pane: it stays visible whatever the tab or workspace |
+| <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/grid-3x3-gap.svg" alt="grid-3x3-gap" width="14"> | Tiles of a Claude session: what each sub-agent is doing |
+| Double-click on a border | Return to the default width |
+<!-- shortcuts:end -->
+packages/auxiliary/website_public/docs/.vitepress/config.ts:47:					{ text: 'Change the Files list appearance', link: '/documentation/change_the_files_list_appearance' },
+packages/auxiliary/website_public/docs/.vitepress/config.ts:53:					{ text: 'Files sidebar section', link: '/documentation/files_sidebar_reference' },
+docs/agents_rules/user_interface/window/layout.md:43:## Files
+docs/agents_rules/user_interface/window/layout.md:46:- A part of the window that shows files, for example a file explorer, only reads them. It has no button to rename, move, delete, or edit a file. The only exception is the Files sidebar section, which can create a new empty file and a new empty folder ([files.md](../sidebars/files.md)).
+packages/apps/desktop_tauri/src/files.rs:118:/// Files of the project containing `cwd`: the git repository (tracked and new files,
+packages/apps/desktop_tauri/src/files.rs:528:/// The paths, among `paths`, that are folders of the project today (not symlinks). The sidebar section Files asks it
+packages/apps/desktop_tauri/src/chats.rs:90:    FilesWritten,
+packages/apps/desktop_tauri/src/chats.rs:367:        SortKey::FilesWritten => written_file_count(&chat.meta.files_written, root) as i64,
+packages/apps/desktop_tauri/src/chats.rs:889:                SortKey::FilesWritten
+packages/apps/desktop_tauri/src/chats.rs:974:        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Descending)), vec!["C", "B", "A"]);
+packages/apps/desktop_tauri/src/chats.rs:975:        assert_eq!(titles(&sorted(&dir, 10, SortKey::FilesWritten, SortOrder::Ascending)), vec!["A", "B", "C"]);
+packages/apps/desktop_tauri/src/lib.rs:157:/// Files edited and not saved: quitting or closing the window asks first.
+docs/agents_rules/user_interface/sidebars/README.md:12:Read `sidebars.md` for the sidebars and the notes. Read `source_control.md` for the Source control section. Read `code_hosting.md` for the Code hosting section, and `code_hosting_search.md` for its search field and its saved searches. Read `files.md` for the Files section. Read the folder `chats` for the Chats section.
+docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md:14:  1. "Sort by": "Created on" (the date of the first record that has a date, or the date of the file when no record has a date), "Last updated" (the date of the file of the chat), "Messages from you" (the number of messages that the developer typed), "Issues" (the number of issues that the chat mentions), "Pull requests" (the number of pull requests that the chat mentions), and "Files written" (the number of different files that the coding agent wrote, a file of a worktree and the same file at the root counting as one).
+docs/agents_rules/user_interface/sidebars/files.md:12:## Files
+docs/agents_rules/user_interface/sidebars/files.md:14:The Files sidebar section shows the whole folder tree of the Git repository of the selected workspace ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)).
+docs/agents_rules/user_interface/sidebars/files.md:16:- The Files sidebar section changes nothing but one thing: it creates a new empty file or a new empty folder, because the developer asked for it ([issue #349](https://github.com/heidrun-org/heidrun/issues/349)). It has no button to rename, move, delete, or edit a file.
+docs/agents_rules/user_interface/sidebars/files.md:17:- The header stays at the top of the sidebar section while the rows scroll under it. It holds the title "Files" and five buttons that show only an icon, in this order: "New file", "New folder", "Refresh", "Collapse all folders" (the icon `dash-square`), and "More options" (three vertical dots).
+docs/agents_rules/user_interface/sidebars/files.md:18:- The menu of "More options" has three groups, and a check mark shows the choice that is on. "Indentation": Small (12 pixels for each level), Medium (20 pixels, the default), Large (28 pixels). "Row height": Compact (24 pixels), Comfortable (30 pixels, the default). "Indent guides": Show (the default), Hide. The choices are saved in the settings `filesPanelIndent`, `filesPanelRowHeight`, and `filesPanelIndentGuides`.
+docs/agents_rules/user_interface/sidebars/files.md:19:- The folder tree uses the same list of files as the Files window: the files that Git tracks, the new files, and the folders that `.gitignore` ignores only when the option to show ignored files is on, as folders that do not unfold. Folders come first, then files, in alphabetical order. Each row shows, from the left: one indent guide for each level of depth, a slot for the arrow of a folder, the icon of a folder or of the kind of the file, the name, and for a changed file a colored status letter at the right. A file keeps the slot of the arrow empty, so the names of the files and of the folders of one level line up. The icons are grey, not colored.
+docs/agents_rules/user_interface/sidebars/files.md:20:- "New file" and "New folder" show a name box inside the tree, as the first child of the target folder, indented as the children of that folder. The target folder is the selected folder, or the folder of the selected file, or the root of the repository when nothing is selected. The developer types only the name, and the name cannot contain the character `/`. The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels. A new file opens in the large Git window. A name that exists already gives an error message, and the name box stays open. The new file or the new folder becomes the selected row.
+docs/agents_rules/user_interface/sidebars/files.md:22:- "Collapse all folders" folds every folder. There is no button that unfolds every folder.
+docs/agents_rules/user_interface/sidebars/files.md:25:- A right click on the row of a file opens a context menu at the pointer ([issue #383](https://github.com/heidrun-org/heidrun/issues/383)). A context menu is a small menu that opens at the pointer. It has two items, in this order: "Copy absolute path" puts the absolute path of the file on the clipboard, and "Copy relative path" puts the path of the file on the clipboard, relative to the folder of the workspace. After a copy, a toast shows the text that was copied. The key Escape, a click outside the context menu, or a click on an item closes the context menu. The context menu stays inside the window. The row of a folder has no context menu. A copy changes no file, so the Files sidebar section still only reads files.
+docs/agents_rules/user_interface/sidebars/files.md:28:- The icon `folder2` of the Files sidebar section is the first icon of the sidebar icon bar of the left sidebar, above the Scripts icon. It shows no number.
+docs/agents_rules/user_interface/sidebars/sidebars.md:15:- The left sidebar holds the Files sidebar section, the Scripts sidebar section, the Source control sidebar section, and the Code hosting sidebar section, in this order from the top.
+docs/agents_rules/user_interface/sidebars/sidebars.md:18:- The sidebar icon bar shows one icon for each sidebar section, one under the other: `folder2` for the Files sidebar section, `play-circle` for the Scripts sidebar section, `git` for the Source control sidebar section, `github` or `gitlab` for the Code hosting sidebar section (a `cloud` when the hosting service is not known, see [code_hosting.md](code_hosting.md)), `bell` for the Needs you sidebar section, `sticky` for the Notes sidebar section, and `chat-left-text` for the Chats sidebar section. The title of the sidebar section is the tooltip of its icon. The number of a sidebar section sits on the top right corner of its icon.
+docs/agents_rules/user_interface/sidebars/index.md:17:- [files.md](files.md): the Files sidebar section.
+packages/apps/web_frontend/src/App.vue:76:import FilesModal from "./components/FilesModal.vue";
+packages/apps/web_frontend/src/App.vue:79:import { files, openFiles } from "./stores/files";
+packages/apps/web_frontend/src/App.vue:200:        return run(() => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }));
+packages/apps/web_frontend/src/App.vue:349:    <FilesModal v-if="files.open" />
+packages/apps/web_frontend/src/i18n/unused_texts.test.ts:24:	static listSourceFiles(folder: string): string[] {
+packages/apps/web_frontend/src/i18n/unused_texts.test.ts:30:					fileList.push(...UnusedTextsTestHelper.listSourceFiles(entryPath));
+packages/apps/web_frontend/src/i18n/unused_texts.test.ts:90:		const sourceText = UnusedTextsTestHelper.listSourceFiles(SOURCE_DIR)
+packages/apps/web_frontend/src/components/Sidebar.test.ts:38:  const wrapper = mount(Sidebar, { global: { stubs: { ActionsPanel: true, SourceControlPanel: true, CodeHostingPanel: true, FilesPanel: true } } });
+packages/apps/web_frontend/src/components/Sidebar.test.ts:99:  it("shows the buttons Files, Scripts, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
+packages/apps/web_frontend/src/components/Sidebar.test.ts:102:    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Files", "Scripts", "Source Control", "Code hosting"]);
+packages/apps/web_frontend/src/components/Sidebar.test.ts:107:  it("shows one icon for each sidebar section, Files first: a folder for Files, a play button for Scripts, the Git logo for Source control, and a cloud for Code hosting", async () => {
+packages/apps/web_frontend/src/components/Sidebar.test.ts:186:  it("shows the sidebar section Files after a click on its button, and remembers it", async () => {
+packages/apps/web_frontend/src/dev/tauri_mock_fixture.ts:557:			' Test Files  2 passed (2)',
+packages/apps/web_frontend/src/stores/source_control.test.ts:10:import { commit, discardFiles, sourceControl, splitFiles, stageFiles, writeCommitMessage } from "./source_control";
+packages/apps/web_frontend/src/stores/source_control.test.ts:63:describe("splitFiles", () => {
+packages/apps/web_frontend/src/stores/source_control.test.ts:65:    const groups = splitFiles(
+packages/apps/web_frontend/src/stores/source_control.test.ts:87:    const groups = splitFiles(
+packages/apps/web_frontend/src/stores/source_control.test.ts:98:    const [nested, root] = splitFiles(
+packages/apps/web_frontend/src/stores/source_control.test.ts:112:    await stageFiles(["README.md"]);
+packages/apps/web_frontend/src/stores/source_control.test.ts:118:    const refused = discardFiles(["README.md"]);
+packages/apps/web_frontend/src/stores/source_control.test.ts:122:    const accepted = discardFiles(["README.md"]);
+packages/apps/web_frontend/src/dialog_box_class.test.ts:18:	'FilesModal.vue',
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:12:import FilesPanel from "./FilesPanel.vue";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:14:import { files, filesPanelNewFolders, filesPanelSelections } from "../stores/files";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:38:  const wrapper = mount(FilesPanel);
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:66:  settings.filesPanelIndent = "medium";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:67:  settings.filesPanelRowHeight = "comfortable";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:68:  settings.filesPanelIndentGuides = true;
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:76:  for (const root of Object.keys(filesPanelNewFolders)) {
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:77:    delete filesPanelNewFolders[root];
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:79:  for (const workspaceId of Object.keys(filesPanelSelections)) {
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:80:    delete filesPanelSelections[workspaceId];
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:85:describe("FilesPanel", () => {
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:88:    expect(wrapper.get(".title").text()).toBe("Files");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:116:      "New file", "New folder", "Refresh", "Collapse all folders", "More options",
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:120:  it("folds every folder with the button Collapse all folders", async () => {
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:124:    await wrapper.get("[aria-label='Collapse all folders']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:151:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:164:    expect(filesPanelSelections.w2.path).toBe("src");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:167:    expect(filesPanelSelections.w1.path).toBe("README.md");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:173:    filesPanelSelections.w2 = { path: "docs", isFolder: true };
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:176:    expect(filesPanelSelections.w1).toBeUndefined();
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:177:    expect(filesPanelSelections.w2.path).toBe("docs");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:191:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:211:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:257:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:260:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:268:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:284:    await wrapper.get("[aria-label='New file']").trigger("click");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:293:    const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:299:    const panel = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:315:    const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:338:    settings.filesPanelIndentGuides = false;
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:347:    settings.filesPanelIndent = "small";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:348:    settings.filesPanelRowHeight = "compact";
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:362:    expect(settings.filesPanelIndent).toBe("large");
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:371:    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:383:  it("copies the absolute path of the file with the item Copy absolute path, and closes the context menu", async () => {
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:423:    const wrapper = mount(FilesPanel);
+packages/apps/web_frontend/src/components/FilesPanel.test.ts:430:    const wrapper = mount(FilesPanel);
+packages/apps/web_frontend/src/stores/settings.ts:41: * The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one, and
+packages/apps/web_frontend/src/stores/settings.ts:168:  /** Window Files: the side column shows the file tree ("tree") or the search in the files ("grep"). */
+packages/apps/web_frontend/src/stores/settings.ts:170:  /** Window Files, search in the files: the query is a regular expression. */
+packages/apps/web_frontend/src/stores/settings.ts:172:  /** Window Files, search in the files: the case of the letters counts. */
+packages/apps/web_frontend/src/stores/settings.ts:174:  /** Window Files: the file tree shows the files that Git ignores. */
+packages/apps/web_frontend/src/stores/settings.ts:176:  /** Sidebar section Files: the space that each level of a folder adds at the left of a row. */
+packages/apps/web_frontend/src/stores/settings.ts:177:  filesPanelIndent: "medium" as "small" | "medium" | "large",
+packages/apps/web_frontend/src/stores/settings.ts:178:  /** Sidebar section Files: the height of a row. */
+packages/apps/web_frontend/src/stores/settings.ts:179:  filesPanelRowHeight: "comfortable" as "compact" | "comfortable",
+packages/apps/web_frontend/src/stores/settings.ts:180:  /** Sidebar section Files: a thin vertical line under each unfolded folder links its rows. */
+packages/apps/web_frontend/src/stores/settings.ts:181:  filesPanelIndentGuides: true,
+packages/apps/web_frontend/src/stores/settings.ts:208:  filesPanelIndent: ["small", "medium", "large"],
+packages/apps/web_frontend/src/stores/settings.ts:209:  filesPanelRowHeight: ["compact", "comfortable"],
+packages/apps/web_frontend/src/stores/source_control.ts:61:export function splitFiles(status: GitStatus | null): Record<SourceControlGroup, SourceControlFile[]> {
+packages/apps/web_frontend/src/stores/source_control.ts:88:export async function stageFiles(paths: string[]): Promise<void> {
+packages/apps/web_frontend/src/stores/source_control.ts:93:export async function unstageFiles(paths: string[]): Promise<void> {
+packages/apps/web_frontend/src/stores/source_control.ts:98:export async function discardFiles(paths: string[]): Promise<void> {
+packages/apps/web_frontend/src/stores/source_control.ts:147:  const groups = splitFiles(status);
+packages/apps/web_frontend/src/stores/sidebar_sections.ts:32: * bar, and shows the sidebar section. The Scripts, Source control, Code hosting, and Files sidebar sections
+packages/apps/web_frontend/src/stores/files.ts:33:  /** Files being edited, by path. */
+packages/apps/web_frontend/src/stores/files.ts:114:    reloadFiles();
+packages/apps/web_frontend/src/stores/files.ts:182: * Sidebar section Files: the empty folders that the developer created in this session, by root of repository. Git does
+packages/apps/web_frontend/src/stores/files.ts:185:export const filesPanelNewFolders = reactive({} as Record<string, string[]>);
+packages/apps/web_frontend/src/stores/files.ts:187:/** The selected row of the sidebar section Files: a path relative to the root, and whether the path is a folder. */
+packages/apps/web_frontend/src/stores/files.ts:188:export type FilesPanelSelection = {
+packages/apps/web_frontend/src/stores/files.ts:195:/** Sidebar section Files: the file or the folder that the developer clicked last, by workspace identifier. */
+packages/apps/web_frontend/src/stores/files.ts:196:export const filesPanelSelections = reactive({} as Record<string, FilesPanelSelection>);
+packages/apps/web_frontend/src/stores/files.ts:202:export async function loadFiles(cwd: string): Promise<boolean> {
+packages/apps/web_frontend/src/stores/files.ts:243:export function reloadFiles() {
+packages/apps/web_frontend/src/stores/files.ts:244:  if (cwdOpen) return loadFiles(cwdOpen);
+packages/apps/web_frontend/src/stores/files.ts:285:export async function openFiles(cwd: string | null | undefined, opts: { path?: string; line?: number | null; search?: boolean } = {}) {
+packages/apps/web_frontend/src/stores/files.ts:288:  if ((cwd !== cwdOpen || !files.list.length) && !(await loadFiles(cwd)) && cwd !== cwdOpen) return;
+packages/apps/web_frontend/src/stores/files.ts:299:    if ((r.root !== files.root || !files.list.length) && !(await loadFiles(r.root))) return;
+packages/apps/web_frontend/src/stores/files.ts:442:export async function grepFiles(query: string, regex: boolean, caseSensitive: boolean) {
+packages/apps/web_frontend/src/stores/files.ts:449:    await reloadFiles();
+packages/apps/web_frontend/src/stores/files.ts:480:    await reloadFiles();
+packages/apps/web_frontend/src/stores/files.ts:499:    await reloadFiles();
+packages/apps/web_frontend/src/components/FilesModal.vue:20:  reloadFiles,
+packages/apps/web_frontend/src/components/FilesModal.vue:26:  grepFiles,
+packages/apps/web_frontend/src/components/FilesModal.vue:185:  () => reloadFiles(),
+packages/apps/web_frontend/src/components/FilesModal.vue:363:    const r = await grepFiles(query, settings.filesGrepRegex, settings.filesGrepCase);
+packages/apps/web_frontend/src/components/FilesModal.vue:665:              <button class="link" :title="t('filesModal.reloadList')" @click="reloadFiles()">↻</button>
+packages/apps/web_frontend/src/font_size.test.ts:11:function sourceFiles(directory: string): string[] {
+packages/apps/web_frontend/src/font_size.test.ts:15:      return sourceFiles(path);
+packages/apps/web_frontend/src/font_size.test.ts:28:    for (const file of sourceFiles(__dirname)) {
+packages/apps/web_frontend/src/lib/dynamic_topics.ts:3:import { chatFiles, fileFolder } from "./chat_files";
+packages/apps/web_frontend/src/lib/dynamic_topics.ts:81:  for (const file of chatFiles(root, chat.meta.files_written)) {
+packages/apps/web_frontend/src/components/CommandPalette.vue:32:import { openFiles } from "../stores/files";
+packages/apps/web_frontend/src/components/CommandPalette.vue:116:    { section: t("commandPalette.section.navigation"), label: t("commandPalette.openFile"), hint: "⌘P", run: () => openFiles(selectedPane.value?.foreground_cwd || selectedPane.value?.cwd, { search: true }) },
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:5:import ChatFilesLine from "./ChatFilesLine.vue";
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:6:import { chatFiles } from "../lib/chat_files";
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:30:function mountLine(props: Partial<InstanceType<typeof ChatFilesLine>["$props"]> = {}) {
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:31:  return mount(ChatFilesLine, {
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:35:      entries: chatFiles("/work/app", FILES),
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:68:describe("ChatFilesLine", () => {
+packages/apps/web_frontend/src/components/ChatFilesLine.test.ts:90:    const wrapper = mountLine({ entries: chatFiles("/work/app", ["/work/app/AGENTS.md", "/main.ts"]) });
+packages/apps/web_frontend/src/components/GitStatusSummary.vue:28:    { field: "changed", name: t("statusBar.gitChangedFiles"), value: currentGit.value.changed },
+packages/apps/web_frontend/src/components/GitStatusSummary.vue:29:    { field: "untracked", name: t("statusBar.gitUntrackedFiles"), value: currentGit.value.untracked },
+packages/apps/web_frontend/src/components/Sidebar.vue:6:import FilesPanel from "./FilesPanel.vue";
+packages/apps/web_frontend/src/components/Sidebar.vue:52: * The buttons of the sidebar icon bar of the left sidebar: the Files, Scripts, Source control, and Code hosting sidebar
+packages/apps/web_frontend/src/components/Sidebar.vue:56:  { id: "files", label: t("filesPanel.sidebarSection"), icon: "folder2", badge: 0 },
+packages/apps/web_frontend/src/components/Sidebar.vue:91:      <FilesPanel v-else />
+packages/apps/web_frontend/src/components/InformationCard.test.ts:10:    props: { label: "Files written" },
+packages/apps/web_frontend/src/components/InformationCard.test.ts:86:    expect(card.attributes("aria-label")).toBe("Files written");
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:7:  return { ...original, stageFiles: vi.fn(), unstageFiles: vi.fn(), discardFiles: vi.fn(), commit: vi.fn() };
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:12:import { commit, discardFiles, stageFiles, unstageFiles } from "../stores/source_control";
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:83:    expect(stageFiles).toHaveBeenCalledWith(["CHANGELOG.md"]);
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:85:    expect(discardFiles).toHaveBeenCalledWith(["CHANGELOG.md"]);
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:87:    expect(unstageFiles).toHaveBeenCalledWith(["docs/agents_rules/user_interface.md"]);
+packages/apps/web_frontend/src/components/SourceControlPanel.test.ts:93:    expect(stageFiles).toHaveBeenCalledWith(["CHANGELOG.md"]);
+packages/apps/web_frontend/src/components/GitModal.vue:42:// A file that the Files sidebar section opens, and that has no change, has no diff: it shows as a whole file.
+packages/apps/web_frontend/src/components/ChatFilesLine.vue:71:async function checkFiles() {
+packages/apps/web_frontend/src/components/ChatFilesLine.vue:125:  <InformationCard :label="t('chatsPanel.filesWritten', { count: entries.length })" @open="checkFiles">
+packages/apps/web_frontend/src/components/FilesPanel.vue:2:// The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
+packages/apps/web_frontend/src/components/FilesPanel.vue:14:import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+packages/apps/web_frontend/src/components/FilesPanel.vue:22:const selection = computed(() => (state.selectedWorkspaceId === null ? null : filesPanelSelections[state.selectedWorkspaceId] ?? null));
+packages/apps/web_frontend/src/components/FilesPanel.vue:31:    delete filesPanelSelections[workspaceId];
+packages/apps/web_frontend/src/components/FilesPanel.vue:34:  filesPanelSelections[workspaceId] = { path, isFolder };
+packages/apps/web_frontend/src/components/FilesPanel.vue:37:const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? []));
+packages/apps/web_frontend/src/components/FilesPanel.vue:46:const indentWidth = computed(() => INDENT_WIDTHS[settings.filesPanelIndent]);
+packages/apps/web_frontend/src/components/FilesPanel.vue:47:const rowHeight = computed(() => ROW_HEIGHTS[settings.filesPanelRowHeight]);
+packages/apps/web_frontend/src/components/FilesPanel.vue:56:  { id: "indentTitle", label: t("filesPanel.menu.indent"), isDisabled: true },
+packages/apps/web_frontend/src/components/FilesPanel.vue:59:    label: mark(settings.filesPanelIndent === choice) + t(`filesPanel.menu.indent.${choice}`),
+packages/apps/web_frontend/src/components/FilesPanel.vue:61:  { id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true },
+packages/apps/web_frontend/src/components/FilesPanel.vue:64:    label: mark(settings.filesPanelRowHeight === choice) + t(`filesPanel.menu.rowHeight.${choice}`),
+packages/apps/web_frontend/src/components/FilesPanel.vue:66:  { id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true },
+packages/apps/web_frontend/src/components/FilesPanel.vue:67:  { id: "guides:on", label: mark(settings.filesPanelIndentGuides) + t("filesPanel.menu.guides.on") },
+packages/apps/web_frontend/src/components/FilesPanel.vue:68:  { id: "guides:off", label: mark(settings.filesPanelIndentGuides === false) + t("filesPanel.menu.guides.off") },
+packages/apps/web_frontend/src/components/FilesPanel.vue:74:    settings.filesPanelIndent = choice as typeof settings.filesPanelIndent;
+packages/apps/web_frontend/src/components/FilesPanel.vue:76:    settings.filesPanelRowHeight = choice as typeof settings.filesPanelRowHeight;
+packages/apps/web_frontend/src/components/FilesPanel.vue:78:    settings.filesPanelIndentGuides = choice === "on";
+packages/apps/web_frontend/src/components/FilesPanel.vue:87:  await loadFiles(root);
+packages/apps/web_frontend/src/components/FilesPanel.vue:88:  const remembered = filesPanelNewFolders[files.root] ?? [];
+packages/apps/web_frontend/src/components/FilesPanel.vue:93:    filesPanelNewFolders[files.root] = await invoke<string[]>("dirs_existing", { root: files.root, paths: remembered });
+packages/apps/web_frontend/src/components/FilesPanel.vue:194:    toast(t("filesPanel.nameHasSlash"), "error");
+packages/apps/web_frontend/src/components/FilesPanel.vue:210:    filesPanelNewFolders[files.root] = [...(filesPanelNewFolders[files.root] ?? []), path];
+packages/apps/web_frontend/src/components/FilesPanel.vue:329:  toast(t("filesPanel.copied", { path: text }));
+packages/apps/web_frontend/src/components/FilesPanel.vue:367:    <div v-if="state.selectedWorkspaceId === null" class="muted">{{ t("filesPanel.selectWorkspace") }}</div>
+packages/apps/web_frontend/src/components/FilesPanel.vue:370:        <span class="title me-auto">{{ t("filesPanel.title") }}</span>
+packages/apps/web_frontend/src/components/FilesPanel.vue:374:          :aria-label="t('filesPanel.newFile')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:375:          :title="t('filesPanel.newFile')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:383:          :aria-label="t('filesPanel.newFolder')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:384:          :title="t('filesPanel.newFolder')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:392:          :aria-label="t('filesPanel.refresh')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:393:          :title="t('filesPanel.refresh')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:402:          :aria-label="t('filesPanel.collapseAll')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:403:          :title="t('filesPanel.collapseAll')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:411:          :label="t('filesPanel.menu.label')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:420:            <template v-if="settings.filesPanelIndentGuides">
+packages/apps/web_frontend/src/components/FilesPanel.vue:431:              :aria-label="naming.kind === 'dir' ? t('filesPanel.newFolder') : t('filesPanel.newFile')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:447:              <template v-if="settings.filesPanelIndentGuides">
+packages/apps/web_frontend/src/components/FilesPanel.vue:462:      <div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
+packages/apps/web_frontend/src/components/FilesPanel.vue:464:    <div v-else class="muted">{{ t("filesPanel.notRepository") }}</div>
+packages/apps/web_frontend/src/components/FilesPanel.vue:471:        :aria-label="t('filesPanel.fileMenu.label')"
+packages/apps/web_frontend/src/components/FilesPanel.vue:475:          {{ t("filesPanel.fileMenu.copyAbsolutePath") }}
+packages/apps/web_frontend/src/components/FilesPanel.vue:478:          {{ t("filesPanel.fileMenu.copyRelativePath") }}
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:9:import { openFiles } from "../stores/files";
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:12:  discardFiles,
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:14:  splitFiles,
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:15:  stageFiles,
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:18:  unstageFiles,
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:29:const groups = computed(() => splitFiles(currentGit.value));
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:101:  void openFiles(currentGit.value?.root, { path: file.path });
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:234:                  @click="discardFiles(paths('changes'))"
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:245:                  @click="stageFiles(paths('changes'))"
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:256:                  @click="unstageFiles(paths('staged'))"
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:292:                      @click="discardFiles([file.path])"
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:302:                      @click="stageFiles([file.path])"
+packages/apps/web_frontend/src/components/SourceControlPanel.vue:314:                    @click="unstageFiles([file.path])"
+packages/apps/web_frontend/src/lib/guards.ts:11:  { re: /\brm\s+(?:-\S+\s+)*(-[a-zA-Z]*[rRf]|--recursive\b|--force\b)/, whyKey: "guards.why.deleteFiles" },
+packages/apps/web_frontend/src/lib/guards.ts:12:  { re: /\bsudo\s+rm\b/, whyKey: "guards.why.deleteFilesAsRoot" },
+packages/apps/web_frontend/src/components/ChatsPanel.test.ts:912:        "Files written",
+packages/apps/web_frontend/src/components/ChatsPanel.vue:29:import ChatFilesLine from "./ChatFilesLine.vue";
+packages/apps/web_frontend/src/components/ChatsPanel.vue:312:            <ChatFilesLine
+packages/apps/web_frontend/src/lib/chat_files.test.ts:2:import { chatFiles, fileFolder, fileIconName, fileName, fileWebUrl, relativeFilePath } from "./chat_files";
+packages/apps/web_frontend/src/lib/chat_files.test.ts:28:describe("chatFiles", () => {
+packages/apps/web_frontend/src/lib/chat_files.test.ts:30:    expect(chatFiles("/work/app", ["/work/app/.claude/worktrees/fix/src/a.rs", "/elsewhere/b.md"])).toEqual([
+packages/apps/web_frontend/src/lib/chat_files.test.ts:37:    const files = chatFiles("/work/app", [
+packages/apps/web_frontend/src/lib/chat_files.test.ts:47:    expect(chatFiles(null, ["/work/app/a.rs"])).toEqual([
+packages/apps/web_frontend/src/lib/chat_files.ts:42:export function chatFiles(root: string | null, paths: string[]): ChatFile[] {
+packages/apps/web_frontend/src/lib/chat_summary.ts:3:import { chatFiles, fileName, type ChatFile } from "./chat_files";
+packages/apps/web_frontend/src/lib/chat_summary.ts:93:  const fileEntries = chatFiles(root, meta.files_written);
+codex
+The six Files documentation pages in this worktree are newly untracked, so I’m treating them as draft pages to review rather than assuming they already match the current rules. I’ve found one visible mismatch in the reference page: the rule describes a status letter on changed files, but the page also claims changed folders show a dot. I’m checking the sidebar order and the relevant code labels before finalizing the outline.
+exec
+/bin/zsh -lc "sed -n '28,65p' packages/auxiliary/website_public/docs/.vitepress/config.ts
+sed -n '1,240p' packages/apps/web_frontend/src/components/FilesPanel.vue
+sed -n '360,490p' packages/apps/web_frontend/src/components/FilesPanel.vue
+sed -n '110,160p' packages/apps/desktop_tauri/src/files.rs
+cat docs/agents_rules/user_interface/window/layout.md" in /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375
+succeeded in 0ms:
+nav: [
+{ text: 'Home', link: '/' },
+{ text: 'Documentation', link: '/documentation/' },
+{ text: 'About', link: '/about' },
+],
+sidebar: [
+{
+text: 'Get started',
+items: [
+{ text: 'Introduction', link: '/documentation/' },
+],
+},
+{
+text: 'How-to guides',
+items: [
+{ text: 'Browse files and folders', link: '/documentation/browse_files' },
+{ text: 'Open a file', link: '/documentation/open_a_file' },
+{ text: 'Create a file or folder', link: '/documentation/create_a_file_or_folder' },
+{ text: 'Copy a file path', link: '/documentation/copy_a_file_path' },
+{ text: 'Change the Files list appearance', link: '/documentation/change_the_files_list_appearance' },
+],
+},
+{
+text: 'Reference',
+items: [
+{ text: 'Files sidebar section', link: '/documentation/files_sidebar_reference' },
+{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
+],
+},
+],
+socialLinks: [
+{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+],
+},
+});
+<script setup lang="ts">
+// The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
+// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
+// changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
+// delete, or edit a file. A right click on the row of a file opens a context menu that copies the absolute path or the
+// relative path of the file to the clipboard.
+// - issue #349
+// - issue #383
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { invoke } from "@tauri-apps/api/core";
+import Icon from "./Icon.vue";
+import SourceControlMenu from "./SourceControlMenu.vue";
+import { currentGit, openGitModal } from "../stores/git";
+import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+import { state, toast } from "../stores/session";
+import { settings } from "../stores/settings";
+import { fileIconName } from "../lib/chat_files";
+import { copy } from "../lib/clipboard";
+import { t } from "../i18n/index";
+/** The selected row of the selected workspace, or null. Each workspace has its own selected row. */
+const selection = computed(() => (state.selectedWorkspaceId === null ? null : filesPanelSelections[state.selectedWorkspaceId] ?? null));
+/** Selects a row of the selected workspace, or selects nothing when the path is null. */
+function select(path: string | null, isFolder: boolean) {
+const workspaceId = state.selectedWorkspaceId;
+if (workspaceId === null) {
+return;
+}
+if (path === null) {
+delete filesPanelSelections[workspaceId];
+return;
+}
+filesPanelSelections[workspaceId] = { path, isFolder };
+}
+const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? []));
+const rows = computed(() => visibleRows(tree.value, files.expanded, files.status));
+/** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
+const INDENT_WIDTHS = { small: 12, medium: 20, large: 28 } as const;
+/** The height in pixels of a row, for each choice of the menu. */
+const ROW_HEIGHTS = { compact: 24, comfortable: 30 } as const;
+const indentWidth = computed(() => INDENT_WIDTHS[settings.filesPanelIndent]);
+const rowHeight = computed(() => ROW_HEIGHTS[settings.filesPanelRowHeight]);
+/** The mark that the menu puts before the choice that is on. */
+function mark(isOn: boolean): string {
+return isOn ? "✓ " : "\u2003";
+}
+/** The items of the menu of the three dots: the indentation, the row height, and the indent guides. */
+const menuItems = computed(() => [
+{ id: "indentTitle", label: t("filesPanel.menu.indent"), isDisabled: true },
+...(["small", "medium", "large"] as const).map((choice) => ({
+id: `indent:${choice}`,
+label: mark(settings.filesPanelIndent === choice) + t(`filesPanel.menu.indent.${choice}`),
+})),
+{ id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true },
+...(["compact", "comfortable"] as const).map((choice) => ({
+id: `rowHeight:${choice}`,
+label: mark(settings.filesPanelRowHeight === choice) + t(`filesPanel.menu.rowHeight.${choice}`),
+})),
+{ id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true },
+{ id: "guides:on", label: mark(settings.filesPanelIndentGuides) + t("filesPanel.menu.guides.on") },
+{ id: "guides:off", label: mark(settings.filesPanelIndentGuides === false) + t("filesPanel.menu.guides.off") },
+]);
+function chooseMenuItem(id: string) {
+const [name, choice] = id.split(":");
+if (name === "indent") {
+settings.filesPanelIndent = choice as typeof settings.filesPanelIndent;
+} else if (name === "rowHeight") {
+settings.filesPanelRowHeight = choice as typeof settings.filesPanelRowHeight;
+} else if (name === "guides") {
+settings.filesPanelIndentGuides = choice === "on";
+}
+}
+/**
+* Reads the tree again, then forgets the new empty folders that do not exist any more on the disk, for example after the
+* developer removed them in the Finder or in a terminal.
+*/
+async function loadTree(root: string) {
+await loadFiles(root);
+const remembered = filesPanelNewFolders[files.root] ?? [];
+if (remembered.length === 0) {
+return;
+}
+try {
+filesPanelNewFolders[files.root] = await invoke<string[]>("dirs_existing", { root: files.root, paths: remembered });
+} catch {
+// The folders stay in the list when the backend cannot answer: the next reading tries again.
+}
+}
+/** Unfolds the folders above the selected row, so that the selected row shows after the tree is read again. */
+function revealSelection() {
+const path = selection.value?.path ?? null;
+if (path === null || path.includes("/") === false) {
+return;
+}
+const parts = path.split("/");
+const folders = new Set(files.expanded);
+for (let index = 1; index < parts.length; index++) {
+folders.add(parts.slice(0, index).join("/"));
+}
+files.expanded = folders;
+}
+// The tree is read again when the repository changes, and when the number of changed files changes. When the
+// repository changes, the folders above the selected row of the new workspace unfold.
+watch(
+() => [currentGit.value?.root, currentGit.value?.changed, currentGit.value?.untracked],
+([root], previous) => {
+if (typeof root !== "string") {
+return;
+}
+const isAnotherRepository = previous === undefined || previous[0] !== root;
+void loadTree(root).then(() => {
+if (isAnotherRepository) {
+revealSelection();
+}
+});
+},
+{ immediate: true },
+);
+/** The folder that a new file or a new folder goes into: the selected folder, or the folder of the selected file. */
+const targetFolder = computed(() => {
+const selected = selection.value?.path ?? null;
+if (selected === null) {
+return "";
+}
+if (selection.value?.isFolder === true) {
+return selected;
+}
+return selected.includes("/") ? selected.slice(0, selected.lastIndexOf("/")) : "";
+});
+/** The name that the developer is typing for a new file or a new folder, or null when no name is being typed. */
+const naming = ref<{ kind: "file" | "dir"; value: string; folder: string } | null>(null);
+let nameInput: HTMLInputElement | null = null;
+/** One entry of the list under the header: a row of the tree, or the box where the developer types a new name. */
+type ListEntry = { type: "row"; row: TreeRow } | { type: "naming"; depth: number };
+/** The rows, with the name box as the first child of the folder that receives the new file or the new folder. */
+const entries = computed((): ListEntry[] => {
+const list: ListEntry[] = rows.value.map((row) => ({ type: "row", row }));
+const current = naming.value;
+if (current === null) {
+return list;
+}
+const depth = current.folder === "" ? 0 : current.folder.split("/").length;
+const folderIndex = rows.value.findIndex((row) => row.dir && row.path === current.folder);
+list.splice(current.folder === "" ? 0 : folderIndex + 1, 0, { type: "naming", depth });
+return list;
+});
+function setNameInput(element: unknown) {
+nameInput = element as HTMLInputElement | null;
+}
+function startNaming(kind: "file" | "dir") {
+const folder = targetFolder.value;
+const folders = new Set(files.expanded);
+const parts = folder === "" ? [] : folder.split("/");
+for (let index = 1; index <= parts.length; index++) {
+folders.add(parts.slice(0, index).join("/"));
+}
+files.expanded = folders;
+naming.value = { kind, value: "", folder };
+void nextTick(() => nameInput?.focus());
+}
+function cancelNaming() {
+naming.value = null;
+}
+async function submitNaming() {
+const current = naming.value;
+if (current === null) {
+return;
+}
+const name = current.value.trim();
+if (name === "") {
+naming.value = null;
+return;
+}
+if (name.includes("/")) {
+toast(t("filesPanel.nameHasSlash"), "error");
+void nextTick(() => nameInput?.focus());
+return;
+}
+const path = current.folder === "" ? name : `${current.folder}/${name}`;
+try {
+await invoke("file_create", { root: files.root, path, dir: current.kind === "dir" });
+} catch (error) {
+toast(String(error), "error");
+void nextTick(() => nameInput?.focus());
+return;
+}
+naming.value = null;
+const folders = new Set(files.expanded);
+if (current.kind === "dir") {
+folders.add(path);
+filesPanelNewFolders[files.root] = [...(filesPanelNewFolders[files.root] ?? []), path];
+}
+files.expanded = folders;
+select(path, current.kind === "dir");
+await loadTree(files.root);
+if (current.kind === "file") {
+openGitModal(path);
+}
+}
+/** A click on the empty space of the section selects nothing: a new file or a new folder then goes to the root. */
+function clearSelection() {
+select(null, false);
+}
+function collapseAll() {
+files.expanded = new Set();
+}
+function refresh() {
+const root = currentGit.value?.root;
+if (root !== undefined) {
+void loadTree(root);
+}
+}
+function toggleFolder(row: TreeRow) {
+if (row.ignored) {
+return;
+}
+const expanded = new Set(files.expanded);
+}
+return "modified";
+}
+</script>
+<template>
+<div class="files-panel" @click.self="clearSelection">
+<div v-if="state.selectedWorkspaceId === null" class="muted">{{ t("filesPanel.selectWorkspace") }}</div>
+<template v-else-if="currentGit">
+<header class="panel-header d-flex align-items-center">
+<span class="title me-auto">{{ t("filesPanel.title") }}</span>
+<button
+type="button"
+class="btn btn-sm icon-button"
+:aria-label="t('filesPanel.newFile')"
+:title="t('filesPanel.newFile')"
+@click="startNaming('file')"
+>
+<Icon name="file-earmark-plus" />
+</button>
+<button
+type="button"
+class="btn btn-sm icon-button"
+:aria-label="t('filesPanel.newFolder')"
+:title="t('filesPanel.newFolder')"
+@click="startNaming('dir')"
+>
+<Icon name="folder-plus" />
+</button>
+<button
+type="button"
+class="btn btn-sm icon-button"
+:aria-label="t('filesPanel.refresh')"
+:title="t('filesPanel.refresh')"
+:disabled="files.loading"
+@click="refresh()"
+>
+<Icon name="arrow-clockwise" />
+</button>
+<button
+type="button"
+class="btn btn-sm icon-button"
+:aria-label="t('filesPanel.collapseAll')"
+:title="t('filesPanel.collapseAll')"
+@click="collapseAll()"
+>
+<Icon name="dash-square" />
+</button>
+<SourceControlMenu
+button-class="btn btn-sm icon-button"
+icon="three-dots-vertical"
+:label="t('filesPanel.menu.label')"
+:items="menuItems"
+@choose="chooseMenuItem"
+/>
+</header>
+<div v-if="files.error !== ''" class="error">{{ files.error }}</div>
+<ul v-else class="rows" @click.self="clearSelection" :style="{ '--row-height': `${rowHeight}px`, '--indent-width': `${indentWidth}px` }">
+<template v-for="entry in entries" :key="entry.type === 'row' ? entry.row.path + (entry.row.dir ? '/' : '') : 'naming'">
+<li v-if="entry.type === 'naming' && naming !== null" class="naming-row d-flex align-items-center">
+<template v-if="settings.filesPanelIndentGuides">
+<span v-for="level in entry.depth" :key="level" class="guide"></span>
+</template>
+<span v-else :style="{ width: `${entry.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+<span class="arrow"></span>
+<Icon :name="naming.kind === 'dir' ? 'folder2' : 'file-earmark'" class="kind" />
+<input
+:ref="setNameInput"
+v-model="naming.value"
+class="form-control form-control-sm"
+spellcheck="false"
+:aria-label="naming.kind === 'dir' ? t('filesPanel.newFolder') : t('filesPanel.newFile')"
+@keydown.enter.prevent="submitNaming"
+@keydown.esc.prevent="cancelNaming"
+@blur="cancelNaming"
+/>
+</li>
+<li v-else-if="entry.type === 'row'">
+<button
+type="button"
+class="row btn d-flex align-items-center text-start"
+:class="{ selected: entry.row.path === selection?.path, ignored: entry.row.ignored }"
+:title="entry.row.path"
+:aria-expanded="entry.row.dir && entry.row.ignored === false ? files.expanded.has(entry.row.path) : undefined"
+@click="chooseRow(entry.row)"
+@contextmenu="openFileMenu($event, entry.row)"
+>
+<template v-if="settings.filesPanelIndentGuides">
+<span v-for="level in entry.row.depth" :key="level" class="guide"></span>
+</template>
+<span v-else :style="{ width: `${entry.row.depth * indentWidth}px` }" class="flex-shrink-0"></span>
+<span class="arrow">
+<Icon v-if="arrowIcon(entry.row) !== null" :name="arrowIcon(entry.row) ?? ''" />
+</span>
+<Icon :name="rowIcon(entry.row)" class="kind" />
+<span class="name me-auto">{{ entry.row.name }}</span>
+<span v-if="entry.row.status !== null && entry.row.dir" class="letter modified">•</span>
+<span v-else-if="entry.row.status !== null" class="letter" :class="letterClass(entry.row.status)">{{ entry.row.status === "?" ? "U" : entry.row.status }}</span>
+</button>
+</li>
+</template>
+</ul>
+<div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
+</template>
+<div v-else class="muted">{{ t("filesPanel.notRepository") }}</div>
+<Teleport to="body">
+<div
+v-if="fileMenu !== null"
+ref="fileMenuElement"
+class="menu show position-fixed"
+role="menu"
+:aria-label="t('filesPanel.fileMenu.label')"
+:style="{ top: `${fileMenu.top}px`, left: `${fileMenu.left}px` }"
+>
+<button type="button" class="menu-item" role="menuitem" @click="copyPath('absolute')">
+{{ t("filesPanel.fileMenu.copyAbsolutePath") }}
+</button>
+<button type="button" class="menu-item" role="menuitem" @click="copyPath('relative')">
+{{ t("filesPanel.fileMenu.copyRelativePath") }}
+</button>
+</div>
+</Teleport>
+</div>
+</template>
+<style scoped>
+.files-panel { flex: 1; min-height: 0; padding: 0 8px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+/* The header stays at the top while the rows scroll under it. Its own padding replaces the top padding of the panel, so no row shows above it. */
+.panel-header { position: sticky; top: 0; z-index: 2; padding: 12px 0 8px; background: var(--side); }
+.title { font-weight: 600; padding-left: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.files-panel :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
+out.push(rel.to_string_lossy().replace('\\', "/"));
+}
+if out.len() >= MAX_FILES {
+return;
+}
+}
+}
+/// Files of the project containing `cwd`: the git repository (tracked and new files,
+/// .gitignore respected), or the folder itself when it is not a repository.
+#[tauri::command]
+pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, String> {
+let dir = std::fs::canonicalize(&cwd).map_err(|_| "dossier introuvable".to_string())?;
+let top = run(&dir, &["rev-parse", "--show-toplevel"]).await.map(|b| String::from_utf8_lossy(&b).trim().to_string());
+let Some(root) = top.filter(|t| !t.is_empty()) else {
+acceptable_root(&dir)?;
+used_by_a_pane(&dir).await?;
+let walk_dir = dir.clone();
+let files = tokio::task::spawn_blocking(move || {
+let mut files = Vec::new();
+walk(&walk_dir, &walk_dir, &mut files, 0);
+files
+})
+.await
+.map_err(|e| e.to_string())?;
+let root = dir.display().to_string();
+remember_root(&root);
+let truncated = files.len() >= MAX_FILES;
+return Ok(FileList { root, git: false, files, status: HashMap::new(), truncated });
+};
+let rootp = std::fs::canonicalize(&root).unwrap_or_else(|_| PathBuf::from(&root));
+acceptable_root(&rootp)?;
+used_by_a_pane(&rootp).await?;
+let listed = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
+let mut files: Vec<String> = split_z(&listed).collect();
+files.sort();
+files.dedup();
+if ignored.unwrap_or(false) {
+// Ignored folders as one entry each ("node_modules/"), not their thousands of files.
+let ign = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
+files.extend(split_z(&ign));
+}
+let truncated = files.len() > MAX_FILES;
+files.truncate(MAX_FILES);
+let mut status = HashMap::new();
+let st = run(&rootp, &["-c", "core.quotepath=off", "status", "--porcelain=v1", "-z", "--untracked-files=all"]).await.unwrap_or_default();
+let mut it = split_z(&st);
+while let Some(entry) = it.next() {
+if entry.len() < 4 {
+continue;
+}
+# User interface of Heidrun: layout of the window
+- Created: 13 October 2026
+- Last updated: 13 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323)
+This document says where each part of the window goes and how each part works. The words are defined in [glossary.md](../../glossary.md). The layout below is the layout of the window.
+The other files of the folder `docs/agents_rules/user_interface` give the rules of the other parts. [AGENTS.md](../../../../AGENTS.md) lists them.
+## Layout
+```
+┌───────────┬─────────────────────────────────────┬───────────┐
+│           │ [tab 1] [tab 2] [+]                 │           │
+│   left    ├─────────────────────┬───────────────┤   right   │
+│  sidebar  │ panes of the        │ pinned panes  │  sidebar  │
+│           │ selected tab        │ in a column   │           │
+│           │                     │               │           │
+├───────────┴─────────────────────┴───────────────┴───────────┤
+│ status bar: [● heidrun] [status bar section] [...]          │
+└─────────────────────────────────────────────────────────────┘
+```
+## Rules of the layout
+- The viewport gets the most width, because the developer reads and writes text there.
+- The left sidebar, the viewport, and the right sidebar are three frames of the same kind: the same border, the same rounded corners, and the same background (`--side`). The tab bar is inside the frame of the viewport. The panes inside the frame of the viewport have a lighter background (`--bg`), as the editor of VS Code is lighter than its sidebar, and they have no frame of their own: see the section "Panes".
+- The gap between the viewport and a sidebar is 5 pixels (`--pane-gap`), whether the sidebar is expanded or collapsed. An expanded sidebar fills the gap with its line to drag, and a collapsed sidebar, which has no line to drag, keeps an empty gap of the same width, so the viewport does not move when the developer collapses or expands a sidebar ([issue #323](https://github.com/heidrun-org/heidrun/issues/323)).
+- A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
+- The top bar is 43 pixels high. The gap above the search box, the theme button, and the more button is 9 pixels, and the gap below them is also 9 pixels, down to the first tab of the tab bar and to the first button of each sidebar icon bar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
+## Text that must stay on one line
+- A piece of information that must not go to the next line, for example a folder path, a file path, or a Git branch name, is always shown on one line.
+- When the container is too narrow to show the whole text on one line, the text does not wrap and does not break in the middle of a word. The container cuts the text at its edge.
+- While the pointer is over the container, the text scrolls sideways, so that the developer can read the whole text.
+- The folder path in the information card of the Workspace status bar section follows these rules ([issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
+## Files
+- Heidrun never modifies a file of the developer. Only the coding agents that run in the panes modify files.
+- A part of the window that shows files, for example a file explorer, only reads them. It has no button to rename, move, delete, or edit a file. The only exception is the Files sidebar section, which can create a new empty file and a new empty folder ([files.md](../sidebars/files.md)).
+codex
+### browse_files.md
+- Action: keep
+- Page type: how-to
+- Title: Browse files and folders
+- Reader goal: Find files and folders in a workspace’s Files sidebar section and control which folders are open.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`
+- Sections:
+- Browse the folder tree: Open the Files sidebar section, then select folders or files in the tree.
+- Refresh or fold the tree: Use **Refresh** to read the tree again or **Collapse all folders** to fold every folder.
+- Troubleshooting: The Files sidebar section says the workspace is not a Git repository.
+- Related pages: `files_sidebar_reference.md`, `open_a_file.md`, `create_a_file_or_folder.md`
+- Leave out: Details about selection persistence, row appearance, and menu choices.
+### change_the_files_list_appearance.md
+- Action: keep
+- Page type: how-to
+- Title: Change the Files list appearance
+- Reader goal: Adjust indentation, row height, and indent guides in the Files sidebar section.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`
+- Sections:
+- Choose the list appearance: Use **More options** to choose indentation, row height, and whether to show indent guides.
+- Troubleshooting: None.
+- Related pages: `browse_files.md`, `files_sidebar_reference.md`, `create_a_file_or_folder.md`
+- Leave out: Exact pixel sizes, saved setting names, and default choices.
+### copy_a_file_path.md
+- Action: keep
+- Page type: how-to
+- Title: Copy a file path
+- Reader goal: Copy a file’s absolute path or its path relative to the selected workspace.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`
+- Sections:
+- Copy a file path: Open the file row’s context menu, choose a path type, and paste the copied path.
+- Troubleshooting: None.
+- Related pages: `browse_files.md`, `open_a_file.md`, `files_sidebar_reference.md`
+- Leave out: Context menu closing behavior and the fact that copying does not change a file.
+### create_a_file_or_folder.md
+- Action: keep
+- Page type: how-to
+- Title: Create a file or folder
+- Reader goal: Create an empty file or folder in the repository of the selected workspace.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`; `packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json`
+- Sections:
+- Choose where to create the item: Select a folder, a file, or no row to set the destination.
+- Create the file or folder: Use **New file** or **New folder**, enter a name, and press **Enter**.
+- Troubleshooting: The name box stays open after Enter because the name contains `/` or already exists in the selected folder.
+- Related pages: `browse_files.md`, `files_sidebar_reference.md`, `open_a_file.md`
+- Leave out: Internal storage of empty folders and unsupported rename, move, delete, and edit operations.
+### files_sidebar_reference.md
+- Action: change
+- Page type: reference
+- Title: Files sidebar section
+- Reader goal: Look up what the Files sidebar section shows and what its controls do.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`; `packages/apps/web_frontend/src/components/GitModal.vue`; `packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json`; `packages/apps/web_frontend/src/i18n/locales/en/gitModal.json`
+- Sections:
+- Folder tree: Describe which files and folders appear, their order, and the status marks for changed files and folders.
+- Header buttons: Explain the purpose of each Files sidebar section header button.
+- More options: List the indentation, row height, and indent guide choices.
+- Selecting rows: Explain how selecting a row works and how to clear the selection.
+- Opening files: Explain where a selected file opens and how unchanged files appear.
+- Troubleshooting: The Files sidebar section says the workspace is not a Git repository.
+- Related pages: `browse_files.md`, `open_a_file.md`, `copy_a_file_path.md`
+- Leave out: Internal setting names, exact dimensions, selection colors, and implementation details.
+### open_a_file.md
+- Action: keep
+- Page type: how-to
+- Title: Open a file
+- Reader goal: Open a file from the Files sidebar section in the large Git window.
+- Sources: `docs/agents_rules/user_interface/sidebars/files.md`; `docs/agents_rules/glossary.md`; `packages/apps/web_frontend/src/components/FilesPanel.vue`; `packages/apps/web_frontend/src/components/GitModal.vue`
+- Sections:
+- Open a file from the Files sidebar section: Find and select a file to open it in the large Git window.
+- Troubleshooting: None.
+- Related pages: `browse_files.md`, `files_sidebar_reference.md`, `copy_a_file_path.md`
+- Leave out: How to use the Source control sidebar section and details of diff controls beyond the unchanged-file behavior.
+### Sidebar
+- Get started: `index.md` (Introduction)
+- How-to guides: `browse_files.md` (Browse files and folders), `open_a_file.md` (Open a file), `create_a_file_or_folder.md` (Create a file or folder), `copy_a_file_path.md` (Copy a file path), `change_the_files_list_appearance.md` (Change the Files list appearance)
+- Reference: `files_sidebar_reference.md` (Files sidebar section), `shortcuts.md` (Keyboard shortcuts)
+tokens used
+42,512
