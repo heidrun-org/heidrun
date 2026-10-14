@@ -1,11 +1,11 @@
-# code_hosting_data_layer
+# data_layer_code_hosting
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 455](https://github.com/heidrun-org/heidrun/issues/455). The name `code_hosting_data_layer` is the name of the package and the name of the executable.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 455](https://github.com/heidrun-org/heidrun/issues/455). The name `data_layer_code_hosting` is the name of the package and the name of the executable.
 
 ## What it contains
 
 - `src/lib.rs`: the public interface of the library.
-- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `code_hosting_data_layer`.
+- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `data_layer_code_hosting`.
 - `src/github_reader.rs`: the only code that runs the command `gh`. It reads the pages of issues and of pull requests, and turns them into the stored shape.
 - `src/database.rs`: the SQLite file and its two tables.
 - `src/schemas.rs`: checks an issue and a pull request against their JSON schema.
@@ -147,11 +147,11 @@ ORDER BY number"
 The desktop application uses the library as a path dependency, as it does for `raw_coding_agent_cli`:
 
 ```toml
-code_hosting_data_layer = { path = "../../auxiliary/code_hosting_data_layer" }
+data_layer_code_hosting = { path = "../../auxiliary/data_layer_code_hosting" }
 ```
 
 ```rust
-use code_hosting_data_layer::{
+use data_layer_code_hosting::{
     default_database_path, ignore_log, synchronize, CodeHostingDatabase, GhGraphqlRunner, GithubReader,
     SynchronizationMode,
 };
@@ -176,5 +176,5 @@ Run these commands from the root of the repository.
 
 ```sh
 pnpm --silent data_layer:code_hosting --help      # show the help
-pnpm --filter code_hosting_data_layer test        # run the Rust tests (cargo test)
+pnpm --filter data_layer_code_hosting test        # run the Rust tests (cargo test)
 ```

@@ -71,7 +71,7 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 | [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
 | [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
 | [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A Rust library and a command line tool that send one prompt to `codex`, `claude`, or `agy` and return the answer. The desktop application uses the library, and the change log generator runs the command line tool. |
-| [`packages/auxiliary/code_hosting_data_layer`](packages/auxiliary/code_hosting_data_layer) | A Rust library and a command line tool that read the issues and the pull requests of a GitHub repository into two tables of a SQLite file (`initialize`, `update`), and run read-only SQL queries on them (`query`). |
+| [`packages/auxiliary/data_layer_code_hosting`](packages/auxiliary/data_layer_code_hosting) | A Rust library and a command line tool that read the issues and the pull requests of a GitHub repository into two tables of a SQLite file (`initialize`, `update`), and run read-only SQL queries on them (`query`). |
 
 ## Contributing
 

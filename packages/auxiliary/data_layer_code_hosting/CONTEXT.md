@@ -1,15 +1,15 @@
-# Directory Context: `/packages/auxiliary/code_hosting_data_layer`
+# Directory Context: `/packages/auxiliary/data_layer_code_hosting`
 
 ## Purpose
-A Rust library and a command line tool that read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The desktop application can use the library. The name `code_hosting_data_layer` is the name of the package and the name of the executable.
+A Rust library and a command line tool that read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_code_hosting` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface of the library. It exports `CodeHostingDatabase`, `GithubReader`, `GraphqlRunner`, `GhGraphqlRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `default_database_path`, `validate_issue_value`, `validate_pull_request_value`, and the data types.
-- `src/main.rs`: the command line, and the executable `code_hosting_data_layer`. The module `src/command_line.rs` reads its arguments.
+- `src/main.rs`: the command line, and the executable `data_layer_code_hosting`. The module `src/command_line.rs` reads its arguments.
 - `schemas/`: the two JSON schema files `issue.schema.json` and `pull_request.schema.json`. They are the only place that says which fields the database stores.
 - `tests/`: the tests of the executable, with a fake `gh` command put at the start of the PATH. The tests of the library sit at the end of each source file, and `src/test_samples.rs` holds their sample data and their fake GitHub.
 - Command to run this folder: `pnpm --silent data_layer:code_hosting --help`
-- Command to test this folder: `pnpm --filter code_hosting_data_layer test`
+- Command to test this folder: `pnpm --filter data_layer_code_hosting test`
 
 ## Rules
 - The SQLite file has two tables, `issues` and `pull_requests`. Each table has exactly the columns `repository`, `number`, `updatedAt`, and `data`, and the primary key is `repository` and `number`. The column `data` holds the JSON text of the item. The facts are never split into more columns.

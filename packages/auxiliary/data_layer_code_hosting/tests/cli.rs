@@ -1,7 +1,7 @@
-//! Tests of the executable `code_hosting_data_layer`, with a fake `gh` command put at the start of the PATH. The fake `gh` command
+//! Tests of the executable `data_layer_code_hosting`, with a fake `gh` command put at the start of the PATH. The fake `gh` command
 //! answers the GraphQL queries from two files, and answers `gh repo view` with the repository `fake-owner/fake-name`.
 
-use code_hosting_data_layer::{CodeHostingDatabase, CodeHostingTable};
+use data_layer_code_hosting::{CodeHostingDatabase, CodeHostingTable};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::process::Command;
@@ -69,7 +69,7 @@ impl Fixture {
     /// Makes the folder. The two issues are the numbers 2 (changed on the day 4) and 1 (day 3), and the pull request is the
     /// number 3 (day 5).
     fn new(name: &str) -> Self {
-        let folder = std::env::temp_dir().join(format!("code_hosting_data_layer_cli_{name}_{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("data_layer_code_hosting_cli_{name}_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(folder.join("bin")).unwrap();
         let gh_path = folder.join("bin").join("gh");
@@ -95,7 +95,7 @@ impl Fixture {
 
     /// Runs the executable with `arguments`, with the fake `gh` command first in the PATH.
     fn run(&self, arguments: &[&str]) -> CliResult {
-        let output = Command::new(env!("CARGO_BIN_EXE_code_hosting_data_layer"))
+        let output = Command::new(env!("CARGO_BIN_EXE_data_layer_code_hosting"))
             .args(arguments)
             .env("PATH", format!("{}:/usr/bin:/bin", self.folder.join("bin").display()))
             .env("FAKE_GH_DIRECTORY", &self.folder)
