@@ -1,12 +1,12 @@
 # Chats sidebar section: the section "Dynamic topics" of the Settings window
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md), [Glossary of Heidrun: dynamic topics](../../../../glossary_dynamic_topics.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md) and [glossary_dynamic_topics.md](../../../../glossary_dynamic_topics.md).
 
 - The Settings window has a section "Dynamic topics", the last section of its sidebar (icon `tags`). The section holds the choice "Extraction method": two radio buttons, "Keyword" and "Language model". The choice is the option `dynamicTopicExtraction` of the settings, and the default is "keyword". Both radio buttons are enabled. The title of the radio button "Language model" says that the coding agent `codex` or `claude` that is installed on this computer finds the topics. The more menu has no entry for it.
 - The title "Extraction method" is followed, on the same line, by a circled question mark (the icon `question-circle`, in muted color). The section has no help paragraph under the radio buttons: the circled question mark holds the help. A click on it opens an information card below it, with a title (the question mark icon and the text "Extraction method"), then two blocks: "Keyword" says that the topics of each chat come from the words of its title, of the first messages that the developer typed, of the folders of the files that the coding agent wrote, and of the titles of its issues and pull requests, and that nothing leaves this computer; "Language model" says that a language model finds the topics, and that Heidrun sends the title and the first messages that the developer typed, of the chats that the list shows, and nothing else, to the coding agent `codex` or `claude` that is installed on this computer. Each block has its name in the medium weight, and its text in muted color.

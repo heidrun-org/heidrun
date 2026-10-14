@@ -1,12 +1,12 @@
 # Chats sidebar section: the methods of the dynamic topic extraction
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md), [Glossary of Heidrun: dynamic topics](../../../../glossary_dynamic_topics.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md) and [glossary_dynamic_topics.md](../../../../glossary_dynamic_topics.md).
 
 - The method "Keyword" reads the dynamic topic source information of each chat: the title, the first messages that the developer typed, the folders of the files that the coding agent wrote (below the root of the repository), and the titles of the issues and of the pull requests that the chat mentioned (the three highest issue numbers and the three highest pull request numbers, read on the forge with `gh` or `glab`, four reads at a time). The messages of the coding agent are not used. It cuts the text into words in lower case, without accents, in the singular, and drops the numbers, the addresses, the words of one or two letters, and the stop words of English and of French (`lib/dynamic_topic_words.ts`). A word of the title counts 3, a word of the title of an issue or of a pull request counts 2, a word of the first messages or of a folder counts 1. The score of a word in a chat is `(1 + ln(weight)) × ln(number of chats that the list shows ÷ number of those chats that hold the word)`, so a word that every chat holds scores nothing. A list of one chat uses only the weight. The best three words, by score and then by alphabetical order, are the topics (`lib/dynamic_topics.ts`).
 - The cache of the method "Keyword" is in the `localStorage` of the web frontend, under the key `heidrun.dynamicTopicsCache`. It keeps, for each chat, the identifier of the chat, the date of its last message, and the words of its dynamic topic source information with their weights, because reading the titles on the forge is the expensive part, and the best words of a chat depend on the other chats that the list shows. The topics are ranked again each time, which is cheap. A chat whose last message did not change is never read again. A new or changed chat gets its words at once from the title, the first messages, and the folders, and gets the titles of its issues and pull requests when the forge answers. A chat whose titles could not be read tries again once in the next run of Heidrun. The cache keeps the 200 chats with the newest last message (`stores/dynamic_topics.ts`).

@@ -1,10 +1,10 @@
 # Dynamic topics rules index
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md), [Glossary of Heidrun: dynamic topics](../../../../glossary_dynamic_topics.md)
 - Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
