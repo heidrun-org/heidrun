@@ -2,12 +2,13 @@
 // The File explorer sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
 // workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
 // changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
-// delete, or edit a file. A right click on the row of a file opens a context menu that copies the absolute path or the
-// relative path of the file to the clipboard. The option "Ignored files" of the menu shows the files and the folders
-// that Git ignores, in the muted color. A folder that Git ignores unfolds one level at a time.
+// delete, or edit a file. A right click on the row of a file or of a folder opens a context menu that copies the
+// absolute path or the relative path to the clipboard. The option "Ignored files" of the menu shows the files and the
+// folders that Git ignores, in the muted color. A folder that Git ignores unfolds one level at a time.
 // - issue #349
 // - issue #383
 // - issue #430
+// - issue #443
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
@@ -302,18 +303,15 @@ function chooseRow(row: TreeRow) {
   openGitModal(row.path);
 }
 
-/** The context menu of the row of a file: the relative path of the file, and where the pointer was. Null when closed. */
+/** The context menu of a file row or a folder row: the relative path, and where the pointer was. Null when closed. */
 const fileMenu = ref<{ path: string; top: number; left: number } | null>(null);
 const fileMenuElement = ref<HTMLElement>();
 
 /** The space in pixels that the context menu keeps between itself and the edge of the window. */
 const FILE_MENU_MARGIN = 8;
 
-/** Opens the context menu at the pointer for the row of a file. The row of a folder keeps the default behavior. */
+/** Opens the context menu at the pointer for the row of a file or of a folder, and hides the default context menu. */
 function openFileMenu(event: MouseEvent, row: TreeRow) {
-  if (row.dir) {
-    return;
-  }
   event.preventDefault();
   fileMenu.value = { path: row.path, top: event.clientY, left: event.clientX };
   document.addEventListener("mousedown", onDocumentMouseDown, true);
@@ -356,7 +354,7 @@ function onDocumentKeyDown(event: KeyboardEvent) {
   }
 }
 
-/** Puts the absolute path or the relative path of the file of the context menu on the clipboard, and closes the menu. */
+/** Puts the absolute path or the relative path of the row of the context menu on the clipboard, and closes the menu. */
 async function copyPath(kind: "absolute" | "relative") {
   const relativePath = fileMenu.value?.path ?? null;
   closeFileMenu();
