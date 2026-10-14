@@ -8,7 +8,7 @@ import { settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
 import { ago } from "../lib/format";
 import { diffStats, parseDiff, splitDiff, type DiffLine } from "../lib/diff";
-import { CODE_THEMES, highlightFile, highlightLine, languageFor } from "../lib/highlight";
+import { highlightFile, highlightLine, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
 import Resizer from "./Resizer.vue";
 import SettingsSwitchRow from "./settings/SettingsSwitchRow.vue";
@@ -251,10 +251,6 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
               {{ t(choice.labelKey) }}
             </label>
           </div>
-          <label class="sr" for="code-theme">{{ t("gitModal.theme") }}</label>
-          <select id="code-theme" v-model="settings.codeTheme" class="theme" :title="t('gitModal.themeTitle')">
-            <option v-for="theme in CODE_THEMES" :key="theme.id" :value="theme.id">{{ theme.label }}</option>
-          </select>
           <SettingsSwitchRow v-model="settings.codeWrap" :label="t('gitModal.wrap')" :title="t('gitModal.wrapTitle')" />
           <button :title="t('gitModal.refreshTitle')" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : t("gitModal.refresh") }}</button>
           <button :title="t('gitModal.closeTitle')" class="close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
@@ -445,7 +441,6 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .path { flex: 1; min-width: 0; font-size: var(--font-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stats { margin-left: 10px; font-size: var(--font-size); }
 .plus { color: var(--ok); } .minus { color: var(--blocked); }
-.theme { height: 28px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 6px; }
 .code { flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
 /* Rendered Markdown: a reading column, GitHub-like. */
 .md { max-width: 860px; margin: 0 auto; padding: 28px 36px 60px; font: var(--font-size)/1.7 var(--sans);  color: var(--c-fg); user-select: text; }
@@ -505,5 +500,4 @@ td.none { background: rgba(var(--wash), 0.02); }
 .chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.warn { background: var(--tint-warn); color: var(--accent); }
 .chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.pending { background: var(--tint-working); color: var(--working); }
 .chip.muted { color: var(--muted); }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

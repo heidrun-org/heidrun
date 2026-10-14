@@ -80,13 +80,13 @@ describe("GitModal", () => {
     expect(wrapper.findAll("header.top .btn-group input")[0].attributes("disabled")).toBeUndefined();
   });
 
-  it("puts the view buttons, the theme menu, the check box Wrap lines, and the button Refresh in the title bar", async () => {
+  it("puts the view buttons, the switch Wrap lines, and the button Refresh in the title bar, and has no theme menu", async () => {
     git.modal.path = "src/main.ts";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", expect.anything()));
     const titleBar = wrapper.find("header.top");
     expect(titleBar.findAll(".btn-group label").map((label) => label.text())).toEqual(["Diff", "Side by side", "File"]);
-    expect(titleBar.find("select.theme").exists()).toBe(true);
+    expect(titleBar.find("select").exists()).toBe(false);
     expect(titleBar.text()).toContain("Wrap lines");
     expect(titleBar.text()).toContain("Refresh");
     expect(wrapper.find(".viewer .bar .btn-group").exists()).toBe(false);
@@ -188,12 +188,12 @@ describe("GitModal", () => {
     expect(settings.codeWrap).toBe(true);
   });
 
-  it("gives a title to every button, radio button, menu, and switch of the title bar", async () => {
+  it("gives a title to every button, radio button, and switch of the title bar", async () => {
     git.modal.path = "README.md";
     settings.diffMode = "preview";
     const wrapper = mount(GitModal);
     await vi.waitFor(() => expect(wrapper.find("article.md").exists()).toBe(true));
-    const controls = wrapper.findAll("header.top button, header.top label.btn-check, header.top select, header.top .switch");
+    const controls = wrapper.findAll("header.top button, header.top label.btn-check, header.top .switch");
     expect(controls.length).toBeGreaterThan(8);
     for (const control of controls) {
       const titledElement = control.element.closest("[title]");

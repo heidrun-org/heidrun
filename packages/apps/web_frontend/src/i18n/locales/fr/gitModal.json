@@ -26,8 +26,6 @@
   "centeredTitle": "Colonne centrée, confortable à lire",
   "fullWidth": "Pleine largeur",
   "fullWidthTitle": "Toute la largeur (grands tableaux)",
-  "theme": "Thème",
-  "themeTitle": "Choisir les couleurs du code",
   "wrap": "Retour à la ligne",
   "wrapTitle": "Revenir à la ligne pour les longues lignes au lieu de défiler sur le côté",
   "chooseFile": "Choisis un fichier à gauche.",

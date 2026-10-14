@@ -26,8 +26,6 @@
   "centeredTitle": "Centered column, comfortable to read",
   "fullWidth": "Full width",
   "fullWidthTitle": "Full width (large tables)",
-  "theme": "Theme",
-  "themeTitle": "Choose the colors of the code",
   "wrap": "Wrap lines",
   "wrapTitle": "Wrap the long lines instead of scrolling sideways",
   "chooseFile": "Choose a file on the left.",
