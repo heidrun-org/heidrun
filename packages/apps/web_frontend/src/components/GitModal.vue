@@ -224,8 +224,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             :title="settings.gitListHidden ? t('gitModal.showList') : t('gitModal.hideList')"
             @click="settings.gitListHidden = !settings.gitListHidden"
           >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
-          <button :title="t('gitModal.openRepositoryTitle')" v-if="fg?.base" class="repo" @click="open(fg.base)">{{ repoName }} <Icon name="box-arrow-up-right" /></button>
-          <span v-else class="repo plain">{{ repoName }}</span>
+          <span class="repo">{{ repoName }}</span>
           <span v-if="st" class="mono branch">{{ st.branch ?? t("gitModal.detached") }}</span>
           <span v-if="st?.ahead" class="chip warn">↑ {{ st.ahead }}</span>
           <span v-if="st?.behind" class="chip pending">↓ {{ st.behind }}</span>
@@ -418,9 +417,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 }
 .top { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
-.repo { border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); font-weight: 600; }
-.repo:hover { color: var(--done); }
-.repo.plain:hover { color: var(--text); }
+.repo { color: var(--text); font-size: var(--font-size); font-weight: 600; }
 .branch { font-size: var(--font-size); color: var(--text-2); }
 .tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 .close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }

@@ -48,6 +48,7 @@ beforeEach(() => {
 afterEach(() => {
   state.selectedWorkspaceId = null;
   git.status = {};
+  git.forge = {};
   git.modal.open = false;
   git.modal.path = null;
   vi.clearAllMocks();
@@ -91,6 +92,28 @@ describe("GitModal", () => {
     expect(wrapper.find(".viewer .bar .btn-group").exists()).toBe(false);
     expect(wrapper.find(".viewer .bar select").exists()).toBe(false);
     expect(wrapper.find(".viewer .bar input").exists()).toBe(false);
+  });
+
+  it("shows the name of the repository as plain text, with no link and no icon, even when the forge gives an address", async () => {
+    git.modal.path = "src/main.ts";
+    git.forge = {
+      w1: {
+        forge: "github",
+        base: "https://github.com/heidrun-org/heidrun",
+        requests: [],
+        recent: [],
+        ci: null,
+        error: null,
+        at: 0,
+      },
+    };
+    const wrapper = mount(GitModal);
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("git_diff", expect.anything()));
+    const repository = wrapper.find("header.top .repo");
+    expect(repository.text()).toBe("heidrun-org/heidrun");
+    expect(repository.element.tagName).toBe("SPAN");
+    expect(repository.find("svg, i, img").exists()).toBe(false);
+    expect(wrapper.find("header.top .title a").exists()).toBe(false);
   });
 
   it("puts the Left sidebar enable disable button in the title bar, and it hides and shows the file list", async () => {
