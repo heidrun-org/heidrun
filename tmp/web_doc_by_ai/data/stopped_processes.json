@@ -1,0 +1,12 @@
+[
+  {
+    "pid": 19610,
+    "kind": "experiment preview",
+    "command": "node /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/auxiliary/website_public/node_modules/.bin/../vitepress/bin/vitepress.js dev docs --host 127.0.0.1 --port 5174"
+  },
+  {
+    "pid": 27045,
+    "kind": "experiment application",
+    "command": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/apps/desktop_tauri/target/debug/bundle/macos/Heidrun.app/Contents/MacOS/heidrun --no-splash-screen"
+  }
+]

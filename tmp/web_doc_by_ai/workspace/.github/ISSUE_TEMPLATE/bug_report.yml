@@ -1,0 +1,57 @@
+name: Bug report
+description: Something is broken in Heidrun. Even Valhalla has a few bugs.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for the report. A clear report helps us fix the problem before Ragnarök.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem. Add a screenshot if it helps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the steps, one per line.
+      placeholder: |
+        1. Open a workspace
+        2. Press ⌘T
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: heidrun-version
+    attributes:
+      label: Heidrun version
+    validations:
+      required: true
+  - type: input
+    id: herdr-version
+    attributes:
+      label: Herdr version
+      description: Run `herdr --version`.
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or other information
+      description: Paste any error message. Do not paste secrets, passwords, or pairing keys.
+      render: shell

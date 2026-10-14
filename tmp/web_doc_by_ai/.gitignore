@@ -1,0 +1,7 @@
+/runtime/
+**/node_modules/
+**/.vitepress/cache/
+**/.vitepress/dist/
+
+# Preserve historical model logs despite the repository-wide log exclusion.
+!*.log

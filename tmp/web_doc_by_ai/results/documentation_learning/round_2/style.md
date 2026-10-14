@@ -1,0 +1,13 @@
+## Style: the pages must be easy to read
+
+- Write for a person using Heidrun. Explain what the person can do and how, without describing internal program details.
+- Start each page with one sentence that says what the reader can do or find there.
+- Keep each page focused on its purpose. Keep task instructions focused on actions; put lookup information in a clearly named section and link to it when useful.
+- Write the steps of a task as a numbered list, with one action in each step. Include any needed starting point, how to find a control, and what result to expect or how to check that the task worked.
+- Name controls as they appear on screen. When the name alone is not enough to find a control, explain where it is or what it looks like. Put control names in bold.
+- Explain an unfamiliar term in plain words the first time it appears. Use the same name for the same part of Heidrun throughout the page.
+- Use a table when readers need to compare or look up several controls, choices, or meanings. Give each entry a clear name and a useful explanation.
+- A paragraph has at most three sentences.
+- Keep pages concise. Include details when they help a reader complete a task, choose an option, understand a result, or recover from a known problem. Do not add defaults, exact dimensions, internal implementation details, or unsupported remedies.
+- Make links useful for the next step: say what the linked page helps the reader do or find.
+- Describe a known problem with its symptom, supported cause, and solution. Include a check when the reader can verify that the solution worked.

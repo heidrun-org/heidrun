@@ -1,0 +1,9 @@
+{
+  "created": "14 October 2026",
+  "sourceWorktree": "/Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375",
+  "sourceCommit": "https://github.com/heidrun-org/heidrun/commit/ba852b856c90815ab1ba32e4950794a9972b5b79",
+  "mainCommit": "https://github.com/heidrun-org/heidrun/commit/a3c950759f3a8a117fa1d22409ac08e210d64632",
+  "sourceFileCount": 808,
+  "excluded": "Git internals, installed node_modules, Rust targets, generated build caches and machine authentication settings. Runtime dependencies are specified by the copied lockfile; no credentials are included.",
+  "copies": "Original worktrees and external artifact folders are retained as recovery copies. Historical scripts are not current entry points."
+}

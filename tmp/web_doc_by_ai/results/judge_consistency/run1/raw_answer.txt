@@ -1,0 +1,67 @@
+```json
+{
+  "rubricVersion": "2",
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "userLanguage",
+          "severity": "suggestion",
+          "location": "Open a project file, paragraph after step 3",
+          "evidence": "The page says the whole file is shown, \"or formatted Markdown if **Reading** is selected\". It does not say that the Reading button appears only for Markdown files.",
+          "impact": "A reader who opens a non-Markdown file looks for Reading and cannot find it. The reader can still finish the task.",
+          "source": "packages/apps/web_frontend/src/components/GitModal.vue",
+          "sourceEvidence": "<button v-if=\"md\" ... @click=\"settings.diffMode = 'read'\">{{ t(\"gitModal.read\") }}</button>",
+          "recommendation": "Optionally write that Reading appears only for Markdown files."
+        }
+      ],
+      "problems": [],
+      "verdict": "The steps, labels, troubleshooting messages and the 50,000-entry limit all match the code and the rule file. The screenshot shows the stated state: docs unfolded and README.md selected."
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "suggestion",
+          "location": "Choose the path format, table row \"Copy relative path\"",
+          "evidence": "The page and the rule file say the relative path is relative to the workspace folder. In the code the Files sidebar section uses the Git top-level folder as its root, so the relative path is relative to the repository root.",
+          "impact": "The two folders are the same in the usual case, where the workspace folder is the repository. They differ only when a workspace is a subfolder of a repository. I could not verify the copy behaviour in that case, so this is uncertain and not a deduction.",
+          "source": "packages/apps/desktop_tauri/src/files.rs",
+          "sourceEvidence": "files_list runs `rev-parse --show-toplevel` and uses the result as the root. copyPath in FilesPanel.vue copies the row path, which is relative to files.root.",
+          "recommendation": "Optionally say \"relative to the repository folder of the workspace\". The rule file may need the same correction."
+        }
+      ],
+      "problems": [],
+      "verdict": "The steps, the toast text \"Copied: docs/README.md\" and the folder-row limitation match the code. The screenshot shows the context menu with both items next to the selected file."
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The destination rules match targetFolder and clearSelection in the code. The French error text and the slash error match files.rs and filesPanel.json. The limit that empty folders disappear after a restart is documented. The screenshot shows the name box inside docs, as the caption says."
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The five header buttons in order, the More options groups and defaults, the status letters, the dot on a folder row, and the selection rules all match the rule file and the code. The More options screenshot matches the table."
+    }
+  ],
+  "site": {
+    "navigation": 5,
+    "consistency": 5,
+    "findings": [],
+    "problems": []
+  },
+  "limitations": [
+    "I did not run the application. I checked the claims against the source code, the rule file, the glossary and the screenshots. I did not check the toast timing or the real context-menu position.",
+    "I did not check whether relative paths differ from the workspace folder when a workspace is a subfolder of a repository."
+  ]
+}
+```

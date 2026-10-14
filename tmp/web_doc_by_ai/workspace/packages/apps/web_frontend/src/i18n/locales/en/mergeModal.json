@@ -1,0 +1,23 @@
+{
+  "eyebrow": "Merge",
+  "titlePr": "Merge the PR {ref}?",
+  "titleMr": "Merge the MR {ref}?",
+  "targetBranch": "target branch",
+  "theTargetBranch": "the target branch",
+  "notReady": "It is not marked as ready: the host can refuse, or merge without the usual checks.",
+  "method": "Method",
+  "methodMerge": "Merge commit",
+  "methodSquash": "Squash (a single commit)",
+  "methodRebase": "Rebase",
+  "removeBranch": "Delete the source branch",
+  "gitlabHint": "If the CI is still running, GitLab schedules the merge for when it passes.",
+  "shaHint": "Merges the last commit seen ({sha}): if someone pushed since, the host refuses it.",
+  "shaHintNoSha": "Merges the last commit seen: if someone pushed since, the host refuses it.",
+  "cancel": "Cancel",
+  "cancelTitle": "Cancel the merge",
+  "merge": "Merge {ref}",
+  "mergeTitle": "Merge the branch",
+  "merging": "Merging…",
+  "toastAutoMerge": "{ref} will be merged when the CI passes",
+  "toastMerged": "{ref} merged into {target}"
+}

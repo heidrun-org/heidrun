@@ -1,0 +1,12 @@
+{
+  "label": "luna_high_repeat",
+  "model": "gpt-6-luna",
+  "effort": "high",
+  "score": 3.9374999999999996,
+  "minimumAccuracy": 4,
+  "minimumTaskSuccess": 3,
+  "generationSeconds": 235.353,
+  "isGenerationTimeEstimated": false,
+  "reportedGenerationTokens": 161803,
+  "pageCount": 6
+}

@@ -1,0 +1,10 @@
+{
+  "status.working": "en cours",
+  "status.blocked": "bloqué",
+  "status.done": "terminé",
+  "status.idle": "inactif",
+  "status.unknown": "inconnu",
+  "justNow": "à l’instant",
+  "minutesAgo": "il y a {minutes} min",
+  "hoursAgo": "il y a {hours} h"
+}

@@ -1,0 +1,20 @@
+{
+  "issue": "https://github.com/heidrun-org/heidrun/issues/407",
+  "branch": "codex/park-ai-documentation-experiment-407",
+  "base": "dev_jerome",
+  "stagedFiles": 1260,
+  "allChangesWithinExperiment": true,
+  "copyDifferences": [
+    ".gitignore",
+    "AGENTS.md",
+    "CONTEXT.md",
+    "README.md",
+    "process/HANDOFF.md",
+    "process/issue_body.md"
+  ],
+  "dependencyAndBuildOutputExcluded": true,
+  "secretPatternScan": "No matching token or private-key patterns and no credential filenames found in preserved files",
+  "diffCheck": "Whitespace warnings in preserved source snapshots, patches and raw logs; original evidence bytes intentionally retained",
+  "modelRunResumed": false,
+  "pullRequestWillRemainUnmerged": true
+}

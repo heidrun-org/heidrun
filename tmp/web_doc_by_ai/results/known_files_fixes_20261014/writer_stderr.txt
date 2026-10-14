@@ -1,0 +1,6 @@
+Step 1 of 4: the coding agent "codex" (model gpt-6.1-sol, effort high) plans the pages (no edit). This can take several minutes.
+  still running, 30 seconds. Use --verbose to see what it does.
+  still running, 60 seconds. Use --verbose to see what it does.
+  still running, 90 seconds. Use --verbose to see what it does.
+  still running, 120 seconds. Use --verbose to see what it does.
+Step 2 of 4: the coding agent writes the pages from the outline. This can take several minutes.

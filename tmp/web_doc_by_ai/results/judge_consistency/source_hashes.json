@@ -1,0 +1,15 @@
+{
+  "docs/agents_rules/glossary.md": "9171d65689b4e1a695eb01d8f216d3b54fe7ee1fbd045e77a0a24b02f4b76bbf",
+  "docs/agents_rules/user_interface/sidebars/files.md": "17175c68f783402d0fc700b8017389458f9be1f44498f1c45f2c597fe401173d",
+  "docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md": "8b3a0fdd38a8821ba51bcb02408554a7f134c0c925ec0951e31f982f36afaf84",
+  "packages/apps/desktop_tauri/src/files.rs": "ea22f2f042df8c331c408c00614d24d537f3e61e6f5ed02d059ba1969039caaa",
+  "packages/apps/web_frontend/src/components/FilesModal.vue": "bb92e2eb4c17f9c76449bc762b3626e767c889e453e36e4a250252178e81a040",
+  "packages/apps/web_frontend/src/components/FilesPanel.vue": "2a1562fa6d687c5100c7175876b813c4912c82eab72e575dbf2f43a6f2dd53f3",
+  "packages/apps/web_frontend/src/components/GitModal.vue": "f6e423e696c0a202c3466f4152c4c8b441b0f4f2f95f655734a17fd5af660905",
+  "packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue": "df878b5935be5413ebee0dfe8869757e8b63fbcdb5f70144d1ad4c9a745ba3dc",
+  "packages/apps/web_frontend/src/i18n/locales/en/filesModal.json": "d4be2b8d9fdfa9c067461cef0567154922f8175a9a715c9b424c747912eb1390",
+  "packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json": "3fb5f6004d94ab00dae905cd2f11cf78d16a59f6faa09a21f65a4d05bdae0b2c",
+  "packages/apps/web_frontend/src/i18n/locales/en/gitModal.json": "bc98ea3c7be3cfbd3fd4261aabd600bb198ed088f972298c553e6ede21eca9f2",
+  "packages/apps/web_frontend/src/stores/files.ts": "4294f78c48686b7d5b368c6726330bbe2f24a1e087564a68856d47db5f72f1cb",
+  "packages/apps/web_frontend/src/stores/settings.ts": "57c337e4b83178ebd8ee0a8a62788b951ae516da289f70222524d7a38b42deb5"
+}

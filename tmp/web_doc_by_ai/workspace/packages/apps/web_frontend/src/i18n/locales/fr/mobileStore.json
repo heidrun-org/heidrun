@@ -1,0 +1,12 @@
+{
+  "pairingRevoked": "Ancien appairage révoqué : scanne le nouveau QR code",
+  "error.agentNotFound": "Agent introuvable (panneau fermé ?)",
+  "error.menuGone": "Ce menu n’est plus affiché : rafraîchis",
+  "error.blockedByProject": "Bloqué par les règles du projet : {reason}",
+  "error.menuChanged": "Le menu a changé ou une réponse est déjà en cours : rafraîchis",
+  "error.emptyPrompt": "Consigne vide",
+  "error.agentBlocked": "L’agent attend une décision : réponds d’abord à son menu",
+  "promptReceived": "Consigne reçue du téléphone pour {name}",
+  "error.unknownAction": "Action inconnue",
+  "error.unknownMethod": "Méthode inconnue"
+}

@@ -1,0 +1,264 @@
+{
+  "reviewStatus": "blocked",
+  "evaluation": {
+    "rubricVersion": "3",
+    "isLimitedRun": true,
+    "pageFiles": [
+      "candidate_69.md",
+      "candidate_25.md",
+      "candidate_84.md",
+      "candidate_16.md",
+      "candidate_58.md",
+      "candidate_31.md"
+    ],
+    "agentName": "claude",
+    "model": "claude-sonnet-5-5",
+    "effort": "high"
+  },
+  "limitations": [
+    "The application was not run. Behaviour was checked in FilesPanel.vue, files.rs, the English locale file filesPanel.json and the rule file files.md.",
+    "Pixels were inspected only for new_file.png and copy_path.png. The caption of candidate_84 refers to docs/README.md. The screenshot shows a README.md row under the docs folder, which is consistent with it.",
+    "The backend error text for an existing name is in French in files.rs. How it appears to an English reader was not checked.",
+    "Anchors #select-an-existing-workspace and #file-context-menu exist as headings in the linked pages. The linked content was not judged.",
+    "Candidates are independent drafts, so the site scores are neutral and no site findings apply."
+  ],
+  "pages": [
+    {
+      "file": "candidate_69.md",
+      "scores": {
+        "taskSuccess": 3,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [
+        {
+          "severity": "material",
+          "location": "Steps, step 1 to step 2",
+          "evidence": "Step 1 selects the destination folder. Step 2 then says 'Type only a new name'. No step tells the reader to click the New file button in the Files header.",
+          "impact": "The name box does not exist until New file is clicked. A reader who follows the steps as written has nowhere to type. The reader must work out that a button must be clicked first.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "startNaming('file') sets naming.value, which shows the name box. The header 'New file' button calls it. The row click (chooseRow) only selects the row and folds or unfolds a folder.",
+          "recommendation": "Add a step between selecting the folder and typing the name: 'Click New file, the first button in the Files header. A name box appears inside the selected folder.'",
+          "criterion": "taskSuccess"
+        }
+      ],
+      "problems": [
+        "The procedure leaves out the click on the New file button. The reader must guess it before the name box can appear."
+      ],
+      "verdict": "The control exists and the reader could infer it, but the omitted click is a consequential guess. The other facts, the image and the troubleshooting section are accurate.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 15,
+        "wordCount": 176,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 0,
+        "numberedStepCount": 3,
+        "bulletCount": 2,
+        "tableCount": 0,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 4.666666666666667
+    },
+    {
+      "file": "candidate_25.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 3
+      },
+      "findings": [
+        {
+          "severity": "material",
+          "location": "Steps, image after step 3",
+          "evidence": "The caption reads 'Context menu for docs/README.md with Copy absolute path and Copy relative path.' The image is /documentation_images/files/new_file.png. Its pixels show a name box in the docs folder with 'example.md' typed. They show no context menu and no README.md row.",
+          "impact": "The caption claims a state that the picture does not show. A reader who looks for the context menu sees a different feature and may think they are in the wrong state.",
+          "source": "packages/auxiliary/website_public/docs/public/documentation_images/files/new_file.png",
+          "sourceEvidence": "Inspected the PNG. It shows the Files header, the docs folder open, and an input box with 'example.md'. No menu items are visible. copy_path.png in the same folder shows the real context menu.",
+          "recommendation": "Use /documentation_images/files/copy_path.png for this step.",
+          "criterion": "accuracy"
+        }
+      ],
+      "problems": [
+        "The screenshot shows the New file name box. The caption says it shows the file context menu."
+      ],
+      "verdict": "The steps, the table and the troubleshooting section are accurate and complete against the rule file and FilesPanel.vue. The wrong image under a context-menu caption is a material accuracy defect.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 22,
+        "wordCount": 235,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 1,
+        "numberedStepCount": 5,
+        "bulletCount": 2,
+        "tableCount": 1,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 4.666666666666667
+    },
+    {
+      "file": "candidate_84.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [],
+      "problems": [],
+      "verdict": "Steps, path table, toast text 'Copied: <path>', folder-row limit and screenshot all match the sources. The screenshot copy_path.png shows the two menu items beside README.md under docs.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 22,
+        "wordCount": 235,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 1,
+        "numberedStepCount": 5,
+        "bulletCount": 2,
+        "tableCount": 1,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 5
+    },
+    {
+      "file": "candidate_16.md",
+      "scores": {
+        "taskSuccess": 2,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 2
+      },
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "Steps, step 4 and the sentence after it",
+          "evidence": "Step 4 says 'Press Escape. The new file becomes selected and opens in the large Git window.' The next sentence says 'Press Enter instead of Escape to cancel before creating the file.'",
+          "impact": "The keys are swapped. A reader who follows step 4 cancels the creation and no file is made.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "The input has @keydown.enter.prevent='submitNaming', which calls file_create and opens the file. cancelNaming sets naming to null. docs/agents_rules/user_interface/sidebars/files.md: 'The key Enter creates the file or the folder, and the key Escape ... cancels.'",
+          "recommendation": "Write 'Press Enter' in step 4 and 'Press Escape instead of Enter to cancel'.",
+          "criterion": "taskSuccess"
+        },
+        {
+          "severity": "blocker",
+          "location": "Steps, step 4 and the cancel sentence",
+          "evidence": "The page says Escape creates and opens the file, and Enter cancels.",
+          "impact": "This is a false operational claim about which key creates data. The reader loses the typed name and gets no file.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "'The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels.'",
+          "recommendation": "Swap the two keys so Enter creates and Escape cancels.",
+          "criterion": "accuracy"
+        }
+      ],
+      "problems": [
+        "Enter and Escape are swapped in step 4 and the cancel sentence. Following the page cancels the creation."
+      ],
+      "verdict": "The page gives a wrong key for the key action of the task. The rest of the page, including the New file step and the image, is correct.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 16,
+        "wordCount": 195,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 0,
+        "numberedStepCount": 4,
+        "bulletCount": 2,
+        "tableCount": 0,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 4
+    },
+    {
+      "file": "candidate_58.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps are complete and in the right order, Enter and Escape are correct, and the troubleshooting section matches the code. The page has no screenshot. This is optional and does not lower any score.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 15,
+        "wordCount": 184,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 0,
+        "numberedStepCount": 4,
+        "bulletCount": 2,
+        "tableCount": 0,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 5
+    },
+    {
+      "file": "candidate_31.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 2
+      },
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "Troubleshooting",
+          "evidence": "The page says 'If a file already has the name, New file overwrites the existing file with an empty file. Press Enter to confirm the replacement.'",
+          "impact": "This is false information about data replacement. A reader may fear that the feature destroys files, or may expect a replacement. The real behaviour is an error and no change. The page also gives no real symptom to look for.",
+          "source": "packages/apps/desktop_tauri/src/files.rs",
+          "sourceEvidence": "file_create calls taken(&target)?, which returns Err when symlink_metadata succeeds, and then uses create_new(true). FilesPanel.vue shows the error as a toast and keeps the name box open. files.md: 'A name that exists already gives an error message, and the name box stays open.'",
+          "recommendation": "Say that a name which already exists gives an error notification, the name box stays open, and nothing is replaced. Tell the reader to choose another name and check that the new row appears.",
+          "criterion": "accuracy"
+        }
+      ],
+      "problems": [
+        "The troubleshooting text falsely says that an existing file is overwritten. The application rejects the name and changes nothing."
+      ],
+      "verdict": "The procedure is correct and complete. The troubleshooting section makes a false claim about replacing a file.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 16,
+        "wordCount": 186,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 0,
+        "numberedStepCount": 4,
+        "bulletCount": 2,
+        "tableCount": 0,
+        "headingCount": 5,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 2
+      },
+      "meanScore": 4.5
+    }
+  ],
+  "site": {
+    "navigation": 5,
+    "consistency": 5,
+    "findings": [],
+    "problems": []
+  },
+  "overallScore": 4.729166666666667
+}

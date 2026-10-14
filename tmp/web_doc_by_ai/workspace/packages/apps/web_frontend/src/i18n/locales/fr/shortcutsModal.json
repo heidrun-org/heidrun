@@ -1,0 +1,9 @@
+{
+  "dialogLabel": "Raccourcis",
+  "title": "Raccourcis",
+  "filterPlaceholder": "Filtrer : onglet, agent, souris…",
+  "closeTitle": "Fermer les raccourcis (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "noShortcut": "Aucun raccourci pour « {query} ».",
+  "footerBefore": "Les commandes sans raccourci sont dans la palette"
+}

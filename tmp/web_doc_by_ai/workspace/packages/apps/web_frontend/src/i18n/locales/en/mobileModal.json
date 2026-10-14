@@ -1,0 +1,19 @@
+{
+  "lead": "Follow the agents from the phone: what waits for a decision, allow or refuse, send a prompt, read the end of the output of an agent. Only through Tailscale, never on the Internet, and with pairing.",
+  "enable": "Turn on mobile access",
+  "pairStep1Before": "On the iPhone or the iPad, open ",
+  "pairStep1After": " and make sure that it is connected.",
+  "pairStep2": "Scan this QR code with the camera, then open the link in Safari.",
+  "pairStep3Before": "Share → ",
+  "pairStep3Bold": "Add to Home Screen",
+  "pairStep3After": ": Heidrun then opens like an app.",
+  "qrSecret": "The QR code contains the pairing key: do not show it, do not share it.",
+  "lastSeen": "Last connection of a device: {time}",
+  "revokeTitle": "The devices already paired will have to scan the QR code again",
+  "revoke": "Revoke the paired devices",
+  "starting": "Starting…",
+  "beforeEnable": "Before you turn it on",
+  "setupStep1Before": "Install ",
+  "setupStep1After": " on this Mac and on the iPhone / the iPad (App Store), connect them with the same account (Google, Apple…).",
+  "setupStep2": "Turn it on here: macOS can ask to allow incoming connections for Heidrun, answer Allow."
+}

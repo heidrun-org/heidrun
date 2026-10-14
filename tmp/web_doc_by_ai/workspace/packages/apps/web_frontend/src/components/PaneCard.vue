@@ -1,0 +1,200 @@
+<script setup lang="ts">
+import { computed } from "vue";
+import TerminalView from "./TerminalView.vue";
+import ConfirmButton from "./ConfirmButton.vue";
+import Icon from "./Icon.vue";
+import InlineRename from "./InlineRename.vue";
+import MacroMenu from "./MacroMenu.vue";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
+import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
+import { git } from "../stores/git";
+import { settings } from "../stores/settings";
+import { mosaic } from "../stores/mosaic";
+import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
+import { pinText } from "../stores/notes";
+import type { AgentInfo } from "../lib/types";
+import { t } from "../i18n/index";
+
+// `isInColumnOfPinnedPanes`: shown in the column of pinned panes, in every tab, the tab of the pane included.
+const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
+
+// A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
+const selected = computed(() =>
+  props.isInColumnOfPinnedPanes
+    ? pinnedPaneState.focus === props.pane.pane_id ||
+      (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
+    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
+);
+// The highlight of the selected pane shows only when the viewport shows several panes: the panes of the selected tab that the
+// grid draws, and the pinned panes of the column of pinned panes.
+const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
+const pinned = computed(() => isPinned(props.pane.pane_id));
+// A click in a pinned pane gives it the keyboard without leaving the current tab.
+function onDown() {
+  if (props.isInColumnOfPinnedPanes) pinnedPaneState.focus = props.pane.pane_id;
+  else {
+    selectPane(props.pane);
+    pinnedPaneState.focus = null;
+  }
+}
+const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
+const ctx = computed(() => contextFor(props.pane));
+const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
+const displayName = computed(() => paneName(props.pane));
+const subtitle = computed(() => {
+  const p = props.pane;
+  if (props.isInColumnOfPinnedPanes) return paneFullName(p);
+  if (p.agent) return `${p.agent} · ${p.pane_id}`;
+  const branch = git.branchByFolder[shellFolder.value];
+  const path = shortPath(shellFolder.value) || p.pane_id;
+  const parts = [p.label ? paneDynamicName(p) : "", branch ?? "", path];
+  return parts.filter((part) => part !== "").join(" · ");
+});
+</script>
+
+<template>
+  <section
+    class="pane"
+    :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
+    @mousedown="onDown"
+  >
+    <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
+    <header class="head">
+      <span class="dot" :class="[status, state.pulse[pane.pane_id] ? 'pulse' : '']"></span>
+      <InlineRename
+        v-if="state.renaming === `pane:${pane.pane_id}`"
+        class="pane-rename"
+        :value="pane.label || displayName"
+        :label="t('paneCard.renameLabel')"
+        allow-empty
+        @save="(v) => finishRename('pane', pane.pane_id, v)"
+        @cancel="state.renaming = null"
+      />
+      <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
+      <span class="sub">{{ subtitle }}</span>
+      <span class="spacer"></span>
+      <template v-if="ctx">
+        <span class="sub">{{ t("paneCard.context") }}</span>
+        <span class="gauge" :class="gaugeLevel(ctx.percent)" style="width: 110px">
+          <span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span>
+        </span>
+        <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
+      </template>
+      <span class="tools">
+        <MacroMenu :pane-id="pane.pane_id" />
+        <template v-if="isInColumnOfPinnedPanes">
+          <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
+          <button
+            class="tool on"
+            aria-pressed="true"
+            :aria-label="t('paneCard.unpin')"
+            :title="t('paneCard.unpinTitle')"
+            @mousedown.stop
+            @click="unpinPane(pane.pane_id)"
+          >
+            <Icon name="pin-fill" />
+          </button>
+        </template>
+        <template v-else>
+        <button
+          v-if="(pane.agent ?? '').includes('claude')"
+          class="tool"
+          :title="t('paneCard.mosaicTitle')"
+          :aria-label="t('paneCard.mosaic')"
+          @mousedown.stop
+          @click="mosaic.paneId = pane.pane_id"
+        ><Icon name="grid-3x3-gap" /></button>
+        <button
+          class="tool"
+          :class="{ on: pinned }"
+          :aria-pressed="pinned"
+          :title="pinned ? t('paneCard.unpin') : t('paneCard.pinTitle')"
+          @mousedown.stop
+          @click="togglePinnedPane(pane.pane_id)"
+        >
+          <Icon :name="pinned ? 'pin-fill' : 'pin'" />
+        </button>
+        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="splitPane('right', pane.pane_id)">
+          <Icon name="layout-split" />
+        </button>
+        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
+          <Icon name="layout-split" class="rotated" />
+        </button>
+        <ConfirmButton
+          icon="x-lg"
+          :confirm-label="t('paneCard.closeConfirm')"
+          :question="t('paneCard.close')"
+          :is-confirm-required="settings.confirmPaneClose"
+          @confirm="closePane(pane.pane_id)"
+        />
+        </template>
+      </span>
+    </header>
+    <TerminalView
+      :key="pane.terminal_id"
+      :terminal-id="pane.terminal_id"
+      :pane-id="pane.pane_id"
+      :cwd="pane.foreground_cwd || pane.cwd"
+      :agent="pane.agent"
+      :focused="selected"
+      @pin="(text) => pinText(text, pane)"
+    />
+  </section>
+</template>
+
+<style scoped>
+/* A pane has no rounded corner: the panes touch each other and the border of the viewport, and the viewport clips the
+   corners that touch its own rounded corners. The border of a pane is the line between two panes. At the edge of the viewport,
+   the border of the pane is hidden under the border of the viewport. */
+.pane {
+  height: 100%; display: flex; flex-direction: column; background: var(--bg); position: relative; z-index: 0;
+  border: 1px solid var(--line); overflow: hidden;
+}
+/* The ring of a blocked pane and of the selected pane has two parts. At the top, the ring is the border itself, so that the outline
+   of the selected tab of the tab bar joins the ring without an offset. On the left, on the right, and at the bottom, the ring is
+   drawn just inside the border, so that it also shows where the viewport hides the border. The ring goes over the border of the
+   next pane that it touches. */
+.pane::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border: 0 solid transparent; border-width: 0 1px 1px;
+}
+.pane.blocked { border-top-color: var(--pane-ring-blocked); z-index: 1; }
+.pane.selected { border-top-color: var(--pane-ring-selected); z-index: 1; }
+.pane.blocked.selected { border-top-color: var(--pane-ring-blocked-selected); }
+.pane.blocked::after { border-color: var(--pane-ring-blocked); }
+.pane.selected::after { border-color: var(--pane-ring-selected); }
+.pane.blocked.selected::after { border-color: var(--pane-ring-blocked-selected); }
+.sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
+.sweep span {
+  position: absolute; top: 0; left: 0; width: 40%; height: 2px;
+  background: linear-gradient(90deg, rgba(63, 184, 175, 0), var(--working), rgba(63, 184, 175, 0));
+  animation: sweep 2.4s ease-in-out infinite;
+}
+.head {
+  height: 34px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 14px;
+  border-bottom: 1px solid var(--pane-head-line); font-size: var(--font-size);
+}
+/* When the viewport shows several panes, the header of the selected pane has a tinted background, and the name and the folder of
+   every other pane are dimmed, so that the selected pane is the one pane with a full contrast. A blocked pane keeps the red look
+   of its header and its text. A viewport with one pane has no highlight, because there is no other pane to tell it from. */
+.pane.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
+.pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
+.pane.several-panes:not(.selected):not(.blocked) .name { color: var(--muted); }
+.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--faint); }
+.name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
+.pane-rename { width: 180px; height: 24px; }
+.sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spacer { flex: 1; }
+.pct { color: var(--text-2); }
+.tools { flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
+.pane:hover .tools, .pane.selected .tools { opacity: 1; }
+.tool {
+  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+}
+.tool:hover { background: var(--hover); color: var(--text); }
+.tool.txt { font-size: var(--font-size); line-height: 1; }
+.tool.on { color: var(--accent); }
+.pane.in-column-of-pinned-panes .head { background: var(--bar); }
+.pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
+</style>

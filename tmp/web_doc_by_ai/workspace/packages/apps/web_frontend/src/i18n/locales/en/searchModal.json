@@ -1,0 +1,17 @@
+{
+  "dialogLabel": "Search in the terminals",
+  "placeholder": "Search in all terminals (#419, an error, a file name…)",
+  "thisWorkspace": "This workspace",
+  "agentsOnly": "Agents only",
+  "regex": "Regular expression",
+  "searching": "Searching…",
+  "summary": "{results} in {panes} · {ms} ms",
+  "results_one": "{count} result",
+  "results_other": "{count} results",
+  "panes_one": "{count} pane",
+  "panes_other": "{count} panes",
+  "help": "Case and accents ignored. ↑↓ to choose, ↵ to open the pane.",
+  "openResult": "Open this search result",
+  "more_one": "… and {count} more above",
+  "more_other": "… and {count} more above"
+}

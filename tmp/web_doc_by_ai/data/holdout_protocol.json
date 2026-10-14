@@ -1,0 +1,5 @@
+{
+  "runs": 2,
+  "acceptance": "Every defect detected with accurate evidence and predeclared primary-criterion threshold in both runs. No material or worse finding for either good case. First two runs are training diagnostics; these examples have not been evaluated by the judge. Expectations frozen before version 3 implementation.",
+  "expectedSha256": "e3802a2f97af10a8325172027f40948ebb7dc1e566773fcbe48c32dc804cc656"
+}
