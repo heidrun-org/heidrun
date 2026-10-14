@@ -20,6 +20,9 @@ pub struct FileList {
     pub git: bool,
     /// Relative paths, "/" separated. Ignored folders (shown on request) end with "/".
     pub files: Vec<String>,
+    /// The entries of `files` that Git ignores, written as in `files`. Empty when the option to show ignored files is
+    /// off (issue #430).
+    pub ignored: Vec<String>,
     /// path → git status letter (M, A, D, R, ?).
     pub status: HashMap<String, String>,
     pub truncated: bool,
@@ -115,6 +118,23 @@ fn walk(base: &Path, dir: &Path, out: &mut Vec<String>, depth: u8) {
     }
 }
 
+/// The files that Git lists for the repository `root`: the tracked files and the new files, sorted. When `show_ignored`
+/// is true, the entries that Git ignores are added, and are also returned alone as the second list. An ignored folder is
+/// one entry that ends with "/", not its thousands of files. Git never lists the folder `.git` (issue #430).
+async fn git_listed_files(root: &Path, show_ignored: bool) -> (Vec<String>, Vec<String>) {
+    let listed = run(root, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
+    let mut files: Vec<String> = split_z(&listed).collect();
+    files.sort();
+    files.dedup();
+    let mut ignored_entries: Vec<String> = Vec::new();
+    if show_ignored {
+        let ign = run(root, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
+        ignored_entries = split_z(&ign).collect();
+        files.extend(ignored_entries.iter().cloned());
+    }
+    (files, ignored_entries)
+}
+
 /// Files of the project containing `cwd`: the git repository (tracked and new files,
 /// .gitignore respected), or the folder itself when it is not a repository.
 #[tauri::command]
@@ -135,20 +155,12 @@ pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, 
         let root = dir.display().to_string();
         remember_root(&root);
         let truncated = files.len() >= MAX_FILES;
-        return Ok(FileList { root, git: false, files, status: HashMap::new(), truncated });
+        return Ok(FileList { root, git: false, files, ignored: Vec::new(), status: HashMap::new(), truncated });
     };
     let rootp = std::fs::canonicalize(&root).unwrap_or_else(|_| PathBuf::from(&root));
     acceptable_root(&rootp)?;
     used_by_a_pane(&rootp).await?;
-    let listed = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
-    let mut files: Vec<String> = split_z(&listed).collect();
-    files.sort();
-    files.dedup();
-    if ignored.unwrap_or(false) {
-        // Ignored folders as one entry each ("node_modules/"), not their thousands of files.
-        let ign = run(&rootp, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
-        files.extend(split_z(&ign));
-    }
+    let (mut files, ignored_entries) = git_listed_files(&rootp, ignored.unwrap_or(false)).await;
     let truncated = files.len() > MAX_FILES;
     files.truncate(MAX_FILES);
     let mut status = HashMap::new();
@@ -172,7 +184,41 @@ pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, 
         }
     }
     remember_root(&root);
-    Ok(FileList { root, git: true, files, status, truncated })
+    Ok(FileList { root, git: true, files, ignored: ignored_entries, status, truncated })
+}
+
+/// The names inside the folder `dir`, one level only: a folder ends with "/", a file does not. A symbolic link is
+/// skipped, as in the walk of a folder that is not a repository, and the folder `.git` is never listed, because it holds
+/// only the internal data of Git (issue #430).
+fn children_of(dir: &Path) -> Result<Vec<String>, String> {
+    let mut names = Vec::new();
+    for entry in std::fs::read_dir(dir).map_err(|e| e.to_string())?.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Ok(file_type) = entry.file_type() else { continue };
+        if file_type.is_symlink() || name == ".git" {
+            continue;
+        }
+        names.push(if file_type.is_dir() { format!("{name}/") } else { name });
+        if names.len() >= MAX_FILES {
+            break;
+        }
+    }
+    names.sort();
+    Ok(names)
+}
+
+/// The first level of one folder of the project: the folders (with a trailing "/") and the files directly inside it. The
+/// sidebar section File explorer asks it when the developer unfolds a folder that Git ignores, because Git does not list
+/// the files of such a folder (issue #430). The folder must be inside a known root, must not be a symbolic link, and
+/// must not be inside `.git`.
+#[tauri::command(async)]
+pub fn folder_children(root: String, path: String) -> Result<Vec<String>, String> {
+    not_in_git_dir(&path)?;
+    let real = full_path(&root, &path)?;
+    if real.is_dir() == false {
+        return Err("not a folder".into());
+    }
+    children_of(&real)
 }
 
 fn full_path(root: &str, path: &str) -> Result<PathBuf, String> {
@@ -525,7 +571,7 @@ pub fn file_create(root: String, path: String, dir: bool) -> Result<(), String> 
     }
 }
 
-/// The paths, among `paths`, that are folders of the project today (not symlinks). The sidebar section Files asks it
+/// The paths, among `paths`, that are folders of the project today (not symlinks). The sidebar section File explorer asks it
 /// to drop the new empty folders that the developer removed outside Heidrun, because Git does not list empty folders.
 #[tauri::command(async)]
 pub fn dirs_existing(root: String, paths: Vec<String>) -> Result<Vec<String>, String> {
@@ -701,6 +747,83 @@ mod helper_tests {
         let paths = vec!["kept".to_string(), "kept/inner".to_string(), "gone".to_string(), "file.txt".to_string(), "../out".to_string()];
         assert_eq!(dirs_existing(root.clone(), paths).unwrap(), vec!["kept", "kept/inner"]);
         assert!(dirs_existing("/not/a/known/root".into(), vec![]).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A repository in a temporary folder: `.heidrun` holds only an ignored file, `.env` is an ignored file, and `src` holds
+    /// a tracked file.
+    fn repository_with_ignored_files(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".heidrun")).unwrap();
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(dir.join(".gitignore"), ".heidrun/\n.env\n").unwrap();
+        std::fs::write(dir.join(".heidrun/config.json"), "{}").unwrap();
+        std::fs::write(dir.join(".env"), "SECRET=1").unwrap();
+        std::fs::write(dir.join("src/a.ts"), "x").unwrap();
+        for args in [vec!["init", "-q"], vec!["add", ".gitignore", "src"]] {
+            let status = std::process::Command::new("git").arg("-C").arg(&dir).args(args).status().unwrap();
+            assert!(status.success());
+        }
+        std::fs::canonicalize(&dir).unwrap()
+    }
+
+    #[tokio::test]
+    async fn lists_a_file_and_a_folder_that_git_ignores_only_when_the_option_is_on_and_never_the_folder_git() {
+        let dir = repository_with_ignored_files("hd-git-listed-files");
+        let (hidden, hidden_ignored) = git_listed_files(&dir, false).await;
+        assert_eq!(hidden, vec![".gitignore", "src/a.ts"]);
+        assert!(hidden_ignored.is_empty());
+        let (shown, shown_ignored) = git_listed_files(&dir, true).await;
+        assert_eq!(shown, vec![".gitignore", "src/a.ts", ".env", ".heidrun/"]);
+        assert_eq!(shown_ignored, vec![".env", ".heidrun/"]);
+        for list in [&hidden, &shown] {
+            assert!(list.iter().all(|entry| entry.trim_end_matches('/') != ".git" && entry.starts_with(".git/") == false));
+        }
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lists_one_level_of_a_folder_with_a_trailing_slash_for_each_folder() {
+        let dir = std::env::temp_dir().join(format!("hd-folder-children-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".heidrun/nested/deeper")).unwrap();
+        std::fs::write(dir.join(".heidrun/config.json"), "{}").unwrap();
+        std::fs::write(dir.join(".heidrun/nested/inner.txt"), "x").unwrap();
+        let root = std::fs::canonicalize(&dir).unwrap().display().to_string();
+        remember_root(&root);
+        assert_eq!(folder_children(root.clone(), ".heidrun".into()).unwrap(), vec!["config.json", "nested/"]);
+        assert_eq!(folder_children(root.clone(), ".heidrun/nested".into()).unwrap(), vec!["deeper/", "inner.txt"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn never_lists_the_folder_git_or_a_symbolic_link_inside_a_folder() {
+        let dir = std::env::temp_dir().join(format!("hd-folder-children-git-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("ignored/.git/hooks")).unwrap();
+        std::fs::write(dir.join("ignored/kept.txt"), "x").unwrap();
+        std::os::unix::fs::symlink(dir.join("ignored/kept.txt"), dir.join("ignored/link.txt")).unwrap();
+        let root = std::fs::canonicalize(&dir).unwrap().display().to_string();
+        remember_root(&root);
+        assert_eq!(folder_children(root.clone(), "ignored".into()).unwrap(), vec!["kept.txt"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn refuses_to_list_a_file_a_path_outside_the_project_a_path_inside_git_and_an_unknown_root() {
+        let dir = std::env::temp_dir().join(format!("hd-folder-children-refuse-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".git/hooks")).unwrap();
+        std::fs::write(dir.join("file.txt"), "x").unwrap();
+        std::os::unix::fs::symlink(&dir, dir.join("loop")).unwrap();
+        let root = std::fs::canonicalize(&dir).unwrap().display().to_string();
+        remember_root(&root);
+        assert!(folder_children(root.clone(), "file.txt".into()).is_err());
+        assert!(folder_children(root.clone(), "../".into()).is_err());
+        assert!(folder_children(root.clone(), ".git/hooks".into()).is_err());
+        assert!(folder_children(root.clone(), "loop".into()).is_err());
+        assert!(folder_children("/not/a/known/root".into(), "src".into()).is_err());
         let _ = std::fs::remove_dir_all(&dir);
     }
 

@@ -347,6 +347,7 @@ pub fn run() {
             history::history_read,
             history::history_export,
             files::files_list,
+            files::folder_children,
             files::files_resolve,
             files::file_image,
             files::file_open_external,
