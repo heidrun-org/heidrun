@@ -21,13 +21,8 @@ export const resolvedTheme = computed<"light" | "dark">(() => {
   return settings.theme;
 });
 
-/** CSS class of the code colours (diff, file viewer): the chosen one, or the one matching the theme. */
-export const codeThemeClass = computed(() => {
-  if (settings.codeTheme === "auto") {
-    return resolvedTheme.value === "light" ? "github-light" : "github-dark";
-  }
-  return settings.codeTheme;
-});
+/** CSS class of the code colours (diff, file viewer): the one matching the theme of the application (issue #446). */
+export const codeThemeClass = computed(() => (resolvedTheme.value === "light" ? "github-light" : "github-dark"));
 
 /** True when the code colours are dark (the file editor uses it for its own base colours). */
 export const codeIsDark = computed(() => codeThemeClass.value !== "github-light");

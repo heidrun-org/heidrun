@@ -148,8 +148,7 @@ const defaults = {
   workingDays: [0, 1, 2, 3, 4, 5, 6] as number[],
   /** Application theme: "system" follows the operating system. */
   theme: "system" as "system" | "light" | "dark",
-  /** Code colours: "auto" follows the application theme. */
-  codeTheme: "auto",
+  /** Code views (diff, file): long lines wrap instead of scrolling sideways. */
   codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
@@ -317,6 +316,8 @@ function load(): typeof defaults {
     if (stored.leftSidebarSection === "actions") {
       stored.leftSidebarSection = "launchers";
     }
+    // The choice of the code theme is gone (issue #446): the code colors follow the theme of the application.
+    delete stored.codeTheme;
     // The button "Reading" of the large Git window became the button "Preview" (issue #446): the saved value "read" is now "preview".
     if (stored.diffMode === "read") {
       stored.diffMode = "preview";
@@ -332,10 +333,6 @@ function load(): typeof defaults {
     delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
-    // "github-dark" was the only default before themes existed: it now means "auto".
-    if (saved.codeTheme === "github-dark") {
-      saved.codeTheme = "auto";
-    }
     return saved;
   } catch {
     return { ...defaults };

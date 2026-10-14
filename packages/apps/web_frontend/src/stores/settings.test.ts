@@ -530,3 +530,12 @@ describe("diff mode of the large Git window", () => {
     expect(restarted.settings.diffMode).toBe("preview");
   });
 });
+
+describe("code theme", () => {
+  it("is not a setting any more, and a saved choice is forgotten", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ codeTheme: "dracula" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(Object.keys(restarted.settings)).not.toContain("codeTheme");
+  });
+});
