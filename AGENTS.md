@@ -60,6 +60,7 @@ The rules of the user interface: where each part goes, and how each part works. 
     - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
     - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
     - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card.
+    - [worktrees_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/worktrees_line.md): the worktrees line and its information card.
   - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
     - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
     - [clusters.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md): the clustered dynamic topics, the translation table, and the button "Rebuild the clusters".

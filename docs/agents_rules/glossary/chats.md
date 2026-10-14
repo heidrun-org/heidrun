@@ -17,7 +17,7 @@ One saved conversation between the developer and a coding agent, for example Cla
 
 ### Chats sidebar section
 
-The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a line with the selector that chooses the coding agent, the Chats sort dropdown menu, and the two view buttons, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of three lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats. The words for the dynamic topics, such as "dynamic topic bar" and "translation table", are in [dynamic_topics.md](dynamic_topics.md).
+The sidebar section of the right sidebar that lists the chats of the selected workspace. At its top, a header that stays in place holds a line with the selector that chooses the coding agent, the Chats sort dropdown menu, and the two view buttons, then the dynamic topic bar. Below the header, the list shows the title of each chat of that coding agent, with a summary of up to four lines under the title. Under the list, the buttons "Show less" and "Show more" change the number of chats. The words for the dynamic topics, such as "dynamic topic bar" and "translation table", are in [dynamic_topics.md](dynamic_topics.md).
 
 ### Chats sort dropdown menu
 

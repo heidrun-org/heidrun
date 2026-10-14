@@ -27,6 +27,7 @@ import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 import ChatDatesLine from "./ChatDatesLine.vue";
 import ChatFilesLine from "./ChatFilesLine.vue";
+import ChatWorktreesLine from "./ChatWorktreesLine.vue";
 import ChatReferencesLine from "./ChatReferencesLine.vue";
 import ChatsSortMenu from "./ChatsSortMenu.vue";
 import DynamicTopicBar from "./DynamicTopicBar.vue";
@@ -317,6 +318,7 @@ const VIEWS = [
               :web-base="repository.base"
               :forge="repository.forge"
             />
+            <ChatWorktreesLine v-if="row.lines.worktrees !== ''" :entries="row.lines.worktreeEntries" />
           </div>
         </li>
       </ul>

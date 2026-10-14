@@ -13,3 +13,4 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [dates_line.md](dates_line.md): the dates line and its information card.
 - [files_line.md](files_line.md): the files line and its information card.
 - [references_line.md](references_line.md): the references line and its information card.
+- [worktrees_line.md](worktrees_line.md): the worktrees line and its information card.

@@ -873,6 +873,23 @@ export async function newWorkspace(cwd: string | null, label: string | null) {
   return guard(() => api.newWorkspace(cwd, label));
 }
 
+/**
+ * Creates a workspace for a folder, then selects it with its first tab and its first pane, so that the developer sees that
+ * the workspace exists. A failure shows a toast.
+ * @param cwd - the absolute path of the folder of the workspace
+ * @param label - the name of the workspace
+ * @returns a promise that ends when the workspace is selected, or when the failure is shown
+ */
+export function openFolderAsWorkspace(cwd: string, label: string) {
+  return guard(async () => {
+    const created = await api.newWorkspace(cwd, label);
+    await refresh();
+    if (created.root_pane) {
+      selectPane(created.root_pane);
+    }
+  });
+}
+
 export function closePane(paneId: string) {
   return guard(() => api.closePane(paneId));
 }

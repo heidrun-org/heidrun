@@ -325,6 +325,7 @@ export class TauriMockFixture {
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/InformationCard.vue',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
 					'/Users/demo/webwork/heidrun/AGENTS.md',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/removed-fix-info-card-252/AGENTS.md',
 					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_information_card/at_all/notes.md',
 					'/Users/demo/notes/scratch.md',
