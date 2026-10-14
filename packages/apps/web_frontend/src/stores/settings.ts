@@ -103,6 +103,11 @@ const defaults = {
   confirmPaneClose: true,
   /** Window "Edit the saved search": the button "Delete" opens the confirmation dialog "Delete the saved search". Off: the saved search is deleted at once. */
   confirmSavedSearchDelete: true,
+  /**
+   * Settings window, section General: how often Heidrun runs `git fetch` in the background for the repository of the
+   * selected workspace, in minutes. 0 is off (issue #432).
+   */
+  gitFetchMinutes: 5,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
   /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
@@ -220,6 +225,7 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
+  gitFetchMinutes: [0, 1, 5, 10, 30],
   newTabCommand: ["terminal", "claude", "codex"],
   customLauncherKind: ["commandLine", "codingAgent"],
   customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
