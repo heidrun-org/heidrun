@@ -22,6 +22,7 @@ mod status_item_icon;
 mod status_item_picture;
 mod topic_clusters;
 mod usage;
+mod user_activity;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
 #[cfg(test)]
@@ -295,6 +296,7 @@ pub fn run() {
             is_splash_screen_disabled,
             status_item::status_item_update,
             status_item::status_item_set_visible,
+            status_item::status_item_set_user_active,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,
@@ -348,6 +350,8 @@ pub fn run() {
             history::history_append,
             history::history_read,
             history::history_export,
+            user_activity::user_activity_append,
+            user_activity::user_activity_read,
             files::files_list,
             files::folder_children,
             files::files_resolve,
