@@ -39,7 +39,7 @@ const truncated = ref(false);
 const rendered = ref("");
 const md = computed(() => isMarkdown(selected.value));
 // "Lecture" only exists for Markdown: elsewhere it falls back to the file view.
-// A file that the Files sidebar section opens, and that has no change, has no diff: it shows as a whole file.
+// A file that the File explorer sidebar section opens, and that has no change, has no diff: it shows as a whole file.
 const isUnchanged = computed(() => selected.value !== null && selectedFile.value === null);
 const mode = computed(() => {
   if (isUnchanged.value && settings.diffMode !== "read") {

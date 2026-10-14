@@ -96,15 +96,15 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar icon bar of the left sidebar", () => {
-  it("shows the buttons Files, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Clipboard", async () => {
+  it("shows the buttons File explorer, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Clipboard", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Files", "Launchers", "Source Control", "Code hosting"]);
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["File explorer", "Launchers", "Source Control", "Code hosting"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows one icon for each sidebar section, Files first: a folder for Files, a play button for Launchers, the Git logo for Source control, and a cloud for Code hosting", async () => {
+  it("shows one icon for each sidebar section, File explorer first: a folder for File explorer, a play button for Launchers, the Git logo for Source control, and a cloud for Code hosting", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-folder2", "bi-play-circle", "bi-git", "bi-cloud"]);
   });
@@ -183,7 +183,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(restarted.find("source-control-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the sidebar section Files after a click on its button, and remembers it", async () => {
+  it("shows the sidebar section File explorer after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.leftSidebarSection).toBe("files");

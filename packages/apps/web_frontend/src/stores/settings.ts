@@ -183,13 +183,13 @@ const defaults = {
   filesGrepRegex: false,
   /** Window Files, search in the files: the case of the letters counts. */
   filesGrepCase: false,
-  /** Window Files: the file tree shows the files that Git ignores. */
+  /** Window Files and sidebar section File explorer: the file tree shows the files that Git ignores. */
   filesShowIgnored: false,
-  /** Sidebar section Files: the space that each level of a folder adds at the left of a row. */
+  /** Sidebar section File explorer: the space that each level of a folder adds at the left of a row. */
   filesPanelIndent: "medium" as "small" | "medium" | "large",
-  /** Sidebar section Files: the height of a row. */
+  /** Sidebar section File explorer: the height of a row. */
   filesPanelRowHeight: "comfortable" as "compact" | "comfortable",
-  /** Sidebar section Files: a thin vertical line under each unfolded folder links its rows. */
+  /** Sidebar section File explorer: a thin vertical line under each unfolded folder links its rows. */
   filesPanelIndentGuides: true,
   /** Window Agents information: the activity list shows all the panes ("all") or only the selected pane ("pane"). */
   agentsActivityScope: "all" as "all" | "pane",
