@@ -408,9 +408,29 @@ describe("FilesPanel", () => {
     wrapper.unmount();
   });
 
-  it("opens no context menu after a right click on the row of a folder", async () => {
+  it("opens the same context menu after a right click on the row of a folder, and hides the default context menu of the web view", async () => {
+    const wrapper = await mountPanel();
+    const folderRow = wrapper.findAll(".row")[0];
+    expect(folderRow.attributes("aria-expanded")).toBeDefined();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 40, clientY: 60 });
+    folderRow.element.dispatchEvent(event);
+    await wrapper.vm.$nextTick();
+    expect(event.defaultPrevented).toBe(true);
+    const items = Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menu] [role=menuitem]"));
+    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+    wrapper.unmount();
+  });
+
+  it("copies the absolute path and the relative path of a folder with the context menu of the row of the folder", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[0].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[0].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("/work/heidrun/src"));
+    expect(invokeMock).toHaveBeenCalledWith("file_full_path", { root: "/work/heidrun", path: "src" });
+    await wrapper.findAll(".row")[0].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[1].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("src"));
+    expect(state.toast).toBe("Copied: src");
     expect(document.body.querySelector("[role=menu]")).toBeNull();
     wrapper.unmount();
   });

@@ -25,7 +25,7 @@
   "cannotReadFolder": "This folder cannot be read.",
   "nameHasSlash": "A name cannot contain the character /. Select a folder first.",
   "copied": "Copied: {path}",
-  "fileMenu.label": "Menu of the file",
+  "fileMenu.label": "Menu of the file or of the folder",
   "fileMenu.copyAbsolutePath": "Copy absolute path",
   "fileMenu.copyRelativePath": "Copy relative path"
 }
