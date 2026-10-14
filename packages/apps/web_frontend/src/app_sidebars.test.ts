@@ -159,7 +159,7 @@ describe("collapsing both sidebars", () => {
 });
 
 describe("opening a sidebar section while its sidebar is collapsed", () => {
-  it("expands the right sidebar, with the Notes sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
+  it("expands the right sidebar, with the Clipboard sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
     const { wrapper, settings, notes } = await mountApp();
     settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();

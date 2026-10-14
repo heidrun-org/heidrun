@@ -2,6 +2,7 @@
 import Icon from "./Icon.vue";
 import { computed, ref } from "vue";
 import ConfirmButton from "./ConfirmButton.vue";
+import SettingsSwitchRow from "./settings/SettingsSwitchRow.vue";
 import InlineRename from "./InlineRename.vue";
 import { moveNote, notes, removeNote, renameNote, visibleNotes, type Note } from "../stores/notes";
 import { useReorder } from "../lib/reorder";
@@ -38,7 +39,7 @@ function sendTo(n: Note, paneId: string) {
   <div class="panel">
     <header class="notes-title d-flex align-items-center">
       <span class="fw-semibold text-truncate me-auto">{{ t("notesPanel.title") }}</span>
-      <label class="toggle"><input v-model="settings.notesShowAll" type="checkbox" />{{ t("notesPanel.allWorkspaces") }}</label>
+      <SettingsSwitchRow v-model="settings.notesShowAll" :label="t('notesPanel.allWorkspaces')" />
     </header>
 
     <p v-if="!list.length" class="empty">
@@ -95,8 +96,6 @@ function sendTo(n: Note, paneId: string) {
 
 <style scoped>
 .panel { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 18px; display: flex; flex-direction: column; gap: 10px; }
-.toggle { display: flex; align-items: center; gap: 6px; font-size: var(--font-size); color: var(--muted); }
-.toggle input { accent-color: var(--done); }
 .empty { margin: 0; font-size: var(--font-size); color: var(--muted); line-height: 1.6; }
 kbd { font-family: var(--mono); color: var(--text-2); }
 .note { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 10px; background: var(--field); border: 1px solid var(--line-strong); }

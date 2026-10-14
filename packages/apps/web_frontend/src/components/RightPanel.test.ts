@@ -45,17 +45,17 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons Needs you, Notes, and Past chats in the sidebar icon bar, and not the buttons Pane, Launchers, and Git", () => {
+  it("shows the buttons Needs you, Clipboard, and Past chats in the sidebar icon bar, and not the buttons Pane, Launchers, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("role")).toBe("tablist");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Notes", "Past chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Clipboard", "Past chats"]);
   });
 
   it("gives each button the title of its sidebar section as its tooltip, and does not call it a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Notes", "Past chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Clipboard", "Past chats"]);
   });
 
   it("marks only the selected sidebar section as active", async () => {
@@ -66,7 +66,7 @@ describe("RightPanel", () => {
     expect(buttons.map((button) => button.attributes("aria-selected"))).toEqual(["false", "true", "false"]);
   });
 
-  it("shows the sidebar section Needs you first, and the sidebar section Notes after a click on its button", async () => {
+  it("shows the sidebar section Needs you first, and the sidebar section Clipboard after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find("to-handle-panel-stub").exists()).toBe(true);
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
@@ -106,7 +106,7 @@ describe("RightPanel", () => {
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[2].find(".badge").exists()).toBe(false);
   });
 
-  it("counts on the button Notes the notes of the selected workspace, and every note when All workspaces is checked", async () => {
+  it("counts on the button Clipboard the notes of the selected workspace, and every note when All workspaces is switched on", async () => {
     state.snapshot = {
       version: "test",
       protocol: 1,

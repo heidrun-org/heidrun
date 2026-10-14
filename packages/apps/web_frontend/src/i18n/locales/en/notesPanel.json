@@ -1,7 +1,7 @@
 {
   "copied": "Copied",
   "sentTo": "Note sent to {agent}",
-  "title": "Notes",
+  "title": "Clipboard",
   "allWorkspaces": "All workspaces",
   "emptyBefore": "Select some text in a terminal, then “Pin” or ",
   "emptyAfter": ".",

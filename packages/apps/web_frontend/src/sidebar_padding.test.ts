@@ -91,7 +91,7 @@ describe('horizontal padding of the sidebar sections of the right sidebar', () =
 		expect(padding).toBe('8px 6px 16px');
 	});
 
-	it('is 14px on each side for the Notes sidebar section, with 12px above its title and 18px below', () => {
+	it('is 14px on each side for the Clipboard sidebar section, with 12px above its title and 18px below', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/NotesPanel.vue', '.panel', 'padding');
 		expect(padding).toBe('12px 14px 18px');
 	});
