@@ -12,9 +12,9 @@ Watch this short video to hear how to say the name. The video is on [YouTube](ht
 
 ## Why this name?
 
-Heiðrún never stops working, and she gives everyone in the hall what they need. Heidrun the application does the same for the AI agents of a developer: it keeps every agent and every terminal in one hall, and the developer never runs dry.
+Heiðrún never stops working, and she gives everyone in the hall what they need. Heidrun the application does the same for the coding agents of a developer: it keeps every coding agent and every terminal in one hall, and the developer never runs dry.
 
-- The agents are the einherjar: they fight all day (they write code), and they feast all night (they wait for the next prompt).
+- The coding agents are the einherjar: they fight all day (they write code), and they feast all night (they wait for the next prompt).
 - The work window is Valhalla: everyone is inside, and there is always room for one more terminal.
 - The developer is the goat: a GOAT, the Greatest Of All Time, and a real goat from the mythology. Both meanings are intended.
 - A merge conflict is Ragnarök. We do not talk about it before breakfast.

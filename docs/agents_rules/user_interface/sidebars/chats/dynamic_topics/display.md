@@ -1,12 +1,12 @@
 # Chats sidebar section: dynamic topics on the rows and the dynamic topic bar
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary.md), [Glossary of Heidrun: dynamic topics](../../../../glossary_dynamic_topics.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md) and [glossary_dynamic_topics.md](../../../../glossary_dynamic_topics.md).
 
 - Under the title of each chat, one single line shows its dynamic topics: at most three small rounded labels (Bootstrap `badge`). The line sits between the title and the summary. A chat without a dynamic topic has no line. While the method is "Language model", a chat shows its line when the language model has given its topics, and shows no line before. The topics come only from the chats that the list shows, never from the other chats of the workspace.
 - The dynamic topic bar is the last part of the header, between the line of the two groups and the separator line. It shows the button "All", then one button for each dynamic topic of the chats that the list shows, the strongest first: the topic that more chats have comes first, then the topic that the chats rank higher, then the alphabetical order (`lib/dynamic_topic_bar.ts`). The buttons are small rounded labels, and the selected button has the inverted colors (the text color as background). The bar has no scroll bar, and it does not scroll by hand or by the wheel. When buttons are hidden after its visible part, an arrow with a fade shows at its end, and each click on the arrow moves the bar so that the next three topics come into view. When buttons are hidden before its visible part, the same arrow shows at its start, and each click goes back by three topics. A button that is partly under an arrow counts as hidden.

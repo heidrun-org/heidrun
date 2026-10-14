@@ -31,9 +31,9 @@
 
 ## What it does
 
-You run many AI agents. Each agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
+You run many coding agents. Each coding agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
 
-Think of Valhalla: the agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
+Think of Valhalla: the coding agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
 
 ## Why you will like it
 

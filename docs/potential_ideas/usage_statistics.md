@@ -1,12 +1,12 @@
 # Usage statistics
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Idea that nobody has decided to build yet
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related issue: [issue 78](https://github.com/heidrun-org/heidrun/issues/78), [issue 79](https://github.com/heidrun-org/heidrun/issues/79), [issue 80](https://github.com/heidrun-org/heidrun/issues/80)
 
-Usage statistics is an idea for Heidrun to show numbers about the Git repositories that it knows about, and about the AI coding agents Codex and Claude Code. This file keeps the content of the three issues above, which are closed.
+Usage statistics is an idea for Heidrun to show numbers about the Git repositories that it knows about, and about the coding agents Codex and Claude Code. This file keeps the content of the three issues above, which are closed.
 
 ## Statistics about the issues of a repository
 
@@ -24,7 +24,7 @@ The list is a set of ideas. The developer must choose which statistics are usefu
 - The number of authors, and the number of commits for each author.
 - The files that change most often.
 
-## Statistics about the logs of the AI coding agents
+## Statistics about the logs of the coding agents
 
 Each statistic is shown for Codex and for Claude Code, separately.
 
@@ -37,7 +37,7 @@ Each statistic is shown for Codex and for Claude Code, separately.
 - **The source of the issues.** The `gh` command is the first choice.
 - **The topic of an issue.** Where Heidrun keeps it, so that the agent does not classify the same issue twice, and which agent classifies the issues.
 - **Computed or asked.** Whether Heidrun computes the statistics of the source code itself, or asks an agent.
-- **The logs.** Where each AI coding agent writes its logs, and whether each log file already holds the number of tokens. Heidrun must read the real files on the disk to find the format.
+- **The logs.** Where each coding agent writes its logs, and whether each log file already holds the number of tokens. Heidrun must read the real files on the disk to find the format.
 - **The prices.** Where Heidrun keeps the price of each model, and who updates the price when it changes.
 - **The place on the screen.** Where Heidrun shows the statistics.
 
