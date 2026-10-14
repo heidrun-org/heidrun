@@ -169,6 +169,14 @@ Always start Heidrun with the command line option `--no-splash-screen` when you 
 - For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
 - The rules of the splash screen are in [docs/agents_rules/user_interface/window/window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md), in the section "Splash screen".
 
+## Environment variables
+
+The file `.env.example` at the root of the repository lists and explains every environment variable that the application reads. A developer copies it to the file `.env`, which Git ignores, and removes the comment sign of each variable that the developer wants. A development build of the application loads the file `.env` at the start, with the module `packages/apps/desktop_tauri/src/environment_file.rs`. A release build never loads it. A variable that is already set in the shell keeps the value of the shell.
+
+- When you add code that reads an environment variable, add the variable to `.env.example` in the same change: a block of comments that says what the variable does, its default value, and its accepted values, then the variable on one commented-out line.
+- Keep every variable of `.env.example` commented out, so that a copy of the file changes nothing.
+- The Rust test of the module `environment_file` fails when `.env.example` and the code do not list the same variables.
+
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.

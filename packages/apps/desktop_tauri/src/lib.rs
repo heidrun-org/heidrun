@@ -5,6 +5,7 @@ mod chats_tokens;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
+mod environment_file;
 mod files;
 mod forge_cache;
 mod git;
@@ -241,6 +242,7 @@ fn quit_now(app: AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    environment_file::load();
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())

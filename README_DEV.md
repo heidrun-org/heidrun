@@ -32,6 +32,12 @@ The command starts the web frontend with its development server on `http://local
 
 To work on the web frontend alone, in a browser, run `pnpm dev:web`. Without the application window, the functions of the Rust backend are not available.
 
+To set an environment variable of the application during development, for example `HEIDRUN_DIR`, copy the file `.env.example` to a file named `.env` at the root of the repository, and remove the `#` at the start of the line of the variable. The file `.env.example` explains every variable that the application reads. Git ignores the file `.env`. Only a development build reads it, once at the start, so run `pnpm dev` again after a change. A variable that is already set in your shell keeps the value of the shell.
+
+```bash
+cp .env.example .env
+```
+
 ## Test the application
 
 ```bash
