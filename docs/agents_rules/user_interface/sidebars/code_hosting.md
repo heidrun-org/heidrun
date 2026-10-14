@@ -1,13 +1,13 @@
 # User interface of Heidrun: code hosting
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md), [Glossary of Heidrun: code hosting](../../glossary_code_hosting.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: code hosting](../../glossary/code_hosting.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
 - Related issue: [issue 370](https://github.com/heidrun-org/heidrun/issues/370), [issue 374](https://github.com/heidrun-org/heidrun/issues/374), [issue 378](https://github.com/heidrun-org/heidrun/issues/378)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
 ## Code hosting
 

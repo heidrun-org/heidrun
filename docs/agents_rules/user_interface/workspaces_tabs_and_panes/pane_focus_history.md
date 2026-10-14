@@ -1,13 +1,13 @@
 # User interface of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md), [Glossary of Heidrun: pane focus history](../../glossary_pane_focus_history.md), [Panes](panes.md), [Layout of the window](../window/layout.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: pane focus history](../../glossary/pane_focus_history.md), [Panes](panes.md), [Layout of the window](../window/layout.md)
 - Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md) and in [glossary_pane_focus_history.md](../../glossary_pane_focus_history.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md) and in [glossary/pane_focus_history.md](../../glossary/pane_focus_history.md).
 
 ## Pane focus history
 

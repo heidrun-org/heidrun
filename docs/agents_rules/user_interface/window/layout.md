@@ -4,10 +4,10 @@
 - Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md)
 - Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323), [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 371](https://github.com/heidrun-org/heidrun/issues/371)
 
-This document says where each part of the window goes and how each part works. The words are defined in [glossary.md](../../glossary.md). The layout below is the layout of the window.
+This document says where each part of the window goes and how each part works. The words are defined in [glossary/index.md](../../glossary/index.md). The layout below is the layout of the window.
 
 The other files of the folder `docs/agents_rules/user_interface` give the rules of the other parts. [AGENTS.md](../../../../AGENTS.md) lists them.
 

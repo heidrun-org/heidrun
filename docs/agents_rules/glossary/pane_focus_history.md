@@ -1,13 +1,13 @@
 # Glossary of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained glossary for agents and tools
-- Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](glossary.md), [User interface of Heidrun: pane focus history](user_interface/workspaces_tabs_and_panes/pane_focus_history.md)
-- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380)
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: pane focus history](../user_interface/workspaces_tabs_and_panes/pane_focus_history.md)
+- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
 
-This document gives one short definition for each word of the navigation through the panes that had the focus. The other words of Heidrun are in [glossary.md](glossary.md).
+This document gives one short definition for each word of the navigation through the panes that had the focus. The other words of Heidrun are in [index.md](index.md).
 
 ### Top bar
 
@@ -28,4 +28,4 @@ The button of the top bar, between the Back button and the search button, with a
 ## Rules
 
 - Write "pane focus history", "Back button", and "Forward button" in full. Do not write "navigation history" or "focus stack" for the history.
-- The word "pane" keeps its meaning of the [glossary](glossary.md): one terminal inside a tab. An entry of the pane focus history is a pane, never a tab and never a chat.
+- The word "pane" keeps its meaning of the [glossary](index.md): one terminal inside a tab. An entry of the pane focus history is a pane, never a tab and never a chat.

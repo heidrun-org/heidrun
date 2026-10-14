@@ -1,12 +1,12 @@
 # Chats sidebar section: the header and the Chats sort dropdown menu
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../glossary/index.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../glossary/index.md).
 
 - The top of the Chats sidebar section is one line with two Bootstrap radio button groups (`btn-group` with `btn-check` inputs) and the button of the Chats sort dropdown menu. At the left, one button for each coding agent that Heidrun supports, Claude and Codex, with its name. A button is disabled, with a title that says why, when the selected workspace has no chat of that coding agent. At the right, first the button of the Chats sort dropdown menu, then the second group with two buttons that show only an icon, with a title: the expanded view (the icon `view-stacked`), and the compact view (the icon `list`). The checked button of a group has the background `--bg-2`, and the other buttons have no background. The Chats sidebar section shows no group when neither coding agent has a chat, and says so. The line of the two groups and the button of the Chats sort dropdown menu, the dynamic topic bar, and a separator line (as wide as the sidebar) form the header of the Chats sidebar section. The header stays at the top of the Chats sidebar section while the list scrolls under it (`position: sticky`, with the background of the sidebar).
 - The compact view is the first look of the list: the rows are tight. The expanded view gives more air: each row has more space above and below it, and the three lines of its summary are farther apart. The coding agent and the view that the developer chose are saved in the settings (`chatsAgent` and `chatsView`), and the next start uses them.

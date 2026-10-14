@@ -20,12 +20,17 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 
 ## Agent rules
 
-The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
+The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code, and keep the glossary up to date when a word changes. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
 
-- [docs/agents_rules/glossary.md](docs/agents_rules/glossary.md): the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations.
-- [docs/agents_rules/glossary_code_hosting.md](docs/agents_rules/glossary_code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it with the glossary when you change the Code hosting sidebar section.
-- [docs/agents_rules/glossary_dynamic_topics.md](docs/agents_rules/glossary_dynamic_topics.md): the definition of each word of the dynamic topics of the Chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it with the glossary when you change the Chats sidebar section or the dynamic topics.
-- [docs/agents_rules/glossary_pane_focus_history.md](docs/agents_rules/glossary_pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it with the glossary when you change the top bar or the focus of the panes.
+- The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
+  - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
+  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, and the column of pinned panes.
+  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Source control, Code hosting, and Files sidebar sections, and the sidebar icon bar.
+  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the Chats sidebar section, and the Chats sort dropdown menu.
+  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Chats sidebar section or the dynamic topics.
+  - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
+  - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
+  - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -88,7 +93,7 @@ Example, for the file `docs/team_collaboration_process/index.md`:
 - Last updated: 8 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../agents_rules/glossary.md)
+- Related rules: [Glossary of Heidrun](../agents_rules/glossary/index.md)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -149,7 +154,7 @@ On GitLab, the `--attach` option of the `glab` command works in the same way, bu
 - When you create the issue: `glab issue create --title "<title>" --description "<body>" --attach './screenshot.png'`
 - When the issue already exists: `glab issue update <issue number> --attach './screenshot.png'`
 
-Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
+Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
 
 ## Starting Heidrun to test it or to take a screenshot
 

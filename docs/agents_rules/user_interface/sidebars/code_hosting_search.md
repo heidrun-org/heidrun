@@ -1,17 +1,17 @@
 # User interface of Heidrun: code hosting search
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md), [Glossary of Heidrun: code hosting](../../glossary_code_hosting.md), [User interface of Heidrun: code hosting](code_hosting.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: code hosting](../../glossary/code_hosting.md), [User interface of Heidrun: code hosting](code_hosting.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
 - Related issue: [issue 374](https://github.com/heidrun-org/heidrun/issues/374), [issue 378](https://github.com/heidrun-org/heidrun/issues/378)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md). The rest of the Code hosting sidebar section is in [code_hosting.md](code_hosting.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md). The rest of the Code hosting sidebar section is in [code_hosting.md](code_hosting.md).
 
 ## Search and saved searches
 
-The words are defined in [glossary_code_hosting.md](../../glossary_code_hosting.md) ([issue #374](https://github.com/heidrun-org/heidrun/issues/374)).
+The words are defined in [glossary/code_hosting.md](../../glossary/code_hosting.md) ([issue #374](https://github.com/heidrun-org/heidrun/issues/374)).
 
 - The search field is between the header and the two lists, with one button that shows only an icon: "Search". The key Enter in the field also runs the search. The two lists show the items that match, and the number of each list is the number found. An empty search shows all the open items. The search stays when the repository changes and after "Refresh". The search field is not shown for a repository without a remote address. A list that finds nothing says "No issue matches the search.", "No pull request matches the search.", or "No merge request matches the search.".
 - On GitHub, the search goes to `gh` as it is, with `--search`, so the whole search language of GitHub works: `author:`, `assignee:`, `mentions:`, `involves:`, `review-requested:`, `label:`, `no:`, the minus sign, `OR`, parentheses, `sort:`, and dates. `gh` adds `is:issue` and `is:pr` by itself, so `review-requested:` finds no issue. A search that names a state (`is:open`, `is:closed`, `is:merged`, or `state:`) is read with `--state all`, so that the search decides. Any other search reads the open items.

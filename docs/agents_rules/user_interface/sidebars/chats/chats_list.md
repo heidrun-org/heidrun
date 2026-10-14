@@ -1,13 +1,13 @@
 # Chats sidebar section: the list of chats
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../glossary/index.md)
 - Related issue: [issue 250](https://github.com/heidrun-org/heidrun/issues/250)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../glossary/index.md).
 
 - The Chats sidebar section is a sidebar section of the right sidebar. It lists the chats of the selected workspace.
 - The folder of the selected workspace gives the chats: the root of the repository that holds the folder of the workspace. A chat that a coding agent saved for another folder, a worktree of the workspace included, is not in the list.
