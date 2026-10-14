@@ -1,12 +1,12 @@
 # Chats sidebar section: the references line
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary/index.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../../glossary/index.md).
 
 - The references line has an information card, opened the same way as the information card of the files line: the whole line is the part that gets a background under the pointer, and a click on the line opens the information card. A repository without a remote has no forge to read, so its references line has no information card.
 - The information card of the references line has a title with the icon of the forge and the text "Issues and pull requests", then one row for each issue, then one row for each pull request. A row shows an icon (a circle with a dot for an issue, the Git icon for a pull request), the title in medium weight, the name and the state in muted color under it ("Issue #250 · Closed"), and a chevron. While the forge is read, the name stands for the title. A line that does not fit scrolls like the lines of the files card.

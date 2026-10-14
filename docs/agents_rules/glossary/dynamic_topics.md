@@ -3,11 +3,11 @@
 - Created: 14 October 2026
 - Last updated: 14 October 2026
 - Status: Maintained glossary for agents and tools
-- Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](glossary.md), [User interface of Heidrun: dynamic topics](user_interface/sidebars/chats/dynamic_topics/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403)
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: dynamic topics](../user_interface/sidebars/chats/dynamic_topics/index.md)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
 
-This document gives one short definition for each word of the dynamic topics of the Chats sidebar section. The other words of Heidrun are in [glossary.md](glossary.md).
+This document gives one short definition for each word of the dynamic topics of the Chats sidebar section. The other words of Heidrun are in [index.md](index.md).
 
 ### Dynamic topic
 

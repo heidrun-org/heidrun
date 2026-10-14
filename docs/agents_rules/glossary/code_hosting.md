@@ -1,13 +1,13 @@
 # Glossary of Heidrun: code hosting
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained glossary for agents and tools
-- Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](glossary.md), [User interface of Heidrun: code hosting](user_interface/sidebars/code_hosting.md), [User interface of Heidrun: code hosting search](user_interface/sidebars/code_hosting_search.md)
-- Related issue: [issue 374](https://github.com/heidrun-org/heidrun/issues/374), [issue 378](https://github.com/heidrun-org/heidrun/issues/378)
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: code hosting](../user_interface/sidebars/code_hosting.md), [User interface of Heidrun: code hosting search](../user_interface/sidebars/code_hosting_search.md)
+- Related issue: [issue 374](https://github.com/heidrun-org/heidrun/issues/374), [issue 378](https://github.com/heidrun-org/heidrun/issues/378), [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
 
-This document gives one short definition for each word of the search in the Code hosting sidebar section. The other words of Heidrun are in [glossary.md](glossary.md).
+This document gives one short definition for each word of the search in the Code hosting sidebar section. The other words of Heidrun are in [index.md](index.md).
 
 ### Search field
 

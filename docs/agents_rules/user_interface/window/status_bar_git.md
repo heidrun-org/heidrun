@@ -1,13 +1,13 @@
 # User interface of Heidrun: Git branch section of the status bar
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md), [status_bar.md](status_bar.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [status_bar.md](status_bar.md)
 - Related issue: [issue 350](https://github.com/heidrun-org/heidrun/issues/350), [issue 348](https://github.com/heidrun-org/heidrun/issues/348)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md). The other status bar sections are in [status_bar.md](status_bar.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md). The other status bar sections are in [status_bar.md](status_bar.md).
 
 ## Git branch section
 
