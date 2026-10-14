@@ -181,6 +181,17 @@ describe('TauriMock', () => {
 			[false, false],
 			[true, false],
 		]);
+		expect(
+			await invoke('chats_worktrees_exist', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual(['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35']);
+		expect(
+			await invoke('chats_worktrees_branches', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual([{ folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', branch: 'fix-35' }]);
+		expect(await invoke('chats_worktree_open_in_vscode', { folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35' })).toBeNull();
 		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
 	});
 
