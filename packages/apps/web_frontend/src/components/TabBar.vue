@@ -76,7 +76,7 @@ function isRemoteControlled(tabId: string): boolean {
             icon="x-lg"
             :confirm-label="t('tabBar.closeConfirm')"
             :question="t('tabBar.close', { name: tabLabel(tab.tab_id) })"
-            :is-confirm-required="settings.confirmTabClose"
+            :is-confirm-required="settings.confirmTabClose && tabs.length > 1"
             @confirm="closeTab(tab.tab_id)"
           />
         </div>
