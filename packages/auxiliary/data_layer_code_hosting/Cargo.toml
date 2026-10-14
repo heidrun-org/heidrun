@@ -1,5 +1,5 @@
 [package]
-name = "code_hosting_data_layer"
+name = "data_layer_code_hosting"
 version = "0.2.5"
 description = "Reads the issues and the pull requests of a GitHub repository into a SQLite file, and runs read-only queries on them"
 license = "MIT"
@@ -7,11 +7,11 @@ edition = "2021"
 publish = false
 
 [lib]
-name = "code_hosting_data_layer"
+name = "data_layer_code_hosting"
 path = "src/lib.rs"
 
 [[bin]]
-name = "code_hosting_data_layer"
+name = "data_layer_code_hosting"
 path = "src/main.rs"
 
 [dependencies]

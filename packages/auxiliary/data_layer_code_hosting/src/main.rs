@@ -1,8 +1,8 @@
-//! The command line `code_hosting_data_layer`: the commands initialize, update, and query.
+//! The command line `data_layer_code_hosting`: the commands initialize, update, and query.
 
 mod command_line;
 
-use code_hosting_data_layer::{
+use data_layer_code_hosting::{
     default_database_path, describe_since, find_repository, ignore_log, synchronize, to_json, to_table,
     CodeHostingDatabase, GhGraphqlRunner, GithubReader,
 };

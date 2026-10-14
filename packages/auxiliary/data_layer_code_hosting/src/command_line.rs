@@ -1,9 +1,9 @@
-//! The arguments of the command line `code_hosting_data_layer`.
+//! The arguments of the command line `data_layer_code_hosting`.
 
-use code_hosting_data_layer::SynchronizationMode;
+use data_layer_code_hosting::SynchronizationMode;
 
 /// The text of the option `--help`.
-pub const HELP: &str = r#"Usage: code_hosting_data_layer <command> [options]
+pub const HELP: &str = r#"Usage: data_layer_code_hosting <command> [options]
 
 Reads the issues and the pull requests of a GitHub repository, and writes them in two
 tables of a SQLite file: "issues" and "pull_requests". Each row holds the facts of one
@@ -37,10 +37,10 @@ Exit codes:
   1   An error happened. The message is on the standard error output.
 
 Examples:
-  $ code_hosting_data_layer initialize
-  $ code_hosting_data_layer update --verbose
-  $ code_hosting_data_layer query "SELECT number, json_extract(data, '$.title') AS title FROM issues LIMIT 5"
-  $ code_hosting_data_layer query --json "SELECT count(*) AS count FROM pull_requests"
+  $ data_layer_code_hosting initialize
+  $ data_layer_code_hosting update --verbose
+  $ data_layer_code_hosting query "SELECT number, json_extract(data, '$.title') AS title FROM issues LIMIT 5"
+  $ data_layer_code_hosting query --json "SELECT count(*) AS count FROM pull_requests"
 "#;
 
 /// What the arguments ask for.

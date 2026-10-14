@@ -13,7 +13,7 @@ pub fn date(day: u32) -> String {
 
 /// A new empty folder in the temporary folder. Each test gives its own name.
 pub fn temp_folder(name: &str) -> PathBuf {
-    let folder = std::env::temp_dir().join(format!("code_hosting_data_layer_{name}_{}", std::process::id()));
+    let folder = std::env::temp_dir().join(format!("data_layer_code_hosting_{name}_{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&folder);
     std::fs::create_dir_all(&folder).unwrap();
     folder
