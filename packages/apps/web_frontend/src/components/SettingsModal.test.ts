@@ -22,21 +22,21 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the sections in the sidebar, with the section Dynamic topics at the end, and without the section Skills", async () => {
+  it("lists the sections in the sidebar, with the section Needs you after the section Finished items, the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Needs you", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
     await links[3].trigger("click");
     expect(wrapper.get("h3").text()).toBe("Mouse");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false]);
     expect(links[3].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
     wrapper.unmount();
@@ -165,6 +165,36 @@ describe("SettingsModal: status item", () => {
     await checkbox.setValue(false);
     const { settings } = await import("../stores/settings");
     expect(settings.showStatusItem).toBe(false);
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: section Needs you", () => {
+  it("shows a switch for the list of workspaces, switched on by default, and saves the choice", async () => {
+    const wrapper = await mountSettings();
+    const { settings, settingsModal } = await import("../stores/settings");
+    settingsModal.section = "needsYou";
+    await flushPromises();
+    expect(wrapper.get("section h3").text()).toBe("Needs you");
+    const label = wrapper.findAll("label").find((candidate) => candidate.text() === "Show the workspaces");
+    expect(label).toBeDefined();
+    const checkbox = wrapper.get(`input[id="${label!.attributes("for")}"]`);
+    expect(checkbox.attributes("role")).toBe("switch");
+    expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+    expect(settings.showWorkspacesInNeedsYou).toBe(true);
+    await checkbox.setValue(false);
+    expect(settings.showWorkspacesInNeedsYou).toBe(false);
+    expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").showWorkspacesInNeedsYou).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("uses a different icon than the section Notifications, because the bell is the icon of the Needs you sidebar section", async () => {
+    const wrapper = await mountSettings();
+    const icons = wrapper.findAll("nav .nav-link").map((entry) => entry.get("i").classes().find((name) => name.startsWith("bi-")));
+    const needsYouIcon = icons[5];
+    const notificationsIcon = icons[6];
+    expect(needsYouIcon).toBe("bi-layout-sidebar-inset-reverse");
+    expect(notificationsIcon).toBe("bi-bell");
     wrapper.unmount();
   });
 });

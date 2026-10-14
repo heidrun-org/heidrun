@@ -10,6 +10,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsNewTabSection.vue`: the setting `newTabCommand`, a button group of three radio inputs. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
+- `SettingsNeedsYouSection.vue`: the switch `showWorkspacesInNeedsYou`: the list of workspaces at the bottom of the Needs you sidebar section (`../NeedsYouWorkspaces.vue`, placed by `../ToHandlePanel.vue`). [Issue 417](https://github.com/heidrun-org/heidrun/issues/417).
 - `SettingsNotificationsSection.vue`: the notification settings, and the switch for the status item in the macOS menu bar (`showStatusItem`, handled by `../../stores/statusItem.ts`).
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
 - `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents`. The whole row is the label of its switch. `../StatusBar.vue` shows the quota of a coding agent only when its switch is on.

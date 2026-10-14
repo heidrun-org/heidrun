@@ -110,6 +110,8 @@ const defaults = {
   customScriptEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
+  showWorkspacesInNeedsYou: true,
   /** Notifications. */
   notifBlockedMin: 5, // remind once when an agent stays blocked this long (0 = off)
   notifContext: true, // an agent's context goes past 80 %
@@ -376,6 +378,7 @@ export type SettingsSection =
   | "newTab"
   | "mouse"
   | "finishedItems"
+  | "needsYou"
   | "notifications"
   | "general"
   | "mobileAccess"
