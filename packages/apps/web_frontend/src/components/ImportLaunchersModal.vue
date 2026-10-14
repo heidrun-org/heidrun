@@ -3,25 +3,25 @@ import Icon from "./Icon.vue";
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { addAction, currentProject, scriptKey, suggestions, withoutImportedScripts, type Detected } from "../stores/project";
-import { closeImportScriptsModal } from "../stores/importScripts";
+import { addLauncher, currentProject, launcherKey, suggestions, withoutImportedLaunchers, type Detected } from "../stores/project";
+import { closeImportLaunchersModal } from "../stores/importLaunchers";
 import { state, toast } from "../stores/session";
 import { pathInsideRoot } from "../lib/path_inside_root";
 import { t } from "../i18n/index";
 
-/** The keys (command and folder) of the scripts that the person ticked. */
+/** The keys (command and folder) of the launchers that the person ticked. */
 const chosen = ref<string[]>([]);
 const canImport = computed(() => chosen.value.length > 0);
 
-/** The scripts of the package.json that the person picked, or `null` while the person has picked none. */
-const pickedScripts = ref<Detected[] | null>(null);
+/** The commands of the package.json that the person picked, or `null` while the person has picked none. */
+const pickedCommands = ref<Detected[] | null>(null);
 /** The path of the package.json that the person picked, relative to the root of the repository. */
 const pickedPath = ref<string | null>(null);
 
-/** The scripts that the window lists: the scripts of the picked package.json, else the scripts that the project has. */
-const shown = computed(() => (pickedScripts.value === null ? suggestions.value : withoutImportedScripts(pickedScripts.value)));
+/** The launchers that the window lists: the commands of the picked package.json, else the commands that the project suggests. */
+const shown = computed(() => (pickedCommands.value === null ? suggestions.value : withoutImportedLaunchers(pickedCommands.value)));
 
-/** Opens the native file picker on the repository, then lists the scripts of the package.json that the person picks. */
+/** Opens the native file picker on the repository, then lists the commands of the package.json that the person picks. */
 async function choosePackageJson() {
   const root = currentProject.value?.root;
   if (root === undefined) {
@@ -30,7 +30,7 @@ async function choosePackageJson() {
   const path = await openDialog({
     directory: false,
     multiple: false,
-    title: t("importScriptsModal.choosePackageJson"),
+    title: t("importLaunchersModal.choosePackageJson"),
     defaultPath: root,
     filters: [{ name: "package.json", extensions: ["json"] }],
   });
@@ -39,15 +39,15 @@ async function choosePackageJson() {
   }
   const relativePath = pathInsideRoot(root, path);
   if (relativePath === null) {
-    toast(t("importScriptsModal.outsideRepository"));
+    toast(t("importLaunchersModal.outsideRepository"));
     return;
   }
   if (relativePath.split("/").pop() !== "package.json") {
-    toast(t("importScriptsModal.notPackageJson"));
+    toast(t("importLaunchersModal.notPackageJson"));
     return;
   }
   try {
-    pickedScripts.value = await invoke<Detected[]>("project_package_scripts", { root, packageJson: path });
+    pickedCommands.value = await invoke<Detected[]>("project_package_scripts", { root, packageJson: path });
   } catch (e) {
     toast(String(e instanceof Error ? e.message : e));
     return;
@@ -56,35 +56,35 @@ async function choosePackageJson() {
   chosen.value = [];
 }
 
-/** Goes back to the scripts that the project has, and forgets the picked package.json. */
+/** Goes back to the commands that the project suggests, and forgets the picked package.json. */
 function backToProject() {
-  pickedScripts.value = null;
+  pickedCommands.value = null;
   pickedPath.value = null;
   chosen.value = [];
 }
 
-/** Ticks every script, or none when every script is already ticked. */
+/** Ticks every launcher, or none when every launcher is already ticked. */
 function toggleAll() {
-  chosen.value = chosen.value.length === shown.value.length ? [] : shown.value.map(scriptKey);
+  chosen.value = chosen.value.length === shown.value.length ? [] : shown.value.map(launcherKey);
 }
 
-/** Adds each ticked script to the scripts of the project, then closes the window. */
+/** Adds each ticked launcher to the launchers of the project, then closes the window. */
 async function importChosen() {
   const workspaceId = state.selectedWorkspaceId;
   if (canImport.value === false || workspaceId === null || workspaceId === undefined) {
     return;
   }
-  for (const detected of shown.value.filter((item) => chosen.value.includes(scriptKey(item)))) {
-    await addAction(workspaceId, detected.label, detected.command, undefined, detected.cwd, detected.description);
+  for (const detected of shown.value.filter((item) => chosen.value.includes(launcherKey(item)))) {
+    await addLauncher(workspaceId, detected.label, detected.command, undefined, detected.cwd, detected.description);
   }
-  closeImportScriptsModal();
+  closeImportLaunchersModal();
 }
 
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
-    closeImportScriptsModal();
+    closeImportLaunchersModal();
   }
 }
 onMounted(() => window.addEventListener("keydown", onKey, true));
@@ -92,25 +92,25 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>
 
 <template>
-  <div class="overlay" @mousedown.self="closeImportScriptsModal()">
-    <form class="window-box" role="dialog" :aria-label="t('importScriptsModal.title')" @submit.prevent="importChosen">
+  <div class="overlay" @mousedown.self="closeImportLaunchersModal()">
+    <form class="window-box" role="dialog" :aria-label="t('importLaunchersModal.title')" @submit.prevent="importChosen">
       <header>
-        <h2>{{ t("importScriptsModal.title") }}</h2>
-        <button type="button" :title="t('importScriptsModal.closeTitle')" class="close" :aria-label="t('importScriptsModal.closeTitle')" @click="closeImportScriptsModal()"><Icon name="x-lg" /></button>
+        <h2>{{ t("importLaunchersModal.title") }}</h2>
+        <button type="button" :title="t('importLaunchersModal.closeTitle')" class="close" :aria-label="t('importLaunchersModal.closeTitle')" @click="closeImportLaunchersModal()"><Icon name="x-lg" /></button>
       </header>
 
       <div class="source d-flex align-items-center gap-2">
-        <button class="btn" type="button" @click="choosePackageJson()"><Icon name="folder2-open" /> {{ t("importScriptsModal.choosePackageJson") }}</button>
+        <button class="btn" type="button" @click="choosePackageJson()"><Icon name="folder2-open" /> {{ t("importLaunchersModal.choosePackageJson") }}</button>
         <template v-if="pickedPath !== null">
           <span class="picked mono flex-fill" :title="pickedPath">{{ pickedPath }}</span>
-          <button class="btn" type="button" @click="backToProject()">{{ t("importScriptsModal.backToProject") }}</button>
+          <button class="btn" type="button" @click="backToProject()">{{ t("importLaunchersModal.backToProject") }}</button>
         </template>
       </div>
 
-      <p v-if="shown.length === 0" class="empty">{{ t(pickedPath === null ? "importScriptsModal.empty" : "importScriptsModal.emptyPicked") }}</p>
+      <p v-if="shown.length === 0" class="empty">{{ t(pickedPath === null ? "importLaunchersModal.empty" : "importLaunchersModal.emptyPicked") }}</p>
       <div v-else class="list-group list-group-flush list">
-        <label v-for="detected in shown" :key="scriptKey(detected)" class="list-group-item d-flex align-items-center gap-2" :title="detected.command">
-          <span class="switch"><input v-model="chosen" type="checkbox" role="switch" :value="scriptKey(detected)" /></span>
+        <label v-for="detected in shown" :key="launcherKey(detected)" class="list-group-item d-flex align-items-center gap-2" :title="detected.command">
+          <span class="switch"><input v-model="chosen" type="checkbox" role="switch" :value="launcherKey(detected)" /></span>
           <span class="name flex-fill">{{ detected.label }}</span>
           <span v-if="detected.command !== detected.label" class="command mono">{{ detected.command }}</span>
           <span class="badge theme-secondary">{{ detected.source }}</span>
@@ -119,10 +119,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
       <footer class="d-flex align-items-center gap-2">
         <button v-if="shown.length > 0" class="btn me-auto" type="button" @click="toggleAll()">
-          {{ t(chosen.length === shown.length ? "importScriptsModal.selectNone" : "importScriptsModal.selectAll") }}
+          {{ t(chosen.length === shown.length ? "importLaunchersModal.selectNone" : "importLaunchersModal.selectAll") }}
         </button>
-        <button class="btn" type="button" @click="closeImportScriptsModal()">{{ t("importScriptsModal.cancel") }}</button>
-        <button class="btn primary" type="submit" :disabled="canImport === false">{{ t("importScriptsModal.import", { count: chosen.length }) }}</button>
+        <button class="btn" type="button" @click="closeImportLaunchersModal()">{{ t("importLaunchersModal.cancel") }}</button>
+        <button class="btn primary" type="submit" :disabled="canImport === false">{{ t("importLaunchersModal.import", { count: chosen.length }) }}</button>
       </footer>
     </form>
   </div>

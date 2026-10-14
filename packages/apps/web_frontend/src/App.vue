@@ -50,7 +50,7 @@ import {
 import { startDefaultNewTab } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
-import { newCustomScriptModal } from "./stores/newCustomScript";
+import { newCustomLauncherModal } from "./stores/newCustomLauncher";
 import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -65,10 +65,10 @@ import { startStatusItem } from "./stores/statusItem";
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import AgentsInformationModal from "./components/AgentsInformationModal.vue";
-import NewCustomScriptModal from "./components/NewCustomScriptModal.vue";
+import NewCustomLauncherModal from "./components/NewCustomLauncherModal.vue";
 import SavedSearchModal from "./components/SavedSearchModal.vue";
-import ImportScriptsModal from "./components/ImportScriptsModal.vue";
-import { importScriptsModal } from "./stores/importScripts";
+import ImportLaunchersModal from "./components/ImportLaunchersModal.vue";
+import { importLaunchersModal } from "./stores/importLaunchers";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import SkillFileModal from "./components/SkillFileModal.vue";
@@ -350,9 +350,9 @@ onBeforeUnmount(() => {
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
-    <NewCustomScriptModal v-if="newCustomScriptModal.open" />
+    <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />
-    <ImportScriptsModal v-if="importScriptsModal.open" />
+    <ImportLaunchersModal v-if="importLaunchersModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
     <InstalledSkillModal v-if="installedSkillModal.open" />

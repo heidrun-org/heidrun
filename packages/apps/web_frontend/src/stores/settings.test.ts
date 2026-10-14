@@ -211,7 +211,7 @@ describe("settings that got a new name to follow the glossary", () => {
 
 describe("sidebar sections that moved from the right sidebar to the left sidebar", () => {
   it.each([
-    ["actions", "actions"],
+    ["actions", "launchers"],
     ["git", "sourceControl"],
   ])("shows the sidebar section %s in the left sidebar when an older version saved it for the right sidebar", async (section, leftSection) => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: section }));
@@ -230,10 +230,10 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
   });
 
   it("keeps the sidebar section that the left sidebar already had", async () => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "git", leftSidebarSection: "actions" }));
+    localStorage.setItem("heidrun.settings", JSON.stringify({ rightSidebarSection: "git", leftSidebarSection: "launchers" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
   });
 
@@ -242,7 +242,7 @@ describe("sidebar sections that moved from the right sidebar to the left sidebar
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("notes");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
   });
 });
 
@@ -268,19 +268,49 @@ describe("sidebar section of the right sidebar that was called Pane", () => {
   });
 });
 
+describe("sidebar section of the left sidebar that was called Scripts", () => {
+  it("shows the sidebar section Launchers when the saved sidebar section was actions, because the Scripts sidebar section became the Launchers sidebar section", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "actions" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
+  });
+
+  it("keeps the sidebar section Launchers when it was saved", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "launchers" }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
+  });
+});
+
+describe("options of the window Create a custom launcher that were called customScript", () => {
+  it.each([
+    ["customScriptKind", "customLauncherKind", "codingAgent"],
+    ["customScriptModel", "customLauncherModel", "opus"],
+    ["customScriptEffort", "customLauncherEffort", "high"],
+  ])("keeps the saved value of %s under the name %s", async (oldName, newName, value) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ [oldName]: value }));
+    vi.resetModules();
+    const restarted = await import("./settings");
+    expect((restarted.settings as Record<string, unknown>)[newName]).toBe(value);
+    expect(oldName in restarted.settings).toBe(false);
+  });
+});
+
 describe("sidebar section of the left sidebar that held the workspaces", () => {
-  it.each(["workspaces", "workspacesAndTabs"])("shows the sidebar section Scripts when the saved sidebar section was %s, because the workspaces left the left sidebar", async (savedName) => {
+  it.each(["workspaces", "workspacesAndTabs"])("shows the sidebar section Launchers when the saved sidebar section was %s, because the workspaces left the left sidebar", async (savedName) => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: savedName }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
   });
 
-  it("shows the sidebar section Scripts when the saved sidebar section was Needs you, because the Needs you sidebar section moved to the right sidebar", async () => {
+  it("shows the sidebar section Launchers when the saved sidebar section was Needs you, because the Needs you sidebar section moved to the right sidebar", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ leftSidebarSection: "toHandle", rightSidebarSection: "notes" }));
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
     expect(restarted.settings.rightSidebarSection).toBe("notes");
   });
 
@@ -289,7 +319,7 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.rightSidebarSection).toBe("toHandle");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
   });
 
   it("keeps the sidebar section Source control when it was saved", async () => {
@@ -306,11 +336,11 @@ describe("sidebar section of the left sidebar that held the workspaces", () => {
     expect(restarted.settings.leftSidebarSection).toBe("sourceControl");
   });
 
-  it("is the sidebar section Scripts that the left sidebar shows first", async () => {
+  it("is the sidebar section Launchers that the left sidebar shows first", async () => {
     localStorage.clear();
     vi.resetModules();
     const restarted = await import("./settings");
-    expect(restarted.settings.leftSidebarSection).toBe("actions");
+    expect(restarted.settings.leftSidebarSection).toBe("launchers");
   });
 });
 

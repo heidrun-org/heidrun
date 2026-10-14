@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: sidebars](../user_interface/sidebars/index.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 425](https://github.com/heidrun-org/heidrun/issues/425)
 
 This document gives one short definition for each word of the sidebars and their sidebar sections. The other words of Heidrun are in [index.md](index.md).
 
@@ -21,7 +21,15 @@ The panel on the right of the viewport. It holds sidebar sections.
 
 ### Sidebar section
 
-One part of a sidebar, for example the Needs you, the Scripts, the Source control, or the Files sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+One part of a sidebar, for example the Needs you, the Launchers, the Source control, or the Files sidebar section. A sidebar holds several sidebar sections, and shows one sidebar section at a time.
+
+### Launchers sidebar section
+
+The sidebar section of the left sidebar that lists the launchers of the selected workspace, with the icon `play-circle`. It replaces the Scripts sidebar section. Its header has the title "Launchers", a button to import launchers, and a button to create a custom launcher.
+
+### Launcher
+
+One item of the Launchers sidebar section: a name, a command line, and an optional folder, saved in the list `launchers` of the file `.heidrun/config.json`. A click on its button "Run" runs its command line in its own tab. A launcher is not a `script` of a file `package.json`: the window "Import launchers" reads those `scripts`, and it makes launchers from them. It replaces the word "script" and the word "action" for this item.
 
 ### Source control sidebar section
 
@@ -42,3 +50,4 @@ The narrow vertical bar of icons at the outer edge of each sidebar, like the bar
 ## Rules
 
 - The word "section" is never alone. Write "sidebar section" or "status bar section".
+- Write "launcher" for an item of the Launchers sidebar section, never "script" and never "action". Write "script" only for a `script` of a file `package.json`, and "action" only for a Git action of the Source control sidebar section, a GitHub Action, or an action of the phone access.

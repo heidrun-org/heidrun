@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CODING_AGENTS, CODING_AGENT_IDS, CUSTOM_SCRIPT_CODING_AGENTS, CUSTOM_SCRIPT_CODING_AGENT_IDS, findCodingAgent } from "./coding_agents";
-import { scriptAgentCommand } from "./script_agent_command";
+import { CODING_AGENTS, CODING_AGENT_IDS, CUSTOM_LAUNCHER_CODING_AGENTS, CUSTOM_LAUNCHER_CODING_AGENT_IDS, findCodingAgent } from "./coding_agents";
+import { launcherAgentCommand } from "./launcher_agent_command";
 
 describe("CODING_AGENTS", () => {
   it("gives each coding agent a different identifier, and an executable", () => {
@@ -12,17 +12,17 @@ describe("CODING_AGENTS", () => {
 
   it("starts the command line of each coding agent with its executable", () => {
     for (const agent of CODING_AGENTS) {
-      expect(scriptAgentCommand({ name: agent.id, prompt: "Hi" })).toMatch(new RegExp(`^${agent.executable} `));
+      expect(launcherAgentCommand({ name: agent.id, prompt: "Hi" })).toMatch(new RegExp(`^${agent.executable} `));
     }
   });
 
   it("builds the command line of each coding agent with each of its models and each of its efforts", () => {
     for (const agent of CODING_AGENTS) {
       for (const model of agent.models) {
-        expect(scriptAgentCommand({ name: agent.id, model: model.id, prompt: "Hi" })).toContain(`'${model.id}'`);
+        expect(launcherAgentCommand({ name: agent.id, model: model.id, prompt: "Hi" })).toContain(`'${model.id}'`);
       }
       for (const effort of agent.efforts) {
-        expect(scriptAgentCommand({ name: agent.id, effort, prompt: "Hi" })).toContain(effort);
+        expect(launcherAgentCommand({ name: agent.id, effort, prompt: "Hi" })).toContain(effort);
       }
     }
   });
@@ -52,18 +52,18 @@ describe("the coding agent Antigravity", () => {
     const antigravity = findCodingAgent("agy");
     expect(antigravity?.executable).toBe("agy");
     expect(antigravity?.canStartInteractiveWithPrompt).toBe(true);
-    expect(CUSTOM_SCRIPT_CODING_AGENT_IDS).toContain("agy");
+    expect(CUSTOM_LAUNCHER_CODING_AGENT_IDS).toContain("agy");
   });
 });
 
-describe("CUSTOM_SCRIPT_CODING_AGENTS", () => {
+describe("CUSTOM_LAUNCHER_CODING_AGENTS", () => {
   it("keeps only the coding agents that start interactive with a prompt", () => {
-    expect(CUSTOM_SCRIPT_CODING_AGENTS.every((agent) => agent.canStartInteractiveWithPrompt)).toBe(true);
-    expect(CUSTOM_SCRIPT_CODING_AGENT_IDS).toEqual(CUSTOM_SCRIPT_CODING_AGENTS.map((agent) => agent.id));
+    expect(CUSTOM_LAUNCHER_CODING_AGENTS.every((agent) => agent.canStartInteractiveWithPrompt)).toBe(true);
+    expect(CUSTOM_LAUNCHER_CODING_AGENT_IDS).toEqual(CUSTOM_LAUNCHER_CODING_AGENTS.map((agent) => agent.id));
   });
 
   it("is not empty, so that the window always has a default coding agent", () => {
-    expect(CUSTOM_SCRIPT_CODING_AGENTS.length).toBeGreaterThan(0);
+    expect(CUSTOM_LAUNCHER_CODING_AGENTS.length).toBeGreaterThan(0);
   });
 });
 

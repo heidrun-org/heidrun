@@ -3,70 +3,70 @@ import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { addAction, updateAction } from "../stores/project";
-import { closeNewCustomScriptModal, newCustomScriptModal } from "../stores/newCustomScript";
+import { addLauncher, updateLauncher } from "../stores/project";
+import { closeNewCustomLauncherModal, newCustomLauncherModal } from "../stores/newCustomLauncher";
 import { state, toast } from "../stores/session";
 import { project } from "../stores/project";
 import { effortsOf } from "../lib/coding_agent_models";
-import { CUSTOM_SCRIPT_CODING_AGENTS, findCodingAgent } from "../lib/coding_agents";
+import { CUSTOM_LAUNCHER_CODING_AGENTS, findCodingAgent } from "../lib/coding_agents";
 import { isLoadingModels, loadCodingAgentModels, modelsOf } from "../stores/coding_agent_models";
-import { scriptAgentCommand } from "../lib/script_agent_command";
+import { launcherAgentCommand } from "../lib/launcher_agent_command";
 import { settings } from "../stores/settings";
 import { t } from "../i18n/index";
 
 type Kind = "commandLine" | "codingAgent";
 
-/** The two kinds of custom script, as the radio buttons show them. */
+/** The two kinds of custom launcher, as the radio buttons show them. */
 const KINDS: { id: Kind; labelKey: string }[] = [
-  { id: "commandLine", labelKey: "newCustomScriptModal.kindCommandLine" },
-  { id: "codingAgent", labelKey: "newCustomScriptModal.kindCodingAgent" },
+  { id: "commandLine", labelKey: "newCustomLauncherModal.kindCommandLine" },
+  { id: "codingAgent", labelKey: "newCustomLauncherModal.kindCodingAgent" },
 ];
 
 
 const nameField = ref<HTMLInputElement>();
 
-/** The custom script that the window edits, or `undefined` when the window creates a new one. */
-const editedAction = (() => {
+/** The custom launcher that the window edits, or `undefined` when the window creates a new one. */
+const editedLauncher = (() => {
   const workspaceId = state.selectedWorkspaceId;
-  const id = newCustomScriptModal.editedId;
+  const id = newCustomLauncherModal.editedId;
   if (id === null || workspaceId === null || workspaceId === undefined) {
     return undefined;
   }
-  return project.byWorkspace[workspaceId]?.config.actions.find((action) => action.id === id);
+  return project.byWorkspace[workspaceId]?.config.launchers.find((launcher) => launcher.id === id);
 })();
-const isEditing = editedAction !== undefined;
+const isEditing = editedLauncher !== undefined;
 
-const kind = ref<Kind>(isEditing ? (editedAction.agent === undefined ? "commandLine" : "codingAgent") : settings.customScriptKind);
-const name = ref(editedAction?.label ?? "");
-const description = ref(editedAction?.description ?? "");
-const command = ref(editedAction !== undefined && editedAction.agent === undefined ? editedAction.command : "");
-const agentName = ref(editedAction?.agent?.name ?? settings.customScriptAgent);
-const folder = ref(editedAction?.cwd ?? "");
-const model = ref(isEditing ? (editedAction.agent?.model ?? "") : settings.customScriptModel);
-const effort = ref(isEditing ? (editedAction.agent?.effort ?? "") : settings.customScriptEffort);
+const kind = ref<Kind>(isEditing ? (editedLauncher.agent === undefined ? "commandLine" : "codingAgent") : settings.customLauncherKind);
+const name = ref(editedLauncher?.label ?? "");
+const description = ref(editedLauncher?.description ?? "");
+const command = ref(editedLauncher !== undefined && editedLauncher.agent === undefined ? editedLauncher.command : "");
+const agentName = ref(editedLauncher?.agent?.name ?? settings.customLauncherAgent);
+const folder = ref(editedLauncher?.cwd ?? "");
+const model = ref(isEditing ? (editedLauncher.agent?.model ?? "") : settings.customLauncherModel);
+const effort = ref(isEditing ? (editedLauncher.agent?.effort ?? "") : settings.customLauncherEffort);
 
 // The last kind, coding agent, model, and effort are remembered, but an edit never changes them.
 watch(kind, (value) => {
   if (isEditing === false) {
-    settings.customScriptKind = value;
+    settings.customLauncherKind = value;
   }
 });
 watch(agentName, (value) => {
   if (isEditing === false) {
-    settings.customScriptAgent = value;
+    settings.customLauncherAgent = value;
   }
 });
 watch(model, (value) => {
   if (isEditing === false) {
-    settings.customScriptModel = value;
+    settings.customLauncherModel = value;
   }
 });
 watch(effort, (value) => {
   if (isEditing === false) {
-    settings.customScriptEffort = value;
+    settings.customLauncherEffort = value;
   }
 });
-const prompt = ref(editedAction?.agent?.prompt ?? "");
+const prompt = ref(editedLauncher?.agent?.prompt ?? "");
 const isWritingName = ref(false);
 const isFolderValid = computed(() => relativeFolder() !== null);
 
@@ -101,7 +101,7 @@ async function chooseFolder() {
   const path = await openDialog({
     directory: true,
     multiple: false,
-    title: t("newCustomScriptModal.chooseFolder"),
+    title: t("newCustomLauncherModal.chooseFolder"),
     defaultPath: root,
   });
   if (path === null) {
@@ -109,7 +109,7 @@ async function chooseFolder() {
   }
   folder.value = path;
   if (relativeFolder() === null) {
-    toast(t("newCustomScriptModal.folderOutside"));
+    toast(t("newCustomLauncherModal.folderOutside"));
     folder.value = "";
     return;
   }
@@ -119,7 +119,7 @@ async function chooseFolder() {
 const models = computed(() => modelsOf(agentName.value));
 const efforts = computed(() => effortsOf(findCodingAgent(agentName.value)?.efforts ?? [], models.value, model.value));
 
-/** The models of the select: the models of the coding agent, and the saved model of an edited script that is no longer listed. */
+/** The models of the select: the models of the coding agent, and the saved model of an edited launcher that is no longer listed. */
 const modelChoices = computed(() => {
   const choices = models.value.map(({ id, label }) => ({ id, label }));
   if (isEditing && model.value !== "" && choices.some((choice) => choice.id === model.value) === false) {
@@ -128,7 +128,7 @@ const modelChoices = computed(() => {
   return choices;
 });
 
-/** The efforts of the select: the efforts of the model, and the saved effort of an edited script that is no longer listed. */
+/** The efforts of the select: the efforts of the model, and the saved effort of an edited launcher that is no longer listed. */
 const effortChoices = computed(() => {
   const choices = [...efforts.value];
   if (isEditing && effort.value !== "" && choices.includes(effort.value) === false) {
@@ -145,11 +145,11 @@ watch(agentName, () => {
 });
 
 // Asks the tool of each coding agent for its models, now, so that a remembered model is not dropped before the answer.
-for (const agent of CUSTOM_SCRIPT_CODING_AGENTS) {
+for (const agent of CUSTOM_LAUNCHER_CODING_AGENTS) {
   void loadCodingAgentModels(agent.id);
 }
 
-// A remembered model or effort that the coding agent does not list now is dropped, once the tool has answered. A script
+// A remembered model or effort that the coding agent does not list now is dropped, once the tool has answered. A launcher
 // that is edited keeps its saved values: the selects show them.
 watch(
   [models, efforts, () => isLoadingModels(agentName.value)],
@@ -169,26 +169,26 @@ watch(
 
 /** Text that tells the coding agent everything that the person filled in, to write the name from it. */
 function describeForm(): string {
-  const lines = name.value.trim() === "" ? [] : [t("newCustomScriptModal.descriptionName", { name: name.value.trim() })];
+  const lines = name.value.trim() === "" ? [] : [t("newCustomLauncherModal.descriptionName", { name: name.value.trim() })];
   if (description.value.trim() !== "") {
-    lines.push(t("newCustomScriptModal.descriptionText", { description: description.value.trim() }));
+    lines.push(t("newCustomLauncherModal.descriptionText", { description: description.value.trim() }));
   }
-  lines.push(t("newCustomScriptModal.descriptionKind", { kind: t(kind.value === "commandLine" ? "newCustomScriptModal.kindCommandLine" : "newCustomScriptModal.kindCodingAgent") }));
+  lines.push(t("newCustomLauncherModal.descriptionKind", { kind: t(kind.value === "commandLine" ? "newCustomLauncherModal.kindCommandLine" : "newCustomLauncherModal.kindCodingAgent") }));
   if (kind.value === "commandLine") {
-    lines.push(t("newCustomScriptModal.descriptionCommand", { command: command.value }));
+    lines.push(t("newCustomLauncherModal.descriptionCommand", { command: command.value }));
     return lines.join("\n");
   }
-  lines.push(t("newCustomScriptModal.descriptionAgent", { agent: agentName.value }));
+  lines.push(t("newCustomLauncherModal.descriptionAgent", { agent: agentName.value }));
   if (folder.value.trim() !== "") {
-    lines.push(t("newCustomScriptModal.descriptionFolder", { folder: folder.value.trim() }));
+    lines.push(t("newCustomLauncherModal.descriptionFolder", { folder: folder.value.trim() }));
   }
   if (model.value.trim() !== "") {
-    lines.push(t("newCustomScriptModal.descriptionModel", { model: model.value.trim() }));
+    lines.push(t("newCustomLauncherModal.descriptionModel", { model: model.value.trim() }));
   }
   if (effort.value !== "") {
-    lines.push(t("newCustomScriptModal.descriptionEffort", { effort: effort.value }));
+    lines.push(t("newCustomLauncherModal.descriptionEffort", { effort: effort.value }));
   }
-  lines.push(t("newCustomScriptModal.descriptionPrompt", { prompt: prompt.value }));
+  lines.push(t("newCustomLauncherModal.descriptionPrompt", { prompt: prompt.value }));
   return lines.join("\n");
 }
 
@@ -200,18 +200,18 @@ async function writeName() {
   const isNameEmpty = name.value.trim() === "";
   const isDescriptionEmpty = description.value.trim() === "";
   if (isNameEmpty === false && isDescriptionEmpty === false) {
-    toast(t("newCustomScriptModal.bothFilled"));
+    toast(t("newCustomLauncherModal.bothFilled"));
     return;
   }
   if (isContentFilled.value === false) {
-    nextTick(() => document.getElementById(kind.value === "commandLine" ? "new-script-command" : "new-script-prompt")?.focus());
+    nextTick(() => document.getElementById(kind.value === "commandLine" ? "new-launcher-command" : "new-launcher-prompt")?.focus());
     return;
   }
   const keys = [isNameEmpty ? '"name"' : null, isDescriptionEmpty ? '"description"' : null].filter((key) => key !== null).join(", ");
   isWritingName.value = true;
   try {
     const answer = await invoke<{ text: string }>("coding_agent_ask", {
-      prompt: t("newCustomScriptModal.writePrompt", { keys, description: describeForm() }),
+      prompt: t("newCustomLauncherModal.writePrompt", { keys, description: describeForm() }),
     });
     const written = parseWrittenFields(answer.text);
     if (isNameEmpty && written.name !== undefined && name.value.trim() === "") {
@@ -222,7 +222,7 @@ async function writeName() {
     }
   } catch (error) {
     const text = String(error);
-    toast(text === "no_coding_agent" ? t("newCustomScriptModal.noCodingAgent") : text);
+    toast(text === "no_coding_agent" ? t("newCustomLauncherModal.noCodingAgent") : text);
   } finally {
     isWritingName.value = false;
   }
@@ -233,13 +233,13 @@ function parseWrittenFields(text: string): { name?: string; description?: string
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start === -1 || end <= start) {
-    throw new Error(t("newCustomScriptModal.badAnswer"));
+    throw new Error(t("newCustomLauncherModal.badAnswer"));
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text.slice(start, end + 1));
   } catch {
-    throw new Error(t("newCustomScriptModal.badAnswer"));
+    throw new Error(t("newCustomLauncherModal.badAnswer"));
   }
   const record = (typeof parsed === "object" && parsed !== null ? parsed : {}) as Record<string, unknown>;
   const written: { name?: string; description?: string } = {};
@@ -259,15 +259,15 @@ async function create() {
   }
   const cwd = relativeFolder() ?? "";
   if (kind.value === "commandLine") {
-    if (editedAction !== undefined) {
-      await updateAction(workspaceId, editedAction.id, {
+    if (editedLauncher !== undefined) {
+      await updateLauncher(workspaceId, editedLauncher.id, {
         label: name.value.trim(),
         command: command.value.trim(),
         ...(description.value.trim() !== "" ? { description: description.value.trim() } : {}),
         ...(cwd !== "" ? { cwd } : {}),
       });
     } else {
-      await addAction(workspaceId, name.value, command.value, undefined, cwd, description.value);
+      await addLauncher(workspaceId, name.value, command.value, undefined, cwd, description.value);
     }
   } else {
     const agent = {
@@ -276,26 +276,26 @@ async function create() {
       ...(model.value.trim() !== "" ? { model: model.value.trim() } : {}),
       ...(effort.value !== "" ? { effort: effort.value } : {}),
     };
-    if (editedAction !== undefined) {
-      await updateAction(workspaceId, editedAction.id, {
+    if (editedLauncher !== undefined) {
+      await updateLauncher(workspaceId, editedLauncher.id, {
         label: name.value.trim(),
-        command: scriptAgentCommand(agent),
+        command: launcherAgentCommand(agent),
         agent,
         ...(description.value.trim() !== "" ? { description: description.value.trim() } : {}),
         ...(cwd !== "" ? { cwd } : {}),
       });
     } else {
-      await addAction(workspaceId, name.value, scriptAgentCommand(agent), agent, cwd, description.value);
+      await addLauncher(workspaceId, name.value, launcherAgentCommand(agent), agent, cwd, description.value);
     }
   }
-  closeNewCustomScriptModal();
+  closeNewCustomLauncherModal();
 }
 
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") {
     e.preventDefault();
     e.stopPropagation();
-    closeNewCustomScriptModal();
+    closeNewCustomLauncherModal();
   }
 }
 onMounted(() => {
@@ -306,40 +306,40 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>
 
 <template>
-  <div class="overlay" @mousedown.self="closeNewCustomScriptModal()">
-    <form class="window-box" role="dialog" :aria-label="t(isEditing ? 'newCustomScriptModal.editDialogLabel' : 'newCustomScriptModal.dialogLabel')" @submit.prevent="create">
+  <div class="overlay" @mousedown.self="closeNewCustomLauncherModal()">
+    <form class="window-box" role="dialog" :aria-label="t(isEditing ? 'newCustomLauncherModal.editDialogLabel' : 'newCustomLauncherModal.dialogLabel')" @submit.prevent="create">
       <header>
-        <h2>{{ t(isEditing ? "newCustomScriptModal.editTitle" : "newCustomScriptModal.title") }}</h2>
-        <button type="button" :title="t('newCustomScriptModal.closeTitle')" class="close" :aria-label="t('newCustomScriptModal.closeLabel')" @click="closeNewCustomScriptModal()"><Icon name="x-lg" /></button>
+        <h2>{{ t(isEditing ? "newCustomLauncherModal.editTitle" : "newCustomLauncherModal.title") }}</h2>
+        <button type="button" :title="t('newCustomLauncherModal.closeTitle')" class="close" :aria-label="t('newCustomLauncherModal.closeLabel')" @click="closeNewCustomLauncherModal()"><Icon name="x-lg" /></button>
       </header>
 
       <div class="content">
         <div>
-          <div class="form-label">{{ t("newCustomScriptModal.kind") }}</div>
-          <div class="btn-group d-flex" role="group" :aria-label="t('newCustomScriptModal.kind')">
+          <div class="form-label">{{ t("newCustomLauncherModal.kind") }}</div>
+          <div class="btn-group d-flex" role="group" :aria-label="t('newCustomLauncherModal.kind')">
             <label v-for="choice in KINDS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
-              <input v-model="kind" type="radio" name="new-script-kind" autocomplete="off" :value="choice.id" />
+              <input v-model="kind" type="radio" name="new-launcher-kind" autocomplete="off" :value="choice.id" />
               {{ t(choice.labelKey) }}
             </label>
           </div>
         </div>
 
         <div>
-          <label class="form-label" for="new-script-name">{{ t("newCustomScriptModal.name") }}</label>
+          <label class="form-label" for="new-launcher-name">{{ t("newCustomLauncherModal.name") }}</label>
           <div class="d-flex gap-2">
             <input
-              id="new-script-name"
+              id="new-launcher-name"
               ref="nameField"
               v-model="name"
               class="form-control flex-fill"
-              :placeholder="t('newCustomScriptModal.namePlaceholder')"
+              :placeholder="t('newCustomLauncherModal.namePlaceholder')"
               spellcheck="false"
             />
             <button
               type="button"
               class="btn write-name"
-              :aria-label="t('newCustomScriptModal.writeName')"
-              :title="t('newCustomScriptModal.writeName')"
+              :aria-label="t('newCustomLauncherModal.writeName')"
+              :title="t('newCustomLauncherModal.writeName')"
               :disabled="isWritingName"
               @click="writeName()"
             >
@@ -350,37 +350,37 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </div>
 
         <div>
-          <label class="form-label" for="new-script-description">{{ t("newCustomScriptModal.description") }}</label>
+          <label class="form-label" for="new-launcher-description">{{ t("newCustomLauncherModal.description") }}</label>
           <textarea
-            id="new-script-description"
+            id="new-launcher-description"
             v-model="description"
             class="form-control"
             rows="3"
-            :placeholder="t('newCustomScriptModal.descriptionPlaceholder')"
+            :placeholder="t('newCustomLauncherModal.descriptionPlaceholder')"
           ></textarea>
         </div>
 
         <div>
-          <label class="form-label" for="new-script-folder">{{ t("newCustomScriptModal.folder") }}</label>
+          <label class="form-label" for="new-launcher-folder">{{ t("newCustomLauncherModal.folder") }}</label>
           <div class="d-flex gap-2">
             <input
-              id="new-script-folder"
+              id="new-launcher-folder"
               v-model="folder"
               class="form-control flex-fill"
               :class="{ 'is-invalid': isFolderValid === false }"
-              :placeholder="t('newCustomScriptModal.folderPlaceholder')"
+              :placeholder="t('newCustomLauncherModal.folderPlaceholder')"
               spellcheck="false"
             />
-            <button type="button" class="btn write-name" :aria-label="t('newCustomScriptModal.chooseFolder')" :title="t('newCustomScriptModal.chooseFolder')" @click="chooseFolder()">
+            <button type="button" class="btn write-name" :aria-label="t('newCustomLauncherModal.chooseFolder')" :title="t('newCustomLauncherModal.chooseFolder')" @click="chooseFolder()">
               <Icon name="folder2-open" />
             </button>
           </div>
         </div>
 
         <div v-if="kind === 'commandLine'">
-          <label class="form-label" for="new-script-command">{{ t("newCustomScriptModal.command") }}</label>
+          <label class="form-label" for="new-launcher-command">{{ t("newCustomLauncherModal.command") }}</label>
           <textarea
-            id="new-script-command"
+            id="new-launcher-command"
             v-model="command"
             class="form-control mono"
             rows="5"
@@ -393,10 +393,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
         <template v-else>
           <div>
-            <div class="form-label">{{ t("newCustomScriptModal.codingAgent") }}</div>
-            <div class="btn-group d-flex" role="group" :aria-label="t('newCustomScriptModal.codingAgent')">
-              <label v-for="choice in CUSTOM_SCRIPT_CODING_AGENTS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
-                <input v-model="agentName" type="radio" name="new-script-agent" autocomplete="off" :value="choice.id" />
+            <div class="form-label">{{ t("newCustomLauncherModal.codingAgent") }}</div>
+            <div class="btn-group d-flex" role="group" :aria-label="t('newCustomLauncherModal.codingAgent')">
+              <label v-for="choice in CUSTOM_LAUNCHER_CODING_AGENTS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
+                <input v-model="agentName" type="radio" name="new-launcher-agent" autocomplete="off" :value="choice.id" />
                 <Icon :name="choice.icon" />
                 {{ choice.label }}
               </label>
@@ -404,28 +404,28 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           </div>
           <div class="d-flex gap-2">
             <div v-if="modelChoices.length > 0" class="field">
-              <label class="form-label" for="new-script-model">{{ t("newCustomScriptModal.model") }}</label>
-              <select id="new-script-model" v-model="model" class="form-control">
-                <option value="">{{ t("newCustomScriptModal.modelDefault") }}</option>
+              <label class="form-label" for="new-launcher-model">{{ t("newCustomLauncherModal.model") }}</label>
+              <select id="new-launcher-model" v-model="model" class="form-control">
+                <option value="">{{ t("newCustomLauncherModal.modelDefault") }}</option>
                 <option v-for="choice in modelChoices" :key="choice.id" :value="choice.id">{{ choice.label }}</option>
               </select>
             </div>
             <div v-if="effortChoices.length > 0" class="field">
-              <label class="form-label" for="new-script-effort">{{ t("newCustomScriptModal.effort") }}</label>
-              <select id="new-script-effort" v-model="effort" class="form-control">
-                <option value="">{{ t("newCustomScriptModal.effortDefault") }}</option>
+              <label class="form-label" for="new-launcher-effort">{{ t("newCustomLauncherModal.effort") }}</label>
+              <select id="new-launcher-effort" v-model="effort" class="form-control">
+                <option value="">{{ t("newCustomLauncherModal.effortDefault") }}</option>
                 <option v-for="level in effortChoices" :key="level" :value="level">{{ level }}</option>
               </select>
             </div>
           </div>
           <div>
-            <label class="form-label" for="new-script-prompt">{{ t("newCustomScriptModal.prompt") }}</label>
+            <label class="form-label" for="new-launcher-prompt">{{ t("newCustomLauncherModal.prompt") }}</label>
             <textarea
-              id="new-script-prompt"
+              id="new-launcher-prompt"
               v-model="prompt"
               class="form-control"
               rows="5"
-              :placeholder="t('newCustomScriptModal.promptPlaceholder')"
+              :placeholder="t('newCustomLauncherModal.promptPlaceholder')"
               @keydown.meta.enter.prevent="create"
               @keydown.ctrl.enter.prevent="create"
             ></textarea>
@@ -433,8 +433,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         </template>
 
         <div class="buttons">
-          <button :title="t(isEditing ? 'newCustomScriptModal.cancelEditTitle' : 'newCustomScriptModal.cancelTitle')" class="btn" type="button" @click="closeNewCustomScriptModal()">{{ t("newCustomScriptModal.cancel") }}</button>
-          <button :title="t(isEditing ? 'newCustomScriptModal.saveTitle' : 'newCustomScriptModal.createTitle')" class="btn primary" type="submit" :disabled="canCreate === false">{{ t(isEditing ? "newCustomScriptModal.save" : "newCustomScriptModal.create") }}</button>
+          <button :title="t(isEditing ? 'newCustomLauncherModal.cancelEditTitle' : 'newCustomLauncherModal.cancelTitle')" class="btn" type="button" @click="closeNewCustomLauncherModal()">{{ t("newCustomLauncherModal.cancel") }}</button>
+          <button :title="t(isEditing ? 'newCustomLauncherModal.saveTitle' : 'newCustomLauncherModal.createTitle')" class="btn primary" type="submit" :disabled="canCreate === false">{{ t(isEditing ? "newCustomLauncherModal.save" : "newCustomLauncherModal.create") }}</button>
         </div>
       </div>
     </form>

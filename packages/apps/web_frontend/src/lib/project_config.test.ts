@@ -2,19 +2,19 @@ import { describe, expect, it } from "vitest";
 import { parseProjectConfig, parseReferences, projectConfigSchema } from "./project_config";
 
 describe("parseProjectConfig", () => {
-  it("accepts a minimal configuration and defaults the actions to an empty list", () => {
-    expect(parseProjectConfig({ version: 1 })).toEqual({ version: 1, actions: [] });
+  it("accepts a minimal configuration and defaults the launchers to an empty list", () => {
+    expect(parseProjectConfig({ version: 1 })).toEqual({ version: 1, launchers: [] });
   });
 
   it("accepts a full configuration", () => {
     const config = parseProjectConfig({
       version: 1,
-      actions: [{ id: "build", label: "Build", command: "pnpm build", cwd: "packages/apps/web_frontend" }],
+      launchers: [{ id: "build", label: "Build", command: "pnpm build", cwd: "packages/apps/web_frontend" }],
       references: { forge: "github", repo: "org/app", tickets: { url: "https://x/{key}", prefixes: ["ABC"] } },
       guards: { confirm: ["^make"], block: ["publish"] },
       prompts: [{ text: "Review this" }],
     });
-    expect(config.actions[0].id).toBe("build");
+    expect(config.launchers[0].id).toBe("build");
     expect(config.references?.forge).toBe("github");
   });
 
@@ -27,8 +27,8 @@ describe("parseProjectConfig", () => {
   });
 
   it("names the path of the invalid field", () => {
-    expect(() => parseProjectConfig({ version: 1, actions: [{ id: "a", label: "A", command: "" }] })).toThrow(
-      /actions\.0\.command/,
+    expect(() => parseProjectConfig({ version: 1, launchers: [{ id: "a", label: "A", command: "" }] })).toThrow(
+      /launchers\.0\.command/,
     );
   });
 
@@ -46,6 +46,29 @@ describe("parseProjectConfig", () => {
 
   it("joins several problems with a semicolon", () => {
     expect(() => parseProjectConfig({ version: 3, extra: true })).toThrow(/;/);
+  });
+});
+
+describe("parseProjectConfig with the old key actions", () => {
+  it("reads the list under the old key actions as the list of launchers", () => {
+    const config = parseProjectConfig({ version: 1, actions: [{ id: "build", label: "Build", command: "pnpm build" }] });
+    expect(config.launchers).toEqual([{ id: "build", label: "Build", command: "pnpm build" }]);
+  });
+
+  it("returns a configuration that has the key launchers and no key actions", () => {
+    const config = parseProjectConfig({ version: 1, actions: [{ id: "build", label: "Build", command: "pnpm build" }] });
+    expect(Object.keys(config)).toContain("launchers");
+    expect(Object.keys(config)).not.toContain("actions");
+  });
+
+  it("names the path of an invalid field under the old key actions with the key launchers", () => {
+    expect(() => parseProjectConfig({ version: 1, actions: [{ id: "a", label: "A", command: "" }] })).toThrow(
+      /launchers\.0\.command/,
+    );
+  });
+
+  it("rejects a file that has both the key actions and the key launchers, and names the key actions", () => {
+    expect(() => parseProjectConfig({ version: 1, actions: [], launchers: [] })).toThrow(/actions/);
   });
 });
 

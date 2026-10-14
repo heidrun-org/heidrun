@@ -42,7 +42,7 @@ async function mountApp() {
   session.state.selectedPaneId = "p1";
   settingsStore.settings.leftCollapsed = false;
   settingsStore.settings.rightCollapsed = false;
-  settingsStore.settings.leftSidebarSection = "actions";
+  settingsStore.settings.leftSidebarSection = "launchers";
   settingsStore.settings.rightSidebarSection = "toHandle";
   const wrapper = shallowMount(App, { attachTo: document.body, global: { stubs: { TopBar: false, Icon: false, MoreMenu: true, ThemeMenu: true } } });
   mountedWindows.push(wrapper);

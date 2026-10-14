@@ -23,7 +23,7 @@ import {
 import { startDefaultNewTab } from "../stores/newPane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
-import { currentProject, runAction } from "../stores/project";
+import { currentProject, runLauncher } from "../stores/project";
 import { macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
@@ -98,8 +98,8 @@ const items = computed<Item[]>(() => {
   const wsId = state.selectedWorkspaceId;
   const proj = currentProject.value;
   if (wsId && proj) {
-    for (const a of proj.config.actions.filter((x) => !lower || x.label.toLowerCase().includes(lower) || x.command.toLowerCase().includes(lower))) {
-      list.push({ section: t("commandPalette.section.projectActions"), label: a.label, hint: a.command, run: () => runAction(wsId, a) });
+    for (const a of proj.config.launchers.filter((x) => !lower || x.label.toLowerCase().includes(lower) || x.command.toLowerCase().includes(lower))) {
+      list.push({ section: t("commandPalette.section.projectLaunchers"), label: a.label, hint: a.command, run: () => runLauncher(wsId, a) });
     }
   }
   const actions: Item[] = [

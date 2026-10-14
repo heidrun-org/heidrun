@@ -1,19 +1,19 @@
 {
-  "title": "Scripts",
-  "createTitle": "Créer un script personnalisé",
-  "empty": "Aucun script pour l’instant. Crée-en un avec le bouton plus, ou importe les scripts de ton projet avec le bouton d’import.",
+  "title": "Lanceurs",
+  "createTitle": "Créer un lanceur personnalisé",
+  "empty": "Aucun lanceur pour l’instant. Crée-en un avec le bouton plus, ou importe les lanceurs de ton projet avec le bouton d’import.",
   "stop": "Arrêter (ctrl+C)",
   "run": "Lancer",
   "removeConfirm": "Retirer",
-  "removeAction": "Retirer le script {action}",
+  "removeLauncher": "Retirer le lanceur {launcher}",
   "noProject": "Ouvre un terminal dans ce workspace pour détecter son dossier de projet.",
   "state.idle": "À l’arrêt",
   "state.running": "En cours",
   "state.finished": "Terminé",
   "stopLabel": "Arrêter",
-  "menuLabel": "Plus d’options pour le script {action}",
+  "menuLabel": "Plus d’options pour le lanceur {launcher}",
   "menu.delete": "Supprimer",
   "runInTab": "Lancer dans son onglet",
   "menu.edit": "Modifier",
-  "importTitle": "Importer les scripts du projet"
+  "importTitle": "Importer les lanceurs du projet"
 }
