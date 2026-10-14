@@ -1,0 +1,19 @@
+{
+  "title": "Launchers",
+  "createTitle": "Create a custom launcher",
+  "empty": "No launcher yet. Create one with the plus button, or import the launchers of your project with the import button.",
+  "stop": "Stop (ctrl+C)",
+  "run": "Run",
+  "removeConfirm": "Remove",
+  "removeLauncher": "Remove the launcher {launcher}",
+  "noProject": "Open a terminal in this workspace to find its project folder.",
+  "state.idle": "Not running",
+  "state.running": "Running",
+  "state.finished": "Finished",
+  "stopLabel": "Stop",
+  "menuLabel": "More about the launcher {launcher}",
+  "menu.delete": "Delete",
+  "runInTab": "Run in its tab",
+  "menu.edit": "Edit",
+  "importTitle": "Import the launchers of the project"
+}

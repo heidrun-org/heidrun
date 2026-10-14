@@ -22,7 +22,7 @@ const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
 const allMacros = computed(() => [...projectMacros.value, ...macros.personal]);
-// The models that the tools list now: the same list as the window Create a custom script. This window offers only Claude Code and Codex.
+// The models that the tools list now: the same list as the window Create a custom launcher. This window offers only Claude Code and Codex.
 for (const toolId of ["claude", "codex"]) {
   void loadCodingAgentModels(toolId);
 }

@@ -45,7 +45,7 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons Needs you, Notes, and Past chats in the sidebar icon bar, and not the buttons Pane, Scripts, and Git", () => {
+  it("shows the buttons Needs you, Notes, and Past chats in the sidebar icon bar, and not the buttons Pane, Launchers, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("role")).toBe("tablist");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);

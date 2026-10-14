@@ -62,8 +62,8 @@ describe('padding of the left sidebar', () => {
 });
 
 describe('horizontal padding of the sidebar sections of the left sidebar', () => {
-	it('is 16px on each side for the Scripts sidebar section, as for the Source control sidebar section', () => {
-		const padding = SidebarPaddingTestHelper.readDeclaration('components/ActionsPanel.vue', '.panel', 'padding');
+	it('is 16px on each side for the Launchers sidebar section, as for the Source control sidebar section', () => {
+		const padding = SidebarPaddingTestHelper.readDeclaration('components/LaunchersPanel.vue', '.panel', 'padding');
 		expect(padding).toBe('12px 16px');
 	});
 

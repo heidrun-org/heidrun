@@ -41,9 +41,9 @@ The developer selects a pane in the list of all the panes of Heidrun, grouped by
 
 The list of the macros. A tap on a macro writes its text into the selected pane. The developer never types on the keyboard of the phone.
 
-### Scripts
+### Launchers
 
-The list of the scripts of the Scripts sidebar section. A tap on a script launches it, and the screen shows its result.
+The list of the launchers of the Launchers sidebar section. A tap on a launcher runs it, and the screen shows its result.
 
 ### Voice
 
@@ -60,9 +60,9 @@ Heidrun Mobile does not show the Git sidebar section, the Past chats sidebar sec
 ## Points to decide
 
 - **A new application or a bigger page.** Today the page is one file that is built into the Rust program. Heidrun Mobile may need its own package, with its own build.
-- **Macros and scripts must reach the phone.** The personal macros are saved in the window of Heidrun desktop, and the macros of the project are saved in `.heidrun/config.json`. The phone cannot read them today. Heidrun desktop must send them through the same channel as the other calls of the phone.
+- **Macros and launchers must reach the phone.** The personal macros are saved in the window of Heidrun desktop, and the macros of the project are saved in `.heidrun/config.json`. The phone cannot read them today. Heidrun desktop must send them through the same channel as the other calls of the phone.
 - **Open a pane.** It is not clear whether "open a pane" means to show an existing pane, or to create a new pane that starts an agent. Closing a pane stops its agent, so it needs a confirmation.
-- **The guards.** A macro, a script, and a voice prompt from the phone must pass the same guards as a prompt that the developer types on the desktop.
+- **The guards.** A macro, a launcher, and a voice prompt from the phone must pass the same guards as a prompt that the developer types on the desktop.
 
 ## What to prove before the build
 

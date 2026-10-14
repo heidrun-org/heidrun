@@ -183,7 +183,7 @@ pub fn project_load(cwd: String) -> Result<Project, String> {
     let path = config_path(&root);
     let config = match std::fs::read_to_string(&path) {
         Ok(text) => serde_json::from_str(&text).map_err(|e| format!("{CONFIG_DIR}/{CONFIG_FILE} invalide : {e}"))?,
-        Err(_) => json!({ "version": 1, "actions": [] }),
+        Err(_) => json!({ "version": 1, "launchers": [] }),
     };
     Ok(Project {
         root: root.display().to_string(),
@@ -430,7 +430,7 @@ mod project_tests {
         let dir = scratch("load-default");
         std::fs::create_dir_all(dir.join(".git")).unwrap();
         let project = project_load(dir.display().to_string()).unwrap();
-        assert_eq!(project.config, json!({ "version": 1, "actions": [] }));
+        assert_eq!(project.config, json!({ "version": 1, "launchers": [] }));
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -438,7 +438,7 @@ mod project_tests {
     fn saves_then_loads_the_configuration() {
         let dir = scratch("roundtrip");
         std::fs::create_dir_all(dir.join(".git")).unwrap();
-        let config = json!({ "version": 1, "actions": [{ "id": "a", "label": "A", "command": "ls" }] });
+        let config = json!({ "version": 1, "launchers": [{ "id": "a", "label": "A", "command": "ls" }] });
         project_save(dir.display().to_string(), config.clone()).unwrap();
         let text = std::fs::read_to_string(dir.join(".heidrun/config.json")).unwrap();
         assert!(text.ends_with('\n'));

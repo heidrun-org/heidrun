@@ -14,40 +14,40 @@ beforeEach(() => {
 async function mountPanel() {
   const { state } = await import("../stores/session");
   const { project } = await import("../stores/project");
-  const { default: ActionsPanel } = await import("./ActionsPanel.vue");
+  const { default: LaunchersPanel } = await import("./LaunchersPanel.vue");
   state.selectedWorkspaceId = "w1";
   project.byWorkspace["w1"] = {
     root: "/Users/me/webwork/heidrun",
     config_path: "/Users/me/webwork/heidrun/.heidrun/config.json",
     config: {
       version: 1,
-      actions: [{ id: "dev", label: "start the server", command: "make dev" }],
+      launchers: [{ id: "dev", label: "start the server", command: "make dev" }],
     },
     detected: [
       { label: "pnpm install", command: "pnpm install", source: "package.json" },
       { label: "pnpm dev", command: "pnpm dev", source: "package.json" },
     ],
   } as never;
-  const wrapper = mount(ActionsPanel);
+  const wrapper = mount(LaunchersPanel);
   await flushPromises();
   return wrapper;
 }
 
-describe("ActionsPanel", () => {
-  it("has the title Scripts, a button Import, and a plus button, on one line, and no section", async () => {
+describe("LaunchersPanel", () => {
+  it("has the title Launchers, a button Import, and a plus button, on one line, and no section", async () => {
     const wrapper = await mountPanel();
     const header = wrapper.get("header");
-    expect(header.get(".title").text()).toBe("Scripts");
-    expect(header.get("button.import").attributes("aria-label")).toBe("Import the scripts of the project");
-    expect(header.get("button.create").attributes("aria-label")).toBe("Create a custom script");
+    expect(header.get(".title").text()).toBe("Launchers");
+    expect(header.get("button.import").attributes("aria-label")).toBe("Import the launchers of the project");
+    expect(header.get("button.create").attributes("aria-label")).toBe("Create a custom launcher");
     expect(wrapper.find(".section-head").exists()).toBe(false);
-    expect(wrapper.text()).not.toMatch(/Custom Scripts|Existing Scripts|Recent/);
+    expect(wrapper.text()).not.toMatch(/Custom Launchers|Existing Launchers|Recent/);
     expect(wrapper.text()).toContain("start the server");
   });
 
-  it("does not use the words Actions or Suggestions", async () => {
+  it("does not use the words Actions, Scripts, or Suggestions", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.text()).not.toMatch(/action/i);
+    expect(wrapper.text()).not.toMatch(/action|script/i);
     expect(wrapper.text()).not.toMatch(/suggestion/i);
   });
 
@@ -64,25 +64,25 @@ describe("ActionsPanel", () => {
     expect(wrapper.findAll("[draggable]")).toHaveLength(0);
   });
 
-  it("opens the window Create a custom script when the person clicks the plus button", async () => {
+  it("opens the window Create a custom launcher when the person clicks the plus button", async () => {
     const wrapper = await mountPanel();
-    const { newCustomScriptModal } = await import("../stores/newCustomScript");
-    expect(newCustomScriptModal.open).toBe(false);
+    const { newCustomLauncherModal } = await import("../stores/newCustomLauncher");
+    expect(newCustomLauncherModal.open).toBe(false);
     await wrapper.get("header button.create").trigger("click");
-    expect(newCustomScriptModal.open).toBe(true);
+    expect(newCustomLauncherModal.open).toBe(true);
   });
 
-  it("opens the window Import scripts when the person clicks the button Import", async () => {
+  it("opens the window Import launchers when the person clicks the button Import", async () => {
     const wrapper = await mountPanel();
-    const { importScriptsModal } = await import("../stores/importScripts");
-    expect(importScriptsModal.open).toBe(false);
+    const { importLaunchersModal } = await import("../stores/importLaunchers");
+    expect(importLaunchersModal.open).toBe(false);
     await wrapper.get("header button.import").trigger("click");
-    expect(importScriptsModal.open).toBe(true);
+    expect(importLaunchersModal.open).toBe(true);
   });
 
   it("has no dashed button and no form inside the tab: the windows replace them", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.text()).not.toContain("Add a script");
+    expect(wrapper.text()).not.toContain("Add a launcher");
     expect(wrapper.find(".dashed").exists()).toBe(false);
     expect(wrapper.find("form").exists()).toBe(false);
     expect(wrapper.find("input").exists()).toBe(false);
@@ -90,7 +90,7 @@ describe("ActionsPanel", () => {
 
   it("draws a card: the status dot before the name, the menu of three dots on the right, the description, then the state and the button Run", async () => {
     const wrapper = await mountPanel();
-    const card = wrapper.get(".action");
+    const card = wrapper.get(".launcher");
     const top = card.get(".top");
     expect(top.element.children[0].classList.contains("dot")).toBe(true);
     expect(top.get(".label").text()).toBe("start the server");
@@ -100,25 +100,25 @@ describe("ActionsPanel", () => {
     expect(card.get(".bottom .btn").text()).toBe("Run");
   });
 
-  it("shows the description of the script instead of the command line when there is one", async () => {
+  it("shows the description of the launcher instead of the command line when there is one", async () => {
     const wrapper = await mountPanel();
     const { project } = await import("../stores/project");
-    project.byWorkspace["w1"]!.config.actions[0].description = "Starts the development server.";
+    project.byWorkspace["w1"]!.config.launchers[0].description = "Starts the development server.";
     await flushPromises();
     expect(wrapper.get(".desc").text()).toBe("Starts the development server.");
   });
 
-  it("shows only the first 120 characters of a long command line when the script has no description", async () => {
+  it("shows only the first 120 characters of a long command line when the launcher has no description", async () => {
     const wrapper = await mountPanel();
     const { project } = await import("../stores/project");
-    project.byWorkspace["w1"]!.config.actions[0].command = "x".repeat(300);
+    project.byWorkspace["w1"]!.config.launchers[0].command = "x".repeat(300);
     await flushPromises();
     expect(wrapper.get(".desc").text()).toBe("x".repeat(120));
   });
 
   it("has the items Edit and Delete, with an icon each, in the menu of three dots of a card", async () => {
     const wrapper = await mountPanel();
-    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    await wrapper.get(".launcher button[aria-haspopup=menu]").trigger("click");
     await flushPromises();
     const items = Array.from(document.body.querySelectorAll("[role=menuitem]")).map((item) => item.textContent?.trim());
     expect(items).toEqual(["Edit", "Delete"]);
@@ -130,7 +130,7 @@ describe("ActionsPanel", () => {
   it("never shows the words Run again", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.html()).not.toMatch(/run again/i);
-    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    await wrapper.get(".launcher button[aria-haspopup=menu]").trigger("click");
     await flushPromises();
     expect(document.body.textContent).not.toMatch(/run again/i);
   });
@@ -138,21 +138,21 @@ describe("ActionsPanel", () => {
   it("opens the window in edit mode when the person chooses Edit", async () => {
     document.body.innerHTML = "";
     const wrapper = await mountPanel();
-    const { newCustomScriptModal } = await import("../stores/newCustomScript");
-    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    const { newCustomLauncherModal } = await import("../stores/newCustomLauncher");
+    await wrapper.get(".launcher button[aria-haspopup=menu]").trigger("click");
     await flushPromises();
     const edit = Array.from(document.body.querySelectorAll<HTMLElement>("[role=menuitem]")).find((item) => item.textContent?.trim() === "Edit");
     edit!.click();
     await flushPromises();
-    expect(newCustomScriptModal.open).toBe(true);
-    expect(newCustomScriptModal.editedId).toBe("dev");
+    expect(newCustomLauncherModal.open).toBe(true);
+    expect(newCustomLauncherModal.editedId).toBe("dev");
   });
 
-  it("runs a script only when the person clicks the button Run, not when the person clicks the card", async () => {
+  it("runs a launcher only when the person clicks the button Run, not when the person clicks the card", async () => {
     const wrapper = await mountPanel();
     const { invoke } = await import("@tauri-apps/api/core");
     vi.mocked(invoke).mockClear();
-    const card = wrapper.get(".action");
+    const card = wrapper.get(".launcher");
     await card.trigger("click");
     await card.get(".label").trigger("click");
     await card.get(".desc").trigger("click");

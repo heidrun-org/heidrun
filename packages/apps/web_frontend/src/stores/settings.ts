@@ -1,7 +1,7 @@
 import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { CUSTOM_SCRIPT_CODING_AGENT_IDS } from "../lib/coding_agents";
+import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
 
 export interface FontOption {
   id: string;
@@ -38,10 +38,10 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 const KEY = "heidrun.settings";
 
 /**
- * The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one, and
+ * The sidebar sections of the left sidebar: "launchers" is the Launchers sidebar section, "files" is the Files one, and
  * "codeHosting" is the Code hosting one.
  */
-export type LeftSidebarSection = "actions" | "sourceControl" | "files" | "codeHosting";
+export type LeftSidebarSection = "launchers" | "sourceControl" | "files" | "codeHosting";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";
@@ -67,7 +67,7 @@ const defaults = {
    */
   mouseMode: "select" as "select" | "app",
   /** Sidebar section that the left sidebar shows. */
-  leftSidebarSection: "actions" as LeftSidebarSection,
+  leftSidebarSection: "launchers" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "toHandle" as RightSidebarSection,
   /** Sidebar section Past chats: the coding agent whose chats the list shows. */
@@ -100,14 +100,14 @@ const defaults = {
   confirmSavedSearchDelete: true,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
-  /** Window Create a custom script: the last kind, "commandLine" or "codingAgent". */
-  customScriptKind: "commandLine" as "commandLine" | "codingAgent",
-  /** Window Create a custom script: the identifier of the last coding agent. */
-  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS[0] as string,
-  /** Window Create a custom script: the last model. An empty text is the default model. */
-  customScriptModel: "",
-  /** Window Create a custom script: the last effort. An empty text is the default effort. */
-  customScriptEffort: "",
+  /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
+  customLauncherKind: "commandLine" as "commandLine" | "codingAgent",
+  /** Window Create a custom launcher: the identifier of the last coding agent. */
+  customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS[0] as string,
+  /** Window Create a custom launcher: the last model. An empty text is the default model. */
+  customLauncherModel: "",
+  /** Window Create a custom launcher: the last effort. An empty text is the default effort. */
+  customLauncherEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
   /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
@@ -216,8 +216,8 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   newTabCommand: ["terminal", "claude", "codex"],
-  customScriptKind: ["commandLine", "codingAgent"],
-  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS,
+  customLauncherKind: ["commandLine", "codingAgent"],
+  customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -265,6 +265,10 @@ const RENAMED_SETTINGS: Record<string, string> = {
   dockedPanes: "pinnedPanes",
   dockWidth: "columnOfPinnedPanesWidth",
   rightTab: "rightSidebarSection",
+  customScriptKind: "customLauncherKind",
+  customScriptAgent: "customLauncherAgent",
+  customScriptModel: "customLauncherModel",
+  customScriptEffort: "customLauncherEffort",
 };
 
 function load(): typeof defaults {
@@ -278,7 +282,8 @@ function load(): typeof defaults {
         delete stored[oldName];
       }
     }
-    // The Scripts and Git sidebar sections moved from the right sidebar to the left sidebar.
+    // The Scripts and Git sidebar sections moved from the right sidebar to the left sidebar. The saved value "actions" of
+    // the Scripts sidebar section becomes "launchers" below.
     if (stored.rightSidebarSection === "actions" || stored.rightSidebarSection === "git") {
       if (!("leftSidebarSection" in stored)) {
         stored.leftSidebarSection = stored.rightSidebarSection;
@@ -287,15 +292,19 @@ function load(): typeof defaults {
     }
     // The workspaces and the tabs left the left sidebar for the tab bar: its Workspaces sidebar section is gone.
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
-      stored.leftSidebarSection = "actions";
+      stored.leftSidebarSection = "launchers";
     }
     // The Needs you sidebar section moved from the left sidebar to the right sidebar.
     if (stored.leftSidebarSection === "toHandle") {
-      stored.leftSidebarSection = "actions";
+      stored.leftSidebarSection = "launchers";
     }
     // The Source control sidebar section replaced the Git sidebar section (issue #305).
     if (stored.leftSidebarSection === "git") {
       stored.leftSidebarSection = "sourceControl";
+    }
+    // The Scripts sidebar section became the Launchers sidebar section (issue #425): the saved value "actions" is now "launchers".
+    if (stored.leftSidebarSection === "actions") {
+      stored.leftSidebarSection = "launchers";
     }
     // The hide buttons of the sidebars are gone (issue #315): a sidebar that was hidden is now collapsed.
     if (stored.leftOpen === false) {
