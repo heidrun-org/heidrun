@@ -118,9 +118,20 @@ fn walk(base: &Path, dir: &Path, out: &mut Vec<String>, depth: u8) {
     }
 }
 
+/// The entries of `entries` that are not inside another entry that ends with "/".
+fn without_entries_inside_listed_folders(entries: Vec<String>) -> Vec<String> {
+    let folders: Vec<String> = entries.iter().filter(|entry| entry.ends_with('/')).cloned().collect();
+    entries
+        .into_iter()
+        .filter(|entry| folders.iter().any(|folder| folder != entry && entry.starts_with(folder.as_str())) == false)
+        .collect()
+}
+
 /// The files that Git lists for the repository `root`: the tracked files and the new files, sorted. When `show_ignored`
 /// is true, the entries that Git ignores are added, and are also returned alone as the second list. An ignored folder is
-/// one entry that ends with "/", not its thousands of files. Git never lists the folder `.git` (issue #430).
+/// one entry that ends with "/", not its thousands of files. Git never lists the folder `.git` (issue #430). Git lists
+/// a folder and an entry inside it when the ignore rule names the entry, for example `.heidrun/` and
+/// `.heidrun/config.json`, so every entry inside an ignored folder is dropped: the folder shows once (issue #441).
 async fn git_listed_files(root: &Path, show_ignored: bool) -> (Vec<String>, Vec<String>) {
     let listed = run(root, &["-c", "core.quotepath=off", "ls-files", "-z", "--cached", "--others", "--exclude-standard"]).await.unwrap_or_default();
     let mut files: Vec<String> = split_z(&listed).collect();
@@ -129,7 +140,7 @@ async fn git_listed_files(root: &Path, show_ignored: bool) -> (Vec<String>, Vec<
     let mut ignored_entries: Vec<String> = Vec::new();
     if show_ignored {
         let ign = run(root, &["-c", "core.quotepath=off", "ls-files", "-z", "--others", "--ignored", "--exclude-standard", "--directory"]).await.unwrap_or_default();
-        ignored_entries = split_z(&ign).collect();
+        ignored_entries = without_entries_inside_listed_folders(split_z(&ign).collect());
         files.extend(ignored_entries.iter().cloned());
     }
     (files, ignored_entries)
@@ -781,6 +792,39 @@ mod helper_tests {
             assert!(list.iter().all(|entry| entry.trim_end_matches('/') != ".git" && entry.starts_with(".git/") == false));
         }
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Issue #441: Git lists `.heidrun/` and `.heidrun/config.json` when the ignore rule names the file, and `.claude/` and
+    /// `.claude/worktrees/` when the rule is in `.git/info/exclude`. The folder must show once.
+    #[tokio::test]
+    async fn lists_a_folder_that_git_ignores_once_when_the_ignore_rule_names_something_inside_it() {
+        let dir = std::env::temp_dir().join(format!("hd-git-listed-nested-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join(".heidrun")).unwrap();
+        std::fs::create_dir_all(dir.join(".claude/worktrees/one")).unwrap();
+        std::fs::create_dir_all(dir.join("node_modules/package")).unwrap();
+        std::fs::write(dir.join(".gitignore"), ".heidrun/config.json\nnode_modules\n").unwrap();
+        std::fs::write(dir.join(".heidrun/config.json"), "{}").unwrap();
+        std::fs::write(dir.join(".claude/worktrees/one/file.txt"), "x").unwrap();
+        std::fs::write(dir.join("node_modules/package/index.js"), "x").unwrap();
+        std::fs::write(dir.join("a.txt"), "x").unwrap();
+        for args in [vec!["init", "-q"], vec!["add", ".gitignore", "a.txt"]] {
+            let status = std::process::Command::new("git").arg("-C").arg(&dir).args(args).status().unwrap();
+            assert!(status.success());
+        }
+        std::fs::write(dir.join(".git/info/exclude"), ".claude/worktrees/\n").unwrap();
+        let dir = std::fs::canonicalize(&dir).unwrap();
+        let (shown, shown_ignored) = git_listed_files(&dir, true).await;
+        assert_eq!(shown_ignored, vec![".claude/", ".heidrun/", "node_modules/"]);
+        assert_eq!(shown, vec![".gitignore", "a.txt", ".claude/", ".heidrun/", "node_modules/"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn drops_every_entry_inside_a_listed_folder_and_keeps_the_other_entries() {
+        let entries = [".claude/", ".claude/worktrees/", ".claude-other", ".heidrun/", ".heidrun/config.json", ".env"];
+        let kept = without_entries_inside_listed_folders(entries.iter().map(|entry| entry.to_string()).collect());
+        assert_eq!(kept, vec![".claude/", ".claude-other", ".heidrun/", ".env"]);
     }
 
     #[test]
