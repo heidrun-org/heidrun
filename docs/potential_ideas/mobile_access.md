@@ -55,7 +55,7 @@ The phone shows a notification when an agent needs the developer: the agent is b
 
 ## What stays out
 
-Heidrun Mobile does not show the Git sidebar section, the Past chats sidebar section, the Notes sidebar section, the Settings window, the tab bar, the layout of several panes, or the pinned panes. The developer does these things at the desk.
+Heidrun Mobile does not show the Git sidebar section, the Past chats sidebar section, the Clipboard sidebar section, the Settings window, the tab bar, the layout of several panes, or the pinned panes. The developer does these things at the desk.
 
 ## Points to decide
 

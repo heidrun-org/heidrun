@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 
-/** Mounts the Notes sidebar section with no note. */
+/** Mounts the Clipboard sidebar section with no note. */
 async function mountNotesPanel() {
   const { notes } = await import("../stores/notes");
   const { settings } = await import("../stores/settings");
@@ -20,10 +20,10 @@ beforeEach(() => {
 });
 
 describe("NotesPanel", () => {
-  it("shows the title Notes, in normal letters and in semibold, like the title of the Past chats sidebar section", async () => {
+  it("shows the title Clipboard, in normal letters and in semibold, like the title of the Past chats sidebar section", async () => {
     const { wrapper } = await mountNotesPanel();
     const title = wrapper.get("header.notes-title span");
-    expect(title.text()).toBe("Notes");
+    expect(title.text()).toBe("Clipboard");
     expect(title.classes()).toContain("fw-semibold");
     expect(wrapper.find(".eyebrow").exists()).toBe(false);
   });
@@ -39,15 +39,19 @@ describe("NotesPanel", () => {
     expect(wrapper.get("header.notes-title span").text()).toBe(t("rightPanel.sidebarSection.notes"));
   });
 
-  it("keeps the check box All workspaces on the same line as the title, at the right", async () => {
+  it("keeps the switch All workspaces on the same line as the title, at the right", async () => {
     const { wrapper, settings } = await mountNotesPanel();
     const header = wrapper.get("header.notes-title");
     expect(header.classes()).toContain("d-flex");
-    expect(Array.from(header.element.children).map((child) => child.tagName)).toEqual(["SPAN", "LABEL"]);
-    const checkbox = header.get("label input[type=checkbox]");
+    expect(Array.from(header.element.children).map((child) => child.tagName)).toEqual(["SPAN", "DIV"]);
+    const switchInput = header.get("span.switch input[type=checkbox][role=switch]");
     expect(header.get("label").text()).toBe("All workspaces");
-    await checkbox.setValue(true);
+    expect(header.find("input[type=checkbox]:not([role=switch])").exists()).toBe(false);
+    expect(settings.notesShowAll).toBe(false);
+    await switchInput.setValue(true);
     expect(settings.notesShowAll).toBe(true);
+    await switchInput.setValue(false);
+    expect(settings.notesShowAll).toBe(false);
   });
 
   it("shows the title above the message when there is no note", async () => {

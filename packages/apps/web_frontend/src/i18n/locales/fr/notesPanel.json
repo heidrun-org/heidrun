@@ -1,7 +1,7 @@
 {
   "copied": "Copié",
   "sentTo": "Note envoyée à {agent}",
-  "title": "Notes",
+  "title": "Presse-papiers",
   "allWorkspaces": "Tous les workspaces",
   "emptyBefore": "Sélectionne du texte dans un terminal, puis « Épingler » ou ",
   "emptyAfter": ".",
