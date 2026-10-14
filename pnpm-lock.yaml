@@ -184,6 +184,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/auxiliary/data_layer_chat_sessions: {}
+
   packages/auxiliary/data_layer_code_hosting: {}
 
   packages/auxiliary/data_layer_source_control: {}

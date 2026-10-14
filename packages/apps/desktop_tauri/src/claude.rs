@@ -12,12 +12,7 @@ use std::path::PathBuf;
 const SCRIPT: &str = include_str!("../../../../scripts/claude-statusline.sh");
 
 pub(crate) fn claude_dir() -> PathBuf {
-    if let Ok(d) = std::env::var("CLAUDE_CONFIG_DIR") {
-        if !d.is_empty() {
-            return PathBuf::from(d);
-        }
-    }
-    dirs::home_dir().unwrap_or_default().join(".claude")
+    data_layer_chat_sessions::claude_dir()
 }
 
 fn desk_dir() -> PathBuf {

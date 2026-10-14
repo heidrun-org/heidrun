@@ -142,7 +142,10 @@ mod tests {
     #[test]
     fn the_file_env_example_lists_exactly_the_variables_that_the_sources_read() {
         let mut read = BTreeSet::new();
-        for file in rust_files(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src")) {
+        let manifest_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
+        // The package `data_layer_chat_sessions` reads the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME` for the application.
+        let source_folders = [manifest_folder.join("src"), manifest_folder.join("../../auxiliary/data_layer_chat_sessions/src")];
+        for file in source_folders.iter().flat_map(|folder| rust_files(folder)) {
             if file.file_name().is_some_and(|name| name == "environment_file.rs") {
                 continue;
             }

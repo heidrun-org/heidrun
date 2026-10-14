@@ -1,7 +1,5 @@
 mod chats;
 mod chats_files;
-mod chats_scan;
-mod chats_tokens;
 mod claude;
 mod clipboard;
 mod coding_agent_models;

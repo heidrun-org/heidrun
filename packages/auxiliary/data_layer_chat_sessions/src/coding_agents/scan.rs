@@ -1,4 +1,4 @@
-//! Chats scan: what one conversation file of Claude Code or of Codex holds, found without a model.
+//! Scan: what one chat session file of Claude Code or of Codex holds, found without a model.
 //!
 //! A scan reads the file line by line. Each line is one record. The scan keeps the title, the first message, and the meta
 //! information of the conversation: the first and the last date, the number of messages from the developer, the folders,
@@ -8,7 +8,7 @@
 //! A conversation file only grows at its end. So a scan can stop at the end of the last complete line, and the next scan
 //! of the same file continues from there with the state that the first scan kept (`scan_file`).
 
-use crate::chats_tokens::TokenScan;
+use crate::coding_agents::tokens::TokenScan;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
@@ -77,7 +77,7 @@ impl ChatMeta {
     fn note_typed_message(&mut self, text: &str) {
         self.user_messages += 1;
         if self.first_messages.len() < FIRST_MESSAGES {
-            self.first_messages.push(crate::claude::short(text, MESSAGE_LENGTH));
+            self.first_messages.push(shorten(text, MESSAGE_LENGTH));
         }
         self.note_references(text, true);
     }
@@ -313,6 +313,17 @@ fn note_patch_files(meta: &mut ChatMeta, line: &str) {
 }
 
 // ---- Both coding agents ------------------------------------------------------------------------------------------
+
+/// The text on one line, with the white space made single, and cut to `length` characters. A longer text ends with an
+/// ellipsis.
+pub fn shorten(text: &str, length: usize) -> String {
+    let one_line = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    if one_line.chars().count() > length {
+        format!("{}…", one_line.chars().take(length).collect::<String>())
+    } else {
+        one_line
+    }
+}
 
 /// The first text of a message content that is not in angle brackets. A content is a string, or a list of parts.
 fn text_of_content(content: &Value) -> Option<String> {
