@@ -206,7 +206,7 @@ const error = ref("");
 const loading = ref(false);
 const truncated = ref(false);
 const md = computed(() => isMarkdown(files.active));
-const reading = computed(() => md.value && settings.filesMdRead);
+const isPreview = computed(() => md.value && settings.filesMdRead);
 let seq = 0;
 
 async function load() {
@@ -241,7 +241,7 @@ async function load() {
     }
     const text = (await invoke<string>("git_file", { root: files.root, path, rev: null })).replace(/\n$/, "");
     if (my !== seq) return;
-    if (reading.value) {
+    if (isPreview.value) {
       rendered.value = renderMarkdown(text);
       return;
     }
@@ -257,7 +257,7 @@ async function load() {
     if (my === seq) loading.value = false;
   }
 }
-watch([() => files.active, () => files.root, reading], load, { immediate: true });
+watch([() => files.active, () => files.root, isPreview], load, { immediate: true });
 // "file:line" chip for the file already shown: just scroll.
 watch(
   () => files.lineTick,
@@ -729,7 +729,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
                 <button class="tb accent" :disabled="!dirty || edit.saving" :title="t('filesModal.saveTitle')" @click="save()">{{ edit.saving ? t("filesModal.saving") : t("filesModal.saveButton") }}</button>
                 <button class="tb" :class="{ on: showDiff === 'mine' }" :disabled="!dirty" :title="t('filesModal.myChangesTitle')" @click="showDiff = showDiff === 'mine' ? null : 'mine'">{{ t("filesModal.diffButton") }}</button>
                 <label class="wrap-t" :title="t('filesModal.diffBeforeSaveTitle')"><input v-model="settings.filesDiffBeforeSave" type="checkbox" />{{ t("filesModal.diffBeforeSave") }}</label>
-                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToReading')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
+                <button class="tb" :class="{ arm: leaving }" :title="leaving ? t('filesModal.leaveArmedTitle') : t('filesModal.backToPreview')" @click="finishEdit">{{ leaving ? t("filesModal.leaveArmed") : t("filesModal.finish") }}</button>
               </template>
               <button v-else-if="canEdit" class="tb edit" :title="t('filesModal.editTitle')" @click="beginEdit"><Icon name="pencil" /> {{ t("filesModal.edit") }}</button>
               <button v-if="files.git && files.active && files.status[files.active] && files.status[files.active] !== 'D'" class="tb" :class="{ on: gitDiff }" :title="t('filesModal.gitDiffTitle')" @click="toggleGitDiff">{{ t("filesModal.gitDiff") }}</button>
@@ -790,7 +790,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <div v-else-if="error" class="empty err">{{ error }}</div>
             <div v-else-if="loading" class="empty">{{ t("filesModal.loading") }}</div>
             <div v-else-if="image" class="img"><img :src="image" :alt="files.active" /></div>
-            <article v-else-if="reading" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
+            <article v-else-if="isPreview" class="md-doc" :class="{ full: settings.mdWidth === 'full' }" @click="onMdClick" v-html="rendered"></article>
             <table v-else class="tbl">
               <tbody>
                 <tr v-for="(h, i) in lines" :key="i" :data-line="i + 1" :class="{ hit: files.line === i + 1 }">
