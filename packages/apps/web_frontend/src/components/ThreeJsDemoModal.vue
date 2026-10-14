@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
+import DialogCloseButton from "./DialogCloseButton.vue";
 import { closeThreeJsDemoModal } from "../stores/three_js_demo_modal";
 import type { ThreeJsDemoScene } from "../lib/three_js_demo_scene";
 import { t } from "../i18n/index";
@@ -50,8 +51,8 @@ onBeforeUnmount(() => {
   <div class="overlay" @mousedown.self="closeThreeJsDemoModal">
     <dialog class="dialog dialog-lg dialog-instant dialog-nonmodal" open aria-labelledby="three-js-demo-title">
       <div class="dialog-header">
-        <div id="three-js-demo-title" class="dialog-title" role="heading" aria-level="2">{{ t("threeJsDemoModal.title") }}</div>
-        <button type="button" class="btn-close" :aria-label="t('threeJsDemoModal.close')" :title="t('threeJsDemoModal.close')" @click="closeThreeJsDemoModal"></button>
+        <div id="three-js-demo-title" class="dialog-title me-auto" role="heading" aria-level="2">{{ t("threeJsDemoModal.title") }}</div>
+        <DialogCloseButton :title="t('threeJsDemoModal.close')" :label="t('threeJsDemoModal.close')" @click="closeThreeJsDemoModal" />
       </div>
       <div class="dialog-body">
         <div v-if="errorText !== ''" class="alert alert-danger" role="alert">{{ t("threeJsDemoModal.notAvailable", { error: errorText }) }}</div>

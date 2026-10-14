@@ -24,8 +24,66 @@ beforeEach(() => {
 describe("SettingsModal: sections", () => {
   it("lists the sections in the sidebar, with the section Dynamic topics at the end, and without the section Skills", async () => {
     const wrapper = await mountSettings();
-    const entries = wrapper.findAll(".side .entry").map((entry) => entry.text());
+    const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
     expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Notifications", "Mobile access", "Agents", "Dynamic topics"]);
+    wrapper.unmount();
+  });
+
+  it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
+    const wrapper = await mountSettings();
+    const links = wrapper.findAll("nav .nav-link");
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false]);
+    expect(links[0].attributes("aria-current")).toBe("page");
+    await links[3].trigger("click");
+    expect(wrapper.get("h3").text()).toBe("Mouse");
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false]);
+    expect(links[3].attributes("aria-current")).toBe("page");
+    expect(links[0].attributes("aria-current")).toBeUndefined();
+    wrapper.unmount();
+  });
+});
+
+describe("SettingsModal: frame (issue #412)", () => {
+  it("is a Bootstrap dialog with a header, a title, a body, and a close button", async () => {
+    const wrapper = await mountSettings();
+    const dialog = wrapper.get("dialog");
+    expect(dialog.classes()).toEqual(expect.arrayContaining(["dialog", "dialog-lg", "dialog-instant", "dialog-nonmodal"]));
+    expect(dialog.attributes("aria-labelledby")).toBe("settings-title");
+    expect(wrapper.get("#settings-title").text()).toBe("Settings");
+    expect(wrapper.get("#settings-title").classes()).toContain("dialog-title");
+    expect(wrapper.find(".dialog-header button.btn").exists()).toBe(true);
+    expect(wrapper.find(".dialog-body nav.nav").exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("closes the window with the close button and with a click on the dark layer, and stays open for a click inside the dialog", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    await wrapper.get("dialog").trigger("mousedown");
+    expect(settingsModal.open).toBe(true);
+    await wrapper.get(".overlay").trigger("mousedown");
+    expect(settingsModal.open).toBe(false);
+    settingsModal.open = true;
+    await wrapper.get(".dialog-header button").trigger("click");
+    expect(settingsModal.open).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("draws the close button as a big X with no border and no background of its own, and not as the square Bootstrap close button", async () => {
+    const wrapper = await mountSettings();
+    const closeButton = wrapper.get(".dialog-header button");
+    expect(closeButton.classes()).toEqual(expect.arrayContaining(["btn", "border-0", "fs-4"]));
+    expect(closeButton.classes()).not.toContain("btn-close");
+    expect(wrapper.findComponent({ name: "DialogCloseButton" }).exists()).toBe(true);
+    expect(closeButton.find(".bi-x-lg").exists()).toBe(true);
+    expect(closeButton.text()).toBe("");
+    wrapper.unmount();
+  });
+
+  it("names the close button for the screen reader", async () => {
+    const wrapper = await mountSettings();
+    expect(wrapper.get(".dialog-header button").attributes("aria-label")).toBe("Close (Escape)");
+    expect(wrapper.get(".dialog-header button").attributes("title")).toBe("Close the window (Escape)");
     wrapper.unmount();
   });
 });
@@ -93,50 +151,16 @@ describe("SettingsModal: key Escape", () => {
   });
 });
 
-describe("SettingsModal: keep agents running after quit", () => {
-  it("shows a checkbox in the section General, switched off by default", async () => {
-    const wrapper = await mountSettings();
-    const row = wrapper.findAll(".check").find((candidate) => candidate.text() === "Keep agents running after quit");
-    expect(row).toBeDefined();
-    const checkbox = row!.find("input[type=checkbox]");
-    expect((checkbox.element as HTMLInputElement).checked).toBe(false);
-    await checkbox.setValue(true);
-    const { settings } = await import("../stores/settings");
-    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
-    wrapper.unmount();
-  });
-
-  it("keeps the long explanation out of the section: it opens from a question mark next to the checkbox", async () => {
-    const wrapper = await mountSettings();
-    const row = wrapper.findAll(".checkRow").find((candidate) => candidate.find(".check").text() === "Keep agents running after quit");
-    expect(row).toBeDefined();
-    const helpButton = row!.find("button.helpButton");
-    expect(helpButton.attributes("aria-label")).toBe("What does this setting do?");
-    const tip = row!.find("[role=tooltip]");
-    expect(helpButton.attributes("aria-describedby")).toBe(tip.attributes("id"));
-    expect(tip.text()).toContain("Heidrun stops its Herdr session");
-    expect(wrapper.findAll(".keys").some((keys) => keys.text().includes("Heidrun stops its Herdr session"))).toBe(false);
-    wrapper.unmount();
-  });
-
-  it("does not switch the checkbox when the question mark is clicked", async () => {
-    const wrapper = await mountSettings();
-    const { settings } = await import("../stores/settings");
-    await wrapper.find("button.helpButton").trigger("click");
-    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
-    wrapper.unmount();
-  });
-});
-
 describe("SettingsModal: status item", () => {
-  it("shows a checkbox for the status item in the section Notifications, switched on by default", async () => {
+  it("shows a switch for the status item in the section Notifications, switched on by default", async () => {
     const wrapper = await mountSettings();
     const { settingsModal } = await import("../stores/settings");
     settingsModal.section = "notifications";
     await flushPromises();
-    const row = wrapper.findAll(".nrow").find((candidate) => candidate.text() === "Show the status item in the macOS menu bar");
-    expect(row).toBeDefined();
-    const checkbox = row!.find("input[type=checkbox]");
+    const label = wrapper.findAll("label").find((candidate) => candidate.text() === "Show the status item in the macOS menu bar");
+    expect(label).toBeDefined();
+    const checkbox = wrapper.get(`input[id="${label!.attributes("for")}"]`);
+    expect(checkbox.attributes("role")).toBe("switch");
     expect((checkbox.element as HTMLInputElement).checked).toBe(true);
     await checkbox.setValue(false);
     const { settings } = await import("../stores/settings");

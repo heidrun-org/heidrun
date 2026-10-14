@@ -4,28 +4,24 @@
 The content of each section of the Settings window. The Settings window itself is `../SettingsModal.vue`.
 
 ## Key Exports & Entry Points
+- `SettingsSwitchRow.vue`: one Bootstrap switch with its label, bound with `v-model`. The slot after the label holds an information card. Every boolean setting uses it.
+- `SettingsGeneralSection.vue`: the language and the time format (button groups of radio inputs), the working days (button group of checkbox inputs), the headings "Ask before closing" (workspace, tab, pane), "Ask before deleting" (saved search), and "Quit" (`keepAgentsRunningAfterQuit`, with an information card). The settings are read by `../WorkspaceStatusSummary.vue`, `../TabBar.vue`, `../PaneCard.vue`, `../SavedSearchModal.vue`, and `../../stores/settings.ts`.
 - `SettingsTerminalSection.vue`: the font, and the font size that zooms the whole window.
-- `SettingsNewTabSection.vue`: the choice "Default command of a new tab", a Bootstrap 6 button group of three radio inputs ("Terminal", "Claude Code", and "Codex"), saved in the setting `newTabCommand`. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
+- `SettingsNewTabSection.vue`: the setting `newTabCommand`, a button group of three radio inputs. The plus button of `../TabBar.vue` starts this command, through `../../stores/newPane.ts`.
 - `SettingsMouseSection.vue`: the mouse mode.
 - `SettingsFinishedItemsSection.vue`: the delay after which finished items disappear.
-- `SettingsNotificationsSection.vue`: the notification settings, and the checkbox that shows or hides the status item in the macOS menu bar (the setting `showStatusItem`, handled by `../../stores/statusItem.ts`).
-- `SettingsGeneralSection.vue`: the language of the user interface the time format (automatic, 12-hour, 24-hour), the working days, the heading "Ask before closing" with three checkboxes, in this order: "Ask before closing a workspace" (the setting `confirmWorkspaceClose`, read by `../WorkspaceStatusSummary.vue`), "Ask before closing a tab" (the setting `confirmTabClose`, read by `../TabBar.vue`), and "Ask before closing a pane" (the setting `confirmPaneClose`, read by `../PaneCard.vue`), the heading "Ask before deleting" with the checkbox "Ask before deleting a saved search" (the setting `confirmSavedSearchDelete`, read by `../SavedSearchModal.vue`), and the checkbox "Keep agents running after quit" (the setting `keepAgentsRunningAfterQuit`, sent to the Rust side by `../../stores/settings.ts`).
+- `SettingsNotificationsSection.vue`: the notification settings, and the switch for the status item in the macOS menu bar (`showStatusItem`, handled by `../../stores/statusItem.ts`).
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the QR code and the paired devices.
-- `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in the setting `ownedAgents`. The whole row of an agent is the switch: a click anywhere on the row, or the Space key or the Enter key on the focused row, changes it. A switched on agent means the user has a valid subscription or access for it. The status bar `../StatusBar.vue` shows the quota of a coding agent only when this agent is switched on, and it changes at once when a switch moves.
-- `SettingsDynamicTopicsSection.vue`: the choice "Extraction method", two radio buttons ("Keyword" and "Language model"), saved in the setting `dynamicTopicExtraction`, and the line that says why the last call of the method "Language model" gave no topic (the store `../../stores/language_model_topics.ts`). The Chats sidebar section `../ChatsPanel.vue` reads the setting. It also holds the switch "Enable clustered dynamic topics" (the setting `clusteredDynamicTopics`), the button "Rebuild the clusters", and the line that says why the last call gave no cluster (the store `../../stores/topic_clusters.ts`). The help of the two parts is in two information cards, each one opened by a circled question mark (`../InformationCard.vue` with the placement "bottom").
+- `SettingsAgentsSection.vue`: one switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents`. The whole row is the label of its switch. `../StatusBar.vue` shows the quota of a coding agent only when its switch is on.
+- `SettingsDynamicTopicsSection.vue`: the extraction method (`dynamicTopicExtraction`, read by `../ChatsPanel.vue`), the switch `clusteredDynamicTopics`, the button "Rebuild the clusters", and the lines that say why the last call gave nothing. Two information cards (`../InformationCard.vue`, placement "bottom") hold the help.
 
 ## Rules
 - A section component shows the content only. The title, the sidebar and the close button belong to `SettingsModal.vue`.
-- The shared styles of the classes `keys`, `seg` and `sr` are defined in `SettingsModal.vue`, not in a section component.
 - One section component per entry of the sidebar of `SettingsModal.vue`.
+- The Settings window writes no style rule except the dark layer behind it and the QR code box. Every control is a Bootstrap component or a Bootstrap utility class. The test `../../settings_bootstrap.test.ts` checks it.
+- A boolean setting is a Bootstrap switch, never a checkbox: the Bootstrap part `check` is not loaded, because other components use the class name `check` for their own labels.
 
 ## Background
-- The section Agents comes from [issue 122](https://github.com/heidrun-org/heidrun/issues/122). Every agent starts switched off. The whole row is the switch: [issue 139](https://github.com/heidrun-org/heidrun/issues/139).
-- The Settings window replaces three buttons of the top bar: [issue 60](https://github.com/heidrun-org/heidrun/issues/60).
-- The checkbox "Keep agents running after quit" comes from [issue 175](https://github.com/heidrun-org/heidrun/issues/175).
-- The checkbox "Ask before closing a tab" comes from [issue 309](https://github.com/heidrun-org/heidrun/issues/309). The heading "Ask before closing" and the two checkboxes for a workspace and a pane come from [issue 333](https://github.com/heidrun-org/heidrun/issues/333).
-- The section New tab comes from [issue 328](https://github.com/heidrun-org/heidrun/issues/328).
-- The section Dynamic topics comes from [issue 260](https://github.com/heidrun-org/heidrun/issues/260).
-- The switch "Clustered dynamic topics" comes from [issue 265](https://github.com/heidrun-org/heidrun/issues/265).
-- The two information cards that replace the help paragraphs of the section Dynamic topics come from [issue 266](https://github.com/heidrun-org/heidrun/issues/266).
-- The radio button "Language model" is enabled by [issue 272](https://github.com/heidrun-org/heidrun/issues/272).
+- The Settings window is rebuilt with Bootstrap in [issue 412](https://github.com/heidrun-org/heidrun/issues/412), after [issue 141](https://github.com/heidrun-org/heidrun/issues/141) and [issue 189](https://github.com/heidrun-org/heidrun/issues/189).
+- Sections: Agents [122](https://github.com/heidrun-org/heidrun/issues/122) and [139](https://github.com/heidrun-org/heidrun/issues/139), New tab [328](https://github.com/heidrun-org/heidrun/issues/328), Dynamic topics [260](https://github.com/heidrun-org/heidrun/issues/260), [265](https://github.com/heidrun-org/heidrun/issues/265), [266](https://github.com/heidrun-org/heidrun/issues/266), [272](https://github.com/heidrun-org/heidrun/issues/272).
+- Settings: the window replaces three top bar buttons [60](https://github.com/heidrun-org/heidrun/issues/60), "Keep agents running" [175](https://github.com/heidrun-org/heidrun/issues/175), "Ask before closing" [309](https://github.com/heidrun-org/heidrun/issues/309) and [333](https://github.com/heidrun-org/heidrun/issues/333).
