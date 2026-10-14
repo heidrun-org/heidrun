@@ -70,17 +70,17 @@ const defaults = {
   leftSidebarSection: "actions" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "toHandle" as RightSidebarSection,
-  /** Sidebar section Chats: the coding agent whose chats the list shows. */
+  /** Sidebar section Past chats: the coding agent whose chats the list shows. */
   chatsAgent: "claude" as "claude" | "codex",
-  /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
+  /** Sidebar section Past chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
   /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
   dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
   /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
   clusteredDynamicTopics: false,
-  /** Sidebar section Chats: what the list is sorted by. */
+  /** Sidebar section Past chats: what the list is sorted by. */
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
-  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  /** Sidebar section Past chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
   chatsOrder: "descending" as "ascending" | "descending",
   /** Last size of the note window, in px. */
   noteWidth: 760,

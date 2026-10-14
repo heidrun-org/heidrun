@@ -45,17 +45,17 @@ describe("RightPanel", () => {
     }
   });
 
-  it("shows the buttons Needs you, Notes, and Chats in the sidebar icon bar, and not the buttons Pane, Scripts, and Git", () => {
+  it("shows the buttons Needs you, Notes, and Past chats in the sidebar icon bar, and not the buttons Pane, Scripts, and Git", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("role")).toBe("tablist");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Notes", "Chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-label"))).toEqual(["Needs you", "Notes", "Past chats"]);
   });
 
   it("gives each button the title of its sidebar section as its tooltip, and does not call it a tab", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.find(".tabs").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Notes", "Chats"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("title"))).toEqual(["Needs you", "Notes", "Past chats"]);
   });
 
   it("marks only the selected sidebar section as active", async () => {
@@ -91,7 +91,7 @@ describe("RightPanel", () => {
     expect(restarted.find("to-handle-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the sidebar section Chats, and no other sidebar section, after a click on its button", async () => {
+  it("shows the sidebar section Past chats, and no other sidebar section, after a click on its button", async () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[2].trigger("click");
     expect(settings.rightSidebarSection).toBe("chats");
@@ -101,7 +101,7 @@ describe("RightPanel", () => {
     expect(wrapper.find("notes-panel-stub").exists()).toBe(false);
   });
 
-  it("shows no number on the button Chats", () => {
+  it("shows no number on the button Past chats", () => {
     const wrapper = mount(RightPanel, { global: { stubs } });
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]")[2].find(".badge").exists()).toBe(false);
   });

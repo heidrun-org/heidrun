@@ -1,7 +1,7 @@
 # Heidrun Mobile
 
 - Created: 12 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Idea that nobody has decided to build yet
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274)
@@ -55,7 +55,7 @@ The phone shows a notification when an agent needs the developer: the agent is b
 
 ## What stays out
 
-Heidrun Mobile does not show the Git sidebar section, the Chats sidebar section, the Notes sidebar section, the Settings window, the tab bar, the layout of several panes, or the pinned panes. The developer does these things at the desk.
+Heidrun Mobile does not show the Git sidebar section, the Past chats sidebar section, the Notes sidebar section, the Settings window, the tab bar, the layout of several panes, or the pinned panes. The developer does these things at the desk.
 
 ## Points to decide
 

@@ -1,4 +1,4 @@
-# Chats sidebar section: the files line
+# Past chats sidebar section: the files line
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

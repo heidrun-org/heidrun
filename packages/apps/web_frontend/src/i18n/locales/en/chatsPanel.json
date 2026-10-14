@@ -1,5 +1,6 @@
 {
-  "label": "Chats of the selected workspace",
+  "title": "Past chats",
+  "label": "Past chats of the selected workspace",
   "agentLabel": "Coding agent",
   "agent.claude": "Claude",
   "agent.codex": "Codex",

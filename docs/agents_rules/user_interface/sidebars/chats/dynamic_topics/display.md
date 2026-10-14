@@ -1,4 +1,4 @@
-# Chats sidebar section: dynamic topics on the rows and the dynamic topic bar
+# Past chats sidebar section: dynamic topics on the rows and the dynamic topic bar
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

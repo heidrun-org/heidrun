@@ -1,4 +1,4 @@
-# Chats sidebar section: the section "Dynamic topics" of the Settings window
+# Past chats sidebar section: the section "Dynamic topics" of the Settings window
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026

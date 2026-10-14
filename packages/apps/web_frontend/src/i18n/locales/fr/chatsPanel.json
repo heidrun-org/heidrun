@@ -1,5 +1,6 @@
 {
-  "label": "Conversations du workspace sélectionné",
+  "title": "Conversations passées",
+  "label": "Conversations passées du workspace sélectionné",
   "agentLabel": "Agent de code",
   "agent.claude": "Claude",
   "agent.codex": "Codex",

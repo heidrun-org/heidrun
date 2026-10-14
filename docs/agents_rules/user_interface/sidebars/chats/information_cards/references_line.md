@@ -1,4 +1,4 @@
-# Chats sidebar section: the references line
+# Past chats sidebar section: the references line
 
 - Created: 13 October 2026
 - Last updated: 14 October 2026
