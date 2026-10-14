@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import { settings } from "../../stores/settings";
 import { t } from "../../i18n/index";
+
+/** The two mouse modes, in the order of the buttons. */
+const MOUSE_MODES = [
+  { id: "select", labelKey: "fontMenu.mouseSelect", titleKey: "fontMenu.mouseSelectTitle" },
+  { id: "app", labelKey: "fontMenu.mouseApp", titleKey: "fontMenu.mouseAppTitle" },
+] as const;
 </script>
 
 <template>
-  <div class="section">
-    <div class="seg" role="radiogroup" :aria-label="t('fontMenu.mouseLabel')">
-      <button :title="t('fontMenu.mouseSelectTitle')" role="radio" :aria-checked="settings.mouseMode === 'select'" :class="{ on: settings.mouseMode === 'select' }" @click="settings.mouseMode = 'select'">{{ t("fontMenu.mouseSelect") }}</button>
-      <button :title="t('fontMenu.mouseAppTitle')" role="radio" :aria-checked="settings.mouseMode === 'app'" :class="{ on: settings.mouseMode === 'app' }" @click="settings.mouseMode = 'app'">{{ t("fontMenu.mouseApp") }}</button>
+  <div class="d-flex flex-column gap-2">
+    <div class="btn-group" role="group" :aria-label="t('fontMenu.mouseLabel')">
+      <label v-for="mode in MOUSE_MODES" :key="mode.id" class="btn-check btn-outline theme-secondary" :title="t(mode.titleKey)">
+        <input v-model="settings.mouseMode" type="radio" name="mouse-mode" autocomplete="off" :value="mode.id" />
+        {{ t(mode.labelKey) }}
+      </label>
     </div>
-    <div class="keys">
-      <template v-if="settings.mouseMode === 'select'">{{ t("fontMenu.mouseSelectHelpBefore") }}<kbd>⌘C</kbd>{{ t("fontMenu.mouseSelectHelpAfter") }}</template>
-      <template v-else>{{ t("fontMenu.mouseAppHelpBefore") }}<kbd>⌥</kbd>{{ t("fontMenu.mouseAppHelpAfter") }}</template>
+    <div class="form-text">
+      <template v-if="settings.mouseMode === 'select'">{{ t("fontMenu.mouseSelectHelpBefore") }}<kbd class="mono">⌘C</kbd>{{ t("fontMenu.mouseSelectHelpAfter") }}</template>
+      <template v-else>{{ t("fontMenu.mouseAppHelpBefore") }}<kbd class="mono">⌥</kbd>{{ t("fontMenu.mouseAppHelpAfter") }}</template>
     </div>
   </div>
 </template>
-
-<style scoped>
-.section { display: flex; flex-direction: column; gap: 10px; }
-</style>

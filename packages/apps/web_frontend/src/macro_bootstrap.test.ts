@@ -57,8 +57,8 @@ describe('the dropdown of the macros (MacroMenu.vue)', () => {
 describe('the pop-up of the macros (MacroEditor.vue)', () => {
 	const sourceText = MacroBootstrapTestHelper.readComponent('MacroEditor.vue');
 
-	it('uses the Bootstrap close button, and the Bootstrap form classes', () => {
-		const classNameList = ['dialog-header', 'dialog-title', 'dialog-body', 'dialog-footer', 'btn-close', 'form-label', 'form-control', 'form-text'];
+	it('uses the close button of the dialogs, and the Bootstrap form classes', () => {
+		const classNameList = ['dialog-header', 'dialog-title', 'dialog-body', 'dialog-footer', 'DialogCloseButton', 'form-label', 'form-control', 'form-text'];
 		for (const className of classNameList) {
 			expect(sourceText).toContain(className);
 		}

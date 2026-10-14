@@ -37,6 +37,7 @@ $application-utilities: (
     property: justify-content,
     class: justify-content,
     values: (
+      start: flex-start,
       center: center,
       between: space-between,
     ),
@@ -115,6 +116,14 @@ $application-utilities: (
       3: 1rem,
     ),
   ),
+  "margin": (
+    important: true,
+    property: margin,
+    class: m,
+    values: (
+      0: 0,
+    ),
+  ),
   "margin-start": (
     important: true,
     property: margin-left,
@@ -149,12 +158,36 @@ $application-utilities: (
       3: 1rem,
     ),
   ),
+  "padding": (
+    important: true,
+    property: padding,
+    class: p,
+    values: (
+      2: 0.5rem,
+    ),
+  ),
+  "padding-start": (
+    important: true,
+    property: padding-left,
+    class: ps,
+    values: (
+      3: 1rem,
+    ),
+  ),
   "padding-top": (
     important: true,
     property: padding-top,
     class: pt,
     values: (
       2: 0.5rem,
+    ),
+  ),
+  "font-size": (
+    important: true,
+    property: font-size,
+    class: fs,
+    values: (
+      4: 1.5em,
     ),
   ),
   "font-weight": (
@@ -197,6 +230,7 @@ $application-utilities: (
     class: text,
     values: (
       wrap: normal,
+      nowrap: nowrap,
     ),
   ),
   "color": (
@@ -220,6 +254,7 @@ $application-utilities: (
       warning: var(--warning-bg),
       danger: var(--danger-bg),
       body-emphasis: var(--fg-body),
+      white: var(--white),
     ),
   ),
   "position": (
@@ -263,7 +298,24 @@ $application-utilities: (
     property: height,
     class: h,
     values: (
+      75: 75%,
       auto: auto,
+    ),
+  ),
+  "width": (
+    important: true,
+    property: width,
+    class: w,
+    values: (
+      auto: auto,
+    ),
+  ),
+  "overflow": (
+    important: true,
+    property: overflow,
+    class: overflow,
+    values: (
+      hidden: hidden,
     ),
   ),
   "overflow-y": (
@@ -272,6 +324,22 @@ $application-utilities: (
     class: overflow-y,
     values: (
       auto: auto,
+    ),
+  ),
+  "border-radius": (
+    important: true,
+    property: border-radius,
+    class: rounded,
+    values: (
+      null: var(--radius-5),
+    ),
+  ),
+  "opacity": (
+    important: true,
+    property: opacity,
+    class: opacity,
+    values: (
+      50: 0.5,
     ),
   ),
   "visibility": (
@@ -295,6 +363,15 @@ select.form-control {
   --control-font-size: var(--font-size);
   font-family: inherit;
   box-shadow: none;
+}
+
+// The focus ring of a field sits on its border, as Bootstrap draws it. The rule :focus-visible of the application puts the ring one pixel
+// outside, which leaves the dark border visible inside the ring and looks like a double border. A click with the mouse on a select also
+// shows the ring, so the ring has the same color and width whatever opens it.
+.form-control:focus-visible,
+.form-control:focus-within {
+  outline: 2px solid var(--done);
+  outline-offset: -1px;
 }
 
 .menu {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
@@ -6,7 +6,8 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 async function mountSection() {
   const { settings } = await import("../../stores/settings");
   const { default: SettingsAgentsSection } = await import("./SettingsAgentsSection.vue");
-  return { wrapper: mount(SettingsAgentsSection), settings };
+  // The click on a label reaches its switch only when the label is in the page.
+  return { wrapper: mount(SettingsAgentsSection, { attachTo: document.body }), settings };
 }
 
 beforeEach(() => {
@@ -14,84 +15,92 @@ beforeEach(() => {
   vi.resetModules();
 });
 
+afterEach(() => {
+  document.body.innerHTML = "";
+});
+
 describe("SettingsAgentsSection", () => {
-  it("lists Claude Code and Codex", async () => {
+  it("lists Claude Code and Codex, one Bootstrap list group row for each", async () => {
     const { wrapper } = await mountSection();
-    expect(wrapper.findAll(".name").map((name) => name.text())).toEqual(["Claude Code", "Codex"]);
+    expect(wrapper.find(".list-group").exists()).toBe(true);
+    expect(wrapper.findAll(".list-group-item").map((row) => row.text())).toEqual(["Claude Code", "Codex"]);
   });
 
   it("starts with every agent switched off", async () => {
     const { wrapper, settings } = await mountSection();
     expect(settings.ownedAgents).toEqual([]);
-    expect(wrapper.findAll("[role=switch]").map((node) => node.attributes("aria-checked"))).toEqual(["false", "false"]);
+    expect(wrapper.findAll("input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false]);
+  });
+
+  it("draws each switch with the Bootstrap class switch", async () => {
+    const { wrapper } = await mountSection();
+    for (const switchInput of wrapper.findAll("input[role=switch]")) {
+      expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
+    }
   });
 
   it("switches an agent on and off", async () => {
     const { wrapper, settings } = await mountSection();
-    await wrapper.findAll("[role=switch]")[1].trigger("click");
+    await wrapper.findAll("input[role=switch]")[1].setValue(true);
     expect(settings.ownedAgents).toEqual(["codex"]);
-    await wrapper.findAll("[role=switch]")[0].trigger("click");
+    await wrapper.findAll("input[role=switch]")[0].setValue(true);
     expect(settings.ownedAgents).toEqual(["codex", "claude"]);
-    await wrapper.findAll("[role=switch]")[1].trigger("click");
+    await wrapper.findAll("input[role=switch]")[1].setValue(false);
     expect(settings.ownedAgents).toEqual(["claude"]);
   });
 
-  it("makes the whole row of an agent the switch", async () => {
+  it("makes the whole row of an agent the label of its switch", async () => {
     const { wrapper } = await mountSection();
-    expect(wrapper.findAll("[role=switch]").map((node) => node.classes())).toEqual([["row"], ["row"]]);
+    const rows = wrapper.findAll(".list-group-item");
+    expect(rows.map((row) => row.element.tagName)).toEqual(["LABEL", "LABEL"]);
+    expect(rows.map((row) => row.find("input[role=switch]").exists())).toEqual([true, true]);
+    expect(rows[0].classes()).toContain("list-group-item-action");
   });
 
-  it("switches an agent when the click is on the name, on the empty space, or on the visual switch", async () => {
+  it("switches an agent when the click is on the name or on the empty space of the row", async () => {
     const { wrapper, settings } = await mountSection();
-    const row = wrapper.findAll(".row")[0];
-    await row.get(".name").trigger("click");
+    const row = wrapper.findAll(".list-group-item")[0];
+    await row.get("span").trigger("click");
     expect(settings.ownedAgents).toEqual(["claude"]);
     await row.trigger("click");
     expect(settings.ownedAgents).toEqual([]);
-    await row.get(".toggle-switch").trigger("click");
-    expect(settings.ownedAgents).toEqual(["claude"]);
-    await row.get(".knob").trigger("click");
-    expect(settings.ownedAgents).toEqual([]);
   });
 
-  it("lets the row take the focus and switches it with the Space key and the Enter key", async () => {
+  it("switches the focused switch with the key Enter, as the key Space does", async () => {
     const { wrapper, settings } = await mountSection();
-    const row = wrapper.findAll("[role=switch]")[1];
-    expect(row.attributes("tabindex")).toBe("0");
-    await row.trigger("keydown", { key: " " });
+    const switchInput = wrapper.findAll("input[role=switch]")[1];
+    await switchInput.trigger("keydown", { key: "Enter" });
     expect(settings.ownedAgents).toEqual(["codex"]);
-    await row.trigger("keydown", { key: "Enter" });
+    expect((switchInput.element as HTMLInputElement).checked).toBe(true);
+    await switchInput.trigger("keydown", { key: "Enter" });
     expect(settings.ownedAgents).toEqual([]);
-    await row.trigger("keydown", { key: "a" });
+    await switchInput.trigger("keydown", { key: "a" });
     expect(settings.ownedAgents).toEqual([]);
   });
 
-  it("does not switch again while the Space key or the Enter key stays pressed", async () => {
+  it("does not switch again while the key Enter stays pressed", async () => {
     const { wrapper, settings } = await mountSection();
-    const row = wrapper.findAll("[role=switch]")[0];
-    await row.trigger("keydown", { key: " " });
-    await row.trigger("keydown", { key: " ", repeat: true });
-    await row.trigger("keydown", { key: "Enter", repeat: true });
+    const switchInput = wrapper.findAll("input[role=switch]")[0];
+    await switchInput.trigger("keydown", { key: "Enter" });
+    await switchInput.trigger("keydown", { key: "Enter", repeat: true });
     expect(settings.ownedAgents).toEqual(["claude"]);
   });
 
-  it("names each switch after its agent and shows no text beside it", async () => {
+  it("names each switch after its agent, because the label of the row holds the name", async () => {
     const { wrapper } = await mountSection();
-    const first = wrapper.get("[role=switch]");
-    expect(first.attributes("aria-labelledby")).toBe("agent-claude");
-    expect(wrapper.get(".toggle-switch").attributes("aria-hidden")).toBe("true");
-    expect(wrapper.get("#agent-claude").text()).toBe("Claude Code");
-    expect(wrapper.get(".row").text()).toBe("Claude Code");
+    const row = wrapper.get(".list-group-item");
+    expect(row.text()).toBe("Claude Code");
+    expect(row.element.contains(row.get("input[role=switch]").element)).toBe(true);
   });
 
   it("saves the choice and restores it at the next start", async () => {
     const first = await mountSection();
-    await first.wrapper.findAll("[role=switch]")[0].trigger("click");
+    await first.wrapper.findAll("input[role=switch]")[0].setValue(true);
     await new Promise((resolve) => setTimeout(resolve));
     expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").ownedAgents).toEqual(["claude"]);
     vi.resetModules();
     const second = await mountSection();
     expect(second.settings.ownedAgents).toEqual(["claude"]);
-    expect(second.wrapper.findAll("[role=switch]").map((node) => node.attributes("aria-checked"))).toEqual(["true", "false"]);
+    expect(second.wrapper.findAll("input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false]);
   });
 });

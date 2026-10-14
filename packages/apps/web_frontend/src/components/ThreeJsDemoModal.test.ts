@@ -69,7 +69,7 @@ describe("ThreeJsDemoModal", () => {
 
   it("closes with the close button", async () => {
     const wrapper = mount(ThreeJsDemoModal);
-    await wrapper.get(".btn-close").trigger("click");
+    await wrapper.get(".dialog-header button").trigger("click");
     expect(threeJsDemoModal.open).toBe(false);
     wrapper.unmount();
   });

@@ -11,22 +11,13 @@ const TTL_OPTIONS = [
 </script>
 
 <template>
-  <div class="section">
-    <div class="seg" role="radiogroup" :aria-label="t('fontMenu.finishedLabel')">
-      <button
-        v-for="o in TTL_OPTIONS"
-        :key="o.v"
-        :title="t('fontMenu.finishedTitle')"
-        role="radio"
-        :aria-checked="settings.finishedTtl === o.v"
-        :class="{ on: settings.finishedTtl === o.v }"
-        @click="settings.finishedTtl = o.v"
-      >{{ t(o.labelKey) }}</button>
+  <div class="d-flex flex-column gap-2">
+    <div class="btn-group" role="group" :aria-label="t('fontMenu.finishedLabel')">
+      <label v-for="o in TTL_OPTIONS" :key="o.v" class="btn-check btn-outline theme-secondary" :title="t('fontMenu.finishedTitle')">
+        <input v-model="settings.finishedTtl" type="radio" name="finished-ttl" autocomplete="off" :value="o.v" />
+        {{ t(o.labelKey) }}
+      </label>
     </div>
-    <div class="keys">{{ t("fontMenu.finishedHelp") }}</div>
+    <div class="form-text">{{ t("fontMenu.finishedHelp") }}</div>
   </div>
 </template>
-
-<style scoped>
-.section { display: flex; flex-direction: column; gap: 10px; }
-</style>
