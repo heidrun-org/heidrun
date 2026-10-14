@@ -1,0 +1,46 @@
+# Judgement of the documentation: 3.6 out of 5
+
+| Page | Type | Mean | taskSuccess | usefulness | order | singleType | userLanguage | accuracy | Lines | Longest paragraph | Paragraph runs | Troubleshooting | Related pages |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| browse_project_files.md | how-to | 3.5 | 3 | 3 | 4 | 4 | 3 | 4 | 39 | 2 sentences | 5 | yes | 3 links |
+| copy_a_file_path.md | how-to | 4.3 | 4 | 4 | 4 | 5 | 4 | 5 | 22 | 1 sentences | 2 | yes | 3 links |
+| create_a_file_or_folder.md | how-to | 4.0 | 4 | 4 | 4 | 4 | 4 | 4 | 40 | 2 sentences | 3 | yes | 3 links |
+| files_sidebar_section_controls.md | reference | 3.8 | 4 | 3 | 4 | 4 | 4 | 4 | 57 | 2 sentences | 0 | no | 3 links |
+
+Site: navigation 3, consistency 3.
+
+- The sidebar group "Files" has a sensible order and its titles match the page titles, but the group has no landing page. The page "Introduction" is only a placeholder ("This page is a placeholder…") and does not point to the four pages. The pages "Related pages" always list the same three sibling pages, with weak reasons ("to look up which folders remain visible"). They do not lead the reader to a real next step. No page explains how to select a workspace, although every page needs one. The page "Keyboard shortcuts" lists ⌘P ("Open a project file, search by name"), the fastest way to find a file, but "Browse and open project files" does not link to it.
+- Words differ between pages and the sources. "Large Git window" is used on three pages but is not defined in the glossary. The pages say "notification", where the rule file says "toast". The instruction "Click Files, the first folder icon in the sidebar icon bar" is repeated with different words on each page (only the browse page adds "above Scripts"). The definition of workspace is repeated on all four pages. The troubleshooting sections are uneven: the browse page has four entries, two of them not failures, and the other pages have one or two real ones.
+- I inspected the pixels of all four PNG files. The mouse pointer appears in every screenshot, and each time it covers the thing the page describes: the Files icon, the typed name, the file name, and the three-dot button. Two pictures sit after the step they do not show (new_file.png after step 3, copy_path.png after step 6). Retake all four without the pointer and place each next to the step it shows. The file `screenshots.json` matches the pages and the files.
+
+### browse_project_files.md (3.5)
+
+Clear numbered steps and a real troubleshooting section, but a new user still lacks two prerequisites, and the Refresh part and two troubleshooting entries are filler.
+
+- A new user cannot finish the task from this page alone. Step 1 does not say how to select a workspace, and "large Git window" is never explained (what it looks like, how to close it). The glossary does not define the term either. Add one plain sentence for each, or a link.
+- The section "Refresh the folder tree" is weak. It does not say when to refresh. The sentence "Newly created empty folders that have been removed outside Heidrun disappear…" is hard to read. The check "updated rows" is vague. Two troubleshooting entries are normal behaviour, not failures: "Refresh is disabled", and "Diff and Side by side are disabled" (its "Solution" is not a solution). The visible symptom "The list is too long: only the first files are shown." is missing; it appears only on the reference page. Remove the two entries, add the missing one, and rewrite the Refresh sentence.
+- Screenshot files_sidebar.png (pixels inspected): the mouse pointer covers the Files icon that step 2 tells the reader to click. No row is selected and no file is open, so the picture shows neither step 4 nor its result. A yellow dot next to `.pnpm-store` is not explained on this page. Retake it without the pointer, with a file row selected, and put it after step 2 or after the result sentence.
+
+### copy_a_file_path.md (4.3)
+
+Short, accurate, and well typed; the screenshot and the choice between the two paths are the parts to improve.
+
+- Screenshot copy_path.png (pixels inspected): it is a tight crop with no sidebar header, so the reader cannot see that this is the Files sidebar section. The pointer covers the file name ("RE▸DME.md"). The alternative text says "docs/README.md", but the folder `docs` is not visible. The picture sits after step 6 but shows step 4 and step 5; the notification is not shown. Retake it wider, without the pointer, and place it after step 5.
+- Step 6 "Check the copied text shown in the notification" is not an action, and the line after the picture repeats it. Merge them into one result sentence that gives the form of the notification ("Copied: <path>").
+- The page does not help the reader choose between the two paths. There is no example of an absolute path next to a relative path, and no hint to paste with ⌘V. Steps 1 to 3 repeat the browse page; replace them with one link and keep only the context menu steps.
+
+### create_a_file_or_folder.md (4.0)
+
+A solid how-to with a useful destination table; it needs the real error text, a shorter slash fix, and a screenshot with no pointer over the typed name.
+
+- The duplicate-name entry cannot be matched by the reader. The source `packages/apps/desktop_tauri/src/files.rs` produces the message in French ("un fichier ou dossier porte déjà ce nom"), but the page says only "an error says the name already exists". The page also does not say the message shows as a small notification. The named sources do not contain this message. Quote the real text, or say that it may appear in French.
+- The slash entry has five steps, and most of them are unnecessary. The code keeps the name box open with focus after the error, so the fix is to remove the `/` and press Enter. Pressing Escape and selecting the folder again is not needed. Shorten the solution to two steps.
+- Screenshot new_file.png (pixels inspected): the mouse pointer covers the typed text, so "example.md" reads "exampl…md". The picture sits after step 3 (press Enter) but shows the state of step 2. The page also never says that a new empty folder disappears from the folder tree after Heidrun restarts; only the reference page hints at it, and this fact matters for the task "Create a folder".
+
+### files_sidebar_section_controls.md (3.8)
+
+A useful lookup table for buttons and indicators, but it repeats the copy page and contains trivial rows and two facts the reader cannot act on.
+
+- The section "File context menu" repeats the copy page almost completely (two items, the notification, how to close the menu). Keep the two-row table and link to "Copy a file path" for the rest. Low-value rows also dilute the page: "Grey folder icon", "Grey file-kind icon", and "Files and folders at the same level have aligned names".
+- Two rows give a fact the reader cannot use. "Ignored folders" says "the option to show ignored files" without saying where it is. In the code it is the "Ignored files" choice of the Files window (`filesModal.json`), which is not a named source of this page. "Long file lists" quotes the message but gives no limit and no way to see the rest.
+- Screenshot more_options.png (pixels inspected): the menu is readable and matches the table, but the pointer covers the three-dot button. The yellow dot on a folder row is described in the table, but only the picture on the browse page shows it. The last table "Visibility and remembered choices" mixes behaviour descriptions into a lookup page and its column title "Choice or limit / Behaviour" is vague.

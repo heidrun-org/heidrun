@@ -1,10 +1,10 @@
 # Sidebars rules index
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md)
 - Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
@@ -12,5 +12,8 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [README.md](README.md): the overview of this folder, for people.
 - [sidebars.md](sidebars.md): the sidebars and the notes.
 - [source_control.md](source_control.md): the Source control sidebar section.
+- [code_hosting.md](code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
+- [code_hosting_search.md](code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
 - [files.md](files.md): the Files sidebar section.
+- [needs_you_workspaces.md](needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
 - [chats/](chats/index.md): the Chats sidebar section.

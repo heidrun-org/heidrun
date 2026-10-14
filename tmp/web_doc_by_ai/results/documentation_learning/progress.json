@@ -1,0 +1,24 @@
+{
+  "bestRound": 1,
+  "bestScore": 3.875,
+  "rounds": [
+    {
+      "round": 1,
+      "score": 3.875,
+      "accepted": true,
+      "comparedWith": 3.5625
+    },
+    {
+      "round": 2,
+      "score": 3.2916666666666665,
+      "accepted": false,
+      "comparedWith": 3.875
+    },
+    {
+      "round": 3,
+      "score": 3.5208333333333335,
+      "accepted": false,
+      "comparedWith": 3.875
+    }
+  ]
+}

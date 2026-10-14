@@ -1,0 +1,282 @@
+[
+  {
+    "heading": "Browse and open project files ​",
+    "images": [
+      {
+        "alt": "Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.",
+        "complete": true,
+        "height": 900,
+        "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/files_sidebar.png",
+        "width": 870
+      }
+    ],
+    "links": [
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#browse-and-open-project-files"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#refresh-the-folder-tree"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#troubleshooting"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-a-workspace-appears"
+      },
+      {
+        "text": "Select an existing workspace",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#this-workspace-is-not-a-git-repository-appears"
+      },
+      {
+        "text": "Select an existing workspace",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#related-pages"
+      },
+      {
+        "text": "Create a file or folder",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+      },
+      {
+        "text": "Copy a file path",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      },
+      {
+        "text": "Files sidebar section controls",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+      },
+      {
+        "text": "Keyboard shortcuts",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+      }
+    ],
+    "title": "Browse and open project files | Heidrun",
+    "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+  },
+  {
+    "heading": "Create a file or folder ​",
+    "images": [
+      {
+        "alt": "New file name box inside docs with example.md typed before Enter is pressed.",
+        "complete": true,
+        "height": 548,
+        "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/new_file.png",
+        "width": 870
+      }
+    ],
+    "links": [
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-a-file-or-folder"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#choose-the-destination"
+      },
+      {
+        "text": "select an existing workspace",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+      },
+      {
+        "text": "large Git window described in Browse and open project files",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#cancel-creation"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#troubleshooting"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#un-fichier-ou-dossier-porte-deja-ce-nom-appears-and-the-name-box-stays-open"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#a-name-cannot-contain-the-character-select-a-folder-first-appears"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#related-pages"
+      },
+      {
+        "text": "Browse and open project files",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+      },
+      {
+        "text": "Copy a file path",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      },
+      {
+        "text": "Files sidebar section controls",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+      }
+    ],
+    "title": "Create a file or folder | Heidrun",
+    "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+  },
+  {
+    "heading": "Copy a file path ​",
+    "images": [
+      {
+        "alt": "Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.",
+        "complete": true,
+        "height": 1009,
+        "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/copy_path.png",
+        "width": 870
+      }
+    ],
+    "links": [
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-a-file-path"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#choose-the-path-format"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#copy-the-path"
+      },
+      {
+        "text": "select an existing workspace",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#troubleshooting"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#the-path-copy-menu-does-not-appear-when-a-folder-row-is-right-clicked"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html#related-pages"
+      },
+      {
+        "text": "Browse and open project files",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+      },
+      {
+        "text": "Create a file or folder",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+      },
+      {
+        "text": "File context menu",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+      }
+    ],
+    "title": "Copy a file path | Heidrun",
+    "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+  },
+  {
+    "heading": "Files sidebar section controls ​",
+    "images": [
+      {
+        "alt": "Files sidebar section header buttons with the More options menu open.",
+        "complete": true,
+        "height": 783,
+        "src": "http://127.0.0.1:5175/heidrun/documentation_images/files/more_options.png",
+        "width": 870
+      }
+    ],
+    "links": [
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#files-sidebar-section-controls"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#header-buttons"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#row-and-name-box-actions"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#more-options"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#file-context-menu"
+      },
+      {
+        "text": "Copy a file path",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#folder-tree-indicators"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#selection"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#ignored-files"
+      },
+      {
+        "text": "Keyboard shortcuts",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/shortcuts.html"
+      },
+      {
+        "text": "Create a file or folder",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder"
+      },
+      {
+        "text": "Browse and open project files",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists"
+      },
+      {
+        "text": "​",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html#related-pages"
+      },
+      {
+        "text": "Browse and open project files",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html"
+      },
+      {
+        "text": "Create a file or folder",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html"
+      },
+      {
+        "text": "Copy a file path",
+        "url": "http://127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html"
+      }
+    ],
+    "title": "Files sidebar section controls | Heidrun",
+    "url": "http://127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html"
+  }
+]

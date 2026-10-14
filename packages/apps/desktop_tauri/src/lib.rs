@@ -3,6 +3,7 @@ mod chats_files;
 mod chats_scan;
 mod claude;
 mod clipboard;
+mod coding_agent_models;
 mod files;
 mod forge_cache;
 mod git;
@@ -304,6 +305,7 @@ pub fn run() {
             clipboard::clipboard_set_image,
             usage::codex_usage,
             project::project_load,
+            project::project_package_scripts,
             project::project_save,
             project::project_refs,
             git::git_status,
@@ -312,6 +314,7 @@ pub fn run() {
             topic_clusters::topic_clusters_read,
             topic_clusters::topic_clusters_write,
             topic_clusters::coding_agent_ask,
+            coding_agent_models::coding_agent_models_run,
             git::forge_merge,
             git::git_diff,
             git::git_file,
@@ -337,6 +340,9 @@ pub fn run() {
             claude::claude_session_agents,
             chats::chats_list,
             chats_files::chats_files_exist,
+            chats_files::chats_worktrees_exist,
+            chats_files::chats_worktrees_branches,
+            chats_files::chats_worktree_open_in_vscode,
             history::history_append,
             history::history_read,
             history::history_export,

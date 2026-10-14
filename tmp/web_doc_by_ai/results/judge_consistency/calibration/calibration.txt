@@ -1,0 +1,1 @@
+Negative control: only the in-memory copy-page text replaces Copy relative path with unsupported Upload file to GitHub. Repository pages and images are unchanged. Expected accuracy and taskSuccess <= 2 for this page.

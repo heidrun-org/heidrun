@@ -1,0 +1,110 @@
+```json
+{
+  "rubricVersion": "3",
+  "pages": [
+    {
+      "file": "candidate_31.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Troubleshooting",
+          "evidence": "The page says: \"If a file already has the name, New file overwrites the existing file with an empty file. Press Enter to confirm the replacement.\"",
+          "impact": "The reader believes that New file can destroy an existing file, and that Enter confirms a replacement. That is false data-loss information. The reader is also not told that an error appears and the name box stays open.",
+          "source": "packages/apps/desktop_tauri/src/files.rs",
+          "sourceEvidence": "`file_create` calls `taken(&target)?` first, then opens the file with `create_new(true)`, so an existing name returns an error. docs/agents_rules/user_interface/sidebars/files.md says: \"A name that exists already gives an error message, and the name box stays open.\" FilesPanel.vue `submitNaming` shows an error toast and refocuses the name box. No replacement is offered.",
+          "recommendation": "Write that an existing file or folder with the same name gives an error notification and the name box stays open. Tell the reader to choose another name and press Enter, then check that the new file row appears."
+        }
+      ],
+      "problems": ["The troubleshooting section claims that an existing file is overwritten. The application rejects the name instead."],
+      "verdict": "The steps and the screenshot are correct, but the false overwrite claim is a blocker for accuracy."
+    },
+    {
+      "file": "candidate_58.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps, the key names and the duplicate-name behaviour match the rules and FilesPanel.vue. The page has no screenshot, but none is required."
+    },
+    {
+      "file": "candidate_16.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, step 4, and the sentence after the steps",
+          "evidence": "Step 4 says \"Press **Escape**. The new file becomes selected and opens in the large Git window.\" The next sentence says \"Press **Enter** instead of Escape to cancel before creating the file.\"",
+          "impact": "A reader who follows step 4 cancels the creation and gets no file. The task fails.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "The input has `@keydown.enter.prevent=\"submitNaming\"`, which creates the file, selects it and calls `openGitModal`. The rules file says: \"The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels.\"",
+          "recommendation": "Swap the two keys: Enter creates the file, and Escape cancels."
+        },
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Step 4 and the cancel sentence",
+          "evidence": "The page says Escape creates and opens the file, and that Enter cancels.",
+          "impact": "The page gives wrong information about what each key does to the data: Enter creates a file and Escape discards the name.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "\"The key Enter creates the file or the folder, and the key Escape, or a click outside the name box, cancels.\"",
+          "recommendation": "Correct the key names in both sentences."
+        }
+      ],
+      "problems": ["The keys Enter and Escape are swapped, so the instruction cancels the creation instead of confirming it."],
+      "verdict": "The page cannot be accepted. The key for creating the file is wrong, so a reader who follows it creates nothing."
+    },
+    {
+      "file": "candidate_84.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps, the table of copied text, the folder-row limit, the toast text \"Copied:\" and the screenshot of the context menu all match the sources."
+    },
+    {
+      "file": "candidate_25.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 3 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "material",
+          "location": "Step 3 image",
+          "evidence": "The alternative text says \"Context menu for docs/README.md with Copy absolute path and Copy relative path.\" The image file is /documentation_images/files/new_file.png. Its pixels show the Files section with an `example.md` name box inside `docs`, and no context menu.",
+          "impact": "The caption describes a state that the screenshot does not show. A reader who looks for the menu on the image finds the name box of New file, which is another task, and may doubt the instruction.",
+          "source": "packages/auxiliary/website_public/docs/public/documentation_images/files/copy_path.png",
+          "sourceEvidence": "The file copy_path.png shows the real context menu on README.md with \"Copy absolute path\" and \"Copy relative path\". The referenced file new_file.png does not.",
+          "recommendation": "Reference /documentation_images/files/copy_path.png."
+        }
+      ],
+      "problems": ["The screenshot shows the New file name box, but its caption says it shows the context menu."],
+      "verdict": "The text is correct and the task can be done, but the wrong screenshot misrepresents the state that the caption names."
+    },
+    {
+      "file": "candidate_69.md",
+      "scores": { "taskSuccess": 3, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "taskSuccess",
+          "severity": "material",
+          "location": "Steps, between step 1 and step 2",
+          "evidence": "Step 1 selects the destination folder. Step 2 says \"Type only a new name\". No step says to click **New file**, and the page never mentions that button. The related link only points to the controls page.",
+          "impact": "No name box exists at step 2. The reader must find and guess the New file button in the Files header before typing.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "`startNaming('file')` sets `naming`, which shows the name box. The header button with `filesPanel.newFile` is its only trigger. The rules file lists \"New file\" as the first of five icon-only buttons.",
+          "recommendation": "Add a step: click **New file**, the first button in the Files header, so that a name box appears inside the selected folder."
+        }
+      ],
+      "problems": ["The step that clicks the New file button is missing, so the name box never appears."],
+      "verdict": "The facts are accurate, but the procedure skips the control that starts the task. A reader can infer it, but must guess."
+    }
+  ],
+  "site": { "navigation": 5, "consistency": 5, "findings": [], "problems": [] },
+  "limitations": [
+    "The pages are independent candidates. Site navigation and consistency are set to the neutral value 5, as instructed.",
+    "I read the rules file, FilesPanel.vue, the backend `file_create` in files.rs, and the images new_file.png and copy_path.png. I did not run the application.",
+    "Candidate_58 and candidate_69 have a blank line where an image could be. This was not scored, since a screenshot is not required.",
+    "The anchors `#select-an-existing-workspace` and `#file-context-menu` exist in the linked pages. Their content was not evaluated."
+  ]
+}
+```

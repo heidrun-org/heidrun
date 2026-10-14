@@ -1,0 +1,5 @@
+
+> heidrun@0.2.5 docs:judge_by_ai /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace
+> tsx packages/dev_tools/documentation_updater/src/judge_cli.ts --dry-run --only browse_project_files.md copy_a_file_path.md create_a_file_or_folder.md files_sidebar_section_controls.md
+
+ ELIFECYCLE  Command failed with exit code 1.

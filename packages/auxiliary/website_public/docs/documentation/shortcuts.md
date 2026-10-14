@@ -23,6 +23,7 @@ In the application, press **⌘/** (or the **?** button at the top) to show this
 | **Navigation** | |
 | ⌥⌘← / ⌥⌘→ | Previous / next tab |
 | ⌥⌘↑ / ⌥⌘↓ | Previous / next workspace |
+| ⌘[ / ⌘] | Back / forward through the panes that had the focus |
 | ⌘1 … ⌘9 | Go to workspace 1 to 9 (order of the list of workspaces) |
 | ⇧⌥⌘← / ⇧⌥⌘→ | Move the tab left / right |
 | ⇧⌥⌘↑ / ⇧⌥⌘↓ | Move the workspace up / down |

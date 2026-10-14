@@ -1,0 +1,616 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 00be483..6ee0c88 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -150,6 +150,12 @@ On GitLab, the `--attach` option of the `glab` command works in the same way, bu
+ 
+ Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](./screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
+ 
++## Updating the user documentation
++
++- The user documentation of the public website is written by a coding agent, never by hand. Run `pnpm docs:update_by_ai` to update it. The command and its rules are in [packages/dev_tools/documentation_updater/CONTEXT.md](packages/dev_tools/documentation_updater/CONTEXT.md).
++- Documentation generation reads Git history and leaves generated files uncommitted. The script and its coding agent never stage files, create or switch branches, write commits, push, merge, or create a pull request or merge request. The developer handles those actions outside this process.
++- When you add, change, or remove a feature, change the rule files in `docs/agents_rules/user_interface`. The coding agent writes the documentation from these rules, so a rule that is missing or old makes a documentation page wrong.
++
+ ## Starting Heidrun to test it or to take a screenshot
+ 
+ Always start Heidrun with the command line option `--no-splash-screen` when you start it to test it, and above all when you take a screenshot. Without the option, the splash screen covers the application for 3 seconds after the main window appears, so a screenshot taken in this time shows the splash screen and not the application, and you wait for nothing.
+diff --git a/README_DEV.md b/README_DEV.md
+index a0e0ea9..631d64e 100644
+--- a/README_DEV.md
++++ b/README_DEV.md
+@@ -47,6 +47,7 @@ The command runs the tests of the six packages, and ends with a non-zero exit co
+ | `pnpm --filter website_public test` | The Vitest tests of `packages/auxiliary/website_public`: the configuration, the pages, and a complete build of the website. The test files sit in the folder `tests`. |
+ | `pnpm --filter raw_coding_agent_cli test` | The Vitest tests of `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The test files sit in the folder `tests`. |
+ | `pnpm --filter change_log_generator test` | The Vitest tests of `packages/dev_tools/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
++| `pnpm --filter documentation_updater test` | The Vitest tests of `packages/dev_tools/documentation_updater`, the tool that updates the user documentation with a coding agent: the hints between two commits, the tests of the generated pages, and the whole update with a fake coding agent. The test files sit in the folder `tests`. |
+ | `pnpm --filter worktree_tools test` | The Vitest tests of `packages/dev_tools/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
+ 
+ When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
+@@ -104,6 +105,35 @@ pnpm --filter desktop_tauri target:clean
+ 
+ The command lists the target folders of the worktrees that no build has used for 7 days. It deletes nothing. To delete them, add the option `--yes`. To change the number of days, add the option `--days <number>`. The command never touches the main checkout. It does not show the size of the folders, because the clones share their disk blocks, so the command `du` shows a size that is too high.
+ 
++## Update the user documentation with AI
++
++```bash
++pnpm docs:update_by_ai
++```
++
++A coding agent writes all the user documentation of the public website, in the folder `packages/auxiliary/website_public/docs/documentation`. No person edits a generated page by hand. The command does a full check every time: the coding agent compares all the pages with all the rules in `docs/agents_rules/user_interface`, with the glossary, and with the code. A new feature gets a section, a changed feature gets its section changed, and a removed feature loses its section.
++
++The file `.last_documented_commit` in the documentation folder holds the last documented commit. The merged pull requests, the fixed issues, and the diff of the rules since that commit are only hints that say which sections to look at first. On the first run the file does not exist, so there are no hints.
++
++The writer prompt asks for numbered task steps that explain how to find each control and what result to expect. Pages explain unfamiliar terms, use the same names throughout, and link to useful next steps instead of repeating other pages. Details and solutions must be supported by the sources.
++
++The command reads Git history, runs the coding agent, and runs the tests and the build of the website. Generated pages, sidebar changes, and the last documented commit file remain local and uncommitted. Existing local changes are allowed. The command never stages files, creates or switches branches, writes commits, pushes, merges, or creates a pull request or merge request. The developer handles those actions and publication outside this process.
++
++| Command | Effect |
++| --- | --- |
++| `pnpm docs:update_by_ai` | Generates and checks the documentation; leaves the files uncommitted. |
++| `pnpm docs:update_by_ai --dry-run` | Prints the prompt with the hints. Nothing changes, and no coding agent runs. |
++| `pnpm docs:update_by_ai --agent claude` | Uses `claude` in place of `codex`, the default. |
++| `pnpm docs:update_by_ai --verbose` | Shows what the coding agent does while it works. |
++| `pnpm docs:update_by_ai --model <name> --effort <level>` | Chooses the model and the effort level of the coding agent. Without them, the coding agent uses its own settings. |
++| `pnpm docs:update_by_ai --only <rule file>` | A small trial: checks only the features of these rule files. The file `.last_documented_commit` is not written. |
++
++The writer reuses verified screenshots supplied in `packages/auxiliary/website_public/docs/public/documentation_images`, with descriptive alternative text, near the matching steps or controls. Screenshot metadata records the application source and the state shown. The writer does not invent screenshots or image paths.
++
++To score the quality of the generated pages, run `pnpm docs:judge_by_ai`. It prints a table of scores from 1 to 5 for each page, and the worst problems of each page. It edits no file. The judge uses contract version 3 and defaults to Claude `claude-sonnet-5-5` with `high` effort. Every deduction requires evidence and a matching severity. `--only` excludes unselected pages from scoring. Reports record scope and settings; blocking findings prevent acceptance regardless of the average. Verification limitations require review. Compare only runs with the same contract and unchanged inputs.
++
++Every generated page has the mark `<!-- generated by docs:update_by_ai -->`, and every section names its rule file in a comment `<!-- source: <path> -->`. The page `shortcuts.md` stays generated by `pnpm docs:shortcuts`.
++
+ ## Generate the change log
+ 
+ ```bash
+diff --git a/package.json b/package.json
+index b5f9042..0052f42 100644
+--- a/package.json
++++ b/package.json
+@@ -10,9 +10,11 @@
+     "dev:web": "pnpm --filter web_frontend dev",
+     "build:web": "pnpm --filter web_frontend build",
+     "tauri": "pnpm --filter desktop_tauri tauri",
+-    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter agents_rules_checker test",
++    "test": "pnpm --filter web_frontend test && pnpm --filter desktop_tauri test && pnpm --filter website_public test && pnpm --filter raw_coding_agent_cli test && pnpm --filter change_log_generator test && pnpm --filter worktree_tools test && pnpm --filter video_recorder test && pnpm --filter documentation_updater test && pnpm --filter agents_rules_checker test",
+     "docs:shortcuts": "node scripts/shortcuts-readme.mjs",
+     "docs:identity": "node scripts/identity-texts.mjs",
++    "docs:update_by_ai": "tsx packages/dev_tools/documentation_updater/src/cli.ts",
++    "docs:judge_by_ai": "tsx packages/dev_tools/documentation_updater/src/judge_cli.ts",
+     "release:dmg": "sh -c 'tsx scripts/release_dmg.ts \"$@\" || true' --",
+     "release:change_log": "tsx packages/dev_tools/change_log_generator/src/cli.ts",
+     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts"
+diff --git a/packages/auxiliary/raw_coding_agent_cli/CONTEXT.md b/packages/auxiliary/raw_coding_agent_cli/CONTEXT.md
+index 026cb0c..58a67a6 100644
+--- a/packages/auxiliary/raw_coding_agent_cli/CONTEXT.md
++++ b/packages/auxiliary/raw_coding_agent_cli/CONTEXT.md
+@@ -16,11 +16,15 @@ A library and a command line tool that send one prompt to a coding agent command
+ - The prompt always goes through the standard input of the coding agent, never through an argument, so a long prompt does not reach the size limit of the command line.
+ - The command line uses `codex` when the option `--agent` is missing. The library has no default: the caller always gives `agentName`.
+ - The command line prints the answer on the standard output, prints an error message on the standard error output, and exits with code 1 when an error happens.
++- With the option `isEditAllowed`, `claude` runs with `--permission-mode acceptEdits` and a short list of read-only `git` and `gh issue view` commands, and `codex` runs with `--sandbox workspace-write`. Without it, the coding agent only answers. The option `workingDirectory` sets the folder where the command runs.
++- With the option `onProgress`, `claude` runs with `--output-format stream-json --verbose`, the answer is the field `result` of the last event, and each progress line is a remark or a tool name. `codex` sends the lines of its standard error output. The answer never changes.
++- The options `model` and `effort` are passed only when they are given: `claude` gets `--model` and `--effort`, and `codex` gets `--model` and `-c model_reasoning_effort="<effort>"`. Without them, each coding agent uses its own settings.
+ - The library keeps no conversation: one call is one prompt and one answer.
+ - Nothing in this folder imports from another package of the workspace.
+-- The application cannot run this library, because the web frontend has no Node.js. The file `packages/apps/desktop_tauri/src/topic_clusters.rs` runs the two commands with the same arguments and the same rules. A change of the arguments here needs the same change there.
++- The application cannot run this library, because the web frontend has no Node.js. The file `packages/apps/desktop_tauri/src/topic_clusters.rs` runs the two commands with the same arguments and the same rules. A change of the default arguments here needs the same change there. The arguments of the option `isEditAllowed` are not used there.
+ 
+ ## Background
+ - The package was created by [issue #113](https://github.com/heidrun-org/heidrun/issues/113). The first user of the library is the script of [issue #114](https://github.com/heidrun-org/heidrun/issues/114).
+ - `codex exec` refuses to run outside a trusted Git repository without `--skip-git-repo-check`, so the package always passes the flag.
++- The options `isEditAllowed` and `workingDirectory` come from [issue #375](https://github.com/heidrun-org/heidrun/issues/375), where a coding agent writes the documentation files.
+ - [Issue #265](https://github.com/heidrun-org/heidrun/issues/265) is the first use of the two commands inside the application, for the clustered dynamic topics.
+diff --git a/packages/auxiliary/raw_coding_agent_cli/src/library/raw_coding_agent.ts b/packages/auxiliary/raw_coding_agent_cli/src/library/raw_coding_agent.ts
+index 089455e..017300f 100644
+--- a/packages/auxiliary/raw_coding_agent_cli/src/library/raw_coding_agent.ts
++++ b/packages/auxiliary/raw_coding_agent_cli/src/library/raw_coding_agent.ts
+@@ -19,6 +19,30 @@ export type RawCodingAgentRunOptions = {
+ 	prompt: string;
+ 	/** The coding agent to run: `claude` runs `claude -p`, and `codex` runs `codex exec`. */
+ 	agentName: RawCodingAgentName;
++	/** The folder where the coding agent runs. When undefined, the folder of the current process. */
++	workingDirectory?: string;
++	/**
++	 * When true, the coding agent may edit the files of the working directory, and `claude` may also run read-only
++	 * `git` commands and `gh issue view`. When false or undefined, the coding agent only answers.
++	 */
++	isEditAllowed?: boolean;
++	/**
++	 * Called with one short line each time the coding agent does something, so the caller can show the progress.
++	 * `claude` then runs with `--output-format stream-json --verbose`, and the line says which tool it uses or what it
++	 * writes. `codex` sends the lines of its standard error output. The returned answer does not change.
++	 */
++	onProgress?: (message: string) => void;
++	/**
++	 * The model of the coding agent, for example `opus` for `claude` or `gpt-5-codex` for `codex`. When undefined, the
++	 * coding agent uses the model of its own settings. Both commands get `--model`.
++	 */
++	model?: string;
++	/**
++	 * The effort level of the coding agent, for example `low`, `medium`, or `high`. When undefined, the coding agent
++	 * uses the effort of its own settings. `claude` gets `--effort`, and `codex` gets
++	 * `-c model_reasoning_effort="<effort>"`.
++	 */
++	effort?: string;
+ };
+ 
+ /**
+@@ -48,8 +72,15 @@ export class RawCodingAgent {
+ 	 * message of the error contains the standard error output of the command.
+ 	 */
+ 	static async run(options: RawCodingAgentRunOptions): Promise<string> {
+-		const commandLine = RawCodingAgent._getCommandLine(options.agentName);
+-		const answer = await RawCodingAgent._spawnAndCollect(commandLine, options.prompt);
++		const isStreaming = options.onProgress !== undefined;
++		const commandLine = RawCodingAgent._getCommandLine(options, isStreaming);
++		const answer = await RawCodingAgent._spawnAndCollect(
++			commandLine,
++			options.prompt,
++			options.workingDirectory,
++			options.onProgress,
++			isStreaming === true && options.agentName === 'claude',
++		);
+ 		return answer;
+ 	}
+ 
+@@ -62,19 +93,52 @@ export class RawCodingAgent {
+ 	/**
+ 	 * Gives the command and the arguments that run one coding agent with a prompt on the standard input.
+ 	 * The flag `--skip-git-repo-check` lets `codex exec` run outside of a trusted Git repository.
+-	 * @param agentName The coding agent to run.
++	 * When `isEditAllowed` is true, `claude` gets `--permission-mode acceptEdits` and the read-only commands `git log`,
++	 * `git diff`, `git show`, and `gh issue view`, and `codex` gets `--sandbox workspace-write`.
++	 * @param options The options of the method `run`: the coding agent, the permission to edit, the model, and the
++	 * effort.
++	 * @param isStreaming True when the caller wants progress lines: `claude` then prints one JSON line for each event.
+ 	 * @returns The command and the arguments.
+ 	 */
+-	private static _getCommandLine(agentName: RawCodingAgentName): RawCodingAgentCommandLine {
+-		if (agentName === 'claude') {
++	private static _getCommandLine(options: RawCodingAgentRunOptions, isStreaming: boolean): RawCodingAgentCommandLine {
++		if (options.agentName === 'claude') {
++			const args = ['-p'];
++			if (isStreaming === true) {
++				args.push('--output-format', 'stream-json', '--verbose');
++			}
++			if (options.isEditAllowed === true) {
++				args.push(
++					'--permission-mode',
++					'acceptEdits',
++					'--allowedTools',
++					'Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(gh issue view:*)',
++				);
++			}
++			if (options.model !== undefined) {
++				args.push('--model', options.model);
++			}
++			if (options.effort !== undefined) {
++				args.push('--effort', options.effort);
++			}
+ 			return {
+ 				command: 'claude',
+-				args: ['-p'],
++				args,
+ 			};
+ 		}
++		const args = ['exec', '--skip-git-repo-check'];
++		if (options.isEditAllowed === true) {
++			args.push('--sandbox', 'workspace-write');
++		}
++		if (options.model !== undefined) {
++			args.push('--model', options.model);
++		}
++		if (options.effort !== undefined) {
++			args.push('-c', `model_reasoning_effort="${options.effort}"`);
++		}
++		args.push('-');
+ 		return {
+ 			command: 'codex',
+-			args: ['exec', '--skip-git-repo-check', '-'],
++			args,
+ 		};
+ 	}
+ 
+@@ -83,23 +147,57 @@ export class RawCodingAgent {
+ 	 * standard error output until the command exits.
+ 	 * @param commandLine The command and the arguments to run.
+ 	 * @param prompt The text to write on the standard input of the command.
++	 * @param workingDirectory The folder to run the command in, or undefined for the folder of the current process.
++	 * @param onProgress Called with each progress line, or undefined for none.
++	 * @param isStreamJson True when the standard output holds one JSON event for each line, as `claude` prints with
++	 * `--output-format stream-json`. The answer is then the field `result` of the last event.
+ 	 * @returns The standard output of the command, without the spaces and the line breaks at the start and at the
+ 	 * end.
+ 	 */
+-	private static _spawnAndCollect(commandLine: RawCodingAgentCommandLine, prompt: string): Promise<string> {
++	private static _spawnAndCollect(
++		commandLine: RawCodingAgentCommandLine,
++		prompt: string,
++		workingDirectory: string | undefined,
++		onProgress: ((message: string) => void) | undefined,
++		isStreamJson: boolean,
++	): Promise<string> {
+ 		return new Promise((resolve, reject) => {
+ 			const childProcess = ChildProcess.spawn(commandLine.command, commandLine.args, {
++				cwd: workingDirectory,
+ 				stdio: ['pipe', 'pipe', 'pipe'],
+ 			});
+ 			let stdoutStr = '';
+ 			let stderrStr = '';
++			let pendingLineStr = '';
++			let resultStr: string | null = null;
+ 			childProcess.stdout.setEncoding('utf8');
+ 			childProcess.stderr.setEncoding('utf8');
+ 			childProcess.stdout.on('data', (chunk: string) => {
+ 				stdoutStr += chunk;
++				if (isStreamJson === false) {
++					return;
++				}
++				pendingLineStr += chunk;
++				const lines = pendingLineStr.split('\n');
++				pendingLineStr = lines.pop() ?? '';
++				for (const line of lines) {
++					const event = RawCodingAgent._readStreamJsonLine(line);
++					resultStr = event.result ?? resultStr;
++					for (const message of event.progress) {
++						onProgress?.(message);
++					}
++				}
+ 			});
+ 			childProcess.stderr.on('data', (chunk: string) => {
+ 				stderrStr += chunk;
++				if (onProgress === undefined || isStreamJson === true) {
++					return;
++				}
++				for (const line of chunk.split('\n')) {
++					if (line.trim() !== '') {
++						onProgress(line.trim());
++					}
++				}
+ 			});
+ 			childProcess.stdin.on('error', () => {
+ 				// The command can exit before it reads the whole prompt. The event 'close' reports the exit code.
+@@ -113,7 +211,7 @@ export class RawCodingAgent {
+ 			});
+ 			childProcess.on('close', (exitCode, signal) => {
+ 				if (exitCode === 0) {
+-					resolve(stdoutStr.trim());
++					resolve(isStreamJson === true ? (resultStr ?? '').trim() : stdoutStr.trim());
+ 					return;
+ 				}
+ 				const reasonStr = signal === null ? `exit code ${exitCode}` : `signal ${signal}`;
+@@ -122,4 +220,53 @@ export class RawCodingAgent {
+ 			childProcess.stdin.end(prompt);
+ 		});
+ 	}
++
++	/**
++	 * Reads one line of the output `stream-json` of `claude`.
++	 * @param line One line of the standard output. A line that is not a JSON object is ignored.
++	 * @returns The progress lines of the event: the first line of each text, and the name of each tool with its main
++	 * argument. Also the final answer when the event is the last one, or null.
++	 */
++	private static _readStreamJsonLine(line: string): { progress: string[]; result: string | null } {
++		const nothing = {
++			progress: [],
++			result: null,
++		};
++		let event: {
++			type?: string;
++			result?: string;
++			message?: { content?: { type?: string; text?: string; name?: string; input?: Record<string, unknown> }[] };
++		};
++		try {
++			event = JSON.parse(line);
++		} catch {
++			return nothing;
++		}
++		if (event.type === 'result') {
++			return {
++				progress: [],
++				result: typeof event.result === 'string' ? event.result : null,
++			};
++		}
++		if (event.type !== 'assistant') {
++			return nothing;
++		}
++		const progress: string[] = [];
++		for (const block of event.message?.content ?? []) {
++			if (block.type === 'text' && typeof block.text === 'string' && block.text.trim() !== '') {
++				progress.push(block.text.trim().split('\n')[0]);
++			}
++			if (block.type === 'tool_use') {
++				const input = block.input ?? {};
++				const mainArgument = [input.file_path, input.path, input.command, input.pattern].find((value) => {
++					return typeof value === 'string';
++				});
++				progress.push(`${block.name} ${mainArgument ?? ''}`.trim());
++			}
++		}
++		return {
++			progress,
++			result: null,
++		};
++	}
+ }
+diff --git a/packages/auxiliary/raw_coding_agent_cli/tests/raw_coding_agent.test.ts b/packages/auxiliary/raw_coding_agent_cli/tests/raw_coding_agent.test.ts
+index 47e56cc..f97bd40 100644
+--- a/packages/auxiliary/raw_coding_agent_cli/tests/raw_coding_agent.test.ts
++++ b/packages/auxiliary/raw_coding_agent_cli/tests/raw_coding_agent.test.ts
+@@ -1,3 +1,5 @@
++import Fs from 'node:fs';
++import Os from 'node:os';
+ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+ import { RawCodingAgent } from '../src/index.ts';
+ import { ECHO_SCRIPT, FakeCommands } from './fake_commands.ts';
+@@ -39,6 +41,101 @@ describe('RawCodingAgent.run', () => {
+ 			expect(answer).toBe('arguments:exec --skip-git-repo-check -\nstandard input:the prompt text');
+ 		});
+ 
++		it('runs "claude -p" with the permission to edit files when isEditAllowed is true', async () => {
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'claude',
++				isEditAllowed: true,
++			});
++			expect(answer).toBe(
++				'arguments:-p --permission-mode acceptEdits --allowedTools '
++					+ 'Bash(git log:*),Bash(git diff:*),Bash(git show:*),Bash(gh issue view:*)\nstandard input:the prompt text',
++			);
++		});
++
++		it('runs "codex exec" with a sandbox that can write when isEditAllowed is true', async () => {
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'codex',
++				isEditAllowed: true,
++			});
++			expect(answer).toBe(
++				'arguments:exec --skip-git-repo-check --sandbox workspace-write -\nstandard input:the prompt text',
++			);
++		});
++
++		it('passes the model and the effort to claude', async () => {
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'claude',
++				model: 'opus',
++				effort: 'high',
++			});
++			expect(answer).toBe('arguments:-p --model opus --effort high\nstandard input:the prompt text');
++		});
++
++		it('passes the model and the effort to codex', async () => {
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'codex',
++				model: 'gpt-5-codex',
++				effort: 'high',
++			});
++			expect(answer).toBe(
++				'arguments:exec --skip-git-repo-check --model gpt-5-codex -c model_reasoning_effort="high" -\n'
++					+ 'standard input:the prompt text',
++			);
++		});
++
++		it('runs the command in the working directory when one is given', async () => {
++			fakeCommands.install({
++				claude: 'pwd',
++			});
++			const workingDirectory = Fs.realpathSync(Os.tmpdir());
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'claude',
++				workingDirectory,
++			});
++			expect(answer).toBe(workingDirectory);
++		});
++
++		it('streams the progress of claude and returns the final answer when onProgress is given', async () => {
++			fakeCommands.install({
++				claude: [
++					`printf '%s\\n' '{"type":"system","subtype":"init"}'`,
++					`printf '%s\\n' '{"type":"assistant","message":{"content":[{"type":"text","text":"I read the rule.\\nMore."},{"type":"tool_use","name":"Read","input":{"file_path":"a.md"}}]}}'`,
++					`printf '%s\\n' '{"type":"result","subtype":"success","result":"the final answer"}'`,
++				].join('\n'),
++			});
++			const messages: string[] = [];
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'claude',
++				onProgress: (message) => {
++					messages.push(message);
++				},
++			});
++			expect(answer).toBe('the final answer');
++			expect(messages).toEqual(['I read the rule.', 'Read a.md']);
++		});
++
++		it('sends the lines of the standard error output of codex as progress', async () => {
++			fakeCommands.install({
++				codex: `echo 'step one' >&2\necho 'the answer'`,
++			});
++			const messages: string[] = [];
++			const answer = await RawCodingAgent.run({
++				prompt: 'the prompt text',
++				agentName: 'codex',
++				onProgress: (message) => {
++					messages.push(message);
++				},
++			});
++			expect(answer).toBe('the answer');
++			expect(messages).toEqual(['step one']);
++		});
++
+ 		it('sends a prompt larger than the limit of the command line', async () => {
+ 			const prompt = 'x'.repeat(2_000_000);
+ 			const answer = await RawCodingAgent.run({
+diff --git a/packages/auxiliary/website_public/CONTEXT.md b/packages/auxiliary/website_public/CONTEXT.md
+index 4398496..597b01d 100644
+--- a/packages/auxiliary/website_public/CONTEXT.md
++++ b/packages/auxiliary/website_public/CONTEXT.md
+@@ -18,6 +18,9 @@ The public website of Heidrun: a homepage and the user documentation, built with
+ 
+ - `docs/public/favicon.svg` is a copy of `data/images/heidrun_favicon.svg`, the favicon of the application, and the test `tests/favicon.test.ts` fails when the two files differ.
+ - The page `docs/documentation/shortcuts.md` is generated by `pnpm docs:shortcuts`: its text has no raw angle bracket, because VitePress reads `<agent>` as a Vue tag and the build fails.
++- Every page of `docs/documentation/` except `shortcuts.md` is written by a coding agent with `pnpm docs:update_by_ai`, has the mark `<!-- generated by docs:update_by_ai -->`, and is never edited by hand. The rules are in `packages/dev_tools/documentation_updater/CONTEXT.md`. The file `docs/documentation/.last_documented_commit` holds the last documented commit. The command leaves generated files uncommitted; the developer handles Git changes and publication outside the process.
++
++- `docs/public/documentation_images/` holds verified captures of the current application and screenshot metadata; pages use these captures to show controls and task states.
+ 
+ ## Background
+-- The package was created by [issue #69](https://github.com/heidrun-org/heidrun/issues/69). The favicon came from [issue #301](https://github.com/heidrun-org/heidrun/issues/301).
++- The package was created by [issue #69](https://github.com/heidrun-org/heidrun/issues/69). The favicon came from [issue #301](https://github.com/heidrun-org/heidrun/issues/301). The pages written by a coding agent come from [issue #375](https://github.com/heidrun-org/heidrun/issues/375).
+diff --git a/packages/auxiliary/website_public/docs/.vitepress/config.ts b/packages/auxiliary/website_public/docs/.vitepress/config.ts
+index 97cb0b2..23cee62 100644
+--- a/packages/auxiliary/website_public/docs/.vitepress/config.ts
++++ b/packages/auxiliary/website_public/docs/.vitepress/config.ts
+@@ -38,6 +38,27 @@ export default defineConfig({
+ 					{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
+ 				],
+ 			},
++			{
++				text: 'Files',
++				items: [
++					{
++						text: 'Browse and open project files',
++						link: '/documentation/browse_project_files',
++					},
++					{
++						text: 'Create a file or folder',
++						link: '/documentation/create_a_file_or_folder',
++					},
++					{
++						text: 'Copy a file path',
++						link: '/documentation/copy_a_file_path',
++					},
++					{
++						text: 'Files sidebar section controls',
++						link: '/documentation/files_sidebar_section_controls',
++					},
++				],
++			},
+ 		],
+ 		socialLinks: [
+ 			{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+diff --git a/packages/auxiliary/website_public/tests/pages.test.ts b/packages/auxiliary/website_public/tests/pages.test.ts
+index f307f32..2cc832e 100644
+--- a/packages/auxiliary/website_public/tests/pages.test.ts
++++ b/packages/auxiliary/website_public/tests/pages.test.ts
+@@ -6,9 +6,14 @@ import { SiteFiles } from './site_files';
+ const pages = SiteFiles.listPages();
+ 
+ describe('website pages', () => {
+-	it('finds the four expected pages', () => {
++	it('finds the pages that always exist, and a page for each sidebar link', () => {
+ 		const names = pages.map((page) => Path.relative(SiteFiles.docsDir, page)).sort();
+-		expect(names).toEqual(['about.md', 'documentation/index.md', 'documentation/shortcuts.md', 'index.md']);
++		expect(names).toEqual(expect.arrayContaining([
++			'about.md',
++			'documentation/index.md',
++			'documentation/shortcuts.md',
++			'index.md',
++		]));
+ 	});
+ 
+ 	for (const page of pages) {
+@@ -30,12 +35,20 @@ describe('website pages', () => {
+ 			});
+ 
+ 			it('has no relative link to a missing page', () => {
+-				const links = [...text.matchAll(/\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
++				const links = [...text.matchAll(/(?<!!)\[[^\]]*\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
+ 				for (const link of links) {
+ 					expect(SiteFiles.markdownFileOfLink(link), link).not.toBeNull();
+ 				}
+ 			});
+ 
++			it('has no image link to a missing public asset', () => {
++				const images = [...text.matchAll(/!\[[^\]]*\]\((\/[^)\s]*)\)/g)];
++				for (const match of images) {
++					const imagePath = Path.join(SiteFiles.docsDir, 'public', match[1].slice(1));
++					expect(Fs.existsSync(imagePath), match[1]).toBe(true);
++				}
++			});
++
+ 			it('has no tab character in the text', () => {
+ 				expect(text.includes('\t')).toBe(false);
+ 			});
+diff --git a/packages/dev_tools/CONTEXT.md b/packages/dev_tools/CONTEXT.md
+index b91a3f4..86c7046 100644
+--- a/packages/dev_tools/CONTEXT.md
++++ b/packages/dev_tools/CONTEXT.md
+@@ -6,6 +6,7 @@ The packages that are only tools for the developers of Heidrun. None of them is
+ ## Key Exports & Entry Points
+ - `agents_rules_checker/`: a package with the test of the maximum size of a file of the agent rules in the folder `docs/agents_rules`. Command: `pnpm --filter agents_rules_checker test`. See its own CONTEXT.md.
+ - `change_log_generator/`: a command line tool that writes `CHANGELOG.md` from the merged pull requests. Command: `pnpm release:change_log`. See its own CONTEXT.md.
++- `documentation_updater/`: a command line tool that asks a coding agent to update the user documentation of the public website, then leaves the generated files uncommitted. Command: `pnpm docs:update_by_ai`. See its own CONTEXT.md.
+ - `video_recorder/`: two command line tools that record a video of the Heidrun window and cut it around its mouse clicks. Commands: `pnpm --filter video_recorder video:record` and `pnpm --filter video_recorder video:cut`. See its own CONTEXT.md.
+ - `worktree_tools/`: two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. Commands: `pnpm worktree:create` and `pnpm --filter desktop_tauri target:clean`. See its own CONTEXT.md.
+ 
+@@ -13,6 +14,7 @@ The packages that are only tools for the developers of Heidrun. None of them is
+ - A package that is only a tool for the developers of Heidrun goes in this folder.
+ - No package in `packages/apps` and no package in `packages/auxiliary` imports a package from this folder.
+ - A package in this folder may import a package from `packages/auxiliary`. Example: `change_log_generator` imports `raw_coding_agent_cli`.
++- A package in this folder may import another package of this folder through its `src/index.ts`. Example: `documentation_updater` imports `change_log_generator`.
+ 
+ ## Background
+ - The three development tools moved here from `packages/auxiliary` in [issue #226](https://github.com/heidrun-org/heidrun/issues/226).
+diff --git a/packages/dev_tools/change_log_generator/CONTEXT.md b/packages/dev_tools/change_log_generator/CONTEXT.md
+index 8a0e110..ae018de 100644
+--- a/packages/dev_tools/change_log_generator/CONTEXT.md
++++ b/packages/dev_tools/change_log_generator/CONTEXT.md
+@@ -4,7 +4,7 @@
+ A full npm package that writes a section of `CHANGELOG.md`, in the Keep a Changelog format, from the pull requests merged between two releases. It reads the releases and the pull requests from Git, and it can ask a coding agent to write the categories.
+ 
+ ## Key Exports & Entry Points
+-- `src/index.ts`: the public interface for another package. It exports the class `GenerateChangeLog` and its types.
++- `src/index.ts`: the public interface for another package. It exports the class `GenerateChangeLog`, the class `ChangeLogGit`, and their types. The package `documentation_updater` imports `ChangeLogGit`.
+ - `src/cli.ts`: the command line, and the executable `change_log_generator` of the `bin` entry in `package.json`.
+ - `src/generation/`: the class `GenerateChangeLog`, which resolves the range, writes the section, and updates the file — see its own CONTEXT.md.
+ - `src/git/`: the class `ChangeLogGit`, the only code that runs `git` — see its own CONTEXT.md.
+diff --git a/packages/dev_tools/change_log_generator/src/index.ts b/packages/dev_tools/change_log_generator/src/index.ts
+index 746b63a..9c268c2 100644
+--- a/packages/dev_tools/change_log_generator/src/index.ts
++++ b/packages/dev_tools/change_log_generator/src/index.ts
+@@ -1,2 +1,4 @@
+ export { GenerateChangeLog } from './generation/generate_change_log.ts';
+ export type { GenerateChangeLogRunOptions, RunAgentFn } from './generation/generate_change_log.ts';
++export { ChangeLogGit } from './git/change_log_git.ts';
++export type { ChangeLogRange, MergedPullRequest } from './types/change_log_types.ts';
+diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
+index b56a78a..3f6dae4 100644
+--- a/pnpm-lock.yaml
++++ b/pnpm-lock.yaml
+@@ -246,6 +246,31 @@ importers:
+         specifier: ^2.1.9
+         version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
+ 
++  packages/dev_tools/documentation_updater:
++    dependencies:
++      change_log_generator:
++        specifier: workspace:*
++        version: link:../change_log_generator
++      commander:
++        specifier: ^15.0.0
++        version: 15.0.0
++      raw_coding_agent_cli:
++        specifier: workspace:*
++        version: link:../../auxiliary/raw_coding_agent_cli
++      tsx:
++        specifier: ^4.23.15
++        version: 4.23.15
++      zod:
++        specifier: ^4.6.5
++        version: 4.6.5
++    devDependencies:
++      '@types/node':
++        specifier: ^26.6.5
++        version: 26.6.5
++      vitest:
++        specifier: ^2.1.9
++        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
++
+   packages/dev_tools/video_recorder:
+     dependencies:
+       commander:

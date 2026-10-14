@@ -1,0 +1,20 @@
+{
+  "none": "Aucun workspace",
+  "newName": "Nouveau nom du workspace",
+  "listLabel": "Workspaces",
+  "rowTitle": "Choisir ce workspace · glisser pour déplacer",
+  "rename": "Renommer le workspace {name}",
+  "closeConfirm": "Fermer",
+  "close": "Fermer l’espace de travail {name}",
+  "new": "Nouveau workspace…",
+  "newTitle": "Créer un nouveau workspace",
+  "chooseFolder": "Choisir le dossier du nouveau workspace",
+  "otherBlocked": "Un agent d’un autre workspace est bloqué",
+  "otherDone": "Un agent d’un autre workspace a terminé",
+  "folder": "Dossier",
+  "branch": "Branche Git",
+  "tabs": "Onglets",
+  "agents": "Agents",
+  "noFolder": "Aucun dossier",
+  "noBranch": "Aucune branche Git"
+}

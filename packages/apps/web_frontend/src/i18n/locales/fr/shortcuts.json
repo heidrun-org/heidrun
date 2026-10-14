@@ -16,6 +16,7 @@
   "group.navigation": "Navigation",
   "action.previousNextTab": "Onglet précédent / suivant",
   "action.previousNextWorkspace": "Workspace précédent / suivant",
+  "action.backForwardPaneFocus": "Reculer / avancer dans l’historique des panneaux sélectionnés",
   "action.goToWorkspace": "Aller au workspace 1 à 9 (ordre de la liste des workspaces)",
   "action.moveTab": "Déplacer l’onglet à gauche / à droite",
   "action.moveWorkspace": "Monter / descendre le workspace",

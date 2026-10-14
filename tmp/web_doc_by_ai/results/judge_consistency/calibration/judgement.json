@@ -1,0 +1,188 @@
+{
+  "evaluation": {
+    "rubricVersion": "2",
+    "isLimitedRun": true,
+    "pageFiles": [
+      "browse_project_files.md",
+      "copy_a_file_path.md",
+      "create_a_file_or_folder.md",
+      "files_sidebar_section_controls.md"
+    ],
+    "agentName": "claude",
+    "model": "claude-sonnet-5-5",
+    "effort": "high"
+  },
+  "limitations": [
+    "The pixels of all four screenshots were inspected: files_sidebar.png, copy_path.png, new_file.png and more_options.png. All four were readable and matched their alt text.",
+    "The application was not run. Claims were checked against the rule file and the frontend and Rust source, not against the live interface.",
+    "The status bar workspace picker (WorkspaceStatusSummary.vue) and GitModal.vue were not re-read in detail. Their claims were judged only from the rule files and the linked context."
+  ],
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps, the screenshot, the Refresh behaviour, the two error messages and the 50,000-entry limit all match the rules and the code. The page supports its task.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 39,
+        "wordCount": 580,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 4,
+        "numberedStepCount": 9,
+        "bulletCount": 4,
+        "tableCount": 0,
+        "headingCount": 9,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 4
+      },
+      "meanScore": 5
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": {
+        "taskSuccess": 3,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 4,
+        "accuracy": 2
+      },
+      "findings": [
+        {
+          "severity": "blocker",
+          "location": "Section 'Choose the path format' (table row 2), step 3, and the troubleshooting 'Check' line",
+          "evidence": "The page names the second context menu item 'Upload file to GitHub'. Heidrun has no such item. The same page's own screenshot and alt text show 'Copy absolute path' and 'Copy relative path'.",
+          "impact": "The reader looks for a menu item that does not exist. The relative path form is never named correctly in the table, in step 3, or in the 'Check' line. A reader may think the action uploads a file to GitHub.",
+          "source": "packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json",
+          "sourceEvidence": "\"fileMenu.copyAbsolutePath\": \"Copy absolute path\", \"fileMenu.copyRelativePath\": \"Copy relative path\". FilesPanel.vue renders only these two buttons. docs/agents_rules/user_interface/sidebars/files.md lists exactly these two items.",
+          "recommendation": "Replace every 'Upload file to GitHub' on the page with 'Copy relative path'. The table row 'docs/README.md' is correct and can stay.",
+          "criterion": "accuracy"
+        },
+        {
+          "severity": "material",
+          "location": "Step 3 and the table 'Choose the path format'",
+          "evidence": "Step 3 says 'Choose Copy absolute path or Upload file to GitHub'. The correct name of the second item appears nowhere in the instructions.",
+          "impact": "The reader who wants the relative path must work out from the screenshot which real item matches the wrong name. The result is only reached by guessing.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "Lines 474-478: the two buttons call copyPath('absolute') and copyPath('relative') with the labels 'Copy absolute path' and 'Copy relative path'.",
+          "recommendation": "Use the real item names in step 3. This is the same correction as the accuracy finding.",
+          "criterion": "taskSuccess"
+        },
+        {
+          "severity": "minor",
+          "location": "Whole page",
+          "evidence": "The established name 'Copy relative path' is used in the screenshot alt text and in the controls page, but the body uses the invented 'Upload file to GitHub'. The page therefore uses two different names for one item.",
+          "impact": "The reader sees the same control with two names and cannot tell they are the same.",
+          "source": "packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json",
+          "sourceEvidence": "\"fileMenu.copyRelativePath\": \"Copy relative path\"",
+          "recommendation": "Use 'Copy relative path' every time.",
+          "criterion": "userLanguage"
+        }
+      ],
+      "problems": [
+        "The page names a context menu item 'Upload file to GitHub' that does not exist. The real item is 'Copy relative path'. The wrong name is in the table, step 3, and the troubleshooting check.",
+        "Because of the wrong name, the reader has to guess which real menu item gives the relative path."
+      ],
+      "verdict": "The overall structure is good, and the screenshot is correct and readable. The page names the second menu item wrongly, so the page is unreliable until the item name is corrected.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 27,
+        "wordCount": 329,
+        "longestParagraphSentences": 1,
+        "paragraphRuns": 1,
+        "numberedStepCount": 6,
+        "bulletCount": 3,
+        "tableCount": 1,
+        "headingCount": 6,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 4
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [],
+      "problems": [],
+      "verdict": "Destination choice, creation, cancel, the empty-folder note and both error messages match the rules and the code. This includes the duplicate-name error that is always in French. The screenshot shows the name box as described.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 39,
+        "wordCount": 541,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 4,
+        "numberedStepCount": 9,
+        "bulletCount": 3,
+        "tableCount": 1,
+        "headingCount": 8,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 5
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": {
+        "taskSuccess": 5,
+        "usefulness": 5,
+        "order": 5,
+        "singleType": 5,
+        "userLanguage": 5,
+        "accuracy": 5
+      },
+      "findings": [],
+      "problems": [],
+      "verdict": "The header buttons, the More options defaults, the file context menu, the status letters (including U for an untracked file), the selection rules and the ignored-files checkbox all match the sources. The screenshot of the More options menu is accurate.",
+      "measures": {
+        "pageType": "reference",
+        "lineCount": 64,
+        "wordCount": 792,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 3,
+        "numberedStepCount": 0,
+        "bulletCount": 3,
+        "tableCount": 6,
+        "headingCount": 9,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 5
+    }
+  ],
+  "site": {
+    "navigation": 5,
+    "consistency": 4,
+    "findings": [
+      {
+        "severity": "minor",
+        "location": "copy_a_file_path.md compared with files_sidebar_section_controls.md ('File context menu')",
+        "evidence": "The reference page lists 'Copy absolute path' and 'Copy relative path'. The how-to page names the second item 'Upload file to GitHub'. The how-to page also links to the reference page 'to look up the two path-copy actions'.",
+        "impact": "A reader who follows the link from the how-to page to the reference page finds different names for the same item.",
+        "source": "packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json",
+        "sourceEvidence": "\"fileMenu.copyRelativePath\": \"Copy relative path\"",
+        "recommendation": "Correct the how-to page so both pages use the same item names.",
+        "criterion": "consistency"
+      }
+    ],
+    "problems": [
+      "The sidebar groups the four pages clearly under 'Files', in a sensible order. The one inconsistency is the wrong menu item name on the 'Copy a file path' page."
+    ]
+  },
+  "overallScore": 4.666666666666667
+}

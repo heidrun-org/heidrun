@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { state } from "../stores/session";
 import ActionsPanel from "./ActionsPanel.vue";
 import SidebarIconBar from "./SidebarIconBar.vue";
 import FilesPanel from "./FilesPanel.vue";
 import SourceControlPanel from "./SourceControlPanel.vue";
+import CodeHostingPanel from "./CodeHostingPanel.vue";
+import type { Forge } from "../lib/refs";
+import { readCodeHostingForge } from "../stores/code_hosting";
 import { currentGit } from "../stores/git";
 import { actionStatus, currentProject } from "../stores/project";
 import { settings } from "../stores/settings";
@@ -21,7 +24,34 @@ const runningScripts = computed(() => {
   return project.config.actions.filter((action) => actionStatus(workspaceId, action) === "running").length;
 });
 
-/** The buttons of the sidebar icon bar of the left sidebar: the Files, Scripts, and Source control sidebar sections, in this order. */
+/**
+ * The hosting service of the repository of the selected workspace, for the icon of the Code hosting sidebar section. It
+ * is null while it is not known: no workspace, no Git repository, no remote address, or the answer is not there yet.
+ */
+const codeHostingForge = ref<Forge | null>(null);
+
+/** The number of the last reading of the hosting service: an older reading that ends later is dropped. */
+let lastForgeReading = 0;
+
+watch(
+  () => currentGit.value?.root ?? null,
+  async (folder) => {
+    const thisReading = ++lastForgeReading;
+    const forge = await readCodeHostingForge(folder);
+    if (thisReading === lastForgeReading) {
+      codeHostingForge.value = forge;
+    }
+  },
+  { immediate: true },
+);
+
+/** The icon of the Code hosting sidebar section: the logo of GitHub or of GitLab, or a cloud when it is not known. */
+const codeHostingIcon = computed(() => codeHostingForge.value ?? "cloud");
+
+/**
+ * The buttons of the sidebar icon bar of the left sidebar: the Files, Scripts, Source control, and Code hosting sidebar
+ * sections, in this order.
+ */
 const sidebarSections = computed((): SidebarSectionButton[] => [
   { id: "files", label: t("filesPanel.sidebarSection"), icon: "folder2", badge: 0 },
   { id: "actions", label: t("sidebar.sidebarSection.actions"), icon: "play-circle", badge: runningScripts.value, isLive: true },
@@ -31,10 +61,11 @@ const sidebarSections = computed((): SidebarSectionButton[] => [
     icon: "git",
     badge: (currentGit.value?.changed ?? 0) + (currentGit.value?.untracked ?? 0),
   },
+  { id: "codeHosting", label: t("codeHostingPanel.sidebarSection"), icon: codeHostingIcon.value, badge: 0 },
 ]);
 
 function selectSidebarSection(id: string) {
-  if (id === "sourceControl" || id === "files") {
+  if (id === "sourceControl" || id === "files" || id === "codeHosting") {
     clickSidebarSectionIcon(id);
     return;
   }
@@ -56,6 +87,7 @@ function selectSidebarSection(id: string) {
     <div v-if="settings.leftCollapsed === false" class="sidebar-section-body">
       <ActionsPanel v-if="settings.leftSidebarSection === 'actions'" />
       <SourceControlPanel v-else-if="settings.leftSidebarSection === 'sourceControl'" />
+      <CodeHostingPanel v-else-if="settings.leftSidebarSection === 'codeHosting'" />
       <FilesPanel v-else />
     </div>
   </aside>

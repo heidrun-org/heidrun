@@ -1,0 +1,55 @@
+```json
+{
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": { "taskSuccess": 4, "usefulness": 3, "order": 3, "singleType": 3, "userLanguage": 3, "accuracy": 4 },
+      "problems": [
+        "The section 'Long file lists' is a note, not a task. It uses internal details (the first 50,000 entries, 'the Files window's search by name') and names a window that no page explains and the glossary does not define. Move the message into the section 'Troubleshooting' with symptom, cause, solution, and check, and say only that the files after the first 50,000 are not shown.",
+        "The screenshot is sharp and readable. It shows the Files icon in the sidebar icon bar and the selected row with a blue outline. It does not show the result of the task, the large Git window, and the page says so in a sentence. The sentence about the 'yellow' dot beside `.pnpm-store` is also wrong in two ways. The dot is amber, and the reader's own repository will not have this folder. Remove both commentary sentences, or replace the image with one that shows the large Git window. The bottom row 'packages' is also cut in half at the edge of the image. Only an unchanged file is described, but a reader will often open a changed file.",
+        "The section 'Troubleshooting' gives the same one-step solution for both symptoms, and the step only points back to the first section. A reader whose only workspace is not a Git repository has no way out. The rule file for the workspace names the entry 'New workspace…' in the information card; name it here. The page also starts with a precondition (select a workspace) before the main task."
+      ],
+      "verdict": "Clear numbered steps and a real section 'Troubleshooting', but the page mixes in reference and internal detail, and the screenshot does not show the task result."
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": { "taskSuccess": 4, "usefulness": 4, "order": 4, "singleType": 4, "userLanguage": 4, "accuracy": 5 },
+      "problems": [
+        "The first sentence links only to the section 'Select an existing workspace'. The steps that show the Files sidebar section (click Files in the sidebar icon bar) and unfold folders are in the next section of the other page, so the reader never sees them. Add them in one short step, and say that a left click on a file row opens the large Git window while a right click opens the menu.",
+        "The screenshot is well placed right after step 1. It is sharp, and it shows the Files header, the selected `docs/README.md`, and both menu items. The sentence 'This example shows… before either item is chosen' only repeats what the image and its alternative text already say. Remove the sentence. The row below `scripts` is cut at the bottom of the image.",
+        "The third related link (changed-file letters) does not help someone who copies a path. Replace it with a link to the section 'File context menu' of the controls page, or remove it. The step 3 wording 'where you need the path' is awkward; write 'in the other application'."
+      ],
+      "verdict": "Short, accurate, and easy to follow, with a useful table of the two path forms, but the reader is not told how to reach the file in the Files sidebar section."
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": { "taskSuccess": 4, "usefulness": 4, "order": 4, "singleType": 4, "userLanguage": 3, "accuracy": 4 },
+      "problems": [
+        "The destination 'At the repository root' says to click empty space in the Files sidebar section. In a large repository the tree fills the whole section and no empty space is visible, so the reader fails. Tell the reader to fold the folders first with 'Collapse all folders' (the sources say this button folds every folder). State that when nothing is selected, the new item goes to the root.",
+        "Some words are for developers: 'the name box shown as the first child of the destination folder', 'loses its tree entry', and 'Git does not list empty folders'. Rewrite in user words: 'at the top of the contents of the destination folder' and 'An empty folder disappears from the folder tree when Heidrun restarts; the folder stays on disk'. The screenshot is sharp and matches step 2 (name box inside `docs`, `example.md` typed). Its caption sentence only repeats the image.",
+        "The first Troubleshooting entry says the message 'may be in French'. In `files.rs` the text is a fixed French string, so it is always French; write that. The entry is otherwise correct and complete (symptom, cause, solution, check)."
+      ],
+      "verdict": "Good steps, a helpful destination table, and a correct section 'Troubleshooting'. Some developer wording, and one destination fails in big repositories."
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": { "taskSuccess": 3, "usefulness": 4, "order": 3, "singleType": 4, "userLanguage": 4, "accuracy": 4 },
+      "problems": [
+        "The page lists no table of row actions, which are the core controls: click a folder row (fold or unfold), click a file row (open in the large Git window), right click a file row (context menu), click empty space (clear the selection), and Enter and Escape in the name box. These are only spread over the how-to pages. The default choices of 'More options' (Medium, Comfortable, Show) are in the rule file and visible as check marks in the screenshot, but the text does not state them.",
+        "The section 'Visibility and selection' is a mixed list. It holds selection memory, closing a window, the 'Ignored files' checkbox, empty folders, and long lists. The checkbox is in the 'Files window', and no page says how to open that window (⌘P), and the glossary has no such term. The rows for empty folders and long lists repeat two other pages. Split the section into 'Selection' and 'Ignored files', and remove the repeated rows.",
+        "The screenshot of 'More options' is sharp, and the check marks are easy to read. The header-buttons table, which is the first thing a reader looks up, has no image next to it. Put the image where the reader sees the five icons too. The indicator text 'a blue outline and a darker background than the row under the pointer' is hard to read; write 'Row with a blue outline'."
+      ],
+      "verdict": "Good tables, correct against the sources, but the row actions are missing and the last section is a grab-bag."
+    }
+  ],
+  "site": {
+    "navigation": 3,
+    "consistency": 4,
+    "problems": [
+      "The page 'Introduction' is a placeholder that says the documentation will be written here, and it links to none of the four Files pages. The sidebar is the only way in. Replace it with a short page that lists the pages and says where to start.",
+      "Every page needs a selected workspace, but no page tells how to add or select one. The procedure sits inside 'Browse and open project files', and the other pages deep-link to that section. Create a page 'Select a workspace' (including the entry 'New workspace…') in the sidebar, and link it from every Troubleshooting entry that mentions a workspace. The section 'Related pages' lists almost every other page on each page, so it does not show the next step.",
+      "Overlap and words: the limit of 50,000 entries, the behaviour of empty folders, and the two context menu items each appear in two pages. The words 'Files window', 'name box', 'tree entry', 'notification', and 'file list' are not in the glossary. 'Folder tree', 'tree', 'list', and 'file list' name the same thing. The pages say 'bottom-left of the application' where the glossary says 'status bar'."
+    ]
+  }
+}
+```

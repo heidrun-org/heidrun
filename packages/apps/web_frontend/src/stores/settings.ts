@@ -1,6 +1,7 @@
 import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { CUSTOM_SCRIPT_CODING_AGENT_IDS } from "../lib/coding_agents";
 
 export interface FontOption {
   id: string;
@@ -36,11 +37,22 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one. */
-export type LeftSidebarSection = "actions" | "sourceControl" | "files";
+/**
+ * The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one, and
+ * "codeHosting" is the Code hosting one.
+ */
+export type LeftSidebarSection = "actions" | "sourceControl" | "files" | "codeHosting";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
 export type RightSidebarSection = "toHandle" | "notes" | "chats";
+
+/** A saved search of the Code hosting sidebar section (issue #374): a search under a name. */
+export type SavedSearch = {
+  /** The name that the button of the saved search shows. Two saved searches never have the same name. */
+  name: string;
+  /** The search, written in the search language of GitHub. */
+  query: string;
+};
 
 const defaults = {
   fontId: "geist",
@@ -70,12 +82,6 @@ const defaults = {
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
   /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
   chatsOrder: "descending" as "ascending" | "descending",
-  /** Tab Scripts: the section Custom Scripts is folded. */
-  scriptsCustomFolded: false,
-  /** Tab Scripts: the section Recent is folded. */
-  scriptsRecentFolded: false,
-  /** Tab Scripts: the section Existing Scripts is folded. */
-  scriptsExistingFolded: false,
   /** Last size of the note window, in px. */
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */
@@ -90,10 +96,22 @@ const defaults = {
   confirmTabClose: true,
   /** A click on the close button in the header of a pane opens the confirmation dialog "Close the pane". Off: the pane closes at once. */
   confirmPaneClose: true,
+  /** Window "Edit the saved search": the button "Delete" opens the confirmation dialog "Delete the saved search". Off: the saved search is deleted at once. */
+  confirmSavedSearchDelete: true,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
+  /** Window Create a custom script: the last kind, "commandLine" or "codingAgent". */
+  customScriptKind: "commandLine" as "commandLine" | "codingAgent",
+  /** Window Create a custom script: the identifier of the last coding agent. */
+  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS[0] as string,
+  /** Window Create a custom script: the last model. An empty text is the default model. */
+  customScriptModel: "",
+  /** Window Create a custom script: the last effort. An empty text is the default effort. */
+  customScriptEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
+  showWorkspacesInNeedsYou: true,
   /** Notifications. */
   notifBlockedMin: 5, // remind once when an agent stays blocked this long (0 = off)
   notifContext: true, // an agent's context goes past 80 %
@@ -177,10 +195,10 @@ const defaults = {
   searchAgentsOnly: false,
   /** Window Search: look only in the selected workspace. */
   searchThisWorkspace: false,
-  /** Sidebar section Scripts: the list of suggestions shows all the suggestions, not only the first six. */
-  scriptsShowAllSuggestions: false,
   /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
+  /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
+  codeHostingSavedSearches: [] as SavedSearch[],
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -198,6 +216,8 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsView: ["compact", "expanded"],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   newTabCommand: ["terminal", "claude", "codex"],
+  customScriptKind: ["commandLine", "codingAgent"],
+  customScriptAgent: CUSTOM_SCRIPT_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -222,6 +242,22 @@ function dropCorruptedValues(saved: Record<string, unknown>): Record<string, unk
     }
   }
   return result;
+}
+
+/**
+ * Keeps the saved searches that have a name and a search that are texts, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches that can be used
+ */
+function keepSavedSearches(value: unknown[]): SavedSearch[] {
+  const kept: SavedSearch[] = [];
+  for (const entry of value) {
+    const candidate = entry as Partial<SavedSearch> | null;
+    if (typeof candidate?.name === "string" && candidate.name !== "" && typeof candidate.query === "string") {
+      kept.push({ name: candidate.name, query: candidate.query });
+    }
+  }
+  return kept;
 }
 
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
@@ -271,6 +307,7 @@ function load(): typeof defaults {
     delete stored.leftOpen;
     delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
+    saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
     // "github-dark" was the only default before themes existed: it now means "auto".
     if (saved.codeTheme === "github-dark") {
       saved.codeTheme = "auto";
@@ -341,6 +378,7 @@ export type SettingsSection =
   | "newTab"
   | "mouse"
   | "finishedItems"
+  | "needsYou"
   | "notifications"
   | "general"
   | "mobileAccess"

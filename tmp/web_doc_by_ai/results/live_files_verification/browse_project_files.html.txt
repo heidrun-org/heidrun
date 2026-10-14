@@ -1,0 +1,168 @@
+Browser tab: 2, Title: "Browse and open project files | Heidrun", URL: "http://127.0.0.1:5175/heidrun/documentation/browse_project_files.html".
+1 AXWebArea Browse and open project files | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+	2 container app
+		3 link Description: Skip to content, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#VPContent
+		4 container
+			5 link Description: Heidrun, Value: 127.0.0.1:5175/heidrun/
+			6 container Main Navigation
+				7 text Main Navigation
+				8 link Description: Home, Value: 127.0.0.1:5175/heidrun/
+				9 link Description: Documentation, Value: 127.0.0.1:5175/heidrun/documentation/
+				10 link Description: About, Value: 127.0.0.1:5175/heidrun/about.html
+			11 switch Description: Switch to light theme, Value: 0
+			12 link Description: github, Value: github.com/heidrun-org/heidrun
+		13 container
+			14 container Sidebar Navigation, ID: VPSidebarNav
+				15 text Sidebar Navigation
+				16 container
+					17 button Documentation
+						18 heading Documentation, Value: 2
+							19 text Documentation
+					20 link Description: Introduction, Value: 127.0.0.1:5175/heidrun/documentation/
+					21 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+				22 container
+					23 button Files
+						24 heading Files, Value: 2
+							25 text Files
+					26 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+					27 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+					28 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+					29 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+		30 container VPContent
+			31 container
+				32 container On this page
+					33 container
+						34 heading On this page, Value: 2, ID: doc-outline-aria-label
+							35 text On this page
+						36 content list
+							37 link Description: Select an existing workspace, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+							38 link Description: Open a project file, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file
+							39 link Description: Refresh the folder tree, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#refresh-the-folder-tree
+							40 link Description: Troubleshooting, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#troubleshooting
+							41 link Description: Related pages, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#related-pages
+			42 container
+				43 container
+					44 heading Browse and open project files Permalink to "Browse and open project files", Value: 1, ID: browse-and-open-project-files
+						45 text Browse and open project files
+						46 link Description: Permalink to "Browse and open project files", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#browse-and-open-project-files
+					47 text Find a file in the selected workspace and view the file in the large Git window.
+					48 heading Select an existing workspace Permalink to "Select an existing workspace", Value: 2, ID: select-an-existing-workspace
+						49 text Select an existing workspace
+						50 link Description: Permalink to "Select an existing workspace", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+					51 text A workspace is a project folder. Choose a workspace that contains a Git repository.
+					52 content list
+						53 container
+							54 AXListMarker 1. 
+							55 text Click the workspace name at the left end of the status bar to open the workspace information card, a small card with details and a list of workspaces.
+						56 container
+							57 AXListMarker 2. 
+							58 text Click the workspace you want in the list below the details. If no suitable workspace is listed, click  New workspace…  at the end of the workspace information card and choose the repository folder.
+					59 text The workspace information card closes, and the status bar shows the selected workspace name.
+					60 heading Open a project file Permalink to "Open a project file", Value: 2, ID: open-a-project-file
+						61 text Open a project file
+						62 link Description: Permalink to "Open a project file", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file
+					63 text The Files sidebar section shows the folder tree of the selected workspace's Git repository.
+					64 content list
+						65 container
+							66 AXListMarker 1. 
+							67 text Click  Files , the first folder icon in the left sidebar icon bar, the narrow vertical bar at the outer edge of the left sidebar, above  Scripts .
+						68 container
+							69 AXListMarker 2. 
+							70 text Click the containing folder rows to unfold the folders and locate the file.
+					71 image Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.
+					72 content list
+						73 container
+							74 AXListMarker 3. 
+							75 text Click the file row you want to open.
+					76 text The file row becomes selected, and the large Git window opens over the application to show the file. Use 
+					77 text File
+					78 text  to view the whole file, or 
+					79 text Diff
+					80 text  or 
+					81 text Side by side
+					82 text  to compare changes. For an unchanged file, 
+					83 text Diff
+					84 text  and 
+					85 text Side by side
+					86 text  are disabled; the whole file is shown, or formatted Markdown if 
+					87 text Reading
+					88 text  is selected. When finished viewing, you can press 
+					89 text Escape
+					90 text  or click 
+					91 text Close
+					92 text , the cross at the top-right of the large Git window, to return to the Files sidebar section. The file row remains selected.
+					93 heading Refresh the folder tree Permalink to "Refresh the folder tree", Value: 2, ID: refresh-the-folder-tree
+						94 text Refresh the folder tree
+						95 link Description: Permalink to "Refresh the folder tree", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#refresh-the-folder-tree
+					96 text Use 
+					97 text Refresh
+					98 text  when a file or folder was added or removed outside Heidrun and the folder tree still shows the old list.
+					99 content list
+						100 container
+							101 AXListMarker 1. 
+							102 text Click  Refresh , the circular arrow in the header of the Files sidebar section.
+						103 container
+							104 AXListMarker 2. 
+							105 text If necessary, click the folder where the change was made to unfold the folder.
+					106 text Check that an added file now appears or a removed file no longer appears. Refresh also removes a remembered empty folder from the folder tree when the folder no longer exists on disk.
+					107 heading Troubleshooting Permalink to "Troubleshooting", Value: 2, ID: troubleshooting
+						108 text Troubleshooting
+						109 link Description: Permalink to "Troubleshooting", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#troubleshooting
+					110 heading “Select a workspace.” appears Permalink to "“Select a workspace.” appears", Value: 3, ID: select-a-workspace-appears
+						111 text “Select a workspace.” appears
+						112 link Description: Permalink to "“Select a workspace.” appears", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-a-workspace-appears
+					113 text Cause
+					114 text : No workspace is selected.
+					115 text Solution
+					116 text :
+					117 content list
+						118 container
+							119 AXListMarker 1. 
+							120 link Description: Select an existing workspace, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+							121 text  that contains a Git repository.
+					122 text Check
+					123 text : The Files sidebar section shows the folder tree when the selected workspace is a Git repository.
+					124 heading Value: 3, ID: this-workspace-is-not-a-git-repository-appears, “This workspace is not a Git repository.” appears Permalink to "“This workspace is not a Git repository.” appears"
+						125 text “This workspace is not a Git repository.” appears
+						126 link Description: Permalink to "“This workspace is not a Git repository.” appears", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#this-workspace-is-not-a-git-repository-appears
+					127 text Cause
+					128 text : The selected workspace is not a Git repository.
+					129 text Solution
+					130 text :
+					131 content list
+						132 container
+							133 AXListMarker 1. 
+							134 link Description: Select an existing workspace, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+							135 text  that contains a Git repository.
+					136 text Check
+					137 text : The Files sidebar section shows the repository's folder tree.
+					138 heading Long file lists Permalink to "Long file lists", Value: 3, ID: long-file-lists
+						139 text Long file lists
+						140 link Description: Permalink to "Long file lists", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#long-file-lists
+					141 text “The list is too long: only the first files are shown.” means that only the first 50,000 entries are available. Heidrun has no control to load the remaining entries. Check the selected workspace in the status bar and unfold the file's containing folders. If the file is still missing while the warning appears, the folder tree may be incomplete.
+					142 heading Related pages Permalink to "Related pages", Value: 2, ID: related-pages
+						143 text Related pages
+						144 link Description: Permalink to "Related pages", Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#related-pages
+					145 content list
+						146 container
+							147 AXListMarker • 
+							148 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+							149 text : to add an empty file or folder in the intended location.
+						150 container
+							151 AXListMarker • 
+							152 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+							153 text : to use a file path outside Heidrun.
+						154 container
+							155 AXListMarker • 
+							156 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+							157 text : to look up buttons and folder tree indicators.
+						158 container
+							159 AXListMarker • 
+							160 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+							161 text : to find the shortcut  ⌘P  for opening a project file by name.
+				162 container Pager
+					163 text Pager
+					164 link Description: Previous page Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+					165 link Description: Next page Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+
+The focused UI element is 1 AXWebArea Browse and open project files | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html

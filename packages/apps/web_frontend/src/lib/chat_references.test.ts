@@ -5,6 +5,7 @@ import {
   chatReferenceState,
   referenceDay,
   referenceExcerpt,
+  referenceLabelStyle,
   repositoryName,
 } from "./chat_references";
 import { settings } from "../stores/settings";
@@ -103,5 +104,18 @@ describe("referenceDay", () => {
     const date = new Date(new Date().getFullYear(), 9, 11, 12, 0).getTime();
     expect(referenceDay(date)).toBe("Oct 11");
     expect(referenceDay(null)).toBe("");
+  });
+});
+
+describe("referenceLabelStyle", () => {
+  it("gives the color to the text and a tint of it to the background and the border", () => {
+    const style = referenceLabelStyle("1d76db");
+    expect(style.color).toContain("#1d76db");
+    expect(style.backgroundColor).toContain("#1d76db");
+    expect(style.borderColor).toContain("#1d76db");
+  });
+
+  it("gives no style when the forge gives no color", () => {
+    expect(referenceLabelStyle(null)).toEqual({});
   });
 });

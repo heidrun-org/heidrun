@@ -2,15 +2,16 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 
 // A part of the screen that opens a small card when it is clicked. The part gets a background while the pointer is over it
-// and while the card is open. The card opens at the left of the part, so the part belongs in a sidebar at the right edge of
-// the window. The card is a child of the part in the page, so the keyboard reaches the buttons in the card. A click on
+// and while the card is open. By default the card opens at the left of the part, so the part belongs in a sidebar at the
+// right edge of the window. The card is a child of the part in the page, so the keyboard reaches the buttons in the card. A click on
 // the part opens the card, and a second click closes it. The card also closes when the key Escape is pressed, when the
 // keyboard focus leaves, and on a click outside. The card does not open when the pointer only moves over the part.
 // The card is placed again each time its height changes, for example when a row of its list expands, and each time the
 // window changes its size, so that the card always stays inside the window.
-// The property "placement" chooses the side of the card: "start" (the default) puts it at the left of the part, and
-// "bottom" puts it below the part, with its arrow under the middle of the part, for a part that is not in a sidebar at
-// the right edge of the window, for example the circled question mark of a page of the Settings window.
+// The property "placement" chooses the side of the card: "start" (the default) puts it at the left of the part, "end"
+// puts it at the right of the part, for a part in a sidebar at the left edge of the window, and "bottom" puts it below
+// the part, with its arrow under the middle of the part, for a part that is not in a sidebar, for example the circled
+// question mark of a page of the Settings window.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
 // decides its padding. The event "open" tells that the card just opened.
 
@@ -18,8 +19,8 @@ const props = withDefaults(
   defineProps<{
     /** The name of the card, for the screen reader. */
     label: string;
-    /** The side of the part where the card opens: at the left of the part, or below the part. */
-    placement?: "start" | "bottom";
+    /** The side of the part where the card opens: at the left of the part, at the right of the part, or below it. */
+    placement?: "start" | "end" | "bottom";
   }>(),
   { placement: "start" },
 );
@@ -64,6 +65,16 @@ function place() {
   }
   const top = Math.max(GAP, Math.min(part.top, window.innerHeight - height - GAP));
   const arrowTop = Math.max(GAP, part.top + part.height / 2 - top - ARROW_HALF_WIDTH);
+  if (props.placement === "end") {
+    cardStyle.value = {
+      top: `${top}px`,
+      left: `${part.right + GAP}px`,
+      right: "auto",
+      "--popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, window.innerWidth - part.right - 2 * GAP))}px`,
+    };
+    arrowStyle.value = { top: `${arrowTop}px` };
+    return;
+  }
   cardStyle.value = {
     top: `${top}px`,
     left: "auto",
@@ -151,7 +162,7 @@ onBeforeUnmount(() => {
       v-if="isOpen"
       ref="card"
       class="popover popover-instant show position-fixed"
-      :class="props.placement === 'bottom' ? 'bs-popover-bottom' : 'bs-popover-start'"
+      :class="`bs-popover-${props.placement}`"
       role="group"
       :aria-label="props.label"
       :style="cardStyle"

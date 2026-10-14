@@ -11,9 +11,9 @@ beforeEach(() => {
   vi.resetModules();
 });
 
-async function mountPanel(options: { recentCommands?: string[] } = {}) {
+async function mountPanel() {
   const { state } = await import("../stores/session");
-  const { project, local } = await import("../stores/project");
+  const { project } = await import("../stores/project");
   const { default: ActionsPanel } = await import("./ActionsPanel.vue");
   state.selectedWorkspaceId = "w1";
   project.byWorkspace["w1"] = {
@@ -28,30 +28,27 @@ async function mountPanel(options: { recentCommands?: string[] } = {}) {
       { label: "pnpm dev", command: "pnpm dev", source: "package.json" },
     ],
   } as never;
-  local.recent["/Users/me/webwork/heidrun"] = (options.recentCommands ?? []).map((command) => ({
-    label: command,
-    command,
-    at: Date.now(),
-  }));
   const wrapper = mount(ActionsPanel);
   await flushPromises();
   return wrapper;
 }
 
 describe("ActionsPanel", () => {
-  it("shows the section Custom Scripts first, then the section Existing Scripts", async () => {
+  it("has the title Scripts, a button Import, and a plus button, on one line, and no section", async () => {
     const wrapper = await mountPanel();
-    const headings = wrapper.findAll(".section-head").map((heading) => heading.text());
-    expect(headings).toEqual(["Custom Scripts", "Existing Scripts"]);
+    const header = wrapper.get("header");
+    expect(header.get(".title").text()).toBe("Scripts");
+    expect(header.get("button.import").attributes("aria-label")).toBe("Import the scripts of the project");
+    expect(header.get("button.create").attributes("aria-label")).toBe("Create a custom script");
+    expect(wrapper.find(".section-head").exists()).toBe(false);
+    expect(wrapper.text()).not.toMatch(/Custom Scripts|Existing Scripts|Recent/);
     expect(wrapper.text()).toContain("start the server");
-    expect(wrapper.text()).toContain("pnpm install");
   });
 
   it("does not use the words Actions or Suggestions", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.text()).not.toMatch(/action/i);
     expect(wrapper.text()).not.toMatch(/suggestion/i);
-    expect(wrapper.text()).toContain("Scripts · ");
   });
 
   it("does not show the path of the configuration file", async () => {
@@ -67,63 +64,23 @@ describe("ActionsPanel", () => {
     expect(wrapper.findAll("[draggable]")).toHaveLength(0);
   });
 
-  it("folds and unfolds the section Custom Scripts", async () => {
-    const wrapper = await mountPanel();
-    const heading = wrapper.findAll(".section-head")[0];
-    expect(heading.attributes("aria-expanded")).toBe("true");
-
-    await heading.trigger("click");
-    expect(wrapper.findAll(".section-head")[0].attributes("aria-expanded")).toBe("false");
-    expect(wrapper.text()).not.toContain("start the server");
-    expect(wrapper.text()).toContain("pnpm install");
-
-    await wrapper.findAll(".section-head")[0].trigger("click");
-    expect(wrapper.findAll(".section-head")[0].attributes("aria-expanded")).toBe("true");
-    expect(wrapper.text()).toContain("start the server");
-  });
-
-  it("folds and unfolds the section Existing Scripts", async () => {
-    const wrapper = await mountPanel();
-    const heading = wrapper.findAll(".section-head")[1];
-    expect(heading.attributes("aria-expanded")).toBe("true");
-
-    await heading.trigger("click");
-    expect(wrapper.findAll(".section-head")[1].attributes("aria-expanded")).toBe("false");
-    expect(wrapper.text()).not.toContain("pnpm install");
-    expect(wrapper.text()).toContain("start the server");
-
-    await wrapper.findAll(".section-head")[1].trigger("click");
-    expect(wrapper.text()).toContain("pnpm install");
-  });
-
-  it("has a plus button on the line of the heading Custom Scripts, after the heading", async () => {
-    const wrapper = await mountPanel();
-    const row = wrapper.get(".section-row");
-    const children = Array.from(row.element.children);
-    expect(children).toHaveLength(2);
-    expect(children[0].classList.contains("section-head")).toBe(true);
-    const plus = wrapper.get(".section-row .create");
-    expect(children[1]).toBe(plus.element);
-    expect(plus.text()).toBe("+");
-    expect(plus.attributes("title")).toBe("Create a custom script");
-    expect(plus.attributes("aria-label")).toBe("Create a custom script");
-  });
-
   it("opens the window Create a custom script when the person clicks the plus button", async () => {
     const wrapper = await mountPanel();
     const { newCustomScriptModal } = await import("../stores/newCustomScript");
     expect(newCustomScriptModal.open).toBe(false);
-    await wrapper.get(".section-row .create").trigger("click");
+    await wrapper.get("header button.create").trigger("click");
     expect(newCustomScriptModal.open).toBe(true);
   });
 
-  it("keeps the plus button when the section Custom Scripts is folded", async () => {
+  it("opens the window Import scripts when the person clicks the button Import", async () => {
     const wrapper = await mountPanel();
-    await wrapper.findAll(".section-head")[0].trigger("click");
-    expect(wrapper.find(".section-row .create").exists()).toBe(true);
+    const { importScriptsModal } = await import("../stores/importScripts");
+    expect(importScriptsModal.open).toBe(false);
+    await wrapper.get("header button.import").trigger("click");
+    expect(importScriptsModal.open).toBe(true);
   });
 
-  it("has no dashed button and no form inside the tab: the window replaces them", async () => {
+  it("has no dashed button and no form inside the tab: the windows replace them", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.text()).not.toContain("Add a script");
     expect(wrapper.find(".dashed").exists()).toBe(false);
@@ -131,58 +88,76 @@ describe("ActionsPanel", () => {
     expect(wrapper.find("input").exists()).toBe(false);
   });
 
-  it("shows the section Recent between the two other sections, when a command was run", async () => {
-    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
-    const headings = wrapper.findAll(".section-head").map((heading) => heading.text());
-    expect(headings).toEqual(["Custom Scripts", "Recent", "Existing Scripts"]);
-    expect(wrapper.text()).toContain("pnpm build");
-  });
-
-  it("does not show the section Recent when no command was run", async () => {
+  it("draws a card: the status dot before the name, the menu of three dots on the right, the description, then the state and the button Run", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.findAll(".section-head").map((heading) => heading.text())).not.toContain("Recent");
+    const card = wrapper.get(".action");
+    const top = card.get(".top");
+    expect(top.element.children[0].classList.contains("dot")).toBe(true);
+    expect(top.get(".label").text()).toBe("start the server");
+    expect(top.find("button[aria-haspopup=menu]").exists()).toBe(true);
+    expect(card.get(".desc").text()).toBe("make dev");
+    expect(card.get(".state").text()).toBe("Not running");
+    expect(card.get(".bottom .btn").text()).toBe("Run");
   });
 
-  it("folds and unfolds the section Recent", async () => {
-    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
-    const recentHeading = () => wrapper.findAll(".section-head")[1];
-    expect(recentHeading().attributes("aria-expanded")).toBe("true");
-
-    await recentHeading().trigger("click");
-    expect(recentHeading().attributes("aria-expanded")).toBe("false");
-    expect(wrapper.text()).not.toContain("pnpm build");
-    expect(wrapper.text()).toContain("start the server");
-    expect(wrapper.text()).toContain("pnpm install");
-
-    await recentHeading().trigger("click");
-    expect(recentHeading().attributes("aria-expanded")).toBe("true");
-    expect(wrapper.text()).toContain("pnpm build");
+  it("shows the description of the script instead of the command line when there is one", async () => {
+    const wrapper = await mountPanel();
+    const { project } = await import("../stores/project");
+    project.byWorkspace["w1"]!.config.actions[0].description = "Starts the development server.";
+    await flushPromises();
+    expect(wrapper.get(".desc").text()).toBe("Starts the development server.");
   });
 
-  it("shows the button that clears the recent commands as an icon, without text, on the line of the heading", async () => {
-    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
-    const clear = wrapper.get(".section-row .clear");
-    expect(clear.text()).toBe("");
-    expect(clear.find("i.bi-trash").exists()).toBe(true);
-    expect(clear.attributes("aria-label")).toBe("Clear the recent commands");
-    expect(clear.attributes("title")).toBe("Clear the recent commands");
-    const row = clear.element.parentElement!;
-    expect(row.children[0].classList.contains("section-head")).toBe(true);
-    expect(row.children[1]).toBe(clear.element);
-    expect(wrapper.text()).not.toContain("Clear");
+  it("shows only the first 120 characters of a long command line when the script has no description", async () => {
+    const wrapper = await mountPanel();
+    const { project } = await import("../stores/project");
+    project.byWorkspace["w1"]!.config.actions[0].command = "x".repeat(300);
+    await flushPromises();
+    expect(wrapper.get(".desc").text()).toBe("x".repeat(120));
   });
 
-  it("keeps the button that clears the recent commands when the section Recent is folded", async () => {
-    const wrapper = await mountPanel({ recentCommands: ["pnpm build"] });
-    await wrapper.findAll(".section-head")[1].trigger("click");
-    expect(wrapper.find(".section-row .clear").exists()).toBe(true);
+  it("has the items Edit and Delete, with an icon each, in the menu of three dots of a card", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    await flushPromises();
+    const items = Array.from(document.body.querySelectorAll("[role=menuitem]")).map((item) => item.textContent?.trim());
+    expect(items).toEqual(["Edit", "Delete"]);
+    expect(document.body.querySelectorAll("[role=separator]")).toHaveLength(1);
+    expect(document.body.querySelector("[role=menuitem].theme-danger")?.textContent?.trim()).toBe("Delete");
+    expect(document.body.querySelectorAll("[role=menuitem] i.bi-pencil, [role=menuitem] i.bi-trash")).toHaveLength(2);
   });
 
-  it("removes the section Recent when the person clicks the button that clears the recent commands", async () => {
-    const wrapper = await mountPanel({ recentCommands: ["pnpm build", "sleep 5"] });
-    await wrapper.get(".section-row .clear").trigger("click");
-    expect(wrapper.text()).not.toContain("pnpm build");
-    expect(wrapper.text()).not.toContain("sleep 5");
-    expect(wrapper.findAll(".section-head").map((heading) => heading.text())).toEqual(["Custom Scripts", "Existing Scripts"]);
+  it("never shows the words Run again", async () => {
+    const wrapper = await mountPanel();
+    expect(wrapper.html()).not.toMatch(/run again/i);
+    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    await flushPromises();
+    expect(document.body.textContent).not.toMatch(/run again/i);
+  });
+
+  it("opens the window in edit mode when the person chooses Edit", async () => {
+    document.body.innerHTML = "";
+    const wrapper = await mountPanel();
+    const { newCustomScriptModal } = await import("../stores/newCustomScript");
+    await wrapper.get(".action button[aria-haspopup=menu]").trigger("click");
+    await flushPromises();
+    const edit = Array.from(document.body.querySelectorAll<HTMLElement>("[role=menuitem]")).find((item) => item.textContent?.trim() === "Edit");
+    edit!.click();
+    await flushPromises();
+    expect(newCustomScriptModal.open).toBe(true);
+    expect(newCustomScriptModal.editedId).toBe("dev");
+  });
+
+  it("runs a script only when the person clicks the button Run, not when the person clicks the card", async () => {
+    const wrapper = await mountPanel();
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockClear();
+    const card = wrapper.get(".action");
+    await card.trigger("click");
+    await card.get(".label").trigger("click");
+    await card.get(".desc").trigger("click");
+    await flushPromises();
+    expect(card.find("button.label, button.desc").exists()).toBe(false);
+    expect(vi.mocked(invoke).mock.calls).toHaveLength(0);
   });
 });

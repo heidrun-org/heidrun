@@ -1,0 +1,13 @@
+{
+  "rubricVersion": "2",
+  "model": "claude-sonnet-5-5",
+  "effort": "high",
+  "candidateSha256": "dff76de3c3fcb574b498224ff7dda8d30362f90af877bda15164f5515bd60086",
+  "expectedSha256": "208a32ab93c4f2de5677ba348ed8b7f33c053f75c6d48aef893c2ac1e992efcf",
+  "runs": 2,
+  "order": [
+    "listed order",
+    "reverse order"
+  ],
+  "acceptance": "Every planted defect must be specifically identified as a deduction, meet its predeclared criterion threshold, and include accurate evidence in both runs. No good case may get material/blocker/unusable findings. Suggestions or unrelated deductions do not count as detection. Any missing image inspection invalidates the image case. No expectation changes after answers arrive. Passing twelve examples is limited evidence, not universal reliability."
+}

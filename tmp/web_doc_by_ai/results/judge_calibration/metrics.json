@@ -1,0 +1,400 @@
+[
+  {
+    "run": "run1",
+    "rubricVersion": "2",
+    "records": [
+      {
+        "file": "sample_19.md",
+        "name": "Complete path-copy procedure",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_42.md",
+        "name": "Unsupported menu item",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_07.md",
+        "name": "Action/result reference table",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_63.md",
+        "name": "Missing context-menu opening step",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_28.md",
+        "name": "Reversed absolute/relative examples",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_55.md",
+        "name": "Correct intermediate screenshot",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_34.md",
+        "name": "Folder wrongly supports copying its path",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_81.md",
+        "name": "Wrong screenshot under correct name-box caption",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_12.md",
+        "name": "Correct Markdown-only Reading prerequisite",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_46.md",
+        "name": "False deletion of empty folders",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": false
+      },
+      {
+        "file": "sample_73.md",
+        "name": "Invalid slash in a creation name",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_90.md",
+        "name": "Reading button for a TypeScript file",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      }
+    ]
+  },
+  {
+    "run": "run2",
+    "rubricVersion": "2",
+    "records": [
+      {
+        "file": "sample_19.md",
+        "name": "Complete path-copy procedure",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_42.md",
+        "name": "Unsupported menu item",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_07.md",
+        "name": "Action/result reference table",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_63.md",
+        "name": "Missing context-menu opening step",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_28.md",
+        "name": "Reversed absolute/relative examples",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_55.md",
+        "name": "Correct intermediate screenshot",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_34.md",
+        "name": "Folder wrongly supports copying its path",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_81.md",
+        "name": "Wrong screenshot under correct name-box caption",
+        "kind": "defect",
+        "detected": true,
+        "score": 4,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_12.md",
+        "name": "Correct Markdown-only Reading prerequisite",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_46.md",
+        "name": "False deletion of empty folders",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_73.md",
+        "name": "Invalid slash in a creation name",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_90.md",
+        "name": "Reading button for a TypeScript file",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      }
+    ]
+  },
+  {
+    "run": "revised1",
+    "rubricVersion": "3",
+    "records": [
+      {
+        "file": "sample_19.md",
+        "name": "Complete path-copy procedure",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_42.md",
+        "name": "Unsupported menu item",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_07.md",
+        "name": "Action/result reference table",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_63.md",
+        "name": "Missing context-menu opening step",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_28.md",
+        "name": "Reversed absolute/relative examples",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_55.md",
+        "name": "Correct intermediate screenshot",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_34.md",
+        "name": "Folder wrongly supports copying its path",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_81.md",
+        "name": "Wrong screenshot under correct name-box caption",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_12.md",
+        "name": "Correct Markdown-only Reading prerequisite",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_46.md",
+        "name": "False deletion of empty folders",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_73.md",
+        "name": "Invalid slash in a creation name",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "sample_90.md",
+        "name": "Reading button for a TypeScript file",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      }
+    ]
+  },
+  {
+    "run": "holdout1",
+    "rubricVersion": "3",
+    "records": [
+      {
+        "file": "candidate_31.md",
+        "name": "Existing file wrongly overwritten",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_58.md",
+        "name": "Correct creation without screenshot",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_16.md",
+        "name": "Enter and Escape behaviour reversed",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_84.md",
+        "name": "Complete copying with intermediate menu image",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_25.md",
+        "name": "Copy-menu caption over creation image",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_69.md",
+        "name": "Missing creation action",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      }
+    ]
+  },
+  {
+    "run": "holdout2",
+    "rubricVersion": "3",
+    "records": [
+      {
+        "file": "candidate_31.md",
+        "name": "Existing file wrongly overwritten",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_58.md",
+        "name": "Correct creation without screenshot",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_16.md",
+        "name": "Enter and Escape behaviour reversed",
+        "kind": "defect",
+        "detected": true,
+        "score": 2,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_84.md",
+        "name": "Complete copying with intermediate menu image",
+        "kind": "good",
+        "falseAlarm": false,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_25.md",
+        "name": "Copy-menu caption over creation image",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      },
+      {
+        "file": "candidate_69.md",
+        "name": "Missing creation action",
+        "kind": "defect",
+        "detected": true,
+        "score": 3,
+        "thresholdMet": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "commandTitle": "Commande par défaut d’un nouvel onglet",
+  "terminalLabel": "Terminal",
+  "terminalTitle": "Le panneau d’un nouvel onglet lance un terminal",
+  "claudeLabel": "Claude Code",
+  "claudeTitle": "Le panneau d’un nouvel onglet lance Claude Code, sans rôle précis, avec le modèle par défaut et sans consigne de départ",
+  "codexLabel": "Codex",
+  "codexTitle": "Le panneau d’un nouvel onglet lance Codex, avec le modèle par défaut et sans consigne de départ",
+  "help": "Un clic sur le bouton plus de la barre d’onglets crée un nouvel onglet, et lance cette commande dans son panneau."
+}

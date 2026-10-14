@@ -30,7 +30,7 @@ pnpm release:change_log --ai --from v0.2.0                # a coding agent write
 | `--from <tag>` | The release after which the changes start. `start` means the start of the history. The default is the release before `--to`, or the start if there is none. |
 | `--to <tag>` | The release where the changes end. `now` means the current commit. The default is `now`. |
 | `--ai` | A coding agent writes the section, with the categories `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, and `Security`. Without this option, the section is a plain list of the pull requests. |
-| `--agent <name>` | The coding agent for `--ai`: `codex` (the default) or `claude`. |
+| `--agent <name>` | The coding agent for `--ai`: `codex` (the default), `claude`, or `agy`. |
 | `--help` | Shows the description and the options. |
 
 How the command works:
@@ -57,7 +57,7 @@ const section = await GenerateChangeLog.run({
 });
 ```
 
-The method `GenerateChangeLog.run` writes the file `CHANGELOG.md` in the repository, and returns the new section. The coding agent comes from the package [`raw_coding_agent_cli`](../raw_coding_agent_cli), and the package is loaded only when `isAi` is true.
+The method `GenerateChangeLog.run` writes the file `CHANGELOG.md` in the repository, and returns the new section. The coding agent runs through the executable of the package [`raw_coding_agent_cli`](../../auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. The method runs the executable only when `isAi` is true, so the mode without the option `--ai` needs no Rust tool.
 
 ## Commands
 

@@ -4,7 +4,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const invokeMock = vi.hoisted(() => vi.fn());
+const copyMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
+vi.mock("../lib/clipboard", () => ({ copy: copyMock }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 
 import FilesPanel from "./FilesPanel.vue";
@@ -40,7 +42,10 @@ async function mountPanel() {
 }
 
 beforeEach(() => {
-  invokeMock.mockImplementation(async (command: string, args: { paths: string[] }) => {
+  invokeMock.mockImplementation(async (command: string, args: { paths: string[]; path: string }) => {
+    if (command === "file_full_path") {
+      return `/work/heidrun/${args.path}`;
+    }
     if (command === "files_list") {
       return {
         root: "/work/heidrun",
@@ -62,6 +67,7 @@ afterEach(() => {
   settings.filesPanelRowHeight = "comfortable";
   settings.filesPanelIndentGuides = true;
   state.selectedWorkspaceId = null;
+  state.toast = "";
   git.status = {};
   git.modal.open = false;
   git.modal.path = null;
@@ -289,6 +295,22 @@ describe("FilesPanel", () => {
     expect(rule).toContain("width: 100%");
   });
 
+  it("gives a row under the pointer a background that shows in the dark theme and in the light theme", () => {
+    const panel = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+    expect(panel).toMatch(/\.row:hover \{ background: var\(--files-row-hover\); \}/);
+    const styles = readFileSync(path.join(import.meta.dirname, "..", "styles.css"), "utf8");
+    const lightStart = styles.indexOf(':root[data-theme="light"]');
+    const themes = { dark: styles.slice(0, lightStart), light: styles.slice(lightStart) };
+    for (const theme of [themes.dark, themes.light]) {
+      const hover = theme.match(/--files-row-hover: #([0-9a-fA-F]{6});/)?.[1] ?? "";
+      const side = theme.match(/--side: #([0-9a-fA-F]{6});/)?.[1] ?? "";
+      expect(hover).not.toBe("");
+      const channels = (color: string) => [0, 2, 4].map((index) => parseInt(color.slice(index, index + 2), 16));
+      const difference = Math.max(...channels(hover).map((value, index) => Math.abs(value - channels(side)[index])));
+      expect(difference).toBeGreaterThanOrEqual(10);
+    }
+  });
+
   it("keeps the header at the top while the rows scroll: the rule of the header sticks it, with its own background", () => {
     const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
     const rule = source.match(/\.panel-header \{([^}]*)\}/)?.[1] ?? "";
@@ -338,6 +360,60 @@ describe("FilesPanel", () => {
     ]);
     items()[3].click();
     expect(settings.filesPanelIndent).toBe("large");
+    wrapper.unmount();
+  });
+
+  it("opens a context menu with two items after a right click on the row of a file", async () => {
+    const wrapper = await mountPanel();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    await wrapper.findAll(".row")[1].trigger("contextmenu", { clientX: 40, clientY: 60 });
+    const items = Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menu] [role=menuitem]"));
+    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+    expect(git.modal.open).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("opens no context menu after a right click on the row of a folder", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("contextmenu");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("copies the absolute path of the file with the item Copy absolute path, and closes the context menu", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.findAll(".row")[2].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[0].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("/work/heidrun/src/main.ts"));
+    expect(invokeMock).toHaveBeenCalledWith("file_full_path", { root: "/work/heidrun", path: "src/main.ts" });
+    expect(state.toast).toBe("Copied: /work/heidrun/src/main.ts");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("copies the path relative to the folder of the workspace with the item Copy relative path", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.findAll(".row")[2].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[1].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("src/main.ts"));
+    expect(state.toast).toBe("Copied: src/main.ts");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("closes the context menu with the key Escape, and with a click outside it, and copies nothing", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[1].trigger("contextmenu");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    await wrapper.findAll(".row")[1].trigger("contextmenu");
+    document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await wrapper.vm.$nextTick();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    expect(copyMock).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 

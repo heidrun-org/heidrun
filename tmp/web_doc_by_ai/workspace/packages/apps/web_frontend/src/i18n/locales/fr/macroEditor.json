@@ -1,0 +1,23 @@
+{
+  "title": "Modifier les macros",
+  "close": "Fermer",
+  "macro": "Macro",
+  "newOption": "Nouvelle macro",
+  "newTitle": "Vider les champs pour écrire une nouvelle macro",
+  "new": "Nouveau",
+  "project": "projet",
+  "labelField": "Titre",
+  "description": "Description",
+  "text": "Texte",
+  "variablesTitle": "Variables remplacées à l'insertion de la macro",
+  "inProject": "Garder dans le projet (.heidrun/config.json)",
+  "delete": "Supprimer cette macro",
+  "deleteConfirm": "Supprimer",
+  "discard": "Annuler",
+  "discardTitle": "Revenir aux valeurs enregistrées",
+  "save": "Enregistrer",
+  "textRequired": "Écris d'abord le texte de la macro",
+  "saved": "Macro enregistrée",
+  "addedToProject": "Macro ajoutée au projet (.heidrun/config.json)",
+  "deleteLabel": "Supprimer"
+}

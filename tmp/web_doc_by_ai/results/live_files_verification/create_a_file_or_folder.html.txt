@@ -1,0 +1,169 @@
+Browser tab: 2, Title: "Create a file or folder | Heidrun", URL: "http://127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html".
+1 AXWebArea Create a file or folder | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+	2 container app
+		3 link Description: Skip to content, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#VPContent
+		4 container
+			5 link Description: Heidrun, Value: 127.0.0.1:5175/heidrun/
+			6 container Main Navigation
+				7 text Main Navigation
+				8 link Description: Home, Value: 127.0.0.1:5175/heidrun/
+				9 link Description: Documentation, Value: 127.0.0.1:5175/heidrun/documentation/
+				10 link Description: About, Value: 127.0.0.1:5175/heidrun/about.html
+			11 switch Description: Switch to light theme, Value: 0
+			12 link Description: github, Value: github.com/heidrun-org/heidrun
+		13 container
+			14 container Sidebar Navigation, ID: VPSidebarNav
+				15 text Sidebar Navigation
+				16 container
+					17 button Documentation
+						18 heading Documentation, Value: 2
+							19 text Documentation
+					20 link Description: Introduction, Value: 127.0.0.1:5175/heidrun/documentation/
+					21 link Description: Keyboard shortcuts, Value: 127.0.0.1:5175/heidrun/documentation/shortcuts.html
+				22 container
+					23 button Files
+						24 heading Files, Value: 2
+							25 text Files
+					26 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+					27 link Description: Create a file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html
+					28 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+					29 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+		30 container VPContent
+			31 container
+				32 container On this page
+					33 container
+						34 heading On this page, Value: 2, ID: doc-outline-aria-label
+							35 text On this page
+						36 content list
+							37 link Description: Choose the destination, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#choose-the-destination
+							38 link Description: Create the file or folder, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder
+							39 link Description: Cancel creation, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#cancel-creation
+							40 link Description: Troubleshooting, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#troubleshooting
+							41 link Description: Related pages, Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#related-pages
+			42 container
+				43 container
+					44 heading Create a file or folder Permalink to "Create a file or folder", Value: 1, ID: create-a-file-or-folder
+						45 text Create a file or folder
+						46 link Description: Permalink to "Create a file or folder", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-a-file-or-folder
+					47 text Create an empty file or folder in the intended location of the selected repository.
+					48 heading Choose the destination Permalink to "Choose the destination", Value: 2, ID: choose-the-destination
+						49 text Choose the destination
+						50 link Description: Permalink to "Choose the destination", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#choose-the-destination
+					51 text First, 
+					52 link Description: select an existing workspace, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#select-an-existing-workspace
+					53 text .
+					54 content list
+						55 container
+							56 AXListMarker 1. 
+							57 text Click  Files , the first folder icon in the left sidebar icon bar, above  Scripts , and click the folder rows needed to unfold the destination folders. Then select the destination using the table below.
+					58 table
+						59 row
+							60 cell
+								61 text Destination
+							62 cell
+								63 text Action
+						64 row
+							65 cell
+								66 text Inside a folder
+							67 cell
+								68 text Click the folder row to select the folder.
+						69 row
+							70 cell
+								71 text Beside an existing file
+							72 cell
+								73 text Click the file row, then press 
+								74 text Escape
+								75 text  to close the large Git window; creation uses the folder containing the selected file.
+						76 row
+							77 cell
+								78 text At the repository root, outside any subfolder
+							79 cell
+								80 text If needed, click 
+								81 text Collapse all folders
+								82 text  to fold every folder, then click empty space outside all rows in the Files sidebar section to clear the selection. When nothing is selected, creation uses the repository root.
+					83 text If the rows still fill the Files sidebar section after folding, there is no separate control to clear the selection.
+					84 heading Create the file or folder Permalink to "Create the file or folder", Value: 2, ID: create-the-file-or-folder
+						85 text Create the file or folder
+						86 link Description: Permalink to "Create the file or folder", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#create-the-file-or-folder
+					87 content list
+						88 container
+							89 AXListMarker 1. 
+							90 text Click  New file , the file icon with a plus sign, or  New folder , the folder icon with a plus sign, in the header of the Files sidebar section.
+						91 container
+							92 AXListMarker 2. 
+							93 text Type only the new name in the name box at the top of the contents of the destination folder, or at the top of the folder tree when creating at the repository root.
+					94 image New file name box inside docs with example.md typed before Enter is pressed.
+					95 content list
+						96 container
+							97 AXListMarker 3. 
+							98 text Press  Enter .
+					99 text The new empty file or folder becomes the selected row. A new file also opens in the 
+					100 link Description: large Git window described in Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html#open-a-project-file
+					101 text . A newly created folder that is still empty disappears from the folder tree when Heidrun restarts. The folder remains on disk.
+					102 heading Cancel creation Permalink to "Cancel creation", Value: 2, ID: cancel-creation
+						103 text Cancel creation
+						104 link Description: Permalink to "Cancel creation", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#cancel-creation
+					105 content list
+						106 container
+							107 AXListMarker 1. 
+							108 text Press  Escape  while the name box is open, or click outside the name box.
+					109 text The name box closes without creating a file or folder.
+					110 heading Troubleshooting Permalink to "Troubleshooting", Value: 2, ID: troubleshooting
+						111 text Troubleshooting
+						112 link Description: Permalink to "Troubleshooting", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#troubleshooting
+					113 heading Value: 3, ID: un-fichier-ou-dossier-porte-deja-ce-nom-appears-and-the-name-box-stays-open, “un fichier ou dossier porte déjà ce nom” appears and the name box stays open Permalink to "“un fichier ou dossier porte déjà ce nom” appears and the name box stays open"
+						114 text “un fichier ou dossier porte déjà ce nom” appears and the name box stays open
+						115 link Description: Permalink to "“un fichier ou dossier porte déjà ce nom” appears and the name box stays open", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#un-fichier-ou-dossier-porte-deja-ce-nom-appears-and-the-name-box-stays-open
+					116 text Cause
+					117 text : A file or folder with the entered name already exists in the destination folder. The error appears in a small notification and is always in French, even with the English interface. The message means “a file or folder already has this name”.
+					118 text Solution
+					119 text :
+					120 content list
+						121 container
+							122 AXListMarker 1. 
+							123 text Replace the entered name with a name that is not already used in the destination folder.
+						124 container
+							125 AXListMarker 2. 
+							126 text Press  Enter .
+					127 text Check
+					128 text : The name box closes and the new file or folder becomes the selected row.
+					129 heading Value: 3, ID: a-name-cannot-contain-the-character-select-a-folder-first-appears, “A name cannot contain the character /. Select a folder first.” appears Permalink to "“A name cannot contain the character /. Select a folder first.” appears"
+						130 text “A name cannot contain the character /. Select a folder first.” appears
+						131 link Description: Permalink to "“A name cannot contain the character /. Select a folder first.” appears", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#a-name-cannot-contain-the-character-select-a-folder-first-appears
+					132 text Cause
+					133 text : The entered name contains 
+					134 text /
+					135 text  instead of being only a file or folder name.
+					136 text Solution
+					137 text :
+					138 content list
+						139 container
+							140 AXListMarker 1. 
+							141 text Remove  /  from the name in the name box, which remains open.
+						142 container
+							143 AXListMarker 2. 
+							144 text Press  Enter .
+					145 text Check
+					146 text : The new file or folder becomes the selected row inside the destination folder.
+					147 heading Related pages Permalink to "Related pages", Value: 2, ID: related-pages
+						148 text Related pages
+						149 link Description: Permalink to "Related pages", Value: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html#related-pages
+					150 content list
+						151 container
+							152 AXListMarker • 
+							153 link Description: Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+							154 text : to select a workspace and view the new file.
+						155 container
+							156 AXListMarker • 
+							157 link Description: Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+							158 text : to copy the path of the new file.
+						159 container
+							160 AXListMarker • 
+							161 link Description: Files sidebar section controls, Value: 127.0.0.1:5175/heidrun/documentation/files_sidebar_section_controls.html
+							162 text : to identify the header buttons and changed-file letters.
+				163 container Pager
+					164 text Pager
+					165 link Description: Previous page Browse and open project files, Value: 127.0.0.1:5175/heidrun/documentation/browse_project_files.html
+					166 link Description: Next page Copy a file path, Value: 127.0.0.1:5175/heidrun/documentation/copy_a_file_path.html
+
+The focused UI element is 1 AXWebArea Create a file or folder | Heidrun, URL: 127.0.0.1:5175/heidrun/documentation/create_a_file_or_folder.html

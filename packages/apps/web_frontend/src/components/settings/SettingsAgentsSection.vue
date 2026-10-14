@@ -12,10 +12,8 @@ function toggleOwned(agent: AgentDefinition) {
   settings.ownedAgents = isOwned(agent) ? others : [...others, agent.id];
 }
 
-function onKeydown(event: KeyboardEvent, agent: AgentDefinition) {
-  if (event.key !== " " && event.key !== "Enter") {
-    return;
-  }
+/** The key Enter switches the focused switch, as the key Space does. Holding the key down switches only once. */
+function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
   event.preventDefault();
   if (event.repeat) {
     return;
@@ -25,37 +23,19 @@ function onKeydown(event: KeyboardEvent, agent: AgentDefinition) {
 </script>
 
 <template>
-  <div class="section">
-    <p class="lead">{{ t("settingsAgents.lead") }}</p>
-    <div class="list">
-      <div
+  <div class="d-flex flex-column gap-3">
+    <p class="m-0">{{ t("settingsAgents.lead") }}</p>
+    <div class="list-group">
+      <label
         v-for="agent in AGENTS"
         :key="agent.id"
-        class="row"
-        role="switch"
-        tabindex="0"
-        :aria-checked="isOwned(agent)"
-        :aria-labelledby="`agent-${agent.id}`"
-        @click="toggleOwned(agent)"
-        @keydown="onKeydown($event, agent)"
+        class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
       >
-        <span :id="`agent-${agent.id}`" class="name">{{ agent.name }}</span>
-        <span class="toggle-switch" :class="{ on: isOwned(agent) }" aria-hidden="true"><span class="knob"></span></span>
-      </div>
+        <span class="fw-semibold">{{ agent.name }}</span>
+        <span class="switch">
+          <input type="checkbox" role="switch" :checked="isOwned(agent)" @change="toggleOwned(agent)" @keydown.enter="onEnter($event, agent)" />
+        </span>
+      </label>
     </div>
   </div>
 </template>
-
-<style scoped>
-.section { display: flex; flex-direction: column; gap: 12px; }
-.lead { margin: 0; font-size: var(--font-size); color: var(--text-2); line-height: 1.5; }
-.list { border: 1px solid var(--line); border-radius: 10px; }
-.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); cursor: pointer; }
-.row:last-child { border-bottom: 0; }
-.row:focus-visible { outline: 2px solid var(--done); outline-offset: -2px; border-radius: 10px; }
-.name { font-size: var(--font-size); font-weight: 600; }
-.toggle-switch { position: relative; flex-shrink: 0; width: 38px; height: 22px; border-radius: 11px; background: var(--line-strong); transition: background 0.15s; }
-.toggle-switch.on { background: var(--done); }
-.knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
-.toggle-switch.on .knob { transform: translateX(16px); }
-</style>

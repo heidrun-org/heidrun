@@ -72,6 +72,7 @@ describe('bootstrap_parts.scss', () => {
 			'[data-bs-theme=dark]',
 			'[data-bs-theme=light]',
 			'.form-control,\nselect.form-control',
+			'.form-control:focus-visible,\n.form-control:focus-within',
 			'.menu',
 			'.popover',
 			'.progress',
@@ -92,6 +93,7 @@ describe('bootstrap_parts.scss', () => {
 		const layerText = cssText.slice(cssText.indexOf('@layer utilities {'), cssText.indexOf('\n.form-control,'));
 		const utilityRuleList = layerText.match(/^ {2}\.[a-z0-9-]+ \{/gm) ?? [];
 		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
+			'.justify-content-start',
 			'.justify-content-center',
 			'.justify-content-between',
 			'.border-0',
@@ -106,13 +108,17 @@ describe('bootstrap_parts.scss', () => {
 			'.align-self-start',
 			'.gap-2',
 			'.gap-3',
+			'.m-0',
 			'.ms-1',
 			'.ms-3',
 			'.me-2',
 			'.me-auto',
 			'.my-auto',
 			'.mb-3',
+			'.p-2',
+			'.ps-3',
 			'.pt-2',
+			'.fs-4',
 			'.fw-medium',
 			'.fw-semibold',
 			'.fst-italic',
@@ -120,6 +126,7 @@ describe('bootstrap_parts.scss', () => {
 			'.text-end',
 			'.text-break',
 			'.text-wrap',
+			'.text-nowrap',
 			'.text-primary-emphasis',
 			'.text-success-emphasis',
 			'.text-warning-emphasis',
@@ -129,6 +136,7 @@ describe('bootstrap_parts.scss', () => {
 			'.bg-warning',
 			'.bg-danger',
 			'.bg-body-emphasis',
+			'.bg-white',
 			'.position-fixed',
 			'.position-absolute',
 			'.position-relative',
@@ -136,8 +144,13 @@ describe('bootstrap_parts.scss', () => {
 			'.end-0',
 			'.bottom-0',
 			'.bottom-100',
+			'.h-75',
 			'.h-auto',
+			'.w-auto',
+			'.overflow-hidden',
 			'.overflow-y-auto',
+			'.rounded',
+			'.opacity-50',
 			'.invisible',
 		]);
 	});
@@ -185,6 +198,11 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).not.toContain('transition-duration: var(--nav-link-transition-duration)');
 	});
 
+	it('draws the focus ring of a field on its border, so that no dark border shows inside the ring', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.form-control:focus-visible,\n\.form-control:focus-within \{[^}]*outline: 2px solid var\(--done\);[^}]*outline-offset: -1px/);
+	});
+
 	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(cssText).toMatch(/\.form-control,\nselect\.form-control \{[^}]*--control-font-size: var\(--font-size\)/);
@@ -201,8 +219,6 @@ describe('bootstrap_parts.scss', () => {
 		for (const [fileName, className] of [
 			['MoreMenu.vue', 'menu'],
 			['ThemeMenu.vue', 'menu'],
-			['SettingsAgentsSection.vue', 'switch'],
-			['SettingsMobileAccessSection.vue', 'switch'],
 		]) {
 			const filePath = fileName.startsWith('Settings') ? Path.join(componentFolder, 'settings', fileName) : Path.join(componentFolder, fileName);
 			const sourceText = Fs.readFileSync(filePath, 'utf8');

@@ -1,0 +1,14 @@
+{
+  "scope": "docs/agents_rules/user_interface/sidebars/files.md",
+  "learning_rounds": 3,
+  "selected_style": "round_1",
+  "benchmark_selected_pages": "comparison/luna_high_repeat/pages.json",
+  "benchmark_selected_score": 3.9375,
+  "post_benchmark_repair": "final_repair/pages.json",
+  "repair": "Corrected the appearance guide to reopen More options after every selection, using GPT-6.1 Sol High.",
+  "final_snapshot": "final/pages.json",
+  "validation": "Page checks passed; 117 website tests passed; website build passed after formatting the configuration.",
+  "prompt_source": "Unchanged; best/prompt_proposal.patch is a proposal for human approval.",
+  "billing": "Reported generation tokens are available in comparison/result.json; billed dollar costs were not measured.",
+  "qualification": "No tested setting met the provisional requirement of every accuracy and task-success score at least 4."
+}

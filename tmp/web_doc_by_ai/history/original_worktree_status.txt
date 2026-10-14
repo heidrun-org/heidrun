@@ -1,0 +1,19 @@
+ M AGENTS.md
+ M README_DEV.md
+ M packages/auxiliary/website_public/CONTEXT.md
+ M packages/auxiliary/website_public/docs/.vitepress/config.ts
+ M packages/dev_tools/CONTEXT.md
+ M packages/dev_tools/documentation_updater/CONTEXT.md
+ M packages/dev_tools/documentation_updater/README.md
+ M packages/dev_tools/documentation_updater/src/cli.ts
+ M packages/dev_tools/documentation_updater/src/documentation_git.ts
+ M packages/dev_tools/documentation_updater/src/documentation_prompt.ts
+ M packages/dev_tools/documentation_updater/src/documentation_types.ts
+ M packages/dev_tools/documentation_updater/src/documentation_update.ts
+ M packages/dev_tools/documentation_updater/tests/documentation_update.test.ts
+?? packages/auxiliary/website_public/docs/documentation/browse_files.md
+?? packages/auxiliary/website_public/docs/documentation/change_the_files_list_appearance.md
+?? packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+?? packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+?? packages/auxiliary/website_public/docs/documentation/files_sidebar_reference.md
+?? packages/auxiliary/website_public/docs/documentation/open_a_file.md

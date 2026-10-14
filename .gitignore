@@ -1,7 +1,23 @@
+# Installed packages, created by the command "pnpm install"
 node_modules
+
+# Built output
 dist
+
+# Compiled Rust files of the desktop application
 packages/apps/desktop_tauri/target
+
+# Schema files that Tauri generates at build time
 packages/apps/desktop_tauri/gen
+
+# Folder settings that macOS Finder creates
 .DS_Store
+
+# Log files
 *.log
+
+# Cache of the VitePress documentation site
 packages/auxiliary/website_public/docs/.vitepress/cache
+
+# Local Heidrun configuration of one developer
+.heidrun/config.json

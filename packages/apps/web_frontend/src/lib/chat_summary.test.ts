@@ -21,8 +21,31 @@ beforeEach(() => {
 });
 
 describe("chatSummaryLines", () => {
-  it("gives three empty lines when the scan found nothing", () => {
-    expect(chatSummaryLines(emptyMeta(), NOW)).toEqual({ dates: "", references: "", files: "", fileEntries: [] });
+  it("gives four empty lines when the scan found nothing", () => {
+    expect(chatSummaryLines(emptyMeta(), NOW)).toEqual({
+      dates: "",
+      references: "",
+      files: "",
+      fileEntries: [],
+      worktrees: "",
+      worktreeEntries: [],
+    });
+  });
+
+  it("names the worktrees of the folders and of the written files on the fourth line", () => {
+    const meta = {
+      ...emptyMeta(),
+      folders: ["/work/app", "/work/app/.claude/worktrees/fix-tab-35"],
+      files_written: ["/work/app/.claude/worktrees/add-icon-36/a.ts", "/Users/jerome/.codex/worktrees/c41f/app/b.ts"],
+    };
+    const lines = chatSummaryLines(meta, NOW, "/work/app");
+    expect(lines.worktrees).toBe("fix-tab-35, add-icon-36, +1");
+    expect(lines.worktreeEntries.map((worktree) => worktree.name)).toEqual(["fix-tab-35", "add-icon-36", "c41f"]);
+  });
+
+  it("leaves the fourth line empty for a chat that ran only in the main checkout", () => {
+    const meta = { ...emptyMeta(), folders: ["/work/app"], files_written: ["/work/app/a.ts"] };
+    expect(chatSummaryLines(meta, NOW, "/work/app").worktrees).toBe("");
   });
 
   it("writes the two days when the chat spans two days", () => {

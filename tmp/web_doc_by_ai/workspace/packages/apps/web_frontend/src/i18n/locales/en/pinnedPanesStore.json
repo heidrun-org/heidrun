@@ -1,0 +1,5 @@
+{
+  "tooMany_one": "{count} pinned pane at most: unpin one first",
+  "tooMany_other": "{count} pinned panes at most: unpin one first",
+  "staysPinned": "{name} stays pinned when you change tabs"
+}

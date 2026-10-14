@@ -1,0 +1,22 @@
+{
+  "dialogLabelSave": "Enregistrer cette recherche",
+  "dialogLabelEdit": "Modifier la recherche enregistrée",
+  "titleSave": "Enregistrer cette recherche",
+  "titleEdit": "Modifier la recherche enregistrée",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "closeLabel": "Fermer (Échap)",
+  "name": "Nom",
+  "search": "Recherche",
+  "nameExists": "Une recherche enregistrée a ce nom. Enregistrer remplace sa recherche.",
+  "problemNameEmpty": "Le nom est vide.",
+  "problemQueryEmpty": "La recherche est vide.",
+  "problemNameUsed": "Une autre recherche enregistrée a ce nom.",
+  "cancelTitle": "Annuler : rien ne change",
+  "cancel": "Annuler",
+  "saveTitle": "Garder la recherche enregistrée",
+  "save": "Enregistrer",
+  "deleteTitle": "Supprimer la recherche enregistrée",
+  "delete": "Supprimer",
+  "deleteQuestion": "Supprimer la recherche enregistrée {name} ?",
+  "deleteConfirm": "Supprimer"
+}

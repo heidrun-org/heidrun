@@ -23,7 +23,7 @@ describe('AgentsRulesSize', () => {
 
 		it('looks at the glossary and at the files of the subfolders', () => {
 			const filePaths = AgentsRulesSize.listFiles(agentsRulesPath);
-			expect(filePaths).toContain(Path.join(agentsRulesPath, 'glossary.md'));
+			expect(filePaths).toContain(Path.join(agentsRulesPath, 'glossary', 'index.md'));
 			expect(filePaths).toContain(Path.join(agentsRulesPath, 'user_interface', 'window', 'layout.md'));
 		});
 	});

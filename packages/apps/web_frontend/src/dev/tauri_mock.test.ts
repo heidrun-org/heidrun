@@ -97,6 +97,39 @@ describe('TauriMock', () => {
 		).rejects.toThrow();
 	});
 
+	it('answers the cached forge command with the list of the open issues and the list of the open pull requests', async () => {
+		TauriMock.install();
+		const issues = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(issues.map((issue: { number: number }) => issue.number)).toEqual([370, 366, 351]);
+		const pullRequests = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['pr', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(pullRequests).toEqual([
+			expect.objectContaining({ number: 369, url: expect.stringContaining('/pull/369') }),
+			expect.objectContaining({ number: 365, url: expect.stringContaining('/pull/365') }),
+		]);
+	});
+
+	it('keeps, in the fake list of the cached forge command, the items that match the words author:, label:, and no:label of --search', async () => {
+		TauriMock.install();
+		const numbersFor = async (tool: 'issue' | 'pr', search: string): Promise<number[]> => {
+			const args = [tool, 'list', '--state', 'open', '--search', search, '--json', 'number'];
+			const items = JSON.parse(await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args }));
+			return items.map((item: { number: number }) => item.number);
+		};
+		expect(await numbersFor('issue', 'author:@me')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'author:erictang')).toEqual([366]);
+		expect(await numbersFor('issue', '-author:erictang')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'label:bug')).toEqual([351]);
+		expect(await numbersFor('issue', 'label:"Simple Work" -label:bug')).toEqual([370]);
+		expect(await numbersFor('issue', 'no:label')).toEqual([366]);
+		expect(await numbersFor('issue', 'mentions:@me')).toEqual([370, 366, 351]);
+		expect(await numbersFor('pr', 'author:erictang')).toEqual([365]);
+		expect(await numbersFor('pr', 'label:bug')).toEqual([]);
+	});
+
 	it('keeps a translation table of the clustered dynamic topics, and answers a fake coding agent that groups by the first four letters', async () => {
 		TauriMock.install();
 		expect(await invoke('topic_clusters_read')).toEqual({});
@@ -148,6 +181,17 @@ describe('TauriMock', () => {
 			[false, false],
 			[true, false],
 		]);
+		expect(
+			await invoke('chats_worktrees_exist', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual(['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35']);
+		expect(
+			await invoke('chats_worktrees_branches', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual([{ folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', branch: 'fix-35' }]);
+		expect(await invoke('chats_worktree_open_in_vscode', { folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35' })).toBeNull();
 		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
 	});
 

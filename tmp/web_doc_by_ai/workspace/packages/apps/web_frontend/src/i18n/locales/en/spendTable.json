@@ -1,0 +1,16 @@
+{
+  "agentCost": "  {who}: {cost}",
+  "currentWindow": "Current 5 h window",
+  "byWorkspace": "Spending by workspace",
+  "windowTitle": "Show the spending of the last 5 hours",
+  "window": "5 h",
+  "todayTitle": "Show the spending of today",
+  "today": "Today",
+  "chartLabel": "Cost per quarter of an hour over the 5 h window",
+  "percent": "{value}%",
+  "total": "Total {cost}",
+  "quotaShare": "· estimated share of the 5 h quota: {list}",
+  "quotaPoints": "{label} {points} points",
+  "emptyWindow": "Nothing yet in the 5 h window: the cost of each Claude session is read at each answer (Claude tracking turned on).",
+  "emptyToday": "Nothing yet today: the cost of each Claude session is read at each answer (Claude tracking turned on)."
+}

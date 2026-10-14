@@ -1,0 +1,20 @@
+
+> website_public@0.2.5 test /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375/packages/auxiliary/website_public
+> vitest run
+
+
+ RUN  v2.1.9 /Users/jetienne/webwork/heidrun/.claude/worktrees/generate-docs-with-ai-375/packages/auxiliary/website_public
+
+ ✓ tests/pages.test.ts (68 tests) 9ms
+ ✓ tests/shortcuts_page.test.ts (8 tests) 89ms
+ ✓ tests/favicon.test.ts (3 tests) 3ms
+ ✓ tests/config.test.ts (18 tests) 4ms
+ ✓ tests/identity.test.ts (7 tests) 88ms
+ ✓ tests/splash_image.test.ts (3 tests) 17ms
+ ✓ tests/build.test.ts (10 tests) 2252ms
+
+ Test Files  7 passed (7)
+      Tests  117 passed (117)
+   Start at  23:00:24
+   Duration  2.60s (transform 220ms, setup 0ms, collect 904ms, tests 2.46s, environment 446ms, prepare 539ms)
+

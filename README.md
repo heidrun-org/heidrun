@@ -31,9 +31,9 @@
 
 ## What it does
 
-You run many AI agents. Each agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
+You run many coding agents. Each coding agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
 
-Think of Valhalla: the agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
+Think of Valhalla: the coding agents are the einherjar (the warriors who feast and fight all day), and you are the goat who keeps the mead flowing.
 
 ## Why you will like it
 
@@ -70,7 +70,7 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 | [`packages/auxiliary/website_public`](packages/auxiliary/website_public) | The public website and documentation, built with VitePress. |
 | [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
 | [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
-| [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A library and a command line tool that send one prompt to `codex` or `claude` and return the answer. The scripts of this repository use the library. |
+| [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A Rust library and a command line tool that send one prompt to `codex`, `claude`, or `agy` and return the answer. The desktop application uses the library, and the change log generator runs the command line tool. |
 
 ## Contributing
 

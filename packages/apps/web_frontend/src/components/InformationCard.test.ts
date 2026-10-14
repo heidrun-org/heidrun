@@ -182,6 +182,29 @@ describe("InformationCard", () => {
     expect(style).toContain("left: auto");
   });
 
+  it("puts the card at the right of the part, as high as the part, when the placement is end", async () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const isCard = this.classList.contains("popover");
+      return isCard
+        ? { top: 0, left: 0, right: 300, bottom: 200, width: 300, height: 200, x: 0, y: 0, toJSON: () => ({}) }
+        : { top: 100, left: 40, right: 240, bottom: 160, width: 200, height: 60, x: 40, y: 100, toJSON: () => ({}) };
+    });
+    const wrapper = mount(InformationCard, {
+      attachTo: document.body,
+      props: { label: "Issue", placement: "end" },
+      slots: { default: "<span>Row</span>", card: "<p>Text</p>" },
+    });
+    await wrapper.trigger("click");
+    await wrapper.vm.$nextTick();
+    const card = wrapper.get(".popover");
+    expect(card.classes()).toEqual(expect.arrayContaining(["bs-popover-end", "position-fixed"]));
+    expect(card.classes()).not.toContain("bs-popover-start");
+    expect(card.attributes("style")).toContain("top: 100px");
+    expect(card.attributes("style")).toContain("left: 248px");
+    expect(card.attributes("style")).toContain("right: auto");
+    expect(wrapper.get(".popover-arrow").attributes("style")).toContain("top: 22px");
+  });
+
   it("puts the card below the part, with its arrow under the middle of the part, when the placement is bottom", async () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
       const isCard = this.classList.contains("popover");

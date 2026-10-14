@@ -7,6 +7,16 @@ import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnaps
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/** One fake issue or one fake pull request, as `gh` prints it. */
+type FixtureForgeItem = {
+	/** The person who opened the item. */
+	author: { login: string };
+	/** The labels of an issue. A pull request has none. */
+	labels?: { name: string; color: string }[];
+	/** The other fields of the item: the number, the title, the address, the date, and the branches. */
+	[field: string]: unknown;
+};
+
 /** The values that describe one pane of the fake Herdr session. */
 type FixturePaneOptions = {
 	/** The identifier of the pane. */
@@ -46,6 +56,109 @@ export class TauriMockFixture {
 			throw new Error('split_not_found: split path not found');
 		}
 		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
+	/**
+	 * The answer of `gh issue list` or `gh pr list`: three fake issues, or two fake pull requests. A search given with
+	 * `--search` keeps the items that match its words `author:`, `label:`, and `no:label`, with the minus sign: the
+	 * other words are ignored.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'list', '--state', 'open', '--json', 'number,title,url']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeListAnswer(args: string[]): string {
+		const searchIndex = args.indexOf('--search');
+		const search = searchIndex === -1 ? '' : args[searchIndex + 1];
+		const items = TauriMockFixture._buildForgeItems(args[0] === 'issue');
+		return JSON.stringify(items.filter((item) => TauriMockFixture._matchesSearch(item, search)));
+	}
+
+	/**
+	 * Tells whether a fake item matches the words of a search.
+	 *
+	 * @param item - The fake issue or pull request.
+	 * @param search - The search, in the search language of GitHub.
+	 * @returns True when the item matches every word that the fixture knows.
+	 */
+	private static _matchesSearch(item: FixtureForgeItem, search: string): boolean {
+		const labelNames = (item.labels ?? []).map((label) => label.name.toLowerCase());
+		return (search.match(/(?:[^\s"]+|"[^"]*")+/g) ?? []).every((word) => {
+			const isNegated = word.startsWith('-');
+			const [qualifier, rawValue] = (isNegated ? word.slice(1) : word).split(':');
+			const value = (rawValue ?? '').replace(/"/g, '').toLowerCase();
+			let isMatch = true;
+			if (qualifier === 'author') {
+				isMatch = item.author.login === (value === '@me' ? 'jeromeetienne' : value);
+			} else if (qualifier === 'label') {
+				isMatch = labelNames.includes(value);
+			} else if (qualifier === 'no' && value === 'label') {
+				isMatch = labelNames.length === 0;
+			} else {
+				return true;
+			}
+			return isNegated ? isMatch === false : isMatch;
+		});
+	}
+
+	/**
+	 * The fake issues or the fake pull requests.
+	 *
+	 * @param isIssues - True for the issues, false for the pull requests.
+	 * @returns The items, as `gh` prints them.
+	 */
+	private static _buildForgeItems(isIssues: boolean): FixtureForgeItem[] {
+		const baseUrl = 'https://github.com/heidrun-org/heidrun';
+		const daysAgo = (days: number): string => new Date(Date.now() - days * 86_400_000).toISOString();
+		if (isIssues) {
+			return [
+				{
+					number: 370,
+					title: 'Add the Code hosting sidebar section: a list of issues and a list of pull requests',
+					url: `${baseUrl}/issues/370`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(1),
+					labels: [{ name: 'Design', color: '1d76db' }, { name: 'Simple Work', color: '2ea043' }],
+				},
+				{
+					number: 366,
+					title: 'Show the branch of each pane in the status bar',
+					url: `${baseUrl}/issues/366`,
+					author: { login: 'erictang' },
+					createdAt: daysAgo(3),
+					labels: [],
+				},
+				{
+					number: 351,
+					title: 'A very long title that does not fit in the width of the left sidebar, so that the end of it is cut',
+					url: `${baseUrl}/issues/351`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(40),
+					labels: [{ name: 'A very long label name that does not fit either', color: 'd4c5f9' }, { name: 'Bug', color: 'd73a4a' }],
+				},
+			];
+		}
+		return [
+			{
+				number: 369,
+				title: 'Move the Needs you sidebar section to the right sidebar',
+				url: `${baseUrl}/pull/369`,
+				author: { login: 'jeromeetienne' },
+				createdAt: daysAgo(0.1),
+				isDraft: false,
+				headRefName: 'move-to-handle-to-the-right-sidebar-251',
+				baseRefName: 'dev_jerome',
+			},
+			{
+				number: 365,
+				title: 'Merge dev into main',
+				url: `${baseUrl}/pull/365`,
+				author: { login: 'erictang' },
+				createdAt: daysAgo(2),
+				isDraft: true,
+				headRefName: 'dev',
+				baseRefName: 'main',
+			},
+		];
 	}
 
 	/**
@@ -212,6 +325,7 @@ export class TauriMockFixture {
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/InformationCard.vue',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
 					'/Users/demo/webwork/heidrun/AGENTS.md',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/removed-fix-info-card-252/AGENTS.md',
 					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_information_card/at_all/notes.md',
 					'/Users/demo/notes/scratch.md',

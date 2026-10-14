@@ -1,0 +1,22 @@
+{
+  "copied": "Copied",
+  "sentTo": "Note sent to {agent}",
+  "noteTitle": "Note title",
+  "doubleClickToRename": "Double-click to rename",
+  "close": "Close",
+  "closeTitle": "Close (Escape)",
+  "noteText": "Note text",
+  "cancelTitle": "Cancel editing the note",
+  "cancel": "Cancel",
+  "saveTitle": "Save the note",
+  "save": "Save",
+  "copyTitle": "Copy the note",
+  "copy": "Copy",
+  "editTitle": "Edit the note",
+  "edit": "Edit",
+  "sendToAgent": "Send to an agent",
+  "sendToAgentChoice": "Send to an agent…",
+  "delete": "Delete",
+  "deleteConfirm": "Delete",
+  "deleteNote": "Delete the note"
+}

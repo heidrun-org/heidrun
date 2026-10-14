@@ -65,6 +65,10 @@
         "actionKey": "action.previousNextWorkspace"
       },
       {
+        "keys": "⌘[ / ⌘]",
+        "actionKey": "action.backForwardPaneFocus"
+      },
+      {
         "keys": "⌘1 … ⌘9",
         "actionKey": "action.goToWorkspace"
       },

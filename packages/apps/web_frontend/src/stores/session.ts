@@ -16,6 +16,7 @@ import type {
   PaneInfo,
   QuotaBlock,
   SessionSnapshot,
+  WorkspaceInfo,
 } from "../lib/types";
 
 /**
@@ -124,6 +125,11 @@ export const state = reactive({
 
 // ---- Derived views --------------------------------------------------------
 
+/**
+ * The list of workspaces, in the order of Herdr: by the number of the workspace. The status of the agents never changes this
+ * order: starting, blocking, finishing, or stopping an agent leaves every workspace where it is. Only the developer moves a
+ * workspace, by drag and drop or with the keyboard.
+ */
 export const workspaces = computed(() =>
   [...(state.snapshot?.workspaces ?? [])].sort((a, b) => a.number - b.number),
 );
@@ -156,27 +162,26 @@ export const allPanes = computed(() => (state.snapshot?.panes ?? []).map(paneVie
 const hasAgent = (wsId: string) => allPanes.value.some((p) => p.workspace_id === wsId && p.agent);
 
 /**
- * Order of the list of workspaces: workspaces with an agent session first, then the others, each group
- * keeping Herdr's order. Starting an agent lifts a workspace back to its place among
- * the active ones; stopping it puts it back among the others.
+ * Tells if an agent runs in a workspace.
+ *
+ * @param workspaceId - The identifier of the workspace.
+ * @returns True when a pane of the workspace runs an agent.
  */
-export const orderedWorkspaces = computed(() => {
-  const list = workspaces.value;
-  return [...list.filter((w) => hasAgent(w.workspace_id)), ...list.filter((w) => !hasAgent(w.workspace_id))];
-});
+export function workspaceHasAgent(workspaceId: string): boolean {
+  return hasAgent(workspaceId);
+}
 
-/** Drag-and-drop in the list of workspaces: a gap in the displayed list → Herdr's insert_index. */
-export function moveWorkspaceInView(id: string, gap: number) {
-  const view = orderedWorkspaces.value;
-  const full = workspaces.value;
-  const group = hasAgent(id);
-  const before = view[gap - 1];
-  const after = view[gap];
-  let insert: number;
-  if (before && hasAgent(before.workspace_id) === group) insert = full.indexOf(before) + 1;
-  else if (after && hasAgent(after.workspace_id) === group) insert = full.indexOf(after);
-  else insert = after ? full.indexOf(after) : full.length;
-  return moveWorkspace(id, insert);
+/**
+ * Gives the classes of the status dot of a workspace: the color of its agents, or a hollow ring when no agent runs.
+ *
+ * @param workspace - The workspace.
+ * @returns The classes to add to the element with the class `dot`.
+ */
+export function workspaceDotClasses(workspace: WorkspaceInfo): string[] {
+  if (hasAgent(workspace.workspace_id) === false) {
+    return ["quiet"];
+  }
+  return [workspace.agent_status === "idle" ? "" : workspace.agent_status];
 }
 
 export const workspacePanes = computed(() => allPanes.value.filter((p) => p.workspace_id === state.selectedWorkspaceId));
@@ -295,7 +300,7 @@ export function paneFullName(p: AgentInfo): string {
 
 /** Agents grouped by workspace, in the order of the list of workspaces: for "send to…" pickers. */
 export const agentGroups = computed(() =>
-  orderedWorkspaces.value
+  workspaces.value
     .map((w) => ({
       workspace: w.label,
       items: allPanes.value
@@ -798,7 +803,7 @@ export function cycleTab(delta: number) {
 
 /** Next / previous workspace, wrapping around. */
 export function cycleWorkspace(delta: number) {
-  const list = orderedWorkspaces.value;
+  const list = workspaces.value;
   if (!list.length) return;
   const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
   selectWorkspace(list[(i + delta + list.length) % list.length].workspace_id);
@@ -806,7 +811,7 @@ export function cycleWorkspace(delta: number) {
 
 /** ⌘1 … ⌘9: workspace by position in the list of workspaces. */
 export function selectWorkspaceAt(index: number) {
-  const w = orderedWorkspaces.value[index];
+  const w = workspaces.value[index];
   if (w) selectWorkspace(w.workspace_id);
 }
 
@@ -871,6 +876,23 @@ export async function newWorkspace(cwd: string | null, label: string | null) {
     cwd = home + cwd.slice(1);
   }
   return guard(() => api.newWorkspace(cwd, label));
+}
+
+/**
+ * Creates a workspace for a folder, then selects it with its first tab and its first pane, so that the developer sees that
+ * the workspace exists. A failure shows a toast.
+ * @param cwd - the absolute path of the folder of the workspace
+ * @param label - the name of the workspace
+ * @returns a promise that ends when the workspace is selected, or when the failure is shown
+ */
+export function openFolderAsWorkspace(cwd: string, label: string) {
+  return guard(async () => {
+    const created = await api.newWorkspace(cwd, label);
+    await refresh();
+    if (created.root_pane) {
+      selectPane(created.root_pane);
+    }
+  });
 }
 
 export function closePane(paneId: string) {
@@ -944,14 +966,12 @@ export function moveTab(tabId: string, insertIndex: number) {
 
 /** Keyboard reordering: moves the selected workspace up (-1) or down (+1). */
 export function shiftWorkspace(delta: -1 | 1) {
-  // Moves past the neighbor shown in the list of workspaces, within its group (with / without agent).
-  const view = orderedWorkspaces.value;
-  const full = workspaces.value;
-  const i = view.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
-  const neighbor = view[i + delta];
-  if (i === -1 || !neighbor || hasAgent(neighbor.workspace_id) !== hasAgent(view[i].workspace_id)) return;
-  const at = full.indexOf(neighbor);
-  return moveWorkspace(view[i].workspace_id, delta > 0 ? at + 1 : at);
+  // Moves past the neighbor shown in the list of workspaces. The status of the agents never changes the order of the list.
+  const list = workspaces.value;
+  const i = list.findIndex((w) => w.workspace_id === state.selectedWorkspaceId);
+  const neighbor = list[i + delta];
+  if (i === -1 || !neighbor) return;
+  return moveWorkspace(list[i].workspace_id, delta > 0 ? i + delta + 1 : i + delta);
 }
 
 /** Keyboard reordering: moves the selected tab left (-1) or right (+1). */

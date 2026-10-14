@@ -62,9 +62,9 @@ describe('padding of the left sidebar', () => {
 });
 
 describe('horizontal padding of the sidebar sections of the left sidebar', () => {
-	it('is 14px on each side for the Scripts sidebar section', () => {
+	it('is 16px on each side for the Scripts sidebar section, as for the Source control sidebar section', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/ActionsPanel.vue', '.panel', 'padding');
-		expect(padding).toBe('18px 14px');
+		expect(padding).toBe('12px 16px');
 	});
 
 	it('is 16px on each side for the Source control sidebar section', () => {
@@ -91,7 +91,7 @@ describe('horizontal padding of the sidebar sections of the right sidebar', () =
 		expect(padding).toBe('8px 6px 16px');
 	});
 
-	it('is 14px on each side for the Notes sidebar section, as for the Scripts sidebar section', () => {
+	it('is 14px on each side for the Notes sidebar section', () => {
 		const padding = SidebarPaddingTestHelper.readDeclaration('components/NotesPanel.vue', '.panel', 'padding');
 		expect(padding).toBe('18px 14px');
 	});

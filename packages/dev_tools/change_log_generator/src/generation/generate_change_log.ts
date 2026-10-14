@@ -1,9 +1,11 @@
+import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Path from 'node:path';
-import type { RawCodingAgentName } from 'raw_coding_agent_cli';
 import { ChangeLogGit } from '../git/change_log_git.ts';
 import { ChangeLogRenderer } from '../rendering/change_log_renderer.ts';
 import type { ChangeLogRange } from '../types/change_log_types.ts';
+
+const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -14,7 +16,7 @@ import type { ChangeLogRange } from '../types/change_log_types.ts';
 /**
  * Runs a coding agent: gives it a prompt and returns its answer.
  * @param prompt The prompt to send.
- * @param agentName The name of the coding agent, `codex` or `claude`.
+ * @param agentName The name of the coding agent, `codex`, `claude`, or `agy`.
  * @returns The answer of the coding agent.
  */
 export type RunAgentFn = (prompt: string, agentName: string) => Promise<string>;
@@ -36,7 +38,7 @@ export type GenerateChangeLogRunOptions = {
 	fromTag?: string;
 	/** The release where the changes end, or `now` for the current commit. When undefined, `now`. */
 	toTag?: string;
-	/** Runs the coding agent. When undefined, the package `raw_coding_agent_cli` runs it. */
+	/** Runs the coding agent. When undefined, the executable of the package `raw_coding_agent_cli` runs it. */
 	runAgentFn?: RunAgentFn;
 };
 
@@ -150,24 +152,53 @@ export class GenerateChangeLog {
 	}
 
 	/**
-	 * Runs a coding agent with the package `raw_coding_agent_cli`. The package is loaded only here, so the mode without
-	 * the option `--ai` does not need it.
+	 * Runs a coding agent with the executable of the package `raw_coding_agent_cli`. The executable is written in Rust,
+	 * so `cargo run` builds it when needed, then runs it. The prompt goes through the standard input of the executable,
+	 * and the answer comes from its standard output. The mode without the option `--ai` does not need the Rust tools.
 	 * @param prompt The prompt to send.
-	 * @param agentName The name of the coding agent, `codex` or `claude`.
-	 * @returns The answer of the coding agent.
-	 * @throws An error when the name is not the name of a known coding agent.
+	 * @param agentName The name of the coding agent, `codex`, `claude`, or `agy`. The executable refuses another name.
+	 * @returns The answer of the coding agent, without the spaces and the line breaks at the start and at the end.
+	 * @throws An error when `cargo` is not installed, or when the executable exits with an error code. The message of
+	 * the error is the message that the executable printed.
 	 */
-	private static async _runRawCodingAgent(prompt: string, agentName: string): Promise<string> {
-		const { RawCodingAgent } = await import('raw_coding_agent_cli');
-		const knownAgentName: RawCodingAgentName | undefined = RawCodingAgent.agentNames.find((name) => {
-			return name === agentName;
-		});
-		if (knownAgentName === undefined) {
-			throw new Error(`Unknown coding agent "${agentName}". Use ${RawCodingAgent.agentNames.join(' or ')}.`);
-		}
-		return RawCodingAgent.run({
-			prompt,
-			agentName: knownAgentName,
+	private static _runRawCodingAgent(prompt: string, agentName: string): Promise<string> {
+		const packagePath = Path.resolve(__dirname, '..', '..', '..', '..', 'auxiliary', 'raw_coding_agent_cli');
+		return new Promise((resolve, reject) => {
+			const childProcess = ChildProcess.spawn('cargo', ['run', '--quiet', '--', '--agent', agentName], {
+				cwd: packagePath,
+				stdio: ['pipe', 'pipe', 'pipe'],
+			});
+			let stdoutStr = '';
+			let stderrStr = '';
+			childProcess.stdout.setEncoding('utf8');
+			childProcess.stderr.setEncoding('utf8');
+			childProcess.stdout.on('data', (chunk: string) => {
+				stdoutStr += chunk;
+			});
+			childProcess.stderr.on('data', (chunk: string) => {
+				stderrStr += chunk;
+			});
+			childProcess.stdin.on('error', () => {
+				// The executable can exit before it reads the whole prompt. The event 'close' reports the exit code.
+			});
+			childProcess.on('error', (error: NodeJS.ErrnoException) => {
+				if (error.code === 'ENOENT') {
+					reject(new Error(
+						'The command "cargo" is not installed or is not in the PATH. The option --ai needs the Rust tools.',
+					));
+					return;
+				}
+				reject(error);
+			});
+			childProcess.on('close', (exitCode) => {
+				if (exitCode === 0) {
+					resolve(stdoutStr.trim());
+					return;
+				}
+				const messageStr = stderrStr.trim();
+				reject(new Error(messageStr === '' ? `The coding agent failed with exit code ${exitCode}.` : messageStr));
+			});
+			childProcess.stdin.end(prompt);
 		});
 	}
 }

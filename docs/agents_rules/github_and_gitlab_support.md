@@ -1,10 +1,10 @@
 # Rule: every support for GitHub is also a support for GitLab
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](glossary.md)
+- Related rules: [Glossary of Heidrun](glossary/index.md)
 - Related issue: [issue 302](https://github.com/heidrun-org/heidrun/issues/302)
 
 This file gives the rule for every agent that adds support for GitHub. Heidrun works with two Git hosting services: GitHub and GitLab. Everywhere that this repository supports GitHub, it must also support GitLab.

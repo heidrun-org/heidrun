@@ -1,0 +1,60 @@
+Merge pull request #388 from heidrun-org/import-scripts-any-package-json-381
+https://github.com/heidrun-org/heidrun/commit/ba852b856c90815ab1ba32e4950794a9972b5b79
+
+Let the person pick any package.json of the repository in the window Import scripts, name an imported script by its key, and add the current work directory to the kind Command line, fixes #381
+https://github.com/heidrun-org/heidrun/commit/ad5cbc97be360f8d5f9e6b236e3168abfe18af84
+
+Merge pull request #387 from heidrun-org/add-pane-focus-history-navigation-380
+https://github.com/heidrun-org/heidrun/commit/ac9e0c530c79c79a3e83de469ddca17683b25c54
+
+Add the Back button and the Forward button to the top bar, and the keys ⌘[ and ⌘], to go back and forward through the history of the focused panes, fixes #380
+https://github.com/heidrun-org/heidrun/commit/3a5767dd228950a28001c56783f8763ae7e03ee7
+
+Merge pull request #385 from heidrun-org/add-files-context-menu-383
+https://github.com/heidrun-org/heidrun/commit/fe8f8f512a72fd774db0d73ef11b891275d26063
+
+Add a context menu to the row of a file in the Files sidebar section, to copy the absolute path or the relative path, and make the hover of a row visible in the dark theme, fixes #383
+https://github.com/heidrun-org/heidrun/commit/97cfb094208a47e7ad00ef544eb4b021c2a26366
+
+Merge pull request #384 from heidrun-org/improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/939b4d2981f9a9f774ce91873ca4964247e59ef5
+
+Improve the Code hosting sidebar section: the logo icon, the header buttons, the windows of the saved searches, and a fixed header, fixes #378
+https://github.com/heidrun-org/heidrun/commit/b06c238c717167c81208fe680fcf746c364e736a
+
+Merge branch 'dev_jerome' into improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/9d4e7c327c489eb762b2dbda020fc9eb7c78ba38
+
+Merge remote-tracking branch 'origin/dev_jerome' into improve-code-hosting-icon-buttons-378
+https://github.com/heidrun-org/heidrun/commit/d2694cec25391547ae69e4a9623ddb9d34f49c10
+
+Work in progress: the logo icon, the header buttons, and the windows of the saved searches, refs #378
+https://github.com/heidrun-org/heidrun/commit/ec3864e57c38e83f21fd4571c1055892468ce49e
+
+Merge pull request #382 from heidrun-org/custom-script-prompt-kind-372
+https://github.com/heidrun-org/heidrun/commit/e0cbcbc23ce60d52387b7538a478aed87f2cd675
+
+Rebuild the Scripts sidebar section: custom scripts of the kind Command line or Coding agent, cards with a menu, and a window to import scripts, fixes #372
+https://github.com/heidrun-org/heidrun/commit/eb5096d3ba2988816102dce7eaa02c3d58604d47
+
+Add comments to .gitignore
+https://github.com/heidrun-org/heidrun/commit/6f6035a59f94fdf18900fc5016be53d526eae4e4
+
+Ignore .heidrun/config.json
+https://github.com/heidrun-org/heidrun/commit/0d209993ee4254f912e1652f6e3af76b188b314a
+
+Merge pull request #377 from heidrun-org/add-saved-searches-code-hosting-374
+https://github.com/heidrun-org/heidrun/commit/404718bdb79d84d2302150ac4a5f5753bcbf7b42
+
+Add a search field and saved searches to the Code hosting sidebar section, fixes #374
+https://github.com/heidrun-org/heidrun/commit/31fa0bc0215b167cd844b036f54cf64684236487
+
+Merge pull request #373 from heidrun-org/add-code-hosting-sidebar-section-370
+https://github.com/heidrun-org/heidrun/commit/42e7f968d5432d415fbcf602038fa3074c254507
+
+Add the Code hosting sidebar section with issues, pull requests, and merge requests, fixes #370
+https://github.com/heidrun-org/heidrun/commit/4b69ee7ae100101814e629c57645de460ef4b1e0
+
+Add docs/potential_ideas/usage_statistics.md with the content of the closed issues #78, #79, and #80
+https://github.com/heidrun-org/heidrun/commit/87765fb9b1a1a8fce27e55af3caf158d0fca78bc
+
