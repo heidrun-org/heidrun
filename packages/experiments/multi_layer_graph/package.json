@@ -9,6 +9,7 @@
   },
   "scripts": {
     "graph:build": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
+    "dev": "pnpm graph:build && vite --open",
     "test": "vitest run"
   },
   "dependencies": {
