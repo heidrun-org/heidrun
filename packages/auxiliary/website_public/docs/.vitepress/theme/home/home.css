@@ -61,6 +61,20 @@
 	margin: 28px 0 0;
 }
 
+.home-read-more {
+	margin: 20px 0 0;
+	font-weight: 600;
+}
+
+.home-read-more a {
+	color: var(--home-accent);
+	text-decoration: none;
+}
+
+.home-read-more a:hover {
+	text-decoration: underline;
+}
+
 .home-joke-goat {
 	flex: none;
 	width: 28px;

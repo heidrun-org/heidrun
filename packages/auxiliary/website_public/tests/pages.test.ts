@@ -6,9 +6,22 @@ import { SiteFiles } from './site_files';
 const pages = SiteFiles.listPages();
 
 describe('website pages', () => {
-	it('finds the four expected pages', () => {
+	it('finds the twelve expected pages', () => {
 		const names = pages.map((page) => Path.relative(SiteFiles.docsDir, page)).sort();
-		expect(names).toEqual(['about.md', 'documentation/index.md', 'documentation/shortcuts.md', 'index.md']);
+		expect(names).toEqual([
+			'about.md',
+			'documentation/index.md',
+			'documentation/shortcuts.md',
+			'features/ai.md',
+			'features/needs_you.md',
+			'features/panes.md',
+			'features/past_chats.md',
+			'features/phone_access.md',
+			'features/quotas.md',
+			'features/sidebar_sections.md',
+			'features/statistics.md',
+			'index.md',
+		]);
 	});
 
 	for (const page of pages) {
@@ -30,7 +43,7 @@ describe('website pages', () => {
 			});
 
 			it('has no relative link to a missing page', () => {
-				const links = [...text.matchAll(/\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
+				const links = [...text.matchAll(/(?<!!)\[[^\]]*\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
 				for (const link of links) {
 					expect(SiteFiles.markdownFileOfLink(link), link).not.toBeNull();
 				}

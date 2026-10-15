@@ -93,7 +93,15 @@ When the release already exists and you do not use `--recreate`, the command rep
 
 The command uploads the disk image twice: once with the version in its name, for example `Heidrun_0.2.7_aarch64.dmg`, and once with a name that never changes, `Heidrun_aarch64.dmg`. The second copy gives the web address of the latest disk image, `https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg`, which the script `scripts/install.sh` uses. The command stops when the build does not give a disk image for Apple silicon (a file that ends with `_aarch64.dmg`).
 
-The disk image is built for the architecture of your machine only, and it is not signed and not notarized. macOS shows a warning when someone opens it from a web browser.
+The disk image is built for the architecture of your machine only, and it is not signed and not notarized.
+
+When someone downloads the disk image with a web browser, the web browser puts a quarantine mark on the file. Then macOS shows the message "“Heidrun” is damaged and can't be opened" when that person opens Heidrun for the first time. Heidrun is not damaged. macOS shows this message because Apple did not notarize the application. To open Heidrun, drag Heidrun to the Applications folder, run this command in a terminal, then open Heidrun again:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Heidrun.app
+```
+
+The file `docs/release_notes/prefix.md` gives the same explanation and the same command in the text of every GitHub release.
 
 ## Install the application with one command
 

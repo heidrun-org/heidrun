@@ -34,6 +34,8 @@ export type HomeFeatureSection = {
 	joke: string;
 	/** The screenshot of the section. A section without a real capture yet has no screenshot, and shows its text alone. */
 	screenshot?: HomeScreenshot;
+	/** The link to the page of the website that explains the feature in more detail. */
+	readMore: HomeLink;
 };
 
 /** The state of a coding agent, with the color that the Heidrun window gives it. */
@@ -74,6 +76,8 @@ export type HomeLonghouseItem = {
 	name: string;
 	/** What the part does for the developer, in one or two sentences. */
 	description: string;
+	/** The path of the page of the website that explains the part, when the page exists. */
+	href?: string;
 };
 
 /** One group of items of the section "The whole longhouse in one window", by the place where they live. */
@@ -266,6 +270,10 @@ export const FEATURES: HomeFeatureSection[] = [
 			'Answer a blocked coding agent from its card, or click the card to go to its pane. The status item in the macOS menu bar shows the same states, even when the window is hidden.',
 		],
 		joke: 'The goat does not search the hall. The hall calls the goat.',
+		readMore: {
+			text: 'Read more about the Needs you sidebar section',
+			href: '/features/needs_you',
+		},
 		screenshot: {
 			src: '/screenshots/needs_you.png',
 			alt: 'The Needs you sidebar section with the card of a blocked coding agent that waits for a decision, and its five answers as buttons.',
@@ -281,6 +289,10 @@ export const FEATURES: HomeFeatureSection[] = [
 			'Split a pane to the right or down. Pin a pane, so that it stays visible when you change the tab or the workspace. Drop an image on a terminal to paste it. Go back and forward through the panes that had the focus, as in a web browser.',
 		],
 		joke: 'Real Vikings wore no horns. Real terminals wear no costume.',
+		readMore: {
+			text: 'Read more about the panes',
+			href: '/features/panes',
+		},
 		screenshot: {
 			src: '/screenshots/panes.png',
 			alt: 'Three panes in one tab: Claude Code on the left, Codex on the right, and under Codex a second Claude Code that waits for a decision.',
@@ -296,6 +308,10 @@ export const FEATURES: HomeFeatureSection[] = [
 			'The status bar shows your Claude quotas, for 5 hours and for the week, and your Codex quotas, with the pace of your use. You know that you will run dry before it happens.',
 		],
 		joke: 'In the myth, the mead never runs out. In real life, the quota does.',
+		readMore: {
+			text: 'Read more about the quotas and the usage wheel',
+			href: '/features/quotas',
+		},
 		screenshot: {
 			src: '/screenshots/quotas.png',
 			alt: 'A Claude Code pane in the light theme, with its usage wheel in the header, and under it the status bar with the Claude quota at 62% and the Codex quota at 3%.',
@@ -311,6 +327,10 @@ export const FEATURES: HomeFeatureSection[] = [
 			'The phone access works only through Tailscale, never on the open Internet. Each phone pairs once, with a QR code.',
 		],
 		joke: 'Go get your coffee. Your coding agents will find you.',
+		readMore: {
+			text: 'Read more about the phone access',
+			href: '/features/phone_access',
+		},
 	},
 ];
 
@@ -348,18 +368,22 @@ export const LONGHOUSE = {
 				{
 					name: 'Launchers sidebar section',
 					description: 'Run the commands of your project, each in its own tab. Import them from package.json in one click.',
+					href: '/features/sidebar_sections',
 				},
 				{
 					name: 'Source control sidebar section',
 					description: 'Stage, commit, and read the diff, as in Visual Studio Code.',
+					href: '/features/sidebar_sections',
 				},
 				{
 					name: 'Code hosting sidebar section',
 					description: 'The open issues and the pull requests of GitHub, or the merge requests of GitLab, with saved searches.',
+					href: '/features/sidebar_sections',
 				},
 				{
 					name: 'File explorer sidebar section',
 					description: 'The whole folder tree of the repository. Open a file to read it or to edit it.',
+					href: '/features/sidebar_sections',
 				},
 			],
 		},
@@ -369,10 +393,12 @@ export const LONGHOUSE = {
 				{
 					name: 'Clipboard sidebar section',
 					description: 'Pin a piece of the text of a terminal as a note, and find it again later.',
+					href: '/features/sidebar_sections',
 				},
 				{
 					name: 'Past chats sidebar section',
 					description: 'Every chat of Claude Code and of Codex for this workspace, with its files, its issues, its tokens, and its estimated cost.',
+					href: '/features/past_chats',
 				},
 			],
 		},
@@ -382,6 +408,7 @@ export const LONGHOUSE = {
 				{
 					name: 'Statistics window',
 					description: 'How long you really worked in each workspace, what each person changed, and what the coding agents cost each day.',
+					href: '/features/statistics',
 				},
 				{
 					name: 'Skills',
@@ -399,6 +426,10 @@ export const LONGHOUSE = {
 			],
 		},
 	] satisfies HomeLonghouseGroup[],
+	aiLink: {
+		text: 'Read where Heidrun uses AI, and what it sends',
+		href: '/features/ai',
+	} satisfies HomeLink,
 };
 
 ///////////////////////////////////////////////////////////////////////////////

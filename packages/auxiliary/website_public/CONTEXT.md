@@ -8,11 +8,12 @@ The public website of Heidrun: a homepage and the user documentation, built with
 - `docs/.vitepress/config.ts`: the VitePress configuration (title, description, navigation, sidebar, `base`). It also writes the hero of the homepage from `data/identity.json`.
 - `docs/public/favicon.svg`: the favicon of every page, linked by the `head` option of `docs/.vitepress/config.ts`.
 - `docs/.vitepress/theme/home/`: the sections of the homepage under the hero, and their texts — see its own CONTEXT.md.
-- `docs/public/screenshots/`: the real captures of the Heidrun window that the homepage shows.
+- `docs/features/`: the eight feature pages of issue 517, listed in the menu "Features" of `docs/.vitepress/config.ts` and linked from the homepage.
+- `docs/public/screenshots/`: the real captures of the Heidrun window that the homepage shows, and in `features/` the captures of the feature pages.
 - `docs/.vitepress/theme/youtube_video.vue`: the component `YoutubeVideo`, registered in `docs/.vitepress/theme/index.ts`. A page shows a YouTube video with `<YoutubeVideo video-id="..." title="..." />`.
 - `docs/.vitepress/theme/home_flux_lines.vue`: the component `HomeFluxLines`, put in the slot `layout-top` of the layout by `docs/.vitepress/theme/index.ts`. It shows the Flux Lines background on the pages with the layout `home` only, in golden lines on the dark theme and in dark golden ink on the light theme.
 - `docs/.vitepress/theme/flux_lines.vue`: the component `FluxLines`, a canvas that the class `FluxLinesRenderer` (`flux_lines_renderer.ts`) draws into with WebGL2. The shaders are in `flux_lines_shaders.ts`, the types in `flux_lines_types.ts`.
-- `tests/`: the Vitest tests of the website (configuration, pages, shortcuts page, identity texts, splash image, YouTube video, favicon, Flux Lines background, sections and texts of the homepage, complete build).
+- `tests/`: the Vitest tests of the website (configuration, pages, shortcuts page, identity texts, the macOS quarantine message in the release text and the developer documents, splash image, YouTube video, favicon, Flux Lines background, sections and texts of the homepage, complete build).
 - Command to run this folder: `pnpm --filter website_public dev`
 - Command to test this folder: `pnpm --filter website_public test`
 
@@ -29,4 +30,4 @@ The public website of Heidrun: a homepage and the user documentation, built with
 - `flux_lines_renderer.ts` and `flux_lines_shaders.ts` are a port of the Flux Lines background of React Bits (MIT + Commons Clause, Copyright (c) 2026 David Haz), and each file keeps the copyright notice.
 
 ## Background
-- The package was created by [issue #69](https://github.com/heidrun-org/heidrun/issues/69). The favicon came from [issue #301](https://github.com/heidrun-org/heidrun/issues/301). The video of the pronunciation came from [issue #401](https://github.com/heidrun-org/heidrun/issues/401). The Flux Lines background came from [issue #410](https://github.com/heidrun-org/heidrun/issues/410). The sections of the homepage came from [issue #509](https://github.com/heidrun-org/heidrun/issues/509).
+- The package was created by [issue #69](https://github.com/heidrun-org/heidrun/issues/69). The favicon came from [issue #301](https://github.com/heidrun-org/heidrun/issues/301). The video of the pronunciation came from [issue #401](https://github.com/heidrun-org/heidrun/issues/401). The Flux Lines background came from [issue #410](https://github.com/heidrun-org/heidrun/issues/410). The sections of the homepage came from [issue #509](https://github.com/heidrun-org/heidrun/issues/509). The feature pages came from [issue #517](https://github.com/heidrun-org/heidrun/issues/517).
