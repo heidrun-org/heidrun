@@ -1,4 +1,6 @@
 import type { TabName } from '../mobile_types';
+import { Icon } from './icon';
+import type { IconName } from './icon';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -12,8 +14,8 @@ type BarButton = {
 	tab: TabName;
 	/** The word under the icon. */
 	label: string;
-	/** The inside of the SVG element of the icon: simple strokes on a grid of 24 by 24. */
-	iconHtmlContent: string;
+	/** The icon above the word, by its name in Bootstrap Icons. */
+	iconName: IconName;
 };
 
 /**
@@ -25,35 +27,27 @@ export class BottomBar {
 		{
 			tab: 'dashboard',
 			label: 'Dashboard',
-			iconHtmlContent:
-				'<rect x="3" y="3" width="7" height="9" rx="1.5"/>' +
-				'<rect x="14" y="3" width="7" height="5" rx="1.5"/>' +
-				'<rect x="14" y="12" width="7" height="9" rx="1.5"/>' +
-				'<rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+			iconName: 'grid',
 		},
 		{
 			tab: 'needs_you',
 			label: 'Needs you',
-			iconHtmlContent:
-				'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>' +
-				'<path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+			iconName: 'bell',
 		},
 		{
 			tab: 'panes',
 			label: 'Panes',
-			iconHtmlContent:
-				'<rect x="3" y="4" width="18" height="7" rx="2"/>' +
-				'<rect x="3" y="13" width="18" height="7" rx="2"/>',
+			iconName: 'view-stacked',
 		},
 		{
 			tab: 'macros',
 			label: 'Macros',
-			iconHtmlContent: '<path d="M4 6h10M4 12h6M4 18h6M16 15h6M19 12v6"/>',
+			iconName: 'lightning-charge',
 		},
 		{
 			tab: 'launchers',
 			label: 'Launchers',
-			iconHtmlContent: '<path d="M7 4l13 8-13 8z"/>',
+			iconName: 'play',
 		},
 	];
 
@@ -75,17 +69,7 @@ export class BottomBar {
 						data-screen="${button.tab}"
 						${currentAttribute}
 					>
-						<svg
-							viewBox="0 0 24 24"
-							width="22"
-							height="22"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.8"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							aria-hidden="true"
-						>${button.iconHtmlContent}</svg>
+						${Icon.render(button.iconName, 22)}
 						<span>${button.label}</span>
 					</button>
 				`;

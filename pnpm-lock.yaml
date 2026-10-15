@@ -194,6 +194,9 @@ importers:
 
   packages/auxiliary/mobile_website:
     devDependencies:
+      bootstrap-icons:
+        specifier: ^1.13.2
+        version: 1.13.2
       jsdom:
         specifier: ^25.0.1
         version: 25.0.1

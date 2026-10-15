@@ -1,4 +1,5 @@
 import { HtmlEscape } from '../html_escape';
+import { Icon } from './icon';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -38,24 +39,13 @@ export class ScreenHeader {
 	static renderPane(title: string, badgeHtmlContent: string): string {
 		const headerHtmlContent = /* html */`
 			<header class="top">
-				<button class="back" data-action="back" aria-label="Back">‹</button>
+				<button class="back" data-action="back" aria-label="Back">
+					${Icon.render('chevron-left', 24)}
+				</button>
 				<h1>${HtmlEscape.escape(title)}</h1>
 				${badgeHtmlContent}
 				<button class="icon-button" data-action="refresh" aria-label="Refresh" title="Refresh">
-					<svg
-						viewBox="0 0 24 24"
-						width="20"
-						height="20"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.8"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
-						<path d="M20 12a8 8 0 1 1-2.34-5.66"/>
-						<path d="M20 4v4h-4"/>
-					</svg>
+					${Icon.render('arrow-clockwise', 20)}
 				</button>
 			</header>
 		`;

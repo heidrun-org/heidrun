@@ -4,6 +4,7 @@ import { OutputText } from '../output_text';
 import { StatusLabels } from '../components/status_labels';
 import { MenuButtons } from '../components/menu_buttons';
 import { ScreenHeader } from '../components/screen_header';
+import { Icon } from '../components/icon';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,20 +68,7 @@ export class PaneScreen {
 					aria-label="Send"
 					title="Send (Cmd+Enter)"
 				>
-					<svg
-						viewBox="0 0 24 24"
-						width="22"
-						height="22"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2.2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
-					>
-						<path d="M12 19V5"/>
-						<path d="M5 12l7-7 7 7"/>
-					</svg>
+					${Icon.render('send-fill', 20)}
 				</button>
 			</div>
 		`;
@@ -139,9 +127,7 @@ export class PaneScreen {
 				aria-label="Interrupt"
 				title="Interrupt (Esc)"
 			>
-				<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
-					<rect x="6" y="6" width="12" height="12" rx="2"/>
-				</svg>
+				${Icon.render('stop-fill', 20)}
 			</button>
 		`;
 		return buttonHtmlContent;

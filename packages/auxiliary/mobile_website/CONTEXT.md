@@ -32,6 +32,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - Every text that comes from the Mac or from a coding agent goes through `HtmlEscape.escape` before it enters a template. A test with hostile text checks it.
 - The page calls only the closed list of methods of the mobile server (`state`, `read`, `answer`, `prompt`, `keys`), with the header `x-herdr-token`.
 - The pairing key comes in the address after `#t=`, which a browser never sends to a server. The phone keeps it in `localStorage` under the name `hd-token`, so a phone that is already paired stays paired.
+- Every icon is an icon of Bootstrap Icons, put in the page as inline SVG by `src/components/icon.ts`. The page loads no icon font and no file from another address.
 - The texts of the page are in English. A text says "coding agent", never "agent" alone.
 - A change of this package needs a new build of the package `mobile_server`. The scripts `test` and `tauri dev` and `tauri build` build this package first.
 
