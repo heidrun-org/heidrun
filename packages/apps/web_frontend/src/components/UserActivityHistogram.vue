@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import type { Data, Layout } from "plotly.js-basic-dist-min";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import type { Data, Layout, PlotHoverEvent, PlotlyHTMLElement } from "plotly.js-basic-dist-min";
 import { ChartTheme } from "../lib/chart_theme";
 import { timeOptions } from "../lib/format";
 import { PlotlyLoader, type PlotlyModule } from "../lib/plotly_loader";
@@ -17,9 +17,10 @@ import { locale, t } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
 
 // The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. Each bar is stacked: it has one
-// part of one color for each chosen workspace. The slot length is a choice of the developer, so the vertical axis, the
-// labels under the bars, and the tooltips follow the slot length. Plotly.js is loaded only when the window opens, so the
-// other windows do not pay for its size.
+// part of one color for each chosen workspace, and a legend above the bars gives the name of each color. The slot length is
+// a choice of the developer, so the vertical axis, the labels under the bars, and the tooltips follow the slot length. The
+// tooltip of a bar is an HTML popover of Bootstrap, because a tooltip of Plotly.js takes only a few tags of markup. Plotly.js
+// is loaded only when the window opens, so the other windows do not pay for its size.
 // Issue: https://github.com/heidrun-org/heidrun/issues/498
 
 const props = defineProps<{
@@ -75,10 +76,27 @@ const MINUTE_MS = 60_000;
 /** The color of the bars when no workspace is chosen yet, as the name of a CSS variable of the theme. */
 const NO_WORKSPACE_COLOR_TOKEN = "--primary-bg";
 
+/** The space between the pointer and the tooltip, in pixels. */
+const TOOLTIP_OFFSET = 12;
+
+/** Where the tooltip of a bar sits in the chart: the sides that it touches, and the distance to each side, in pixels. */
+type TooltipPlacement = { left?: string; right?: string; top?: string; bottom?: string };
+
+/** The tooltip as the page shows it: the slot, the total, and one row for each workspace that has time in the slot. */
+type TooltipContent = {
+  title: string;
+  total: string;
+  rows: { folder: string; name: string; colorToken: string; time: string }[];
+};
+
 const chart = ref<HTMLDivElement>();
 let plotly: PlotlyModule | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let isUnmounted = false;
+let hasHoverListeners = false;
+
+/** The index of the slot under the pointer and the place of its tooltip, or `null` while the pointer is not over a bar. */
+const hovered = ref<{ index: number; placement: TooltipPlacement } | null>(null);
 
 /** The text of a time of the clock, following the language and the time format of the settings. */
 function clockText(time: number): string {
@@ -133,42 +151,76 @@ function durationText(activeTimeMs: number): string {
   return t("statisticsModal.durationMinutesSeconds", { minutes: Math.floor(totalSeconds / 60), seconds: totalSeconds % 60 });
 }
 
-/** Writes a text of a user into the markup of a tooltip of Plotly.js, so a name with a sign "<" is shown as it is. */
+/** Writes a text of a user into the markup of the name of a trace of Plotly.js, so a name with a sign "<" is shown as it is. */
 function escapeMarkup(text: string): string {
   return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 /**
- * The first line of the tooltip of a slot, with the total of all the chosen workspaces. A slot of one hour or less gives
- * its start and its end, and the user activity time in minutes and seconds. A slot of six hours gives its start and its
- * end, and the user activity time in hours and minutes. A slot of one day gives its day, and the user activity time in
- * hours and minutes. In the last week, the start of a slot that is shorter than one day also gives its day.
+ * The first line of the tooltip of a slot. A slot of one day gives its day. Any other slot gives its start and its end. In
+ * the last week, the start of a slot that is shorter than one day also gives its day.
  */
-function totalTooltipText(slot: UserActivitySlot): string {
-  const length = USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId];
-  if (length.unit === "day") {
-    return t("statisticsModal.dayTooltip", { day: dayText(slot.startedAt, "long"), time: durationText(slot.activeTimeMs) });
+function slotTitleText(slot: UserActivitySlot): string {
+  if (USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId].unit === "day") {
+    return dayText(slot.startedAt, "long");
   }
   const start = props.rangeId === "week" ? `${dayText(slot.startedAt, "long")}, ${clockText(slot.startedAt)}` : clockText(slot.startedAt);
-  return t("statisticsModal.tooltip", { start, end: clockText(slot.endedAt), time: durationText(slot.activeTimeMs) });
+  return t("statisticsModal.tooltip", { start, end: clockText(slot.endedAt) });
 }
 
 /**
- * The tooltip of the bar of the slot at an index. The first line is the total. When two or more workspaces are chosen, one
- * line follows for each workspace that has user activity time in the slot, with the name and the time of the workspace.
+ * The content of the tooltip of the slot under the pointer, or `null` while the pointer is not over a bar. It has the slot,
+ * the total of all the chosen workspaces, and, when two or more workspaces are chosen, one row for each workspace that has
+ * user activity time in the slot, in the order of the colors.
  */
-function tooltipText(slot: UserActivitySlot, index: number): string {
-  const lines = [totalTooltipText(slot)];
-  if (props.workspaceSlots.length < 2) {
-    return lines[0];
+const tooltip = computed<TooltipContent | null>(() => {
+  if (hovered.value === null) {
+    return null;
   }
-  for (const workspace of props.workspaceSlots) {
-    const { activeTimeMs } = workspace.slots[index];
-    if (activeTimeMs > 0) {
-      lines.push(t("statisticsModal.workspaceTooltipLine", { workspace: escapeMarkup(workspace.name), time: durationText(activeTimeMs) }));
+  const { index } = hovered.value;
+  const slot = props.slots[index];
+  if (slot === undefined) {
+    return null;
+  }
+  const rows: TooltipContent["rows"] = [];
+  if (props.workspaceSlots.length > 1) {
+    for (const workspace of props.workspaceSlots) {
+      const { activeTimeMs } = workspace.slots[index];
+      if (activeTimeMs > 0) {
+        rows.push({ folder: workspace.folder, name: workspace.name, colorToken: workspace.colorToken, time: durationText(activeTimeMs) });
+      }
     }
   }
-  return lines.join("<br>");
+  return { title: slotTitleText(slot), total: durationText(slot.activeTimeMs), rows };
+});
+
+/**
+ * Gives the place of the tooltip from the place of the pointer. The tooltip stays on the side of the pointer that has the
+ * most room, so it never leaves the chart: at the right of the pointer in the left half, at the left in the right half, below
+ * the pointer in the top half, and above it in the bottom half.
+ */
+function placementOf(x: number, y: number, width: number, height: number): TooltipPlacement {
+  return {
+    ...(x > width / 2 ? { right: `${width - x + TOOLTIP_OFFSET}px` } : { left: `${x + TOOLTIP_OFFSET}px` }),
+    ...(y > height / 2 ? { bottom: `${height - y + TOOLTIP_OFFSET}px` } : { top: `${y + TOOLTIP_OFFSET}px` }),
+  };
+}
+
+/** Shows the tooltip of the bar under the pointer. */
+function onHover(event: PlotHoverEvent): void {
+  const point = event.points[0];
+  const element = chart.value;
+  if (point === undefined || element === undefined) {
+    return;
+  }
+  const box = element.getBoundingClientRect();
+  const placement = placementOf(event.event.clientX - box.left, event.event.clientY - box.top, box.width, box.height);
+  hovered.value = { index: point.pointNumber, placement };
+}
+
+/** Hides the tooltip when the pointer leaves a bar. */
+function onUnhover(): void {
+  hovered.value = null;
 }
 
 /** The parts of each bar, from the bottom to the top: one for each chosen workspace, or one empty part when none is chosen. */
@@ -201,28 +253,26 @@ function draw(): void {
   const textColor = ChartTheme.readColor("--fg-body", chart.value);
   const lineColor = ChartTheme.readColor("--border-color", chart.value);
   const unitMs = UNIT_MS[VERTICAL_AXES[props.slotLengthId].unit];
-  const customdata = props.slots.map(tooltipText);
   const data: Data[] = parts().map((part) => ({
     type: "bar",
-    name: part.name,
+    name: escapeMarkup(part.name),
     x: props.slots.map((_slot, index) => index),
     y: part.slots.map((slot) => slot.activeTimeMs / unitMs),
-    customdata,
-    hovertemplate: "%{customdata}<extra></extra>",
+    hoverinfo: "none",
     marker: { color: ChartTheme.readColor(part.colorToken, element) },
   }));
   const { values: tickValues, texts: tickTexts } = ticks();
   const layout: Partial<Layout> = {
     autosize: true,
     title: { text: t(RANGE_TEXTS[props.rangeId].chartTitle) },
-    margin: { t: 48, r: 40, b: 64, l: 64 },
+    margin: { t: 72, r: 40, b: 64, l: 64 },
     paper_bgcolor: "rgba(0, 0, 0, 0)",
     plot_bgcolor: "rgba(0, 0, 0, 0)",
     font: { color: textColor },
     bargap: 0.15,
     barmode: "stack",
-    showlegend: false,
-    hoverlabel: { bgcolor: ChartTheme.readColor("--bg-body", element), bordercolor: lineColor, font: { color: textColor } },
+    showlegend: props.workspaceSlots.length > 0,
+    legend: { orientation: "h", x: 0, y: 1.1, traceorder: "normal", itemclick: false, itemdoubleclick: false },
     xaxis: {
       type: "linear",
       title: { text: t(isDaySlot() === true ? "statisticsModal.dayAxis" : "statisticsModal.slotStartAxis") },
@@ -237,6 +287,12 @@ function draw(): void {
     yaxis: verticalAxis(lineColor),
   };
   plotly.react(element, data, layout, { displayModeBar: false });
+  if (hasHoverListeners === false) {
+    const plotElement = element as unknown as PlotlyHTMLElement;
+    plotElement.on("plotly_hover", onHover);
+    plotElement.on("plotly_unhover", onUnhover);
+    hasHoverListeners = true;
+  }
 }
 
 onMounted(async () => {
@@ -258,6 +314,7 @@ onMounted(async () => {
 
 // The theme sets its attributes on the page in its own watcher, so the colors are read on the next tick.
 watch([resolvedTheme, locale, () => props.slots, () => props.workspaceSlots, () => props.rangeId, () => props.slotLengthId], async () => {
+  hovered.value = null;
   await nextTick();
   draw();
 });
@@ -272,14 +329,39 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div
-    ref="chart"
-    class="user-activity-histogram"
-    role="img"
-    :aria-label="t(RANGE_TEXTS[rangeId].chartLabel, { slotLength: UserActivitySlotLengthText.of(slotLengthId) })"
-  ></div>
+  <div class="user-activity-histogram-box position-relative">
+    <div
+      ref="chart"
+      class="user-activity-histogram"
+      role="img"
+      :aria-label="t(RANGE_TEXTS[rangeId].chartLabel, { slotLength: UserActivitySlotLengthText.of(slotLengthId) })"
+    ></div>
+    <div v-if="tooltip !== null" class="popover show position-absolute" role="tooltip" :style="{ ...hovered?.placement, pointerEvents: 'none' }">
+      <div class="popover-body d-flex flex-column gap-2">
+        <div class="fw-semibold">{{ tooltip.title }}</div>
+        <div class="d-flex justify-content-between gap-3" data-field="total">
+          <span class="text-body-secondary">{{ t("statisticsModal.tooltipTotal") }}</span>
+          <span>{{ tooltip.total }}</span>
+        </div>
+        <div v-if="tooltip.rows.length > 0" class="d-flex flex-column gap-1 border-top pt-2">
+          <div v-for="row in tooltip.rows" :key="row.folder" class="d-flex justify-content-between gap-3" data-field="workspace">
+            <span class="d-flex align-items-center">
+              <span
+                class="d-inline-flex me-2"
+                aria-hidden="true"
+                :style="{ width: '0.75em', height: '0.75em', borderRadius: '50%', background: `var(${row.colorToken})` }"
+              ></span>
+              {{ row.name }}
+            </span>
+            <span>{{ row.time }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.user-activity-histogram-box { width: 100%; height: 100%; }
 .user-activity-histogram { width: 100%; height: 100%; }
 </style>

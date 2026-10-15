@@ -11,7 +11,7 @@ This file describes the statistic of the tab "User activity" of the Statistics w
 
 ## What the statistic shows
 
-One histogram of the user activity time: the time that the developer is in front of Heidrun. The developer chooses the last hour (12 slots of five minutes), the last day (24 slots of one hour), or the last week (7 slots of one day). Each bar is the user activity time of one slot. The bar is stacked: it has one part of one color for each chosen workspace, and its height is the time of all the chosen workspaces together.
+One histogram of the user activity time: the time that the developer is in front of Heidrun. The developer chooses the last hour (12 slots of five minutes), the last day (24 slots of one hour), or the last week (7 slots of one day). Each bar is the user activity time of one slot. The bar is stacked: it has one part of one color for each chosen workspace, and its height is the time of all the chosen workspaces together. A legend gives the name of each color, and the tooltip of a bar gives the total and the time of each workspace.
 
 ## The data layer that it reads
 
