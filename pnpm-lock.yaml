@@ -190,6 +190,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/auxiliary/mobile_server: {}
+
   packages/auxiliary/raw_coding_agent_cli: {}
 
   packages/auxiliary/website_public:

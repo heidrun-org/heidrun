@@ -1,0 +1,24 @@
+[package]
+name = "mobile_server"
+version = "0.2.7"
+description = "The mobile server of Heidrun: serves the mobile website on the Tailscale address of the Mac, checks the pairing key, and hands each call of the phone to the desktop application"
+license = "MIT"
+edition = "2021"
+publish = false
+
+[lib]
+name = "mobile_server"
+path = "src/lib.rs"
+
+[dependencies]
+axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
+tokio = { version = "1", features = ["net", "rt", "sync", "time"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+if-addrs = "0.15"
+dirs = "6"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "sync", "time"] }
+tower = { version = "0.5", features = ["util"] }

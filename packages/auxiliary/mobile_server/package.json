@@ -1,0 +1,9 @@
+{
+  "name": "mobile_server",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.7",
+  "scripts": {
+    "test": "cargo test"
+  }
+}
