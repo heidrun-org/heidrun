@@ -18,7 +18,7 @@ const props = defineProps<{
 }>();
 
 /** The time that the pointer or the keyboard focus must stay on the element before the tooltip opens, in milliseconds. */
-const OPEN_DELAY = 500;
+const OPEN_DELAY = 1500;
 
 /** The space between the element and the tooltip, and between the tooltip and the edge of the window, in pixels. */
 const GAP = 8;

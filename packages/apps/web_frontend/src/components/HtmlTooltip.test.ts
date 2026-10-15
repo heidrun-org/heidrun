@@ -5,7 +5,7 @@ import HtmlTooltip from "./HtmlTooltip.vue";
 enableAutoUnmount(afterEach);
 
 /** The delay of the tooltip, in milliseconds. The tests move a fake clock by this time. */
-const OPEN_DELAY = 500;
+const OPEN_DELAY = 1500;
 
 /** The clock is fake for the timers only: `flushPromises` of Vue Test Utils needs the real `setImmediate`. */
 beforeEach(() => {
