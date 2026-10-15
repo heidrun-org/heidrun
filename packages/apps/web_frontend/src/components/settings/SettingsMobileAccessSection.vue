@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from "vue";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { mobile, mobileStatus, revokeMobile, setMobile } from "../../stores/mobile";
-import { ago } from "../../lib/format";
+import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { t } from "../../i18n/index";
 
 const st = computed(() => mobile.status);
@@ -37,7 +37,7 @@ onBeforeUnmount(() => {
       </div>
       <p class="m-0 mono text-body-secondary">{{ st.url }}</p>
       <p class="m-0 form-text">{{ t("mobileModal.qrSecret") }}</p>
-      <p v-if="mobile.lastSeen" class="m-0 form-text">{{ t("mobileModal.lastSeen", { time: ago(mobile.lastSeen) }) }}</p>
+      <p v-if="mobile.lastSeen" class="m-0 form-text"><AbbreviatedTime :milliseconds="mobile.lastSeen" phrase-key="mobileModal.lastSeen" /></p>
       <button type="button" class="btn align-self-start" :disabled="mobile.busy" :title="t('mobileModal.revokeTitle')" @click="revokeMobile">
         {{ t("mobileModal.revoke") }}
       </button>

@@ -9,7 +9,7 @@ import { useReorder } from "../lib/reorder";
 import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { copy } from "../lib/clipboard";
 import { settings } from "../stores/settings";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { t } from "../i18n/index";
 
 const list = visibleNotes;
@@ -73,7 +73,7 @@ function sendTo(n: Note, paneId: string) {
         </button>
         <ConfirmButton icon="x-lg" :confirm-label="t('notesPanel.deleteConfirm')" :question="t('notesPanel.deleteNote')" @confirm="removeNote(n.id)" />
       </header>
-      <div class="origin">{{ n.origin }} · {{ ago(n.createdAt) }}</div>
+      <div class="origin">{{ n.origin }} · <AbbreviatedTime :milliseconds="n.createdAt" /></div>
       <pre class="mono" :class="{ open: expanded[n.id] }" :title="t('notesPanel.textTitle')" @click="expanded[n.id] = !expanded[n.id]" @dblclick="notes.openId = n.id">{{ n.text }}</pre>
       <div class="actions">
         <button :title="t('notesPanel.copyTitle')" class="btn" @click="copyNote(n)">{{ t("notesPanel.copy") }}</button>
