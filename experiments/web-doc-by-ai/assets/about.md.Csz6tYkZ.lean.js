@@ -1,1 +1,0 @@
-import{_ as a,o as t,c as r,ae as i}from"./chunks/framework.B2FZg54p.js";const f=JSON.parse('{"title":"About Heidrun","description":"","frontmatter":{},"headers":[],"relativePath":"about.md","filePath":"about.md"}'),o={name:"about.md"};function n(h,e,l,s,d,m){return t(),r("div",null,[...e[0]||(e[0]=[i("",6)])])}const p=a(o,[["render",n]]);export{f as __pageData,p as default};
