@@ -5,6 +5,7 @@ import { allPanes, state, tabLayout, tabPanes, toast } from "./session";
 import { settings } from "./settings";
 import { paneName } from "../lib/format";
 import { PaneLayoutWithoutPanes } from "../lib/pane_layout_without_panes";
+import type { AgentInfo, PaneLayoutSnapshot } from "../lib/types";
 import { t } from "../i18n/index";
 
 export const MAX_PINNED_PANES = 4;
@@ -39,6 +40,49 @@ export const gridLayout = computed(() => {
     return null;
   }
   return PaneLayoutWithoutPanes.remove(layout, settings.pinnedPanes);
+});
+
+/** Names of the tabs that the developer opened since Heidrun started, in the order of the first opening. */
+const openedTabIds = reactive(new Set<string>());
+
+watch(
+  () => state.selectedTabId,
+  (tabId) => {
+    if (tabId !== null) {
+      openedTabIds.add(tabId);
+    }
+  },
+  { immediate: true, flush: "sync" },
+);
+
+/** One tab that the developer opened, with the panes that the grid draws for it. */
+export type KeptTab = {
+  /** Name of the tab in Herdr, for example `w1:t1`. */
+  tabId: string;
+  /** True for the selected tab. The grid hides the other tabs, and keeps their terminals alive. */
+  isSelected: boolean;
+  /** The panes of the tab that the grid draws: the pinned panes are left out. */
+  panes: AgentInfo[];
+  /** The layout of the tab without the pinned panes, or null when Herdr sent none. */
+  layout: PaneLayoutSnapshot | null;
+};
+
+/**
+ * Every tab that the developer opened, the selected tab and the other tabs. The grid keeps the terminals of all these tabs
+ * alive, and hides the terminals of the tabs that are not selected. A tab switch then shows a terminal that already holds
+ * its screen: a new terminal would be empty until Herdr draws the screen again, and the pane would blink.
+ */
+export const keptTabs = computed<KeptTab[]>(() => {
+  const layouts = state.snapshot?.layouts ?? [];
+  return [...openedTabIds].map((tabId) => {
+    const layout = layouts.find((candidate) => candidate.tab_id === tabId) ?? null;
+    return {
+      tabId,
+      isSelected: tabId === state.selectedTabId,
+      panes: allPanes.value.filter((p) => p.tab_id === tabId && isPinned(p.pane_id) === false),
+      layout: layout === null ? null : PaneLayoutWithoutPanes.remove(layout, settings.pinnedPanes),
+    };
+  });
 });
 
 export function pinPane(paneId: string) {
