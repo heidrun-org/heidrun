@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import QuotaSummary from "./QuotaSummary.vue";
+import quotaSummarySource from "./QuotaSummary.vue?raw";
 import { advanceWorking, perHour, quotaPace, quotaRingWindow, workingSeconds } from "../lib/format";
 import type { QuotaBlock } from "../lib/types";
 
@@ -105,6 +106,12 @@ describe("QuotaSummary", () => {
     const arc = wrapper.get(".arc");
     const length = Number(arc.attributes("stroke-dasharray"));
     expect(Number(arc.attributes("stroke-dashoffset"))).toBeCloseTo(length * 0.4);
+  });
+
+  it("draws the track of the ring in the faint color, so that the whole ring shows against the status bar", () => {
+    const track = /\.ring \.track \{([^}]*)\}/.exec(quotaSummarySource);
+    expect(track).not.toBeNull();
+    expect(track![1]).toContain("stroke: var(--faint)");
   });
 
   it("lists every window and the cost in the popover", async () => {

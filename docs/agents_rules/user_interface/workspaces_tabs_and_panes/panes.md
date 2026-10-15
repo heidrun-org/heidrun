@@ -1,11 +1,11 @@
 # User interface of Heidrun: panes
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 475](https://github.com/heidrun-org/heidrun/issues/475)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -18,6 +18,8 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The border of the panes goes 1 pixel past the frame of the viewport on its left, on its right, and at its bottom, so the frame clips it. At the top, the border of the panes is the line under the tab bar. The ring of the selected pane and the ring of a blocked pane have the color of the state. At the top, the ring is the top border of the pane, so that it joins the selected tab. On the left, on the right, and at the bottom, the ring is drawn just inside the border of the pane, so that it also shows at the edge of the viewport, where the frame hides the border ([issue #326](https://github.com/heidrun-org/heidrun/issues/326)).
 - A click on a pane gives the focus to that pane. Heidrun remembers the panes that had the focus: see [pane_focus_history.md](pane_focus_history.md).
 - The selected pane is easy to see, in the dark theme and in the light theme, in the grid and in the column of pinned panes, when the viewport shows more than one pane: the panes of the selected tab that are not pinned, plus the pinned panes. With only one pane in the viewport, there is no highlight. The header of the selected pane has a tinted background (`--pane-head-selected`). The name of every other pane is in the muted color (`--muted`), and its folder is in the faint color (`--faint`), so that the selected pane is the only pane with a full contrast. The ring stays as it is. A blocked pane keeps the red look of its header and of its text ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
+- The header of a pane shows the context window of the coding agent as a usage wheel, and only as a usage wheel: no word "context", no bar, and no number beside it. The usage wheel is a circle of 22 pixels that fills like a ring, from the top, clockwise. It has the three colors of the usage bars: normal below 60 percent, warning from 60 to 80 percent, and critical above 80 percent. A pane whose coding agent has no known context window has no usage wheel ([issue 475](https://github.com/heidrun-org/heidrun/issues/475)).
+- A click on the usage wheel opens its information card below the usage wheel. The information card shows the percent used, the number of tokens used, and the size of the context window. A row is left out when the program does not know its number. The information card follows the rules of the information card in the glossary: it opens on a click only, and a second click, the key Escape, a click outside, and the loss of the keyboard focus close it. The pane that holds the open information card goes above the other panes, so that no other pane hides the information card.
 - A click on the pin button in the header of a pane pins the pane. A pinned pane goes into the column of pinned panes.
 - The column of pinned panes sits at the right edge of the viewport, beside the panes of the selected tab. It shows every pinned pane in every tab, the tab of the pinned pane included. Its width is the same in every tab, so a pinned pane keeps the same width in every tab.
 - The panes of the selected tab that are not pinned fill the width that the column leaves. A tab whose panes are all pinned shows the same picture as an empty tab.

@@ -1,0 +1,9 @@
+{
+  "title": "Context window",
+  "label": "Context window: {value} % used",
+  "percentLabel": "Used",
+  "percentValue": "{value} %",
+  "usedLabel": "Tokens used",
+  "sizeLabel": "Window size",
+  "tokens": "{value} tokens"
+}

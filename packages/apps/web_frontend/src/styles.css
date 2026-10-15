@@ -54,6 +54,9 @@
   --tint-done: #142033;
   --tint-err: #201313;
   --gauge-track: #23272c;
+  --g-ok: #5fbf7a;
+  --g-warn: #f0a63a;
+  --g-crit: #ea6a5f;
   --wash: 255, 255, 255;
   --overlay-hover: rgba(255, 255, 255, 0.08);
   --editor-caret: #cccccc;
@@ -227,7 +230,6 @@ html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize
 /* Gauges ------------------------------------------------------------------ */
 /* Usage gauges: green up to 60 %, orange to 80 %, red beyond. Ticks mark both thresholds. */
 .gauge {
-  --g-ok: #5fbf7a; --g-warn: #f0a63a; --g-crit: #ea6a5f;
   position: relative; height: 8px; border-radius: 4px; background: var(--gauge-track); overflow: hidden;
 }
 .gauge > span { display: block; height: 100%; border-radius: 4px; background: var(--g-ok); transition: width 0.4s, background 0.4s; }

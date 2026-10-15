@@ -13,7 +13,8 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 // the part, with its arrow under the middle of the part, for a part that is not in a sidebar, for example the circled
 // question mark of a page of the Settings window.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
-// decides its padding. The event "open" tells that the card just opened.
+// decides its padding. The event "open" tells that the card just opened. The property "width" gives a narrower or wider
+// card than the default, for a card with only a few short rows, for example the usage wheel in the header of a pane.
 
 const props = withDefaults(
   defineProps<{
@@ -21,6 +22,8 @@ const props = withDefaults(
     label: string;
     /** The side of the part where the card opens: at the left of the part, at the right of the part, or below it. */
     placement?: "start" | "end" | "bottom";
+    /** The width of the card, as a CSS length. Without it, the card is 34rem wide. */
+    width?: string;
   }>(),
   { placement: "start" },
 );
@@ -165,7 +168,7 @@ onBeforeUnmount(() => {
       :class="`bs-popover-${props.placement}`"
       role="group"
       :aria-label="props.label"
-      :style="cardStyle"
+      :style="{ ...cardStyle, width: props.width }"
       @click.stop
     >
       <div class="popover-arrow position-absolute" :style="arrowStyle"></div>
