@@ -49,4 +49,4 @@ The three numbers under the person chooser for the Git history: the number of co
 
 ### Bar chart of the work of one person
 
-The bar chart of the Work of one person tab. It has one bar for each day of the time range. Each bar has two colors, one on top of the other. For the Git history: the number of commits of the day, then the number of pull requests of the day. For the AI cost: the cost of Claude Code of the day, then the cost of Codex of the day.
+The bar chart of the Work of one person tab. It has one bar for each day of the time range. Each bar has two colors, one on top of the other. For the Git history: the number of commits of the day, then the number of pull requests of the day. For the AI cost: the cost of Claude Code of the day, then the cost of Codex of the day. It has a chart legend and a chart information card, as every chart of the Statistics window has ([statistics_charts.md](statistics_charts.md)).

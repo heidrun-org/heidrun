@@ -34,7 +34,7 @@ This file is a part of the rules of the window of Heidrun. The words are defined
 
 - The histogram reads the user activity records through the data layer, with the command `user_activity_records_in_range` of the file `packages/apps/desktop_tauri/src/user_activity.rs`. The command copies the new lines of the file `user_activity.jsonl` into the SQLite file of the data layer with the mode `update` of the package `data_layer_user_activity`, then reads the records whose active period overlaps the time range with a read-only query. The window asks once, from the start of the oldest slot of any choice of the time range and of the slot length, which is a little less than 7 days before now, and cuts the same records again for each choice. The times of the records that it gives are in UTC.
 - The command holds the same lock as the write of a record, so it never reads half a line.
-- The calculation of the slots, the tab, and the chart are listed in [statistics_user_activity.md](statistics_user_activity.md).
+- The calculation of the slots, the tab, and the chart are listed in [statistics_user_activity.md](statistics_user_activity.md). Every chart of the window has a chart legend and a chart information card: the rules are in [statistics_charts.md](statistics_charts.md).
 
 ## Tests
 

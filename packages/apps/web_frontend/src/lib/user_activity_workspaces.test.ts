@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { UserActivityWorkspaces } from "./user_activity_workspaces";
+import { UserActivitySlots } from "./user_activity_slots";
+import { USER_ACTIVITY_WORKSPACE_COLOR_TOKENS, UserActivityWorkspaces } from "./user_activity_workspaces";
 
 /** A record with only the folder of its workspace. */
 function record(workspaceFolder: string): { workspaceFolder: string } {
@@ -85,5 +86,101 @@ describe("UserActivityWorkspaces.runningPeriodStartedAt", () => {
 	it("gives null when no period runs, or when no workspace is selected", () => {
 		expect(UserActivityWorkspaces.runningPeriodStartedAt(null, "/work/alpha", ["/work/alpha"])).toBeNull();
 		expect(UserActivityWorkspaces.runningPeriodStartedAt(1000, null, ["/work/alpha"])).toBeNull();
+	});
+});
+
+describe("UserActivityWorkspaces.colorToken", () => {
+	it("gives a different color to each of the first workspaces, and starts again after the last color", () => {
+		const count = USER_ACTIVITY_WORKSPACE_COLOR_TOKENS.length;
+		const firstColors = Array.from({ length: count }, (_unused, index) => UserActivityWorkspaces.colorToken(index));
+		expect(new Set(firstColors).size).toBe(count);
+		expect(UserActivityWorkspaces.colorToken(count)).toBe(firstColors[0]);
+		expect(UserActivityWorkspaces.colorToken(count + 1)).toBe(firstColors[1]);
+	});
+
+	it("gives only names of CSS variables of the color scales of Bootstrap", () => {
+		for (const token of USER_ACTIVITY_WORKSPACE_COLOR_TOKENS) {
+			expect(token).toMatch(/^--[a-z]+-500$/);
+		}
+	});
+});
+
+describe("UserActivityWorkspaces.slotsByWorkspace", () => {
+	const ALPHA = "/work/alpha";
+	const BETA = "/work/beta";
+	const GAMMA = "/work/gamma";
+	const choices = [
+		{ folder: ALPHA, name: "alpha" },
+		{ folder: BETA, name: "beta" },
+		{ folder: GAMMA, name: "gamma" },
+	];
+
+	/** The current time of the tests: 10:07:30. The last slot of five minutes is 10:05 to 10:10, and it has index 11. */
+	const now = new Date(2026, 9, 15, 10, 7, 30).getTime();
+
+	/** A record of an active period that starts at a time of the clock, and lasts a number of seconds. */
+	function timedRecord(workspaceFolder: string, hour: number, minute: number, second: number, durationInSeconds: number) {
+		const startedAt = new Date(2026, 9, 15, hour, minute, second).getTime();
+		return {
+			workspaceFolder,
+			startedAt: new Date(startedAt).toISOString(),
+			endedAt: new Date(startedAt + durationInSeconds * 1000).toISOString(),
+		};
+	}
+
+	const records = [
+		timedRecord(ALPHA, 10, 0, 30, 60),
+		timedRecord(BETA, 10, 2, 0, 60),
+		timedRecord(BETA, 9, 57, 0, 60),
+	];
+
+	it("gives one entry for each chosen workspace, in the order of the choices, with the user activity time of this workspace only", () => {
+		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [BETA, ALPHA], records, null, null, now);
+		expect(result.map((workspace) => workspace.folder)).toEqual([ALPHA, BETA]);
+		expect(result.map((workspace) => workspace.name)).toEqual(["alpha", "beta"]);
+		expect(result[0].slots).toHaveLength(12);
+		expect(result[0].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0]);
+		expect(result[1].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 60, 0]);
+	});
+
+	it("keeps the color of a workspace when another workspace is hidden", () => {
+		const everyWorkspace = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA, GAMMA], records, null, null, now);
+		const withoutBeta = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, GAMMA], records, null, null, now);
+		expect(withoutBeta.map((workspace) => workspace.folder)).toEqual([ALPHA, GAMMA]);
+		expect(withoutBeta[0].colorToken).toBe(everyWorkspace[0].colorToken);
+		expect(withoutBeta[1].colorToken).toBe(everyWorkspace[2].colorToken);
+		expect(withoutBeta[1].colorToken).toBe(UserActivityWorkspaces.colorToken(2));
+	});
+
+	it("gives the same colors in every time range", () => {
+		const colors = (rangeId: "hour" | "day" | "week") =>
+			UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, null, null, now, rangeId).map((workspace) => workspace.colorToken);
+		expect(colors("day")).toEqual(colors("hour"));
+		expect(colors("week")).toEqual(colors("hour"));
+	});
+
+	it("adds up, slot by slot, to the user activity time of all the chosen workspaces together", () => {
+		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA, GAMMA], records, null, null, now);
+		const total = UserActivitySlots.compute(records, null, now);
+		const sums = total.map((_slot, index) => result.reduce((sum, workspace) => sum + workspace.slots[index].activeTimeMs, 0));
+		expect(sums).toEqual(total.map((slot) => slot.activeTimeMs));
+	});
+
+	it("counts the running active period only in the slots of its own workspace", () => {
+		const runningPeriodStartedAt = new Date(2026, 9, 15, 10, 6, 30).getTime();
+		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, runningPeriodStartedAt, ALPHA, now);
+		expect(result[0].slots[11].activeTimeMs / 1000).toBe(60);
+		expect(result[1].slots[11].activeTimeMs).toBe(0);
+	});
+
+	it("gives a workspace with no user activity time in the range a part of height 0", () => {
+		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [GAMMA], records, null, null, now);
+		expect(result).toHaveLength(1);
+		expect(result[0].slots.every((slot) => slot.activeTimeMs === 0)).toBe(true);
+	});
+
+	it("gives no entry when no workspace is chosen, or when there is no choice", () => {
+		expect(UserActivityWorkspaces.slotsByWorkspace(choices, [], records, null, null, now)).toEqual([]);
+		expect(UserActivityWorkspaces.slotsByWorkspace([], [], [], null, null, now)).toEqual([]);
 	});
 });

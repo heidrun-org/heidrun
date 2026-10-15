@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: User activity sidebar section](../user_interface/sidebars/user_activity.md), [User interface of Heidrun: Statistics window](../user_interface/window/statistics_window.md)
-- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 494](https://github.com/heidrun-org/heidrun/issues/494)
+- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 494](https://github.com/heidrun-org/heidrun/issues/494), [issue 498](https://github.com/heidrun-org/heidrun/issues/498)
 
 This document gives one short definition for each word of the activity of the developer in front of Heidrun. The other words of Heidrun are in [index.md](index.md).
 
@@ -47,7 +47,7 @@ The tab "User activity" of the Statistics window. It holds one histogram of the 
 
 ### Histogram of the user activity time
 
-The bar chart of the User activity tab. It shows the user activity time of the last hour, of the last day, or of the last week, as the developer chooses, with one bar for each slot.
+The bar chart of the User activity tab. It shows the user activity time of the last hour, of the last day, or of the last week, as the developer chooses, with one bar for each slot. Each bar is stacked: it has one part of one color for each chosen workspace. It has a chart legend and a chart information card, as every chart of the Statistics window has ([statistics_charts.md](statistics_charts.md)).
 
 ### Slot
 

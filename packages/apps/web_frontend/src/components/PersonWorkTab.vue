@@ -135,7 +135,6 @@ const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
     return null;
   }
   const days = result.value.days;
-  const dayTexts = days.map((day) => DayText.tooltip(day.startedAt));
   return {
     labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
     series: [
@@ -143,19 +142,17 @@ const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
         name: t("statisticsModal.personWorkCommitsTrace"),
         colorToken: "--primary-bg",
         values: days.map((day) => day.commitCount),
-        tooltips: days.map((day, index) =>
-          t("statisticsModal.personWorkCommitsTooltip", { day: dayTexts[index], value: day.commitCount }),
-        ),
+        valueTexts: days.map((day) => String(day.commitCount)),
       },
       {
         name: t("statisticsModal.personWorkPullRequestsTrace"),
         colorToken: "--success-bg",
         values: days.map((day) => day.pullRequestCount),
-        tooltips: days.map((day, index) =>
-          t("statisticsModal.personWorkPullRequestsTooltip", { day: dayTexts[index], value: day.pullRequestCount }),
-        ),
+        valueTexts: days.map((day) => String(day.pullRequestCount)),
       },
     ],
+    titles: days.map((day) => DayText.cardTitle(day.startedAt)),
+    totals: null,
     title: t("statisticsModal.personWorkChartTitle", { person: person.value.name }),
     horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
     verticalAxisTitle: t("statisticsModal.personWorkVerticalAxis"),
@@ -172,21 +169,14 @@ const aiCostChart = computed<StackedBarChartContent | null>(() => {
   const days = aiCostResult.value.days;
   return {
     labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
-    series: AI_COST_AGENT_IDS.map((agentId) => {
-      const agentName = findCodingAgent(agentId)?.label ?? agentId;
-      return {
-        name: agentName,
-        colorToken: AI_COST_COLOR_TOKENS[agentId],
-        values: days.map((day) => day.costByAgent[agentId]),
-        tooltips: days.map((day) =>
-          t("statisticsModal.personWorkAiCostTooltip", {
-            agent: agentName,
-            day: DayText.tooltip(day.startedAt),
-            value: dollarsText(day.costByAgent[agentId]),
-          }),
-        ),
-      };
-    }),
+    series: AI_COST_AGENT_IDS.map((agentId) => ({
+      name: findCodingAgent(agentId)?.label ?? agentId,
+      colorToken: AI_COST_COLOR_TOKENS[agentId],
+      values: days.map((day) => day.costByAgent[agentId]),
+      valueTexts: days.map((day) => dollarsText(day.costByAgent[agentId])),
+    })),
+    titles: days.map((day) => DayText.cardTitle(day.startedAt)),
+    totals: days.map((day) => dollarsText(AI_COST_AGENT_IDS.reduce((sum, agentId) => sum + day.costByAgent[agentId], 0))),
     title: t("statisticsModal.personWorkAiCostChartTitle"),
     horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
     verticalAxisTitle: t("statisticsModal.personWorkAiCostVerticalAxis"),

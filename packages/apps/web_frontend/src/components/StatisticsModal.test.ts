@@ -10,6 +10,9 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 
 /** The calls that the chart makes to Plotly.js: jsdom cannot draw an SVG chart, so Plotly.js is replaced. */
 const plotly = { react: vi.fn(), purge: vi.fn(), Plots: { resize: vi.fn() } };
+
+/** The functions that the chart gave to Plotly.js for the events of the pointer: a test calls them as the pointer would. */
+const plotlyHandlers: Record<string, (event: unknown) => void> = {};
 vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 
 /** The tab "Work of one person" reads the repository of the selected workspace: the test selects the folder of a workspace. */
@@ -20,7 +23,7 @@ vi.mock("../stores/user_activity", async (importOriginal) => {
 
 /** What one call to `Plotly.react` drew. */
 type Drawing = {
-  data: { type: string; x: number[]; y: number[]; customdata: string[] };
+  data: { type: string; x: number[]; y: number[] };
   layout: { yaxis: { range?: number[]; autorange?: boolean } };
 };
 
@@ -88,7 +91,15 @@ beforeEach(() => {
     },
   );
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  for (const name of Object.keys(plotlyHandlers)) {
+    delete plotlyHandlers[name];
+  }
   plotly.react.mockReset();
+  plotly.react.mockImplementation((element: { on?: unknown }) => {
+    element.on = (name: string, callback: (event: unknown) => void) => {
+      plotlyHandlers[name] = callback;
+    };
+  });
   plotly.purge.mockReset();
   document.body.innerHTML = "";
 });
@@ -254,16 +265,21 @@ describe("StatisticsModal", () => {
     expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5, 5);
   });
 
-  it("writes the tooltip of the last hour with the start, the end, and the minutes and seconds, and the tooltip of the last week with the day, the hours, and the minutes", async () => {
+  it("shows the tooltip of the last hour with the start, the end, and the minutes and seconds, and the tooltip of the last week with the day, the hours, and the minutes", async () => {
     const now = Date.now();
     const record = { workspaceFolder: "/work/heidrun", startedAt: new Date(now - 3_600_000).toISOString(), endedAt: new Date(now - 60_000).toISOString() };
     const { wrapper } = await mountStatisticsModal([record]);
     await waitForDrawings(1);
-    expect(lastDrawing().data.customdata.every((tooltip) => /^.+ to .+: \d+ min \d+ s$/.test(tooltip))).toBe(true);
+    plotlyHandlers.plotly_hover({ points: [{ pointNumber: 3 }], event: { clientX: 100, clientY: 50 } });
+    await flushPromises();
+    expect(wrapper.get('[role="tooltip"] .fw-semibold').text()).toMatch(/^.+ to .+$/);
+    expect(wrapper.get('[role="tooltip"] [data-field="total"] span:last-child').text()).toMatch(/^\d+ min \d+ s$/);
     await chooseRange(wrapper, "week", 2);
-    const tooltips = lastDrawing().data.customdata;
-    expect(tooltips).toHaveLength(7);
-    expect(tooltips.every((tooltip) => /: \d+ h \d+ min$/.test(tooltip))).toBe(true);
+    expect(wrapper.find('[role="tooltip"]').exists()).toBe(false);
+    plotlyHandlers.plotly_hover({ points: [{ pointNumber: 3 }], event: { clientX: 100, clientY: 50 } });
+    await flushPromises();
+    expect(wrapper.get('[role="tooltip"] .fw-semibold').text()).not.toContain(" to ");
+    expect(wrapper.get('[role="tooltip"] [data-field="total"] span:last-child').text()).toMatch(/^\d+ h \d+ min$/);
   });
 
   it("draws the chart again at its new size when the window changes size", async () => {
