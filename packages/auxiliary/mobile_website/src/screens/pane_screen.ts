@@ -47,12 +47,9 @@ export class PaneScreen {
 		const isBlocked = agent.status === 'blocked';
 		const isWorking = agent.status === 'working';
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
-		const interruptHtmlContent =
-			isWorking ? PaneScreen.renderDangerButton('interrupt', 'Interrupt', paneId) : '';
-		const hasActions = denyHtmlContent !== '' || interruptHtmlContent !== '';
-		const buttonsHtmlContent = `${denyHtmlContent}${interruptHtmlContent}`;
+		const stopHtmlContent = isWorking ? PaneScreen.renderStopButton(paneId) : '';
 		const actionsHtmlContent =
-			hasActions ? /* html */`<div class="actions">${buttonsHtmlContent}</div>` : '';
+			denyHtmlContent === '' ? '' : /* html */`<div class="actions">${denyHtmlContent}</div>`;
 		const screenHtmlContent = /* html */`
 			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent)}
 			<main class="pane-main">
@@ -68,6 +65,7 @@ export class PaneScreen {
 					rows="1"
 					enterkeyhint="send"
 				></textarea>
+				${stopHtmlContent}
 				<button class="button button-primary" data-action="send" data-pane-id="${paneId}">
 					Send
 				</button>
@@ -111,6 +109,29 @@ export class PaneScreen {
 		}
 		const lineHtmlContent = /* html */`<div class="${className}">${HtmlEscape.escape(text)}</div>`;
 		return lineHtmlContent;
+	}
+
+	/**
+	 * Draws the button that interrupts a working coding agent: the stop icon, a red square, next to the button
+	 * Send.
+	 * @param paneId The identifier of the pane, already escaped.
+	 * @returns The HTML of the button.
+	 */
+	private static renderStopButton(paneId: string): string {
+		const buttonHtmlContent = /* html */`
+			<button
+				class="stop-button"
+				data-action="interrupt"
+				data-pane-id="${paneId}"
+				aria-label="Interrupt"
+				title="Interrupt (Esc)"
+			>
+				<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+					<rect x="6" y="6" width="12" height="12" rx="2"/>
+				</svg>
+			</button>
+		`;
+		return buttonHtmlContent;
 	}
 
 	/**

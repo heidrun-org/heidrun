@@ -384,6 +384,23 @@ main {
   border-top: 1px solid var(--line);
 }
 
+.stop-button {
+  flex: none;
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--blocked);
+}
+
+.stop-button:active {
+  background: var(--line-strong);
+}
+
 .composer textarea {
   flex: 1;
   min-height: 42px;

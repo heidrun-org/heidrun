@@ -237,6 +237,12 @@ describe('Pane screen keys', () => {
 		const harness = await AppHarness.start(mac);
 		await harness.openPane('p-working');
 		expect(document.querySelector('button[data-action="deny"]')).toBeNull();
+		const stop = document.querySelector('.composer button[data-action="interrupt"]');
+		expect(stop?.getAttribute('aria-label')).toBe('Interrupt');
+		expect(stop?.textContent?.trim()).toBe('');
+		expect(stop?.querySelector('svg')).not.toBeNull();
+		expect(document.querySelector('.actions')).toBeNull();
+		expect(stop?.nextElementSibling?.getAttribute('data-action')).toBe('send');
 		await harness.tap('button[data-action="interrupt"]');
 		expect(mac.callsOf('keys').map((call) => call.params)).toEqual([
 			{
