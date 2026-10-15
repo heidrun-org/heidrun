@@ -5,6 +5,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import aboutImage from "../assets/heidrun_splash_screen.jpg";
 import { t } from "../i18n/index";
+import { versionWithBuildTime } from "../lib/build_time";
 import { GOAT_SOUND_AUTHOR, GOAT_SOUND_SOURCE_URL, playNextGoatBleat } from "../lib/goat_sounds";
 import Icon from "./Icon.vue";
 
@@ -14,7 +15,7 @@ const closeButton = ref<HTMLButtonElement>();
 let unlisten: UnlistenFn | null = null;
 
 async function open() {
-  version.value = await getVersion().catch(() => "");
+  version.value = versionWithBuildTime(await getVersion().catch(() => ""), __BUILD_TIME__);
   isOpen.value = true;
   await nextTick();
   closeButton.value?.focus();
