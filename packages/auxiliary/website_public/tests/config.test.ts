@@ -47,8 +47,8 @@ describe('VitePress configuration', () => {
 		expect(new Set(links).size).toBe(links.length);
 	});
 
-	it('links the navigation to the home page, the documentation and the about page', () => {
-		expect(themeConfig.nav.map((item) => item.link)).toEqual(['/', '/documentation/', '/about']);
+	it('links the navigation to the home page, the features, the documentation and the about page', () => {
+		expect(themeConfig.nav.map((item) => item.link)).toEqual(['/', '/features/needs_you', '/documentation/', '/about']);
 	});
 
 	it('links to the GitHub repository of the organization', () => {
