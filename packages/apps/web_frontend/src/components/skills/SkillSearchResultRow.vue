@@ -11,7 +11,8 @@ defineProps<{ result: SearchResult }>();
   <div class="row">
     <div class="meta">
       <div class="name">{{ result.name }}</div>
-      <div class="sub">{{ result.source }} · {{ t("settingsSkills.installs", { total: result.installs.toLocaleString() }) }}</div>
+      <div v-if="result.folderUrl === undefined" class="sub">{{ result.source }} · {{ t("settingsSkills.installs", { total: result.installs.toLocaleString() }) }}</div>
+      <div v-else class="sub">{{ result.source }} · {{ t("settingsSkills.githubFolder") }}</div>
     </div>
     <button class="btn" @click="inspectResult(result)"><Icon name="eye" /> {{ t("settingsSkills.inspect") }}</button>
     <span v-if="isInstalledAtLevel(result)" class="place">{{ t("settingsSkills.installed") }}</span>

@@ -1,6 +1,7 @@
 {
   "label": "Right sidebar",
   "sidebarSection.toHandle": "Needs you",
-  "sidebarSection.notes": "Notes",
-  "sidebarSection.chats": "Chats"
+  "sidebarSection.notes": "Clipboard",
+  "sidebarSection.chats": "Past chats",
+  "sidebarSection.userActivity": "User activity"
 }

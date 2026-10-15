@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
-import { RESULT, prepare } from "./skills_test_support";
+import { FOLDER_URL, RESULT, prepare } from "./skills_test_support";
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
@@ -26,6 +26,17 @@ describe("FindSkills", () => {
     expect(wrapper.find(".search").exists()).toBe(true);
   });
 
+  it("shows a magnifying glass at the start of the field, and the hint about the web address below it", async () => {
+    const { wrapper } = await mountFind();
+    const field = wrapper.get(".searchField");
+    expect(field.find(".bi-search").exists()).toBe(true);
+    expect(field.find(".search").exists()).toBe(true);
+    const hint = wrapper.get(".hint");
+    expect(hint.text()).toBe("You can also paste the web address of a skill folder in a GitHub repository.");
+    expect(wrapper.get(".search").attributes("aria-describedby")).toBe(hint.attributes("id"));
+    expect(field.element.nextElementSibling).toBe(hint.element);
+  });
+
   it("lists the results of the search", async () => {
     const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
     await skills.searchSkills("docx");
@@ -33,6 +44,28 @@ describe("FindSkills", () => {
     expect(invoke).toHaveBeenCalledWith("skills_search", { query: "docx" });
     expect(wrapper.findAll(".list .row")).toHaveLength(1);
     expect(wrapper.get(".row").text()).toContain("anthropics/skills · 198,891 installs");
+  });
+
+  it("shows one result for the web address of a skill folder, and does not search on skills.sh", async () => {
+    const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
+    await skills.searchSkills(FOLDER_URL);
+    await flushPromises();
+    expect(invoke).not.toHaveBeenCalledWith("skills_search", expect.anything());
+    const rows = wrapper.findAll(".list .row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].get(".name").text()).toBe("pdf");
+    expect(rows[0].get(".sub").text()).toBe("anthropics/skills · GitHub folder");
+    const buttons = rows[0].findAll("button").map((button) => button.text());
+    expect(buttons).toEqual(["Inspect", "Install"]);
+  });
+
+  it("goes back to the search on skills.sh when the text is not a web address of a skill folder", async () => {
+    const { wrapper, skills } = await mountFind({ skills_search: [RESULT] });
+    await skills.searchSkills(FOLDER_URL);
+    await skills.searchSkills("https://github.com/anthropics/skills");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_search", { query: "https://github.com/anthropics/skills" });
+    expect(wrapper.get(".row").text()).toContain("198,891 installs");
   });
 
   it("says that nothing was found", async () => {

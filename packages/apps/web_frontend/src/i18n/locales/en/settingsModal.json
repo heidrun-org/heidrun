@@ -11,5 +11,7 @@
   "notifications": "Notifications",
   "mobileAccess": "Mobile access",
   "agents": "Agents",
-  "dynamicTopics": "Dynamic topics"
+  "pastChats": "Past chats",
+  "dynamicTopics": "Dynamic topics",
+  "needsYou": "Needs you"
 }

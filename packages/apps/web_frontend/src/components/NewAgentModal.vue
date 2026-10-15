@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { agentCommand, listAgents, newAgent, type AgentDef } from "../stores/agents";
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
 import { macros, projectMacros } from "../stores/macros";
+import { loadCodingAgentModels, modelsOf } from "../stores/coding_agent_models";
 import { forgetNewPaneValues, loadNewPaneValues, saveNewPaneValues, startNewPane } from "../stores/newPane";
 import { t } from "../i18n/index";
 
@@ -21,7 +22,11 @@ const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
 const allMacros = computed(() => [...projectMacros.value, ...macros.personal]);
-const MODELS = { claude: ["opus", "sonnet", "haiku"], codex: ["gpt-5-codex", "gpt-5"], terminal: [] as string[] };
+// The models that the tools list now: the same list as the window Create a custom launcher. This window offers only Claude Code and Codex.
+for (const toolId of ["claude", "codex"]) {
+  void loadCodingAgentModels(toolId);
+}
+const suggestedModels = computed(() => modelsOf(tool.value));
 const command = computed(() => {
   if (tool.value === "terminal") return "";
   try {
@@ -127,7 +132,7 @@ function onKey(e: KeyboardEvent) {
         <label>
           <span class="field-label">{{ t("newAgentModal.model") }}</span>
           <input v-model="model" list="na-models" :placeholder="chosen?.model ? t('newAgentModal.agentModel', { model: chosen.model }) : t('newAgentModal.defaultModel')" spellcheck="false" />
-          <datalist id="na-models"><option v-for="m in MODELS[tool]" :key="m" :value="m" /></datalist>
+          <datalist id="na-models"><option v-for="m in suggestedModels" :key="m.id" :value="m.id" :label="m.label" /></datalist>
         </label>
         <label>
           <span class="field-label">{{ t("newAgentModal.tabName") }}</span>

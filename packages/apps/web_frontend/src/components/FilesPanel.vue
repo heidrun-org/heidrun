@@ -1,18 +1,37 @@
 <script setup lang="ts">
-// The Files sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
+// The File explorer sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
 // workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
 // changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
-// delete, or edit a file.
+// delete, or edit a file. A right click on the row of a file or of a folder opens a context menu that copies the
+// absolute path or the relative path to the clipboard. The option "Ignored files" of the menu shows the files and the
+// folders that Git ignores, in the muted color. A folder that Git ignores unfolds one level at a time.
 // - issue #349
-import { computed, nextTick, ref, watch } from "vue";
+// - issue #383
+// - issue #430
+// - issue #443
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import Icon from "./Icon.vue";
 import SourceControlMenu from "./SourceControlMenu.vue";
 import { currentGit, openGitModal } from "../stores/git";
-import { buildTree, files, filesPanelNewFolders, filesPanelSelections, loadFiles, visibleRows, type TreeRow } from "../stores/files";
+import {
+  buildTree,
+  files,
+  filesPanelIgnoredChildren,
+  filesPanelNewFolders,
+  filesPanelSelections,
+  isInIgnoredFolder,
+  loadExpandedIgnoredFolders,
+  loadFiles,
+  loadIgnoredFolder,
+  openFiles,
+  visibleRows,
+  type TreeRow,
+} from "../stores/files";
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
+import { copy } from "../lib/clipboard";
 import { t } from "../i18n/index";
 
 /** The selected row of the selected workspace, or null. Each workspace has its own selected row. */
@@ -31,8 +50,8 @@ function select(path: string | null, isFolder: boolean) {
   filesPanelSelections[workspaceId] = { path, isFolder };
 }
 
-const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? []));
-const rows = computed(() => visibleRows(tree.value, files.expanded, files.status));
+const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? [], files.ignored));
+const rows = computed(() => visibleRows(tree.value, files.expanded, files.status, filesPanelIgnoredChildren));
 
 /** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
 const INDENT_WIDTHS = { small: 12, medium: 20, large: 28 } as const;
@@ -48,21 +67,27 @@ function mark(isOn: boolean): string {
   return isOn ? "✓ " : "\u2003";
 }
 
-/** The items of the menu of the three dots: the indentation, the row height, and the indent guides. */
+/**
+ * The items of the menu of the three dots: the indentation, the row height, the indent guides, and the ignored files.
+ * A separator line sits between two groups.
+ */
 const menuItems = computed(() => [
   { id: "indentTitle", label: t("filesPanel.menu.indent"), isDisabled: true },
   ...(["small", "medium", "large"] as const).map((choice) => ({
     id: `indent:${choice}`,
     label: mark(settings.filesPanelIndent === choice) + t(`filesPanel.menu.indent.${choice}`),
   })),
-  { id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true },
+  { id: "rowHeightTitle", label: t("filesPanel.menu.rowHeight"), isDisabled: true, hasDividerBefore: true },
   ...(["compact", "comfortable"] as const).map((choice) => ({
     id: `rowHeight:${choice}`,
     label: mark(settings.filesPanelRowHeight === choice) + t(`filesPanel.menu.rowHeight.${choice}`),
   })),
-  { id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true },
+  { id: "guidesTitle", label: t("filesPanel.menu.guides"), isDisabled: true, hasDividerBefore: true },
   { id: "guides:on", label: mark(settings.filesPanelIndentGuides) + t("filesPanel.menu.guides.on") },
   { id: "guides:off", label: mark(settings.filesPanelIndentGuides === false) + t("filesPanel.menu.guides.off") },
+  { id: "ignoredTitle", label: t("filesPanel.menu.ignored"), isDisabled: true, hasDividerBefore: true },
+  { id: "ignored:on", label: mark(settings.filesShowIgnored) + t("filesPanel.menu.ignored.on") },
+  { id: "ignored:off", label: mark(settings.filesShowIgnored === false) + t("filesPanel.menu.ignored.off") },
 ]);
 
 function chooseMenuItem(id: string) {
@@ -73,6 +98,8 @@ function chooseMenuItem(id: string) {
     settings.filesPanelRowHeight = choice as typeof settings.filesPanelRowHeight;
   } else if (name === "guides") {
     settings.filesPanelIndentGuides = choice === "on";
+  } else if (name === "ignored") {
+    settings.filesShowIgnored = choice === "on";
   }
 }
 
@@ -82,6 +109,7 @@ function chooseMenuItem(id: string) {
  */
 async function loadTree(root: string) {
   await loadFiles(root);
+  await loadExpandedIgnoredFolders();
   const remembered = filesPanelNewFolders[files.root] ?? [];
   if (remembered.length === 0) {
     return;
@@ -119,10 +147,24 @@ watch(
     void loadTree(root).then(() => {
       if (isAnotherRepository) {
         revealSelection();
+        void loadExpandedIgnoredFolders();
       }
     });
   },
   { immediate: true },
+);
+
+// The tree is read again when the developer shows or hides the files that Git ignores. A selected row inside a folder
+// that Git ignores disappears with the option, so the selection is cleared and a new file does not go into a hidden folder.
+watch(
+  () => settings.filesShowIgnored,
+  (isShown) => {
+    const path = selection.value?.path ?? null;
+    if (isShown === false && path !== null && isInIgnoredFolder(path)) {
+      select(null, false);
+    }
+    refresh();
+  },
 );
 
 /** The folder that a new file or a new folder goes into: the selected folder, or the folder of the selected file. */
@@ -204,7 +246,10 @@ async function submitNaming() {
   const folders = new Set(files.expanded);
   if (current.kind === "dir") {
     folders.add(path);
-    filesPanelNewFolders[files.root] = [...(filesPanelNewFolders[files.root] ?? []), path];
+    // A new folder inside a folder that Git ignores shows from the disk, so the tree does not remember it.
+    if (isInIgnoredFolder(path) === false) {
+      filesPanelNewFolders[files.root] = [...(filesPanelNewFolders[files.root] ?? []), path];
+    }
   }
   files.expanded = folders;
   select(path, current.kind === "dir");
@@ -230,17 +275,24 @@ function refresh() {
   }
 }
 
-function toggleFolder(row: TreeRow) {
-  if (row.ignored) {
+/**
+ * Folds or unfolds a folder. A folder that Git ignores unfolds after the program reads its first level from the disk.
+ * @param row - The row of the folder.
+ */
+async function toggleFolder(row: TreeRow) {
+  if (files.expanded.has(row.path)) {
+    const folded = new Set(files.expanded);
+    folded.delete(row.path);
+    files.expanded = folded;
     return;
   }
-  const expanded = new Set(files.expanded);
-  if (expanded.has(row.path)) {
-    expanded.delete(row.path);
-  } else {
-    expanded.add(row.path);
+  if (row.isGitIgnored && (await loadIgnoredFolder(row.path)) === false) {
+    toast(t("filesPanel.cannotReadFolder"), "error");
+    return;
   }
-  files.expanded = expanded;
+  const unfolded = new Set(files.expanded);
+  unfolded.add(row.path);
+  files.expanded = unfolded;
 }
 
 function chooseRow(row: TreeRow) {
@@ -249,8 +301,81 @@ function chooseRow(row: TreeRow) {
     toggleFolder(row);
     return;
   }
-  openGitModal(row.path);
+  void openFiles(files.root, { path: row.path });
 }
+
+/** The context menu of a file row or a folder row: the relative path, and where the pointer was. Null when closed. */
+const fileMenu = ref<{ path: string; top: number; left: number } | null>(null);
+const fileMenuElement = ref<HTMLElement>();
+
+/** The space in pixels that the context menu keeps between itself and the edge of the window. */
+const FILE_MENU_MARGIN = 8;
+
+/** Opens the context menu at the pointer for the row of a file or of a folder, and hides the default context menu. */
+function openFileMenu(event: MouseEvent, row: TreeRow) {
+  event.preventDefault();
+  fileMenu.value = { path: row.path, top: event.clientY, left: event.clientX };
+  document.addEventListener("mousedown", onDocumentMouseDown, true);
+  document.addEventListener("keydown", onDocumentKeyDown, true);
+  void nextTick(() => {
+    const menuElement = fileMenuElement.value;
+    const current = fileMenu.value;
+    if (menuElement === undefined || current === null) {
+      return;
+    }
+    // The context menu stays inside the window, whatever the place of the pointer.
+    fileMenu.value = {
+      ...current,
+      top: Math.max(FILE_MENU_MARGIN, Math.min(current.top, window.innerHeight - menuElement.offsetHeight - FILE_MENU_MARGIN)),
+      left: Math.max(FILE_MENU_MARGIN, Math.min(current.left, window.innerWidth - menuElement.offsetWidth - FILE_MENU_MARGIN)),
+    };
+  });
+}
+
+/** Closes the context menu. */
+function closeFileMenu() {
+  fileMenu.value = null;
+  document.removeEventListener("mousedown", onDocumentMouseDown, true);
+  document.removeEventListener("keydown", onDocumentKeyDown, true);
+}
+
+/** Closes the context menu on a click outside the context menu. */
+function onDocumentMouseDown(event: MouseEvent) {
+  if (fileMenuElement.value?.contains(event.target as Node) === true) {
+    return;
+  }
+  closeFileMenu();
+}
+
+/** Closes the context menu on the key Escape. */
+function onDocumentKeyDown(event: KeyboardEvent) {
+  if (event.key === "Escape") {
+    event.stopPropagation();
+    closeFileMenu();
+  }
+}
+
+/** Puts the absolute path or the relative path of the row of the context menu on the clipboard, and closes the menu. */
+async function copyPath(kind: "absolute" | "relative") {
+  const relativePath = fileMenu.value?.path ?? null;
+  closeFileMenu();
+  if (relativePath === null) {
+    return;
+  }
+  let text = relativePath;
+  if (kind === "absolute") {
+    try {
+      text = await invoke<string>("file_full_path", { root: files.root, path: relativePath });
+    } catch (error) {
+      toast(String(error), "error");
+      return;
+    }
+  }
+  await copy(text);
+  toast(t("filesPanel.copied", { path: text }));
+}
+
+onBeforeUnmount(closeFileMenu);
 
 /** The icon of a row: a folder that is closed or open, or the kind of the file. */
 function rowIcon(row: TreeRow): string {
@@ -262,7 +387,7 @@ function rowIcon(row: TreeRow): string {
 
 /** The name of the arrow of a folder row. A file row has no arrow, but it keeps the space of the arrow. */
 function arrowIcon(row: TreeRow): string | null {
-  if (row.dir === false || row.ignored) {
+  if (row.dir === false) {
     return null;
   }
   return files.expanded.has(row.path) ? "chevron-down" : "chevron-right";
@@ -359,10 +484,11 @@ function letterClass(letter: string): string {
             <button
               type="button"
               class="row btn d-flex align-items-center text-start"
-              :class="{ selected: entry.row.path === selection?.path, ignored: entry.row.ignored }"
+              :class="{ selected: entry.row.path === selection?.path, ignored: entry.row.isGitIgnored }"
               :title="entry.row.path"
-              :aria-expanded="entry.row.dir && entry.row.ignored === false ? files.expanded.has(entry.row.path) : undefined"
+              :aria-expanded="entry.row.dir ? files.expanded.has(entry.row.path) : undefined"
               @click="chooseRow(entry.row)"
+              @contextmenu="openFileMenu($event, entry.row)"
             >
               <template v-if="settings.filesPanelIndentGuides">
                 <span v-for="level in entry.row.depth" :key="level" class="guide"></span>
@@ -382,6 +508,23 @@ function letterClass(letter: string): string {
       <div v-if="files.truncated" class="muted">{{ t("filesPanel.truncated") }}</div>
     </template>
     <div v-else class="muted">{{ t("filesPanel.notRepository") }}</div>
+    <Teleport to="body">
+      <div
+        v-if="fileMenu !== null"
+        ref="fileMenuElement"
+        class="menu show position-fixed"
+        role="menu"
+        :aria-label="t('filesPanel.fileMenu.label')"
+        :style="{ top: `${fileMenu.top}px`, left: `${fileMenu.left}px` }"
+      >
+        <button type="button" class="menu-item" role="menuitem" @click="copyPath('absolute')">
+          {{ t("filesPanel.fileMenu.copyAbsolutePath") }}
+        </button>
+        <button type="button" class="menu-item" role="menuitem" @click="copyPath('relative')">
+          {{ t("filesPanel.fileMenu.copyRelativePath") }}
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -394,7 +537,7 @@ function letterClass(letter: string): string {
 .files-panel :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .rows { list-style: none; margin: 0; padding: 0; }
 .row { width: 100%; height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
-.row:hover { background: var(--hover-soft); }
+.row:hover { background: var(--files-row-hover); }
 /* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
 .row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }
 .row.ignored { color: var(--muted); }

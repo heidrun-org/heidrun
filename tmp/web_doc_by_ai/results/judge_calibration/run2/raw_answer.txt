@@ -1,0 +1,265 @@
+```json
+{
+  "rubricVersion": "2",
+  "pages": [
+    {
+      "file": "sample_90.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Before you start; Steps, step 3",
+          "evidence": "The page says Reading is available for every file and tells the reader to click Reading for a TypeScript file.",
+          "impact": "The Reading button does not exist for a TypeScript file. The reader looks for a control that is not there, and the page's only task cannot be done.",
+          "source": "packages/apps/web_frontend/src/components/GitModal.vue",
+          "sourceEvidence": "Line 260: `<button v-if=\"md\" ... gitModal.read>`; line 48: `settings.diffMode === \"read\" && !md.value ? \"file\" : settings.diffMode`; src/lib/markdown.ts: isMarkdown tests `.(md|markdown|mdx)$`.",
+          "recommendation": "Remove the page, or say that Reading appears only for Markdown files and that a TypeScript file is shown as a whole file."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, step 3; closing sentence",
+          "evidence": "'The TypeScript file is shown in Reading mode.'",
+          "impact": "Reading mode for a TypeScript file does not exist, so the stated task cannot be done.",
+          "source": "packages/apps/web_frontend/src/components/GitModal.vue",
+          "sourceEvidence": "The Reading button is rendered only when `md` is true.",
+          "recommendation": "Describe the real behaviour for a TypeScript file (whole-file view), or drop the task."
+        }
+      ],
+      "problems": ["The page documents Reading mode for a TypeScript file, which the application does not offer."],
+      "verdict": "The page describes a feature that does not exist for the file type it names, so the task fails."
+    },
+    {
+      "file": "sample_73.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Steps, step 3",
+          "evidence": "'Type `notes/today.md` to create a folder and a file together. The slash is accepted in the name box.'",
+          "impact": "Heidrun rejects a name with a slash, shows an error notification, and creates nothing. Following the step exactly fails.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "Lines 193-196: `if (name.includes(\"/\")) { toast(t(\"filesPanel.nameHasSlash\"), \"error\"); ... return; }`; filesPanel.json: 'A name cannot contain the character /. Select a folder first.'; the rule file says the name cannot contain `/`.",
+          "recommendation": "Tell the reader to type a name without a slash. To put a file in a folder, select the folder first."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, step 3",
+          "evidence": "The page tells the reader to type `notes/today.md`.",
+          "impact": "The reader who follows the example sees an error and no file is created. The troubleshooting section covers only a duplicate name.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "The slash check blocks creation.",
+          "recommendation": "Replace the example with a plain name such as `example.md`."
+        },
+        {
+          "criterion": "accuracy",
+          "severity": "minor",
+          "location": "Image under step 3",
+          "evidence": "The step types `notes/today.md`, but the image and caption show `example.md`.",
+          "impact": "The picture and the instruction disagree.",
+          "source": "packages/auxiliary/website_public/docs/public/documentation_images/files/new_file.png",
+          "sourceEvidence": "The image shows a name box with `example.md` inside `docs`.",
+          "recommendation": "Make the typed name match the image."
+        }
+      ],
+      "problems": ["Step 3 tells the reader to type a name with a slash. Heidrun rejects that name with an error."],
+      "verdict": "The main step is wrong against the source, so the task fails as written."
+    },
+    {
+      "file": "sample_46.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Empty folders",
+          "evidence": "'After restart, Heidrun deletes the empty folder from disk.'",
+          "impact": "A false claim of data deletion makes this lookup content unreliable. The reader may avoid creating folders or may fear data loss.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "The tree 'remembers the new empty folders ... until Heidrun restarts'. Only a Refresh asks the backend which remembered folders still exist (dirs_existing in packages/apps/desktop_tauri/src/files.rs). Nothing deletes a folder.",
+          "recommendation": "Say that the folder stays on disk but is no longer shown in the tree after a restart, because Git does not list it."
+        }
+      ],
+      "problems": ["The Empty folders section says wrongly that Heidrun deletes the empty folder from disk after a restart."],
+      "verdict": "The row action table is correct, but one false claim about deleting folders makes the reference unreliable."
+    },
+    {
+      "file": "sample_12.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps are correct. The page says that Reading appears only for Markdown files, and the code agrees."
+    },
+    {
+      "file": "sample_81.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 4 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "minor",
+          "location": "Image under step 3",
+          "evidence": "The caption says 'Name box inside docs with example.md typed', but the image is copy_path.png.",
+          "impact": "That image shows the file context menu on README.md, not a name box. The reader sees a picture that does not match the step. The text still lets the reader finish the task.",
+          "source": "packages/auxiliary/website_public/docs/public/documentation_images/files/copy_path.png",
+          "sourceEvidence": "The image shows the selected README.md with the menu items 'Copy absolute path' and 'Copy relative path'. There is no name box.",
+          "recommendation": "Use new_file.png, which shows the name box."
+        }
+      ],
+      "problems": ["The screenshot shows the path-copy context menu, but the caption describes a name box."],
+      "verdict": "The steps and the troubleshooting are correct. The wrong screenshot is a local flaw."
+    },
+    {
+      "file": "sample_34.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Steps, step 3; Troubleshooting",
+          "evidence": "Step 3: 'Right-click the folder row to open the context menu and copy that folder path.' Troubleshooting: 'A folder row has the same path-copy context menu as a file.'",
+          "impact": "A folder row has no context menu. The reader right-clicks a folder, sees nothing, and cannot copy a path. The troubleshooting text then tells the reader to right-click a file instead, which contradicts it.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "'The row of a folder has no context menu.' FilesPanel.vue binds @contextmenu to file rows only.",
+          "recommendation": "Tell the reader to right-click the file row, and say that a folder row has no context menu."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, steps 3-4",
+          "evidence": "Step 3 sends the reader to a folder row, so no menu opens for step 4.",
+          "impact": "The task of copying a file path cannot be done by following the steps.",
+          "source": "packages/apps/web_frontend/src/components/FilesPanel.vue",
+          "sourceEvidence": "Line 445: `@contextmenu=\"openFileMenu($event, entry.row)\"` on the file row.",
+          "recommendation": "Right-click the file row."
+        }
+      ],
+      "problems": ["The page says that a folder row opens the path-copy context menu. Folder rows have no context menu."],
+      "verdict": "The page sends the reader to the wrong row, and the troubleshooting contradicts the rule."
+    },
+    {
+      "file": "sample_55.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps, the image, and the duplicate-name troubleshooting match the source."
+    },
+    {
+      "file": "sample_28.md",
+      "scores": { "taskSuccess": 3, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Table under the steps",
+          "evidence": "'Copy absolute path' is shown with `docs/README.md`, and 'Copy relative path' is shown with `/Users/alex/projects/example/docs/README.md`.",
+          "impact": "The two results are swapped. The 'Use when' text is swapped with them. The reader picks the wrong item and pastes the wrong kind of path.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "'Copy absolute path' puts the absolute path of the file on the clipboard. 'Copy relative path' puts the path relative to the workspace folder.",
+          "recommendation": "Swap the copied text and the 'Use when' text so that each matches its item."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "material",
+          "location": "Steps, step 4, and the table",
+          "evidence": "Step 4 tells the reader to choose an item 'using the table below', and the table gives the wrong result for each item.",
+          "impact": "The reader can open the menu and copy, but the choice goes by the table, so the reader gets the opposite path.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "See the finding on accuracy.",
+          "recommendation": "Correct the table."
+        }
+      ],
+      "problems": ["The table swaps the absolute path result and the relative path result."],
+      "verdict": "The steps are right, but the swapped table leads the reader to copy the wrong path."
+    },
+    {
+      "file": "sample_63.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 3, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, step 3",
+          "evidence": "Step 3 says 'Choose Copy absolute path or Copy relative path'. No step tells the reader to right-click the file row.",
+          "impact": "The reader never opens the context menu, so the two items cannot be chosen. The page does not say how to start the copy.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "The items are in a context menu that opens from a right-click on a file row.",
+          "recommendation": "Add a step before step 3: right-click the file row to open the context menu."
+        },
+        {
+          "criterion": "order",
+          "severity": "material",
+          "location": "Steps, steps 2-3",
+          "evidence": "The steps go from unfolding the folders straight to choosing a menu item. The action that opens the menu is missing. The next text then says 'The menu closes'.",
+          "impact": "The sequence has a gap, so the reader must guess how the menu opens.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "A right-click opens the context menu.",
+          "recommendation": "Insert the right-click step."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "minor",
+          "location": "Troubleshooting",
+          "evidence": "'A folder row has no path-copy context menu.' The text ends there, with a trailing space. It gives no recovery and no check.",
+          "impact": "The reader who right-clicks a folder is not told what to do next.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "'The row of a folder has no context menu.'",
+          "recommendation": "Add: right-click a file row instead, and check that the two items appear."
+        }
+      ],
+      "problems": ["No step opens the context menu with a right-click.", "The troubleshooting section ends after the cause."],
+      "verdict": "The facts are right, but the missing right-click step breaks the procedure."
+    },
+    {
+      "file": "sample_07.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The lookup table and the empty folder note match the source."
+    },
+    {
+      "file": "sample_42.md",
+      "scores": { "taskSuccess": 2, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 2 },
+      "findings": [
+        {
+          "criterion": "accuracy",
+          "severity": "blocker",
+          "location": "Steps, step 4; table; Troubleshooting",
+          "evidence": "The page names a menu item 'Upload file to GitHub' and says that it copies `docs/README.md`.",
+          "impact": "The context menu has no such item. The relative-path item is replaced by it. The reader looks for an item that does not exist, and the relative-path choice is missing.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "The context menu has two items: 'Copy absolute path' and 'Copy relative path'. The new_file.png and copy_path.png images agree.",
+          "recommendation": "Use 'Copy relative path' in step 4, the table, and the troubleshooting section."
+        },
+        {
+          "criterion": "taskSuccess",
+          "severity": "blocker",
+          "location": "Steps, step 4",
+          "evidence": "'Choose Copy absolute path or Upload file to GitHub'.",
+          "impact": "The relative path cannot be copied by following the page. The reader may think that an upload feature exists.",
+          "source": "docs/agents_rules/user_interface/sidebars/files.md",
+          "sourceEvidence": "See the finding on accuracy.",
+          "recommendation": "Name the real second item."
+        }
+      ],
+      "problems": ["The page names a menu item 'Upload file to GitHub' that does not exist."],
+      "verdict": "The page replaces a real menu item with an invented one, so the relative path task fails."
+    },
+    {
+      "file": "sample_19.md",
+      "scores": { "taskSuccess": 5, "usefulness": 5, "order": 5, "singleType": 5, "userLanguage": 5, "accuracy": 5 },
+      "findings": [],
+      "problems": [],
+      "verdict": "The steps, the table, and the troubleshooting match the source and the interface."
+    }
+  ],
+  "site": { "navigation": 5, "consistency": 5, "findings": [], "problems": [] },
+  "limitations": [
+    "The pages are independent candidates. Site scores are set to 5 as required.",
+    "Candidate names for the pages 'Read a Markdown file' and 'Read a TypeScript file' are not in the supplied sidebar. This cannot change any score here.",
+    "The rule file says the empty folder is remembered until Heidrun restarts. I did not run the application to see a restart."
+  ]
+}
+```

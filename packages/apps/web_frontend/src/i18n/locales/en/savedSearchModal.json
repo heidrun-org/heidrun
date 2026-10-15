@@ -1,0 +1,22 @@
+{
+  "dialogLabelSave": "Save this search",
+  "dialogLabelEdit": "Edit the saved search",
+  "titleSave": "Save this search",
+  "titleEdit": "Edit the saved search",
+  "closeTitle": "Close the window (Escape)",
+  "closeLabel": "Close (Escape)",
+  "name": "Name",
+  "search": "Search",
+  "nameExists": "A saved search has this name. Save replaces its search.",
+  "problemNameEmpty": "The name is empty.",
+  "problemQueryEmpty": "The search is empty.",
+  "problemNameUsed": "Another saved search has this name.",
+  "cancelTitle": "Cancel: nothing changes",
+  "cancel": "Cancel",
+  "saveTitle": "Keep the saved search",
+  "save": "Save",
+  "deleteTitle": "Delete the saved search",
+  "delete": "Delete",
+  "deleteQuestion": "Delete the saved search {name}?",
+  "deleteConfirm": "Delete"
+}

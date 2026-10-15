@@ -11,7 +11,7 @@
   "section.pin": "Panneaux épinglés",
   "unpin": "Désépingler le panneau : {pane}",
   "pin": "Épingler le panneau : {pane}",
-  "section.projectActions": "Scripts du projet",
+  "section.projectLaunchers": "Lanceurs du projet",
   "section.terminals": "Terminaux",
   "newAgent": "Nouvel agent (Claude, Codex, agents du projet)…",
   "newTerminal": "Nouveau terminal",
@@ -29,6 +29,7 @@
   "openFile": "Ouvrir un fichier du projet…",
   "section.help": "Aide",
   "shortcuts": "Raccourcis clavier et souris",
+  "threeJsDemo": "Démo Three.js (WebGL)…",
   "section.display": "Affichage",
   "mobile": "Accès mobile (iPhone, iPad)…",
   "installedSkill": "Compétence installée (inspecter, supprimer)…",
@@ -52,7 +53,7 @@
   "font": "Police : {font}",
   "dialogLabel": "Palette de commandes",
   "inputLabel": "Commande ou recherche",
-  "placeholder": "Taper une commande, un agent, un script…",
+  "placeholder": "Taper une commande, un agent, un lanceur…",
   "runTitle": "Lancer cette commande",
   "agents": "Agents (agents de code que vous pouvez utiliser)…"
 }

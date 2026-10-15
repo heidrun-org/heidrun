@@ -1,0 +1,64 @@
+# Judgement of the documentation: 3.4 out of 5
+
+| Page | Type | Mean | taskSuccess | usefulness | order | singleType | userLanguage | accuracy | Lines | Longest paragraph | Paragraph runs | Troubleshooting | Related pages |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| browse_files.md | how-to | 3.5 | 3 | 3 | 4 | 4 | 3 | 4 | 21 | 2 sentences | 0 | yes | 3 links |
+| change_the_files_list_appearance.md | how-to | 4.3 | 3 | 4 | 5 | 5 | 4 | 5 | 11 | 1 sentences | 0 | no | 3 links |
+| copy_a_file_path.md | how-to | 4.2 | 3 | 3 | 5 | 5 | 4 | 5 | 11 | 1 sentences | 0 | no | 3 links |
+| create_a_file_or_folder.md | how-to | 3.7 | 3 | 4 | 3 | 4 | 4 | 4 | 19 | 2 sentences | 0 | yes | 3 links |
+| files_sidebar_reference.md | reference | 3.0 | 3 | 3 | 3 | 3 | 3 | 3 | 33 | 4 sentences | 0 | yes | 3 links |
+| open_a_file.md | how-to | 3.3 | 3 | 2 | 4 | 4 | 3 | 4 | 11 | 1 sentences | 0 | no | 3 links |
+
+Site: navigation 2, consistency 3.
+
+- The entry page 'Introduction' is a placeholder ('This page is a placeholder', page type: tutorial) and links to no page. The site has no tutorial, and no page says how to open the Files sidebar section. Write the introduction as a short first lesson, and link to 'Browse files and folders' from it.
+- Three pages overlap: 'Open a file', step 4 of 'Browse files and folders', and the section 'Opening files' of the reference all say the same thing about the large Git window and the disabled buttons. Keep one place for the facts, and link to it from the others.
+- The shortcuts page ('Right click: New file or folder, rename / move, Trash') for the file explorer disagrees with the Files sidebar section, which has no rename, move, or delete. No page tells the reader the difference between the Files sidebar section and the Files window. Add one sentence of explanation in the reference, and link the two pages. The 'Related pages' sections never link to Keyboard shortcuts.
+
+### browse_files.md (3.5)
+
+Clear short steps and a real Troubleshooting section, but the reader cannot find the Files sidebar section or its icon-only buttons, and one step repeats another page.
+
+- The page never says how to open the Files sidebar section: no icon and no position in the left sidebar. Add the folder icon, which is the first icon of the sidebar icon bar. The buttons **Refresh** and **Collapse all folders** show only an icon, so also say how to find them (the icon, or the name shown on hover).
+- The Troubleshooting section covers only the message "This workspace is not a Git repository." and never quotes it. It misses the message "Select a workspace." (no workspace selected) and the message "The list is too long: only the first files are shown." Both are in filesPanel.json. Quote each message exactly. Add a step that says how to select a workspace.
+- Step 4 repeats the whole page open_a_file.md, and the sentence about the tree updating when "the number of changed files changes" is an internal detail. Delete step 4 and send the reader to the page 'Open a file'. Replace the sentence with 'The tree updates by itself when the repository changes.'
+
+### change_the_files_list_appearance.md (4.3)
+
+Correct and well ordered, but the entry step is vague for an icon-only button and the page gives no check and no defaults.
+
+- Step 1 says 'Select More options', but the button shows only three vertical dots and has no visible text. Describe the icon: 'Select the three vertical dots in the header of the Files sidebar section (More options)'.
+- There is no way to check the result and no default. Add that a check mark shows the choice that is on, and that the defaults are Medium, Comfortable, and Show. Also say that Heidrun keeps the choices, because the rule file saves them in settings.
+- The page does not say what each choice changes, so the reader cannot choose well. Add the effect in one short phrase, for example 'Compact shows more rows in the same height'.
+
+### copy_a_file_path.md (4.2)
+
+Short and accurate, but it leaves out the one failure the reader can meet (folders have no menu) and repeats its title as a heading.
+
+- No Troubleshooting section, although the reader can meet a failure: a right click on a folder row opens no menu (only file rows have one), and the absolute path can fail with an error message. Add a Troubleshooting section with the symptom, the cause, the solution, and a check.
+- The title and the only section heading are the same ('Copy a file path'), which is filler. Rename the heading to 'Copy the absolute or relative path', or remove the heading.
+- The page does not say how to close the menu without a copy (key Escape or a click outside), and it does not say what 'relative' means. Add 'Relative means: from the folder of the workspace.' to the page.
+
+### create_a_file_or_folder.md (3.7)
+
+Good steps, but the destination paragraph sits before the steps, the error messages are not quoted, and the empty folder that disappears after a restart is not mentioned.
+
+- The first section is a paragraph before the steps. Make it step 1, optional: 'Select a folder, or a file, to choose where the item goes. With no row selected, the item goes in the repository root.' The section is then a normal numbered list.
+- The Troubleshooting entry hides the real message. The code shows a toast ('A name cannot contain the character /. Select a folder first.') for a slash, and a separate error message for a name that exists. Quote both messages. Say that the name box stays open, and that Escape or a click outside cancels it. 'Press Enter' in the solution is not a full solution.
+- A real surprise is missing: an empty folder is listed only until Heidrun restarts, because Git does not list empty folders (files.md). Add a Troubleshooting entry, or a one-line note after the steps.
+
+### files_sidebar_reference.md (3.0)
+
+A useful lookup table, but two facts are wrong or vague, the icons and the defaults are missing, and the page mixes in steps and long prose.
+
+- Two sentences are wrong or point nowhere. 'ignored folders as closed folders' is wrong: ignored folders cannot unfold at all (toggleFolder returns for them). 'the setting to show ignored files' does not say where it is: it is the checkbox 'Ignored files' in the Files window (filesModal.json), not in this sidebar section. Fix both sentences. Also say that the status letter 'U' marks a new file.
+- The page breaks its page type. It holds a numbered Troubleshooting solution, and the sections 'Selecting rows' and 'Opening files' are running prose with behaviour (selection kept for each workspace, folders unfold again). Turn them into a table of 'Action | Result'. Keep Troubleshooting short, or point to the page 'Browse files and folders'.
+- The header buttons table does not give the icon of each button, but all five buttons show only an icon. Add an 'Icon' column (for example `dash-square` for Collapse all folders, three vertical dots for More options), and add the defaults and the right-click menu of a file (Copy absolute path, Copy relative path). The right-click menu is the main missing item for a reference.
+
+### open_a_file.md (3.3)
+
+Correct but nearly empty, and it repeats the browse page; the reader learns almost nothing new.
+
+- Almost all of the page repeats step 4 of 'Browse files and folders'. Merge the two pages, or make this page cover something new: what the large Git window shows for a changed file against an unchanged file, and how to close it with Escape.
+- The phrase 'large Git window' is not defined for a new user, and the sentence 'An unchanged file appears as a whole file, and Diff and Side by side are disabled' has no explanation of what to do next. Say what the window looks like and how to close it. Name the Diff option for a changed file.
+- Step 2 'Find the file in the Files sidebar section' gives no way to find the section. Name its icon, or link to the page 'Browse files and folders'.

@@ -122,6 +122,22 @@ export function referenceExcerpt(body: string): string {
 }
 
 /**
+ * The style of a label: its color for the text, a tint of it for the background and the border, as GitHub draws it.
+ * @param color - the color of the label as six hexadecimal digits without `#`, or null when the forge gives no color
+ * @returns the CSS properties, or an empty object when the color is null
+ */
+export function referenceLabelStyle(color: string | null): Record<string, string> {
+  if (color === null) {
+    return {};
+  }
+  return {
+    color: `color-mix(in srgb, #${color} 70%, var(--fg-body))`,
+    backgroundColor: `color-mix(in srgb, #${color} 15%, transparent)`,
+    borderColor: `color-mix(in srgb, #${color} 50%, transparent)`,
+  };
+}
+
+/**
  * The date of the card: "Oct 11", with the year when it is not the current year.
  * @param createdAt - the date of the creation in milliseconds since 1970, or null
  * @returns the text, or an empty text when the date is not known

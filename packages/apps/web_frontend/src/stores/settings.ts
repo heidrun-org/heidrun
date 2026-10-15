@@ -1,6 +1,7 @@
 import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
 
 export interface FontOption {
   id: string;
@@ -36,11 +37,22 @@ document.documentElement.style.setProperty("--font-size", `${FONT_DEFAULT}px`);
 
 const KEY = "heidrun.settings";
 
-/** The sidebar sections of the left sidebar: "actions" is the Scripts sidebar section, "files" is the Files one. */
-export type LeftSidebarSection = "actions" | "sourceControl" | "files";
+/**
+ * The sidebar sections of the left sidebar: "launchers" is the Launchers sidebar section, "files" is the Files one, and
+ * "codeHosting" is the Code hosting one.
+ */
+export type LeftSidebarSection = "launchers" | "sourceControl" | "files" | "codeHosting";
 
 /** The sidebar sections of the right sidebar: "toHandle" is the Needs you sidebar section. */
-export type RightSidebarSection = "toHandle" | "notes" | "chats";
+export type RightSidebarSection = "toHandle" | "notes" | "chats" | "userActivity";
+
+/** A saved search of the Code hosting sidebar section (issue #374): a search under a name. */
+export type SavedSearch = {
+  /** The name that the button of the saved search shows. Two saved searches never have the same name. */
+  name: string;
+  /** The search, written in the search language of GitHub. */
+  query: string;
+};
 
 const defaults = {
   fontId: "geist",
@@ -55,27 +67,31 @@ const defaults = {
    */
   mouseMode: "select" as "select" | "app",
   /** Sidebar section that the left sidebar shows. */
-  leftSidebarSection: "actions" as LeftSidebarSection,
+  leftSidebarSection: "launchers" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
   rightSidebarSection: "toHandle" as RightSidebarSection,
-  /** Sidebar section Chats: the coding agent whose chats the list shows. */
+  /** Sidebar section Past chats: the coding agent whose chats the list shows. */
   chatsAgent: "claude" as "claude" | "codex",
-  /** Sidebar section Chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
+  /** Sidebar section Past chats: "compact" keeps the rows tight, and "expanded" gives them more air. */
   chatsView: "compact" as "compact" | "expanded",
+  /**
+   * Settings window, section Past chats: how often the Past chats sidebar section reads the files of the chats again while it
+   * is on the screen, in seconds (issue #442).
+   */
+  chatsRefreshSeconds: 10,
+  /**
+   * Settings window, section Dynamic topics: the dynamic topics are on. Off: the Past chats sidebar section shows no dynamic
+   * topic bar and no dynamic topic label, and Heidrun computes no dynamic topic and calls no coding agent for them (issue #422).
+   */
+  dynamicTopics: true,
   /** Settings window, section Dynamic topics: the method that computes the dynamic topics of each chat, "keyword" or "languageModel". */
   dynamicTopicExtraction: "keyword" as "keyword" | "languageModel",
   /** Settings window, section Dynamic topics: the topics show clustered dynamic topics (names of clusters) instead of raw dynamic topics. */
   clusteredDynamicTopics: false,
-  /** Sidebar section Chats: what the list is sorted by. */
+  /** Sidebar section Past chats: what the list is sorted by. */
   chatsSortKey: "last_updated" as "created_on" | "last_updated" | "messages" | "issues" | "pull_requests" | "files_written",
-  /** Sidebar section Chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
+  /** Sidebar section Past chats: "descending" puts the largest value of the sort key first, and "ascending" puts the smallest value first. */
   chatsOrder: "descending" as "ascending" | "descending",
-  /** Tab Scripts: the section Custom Scripts is folded. */
-  scriptsCustomFolded: false,
-  /** Tab Scripts: the section Recent is folded. */
-  scriptsRecentFolded: false,
-  /** Tab Scripts: the section Existing Scripts is folded. */
-  scriptsExistingFolded: false,
   /** Last size of the note window, in px. */
   noteWidth: 760,
   /** Side columns, in px (drag the borders; double-click resets). */
@@ -90,10 +106,27 @@ const defaults = {
   confirmTabClose: true,
   /** A click on the close button in the header of a pane opens the confirmation dialog "Close the pane". Off: the pane closes at once. */
   confirmPaneClose: true,
+  /** Window "Edit the saved search": the button "Delete" opens the confirmation dialog "Delete the saved search". Off: the saved search is deleted at once. */
+  confirmSavedSearchDelete: true,
+  /**
+   * Settings window, section General: how often Heidrun runs `git fetch` in the background for the repository of the
+   * selected workspace, in minutes. 0 is off (issue #432).
+   */
+  gitFetchMinutes: 5,
   /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex",
+  /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
+  customLauncherKind: "commandLine" as "commandLine" | "codingAgent",
+  /** Window Create a custom launcher: the identifier of the last coding agent. */
+  customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS[0] as string,
+  /** Window Create a custom launcher: the last model. An empty text is the default model. */
+  customLauncherModel: "",
+  /** Window Create a custom launcher: the last effort. An empty text is the default effort. */
+  customLauncherEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
+  showWorkspacesInNeedsYou: true,
   /** Notifications. */
   notifBlockedMin: 5, // remind once when an agent stays blocked this long (0 = off)
   notifContext: true, // an agent's context goes past 80 %
@@ -103,8 +136,8 @@ const defaults = {
   quietTo: "",
   /** The status item (the dots) is shown in the macOS menu bar. */
   showStatusItem: true,
-  /** Git viewer: "unified" | "split" diff, or the whole "file". */
-  diffMode: "unified" as "unified" | "split" | "file" | "read",
+  /** Git viewer: "unified" | "split" diff, the whole "file", or the "preview" of a Markdown file. */
+  diffMode: "unified" as "unified" | "split" | "file" | "preview",
   /** Side-by-side diff: share of the width for the old version (0.5 = middle). */
   splitRatio: 0.5,
   /** Markdown reading: centred column, or the whole width. */
@@ -120,8 +153,7 @@ const defaults = {
   workingDays: [0, 1, 2, 3, 4, 5, 6] as number[],
   /** Application theme: "system" follows the operating system. */
   theme: "system" as "system" | "light" | "dark",
-  /** Code colours: "auto" follows the application theme. */
-  codeTheme: "auto",
+  /** Code views (diff, file): long lines wrap instead of scrolling sideways. */
   codeWrap: false,
   rightWidth: 320,
   noteHeight: 520,
@@ -155,13 +187,13 @@ const defaults = {
   filesGrepRegex: false,
   /** Window Files, search in the files: the case of the letters counts. */
   filesGrepCase: false,
-  /** Window Files: the file tree shows the files that Git ignores. */
+  /** Window Files and sidebar section File explorer: the file tree shows the files that Git ignores. */
   filesShowIgnored: false,
-  /** Sidebar section Files: the space that each level of a folder adds at the left of a row. */
+  /** Sidebar section File explorer: the space that each level of a folder adds at the left of a row. */
   filesPanelIndent: "medium" as "small" | "medium" | "large",
-  /** Sidebar section Files: the height of a row. */
+  /** Sidebar section File explorer: the height of a row. */
   filesPanelRowHeight: "comfortable" as "compact" | "comfortable",
-  /** Sidebar section Files: a thin vertical line under each unfolded folder links its rows. */
+  /** Sidebar section File explorer: a thin vertical line under each unfolded folder links its rows. */
   filesPanelIndentGuides: true,
   /** Window Agents information: the activity list shows all the panes ("all") or only the selected pane ("pane"). */
   agentsActivityScope: "all" as "all" | "pane",
@@ -177,17 +209,17 @@ const defaults = {
   searchAgentsOnly: false,
   /** Window Search: look only in the selected workspace. */
   searchThisWorkspace: false,
-  /** Sidebar section Scripts: the list of suggestions shows all the suggestions, not only the first six. */
-  scriptsShowAllSuggestions: false,
-  /** Sidebar section Notes: the list shows the notes of every workspace, not only of the selected workspace. */
+  /** Clipboard sidebar section: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
+  /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
+  codeHostingSavedSearches: [] as SavedSearch[],
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
 
 /** The values that an option accepts, for the options that have a short list of values. A saved value outside the list is dropped. */
 const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
-  rightSidebarSection: ["toHandle", "notes", "chats"],
+  rightSidebarSection: ["toHandle", "notes", "chats", "userActivity"],
   filesSideMode: ["tree", "grep"],
   filesPanelIndent: ["small", "medium", "large"],
   filesPanelRowHeight: ["compact", "comfortable"],
@@ -196,8 +228,12 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   historyGroupBy: ["ws", "feature"],
   chatsAgent: ["claude", "codex"],
   chatsView: ["compact", "expanded"],
+  chatsRefreshSeconds: [5, 10, 30, 60],
   dynamicTopicExtraction: ["keyword", "languageModel"],
+  gitFetchMinutes: [0, 1, 5, 10, 30],
   newTabCommand: ["terminal", "claude", "codex"],
+  customLauncherKind: ["commandLine", "codingAgent"],
+  customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
@@ -224,11 +260,31 @@ function dropCorruptedValues(saved: Record<string, unknown>): Record<string, unk
   return result;
 }
 
+/**
+ * Keeps the saved searches that have a name and a search that are texts, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches that can be used
+ */
+function keepSavedSearches(value: unknown[]): SavedSearch[] {
+  const kept: SavedSearch[] = [];
+  for (const entry of value) {
+    const candidate = entry as Partial<SavedSearch> | null;
+    if (typeof candidate?.name === "string" && candidate.name !== "" && typeof candidate.query === "string") {
+      kept.push({ name: candidate.name, query: candidate.query });
+    }
+  }
+  return kept;
+}
+
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
 const RENAMED_SETTINGS: Record<string, string> = {
   dockedPanes: "pinnedPanes",
   dockWidth: "columnOfPinnedPanesWidth",
   rightTab: "rightSidebarSection",
+  customScriptKind: "customLauncherKind",
+  customScriptAgent: "customLauncherAgent",
+  customScriptModel: "customLauncherModel",
+  customScriptEffort: "customLauncherEffort",
 };
 
 function load(): typeof defaults {
@@ -242,7 +298,8 @@ function load(): typeof defaults {
         delete stored[oldName];
       }
     }
-    // The Scripts and Git sidebar sections moved from the right sidebar to the left sidebar.
+    // The Scripts and Git sidebar sections moved from the right sidebar to the left sidebar. The saved value "actions" of
+    // the Scripts sidebar section becomes "launchers" below.
     if (stored.rightSidebarSection === "actions" || stored.rightSidebarSection === "git") {
       if (!("leftSidebarSection" in stored)) {
         stored.leftSidebarSection = stored.rightSidebarSection;
@@ -251,15 +308,25 @@ function load(): typeof defaults {
     }
     // The workspaces and the tabs left the left sidebar for the tab bar: its Workspaces sidebar section is gone.
     if (stored.leftSidebarSection === "workspacesAndTabs" || stored.leftSidebarSection === "workspaces") {
-      stored.leftSidebarSection = "actions";
+      stored.leftSidebarSection = "launchers";
     }
     // The Needs you sidebar section moved from the left sidebar to the right sidebar.
     if (stored.leftSidebarSection === "toHandle") {
-      stored.leftSidebarSection = "actions";
+      stored.leftSidebarSection = "launchers";
     }
     // The Source control sidebar section replaced the Git sidebar section (issue #305).
     if (stored.leftSidebarSection === "git") {
       stored.leftSidebarSection = "sourceControl";
+    }
+    // The Scripts sidebar section became the Launchers sidebar section (issue #425): the saved value "actions" is now "launchers".
+    if (stored.leftSidebarSection === "actions") {
+      stored.leftSidebarSection = "launchers";
+    }
+    // The choice of the code theme is gone (issue #446): the code colors follow the theme of the application.
+    delete stored.codeTheme;
+    // The button "Reading" of the large Git window became the button "Preview" (issue #446): the saved value "read" is now "preview".
+    if (stored.diffMode === "read") {
+      stored.diffMode = "preview";
     }
     // The hide buttons of the sidebars are gone (issue #315): a sidebar that was hidden is now collapsed.
     if (stored.leftOpen === false) {
@@ -271,10 +338,7 @@ function load(): typeof defaults {
     delete stored.leftOpen;
     delete stored.rightOpen;
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
-    // "github-dark" was the only default before themes existed: it now means "auto".
-    if (saved.codeTheme === "github-dark") {
-      saved.codeTheme = "auto";
-    }
+    saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
     return saved;
   } catch {
     return { ...defaults };
@@ -341,10 +405,12 @@ export type SettingsSection =
   | "newTab"
   | "mouse"
   | "finishedItems"
+  | "needsYou"
   | "notifications"
   | "general"
   | "mobileAccess"
   | "agents"
+  | "pastChats"
   | "dynamicTopics";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */

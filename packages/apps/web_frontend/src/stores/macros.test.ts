@@ -17,7 +17,7 @@ describe("the macros of a project", () => {
     state.selectedWorkspaceId = "workspace_test";
     project.byWorkspace.workspace_test = {
       root: "/tmp/project",
-      config: { version: 1, actions: [], prompts: [{ text: "Review the branch" }] },
+      config: { version: 1, launchers: [], prompts: [{ text: "Review the branch" }] },
     } as never;
     expect(projectMacros.value).toEqual([
       { id: "projet-0", label: "Review the branch", description: "", text: "Review the branch" },

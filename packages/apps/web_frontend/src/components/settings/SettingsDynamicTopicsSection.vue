@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
+import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { languageModelStatus } from "../../stores/language_model_topics";
 import { settings } from "../../stores/settings";
 import { rebuildTopicClusters, topicClusterStatus } from "../../stores/topic_clusters";
@@ -21,83 +22,70 @@ const CLUSTERED_HELP_BLOCKS = [
 </script>
 
 <template>
-  <div class="section">
-    <div class="d-flex align-items-center gap-2">
-      <h4>{{ t("settingsDynamicTopics.extractionTitle") }}</h4>
-      <InformationCard :label="t('settingsDynamicTopics.extractionHelpLabel')" placement="bottom">
-        <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.extractionHelpLabel')">
-          <Icon name="question-circle" />
-        </span>
-        <template #card>
-          <div class="list-group list-group-flush">
-            <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
-              <Icon name="question-circle" />
-              {{ t("settingsDynamicTopics.extractionTitle") }}
+  <div class="d-flex flex-column gap-3">
+    <SettingsSwitchRow v-model="settings.dynamicTopics" :label="t('settingsDynamicTopics.enableLabel')" />
+
+    <div class="d-flex flex-column gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="form-label m-0">{{ t("settingsDynamicTopics.extractionTitle") }}</h4>
+        <InformationCard :label="t('settingsDynamicTopics.extractionHelpLabel')" placement="bottom">
+          <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.extractionHelpLabel')">
+            <Icon name="question-circle" />
+          </span>
+          <template #card>
+            <div class="list-group list-group-flush">
+              <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
+                <Icon name="question-circle" />
+                {{ t("settingsDynamicTopics.extractionTitle") }}
+              </div>
+              <div class="list-group-item" data-help-block>
+                <div class="fw-medium">{{ t("settingsDynamicTopics.keywordLabel") }}</div>
+                <div class="text-body-secondary">{{ t("settingsDynamicTopics.keywordHelp") }}</div>
+              </div>
+              <div class="list-group-item" data-help-block>
+                <div class="fw-medium">{{ t("settingsDynamicTopics.languageModelLabel") }}</div>
+                <div class="text-body-secondary">{{ t("settingsDynamicTopics.languageModelHelp") }}</div>
+              </div>
             </div>
-            <div class="list-group-item" data-help-block>
-              <div class="fw-medium">{{ t("settingsDynamicTopics.keywordLabel") }}</div>
-              <div class="text-body-secondary">{{ t("settingsDynamicTopics.keywordHelp") }}</div>
-            </div>
-            <div class="list-group-item" data-help-block>
-              <div class="fw-medium">{{ t("settingsDynamicTopics.languageModelLabel") }}</div>
-              <div class="text-body-secondary">{{ t("settingsDynamicTopics.languageModelHelp") }}</div>
-            </div>
-          </div>
-        </template>
-      </InformationCard>
-    </div>
-    <div class="seg" role="radiogroup" :aria-label="t('settingsDynamicTopics.extractionLabel')">
-      <button
-        v-for="method in EXTRACTIONS"
-        :key="method.id"
-        role="radio"
-        :title="t(method.titleKey)"
-        :aria-checked="settings.dynamicTopicExtraction === method.id"
-        :class="{ on: settings.dynamicTopicExtraction === method.id }"
-        @click="settings.dynamicTopicExtraction = method.id"
-      >
-        {{ t(method.labelKey) }}
-      </button>
-    </div>
-    <div v-if="settings.dynamicTopicExtraction === 'languageModel' && languageModelStatus.error !== null" class="keys" role="status">
-      {{ t(`settingsDynamicTopics.languageModelError.${languageModelStatus.error}`) }}
+          </template>
+        </InformationCard>
+      </div>
+      <div class="btn-group" role="group" :aria-label="t('settingsDynamicTopics.extractionLabel')">
+        <label v-for="method in EXTRACTIONS" :key="method.id" class="btn-check btn-outline theme-secondary" :title="t(method.titleKey)">
+          <input v-model="settings.dynamicTopicExtraction" type="radio" name="dynamic-topic-extraction" autocomplete="off" :value="method.id" />
+          {{ t(method.labelKey) }}
+        </label>
+      </div>
+      <div v-if="settings.dynamicTopicExtraction === 'languageModel' && languageModelStatus.error !== null" class="form-text" role="status">
+        {{ t(`settingsDynamicTopics.languageModelError.${languageModelStatus.error}`) }}
+      </div>
     </div>
 
-    <h4>{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
-    <div class="d-flex align-items-center gap-2">
-      <div class="d-inline-flex align-items-center gap-2 mb-0">
-        <span class="switch">
-          <input
-            id="clustered-dynamic-topics"
-            v-model="settings.clusteredDynamicTopics"
-            type="checkbox"
-            role="switch"
-          />
-        </span>
-        <label for="clustered-dynamic-topics">{{ t("settingsDynamicTopics.clusteredLabel") }}</label>
-      </div>
-      <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
-        <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.clusteredHelpLabel')">
-          <Icon name="question-circle" />
-        </span>
-        <template #card>
-          <div class="list-group list-group-flush">
-            <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
-              <Icon name="question-circle" />
-              {{ t("settingsDynamicTopics.clusteredTitle") }}
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
+      <SettingsSwitchRow v-model="settings.clusteredDynamicTopics" :label="t('settingsDynamicTopics.clusteredLabel')">
+        <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
+          <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.clusteredHelpLabel')">
+            <Icon name="question-circle" />
+          </span>
+          <template #card>
+            <div class="list-group list-group-flush">
+              <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
+                <Icon name="question-circle" />
+                {{ t("settingsDynamicTopics.clusteredTitle") }}
+              </div>
+              <div v-for="block in CLUSTERED_HELP_BLOCKS" :key="block.titleKey" class="list-group-item" data-help-block>
+                <div class="fw-medium">{{ t(block.titleKey) }}</div>
+                <div class="text-body-secondary">{{ t(block.textKey) }}</div>
+              </div>
             </div>
-            <div v-for="block in CLUSTERED_HELP_BLOCKS" :key="block.titleKey" class="list-group-item" data-help-block>
-              <div class="fw-medium">{{ t(block.titleKey) }}</div>
-              <div class="text-body-secondary">{{ t(block.textKey) }}</div>
-            </div>
-          </div>
-        </template>
-      </InformationCard>
-    </div>
-    <div class="rebuild">
+          </template>
+        </InformationCard>
+      </SettingsSwitchRow>
       <button
         type="button"
-        class="btn"
+        class="btn align-self-start"
+        :class="{ 'opacity-50': settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning }"
         :title="t('settingsDynamicTopics.rebuildTitle')"
         :disabled="settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning"
         @click="rebuildTopicClusters()"
@@ -105,16 +93,9 @@ const CLUSTERED_HELP_BLOCKS = [
         <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-sm" aria-hidden="true"></span>
         {{ t("settingsDynamicTopics.rebuildLabel") }}
       </button>
-    </div>
-    <div v-if="settings.clusteredDynamicTopics && topicClusterStatus.error !== null" class="keys" role="status">
-      {{ t(`settingsDynamicTopics.error.${topicClusterStatus.error}`) }}
+      <div v-if="settings.clusteredDynamicTopics && topicClusterStatus.error !== null" class="form-text" role="status">
+        {{ t(`settingsDynamicTopics.error.${topicClusterStatus.error}`) }}
+      </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.section { display: flex; flex-direction: column; gap: 10px; }
-h4 { margin: 0; font-size: var(--font-size); font-weight: 600; color: var(--text-2); }
-.rebuild { display: flex; align-items: center; gap: 8px; }
-.btn:disabled { opacity: 0.45; }
-</style>

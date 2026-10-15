@@ -81,14 +81,22 @@ export class TauriMock {
 					(payload as { sortKey?: ChatSortKey }).sortKey,
 					(payload as { order?: ChatSortOrder }).order,
 				);
+			case 'user_activity_records_in_range':
+				return TauriMockFixture.buildUserActivityRecords(Date.parse((payload as { until: string }).until));
+			case 'person_work_in_range':
+				return TauriMockFixture.buildPersonWorkItems(Date.parse((payload as { until: string }).until));
+			case 'ai_cost_in_range':
+				return TauriMockFixture.buildAiCostItems(Date.parse((payload as { until: string }).until));
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
-			case 'forge_cli_cached':
-				return TauriMockFixture.buildForgeAnswer((payload as { args: string[] }).args);
+			case 'forge_cli_cached': {
+				const args = (payload as { args: string[] }).args;
+				return args[1] === 'list' ? TauriMockFixture.buildForgeListAnswer(args) : TauriMockFixture.buildForgeAnswer(args);
+			}
 			case 'topic_clusters_read':
 				return TauriMockFixture.getTopicClusterRows();
 			case 'topic_clusters_write':
@@ -102,6 +110,14 @@ export class TauriMock {
 					on_disk: path.includes('OldCard') === false,
 					on_remote: path.includes('OldCard') === false && path.includes('InformationCard') === false,
 				}));
+			case 'chats_worktrees_exist':
+				return (payload as { folders: string[] }).folders.filter((folder) => folder.includes('removed') === false);
+			case 'chats_worktrees_branches':
+				return (payload as { folders: string[] }).folders
+					.filter((folder) => folder.includes('removed') === false)
+					.map((folder) => ({ folder, branch: folder.split('/').filter(Boolean).pop() ?? null }));
+			case 'chats_worktree_open_in_vscode':
+				return null;
 			case 'files_resolve':
 				return {
 					root: '/Users/demo/webwork/heidrun',

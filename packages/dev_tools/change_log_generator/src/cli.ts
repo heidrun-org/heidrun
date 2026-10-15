@@ -42,7 +42,7 @@ export class Cli {
 			)
 			.option(
 				'--agent <name>',
-				`The coding agent for the option --ai: "codex" or "claude". (default: "${GenerateChangeLog.defaultAgentName}")`,
+				`The coding agent for the option --ai: "codex", "claude", or "agy". (default: "${GenerateChangeLog.defaultAgentName}")`,
 			)
 			.option(
 				'--from <tag>',

@@ -1,0 +1,344 @@
+:root {
+  --bg: #1f1f1f;
+  --panel: #0f1113;
+  --bar: #111316;
+  --shell: #181818;
+  --side: #181818;
+  --pane-radius: 8px;
+  --pane-gap: 5px;
+  --field: #16181b;
+  --hover: #1d2024;
+  --line: #2b2b2b;
+  --line-strong: #2a2e33;
+  --text: #cccccc;
+  --text-2: #c9cdd1;
+  --muted: #8f8f8f;
+  --faint: #6b7177;
+  --icon: #888888;
+
+  --working: #3fb8af;
+  --blocked: #f0645f;
+  /* Agent asking a question in its answer (not a blocking prompt). */
+  --question: #c29bf0;
+  --done: #6ea8fe;
+  --idle: #5a6066;
+  --fail: #e58a8a;
+  --ok: #7ec699;
+
+  --accent: #f2a93b;
+  --line-modal: #33383e;
+  --pane-ring-selected: #33506f;
+  --pane-ring-blocked: #5c2826;
+  --pane-ring-blocked-selected: #7d3330;
+  --pane-head-selected: #1f3452;
+  --choice-bg: #2a1514;
+  --choice-border: #4a2523;
+  --choice-hover-bg: #3a1c1b;
+  --choice-number-bg: #4a2523;
+  --pane-head-line: #2b2b2b;
+  --pane-head-line-blocked: #2f1b1a;
+  --line-soft: #262a2f;
+  --raised: #1b1e22;
+  --toast-bg: #23272c;
+  --toast-shadow: rgba(0, 0, 0, 0.5);
+  --chip: #1d2024;
+  --muted-2: #9aa0a6;
+  --hover-soft: #16191c;
+  --files-row-hover: #22262a;
+  --sel: #24406a;
+  --tint-ok: #132a1c;
+  --tint-warn: #2b2213;
+  --tint-crit: #301817;
+  --tint-working: #13282a;
+  --tint-merged: #24193a;
+  --tint-done: #142033;
+  --tint-err: #201313;
+  --gauge-track: #23272c;
+  --wash: 255, 255, 255;
+  --overlay-hover: rgba(255, 255, 255, 0.08);
+  --editor-caret: #cccccc;
+  --editor-active-line: rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: rgba(121, 121, 121, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
+  --sans: "Geist", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --mono: "Geist Mono", "SF Mono", Menlo, monospace;
+  color-scheme: dark;
+}
+
+/* Light theme: the theme store sets data-theme="light" on <html>. */
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --bar: #efefec;
+  --shell: #f8f8f8;
+  --side: #f8f8f8;
+  --field: #ffffff;
+  --hover: #e8e8e4;
+  --line: #e5e5e5;
+  --line-strong: #cbcbc4;
+  --text: #3b3b3b;
+  --text-2: #3a3d41;
+  --muted: #737373;
+  --faint: #8a8f95;
+  --icon: #5d5d5d;
+
+  --working: #12807a;
+  --blocked: #cc3a35;
+  --question: #7d4cc4;
+  --done: #2563c9;
+  --idle: #9aa0a6;
+  --fail: #b42f2f;
+  --ok: #1e8a4c;
+
+  --accent: #b86e00;
+  --line-modal: #cbcbc4;
+  --pane-ring-selected: #aec3de;
+  --pane-ring-blocked: #e6bcb9;
+  --pane-ring-blocked-selected: #d98d89;
+  --pane-head-selected: #dbe7fb;
+  --choice-bg: var(--side);
+  --choice-border: #e6bcb9;
+  --choice-hover-bg: #fff3f2;
+  --choice-number-bg: #f8d6d3;
+  --pane-head-line: #e4e4df;
+  --pane-head-line-blocked: #f0d2d0;
+  --line-soft: #e4e4df;
+  --raised: #ffffff;
+  --toast-bg: #ffffff;
+  --toast-shadow: rgba(0, 0, 0, 0.16);
+  --chip: #e9e9e5;
+  --muted-2: #62676d;
+  --hover-soft: #ececE8;
+  --files-row-hover: #ececE8;
+  --sel: #cfe0fa;
+  --tint-ok: #dcf3e4;
+  --tint-warn: #fbefd2;
+  --tint-crit: #fbdedc;
+  --tint-working: #d7f0ee;
+  --tint-merged: #eadffa;
+  --tint-done: #dde9fb;
+  --tint-err: #fbe6e4;
+  --gauge-track: #dcdcd6;
+  --wash: 0, 0, 0;
+  --overlay-hover: rgba(0, 0, 0, 0.07);
+  --editor-caret: #3b3b3b;
+  --editor-active-line: rgba(0, 0, 0, 0.04);
+  --scrollbar-thumb: rgba(100, 100, 100, 0.4);
+  --scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
+  color-scheme: light;
+}
+:root[data-theme="light"] .btn.primary { color: #fff; }
+:root[data-theme="light"] .lvl-ok { color: #1e8a4c; }
+:root[data-theme="light"] .lvl-warn { color: #b86e00; }
+:root[data-theme="light"] .lvl-crit { color: #cc3a35; }
+:root[data-theme="light"] .gauge::before, :root[data-theme="light"] .gauge::after { background: rgba(255, 255, 255, 0.9); }
+
+/* Bootstrap theme ---------------------------------------------------------- */
+/* Bootstrap draws its components from its own theme variables. These lines give the variables the colors of the application, in the
+   dark theme and in the light theme. The three colors of the levels are the colors of the usage gauges. The two z-index lines keep a
+   popover and a dropdown menu below the confirmation window (z-index 60) that opens above them. */
+:root {
+  --fg-body: var(--text);
+  --bg-body: var(--panel);
+  --border-color: var(--line-strong);
+  --border-color-translucent: var(--line-modal);
+  --fg-3: var(--muted);
+  --bg-2: var(--gauge-track);
+  --bg-1: var(--hover);
+  --success-bg: #5fbf7a;
+  --warning-bg: #f0a63a;
+  --danger-bg: #ea6a5f;
+}
+.popover { --popover-zindex: 20; }
+.menu { --menu-zindex: 50; }
+
+/* Status bar sections ------------------------------------------------------ */
+/* Each status bar section looks like a button of the status bar of Visual Studio Code: a rounded background while the pointer is over it,
+   and while its information card is open. The class "show" is the Bootstrap name of an open toggle. The background is white at 12 %
+   strength in the dark theme and black at 12 % strength in the light theme, through the variable "--wash". The vertical margin leaves 6
+   pixels of the status bar above and below the background. The 11 negative pixels at each side cancel the 11 pixels of padding, so the
+   text stays in place. The information card is placed from the status bar, so the vertical margin does not move it. */
+.status-section { align-self: stretch; margin: 6px -11px; padding: 0 11px; border-radius: 6px; cursor: pointer; outline-offset: 3px; }
+.status-section:hover, .status-section.show { background: rgba(var(--wash), 0.12); }
+
+* { box-sizing: border-box; }
+
+/* Scroll bars ------------------------------------------------------------- */
+/* Every scroll bar of the application has the look of the scroll bar of VS Code: narrow, with no track, and a thumb made of a gray at 40 %
+   strength, which is stronger (70 %) while the pointer is over the thumb. The two colors are variables of the dark theme and of the light
+   theme. Nothing else sets "scrollbar-width" or "scrollbar-color": these two standard properties would replace the pseudo-elements below. */
+*::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+html, body, #app { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 400 var(--font-size)/1.4 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+button:where(:not(.btn)) { font: inherit; color: inherit; cursor: pointer; }
+input { font: inherit; color: inherit; user-select: text; }
+/* While a line or a corner between panes is dragged, one cursor shows over every element, also over an element that has its own cursor. */
+html[data-pane-drag-cursor="move"], html[data-pane-drag-cursor="move"] * { cursor: move !important; }
+html[data-pane-drag-cursor="row-resize"], html[data-pane-drag-cursor="row-resize"] * { cursor: row-resize !important; }
+html[data-pane-drag-cursor="col-resize"], html[data-pane-drag-cursor="col-resize"] * { cursor: col-resize !important; }
+:focus-visible { outline: 2px solid var(--done); outline-offset: 1px; }
+
+.eyebrow {
+  font-size: var(--font-size); font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--muted);
+}
+.mono { font-family: var(--mono); }
+
+/* Status dots ------------------------------------------------------------ */
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--idle); }
+.dot.working { background: var(--working); animation: breathe 2.2s ease-in-out infinite; }
+.dot.blocked { background: var(--blocked); }
+.dot.done { background: var(--done); }
+.dot.unknown { background: var(--muted); }
+.dot.process { background: var(--idle); }
+/* A hollow ring: no agent runs in the workspace. */
+.dot.quiet { background: transparent; box-shadow: inset 0 0 0 1.5px var(--faint); }
+.dot.pulse { animation: pulse-once 1.2s ease-out 1; }
+
+.t-working { color: var(--working); }
+.t-blocked { color: var(--blocked); }
+.t-question { color: var(--question); }
+.t-done { color: var(--done); }
+.t-idle, .t-unknown { color: var(--muted); }
+
+@keyframes breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(63, 184, 175, 0.55); }
+  50% { opacity: 0.55; box-shadow: 0 0 0 5px rgba(63, 184, 175, 0); }
+}
+@keyframes pulse-once {
+  0% { box-shadow: 0 0 0 0 rgba(242, 169, 59, 0.8); transform: scale(1.35); }
+  100% { box-shadow: 0 0 0 10px rgba(242, 169, 59, 0); transform: scale(1); }
+}
+@keyframes sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+/* Gauges ------------------------------------------------------------------ */
+/* Usage gauges: green up to 60 %, orange to 80 %, red beyond. Ticks mark both thresholds. */
+.gauge {
+  --g-ok: #5fbf7a; --g-warn: #f0a63a; --g-crit: #ea6a5f;
+  position: relative; height: 8px; border-radius: 4px; background: var(--gauge-track); overflow: hidden;
+}
+.gauge > span { display: block; height: 100%; border-radius: 4px; background: var(--g-ok); transition: width 0.4s, background 0.4s; }
+.gauge.warn > span { background: var(--g-warn); }
+.gauge.crit > span { background: var(--g-crit); }
+.gauge::before, .gauge::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(11, 12, 14, 0.85); z-index: 1;
+}
+.gauge::before { left: 60%; }
+.gauge::after { left: 80%; }
+.gauge.lg { height: 10px; border-radius: 5px; }
+.gauge.lg > span { border-radius: 5px; }
+.lvl-ok { color: #7fd197; }
+.lvl-warn { color: #f4b75a; }
+.lvl-crit { color: #f07f75; }
+
+/* Buttons ----------------------------------------------------------------- */
+/* The base look of a button is made of the Bootstrap button variables. Bootstrap draws the button from them, in the layer "bootstrap".
+   This rule keeps only what Bootstrap cannot express: the height, the display, the alignment, the gap, the line height, and the text selection. */
+.btn {
+  --btn-padding-x: 12px;
+  --btn-padding-y: 0;
+  --btn-font-size: var(--font-size);
+  --btn-font-weight: 500;
+  --btn-border-width: 1px;
+  --btn-border-radius: 7px;
+  --btn-color: var(--text-2);
+  --btn-bg: transparent;
+  --btn-border-color: var(--line-strong);
+  --btn-hover-color: var(--text-2);
+  --btn-hover-bg: var(--hover);
+  --btn-hover-border-color: var(--line-strong);
+  --btn-active-color: var(--text-2);
+  --btn-active-bg: var(--hover);
+  --btn-active-border-color: var(--line-strong);
+  --btn-disabled-color: var(--text-2);
+  --btn-disabled-bg: var(--hover);
+  --btn-disabled-border-color: var(--line-strong);
+  height: 30px; display: inline-flex; align-items: center; gap: 6px; line-height: inherit; user-select: inherit;
+}
+/* The application never had a pressed look, a disabled look, or a focus background: only the mouse hover changes the background. */
+.btn:not(:hover) {
+  --btn-hover-bg: transparent;
+  --btn-active-bg: transparent;
+  --btn-disabled-bg: transparent;
+}
+.btn kbd { font-family: var(--mono); color: var(--muted); font-size: var(--font-size); }
+.btn.lg { height: 40px; border-radius: 10px; font-size: var(--font-size); justify-content: center; }
+.btn.primary { background: var(--accent); border-color: transparent; color: #111316; font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---- Code themes (diff and file viewer) -------------------------------------- */
+.code { --c-bg: #0d1117; --c-fg: #c9d1d9; --c-gutter: #6e7681; --c-add: rgba(46, 160, 67, 0.16); --c-add-strong: rgba(46, 160, 67, 0.4);
+  --c-del: rgba(248, 81, 73, 0.14); --c-del-strong: rgba(248, 81, 73, 0.4); --c-hunk: rgba(56, 139, 253, 0.12); --c-hunk-fg: #8b949e;
+  --k: #ff7b72; --s: #a5d6ff; --c: #8b949e; --n: #79c0ff; --f: #d2a8ff; --t: #ffa657; --a: #7ee787; --v: #ffa657; --m: #79c0ff;
+  background: var(--c-bg); color: var(--c-fg); }
+.code.github-light { --c-bg: #ffffff; --c-fg: #24292f; --c-gutter: #8c959f; --c-add: rgba(46, 160, 67, 0.15); --c-add-strong: rgba(46, 160, 67, 0.35);
+  --c-del: rgba(255, 129, 130, 0.2); --c-del-strong: rgba(255, 129, 130, 0.45); --c-hunk: rgba(84, 174, 255, 0.15); --c-hunk-fg: #57606a;
+  --k: #cf222e; --s: #0a3069; --c: #6e7781; --n: #0550ae; --f: #8250df; --t: #953800; --a: #116329; --v: #953800; --m: #0550ae; }
+.code.one-dark { --c-bg: #282c34; --c-fg: #abb2bf; --c-gutter: #636d83; --c-hunk-fg: #7f848e;
+  --k: #c678dd; --s: #98c379; --c: #7f848e; --n: #d19a66; --f: #61afef; --t: #e5c07b; --a: #e06c75; --v: #e06c75; --m: #56b6c2; }
+.code.dracula { --c-bg: #22212c; --c-fg: #f8f8f2; --c-gutter: #6272a4; --c-hunk-fg: #6272a4;
+  --k: #ff79c6; --s: #f1fa8c; --c: #6272a4; --n: #bd93f9; --f: #50fa7b; --t: #8be9fd; --a: #50fa7b; --v: #ffb86c; --m: #8be9fd; }
+.code.solarized { --c-bg: #002b36; --c-fg: #93a1a1; --c-gutter: #586e75; --c-hunk-fg: #657b83;
+  --k: #859900; --s: #2aa198; --c: #586e75; --n: #d33682; --f: #268bd2; --t: #b58900; --a: #b58900; --v: #cb4b16; --m: #6c71c4; }
+.code .hljs-keyword, .code .hljs-selector-tag, .code .hljs-literal, .code .hljs-doctag, .code .hljs-meta .hljs-keyword { color: var(--k); }
+.code .hljs-string, .code .hljs-regexp, .code .hljs-meta .hljs-string, .code .hljs-template-string { color: var(--s); }
+.code .hljs-comment, .code .hljs-quote { color: var(--c); font-style: italic; }
+.code .hljs-number, .code .hljs-symbol, .code .hljs-bullet { color: var(--n); }
+.code .hljs-title, .code .hljs-title.function_, .code .hljs-section { color: var(--f); }
+.code .hljs-type, .code .hljs-built_in, .code .hljs-title.class_, .code .hljs-class .hljs-title { color: var(--t); }
+.code .hljs-attr, .code .hljs-attribute, .code .hljs-selector-attr, .code .hljs-selector-class, .code .hljs-selector-id { color: var(--a); }
+.code .hljs-variable, .code .hljs-template-variable, .code .hljs-params { color: var(--v); }
+.code .hljs-meta, .code .hljs-name, .code .hljs-tag { color: var(--m); }
+.code .hljs-addition { color: var(--a); } .code .hljs-deletion { color: var(--k); }
+.code .hljs-emphasis { font-style: italic; } .code .hljs-strong { font-weight: 700; }
+
+/* ---- Rendered Markdown (issue preview) ---------------------------------------- */
+.md-doc { max-width: 860px; margin: 0 auto; font: var(--font-size)/1.7 var(--sans); color: var(--text); user-select: text; }
+.md-doc.full { max-width: none; }
+.md-doc h1, .md-doc h2 { padding-bottom: 0.3em; border-bottom: 1px solid var(--line-strong); }
+.md-doc h1 { font-size: 1.7em; margin: 0.2em 0 0.7em; }
+.md-doc h2 { font-size: 1.35em; margin: 1.5em 0 0.6em; }
+.md-doc h3 { font-size: 1.15em; margin: 1.3em 0 0.5em; }
+.md-doc h4, .md-doc h5, .md-doc h6 { font-size: 1em; margin: 1.1em 0 0.4em; }
+.md-doc p, .md-doc ul, .md-doc ol, .md-doc blockquote, .md-doc table, .md-doc pre { margin: 0 0 1em; }
+.md-doc ul, .md-doc ol { padding-left: 1.6em; }
+.md-doc li { margin: 0.2em 0; }
+.md-doc li input[type="checkbox"] { margin-right: 0.4em; accent-color: var(--done); }
+.md-doc a { color: #58a6ff; text-decoration: none; }
+.md-doc a:hover { text-decoration: underline; }
+.md-doc code { font-family: var(--mono); font-size: 0.86em; padding: 0.15em 0.4em; border-radius: 5px; background: rgba(var(--wash), 0.08); }
+.md-doc pre.md-code { padding: 14px 16px; border-radius: 8px; background: rgba(0, 0, 0, 0.3); overflow: auto; font-size: 0.82em; line-height: 1.55; }
+.md-doc pre.md-code code { padding: 0; background: none; font-size: inherit; }
+.md-doc blockquote { padding: 0.2em 1em; border-left: 3px solid rgba(var(--wash), 0.2); color: var(--muted); }
+.md-doc table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 0.92em; }
+.md-doc.full table { display: table; width: 100%; }
+.md-doc th, .md-doc td { padding: 6px 12px; border: 1px solid rgba(var(--wash), 0.12); }
+.md-doc th { background: rgba(var(--wash), 0.05); font-weight: 600; }
+.md-doc hr { border: none; border-top: 1px solid rgba(var(--wash), 0.12); margin: 2em 0; }
+.md-doc img { max-width: 100%; }
+
+.bi.rotated {
+  display: inline-block;
+  transform: rotate(90deg);
+}
+
+.bi-circle-fill {
+  font-size: 0.6em;
+}

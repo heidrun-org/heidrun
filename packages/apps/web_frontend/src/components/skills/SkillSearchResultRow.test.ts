@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
-import { INSTALLED, RESULT, pending, prepare } from "./skills_test_support";
+import { FOLDER_RESULT, FOLDER_URL, INSTALLED, RESULT, pending, prepare } from "./skills_test_support";
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
@@ -133,5 +133,54 @@ describe("SkillSearchResultRow: install", () => {
     await clickInstall(wrapper);
     expect(wrapper.find(".spinner").exists()).toBe(false);
     expect(session.state.toastKind).toBe("error");
+  });
+});
+
+describe("SkillSearchResultRow: web address of a skill folder", () => {
+  it("shows the name and the repository, with no number of installs", async () => {
+    const { wrapper } = await mountRow(FOLDER_RESULT);
+    expect(wrapper.get(".name").text()).toBe("pdf");
+    expect(wrapper.get(".sub").text()).toBe("anthropics/skills · GitHub folder");
+  });
+
+  it("shows the SKILL.md file of the folder, with GitHub as its origin", async () => {
+    const { wrapper, skills } = await mountRow(FOLDER_RESULT, { skills_preview_folder: "---\nname: pdf\n---" });
+    await wrapper.findAll("button")[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_preview_folder", { url: FOLDER_URL });
+    expect(invoke).not.toHaveBeenCalledWith("skills_preview", expect.anything());
+    expect(skills.skills.view?.text).toContain("name: pdf");
+    expect(skills.skills.view?.originLabel).toBe("GitHub · anthropics/skills");
+  });
+
+  it("installs the folder at the chosen level, for the agents that are switched on", async () => {
+    const { wrapper, session } = await mountRow(FOLDER_RESULT);
+    await wrapper.findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install_folder", {
+      level: "workspace",
+      cwd: "/work/heidrun",
+      url: FOLDER_URL,
+      agents: ["claude", "codex"],
+    });
+    expect(invoke).not.toHaveBeenCalledWith("skills_install", expect.anything());
+    expect(session.state.toast).toBe("Skill pdf installed");
+  });
+
+  it("shows the error when the folder is not found or the repository is private", async () => {
+    const { wrapper, session } = await mountRow(FOLDER_RESULT);
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "skills_install_folder") {
+        throw "skills_folder_not_found: anthropics/skills/main/skills/pdf";
+      }
+      return INSTALLED;
+    });
+    await wrapper.findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(session.state.toastKind).toBe("error");
+    expect(session.state.toast).toBe(
+      "This folder was not found on GitHub: anthropics/skills/main/skills/pdf. The repository must be public, and the folder must have a SKILL.md file.",
+    );
+    expect(wrapper.find(".spinner").exists()).toBe(false);
   });
 });

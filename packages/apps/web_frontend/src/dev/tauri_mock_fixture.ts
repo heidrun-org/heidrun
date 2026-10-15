@@ -1,11 +1,24 @@
-import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder } from '../stores/chats';
+import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
+import type { AiCostItems } from '../lib/ai_cost';
+import type { PersonWorkItems } from '../lib/person_work';
+import type { UserActivityRecord } from '../lib/user_activity';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 //	TauriMockFixture — the fake Herdr session that the browser shows when no Tauri bridge exists
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+/** One fake issue or one fake pull request, as `gh` prints it. */
+type FixtureForgeItem = {
+	/** The person who opened the item. */
+	author: { login: string };
+	/** The labels of an issue. A pull request has none. */
+	labels?: { name: string; color: string }[];
+	/** The other fields of the item: the number, the title, the address, the date, and the branches. */
+	[field: string]: unknown;
+};
 
 /** The values that describe one pane of the fake Herdr session. */
 type FixturePaneOptions = {
@@ -46,6 +59,109 @@ export class TauriMockFixture {
 			throw new Error('split_not_found: split path not found');
 		}
 		TauriMockFixture._firstTabRatio = Math.min(0.9, Math.max(0.1, ratio));
+	}
+
+	/**
+	 * The answer of `gh issue list` or `gh pr list`: three fake issues, or two fake pull requests. A search given with
+	 * `--search` keeps the items that match its words `author:`, `label:`, and `no:label`, with the minus sign: the
+	 * other words are ignored.
+	 *
+	 * @param args - The arguments of `gh`, for example `['issue', 'list', '--state', 'open', '--json', 'number,title,url']`.
+	 * @returns The JSON text that `gh` prints.
+	 */
+	static buildForgeListAnswer(args: string[]): string {
+		const searchIndex = args.indexOf('--search');
+		const search = searchIndex === -1 ? '' : args[searchIndex + 1];
+		const items = TauriMockFixture._buildForgeItems(args[0] === 'issue');
+		return JSON.stringify(items.filter((item) => TauriMockFixture._matchesSearch(item, search)));
+	}
+
+	/**
+	 * Tells whether a fake item matches the words of a search.
+	 *
+	 * @param item - The fake issue or pull request.
+	 * @param search - The search, in the search language of GitHub.
+	 * @returns True when the item matches every word that the fixture knows.
+	 */
+	private static _matchesSearch(item: FixtureForgeItem, search: string): boolean {
+		const labelNames = (item.labels ?? []).map((label) => label.name.toLowerCase());
+		return (search.match(/(?:[^\s"]+|"[^"]*")+/g) ?? []).every((word) => {
+			const isNegated = word.startsWith('-');
+			const [qualifier, rawValue] = (isNegated ? word.slice(1) : word).split(':');
+			const value = (rawValue ?? '').replace(/"/g, '').toLowerCase();
+			let isMatch = true;
+			if (qualifier === 'author') {
+				isMatch = item.author.login === (value === '@me' ? 'jeromeetienne' : value);
+			} else if (qualifier === 'label') {
+				isMatch = labelNames.includes(value);
+			} else if (qualifier === 'no' && value === 'label') {
+				isMatch = labelNames.length === 0;
+			} else {
+				return true;
+			}
+			return isNegated ? isMatch === false : isMatch;
+		});
+	}
+
+	/**
+	 * The fake issues or the fake pull requests.
+	 *
+	 * @param isIssues - True for the issues, false for the pull requests.
+	 * @returns The items, as `gh` prints them.
+	 */
+	private static _buildForgeItems(isIssues: boolean): FixtureForgeItem[] {
+		const baseUrl = 'https://github.com/heidrun-org/heidrun';
+		const daysAgo = (days: number): string => new Date(Date.now() - days * 86_400_000).toISOString();
+		if (isIssues) {
+			return [
+				{
+					number: 370,
+					title: 'Add the Code hosting sidebar section: a list of issues and a list of pull requests',
+					url: `${baseUrl}/issues/370`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(1),
+					labels: [{ name: 'Design', color: '1d76db' }, { name: 'Simple Work', color: '2ea043' }],
+				},
+				{
+					number: 366,
+					title: 'Show the branch of each pane in the status bar',
+					url: `${baseUrl}/issues/366`,
+					author: { login: 'erictang' },
+					createdAt: daysAgo(3),
+					labels: [],
+				},
+				{
+					number: 351,
+					title: 'A very long title that does not fit in the width of the left sidebar, so that the end of it is cut',
+					url: `${baseUrl}/issues/351`,
+					author: { login: 'jeromeetienne' },
+					createdAt: daysAgo(40),
+					labels: [{ name: 'A very long label name that does not fit either', color: 'd4c5f9' }, { name: 'Bug', color: 'd73a4a' }],
+				},
+			];
+		}
+		return [
+			{
+				number: 369,
+				title: 'Move the Needs you sidebar section to the right sidebar',
+				url: `${baseUrl}/pull/369`,
+				author: { login: 'jeromeetienne' },
+				createdAt: daysAgo(0.1),
+				isDraft: false,
+				headRefName: 'move-to-handle-to-the-right-sidebar-251',
+				baseRefName: 'dev_jerome',
+			},
+			{
+				number: 365,
+				title: 'Merge dev into main',
+				url: `${baseUrl}/pull/365`,
+				author: { login: 'erictang' },
+				createdAt: daysAgo(2),
+				isDraft: true,
+				headRefName: 'dev',
+				baseRefName: 'main',
+			},
+		];
 	}
 
 	/**
@@ -133,6 +249,151 @@ export class TauriMockFixture {
 	}
 
 	/**
+	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last week, in UTC, as the
+	 * data layer gives them. Seven periods are in the last hour, and they cross the limits of the slots of five minutes.
+	 * The last slot of the last hour has no period. Four more periods fall on each of the seven days, from three hours
+	 * before the end of the time range, and they are 20 to 55 minutes long. Each period belongs to one of three folders: the
+	 * folder of the first workspace for three periods of every five, the folder of the second workspace for one period of
+	 * every five, and the folder of a worktree that was removed for the last one, so that the histogram has workspaces to
+	 * choose.
+	 * - issue #473
+	 * - issue #486
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970.
+	 * @returns The fake user activity records, the oldest first.
+	 */
+	static buildUserActivityRecords(until: number): UserActivityRecord[] {
+		const secondsBeforeUntil: [number, number][] = [
+			[56 * 60, 54 * 60 + 20],
+			[51 * 60, 47 * 60 + 30],
+			[44 * 60, 43 * 60],
+			[31 * 60 + 40, 26 * 60 + 10],
+			[19 * 60, 16 * 60 + 50],
+			[9 * 60 + 30, 9 * 60],
+			[4 * 60, 2 * 60 + 30],
+		];
+		for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+			for (let sessionIndex = 0; sessionIndex < 4; sessionIndex += 1) {
+				const startedBefore = dayIndex * 24 * 3600 + (3 + 3 * sessionIndex) * 3600;
+				const lengthMinutes = 20 + ((dayIndex * 7 + sessionIndex * 11) % 36);
+				secondsBeforeUntil.push([startedBefore, startedBefore - lengthMinutes * 60]);
+			}
+		}
+		secondsBeforeUntil.sort((first, second) => second[0] - first[0]);
+		const workspaceFolders = [
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/website',
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/heidrun/.claude/worktrees/removed-fix-info-card-252',
+		];
+		return secondsBeforeUntil.map(([startedBefore, endedBefore], index) => ({
+			workspaceFolder: workspaceFolders[index % workspaceFolders.length],
+			startedAt: new Date(until - startedBefore * 1000).toISOString(),
+			lastActionAt: new Date(until - endedBefore * 1000).toISOString(),
+			endedAt: new Date(until - endedBefore * 1000).toISOString(),
+			keyboardActionCount: 40,
+			mouseActionCount: 12,
+			endReason: 'cool_down',
+		}));
+	}
+
+	/**
+	 * The answer of the Tauri command `person_work_in_range`: the fake work of two people in the last 30 days. Jérôme
+	 * Étienne writes one to five commits each day and opens a pull request every other day, and his login on GitHub is
+	 * `jerome-etienne`. He opens an issue every fifth day. Eric writes a commit every third day, and opens nothing on GitHub.
+	 * - issue #482
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The fake commits, pull requests, and issues, the oldest first, and no error of GitHub.
+	 */
+	static buildPersonWorkItems(until: number): PersonWorkItems {
+		const dayMs = 24 * 3600 * 1000;
+		const result: PersonWorkItems = {
+			repository: 'heidrun-org/heidrun',
+			commits: [],
+			pullRequests: [],
+			issues: [],
+			codeHostingError: null,
+		};
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const dayEnd = until - daysBefore * dayMs;
+			const commitCount = 1 + ((daysBefore * 3 + 2) % 5);
+			for (let index = 0; index < commitCount; index += 1) {
+				result.commits.push({
+					authorName: 'Jérôme Étienne',
+					authorEmail: 'jerome@example.com',
+					committedAt: new Date(dayEnd - (3 + index) * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 3 === 0) {
+				result.commits.push({
+					authorName: 'Eric',
+					authorEmail: 'eric@example.com',
+					committedAt: new Date(dayEnd - 2 * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 2 === 0) {
+				result.pullRequests.push({
+					author: 'jerome-etienne',
+					createdAt: new Date(dayEnd - 5 * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 5 === 0) {
+				result.issues.push({
+					author: 'jerome-etienne',
+					createdAt: new Date(dayEnd - 6 * 3600 * 1000).toISOString(),
+				});
+			}
+		}
+		result.commits.sort((first, second) => first.committedAt.localeCompare(second.committedAt));
+		return result;
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost of each hour
+	 * where it used tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
+	 * costs a few cents. Every fourth day, a longer chat of Claude Code goes on after midnight and costs money on the next day
+	 * too. Codex has one chat every other day that costs under 2 dollars. One chat of Codex has no known price.
+	 * - issue #482
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The fake chats, the oldest first.
+	 */
+	static buildAiCostItems(until: number): AiCostItems {
+		const hourMs = 3600 * 1000;
+		const dayMs = 24 * hourMs;
+		const hour = (dayEnd: number, hoursBefore: number, costUsd: number | null) => ({
+			at: new Date(dayEnd - hoursBefore * hourMs).toISOString(),
+			costUsd,
+		});
+		const result: AiCostItems = { chats: [] };
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const dayEnd = until - daysBefore * dayMs;
+			const cost = 1 + ((daysBefore * 7 + 3) % 5);
+			result.chats.push({
+				codingAgent: 'claude',
+				hours: [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)],
+			});
+			result.chats.push({
+				codingAgent: 'claude',
+				hours: [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)],
+			});
+			if (daysBefore % 4 === 2) {
+				result.chats.push({
+					codingAgent: 'claude',
+					hours: [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)],
+				});
+			}
+			if (daysBefore % 2 === 1) {
+				const costUsd = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
+				result.chats.push({ codingAgent: 'codex', hours: [hour(dayEnd, 6, costUsd)] });
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * The answer of the Tauri command `coding_agent_ask`. There is no coding agent in a browser, so the mock answers two
 	 * kinds of prompt. For the prompt of the clustered dynamic topics, it groups the new labels that start with the same
 	 * four letters under the shortest of them, for example "sidebar" and "sidebars" under "sidebar". For the prompt of the
@@ -180,10 +441,17 @@ export class TauriMockFixture {
 		order: ChatSortOrder = 'descending',
 	): Record<ChatAgent, { chats: Chat[]; has_more: boolean }> & { root: string } {
 		const now = Date.now();
-		const buildChat = (id: string, title: string, minutesAgo: number, meta: Partial<ChatMeta> = {}): Chat => ({
+		const buildChat = (
+			id: string,
+			title: string,
+			minutesAgo: number,
+			meta: Partial<ChatMeta> = {},
+			usage: ChatUsage | null = null,
+		): Chat => ({
 			id,
 			title,
 			updated_at: now - minutesAgo * 60_000,
+			usage,
 			meta: {
 				first_at: now - (minutesAgo + 90) * 60_000,
 				last_at: now - minutesAgo * 60_000,
@@ -212,18 +480,20 @@ export class TauriMockFixture {
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/InformationCard.vue',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/components/OldCard.vue',
 					'/Users/demo/webwork/heidrun/AGENTS.md',
+					'/Users/demo/webwork/heidrun/.claude/worktrees/removed-fix-info-card-252/AGENTS.md',
 					'/Users/demo/webwork/heidrun/docs/agents_rules/user_interface.md',
 					'/Users/demo/webwork/heidrun/packages/apps/web_frontend/src/i18n/locales/fr/a_folder_with_many_levels/that_does_not_fit_in/the_information_card/at_all/notes.md',
 					'/Users/demo/notes/scratch.md',
 					'/private/tmp/claude-501/-Users-demo-webwork-heidrun/e957b92e-4848-4b5b-849e-6618a7a326fd/scratchpad/issue_31_comment.md',
 				],
-			}),
+			},
+			{ input_tokens: 3_218_500, cached_input_tokens: 3_035_392, output_tokens: 3_287, cost_usd: 4.52 }),
 			buildChat('claude_2', 'Tab drag-drop with image drop support', 90, {
 				first_at: now - 3_000 * 60_000,
 				user_messages: 4,
 				issues: [104, 247],
 				pull_requests: [230, 249],
-			}),
+			}, { input_tokens: 48_000, cached_input_tokens: 0, output_tokens: 1_900, cost_usd: null }),
 			buildChat('claude_3', 'Fix the border of the tab bar when the window is narrow and the pinned panes column is wide', 400, {
 				user_messages: 1,
 				issues: [1, 2, 3, 4, 5, 6],
@@ -237,7 +507,12 @@ export class TauriMockFixture {
 			claudeChats.push(buildChat(`claude_${index}`, `Fake chat number ${index}`, 3_000 + index * 60));
 		}
 		const codexChats: Chat[] = [
-			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }),
+			buildChat('codex_1', 'Describe image contents', 30, { user_messages: 1 }, {
+				input_tokens: 134_683,
+				cached_input_tokens: 132_864,
+				output_tokens: 84,
+				cost_usd: 0.0031,
+			}),
 			buildChat('codex_2', 'Count up to 200', 600),
 		];
 		const cut = (chats: Chat[]) => {

@@ -1,13 +1,26 @@
 import { z } from "zod";
+import { CODING_AGENT_IDS } from "./coding_agents";
 
 // Schema of the project configuration file `.heidrun/config.json`, at the root of the repository.
 // Every object is strict: an unknown field is a typo, and the file is rejected with its path.
 
-/** A custom script of the tab Scripts. It is stored under the key `actions`, which keeps older files valid. */
-export const actionSchema = z.strictObject({
+/** The coding agent of a custom launcher of the kind Coding agent. The launcher keeps the command line that starts it. */
+export const launcherAgentSchema = z.strictObject({
+  name: z.enum(CODING_AGENT_IDS),
+  model: z.string().optional(),
+  effort: z.string().optional(),
+  prompt: z.string().min(1),
+});
+
+/** A launcher of the Launchers sidebar section. It is stored in the list under the key `launchers`. */
+export const launcherSchema = z.strictObject({
   id: z.string().min(1),
   label: z.string().min(1),
   command: z.string().min(1),
+  /** Optional description of the launcher, on several lines. */
+  description: z.string().optional(),
+  /** Present only for a custom launcher of the kind Coding agent. `command` then holds the generated command line. */
+  agent: launcherAgentSchema.optional(),
   /** Optional sub-folder, relative to the project root. */
   cwd: z.string().optional(),
 });
@@ -45,27 +58,51 @@ export const macroSchema = z.strictObject({
 /** The whole content of `.heidrun/config.json`. */
 export const projectConfigSchema = z.strictObject({
   version: z.literal(1),
-  actions: z.array(actionSchema).default([]),
+  launchers: z.array(launcherSchema).default([]),
   references: referencesSchema.optional(),
   guards: guardsSchema.optional(),
   // The key keeps the old name of the feature, because other people already have the file.
   prompts: z.array(macroSchema).optional(),
 });
 
-export type Action = z.infer<typeof actionSchema>;
+export type LauncherAgent = z.infer<typeof launcherAgentSchema>;
+export type Launcher = z.infer<typeof launcherSchema>;
 export type ProjectReferences = z.infer<typeof referencesSchema>;
 export type ProjectGuardsConfig = z.infer<typeof guardsSchema>;
 export type ProjectMacro = z.infer<typeof macroSchema>;
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;
 
-/** One line per problem, each starting with the path of the field: `actions.0.command: Too small…`. */
+/** The key of the list of launchers in the files written before the rename, when a launcher was called an action. */
+const LEGACY_LAUNCHERS_KEY = "actions";
+
+/**
+ * Moves the list under the old key `actions` to the key `launchers`, so that a file written before the rename is still
+ * read. The program writes only the key `launchers`. A file that has both keys is not changed, so the strict schema
+ * rejects the old key and names it.
+ */
+function moveLegacyLaunchersKey(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (LEGACY_LAUNCHERS_KEY in record === false || "launchers" in record) {
+    return value;
+  }
+  const { [LEGACY_LAUNCHERS_KEY]: legacyLaunchers, ...rest } = record;
+  return { ...rest, launchers: legacyLaunchers };
+}
+
+/** One line per problem, each starting with the path of the field: `launchers.0.command: Too small…`. */
 function describeIssues(error: z.ZodError): string {
   return error.issues.map((issue) => `${issue.path.length > 0 ? issue.path.join(".") : "(root)"}: ${issue.message}`).join("; ");
 }
 
-/** Validates a configuration read from the file, or about to be written to it. Throws an Error that names the fields. */
+/**
+ * Validates a configuration read from the file, or about to be written to it. The old key `actions` is read as the key
+ * `launchers`. Throws an Error that names the fields.
+ */
 export function parseProjectConfig(value: unknown): ProjectConfig {
-  const result = projectConfigSchema.safeParse(value);
+  const result = projectConfigSchema.safeParse(moveLegacyLaunchersKey(value));
   if (result.success === false) {
     throw new Error(describeIssues(result.error));
   }

@@ -122,6 +122,20 @@ describe("ChatReferencesLine", () => {
     expect(details.text()).toContain("jerome opened this issue");
   });
 
+  it("shows the picture of the person who opened it, and the icon of a person when the picture does not load", async () => {
+    const wrapper = mountLine();
+    await openCard(wrapper);
+    await wrapper.findAll("[data-reference]")[0].trigger("click");
+    const details = wrapper.get("[data-reference-details]");
+    const avatar = details.get("img.avatar");
+    expect(avatar.attributes("src")).toBe("https://github.com/jerome.png?size=48");
+    expect(avatar.attributes("referrerpolicy")).toBe("no-referrer");
+    expect(details.find("i.bi-person-circle").exists()).toBe(false);
+    await avatar.trigger("error");
+    expect(details.find("img.avatar").exists()).toBe(false);
+    expect(details.find("i.bi-person-circle").exists()).toBe(true);
+  });
+
   it("shows the two branches of a pull request, and the person who opened it", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);

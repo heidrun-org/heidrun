@@ -1,0 +1,79 @@
+
+> desktop_tauri@0.2.5 tauri /Users/jetienne/webwork/heidrun/packages/apps/desktop_tauri
+> tauri build --no-bundle
+
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `pnpm --filter web_frontend build`
+
+> web_frontend@0.2.5 build /Users/jetienne/webwork/heidrun/packages/apps/web_frontend
+> vue-tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js (74:0): A comment
+
+"/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+ * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+ * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+
+in "../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js (400:0): A comment
+
+"// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+
+in "../../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 822 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                     0.78 kB │ gzip:   0.42 kB
+dist/assets/bootstrap-icons-DJdhg9lH.woff2        134.01 kB
+dist/assets/baby_goat-Dl0pvcPG.webp               162.94 kB
+dist/assets/bootstrap-icons-BHUGvtHM.woff         180.29 kB
+dist/assets/goat_bleat_1-VkWLPlIN.wav             439.28 kB
+dist/assets/goat_bleat_2-sDxo4zw8.wav             441.40 kB
+dist/assets/heidrun_splash_screen-BJMqjZou.jpg    918.33 kB
+dist/assets/index-CvB8qxtj.css                    311.88 kB │ gzip:  52.34 kB
+dist/assets/properties-C78fOPTZ.js                  0.67 kB │ gzip:   0.35 kB
+dist/assets/toml-Bm5Em-hy.js                        1.14 kB │ gzip:   0.54 kB
+dist/assets/index-GFvlaoaJ.js                       2.04 kB │ gzip:   1.28 kB
+dist/assets/shell-CjFT_Tl9.js                       2.57 kB │ gzip:   1.21 kB
+dist/assets/go-CTD25R5P.js                          2.79 kB │ gzip:   1.30 kB
+dist/assets/lua-VAEuO923.js                         3.41 kB │ gzip:   1.43 kB
+dist/assets/index-BrQFYRax.js                       3.43 kB │ gzip:   1.74 kB
+dist/assets/swift-BzpIVaGY.js                       3.96 kB │ gzip:   1.79 kB
+dist/assets/dockerfile-ZL4hHokT.js                  4.16 kB │ gzip:   1.66 kB
+dist/assets/ruby-BK5aLJev.js                        5.21 kB │ gzip:   2.16 kB
+dist/assets/index-DA6dJ7hW.js                      11.61 kB │ gzip:   5.19 kB
+dist/assets/index-Bn1iAOmP.js                      14.00 kB │ gzip:   6.08 kB
+dist/assets/index-C17yGQc6.js                      14.70 kB │ gzip:   5.96 kB
+dist/assets/clike-B9uivgTg.js                      22.30 kB │ gzip:   7.86 kB
+dist/assets/index-Dfyydo8w.js                      26.93 kB │ gzip:   8.91 kB
+dist/assets/index-DOzm-pAV.js                      28.27 kB │ gzip:  12.83 kB
+dist/assets/index-fNXu63BZ.js                      28.76 kB │ gzip:  11.70 kB
+dist/assets/index-BJPPvfzo.js                      44.45 kB │ gzip:  15.43 kB
+dist/assets/index-4i679alr.js                      45.13 kB │ gzip:  19.17 kB
+dist/assets/index-D2sg6sgh.js                      47.78 kB │ gzip:  19.36 kB
+dist/assets/index-DNSwEhSq.js                      83.73 kB │ gzip:  30.36 kB
+dist/assets/index-K0J-UMjF.js                      84.69 kB │ gzip:  33.49 kB
+dist/assets/index-BIAML5OP.js                      98.29 kB │ gzip:  28.58 kB
+dist/assets/editor-Do6kL1HH.js                    415.26 kB │ gzip: 135.07 kB
+dist/assets/three_js_demo_scene-CvpunTaP.js       519.57 kB │ gzip: 129.79 kB
+dist/assets/index-C1ueOTRf.js                   1,305.75 kB │ gzip: 404.39 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 5.28s
+   Compiling heidrun v0.2.5 (/Users/jetienne/webwork/heidrun/packages/apps/desktop_tauri)
+warning: function `package_manager` is never used
+  --> src/project.rs:65:4
+   |
+65 | fn package_manager(root: &Path) -> &'static str {
+   |    ^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `heidrun` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 37.16s
+       Built application at: /Users/jetienne/webwork/heidrun/packages/apps/desktop_tauri/target/release/heidrun

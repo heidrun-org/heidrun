@@ -11,6 +11,9 @@ pub struct SkillOrigin {
     pub source: String,
     /// The folder name of the skill in the repository.
     pub skill_id: String,
+    /// The web address of the GitHub folder, for a skill installed from that address. `None` for a skill of skills.sh.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub folder_url: Option<String>,
 }
 
 /// A skill found on the disk.
@@ -69,6 +72,16 @@ pub(super) fn is_valid_name(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn writes_the_address_of_the_folder_only_when_there_is_one() {
+        let from_skills_sh = SkillOrigin { source: "a/b".into(), skill_id: "c".into(), folder_url: None };
+        assert_eq!(serde_json::to_string(&from_skills_sh).unwrap(), r#"{"source":"a/b","skill_id":"c"}"#);
+        let from_address = SkillOrigin { source: "a/b".into(), skill_id: "c".into(), folder_url: Some("https://github.com/a/b/tree/main/c".into()) };
+        let text = serde_json::to_string(&from_address).unwrap();
+        assert_eq!(serde_json::from_str::<SkillOrigin>(&text).unwrap(), from_address);
+        assert_eq!(serde_json::from_str::<SkillOrigin>(r#"{"source":"a/b","skill_id":"c"}"#).unwrap(), from_skills_sh);
+    }
 
     #[test]
     fn accepts_a_source_of_a_repository() {

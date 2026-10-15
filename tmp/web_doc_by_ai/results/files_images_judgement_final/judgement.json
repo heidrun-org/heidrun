@@ -1,0 +1,138 @@
+{
+  "pages": [
+    {
+      "file": "browse_project_files.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 3,
+        "order": 3,
+        "singleType": 3,
+        "userLanguage": 4,
+        "accuracy": 4
+      },
+      "problems": [
+        "The page starts with a full section, 'Select an existing workspace', before the main task. Replace it with one sentence and a link, and put 'Open a project file' first. The two Troubleshooting entries 'Select a workspace.' and 'This workspace is not a Git repository.' have the same solution; merge them.",
+        "Screenshot files_sidebar.png (I read the pixels): it is readable, and it shows the docs folder unfolded and README.md selected with a blue outline. It sits before step 3, so it shows the result of a click the reader has not made yet. No screenshot shows the large Git window, although the next paragraph describes its File, Diff, Side by side, and Reading buttons. Move the picture after step 3 and add one of the large Git window.",
+        "'Long file lists' has no cause, solution, and check, and it gives no solution. The paragraph about File, Diff, Side by side, and Reading is dense reference text, and 'remembered empty folder' in the Refresh section is internal wording. Write the first as a short Troubleshooting entry, turn the second into a short list or move it to the reference page, and say 'a new empty folder that you created' in the third."
+      ],
+      "verdict": "The facts are correct and the steps work, but the page starts with a prerequisite, mixes three tasks, and has a weak Troubleshooting section.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 39,
+        "wordCount": 580,
+        "longestParagraphSentences": 3,
+        "paragraphRuns": 4,
+        "numberedStepCount": 9,
+        "bulletCount": 4,
+        "tableCount": 0,
+        "headingCount": 9,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 4
+      },
+      "meanScore": 3.5
+    },
+    {
+      "file": "copy_a_file_path.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 4,
+        "order": 4,
+        "singleType": 4,
+        "userLanguage": 4,
+        "accuracy": 5
+      },
+      "problems": [
+        "Step 1 holds two actions (open the Files sidebar section, then unfold folders to find the file) and repeats the icon description from the other pages. Link to 'Browse and open project files' and keep the step to one action. Step 3 sends the reader back up to the table; say the choice in the step itself.",
+        "The absolute path copy can fail, and the code shows an error notification. The page does not say so, and its only Troubleshooting entry is the right-click on a folder row. Screenshot copy_path.png (I read the pixels) is clear and matches the two menu items, but the 'Copied:' notification described after step 3 is not shown, and the example only shows the relative path.",
+        "The heading 'path-copy menu' is an invented name; use 'context menu', the word of the glossary. The Related page 'Create a file or folder' is a weak next step; link to the reference page 'Files sidebar section controls' instead."
+      ],
+      "verdict": "This is the best page of the set: short, accurate, and correctly placed screenshot. Step 1 is overloaded and the Troubleshooting is thin.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 27,
+        "wordCount": 329,
+        "longestParagraphSentences": 1,
+        "paragraphRuns": 1,
+        "numberedStepCount": 6,
+        "bulletCount": 3,
+        "tableCount": 1,
+        "headingCount": 6,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 4.166666666666667
+    },
+    {
+      "file": "create_a_file_or_folder.md",
+      "scores": {
+        "taskSuccess": 3,
+        "usefulness": 3,
+        "order": 4,
+        "singleType": 4,
+        "userLanguage": 4,
+        "accuracy": 4
+      },
+      "problems": [
+        "Choosing the destination is hard to follow. A click on a folder row also folds or unfolds the folder, and the page does not say so. For the repository root the reader must fold everything and find empty space, and the page then says there may be no control to clear the selection. State plainly how to reach the repository root, or state this limit once, in the Troubleshooting section.",
+        "The Troubleshooting entry for '/' only says to remove '/', but the message says 'Select a folder first'. Add the solution for a reader who wants a file in a subfolder: create the folder, select it, then create the file. Other backend messages are also in French (for example an invalid name), and Enter with an empty name closes the box silently; the page covers neither.",
+        "Screenshot new_file.png (I read the pixels) is readable and shows the name box with example.md at the top of docs. No visible row has the blue selection outline, so it does not show the destination state that step 1 asks for. 'Cancel creation' is a numbered list with one step; make it one sentence under step 3. The fact that an empty folder disappears after a restart is lost between the steps and the Troubleshooting section; give it its own short note."
+      ],
+      "verdict": "The steps and the French error message are correct, but the destination choice is hard to follow and one Troubleshooting solution does not solve the real case.",
+      "measures": {
+        "pageType": "how-to",
+        "lineCount": 39,
+        "wordCount": 541,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 4,
+        "numberedStepCount": 9,
+        "bulletCount": 3,
+        "tableCount": 1,
+        "headingCount": 8,
+        "hasTroubleshooting": true,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 3.6666666666666665
+    },
+    {
+      "file": "files_sidebar_section_controls.md",
+      "scores": {
+        "taskSuccess": 4,
+        "usefulness": 3,
+        "order": 3,
+        "singleType": 3,
+        "userLanguage": 4,
+        "accuracy": 4
+      },
+      "problems": [
+        "The section 'Ignored files' describes another window (the Files window, opened with ⌘P) and tells the reader how to find a checkbox. That is off-topic for a page about the Files sidebar section and reads like a how-to step. It also cites seven sources, most of them unrelated. Move it to its own page, or keep one sentence with a link.",
+        "Screenshot more_options.png (I read the pixels) is clear: it shows the five header icons and the open menu, and the check marks on Medium, Comfortable, and Show match the Default column. It sits in 'Header buttons', two sections before the 'More options' table; move it next to that table. No screenshot shows the row indicators (letters M, A, D, R, U, and the dot), so the reader must trust the table.",
+        "'Row and name box actions' repeats the steps of the how-to pages (Enter, Escape, click a row). The 'Selection' table mixes actions and states under the vague column 'Item' and reads like an explanation. Order by what the reader looks up: header buttons, More options, rows, indicators, context menu."
+      ],
+      "verdict": "The tables are accurate and easy to scan, but the page includes an unrelated section, repeats the how-to steps, and puts the screenshot in the wrong place.",
+      "measures": {
+        "pageType": "reference",
+        "lineCount": 64,
+        "wordCount": 792,
+        "longestParagraphSentences": 2,
+        "paragraphRuns": 3,
+        "numberedStepCount": 0,
+        "bulletCount": 3,
+        "tableCount": 6,
+        "headingCount": 9,
+        "hasTroubleshooting": false,
+        "relatedPageLinkCount": 3
+      },
+      "meanScore": 3.5
+    }
+  ],
+  "site": {
+    "navigation": 3,
+    "consistency": 4,
+    "problems": [
+      "The sidebar item 'Introduction' leads to a page that says 'This page is a placeholder'. A new reader has no starting point and no map of the four Files pages, and the set has no tutorial. Add a short list of links with one sentence for each, and one first-use lesson.",
+      "The section 'Related pages' is uneven. 'Copy a file path' links to 'Create a file or folder' for no real need. 'Create a file or folder' does not link to 'Keyboard shortcuts' or explain that the Files window (⌘P) has its own new file and new folder buttons. Nothing explains the difference between the Files sidebar section and the Files window; the reference page only touches it in the wrong place.",
+      "Overlap between pages: the description of the Files icon in the sidebar icon bar is repeated on three pages in three different wordings, the definition of the context menu is repeated on two pages, and the reference page repeats how-to steps. Define each once, with a link."
+    ]
+  },
+  "overallScore": 3.6388888888888893
+}

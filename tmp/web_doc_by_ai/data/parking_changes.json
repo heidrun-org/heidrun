@@ -1,0 +1,25 @@
+{
+  "source": "data/source_manifest.json",
+  "modifiedOnlyInParkedWorkspace": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README_DEV.md",
+    "packages/dev_tools/documentation_updater/README.md",
+    "packages/dev_tools/documentation_updater/src/cli.ts",
+    "packages/dev_tools/documentation_updater/src/judge_cli.ts",
+    "CONTEXT.md files rebased to their actual repository-relative locations"
+  ],
+  "entryPointChange": "The two CLI repositoryPath arguments use Path.resolve(import.meta.dirname, ../../../..) instead of discovering the enclosing Git root.",
+  "originalVersions": "history/before_parking/",
+  "outsideFolderChanges": "None remain. The newly created parent tmp/CONTEXT.md was removed. Production website, root scripts, original worktrees, Git branches and index are unchanged.",
+  "parkedVerification": {
+    "report": "results/parked_folder_check/README.md",
+    "additionalChanges": [
+      "workspace/package.json: two scripts use node --import tsx",
+      "README.md and two parked workspace readmes: invocation notes",
+      "process/HANDOFF.md: verification state",
+      ".gitignore: ignore runtime, dependencies and build output"
+    ],
+    "originalPackage": "history/before_parked_check/package.json"
+  }
+}

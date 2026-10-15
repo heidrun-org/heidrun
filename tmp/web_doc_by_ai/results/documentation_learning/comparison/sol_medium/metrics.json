@@ -1,0 +1,11 @@
+{
+  "label": "sol_medium",
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "score": 3.625,
+  "minimumAccuracy": 4,
+  "minimumTaskSuccess": 3,
+  "generationSeconds": 197.113,
+  "reportedGenerationTokens": 98876,
+  "pageCount": 6
+}

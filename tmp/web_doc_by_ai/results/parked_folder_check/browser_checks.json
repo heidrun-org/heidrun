@@ -1,0 +1,54 @@
+[
+  {
+    "heading": "Browse and open project files ​",
+    "images": [
+      {
+        "alt": "Files sidebar section with docs unfolded and docs/README.md selected in the folder tree.",
+        "complete": true,
+        "height": 900,
+        "src": "http://127.0.0.1:5180/heidrun/documentation_images/files/files_sidebar.png",
+        "width": 870
+      }
+    ],
+    "url": "http://127.0.0.1:5180/heidrun/documentation/browse_project_files.html"
+  },
+  {
+    "heading": "Create a file or folder ​",
+    "images": [
+      {
+        "alt": "New file name box inside docs with example.md typed before Enter is pressed.",
+        "complete": true,
+        "height": 548,
+        "src": "http://127.0.0.1:5180/heidrun/documentation_images/files/new_file.png",
+        "width": 870
+      }
+    ],
+    "url": "http://127.0.0.1:5180/heidrun/documentation/create_a_file_or_folder.html"
+  },
+  {
+    "heading": "Copy a file path ​",
+    "images": [
+      {
+        "alt": "Files sidebar section with docs unfolded, docs/README.md selected, and Copy absolute path and Copy relative path in the context menu.",
+        "complete": true,
+        "height": 1009,
+        "src": "http://127.0.0.1:5180/heidrun/documentation_images/files/copy_path.png",
+        "width": 870
+      }
+    ],
+    "url": "http://127.0.0.1:5180/heidrun/documentation/copy_a_file_path.html"
+  },
+  {
+    "heading": "Files sidebar section controls ​",
+    "images": [
+      {
+        "alt": "Files sidebar section header buttons with the More options menu open.",
+        "complete": true,
+        "height": 783,
+        "src": "http://127.0.0.1:5180/heidrun/documentation_images/files/more_options.png",
+        "width": 870
+      }
+    ],
+    "url": "http://127.0.0.1:5180/heidrun/documentation/files_sidebar_section_controls.html"
+  }
+]

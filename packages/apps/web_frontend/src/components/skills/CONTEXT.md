@@ -5,13 +5,13 @@ The parts of the two skills windows: the frame, the level switch, the notice, th
 
 ## Key Exports & Entry Points
 - `../InstalledSkillModal.vue`: the window Installed skill. It lists the installed skills, and each one can be inspected or deleted. It has no level switch and no search.
-- `../FindNewSkillsModal.vue`: the window Find new skills. It shows the level switch (User first, then Workspace), the notice, and the search on skills.sh. Each result can be inspected or installed. A skill is installed for the agents switched on in the section Agents of the Settings window. The level is saved in the settings.
+- `../FindNewSkillsModal.vue`: the window Find new skills. It shows the level switch (User first, then Workspace), the notice, and the search field. Each result can be inspected or installed. The field takes a search on skills.sh, or the web address of a skill folder in a public GitHub repository, which gives one result and no search. A skill is installed for the agents switched on in the section Agents of the Settings window. The level is saved in the settings.
 - `../SkillFileModal.vue`: the window opened by the button "Inspect". It shows a SKILL.md file rendered or as highlighted source, and it sits above the two skills windows. Both skills windows open from the menu with three vertical dots of the top bar (`../MoreMenu.vue`) and from the command palette.
-- `SkillsLevelSwitch.vue`: the choice between the workspace level and the user level.
+- `SkillsLevelSwitch.vue`: the choice between the workspace level and the user level, a Bootstrap button group of two radio inputs, drawn like the choice of the language in the Settings window ([issue 490](https://github.com/heidrun-org/heidrun/issues/490)).
 - `SkillsNoAgentNotice.vue`: the notice with the button "Open Agents", shown when no coding agent is switched on.
 - `SkillsWindow.vue`: the frame of both skills windows: the title, the question mark with the help text, the close button, the Escape key, and the loading of the skills. A skills window gives it a title, a help text, and its content in the slot.
 - `InstalledSkillsList.vue`: the list of installed skills, one `InstalledSkillRow.vue` for each skill (inspect, add link, delete).
-- `FindSkills.vue`: the search on skills.sh, one `SkillSearchResultRow.vue` for each result (inspect, install).
+- `FindSkills.vue`: the search field with its magnifying glass and its hint, and one `SkillSearchResultRow.vue` for each result (inspect, install). `../../lib/github_folder_address.ts` tells a web address of a skill folder from a search.
 - `skills_section.css`: the styles of the lists and rows, shared by both row components.
 - `skills_test_support.ts`: the fake backend and the helpers shared by the tests of this folder.
 
@@ -22,4 +22,4 @@ The parts of the two skills windows: the frame, the level switch, the notice, th
 
 ## Background
 - The folder comes from the split of the section Skills of the Settings window: [issue 131](https://github.com/heidrun-org/heidrun/issues/131). The skills left the Settings window and became two windows: [issue 138](https://github.com/heidrun-org/heidrun/issues/138).
-- The window Find new skills installs a skill with the command `skills_install` of `desktop_tauri/src/skills/install.rs`. The search uses the endpoint `https://skills.sh/api/search`, because the documented API `/api/v1` needs a Vercel OIDC token that a desktop application cannot have: [issue 34](https://github.com/heidrun-org/heidrun/issues/34).
+- The window Find new skills installs a skill with the command `skills_install` of `desktop_tauri/src/skills/install.rs`, or with `skills_install_folder` for a web address of a skill folder ([issue 289](https://github.com/heidrun-org/heidrun/issues/289)). The search uses the endpoint `https://skills.sh/api/search`, because the documented API `/api/v1` needs a Vercel OIDC token that a desktop application cannot have: [issue 34](https://github.com/heidrun-org/heidrun/issues/34).

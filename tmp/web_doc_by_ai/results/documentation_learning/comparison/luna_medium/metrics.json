@@ -1,0 +1,12 @@
+{
+  "label": "luna_medium",
+  "model": "gpt-6-luna",
+  "effort": "medium",
+  "score": 3.3749999999999996,
+  "minimumAccuracy": 3,
+  "minimumTaskSuccess": 3,
+  "generationSeconds": 74.899,
+  "isGenerationTimeEstimated": false,
+  "reportedGenerationTokens": 90364,
+  "pageCount": 6
+}

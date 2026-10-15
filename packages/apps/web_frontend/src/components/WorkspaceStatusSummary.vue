@@ -8,18 +8,20 @@ import ScrollingLine from "./ScrollingLine.vue";
 import { askConfirm } from "../stores/confirm";
 import { settings } from "../stores/settings";
 import { currentGit, workspaceCwd } from "../stores/git";
+import { openNewWorkspace } from "../stores/newPane";
 import {
   allPanes,
   closeWorkspace,
   finishRename,
-  moveWorkspaceInView,
-  newWorkspace,
+  moveWorkspace,
   otherWorkspaceStatus,
   selectWorkspace,
   startRename,
   state,
+  workspaceDotClasses,
+  workspaceHasAgent,
   workspaceLabel,
-  orderedWorkspaces as workspaces,
+  workspaces,
 } from "../stores/session";
 import { useReorder } from "../lib/reorder";
 import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
@@ -38,7 +40,7 @@ const { isOpen, toggle, close, onFocusOut } = useStatusCard(root);
 const CARD_WIDTH_PIXELS = 408;
 const cardStyle = { width: `${CARD_WIDTH_PIXELS}px`, "--popover-max-width": `${CARD_WIDTH_PIXELS}px` };
 
-const workspaceReorder = useReorder("y", (id, at) => moveWorkspaceInView(id, at));
+const workspaceReorder = useReorder("y", (id, at) => moveWorkspace(id, at));
 
 /** The selected workspace, or null when Herdr has no workspace. */
 const selectedWorkspace = computed(
@@ -56,29 +58,6 @@ const isRenaming = computed(
 );
 
 /**
- * Tells if an agent runs in a workspace.
- *
- * @param workspaceId - The identifier of the workspace.
- * @returns True when a pane of the workspace runs an agent.
- */
-function hasAgent(workspaceId: string): boolean {
-  return allPanes.value.some((pane) => pane.workspace_id === workspaceId && pane.agent);
-}
-
-/**
- * Gives the classes of the status dot of a workspace: the color of its agents, or a hollow ring when no agent runs.
- *
- * @param workspace - The workspace.
- * @returns The classes to add to the element with the class `dot`.
- */
-function dotClassesOf(workspace: WorkspaceInfo): string[] {
-  if (hasAgent(workspace.workspace_id) === false) {
-    return ["quiet"];
-  }
-  return [workspace.agent_status === "idle" ? "" : workspace.agent_status];
-}
-
-/**
  * The classes of the status dot in the status bar. The status of the agents of another workspace comes first, because the
  * developer does not see them. Without such an agent, the dot shows the status of the selected workspace.
  */
@@ -89,7 +68,7 @@ const dotClasses = computed(() => {
   if (selectedWorkspace.value === null) {
     return ["quiet"];
   }
-  return dotClassesOf(selectedWorkspace.value);
+  return workspaceDotClasses(selectedWorkspace.value);
 });
 
 /** The text of the status dot for a screen reader, only when an agent of another workspace calls. */
@@ -177,7 +156,7 @@ async function createWorkspace(): Promise<void> {
     return;
   }
   const label = path.split("/").filter(Boolean).pop() ?? null;
-  await newWorkspace(path, label);
+  await openNewWorkspace(path, label);
 }
 
 // The command search renames the workspace too: the field replaces the name, so the card must not stay open.
@@ -242,7 +221,7 @@ watch(isRenaming, (renaming) => {
             class="workspace-row d-flex align-items-center position-relative"
             :class="{
               active: workspace.workspace_id === state.selectedWorkspaceId,
-              quiet: !hasAgent(workspace.workspace_id),
+              quiet: !workspaceHasAgent(workspace.workspace_id),
               dragging: workspaceReorder.dragging.value === workspace.workspace_id,
               'drop-before': workspaceReorder.gap.value === workspaceIndex,
               'drop-after': workspaceReorder.gap.value === workspaceIndex + 1 && workspaceIndex === workspaces.length - 1,
@@ -257,11 +236,11 @@ watch(isRenaming, (renaming) => {
               :title="t('workspaceStatusSummary.rowTitle')"
               @click="choose(workspace.workspace_id)"
             >
-              <span class="dot" :class="dotClassesOf(workspace)"></span>
+              <span class="dot" :class="workspaceDotClasses(workspace)"></span>
               <span
                 class="name"
                 :class="{
-                  'text-body-secondary': !hasAgent(workspace.workspace_id) && workspace.workspace_id !== state.selectedWorkspaceId,
+                  'text-body-secondary': !workspaceHasAgent(workspace.workspace_id) && workspace.workspace_id !== state.selectedWorkspaceId,
                 }"
               >{{ workspace.label }}</span>
             </button>

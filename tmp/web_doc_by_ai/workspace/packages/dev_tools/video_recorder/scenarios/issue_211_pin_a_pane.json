@@ -1,0 +1,10 @@
+{
+  "name": "issue_211_pin_a_pane",
+  "description": "A workspace with two tabs: pin the pane of the second tab, go back to the first tab, open the Git section.",
+  "clicks": [
+    { "label": "Click the second tab in the tab bar" },
+    { "label": "Click the pin button in the header of the pane" },
+    { "label": "Click the first tab in the tab bar" },
+    { "label": "Click the Git section in the navigation bar of the left sidebar" }
+  ]
+}

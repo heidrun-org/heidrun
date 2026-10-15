@@ -1,6 +1,7 @@
 import { locale, t } from "../i18n/index";
 import type { ChatMeta } from "../stores/chats";
 import { chatFiles, fileName, type ChatFile } from "./chat_files";
+import { chatWorktrees, worktreesText, type ChatWorktree } from "./chat_worktrees";
 import { timeOptions } from "./format";
 
 /** The most issue numbers or pull request numbers that the summary of a chat writes. The others count as "+N". */
@@ -56,7 +57,7 @@ function filesText(files: ChatFile[]): string {
   return more > 0 ? `${listed.join(", ")}, +${more}` : listed.join(", ");
 }
 
-/** The three lines of the summary of a chat. A line that has nothing to say is an empty text. */
+/** The four lines of the summary of a chat. A line that has nothing to say is an empty text. */
 export type ChatSummaryLines = {
   /** The first and the last date, then the number of messages from the developer. */
   dates: string;
@@ -66,15 +67,19 @@ export type ChatSummaryLines = {
   files: string;
   /** The files that the coding agent wrote, each one once. The information card of the third line lists them. */
   fileEntries: ChatFile[];
+  /** The names of the worktrees that the coding agent worked in. */
+  worktrees: string;
+  /** The worktrees that the coding agent worked in, each name once. The fourth line lists them. */
+  worktreeEntries: ChatWorktree[];
 };
 
 /**
- * The summary that the list shows under the title of a chat, in three lines: the dates and the messages, the issues and
- * the pull requests, and the files written.
+ * The summary that the list shows under the title of a chat, in four lines: the dates and the messages, the issues and
+ * the pull requests, the files written, and the worktrees.
  * @param meta - what the scan of the file of the chat found
  * @param now - the current date, which decides whether the year shows in a date
  * @param root - the root of the repository, or null when it is not known: the files are named below it
- * @returns the three lines, each one an empty text when the chat has nothing for it
+ * @returns the four lines, each one an empty text when the chat has nothing for it
  */
 export function chatSummaryLines(meta: ChatMeta, now: Date = new Date(), root: string | null = null): ChatSummaryLines {
   const dates = [datesText(meta.first_at, meta.last_at, now)];
@@ -91,10 +96,13 @@ export function chatSummaryLines(meta: ChatMeta, now: Date = new Date(), root: s
     );
   }
   const fileEntries = chatFiles(root, meta.files_written);
+  const worktreeEntries = chatWorktrees(meta.folders, meta.files_written);
   return {
     dates: dates.filter((part) => part !== "").join(" · "),
     references: references.join(" · "),
     files: filesText(fileEntries),
     fileEntries,
+    worktrees: worktreesText(worktreeEntries),
+    worktreeEntries,
   };
 }

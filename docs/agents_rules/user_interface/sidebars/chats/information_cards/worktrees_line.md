@@ -1,0 +1,22 @@
+# Past chats sidebar section: the worktrees line
+
+- Created: 14 October 2026
+- Last updated: 14 October 2026
+- Status: Maintained rules for agents and tools
+- Related framing: [Project instructions](../../../../../../AGENTS.md)
+- Related rules: [Glossary of Heidrun](../../../../glossary/index.md), [The summary of a chat](../chat_summary.md)
+- Related issue: [issue 386](https://github.com/heidrun-org/heidrun/issues/386)
+
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../../glossary/index.md).
+
+- The worktrees line is the fourth line of the summary of a chat. It starts with the icon `folder-symlink`, then the names of the first two worktrees where the coding agent worked, then "+" and how many more, as the files line does. A chat that used no worktree has no worktrees line.
+- The name of a worktree is the folder after `.claude/worktrees/` (Claude Code) or after `.codex/worktrees/` (Codex). The program reads it from the folders where the coding agent ran and from the paths of the files that the coding agent wrote. The name is shown as it is, including the names of four letters and digits that Codex makes, for example `c41f`. The main checkout is not a worktree, so a chat that ran only in the main checkout has no worktrees line. The program does not use `git worktree list`, because most worktrees no longer exist when the chat is read. A worktree name that contains a slash, for example `codex/documentation-experiment-375`, shows as its first folder, `codex`, after the worktree is removed.
+- The name of a worktree that no longer exists is followed by the small icon `slash-circle` (a circle with a slash, the sign of the empty set), so that the developer sees at once that the worktree is gone, without a pointer over the name. The name also has a title that says so. While the program has no answer yet, and when it cannot answer, a name has no icon. The program asks the Tauri command `chats_worktrees_exist` about the listed worktrees when the line appears.
+- The worktrees line has an information card, opened the same way as the information card of the files line: the whole line gets a background under the pointer, and a click on the line opens the information card. The names in the line are plain text: every action is in the information card. The information card has a title with the icon `folder-symlink` and the text "N worktrees", then one row for each worktree of the chat, not only the two of the line.
+- A row has an icon (`folder-symlink`, or `slash-circle` for a worktree that no longer exists), three lines, and three buttons. The first line is the name of the worktree in medium weight. The second line is in muted color: "Branch" and the current branch of the worktree, or "Detached head" when the worktree has no branch, or "No longer exists on this Mac" for a removed worktree. The third line is in muted color: the path of the folder of the worktree. A line that does not fit shows its beginning with an ellipsis, and scrolls to its end while the pointer is over the row.
+- The three buttons of a row, in this order: the button with the icon `window-plus` opens the folder of the worktree as a workspace named after the worktree, selects the new workspace with its first tab and its first pane, and closes the information card. The button with the icon `code-slash` opens the folder in VS Code through the Tauri command `chats_worktree_open_in_vscode`, which opens only a folder that exists and has `.claude/worktrees/` or `.codex/worktrees/` in its path. The button with the icon `folder2-open` shows the folder in the Finder. A failure of the last two buttons shows a toast. There is no button to open a terminal in a worktree, because a workspace already holds the panes, and there is no button to remove a worktree, because it destroys work.
+- Each time the information card opens, the program asks the Tauri command `chats_worktrees_branches` about every worktree of the chat. The answer lists the worktrees that exist, each with its current branch. The program reads the branch from the file `.git` of the folder (the line `gitdir: <folder>`) and from the file `HEAD` of that folder, without a Git process. The three buttons of a worktree that is not in the answer are disabled, with a title that says why. When the program cannot answer, the buttons stay on, as in the files card.
+
+## Background
+
+- The decisions of this file come from [issue 386](https://github.com/heidrun-org/heidrun/issues/386).

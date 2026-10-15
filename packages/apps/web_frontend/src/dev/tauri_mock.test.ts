@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { clearMocks } from '@tauri-apps/api/mocks';
 import { afterEach, describe, expect, it } from 'vitest';
+import type { AiCostItems } from '../lib/ai_cost';
+import type { PersonWorkItems } from '../lib/person_work';
 import type { SessionSnapshot } from '../lib/types';
 import { TauriMock } from './tauri_mock';
 import { TauriMockFixture } from './tauri_mock_fixture';
@@ -97,6 +99,39 @@ describe('TauriMock', () => {
 		).rejects.toThrow();
 	});
 
+	it('answers the cached forge command with the list of the open issues and the list of the open pull requests', async () => {
+		TauriMock.install();
+		const issues = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['issue', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(issues.map((issue: { number: number }) => issue.number)).toEqual([370, 366, 351]);
+		const pullRequests = JSON.parse(
+			await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args: ['pr', 'list', '--state', 'open', '--json', 'number,title,url'] }),
+		);
+		expect(pullRequests).toEqual([
+			expect.objectContaining({ number: 369, url: expect.stringContaining('/pull/369') }),
+			expect.objectContaining({ number: 365, url: expect.stringContaining('/pull/365') }),
+		]);
+	});
+
+	it('keeps, in the fake list of the cached forge command, the items that match the words author:, label:, and no:label of --search', async () => {
+		TauriMock.install();
+		const numbersFor = async (tool: 'issue' | 'pr', search: string): Promise<number[]> => {
+			const args = [tool, 'list', '--state', 'open', '--search', search, '--json', 'number'];
+			const items = JSON.parse(await invoke<string>('forge_cli_cached', { cwd: '/x', tool: 'gh', args }));
+			return items.map((item: { number: number }) => item.number);
+		};
+		expect(await numbersFor('issue', 'author:@me')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'author:erictang')).toEqual([366]);
+		expect(await numbersFor('issue', '-author:erictang')).toEqual([370, 351]);
+		expect(await numbersFor('issue', 'label:bug')).toEqual([351]);
+		expect(await numbersFor('issue', 'label:"Simple Work" -label:bug')).toEqual([370]);
+		expect(await numbersFor('issue', 'no:label')).toEqual([366]);
+		expect(await numbersFor('issue', 'mentions:@me')).toEqual([370, 366, 351]);
+		expect(await numbersFor('pr', 'author:erictang')).toEqual([365]);
+		expect(await numbersFor('pr', 'label:bug')).toEqual([]);
+	});
+
 	it('keeps a translation table of the clustered dynamic topics, and answers a fake coding agent that groups by the first four letters', async () => {
 		TauriMock.install();
 		expect(await invoke('topic_clusters_read')).toEqual({});
@@ -148,6 +183,17 @@ describe('TauriMock', () => {
 			[false, false],
 			[true, false],
 		]);
+		expect(
+			await invoke('chats_worktrees_exist', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual(['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35']);
+		expect(
+			await invoke('chats_worktrees_branches', {
+				folders: ['/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', '/Users/demo/webwork/heidrun/.claude/worktrees/removed-36'],
+			}),
+		).toEqual([{ folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35', branch: 'fix-35' }]);
+		expect(await invoke('chats_worktree_open_in_vscode', { folder: '/Users/demo/webwork/heidrun/.claude/worktrees/fix-35' })).toBeNull();
 		expect(await invoke('file_open_external', { root: '/Users/demo/webwork/heidrun', path: 'docs/a.md' })).toBeNull();
 	});
 
@@ -192,5 +238,90 @@ describe('TauriMockFixture', () => {
 		const snapshot = TauriMockFixture.buildSnapshot();
 		const statusList = snapshot.panes.map((paneInfo) => paneInfo.agent_status).sort();
 		expect(statusList).toEqual(['blocked', 'done', 'idle', 'working']);
+	});
+});
+
+describe('TauriMock user activity', () => {
+	afterEach(() => {
+		clearMocks();
+		delete tauriWindow.__TAURI_INTERNALS__;
+	});
+
+	it('answers the Tauri command user_activity_records_in_range with fake active periods of the last week that end before the end of the range', async () => {
+		TauriMock.install();
+		const until = Date.now();
+		const records = await invoke<{ workspaceFolder: string; startedAt: string; endedAt: string }[]>('user_activity_records_in_range', {
+			since: new Date(until - 7 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(records.length).toBeGreaterThan(30);
+		for (const record of records) {
+			expect(Date.parse(record.startedAt)).toBeLessThan(Date.parse(record.endedAt));
+			expect(Date.parse(record.endedAt)).toBeLessThanOrEqual(until);
+			expect(Date.parse(record.startedAt)).toBeGreaterThanOrEqual(until - 7 * 86_400_000);
+		}
+		const startedAtList = records.map((record) => Date.parse(record.startedAt));
+		expect(startedAtList).toEqual([...startedAtList].sort((first, second) => first - second));
+	});
+
+	it('gives the fake active periods to three workspace folders, so that the histogram has workspaces to choose', async () => {
+		TauriMock.install();
+		const until = Date.now();
+		const records = await invoke<{ workspaceFolder: string }[]>('user_activity_records_in_range', {
+			since: new Date(until - 7 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(new Set(records.map((record) => record.workspaceFolder)).size).toBe(3);
+		expect(records.filter((record) => record.workspaceFolder === '/Users/demo/webwork/heidrun').length).toBeGreaterThan(
+			records.filter((record) => record.workspaceFolder === '/Users/demo/webwork/website').length,
+		);
+	});
+});
+
+describe('TauriMock work of one person', () => {
+	afterEach(() => {
+		clearMocks();
+		delete tauriWindow.__TAURI_INTERNALS__;
+	});
+
+	it('answers the Tauri command person_work_in_range with the fake work of two people in the last 30 days', async () => {
+		TauriMock.install();
+		const until = new Date(2026, 9, 15).getTime();
+		const items = await invoke<PersonWorkItems>('person_work_in_range', {
+			folder: '/Users/demo/webwork/heidrun',
+			since: new Date(until - 30 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(items.repository).toBe('heidrun-org/heidrun');
+		expect(items.codeHostingError).toBeNull();
+		expect(new Set(items.commits.map((commit) => commit.authorName))).toEqual(new Set(['Jérôme Étienne', 'Eric']));
+		expect(items.pullRequests.length).toBeGreaterThan(10);
+		expect(items.issues.length).toBeGreaterThan(3);
+		for (const time of [...items.commits.map((commit) => commit.committedAt), ...items.pullRequests.map((item) => item.createdAt)]) {
+			expect(Date.parse(time)).toBeLessThan(until);
+			expect(Date.parse(time)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
+		}
+	});
+
+	it('answers the Tauri command ai_cost_in_range with the fake chats of Claude Code and of Codex in the last 30 days', async () => {
+		TauriMock.install();
+		const until = new Date(2026, 9, 15).getTime();
+		const items = await invoke<AiCostItems>('ai_cost_in_range', {
+			folder: '/Users/demo/webwork/heidrun',
+			since: new Date(until - 30 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(new Set(items.chats.map((chat) => chat.codingAgent))).toEqual(new Set(['claude', 'codex']));
+		expect(items.chats.filter((chat) => chat.hours.every((hour) => hour.costUsd === null))).toHaveLength(1);
+		expect(items.chats.length).toBeGreaterThan(60);
+		const longChats = items.chats.filter((chat) => {
+			const days = new Set(chat.hours.map((hour) => new Date(hour.at).toDateString()));
+			return days.size > 1;
+		});
+		expect(longChats.length).toBeGreaterThan(3);
+		for (const hour of items.chats.flatMap((chat) => chat.hours)) {
+			expect(Date.parse(hour.at)).toBeLessThan(until);
+			expect(Date.parse(hour.at)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
+		}
 	});
 });

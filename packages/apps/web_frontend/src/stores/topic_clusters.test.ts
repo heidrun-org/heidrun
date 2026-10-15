@@ -79,6 +79,17 @@ describe("prepareTopicClusters", () => {
     expect(topicClusterTable.value.size).toBe(0);
   });
 
+  it("makes no call, and reads nothing, when the option Dynamic topics is off, even when the option Clustered dynamic topics is on", async () => {
+    installBackend({}, answerWith((topic) => topic));
+    const { settings, prepareTopicClusters, topicClusterTable } = await startRun(true);
+    settings.dynamicTopics = false;
+    await prepareTopicClusters(["panel", "tab"]);
+    for (const command of ["topic_clusters_read", "topic_clusters_write", "coding_agent_ask"]) {
+      expect(callsOf(command)).toBe(0);
+    }
+    expect(topicClusterTable.value.size).toBe(0);
+  });
+
   it("makes one single call for all the new raw dynamic topics, and saves the answer on the disk", async () => {
     const backend = installBackend({}, answerWith((topic) => (topic === "tab" ? "tab" : "sidebar")));
     const { prepareTopicClusters, topicClusterTable, topicClusterStatus } = await startRun(true);

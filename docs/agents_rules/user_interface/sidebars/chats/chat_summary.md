@@ -1,18 +1,21 @@
-# Chats sidebar section: the summary of a chat
+# Past chats sidebar section: the summary of a chat
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../glossary.md)
+- Related rules: [Glossary of Heidrun](../../../glossary/index.md)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../../glossary.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../glossary/index.md).
 
-- Under the title, each chat shows a summary in muted color, in up to three lines. A line has no indent: its icon starts at the same place as the first letter of the title. A line that has nothing to say is left out. Each line starts with a small icon.
+- Under the title, each chat shows a summary in muted color, in up to four lines. A line has no indent: its icon starts at the same place as the first letter of the title. A line that has nothing to say is left out. Each line starts with a small icon.
   1. The clock icon, then the first and the last date, then the number of messages from the developer.
   2. The icon of the forge of the repository (GitHub or GitLab, else the Git icon), then the issue numbers, then the pull request numbers. A list of numbers shows the first three, then "+" and how many more.
   3. The file icon, then the names of the first two files that the coding agent wrote, then "+" and how many more. This line is the files line.
-  The folders where the coding agent ran are found and kept, but the summary does not show them yet.
+  4. The icon `folder-symlink`, then the names of the first two worktrees where the coding agent worked, then "+" and how many more. This line is the worktrees line.
+- The worktrees line, how the program finds the worktrees, and the information card of the line are in [information_cards/worktrees_line.md](information_cards/worktrees_line.md).
 - Every information card of a chat is 34 rem wide, and narrower when the window leaves less room at the left of its part. A list in an information card that is taller than half of the window scrolls, with the scroll bar of the section "Scroll bars".
 - The program finds the summary without a model, by reading the file of the chat: the dates come from the `timestamp` field of the records, the messages from the records that the developer typed (the program also keeps the text of the first three, on one line, cut to 300 characters), and the files from the Write, Edit, MultiEdit, and NotebookEdit tools of Claude and from the patches of Codex. A pull request number comes from the `pr-link` records of Claude, from addresses that end with `/pull/<number>`, and from the words "pull request" or "PR" before a number. An issue number comes from addresses that end with `/issues/<number>`, from the word "issue" before a number, from `gh` commands, and from a bare `#<number>` in a message of the developer or in a commit command. A number that is a pull request is never an issue.
-- The program keeps what it read in each file in the file `chats_cache.json`, in the data folder of Heidrun. It reads a file again only when the size or the modification date of the file changes. A file that only grew is read from the place where the last read stopped, so a long chat that is still running costs little.
+- The program also reads the tokens of each chat in the same read, without a model, and keeps them for each model, because each model has its own price. Claude Code writes the usage of an answer on several lines that share one identifier, and a resumed chat writes the earlier answers again: each answer counts once, with the largest usage of its lines. Codex writes the usage of each request in a record `token_count` with a running total: the program adds the usage of the last request each time that the total changes, so a chat that Codex forked from another chat does not count the tokens that it inherited, and it gives the tokens to the model of the turn. The tokens of a request with no known model have no price, so the chat shows no cost.
+- The program turns the tokens into money with the public price of each model: the price of an input token, of an input token read from the cache, of an input token written to the cache, and of an output token. The prices come from the public price list of the project LiteLLM, only for the providers `anthropic` and `openai`. The program keeps them in the file `model_prices.json`, in the data folder of Heidrun, and fetches the list again in the background when the file is missing or more than one day old, and not more than once an hour. When the fetch fails, the program keeps the last table. A model whose name ends with a date finds the price of the same name without the date. The cost of a chat is the sum over its models, and it is missing when one model has no price. The cost is an estimate: neither coding agent writes the cost in money in its files.
+- The program keeps what it read in each file in the file `chats_cache.json`, in the data folder of Heidrun. It reads a file again only when the size or the modification date of the file changes. A file that only grew is read from the place where the last read stopped, so a long chat that is still running costs little. The cache holds the tokens too, for each model and for each hour of the request, in UTC: the hours are for the source "AI cost" of the Statistics window ([statistics_ai_cost.md](../../window/statistics_ai_cost.md)). A cache with an older version is thrown away and read again.

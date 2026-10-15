@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import DialogCloseButton from "./DialogCloseButton.vue";
 import Icon from "./Icon.vue";
 import { askConfirm } from "../stores/confirm";
 import { currentProject } from "../stores/project";
@@ -108,8 +109,8 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
   <div class="overlay" @mousedown.self="close">
     <dialog class="dialog dialog-instant dialog-nonmodal" open aria-labelledby="macro-editor-title">
       <div class="dialog-header">
-        <div id="macro-editor-title" class="dialog-title" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
-        <button type="button" class="btn-close" :aria-label="t('macroEditor.close')" :title="t('macroEditor.close')" @click="close"></button>
+        <div id="macro-editor-title" class="dialog-title me-auto" role="heading" aria-level="2">{{ t("macroEditor.title") }}</div>
+        <DialogCloseButton :title="t('macroEditor.close')" :label="t('macroEditor.close')" @click="close" />
       </div>
 
       <div class="dialog-body">

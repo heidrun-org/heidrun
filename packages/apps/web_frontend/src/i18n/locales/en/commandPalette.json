@@ -11,7 +11,7 @@
   "section.pin": "Pinned panes",
   "unpin": "Unpin the pane {pane}",
   "pin": "Pin the pane {pane}",
-  "section.projectActions": "Project scripts",
+  "section.projectLaunchers": "Project launchers",
   "section.terminals": "Terminals",
   "newAgent": "New agent (Claude, Codex, project agents)…",
   "newTerminal": "New terminal",
@@ -29,6 +29,7 @@
   "openFile": "Open a project file…",
   "section.help": "Help",
   "shortcuts": "Keyboard and mouse shortcuts",
+  "threeJsDemo": "Three.js demo (WebGL)…",
   "section.display": "Display",
   "mobile": "Mobile access (iPhone, iPad)…",
   "installedSkill": "Installed skill (inspect, delete)…",
@@ -52,7 +53,7 @@
   "font": "Font: {font}",
   "dialogLabel": "Command palette",
   "inputLabel": "Command or search",
-  "placeholder": "Type a command, an agent, a script…",
+  "placeholder": "Type a command, an agent, a launcher…",
   "runTitle": "Run this command",
   "agents": "Agents (coding agents you can use)…"
 }

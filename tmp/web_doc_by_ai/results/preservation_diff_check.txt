@@ -1,0 +1,689 @@
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:6: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:8: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:16: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:28: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:31: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:33: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:64: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:98: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:109: space before tab in indent.
++ 	prompt: string;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:110: space before tab in indent.
++ 	/** The coding agent to run: `claude` runs `claude -p`, and `codex` runs `codex exec`. */
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:111: space before tab in indent.
++ 	agentName: RawCodingAgentName;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:137: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:140: space before tab in indent.
++ 	 * message of the error contains the standard error output of the command.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:141: space before tab in indent.
++ 	 */
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:142: space before tab in indent.
++ 	static async run(options: RawCodingAgentRunOptions): Promise<string> {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:154: space before tab in indent.
++ 		return answer;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:155: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:156: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:158: space before tab in indent.
++ 	/**
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:159: space before tab in indent.
++ 	 * Gives the command and the arguments that run one coding agent with a prompt on the standard input.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:160: space before tab in indent.
++ 	 * The flag `--skip-git-repo-check` lets `codex exec` run outside of a trusted Git repository.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:167: space before tab in indent.
++ 	 * @returns The command and the arguments.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:168: space before tab in indent.
++ 	 */
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:191: space before tab in indent.
++ 			return {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:192: space before tab in indent.
++ 				command: 'claude',
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:195: space before tab in indent.
++ 			};
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:196: space before tab in indent.
++ 		}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:208: space before tab in indent.
++ 		return {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:209: space before tab in indent.
++ 			command: 'codex',
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:212: space before tab in indent.
++ 		};
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:213: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:214: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:216: space before tab in indent.
++ 	 * standard error output until the command exits.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:217: space before tab in indent.
++ 	 * @param commandLine The command and the arguments to run.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:218: space before tab in indent.
++ 	 * @param prompt The text to write on the standard input of the command.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:223: space before tab in indent.
++ 	 * @returns The standard output of the command, without the spaces and the line breaks at the start and at the
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:224: space before tab in indent.
++ 	 * end.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:225: space before tab in indent.
++ 	 */
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:234: space before tab in indent.
++ 		return new Promise((resolve, reject) => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:235: space before tab in indent.
++ 			const childProcess = ChildProcess.spawn(commandLine.command, commandLine.args, {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:237: space before tab in indent.
++ 				stdio: ['pipe', 'pipe', 'pipe'],
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:238: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:239: space before tab in indent.
++ 			let stdoutStr = '';
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:240: space before tab in indent.
++ 			let stderrStr = '';
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:243: space before tab in indent.
++ 			childProcess.stdout.setEncoding('utf8');
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:244: space before tab in indent.
++ 			childProcess.stderr.setEncoding('utf8');
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:245: space before tab in indent.
++ 			childProcess.stdout.on('data', (chunk: string) => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:246: space before tab in indent.
++ 				stdoutStr += chunk;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:260: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:261: space before tab in indent.
++ 			childProcess.stderr.on('data', (chunk: string) => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:262: space before tab in indent.
++ 				stderrStr += chunk;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:271: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:272: space before tab in indent.
++ 			childProcess.stdin.on('error', () => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:273: space before tab in indent.
++ 				// The command can exit before it reads the whole prompt. The event 'close' reports the exit code.
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:275: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:276: space before tab in indent.
++ 			childProcess.on('close', (exitCode, signal) => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:277: space before tab in indent.
++ 				if (exitCode === 0) {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:280: space before tab in indent.
++ 					return;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:281: space before tab in indent.
++ 				}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:282: space before tab in indent.
++ 				const reasonStr = signal === null ? `exit code ${exitCode}` : `signal ${signal}`;
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:284: space before tab in indent.
++ 			childProcess.stdin.end(prompt);
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:285: space before tab in indent.
++ 		});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:286: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:348: space before tab in indent.
++ 			expect(answer).toBe('arguments:exec --skip-git-repo-check -\nstandard input:the prompt text');
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:349: space before tab in indent.
++ 		});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:350: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:446: space before tab in indent.
++ 		it('sends a prompt larger than the limit of the command line', async () => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:447: space before tab in indent.
++ 			const prompt = 'x'.repeat(2_000_000);
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:448: space before tab in indent.
++ 			const answer = await RawCodingAgent.run({
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:454: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:460: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:469: space before tab in indent.
++ 					{ text: 'Keyboard shortcuts', link: '/documentation/shortcuts' },
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:470: space before tab in indent.
++ 				],
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:471: space before tab in indent.
++ 			},
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:493: space before tab in indent.
++ 		],
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:494: space before tab in indent.
++ 		socialLinks: [
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:495: space before tab in indent.
++ 			{ icon: 'github', link: 'https://github.com/heidrun-org/heidrun' },
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:502: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:506: space before tab in indent.
++ 		const names = pages.map((page) => Path.relative(SiteFiles.docsDir, page)).sort();
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:514: space before tab in indent.
++ 	});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:515: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:516: space before tab in indent.
++ 	for (const page of pages) {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:518: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:519: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:520: space before tab in indent.
++ 			it('has no relative link to a missing page', () => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:523: space before tab in indent.
++ 				for (const link of links) {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:524: space before tab in indent.
++ 					expect(SiteFiles.markdownFileOfLink(link), link).not.toBeNull();
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:525: space before tab in indent.
++ 				}
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:526: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:527: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:536: space before tab in indent.
++ 			it('has no tab character in the text', () => {
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:537: space before tab in indent.
++ 				expect(text.includes('\t')).toBe(false);
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:538: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:550: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:556: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:565: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_changes.patch:588: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/fresh_worktree_commits.txt:60: new blank line at EOF.
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:7: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:11: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:18: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:20: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:25: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:39: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:44: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:52: space before tab in indent.
++ 		],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:53: space before tab in indent.
++ 		sidebar: [
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:54: space before tab in indent.
++ 			{
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:57: space before tab in indent.
++ 				items: [
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:102: space before tab in indent.
++ 				],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:103: space before tab in indent.
++ 			},
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:104: space before tab in indent.
++ 		],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:117: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:124: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:128: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:133: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:159: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:171: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:179: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:184: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:186: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:200: space before tab in indent.
++ 				'Updates the user documentation of the website with a coding agent. Every run is a full check: the '
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:201: space before tab in indent.
++ 					+ 'coding agent compares all the documentation with all the current rules and code. The commits '
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:202: space before tab in indent.
++ 					+ 'since the last documented commit (the file .last_documented_commit) only say which sections to '
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:209: space before tab in indent.
++ 			)
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:210: space before tab in indent.
++ 			.option(
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:211: space before tab in indent.
++ 				'--agent <name>',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:213: space before tab in indent.
++ 				'The effort level of the coding agent, for example "low", "medium", or "high". (default: the effort of '
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:214: space before tab in indent.
++ 					+ 'the settings of the coding agent)',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:215: space before tab in indent.
++ 			)
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:220: space before tab in indent.
++ 			.option(
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:221: space before tab in indent.
++ 				'--only <path...>',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:222: space before tab in indent.
++ 				'Limit the run to the features of these rule files (paths relative to the root of the repository). '
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:224: space before tab in indent.
++ 				'after',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:225: space before tab in indent.
++ 				`
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:236: space before tab in indent.
++ 			);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:237: space before tab in indent.
++ 		program.parse(argv);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:247: space before tab in indent.
++ 		try {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:248: space before tab in indent.
++ 			const result = await DocumentationUpdate.run({
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:249: space before tab in indent.
++ 				repositoryPath: ChangeLogGit.findRepositoryPath(process.cwd()),
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:251: space before tab in indent.
++ 				model: options.model,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:252: space before tab in indent.
++ 				effort: options.effort,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:253: space before tab in indent.
++ 				isDryRun: options.dryRun === true,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:255: space before tab in indent.
++ 				onlyRuleFiles: options.only ?? [],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:256: space before tab in indent.
++ 				onStep: (message: string) => {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:257: space before tab in indent.
++ 					process.stderr.write(`${message}\n`);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:259: space before tab in indent.
++ 					: undefined,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:260: space before tab in indent.
++ 			});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:261: space before tab in indent.
++ 			process.stdout.write(`${result.report}\n`);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:268: space before tab in indent.
++ 		} catch (error) {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:269: space before tab in indent.
++ 			const message = error instanceof Error ? error.message : String(error);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:270: space before tab in indent.
++ 			process.stderr.write(`Error: ${message}\n`);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:276: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:283: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:293: space before tab in indent.
++ 	/**
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:295: space before tab in indent.
++ 		return DocumentationGit._git(repositoryPath, ['status', '--short']).trimEnd();
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:296: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:297: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:370: space before tab in indent.
++ 	///////////////////////////////////////////////////////////////////////////////
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:371: space before tab in indent.
++ 	///////////////////////////////////////////////////////////////////////////////
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:372: space before tab in indent.
++ 	//	Helpers
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:378: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:380: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:383: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:385: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:387: space before tab in indent.
++ 		const contextText = /* markdown */ `
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:389: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:393: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:396: space before tab in indent.
++ 		const styleText = /* markdown */ `
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:398: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:420: space before tab in indent.
++ 		return styleText.trim();
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:421: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:427: space before tab in indent.
++ 	effort?: string;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:428: space before tab in indent.
++ 	/** When true, the command only prints the hints and the prompt, and changes nothing. */
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:429: space before tab in indent.
++ 	isDryRun: boolean;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:432: space before tab in indent.
++ 	/**
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:433: space before tab in indent.
++ 	 * The rule files that limit the run, relative to the root of the repository. When the list is empty, the run is a
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:434: space before tab in indent.
++ 	 * full check. When it is not empty, the coding agent checks only the features of these rule files, and the
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:437: space before tab in indent.
++ 	/** The text that the command prints: the report and the outline, or the two prompts in a dry run. */
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:438: space before tab in indent.
++ 	report: string;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:449: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:456: space before tab in indent.
++ 	/** The coding agent that the command uses when the option `--agent` is missing. */
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:458: space before tab in indent.
++ 	/**
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:459: space before tab in indent.
++ 	 * Runs the update.
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:460: space before tab in indent.
++ 	 * @param options The folder of the repository, the coding agent, and the choices of the developer.
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:465: space before tab in indent.
++ 	 * `HEAD`, when the coding agent fails, when a test fails, or when the build fails.
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:466: space before tab in indent.
++ 	 */
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:467: space before tab in indent.
++ 	static async run(options: DocumentationUpdateOptions): Promise<DocumentationUpdateResult> {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:469: space before tab in indent.
++ 			);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:470: space before tab in indent.
++ 			return {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:471: space before tab in indent.
++ 				report: `# Pass 1: the outline prompt\n\n${outlinePrompt}\n\n# Pass 2: the writing prompt\n\n${writingPrompt}`,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:474: space before tab in indent.
++ 			};
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:475: space before tab in indent.
++ 		}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:491: space before tab in indent.
++ 		const onStep = options.onStep ?? (() => {});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:492: space before tab in indent.
++ 		const modelText = `model ${options.model ?? 'from its settings'}, effort ${options.effort ?? 'from its settings'}`;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:495: space before tab in indent.
++ 		const outline = await DocumentationUpdate._runAgentWithHeartbeat(options, outlinePrompt, false, onStep);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:498: space before tab in indent.
++ 		const writingPrompt = DocumentationPrompt.buildWriting(hints, options.onlyRuleFiles, outline);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:499: space before tab in indent.
++ 		const agentAnswer = await DocumentationUpdate._runAgentWithHeartbeat(options, writingPrompt, true, onStep);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:500: space before tab in indent.
++ 		const agentReport = `${agentAnswer.trim()}\n\n<details>\n<summary>The outline of the first pass</summary>\n\n${outline.trim()}\n\n</details>`;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:503: space before tab in indent.
++ 		if (options.onlyRuleFiles.length === 0) {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:504: space before tab in indent.
++ 			DocumentationGit.writeLastDocumentedCommit(repositoryPath, hints.currentCommit);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:505: space before tab in indent.
++ 		}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:507: space before tab in indent.
++ 		if (problems.length > 0) {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:508: space before tab in indent.
++ 			throw new Error(`The generated documentation breaks its rules:\n${problems.join('\n')}`);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:509: space before tab in indent.
++ 		}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:512: space before tab in indent.
++ 		const verifyFn = options.verifyFn ?? DocumentationUpdate._runPnpmVerification;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:513: space before tab in indent.
++ 		await verifyFn(repositoryPath);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:533: space before tab in indent.
++ 		return {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:534: space before tab in indent.
++ 			report: agentReport,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:537: space before tab in indent.
++ 		};
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:538: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:539: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:545: space before tab in indent.
++ 			repositoryPath,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:546: space before tab in indent.
++ 			agentName: 'claude',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:547: space before tab in indent.
++ 			isDryRun: true,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:549: space before tab in indent.
++ 			onlyRuleFiles: [],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:550: space before tab in indent.
++ 			runAgentFn: () => {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:551: space before tab in indent.
++ 				throw new Error('The coding agent must not run in a dry run.');
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:553: space before tab in indent.
++ 		expect(DocumentationGit.isWorkingTreeClean(repositoryPath)).toBe(true);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:554: space before tab in indent.
++ 	});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:555: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:558: space before tab in indent.
++ 		const repositoryPath = createRepository();
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:594: space before tab in indent.
++ 	});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:595: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:598: space before tab in indent.
++ 		const repositoryPath = createRepository();
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:599: space before tab in indent.
++ 		const currentCommit = DocumentationGit.findCurrentCommit(repositoryPath);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:600: space before tab in indent.
++ 		const result = await DocumentationUpdate.run({
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:601: space before tab in indent.
++ 			repositoryPath,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:602: space before tab in indent.
++ 			agentName: 'claude',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:603: space before tab in indent.
++ 			isDryRun: false,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:605: space before tab in indent.
++ 			onlyRuleFiles: [],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:606: space before tab in indent.
++ 			model: 'gpt-5-codex',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:607: space before tab in indent.
++ 			effort: 'high',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:609: space before tab in indent.
++ 		});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:610: space before tab in indent.
++ 		expect(modelsAndEfforts.slice(-2)).toEqual(['gpt-5-codex/high', 'gpt-5-codex/high']);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:611: space before tab in indent.
++ 		expect(prompts.at(-2)).toContain('In this pass you DO NOT edit any file');
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:614: space before tab in indent.
++ 		expect(prompts.at(-1)).toContain(OUTLINE);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:615: space before tab in indent.
++ 		expect(result.report).toContain(REPORT);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:616: space before tab in indent.
++ 		expect(result.report).toContain('<summary>The outline of the first pass</summary>');
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:623: space before tab in indent.
++ 		expect(DocumentationGit.readLastDocumentedCommit(repositoryPath)).toBe(currentCommit);
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:626: space before tab in indent.
++ 	});
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:627: trailing whitespace.
++ 
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:628: space before tab in indent.
++ 	it('fails and makes no branch when the coding agent breaks a rule of the pages', async () => {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:630: space before tab in indent.
++ 			repositoryPath,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:631: space before tab in indent.
++ 			agentName: 'claude',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:632: space before tab in indent.
++ 			isDryRun: false,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:634: space before tab in indent.
++ 			onlyRuleFiles: [],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:635: space before tab in indent.
++ 			runAgentFn: async () => {
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:636: space before tab in indent.
++ 				return REPORT;
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:638: space before tab in indent.
++ 			repositoryPath,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:639: space before tab in indent.
++ 			agentName: 'claude',
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:640: space before tab in indent.
++ 			isDryRun: false,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:642: space before tab in indent.
++ 			onlyRuleFiles: [],
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:643: space before tab in indent.
++ 			runAgentFn: writeGoodPage,
+tmp/web_doc_by_ai/history/original_worktree_changes.patch:644: space before tab in indent.
++ 			verifyFn: async () => {},
+tmp/web_doc_by_ai/history/original_worktree_commits.txt:60: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/best/prompt_proposal.patch:4: space before tab in indent.
++ 		const styleText = /* markdown */ `
+tmp/web_doc_by_ai/results/documentation_learning/best/prompt_proposal.patch:6: trailing whitespace.
++ 
+tmp/web_doc_by_ai/results/documentation_learning/best/prompt_proposal.patch:28: space before tab in indent.
++ 		return styleText.trim();
+tmp/web_doc_by_ai/results/documentation_learning/best/prompt_proposal.patch:29: space before tab in indent.
++ 	}
+tmp/web_doc_by_ai/results/documentation_learning/comparison/luna_high/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/comparison/luna_high_repeat/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/comparison/luna_medium/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/comparison/sol_high/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/comparison/sol_medium/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/final_repair/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/round_1/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/round_2/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/documentation_learning/round_3/website_test.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/results/judge_calibration/revised1/prompt.md:332: trailing whitespace.
++A folder row has no path-copy context menu. 
+tmp/web_doc_by_ai/results/judge_calibration/rubric_version2.md:44: new blank line at EOF.
+tmp/web_doc_by_ai/results/judge_calibration/run1/prompt.md:319: trailing whitespace.
++A folder row has no path-copy context menu. 
+tmp/web_doc_by_ai/results/judge_calibration/run2/prompt.md:496: trailing whitespace.
++A folder row has no path-copy context menu. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:55: trailing whitespace.
++							54 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:58: trailing whitespace.
++							57 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:67: trailing whitespace.
++							66 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:70: trailing whitespace.
++							69 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:75: trailing whitespace.
++							74 AXListMarker 3. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:77: trailing whitespace.
++					76 text The file row becomes selected, and the large Git window opens over the application to show the file. Use 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:79: trailing whitespace.
++					78 text  to view the whole file, or 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:81: trailing whitespace.
++					80 text  or 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:83: trailing whitespace.
++					82 text  to compare changes. For an unchanged file, 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:85: trailing whitespace.
++					84 text  and 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:87: trailing whitespace.
++					86 text  are disabled; the whole file is shown, or formatted Markdown if 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:89: trailing whitespace.
++					88 text  is selected. When finished viewing, you can press 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:91: trailing whitespace.
++					90 text  or click 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:97: trailing whitespace.
++					96 text Use 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:102: trailing whitespace.
++							101 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:105: trailing whitespace.
++							104 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:120: trailing whitespace.
++							119 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:134: trailing whitespace.
++							133 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:148: trailing whitespace.
++							147 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:152: trailing whitespace.
++							151 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:156: trailing whitespace.
++							155 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/browse_project_files.html.txt:160: trailing whitespace.
++							159 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:52: trailing whitespace.
++					51 text For a workspace folder at 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:54: trailing whitespace.
++					53 text , these are the two forms of the path to 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:82: trailing whitespace.
++					81 text First, 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:87: trailing whitespace.
++							86 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:90: trailing whitespace.
++							89 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:95: trailing whitespace.
++							94 AXListMarker 3. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:97: trailing whitespace.
++					96 text The path is copied, the context menu closes, and a small notification briefly shows 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:99: trailing whitespace.
++					98 text  followed by the copied path, for example 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:104: trailing whitespace.
++							103 AXListMarker 4. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:118: trailing whitespace.
++							117 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:121: trailing whitespace.
++							120 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:124: trailing whitespace.
++					123 text : The context menu shows 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:126: trailing whitespace.
++					125 text  and 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:134: trailing whitespace.
++							133 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:138: trailing whitespace.
++							137 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/copy_a_file_path.html.txt:142: trailing whitespace.
++							141 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:52: trailing whitespace.
++					51 text First, 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:57: trailing whitespace.
++							56 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:74: trailing whitespace.
++								73 text Click the file row, then press 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:81: trailing whitespace.
++								80 text If needed, click 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:90: trailing whitespace.
++							89 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:93: trailing whitespace.
++							92 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:98: trailing whitespace.
++							97 AXListMarker 3. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:100: trailing whitespace.
++					99 text The new empty file or folder becomes the selected row. A new file also opens in the 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:108: trailing whitespace.
++							107 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:123: trailing whitespace.
++							122 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:126: trailing whitespace.
++							125 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:134: trailing whitespace.
++					133 text : The entered name contains 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:141: trailing whitespace.
++							140 AXListMarker 1. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:144: trailing whitespace.
++							143 AXListMarker 2. 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:153: trailing whitespace.
++							152 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:157: trailing whitespace.
++							156 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/create_a_file_or_folder.html.txt:161: trailing whitespace.
++							160 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:133: trailing whitespace.
++								132 text Press 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:140: trailing whitespace.
++								139 text Press 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:164: trailing whitespace.
++								163 text , 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:166: trailing whitespace.
++								165 text , 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:177: trailing whitespace.
++								176 text , 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:188: trailing whitespace.
++								187 text , 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:214: trailing whitespace.
++					213 text See 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:300: trailing whitespace.
++					299 text The Files window is the project file browser opened with 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:302: trailing whitespace.
++					301 text , as listed in 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:304: trailing whitespace.
++					303 text . The 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:306: trailing whitespace.
++					305 text  checkbox is below the file-name search field in the 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:308: trailing whitespace.
++					307 text  view on the left of the Files window. The choice is saved and also affects the Files sidebar section. Folders excluded by 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:310: trailing whitespace.
++					309 text  appear when the checkbox is selected, but cannot unfold. See 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:312: trailing whitespace.
++					311 text  for empty-folder behaviour and 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:320: trailing whitespace.
++							319 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:324: trailing whitespace.
++							323 AXListMarker • 
+tmp/web_doc_by_ai/results/live_files_verification/files_sidebar_section_controls.html.txt:328: trailing whitespace.
++							327 AXListMarker • 
+tmp/web_doc_by_ai/results/parked_folder_check/judge_tests.txt:10: new blank line at EOF.
+tmp/web_doc_by_ai/results/parked_folder_check/website_tests.txt:20: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/sidebars/sidebars.md:33: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/sidebars/source_control.md:25: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/window/colors_and_scroll_bars.md:29: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/window/layout.md:48: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/window/status_bar.md:29: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md:33: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md:23: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md:22: new blank line at EOF.
+tmp/web_doc_by_ai/workspace/docs/release_notes/prefix.md:11: new blank line at EOF.

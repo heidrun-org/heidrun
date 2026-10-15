@@ -9,6 +9,11 @@
 //!   file on the forge exists. The default branch is `refs/remotes/origin/HEAD`. A repository without it uses `HEAD`.
 //!
 //! The check of the remote is local and offline: it reads the objects of the repository with `git cat-file`.
+//!
+//! The command `chats_worktrees_exist` tells which folders of the worktrees that a chat named still exist, so that the
+//! worktrees line of the summary of the chat marks a worktree that was removed. The command `chats_worktrees_branches`
+//! adds the current branch of each worktree that exists, for the information card of the worktrees line. The command
+//! `chats_worktree_open_in_vscode` opens the folder of one worktree in VS Code.
 
 use serde::Serialize;
 use std::io::Write;
@@ -34,6 +39,83 @@ pub async fn chats_files_exist(folder: String, paths: Vec<String>) -> Result<Vec
     tauri::async_runtime::spawn_blocking(move || check(&crate::project::find_root(Path::new(&folder)), &paths))
         .await
         .map_err(|e| e.to_string())
+}
+
+/// The folders among `folders` that exist on the disk. A folder that is not an absolute path does not exist. The answer keeps
+/// the order of the caller.
+#[tauri::command]
+pub fn chats_worktrees_exist(folders: Vec<String>) -> Vec<String> {
+    existing_folders(&folders)
+}
+
+/// One worktree folder that exists, with the branch that it has checked out.
+#[derive(Serialize, Debug, PartialEq)]
+pub struct WorktreeBranch {
+    /// The folder, as the caller gave it.
+    pub folder: String,
+    /// The current branch, or None when the head of the worktree is detached or cannot be read.
+    pub branch: Option<String>,
+}
+
+/// For each folder among `folders` that exists, the current branch of the worktree. A folder that does not exist is left
+/// out, so the caller knows that the worktree was removed. The answer keeps the order of the caller.
+#[tauri::command]
+pub fn chats_worktrees_branches(folders: Vec<String>) -> Vec<WorktreeBranch> {
+    existing_folders(&folders)
+        .into_iter()
+        .map(|folder| {
+            let branch = current_branch(Path::new(&folder));
+            WorktreeBranch { folder, branch }
+        })
+        .collect()
+}
+
+/// Opens the folder of one worktree in VS Code, or in the default application when VS Code is not installed. Only a folder
+/// that exists and sits in a worktree of Claude (`.claude/worktrees/`) or of Codex (`.codex/worktrees/`) opens.
+#[tauri::command(async)]
+pub fn chats_worktree_open_in_vscode(folder: String) -> Result<(), String> {
+    if !is_worktree_folder(&folder) {
+        return Err("This folder is not a worktree that exists.".to_string());
+    }
+    let vscode = Command::new("open").arg("-a").arg("Visual Studio Code").arg(&folder).status();
+    if matches!(vscode, Ok(status) if status.success()) {
+        return Ok(());
+    }
+    match Command::new("open").arg(&folder).status() {
+        Ok(status) if status.success() => Ok(()),
+        _ => Err("The folder cannot be opened.".to_string()),
+    }
+}
+
+/// True for an absolute path of a folder that exists and has `.claude/worktrees/` or `.codex/worktrees/` in its path.
+fn is_worktree_folder(folder: &str) -> bool {
+    let path = Path::new(folder);
+    let is_in_worktrees = folder.contains("/.claude/worktrees/") || folder.contains("/.codex/worktrees/");
+    is_in_worktrees && path.is_absolute() && path.is_dir() && path.components().all(|part| part != Component::ParentDir)
+}
+
+/// The branch that the worktree in `folder` has checked out. The folder of a worktree holds a file `.git` with the line
+/// `gitdir: <folder of the worktree inside the repository>`, and the main checkout holds a folder `.git`. The file `HEAD`
+/// of that folder says `ref: refs/heads/<branch>`, or a commit when the head is detached.
+fn current_branch(folder: &Path) -> Option<String> {
+    let dot_git = folder.join(".git");
+    let git_folder = if dot_git.is_dir() {
+        dot_git
+    } else {
+        let text = std::fs::read_to_string(&dot_git).ok()?;
+        let target = Path::new(text.trim().strip_prefix("gitdir:")?.trim());
+        if target.is_absolute() { target.to_path_buf() } else { folder.join(target) }
+    };
+    let head = std::fs::read_to_string(git_folder.join("HEAD")).ok()?;
+    head.trim().strip_prefix("ref: refs/heads/").map(str::to_string)
+}
+
+fn existing_folders(folders: &[String]) -> Vec<String> {
+    folders
+        .iter()
+        .filter(|folder| Path::new(folder.as_str()).is_absolute() && Path::new(folder.as_str()).is_dir())
+        .cloned()
+        .collect()
 }
 
 fn check(root: &Path, paths: &[String]) -> Vec<FileExistence> {
@@ -240,6 +322,96 @@ mod tests {
     fn answers_for_an_empty_list() {
         let root = repository("empty");
         assert!(check(&root, &[]).is_empty());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn keeps_the_folders_that_exist_in_the_order_of_the_caller() {
+        let root = scratch("worktrees");
+        std::fs::create_dir_all(root.join("one")).unwrap();
+        std::fs::create_dir_all(root.join("two")).unwrap();
+        let wanted = vec![
+            root.join("two").to_string_lossy().to_string(),
+            root.join("gone").to_string_lossy().to_string(),
+            root.join("one").to_string_lossy().to_string(),
+        ];
+        let found = existing_folders(&wanted);
+        assert_eq!(found, vec![wanted[0].clone(), wanted[2].clone()]);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn does_not_count_a_file_or_a_relative_path_as_a_worktree_folder() {
+        let root = scratch("worktrees-file");
+        std::fs::write(root.join("a.txt"), "a").unwrap();
+        let file = root.join("a.txt").to_string_lossy().to_string();
+        assert!(existing_folders(&[file, "relative/folder".to_string(), String::new()]).is_empty());
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn reads_the_branch_of_a_worktree_from_its_git_file() {
+        let root = scratch("branch-worktree");
+        let git_folder = root.join("repository/.git/worktrees/fix-35");
+        std::fs::create_dir_all(&git_folder).unwrap();
+        std::fs::write(git_folder.join("HEAD"), "ref: refs/heads/fix-tab-35\n").unwrap();
+        let worktree = root.join("repository/.claude/worktrees/fix-35");
+        std::fs::create_dir_all(&worktree).unwrap();
+        std::fs::write(worktree.join(".git"), format!("gitdir: {}\n", git_folder.display())).unwrap();
+        assert_eq!(current_branch(&worktree), Some("fix-tab-35".to_string()));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn reads_the_branch_of_a_checkout_that_has_a_git_folder_and_a_relative_git_file() {
+        let root = scratch("branch-checkout");
+        std::fs::create_dir_all(root.join("main/.git")).unwrap();
+        std::fs::write(root.join("main/.git/HEAD"), "ref: refs/heads/dev_jerome\n").unwrap();
+        assert_eq!(current_branch(&root.join("main")), Some("dev_jerome".to_string()));
+        std::fs::create_dir_all(root.join("linked")).unwrap();
+        std::fs::write(root.join("linked/.git"), "gitdir: ../main/.git\n").unwrap();
+        assert_eq!(current_branch(&root.join("linked")), Some("dev_jerome".to_string()));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn has_no_branch_for_a_detached_head_or_a_folder_without_git() {
+        let root = scratch("branch-none");
+        std::fs::create_dir_all(root.join("detached/.git")).unwrap();
+        std::fs::write(root.join("detached/.git/HEAD"), "0123456789abcdef0123456789abcdef01234567\n").unwrap();
+        assert_eq!(current_branch(&root.join("detached")), None);
+        std::fs::create_dir_all(root.join("plain")).unwrap();
+        assert_eq!(current_branch(&root.join("plain")), None);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn gives_the_branch_only_for_the_folders_that_exist() {
+        let root = scratch("branches-list");
+        std::fs::create_dir_all(root.join("one/.git")).unwrap();
+        std::fs::write(root.join("one/.git/HEAD"), "ref: refs/heads/one-branch\n").unwrap();
+        let one = root.join("one").to_string_lossy().to_string();
+        let gone = root.join("gone").to_string_lossy().to_string();
+        let found = chats_worktrees_branches(vec![gone, one.clone()]);
+        assert_eq!(found, vec![WorktreeBranch { folder: one, branch: Some("one-branch".to_string()) }]);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn opens_only_an_existing_folder_inside_a_worktrees_folder() {
+        let root = scratch("open-guard");
+        let claude = root.join(".claude/worktrees/fix-35");
+        let codex = root.join(".codex/worktrees/c41f/app");
+        let other = root.join("src");
+        for folder in [&claude, &codex, &other] {
+            std::fs::create_dir_all(folder).unwrap();
+        }
+        assert!(is_worktree_folder(&claude.to_string_lossy()));
+        assert!(is_worktree_folder(&codex.to_string_lossy()));
+        assert!(!is_worktree_folder(&other.to_string_lossy()));
+        assert!(!is_worktree_folder(&root.join(".claude/worktrees/removed").to_string_lossy()));
+        assert!(!is_worktree_folder(".claude/worktrees/fix-35"));
+        assert!(!is_worktree_folder(&format!("{}/../../src", claude.display())));
         let _ = std::fs::remove_dir_all(&root);
     }
 }

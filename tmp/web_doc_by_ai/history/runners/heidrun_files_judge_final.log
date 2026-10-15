@@ -1,0 +1,64 @@
+Judging 4 pages with the coding agent "claude" (model from its settings, effort from its settings).
+Bash ls -la packages/auxiliary/website_public/docs/public/documentation_images/ packages/auxiliary/website_public/docs/public/documentation_images/files && cat packages/auxiliary/website_public/docs/public/documentation_images/files/screenshots.json && cat docs/agents_rules/user_interface/sidebars/files.md
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/auxiliary/website_public/docs/public/documentation_images/files/files_sidebar.png
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/auxiliary/website_public/docs/public/documentation_images/files/copy_path.png
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/auxiliary/website_public/docs/public/documentation_images/files/new_file.png
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/auxiliary/website_public/docs/public/documentation_images/files/more_options.png
+Bash cat packages/apps/web_frontend/src/i18n/locales/en/filesPanel.json packages/apps/web_frontend/src/i18n/locales/en/filesModal.json; wc -l packages/apps/web_frontend/src/components/FilesPanel.vue packages/apps/web_frontend/src/components/FilesModal.vue packages/apps/web_frontend/src/stores/files.ts packages/apps/desktop_tauri/src/files.rs packages/apps/web_frontend/src/components/GitModal.vue packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue; ls packages/auxiliary/website_public/docs/documentation/; cat packages/auxiliary/website_public/docs/documentation/shortcuts.md | head -80
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/apps/web_frontend/src/components/FilesPanel.vue
+Bash grep -n "porte\|existe\|already\|fn file_create\|fn file_full_path\|50_000\|50000\|MAX\|truncated\|fn dirs_existing" packages/apps/desktop_tauri/src/files.rs | head -50; grep -n "fichier\|dossier" packages/apps/desktop_tauri/src/files.rs | head -30
+Bash cat packages/apps/web_frontend/src/i18n/locales/en/gitModal.json | head -80; grep -n "Escape\|esc\|close\|isFile\|Reading\|filesModal\|openGitModal" packages/apps/web_frontend/src/components/GitModal.vue | head -60
+Read /Users/jetienne/webwork/heidrun/.claude/worktrees/codex/documentation-experiment-375/packages/apps/web_frontend/src/components/GitModal.vue
+Bash grep -n "showIgnored\|showIgnoredFiles\|ignored" packages/apps/web_frontend/src/components/FilesModal.vue packages/apps/web_frontend/src/stores/files.ts packages/apps/web_frontend/src/stores/settings.ts | head -50; grep -n "truncated\|listTruncated" packages/apps/web_frontend/src/components/FilesModal.vue packages/apps/web_frontend/src/stores/files.ts | head
+Bash grep -n -i "large Git window\|Git window\|status bar\|workspace information card\|icon bar\|sidebar icon bar\|toast\|context menu\|workspace\b" docs/agents_rules/glossary.md | head -40; cat docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md | head -60
+Checking the last few sources (the glossary words for the large Git window, the "New workspace…" entry, and where the Ignored files checkbox sits), then I will write the judgement.
+Bash grep -n -i "git window\|large git" docs/agents_rules/glossary.md | head; grep -rn "newWorkspace\|New workspace" packages/apps/web_frontend/src/i18n/locales/en/*.json | head -5; sed -n 640,670p packages/apps/web_frontend/src/components/FilesModal.vue; cat packages/auxiliary/website_public/docs/documentation/index.md | head -40
+Bash grep -n "new\b\|newWorkspace\|emit\|open(" packages/apps/web_frontend/src/components/WorkspaceStatusSummary.vue | head -20; sed -n 495,530p packages/apps/desktop_tauri/src/files.rs; grep -n "filesShowIgnored" packages/apps/web_frontend/src/stores/settings.ts; cat packages/auxiliary/website_public/docs/documentation/index.md | wc -l; git log --oneline -1
+```json
+# Judgement of the documentation: 3.6 out of 5
+
+| Page | Type | Mean | taskSuccess | usefulness | order | singleType | userLanguage | accuracy | Lines | Longest paragraph | Paragraph runs | Troubleshooting | Related pages |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| browse_project_files.md | how-to | 3.5 | 4 | 3 | 3 | 3 | 4 | 4 | 39 | 3 sentences | 4 | yes | 4 links |
+| copy_a_file_path.md | how-to | 4.2 | 4 | 4 | 4 | 4 | 4 | 5 | 27 | 1 sentences | 1 | yes | 3 links |
+| create_a_file_or_folder.md | how-to | 3.7 | 3 | 3 | 4 | 4 | 4 | 4 | 39 | 2 sentences | 4 | yes | 3 links |
+| files_sidebar_section_controls.md | reference | 3.5 | 4 | 3 | 3 | 3 | 4 | 4 | 64 | 2 sentences | 3 | no | 3 links |
+
+Site: navigation 3, consistency 4.
+
+- The sidebar item 'Introduction' leads to a page that says 'This page is a placeholder'. A new reader has no starting point and no map of the four Files pages, and the set has no tutorial. Add a short list of links with one sentence for each, and one first-use lesson.
+- The section 'Related pages' is uneven. 'Copy a file path' links to 'Create a file or folder' for no real need. 'Create a file or folder' does not link to 'Keyboard shortcuts' or explain that the Files window (⌘P) has its own new file and new folder buttons. Nothing explains the difference between the Files sidebar section and the Files window; the reference page only touches it in the wrong place.
+- Overlap between pages: the description of the Files icon in the sidebar icon bar is repeated on three pages in three different wordings, the definition of the context menu is repeated on two pages, and the reference page repeats how-to steps. Define each once, with a link.
+
+### browse_project_files.md (3.5)
+
+The facts are correct and the steps work, but the page starts with a prerequisite, mixes three tasks, and has a weak Troubleshooting section.
+
+- The page starts with a full section, 'Select an existing workspace', before the main task. Replace it with one sentence and a link, and put 'Open a project file' first. The two Troubleshooting entries 'Select a workspace.' and 'This workspace is not a Git repository.' have the same solution; merge them.
+- Screenshot files_sidebar.png (I read the pixels): it is readable, and it shows the docs folder unfolded and README.md selected with a blue outline. It sits before step 3, so it shows the result of a click the reader has not made yet. No screenshot shows the large Git window, although the next paragraph describes its File, Diff, Side by side, and Reading buttons. Move the picture after step 3 and add one of the large Git window.
+- 'Long file lists' has no cause, solution, and check, and it gives no solution. The paragraph about File, Diff, Side by side, and Reading is dense reference text, and 'remembered empty folder' in the Refresh section is internal wording. Write the first as a short Troubleshooting entry, turn the second into a short list or move it to the reference page, and say 'a new empty folder that you created' in the third.
+
+### copy_a_file_path.md (4.2)
+
+This is the best page of the set: short, accurate, and correctly placed screenshot. Step 1 is overloaded and the Troubleshooting is thin.
+
+- Step 1 holds two actions (open the Files sidebar section, then unfold folders to find the file) and repeats the icon description from the other pages. Link to 'Browse and open project files' and keep the step to one action. Step 3 sends the reader back up to the table; say the choice in the step itself.
+- The absolute path copy can fail, and the code shows an error notification. The page does not say so, and its only Troubleshooting entry is the right-click on a folder row. Screenshot copy_path.png (I read the pixels) is clear and matches the two menu items, but the 'Copied:' notification described after step 3 is not shown, and the example only shows the relative path.
+- The heading 'path-copy menu' is an invented name; use 'context menu', the word of the glossary. The Related page 'Create a file or folder' is a weak next step; link to the reference page 'Files sidebar section controls' instead.
+
+### create_a_file_or_folder.md (3.7)
+
+The steps and the French error message are correct, but the destination choice is hard to follow and one Troubleshooting solution does not solve the real case.
+
+- Choosing the destination is hard to follow. A click on a folder row also folds or unfolds the folder, and the page does not say so. For the repository root the reader must fold everything and find empty space, and the page then says there may be no control to clear the selection. State plainly how to reach the repository root, or state this limit once, in the Troubleshooting section.
+- The Troubleshooting entry for '/' only says to remove '/', but the message says 'Select a folder first'. Add the solution for a reader who wants a file in a subfolder: create the folder, select it, then create the file. Other backend messages are also in French (for example an invalid name), and Enter with an empty name closes the box silently; the page covers neither.
+- Screenshot new_file.png (I read the pixels) is readable and shows the name box with example.md at the top of docs. No visible row has the blue selection outline, so it does not show the destination state that step 1 asks for. 'Cancel creation' is a numbered list with one step; make it one sentence under step 3. The fact that an empty folder disappears after a restart is lost between the steps and the Troubleshooting section; give it its own short note.
+
+### files_sidebar_section_controls.md (3.5)
+
+The tables are accurate and easy to scan, but the page includes an unrelated section, repeats the how-to steps, and puts the screenshot in the wrong place.
+
+- The section 'Ignored files' describes another window (the Files window, opened with ⌘P) and tells the reader how to find a checkbox. That is off-topic for a page about the Files sidebar section and reads like a how-to step. It also cites seven sources, most of them unrelated. Move it to its own page, or keep one sentence with a link.
+- Screenshot more_options.png (I read the pixels) is clear: it shows the five header icons and the open menu, and the check marks on Medium, Comfortable, and Show match the Default column. It sits in 'Header buttons', two sections before the 'More options' table; move it next to that table. No screenshot shows the row indicators (letters M, A, D, R, U, and the dot), so the reader must trust the table.
+- 'Row and name box actions' repeats the steps of the how-to pages (Enter, Escape, click a row). The 'Selection' table mixes actions and states under the vague column 'Item' and reads like an explanation. Order by what the reader looks up: header buttons, More options, rows, indicators, context menu.
+Repository files, branch, commit, and staged changes are unchanged.

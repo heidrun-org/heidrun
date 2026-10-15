@@ -20,6 +20,10 @@ export const INSTALLED = [
 /** A result of the search on skills.sh. */
 export const RESULT = { source: "anthropics/skills", skillId: "docx", name: "docx", installs: 198891 };
 
+/** The web address of a skill folder on GitHub, and the one result that the window shows for it. */
+export const FOLDER_URL = "https://github.com/anthropics/skills/tree/main/skills/pdf";
+export const FOLDER_RESULT = { source: "anthropics/skills", skillId: "pdf", name: "pdf", installs: 0, folderUrl: FOLDER_URL };
+
 /**
  * Makes the fake backend answer the commands, selects a workspace, and loads the skills store.
  * Both coding agents are switched on, unless the saved settings already say which ones are.

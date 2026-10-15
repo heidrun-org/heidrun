@@ -20,47 +20,95 @@ beforeEach(() => {
   vi.mocked(invoke).mockClear();
 });
 
+describe("SettingsDynamicTopicsSection, the option Enable dynamic topics", () => {
+  it("shows a Bootstrap switch Enable dynamic topics, switched on at first", async () => {
+    const { wrapper, settings } = await mountSection();
+    const switchInput = wrapper.findAll('input[role="switch"]')[0];
+    expect(wrapper.get(`label[for="${switchInput.attributes("id")}"]`).text()).toBe("Enable dynamic topics");
+    expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
+    expect((switchInput.element as HTMLInputElement).checked).toBe(true);
+    expect(settings.dynamicTopics).toBe(true);
+  });
+
+  it("is the first control of the section, above the title Extraction method, and has no title of its own", async () => {
+    const { wrapper } = await mountSection();
+    const switchInput = wrapper.findAll('input[role="switch"]')[0];
+    const extractionTitle = wrapper.get("h4");
+    expect(extractionTitle.text()).toBe("Extraction method");
+    expect(wrapper.find("input, button, select")?.element).toBe(switchInput.element);
+    expect(switchInput.element.compareDocumentPosition(extractionTitle.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
+  });
+
+  it("saves the state of the switch in the option, and shows the saved state at the next start", async () => {
+    const first = await mountSection();
+    await first.wrapper.findAll('input[role="switch"]')[0].setValue(false);
+    expect(first.settings.dynamicTopics).toBe(false);
+    const second = await mountSection();
+    expect(second.settings.dynamicTopics).toBe(false);
+    expect((second.wrapper.findAll('input[role="switch"]')[0].element as HTMLInputElement).checked).toBe(false);
+  });
+
+  it("does not change the other controls of the section while the option is off", async () => {
+    const { wrapper, settings } = await mountSection();
+    await wrapper.findAll('input[role="switch"]')[0].setValue(false);
+    expect(settings.dynamicTopics).toBe(false);
+    expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
+    expect(wrapper.findAll("input[type=radio]").map((radio) => radio.attributes("disabled"))).toEqual([undefined, undefined]);
+    expect((wrapper.findAll('input[role="switch"]')[1].element as HTMLInputElement).disabled).toBe(false);
+    expect(wrapper.findAll(".information-card-part")).toHaveLength(2);
+  });
+});
+
 describe("SettingsDynamicTopicsSection", () => {
-  it("shows the title Extraction method above a group of two radio buttons, Keyword and Language model", async () => {
+  it("shows the title Extraction method above a Bootstrap button group of two radio inputs, Keyword and Language model", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.get("h4").text()).toBe("Extraction method");
-    expect(wrapper.get('[role="radiogroup"]').attributes("aria-label")).toBe("Extraction method");
-    expect(wrapper.findAll('[role="radio"]').map((radio) => radio.text())).toEqual(["Keyword", "Language model"]);
+    const group = wrapper.get(".btn-group");
+    expect(group.attributes("role")).toBe("group");
+    expect(group.attributes("aria-label")).toBe("Extraction method");
+    const labels = group.findAll("label");
+    expect(labels.map((label) => label.text())).toEqual(["Keyword", "Language model"]);
+    for (const label of labels) {
+      expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
+    }
+    expect(group.findAll("input[type=radio]")).toHaveLength(2);
   });
 
   it("checks the radio button Keyword at first", async () => {
     const { wrapper, settings } = await mountSection();
     expect(settings.dynamicTopicExtraction).toBe("keyword");
-    expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["true", "false"]);
+    expect(wrapper.findAll("input[type=radio]").map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false]);
   });
 
   it("enables the radio button Language model, with a title that names the coding agents, and a click chooses it", async () => {
     const { wrapper, settings } = await mountSection();
-    const languageModel = wrapper.findAll('[role="radio"]')[1];
+    const languageModel = wrapper.findAll("input[type=radio]")[1];
+    const languageModelLabel = wrapper.findAll(".btn-group label")[1];
     expect(languageModel.attributes("disabled")).toBeUndefined();
-    expect(languageModel.attributes("title")).toContain("codex or claude");
-    expect(languageModel.attributes("title")).not.toContain("Not ready yet");
-    await languageModel.trigger("click");
+    expect(languageModelLabel.attributes("title")).toContain("codex or claude");
+    expect(languageModelLabel.attributes("title")).not.toContain("Not ready yet");
+    await languageModel.setValue(true);
     expect(settings.dynamicTopicExtraction).toBe("languageModel");
-    expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["false", "true"]);
+    expect(wrapper.findAll("input[type=radio]").map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([false, true]);
   });
 
   it("chooses Keyword again with a click on the radio button Keyword", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ dynamicTopicExtraction: "languageModel" }));
     const { wrapper, settings } = await mountSection();
-    await wrapper.findAll('[role="radio"]')[0].trigger("click");
+    await wrapper.findAll("input[type=radio]")[0].setValue(true);
     expect(settings.dynamicTopicExtraction).toBe("keyword");
   });
 
   it("checks the radio button of the saved method", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ dynamicTopicExtraction: "languageModel" }));
     const { wrapper } = await mountSection();
-    expect(wrapper.findAll('[role="radio"]').map((radio) => radio.attributes("aria-checked"))).toEqual(["false", "true"]);
+    expect(wrapper.findAll("input[type=radio]").map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([false, true]);
   });
 
   it("has no help paragraph under the controls", async () => {
     const { wrapper } = await mountSection();
-    expect(wrapper.findAll(".keys")).toHaveLength(0);
+    expect(wrapper.findAll(".form-text")).toHaveLength(0);
     expect(wrapper.text()).not.toContain("Nothing leaves this computer");
     expect(wrapper.text()).not.toContain("not ready yet");
   });
@@ -127,7 +175,8 @@ describe("SettingsDynamicTopicsSection, the method Language model", () => {
     await wrapper.vm.$nextTick();
     const status = wrapper.get("[role=status]");
     expect(status.text()).toContain("Neither codex nor claude is installed");
-    expect(status.element.previousElementSibling).toBe(wrapper.get('[role="radiogroup"]').element);
+    expect(status.classes()).toContain("form-text");
+    expect(status.element.previousElementSibling).toBe(wrapper.get(".btn-group").element);
     languageModelStatus.error = "wrongAnswer";
     await wrapper.vm.$nextTick();
     expect(wrapper.get("[role=status]").text()).toContain("answer that Heidrun cannot use");
@@ -155,27 +204,29 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
   it("shows a switch Enable clustered dynamic topics under the choice of the method, switched off at first", async () => {
     const { wrapper, settings } = await mountSection();
     expect(wrapper.findAll("h4").map((title) => title.text())).toEqual(["Extraction method", "Clustered dynamic topics"]);
-    const switchInput = wrapper.get('input[role="switch"]');
-    expect(wrapper.get('label[for="clustered-dynamic-topics"]').text()).toBe("Enable clustered dynamic topics");
+    const switchInput = wrapper.findAll('input[role="switch"]')[1];
+    expect(wrapper.get(`label[for="${switchInput.attributes("id")}"]`).text()).toBe("Enable clustered dynamic topics");
+    expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
     expect((switchInput.element as HTMLInputElement).checked).toBe(false);
     expect(settings.clusteredDynamicTopics).toBe(false);
   });
 
   it("saves the state of the switch in the option, and shows the saved state at the next start", async () => {
     const first = await mountSection();
-    await first.wrapper.get('input[role="switch"]').setValue(true);
+    await first.wrapper.findAll('input[role="switch"]')[1].setValue(true);
     expect(first.settings.clusteredDynamicTopics).toBe(true);
     const second = await mountSection();
-    expect((second.wrapper.get('input[role="switch"]').element as HTMLInputElement).checked).toBe(true);
+    expect((second.wrapper.findAll('input[role="switch"]')[1].element as HTMLInputElement).checked).toBe(true);
   });
 
   it("shows a circled question mark just after the label of the switch, and no help paragraph under it", async () => {
     const { wrapper } = await mountSection();
-    const row = wrapper.get('label[for="clustered-dynamic-topics"]').element.closest(".d-flex") as HTMLElement;
+    const switchInput = wrapper.findAll('input[role="switch"]')[1];
+    const row = wrapper.get(`label[for="${switchInput.attributes("id")}"]`).element.closest(".d-flex") as HTMLElement;
     const mark = wrapper.findAll(".information-card-part")[1];
     expect(row.contains(mark.element)).toBe(true);
     expect(mark.get('[role="img"]').attributes("aria-label")).toBe("About the clustered dynamic topics");
-    expect(wrapper.findAll(".keys")).toHaveLength(0);
+    expect(wrapper.findAll(".form-text")).toHaveLength(0);
   });
 
   it("opens an information card with three blocks: what it is, what Heidrun sends, and what happens when the option is off", async () => {
@@ -207,11 +258,12 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
     expect(wrapper.get(".popover").attributes("aria-label")).toBe("About the clustered dynamic topics");
   });
 
-  it("shows the button Rebuild the clusters, disabled while the option is off", async () => {
+  it("shows the Bootstrap button Rebuild the clusters, disabled and faded while the option is off", async () => {
     const { wrapper } = await mountSection();
-    const button = wrapper.get(".rebuild button");
+    const button = wrapper.get("button.btn");
     expect(button.text()).toBe("Rebuild the clusters");
     expect(button.attributes("disabled")).toBeDefined();
+    expect(button.classes()).toContain("opacity-50");
     await button.trigger("click");
     expect(invoke).not.toHaveBeenCalledWith("topic_clusters_write", expect.anything());
   });
@@ -220,8 +272,9 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
     const { wrapper, settings } = await mountSection();
     settings.clusteredDynamicTopics = true;
     await wrapper.vm.$nextTick();
-    const button = wrapper.get(".rebuild button");
+    const button = wrapper.get("button.btn");
     expect(button.attributes("disabled")).toBeUndefined();
+    expect(button.classes()).not.toContain("opacity-50");
     await button.trigger("click");
     expect(invoke).toHaveBeenCalledWith("topic_clusters_write", { rows: {} });
   });
@@ -231,8 +284,8 @@ describe("SettingsDynamicTopicsSection, clustered dynamic topics", () => {
     settings.clusteredDynamicTopics = true;
     topicClusterStatus.isRunning = true;
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".rebuild .spinner-border").exists()).toBe(true);
-    expect(wrapper.get(".rebuild button").attributes("disabled")).toBeDefined();
+    expect(wrapper.find("button.btn .spinner-border").exists()).toBe(true);
+    expect(wrapper.get("button.btn").attributes("disabled")).toBeDefined();
   });
 
   it("says why the call gave no cluster, only while the option is on", async () => {

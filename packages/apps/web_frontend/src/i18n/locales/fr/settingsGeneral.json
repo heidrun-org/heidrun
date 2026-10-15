@@ -14,8 +14,18 @@
   "confirmWorkspaceClose": "Demander avant de fermer un espace de travail",
   "confirmTabClose": "Demander avant de fermer un onglet",
   "confirmPaneClose": "Demander avant de fermer un panneau",
+  "askBeforeDeletingTitle": "Demander avant de supprimer",
+  "confirmSavedSearchDelete": "Demander avant de supprimer une recherche enregistrée",
   "quitTitle": "Quitter",
   "keepAgentsRunning": "Garder les agents actifs après avoir quitté",
   "keepAgentsRunningHelpLabel": "Que fait ce réglage ?",
-  "keepAgentsRunningHelp": "Désactivé : quand vous quittez Heidrun, Heidrun arrête sa session Herdr, et les agents s’arrêtent. Activé : les agents continuent de tourner, et Heidrun se reconnecte à la même session au prochain démarrage. La session Herdr par défaut de votre terminal n’est jamais arrêtée."
+  "keepAgentsRunningHelp": "Désactivé : quand vous quittez Heidrun, Heidrun arrête sa session Herdr, et les agents s’arrêtent. Activé : les agents continuent de tourner, et Heidrun se reconnecte à la même session au prochain démarrage. La session Herdr par défaut de votre terminal n’est jamais arrêtée.",
+  "gitTitle": "Git",
+  "gitFetchLabel": "Récupérer le dépôt distant en arrière-plan",
+  "gitFetchOff": "Désactivé",
+  "gitFetch1": "1 minute",
+  "gitFetch5": "5 minutes",
+  "gitFetch10": "10 minutes",
+  "gitFetch30": "30 minutes",
+  "gitFetchHelp": "Heidrun lance git fetch pour le dépôt de l’espace de travail sélectionné, afin que les deux nombres de la section Git de la barre d’état restent justes. Un fetch qui échoue n’affiche rien."
 }

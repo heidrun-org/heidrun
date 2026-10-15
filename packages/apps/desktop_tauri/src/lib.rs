@@ -1,8 +1,11 @@
+mod ai_cost;
 mod chats;
 mod chats_files;
-mod chats_scan;
 mod claude;
 mod clipboard;
+mod coding_agent_models;
+mod data_layer_lock;
+mod environment_file;
 mod files;
 mod forge_cache;
 mod git;
@@ -11,6 +14,8 @@ mod history;
 mod legacy;
 mod herdr;
 mod mobile;
+mod model_prices;
+mod person_work;
 mod project;
 mod pty;
 mod skills;
@@ -19,6 +24,7 @@ mod status_item_icon;
 mod status_item_picture;
 mod topic_clusters;
 mod usage;
+mod user_activity;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
 #[cfg(test)]
@@ -72,6 +78,9 @@ async fn herdr_server_start() -> Result<String, String> {
     if let Some(home) = dirs::home_dir() {
         cmd.current_dir(home);
     }
+    // Every pane inherits the environment of the server. Without this, a coding agent in a pane connects to Visual
+    // Studio Code when the developer started Heidrun from the terminal of Visual Studio Code.
+    herdr::remove_editor_variables(&mut cmd);
     #[cfg(unix)]
     {
         // Own process group: the server is not stopped by a signal sent to Heidrun. Heidrun stops the server itself
@@ -237,6 +246,7 @@ fn quit_now(app: AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    environment_file::load();
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
@@ -292,6 +302,7 @@ pub fn run() {
             is_splash_screen_disabled,
             status_item::status_item_update,
             status_item::status_item_set_visible,
+            status_item::status_item_set_user_active,
             herdr_request,
             herdr_cli,
             herdr_watch_panes,
@@ -304,6 +315,7 @@ pub fn run() {
             clipboard::clipboard_set_image,
             usage::codex_usage,
             project::project_load,
+            project::project_package_scripts,
             project::project_save,
             project::project_refs,
             git::git_status,
@@ -312,6 +324,7 @@ pub fn run() {
             topic_clusters::topic_clusters_read,
             topic_clusters::topic_clusters_write,
             topic_clusters::coding_agent_ask,
+            coding_agent_models::coding_agent_models_run,
             git::forge_merge,
             git::git_diff,
             git::git_file,
@@ -337,10 +350,19 @@ pub fn run() {
             claude::claude_session_agents,
             chats::chats_list,
             chats_files::chats_files_exist,
+            chats_files::chats_worktrees_exist,
+            chats_files::chats_worktrees_branches,
+            chats_files::chats_worktree_open_in_vscode,
             history::history_append,
             history::history_read,
             history::history_export,
+            user_activity::user_activity_append,
+            user_activity::user_activity_read,
+            user_activity::user_activity_records_in_range,
+            person_work::person_work_in_range,
+            ai_cost::ai_cost_in_range,
             files::files_list,
+            files::folder_children,
             files::files_resolve,
             files::file_image,
             files::file_open_external,
@@ -364,6 +386,8 @@ pub fn run() {
             skills::search::skills_search,
             skills::install::skills_preview,
             skills::install::skills_install,
+            skills::install::skills_preview_folder,
+            skills::install::skills_install_folder,
             skills::agent_folders::skills_link_agent,
         ])
         .build(tauri::generate_context!())

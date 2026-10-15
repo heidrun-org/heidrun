@@ -1,8 +1,8 @@
 {
   "selectWorkspace": "Select a workspace.",
   "notRepository": "This workspace is not a Git repository.",
-  "title": "Files",
-  "sidebarSection": "Files",
+  "title": "File explorer",
+  "sidebarSection": "File explorer",
   "refresh": "Refresh",
   "truncated": "The list is too long: only the first files are shown.",
   "menu.label": "More options",
@@ -16,8 +16,16 @@
   "menu.guides": "Indent guides",
   "menu.guides.on": "Show",
   "menu.guides.off": "Hide",
+  "menu.ignored": "Ignored files",
+  "menu.ignored.on": "Show",
+  "menu.ignored.off": "Hide",
   "newFile": "New file",
   "newFolder": "New folder",
   "collapseAll": "Collapse all folders",
-  "nameHasSlash": "A name cannot contain the character /. Select a folder first."
+  "cannotReadFolder": "This folder cannot be read.",
+  "nameHasSlash": "A name cannot contain the character /. Select a folder first.",
+  "copied": "Copied: {path}",
+  "fileMenu.label": "Menu of the file or of the folder",
+  "fileMenu.copyAbsolutePath": "Copy absolute path",
+  "fileMenu.copyRelativePath": "Copy relative path"
 }

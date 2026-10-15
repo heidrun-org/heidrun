@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { mount } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
+import type { RefContext } from "../lib/refs";
 import type { SessionSnapshot } from "../lib/types";
+import type { GitStatus } from "../stores/git";
 import { settings } from "../stores/settings";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
+vi.mock("../lib/refs", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../lib/refs")>();
+  return { ...original, refContext: vi.fn() };
+});
 
 const SNAPSHOT = {
   workspaces: [
@@ -29,7 +35,7 @@ async function mountSidebar(snapshot: SessionSnapshot = SNAPSHOT) {
   for (const paneId of Object.keys(session.state.dismissed)) {
     delete session.state.dismissed[paneId];
   }
-  const wrapper = mount(Sidebar, { global: { stubs: { ActionsPanel: true, SourceControlPanel: true, FilesPanel: true } } });
+  const wrapper = mount(Sidebar, { global: { stubs: { LaunchersPanel: true, SourceControlPanel: true, CodeHostingPanel: true, FilesPanel: true } } });
   return { session, wrapper };
 }
 
@@ -45,10 +51,23 @@ function snapshotWithCalls(): SessionSnapshot {
   } as unknown as SessionSnapshot;
 }
 
-beforeEach(() => {
+/** The context of a repository with a remote address on `forge`, or without a remote address for a null forge. */
+function contextOf(forge: "github" | "gitlab" | null, base: string | null = "https://example.com/team/app"): RefContext {
+  return { base, origin: "https://example.com", forge, ticketUrl: null, ticketPrefixes: [], enabled: true };
+}
+
+/** The class of the icon of the button Code hosting of the sidebar icon bar. */
+function codeHostingIconClass(wrapper: Awaited<ReturnType<typeof mountSidebar>>["wrapper"]): string {
+  return wrapper.get(".sidebar-icon-bar [role=tab][aria-label='Code hosting'] i.bi").classes()[1];
+}
+
+beforeEach(async () => {
   localStorage.clear();
   vi.clearAllMocks();
-  settings.leftSidebarSection = "actions";
+  const { refContext } = await import("../lib/refs");
+  vi.mocked(refContext).mockResolvedValue(contextOf(null, null));
+  (await import("../stores/git")).git.status = {};
+  settings.leftSidebarSection = "launchers";
   settings.leftCollapsed = false;
 });
 
@@ -77,17 +96,67 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar icon bar of the left sidebar", () => {
-  it("shows the buttons Files, Scripts, and Source Control, in this order, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
+  it("shows the buttons File explorer, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Clipboard", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Files", "Scripts", "Source Control"]);
-    expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab"]);
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["File explorer", "Launchers", "Source Control", "Code hosting"]);
+    expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows one icon for each sidebar section, Files first: a folder for Files, a play button for Scripts, and the Git logo for Source control", async () => {
+  it("shows one icon for each sidebar section, File explorer first: a folder for File explorer, a play button for Launchers, the Git logo for Source control, and a cloud for Code hosting", async () => {
     const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-folder2", "bi-play-circle", "bi-git"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-folder2", "bi-play-circle", "bi-git", "bi-cloud"]);
+  });
+
+  it("shows a cloud for Code hosting while the hosting service is not known: no workspace, no Git repository, or no remote address", async () => {
+    const { wrapper, session } = await mountSidebar();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+    const gitStore = await import("../stores/git");
+    gitStore.git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+    session.state.selectedWorkspaceId = null;
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-cloud");
+  });
+
+  it("shows the GitHub logo for Code hosting when the repository of the selected workspace is on GitHub", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockResolvedValue(contextOf("github"));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    const { wrapper } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-github");
+    expect(wrapper.get(".sidebar-icon-bar [aria-label='Code hosting']").attributes("title")).toBe("Code hosting");
+  });
+
+  it("shows the GitLab logo for Code hosting when the repository is on GitLab, and for every host that is not GitHub", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockResolvedValue(contextOf(null));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/heidrun" } as GitStatus };
+    const { wrapper } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
+    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+    (await import("../stores/git")).git.status = { w1: { root: "/work/other" } as GitStatus };
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
+  });
+
+  it("changes the logo of Code hosting when another workspace is selected, and reads no list to do it", async () => {
+    const { refContext } = await import("../lib/refs");
+    vi.mocked(refContext).mockImplementation(async (folder) => contextOf(folder === "/work/heidrun" ? "github" : "gitlab"));
+    (await import("../stores/git")).git.status = {
+      w1: { root: "/work/heidrun" } as GitStatus,
+      w2: { root: "/work/teamwright" } as GitStatus,
+    };
+    const { wrapper, session } = await mountSidebar();
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-github");
+    session.state.selectedWorkspaceId = "w2";
+    await flushPromises();
+    expect(codeHostingIconClass(wrapper)).toBe("bi-gitlab");
   });
 
   it("puts the sidebar icon bar at the left edge, before the content of the sidebar section, in the same frame", async () => {
@@ -96,10 +165,10 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(children).toEqual(["sidebar-icon-bar", "sidebar-section-body"]);
   });
 
-  it("shows the sidebar section Scripts first, and marks its button as active", async () => {
+  it("shows the sidebar section Launchers first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true, false]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true, false, false]);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(true);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
   });
 
@@ -107,22 +176,35 @@ describe("Sidebar icon bar of the left sidebar", () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[2].trigger("click");
     expect(settings.leftSidebarSection).toBe("sourceControl");
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, true]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, true, false]);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
     const restarted = (await mountSidebar()).wrapper;
     expect(restarted.find("source-control-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the sidebar section Files after a click on its button, and remembers it", async () => {
+  it("shows the sidebar section File explorer after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.leftSidebarSection).toBe("files");
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false, false]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false, false, false]);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
     expect(wrapper.find("files-panel-stub").exists()).toBe(true);
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i")[0].classes()).toContain("bi-folder2");
+  });
+
+  it("shows the sidebar section Code hosting after a click on its button, and remembers it", async () => {
+    const { wrapper } = await mountSidebar();
+    await wrapper.findAll(".sidebar-icon-bar [role=tab]")[3].trigger("click");
+    expect(settings.leftSidebarSection).toBe("codeHosting");
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false, true]);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("files-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("code-hosting-panel-stub").exists()).toBe(true);
+    const restarted = (await mountSidebar()).wrapper;
+    expect(restarted.find("code-hosting-panel-stub").exists()).toBe(true);
   });
 
   it("collapses after a click on the icon of the sidebar section that it shows, and then selects no icon", async () => {
@@ -130,8 +212,8 @@ describe("Sidebar icon bar of the left sidebar", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(true);
     expect(wrapper.find(".sidebar-section-body").exists()).toBe(false);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false]);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "false"]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false, false]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.attributes("aria-selected"))).toEqual(["false", "false", "false", "false"]);
     expect(wrapper.get("aside").attributes("style")).toContain("width: 48px");
   });
 
@@ -142,7 +224,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(settings.leftCollapsed).toBe(false);
     expect(settings.leftSidebarSection).toBe("sourceControl");
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
-    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, true]);
+    expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, true, false]);
   });
 
   it("expands to the same sidebar section after a click on the icon that collapsed it", async () => {
@@ -150,7 +232,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(true);
   });
 
   it("collapses after a click on the collapse button, the first button of the sidebar icon bar, with an arrow toward the left edge", async () => {

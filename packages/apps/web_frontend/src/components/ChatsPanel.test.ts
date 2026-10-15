@@ -80,6 +80,7 @@ beforeEach(() => {
   for (const id of Object.keys(languageModelEntries)) {
     delete languageModelEntries[id];
   }
+  settings.dynamicTopics = true;
   settings.dynamicTopicExtraction = "keyword";
   settings.clusteredDynamicTopics = false;
   topicClusterTable.value = new Map();
@@ -118,7 +119,7 @@ describe("ChatsPanel", () => {
     answer(["Fix the tab bar", "Add the Chats sidebar section"], ["Describe image"]);
     const wrapper = mount(ChatsPanel);
     await flushPromises();
-    const header = wrapper.element.firstElementChild as HTMLElement;
+    const header = wrapper.get(".chats-panel").element.firstElementChild as HTMLElement;
     expect(header.classList.contains("chats-header")).toBe(true);
     const row = header.firstElementChild as HTMLElement;
     expect([...row.children].map((child) => child.getAttribute("role"))).toEqual(["group", null]);
@@ -212,7 +213,29 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.find(".btn-group").exists()).toBe(false);
-    expect(wrapper.text()).toBe("No chat of Claude or Codex was found for this workspace.");
+    expect(wrapper.get(".chats-panel").text()).toBe("No chat of Claude or Codex was found for this workspace.");
+  });
+
+  it("shows the title Past chats first, above the scroll area, with a list of chats", async () => {
+    answer(["Fix the tab bar"], []);
+    const wrapper = mount(ChatsPanel);
+    await flushPromises();
+    const title = wrapper.element.firstElementChild as HTMLElement;
+    expect(title.tagName).toBe("HEADER");
+    expect(title.textContent?.trim()).toBe("Past chats");
+    expect(title.nextElementSibling).toBe(wrapper.get(".chats-panel").element);
+    expect(wrapper.get(".chats-panel").text()).not.toContain("Past chats");
+  });
+
+  it("shows the title Past chats when no chat was found and when no workspace is selected", async () => {
+    answer([], []);
+    const empty = mount(ChatsPanel);
+    await flushPromises();
+    expect(empty.get("header").text()).toBe("Past chats");
+    state.selectedWorkspaceId = null;
+    const withoutWorkspace = mount(ChatsPanel);
+    await flushPromises();
+    expect(withoutWorkspace.get("header").text()).toBe("Past chats");
   });
 
   it("asks for nothing and tells to select a workspace when no workspace is selected", async () => {
@@ -220,7 +243,7 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(invoke).not.toHaveBeenCalled();
-    expect(wrapper.text()).toBe("Select a workspace to see its chats.");
+    expect(wrapper.get(".chats-panel").text()).toBe("Select a workspace to see its chats.");
   });
 
   it("shows the reason in an alert when the conversations cannot be read", async () => {
@@ -242,6 +265,26 @@ describe("ChatsPanel", () => {
     wrapper.unmount();
     await vi.advanceTimersByTimeAsync(30_000);
     expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads the files again after the delay of the Settings window, and starts again when the delay changes", async () => {
+    vi.useFakeTimers();
+    settings.chatsRefreshSeconds = 30;
+    answer(["Fix the tab bar"], []);
+    mount(ChatsPanel);
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(29_000);
+    expect(invoke).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(invoke).toHaveBeenCalledTimes(2);
+    settings.chatsRefreshSeconds = 5;
+    await flushPromises();
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(invoke).toHaveBeenCalledTimes(3);
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(invoke).toHaveBeenCalledTimes(5);
+    settings.chatsRefreshSeconds = 10;
   });
 
   /** The two buttons under the list: Show more, then Show less. */
@@ -544,6 +587,95 @@ describe("ChatsPanel", () => {
     const wrapper = mount(ChatsPanel);
     await flushPromises();
     expect(wrapper.findAll(".chat-topics")[0].findAll(".badge").map((badge) => badge.text())).toEqual(["sidebar", "zebra"]);
+  });
+
+  describe("the option Dynamic topics", () => {
+    /** How many times the Tauri command `name` ran. */
+    function callsOf(name: string): number {
+      return vi.mocked(invoke).mock.calls.filter(([command]) => command === name).length;
+    }
+
+    it("shows the dynamic topic bar and the dynamic topic labels while the option is on, which is the default", async () => {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(settings.dynamicTopics).toBe(true);
+      expect(wrapper.find(".topic-bar").exists()).toBe(true);
+      expect(wrapper.findAll(".chat-topics").length).toBeGreaterThan(0);
+    });
+
+    it("shows no dynamic topic bar and no dynamic topic label while the option is off, and computes nothing, with the method Keyword", async () => {
+      settings.dynamicTopics = false;
+      settings.clusteredDynamicTopics = true;
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+      expect(wrapper.find(".topic-bar").exists()).toBe(false);
+      expect(wrapper.find(".topic-chip").exists()).toBe(false);
+      expect(wrapper.find(".chat-topics").exists()).toBe(false);
+      expect(Object.keys(keywordEntries)).toEqual([]);
+      expect(prepareTopicClusters).not.toHaveBeenCalled();
+      expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
+      expect(callsOf("coding_agent_ask")).toBe(0);
+      expect(callsOf("forge_cli_cached")).toBe(0);
+    });
+
+    it("shows no dynamic topic bar and no dynamic topic label, and never asks the coding agent, with the method Language model", async () => {
+      settings.dynamicTopics = false;
+      settings.dynamicTopicExtraction = "languageModel";
+      settings.clusteredDynamicTopics = true;
+      languageModelEntries.c0 = { lastAt: 1, topics: ["cache", "storage"] };
+      languageModelEntries.c1 = { lastAt: 1, topics: ["tab bar"] };
+      answer(["Sidebar cache", "Sidebar tabs"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      expect(shownTitles(wrapper)).toEqual(["Sidebar cache", "Sidebar tabs"]);
+      expect(wrapper.find(".topic-bar").exists()).toBe(false);
+      expect(wrapper.find(".chat-topics").exists()).toBe(false);
+      expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
+      expect(prepareTopicClusters).not.toHaveBeenCalled();
+      expect(callsOf("coding_agent_ask")).toBe(0);
+    });
+
+    it("hides the dynamic topic bar and the labels at once when the developer switches the option off, and shows every chat again", async () => {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".topic-chip")[1].trigger("click");
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel"]);
+      settings.dynamicTopics = false;
+      await flushPromises();
+      expect(wrapper.find(".topic-bar").exists()).toBe(false);
+      expect(wrapper.find(".chat-topics").exists()).toBe(false);
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+    });
+
+    it("shows the dynamic topic bar and the labels again, without a selected topic, when the developer switches the option on again", async () => {
+      answer(["Sidebar panel", "Tabs panel", "Cache"], []);
+      const wrapper = mount(ChatsPanel);
+      await flushPromises();
+      await wrapper.findAll(".topic-chip")[1].trigger("click");
+      settings.dynamicTopics = false;
+      await flushPromises();
+      settings.dynamicTopics = true;
+      await flushPromises();
+      expect(wrapper.findAll(".topic-chip").map((button) => button.text())).toEqual(["All", "panel", "cache", "sidebar", "tab"]);
+      expect(wrapper.findAll(".topic-chip").map((button) => button.attributes("aria-pressed"))).toEqual(["true", "false", "false", "false", "false"]);
+      expect(shownTitles(wrapper)).toEqual(["Sidebar panel", "Tabs panel", "Cache"]);
+    });
+
+    it("asks the language model when the developer switches the option on, and not before", async () => {
+      settings.dynamicTopics = false;
+      settings.dynamicTopicExtraction = "languageModel";
+      answer(["Sidebar cache"], []);
+      mount(ChatsPanel);
+      await flushPromises();
+      expect(prepareLanguageModelTopics).not.toHaveBeenCalled();
+      settings.dynamicTopics = true;
+      await flushPromises();
+      expect(prepareLanguageModelTopics).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("the dynamic topic bar", () => {

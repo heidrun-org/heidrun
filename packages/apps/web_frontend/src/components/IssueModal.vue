@@ -5,7 +5,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { issueView } from "../stores/issues";
 import { settings } from "../stores/settings";
 import { renderMarkdown } from "../lib/markdown";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { t } from "../i18n/index";
 
 const el = ref<HTMLElement>();
@@ -79,7 +79,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <h1 class="t">{{ d.title }}</h1>
             <p class="meta">
               <span v-if="d.author">{{ d.author }}</span>
-              <span v-if="d.at"> · {{ ago(d.at) }}</span>
+              <span v-if="d.at"> · <AbbreviatedTime :milliseconds="d.at" /></span>
               <span v-if="d.branches" class="mono"> · {{ d.branches }}</span>
             </p>
           </div>
@@ -89,7 +89,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <section v-if="comments.length" class="md-doc comments" :class="{ full: settings.mdWidth === 'full' }">
             <h2>{{ t("issueModal.comments") }} <span class="count">{{ comments.length }}</span></h2>
             <div v-for="(c, i) in comments" :key="i" class="comment">
-              <div class="c-head"><strong>{{ c.author }}</strong><span v-if="c.at" class="muted"> · {{ ago(c.at) }}</span></div>
+              <div class="c-head"><strong>{{ c.author }}</strong><span v-if="c.at" class="muted"> · <AbbreviatedTime :milliseconds="c.at" /></span></div>
               <div class="c-body" v-html="c.html"></div>
             </div>
           </section>

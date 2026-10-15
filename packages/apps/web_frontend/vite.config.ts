@@ -1,10 +1,15 @@
 import { defineConfig } from "vitest/config";
 import vue from "@vitejs/plugin-vue";
+import { formatBuildTime } from "./src/lib/build_time";
 
 // Tauri expects a fixed port and does not want Vite to clear its output.
 export default defineConfig({
   plugins: [vue()],
   clearScreen: false,
+  // The date and time of the build, for the window "About Heidrun". In development, it is the start of the dev server.
+  define: {
+    __BUILD_TIME__: JSON.stringify(formatBuildTime(new Date())),
+  },
   css: {
     preprocessorOptions: {
       scss: {

@@ -25,6 +25,7 @@ import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
+import { goBackInPaneFocusHistory, goForwardInPaneFocusHistory } from "./stores/pane_focus_history";
 import { search } from "./stores/search";
 import { COLLAPSED_SIDEBAR_WIDTH, openSidebarSection } from "./stores/sidebar_sections";
 import { answerConfirm, confirmDialog } from "./stores/confirm";
@@ -41,15 +42,15 @@ import {
   selectedPane,
   shiftTab,
   shiftWorkspace,
-  splitPane,
   start,
   state,
   toast,
 } from "./stores/session";
-import { startDefaultNewTab } from "./stores/newPane";
+import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
-import { newCustomScriptModal } from "./stores/newCustomScript";
+import { newCustomLauncherModal } from "./stores/newCustomLauncher";
+import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
@@ -57,13 +58,18 @@ import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
+import { startGitBackgroundFetch } from "./stores/git_background_fetch";
 import { startAlerts } from "./stores/alerts";
 import { startStatusItem } from "./stores/statusItem";
+import { startUserActivity } from "./stores/user_activity";
 // Records Claude spend by workspace from the start, right sidebar open or not.
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import AgentsInformationModal from "./components/AgentsInformationModal.vue";
-import NewCustomScriptModal from "./components/NewCustomScriptModal.vue";
+import NewCustomLauncherModal from "./components/NewCustomLauncherModal.vue";
+import SavedSearchModal from "./components/SavedSearchModal.vue";
+import ImportLaunchersModal from "./components/ImportLaunchersModal.vue";
+import { importLaunchersModal } from "./stores/importLaunchers";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import SkillFileModal from "./components/SkillFileModal.vue";
@@ -71,6 +77,10 @@ import InstalledSkillModal from "./components/InstalledSkillModal.vue";
 import FindNewSkillsModal from "./components/FindNewSkillsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
+import ThreeJsDemoModal from "./components/ThreeJsDemoModal.vue";
+import { threeJsDemoModal } from "./stores/three_js_demo_modal";
+import StatisticsModal from "./components/StatisticsModal.vue";
+import { statisticsModal } from "./stores/statistics_modal";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
@@ -90,8 +100,8 @@ const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(sett
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
-const LEFT_COLUMN = { min: 200, max: 520, defaultWidth: 280 };
-const RIGHT_COLUMN = { min: 260, max: 720, defaultWidth: 320 };
+const LEFT_COLUMN = { min: 200, defaultWidth: 280 };
+const RIGHT_COLUMN = { min: 260, defaultWidth: 320 };
 const COLUMN_OF_PINNED_PANES = { min: 320, max: 1400, defaultWidth: 560 };
 const leftReserve = computed(() => rightTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
 const rightReserve = computed(() => leftTakenWidth.value + columnOfPinnedPanesTakenWidth.value);
@@ -187,6 +197,14 @@ function onKey(e: KeyboardEvent) {
   // ⌘1 … ⌘9: workspace by position.
   const digit = /^Digit([1-9])$/.exec(e.code);
   if (digit && !e.altKey && !e.shiftKey) return run(() => selectWorkspaceAt(Number(digit[1]) - 1));
+  // ⌘[ / ⌘]: back / forward through the panes that had the focus, as in Chrome. By e.key: on a French keyboard,
+  // "[" and "]" need ⇧⌥, and the physical key of "[" is another character.
+  if (e.key === "[") {
+    return run(() => goBackInPaneFocusHistory());
+  }
+  if (e.key === "]") {
+    return run(() => goForwardInPaneFocusHistory());
+  }
 
   switch (e.code) {
     case "KeyP":
@@ -215,7 +233,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyT":
       return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
     case "KeyD":
-      return run(() => splitPane(e.shiftKey ? "down" : "right"));
+      return run(() => startDefaultSplit(e.shiftKey ? "down" : "right"));
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;
@@ -252,11 +270,14 @@ function onKey(e: KeyboardEvent) {
 
 let unlistenDrop: (() => void) | null = null;
 onMounted(async () => {
+  // First of all: the detection of the activity of the user must see every action before the other listeners do.
+  startUserActivity();
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", onResize);
   start();
   startProjects();
   startGit();
+  startGitBackgroundFetch();
   startAlerts();
   startStatusItem();
   loadHistory();
@@ -289,7 +310,7 @@ onBeforeUnmount(() => {
     <TopBar />
     <div class="body">
       <Sidebar />
-      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :max="LEFT_COLUMN.max" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
       <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
       <div v-else class="sidebar-gap"></div>
       <main class="center">
@@ -316,7 +337,7 @@ onBeforeUnmount(() => {
         <Offline v-else />
       </main>
       <template v-if="state.snapshot">
-        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :max="RIGHT_COLUMN.max" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
+        <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>
@@ -324,6 +345,8 @@ onBeforeUnmount(() => {
     <StatusBar />
     <CommandPalette v-if="state.paletteOpen" />
     <MacroEditor v-if="macroEditor.open" />
+    <ThreeJsDemoModal v-if="threeJsDemoModal.open" />
+    <StatisticsModal v-if="statisticsModal.open" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
@@ -334,7 +357,9 @@ onBeforeUnmount(() => {
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
-    <NewCustomScriptModal v-if="newCustomScriptModal.open" />
+    <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
+    <SavedSearchModal v-if="savedSearchModal.open" />
+    <ImportLaunchersModal v-if="importLaunchersModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
     <InstalledSkillModal v-if="installedSkillModal.open" />

@@ -6,8 +6,9 @@
 //! menu, and tells the web page which agent the user chose in the menu.
 
 use crate::status_item_icon as icon;
-use crate::status_item_picture::{self as picture, Slot, PICTURE_HEIGHT};
+use crate::status_item_picture::{self as picture, Slot, Sprite, PICTURE_HEIGHT};
 use serde::Deserialize;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 use tauri::image::Image;
@@ -82,19 +83,34 @@ pub struct StatusItemPayload {
 /// Name of the environment variable that makes the status item show fake agents, to look at the animations.
 const DEMO_VARIABLE: &str = "HEIDRUN_STATUS_ITEM_DEMO";
 
+/// Name of the environment variable that makes the icon of Heidrun fade while the user is not active in front of
+/// Heidrun. It shows by eye that the detection of the activity of the user works.
+const USER_ACTIVITY_VARIABLE: &str = "HEIDRUN_STATUS_ITEM_USER_ACTIVITY";
+
 /// The data that the status item shows now, and the time of its creation, which gives the time of each picture.
 pub struct StatusItemState {
     payload: Mutex<StatusItemPayload>,
     started: Instant,
     /// True when the environment variable `HEIDRUN_STATUS_ITEM_DEMO` is set: the data of the web page is ignored.
     is_demo: bool,
+    /// True when the environment variable `HEIDRUN_STATUS_ITEM_USER_ACTIVITY` is set: the icon of Heidrun is faded
+    /// while the user is not active in front of Heidrun.
+    is_user_activity_shown: bool,
+    /// True while the user is active in front of Heidrun. The web page sends it with `status_item_set_user_active`.
+    is_user_active: AtomicBool,
 }
 
 impl Default for StatusItemState {
     fn default() -> Self {
         let is_demo = std::env::var_os(DEMO_VARIABLE).is_some();
         let payload = if is_demo { demo_payload() } else { StatusItemPayload::default() };
-        StatusItemState { payload: Mutex::new(payload), started: Instant::now(), is_demo }
+        StatusItemState {
+            payload: Mutex::new(payload),
+            started: Instant::now(),
+            is_demo,
+            is_user_activity_shown: std::env::var_os(USER_ACTIVITY_VARIABLE).is_some(),
+            is_user_active: AtomicBool::new(false),
+        }
     }
 }
 
@@ -120,6 +136,11 @@ impl StatusItemState {
     fn lock(&self) -> MutexGuard<'_, StatusItemPayload> {
         self.payload.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
     }
+
+    /// True when the icon of Heidrun must be drawn faded: the environment variable is set and the user is not active.
+    fn is_icon_faded(&self) -> bool {
+        self.is_user_activity_shown && !self.is_user_active.load(Ordering::Relaxed)
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -130,8 +151,12 @@ impl StatusItemState {
 /// in the picture: the status bar of the Heidrun window shows it. The icon of Heidrun
 /// does not move.
 pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
+    slots_with_icon(payload, icon::frames())
+}
+
+/// The slots of `slots_for`, with `icon` as the frames of the icon of Heidrun: the normal icon or the faded icon.
+fn slots_with_icon(payload: &StatusItemPayload, icon: &'static [Sprite]) -> Vec<Slot> {
     let mut slots = Vec::new();
-    let icon = icon::frames();
     if !icon.is_empty() {
         slots.push(Slot::Sprite { frames: icon, is_walking: false });
     }
@@ -141,9 +166,11 @@ pub fn slots_for(payload: &StatusItemPayload) -> Vec<Slot> {
     slots
 }
 
-/// Draws the picture of the status item for the data of the web page, at `time` seconds after the start.
-fn draw(payload: &StatusItemPayload, time: f32) -> Image<'static> {
-    let slots = slots_for(payload);
+/// Draws the picture of the status item for the data of the web page, at `time` seconds after the start. The icon of
+/// Heidrun is faded when `is_icon_faded` is true.
+fn draw(payload: &StatusItemPayload, is_icon_faded: bool, time: f32) -> Image<'static> {
+    let icon = if is_icon_faded { icon::faded_frames() } else { icon::frames() };
+    let slots = slots_with_icon(payload, icon);
     Image::new_owned(picture::draw_frame(&slots, payload.is_urgent, time), picture::picture_width(&slots), PICTURE_HEIGHT)
 }
 
@@ -155,7 +182,7 @@ fn is_animated(payload: &StatusItemPayload) -> bool {
 /// Draws the picture again and gives it to the status item.
 fn redraw(app: &AppHandle) {
     let state = app.state::<StatusItemState>();
-    let image = draw(&state.lock(), state.started.elapsed().as_secs_f32());
+    let image = draw(&state.lock(), state.is_icon_faded(), state.started.elapsed().as_secs_f32());
     if let Some(tray) = app.tray_by_id(STATUS_ITEM_ID) {
         let _ = tray.set_icon(Some(image));
     }
@@ -300,9 +327,10 @@ fn handle_menu_event(app: &AppHandle, menu_id: &str) {
 
 /// Creates the status item in the menu bar and starts the timer that moves the picture.
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
-    let payload = app.state::<StatusItemState>().lock().clone();
+    let state = app.state::<StatusItemState>();
+    let payload = state.lock().clone();
     TrayIconBuilder::with_id(STATUS_ITEM_ID)
-        .icon(draw(&payload, 0.0))
+        .icon(draw(&payload, state.is_icon_faded(), 0.0))
         .icon_as_template(false)
         .menu(&build_menu(app, &payload)?)
         .on_menu_event(|app, event| handle_menu_event(app, event.id().as_ref()))
@@ -338,6 +366,13 @@ pub fn status_item_update(
     }
     redraw(&app);
     Ok(())
+}
+
+/// Called by the web page each time the user starts or stops to be active in front of Heidrun. The menu does not change.
+#[tauri::command]
+pub fn status_item_set_user_active(app: AppHandle, state: State<StatusItemState>, is_active: bool) {
+    state.is_user_active.store(is_active, Ordering::Relaxed);
+    redraw(&app);
 }
 
 /// Called by the web page when the user shows or hides the status item in the menu bar.
@@ -436,6 +471,44 @@ mod tests {
             })
             .collect();
         assert_eq!(colors, vec![[235, 64, 52], [52, 199, 89], [191, 90, 242]]);
+    }
+
+    fn state_with(is_user_activity_shown: bool, is_user_active: bool) -> StatusItemState {
+        StatusItemState {
+            payload: Mutex::new(StatusItemPayload::default()),
+            started: Instant::now(),
+            is_demo: false,
+            is_user_activity_shown,
+            is_user_active: AtomicBool::new(is_user_active),
+        }
+    }
+
+    #[test]
+    fn the_icon_is_faded_only_when_the_variable_is_set_and_the_user_is_not_active() {
+        assert!(state_with(true, false).is_icon_faded());
+        assert!(!state_with(true, true).is_icon_faded());
+        assert!(!state_with(false, false).is_icon_faded());
+        assert!(!state_with(false, true).is_icon_faded());
+    }
+
+    #[test]
+    fn the_faded_icon_is_more_transparent_than_the_normal_icon() {
+        let alpha = |slots: Vec<Slot>| match slots.first() {
+            Some(Slot::Sprite { frames, .. }) => frames[0].pixels.chunks(4).map(|pixel| pixel[3]).max(),
+            _ => None,
+        };
+        let normal = alpha(slots_for(&StatusItemPayload::default()));
+        let faded = alpha(slots_with_icon(&StatusItemPayload::default(), icon::faded_frames()));
+        assert_eq!(normal, Some(255));
+        assert!(faded < Some(255));
+    }
+
+    #[test]
+    fn the_faded_icon_has_the_same_width_as_the_icon_so_the_picture_does_not_jump() {
+        let payload = StatusItemPayload::default();
+        let normal = picture::picture_width(&slots_for(&payload));
+        let faded = picture::picture_width(&slots_with_icon(&payload, icon::faded_frames()));
+        assert_eq!(normal, faded);
     }
 
     #[test]

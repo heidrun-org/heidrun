@@ -1,0 +1,39 @@
+{
+  "date": "14 October 2026",
+  "dependencyInstall": "passed: 404 packages, 10 workspace projects, frozen lockfile",
+  "writerDryRun": "passed",
+  "judgeDryRun": "passed",
+  "pureJudgeTests": {
+    "passed": 7,
+    "skipped": 9
+  },
+  "websiteTests": {
+    "passed": 111,
+    "files": 7
+  },
+  "productionBuild": "passed in 1.73 seconds",
+  "browser": "All four pages and all four screenshots loaded",
+  "generatedArtifactsChanged": [],
+  "paidModelRun": false,
+  "outsideFingerprintChanges": [
+    "AGENTS.md",
+    "README.md",
+    "docs/agents_rules/README.md",
+    "docs/agents_rules/glossary.md",
+    "docs/agents_rules/index.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/README.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/display.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/extraction_methods.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/index.md",
+    "docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md",
+    "docs/potential_ideas/README.md",
+    "docs/potential_ideas/index.md",
+    "docs/potential_ideas/usage_statistics.md",
+    "packages/auxiliary/website_public/docs/about.md"
+  ],
+  "branchUnchanged": true,
+  "indexUnchanged": true,
+  "finalGitStatus": "?? tmp/\n",
+  "boundaryLimit": "15 outside tracked file fingerprints differ from the initial snapshot; final Git status has no tracked changes. Those files were not edited by this check. Concurrent or intervening repository updates prevent a whole-checkout unchanged claim."
+}

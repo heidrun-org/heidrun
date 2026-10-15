@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { CodexUsage, PaneInfo, SessionSnapshot } from "./types";
+import type { CodexUsage, PaneInfo, SessionSnapshot, TabInfo, WorkspaceInfo } from "./types";
 
 export function request<T = any>(method: string, params: Record<string, unknown> = {}): Promise<T> {
   return invoke<T>("herdr_request", { method, params });
@@ -72,8 +72,13 @@ export function setSplitRatio(tabId: string, path: boolean[], ratio: number) {
   return request("layout.set_split_ratio", { tab_id: tabId, path, ratio });
 }
 
+/** Creates a workspace, with one tab that holds one pane. Herdr answers with the three of them. */
 export function newWorkspace(cwd: string | null, label: string | null) {
-  return request("workspace.create", { cwd, label, focus: false });
+  return request<{ workspace: WorkspaceInfo; tab: TabInfo; root_pane: PaneInfo }>("workspace.create", {
+    cwd,
+    label,
+    focus: false,
+  });
 }
 
 export function closeWorkspace(workspaceId: string) {

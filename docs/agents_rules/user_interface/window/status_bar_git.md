@@ -1,20 +1,20 @@
 # User interface of Heidrun: Git branch section of the status bar
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary.md), [status_bar.md](status_bar.md)
-- Related issue: [issue 350](https://github.com/heidrun-org/heidrun/issues/350), [issue 348](https://github.com/heidrun-org/heidrun/issues/348)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [status_bar.md](status_bar.md)
+- Related issue: [issue 350](https://github.com/heidrun-org/heidrun/issues/350), [issue 348](https://github.com/heidrun-org/heidrun/issues/348), [issue 432](https://github.com/heidrun-org/heidrun/issues/432)
 
-This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary.md](../../glossary.md). The other status bar sections are in [status_bar.md](status_bar.md).
+This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md). The other status bar sections are in [status_bar.md](status_bar.md).
 
 ## Git branch section
 
 - The Git branch status bar section has three click zones, from left to right. Each zone is a status bar section with its own rounded background ([issue #350](https://github.com/heidrun-org/heidrun/issues/350)).
   - The branch zone shows the Git icon, the branch name, and a star when the working folder has an uncommitted change. A click on it opens the branch picker.
   - The synchronize zone shows a turning-arrows icon (`arrow-repeat`), like "Synchronize Changes" of Visual Studio Code. See the section "Synchronize with the upstream branch" below.
-  - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository.
+  - The counts zone shows the commits to download, then the commits to upload. A click on it opens its information card, which lists the details of the Git repository. The counts are read from the local repository, and a fetch in the background keeps them true: see the section "Fetch in the background" below.
 - The zones touch each other: each side between two zones has 4 pixels of background, and the two outer sides have the 11 pixels of the other status bar sections. The text of the zones does not move. The three zones are one button group, as in Bootstrap: only the left corners of the branch zone and the right corners of the counts zone are round (6 pixels), and the corners where two zones touch are square, also in the hover background and in the open state.
 - The branch picker is a card above the branch zone, 408 pixels wide. At the top it has a search field with the text "Select a branch to check out". Under it, the local branches, the most recently committed first. Each row shows the Git icon, the name of the branch, a check mark for the current branch, and the time of the last commit on the first line, then the author, the short hash, and the subject of the last commit on the second line.
 - The card has no padding around the list: the separators between the rows touch the left and right borders of the card, and the scroll bar of the list touches the right border. Only the search field has space around it. The list scrolls inside the card when it is longer than 560 pixels, and the list is at most 60 percent of the window height.
@@ -35,3 +35,12 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - When the push fails, for example because the remote repository refuses it, a red notice shows the message of Git after the sentence of the merge, which is done.
 - When Git refuses before the push, for example because a change of the working folder would be overwritten, the card shows the message of Git in a red notice, and nothing changes.
 - When the current branch has no upstream branch, the icon is faded to 35 percent, nothing starts, and the card says "This branch has no upstream branch. Push it first, so it has one."
+
+### Fetch in the background
+
+- The counts come from `git status --porcelain=v2 --branch --untracked-files=all`, which reads only the local repository and never contacts the remote repository. Heidrun reads it again every 10 seconds for the selected workspace, and every 60 seconds for the other workspaces. So the count to download changes only after a fetch ([issue #432](https://github.com/heidrun-org/heidrun/issues/432)).
+- Heidrun runs `git fetch --prune` in the background for the Git repository of the selected workspace, with the Tauri command `git_sync` and the action `fetch` (`stores/git_background_fetch.ts`). The command never asks for a password (`GIT_TERMINAL_PROMPT=0`) and stops after 90 seconds. The Git status is read again after each fetch, so the counts change at once.
+- The option is in the section "General" of the Settings window, under the heading "Git", after the name "Fetch the remote repository in the background": a Bootstrap button group of five radio inputs, "Off", "1 minute", "5 minutes", "10 minutes", and "30 minutes". The default is "5 minutes". The option is the setting `gitFetchMinutes`, which holds 0 for "Off". A line in muted color under the group says that the fetch keeps the two counts true and that a fetch that fails shows nothing.
+- A fetch starts each time the delay passes. When the developer changes the option, the old delay stops and the new delay starts at once, without a fetch. When the developer selects another workspace, and when the first Git status of the selected workspace arrives, Heidrun fetches its repository at once if the last fetch of that repository is older than the delay, or if there is none.
+- Heidrun does not fetch when the option is "Off", when the selected workspace has no Git repository, when the branch has no upstream branch, and while a synchronization, a pull, a push, or another fetch runs.
+- A fetch that fails shows nothing: no toast and no error line. The next delay tries again.

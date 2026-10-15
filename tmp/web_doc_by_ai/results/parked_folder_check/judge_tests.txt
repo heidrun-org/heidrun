@@ -1,0 +1,10 @@
+
+ RUN  v2.1.9 /Users/jetienne/webwork/heidrun/tmp/web_doc_by_ai/workspace/packages/dev_tools/documentation_updater
+
+ ✓ tests/documentation_judge.test.ts (16 tests | 9 skipped) 22ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed | 9 skipped (16)
+   Start at  07:59:00
+   Duration  608ms (transform 170ms, setup 0ms, collect 283ms, tests 22ms, environment 0ms, prepare 51ms)
+

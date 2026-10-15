@@ -1,0 +1,20 @@
+{
+  "none": "No workspace",
+  "newName": "New name of the workspace",
+  "listLabel": "Workspaces",
+  "rowTitle": "Select this workspace · drag to move",
+  "rename": "Rename the workspace {name}",
+  "closeConfirm": "Close",
+  "close": "Close the workspace {name}",
+  "new": "New workspace…",
+  "newTitle": "Create a new workspace",
+  "chooseFolder": "Choose the folder of the new workspace",
+  "otherBlocked": "An agent in another workspace is blocked",
+  "otherDone": "An agent in another workspace has finished",
+  "folder": "Folder",
+  "branch": "Git branch",
+  "tabs": "Tabs",
+  "agents": "Agents",
+  "noFolder": "No folder",
+  "noBranch": "No Git branch"
+}

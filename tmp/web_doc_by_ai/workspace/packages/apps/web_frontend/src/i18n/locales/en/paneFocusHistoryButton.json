@@ -1,0 +1,8 @@
+{
+  "backLabel": "Back",
+  "backTitle": "Back to the previous pane. Hold to show the history.",
+  "backMenuLabel": "Panes before this one",
+  "forwardLabel": "Forward",
+  "forwardTitle": "Forward to the next pane. Hold to show the history.",
+  "forwardMenuLabel": "Panes after this one"
+}

@@ -4,12 +4,14 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const invokeMock = vi.hoisted(() => vi.fn());
+const copyMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
+vi.mock("../lib/clipboard", () => ({ copy: copyMock }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 
 import FilesPanel from "./FilesPanel.vue";
 import { git, type GitStatus } from "../stores/git";
-import { files, filesPanelNewFolders, filesPanelSelections } from "../stores/files";
+import { files, filesPanelIgnoredChildren, filesPanelNewFolders, filesPanelSelections } from "../stores/files";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
 
@@ -40,7 +42,10 @@ async function mountPanel() {
 }
 
 beforeEach(() => {
-  invokeMock.mockImplementation(async (command: string, args: { paths: string[] }) => {
+  invokeMock.mockImplementation(async (command: string, args: { paths: string[]; path: string }) => {
+    if (command === "file_full_path") {
+      return `/work/heidrun/${args.path}`;
+    }
     if (command === "files_list") {
       return {
         root: "/work/heidrun",
@@ -61,12 +66,21 @@ afterEach(() => {
   settings.filesPanelIndent = "medium";
   settings.filesPanelRowHeight = "comfortable";
   settings.filesPanelIndentGuides = true;
+  settings.filesShowIgnored = false;
   state.selectedWorkspaceId = null;
+  state.toast = "";
   git.status = {};
   git.modal.open = false;
   git.modal.path = null;
+  files.open = false;
+  files.tabs = [];
+  files.active = null;
   files.root = "";
+  files.ignored = [];
   files.expanded = new Set();
+  for (const folder of Object.keys(filesPanelIgnoredChildren)) {
+    delete filesPanelIgnoredChildren[folder];
+  }
   for (const root of Object.keys(filesPanelNewFolders)) {
     delete filesPanelNewFolders[root];
   }
@@ -79,7 +93,7 @@ afterEach(() => {
 describe("FilesPanel", () => {
   it("shows the title and the folders first, then the files, and folds the folders at the start", async () => {
     const wrapper = await mountPanel();
-    expect(wrapper.get(".title").text()).toBe("Files");
+    expect(wrapper.get(".title").text()).toBe("File explorer");
     expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual(["src", "README.md"]);
   });
 
@@ -90,11 +104,13 @@ describe("FilesPanel", () => {
     expect(git.modal.open).toBe(false);
   });
 
-  it("opens a file in the large Git window after a click on it", async () => {
+  it("opens a file in the Files window, and not in the large Git window, after a click on it", async () => {
     const wrapper = await mountPanel();
     await wrapper.findAll(".row")[1].trigger("click");
-    expect(git.modal.open).toBe(true);
-    expect(git.modal.path).toBe("README.md");
+    await vi.waitFor(() => expect(files.active).toBe("README.md"));
+    expect(files.open).toBe(true);
+    expect(files.tabs).toContain("README.md");
+    expect(git.modal.open).toBe(false);
   });
 
   it("shows a status letter on a changed file", async () => {
@@ -124,14 +140,14 @@ describe("FilesPanel", () => {
     expect(wrapper.find("[aria-label='Expand all folders']").exists()).toBe(false);
   });
 
-  it("selects the row that was clicked, a folder or a file, and only that row, and keeps it after the Git window closes", async () => {
+  it("selects the row that was clicked, a folder or a file, and only that row, and keeps it after the Files window closes", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.findAll(".row.selected")).toHaveLength(0);
     await wrapper.findAll(".row")[0].trigger("click");
     expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["src•"]);
     await wrapper.findAll(".row")[3].trigger("click");
     expect(wrapper.findAll(".row.selected").map((row) => row.text())).toEqual(["README.md"]);
-    git.modal.open = false;
+    files.open = false;
     await wrapper.vm.$nextTick();
     expect(wrapper.findAll(".row.selected")).toHaveLength(1);
   });
@@ -289,6 +305,22 @@ describe("FilesPanel", () => {
     expect(rule).toContain("width: 100%");
   });
 
+  it("gives a row under the pointer a background that shows in the dark theme and in the light theme", () => {
+    const panel = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+    expect(panel).toMatch(/\.row:hover \{ background: var\(--files-row-hover\); \}/);
+    const styles = readFileSync(path.join(import.meta.dirname, "..", "styles.css"), "utf8");
+    const lightStart = styles.indexOf(':root[data-theme="light"]');
+    const themes = { dark: styles.slice(0, lightStart), light: styles.slice(lightStart) };
+    for (const theme of [themes.dark, themes.light]) {
+      const hover = theme.match(/--files-row-hover: #([0-9a-fA-F]{6});/)?.[1] ?? "";
+      const side = theme.match(/--side: #([0-9a-fA-F]{6});/)?.[1] ?? "";
+      expect(hover).not.toBe("");
+      const channels = (color: string) => [0, 2, 4].map((index) => parseInt(color.slice(index, index + 2), 16));
+      const difference = Math.max(...channels(hover).map((value, index) => Math.abs(value - channels(side)[index])));
+      expect(difference).toBeGreaterThanOrEqual(10);
+    }
+  });
+
   it("keeps the header at the top while the rows scroll: the rule of the header sticks it, with its own background", () => {
     const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
     const rule = source.match(/\.panel-header \{([^}]*)\}/)?.[1] ?? "";
@@ -334,10 +366,114 @@ describe("FilesPanel", () => {
     await wrapper.get("[aria-label='More options']").trigger("click");
     const items = () => Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]"));
     expect(items().map((item) => item.textContent?.trim())).toEqual([
-      "Indentation", "Small", "✓ Medium", "Large", "Row height", "Compact", "✓ Comfortable", "Indent guides", "✓ Show", "Hide",
+      "Indentation", "Small", "✓ Medium", "Large",
+      "Row height", "Compact", "✓ Comfortable",
+      "Indent guides", "✓ Show", "Hide",
+      "Ignored files", "Show", "✓ Hide",
     ]);
     items()[3].click();
     expect(settings.filesPanelIndent).toBe("large");
+    wrapper.unmount();
+  });
+
+  it("puts a separator line between two groups of the menu of the three dots, and nowhere else", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.get("[aria-label='More options']").trigger("click");
+    const menu = document.body.querySelector("[role=menu]") as HTMLElement;
+    const separators = Array.from(menu.querySelectorAll("[role=separator]"));
+    expect(separators).toHaveLength(3);
+    expect(separators.map((separator) => separator.nextElementSibling?.textContent?.trim())).toEqual(["Row height", "Indent guides", "Ignored files"]);
+    wrapper.unmount();
+  });
+
+  it("turns the option Ignored files on and off with the menu, and reads the list of files again each time", async () => {
+    const wrapper = await mountPanel();
+    expect(settings.filesShowIgnored).toBe(false);
+    invokeMock.mockClear();
+    await wrapper.get("[aria-label='More options']").trigger("click");
+    const items = () => Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]"));
+    items()[11].click();
+    expect(settings.filesShowIgnored).toBe(true);
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("files_list", { cwd: "/work/heidrun", ignored: true }));
+    await wrapper.get("[aria-label='More options']").trigger("click");
+    expect(items().map((item) => item.textContent?.trim()).slice(-3)).toEqual(["Ignored files", "✓ Show", "Hide"]);
+    items()[12].click();
+    expect(settings.filesShowIgnored).toBe(false);
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("files_list", { cwd: "/work/heidrun", ignored: false }));
+    wrapper.unmount();
+  });
+
+  it("opens a context menu with two items after a right click on the row of a file", async () => {
+    const wrapper = await mountPanel();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    await wrapper.findAll(".row")[1].trigger("contextmenu", { clientX: 40, clientY: 60 });
+    const items = Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menu] [role=menuitem]"));
+    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+    expect(git.modal.open).toBe(false);
+    wrapper.unmount();
+  });
+
+  it("opens the same context menu after a right click on the row of a folder, and hides the default context menu of the web view", async () => {
+    const wrapper = await mountPanel();
+    const folderRow = wrapper.findAll(".row")[0];
+    expect(folderRow.attributes("aria-expanded")).toBeDefined();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 40, clientY: 60 });
+    folderRow.element.dispatchEvent(event);
+    await wrapper.vm.$nextTick();
+    expect(event.defaultPrevented).toBe(true);
+    const items = Array.from(document.body.querySelectorAll<HTMLButtonElement>("[role=menu] [role=menuitem]"));
+    expect(items.map((item) => item.textContent?.trim())).toEqual(["Copy absolute path", "Copy relative path"]);
+    wrapper.unmount();
+  });
+
+  it("copies the absolute path and the relative path of a folder with the context menu of the row of the folder", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[0].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("/work/heidrun/src"));
+    expect(invokeMock).toHaveBeenCalledWith("file_full_path", { root: "/work/heidrun", path: "src" });
+    await wrapper.findAll(".row")[0].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[1].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("src"));
+    expect(state.toast).toBe("Copied: src");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("copies the absolute path of the file with the item Copy absolute path, and closes the context menu", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.findAll(".row")[2].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[0].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("/work/heidrun/src/main.ts"));
+    expect(invokeMock).toHaveBeenCalledWith("file_full_path", { root: "/work/heidrun", path: "src/main.ts" });
+    expect(state.toast).toBe("Copied: /work/heidrun/src/main.ts");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("copies the path relative to the folder of the workspace with the item Copy relative path", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[0].trigger("click");
+    await wrapper.findAll(".row")[2].trigger("contextmenu");
+    document.body.querySelectorAll<HTMLButtonElement>("[role=menuitem]")[1].click();
+    await vi.waitFor(() => expect(copyMock).toHaveBeenCalledWith("src/main.ts"));
+    expect(state.toast).toBe("Copied: src/main.ts");
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    wrapper.unmount();
+  });
+
+  it("closes the context menu with the key Escape, and with a click outside it, and copies nothing", async () => {
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".row")[1].trigger("contextmenu");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    await wrapper.findAll(".row")[1].trigger("contextmenu");
+    document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    await wrapper.vm.$nextTick();
+    expect(document.body.querySelector("[role=menu]")).toBeNull();
+    expect(copyMock).not.toHaveBeenCalled();
     wrapper.unmount();
   });
 
@@ -353,5 +489,191 @@ describe("FilesPanel", () => {
     git.status = { w1: null };
     const wrapper = mount(FilesPanel);
     expect(wrapper.text()).toBe("This workspace is not a Git repository.");
+  });
+});
+
+describe("FilesPanel, the files and the folders that Git ignores", () => {
+  /** The first level of each folder that Git ignores, as the backend gives it. A folder ends with "/". */
+  let ignoredFolders: Record<string, string[]>;
+
+  beforeEach(() => {
+    ignoredFolders = {
+      ".heidrun": ["config.json", "nested/"],
+      ".heidrun/nested": ["deep.txt"],
+      dist: ["bundle.js"],
+    };
+    invokeMock.mockImplementation(async (command: string, args: { ignored?: boolean; path?: string; paths?: string[] }) => {
+      if (command === "files_list") {
+        const ignored = args.ignored === true ? [".env", ".heidrun/", "dist/"] : [];
+        return {
+          root: "/work/heidrun",
+          git: true,
+          files: ["README.md", "src/main.ts", ...ignored],
+          ignored,
+          status: {},
+          truncated: false,
+        };
+      }
+      if (command === "folder_children") {
+        const children = ignoredFolders[args.path ?? ""];
+        if (children === undefined) {
+          throw new Error("not a folder");
+        }
+        return children;
+      }
+      if (command === "dirs_existing") {
+        return args.paths;
+      }
+      return null;
+    });
+  });
+
+  /** The row whose name is `name`. */
+  function rowNamed(wrapper: Awaited<ReturnType<typeof mountPanel>>, name: string) {
+    return wrapper.findAll(".row").find((row) => row.get(".name").text() === name);
+  }
+
+  /** The names of the rows, from the top. */
+  function rowNames(wrapper: Awaited<ReturnType<typeof mountPanel>>): string[] {
+    return wrapper.findAll(".row .name").map((name) => name.text());
+  }
+
+  it("lists a folder that holds only ignored files, and its ignored file after it unfolds, both in the muted color, when the option is on", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    expect(rowNames(wrapper)).toEqual([".heidrun", "dist", "src", ".env", "README.md"]);
+    expect(rowNamed(wrapper, ".heidrun")?.classes()).toContain("ignored");
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    expect(invokeMock).toHaveBeenCalledWith("folder_children", { root: "/work/heidrun", path: ".heidrun" });
+    expect(rowNamed(wrapper, "config.json")?.classes()).toContain("ignored");
+    expect(rowNamed(wrapper, "config.json")?.find(".arrow i").exists()).toBe(false);
+  });
+
+  it("does not list a folder or a file that Git ignores when the option is off, and reads no folder", async () => {
+    const wrapper = await mountPanel();
+    expect(rowNames(wrapper)).toEqual(["src", "README.md"]);
+    expect(invokeMock).toHaveBeenCalledWith("files_list", { cwd: "/work/heidrun", ignored: false });
+    expect(invokeMock).not.toHaveBeenCalledWith("folder_children", expect.anything());
+  });
+
+  it("shows a file that Git ignores in the muted color, and a file that Git tracks and a folder that Git tracks in the normal color", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    expect(rowNamed(wrapper, ".env")?.classes()).toContain("ignored");
+    expect(rowNamed(wrapper, "README.md")?.classes()).not.toContain("ignored");
+    expect(rowNamed(wrapper, "src")?.classes()).not.toContain("ignored");
+  });
+
+  it("gives a row that Git ignores the muted color in the style of the sidebar section", () => {
+    const source = readFileSync(path.join(import.meta.dirname, "FilesPanel.vue"), "utf8");
+    expect(source).toMatch(/\.row\.ignored \{ color: var\(--muted\); \}/);
+  });
+
+  it("unfolds an ignored folder inside an ignored folder, and reads only the folders that the developer unfolds, one level each", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("nested"));
+    expect(rowNames(wrapper)).not.toContain("deep.txt");
+    await rowNamed(wrapper, "nested")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("deep.txt"));
+    expect(rowNames(wrapper)).toEqual([".heidrun", "nested", "deep.txt", "config.json", "dist", "src", ".env", "README.md"]);
+    const reads = invokeMock.mock.calls.filter(([command]) => command === "folder_children").map(([, args]) => args.path);
+    expect(reads).toEqual([".heidrun", ".heidrun/nested"]);
+  });
+
+  it("folds an unfolded ignored folder with a click, without reading the folder again", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    expect(rowNames(wrapper)).not.toContain("config.json");
+    expect(invokeMock.mock.calls.filter(([command]) => command === "folder_children")).toHaveLength(1);
+  });
+
+  it("opens a file inside a folder that Git ignores in the Files window after a click on it", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    await rowNamed(wrapper, "config.json")?.trigger("click");
+    await vi.waitFor(() => expect(files.active).toBe(".heidrun/config.json"));
+    expect(files.open).toBe(true);
+    expect(git.modal.open).toBe(false);
+  });
+
+  it("reads again every unfolded ignored folder after the button Refresh", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    ignoredFolders[".heidrun"] = ["config.json", "nested/", "created_outside.txt"];
+    await wrapper.get("[aria-label='Refresh']").trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("created_outside.txt"));
+    const reads = invokeMock.mock.calls.filter(([command, args]) => command === "folder_children" && args.path === "dist");
+    expect(reads).toHaveLength(0);
+  });
+
+  it("keeps the folder folded and shows an error message when the folder cannot be read", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    delete ignoredFolders.dist;
+    await rowNamed(wrapper, "dist")?.trigger("click");
+    await vi.waitFor(() => expect(state.toast).toBe("This folder cannot be read."));
+    expect(wrapper.findAll(".row .name").map((name) => name.text())).toEqual([".heidrun", "dist", "src", ".env", "README.md"]);
+    expect(rowNamed(wrapper, "dist")?.attributes("aria-expanded")).toBe("false");
+  });
+
+  it("shows and hides the files that Git ignores with the option of the menu, and forgets the content of the ignored folders", async () => {
+    const wrapper = await mountPanel();
+    expect(rowNames(wrapper)).toEqual(["src", "README.md"]);
+    settings.filesShowIgnored = true;
+    await vi.waitFor(() => expect(rowNames(wrapper)).toEqual([".heidrun", "dist", "src", ".env", "README.md"]));
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    settings.filesShowIgnored = false;
+    await vi.waitFor(() => expect(rowNames(wrapper)).toEqual(["src", "README.md"]));
+    expect(filesPanelIgnoredChildren[".heidrun"]).toBeUndefined();
+  });
+
+  it("selects nothing when the option goes off while the selected row is inside a folder that Git ignores", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    expect(filesPanelSelections.w1.path).toBe(".heidrun");
+    settings.filesShowIgnored = false;
+    await vi.waitFor(() => expect(filesPanelSelections.w1).toBeUndefined());
+  });
+
+  it("puts a new file inside an ignored folder, and shows it from the disk", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    await wrapper.get("[aria-label='New file']").trigger("click");
+    ignoredFolders[".heidrun"] = ["config.json", "nested/", "notes.txt"];
+    await wrapper.get(".naming-row input").setValue("notes.txt");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("file_create", { root: "/work/heidrun", path: ".heidrun/notes.txt", dir: false }));
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("notes.txt"));
+    expect(rowNamed(wrapper, "notes.txt")?.classes()).toContain("ignored");
+  });
+
+  it("shows a new folder inside an ignored folder once, from the disk, and does not remember it in the list of new folders", async () => {
+    settings.filesShowIgnored = true;
+    const wrapper = await mountPanel();
+    await rowNamed(wrapper, ".heidrun")?.trigger("click");
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("config.json"));
+    await wrapper.get("[aria-label='New folder']").trigger("click");
+    ignoredFolders[".heidrun"] = ["config.json", "nested/", "created/"];
+    ignoredFolders[".heidrun/created"] = [];
+    await wrapper.get(".naming-row input").setValue("created");
+    await wrapper.get(".naming-row input").trigger("keydown", { key: "Enter" });
+    await vi.waitFor(() => expect(rowNames(wrapper)).toContain("created"));
+    expect(rowNames(wrapper).filter((name) => name === "created")).toHaveLength(1);
+    expect(filesPanelNewFolders["/work/heidrun"] ?? []).toEqual([]);
   });
 });

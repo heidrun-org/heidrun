@@ -1,0 +1,19 @@
+ M AGENTS.md
+ M README_DEV.md
+ M package.json
+ M packages/auxiliary/raw_coding_agent_cli/CONTEXT.md
+ M packages/auxiliary/raw_coding_agent_cli/src/library/raw_coding_agent.ts
+ M packages/auxiliary/raw_coding_agent_cli/tests/raw_coding_agent.test.ts
+ M packages/auxiliary/website_public/CONTEXT.md
+ M packages/auxiliary/website_public/docs/.vitepress/config.ts
+ M packages/auxiliary/website_public/tests/pages.test.ts
+ M packages/dev_tools/CONTEXT.md
+ M packages/dev_tools/change_log_generator/CONTEXT.md
+ M packages/dev_tools/change_log_generator/src/index.ts
+ M pnpm-lock.yaml
+?? packages/auxiliary/website_public/docs/documentation/browse_project_files.md
+?? packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md
+?? packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md
+?? packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md
+?? packages/auxiliary/website_public/docs/public/documentation_images/
+?? packages/dev_tools/documentation_updater/

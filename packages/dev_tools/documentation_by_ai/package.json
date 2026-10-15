@@ -1,0 +1,21 @@
+{
+  "name": "documentation_by_ai",
+  "private": true,
+  "version": "0.2.7",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "cli": "node --import tsx src/cli.ts",
+    "generate-and-build": "node --import tsx src/cli.ts generate-and-build"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5"
+  }
+}

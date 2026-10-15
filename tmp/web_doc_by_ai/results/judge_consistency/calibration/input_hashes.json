@@ -1,0 +1,12 @@
+{
+  "packages/auxiliary/website_public/docs/documentation/browse_project_files.md": "449bcaa2fa90fd36b15431a6e4310472297df4954a82a0135d737b33559aad75",
+  "packages/auxiliary/website_public/docs/documentation/copy_a_file_path.md": "872842902d59eeb5066611d3a733522cd54a0a36cabf65ed431ae40eb2aa0c2e",
+  "packages/auxiliary/website_public/docs/documentation/create_a_file_or_folder.md": "079f62da7326ee909370aedcadb11067d3eb42eebf598ecba12ba4532570363f",
+  "packages/auxiliary/website_public/docs/documentation/files_sidebar_section_controls.md": "46351226129be35f0c9b07b465655aa42aa423cf7c78de32af376bda080f3ac8",
+  "packages/auxiliary/website_public/docs/.vitepress/config.ts": "3a1efccce0a5a5d8541295d2fa25ae3aec58f2919dc54b9867b99cdbd82e4026",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/copy_path.png": "c548a47c6dd8f6fdfcd06ec54efa4be505bdf59e3b7bd51bb6028cdf92c61e82",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/files_sidebar.png": "0d28b26140df8929033958e8fdaeee12e6b4a419878a73263e80035c66d7410c",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/more_options.png": "e6f5def8daa0390d1707bfdf2daca759ce272775b6ca1d1b7f1d25c2a0d2b703",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/new_file.png": "0e9cdfed1023f3af2cabce828261d63f3fd36878a7d1e0db3569fc09c2b4a812",
+  "packages/auxiliary/website_public/docs/public/documentation_images/files/screenshots.json": "92aade5a20732efe733408ec7c21779fe4bcb44b392f1ec2198d1e0360ea6b2c"
+}

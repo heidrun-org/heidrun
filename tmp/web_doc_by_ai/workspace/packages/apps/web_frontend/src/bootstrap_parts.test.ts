@@ -1,0 +1,231 @@
+import Fs from 'node:fs';
+import Path from 'node:path';
+import * as Sass from 'sass';
+import { describe, expect, it } from 'vitest';
+
+const __dirname = import.meta.dirname;
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	BootstrapPartsTest — the compiled Bootstrap parts must stay inside one CSS layer
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Helpers for the tests of `bootstrap_parts.scss`.
+ */
+class BootstrapPartsTestHelper {
+	/**
+	 * Compiles `bootstrap_parts.scss` the way Vite compiles it.
+	 *
+	 * @returns The CSS text.
+	 */
+	static compile(): string {
+		const result = Sass.compile(Path.resolve(__dirname, 'bootstrap_parts.scss'), {
+			loadPaths: [Path.resolve(__dirname, '../node_modules')],
+			quietDeps: true,
+					});
+		return result.css;
+	}
+
+	/**
+	 * Lists what stands at the top level of a CSS text: the selector of each rule, and the head of each at-rule.
+	 *
+	 * @param cssText - The CSS text.
+	 * @returns The top-level selectors and at-rule heads, in order.
+	 */
+	static listTopLevelHeads(cssText: string): string[] {
+		const textWithoutComments = cssText.replace(/\/\*[\s\S]*?\*\//g, '');
+		const headList: string[] = [];
+		let depth = 0;
+		let headStart = 0;
+		for (let index = 0; index < textWithoutComments.length; index++) {
+			const character = textWithoutComments[index];
+			if (character === '{') {
+				if (depth === 0) {
+					headList.push(textWithoutComments.slice(headStart, index).trim());
+				}
+				depth += 1;
+			} else if (character === '}') {
+				depth -= 1;
+				if (depth === 0) {
+					headStart = index + 1;
+				}
+			} else if (character === ';' && depth === 0) {
+				headStart = index + 1;
+			}
+		}
+		return headList;
+	}
+}
+
+describe('bootstrap_parts.scss', () => {
+	it('puts every Bootstrap component rule in a cascade layer, so that a rule of the application always wins', () => {
+		const headList = BootstrapPartsTestHelper.listTopLevelHeads(BootstrapPartsTestHelper.compile());
+		const layerHeadList = headList.filter((head) => head.startsWith('@layer') === true);
+		expect(layerHeadList.length).toBeGreaterThan(10);
+		const ruleHeadList = headList.filter((head) => head.startsWith('@layer') === false);
+		expect(ruleHeadList).toEqual([
+			':root,\n:host',
+			':root,\n:host',
+			'@media (prefers-color-scheme: dark)',
+			'[data-bs-theme=dark]',
+			'[data-bs-theme=light]',
+			'.form-control,\nselect.form-control',
+			'.menu',
+			'.popover',
+			'.progress',
+			'.alert',
+			'.badge',
+			'.list-group',
+			'.btn',
+			'.btn:disabled',
+			'.btn-group > .btn',
+			'.btn-group > .btn:hover',
+			'.btn-group > .btn:not(:first-child)',
+			'.btn-group > .btn:not(:last-child)',
+		]);
+	});
+
+	it('has only the utility classes that the web frontend uses, and they sit in the layer utilities', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		const layerText = cssText.slice(cssText.indexOf('@layer utilities {'), cssText.indexOf('\n.form-control,'));
+		const utilityRuleList = layerText.match(/^ {2}\.[a-z0-9-]+ \{/gm) ?? [];
+		expect(utilityRuleList.map((rule) => rule.trim().replace(' {', ''))).toEqual([
+			'.justify-content-center',
+			'.justify-content-between',
+			'.border-0',
+			'.border-top',
+			'.d-block',
+			'.d-flex',
+			'.d-inline-flex',
+			'.flex-column',
+			'.flex-wrap',
+			'.flex-fill',
+			'.align-items-center',
+			'.align-self-start',
+			'.gap-2',
+			'.gap-3',
+			'.ms-1',
+			'.ms-3',
+			'.me-2',
+			'.me-auto',
+			'.my-auto',
+			'.mb-3',
+			'.pt-2',
+			'.fw-medium',
+			'.fw-semibold',
+			'.fst-italic',
+			'.text-start',
+			'.text-end',
+			'.text-break',
+			'.text-wrap',
+			'.text-primary-emphasis',
+			'.text-success-emphasis',
+			'.text-warning-emphasis',
+			'.text-danger-emphasis',
+			'.text-body-secondary',
+			'.bg-success',
+			'.bg-warning',
+			'.bg-danger',
+			'.bg-body-emphasis',
+			'.position-fixed',
+			'.position-absolute',
+			'.position-relative',
+			'.top-0',
+			'.end-0',
+			'.bottom-0',
+			'.bottom-100',
+			'.h-auto',
+			'.overflow-y-auto',
+			'.invisible',
+		]);
+	});
+
+	it('keeps the rule that a utility class wins over a rule of the application: every utility carries important', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		const layerText = cssText.slice(cssText.indexOf('@layer utilities {'), cssText.indexOf('\n.form-control,'));
+		expect(layerText).toMatch(/^ {2}\.invisible \{\s*visibility: hidden !important;/m);
+		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
+	});
+
+	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
+		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
+		}
+	});
+
+	it('does not have the Bootstrap part check, because the application already uses the class name check', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).not.toMatch(/^\s*\.check[ ,{]/m);
+	});
+
+	it('gives a row of a list group no background of its own, so that the sidebar shows through in both themes', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-bg: transparent/);
+	});
+
+	it('gives a row of a list group under the pointer the soft hover background, so that a line or a button inside it still shows', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-action-hover-bg: var\(--hover-soft\)/);
+	});
+
+	it('gives a row of a list group the same background when it is pressed as when it is hovered, so that a click does not darken it', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-action-active-bg: var\(--hover-soft\)/);
+	});
+
+	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		for (const selector of ['.nav', '.nav-link', '.nav-tabs']) {
+			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
+		}
+		expect(cssText).not.toContain('transition-duration: var(--nav-link-transition-duration)');
+	});
+
+	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.form-control,\nselect\.form-control \{[^}]*--control-font-size: var\(--font-size\)/);
+	});
+
+	it('gives the button no transition, as the application has none', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).not.toContain('transition: color 0.15s');
+		expect(cssText).not.toContain('transition-property: var(--btn-transition-property)');
+	});
+
+	it('does not clash with the class names of the components of the application: those components use no Bootstrap class name for their own box', () => {
+		const componentFolder = Path.resolve(__dirname, 'components');
+		for (const [fileName, className] of [
+			['MoreMenu.vue', 'menu'],
+			['ThemeMenu.vue', 'menu'],
+			['SettingsAgentsSection.vue', 'switch'],
+			['SettingsMobileAccessSection.vue', 'switch'],
+		]) {
+			const filePath = fileName.startsWith('Settings') ? Path.join(componentFolder, 'settings', fileName) : Path.join(componentFolder, fileName);
+			const sourceText = Fs.readFileSync(filePath, 'utf8');
+			expect({ fileName, isClassUsed: new RegExp(`class="${className}[" ]`).test(sourceText) }).toEqual({
+				fileName,
+				isClassUsed: false,
+			});
+		}
+	});
+
+	it('joins the buttons that have only the class btn inside a button group, because Bootstrap 6 joins only the classes that contain btn-', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:first-child\) \{\s*margin-inline-start: calc\(-1 \* var\(--btn-border-width\)\)/);
+		expect(cssText).toMatch(/\.btn-group > \.btn:not\(:last-child\) \{\s*border-start-end-radius: 0/);
+	});
+
+	it('aligns the content of a button to the start, as Bootstrap 5 did, and not to the center as Bootstrap 6 does', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\n\.btn \{[^}]*justify-content: flex-start/);
+	});
+
+	it('stacks the lines of a notice one under the other, as Bootstrap 5 did, and not side by side as Bootstrap 6 does', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\n\.alert \{[^}]*display: block/);
+	});
+});

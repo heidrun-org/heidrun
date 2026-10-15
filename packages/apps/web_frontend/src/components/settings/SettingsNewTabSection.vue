@@ -12,7 +12,7 @@ const COMMANDS = [
 
 <template>
   <div class="d-flex flex-column gap-2">
-    <h4 class="h6 fw-semibold text-body-secondary mb-0">{{ t("settingsNewTab.commandTitle") }}</h4>
+    <h4 class="form-label m-0">{{ t("settingsNewTab.commandTitle") }}</h4>
     <div class="btn-group" role="group" :aria-label="t('settingsNewTab.commandTitle')">
       <label
         v-for="command in COMMANDS"
@@ -24,6 +24,6 @@ const COMMANDS = [
         {{ t(command.labelKey) }}
       </label>
     </div>
-    <div class="keys">{{ t("settingsNewTab.help") }}</div>
+    <div class="form-text">{{ t("settingsNewTab.help") }}</div>
   </div>
 </template>
