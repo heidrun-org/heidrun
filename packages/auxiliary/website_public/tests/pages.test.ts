@@ -43,7 +43,7 @@ describe('website pages', () => {
 			});
 
 			it('has no relative link to a missing page', () => {
-				const links = [...text.matchAll(/\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
+				const links = [...text.matchAll(/(?<!!)\[[^\]]*\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
 				for (const link of links) {
 					expect(SiteFiles.markdownFileOfLink(link), link).not.toBeNull();
 				}
