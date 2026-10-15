@@ -9,6 +9,7 @@ import { workspaceCwd } from "./project";
 import { askConfirm } from "./confirm";
 import { hasText, t } from "../i18n/index";
 import { clockTime } from "../lib/format";
+import { parseGithubFolderAddress } from "../lib/github_folder_address";
 
 /** Where a skill is installed: the folder of the workspace, or the user. */
 export type SkillLevel = "workspace" | "user";
@@ -18,6 +19,8 @@ export interface SkillOrigin {
   /** The GitHub repository, as `owner/repository`. */
   source: string;
   skill_id: string;
+  /** The web address of the GitHub folder, for a skill installed from that address. Absent for a skill of skills.sh. */
+  folder_url?: string;
 }
 
 /** A skill found on the disk. */
@@ -33,13 +36,15 @@ export interface InstalledSkill {
   agents: string[];
 }
 
-/** A result of the search on skills.sh. */
+/** A result of the search on skills.sh, or the one result for a web address of a skill folder on GitHub. */
 export interface SearchResult {
   /** The GitHub repository, as `owner/repository`. */
   source: string;
   skillId: string;
   name: string;
   installs: number;
+  /** The web address of the skill folder on GitHub. Present only for the result of a web address, absent for skills.sh. */
+  folderUrl?: string;
 }
 
 /** The read-only view of a SKILL.md file. */
@@ -123,7 +128,7 @@ export function errorText(error: unknown): string {
 
 /** The key of a skill of the search, to find it back in the list of installed skills. */
 export function resultKey(result: SearchResult): string {
-  return `${result.source}/${result.skillId}`;
+  return result.folderUrl ?? `${result.source}/${result.skillId}`;
 }
 
 /** The key of an installed skill: the level and the folder name. */
@@ -170,7 +175,10 @@ export function openAgentsSection(): void {
 
 /** The text that says where an installed skill comes from. */
 export function originLabel(skill: InstalledSkill): string {
-  return skill.origin === null ? t("settingsSkills.originLocal") : `skills.sh · ${skill.origin.source}`;
+  if (skill.origin === null) {
+    return t("settingsSkills.originLocal");
+  }
+  return `${skill.origin.folder_url === undefined ? "skills.sh" : "GitHub"} · ${skill.origin.source}`;
 }
 
 export async function loadSkills(): Promise<void> {
@@ -181,12 +189,29 @@ export async function loadSkills(): Promise<void> {
   }
 }
 
+/** The one result of a web address of a skill folder on GitHub. It has no installs, because no search gave it. */
+function folderResult(query: string): SearchResult | null {
+  const folder = parseGithubFolderAddress(query);
+  return folder === null ? null : { source: folder.source, skillId: folder.skillId, name: folder.skillId, installs: 0, folderUrl: folder.url };
+}
+
+/**
+ * Searches skills.sh. When the query is the web address of a skill folder on GitHub, there is no search: the only result
+ * is that folder, and GitHub is asked only when the developer inspects or installs it.
+ */
 export async function searchSkills(query: string): Promise<void> {
   skills.query = query;
   skills.searchError = "";
   if (query.trim() === "") {
     skills.results = [];
     skills.searched = false;
+    return;
+  }
+  const folder = folderResult(query);
+  if (folder !== null) {
+    skills.results = [folder];
+    skills.searched = true;
+    skills.searching = false;
     return;
   }
   skills.searching = true;
@@ -221,12 +246,15 @@ export async function inspectInstalled(skill: InstalledSkill): Promise<void> {
   }
 }
 
-/** Shows the SKILL.md file of a result of the search, before the installation. */
+/** Shows the SKILL.md file of a result of the search, or of a web address of a skill folder, before the installation. */
 export async function inspectResult(result: SearchResult): Promise<void> {
-  const label = `skills.sh · ${result.source}`;
+  const label = `${result.folderUrl === undefined ? "skills.sh" : "GitHub"} · ${result.source}`;
   skills.view = { name: result.name, originLabel: label, text: "", loading: true };
   try {
-    const text = await invoke<string>("skills_preview", { source: result.source, skillId: result.skillId });
+    const text =
+      result.folderUrl === undefined
+        ? await invoke<string>("skills_preview", { source: result.source, skillId: result.skillId })
+        : await invoke<string>("skills_preview_folder", { url: result.folderUrl });
     skills.view = { name: result.name, originLabel: label, text, loading: false };
   } catch (error) {
     skills.view = null;
@@ -238,7 +266,7 @@ export function closeSkillView(): void {
   skills.view = null;
 }
 
-/** Installs a result of the search at the chosen level. */
+/** Installs a result of the search, or the skill folder of a web address, at the chosen level. */
 export async function installSkill(result: SearchResult): Promise<void> {
   const level = settings.skillsLevel;
   const cwd = currentCwd();
@@ -253,7 +281,11 @@ export async function installSkill(result: SearchResult): Promise<void> {
   }
   skills.busyKey = resultKey(result);
   try {
-    await invoke<InstalledSkill>("skills_install", { level, cwd, source: result.source, skillId: result.skillId, agents });
+    if (result.folderUrl === undefined) {
+      await invoke<InstalledSkill>("skills_install", { level, cwd, source: result.source, skillId: result.skillId, agents });
+    } else {
+      await invoke<InstalledSkill>("skills_install_folder", { level, cwd, url: result.folderUrl, agents });
+    }
     await loadSkills();
     toast(t("skillsStore.installed", { name: result.name }));
   } catch (error) {

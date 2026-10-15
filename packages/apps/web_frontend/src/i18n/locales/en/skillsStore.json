@@ -9,6 +9,8 @@
   "error_skills_already_installed": "The skill {details} is already installed at this level",
   "error_skills_not_installed": "The skill {details} is not installed",
   "error_skills_not_found": "The files of this skill were not found on GitHub: {details}",
+  "error_skills_folder_not_found": "This folder was not found on GitHub: {details}. The repository must be public, and the folder must have a SKILL.md file.",
+  "error_skills_invalid_address": "This is not the web address of a folder in a GitHub repository: {details}",
   "error_skills_github_rate_limit": "GitHub refuses more requests for now. Try again at {time}.",
   "error_skills_github_rate_limit_unknown": "GitHub refuses more requests for now. Try again in a few minutes.",
   "error_skills_too_many_files": "This skill has too many files to install",
