@@ -14,8 +14,14 @@ function at(monthDay: number, hour: number): string {
 	return new Date(2026, 9, monthDay, hour, 0, 0).toISOString();
 }
 
-function commit(authorName: string, authorEmail: string, committedAt: string): PersonWorkCommit {
-	return { authorName, authorEmail, committedAt };
+function commit(
+	authorName: string,
+	authorEmail: string,
+	committedAt: string,
+	insertions = 0,
+	deletions = 0,
+): PersonWorkCommit {
+	return { authorName, authorEmail, committedAt, insertions, deletions };
 }
 
 function opened(author: string | null, createdAt: string): PersonWorkOpenedItem {
@@ -103,11 +109,11 @@ describe("PersonWork.findPersons", () => {
 describe("PersonWork.compute", () => {
 	const sample = items({
 		commits: [
-			commit("Jerome Etienne", "j@example.com", at(8, 9)),
-			commit("Jerome Etienne", "j@example.com", at(14, 9)),
-			commit("Jerome Etienne", "j@example.com", at(14, 14)),
-			commit("Eric", "e@example.com", at(14, 10)),
-			commit("Jerome Etienne", "j@example.com", at(7, 23)),
+			commit("Jerome Etienne", "j@example.com", at(8, 9), 10, 2),
+			commit("Jerome Etienne", "j@example.com", at(14, 9), 5, 1),
+			commit("Jerome Etienne", "j@example.com", at(14, 14), 3, 3),
+			commit("Eric", "e@example.com", at(14, 10), 7, 0),
+			commit("Jerome Etienne", "j@example.com", at(7, 23), 100, 50),
 		],
 		pullRequests: [opened("jeromeetienne", at(14, 11)), opened("jeromeetienne", at(10, 11)), opened("eric", at(14, 12))],
 		issues: [opened("jeromeetienne", at(13, 11)), opened("jeromeetienne", at(2, 11)), opened("eric", at(13, 11))],
@@ -134,11 +140,30 @@ describe("PersonWork.compute", () => {
 		]);
 	});
 
-	it("counts the three totals of the person in the time range, and nothing of another person", () => {
+	it("counts the totals of the person in the time range, and nothing of another person", () => {
 		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
 		expect([result.commitCount, result.pullRequestCount, result.issueCount]).toEqual([3, 2, 1]);
 		const eric = PersonWork.compute(sample, "eric", NOW, 7);
 		expect([eric.commitCount, eric.pullRequestCount, eric.issueCount]).toEqual([1, 1, 1]);
+	});
+
+	it("adds the lines added and the lines deleted of the commits of the person in the time range", () => {
+		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
+		expect([result.insertionCount, result.deletionCount]).toEqual([18, 6]);
+		const eric = PersonWork.compute(sample, "eric", NOW, 7);
+		expect([eric.insertionCount, eric.deletionCount]).toEqual([7, 0]);
+	});
+
+	it("does not add the lines of a commit outside the time range, and adds them again for thirty days", () => {
+		const sevenDays = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
+		const thirtyDays = PersonWork.compute(sample, "jeromeetienne", NOW, 30);
+		expect([sevenDays.insertionCount, sevenDays.deletionCount]).toEqual([18, 6]);
+		expect([thirtyDays.insertionCount, thirtyDays.deletionCount]).toEqual([118, 56]);
+	});
+
+	it("gives no line for a person with no commit", () => {
+		const result = PersonWork.compute(items({ pullRequests: [opened("eric", at(14, 12))] }), "eric", NOW, 7);
+		expect([result.insertionCount, result.deletionCount]).toEqual([0, 0]);
 	});
 
 	it("counts an item of the first day and of the last day, and no item of the day before or of the day after", () => {
