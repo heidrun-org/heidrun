@@ -99,6 +99,31 @@ pub fn server_shell_command(bin: &std::path::Path) -> String {
     format!("exec '{quoted_bin}' {}", command_arguments(&["server"]).join(" "))
 }
 
+/// The environment variables that tell a coding agent in a pane that it runs inside the terminal of Visual Studio Code.
+/// The variables whose name starts with `VSCODE_` are removed too, see `is_editor_variable`.
+const EDITOR_VARIABLE_NAMES: &[&str] = &["CLAUDE_CODE_SSE_PORT", "TERM_PROGRAM", "TERM_PROGRAM_VERSION"];
+
+/// True when the environment variable `name` connects a coding agent to Visual Studio Code. A coding agent that sees
+/// these variables connects to the window of Visual Studio Code that has the same folder open, and reads the open file
+/// and the selected lines as if the developer had pasted them.
+pub fn is_editor_variable(name: &str) -> bool {
+    EDITOR_VARIABLE_NAMES.contains(&name) || name.starts_with("VSCODE_")
+}
+
+/// Removes the editor variables from the environment of `command`. Every pane inherits the environment of the Herdr
+/// server, so the server must not receive these variables when the developer starts Heidrun from the terminal of
+/// Visual Studio Code.
+pub fn remove_editor_variables(command: &mut std::process::Command) {
+    for (name, _) in std::env::vars_os() {
+        let Some(name) = name.to_str() else {
+            continue;
+        };
+        if is_editor_variable(name) {
+            command.env_remove(name);
+        }
+    }
+}
+
 /// The arguments of the command that stops the session `heidrun` when the user quits Heidrun. `None` when the session
 /// stays running: the user chose "Keep agents running after quit", or the environment chooses a session that is not
 /// the session of Heidrun.
@@ -398,6 +423,57 @@ mod herdr_tests {
         std::env::set_var("HERDR_SESSION", "work");
         assert_eq!(server_shell_command(std::path::Path::new("/opt/herdr")), "exec '/opt/herdr' server");
         clear_env();
+    }
+
+    #[test]
+    fn the_editor_variables_are_recognized() {
+        for name in ["CLAUDE_CODE_SSE_PORT", "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "VSCODE_INJECTION", "VSCODE_GIT_IPC_HANDLE"] {
+            assert!(is_editor_variable(name), "{name} must be an editor variable");
+        }
+        for name in ["PATH", "HOME", "TERM", "COLORTERM", "HERDR_SESSION", "MY_VSCODE_VARIABLE", "CLAUDE_CODE_OTHER"] {
+            assert_eq!(is_editor_variable(name), false, "{name} must not be an editor variable");
+        }
+    }
+
+    #[test]
+    fn the_server_command_loses_the_editor_variables_and_keeps_the_other_variables() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::set_var("CLAUDE_CODE_SSE_PORT", "41752");
+        std::env::set_var("TERM_PROGRAM", "vscode");
+        std::env::set_var("TERM_PROGRAM_VERSION", "1.0.0");
+        std::env::set_var("VSCODE_INJECTION", "1");
+        std::env::set_var("KEPT_TEST_VARIABLE", "kept");
+        let mut command = std::process::Command::new("herdr");
+        remove_editor_variables(&mut command);
+        let changes: std::collections::HashMap<String, Option<String>> = command
+            .get_envs()
+            .map(|(name, value)| (name.to_string_lossy().into_owned(), value.map(|v| v.to_string_lossy().into_owned())))
+            .collect();
+        for name in ["CLAUDE_CODE_SSE_PORT", "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "VSCODE_INJECTION"] {
+            assert_eq!(changes.get(name), Some(&None), "{name} must be removed");
+        }
+        assert_eq!(changes.contains_key("KEPT_TEST_VARIABLE"), false);
+        for name in ["CLAUDE_CODE_SSE_PORT", "TERM_PROGRAM", "TERM_PROGRAM_VERSION", "VSCODE_INJECTION", "KEPT_TEST_VARIABLE"] {
+            std::env::remove_var(name);
+        }
+    }
+
+    #[test]
+    fn a_started_process_does_not_receive_the_editor_variables() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        std::env::set_var("CLAUDE_CODE_SSE_PORT", "41752");
+        std::env::set_var("VSCODE_INJECTION", "1");
+        std::env::set_var("KEPT_TEST_VARIABLE", "kept");
+        let mut command = std::process::Command::new("/usr/bin/env");
+        remove_editor_variables(&mut command);
+        let output = command.output().expect("the command env must run");
+        let text = String::from_utf8_lossy(&output.stdout).into_owned();
+        for name in ["CLAUDE_CODE_SSE_PORT", "VSCODE_INJECTION", "KEPT_TEST_VARIABLE"] {
+            std::env::remove_var(name);
+        }
+        assert_eq!(text.contains("CLAUDE_CODE_SSE_PORT="), false);
+        assert_eq!(text.contains("VSCODE_INJECTION="), false);
+        assert!(text.contains("KEPT_TEST_VARIABLE=kept"));
     }
 
     #[test]
