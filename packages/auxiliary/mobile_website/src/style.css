@@ -144,24 +144,29 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8dvh 0 calc(20px + env(safe-area-inset-bottom));
+  padding: 13dvh 0 calc(20px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
   text-align: center;
 }
 
 .welcome-picture {
-  width: min(84%, 360px);
+  position: relative;
+  width: min(88%, 380px);
   aspect-ratio: 1;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: var(--panel);
 }
 
+/* The goat is bigger than the circle and stands on the same line, so its head and its horns go out of the top. */
 .welcome-image {
+  position: absolute;
+  left: -9%;
+  bottom: 3.95%;
   display: block;
-  width: 100%;
-  height: 100%;
-  padding: 5%;
-  object-fit: contain;
+  width: 118%;
+  height: auto;
+  pointer-events: none;
 }
 
 .welcome-text {
