@@ -93,7 +93,7 @@ function sampleAiCostItems(): AiCostItems {
 
 /** Mounts the tab with the items that the commands give, or with an error. A promise that never ends keeps a read pending. */
 async function mountPersonWorkTab(
-  result: PersonWorkItems | Error = sampleItems(),
+  result: PersonWorkItems | Error | Promise<never> = sampleItems(),
   aiCost: AiCostItems | Error | Promise<never> = sampleAiCostItems(),
 ) {
   invoke.mockReset();
@@ -370,6 +370,17 @@ describe("PersonWorkTab", () => {
     await chooseAiCost(wrapper);
     expect(wrapper.text()).toContain("Reading the chats of the coding agents…");
     expect(wrapper.find('[data-total="claude"]').exists()).toBe(false);
+    const message = wrapper.get('[role="status"]');
+    expect(message.element.firstElementChild?.classList.contains("spinner-border")).toBe(true);
+    expect(message.get(".spinner-border").attributes("aria-hidden")).toBe("true");
+  });
+
+  it("puts a busy wheel before the message while the commits, the pull requests, and the issues are read", async () => {
+    const wrapper = await mountPersonWorkTab(new Promise<never>(() => {}));
+    const message = wrapper.get('[role="status"]');
+    expect(message.text()).toBe("Reading the commits, the pull requests, and the issues…");
+    expect(message.element.firstElementChild?.classList.contains("spinner-border")).toBe(true);
+    expect(message.get(".spinner-border").attributes("aria-hidden")).toBe("true");
   });
 
   it("shows an error message when the chats cannot be read, and the Git history stays available", async () => {

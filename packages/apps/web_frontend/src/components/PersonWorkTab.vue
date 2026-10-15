@@ -290,7 +290,7 @@ onMounted(load);
       </div>
       <template v-if="sourceId === 'git_history'">
         <div v-if="errorText !== ''" class="alert theme-danger" role="alert">{{ t("statisticsModal.personWorkLoadError", { error: errorText }) }}</div>
-        <span v-else-if="items === null" class="form-text">{{ t("statisticsModal.personWorkLoading") }}</span>
+        <span v-else-if="items === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkLoading") }}</span>
         <template v-else>
           <div v-if="items.codeHostingError !== null" class="alert theme-warning" role="alert">
             {{ t("statisticsModal.personWorkCodeHostingError", { error: items.codeHostingError }) }}
@@ -313,7 +313,7 @@ onMounted(load);
         <div v-if="aiCostErrorText !== ''" class="alert theme-danger" role="alert">
           {{ t("statisticsModal.personWorkAiCostLoadError", { error: aiCostErrorText }) }}
         </div>
-        <span v-else-if="aiCostResult === null" class="form-text">{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
+        <span v-else-if="aiCostResult === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
         <template v-else>
           <div class="d-flex flex-wrap gap-3 mb-3">
             <div v-for="total in aiCostTotals" :key="total.id" :data-total="total.id" class="d-flex align-items-center gap-2">

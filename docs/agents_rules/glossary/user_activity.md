@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: User activity sidebar section](../user_interface/sidebars/user_activity.md), [User interface of Heidrun: Statistics window](../user_interface/window/statistics_window.md)
-- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486)
+- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 494](https://github.com/heidrun-org/heidrun/issues/494)
 
 This document gives one short definition for each word of the activity of the developer in front of Heidrun. The other words of Heidrun are in [index.md](index.md).
 
@@ -39,7 +39,7 @@ The sidebar section of the right sidebar that shows the user activity records of
 
 ### Statistics window
 
-The large window that the item "Statistics" of the More menu opens. It is as large as the large Git window. It has a tab list, and the tab "User activity" is its first tab.
+The large window that the item "Statistics" of the More menu opens. It is as large as the large Git window. Its title bar holds the buttons of its tabs, and the tab "User activity" is its first tab.
 
 ### User activity tab
 

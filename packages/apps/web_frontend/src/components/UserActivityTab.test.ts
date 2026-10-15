@@ -69,10 +69,12 @@ const resizeCallbacks: Array<() => void> = [];
  * @param records - The records that the data layer gives, or the error that it gives.
  * @param runningPeriodStartedAgoMs - How long ago the active period that runs now started, or `null` when no period runs.
  */
-async function mountUserActivityTab(records: unknown[] | Error, runningPeriodStartedAgoMs: number | null = null) {
+async function mountUserActivityTab(records: unknown[] | Error | Promise<never>, runningPeriodStartedAgoMs: number | null = null) {
   invoke.mockReset();
   if (records instanceof Error) {
     invoke.mockRejectedValue(records);
+  } else if (records instanceof Promise) {
+    invoke.mockReturnValue(records);
   } else {
     invoke.mockResolvedValue(records);
   }
@@ -360,5 +362,13 @@ describe("UserActivityTab: the workspaces", () => {
     const { wrapper } = await mountUserActivityTab(new Error("no data layer"));
     expect(wrapper.get(".alert-danger").text()).toContain("no data layer");
     expect(plotly.react).not.toHaveBeenCalled();
+  });
+
+  it("puts a busy wheel before the message while the user activity is read", async () => {
+    const { wrapper } = await mountUserActivityTab(new Promise<never>(() => {}));
+    const message = wrapper.get('[role="status"]');
+    expect(message.text()).toBe("Reading the user activity…");
+    expect(message.element.firstElementChild?.classList.contains("spinner-border")).toBe(true);
+    expect(message.get(".spinner-border").attributes("aria-hidden")).toBe("true");
   });
 });
