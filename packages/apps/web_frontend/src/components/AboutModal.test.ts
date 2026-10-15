@@ -37,6 +37,12 @@ beforeEach(() => {
 });
 
 describe("AboutModal", () => {
+  it("shows the version, a dash, and the date and time of the build, as <year><month><day>-<hours><minutes><seconds>", async () => {
+    const wrapper = await openAboutModal();
+    expect(wrapper.get(".version").text()).toMatch(/^Version 1\.2\.3-\d{8}-\d{6}$/);
+    wrapper.unmount();
+  });
+
   it("shows a button that plays a goat bleat, and the modal stays open after the click", async () => {
     const wrapper = await openAboutModal();
     const button = wrapper.get("button.play-goat-sound");
