@@ -7,6 +7,7 @@ import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
 import { MessageScreen } from './screens/message_screen';
+import { HomeScreen } from './screens/home_screen';
 import { NeedsYouScreen } from './screens/needs_you_screen';
 import { PanesScreen } from './screens/panes_screen';
 import { PaneScreen } from './screens/pane_screen';
@@ -45,10 +46,10 @@ export class MobileApp {
 	private readonly overlay: HTMLElement;
 
 	/** The screen that is open. */
-	private screen: ScreenName = 'needs_you';
+	private screen: ScreenName = 'home';
 
 	/** The screen of the bottom bar that is highlighted, and where the button Back of a pane goes. */
-	private tab: TabName = 'needs_you';
+	private tab: TabName = 'home';
 
 	/** The identifier of the pane that the screen of one pane shows, or null. */
 	private paneId: string | null = null;
@@ -270,7 +271,10 @@ export class MobileApp {
 				this.isOnline,
 			);
 		}
-		return NeedsYouScreen.render(snapshot, this.isOnline);
+		if (this.screen === 'needs_you') {
+			return NeedsYouScreen.render(snapshot, this.isOnline);
+		}
+		return HomeScreen.render(snapshot, this.isOnline);
 	}
 
 	/**
@@ -333,7 +337,7 @@ export class MobileApp {
 			return;
 		}
 		if (action === 'go') {
-			this._open((element.dataset.screen ?? 'needs_you') as TabName, null);
+			this._open((element.dataset.screen ?? 'home') as TabName, null);
 		} else if (action === 'open-pane') {
 			this._open(this.tab, paneId);
 		} else if (action === 'back') {

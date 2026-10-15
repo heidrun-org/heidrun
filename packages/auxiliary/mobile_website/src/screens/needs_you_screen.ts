@@ -11,8 +11,9 @@ import { ScreenHeader } from '../components/screen_header';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The first screen. It lists the coding agents that are blocked, that ask a question, or that finished, with the
- * blocked ones first. It shows the same coding agents as the Needs you sidebar section of Heidrun desktop.
+ * The screen of the coding agents that wait. It lists the coding agents that are blocked, that ask a question, or
+ * that finished, with the blocked ones first. It shows the same coding agents as the Needs you sidebar section of
+ * Heidrun desktop.
  */
 export class NeedsYouScreen {
 	/**

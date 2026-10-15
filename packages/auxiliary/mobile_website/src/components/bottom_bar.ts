@@ -2,7 +2,7 @@ import type { TabName } from '../mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	BottomBar — the four buttons at the bottom of every screen
+//	BottomBar — the five buttons at the bottom of every screen
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -17,11 +17,16 @@ type BarButton = {
 };
 
 /**
- * Draws the bottom bar: Needs you, Panes, Macros, and Launchers.
+ * Draws the bottom bar: Home, Needs you, Panes, Macros, and Launchers.
  */
 export class BottomBar {
-	/** The four buttons, from left to right. */
+	/** The five buttons, from left to right. */
 	private static readonly buttons: BarButton[] = [
+		{
+			tab: 'home',
+			label: 'Home',
+			iconHtmlContent: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+		},
 		{
 			tab: 'needs_you',
 			label: 'Needs you',

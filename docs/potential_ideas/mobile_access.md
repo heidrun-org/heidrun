@@ -1,7 +1,7 @@
 # Heidrun Mobile
 
 - Created: 12 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Idea that nobody has decided to build yet
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274)
@@ -29,9 +29,13 @@ Heidrun Mobile grows this page into a real application. The pairing key, the Tai
 
 ## The screens
 
+### Home
+
+The first screen. It shows the whole situation at a glance: how many coding agents need the developer, how many work, and the usage limits. A tap on a count opens the screen with the details. When the address of the page names no screen, the page opens on Home.
+
 ### Needs your attention
 
-The first screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the Needs you sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
+The second screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the Needs you sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
 
 ### Panes
 

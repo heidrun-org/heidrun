@@ -100,7 +100,7 @@ export type CallResult = {
 };
 
 /** The screens that the bottom bar opens. */
-export type TabName = 'needs_you' | 'panes' | 'macros' | 'launchers';
+export type TabName = 'home' | 'needs_you' | 'panes' | 'macros' | 'launchers';
 
-/** Every screen: the four screens of the bottom bar, and the screen of one pane. */
+/** Every screen: the five screens of the bottom bar, and the screen of one pane. */
 export type ScreenName = TabName | 'pane';

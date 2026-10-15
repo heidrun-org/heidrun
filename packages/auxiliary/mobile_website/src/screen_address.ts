@@ -15,13 +15,14 @@ export type ScreenLocation = {
 };
 
 /**
- * The address of the page holds the screen that is open, after the sign "#": `#/needs-you`, `#/panes`, and
+ * The address of the page holds the screen that is open, after the sign "#": `#/home`, `#/needs-you`, `#/panes`, and
  * `#/panes/<identifier of the pane>`. A reload of the page, and the buttons Back and Forward of the browser, then
  * lead to the same screen. The part after "#" is never sent to a server, and the mobile server needs no route.
  */
 export class ScreenAddress {
 	/** The word of each screen of the bottom bar in the address. */
 	private static readonly words: Record<TabName, string> = {
+		home: 'home',
 		needs_you: 'needs-you',
 		panes: 'panes',
 		macros: 'macros',
@@ -46,7 +47,7 @@ export class ScreenAddress {
 	 * Reads the address of a screen.
 	 * @param hash The part of the address after the path, for example `window.location.hash`.
 	 * @returns Where the address leads. An address that is empty, wrong, or from a later version of the page leads
-	 * to the screen Needs you.
+	 * to the screen Home.
 	 */
 	static parse(hash: string): ScreenLocation {
 		const segments = hash.replace(/^#\/?/, '').split('/');
@@ -55,7 +56,7 @@ export class ScreenAddress {
 		});
 		if (tab === undefined) {
 			return {
-				tab: 'needs_you',
+				tab: 'home',
 				paneId: null,
 			};
 		}

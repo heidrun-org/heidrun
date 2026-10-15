@@ -4,6 +4,7 @@
 The screens of the mobile website. Each screen is one class with one static method `render` that gives the HTML of the screen, without the bottom bar.
 
 ## Key Exports & Entry Points
+- `home_screen.ts`: the first page: the count of coding agents that need the developer, the count that work, and the usage limits. Each count opens a screen.
 - `needs_you_screen.ts`: the coding agents that wait for the developer, and the usage limits.
 - `panes_screen.ts`: every coding agent, grouped by workspace and by tab.
 - `pane_screen.ts`: one pane: the end of its output, its menu, a field for a prompt, and the buttons that stop it.

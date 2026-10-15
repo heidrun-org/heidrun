@@ -34,10 +34,11 @@ export class AppHarness {
 	 * Starts a page that is paired with the fake Mac.
 	 * @param mac The fake Mac.
 	 * @param isPaired False to start a phone that has no pairing key.
-	 * @param hash The part of the address after the path when the page opens, for example `#/panes`.
+	 * @param hash The part of the address after the path when the page opens, for example `#/panes`. Most tests
+	 * start on the screen Needs you, so this is the default. Pass an empty text to open the page with no address.
 	 * @returns The page, after its first refresh.
 	 */
-	static async start(mac: FakeMac, isPaired = true, hash = ''): Promise<AppHarness> {
+	static async start(mac: FakeMac, isPaired = true, hash = '#/needs-you'): Promise<AppHarness> {
 		AppHarness.current?.stop();
 		vi.useFakeTimers();
 		window.history.replaceState(null, '', `/${hash}`);
