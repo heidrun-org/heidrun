@@ -32,9 +32,11 @@ export class WelcomeScreen {
 					height="640"
 					alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron"
 				>
-				<h1 class="welcome-name">${name}</h1>
-				<p class="welcome-motto">${motto}</p>
-				<p class="welcome-description">${description}</p>
+				<div class="welcome-text">
+					<h1 class="welcome-name">${name}</h1>
+					<p class="welcome-motto">${motto}</p>
+					<p class="welcome-description">${description}</p>
+				</div>
 				<button
 					class="button button-primary welcome-button"
 					data-action="go"

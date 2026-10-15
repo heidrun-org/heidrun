@@ -143,45 +143,38 @@ main {
 .welcome {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
-  text-align: center;
-}
-
-/* Automatic margins center the content, and keep it reachable by scrolling on a short screen. */
-.welcome > :first-child {
-  margin-top: auto;
-}
-
-.welcome > :last-child {
-  margin-bottom: auto;
+  padding: 0 0 calc(20px + env(safe-area-inset-bottom));
 }
 
 .welcome-image {
-  width: min(100%, 360px);
+  display: block;
+  width: 100%;
   height: auto;
   aspect-ratio: 1;
-  border-radius: 24px;
-  border: 1px solid var(--line);
+  max-height: 55dvh;
+  object-fit: cover;
+}
+
+.welcome-text {
+  padding: 20px 20px 24px;
 }
 
 .welcome-name {
-  margin: 14px 0 0;
+  margin: 0;
   font-size: 34px;
   font-weight: 700;
   letter-spacing: 0.3px;
 }
 
 .welcome-motto {
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
 
 .welcome-description {
-  margin: 0 0 14px;
+  margin: 10px 0 0;
   font-size: 14.5px;
   line-height: 1.45;
   color: var(--text-2);
@@ -191,8 +184,9 @@ main {
   display: block;
 }
 
+/* The automatic top margin pushes the button to the bottom of the screen, where the thumb is. */
 .welcome-button {
-  width: min(100%, 320px);
+  margin: auto 20px 0;
   padding: 14px 20px;
   font-size: 17px;
 }
