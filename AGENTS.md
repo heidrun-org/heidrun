@@ -140,7 +140,9 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 
 ### Issue Fix Review
 
-The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). The Issue Fix Review has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)). Never put the two messages in one message.
+
+The first message asks the developer to review. Always do these steps, in this order:
 
 1. Tell the developer to look at the result.
 2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
@@ -148,9 +150,11 @@ The Issue Fix Review starts when the change is done in the temporary worktree. W
    cd <path of the temporary worktree> && pnpm dev
    ```
 3. Say in one or two short lines what to look at, so that the developer can validate the change.
-4. Only then ask whether the developer is satisfied and wants the pull request.
+4. Stop. The first message has no question and no button, and it says nothing about the pull request (on GitLab, the merge request) or about the merge. Write the command line in the closing text of the message, never before a question box, so that the developer always sees it.
 
-- Give the command line again each time that the developer asks for a change and you change the work.
+The developer runs the application, then says that the result is reviewed. The second message comes only after that. It asks one question: whether the result is good. It does not ask about the pull request or about the merge.
+
+- Give the command line again each time that the developer asks for a change and you change the work. Then start again with the first message.
 - Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
 
 ### Issue Fix Completion
