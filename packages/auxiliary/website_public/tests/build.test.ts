@@ -26,6 +26,19 @@ describe('website build', () => {
 		}
 	});
 
+	it('writes a page for every feature page', () => {
+		for (const name of ['needs_you', 'panes', 'quotas', 'phone_access', 'sidebar_sections', 'past_chats', 'statistics', 'ai']) {
+			expect(Fs.existsSync(Path.join(outDir, 'features', `${name}.html`)), name).toBe(true);
+		}
+	});
+
+	it('links the home page to every feature page, with the base path', () => {
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		for (const name of ['needs_you', 'panes', 'quotas', 'phone_access', 'sidebar_sections', 'past_chats', 'statistics', 'ai']) {
+			expect(html, name).toContain(`href="/heidrun/features/${name}`);
+		}
+	});
+
 	it('uses the base path in the links to the assets', () => {
 		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
 		expect(html).toContain('/heidrun/assets/');
