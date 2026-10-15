@@ -110,7 +110,8 @@ async function handle(method: string, params: Params): Promise<unknown> {
 
   if (method === "read") {
     const lines = Math.min(200, Math.max(10, Number(params.lines) || 60));
-    return { text: await api.read(pane.pane_id, lines) };
+    // The phone asks for the colors of the terminal with `ansi: true`. A page that does not ask gets plain text.
+    return { text: await api.read(pane.pane_id, lines, params.ansi === true ? "ansi" : "text") };
   }
 
   if (method === "answer") {

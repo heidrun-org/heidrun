@@ -14,6 +14,33 @@ describe('Pane screen', () => {
 		expect(harness.text()).toContain('Codex · context 42 % · 2 min ago');
 	});
 
+	it('asks the Mac for the colors, and paints them in the output', async () => {
+		const mac = Fixtures.mac();
+		mac.outputText = '\x1b[32mgreen\x1b[0m \x1b[2mdim\x1b[0m \x1b[1;44mbar\x1b[0m\n';
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		expect(mac.callsOf('read').pop()?.params.ansi).toBe(true);
+		const output = document.querySelector('.output') as HTMLElement;
+		expect(output.textContent).toBe('green dim bar');
+		const spans = output.querySelectorAll<HTMLElement>('span');
+		expect(spans[0].style.color).toBe('rgb(13, 188, 121)');
+		expect(spans[1].classList.contains('a-dim')).toBe(true);
+		expect(spans[2].classList.contains('a-bold')).toBe(true);
+		expect(spans[2].style.backgroundColor).toBe('rgb(36, 114, 200)');
+	});
+
+	it('paints the colors again after a refresh that changes the output', async () => {
+		const mac = Fixtures.mac();
+		mac.outputText = '\x1b[31mone\x1b[0m';
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		mac.outputText = '\x1b[34mtwo\x1b[0m';
+		await harness.settle(3000);
+		const span = document.querySelector<HTMLElement>('.output span');
+		expect(span?.textContent).toBe('two');
+		expect(span?.style.color).toBe('rgb(36, 114, 200)');
+	});
+
 	it('shows the menu of a blocked coding agent, and answers it', async () => {
 		const mac = Fixtures.mac();
 		const harness = await AppHarness.start(mac);

@@ -134,11 +134,13 @@ export function run(paneId: string, command: string) {
   return cli(["pane", "run", paneId, command]);
 }
 
-export async function read(paneId: string, lines = 80): Promise<string> {
+/** The end of the output of a pane. With `format` "ansi", the text keeps the colors and the styles, as escape codes. */
+export async function read(paneId: string, lines = 80, format: "text" | "ansi" = "text"): Promise<string> {
   const r = await request<{ read: { text: string } }>("pane.read", {
     pane_id: paneId,
     source: "recent_unwrapped",
     lines,
+    ...(format === "ansi" ? { format } : {}),
   });
   return r.read.text;
 }

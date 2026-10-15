@@ -296,6 +296,30 @@ main {
   word-break: break-word;
 }
 
+.a-bold {
+  font-weight: 700;
+}
+
+.a-dim {
+  opacity: 0.6;
+}
+
+.a-italic {
+  font-style: italic;
+}
+
+.a-underline {
+  text-decoration: underline;
+}
+
+.a-strike {
+  text-decoration: line-through;
+}
+
+.a-underline.a-strike {
+  text-decoration: underline line-through;
+}
+
 .actions {
   flex: none;
   display: flex;

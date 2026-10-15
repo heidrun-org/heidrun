@@ -1,6 +1,7 @@
 import type { AgentView } from '../mobile_types';
 import { HtmlEscape } from '../html_escape';
 import { TimeAgo } from '../time_ago';
+import { OutputText } from '../output_text';
 import { StatusLabels } from '../components/status_labels';
 import { MenuButtons } from '../components/menu_buttons';
 import { ScreenHeader } from '../components/screen_header';
@@ -41,6 +42,7 @@ export class PaneScreen {
 		const ageText = TimeAgo.format(agent.since, now);
 		const subtitle = HtmlEscape.escape(`${agent.name}${contextText} · ${ageText}`);
 		const placeholder = HtmlEscape.escape(`Prompt for ${agent.name}…`);
+		const outputHtmlContent = OutputText.toHtml(output);
 		const isBlocked = agent.status === 'blocked';
 		const isWorking = agent.status === 'working';
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
@@ -51,7 +53,7 @@ export class PaneScreen {
 			<main class="pane-main">
 				<div class="sub">${subtitle}</div>
 				${PaneScreen.renderQuestion(agent)}
-				<pre class="output">${HtmlEscape.escape(output === '' ? '…' : output)}</pre>
+				<pre class="output">${outputHtmlContent === '' ? '…' : outputHtmlContent}</pre>
 				<div class="actions">
 					<button class="button" data-action="refresh">↻ Refresh</button>
 					${denyHtmlContent}

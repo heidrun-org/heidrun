@@ -17,7 +17,8 @@ const problemsOf = (container: HTMLElement): string[] => {
 			problems.push('script element');
 		}
 		for (const attribute of element.attributes) {
-			if (attribute.name === 'style') {
+			const isPaintedColor = element.hasAttribute('data-fg') || element.hasAttribute('data-bg');
+			if (attribute.name === 'style' && isPaintedColor === false) {
 				problems.push(`style attribute on ${element.tagName}`);
 			}
 			if (attribute.name.startsWith('on')) {
@@ -63,6 +64,19 @@ describe('Rendering safety', () => {
 		await harness.openPane('p-hostile');
 		expect(document.querySelector('img')).toBeNull();
 		expect(document.querySelector('.output')?.textContent).toBe(attack);
+		expect(problemsOf(harness.root)).toEqual([]);
+	});
+
+	it('puts a hostile text inside a colored span as text, and the color only as a hexadecimal value', async () => {
+		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent()], ['p-hostile']));
+		mac.outputText = `\x1b[38;2;1;2;3m${attack}\x1b[0m \x1b[38;5;"onmouseover="x\x1b[0m`;
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-hostile');
+		expect(document.querySelector('img')).toBeNull();
+		const colored = document.querySelectorAll('.output [data-fg]');
+		expect(colored).toHaveLength(1);
+		expect(colored[0].getAttribute('data-fg')).toBe('#010203');
+		expect(colored[0].textContent).toBe(attack);
 		expect(problemsOf(harness.root)).toEqual([]);
 	});
 

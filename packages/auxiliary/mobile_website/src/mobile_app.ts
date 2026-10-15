@@ -1,6 +1,6 @@
 import { MobileApi, UnpairedError } from './mobile_api';
 import type { CallResult, ConfirmRequest, ScreenName, Snapshot, TabName } from './mobile_types';
-import { OutputText } from './output_text';
+import { ColorPainter } from './color_painter';
 import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
@@ -121,9 +121,10 @@ export class MobileApp {
 				const result = await MobileApi.call<CallResult>('read', {
 					paneId: openAgent.paneId,
 					lines: MobileApp.outputLines,
+					ansi: true,
 				});
 				if (typeof result.text === 'string') {
-					this.output = OutputText.tidy(result.text);
+					this.output = result.text;
 				}
 			}
 		} catch (error) {
@@ -210,6 +211,7 @@ export class MobileApp {
 		this.root.innerHTML = htmlContent;
 		this.renderedHtml = htmlContent;
 		this.renderedKey = key;
+		ColorPainter.paint(this.root);
 		const output = this.root.querySelector('.output');
 		if (output !== null) {
 			output.scrollTop = isSameScreen && isAtEnd === false ? outputTop : output.scrollHeight;

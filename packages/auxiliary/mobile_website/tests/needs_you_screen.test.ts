@@ -66,6 +66,7 @@ describe('Needs you screen', () => {
 			{
 				paneId: 'p-asking',
 				lines: 80,
+				ansi: true,
 			},
 		]);
 	});
