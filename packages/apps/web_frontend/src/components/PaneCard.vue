@@ -5,8 +5,9 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
-import { closePane, contextFor, finishRename, paneFullName, selectPane, splitPane, startRename, state } from "../stores/session";
+import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
+import { onSplitPaneClick } from "../stores/newPane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
@@ -114,10 +115,10 @@ const subtitle = computed(() => {
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="splitPane('right', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'right', pane.pane_id)">
           <Icon name="layout-split" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="splitPane('down', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
         <ConfirmButton

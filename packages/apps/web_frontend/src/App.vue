@@ -42,12 +42,11 @@ import {
   selectedPane,
   shiftTab,
   shiftWorkspace,
-  splitPane,
   start,
   state,
   toast,
 } from "./stores/session";
-import { startDefaultNewTab } from "./stores/newPane";
+import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomLauncherModal } from "./stores/newCustomLauncher";
@@ -232,7 +231,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyT":
       return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
     case "KeyD":
-      return run(() => splitPane(e.shiftKey ? "down" : "right"));
+      return run(() => startDefaultSplit(e.shiftKey ? "down" : "right"));
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;

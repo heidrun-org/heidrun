@@ -9,9 +9,9 @@
   "unpinTitle": "Désépingler le panneau (l’agent continue)",
   "pinTitle": "Épingler le panneau : il reste visible quand tu changes d’onglet ou de workspace",
   "splitRight": "Diviser à droite",
-  "splitRightTitle": "Diviser à droite (⌘D)",
+  "splitRightTitle": "Diviser à droite avec la commande par défaut d’un nouvel onglet (⌘D, clic avec majuscule : démarrer un terminal)",
   "splitDown": "Diviser en bas",
-  "splitDownTitle": "Diviser en bas (⇧⌘D)",
+  "splitDownTitle": "Diviser en bas avec la commande par défaut d’un nouvel onglet (⇧⌘D, clic avec majuscule : démarrer un terminal)",
   "close": "Fermer le panneau (⌘W)",
   "closeConfirm": "Fermer"
 }
