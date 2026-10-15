@@ -20,6 +20,10 @@ export type PersonWorkCommit = {
 	authorEmail: string;
 	/** The date of the commit, an ISO 8601 text. */
 	committedAt: string;
+	/** The number of lines that the commit adds. */
+	insertions: number;
+	/** The number of lines that the commit deletes. */
+	deletions: number;
 };
 
 /** One pull request or one issue that a person opened, as the command `person_work_in_range` gives it. */
@@ -75,6 +79,10 @@ export type PersonWorkResult = {
 	pullRequestCount: number;
 	/** The number of issues that the person opened in the time range. */
 	issueCount: number;
+	/** The number of lines that the commits of the person add in the time range. */
+	insertionCount: number;
+	/** The number of lines that the commits of the person delete in the time range. */
+	deletionCount: number;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -155,7 +163,7 @@ export class PersonWork {
 	 * @param personId - The identifier of the person, from `findPersons`.
 	 * @param now - The current time, in milliseconds since 1 January 1970.
 	 * @param dayCount - The number of days of the time range, today included.
-	 * @returns The days, and the three totals. An item outside the time range is not counted.
+	 * @returns The days, and the totals. An item outside the time range is not counted.
 	 */
 	static compute(items: PersonWorkItems, personId: string, now: number, dayCount: number): PersonWorkResult {
 		const days: PersonWorkDay[] = CalendarDays.build(now, dayCount).map((day) => ({
@@ -163,7 +171,14 @@ export class PersonWork {
 			commitCount: 0,
 			pullRequestCount: 0,
 		}));
-		const result: PersonWorkResult = { days, commitCount: 0, pullRequestCount: 0, issueCount: 0 };
+		const result: PersonWorkResult = {
+			days,
+			commitCount: 0,
+			pullRequestCount: 0,
+			issueCount: 0,
+			insertionCount: 0,
+			deletionCount: 0,
+		};
 		for (const commit of items.commits) {
 			if (PersonWork._idOfCommit(commit) !== personId) {
 				continue;
@@ -172,6 +187,8 @@ export class PersonWork {
 			if (index !== -1) {
 				days[index].commitCount += 1;
 				result.commitCount += 1;
+				result.insertionCount += commit.insertions;
+				result.deletionCount += commit.deletions;
 			}
 		}
 		for (const pullRequest of items.pullRequests) {

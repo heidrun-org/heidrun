@@ -25,8 +25,8 @@ Heidrun keeps each active period in the file `~/.config/heidrun/user_activity.js
 
 The tab "Work of one person" shows the work of the last 7 days or of the last 30 days, with one bar for each day. Choose the source of the numbers:
 
-- "Git history": the commits, the pull requests, and the issues of one person, in the repository of the selected workspace. The person chooser lists each person who worked in the last 30 days, the most active person first. Three totals give the number of commits, of pull requests, and of issues.
-- "AI cost": the estimated cost in US dollars of the chats of Claude Code and of Codex on this computer, for each day. Three totals give the cost of Claude Code, the cost of Codex, and the two together.
+- "Git history": the commits, the pull requests, and the issues of one person, in the repository of the selected workspace. The person chooser lists each person who worked in the last 30 days, the most active person first. Five totals give the number of commits, of pull requests, of issues, of lines added, and of lines deleted. Under each total, its average per day.
+- "AI cost": the estimated cost in US dollars of the chats of Claude Code and of Codex on this computer, for each day. Three totals give the cost of Claude Code, the cost of Codex, and the two together, each with its average cost per day.
 
 ![The tab "Work of one person" of the Statistics window with the source "Git history": the three totals, and one bar for each of the last 7 days with the commits and the pull requests.](/screenshots/features/statistics_person_work.png)
 

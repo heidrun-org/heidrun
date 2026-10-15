@@ -302,7 +302,9 @@ export class TauriMockFixture {
 	 * The answer of the Tauri command `person_work_in_range`: the fake work of two people in the last 30 days. Jérôme
 	 * Étienne writes one to five commits each day and opens a pull request every other day, and his login on GitHub is
 	 * `jerome-etienne`. He opens an issue every fifth day. Eric writes a commit every third day, and opens nothing on GitHub.
+	 * Each commit adds and deletes some lines.
 	 * - issue #482
+	 * - issue #523
 	 *
 	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
 	 * @returns The fake commits, pull requests, and issues, the oldest first, and no error of GitHub.
@@ -324,6 +326,8 @@ export class TauriMockFixture {
 					authorName: 'Jérôme Étienne',
 					authorEmail: 'jerome@example.com',
 					committedAt: new Date(dayEnd - (3 + index) * 3600 * 1000).toISOString(),
+					insertions: 20 + ((daysBefore * 7 + index * 13) % 80),
+					deletions: 5 + ((daysBefore * 5 + index * 11) % 40),
 				});
 			}
 			if (daysBefore % 3 === 0) {
@@ -331,6 +335,8 @@ export class TauriMockFixture {
 					authorName: 'Eric',
 					authorEmail: 'eric@example.com',
 					committedAt: new Date(dayEnd - 2 * 3600 * 1000).toISOString(),
+					insertions: 15,
+					deletions: 4,
 				});
 			}
 			if (daysBefore % 2 === 0) {

@@ -81,16 +81,19 @@ function daysAgo(daysAgo: number): string {
   return new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysAgo, 12).toISOString();
 }
 
-/** Jérôme has three commits, one pull request, and two issues. Eric has one commit and one issue. */
+/**
+ * Jérôme has three commits (18 lines added and 6 lines deleted), one pull request, and two issues. Eric has one commit
+ * (7 lines added and no line deleted) and one issue.
+ */
 function sampleItems(): PersonWorkItems {
   const jerome = { authorName: "Jerome Etienne", authorEmail: "jerome@example.com" };
   return {
     repository: "heidrun-org/heidrun",
     commits: [
-      { ...jerome, committedAt: daysAgo(3) },
-      { ...jerome, committedAt: daysAgo(0) },
-      { ...jerome, committedAt: daysAgo(0) },
-      { authorName: "Eric", authorEmail: "eric@example.com", committedAt: daysAgo(0) },
+      { ...jerome, committedAt: daysAgo(3), insertions: 10, deletions: 2 },
+      { ...jerome, committedAt: daysAgo(0), insertions: 5, deletions: 1 },
+      { ...jerome, committedAt: daysAgo(0), insertions: 3, deletions: 3 },
+      { authorName: "Eric", authorEmail: "eric@example.com", committedAt: daysAgo(0), insertions: 7, deletions: 0 },
     ],
     pullRequests: [{ author: "jeromeetienne", createdAt: daysAgo(0) }],
     issues: [
@@ -175,9 +178,22 @@ function aiCostTotalsOf(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>)
   return ["claude", "codex", "total"].map((id) => wrapper.get(`[data-total="${id}"] .fs-4`).text());
 }
 
-/** The three totals under the chooser: the commits, the pull requests, and the issues. */
+/** The identifiers of the totals of the Git history under the chooser, from left to right. */
+const GIT_HISTORY_TOTAL_IDS = ["commits", "pull-requests", "issues", "lines-added", "lines-deleted"];
+
+/** The totals under the chooser: the commits, the pull requests, the issues, the lines added, and the lines deleted. */
 function totalsOf(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>): string[] {
-  return ["commits", "pull-requests", "issues"].map((id) => wrapper.get(`[data-total="${id}"] .fs-4`).text());
+  return GIT_HISTORY_TOTAL_IDS.map((id) => wrapper.get(`[data-total="${id}"] .fs-4`).text());
+}
+
+/** The average per day under each total of the Git history, from left to right. */
+function perDayOf(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>): string[] {
+  return GIT_HISTORY_TOTAL_IDS.map((id) => wrapper.get(`[data-total="${id}"] [data-per-day]`).text());
+}
+
+/** The average per day under each total of the AI cost, from left to right. */
+function aiCostPerDayOf(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>): string[] {
+  return ["claude", "codex", "total"].map((id) => wrapper.get(`[data-total="${id}"] [data-per-day]`).text());
 }
 
 beforeEach(async () => {
@@ -242,10 +258,32 @@ describe("PersonWorkTab", () => {
 
   it("shows the number of commits, of pull requests, and of issues of the person in the time range", async () => {
     const wrapper = await mountPersonWorkTab();
-    expect(totalsOf(wrapper)).toEqual(["3", "1", "1"]);
+    expect(totalsOf(wrapper).slice(0, 3)).toEqual(["3", "1", "1"]);
     expect(wrapper.get('[data-total="commits"]').text()).toContain("Commits");
     expect(wrapper.get('[data-total="pull-requests"]').text()).toContain("Pull requests");
     expect(wrapper.get('[data-total="issues"]').text()).toContain("Issues");
+  });
+
+  it("shows the lines added and the lines deleted by the commits of the person in the time range", async () => {
+    const wrapper = await mountPersonWorkTab();
+    expect(totalsOf(wrapper).slice(3)).toEqual(["18", "6"]);
+    expect(wrapper.get('[data-total="lines-added"]').text()).toContain("Lines added");
+    expect(wrapper.get('[data-total="lines-deleted"]').text()).toContain("Lines deleted");
+  });
+
+  it("shows the average per day under each total of the Git history, for 7 days and for 30 days", async () => {
+    const wrapper = await mountPersonWorkTab();
+    expect(perDayOf(wrapper)).toEqual(["0.43 per day", "0.14 per day", "0.14 per day", "2.6 per day", "0.86 per day"]);
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    expect(perDayOf(wrapper)).toEqual(["0.1 per day", "0.03 per day", "0.07 per day", "0.6 per day", "0.2 per day"]);
+  });
+
+  it("changes the totals and the averages when the person changes", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person").setValue("eric");
+    expect(totalsOf(wrapper).slice(3)).toEqual(["7", "0"]);
+    expect(perDayOf(wrapper)[3]).toBe("1 per day");
+    expect(perDayOf(wrapper)[4]).toBe("0 per day");
   });
 
   it("draws one stacked bar for each day: the commits below, and the pull requests above", async () => {
@@ -310,7 +348,7 @@ describe("PersonWorkTab", () => {
     await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
     await waitForDrawings(2);
     expect(lastDrawing().traces[0].x).toHaveLength(30);
-    expect(totalsOf(wrapper)).toEqual(["3", "1", "2"]);
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "2", "18", "6"]);
     expect(personWorkCalls()).toHaveLength(1);
   });
 
@@ -321,7 +359,7 @@ describe("PersonWorkTab", () => {
     await waitForDrawings(2);
     expect(lastDrawing().layout.title.text).toBe("Eric: commits and pull requests of each day");
     expect(lastDrawing().traces[0].y).toEqual([0, 0, 0, 0, 0, 0, 1]);
-    expect(totalsOf(wrapper)).toEqual(["1", "0", "1"]);
+    expect(totalsOf(wrapper)).toEqual(["1", "0", "1", "7", "0"]);
     expect(personWorkCalls()).toHaveLength(1);
   });
 
@@ -382,6 +420,14 @@ describe("PersonWorkTab", () => {
     expect(wrapper.get('[data-total="total"]').text()).toContain("Total");
   });
 
+  it("shows the average cost per day under each total of the AI cost, for 7 days and for 30 days", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    expect(aiCostPerDayOf(wrapper)).toEqual(["$0.57 per day", "$0.07 per day", "$0.64 per day"]);
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    expect(aiCostPerDayOf(wrapper)).toEqual(["$0.23 per day", "$0.02 per day", "$0.25 per day"]);
+  });
+
   it("draws one stacked bar for each day, with one color for each coding agent, in dollars", async () => {
     const wrapper = await mountPersonWorkTab();
     await chooseAiCost(wrapper);
@@ -433,7 +479,7 @@ describe("PersonWorkTab", () => {
     expect(wrapper.find("#statistics-person").exists()).toBe(false);
     await wrapper.get("#statistics-person-source-git_history").setValue(true);
     expect(wrapper.find("#statistics-person").exists()).toBe(true);
-    expect(totalsOf(wrapper)).toEqual(["3", "1", "2"]);
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "2", "18", "6"]);
   });
 
   it("tells how many chats have no known price", async () => {
@@ -482,6 +528,6 @@ describe("PersonWorkTab", () => {
     expect(wrapper.get(".alert.theme-danger").text()).toContain("scan failed");
     await wrapper.get("#statistics-person-source-git_history").setValue(true);
     expect(wrapper.find(".alert.theme-danger").exists()).toBe(false);
-    expect(totalsOf(wrapper)).toEqual(["3", "1", "1"]);
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
   });
 });

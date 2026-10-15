@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Chat summary](../sidebars/chats/chat_summary.md)
-- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
+- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523)
 
 This file is a part of the rules of the tab "Work of one person". The layout of the tab, the two radio button groups, and the bar chart are in [statistics_person_work.md](statistics_person_work.md). The words are defined in [glossary/person_work.md](../../glossary/person_work.md).
 
@@ -16,6 +16,10 @@ This file is a part of the rules of the tab "Work of one person". The layout of 
 - The tokens of a request whose record has no date count at the date of the last record of the chat, or at the date of the last change of its file when no record has a date.
 - A chat that used no token does not count. A chat with a model that has no known price counts as a chat with no cost in every hour, because a cost without the tokens of that model would be too small. A line of text under the chart says how many such chats have tokens in the time range.
 
+## The average per day
+
+- Under each of the three totals, the tab shows the average cost per day: the total divided by the number of days of the time range, 7 or 30, in US dollars, for example "$0.57 per day". The rules are in [statistics_totals.md](statistics_totals.md).
+
 ## Where the data comes from
 
 - The source "AI cost" reads its data with the command `ai_cost_in_range` of the file `packages/apps/desktop_tauri/src/ai_cost.rs`. The command lists the chats of Claude Code and of Codex of the folder of the workspace with the function of the Past chats sidebar section, and keeps the chats that used tokens. For each one it gives its coding agent and its hours that overlap the time range, each with the start of the hour and the estimated cost of the hour. It does not write the SQLite file, so it does not take the lock. The tab asks once, for the same 30 days as the Git history. The hours are in the scan cache of the package, `chats_cache.json`, and not in the SQLite file: nothing reads them there.
@@ -24,5 +28,5 @@ This file is a part of the rules of the tab "Work of one person". The layout of 
 ## Tests
 
 - `lib/ai_cost.test.ts` tests the counting of the cost of each coding agent for each day, the cost of a chat that lasts several days, the totals, the chats with no known price, and the hours that are outside the time range.
-- `components/PersonWorkTab.test.ts` tests that the window does not read the chats before the developer chooses the source "AI cost", and reads them once. It tests the totals, the stacked bars, their legend, and their chart information card in US dollars, the 30 days, the hidden person chooser, the two lines of text under the chart, the empty time range, the reading in progress, and the error.
+- `components/PersonWorkTab.test.ts` tests that the window does not read the chats before the developer chooses the source "AI cost", and reads them once. It tests the totals, the average cost per day for 7 days and for 30 days, the stacked bars, their legend, and their chart information card in US dollars, the 30 days, the hidden person chooser, the two lines of text under the chart, the empty time range, the reading in progress, and the error.
 - The Rust tests of the module `ai_cost` test the cost of each hour, the hours that overlap the time range, a request without a date, a chat with no token, a chat with no known price, the names of the fields, and a text that is not a time. The Rust tests of the module `chats` test the tokens of each hour of a chat, and the Rust tests of the file `tokens.rs` of the package `data_layer_chat_sessions` test the hour of each request of Claude Code and of Codex.

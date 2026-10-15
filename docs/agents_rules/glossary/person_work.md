@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User activity glossary](user_activity.md), [User interface of Heidrun: Statistics window, tab "Work of one person"](../user_interface/window/statistics_person_work.md)
-- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
+- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523)
 
 This document gives one short definition for each word of the statistic of the work of one person. The other words of Heidrun are in [index.md](index.md). The Statistics window is defined in [user_activity.md](user_activity.md).
 
@@ -21,7 +21,7 @@ The kind of data that the bar chart shows, as the developer chooses it in a radi
 
 ### Git history
 
-The source of the Work of one person tab that counts the commits, the pull requests, and the issues of one person.
+The source of the Work of one person tab that counts the commits, the pull requests, the issues, and the lines added and deleted of one person.
 
 ### AI cost
 
@@ -43,9 +43,13 @@ The last 7 days or the last 30 days, as the developer chooses. The last day of t
 
 The time from midnight to the next midnight, in the time zone of the computer. A commit counts on the day of its commit date. A pull request or an issue counts on the day that its author opened it.
 
-### Three totals
+### Totals
 
-The three numbers under the person chooser for the Git history: the number of commits, the number of pull requests that the person opened, and the number of issues that the person opened, in the time range. The issues are a number only. They are not in the bar chart. The AI cost has three totals too: the cost of Claude Code, the cost of Codex, and the two together.
+The numbers under the person chooser, in the time range. For the Git history there are five: the number of commits, the number of pull requests that the person opened, the number of issues that the person opened, the number of lines added, and the number of lines deleted. The lines are the lines of the commits of the person, as Git counts them for each commit, and a binary file counts 0. The issues and the lines are numbers only. They are not in the bar chart. The AI cost has three totals: the cost of Claude Code, the cost of Codex, and the two together.
+
+### Average per day
+
+The text under each total: the total divided by the number of days of the time range, 7 or 30, for example "71.1 per day". Every day counts, also a day with no work. For the AI cost, the average is a cost in US dollars, for example "$28.50 per day".
 
 ### Bar chart of the work of one person
 

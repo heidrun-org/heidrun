@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import StackedBarChart from "./StackedBarChart.vue";
 import { AI_COST_AGENT_IDS, AiCost, type AiCostAgentId, type AiCostItems } from "../lib/ai_cost";
+import { AveragePerDay } from "../lib/average_per_day";
 import { CalendarDays } from "../lib/calendar_days";
 import { costText } from "../lib/chat_usage";
 import { findCodingAgent } from "../lib/coding_agents";
@@ -20,8 +21,8 @@ import { selectedWorkspaceFolder } from "../stores/user_activity";
 import { locale, t } from "../i18n/index";
 
 // The tab "Work of one person" of the Statistics window. A radio button group chooses the source of the bar chart: the Git
-// history (the commits and the pull requests of one person, with the number of issues), or the AI cost (the estimated cost
-// of the chats of each coding agent). Each source reads its data once, for the longest time range, the first time that it is
+// history (the commits and the pull requests of one person, with the number of issues and the lines), or the AI cost (the
+// estimated cost of the chats of each coding agent). Each total has its average per day under it. Each source reads its data once, for the longest time range, the first time that it is
 // shown, and cuts it again when the person or the time range changes.
 
 /** The choices of the radio button group of the source, from left to right. */
@@ -104,12 +105,31 @@ const result = computed(() => {
   return PersonWork.compute(items.value, person.value.id, readAt.value, dayCount.value);
 });
 
-/** The three totals under the chooser, from left to right. */
-const totals = computed(() => [
-  { id: "commits", labelKey: "statisticsModal.personWorkCommits", value: result.value?.commitCount ?? 0 },
-  { id: "pull-requests", labelKey: "statisticsModal.personWorkPullRequests", value: result.value?.pullRequestCount ?? 0 },
-  { id: "issues", labelKey: "statisticsModal.personWorkIssues", value: result.value?.issueCount ?? 0 },
-]);
+/** Writes a number of items or of lines as the language of the interface writes a number. */
+function countText(count: number): string {
+  return count.toLocaleString(locale.value);
+}
+
+/** Writes the average per day of a total of items or of lines, for the time range of the chart. */
+function averageCountText(total: number): string {
+  return t("statisticsModal.personWorkPerDay", { value: AveragePerDay.countText(AveragePerDay.of(total, dayCount.value), locale.value) });
+}
+
+/** The totals under the chooser, from left to right, each with its average per day. */
+const totals = computed(() =>
+  [
+    { id: "commits", labelKey: "statisticsModal.personWorkCommits", value: result.value?.commitCount ?? 0 },
+    { id: "pull-requests", labelKey: "statisticsModal.personWorkPullRequests", value: result.value?.pullRequestCount ?? 0 },
+    { id: "issues", labelKey: "statisticsModal.personWorkIssues", value: result.value?.issueCount ?? 0 },
+    { id: "lines-added", labelKey: "statisticsModal.personWorkLinesAdded", value: result.value?.insertionCount ?? 0 },
+    { id: "lines-deleted", labelKey: "statisticsModal.personWorkLinesDeleted", value: result.value?.deletionCount ?? 0 },
+  ].map((total) => ({
+    id: total.id,
+    labelKey: total.labelKey,
+    valueText: countText(total.value),
+    perDayText: averageCountText(total.value),
+  })),
+);
 
 /** The days and the totals of the AI cost in the time range, or `null` before the chats are read. */
 const aiCostResult = computed(() => {
@@ -120,14 +140,21 @@ const aiCostResult = computed(() => {
 });
 
 /** The totals of the AI cost under the chooser, from left to right: each coding agent, then the two together. */
-const aiCostTotals = computed(() => [
-  ...AI_COST_AGENT_IDS.map((agentId) => ({
-    id: agentId,
-    label: findCodingAgent(agentId)?.label ?? agentId,
-    value: dollarsText(aiCostResult.value?.totalByAgent[agentId] ?? 0),
+const aiCostTotals = computed(() =>
+  [
+    ...AI_COST_AGENT_IDS.map((agentId) => ({
+      id: agentId,
+      label: findCodingAgent(agentId)?.label ?? agentId,
+      cost: aiCostResult.value?.totalByAgent[agentId] ?? 0,
+    })),
+    { id: "total", label: t("statisticsModal.personWorkAiCostTotal"), cost: aiCostResult.value?.totalCost ?? 0 },
+  ].map((total) => ({
+    id: total.id,
+    label: total.label,
+    valueText: dollarsText(total.cost),
+    perDayText: t("statisticsModal.personWorkPerDay", { value: dollarsText(AveragePerDay.of(total.cost, dayCount.value)) }),
   })),
-  { id: "total", label: t("statisticsModal.personWorkAiCostTotal"), value: dollarsText(aiCostResult.value?.totalCost ?? 0) },
-]);
+);
 
 /** The bar chart of the Git history, or `null` when there is no person. */
 const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
@@ -288,9 +315,12 @@ onMounted(load);
           <span v-if="persons.length === 0" class="form-text">{{ t("statisticsModal.personWorkNoPerson") }}</span>
           <template v-else>
             <div class="d-flex flex-wrap gap-3 mb-3">
-              <div v-for="total in totals" :key="total.id" :data-total="total.id" class="d-flex align-items-center gap-2">
-                <span class="fs-4 fw-semibold">{{ total.value }}</span>
-                <span class="form-text">{{ t(total.labelKey) }}</span>
+              <div v-for="total in totals" :key="total.id" :data-total="total.id" class="d-flex flex-column">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="fs-4 fw-semibold">{{ total.valueText }}</span>
+                  <span class="form-text">{{ t(total.labelKey) }}</span>
+                </div>
+                <span class="form-text" data-per-day>{{ total.perDayText }}</span>
               </div>
             </div>
             <div v-if="gitHistoryChart !== null" style="flex: 1 1 0; min-height: 240px">
@@ -306,9 +336,12 @@ onMounted(load);
         <span v-else-if="aiCostResult === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
         <template v-else>
           <div class="d-flex flex-wrap gap-3 mb-3">
-            <div v-for="total in aiCostTotals" :key="total.id" :data-total="total.id" class="d-flex align-items-center gap-2">
-              <span class="fs-4 fw-semibold">{{ total.value }}</span>
-              <span class="form-text">{{ total.label }}</span>
+            <div v-for="total in aiCostTotals" :key="total.id" :data-total="total.id" class="d-flex flex-column">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fs-4 fw-semibold">{{ total.valueText }}</span>
+                <span class="form-text">{{ total.label }}</span>
+              </div>
+              <span class="form-text" data-per-day>{{ total.perDayText }}</span>
             </div>
           </div>
           <span v-if="aiCostResult.chatCount === 0" class="form-text">{{ t("statisticsModal.personWorkAiCostNone") }}</span>

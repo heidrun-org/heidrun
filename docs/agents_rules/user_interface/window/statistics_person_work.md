@@ -4,8 +4,8 @@
 - Last updated: 15 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Statistics window](statistics_window.md), [layout.md](layout.md), [Source "AI cost"](statistics_ai_cost.md)
-- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
+- Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Statistics window](statistics_window.md), [layout.md](layout.md), [Source "AI cost"](statistics_ai_cost.md), [Totals](statistics_totals.md)
+- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523)
 
 This file is a part of the rules of the window of Heidrun. The words are defined in [glossary/person_work.md](../../glossary/person_work.md). The rules of the source "AI cost" are in [statistics_ai_cost.md](statistics_ai_cost.md).
 
@@ -23,7 +23,8 @@ This file is a part of the rules of the window of Heidrun. The words are defined
 - The radio button group of the source has the same Bootstrap form as the one of the tab "User activity", with two buttons that have a text and a title: "Git history", chosen at first, and "AI cost". A click shows the other source at once.
 - The person chooser, a `select` with the class `form-control`, is shown for the source "Git history" only, because the AI cost is the cost of the chats on this computer and not the work of one person. The person with the most items is chosen at first.
 - The radio button group of the time range has two buttons that have a text and a title: "Last 7 days", chosen at first, and "Last 30 days". A click draws the bar chart of this time range at once, from the data that the tab already read. A change of the source keeps the time range.
-- The totals. For the Git history: the number of commits, the number of pull requests, and the number of issues of the person in the time range. For the AI cost: the cost of Claude Code, the cost of Codex, and the two together, in US dollars, for example "$4.00". A cost of exactly zero is "$0.00". A change of the person or of the time range changes the totals at once.
+- The totals. For the Git history: the number of commits, the number of pull requests, the number of issues, the lines added, and the lines deleted of the person in the time range. For the AI cost: the cost of Claude Code, the cost of Codex, and the two together, in US dollars, for example "$4.00". A cost of exactly zero is "$0.00". A change of the person or of the time range changes the totals at once.
+- Under each total, its average per day. The rules of the lines and of the average per day are in [statistics_totals.md](statistics_totals.md).
 - The bar chart takes the rest of the height, with at least 240 pixels. For the AI cost, two lines of text are under the bar chart ([statistics_ai_cost.md](statistics_ai_cost.md)).
 
 ## The bar chart
@@ -56,4 +57,4 @@ This file is a part of the rules of the window of Heidrun. The words are defined
 - `lib/person_work.test.ts` tests the finding of the people (name and login, accents, hyphens, emails of GitHub, the shown name, the order), and the counting of each day and the totals. `lib/calendar_days.test.ts` tests the days: the first and the last day, and the time zone.
 - `components/PersonWorkTab.test.ts` tests the reading of the Git history, the two radio button groups, the person chooser, the totals, the stacked bars, their legends and their chart information cards, the change of the person, of the source, and of the time range, and the texts of the error, of the missing workspace, of GitHub, and of the empty repository, with a replacement for Plotly.js. It tests the source "AI cost" too: [statistics_ai_cost.md](statistics_ai_cost.md).
 - `components/StatisticsModal.test.ts` tests that the tab list has the two tabs, and that the tab "Work of one person" reads its data only when it is shown.
-- The Rust tests of the module `person_work` test the command with a real Git repository and a real SQLite file in a temporary folder, and with a fake GitHub: the time range, the author and the date of a commit, the merge commits, the pull requests and the issues, the failure of GitHub, a folder that is not a repository, and a text that is not a time.
+- The Rust tests of the module `person_work` test the command with a real Git repository and a real SQLite file in a temporary folder, and with a fake GitHub: the time range, the author, the date, and the lines of a commit, the merge commits, the pull requests and the issues, the failure of GitHub, a folder that is not a repository, and a text that is not a time.

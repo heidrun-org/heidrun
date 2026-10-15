@@ -23,6 +23,10 @@ pub struct CommitWork {
     pub author_email: String,
     /// The date of the commit, in UTC, in the format ISO 8601.
     pub committed_at: String,
+    /// The number of lines that the commit adds. A binary file counts 0.
+    pub insertions: i64,
+    /// The number of lines that the commit deletes. A binary file counts 0.
+    pub deletions: i64,
 }
 
 /// One pull request or one issue that a person opened.
@@ -127,6 +131,8 @@ fn read_commits(
                 author_name: commit.author_name,
                 author_email: commit.author_email,
                 committed_at: commit.committed_at,
+                insertions: commit.insertions,
+                deletions: commit.deletions,
             });
         }
     }
@@ -385,10 +391,35 @@ mod tests {
                 author_name: "Bob Builder".into(),
                 author_email: "bob@example.com".into(),
                 committed_at: work.commits[0].committed_at.clone(),
+                insertions: 1,
+                deletions: 1,
             }]
         );
         assert!(work.commits[0].committed_at.starts_with("2026-10-12T10:00:00"));
         assert_eq!(work.code_hosting_error, None);
+    }
+
+    #[test]
+    fn the_lines_added_and_the_lines_deleted_of_each_commit_are_read() {
+        let temporary = TemporaryFolder::new("lines");
+        let folder = repository_with_commits(&temporary, &[(ADA, "2026-10-10T10:00:00+00:00")]);
+        let date = "2026-10-11T10:00:00+00:00";
+        std::fs::write(folder.join("file.txt"), "one\ntwo\nthree\nfour\n").unwrap();
+        git(&folder, &["add", "file.txt"], BOB, date);
+        git(&folder, &["commit", "--quiet", "-m", "Four lines"], BOB, date);
+        std::fs::write(folder.join("file.txt"), "one\nthree\nfour\nfive\nsix\n").unwrap();
+        git(&folder, &["add", "file.txt"], BOB, "2026-10-12T10:00:00+00:00");
+        git(&folder, &["commit", "--quiet", "-m", "Two lines added, one line deleted"], BOB, "2026-10-12T10:00:00+00:00");
+        let work = read_person_work(
+            &folder,
+            &temporary.database(),
+            &EmptyRunner,
+            "2026-10-01T00:00:00.000Z",
+            "2026-10-20T00:00:00.000Z",
+        )
+        .unwrap();
+        let lines: Vec<(i64, i64)> = work.commits.iter().map(|commit| (commit.insertions, commit.deletions)).collect();
+        assert_eq!(lines, vec![(1, 0), (4, 1), (2, 1)]);
     }
 
     #[test]
