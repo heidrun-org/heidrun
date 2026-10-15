@@ -12,6 +12,12 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 const plotly = { react: vi.fn(), purge: vi.fn(), Plots: { resize: vi.fn() } };
 vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 
+/** The tab "Work of one person" reads the repository of the selected workspace: the test selects the folder of a workspace. */
+vi.mock("../stores/user_activity", async (importOriginal) => {
+  const { ref } = await import("vue");
+  return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
+});
+
 /** What one call to `Plotly.react` drew. */
 type Drawing = {
   data: { type: string; x: string[]; y: number[]; customdata: string[] };
@@ -94,18 +100,41 @@ describe("StatisticsModal", () => {
     expect(wrapper.find("button[aria-label='Close (Escape)']").exists()).toBe(true);
   });
 
-  it("has one tab, User activity, built as a Bootstrap tab list, and it is the selected tab", async () => {
+  it("has two tabs, User activity and Work of one person, built as a Bootstrap tab list, and User activity is the selected tab", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const tabList = wrapper.get('[role="tablist"]');
     expect(tabList.classes()).toEqual(expect.arrayContaining(["nav", "nav-tabs"]));
     const tabs = tabList.findAll('[role="tab"]');
-    expect(tabs.map((tab) => tab.text())).toEqual(["User activity"]);
+    expect(tabs.map((tab) => tab.text())).toEqual(["User activity", "Work of one person"]);
+    expect(tabs.map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false"]);
     expect(tabs[0].classes()).toContain("active");
-    expect(tabs[0].attributes("aria-selected")).toBe("true");
-    const pane = wrapper.get('[role="tabpanel"]');
-    expect(pane.classes()).toEqual(expect.arrayContaining(["tab-pane", "active"]));
-    expect(pane.attributes("id")).toBe(tabs[0].attributes("aria-controls"));
-    expect(pane.attributes("aria-labelledby")).toBe(tabs[0].attributes("id"));
+    expect(tabs[1].classes()).not.toContain("active");
+    const panes = wrapper.findAll('[role="tabpanel"]');
+    expect(panes).toHaveLength(2);
+    expect(panes[0].classes()).toEqual(expect.arrayContaining(["tab-pane", "active"]));
+    expect(panes[1].classes()).not.toContain("active");
+    for (const [index, pane] of panes.entries()) {
+      expect(pane.attributes("id")).toBe(tabs[index].attributes("aria-controls"));
+      expect(pane.attributes("aria-labelledby")).toBe(tabs[index].attributes("id"));
+    }
+  });
+
+  it("reads the work of the people only when the tab Work of one person is shown, and only once while the window stays open", async () => {
+    const { wrapper } = await mountStatisticsModal([]);
+    const noWork = { repository: "heidrun-org/heidrun", commits: [], pullRequests: [], issues: [], codeHostingError: null };
+    invoke.mockImplementation(async (command: string) => (command === "person_work_in_range" ? noWork : []));
+    const personWorkCalls = () => invoke.mock.calls.filter((call) => call[0] === "person_work_in_range");
+    expect(personWorkCalls()).toHaveLength(0);
+    const tabs = wrapper.findAll('[role="tab"]');
+    await tabs[1].trigger("click");
+    await flushPromises();
+    expect(tabs[1].classes()).toContain("active");
+    expect(wrapper.findAll('[role="tabpanel"]')[1].classes()).toContain("active");
+    expect(personWorkCalls()).toHaveLength(1);
+    await tabs[0].trigger("click");
+    await tabs[1].trigger("click");
+    await flushPromises();
+    expect(personWorkCalls()).toHaveLength(1);
   });
 
   it("has a Bootstrap radio button group with Last hour, Last day, and Last week, and Last hour is chosen at first", async () => {

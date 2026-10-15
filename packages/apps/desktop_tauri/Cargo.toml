@@ -26,6 +26,10 @@ raw_coding_agent_cli = { path = "../../auxiliary/raw_coding_agent_cli" }
 data_layer_chat_sessions = { path = "../../data_layers/data_layer_chat_sessions" }
 # Reads the user activity records of the developer into the SQLite file of the data layer, for the Statistics window
 data_layer_user_activity = { path = "../../data_layers/data_layer_user_activity" }
+# Reads the commits of a repository into the SQLite file of the data layer, for the Statistics window
+data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
+# Reads the pull requests and the issues of a repository into the SQLite file of the data layer, for the Statistics window
+data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
 portable-pty = "0.9"
 base64 = "0.22"
 dirs = "6"

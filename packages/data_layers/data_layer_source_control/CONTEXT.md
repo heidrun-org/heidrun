@@ -34,4 +34,4 @@ A Rust library and a command line tool that read every commit of a Git repositor
 ## Background
 - The package comes from [issue #462](https://github.com/heidrun-org/heidrun/issues/462). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452).
 - The package gave the same counts as Git for the 755 commits and the 225 merges of this repository, and the same line counts as `git diff --numstat` for 72 commits that were checked.
-- The desktop application does not use the package yet. It still runs `git` itself in `packages/apps/desktop_tauri/src/git.rs` and `git_source_control.rs`.
+- The Statistics window uses the package in `packages/apps/desktop_tauri/src/person_work.rs` ([issue #482](https://github.com/heidrun-org/heidrun/issues/482)). The other features of the desktop application still run `git` themselves in `git.rs` and `git_source_control.rs`.

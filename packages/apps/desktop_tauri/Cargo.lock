@@ -820,6 +820,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "data_layer_code_hosting"
+version = "0.2.5"
+dependencies = [
+ "dirs 6.0.0",
+ "jsonschema",
+ "rusqlite",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "data_layer_source_control"
+version = "0.2.5"
+dependencies = [
+ "dirs 6.0.0",
+ "jsonschema",
+ "rusqlite",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "data_layer_user_activity"
 version = "0.2.5"
 dependencies = [
@@ -1791,6 +1813,8 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "data_layer_chat_sessions",
+ "data_layer_code_hosting",
+ "data_layer_source_control",
  "data_layer_user_activity",
  "dirs 6.0.0",
  "dotenvy",

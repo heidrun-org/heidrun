@@ -1,5 +1,7 @@
 import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
+import type { AiCostItems } from '../lib/ai_cost';
+import type { PersonWorkItems } from '../lib/person_work';
 import type { UserActivityRecord } from '../lib/user_activity';
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -283,6 +285,101 @@ export class TauriMockFixture {
 			mouseActionCount: 12,
 			endReason: 'cool_down',
 		}));
+	}
+
+	/**
+	 * The answer of the Tauri command `person_work_in_range`: the fake work of two people in the last 30 days. Jérôme
+	 * Étienne writes one to five commits each day and opens a pull request every other day, and his login on GitHub is
+	 * `jerome-etienne`. He opens an issue every fifth day. Eric writes a commit every third day, and opens nothing on GitHub.
+	 * - issue #482
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The fake commits, pull requests, and issues, the oldest first, and no error of GitHub.
+	 */
+	static buildPersonWorkItems(until: number): PersonWorkItems {
+		const dayMs = 24 * 3600 * 1000;
+		const result: PersonWorkItems = {
+			repository: 'heidrun-org/heidrun',
+			commits: [],
+			pullRequests: [],
+			issues: [],
+			codeHostingError: null,
+		};
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const dayEnd = until - daysBefore * dayMs;
+			const commitCount = 1 + ((daysBefore * 3 + 2) % 5);
+			for (let index = 0; index < commitCount; index += 1) {
+				result.commits.push({
+					authorName: 'Jérôme Étienne',
+					authorEmail: 'jerome@example.com',
+					committedAt: new Date(dayEnd - (3 + index) * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 3 === 0) {
+				result.commits.push({
+					authorName: 'Eric',
+					authorEmail: 'eric@example.com',
+					committedAt: new Date(dayEnd - 2 * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 2 === 0) {
+				result.pullRequests.push({
+					author: 'jerome-etienne',
+					createdAt: new Date(dayEnd - 5 * 3600 * 1000).toISOString(),
+				});
+			}
+			if (daysBefore % 5 === 0) {
+				result.issues.push({
+					author: 'jerome-etienne',
+					createdAt: new Date(dayEnd - 6 * 3600 * 1000).toISOString(),
+				});
+			}
+		}
+		result.commits.sort((first, second) => first.committedAt.localeCompare(second.committedAt));
+		return result;
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost of each hour
+	 * where it used tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
+	 * costs a few cents. Every fourth day, a longer chat of Claude Code goes on after midnight and costs money on the next day
+	 * too. Codex has one chat every other day that costs under 2 dollars. One chat of Codex has no known price.
+	 * - issue #482
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The fake chats, the oldest first.
+	 */
+	static buildAiCostItems(until: number): AiCostItems {
+		const hourMs = 3600 * 1000;
+		const dayMs = 24 * hourMs;
+		const hour = (dayEnd: number, hoursBefore: number, costUsd: number | null) => ({
+			at: new Date(dayEnd - hoursBefore * hourMs).toISOString(),
+			costUsd,
+		});
+		const result: AiCostItems = { chats: [] };
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const dayEnd = until - daysBefore * dayMs;
+			const cost = 1 + ((daysBefore * 7 + 3) % 5);
+			result.chats.push({
+				codingAgent: 'claude',
+				hours: [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)],
+			});
+			result.chats.push({
+				codingAgent: 'claude',
+				hours: [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)],
+			});
+			if (daysBefore % 4 === 2) {
+				result.chats.push({
+					codingAgent: 'claude',
+					hours: [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)],
+				});
+			}
+			if (daysBefore % 2 === 1) {
+				const costUsd = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
+				result.chats.push({ codingAgent: 'codex', hours: [hour(dayEnd, 6, costUsd)] });
+			}
+		}
+		return result;
 	}
 
 	/**
