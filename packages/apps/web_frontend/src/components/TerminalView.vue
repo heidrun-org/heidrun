@@ -219,7 +219,7 @@ onMounted(async () => {
         start: { x: col[s] + 1, y },
         end: { x: col[e - 1] + width[e - 1], y },
       });
-      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void; after?: boolean }[] = [];
+      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void; after?: boolean; detail?: string }[] = [];
       // "! command" suggested by Claude (its shell mode): the whole command, joined on
       // one line even when it spans several, is sent to the prompt and run.
       if (isClaude()) {
@@ -313,6 +313,7 @@ onMounted(async () => {
           // Issues and MR: also previewed in the app; ⌘-click goes straight there.
           alt: preview ? { label: t("terminalView.preview"), run: preview } : undefined,
           meta: preview,
+          detail: r.url,
         });
       }
       // "src/app.ts:42" cited by the agent (or a compiler): opened in the file explorer.
@@ -362,7 +363,7 @@ onMounted(async () => {
           },
           hover: () => {
             overLink = true;
-            showChip(range(i.s, i.e), i.label, i.run, i.alt, i.after);
+            showChip(range(i.s, i.e), i.label, i.run, i.alt, i.after, i.detail);
           },
           leave: () => {
             overLink = false;
@@ -506,7 +507,7 @@ interface ChipAction {
   label: string;
   run: () => void;
 }
-const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void; alt?: ChipAction } | null>(null);
+const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void; alt?: ChipAction; detail?: string } | null>(null);
 let chipTimer = 0;
 // Mouse on the chip: the chip is frozen. Claude redraws the screen all the time, and
 // xterm then re-reads the link under the last pointer position, which may be another
@@ -526,6 +527,7 @@ function showChip(
   alt?: ChipAction,
   /** On the line itself, after the text (agent list rows: one link per line). */
   after = false,
+  detail?: string,
 ) {
   if (onChip) return;
   window.clearTimeout(chipTimer);
@@ -538,11 +540,12 @@ function showChip(
   const row = r.start.y - 1 - term.buffer.active.viewportY;
   const rowTop = s.top - w.top + row * cellH;
   // 2 px of overlap with the text: no gap where the pointer would leave the link.
-  const top = after ? rowTop + (cellH - CHIP_H) / 2 : row > 0 ? rowTop - CHIP_H + 2 : rowTop + cellH - 2;
+  const height = detail === undefined ? CHIP_H : 42;
+  const top = after ? rowTop + (cellH - height) / 2 : row > 0 ? rowTop - height + 2 : rowTop + cellH - 2;
   const left = after ? s.left - w.left + r.end.x * cellW : s.left - w.left + (r.start.x - 1) * cellW - 2;
-  const width = alt ? 230 : 180;
+  const width = detail !== undefined ? 360 : alt ? 230 : 180;
   const roomy = left + width < w.width;
-  chip.value = { left: roomy ? Math.max(0, left) : null, right: roomy ? null : 10, top, label, run, alt };
+  chip.value = { left: roomy ? Math.max(0, left) : null, right: roomy ? null : 10, top, label, run, alt, detail };
 }
 
 function hideChip(now = false) {
@@ -952,8 +955,11 @@ onBeforeUnmount(() => {
       @mouseleave="leaveChip()"
       @mousedown.stop.prevent
     >
-      <button class="chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
-      <button v-if="chip.alt" class="chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
+      <div class="chip-actions">
+        <button class="chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
+        <button v-if="chip.alt" class="chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
+      </div>
+      <div v-if="chip.detail" class="chip-detail" :title="chip.detail">{{ chip.detail }}</div>
     </div>
     <div v-if="hasSelection" class="sel-bar" @mousedown.stop.prevent>
       <button :title="t('terminalView.copyTitle')" class="btn" @click="copySelection">{{ t("terminalView.copy") }} <kbd>⌘C</kbd></button>
@@ -985,7 +991,9 @@ onBeforeUnmount(() => {
 }
 .sel-bar .btn { background: var(--field); }
 /* The padding is part of the hover zone, and reaches down to the hovered text. */
-.chips { position: absolute; z-index: 6; height: 26px; display: flex; align-items: flex-start; gap: 4px; padding: 0 4px; }
+.chips { position: absolute; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0 4px; }
+.chip-actions { height: 26px; display: flex; align-items: flex-start; gap: 4px; }
+.chip-detail { max-width: 352px; overflow: hidden; color: var(--text-2); font-size: 11px; line-height: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: var(--font-size); font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
