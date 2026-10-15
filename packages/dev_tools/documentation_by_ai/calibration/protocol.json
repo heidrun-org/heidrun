@@ -1,0 +1,14 @@
+{
+  "model": "gpt-6-luna",
+  "agent": "codex",
+  "effort": "high",
+  "rubric": "3 unchanged",
+  "runs": 2,
+  "order": "run1 original candidate order; run2 reversed; calls do not share conversational history.",
+  "acceptance": "All five planted defects identified with source-supported relevant evidence and primary score at or below frozen threshold in both runs. Both good cases have no nonsuggestion finding and all six scores 5 in both runs. Report detection separately from severity and formatting. No model rerun to improve scores.",
+  "scope": "Only independent pane focus history examples; site fields neutral excluded. No visual calibration or live runtime checks. Actual generated page unchanged.",
+  "expectations_sha256": "c99cb189dab01c9657ddd24fcbf59da138bed5cfacb68721c92bef65de4c3d08",
+  "workflow": "One candidate per fresh independent model call; two rounds; 14 calls total; maximum two calls running concurrently.",
+  "comparison": "Same exact cases, private expectations, source hashes, model, effort and rubric. Only single-source output instruction added to isolated-call prompt.",
+  "format_requirement": "Each source-dependent finding has exactly one existing repository-relative path in source. Additional sources may be described in sourceEvidence; never join paths or supply an array. Existing source guard unchanged."
+}

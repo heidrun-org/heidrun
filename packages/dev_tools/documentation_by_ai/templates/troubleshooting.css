@@ -1,0 +1,38 @@
+.vp-doc .documentation-troubleshooting-topic {
+	margin: 24px 0;
+	padding: 22px 24px;
+	border: 1px solid var(--vp-c-divider);
+	border-left: 4px solid var(--vp-c-brand-1);
+	border-radius: 12px;
+	background: var(--vp-c-bg-soft);
+}
+
+.vp-doc .documentation-troubleshooting-topic > h3 {
+	margin: 0 0 16px;
+	padding-bottom: 14px;
+	border-bottom: 1px solid var(--vp-c-divider);
+	font-size: 19px;
+	line-height: 1.45;
+}
+
+.vp-doc .documentation-troubleshooting-topic > p {
+	margin: 14px 0;
+}
+
+.vp-doc .documentation-troubleshooting-topic > ol {
+	margin: 8px 0 18px;
+	padding-left: 22px;
+}
+
+.vp-doc .documentation-troubleshooting-topic > p:last-child {
+	margin-bottom: 0;
+	padding: 12px 14px;
+	border-radius: 8px;
+	background: var(--vp-c-brand-soft);
+}
+
+@media (max-width: 640px) {
+	.vp-doc .documentation-troubleshooting-topic {
+		padding: 18px;
+	}
+}

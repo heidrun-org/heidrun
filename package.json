@@ -19,7 +19,8 @@
     "data_layer:chat_sessions": "pnpm --silent --filter data_layer_chat_sessions cli",
     "data_layer:source_control": "pnpm --silent --filter data_layer_source_control cli",
     "data_layer:user_activity": "pnpm --silent --filter data_layer_user_activity cli",
-    "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts"
+    "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts",
+    "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
