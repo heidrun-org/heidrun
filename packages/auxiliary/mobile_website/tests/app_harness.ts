@@ -1,10 +1,10 @@
 import { vi } from 'vitest';
 import { MobileApp } from '../src/mobile_app';
-import { FakeMac } from './fake_mac';
+import { FakeComputer } from './fake_computer';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	AppHarness — starts the page against a fake Mac, and taps on it
+//	AppHarness — starts the page against a fake computer, and taps on it
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -31,23 +31,23 @@ export class AppHarness {
 	}
 
 	/**
-	 * Starts a page that is paired with the fake Mac.
-	 * @param mac The fake Mac.
+	 * Starts a page that is paired with the fake computer.
+	 * @param computer The fake computer.
 	 * @param isPaired False to start a phone that has no pairing key.
 	 * @param hash The part of the address after the path when the page opens, for example `#/panes`. Most tests
 	 * start on the screen Needs you, so this is the default. Pass an empty text to open the page with no address.
 	 * @returns The page, after its first refresh.
 	 */
-	static async start(mac: FakeMac, isPaired = true, hash = '#/needs-you'): Promise<AppHarness> {
+	static async start(computer: FakeComputer, isPaired = true, hash = '#/needs-you'): Promise<AppHarness> {
 		AppHarness.current?.stop();
 		vi.useFakeTimers();
 		window.history.replaceState(null, '', `/${hash}`);
 		document.body.innerHTML = '<div id="app"></div><div id="overlay"></div>';
 		window.localStorage.clear();
 		if (isPaired) {
-			window.localStorage.setItem('hd-token', FakeMac.key);
+			window.localStorage.setItem('hd-token', FakeComputer.key);
 		}
-		mac.install();
+		computer.install();
 		const root = document.getElementById('app') as HTMLElement;
 		const overlay = document.getElementById('overlay') as HTMLElement;
 		const harness = new AppHarness(root, overlay, new MobileApp(root, overlay));

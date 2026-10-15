@@ -1,6 +1,6 @@
 # mobile_website
 
-The mobile website of [Heidrun](../../../README.md): the page that a phone opens to see the coding agents, answer them, and send them a prompt. The package `mobile_server` serves the built page from the Mac, and the page talks only to that server.
+The mobile website of [Heidrun](../../../README.md): the page that a phone opens to see the coding agents, answer them, and send them a prompt. The package `mobile_server` serves the built page from the computer, and the page talks only to that server.
 
 ## Run the website while you work on it
 
@@ -36,7 +36,7 @@ Open the address that the second command prints (port 5183, with the pairing key
 
 ### Open the page on your phone
 
-Add `--host` to the command of either way. Your phone must be on the same Wi-Fi network as the Mac, and not on a guest network.
+Add `--host` to the command of either way. Your phone must be on the same Wi-Fi network as the computer, and not on a guest network.
 
 ```bash
 pnpm --filter mobile_website dev --host

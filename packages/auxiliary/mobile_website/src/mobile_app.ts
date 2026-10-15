@@ -21,8 +21,8 @@ import { WelcomeScreen } from './screens/welcome_screen';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The mobile website. It asks the Mac for the state of the coding agents, draws one screen at a time, and sends the
- * answers, the prompts, and the stop keys of the developer back to the Mac.
+ * The mobile website. It asks the computer for the state of the coding agents, draws one screen at a time, and
+ * sends the answers, the prompts, and the stop keys of the developer back to the computer.
  */
 export class MobileApp {
 	/** The delay between two refreshes on a screen of the bottom bar, in milliseconds. */
@@ -134,8 +134,8 @@ export class MobileApp {
 	}
 
 	/**
-	 * Asks the Mac for the state, and for the output of the open pane. Then it draws the screen again, and plans
-	 * the next refresh unless the page is hidden.
+	 * Asks the computer for the state, and for the output of the open pane. Then it draws the screen again, and
+	 * plans the next refresh unless the page is hidden.
 	 * @returns A promise that ends when the screen is drawn.
 	 */
 	async refresh(): Promise<void> {
@@ -398,11 +398,11 @@ export class MobileApp {
 	}
 
 	/**
-	 * Sends one call that changes something on the Mac. A dangerous command goes through the confirmation sheet
-	 * first.
+	 * Sends one call that changes something on the computer. A dangerous command goes through the confirmation
+	 * sheet first.
 	 * @param method The name of the method.
 	 * @param params The parameters of the method.
-	 * @returns True when the Mac did what the call asked, false when it refused, failed, or the developer
+	 * @returns True when the computer did what the call asked, false when it refused, failed, or the developer
 	 * cancelled.
 	 */
 	private async _act(method: string, params: Record<string, unknown>): Promise<boolean> {
@@ -434,7 +434,7 @@ export class MobileApp {
 				this._render();
 			} else {
 				const reason = error instanceof Error ? error.message : String(error);
-				this._toast(`No answer from the Mac: ${reason}`);
+				this._toast(`No answer from the computer: ${reason}`);
 			}
 			return false;
 		}

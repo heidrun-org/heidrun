@@ -1,9 +1,9 @@
 import type { AgentView } from '../src/mobile_types';
-import { FakeMac } from './fake_mac';
+import { FakeComputer } from './fake_computer';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	Fixtures — the coding agents and the fake Mac that most tests start from
+//	Fixtures — the coding agents and the fake computer that most tests start from
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,7 +16,7 @@ export class Fixtures {
 	 * @returns The coding agent.
 	 */
 	static blocked(): AgentView {
-		return FakeMac.agent({
+		return FakeComputer.agent({
 			paneId: 'p-blocked',
 			status: 'blocked',
 			menu: {
@@ -45,7 +45,7 @@ export class Fixtures {
 	 * @returns The coding agent.
 	 */
 	static asking(): AgentView {
-		return FakeMac.agent({
+		return FakeComputer.agent({
 			paneId: 'p-asking',
 			tab: 'review-12',
 			status: 'done',
@@ -58,7 +58,7 @@ export class Fixtures {
 	 * @returns The coding agent.
 	 */
 	static finished(): AgentView {
-		return FakeMac.agent({
+		return FakeComputer.agent({
 			paneId: 'p-finished',
 			tab: 'docs',
 			status: 'done',
@@ -70,7 +70,7 @@ export class Fixtures {
 	 * @returns The coding agent.
 	 */
 	static working(): AgentView {
-		return FakeMac.agent({
+		return FakeComputer.agent({
 			paneId: 'p-working',
 			name: 'Codex',
 			kind: 'codex',
@@ -79,12 +79,12 @@ export class Fixtures {
 	}
 
 	/**
-	 * A fake Mac with the four coding agents. The three that need the developer are listed in the wrong order on
-	 * purpose.
-	 * @returns The fake Mac.
+	 * A fake computer with the four coding agents. The three that need the developer are listed in the wrong order
+	 * on purpose.
+	 * @returns The fake computer.
 	 */
-	static mac(): FakeMac {
-		const snapshot = FakeMac.snapshotOf(
+	static computer(): FakeComputer {
+		const snapshot = FakeComputer.snapshotOf(
 			[Fixtures.working(), Fixtures.finished(), Fixtures.asking(), Fixtures.blocked()],
 			['p-finished', 'p-asking', 'p-blocked'],
 		);
@@ -94,6 +94,6 @@ export class Fixtures {
 				percent: 42,
 			},
 		];
-		return new FakeMac(snapshot);
+		return new FakeComputer(snapshot);
 	}
 }

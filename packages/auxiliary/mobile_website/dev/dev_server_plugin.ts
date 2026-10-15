@@ -7,7 +7,7 @@ import { DevApi } from './dev_api';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	DevServerPlugin — answers `/api` in the development server, with a fake Mac or the real application
+//	DevServerPlugin — answers `/api` in the development server, with a fake computer or the real application
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,13 +16,13 @@ import { DevApi } from './dev_api';
  * for `vite build`, so nothing of this folder reaches the built website.
  */
 export class DevServerPlugin {
-	/** The biggest body of a call that the fake Mac accepts, in bytes. */
+	/** The biggest body of a call that the fake computer accepts, in bytes. */
 	private static readonly maxBodyBytes = 64 * 1024;
 
 	/**
 	 * Builds the plugin.
 	 * @param realTarget The address of the mobile server of the desktop application, for example
-	 * `http://127.0.0.1:47823`, or null to answer with the fake Mac.
+	 * `http://127.0.0.1:47823`, or null to answer with the fake computer.
 	 * @returns The plugin.
 	 */
 	static create(realTarget: string | null): Plugin {
@@ -103,13 +103,13 @@ export class DevServerPlugin {
 	 * server, with the pairing key after the sign "#". The network address is there only when Vite runs with
 	 * `--host`.
 	 * @param addresses The addresses of the server: the local one first, then the ones of the network.
-	 * @param realTarget The address of the mobile server of the desktop application, or null for the fake Mac.
+	 * @param realTarget The address of the mobile server of the desktop application, or null for the fake computer.
 	 * @param realKey The pairing key of the desktop application, or null when it has none.
 	 * @returns The lines to print.
 	 */
 	static pairingLines(addresses: string[], realTarget: string | null, realKey: string | null): string[] {
 		const key = realTarget === null ? DevApi.pairingKey : realKey;
-		const title = realTarget === null ? 'Fake Mac' : `Real desktop application at ${realTarget}`;
+		const title = realTarget === null ? 'Fake computer' : `Real desktop application at ${realTarget}`;
 		const lines: string[] = [];
 		for (const address of addresses) {
 			lines.push(`  ➜  ${title}: open ${address}${key === null ? '' : `#t=${key}`}`);

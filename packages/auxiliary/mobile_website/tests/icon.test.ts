@@ -28,7 +28,7 @@ describe('Icons', () => {
 	});
 
 	it('uses Bootstrap Icons in the bottom bar, in the header of a pane, and in the prompt line', async () => {
-		const harness = await AppHarness.start(Fixtures.mac());
+		const harness = await AppHarness.start(Fixtures.computer());
 		const barIcons = [...document.querySelectorAll('.bottom-bar .bar-button svg.bi')];
 		expect(barIcons.map((icon) => icon.getAttribute('class'))).toEqual([
 			'bi bi-grid',
@@ -45,7 +45,7 @@ describe('Icons', () => {
 	});
 
 	it('keeps every icon of the page in the class Icon, and draws no icon by hand', async () => {
-		const harness = await AppHarness.start(Fixtures.mac());
+		const harness = await AppHarness.start(Fixtures.computer());
 		await harness.openPane('p-working');
 		const svgs = [...document.querySelectorAll('svg')];
 		const handDrawn = svgs.filter((svg) => svg.classList.contains('bi') === false);

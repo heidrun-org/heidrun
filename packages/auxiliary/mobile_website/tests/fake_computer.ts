@@ -3,11 +3,11 @@ import type { AgentView, CallResult, Snapshot } from '../src/mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	FakeMac — a fake Mac that answers the calls of the page, and remembers them
+//	FakeComputer — a fake computer that answers the calls of the page, and remembers them
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** One call that the page sent to the fake Mac. */
+/** One call that the page sent to the fake computer. */
 export type RecordedCall = {
 	/** The name of the method. */
 	method: string;
@@ -20,8 +20,8 @@ export type RecordedCall = {
 /**
  * Takes the place of the `fetch` of the page. It checks the pairing key like the mobile server does.
  */
-export class FakeMac {
-	/** The pairing key that the fake Mac accepts at the start. */
+export class FakeComputer {
+	/** The pairing key that the fake computer accepts at the start. */
 	static readonly key = 'a'.repeat(64);
 
 	/** The answer of the method `state`. */
@@ -36,14 +36,14 @@ export class FakeMac {
 	/** The answers of the methods that change something, one list for each method. The last answer repeats. */
 	answers: Record<string, CallResult[]> = {};
 
-	/** True when the Mac does not answer: the call of the page fails like a phone without a network. */
+	/** True when the computer does not answer: the call of the page fails like a phone without a network. */
 	isDown = false;
 
-	/** The pairing key that the fake Mac accepts now. */
-	acceptedKey: string = FakeMac.key;
+	/** The pairing key that the fake computer accepts now. */
+	acceptedKey: string = FakeComputer.key;
 
 	/**
-	 * Creates a fake Mac.
+	 * Creates a fake computer.
 	 * @param snapshot The answer of the method `state`.
 	 */
 	constructor(snapshot: Snapshot) {
@@ -93,7 +93,7 @@ export class FakeMac {
 	}
 
 	/**
-	 * Replaces the `fetch` of the page by this fake Mac.
+	 * Replaces the `fetch` of the page by this fake computer.
 	 */
 	install(): void {
 		vi.stubGlobal('fetch', (_address: string, init: RequestInit) => this._answer(init));

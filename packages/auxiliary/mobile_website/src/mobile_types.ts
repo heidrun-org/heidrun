@@ -69,7 +69,7 @@ export type QuotaView = {
 
 /** The answer of the method `state`: everything that the first screens show. */
 export type Snapshot = {
-	/** The time of the Mac when it made the answer, in milliseconds since 1970. */
+	/** The time of the computer when it made the answer, in milliseconds since 1970. */
 	now: number;
 	/** The identifiers of the panes that wait for the developer. */
 	attention: string[];
@@ -81,7 +81,7 @@ export type Snapshot = {
 
 /** A command that the guards of Heidrun want the developer to check once more. */
 export type ConfirmRequest = {
-	/** The command, as the Mac shows it now. */
+	/** The command, as the computer shows it now. */
 	command: string;
 	/** Why the guards stopped the command. */
 	why: string;

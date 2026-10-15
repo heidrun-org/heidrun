@@ -15,12 +15,12 @@ type Reply = {
 const cleanups: Array<() => Promise<void>> = [];
 
 describe('Pairing lines of the development server', () => {
-	it('prints the pairing link of the fake Mac for the local address and for the address of the network', () => {
+	it('prints the pairing link of the fake computer for the local address and the network address', () => {
 		const addresses = ['http://localhost:5183/', 'http://192.168.1.160:5183/'];
 		const lines = DevServerPlugin.pairingLines(addresses, null, null);
 		expect(lines).toEqual([
-			`  ➜  Fake Mac: open http://localhost:5183/#t=${DevApi.pairingKey}`,
-			`  ➜  Fake Mac: open http://192.168.1.160:5183/#t=${DevApi.pairingKey}`,
+			`  ➜  Fake computer: open http://localhost:5183/#t=${DevApi.pairingKey}`,
+			`  ➜  Fake computer: open http://192.168.1.160:5183/#t=${DevApi.pairingKey}`,
 		]);
 	});
 
@@ -89,7 +89,7 @@ afterEach(async () => {
 	}
 });
 
-describe('DevServerPlugin with the fake Mac', () => {
+describe('DevServerPlugin with the fake computer', () => {
 	it('answers a call of the page on /api', async () => {
 		const port = await startVite(null);
 		const reply = await post(port, 'POST', { 'x-herdr-token': DevApi.pairingKey }, '{"method":"state"}');

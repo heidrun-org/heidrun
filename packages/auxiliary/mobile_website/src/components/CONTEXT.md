@@ -15,5 +15,5 @@ The parts that more than one screen of the mobile website uses.
 ## Rules
 - A component draws only. It never calls the mobile server.
 - A component imports nothing from `src/screens`.
-- Every text that comes from the Mac goes through `HtmlEscape.escape`.
+- Every text that comes from the computer goes through `HtmlEscape.escape`.
 - Every icon comes from `Icon.render`, which reads the package `bootstrap-icons`. Nobody draws an icon by hand, and a test checks it.

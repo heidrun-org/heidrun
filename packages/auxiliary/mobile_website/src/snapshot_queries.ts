@@ -32,7 +32,7 @@ export class SnapshotQueries {
 
 	/**
 	 * Lists the coding agents that wait for the developer: first the blocked ones, then the ones that ask a
-	 * question, then the ones that finished. Inside one group, the order of the Mac stays.
+	 * question, then the ones that finished. Inside one group, the order of the computer stays.
 	 * @param snapshot The answer of the method `state`.
 	 * @returns The coding agents of the Needs you screen.
 	 */

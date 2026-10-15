@@ -12,14 +12,14 @@ import { Icon } from './icon';
  */
 export class ScreenHeader {
 	/**
-	 * Draws the top bar of a screen of the bottom bar: the title and the state of the connection to the Mac.
+	 * Draws the top bar of a screen of the bottom bar: the title and the state of the connection to the computer.
 	 * @param title The title of the screen.
 	 * @param isOnline True when the last call worked, false when it failed, null before the first call.
 	 * @returns The HTML of the top bar.
 	 */
 	static renderTab(title: string, isOnline: boolean | null): string {
 		const connection = isOnline === true ? 'dot-ok' : isOnline === false ? 'dot-blocked' : 'dot-idle';
-		const connectionText = isOnline === true ? 'Connected to the Mac' : 'Not connected to the Mac';
+		const connectionText = isOnline === true ? 'Connected' : 'Not connected';
 		const headerHtmlContent = /* html */`
 			<header class="top">
 				<h1>${HtmlEscape.escape(title)}</h1>

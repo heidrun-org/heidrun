@@ -9,7 +9,7 @@ import { HtmlEscape } from '../html_escape';
 
 /**
  * Draws the choices of a menu. A tap sends the number of the choice. The guards of Heidrun check a dangerous command
- * on the Mac before the choice goes to the coding agent.
+ * on the computer before the choice goes to the coding agent.
  */
 export class MenuButtons {
 	/**

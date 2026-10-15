@@ -9,7 +9,7 @@ import { HtmlEscape } from '../html_escape';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The welcome page. The page opens on it when its address names no screen. It needs no data from the Mac, so it
+ * The welcome page. The page opens on it when its address names no screen. It needs no data from the computer, so it
  * draws before the pairing and before the first answer. It has no bottom bar.
  */
 export class WelcomeScreen {

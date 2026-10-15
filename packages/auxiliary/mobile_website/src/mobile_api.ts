@@ -57,7 +57,7 @@ export class MobileApi {
 	}
 
 	/**
-	 * Forgets the pairing key, for example after the Mac revoked it.
+	 * Forgets the pairing key, for example after the computer revoked it.
 	 */
 	static forgetPairingKey(): void {
 		try {
@@ -71,7 +71,7 @@ export class MobileApi {
 	 * Sends one call to the mobile server.
 	 * @param method The name of the method. The mobile server accepts only a closed list of names.
 	 * @param params The parameters of the method.
-	 * @returns The answer of the Mac.
+	 * @returns The answer of the computer.
 	 * @throws UnpairedError when the mobile server refuses the pairing key.
 	 * @throws Error with the text of the server when the call fails for another reason.
 	 */

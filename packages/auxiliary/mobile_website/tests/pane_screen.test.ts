@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { AppHarness } from './app_harness';
-import { FakeMac } from './fake_mac';
+import { FakeComputer } from './fake_computer';
 import { Fixtures } from './fixtures';
 
 describe('Pane screen', () => {
 	it('shows the end of the output and the status, and no line of information above the output', async () => {
-		const mac = Fixtures.mac();
-		mac.outputText = 'line one\nline two\n\n\n';
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		computer.outputText = 'line one\nline two\n\n\n';
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		expect(document.querySelector('.output')?.textContent).toBe('line one\nline two');
 		expect(document.querySelector('.output > code.output-text')?.textContent).toBe('line one\nline two');
@@ -17,12 +17,12 @@ describe('Pane screen', () => {
 		expect(document.querySelector('.send-button')?.getAttribute('aria-label')).toBe('Send');
 	});
 
-	it('asks the Mac for the colors, and paints them in the output', async () => {
-		const mac = Fixtures.mac();
-		mac.outputText = '\x1b[32mgreen\x1b[0m \x1b[2mdim\x1b[0m \x1b[1;44mbar\x1b[0m\n';
-		const harness = await AppHarness.start(mac);
+	it('asks the computer for the colors, and paints them in the output', async () => {
+		const computer = Fixtures.computer();
+		computer.outputText = '\x1b[32mgreen\x1b[0m \x1b[2mdim\x1b[0m \x1b[1;44mbar\x1b[0m\n';
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		expect(mac.callsOf('read').pop()?.params.ansi).toBe(true);
+		expect(computer.callsOf('read').pop()?.params.ansi).toBe(true);
 		const output = document.querySelector('.output') as HTMLElement;
 		expect(output.textContent).toBe('green dim bar');
 		const spans = output.querySelectorAll<HTMLElement>('span');
@@ -33,27 +33,27 @@ describe('Pane screen', () => {
 	});
 
 	it('paints the colors again after a refresh that changes the output', async () => {
-		const mac = Fixtures.mac();
-		mac.outputText = '\x1b[31mone\x1b[0m';
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		computer.outputText = '\x1b[31mone\x1b[0m';
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		mac.outputText = '\x1b[34mtwo\x1b[0m';
+		computer.outputText = '\x1b[34mtwo\x1b[0m';
 		await harness.settle(3000);
 		const span = document.querySelector<HTMLElement>('.output span');
 		expect(span?.textContent).toBe('two');
 		expect(span?.style.color).toBe('rgb(36, 114, 200)');
 	});
 
-	it('asks the Mac for 300 lines, so a tall screen shows more than the end of the screen', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+	it('asks the computer for 300 lines, so a tall screen shows more than the end of the screen', async () => {
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		expect(mac.callsOf('read').pop()?.params.lines).toBe(300);
+		expect(computer.callsOf('read').pop()?.params.lines).toBe(300);
 	});
 
 	it('has a refresh icon in the header, and no button Refresh below the output', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-finished');
 		const icon = document.querySelector('header button[data-action="refresh"]');
 		expect(icon?.getAttribute('aria-label')).toBe('Refresh');
@@ -61,18 +61,18 @@ describe('Pane screen', () => {
 		expect(document.querySelectorAll('[data-action="refresh"]')).toHaveLength(1);
 		expect(harness.text()).not.toContain('Refresh');
 		expect(document.querySelector('.actions')).toBeNull();
-		const stateCalls = mac.callsOf('state').length;
+		const stateCalls = computer.callsOf('state').length;
 		await harness.tap('header button[data-action="refresh"]');
-		expect(mac.callsOf('state').length).toBe(stateCalls + 1);
+		expect(computer.callsOf('state').length).toBe(stateCalls + 1);
 	});
 
 	it('shows the menu of a blocked coding agent, and answers it', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-blocked');
 		expect(document.querySelectorAll('.menu button[data-action="answer"]')).toHaveLength(3);
 		await harness.tap('.menu button[data-n="3"]');
-		expect(mac.callsOf('answer').map((call) => call.params)).toEqual([
+		expect(computer.callsOf('answer').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-blocked',
 				n: 3,
@@ -81,36 +81,36 @@ describe('Pane screen', () => {
 	});
 
 	it('tells to read the output when a blocked coding agent has no menu', async () => {
-		const mac = Fixtures.mac();
-		mac.snapshot.workspaces[0].agents[3].menu = null;
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		computer.snapshot.workspaces[0].agents[3].menu = null;
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-blocked');
 		expect(harness.text()).toContain('Waiting for a decision: read the end of the output below.');
 		expect(document.querySelectorAll('.menu button')).toHaveLength(0);
 	});
 
 	it('shows the question of a coding agent that finished and asks something', async () => {
-		const harness = await AppHarness.start(Fixtures.mac());
+		const harness = await AppHarness.start(Fixtures.computer());
 		await harness.openPane('p-asking');
 		expect(document.querySelector('main .question')?.textContent).toBe('Which file should I change?');
 	});
 
 	it('refreshes the output every 2.5 seconds', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		const before = mac.callsOf('read').length;
-		mac.outputText = 'new output';
+		const before = computer.callsOf('read').length;
+		computer.outputText = 'new output';
 		await harness.settle(2500);
-		expect(mac.callsOf('read').length).toBe(before + 1);
+		expect(computer.callsOf('read').length).toBe(before + 1);
 		expect(document.querySelector('.output')?.textContent).toBe('new output');
 	});
 
 	it('says that the coding agent does not exist anymore when it leaves the list', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		mac.snapshot.workspaces[0].agents = [];
+		computer.snapshot.workspaces[0].agents = [];
 		await harness.settle(2500);
 		expect(harness.text()).toContain('This coding agent does not exist anymore.');
 		expect(document.querySelector('#prompt-field')).toBeNull();
@@ -119,12 +119,12 @@ describe('Pane screen', () => {
 
 describe('Pane screen prompt', () => {
 	it('sends the prompt without the spaces around it, clears the field, and says so', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		harness.field().value = '  run the tests  ';
 		await harness.tap('button[data-action="send"]');
-		expect(mac.callsOf('prompt').map((call) => call.params)).toEqual([
+		expect(computer.callsOf('prompt').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-working',
 				text: 'run the tests',
@@ -135,15 +135,15 @@ describe('Pane screen prompt', () => {
 	});
 
 	it('sends the prompt when the developer presses Cmd+Enter or Ctrl+Enter in the field', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		harness.field().value = 'first';
 		const commandEnter = await harness.press('Enter', { metaKey: true });
 		expect(commandEnter.defaultPrevented).toBe(true);
 		harness.field().value = 'second';
 		await harness.press('Enter', { ctrlKey: true });
-		expect(mac.callsOf('prompt').map((call) => call.params)).toEqual([
+		expect(computer.callsOf('prompt').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-working',
 				text: 'first',
@@ -158,8 +158,8 @@ describe('Pane screen prompt', () => {
 	});
 
 	it('does not send the prompt on Enter alone, on Shift+Enter, or on Cmd with another key', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		harness.field().value = 'run the tests';
 		const enter = await harness.press('Enter', {});
@@ -167,21 +167,21 @@ describe('Pane screen prompt', () => {
 		await harness.press('a', { metaKey: true });
 		await harness.press('Enter', { metaKey: true, isComposing: true });
 		expect(enter.defaultPrevented).toBe(false);
-		expect(mac.callsOf('prompt')).toHaveLength(0);
+		expect(computer.callsOf('prompt')).toHaveLength(0);
 		expect(harness.field().value).toBe('run the tests');
 	});
 
 	it('sends nothing on Cmd+Enter when the field is empty', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		await harness.press('Enter', { metaKey: true });
-		expect(mac.callsOf('prompt')).toHaveLength(0);
+		expect(computer.callsOf('prompt')).toHaveLength(0);
 	});
 
 	it('sends nothing on Cmd+Enter outside the field for a prompt', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		harness.field().value = 'run the tests';
 		const event = new KeyboardEvent('keydown', {
@@ -192,23 +192,23 @@ describe('Pane screen prompt', () => {
 		});
 		document.querySelector('.output')?.dispatchEvent(event);
 		await harness.settle();
-		expect(mac.callsOf('prompt')).toHaveLength(0);
+		expect(computer.callsOf('prompt')).toHaveLength(0);
 	});
 
 	it('sends nothing when the field is empty or has only spaces', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		await harness.tap('button[data-action="send"]');
 		harness.field().value = '   ';
 		await harness.tap('button[data-action="send"]');
-		expect(mac.callsOf('prompt')).toHaveLength(0);
+		expect(computer.callsOf('prompt')).toHaveLength(0);
 	});
 
-	it('keeps the text of the prompt when the Mac refuses it', async () => {
-		const mac = Fixtures.mac();
-		mac.answers.prompt = [{ error: 'The coding agent is busy.' }];
-		const harness = await AppHarness.start(mac);
+	it('keeps the text of the prompt when the computer refuses it', async () => {
+		const computer = Fixtures.computer();
+		computer.answers.prompt = [{ error: 'The coding agent is busy.' }];
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		harness.field().value = 'run the tests';
 		await harness.tap('button[data-action="send"]');
@@ -217,13 +217,13 @@ describe('Pane screen prompt', () => {
 	});
 
 	it('does not draw the screen again while the developer types, so the text stays', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		const field = harness.field();
 		field.focus();
 		field.value = 'half a sen';
-		mac.outputText = 'new output';
+		computer.outputText = 'new output';
 		await harness.settle(2500);
 		expect(harness.field()).toBe(field);
 		expect(field.value).toBe('half a sen');
@@ -235,8 +235,8 @@ describe('Pane screen prompt', () => {
 
 describe('Pane screen keys', () => {
 	it('has the button Interrupt for a working coding agent, and sends Esc', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
 		expect(document.querySelector('button[data-action="deny"]')).toBeNull();
 		const stop = document.querySelector('.composer button[data-action="interrupt"]');
@@ -246,7 +246,7 @@ describe('Pane screen keys', () => {
 		expect(document.querySelector('.actions')).toBeNull();
 		expect(stop?.nextElementSibling?.getAttribute('data-action')).toBe('send');
 		await harness.tap('button[data-action="interrupt"]');
-		expect(mac.callsOf('keys').map((call) => call.params)).toEqual([
+		expect(computer.callsOf('keys').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-working',
 				action: 'interrupt',
@@ -256,12 +256,12 @@ describe('Pane screen keys', () => {
 	});
 
 	it('has the button Refuse for a blocked coding agent, and sends Esc', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-blocked');
 		expect(document.querySelector('button[data-action="interrupt"]')).toBeNull();
 		await harness.tap('button[data-action="deny"]');
-		expect(mac.callsOf('keys').map((call) => call.params)).toEqual([
+		expect(computer.callsOf('keys').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-blocked',
 				action: 'deny',
@@ -271,26 +271,26 @@ describe('Pane screen keys', () => {
 	});
 
 	it('has neither button for a coding agent that finished', async () => {
-		const harness = await AppHarness.start(Fixtures.mac());
+		const harness = await AppHarness.start(Fixtures.computer());
 		await harness.openPane('p-finished');
 		expect(document.querySelector('button[data-action="interrupt"]')).toBeNull();
 		expect(document.querySelector('button[data-action="deny"]')).toBeNull();
 	});
 
-	it('says that the Mac does not answer when the call fails', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+	it('says that the computer does not answer when the call fails', async () => {
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		mac.isDown = true;
+		computer.isDown = true;
 		await harness.tap('button[data-action="interrupt"]');
-		expect(harness.toast()).toBe('No answer from the Mac: Failed to fetch');
+		expect(harness.toast()).toBe('No answer from the computer: Failed to fetch');
 	});
 
-	it('asks for the pairing again when the Mac refuses the key during a call', async () => {
-		const mac = Fixtures.mac();
-		const harness = await AppHarness.start(mac);
+	it('asks for the pairing again when the computer refuses the key during a call', async () => {
+		const computer = Fixtures.computer();
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-working');
-		mac.acceptedKey = FakeMac.key.replace(/a/g, 'c');
+		computer.acceptedKey = FakeComputer.key.replace(/a/g, 'c');
 		await harness.tap('button[data-action="interrupt"]');
 		expect(harness.text()).toContain('Pairing needed');
 	});

@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Escapes the text that comes from the Mac or from a coding agent before it goes into a template of HTML.
+ * Escapes the text that comes from the computer or from a coding agent before it goes into a template of HTML.
  */
 export class HtmlEscape {
 	/**

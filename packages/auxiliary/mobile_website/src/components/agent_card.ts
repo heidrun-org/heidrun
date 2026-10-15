@@ -18,7 +18,7 @@ export class AgentCard {
 	 * Draws a coding agent that waits for the developer. A blocked coding agent shows its menu, so the developer
 	 * can answer without opening the pane.
 	 * @param agent The coding agent.
-	 * @param now The current time of the Mac, in milliseconds since 1970.
+	 * @param now The current time of the computer, in milliseconds since 1970.
 	 * @returns The HTML of the card.
 	 */
 	static renderAttention(agent: AgentView, now: number): string {

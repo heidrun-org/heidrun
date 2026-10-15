@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AgentView } from '../src/mobile_types';
 import { AppHarness } from './app_harness';
-import { FakeMac } from './fake_mac';
+import { FakeComputer } from './fake_computer';
 
 const attack = '<img src=x onerror=alert(1)>';
 
@@ -33,7 +33,7 @@ const problemsOf = (container: HTMLElement): string[] => {
 };
 
 const hostileAgent = (): AgentView =>
-	FakeMac.agent({
+	FakeComputer.agent({
 		paneId: 'p-hostile',
 		name: attack,
 		workspace: attack,
@@ -53,9 +53,9 @@ const hostileAgent = (): AgentView =>
 
 describe('Rendering safety', () => {
 	it('puts the text of a coding agent in the page as text, never as markup', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent()], ['p-hostile']));
-		mac.outputText = attack;
-		const harness = await AppHarness.start(mac);
+		const computer = new FakeComputer(FakeComputer.snapshotOf([hostileAgent()], ['p-hostile']));
+		computer.outputText = attack;
+		const harness = await AppHarness.start(computer);
 		expect(document.querySelector('img')).toBeNull();
 		expect(harness.text()).toContain(attack);
 		await harness.tap('button[data-screen="panes"]');
@@ -68,9 +68,9 @@ describe('Rendering safety', () => {
 	});
 
 	it('puts a hostile text inside a colored span as text, and the color only as a hexadecimal value', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent()], ['p-hostile']));
-		mac.outputText = `\x1b[38;2;1;2;3m${attack}\x1b[0m \x1b[38;5;"onmouseover="x\x1b[0m`;
-		const harness = await AppHarness.start(mac);
+		const computer = new FakeComputer(FakeComputer.snapshotOf([hostileAgent()], ['p-hostile']));
+		computer.outputText = `\x1b[38;2;1;2;3m${attack}\x1b[0m \x1b[38;5;"onmouseover="x\x1b[0m`;
+		const harness = await AppHarness.start(computer);
 		await harness.openPane('p-hostile');
 		expect(document.querySelector('img')).toBeNull();
 		const colored = document.querySelectorAll('.output [data-fg]');
@@ -80,18 +80,18 @@ describe('Rendering safety', () => {
 		expect(problemsOf(harness.root)).toEqual([]);
 	});
 
-	it('shows a message of the Mac as text, never as markup', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent()], ['p-hostile']));
-		mac.answers.answer = [{ error: attack }];
-		const harness = await AppHarness.start(mac);
+	it('shows a message of the computer as text, never as markup', async () => {
+		const computer = new FakeComputer(FakeComputer.snapshotOf([hostileAgent()], ['p-hostile']));
+		computer.answers.answer = [{ error: attack }];
+		const harness = await AppHarness.start(computer);
 		await harness.tap('button[data-action="answer"]');
 		expect(harness.toast()).toBe(attack);
 		expect(harness.overlay.querySelector('img')).toBeNull();
 	});
 
 	it('shows a command to check as text, never as markup', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent()], ['p-hostile']));
-		mac.answers.answer = [
+		const computer = new FakeComputer(FakeComputer.snapshotOf([hostileAgent()], ['p-hostile']));
+		computer.answers.answer = [
 			{
 				confirm: {
 					command: attack,
@@ -99,7 +99,7 @@ describe('Rendering safety', () => {
 				},
 			},
 		];
-		const harness = await AppHarness.start(mac);
+		const harness = await AppHarness.start(computer);
 		await harness.tap('button[data-action="answer"]');
 		expect(harness.overlay.querySelector('.sheet')?.textContent).toContain(attack);
 		expect(harness.overlay.querySelector('img')).toBeNull();
@@ -107,8 +107,9 @@ describe('Rendering safety', () => {
 	});
 
 	it('uses no inline script, no inline style, and no event attribute on any screen', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent(), FakeMac.agent({})], ['p-hostile']));
-		const harness = await AppHarness.start(mac);
+		const agents = [hostileAgent(), FakeComputer.agent({})];
+		const computer = new FakeComputer(FakeComputer.snapshotOf(agents, ['p-hostile']));
+		const harness = await AppHarness.start(computer);
 		const screens = ['dashboard', 'needs_you', 'panes', 'macros', 'launchers'];
 		for (const screen of screens) {
 			await harness.tap(`button[data-screen="${screen}"]`);

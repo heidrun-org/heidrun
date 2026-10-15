@@ -2,11 +2,11 @@ import type { AgentView, CallResult, Snapshot } from '../src/mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	DevApi — a fake Mac for the development server: four coding agents that answer the calls of the page
+//	DevApi — a fake computer for the development server: four coding agents that answer the calls of the page
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** The answer of the fake Mac to one call: the HTTP status and the JSON body. */
+/** The answer of the fake computer to one call: the HTTP status and the JSON body. */
 export type DevApiReply = {
 	/** The HTTP status of the answer. */
 	status: number;
@@ -26,7 +26,7 @@ export class DevApi {
 	/** The closed list of methods, the same as the list of the mobile server. */
 	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys'];
 
-	/** The command that the fake Mac asks the developer to check once more, like the guards of Heidrun do. */
+	/** The command that the fake computer asks the developer to check once more, like the guards of Heidrun do. */
 	private static readonly dangerousCommand = 'rm -rf build';
 
 	/** The coding agents, which change when the developer answers. */
@@ -36,7 +36,7 @@ export class DevApi {
 	private readonly prompts = new Map<string, string[]>();
 
 	/**
-	 * Creates a fake Mac with four coding agents.
+	 * Creates a fake computer with four coding agents.
 	 * @param now The time that the changes of status are counted from, in milliseconds since 1970.
 	 */
 	constructor(now: number = Date.now()) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AppHarness } from './app_harness';
-import { FakeMac } from './fake_mac';
+import { FakeComputer } from './fake_computer';
 import { Fixtures } from './fixtures';
 
 const countOf = (screen: string): { number: string; label: string } => {
@@ -13,13 +13,13 @@ const countOf = (screen: string): { number: string; label: string } => {
 
 describe('Dashboard screen', () => {
 	it('has the title Dashboard and the usage limits', async () => {
-		const harness = await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
+		const harness = await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		expect(document.querySelector('header h1')?.textContent).toBe('Dashboard');
 		expect(harness.text()).toContain('Usage limits');
 	});
 
 	it('counts the coding agents that need the developer, and the ones that work', async () => {
-		await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
+		await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		expect(countOf('needs_you')).toEqual({
 			number: '3',
 			label: 'Need you',
@@ -32,13 +32,13 @@ describe('Dashboard screen', () => {
 	});
 
 	it('tells how many coding agents and workspaces there are', async () => {
-		const harness = await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
+		const harness = await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		expect(harness.text()).toContain('4 coding agents in 1 workspace');
 	});
 
 	it('says that nothing waits, and draws no hot count, when no coding agent needs the developer', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([Fixtures.working()], []));
-		const harness = await AppHarness.start(mac, true, '#/dashboard');
+		const computer = new FakeComputer(FakeComputer.snapshotOf([Fixtures.working()], []));
+		const harness = await AppHarness.start(computer, true, '#/dashboard');
 		expect(countOf('needs_you').number).toBe('0');
 		expect(document.querySelector('.count-card-hot')).toBeNull();
 		expect(harness.text()).toContain('Nothing waits for your decision.');
@@ -46,8 +46,8 @@ describe('Dashboard screen', () => {
 	});
 
 	it('works with no coding agent at all, and with no usage limit', async () => {
-		const mac = new FakeMac(FakeMac.snapshotOf([], []));
-		const harness = await AppHarness.start(mac, true, '#/dashboard');
+		const computer = new FakeComputer(FakeComputer.snapshotOf([], []));
+		const harness = await AppHarness.start(computer, true, '#/dashboard');
 		expect(countOf('needs_you').number).toBe('0');
 		expect(countOf('panes').number).toBe('0');
 		expect(harness.text()).not.toContain('Usage limits');
@@ -55,8 +55,8 @@ describe('Dashboard screen', () => {
 	});
 
 	it('draws each usage limit with its percent and a bar', async () => {
-		const mac = Fixtures.mac();
-		mac.snapshot.quotas = [
+		const computer = Fixtures.computer();
+		computer.snapshot.quotas = [
 			{
 				name: '5-hour limit',
 				percent: 42,
@@ -66,7 +66,7 @@ describe('Dashboard screen', () => {
 				percent: 62,
 			},
 		];
-		await AppHarness.start(mac, true, '#/dashboard');
+		await AppHarness.start(computer, true, '#/dashboard');
 		const rows = [...document.querySelectorAll('.usage-row')];
 		const names = rows.map((row) => row.querySelector('span')?.textContent);
 		expect(names).toEqual(['5-hour limit', 'Weekly limit']);
@@ -74,9 +74,9 @@ describe('Dashboard screen', () => {
 		expect(rows.map((row) => row.querySelector('progress')?.getAttribute('value'))).toEqual(['42', '62']);
 	});
 
-	it('keeps the bar between 0 and 100 when the Mac sends a strange percent', async () => {
-		const mac = Fixtures.mac();
-		mac.snapshot.quotas = [
+	it('keeps the bar between 0 and 100 when the computer sends a strange percent', async () => {
+		const computer = Fixtures.computer();
+		computer.snapshot.quotas = [
 			{
 				name: 'Over',
 				percent: 250,
@@ -90,34 +90,34 @@ describe('Dashboard screen', () => {
 				percent: Number.NaN,
 			},
 		];
-		await AppHarness.start(mac, true, '#/dashboard');
+		await AppHarness.start(computer, true, '#/dashboard');
 		const values = [...document.querySelectorAll('progress')].map((bar) => bar.getAttribute('value'));
 		expect(values).toEqual(['100', '0', '0']);
 	});
 
 	it('opens the screen Needs you when the developer taps the count Need you', async () => {
-		const harness = await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
+		const harness = await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		await harness.tap('.count-card[data-screen="needs_you"]');
 		expect(document.querySelector('header h1')?.textContent).toBe('Needs you');
 		expect(window.location.hash).toBe('#/needs-you');
 	});
 
 	it('opens the screen Panes when the developer taps the count Working', async () => {
-		const harness = await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
+		const harness = await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		await harness.tap('.count-card[data-screen="panes"]');
 		expect(document.querySelector('header h1')?.textContent).toBe('Panes');
 		expect(window.location.hash).toBe('#/panes');
 	});
 
 	it('shows the text of a usage limit as text, never as markup', async () => {
-		const mac = Fixtures.mac();
-		mac.snapshot.quotas = [
+		const computer = Fixtures.computer();
+		computer.snapshot.quotas = [
 			{
 				name: '<img src=x onerror=alert(1)>',
 				percent: 10,
 			},
 		];
-		const harness = await AppHarness.start(mac, true, '#/dashboard');
+		const harness = await AppHarness.start(computer, true, '#/dashboard');
 		expect(document.querySelector('img')).toBeNull();
 		expect(harness.text()).toContain('<img src=x onerror=alert(1)>');
 	});
