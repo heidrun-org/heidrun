@@ -4,7 +4,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentGit } from "../stores/git";
 import { checkoutGitBranch, filterGitBranches, listGitBranches, selectedRoot, type GitBranch } from "../stores/git_branches";
 import { isOnRemote, loadRemoteBranchNames } from "../stores/git_remote_branches";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { branchUrl, webOfRemote } from "../lib/refs";
 import { useStatusCard } from "../lib/status_card";
 import { t } from "../i18n/index";
@@ -136,7 +136,7 @@ function chooseFirst() {
                 <Icon name="git" />
                 <span class="fw-semibold branch-name">{{ branch.name }}</span>
                 <Icon v-if="branch.is_current" name="check2" :title="t('statusBar.gitBranchPickerCurrent')" />
-                <span class="text-body-secondary branch-time">{{ ago(branch.last_time * 1000) }}</span>
+                <span class="text-body-secondary branch-time"><AbbreviatedTime :milliseconds="branch.last_time * 1000" /></span>
               </span>
               <span class="text-body-secondary branch-subject">
                 {{ branch.last_author }} • {{ branch.last_sha }} • {{ branch.last_subject }}

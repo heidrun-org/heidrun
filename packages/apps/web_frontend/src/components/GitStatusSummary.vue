@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { currentGit } from "../stores/git";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { computed, ref } from "vue";
 import Icon from "./Icon.vue";
 import GitBranchPicker from "./GitBranchPicker.vue";
@@ -61,7 +61,7 @@ const detailRows = computed(() => {
           <div v-if="currentGit.last_subject !== null" class="d-flex flex-column border-top pt-2">
             <span class="text-body-secondary">{{ t("statusBar.gitLastCommit") }}</span>
             <span data-field="last-subject">{{ currentGit.last_subject }}</span>
-            <span v-if="currentGit.last_time !== null" class="text-body-secondary">{{ ago(currentGit.last_time * 1000) }}</span>
+            <span v-if="currentGit.last_time !== null" class="text-body-secondary"><AbbreviatedTime :milliseconds="currentGit.last_time * 1000" /></span>
           </div>
         </div>
       </div>

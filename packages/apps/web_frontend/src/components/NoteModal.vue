@@ -7,7 +7,7 @@ import { notes, removeNote, renameNote, updateNoteText } from "../stores/notes";
 import { agentGroups, allPanes, paneFullName, sendPrompt, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { copy } from "../lib/clipboard";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { t } from "../i18n/index";
 
 const note = computed(() => notes.list.find((n) => n.id === notes.openId) ?? null);
@@ -128,7 +128,7 @@ function remove() {
         />
         <div v-else class="titles">
           <h2 :title="t('noteModal.doubleClickToRename')" @dblclick="renaming = true">{{ note.title }}</h2>
-          <div class="origin">{{ note.origin }} · {{ ago(note.createdAt) }}</div>
+          <div class="origin">{{ note.origin }} · <AbbreviatedTime :milliseconds="note.createdAt" /></div>
         </div>
         <button class="x" :aria-label="t('noteModal.close')" :title="t('noteModal.closeTitle')" @click="close">
           <Icon name="x-lg" />

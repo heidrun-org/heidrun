@@ -40,6 +40,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The window, in the folder `docs/agents_rules/user_interface/window`:
   - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
   - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
+  - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
   - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
   - [statistics_user_activity.md](docs/agents_rules/user_interface/window/statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
   - [statistics_person_work.md](docs/agents_rules/user_interface/window/statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.

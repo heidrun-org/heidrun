@@ -5,11 +5,12 @@
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
+- [abbreviated_times.md](abbreviated_times.md): the circled question mark after each abbreviated time, and its title with the exact time.
 - [colors_and_scroll_bars.md](colors_and_scroll_bars.md): the colors and the scroll bars.
 - [layout.md](layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
 - [statistics_window.md](statistics_window.md): the item "Statistics" of the More menu, the Statistics window, the buttons of its tabs in the title bar, and where the data of the tab "User activity" comes from.
