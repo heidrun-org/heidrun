@@ -1,6 +1,6 @@
-import { GameSettings, GameStateFactory, GameWorld, SeededRandom, ShootingRules } from '../src/index.ts';
-import { ThingGenerator, ThingRules } from '../src/index.ts';
-import type { GameState, RockSize, Thing } from '../src/index.ts';
+import { FallbackCommits, GameSettings, GameStateFactory, GameWorld } from '../src/index.ts';
+import { SeededRandom, ShootingRules, ThingGenerator, ThingRules } from '../src/index.ts';
+import type { CommitRecord, GameState, RockSize, Thing } from '../src/index.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -22,6 +22,36 @@ export type GeneratedWorld = {
  * Makes small game states and runs small parts of the rules for the tests. Only the tests import this class.
  */
 export class TestStates {
+	/**
+	 * Makes a world with the fake commits.
+	 * @returns The world, in the phase "ready".
+	 */
+	static createGameWorld(): GameWorld {
+		const gameWorld = new GameWorld(1, FallbackCommits.create());
+		return gameWorld;
+	}
+
+	/**
+	 * Makes commits that each change 10 lines.
+	 * @param lanes The lane of each commit, from the oldest commit to the newest commit.
+	 * @returns The commits.
+	 */
+	static createCommits(lanes: number[]): CommitRecord[] {
+		const commits = lanes.map((lane, index) => {
+			const commit: CommitRecord = {
+				hash: `commit${index}`,
+				committedAt: new Date(Date.UTC(2026, 0, 1 + index)).toISOString(),
+				subject: `Commit number ${index}`,
+				insertions: 10,
+				deletions: 0,
+				isMerge: false,
+				lane,
+			};
+			return commit;
+		});
+		return commits;
+	}
+
 	/**
 	 * Makes a state in the phase "running" with no thing.
 	 * @returns The state.
@@ -81,7 +111,7 @@ export class TestStates {
 		const stepCount = 90;
 		let clearCount = 0;
 		for (let jumpStep = 0; jumpStep < momentCount; jumpStep += 1) {
-			const gameWorld = new GameWorld(1);
+			const gameWorld = TestStates.createGameWorld();
 			gameWorld.command('start');
 			gameWorld.state.things = [];
 			gameWorld.state.distance = distance;
@@ -103,11 +133,12 @@ export class TestStates {
 	 * Makes a world and runs the generator for a long distance. The things move toward the dinosaur as in a run, and
 	 * nothing takes them out.
 	 * @param seed The seed of the random numbers.
+	 * @param commits The commits to place.
 	 * @returns The state and the distance that the world went through.
 	 */
-	static generateWorld(seed: number): GeneratedWorld {
+	static generateWorld(seed: number, commits: CommitRecord[]): GeneratedWorld {
 		const gameState = GameStateFactory.create(0);
-		const generator = new ThingGenerator(new SeededRandom(seed));
+		const generator = new ThingGenerator(new SeededRandom(seed), commits);
 		generator.prefill(gameState);
 		gameState.speed = 600;
 		const distanceMoved = 150;
@@ -115,6 +146,9 @@ export class TestStates {
 		for (let index = 0; index < 400; index += 1) {
 			for (const thing of gameState.things) {
 				thing.x -= distanceMoved;
+			}
+			if (gameState.lastCommitX !== null) {
+				gameState.lastCommitX -= distanceMoved;
 			}
 			traveled += distanceMoved;
 			generator.step(gameState, distanceMoved);
@@ -127,32 +161,13 @@ export class TestStates {
 	}
 
 	/**
-	 * Groups the things of a generated world by their row. The distance of a row is measured from the start of the
-	 * run, so a row keeps its distance while the world moves.
-	 * @param generatedWorld The generated world.
-	 * @returns The rows, sorted from the first row to the last row.
-	 */
-	static groupRows(generatedWorld: GeneratedWorld): Thing[][] {
-		const rows = new Map<number, Thing[]>();
-		for (const thing of generatedWorld.gameState.things) {
-			const rowDistance = thing.x + generatedWorld.traveled;
-			const row = rows.get(rowDistance) ?? [];
-			row.push(thing);
-			rows.set(rowDistance, row);
-		}
-		const sortedDistances = [...rows.keys()].sort((first, second) => first - second);
-		const sortedRows = sortedDistances.map((rowDistance) => rows.get(rowDistance) ?? []);
-		return sortedRows;
-	}
-
-	/**
 	 * Describes the things of a state, one text for each thing, to compare two worlds.
 	 * @param gameState The state.
 	 * @returns The texts.
 	 */
 	static describeThings(gameState: GameState): string[] {
 		const descriptions = gameState.things.map((thing) => {
-			return `${thing.kind}:${thing.rockSize}:${thing.lane}:${thing.x.toFixed(3)}`;
+			return `${thing.kind}:${thing.rockSize}:${thing.lane}:${thing.x.toFixed(3)}:${thing.commit?.hash}`;
 		});
 		return descriptions;
 	}

@@ -26,6 +26,7 @@ export class GameStateFactory {
 			pieces: [],
 			distance: 0,
 			speed: GameSettings.START_SPEED,
+			lastCommitX: null,
 			ammunition: GameSettings.START_AMMUNITION,
 			bestScore,
 			nextId: 1,

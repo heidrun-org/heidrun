@@ -44,6 +44,9 @@ export class ThingPainter {
 		} else {
 			ThingPainter._paintCrate(context, thing, screenX, baseline, scale);
 		}
+		if (thing.commit !== null && thing.commit.isMerge === true) {
+			ThingPainter._paintMergeMark(context, thing, screenX, baseline, scale);
+		}
 	}
 
 	/**
@@ -107,6 +110,36 @@ export class ThingPainter {
 	}
 
 	/**
+	 * Draws the mark of a merge commit: a gold diamond that floats above the thing.
+	 * @param context The drawing context of the canvas.
+	 * @param thing The thing of the merge commit.
+	 * @param screenX The place of the middle of the thing, in design units.
+	 * @param baseline The height of the feet of the thing, in design units.
+	 * @param scale The scale of the lane.
+	 */
+	private static _paintMergeMark(
+		context: CanvasRenderingContext2D,
+		thing: Thing,
+		screenX: number,
+		baseline: number,
+		scale: number,
+	): void {
+		const radius = 11 * scale;
+		const centerY = baseline - thing.height * scale - 22 * scale;
+		context.beginPath();
+		context.moveTo(screenX, centerY - radius);
+		context.lineTo(screenX + radius, centerY);
+		context.lineTo(screenX, centerY + radius);
+		context.lineTo(screenX - radius, centerY);
+		context.closePath();
+		context.fillStyle = ViewPalette.MERGE_MARK;
+		context.fill();
+		context.strokeStyle = ViewPalette.MERGE_MARK_EDGE;
+		context.lineWidth = 2 * scale;
+		context.stroke();
+	}
+
+	/**
 	 * Draws a cactus.
 	 * @param context The drawing context of the canvas.
 	 * @param screenX The place of the middle of the cactus, in design units.
@@ -139,7 +172,7 @@ export class ThingPainter {
 
 	/**
 	 * Draws a rock: a dark edge, a lighter middle, and a lit spot at the top left. The outline is a little different
-	 * for each rock.
+	 * for each rock. The rock of a merge commit is purple.
 	 * @param context The drawing context of the canvas.
 	 * @param thing The rock.
 	 * @param screenX The place of the middle of the rock, in design units.
@@ -155,17 +188,21 @@ export class ThingPainter {
 	): void {
 		const width = thing.width * scale;
 		const height = thing.height * scale;
+		const isMerge = thing.commit !== null && thing.commit.isMerge === true;
+		const darkColor = isMerge ? ViewPalette.MERGE_ROCK_DARK : ViewPalette.ROCK_DARK;
+		const middleColor = isMerge ? ViewPalette.MERGE_ROCK : ViewPalette.ROCK;
+		const lightColor = isMerge ? ViewPalette.MERGE_ROCK_LIGHT : ViewPalette.ROCK_LIGHT;
 		context.save();
 		context.translate(screenX, baseline);
 		ThingPainter._outlinePath(context, thing.id, width, height);
-		context.fillStyle = ViewPalette.ROCK_DARK;
+		context.fillStyle = darkColor;
 		context.fill();
 
 		context.save();
 		context.translate(-width * 0.03, 0);
 		context.scale(0.9, 0.93);
 		ThingPainter._outlinePath(context, thing.id, width, height);
-		context.fillStyle = ViewPalette.ROCK;
+		context.fillStyle = middleColor;
 		context.fill();
 		context.restore();
 
@@ -173,7 +210,7 @@ export class ThingPainter {
 		context.translate(-width * 0.12, -height * 0.18);
 		context.scale(0.5, 0.5);
 		ThingPainter._outlinePath(context, thing.id, width, height);
-		context.fillStyle = ViewPalette.ROCK_LIGHT;
+		context.fillStyle = lightColor;
 		context.fill();
 		context.restore();
 		context.restore();

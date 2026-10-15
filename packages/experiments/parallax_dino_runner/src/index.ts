@@ -1,5 +1,10 @@
 export { AmmunitionRules } from './game/ammunition_rules.ts';
 export { CollisionRules } from './game/collision_rules.ts';
+export { CommitFileReader } from './game/commit_file_reader.ts';
+export { CommitRules } from './game/commit_rules.ts';
+export { CommitFileSchema, CommitRecordSchema } from './game/commit_types.ts';
+export type { CommitFile, CommitRecord } from './game/commit_types.ts';
+export { FallbackCommits } from './game/fallback_commits.ts';
 export { DinosaurRules } from './game/dinosaur_rules.ts';
 export { GameSettings } from './game/game_settings.ts';
 export { GameStateFactory } from './game/game_state_factory.ts';

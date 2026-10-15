@@ -44,15 +44,46 @@ describe('CollisionRules', () => {
 		expect(CollisionRules.touches(gameState.dinosaur, largeRock)).toBe(true);
 	});
 
-	it('puts the dinosaur in two lanes during a lane change', () => {
+	it('puts the dinosaur in the lane that it is nearest to, as it is drawn', () => {
 		const dinosaur = DinosaurRules.create();
-		dinosaur.lanePosition = 1.5;
+		dinosaur.lanePosition = 1.4;
 		expect(CollisionRules.isInLane(dinosaur, 0)).toBe(false);
 		expect(CollisionRules.isInLane(dinosaur, 1)).toBe(true);
+		expect(CollisionRules.isInLane(dinosaur, 2)).toBe(false);
+		dinosaur.lanePosition = 1.6;
+		expect(CollisionRules.isInLane(dinosaur, 1)).toBe(false);
 		expect(CollisionRules.isInLane(dinosaur, 2)).toBe(true);
 		dinosaur.lanePosition = 2;
 		expect(CollisionRules.isInLane(dinosaur, 1)).toBe(false);
 		expect(CollisionRules.isInLane(dinosaur, 2)).toBe(true);
+	});
+
+	it('is in exactly one lane at every lane position', () => {
+		const dinosaur = DinosaurRules.create();
+		for (let lanePosition = 0; lanePosition <= 2; lanePosition += 0.01) {
+			dinosaur.lanePosition = lanePosition;
+			const lanes = [0, 1, 2].filter((lane) => CollisionRules.isInLane(dinosaur, lane));
+			expect(lanes).toHaveLength(1);
+			expect(Math.abs(lanes[0] - lanePosition)).toBeLessThanOrEqual(0.5);
+		}
+	});
+
+	it('does not hit a rock of the lane that the dinosaur has already left', () => {
+		const gameState = TestStates.createRunning();
+		const rockOfNearLane = ThingRules.createRock(gameState, 2, 0, 'small');
+		const rockOfMiddleLane = ThingRules.createRock(gameState, 1, 0, 'small');
+		gameState.dinosaur.lanePosition = 1.1;
+		gameState.dinosaur.targetLane = 1;
+		expect(CollisionRules.touches(gameState.dinosaur, rockOfNearLane)).toBe(false);
+		expect(CollisionRules.touches(gameState.dinosaur, rockOfMiddleLane)).toBe(true);
+	});
+
+	it('does not hit a rock of the lane that the dinosaur has not yet entered', () => {
+		const gameState = TestStates.createRunning();
+		const rockOfNearLane = ThingRules.createRock(gameState, 2, 0, 'small');
+		gameState.dinosaur.lanePosition = 1.1;
+		gameState.dinosaur.targetLane = 2;
+		expect(CollisionRules.touches(gameState.dinosaur, rockOfNearLane)).toBe(false);
 	});
 
 	it('picks up a crate, adds the ammunition, and never goes over the maximum', () => {

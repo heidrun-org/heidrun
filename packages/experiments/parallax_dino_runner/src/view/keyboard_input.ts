@@ -7,13 +7,14 @@ import type { GameCommand } from '../index.ts';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * What a key asks for: a command of the game, or to turn the sound off or on.
+ * What a key asks for: a command of the game, or to turn the sound on or off.
  */
 export type KeyboardAction = GameCommand | 'toggleSound';
 
 /**
- * Turns the keys of the keyboard into actions: Space jumps, Arrow Up and Arrow Down change lane, F shoots, Enter starts
- * the game and starts it again, and M turns the sound off or on. A key that stays down gives only one action.
+ * Turns the keys of the keyboard into actions: Space jumps, Arrow Up and Arrow Down change lane, F shoots, P pauses the
+ * game and lets it run again, Enter starts the game and starts it again, and M turns the sound on or off. A key that
+ * stays down gives only one action.
  */
 export class KeyboardInput {
 	/** The action of each key, by the code of the key. */
@@ -22,6 +23,7 @@ export class KeyboardInput {
 		['ArrowUp', 'laneUp'],
 		['ArrowDown', 'laneDown'],
 		['KeyF', 'shoot'],
+		['KeyP', 'pause'],
 		['Enter', 'start'],
 		['KeyM', 'toggleSound'],
 	]);
