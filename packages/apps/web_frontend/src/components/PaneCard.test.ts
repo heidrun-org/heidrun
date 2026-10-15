@@ -200,6 +200,36 @@ describe("PaneCard", () => {
   });
 });
 
+describe("PaneCard usage wheel", () => {
+  const WITH_CONTEXT = { agent: "claude", tokens: { hd_ctx: 7, hd_ctx_size: 200_000 } };
+
+  it("shows the context window as a usage wheel, with no word, no bar, and no number beside it", async () => {
+    const wrapper = await mountPaneCard(WITH_CONTEXT);
+    expect(wrapper.find(".head .usage-wheel").exists()).toBe(true);
+    expect(wrapper.find(".head .gauge").exists()).toBe(false);
+    expect(wrapper.get(".head").text()).not.toContain("context");
+    expect(wrapper.get(".head").text()).not.toContain("%");
+  });
+
+  it("shows no usage wheel when the program does not know the context window", async () => {
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find(".usage-wheel").exists()).toBe(false);
+  });
+
+  it("opens the information card of the usage wheel on a click, with the tokens and the size", async () => {
+    const wrapper = await mountPaneCard(WITH_CONTEXT);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await wrapper.get(".information-card-part").trigger("click");
+    expect(wrapper.get("[data-field=percent]").text()).toContain("7 %");
+    expect(wrapper.get("[data-field=used]").text()).toContain("14,000 tokens");
+    expect(wrapper.get("[data-field=size]").text()).toContain("200,000 tokens");
+  });
+
+  it("puts the pane that holds the open card above the next panes, so that no pane hides the card", () => {
+    expect(styleRule(".pane:has(.information-card-part.is-open)")).toContain("z-index: 3");
+  });
+});
+
 describe("PaneCard close", () => {
   // The store of the settings saves itself in the local storage, so the value of the previous test comes back: reset it.
   // The mocked function `closePane` keeps the calls of the previous test: clear them.

@@ -5,13 +5,14 @@ import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
+import UsageWheel from "./UsageWheel.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { onSplitPaneClick } from "../stores/newPane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
-import { gaugeLevel, paneDynamicName, paneName, shortPath } from "../lib/format";
+import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -74,13 +75,7 @@ const subtitle = computed(() => {
       <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
-      <template v-if="ctx">
-        <span class="sub">{{ t("paneCard.context") }}</span>
-        <span class="gauge" :class="gaugeLevel(ctx.percent)" style="width: 110px">
-          <span :style="{ width: `${Math.min(100, ctx.percent)}%` }"></span>
-        </span>
-        <span class="mono pct" :class="'lvl-' + gaugeLevel(ctx.percent)">{{ Math.round(ctx.percent) }} %</span>
-      </template>
+      <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
         <MacroMenu :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
@@ -186,7 +181,9 @@ const subtitle = computed(() => {
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .spacer { flex: 1; }
-.pct { color: var(--text-2); }
+/* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
+   that come after it. Without this, the next pane hides the part of the card that goes over it. */
+.pane:has(.information-card-part.is-open) { z-index: 3; }
 .tools { flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
 .pane:hover .tools, .pane.selected .tools { opacity: 1; }
 .tool {

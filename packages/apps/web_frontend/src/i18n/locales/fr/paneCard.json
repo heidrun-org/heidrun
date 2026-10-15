@@ -1,7 +1,6 @@
 {
   "renameLabel": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
   "nameTitle": "{name} · Double-clic pour renommer",
-  "context": "contexte",
   "goToTab": "Aller à son onglet",
   "mosaicTitle": "Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)",
   "mosaic": "Mosaïque des agents de la session",

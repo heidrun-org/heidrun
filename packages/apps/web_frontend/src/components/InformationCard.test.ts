@@ -245,3 +245,19 @@ describe("InformationCard", () => {
     expect(wrapper.get(".popover-arrow").attributes("style")).toContain(`left: ${window.innerWidth - 20 - (window.innerWidth - 308) - 8}px`);
   });
 });
+
+describe("InformationCard width", () => {
+  it("gives the card the width of the property width, and the usual width without it", async () => {
+    const narrow = mount(InformationCard, {
+      attachTo: document.body,
+      props: { label: "Context window", width: "16rem" },
+      slots: { default: "<span>ring</span>", card: "<span>Inside the card</span>" },
+    });
+    await narrow.trigger("click");
+    expect(narrow.get(".popover").attributes("style")).toContain("width: 16rem");
+
+    const usual = mountCard();
+    await usual.trigger("click");
+    expect(usual.get(".popover").attributes("style") ?? "").not.toContain("width: 16rem");
+  });
+});

@@ -1,11 +1,11 @@
 # Glossary of Heidrun: workspaces, tabs, and panes
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -55,9 +55,16 @@ A pane that the developer keeps visible. The pin button in the header of the pan
 
 The column at the right edge of the viewport. It holds the pinned panes, one above the other, in every tab.
 
+## The parts of a pane
+
+### Usage wheel
+
+The small circle in the header of a pane that shows how much of the context window the coding agent used. The circle fills like a ring, with the colors normal, warning, and critical. It has no word and no number beside it. A click on the usage wheel opens its information card, which gives the percent used, the number of tokens used, and the size of the context window.
+
 ## Rules
 
 - The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - Write "coding agent" in full. Never write "agent" alone, "AI agent", or "AI coding agent" for Claude Code, Codex, or Antigravity.
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".
+- Write "usage wheel". Do not write "context bar", "gauge", or "ring" for the circle in the header of a pane.

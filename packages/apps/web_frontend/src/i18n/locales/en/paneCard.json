@@ -1,7 +1,6 @@
 {
   "renameLabel": "New pane name (empty to go back to the automatic name)",
   "nameTitle": "{name} · Double-click to rename",
-  "context": "context",
   "goToTab": "Go to its tab",
   "mosaicTitle": "Mosaic: what each agent of this session does (main, subagents)",
   "mosaic": "Mosaic of the session agents",
