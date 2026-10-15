@@ -8,7 +8,7 @@ The macOS application of [Heidrun](../../../README.md): the Rust backend and the
 - Stops its session when the user quits, unless the setting "Keep agents running after quit" is on. The default Herdr session of a terminal is never stopped.
 - Runs the terminals of the panes with `portable-pty`.
 - Reads the git state, the project files, the job history, and the Claude and Codex usage.
-- Serves the mobile access (iPhone and iPad over Tailscale) with `axum`.
+- Runs the mobile access (iPhone and iPad over Tailscale) with the package `mobile_server`, which serves the mobile website, and hands each call of the phone to the window.
 
 ## Commands
 
