@@ -5,10 +5,11 @@ The backend of the windows Installed skill and Find new skills: it finds, reads,
 
 ## Key Exports & Entry Points
 - `installed.rs`: the commands `skills_list`, `skills_read`, and `skills_delete`.
-- `install.rs`: the commands `skills_preview` and `skills_install`.
+- `install.rs`: the commands `skills_preview` and `skills_install` (a skill of skills.sh), and `skills_preview_folder` and `skills_install_folder` (the web address of a skill folder in a public GitHub repository).
 - `search.rs`: the command `skills_search`, the search on skills.sh.
 - `agent_folders.rs`: the command `skills_link_agent`, and the skills folders and the links of each coding agent.
-- `github.rs`: the lookup of a skill in a GitHub repository, with the rate limit of GitHub.
+- `github.rs`: the lookup of a skill in a GitHub repository, and of the files below a skill folder, with the rate limit of GitHub.
+- `folder_address.rs`: reads the web address of a skill folder: the repository, and the parts after `tree/`.
 - `repository_paths.rs`: pure functions on the paths of the files of a repository.
 - `cache.rs`: the cache of the lists of files and of the SKILL.md texts, in memory and on the disk.
 - `skill_text.rs`: the frontmatter of a SKILL.md file.
@@ -17,10 +18,12 @@ The backend of the windows Installed skill and Find new skills: it finds, reads,
 
 ## Rules
 - Only the modules with a Tauri command are `pub(crate)`. The file `lib.rs` registers each command with its full path, for example `skills::installed::skills_list`.
-- `repository_paths.rs`, `skill_text.rs`, and `types.rs` do no input or output, and import no other module of this folder except `types.rs`.
+- `repository_paths.rs`, `folder_address.rs`, `skill_text.rs`, and `types.rs` do no input or output, and import no other module of this folder except `types.rs`.
 - A command name and an error code never change without a matching change in `stores/skills.ts` and in `skillsStore.json` of the frontend.
 - Each file keeps its own tests at its end. Helpers shared by several test modules go in `test_support.rs`.
 - Heidrun never replaces a real folder with a link.
+- The two installations (skills.sh and the web address of a folder) share `plan_install`, `prepare_staging`, and `finish_install`, so they give the same folders, links, and origin file. Only the origin of a folder installation has `folder_url`.
+- The web address does not say where the branch ends, because a branch name can hold slashes: `list_folder_files` tries the shortest branch first, and the text of `SKILL.md` is read with the whole address.
 
 ## Background
-- The folder comes from the split of the former file `skills.rs`: [issue 129](https://github.com/heidrun-org/heidrun/issues/129).
+- The folder comes from the split of the former file `skills.rs`: [issue 129](https://github.com/heidrun-org/heidrun/issues/129). The installation from a web address comes from [issue 289](https://github.com/heidrun-org/heidrun/issues/289). The tests that call the network cover a branch name with a slash, a folder that does not exist, and a repository that does not exist (GitHub gives the same answer as for a private repository).
