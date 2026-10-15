@@ -6,6 +6,7 @@ The data layer packages of Heidrun. Each package reads the facts of one source i
 ## Key Exports & Entry Points
 - `data_layer_code_hosting/`: a Rust library and a command line tool that read the issues and the pull requests of a GitHub repository into two tables of a SQLite file, in the mode initialize or update, and run read-only SQL queries on them. See its own CONTEXT.md.
 - `data_layer_source_control/`: a Rust library and a command line tool that read the commits and the merges of a Git repository into a table of the same SQLite file, in the mode initialize or update, and run read-only SQL queries on it. See its own CONTEXT.md.
+- `data_layer_user_activity/`: a Rust library and a command line tool that read the user activity records of the developer from the file `user_activity.jsonl` into a table of the same SQLite file, in the mode initialize or update, and run read-only SQL queries on it. See its own CONTEXT.md.
 - `data_layer_chat_sessions/`: a Rust library and a command line tool that read the chat sessions of Claude Code and of Codex for a repository into a SQLite file, in the mode initialize or update, and run read-only SQL queries on them. The desktop application uses the library to find and read the chat session files. See its own CONTEXT.md.
 
 ## Rules
