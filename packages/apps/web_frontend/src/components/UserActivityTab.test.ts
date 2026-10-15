@@ -630,20 +630,27 @@ describe("UserActivityTab: the stacked bars", () => {
     expect(tooltipOf(wrapper)).toBeNull();
   });
 
-  it("puts the tooltip on the side of the pointer that has room, and never lets the tooltip take the pointer", async () => {
+  it("puts the tooltip beside the column, on the side that has room, with an arrow at the height of the pointer", async () => {
     const box = { left: 0, top: 0, width: 400, height: 300, right: 400, bottom: 300, x: 0, y: 0, toJSON: () => ({}) };
     const boxSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(box);
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
     await waitForDrawings(1);
     await hoverSlot(10, { x: 100, y: 50 });
-    const topLeftStyle = wrapper.get('[role="tooltip"]').attributes("style");
-    expect(topLeftStyle).toContain("left: 112px");
-    expect(topLeftStyle).toContain("top: 62px");
-    expect(topLeftStyle).toContain("pointer-events: none");
-    await hoverSlot(10, { x: 350, y: 250 });
-    const bottomRightStyle = wrapper.get('[role="tooltip"]').attributes("style");
-    expect(bottomRightStyle).toContain("right: 62px");
-    expect(bottomRightStyle).toContain("bottom: 62px");
+    const rightColumn = wrapper.get('[role="tooltip"]');
+    expect(rightColumn.classes()).toContain("bs-popover-start");
+    expect(rightColumn.classes()).not.toContain("bs-popover-end");
+    expect(rightColumn.attributes("style")).toContain("right: calc(");
+    expect(rightColumn.attributes("style")).not.toContain("left:");
+    expect(rightColumn.attributes("style")).toContain("top: 50px");
+    expect(rightColumn.attributes("style")).toContain("pointer-events: none");
+    expect(rightColumn.get(".popover-arrow").attributes("style")).toContain("top:");
+    await hoverSlot(1, { x: 350, y: 250 });
+    const leftColumn = wrapper.get('[role="tooltip"]');
+    expect(leftColumn.classes()).toContain("bs-popover-end");
+    expect(leftColumn.classes()).not.toContain("bs-popover-start");
+    expect(leftColumn.attributes("style")).toContain("left: calc(");
+    expect(leftColumn.attributes("style")).not.toContain("right:");
+    expect(leftColumn.attributes("style")).toContain("top: 250px");
     boxSpy.mockRestore();
   });
 });

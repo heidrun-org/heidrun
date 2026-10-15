@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from "vue";
 import type { Data, Layout, PlotHoverEvent, PlotlyHTMLElement } from "plotly.js-basic-dist-min";
 import { ChartTheme } from "../lib/chart_theme";
 import { timeOptions } from "../lib/format";
@@ -12,6 +12,12 @@ import {
   type UserActivitySlot,
   type UserActivitySlotLengthId,
 } from "../lib/user_activity_slots";
+import {
+  USER_ACTIVITY_BAR_GAP,
+  USER_ACTIVITY_CHART_MARGIN,
+  UserActivityTooltipPlacement,
+  type UserActivityTooltipSide,
+} from "../lib/user_activity_tooltip_placement";
 import type { UserActivityWorkspaceSlots } from "../lib/user_activity_workspaces";
 import { locale, t } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
@@ -19,8 +25,9 @@ import { resolvedTheme } from "../stores/theme";
 // The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. Each bar is stacked: it has one
 // part of one color for each chosen workspace, and a legend above the bars gives the name of each color. The slot length is
 // a choice of the developer, so the vertical axis, the labels under the bars, and the tooltips follow the slot length. The
-// tooltip of a bar is an HTML popover of Bootstrap, because a tooltip of Plotly.js takes only a few tags of markup. Plotly.js
-// is loaded only when the window opens, so the other windows do not pay for its size.
+// tooltip of a bar is an HTML popover of Bootstrap, because a tooltip of Plotly.js takes only a few tags of markup. It sits
+// beside the column of the slot, with an arrow that points to the column. Plotly.js is loaded only when the window opens, so
+// the other windows do not pay for its size.
 // Issue: https://github.com/heidrun-org/heidrun/issues/498
 
 const props = defineProps<{
@@ -76,11 +83,24 @@ const MINUTE_MS = 60_000;
 /** The color of the bars when no workspace is chosen yet, as the name of a CSS variable of the theme. */
 const NO_WORKSPACE_COLOR_TOKEN = "--primary-bg";
 
-/** The space between the pointer and the tooltip, in pixels. */
-const TOOLTIP_OFFSET = 12;
+/** The space between the tip of the arrow and the column, in pixels. */
+const ARROW_TIP_SPACE = 2;
 
-/** Where the tooltip of a bar sits in the chart: the sides that it touches, and the distance to each side, in pixels. */
-type TooltipPlacement = { left?: string; right?: string; top?: string; bottom?: string };
+/** The slot under the pointer, and where its tooltip sits. */
+type HoveredSlot = {
+  /** The index of the slot, from the oldest slot. */
+  index: number;
+  /** The side of the column where the tooltip sits. */
+  side: UserActivityTooltipSide;
+  /** The distance from the left side of the chart to the edge of the column that the tooltip touches, in pixels. */
+  edge: number;
+  /** The height of the pointer in the chart, in pixels. The arrow of the tooltip points to the column at this height. */
+  pointerY: number;
+  /** The width of the chart, in pixels. */
+  chartWidth: number;
+  /** The height of the chart, in pixels. */
+  chartHeight: number;
+};
 
 /** The tooltip as the page shows it: the slot, the total, and one row for each workspace that has time in the slot. */
 type TooltipContent = {
@@ -95,8 +115,17 @@ let resizeObserver: ResizeObserver | null = null;
 let isUnmounted = false;
 let hasHoverListeners = false;
 
-/** The index of the slot under the pointer and the place of its tooltip, or `null` while the pointer is not over a bar. */
-const hovered = ref<{ index: number; placement: TooltipPlacement } | null>(null);
+/** The slot under the pointer and the place of its tooltip, or `null` while the pointer is not over a bar. */
+const hovered = ref<HoveredSlot | null>(null);
+
+/** The element of the tooltip, or `undefined` while the tooltip is not shown. The page measures it to place it. */
+const tooltipElement = ref<HTMLDivElement>();
+
+/** The distance from the top of the chart to the top of the tooltip, in pixels. */
+const tooltipTop = ref(0);
+
+/** The distance from the top of the tooltip to the top of its arrow, in pixels. */
+const arrowTop = ref(0);
 
 /** The text of a time of the clock, following the language and the time format of the settings. */
 function clockText(time: number): string {
@@ -195,27 +224,51 @@ const tooltip = computed<TooltipContent | null>(() => {
 });
 
 /**
- * Gives the place of the tooltip from the place of the pointer. The tooltip stays on the side of the pointer that has the
- * most room, so it never leaves the chart: at the right of the pointer in the left half, at the left in the right half, below
- * the pointer in the top half, and above it in the bottom half.
+ * The style of the tooltip: it touches the edge of the column on its side, with the space of the arrow between them. The
+ * tooltip never takes the pointer, so the pointer stays over the bar.
  */
-function placementOf(x: number, y: number, width: number, height: number): TooltipPlacement {
-  return {
-    ...(x > width / 2 ? { right: `${width - x + TOOLTIP_OFFSET}px` } : { left: `${x + TOOLTIP_OFFSET}px` }),
-    ...(y > height / 2 ? { bottom: `${height - y + TOOLTIP_OFFSET}px` } : { top: `${y + TOOLTIP_OFFSET}px` }),
-  };
+const tooltipStyle = computed<CSSProperties>(() => {
+  const current = hovered.value;
+  if (current === null) {
+    return {};
+  }
+  const space = `var(--popover-arrow-height) + ${ARROW_TIP_SPACE}px`;
+  const horizontal =
+    current.side === "end" ? { left: `calc(${current.edge}px + ${space})` } : { right: `calc(${current.chartWidth - current.edge}px + ${space})` };
+  return { ...horizontal, top: `${tooltipTop.value}px`, pointerEvents: "none" };
+});
+
+/** Puts the middle of the tooltip, and its arrow, at the height of the pointer, once the page has drawn the tooltip. */
+function placeTooltip(): void {
+  const current = hovered.value;
+  const element = tooltipElement.value;
+  if (current === null || element === undefined) {
+    return;
+  }
+  const height = element.offsetHeight;
+  tooltipTop.value = UserActivityTooltipPlacement.top(current.pointerY, height, current.chartHeight);
+  arrowTop.value = UserActivityTooltipPlacement.arrowTop(current.pointerY, tooltipTop.value, height);
 }
 
-/** Shows the tooltip of the bar under the pointer. */
-function onHover(event: PlotHoverEvent): void {
+/** Shows the tooltip of the bar under the pointer, beside its column. */
+async function onHover(event: PlotHoverEvent): Promise<void> {
   const point = event.points[0];
   const element = chart.value;
   if (point === undefined || element === undefined) {
     return;
   }
   const box = element.getBoundingClientRect();
-  const placement = placementOf(event.event.clientX - box.left, event.event.clientY - box.top, box.width, box.height);
-  hovered.value = { index: point.pointNumber, placement };
+  const { side, edge } = UserActivityTooltipPlacement.column(point.pointNumber, props.slots.length, box.width);
+  hovered.value = {
+    index: point.pointNumber,
+    side,
+    edge,
+    pointerY: event.event.clientY - box.top,
+    chartWidth: box.width,
+    chartHeight: box.height,
+  };
+  await nextTick();
+  placeTooltip();
 }
 
 /** Hides the tooltip when the pointer leaves a bar. */
@@ -265,11 +318,11 @@ function draw(): void {
   const layout: Partial<Layout> = {
     autosize: true,
     title: { text: t(RANGE_TEXTS[props.rangeId].chartTitle) },
-    margin: { t: 72, r: 40, b: 64, l: 64 },
+    margin: { ...USER_ACTIVITY_CHART_MARGIN },
     paper_bgcolor: "rgba(0, 0, 0, 0)",
     plot_bgcolor: "rgba(0, 0, 0, 0)",
     font: { color: textColor },
-    bargap: 0.15,
+    bargap: USER_ACTIVITY_BAR_GAP,
     barmode: "stack",
     showlegend: props.workspaceSlots.length > 0,
     legend: { orientation: "h", x: 0, y: 1.1, traceorder: "normal", itemclick: false, itemdoubleclick: false },
@@ -336,7 +389,15 @@ onBeforeUnmount(() => {
       role="img"
       :aria-label="t(RANGE_TEXTS[rangeId].chartLabel, { slotLength: UserActivitySlotLengthText.of(slotLengthId) })"
     ></div>
-    <div v-if="tooltip !== null" class="popover show position-absolute" role="tooltip" :style="{ ...hovered?.placement, pointerEvents: 'none' }">
+    <div
+      v-if="tooltip !== null && hovered !== null"
+      ref="tooltipElement"
+      class="popover popover-instant show position-absolute"
+      :class="hovered.side === 'end' ? 'bs-popover-end' : 'bs-popover-start'"
+      role="tooltip"
+      :style="tooltipStyle"
+    >
+      <div class="popover-arrow position-absolute" :style="{ top: `${arrowTop}px` }"></div>
       <div class="popover-body d-flex flex-column gap-2">
         <div class="fw-semibold">{{ tooltip.title }}</div>
         <div class="d-flex justify-content-between gap-3" data-field="total">
@@ -363,5 +424,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .user-activity-histogram-box { width: 100%; height: 100%; }
+/* The arrow of the tooltip is larger than the arrow of Bootstrap, so the developer sees at once which column the tooltip is about. */
+.user-activity-histogram-box .popover { --popover-arrow-width: 1.5rem; --popover-arrow-height: 0.75rem; }
 .user-activity-histogram { width: 100%; height: 100%; }
 </style>
