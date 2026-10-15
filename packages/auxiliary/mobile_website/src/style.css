@@ -143,16 +143,27 @@ main {
 .welcome {
   display: flex;
   flex-direction: column;
-  padding: 0 0 calc(20px + env(safe-area-inset-bottom));
+  align-items: center;
+  padding: 12dvh 0 calc(20px + env(safe-area-inset-bottom));
+  text-align: center;
 }
 
+.welcome-picture {
+  width: 176px;
+  height: 176px;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+}
+
+/* The picture is zoomed on the goat, so the goat fills the circle. */
 .welcome-image {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  max-height: 55dvh;
+  height: 100%;
   object-fit: cover;
+  transform: scale(1.4);
+  transform-origin: 63% 3%;
 }
 
 .welcome-text {
@@ -186,6 +197,7 @@ main {
 
 /* The automatic top margin pushes the button to the bottom of the screen, where the thumb is. */
 .welcome-button {
+  width: calc(100% - 40px);
   margin: auto 20px 0;
   padding: 14px 20px;
   font-size: 17px;

@@ -25,13 +25,15 @@ export class WelcomeScreen {
 		const imageUrl = HtmlEscape.escape(splashImageUrl);
 		const screenHtmlContent = /* html */`
 			<main class="welcome">
-				<img
-					class="welcome-image"
-					src="${imageUrl}"
-					width="640"
-					height="640"
-					alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron"
-				>
+				<div class="welcome-picture">
+					<img
+						class="welcome-image"
+						src="${imageUrl}"
+						width="640"
+						height="640"
+						alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron"
+					>
+				</div>
 				<div class="welcome-text">
 					<h1 class="welcome-name">${name}</h1>
 					<p class="welcome-motto">${motto}</p>
