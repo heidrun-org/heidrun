@@ -1,5 +1,5 @@
 import { launchAgent } from "./agents";
-import { newTerminal, newWorkspace, selectedPane, selectedWorkspace } from "./session";
+import { newTerminal, newWorkspace, selectedPane, selectedWorkspace, splitPane } from "./session";
 import { insertIntoFocusedPane } from "./input";
 import { settings } from "./settings";
 import type { PaneInfo } from "../lib/types";
@@ -84,14 +84,44 @@ export function defaultNewTabValues(): NewPaneValues {
   };
 }
 
-/** Plain click on the plus button starts the default command of a new tab; shift click starts the previous pane again. */
+/** Plain click on the plus button starts the default command of a new tab; shift click starts a terminal. */
 export function onNewPaneClick(e: MouseEvent) {
-  const previous = loadNewPaneValues();
-  if (e.shiftKey && previous !== null) {
-    startNewPane(previous);
+  if (e.shiftKey) {
+    newTerminal();
     return;
   }
   startDefaultNewTab();
+}
+
+/**
+ * Plain click on a split control starts the default command of a new tab in the new pane; shift click starts a terminal.
+ * @param e - the click on the split control
+ * @param direction - where the new pane goes: to the right of the pane, or below it
+ * @param paneId - the pane to split, the selected pane when it is not given
+ * @returns a promise that ends when the command is started, or when the failure is shown
+ */
+export async function onSplitPaneClick(e: MouseEvent, direction: "right" | "down", paneId?: string): Promise<void> {
+  if (e.shiftKey) {
+    await splitPane(direction, paneId);
+    return;
+  }
+  await startDefaultSplit(direction, paneId);
+}
+
+/**
+ * Splits a pane, then starts the default command of a new tab in the new pane: the split controls, the shortcuts
+ * Command+D and Shift+Command+D, and the command palette do the same. The new pane is in an existing tab, so the tab keeps
+ * its name. A terminal needs no command, so the default command "terminal" only splits the pane.
+ * @param direction - where the new pane goes: to the right of the pane, or below it
+ * @param paneId - the pane to split, the selected pane when it is not given
+ * @returns a promise that ends when the command is started, or when the failure is shown
+ */
+export async function startDefaultSplit(direction: "right" | "down", paneId?: string): Promise<void> {
+  const pane = await splitPane(direction, paneId);
+  if (pane === undefined) {
+    return;
+  }
+  await startNewPane({ ...defaultNewTabValues(), label: "" }, pane);
 }
 
 /** Starts the default command of a new tab: the plus button of the tab bar and the shortcut Command+T do the same. */

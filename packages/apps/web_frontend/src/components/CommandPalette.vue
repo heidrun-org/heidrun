@@ -15,12 +15,11 @@ import {
   runInPane,
   selectPane,
   selectedPane,
-  splitPane,
   startRename,
   state,
   workspaceLabel,
 } from "../stores/session";
-import { startDefaultNewTab } from "../stores/newPane";
+import { startDefaultNewTab, startDefaultSplit } from "../stores/newPane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runLauncher } from "../stores/project";
@@ -106,8 +105,8 @@ const items = computed<Item[]>(() => {
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.newAgent"), hint: "⇧⌘T", run: () => (newAgent.open = true) },
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => startDefaultNewTab() },
     { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), run: () => newTerminal() },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => splitPane("right") },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => splitPane("down") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => startDefaultSplit("right") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => startDefaultSplit("down") },
     ...(sel ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closePane", { pane: paneName(sel) }), hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
     ...(state.selectedTabId ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closeTab"), run: () => closeTab(state.selectedTabId!) }] : []),
     ...(state.selectedWorkspaceId ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renameWorkspace"), run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),
