@@ -1,0 +1,51 @@
+[
+  {
+    "file": "pane_focus_history_482.md",
+    "kind": "good",
+    "defect": "none",
+    "criterion": null,
+    "max_score": 5
+  },
+  {
+    "file": "pane_focus_history_206.md",
+    "kind": "good",
+    "defect": "none",
+    "criterion": null,
+    "max_score": 5
+  },
+  {
+    "file": "pane_focus_history_731.md",
+    "kind": "defective",
+    "defect": "disabled Back cannot create entry",
+    "criterion": "taskSuccess",
+    "max_score": 2
+  },
+  {
+    "file": "pane_focus_history_593.md",
+    "kind": "defective",
+    "defect": "Cancel neither closes nor saves",
+    "criterion": "accuracy",
+    "max_score": 2
+  },
+  {
+    "file": "pane_focus_history_847.md",
+    "kind": "defective",
+    "defect": "Escape cannot unconditionally close editor-focused explorer",
+    "criterion": "accuracy",
+    "max_score": 2
+  },
+  {
+    "file": "pane_focus_history_165.md",
+    "kind": "defective",
+    "defect": "holding button to open list omitted",
+    "criterion": "taskSuccess",
+    "max_score": 3
+  },
+  {
+    "file": "pane_focus_history_924.md",
+    "kind": "defective",
+    "defect": "outside click can change focus and is not blocked",
+    "criterion": "accuracy",
+    "max_score": 2
+  }
+]

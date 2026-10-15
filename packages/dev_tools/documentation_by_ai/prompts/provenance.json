@@ -1,0 +1,13 @@
+{
+  "purpose": "Historical learning material only; not read by generate-and-build. No universal reliability claim.",
+  "source": "Temporary issue409 worktree, tmp/web_doc_by_ai, final15October2026 learned prompt and reusable presentation.",
+  "adaptation": "Single writing call replaces outline/write workflow; post-generation judge, visual checks and correction passes removed by user request. Current source inventory replaces old glossary paths and historical Git hints.",
+  "historical_calibration_hashes": {
+    "candidates.json": "816768a909bfa2d38c98192afc4eaae71f4d30733779cf36f86d2889d3a3ca9a",
+    "expectations_private.json": "c99cb189dab01c9657ddd24fcbf59da138bed5cfacb68721c92bef65de4c3d08",
+    "protocol.json": "2a9c9afa05c85b9380a15c42a809a89f348d73b9b4bcfe6136b183a4ef5b8b00",
+    "output_contract.md": "e1af8fcb887505c53005159e599f8c2976d105c8dba22809a22a0707d55062b1",
+    "input_hashes.json": "bdab3bbbc440fc0c1a6a55831b80e54bda2f2dfbc5bfc574d4eadad5b0857b2f"
+  },
+  "learned_prompt_source_sha256": "a472c591327a9fd84a50937f498251a64dabd32ef6770864e946497a8f1821c2"
+}
