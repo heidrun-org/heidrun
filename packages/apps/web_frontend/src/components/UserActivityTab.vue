@@ -22,7 +22,7 @@ import { activePeriodStartedAt, selectedWorkspaceFolder } from "../stores/user_a
 import { t } from "../i18n/index";
 
 // The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. Each bar
-// of the histogram is stacked, with one color for each chosen workspace, and the button of each workspace shows its color. The
+// of the histogram is stacked, with one color for each chosen workspace, and the legend of the histogram gives the colors. The
 // time range is the last hour, the last day, or the last week. The slot length depends on the time range, and it goes back
 // to the slot length that the time range starts with each time that the time range changes. The workspaces are all of them
 // at first, and the developer can hide any workspace. The records are read once, for the longest time range, when the
@@ -199,11 +199,6 @@ onMounted(load);
             autocomplete="off"
             :value="choice.folder"
           />
-          <span
-            class="d-inline-flex me-2"
-            aria-hidden="true"
-            :style="{ width: '0.75em', height: '0.75em', borderRadius: '50%', background: `var(${UserActivityWorkspaces.colorToken(index)})` }"
-          ></span>
           {{ choice.name }}
         </label>
       </div>

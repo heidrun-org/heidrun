@@ -47,7 +47,7 @@ The tab "User activity" of the Statistics window. It holds one histogram of the 
 
 ### Histogram of the user activity time
 
-The bar chart of the User activity tab. It shows the user activity time of the last hour, of the last day, or of the last week, as the developer chooses, with one bar for each slot. Each bar is stacked: it has one part of one color for each chosen workspace.
+The bar chart of the User activity tab. It shows the user activity time of the last hour, of the last day, or of the last week, as the developer chooses, with one bar for each slot. Each bar is stacked: it has one part of one color for each chosen workspace. It has a chart legend and a chart information card, as every chart of the Statistics window has ([statistics_charts.md](statistics_charts.md)).
 
 ### Slot
 

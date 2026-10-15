@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { flushPromises, mount } from "@vue/test-utils";
+import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import type { AiCostItems } from "../lib/ai_cost";
 import type { PersonWorkItems } from "../lib/person_work";
 
@@ -26,10 +26,18 @@ async function selectFolder(folder: string | null): Promise<void> {
   (selectedWorkspaceFolder as unknown as { value: string | null }).value = folder;
 }
 
+/** The functions that the chart registered for the events of Plotly.js, by the name of the event. */
+const plotlyHandlers: Record<string, (event: unknown) => void> = {};
+
 /** What one call to `Plotly.react` drew: the two bar traces, and the layout. */
 type Drawing = {
-  traces: Array<{ name: string; x: string[]; y: number[]; customdata: string[]; marker: { color: string } }>;
-  layout: { barmode: string; title: { text: string }; yaxis: { dtick?: number; tickprefix?: string } };
+  traces: Array<{ name: string; x: string[]; y: number[]; hoverinfo: string; marker: { color: string } }>;
+  layout: {
+    barmode: string;
+    title: { text: string };
+    yaxis: { dtick?: number; tickprefix?: string };
+    legend: { orientation: string; x: number; y: number };
+  };
 };
 
 /** Waits until the chart has called Plotly.js this number of times: the chart loads Plotly.js after it mounts. */
@@ -41,6 +49,30 @@ async function waitForDrawings(drawingCount: number): Promise<void> {
 function lastDrawing(): Drawing {
   const call = plotly.react.mock.calls[plotly.react.mock.calls.length - 1];
   return { traces: call[1], layout: call[2] };
+}
+
+/**
+ * Moves the pointer onto the bar of a day, as Plotly.js tells the chart, and waits for the chart information card.
+ *
+ * @param dayIndex - The index of the day, from the oldest day.
+ */
+async function hoverDay(dayIndex: number): Promise<void> {
+  plotlyHandlers.plotly_hover({ points: [{ pointNumber: dayIndex }], event: { clientX: 100, clientY: 50 } });
+  await flushPromises();
+}
+
+/** What the chart information card shows: the title, the total or `null`, and the name and the value of each row. */
+function cardOf(wrapper: VueWrapper) {
+  const card = wrapper.find('[role="tooltip"]');
+  if (card.exists() === false) {
+    return null;
+  }
+  const total = card.find('[data-field="total"] span:last-child');
+  return {
+    title: card.get(".fw-semibold").text(),
+    total: total.exists() ? total.text() : null,
+    rows: card.findAll('[data-field="row"]').map((row) => [row.element.children[0].textContent?.trim(), row.element.children[1].textContent]),
+  };
 }
 
 /** A time at 12:00 of the clock of the computer, `daysAgo` days before today, as an ISO 8601 text. */
@@ -161,7 +193,15 @@ beforeEach(async () => {
     },
   );
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  for (const name of Object.keys(plotlyHandlers)) {
+    delete plotlyHandlers[name];
+  }
   plotly.react.mockReset();
+  plotly.react.mockImplementation((element: { on?: unknown }) => {
+    element.on = (name: string, callback: (event: unknown) => void) => {
+      plotlyHandlers[name] = callback;
+    };
+  });
   plotly.purge.mockReset();
   document.body.innerHTML = "";
 });
@@ -219,9 +259,49 @@ describe("PersonWorkTab", () => {
     expect(traces[0].y).toEqual([0, 0, 0, 1, 0, 0, 2]);
     expect(traces[1].y).toEqual([0, 0, 0, 0, 0, 0, 1]);
     expect(traces[0].marker.color).not.toBe(traces[1].marker.color);
-    expect(traces[0].customdata[6]).toMatch(/^Commits on .+: 2$/);
-    expect(traces[1].customdata[6]).toMatch(/^Pull requests on .+: 1$/);
+    expect(traces.every((trace) => trace.hoverinfo === "none")).toBe(true);
     expect(layout.yaxis.dtick).toBe(1);
+  });
+
+  it("shows a legend above the bars, and turns off the tooltip of Plotly.js", async () => {
+    await mountPersonWorkTab();
+    await waitForDrawings(1);
+    const { layout } = lastDrawing();
+    expect(layout.legend).toMatchObject({ orientation: "h", y: 1.1 });
+    expect(Object.keys(plotlyHandlers).sort()).toEqual(["plotly_hover", "plotly_unhover"]);
+  });
+
+  it("shows no chart information card until the pointer is over a bar", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    expect(cardOf(wrapper)).toBeNull();
+  });
+
+  it("shows the day, and the commits and the pull requests of the day, in the chart information card, with no total", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await hoverDay(6);
+    const card = cardOf(wrapper);
+    expect(card?.title).not.toBe("");
+    expect(card?.total).toBeNull();
+    expect(card?.rows).toEqual([
+      ["Commits", "2"],
+      ["Pull requests", "1"],
+    ]);
+    expect(wrapper.findAll('[role="tooltip"] [data-field="row"] span[aria-hidden="true"]').map((dot) => dot.attributes("style"))).toEqual([
+      expect.stringContaining("var(--primary-bg)"),
+      expect.stringContaining("var(--success-bg)"),
+    ]);
+  });
+
+  it("leaves a color out of the chart information card of a day where it has no value, and hides the card when the pointer leaves", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await hoverDay(3);
+    expect(cardOf(wrapper)?.rows).toEqual([["Commits", "1"]]);
+    plotlyHandlers.plotly_unhover({});
+    await flushPromises();
+    expect(cardOf(wrapper)).toBeNull();
   });
 
   it("draws thirty bars and counts the older issues when Last 30 days is chosen", async () => {
@@ -316,10 +396,23 @@ describe("PersonWorkTab", () => {
     expect(traces[0].y).toEqual([0, 0, 0, 0, 0, 2.5, 1.5]);
     expect(traces[1].y).toEqual([0, 0, 0, 0, 0.5, 0, 0]);
     expect(traces[0].marker.color).not.toBe(traces[1].marker.color);
-    expect(traces[0].customdata[5]).toMatch(/^Claude Code on .+: \$2\.50$/);
-    expect(traces[0].customdata[6]).toMatch(/^Claude Code on .+: \$1\.50$/);
-    expect(traces[0].customdata[0]).toMatch(/^Claude Code on .+: \$0\.00$/);
-    expect(traces[1].customdata[4]).toMatch(/^Codex on .+: \$0\.50$/);
+    expect(traces.every((trace) => trace.hoverinfo === "none")).toBe(true);
+    expect(lastDrawing().layout.legend).toMatchObject({ orientation: "h", y: 1.1 });
+  });
+
+  it("shows the day, the total, and the cost of each coding agent that has a cost, in the chart information card", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+    await hoverDay(5);
+    expect(cardOf(wrapper)?.total).toBe("$2.50");
+    expect(cardOf(wrapper)?.rows).toEqual([["Claude Code", "$2.50"]]);
+    await hoverDay(4);
+    expect(cardOf(wrapper)?.total).toBe("$0.50");
+    expect(cardOf(wrapper)?.rows).toEqual([["Codex", "$0.50"]]);
+    await hoverDay(0);
+    expect(cardOf(wrapper)?.total).toBe("$0.00");
+    expect(cardOf(wrapper)?.rows).toEqual([]);
   });
 
   it("draws thirty bars and counts the older chats when Last 30 days is chosen with the source AI cost", async () => {

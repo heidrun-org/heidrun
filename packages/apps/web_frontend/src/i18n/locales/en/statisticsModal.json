@@ -37,8 +37,8 @@
   "secondsAxis": "Seconds of activity",
   "minutesAxis": "Minutes of activity",
   "hoursAxis": "Hours of activity",
-  "tooltip": "{start} to {end}",
-  "tooltipTotal": "Total",
+  "slotRangeTitle": "{start} to {end}",
+  "cardTotal": "Total",
   "durationMinutesSeconds": "{minutes} min {seconds} s",
   "durationHoursMinutes": "{hours} h {minutes} min",
   "personWorkTab": "Work of one person",
@@ -62,8 +62,6 @@
   "personWorkVerticalAxis": "Number",
   "personWorkCommitsTrace": "Commits",
   "personWorkPullRequestsTrace": "Pull requests",
-  "personWorkCommitsTooltip": "Commits on {day}: {value}",
-  "personWorkPullRequestsTooltip": "Pull requests on {day}: {value}",
   "personWorkSourceLabel": "Source of the chart",
   "personWorkSourceGitHistory": "Git history",
   "personWorkSourceGitHistoryTitle": "Show the commits and the pull requests of one person, with one bar for each day",
@@ -77,6 +75,5 @@
   "personWorkAiCostTotal": "Total",
   "personWorkAiCostChartLabel": "Bar chart of the estimated cost of the chats of each coding agent, for each day",
   "personWorkAiCostChartTitle": "AI cost of each day, for each coding agent",
-  "personWorkAiCostVerticalAxis": "Cost (US dollars)",
-  "personWorkAiCostTooltip": "{agent} on {day}: {value}"
+  "personWorkAiCostVerticalAxis": "Cost (US dollars)"
 }

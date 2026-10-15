@@ -16,6 +16,8 @@ One bar chart with one bar for each day of the last 7 days or of the last 30 day
 - Git history: for one person, the commits and the pull requests of each day, and the number of issues of the time range.
 - AI cost: for each coding agent, the estimated cost in US dollars of each day. It is not about one person.
 
+The chart has a legend that names each color. A card beside the bar under the pointer, with an arrow that points to the bar, gives the day, the total of the AI cost, and the value of each color.
+
 The two sources read the data layers in two different ways.
 
 ## Source "Git history"

@@ -13,8 +13,9 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [colors_and_scroll_bars.md](colors_and_scroll_bars.md): the colors and the scroll bars.
 - [layout.md](layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
 - [statistics_window.md](statistics_window.md): the item "Statistics" of the More menu, the Statistics window, the buttons of its tabs in the title bar, and where the data of the tab "User activity" comes from.
+- [statistics_charts.md](statistics_charts.md): the rules that every chart of the Statistics window follows: the chart legend, the chart information card with its arrow, the shared code, and the tests that a new chart adds.
 - [statistics_user_activity.md](statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
-- [statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the tooltip with its arrow, and its tests.
+- [statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
 - [statistics_person_work.md](statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.
 - [statistics_ai_cost.md](statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
 - [status_bar.md](status_bar.md): the status bar and the menu of the status item.

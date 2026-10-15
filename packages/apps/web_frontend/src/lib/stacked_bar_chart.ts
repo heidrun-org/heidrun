@@ -12,8 +12,8 @@ export type StackedBarSeries = {
 	colorToken: string;
 	/** The height of this color in each bar, in the order of the bars. */
 	values: number[];
-	/** The text of the tooltip of this color in each bar, in the order of the bars. */
-	tooltips: string[];
+	/** The value of this color in each bar, written with its unit, in the order of the bars. */
+	valueTexts: string[];
 };
 
 /** The unit of the vertical axis: a count of whole items, or an amount in US dollars. */
@@ -25,6 +25,10 @@ export type StackedBarChartContent = {
 	labels: string[];
 	/** The colors of the bars, from the bottom of a bar to its top. */
 	series: StackedBarSeries[];
+	/** The first line of the chart information card of each bar, in the order of the bars, for example the day. */
+	titles: string[];
+	/** The total of all the colors in each bar, written with its unit, or `null` when the colors cannot be added. */
+	totals: string[] | null;
 	/** The title of the chart. */
 	title: string;
 	/** The title of the horizontal axis. */

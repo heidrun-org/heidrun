@@ -101,7 +101,7 @@ function tooltipOf(wrapper: VueWrapper) {
   return {
     title: tooltip.get(".fw-semibold").text(),
     total: tooltip.get('[data-field="total"] span:last-child').text(),
-    rows: tooltip.findAll('[data-field="workspace"]').map((row) => [row.element.children[0].textContent?.trim(), row.element.children[1].textContent]),
+    rows: tooltip.findAll('[data-field="row"]').map((row) => [row.element.children[0].textContent?.trim(), row.element.children[1].textContent]),
   };
 }
 
@@ -485,18 +485,9 @@ describe("UserActivityTab: the stacked bars", () => {
     expect(lastDrawing().traces.map((trace) => [trace.name, trace.marker.color])).toEqual([["old_experiment", "--orange-500"]]);
   });
 
-  it("shows the color of each workspace on its button, and none on the button All workspaces", async () => {
+  it("shows no dot of color on the buttons of the workspaces, because the legend of the chart gives the colors", async () => {
     const { wrapper } = await mountUserActivityTab(records());
-    const dotOf = (title: string) => wrapper.find(`label[title*='${title}'] span[aria-hidden='true']`);
-    expect(dotOf("/work/heidrun").attributes("style")).toContain("var(--blue-500)");
-    expect(dotOf("/work/old_experiment").attributes("style")).toContain("var(--orange-500)");
-    expect(wrapper.find("label[title*='every workspace'] span[aria-hidden='true']").exists()).toBe(false);
-  });
-
-  it("keeps the color on the button of a workspace that is hidden", async () => {
-    const { wrapper } = await mountUserActivityTab(records());
-    await wrapper.get("#statistics-workspace-1").setValue(false);
-    expect(wrapper.get("label[title*='/work/old_experiment'] span[aria-hidden='true']").attributes("style")).toContain("var(--orange-500)");
+    expect(wrapper.find('[role="group"][aria-label="Workspaces"] [aria-hidden="true"]').exists()).toBe(false);
   });
 
   it("draws one part with the user activity time of the only workspace", async () => {
@@ -572,7 +563,7 @@ describe("UserActivityTab: the stacked bars", () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
     await waitForDrawings(1);
     await hoverSlot(10);
-    const dots = wrapper.findAll('[role="tooltip"] [data-field="workspace"] span[aria-hidden="true"]');
+    const dots = wrapper.findAll('[role="tooltip"] [data-field="row"] span[aria-hidden="true"]');
     expect(dots.map((dot) => dot.attributes("style"))).toEqual([
       expect.stringContaining("var(--blue-500)"),
       expect.stringContaining("var(--orange-500)"),

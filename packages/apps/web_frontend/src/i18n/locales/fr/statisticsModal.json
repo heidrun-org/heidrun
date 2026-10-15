@@ -37,8 +37,8 @@
   "secondsAxis": "Secondes d'activité",
   "minutesAxis": "Minutes d'activité",
   "hoursAxis": "Heures d'activité",
-  "tooltip": "{start} à {end}",
-  "tooltipTotal": "Total",
+  "slotRangeTitle": "{start} à {end}",
+  "cardTotal": "Total",
   "durationMinutesSeconds": "{minutes} min {seconds} s",
   "durationHoursMinutes": "{hours} h {minutes} min",
   "personWorkTab": "Travail d'une personne",
@@ -62,8 +62,6 @@
   "personWorkVerticalAxis": "Nombre",
   "personWorkCommitsTrace": "Commits",
   "personWorkPullRequestsTrace": "Pull requests",
-  "personWorkCommitsTooltip": "Commits le {day} : {value}",
-  "personWorkPullRequestsTooltip": "Pull requests le {day} : {value}",
   "personWorkSourceLabel": "Source du diagramme",
   "personWorkSourceGitHistory": "Historique Git",
   "personWorkSourceGitHistoryTitle": "Afficher les commits et les pull requests d'une personne, avec une barre pour chaque jour",
@@ -77,6 +75,5 @@
   "personWorkAiCostTotal": "Total",
   "personWorkAiCostChartLabel": "Diagramme en barres du coût estimé des conversations de chaque agent de code, pour chaque jour",
   "personWorkAiCostChartTitle": "Coût de l'IA de chaque jour, pour chaque agent de code",
-  "personWorkAiCostVerticalAxis": "Coût (dollars américains)",
-  "personWorkAiCostTooltip": "{agent} le {day} : {value}"
+  "personWorkAiCostVerticalAxis": "Coût (dollars américains)"
 }

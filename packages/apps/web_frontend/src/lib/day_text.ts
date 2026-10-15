@@ -2,7 +2,7 @@ import { locale } from "../i18n/index";
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	DayText — writes a day for the axis and for the tooltip of a bar chart
+//	DayText — writes a day for the axis and for the chart information card of a bar chart
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -26,12 +26,12 @@ export class DayText {
 	}
 
 	/**
-	 * Writes a day for the tooltip of a bar: the long form.
+	 * Writes a day for the title of the chart information card of a bar: the long form.
 	 *
 	 * @param time - The start of the day, in milliseconds since 1 January 1970.
 	 * @returns The text, for example "Monday, October 12".
 	 */
-	static tooltip(time: number): string {
+	static cardTitle(time: number): string {
 		return new Date(time).toLocaleDateString(locale.value, { weekday: "long", day: "numeric", month: "long" });
 	}
 }

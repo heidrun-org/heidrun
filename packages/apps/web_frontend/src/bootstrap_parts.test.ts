@@ -107,6 +107,7 @@ describe('bootstrap_parts.scss', () => {
 			'.flex-fill',
 			'.align-items-center',
 			'.align-self-start',
+			'.gap-1',
 			'.gap-2',
 			'.gap-3',
 			'.m-0',
