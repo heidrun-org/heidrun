@@ -261,7 +261,7 @@ export class MobileApp {
 	private _screenHtmlContent(snapshot: Snapshot): string {
 		if (this.screen === 'pane') {
 			const agent = this.paneId === null ? null : SnapshotQueries.agentById(snapshot, this.paneId);
-			return PaneScreen.render(agent, this.output, snapshot.now);
+			return PaneScreen.render(agent, this.output);
 		}
 		if (this.screen === 'panes') {
 			return PanesScreen.render(snapshot, this.isOnline);

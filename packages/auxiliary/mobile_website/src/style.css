@@ -453,6 +453,14 @@ main {
 .pane-main {
   display: flex;
   flex-direction: column;
+  padding: 0;
+}
+
+.pane-main > .question,
+.pane-main > .menu,
+.pane-main > .actions {
+  margin-left: 12px;
+  margin-right: 12px;
 }
 
 .pane-main > * {
@@ -463,11 +471,11 @@ main {
   display: flex;
   flex-direction: column;
   flex: 1 0 8rem;
-  margin: 10px 0;
-  padding: 10px;
+  margin: 0;
+  padding: 8px 10px;
   overflow: auto;
-  border-radius: 10px;
-  border: 1px solid var(--line);
+  border-radius: 0;
+  border: 0;
   background: #08090a;
   color: var(--text-2);
   font-family: ui-monospace, Menlo, monospace;
@@ -563,6 +571,23 @@ main {
 
 .stop-button:active {
   background: var(--line-strong);
+}
+
+.send-button {
+  flex: none;
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--done);
+  color: #08111f;
+}
+
+.send-button:active {
+  opacity: 0.8;
 }
 
 .composer textarea {

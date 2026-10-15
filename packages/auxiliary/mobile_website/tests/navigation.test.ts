@@ -50,7 +50,7 @@ describe('Navigation and address', () => {
 		expect(screenTitle()).toBe('heidrun · fix-35');
 		expect(document.querySelector('.output')).not.toBeNull();
 		expect(window.location.hash).toBe('#/panes/p-working');
-		expect(harness.text()).toContain('Codex');
+		expect(document.querySelector('textarea')?.getAttribute('placeholder')).toBe('Prompt for Codex…');
 		await harness.tap('button[data-action="back"]');
 		expect(screenTitle()).toBe('Panes');
 	});

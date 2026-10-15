@@ -1,6 +1,5 @@
 import type { AgentView } from '../mobile_types';
 import { HtmlEscape } from '../html_escape';
-import { TimeAgo } from '../time_ago';
 import { OutputText } from '../output_text';
 import { StatusLabels } from '../components/status_labels';
 import { MenuButtons } from '../components/menu_buttons';
@@ -13,7 +12,7 @@ import { ScreenHeader } from '../components/screen_header';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The screen of one pane that runs a coding agent.
+ * The screen of one pane that runs a coding agent. The center shows only the output of the pane, edge to edge.
  */
 export class PaneScreen {
 	/** The identifier of the field for a prompt. */
@@ -23,10 +22,9 @@ export class PaneScreen {
 	 * Draws the screen.
 	 * @param agent The coding agent of the pane, or null when the pane does not exist anymore.
 	 * @param output The end of the output of the pane.
-	 * @param now The current time of the Mac, in milliseconds since 1970.
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
-	static render(agent: AgentView | null, output: string, now: number): string {
+	static render(agent: AgentView | null, output: string): string {
 		if (agent === null) {
 			const missingHtmlContent = /* html */`
 				${ScreenHeader.renderPane('Coding agent', '')}
@@ -38,9 +36,6 @@ export class PaneScreen {
 		const label = HtmlEscape.escape(StatusLabels.label(agent));
 		const badgeHtmlContent = /* html */`<span class="badge badge-${color}">${label}</span>`;
 		const paneId = HtmlEscape.escape(agent.paneId);
-		const contextText = agent.context === null ? '' : ` · context ${agent.context} %`;
-		const ageText = TimeAgo.format(agent.since, now);
-		const subtitle = HtmlEscape.escape(`${agent.name}${contextText} · ${ageText}`);
 		const placeholder = HtmlEscape.escape(`Prompt for ${agent.name}…`);
 		const outputHtmlContent = OutputText.toHtml(output);
 		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
@@ -53,7 +48,6 @@ export class PaneScreen {
 		const screenHtmlContent = /* html */`
 			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent)}
 			<main class="pane-main">
-				<div class="sub">${subtitle}</div>
 				${PaneScreen.renderQuestion(agent)}
 				<pre class="output"><code class="output-text">${shownHtmlContent}</code></pre>
 				${actionsHtmlContent}
@@ -66,8 +60,27 @@ export class PaneScreen {
 					enterkeyhint="send"
 				></textarea>
 				${stopHtmlContent}
-				<button class="button button-primary" data-action="send" data-pane-id="${paneId}">
-					Send
+				<button
+					class="send-button"
+					data-action="send"
+					data-pane-id="${paneId}"
+					aria-label="Send"
+					title="Send (Cmd+Enter)"
+				>
+					<svg
+						viewBox="0 0 24 24"
+						width="22"
+						height="22"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M12 19V5"/>
+						<path d="M5 12l7-7 7 7"/>
+					</svg>
 				</button>
 			</div>
 		`;

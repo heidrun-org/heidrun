@@ -4,7 +4,7 @@ import { FakeMac } from './fake_mac';
 import { Fixtures } from './fixtures';
 
 describe('Pane screen', () => {
-	it('shows the end of the output, the status, and the context of the coding agent', async () => {
+	it('shows the end of the output and the status, and no line of information above the output', async () => {
 		const mac = Fixtures.mac();
 		mac.outputText = 'line one\nline two\n\n\n';
 		const harness = await AppHarness.start(mac);
@@ -12,7 +12,9 @@ describe('Pane screen', () => {
 		expect(document.querySelector('.output')?.textContent).toBe('line one\nline two');
 		expect(document.querySelector('.output > code.output-text')?.textContent).toBe('line one\nline two');
 		expect(document.querySelector('header .badge')?.textContent).toBe('Working');
-		expect(harness.text()).toContain('Codex · context 42 % · 2 min ago');
+		expect(document.querySelector('.sub')).toBeNull();
+		expect(harness.text()).not.toContain('context 42 %');
+		expect(document.querySelector('.send-button')?.getAttribute('aria-label')).toBe('Send');
 	});
 
 	it('asks the Mac for the colors, and paints them in the output', async () => {
