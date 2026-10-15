@@ -252,8 +252,12 @@ export class TauriMockFixture {
 	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last week, in UTC, as the
 	 * data layer gives them. Seven periods are in the last hour, and they cross the limits of the slots of five minutes.
 	 * The last slot of the last hour has no period. Four more periods fall on each of the seven days, from three hours
-	 * before the end of the time range, and they are 20 to 55 minutes long.
+	 * before the end of the time range, and they are 20 to 55 minutes long. Each period belongs to one of three folders: the
+	 * folder of the first workspace for three periods of every five, the folder of the second workspace for one period of
+	 * every five, and the folder of a worktree that was removed for the last one, so that the histogram has workspaces to
+	 * choose.
 	 * - issue #473
+	 * - issue #486
 	 *
 	 * @param until - The end of the time range, in milliseconds since 1 January 1970.
 	 * @returns The fake user activity records, the oldest first.
@@ -276,8 +280,15 @@ export class TauriMockFixture {
 			}
 		}
 		secondsBeforeUntil.sort((first, second) => second[0] - first[0]);
-		return secondsBeforeUntil.map(([startedBefore, endedBefore]) => ({
-			workspaceFolder: '/Users/demo/webwork/heidrun',
+		const workspaceFolders = [
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/website',
+			'/Users/demo/webwork/heidrun',
+			'/Users/demo/webwork/heidrun/.claude/worktrees/removed-fix-info-card-252',
+		];
+		return secondsBeforeUntil.map(([startedBefore, endedBefore], index) => ({
+			workspaceFolder: workspaceFolders[index % workspaceFolders.length],
 			startedAt: new Date(until - startedBefore * 1000).toISOString(),
 			lastActionAt: new Date(until - endedBefore * 1000).toISOString(),
 			endedAt: new Date(until - endedBefore * 1000).toISOString(),

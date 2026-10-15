@@ -250,7 +250,7 @@ describe('TauriMock user activity', () => {
 	it('answers the Tauri command user_activity_records_in_range with fake active periods of the last week that end before the end of the range', async () => {
 		TauriMock.install();
 		const until = Date.now();
-		const records = await invoke<{ startedAt: string; endedAt: string }[]>('user_activity_records_in_range', {
+		const records = await invoke<{ workspaceFolder: string; startedAt: string; endedAt: string }[]>('user_activity_records_in_range', {
 			since: new Date(until - 7 * 86_400_000).toISOString(),
 			until: new Date(until).toISOString(),
 		});
@@ -262,6 +262,19 @@ describe('TauriMock user activity', () => {
 		}
 		const startedAtList = records.map((record) => Date.parse(record.startedAt));
 		expect(startedAtList).toEqual([...startedAtList].sort((first, second) => first - second));
+	});
+
+	it('gives the fake active periods to three workspace folders, so that the histogram has workspaces to choose', async () => {
+		TauriMock.install();
+		const until = Date.now();
+		const records = await invoke<{ workspaceFolder: string }[]>('user_activity_records_in_range', {
+			since: new Date(until - 7 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(new Set(records.map((record) => record.workspaceFolder)).size).toBe(3);
+		expect(records.filter((record) => record.workspaceFolder === '/Users/demo/webwork/heidrun').length).toBeGreaterThan(
+			records.filter((record) => record.workspaceFolder === '/Users/demo/webwork/website').length,
+		);
 	});
 });
 

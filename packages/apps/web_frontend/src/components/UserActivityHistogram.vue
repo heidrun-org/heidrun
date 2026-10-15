@@ -4,39 +4,65 @@ import type { Data, Layout } from "plotly.js-basic-dist-min";
 import { ChartTheme } from "../lib/chart_theme";
 import { timeOptions } from "../lib/format";
 import { PlotlyLoader, type PlotlyModule } from "../lib/plotly_loader";
-import type { UserActivityRangeId, UserActivitySlot } from "../lib/user_activity_slots";
+import { UserActivitySlotLengthText } from "../lib/user_activity_slot_length_text";
+import {
+  USER_ACTIVITY_SLOT_LENGTHS,
+  UserActivitySlots,
+  type UserActivityRangeId,
+  type UserActivitySlot,
+  type UserActivitySlotLengthId,
+} from "../lib/user_activity_slots";
 import { locale, t } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
 
-// The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. The last hour has slots of five
-// minutes, the last day has slots of one hour, and the last week has slots of one day. Plotly.js is loaded only when the
-// window opens, so the other windows do not pay for its size.
+// The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. The slot length is a choice of the
+// developer, so the vertical axis, the labels under the bars, and the tooltips follow the slot length. Plotly.js is loaded
+// only when the window opens, so the other windows do not pay for its size.
 
 const props = defineProps<{
   /** The slots, the oldest first. */
   slots: UserActivitySlot[];
   /** The time range of the histogram. */
   rangeId: UserActivityRangeId;
+  /** The length of one slot. */
+  slotLengthId: UserActivitySlotLengthId;
 }>();
 
-/** The keys of the texts of each range: the title, the horizontal axis, and the description for the screen reader. */
+/** The keys of the texts of each range: the title, and the description for the screen reader. */
 const RANGE_TEXTS = {
-  hour: {
-    chartTitle: "statisticsModal.hourChartTitle",
-    horizontalAxis: "statisticsModal.hourHorizontalAxis",
-    chartLabel: "statisticsModal.hourChartLabel",
-  },
-  day: {
-    chartTitle: "statisticsModal.dayChartTitle",
-    horizontalAxis: "statisticsModal.dayHorizontalAxis",
-    chartLabel: "statisticsModal.dayChartLabel",
-  },
-  week: {
-    chartTitle: "statisticsModal.weekChartTitle",
-    horizontalAxis: "statisticsModal.weekHorizontalAxis",
-    chartLabel: "statisticsModal.weekChartLabel",
-  },
+  hour: { chartTitle: "statisticsModal.hourChartTitle", chartLabel: "statisticsModal.hourChartLabel" },
+  day: { chartTitle: "statisticsModal.dayChartTitle", chartLabel: "statisticsModal.dayChartLabel" },
+  week: { chartTitle: "statisticsModal.weekChartTitle", chartLabel: "statisticsModal.weekChartLabel" },
 } as const;
+
+/** The unit of the height of the bars. */
+type HeightUnit = "seconds" | "minutes" | "hours";
+
+/**
+ * The vertical axis of each slot length: the unit, the top, and the space between two lines. A slot of one minute goes
+ * from 0 to 60 seconds. A slot of 5 minutes to one hour goes from 0 to the length of the slot, in minutes. A slot of six
+ * hours goes from 0 to 6 hours. The top is `null` for a slot of one day, which follows the longest day.
+ */
+const VERTICAL_AXES: Record<UserActivitySlotLengthId, { unit: HeightUnit; top: number | null; step: number | null }> = {
+  one_minute: { unit: "seconds", top: 60, step: 10 },
+  five_minutes: { unit: "minutes", top: 5, step: 1 },
+  ten_minutes: { unit: "minutes", top: 10, step: 2 },
+  fifteen_minutes: { unit: "minutes", top: 15, step: 5 },
+  thirty_minutes: { unit: "minutes", top: 30, step: 5 },
+  one_hour: { unit: "minutes", top: 60, step: 10 },
+  six_hours: { unit: "hours", top: 6, step: 1 },
+  one_day: { unit: "hours", top: null, step: null },
+};
+
+/** The length of a unit of height, in milliseconds. */
+const UNIT_MS: Record<HeightUnit, number> = { seconds: 1000, minutes: 60_000, hours: 3_600_000 };
+
+/** The key of the title of the vertical axis, for each unit of height. */
+const AXIS_TITLE_KEYS: Record<HeightUnit, string> = {
+  seconds: "statisticsModal.secondsAxis",
+  minutes: "statisticsModal.minutesAxis",
+  hours: "statisticsModal.hoursAxis",
+};
 
 /** One minute, in milliseconds. */
 const MINUTE_MS = 60_000;
@@ -56,27 +82,63 @@ function dayText(time: number, form: "short" | "long"): string {
   return new Date(time).toLocaleDateString(locale.value, { weekday: form, day: "numeric", month: form });
 }
 
-/** The text under a bar: the start of the slot of five minutes or one hour, or the day of the slot of one day. */
-function axisText(slot: UserActivitySlot): string {
-  return props.rangeId === "week" ? dayText(slot.startedAt, "short") : clockText(slot.startedAt);
+/** True when the slots are slots of one day: the label of a slot is then its day. */
+function isDaySlot(): boolean {
+  return USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId].unit === "day";
+}
+
+/** The minutes since midnight, on the clock of the computer, at the start of a slot. */
+function minutesSinceMidnight(time: number): number {
+  const date = new Date(time);
+  return date.getHours() * 60 + date.getMinutes();
 }
 
 /**
- * The tooltip of the bar of a slot. A slot of five minutes or one hour gives its start and its end, and the user
- * activity time in minutes and seconds. A slot of one day gives its day, and the user activity time in hours and minutes.
+ * The tick of the horizontal axis. A slot has a label when it starts at a multiple of the label step since midnight. A
+ * label that sits on a midnight is the day, and any other label is the time of the clock.
+ */
+function ticks(): { values: number[]; texts: string[] } {
+  const step = UserActivitySlots.labelStepInMinutes(props.rangeId, props.slotLengthId);
+  const values: number[] = [];
+  const texts: string[] = [];
+  props.slots.forEach((slot, index) => {
+    if (minutesSinceMidnight(slot.startedAt) % step !== 0) {
+      return;
+    }
+    values.push(index);
+    texts.push(step >= 1440 ? dayText(slot.startedAt, "short") : clockText(slot.startedAt));
+  });
+  return { values, texts };
+}
+
+/**
+ * The tooltip of the bar of a slot. A slot of one hour or less gives its start and its end, and the user activity time in
+ * minutes and seconds. A slot of six hours gives its start and its end, and the user activity time in hours and minutes.
+ * A slot of one day gives its day, and the user activity time in hours and minutes. In the last week, the start of a slot
+ * that is shorter than one day also gives its day.
  */
 function tooltipText(slot: UserActivitySlot): string {
-  if (props.rangeId === "week") {
-    const totalMinutes = Math.round(slot.activeTimeMs / MINUTE_MS);
-    return t("statisticsModal.weekTooltip", {
+  const length = USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId];
+  const totalMinutes = Math.round(slot.activeTimeMs / MINUTE_MS);
+  if (length.unit === "day") {
+    return t("statisticsModal.dayTooltip", {
       day: dayText(slot.startedAt, "long"),
+      hours: Math.floor(totalMinutes / 60),
+      minutes: totalMinutes % 60,
+    });
+  }
+  const start = props.rangeId === "week" ? `${dayText(slot.startedAt, "long")}, ${clockText(slot.startedAt)}` : clockText(slot.startedAt);
+  if (length.unit === "hour" && length.amount > 1) {
+    return t("statisticsModal.hoursTooltip", {
+      start,
+      end: clockText(slot.endedAt),
       hours: Math.floor(totalMinutes / 60),
       minutes: totalMinutes % 60,
     });
   }
   const totalSeconds = Math.round(slot.activeTimeMs / 1000);
   return t("statisticsModal.tooltip", {
-    start: clockText(slot.startedAt),
+    start,
     end: clockText(slot.endedAt),
     minutes: Math.floor(totalSeconds / 60),
     seconds: totalSeconds % 60,
@@ -84,18 +146,16 @@ function tooltipText(slot: UserActivitySlot): string {
 }
 
 /**
- * The vertical axis. The last hour goes from 0 to 5 minutes, and the last day goes from 0 to 60 minutes: the length of
- * one slot. The last week is in hours, and its top follows the longest day.
+ * The vertical axis. A slot that is shorter than one day goes from 0 to the length of the slot, so the bars of two slot
+ * lengths of the same unit have the same scale. A slot of one day is in hours, and its top follows the longest day.
  */
 function verticalAxis(lineColor: string): Partial<Layout["yaxis"]> {
-  const common = { fixedrange: true, linecolor: lineColor, gridcolor: lineColor, zerolinecolor: lineColor };
-  if (props.rangeId === "hour") {
-    return { ...common, title: { text: t("statisticsModal.minutesAxis") }, autorange: false, range: [0, 5], dtick: 1 };
+  const { unit, top, step } = VERTICAL_AXES[props.slotLengthId];
+  const common = { fixedrange: true, linecolor: lineColor, gridcolor: lineColor, zerolinecolor: lineColor, title: { text: t(AXIS_TITLE_KEYS[unit]) } };
+  if (top === null || step === null) {
+    return { ...common, autorange: true, rangemode: "tozero" };
   }
-  if (props.rangeId === "day") {
-    return { ...common, title: { text: t("statisticsModal.minutesAxis") }, autorange: false, range: [0, 60], dtick: 10 };
-  }
-  return { ...common, title: { text: t("statisticsModal.hoursAxis") }, autorange: true, rangemode: "tozero" };
+  return { ...common, autorange: false, range: [0, top], dtick: step };
 }
 
 /** Draws the bars again, with the colors of the theme in use. */
@@ -109,13 +169,14 @@ function draw(): void {
   const data: Data[] = [
     {
       type: "bar",
-      x: props.slots.map(axisText),
-      y: props.slots.map((slot) => slot.activeTimeMs / (props.rangeId === "week" ? 60 * MINUTE_MS : MINUTE_MS)),
+      x: props.slots.map((_slot, index) => index),
+      y: props.slots.map((slot) => slot.activeTimeMs / UNIT_MS[VERTICAL_AXES[props.slotLengthId].unit]),
       customdata: props.slots.map(tooltipText),
       hovertemplate: "%{customdata}<extra></extra>",
       marker: { color: ChartTheme.readColor("--primary-bg", chart.value) },
     },
   ];
+  const { values: tickValues, texts: tickTexts } = ticks();
   const layout: Partial<Layout> = {
     autosize: true,
     title: { text: t(RANGE_TEXTS[props.rangeId].chartTitle) },
@@ -125,9 +186,13 @@ function draw(): void {
     font: { color: textColor },
     bargap: 0.15,
     xaxis: {
-      type: "category",
-      title: { text: t(RANGE_TEXTS[props.rangeId].horizontalAxis) },
+      type: "linear",
+      title: { text: t(isDaySlot() === true ? "statisticsModal.dayAxis" : "statisticsModal.slotStartAxis") },
       fixedrange: true,
+      range: [-0.5, props.slots.length - 0.5],
+      tickmode: "array",
+      tickvals: tickValues,
+      ticktext: tickTexts,
       linecolor: lineColor,
       gridcolor: lineColor,
     },
@@ -154,7 +219,7 @@ onMounted(async () => {
 });
 
 // The theme sets its attributes on the page in its own watcher, so the colors are read on the next tick.
-watch([resolvedTheme, locale, () => props.slots, () => props.rangeId], async () => {
+watch([resolvedTheme, locale, () => props.slots, () => props.rangeId, () => props.slotLengthId], async () => {
   await nextTick();
   draw();
 });
@@ -169,7 +234,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="chart" class="user-activity-histogram" role="img" :aria-label="t(RANGE_TEXTS[rangeId].chartLabel)"></div>
+  <div
+    ref="chart"
+    class="user-activity-histogram"
+    role="img"
+    :aria-label="t(RANGE_TEXTS[rangeId].chartLabel, { slotLength: UserActivitySlotLengthText.of(slotLengthId) })"
+  ></div>
 </template>
 
 <style scoped>
