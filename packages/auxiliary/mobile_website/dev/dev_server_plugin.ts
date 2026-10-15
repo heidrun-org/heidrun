@@ -98,17 +98,35 @@ export class DevServerPlugin {
 		response.end(typeof reply.body === 'string' ? reply.body : JSON.stringify(reply.body));
 	}
 
-	private static printPairedAddress(server: ViteDevServer, realTarget: string | null): void {
-		const address = server.resolvedUrls?.local[0] ?? 'http://127.0.0.1:5183/';
-		if (realTarget === null) {
-			console.log(`  ➜  Fake Mac: open ${address}#t=${DevApi.pairingKey}`);
-			return;
+	/**
+	 * Gives the lines that the development server prints to pair a browser: one address for each way to reach the
+	 * server, with the pairing key after the sign "#". The network address is there only when Vite runs with
+	 * `--host`.
+	 * @param addresses The addresses of the server: the local one first, then the ones of the network.
+	 * @param realTarget The address of the mobile server of the desktop application, or null for the fake Mac.
+	 * @param realKey The pairing key of the desktop application, or null when it has none.
+	 * @returns The lines to print.
+	 */
+	static pairingLines(addresses: string[], realTarget: string | null, realKey: string | null): string[] {
+		const key = realTarget === null ? DevApi.pairingKey : realKey;
+		const title = realTarget === null ? 'Fake Mac' : `Real desktop application at ${realTarget}`;
+		const lines: string[] = [];
+		for (const address of addresses) {
+			lines.push(`  ➜  ${title}: open ${address}${key === null ? '' : `#t=${key}`}`);
 		}
-		const key = DevServerPlugin.readRealPairingKey();
-		const hashText = key === null ? '' : `#t=${key}`;
-		console.log(`  ➜  Real desktop application at ${realTarget}: open ${address}${hashText}`);
 		if (key === null) {
-			console.log('     The file mobile.json has no pairing key: turn the mobile access on first.');
+			lines.push('     The file mobile.json has no pairing key: turn the mobile access on first.');
+		}
+		return lines;
+	}
+
+	private static printPairedAddress(server: ViteDevServer, realTarget: string | null): void {
+		const local = server.resolvedUrls?.local ?? ['http://127.0.0.1:5183/'];
+		const network = server.resolvedUrls?.network ?? [];
+		const realKey = realTarget === null ? null : DevServerPlugin.readRealPairingKey();
+		const addresses = [...local.slice(0, 1), ...network];
+		for (const line of DevServerPlugin.pairingLines(addresses, realTarget, realKey)) {
+			console.log(line);
 		}
 	}
 

@@ -17,7 +17,6 @@ export class MessageScreen {
 			<div class="message">
 				<h2>Pairing needed</h2>
 				<p>In Heidrun on the Mac, open "Mobile access" and scan the QR code with the camera.</p>
-				<p>Tailscale must be connected on this device.</p>
 			</div>
 		`;
 		return screenHtmlContent;
@@ -29,7 +28,7 @@ export class MessageScreen {
 	 * @returns The HTML of the screen.
 	 */
 	static connecting(isOnline: boolean | null): string {
-		const offlineText = 'The Mac does not answer. Is Tailscale connected? Is Heidrun open?';
+		const offlineText = 'The Mac does not answer. Is Heidrun open?';
 		const text = isOnline === false ? offlineText : 'Connecting…';
 		const screenHtmlContent = /* html */`<div class="message">${text}</div>`;
 		return screenHtmlContent;

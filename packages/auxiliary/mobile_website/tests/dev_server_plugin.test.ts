@@ -14,6 +14,33 @@ type Reply = {
 
 const cleanups: Array<() => Promise<void>> = [];
 
+describe('Pairing lines of the development server', () => {
+	it('prints the pairing link of the fake Mac for the local address and for the address of the network', () => {
+		const addresses = ['http://localhost:5183/', 'http://192.168.1.160:5183/'];
+		const lines = DevServerPlugin.pairingLines(addresses, null, null);
+		expect(lines).toEqual([
+			`  ➜  Fake Mac: open http://localhost:5183/#t=${DevApi.pairingKey}`,
+			`  ➜  Fake Mac: open http://192.168.1.160:5183/#t=${DevApi.pairingKey}`,
+		]);
+	});
+
+	it('prints the pairing link of the real application, with its own key', () => {
+		const key = 'ab'.repeat(32);
+		const target = 'http://127.0.0.1:47823';
+		const lines = DevServerPlugin.pairingLines(['http://192.168.1.160:5183/'], target, key);
+		expect(lines).toEqual([
+			`  ➜  Real desktop application at ${target}: open http://192.168.1.160:5183/#t=${key}`,
+		]);
+	});
+
+	it('says to turn the mobile access on when the real application has no pairing key', () => {
+		const lines = DevServerPlugin.pairingLines(['http://localhost:5183/'], 'http://127.0.0.1:47823', null);
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).not.toContain('#t=');
+		expect(lines[1]).toContain('turn the mobile access on first');
+	});
+});
+
 const startVite = async (realTarget: string | null): Promise<number> => {
 	const server: ViteDevServer = await createServer({
 		configFile: false,

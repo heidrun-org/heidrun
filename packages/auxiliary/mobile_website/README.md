@@ -34,6 +34,16 @@ MOBILE_API_TARGET=http://127.0.0.1:47823 pnpm --filter mobile_website dev
 
 Open the address that the second command prints (port 5183, with the pairing key). Do not open port 47823 to work on the page: that port serves the last built copy of the page, with no reload.
 
+### Open the page on your phone
+
+Add `--host` to the command of either way. Your phone must be on the same Wi-Fi network as the Mac, and not on a guest network.
+
+```bash
+pnpm --filter mobile_website dev --host
+```
+
+Vite then prints one line for each address, with the pairing key after the sign "#". Open the line with the address of the network (for example `http://192.168.1.160:5183/#t=...`) on the phone once. The phone keeps the key, so a later visit needs no key. This address uses plain HTTP, so the browser of the phone does not give the microphone to the page.
+
 ## Other commands
 
 ```bash
