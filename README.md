@@ -48,6 +48,16 @@ Think of Valhalla: the coding agents are the einherjar (the warriors who feast a
 
 The full list of features, shortcuts, and settings is in the [documentation](https://heidrun-org.github.io/heidrun/documentation/).
 
+## Installation
+
+On a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun in `/Applications`, and macOS opens Heidrun with no message "damaged". Quit Heidrun before you run it.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh
+```
+
+The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image of the latest release with `curl`, copies Heidrun to `/Applications`, and prints the installed version. Heidrun is not signed and not notarized, and `curl` does not put the quarantine mark on the disk image that it downloads, so macOS does not check the signature.
+
 ## Quick start
 
 You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, and [pnpm](https://pnpm.io).
@@ -69,6 +79,7 @@ To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Appli
 | [`packages/apps/web_frontend`](packages/apps/web_frontend) | The user interface, written with Vue 3 and TypeScript. |
 | [`packages/auxiliary/website_public`](packages/auxiliary/website_public) | The public website and documentation, built with VitePress. |
 | [`packages/dev_tools/change_log_generator`](packages/dev_tools/change_log_generator) | A command line tool that writes `CHANGELOG.md` from the merged pull requests. |
+| [`packages/dev_tools/install_script_tests`](packages/dev_tools/install_script_tests) | The tests of the script `scripts/install.sh`, which runs it with a fake `curl`, a fake `hdiutil`, and a fake `ditto`. |
 | [`packages/dev_tools/worktree_tools`](packages/dev_tools/worktree_tools) | Two command line tools: one creates a Git worktree and clones the compiled Rust files into it, the other deletes the old Cargo target folders of the worktrees. |
 | [`packages/auxiliary/raw_coding_agent_cli`](packages/auxiliary/raw_coding_agent_cli) | A Rust library and a command line tool that send one prompt to `codex`, `claude`, or `agy` and return the answer. The desktop application uses the library, and the change log generator runs the command line tool. |
 | [`packages/data_layers/data_layer_code_hosting`](packages/data_layers/data_layer_code_hosting) | A Rust library and a command line tool that read the issues and the pull requests of a GitHub repository into two tables of a SQLite file (`initialize`, `update`), and run read-only SQL queries on them (`query`). |
