@@ -171,7 +171,8 @@ main {
 }
 
 .welcome-text {
-  padding: 48px 20px 24px;
+  margin-top: auto;
+  padding: 48px 20px 40px;
 }
 
 .welcome-name {
