@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitepress';
 import identity from '../../../../../data/identity.json';
+import { LinkPreviewCards } from './link_preview_cards';
 
 const base = '/heidrun/';
+const siteAddress = `https://heidrun-org.github.io${base}`;
 
 export default defineConfig({
 	title: identity.title,
@@ -25,7 +27,16 @@ export default defineConfig({
 			rel: 'stylesheet',
 			href: 'https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400..700&display=swap',
 		}],
+		...LinkPreviewCards.sharedTags(siteAddress),
 	],
+	transformHead({ pageData, title, description }) {
+		return LinkPreviewCards.pageTags({
+			siteAddress,
+			title,
+			description,
+			relativePath: pageData.relativePath,
+		});
+	},
 	transformPageData(pageData) {
 		if (pageData.relativePath === 'index.md') {
 			pageData.frontmatter.hero = {

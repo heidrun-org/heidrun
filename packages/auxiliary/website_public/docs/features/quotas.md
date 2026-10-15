@@ -1,3 +1,7 @@
+---
+description: "The usage wheel of each pane and the status bar show the context window and the quotas of Claude and Codex, before a coding agent reaches a limit."
+---
+
 # The quotas and the usage wheel
 
 A coding agent works inside two limits:

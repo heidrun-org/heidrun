@@ -1,3 +1,7 @@
+---
+description: "The File explorer, Source control, Code hosting, Launchers, and Clipboard sidebar sections keep the project tools next to your coding agents."
+---
+
 # The sidebar sections
 
 Around your coding agents, you need more: the files of the project, the Git changes, the issues, the commands of the project, and the pieces of text that you want to keep. Without Heidrun, each one is in a different application.
