@@ -1,6 +1,6 @@
 [package]
 name = "data_layer_source_control"
-version = "0.2.5"
+version = "0.2.7"
 description = "Reads the commits and the merges of a Git repository into a SQLite file, and runs read-only queries on them"
 license = "MIT"
 edition = "2021"

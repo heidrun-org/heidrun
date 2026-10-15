@@ -2,7 +2,7 @@
   "name": "heidrun",
   "private": true,
   "license": "MIT",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter desktop_tauri tauri dev",
