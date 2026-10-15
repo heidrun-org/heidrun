@@ -1,6 +1,8 @@
 import { MobileApi, UnpairedError } from './mobile_api';
 import type { CallResult, ConfirmRequest, ScreenName, Snapshot, TabName } from './mobile_types';
 import { ColorPainter } from './color_painter';
+import { ScreenAddress } from './screen_address';
+import type { ScreenLocation } from './screen_address';
 import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
@@ -75,6 +77,20 @@ export class MobileApp {
 	/** Answers the confirmation sheet that is open, or null when no sheet is open. */
 	private confirmation: ((isConfirmed: boolean) => void) | null = null;
 
+	/** Opens the screen that the address names, when the developer uses the buttons Back and Forward. */
+	private readonly onPopState = (): void => {
+		this._applyLocation(ScreenAddress.parse(window.location.hash));
+		this._render();
+		void this.refresh();
+	};
+
+	/** Refreshes when the page becomes visible again. */
+	private readonly onVisibilityChange = (): void => {
+		if (document.hidden === false) {
+			void this.refresh();
+		}
+	};
+
 	/**
 	 * Creates the page. Nothing is drawn before `start`.
 	 * @param root The element that holds the screen.
@@ -86,19 +102,32 @@ export class MobileApp {
 	}
 
 	/**
-	 * Keeps the pairing key of the address, listens to the taps, and draws the first screen.
+	 * Keeps the pairing key of the address, opens the screen that the address names, listens to the taps, and
+	 * draws the first screen.
 	 * @returns A promise that ends when the first refresh ends.
 	 */
 	async start(): Promise<void> {
 		MobileApi.capturePairingKey();
+		this._applyLocation(ScreenAddress.parse(window.location.hash));
+		this._writeAddress(true);
 		this.root.addEventListener('click', (event) => void this._onClick(event));
 		this.overlay.addEventListener('click', (event) => void this._onClick(event));
-		document.addEventListener('visibilitychange', () => {
-			if (document.hidden === false) {
-				void this.refresh();
-			}
-		});
+		document.addEventListener('visibilitychange', this.onVisibilityChange);
+		window.addEventListener('popstate', this.onPopState);
 		await this.refresh();
+	}
+
+	/**
+	 * Stops the page: no more refresh, and no more listener on the document and on the window.
+	 */
+	stop(): void {
+		this._clearTimer();
+		if (this.toastTimer !== null) {
+			clearTimeout(this.toastTimer);
+			this.toastTimer = null;
+		}
+		document.removeEventListener('visibilitychange', this.onVisibilityChange);
+		window.removeEventListener('popstate', this.onPopState);
 	}
 
 	/**
@@ -243,20 +272,42 @@ export class MobileApp {
 		return NeedsYouScreen.render(snapshot, this.isOnline);
 	}
 
-	private _openTab(tab: TabName): void {
-		this.tab = tab;
-		this.screen = tab;
-		this.paneId = null;
+	/**
+	 * Opens a screen, adds it to the history of the browser, and puts it in the address.
+	 * @param tab The screen of the bottom bar to open, or the one that the pane came from.
+	 * @param paneId The identifier of the pane to open, or null for the screen of the bottom bar.
+	 */
+	private _open(tab: TabName, paneId: string | null): void {
+		this._applyLocation({
+			tab,
+			paneId,
+		});
+		this._writeAddress(false);
 		this._render();
 		void this.refresh();
 	}
 
-	private _openPane(paneId: string): void {
-		this.screen = 'pane';
-		this.paneId = paneId;
+	private _applyLocation(location: ScreenLocation): void {
+		this.tab = location.tab;
+		this.screen = location.paneId === null ? location.tab : 'pane';
+		this.paneId = location.paneId;
 		this.output = '';
-		this._render();
-		void this.refresh();
+	}
+
+	/**
+	 * Puts the open screen in the address of the page.
+	 * @param isReplace True to replace the entry of the history that is current, false to add a new entry.
+	 */
+	private _writeAddress(isReplace: boolean): void {
+		const hash = ScreenAddress.format(this.tab, this.paneId);
+		if (window.location.hash === hash) {
+			return;
+		}
+		if (isReplace) {
+			window.history.replaceState(null, '', hash);
+		} else {
+			window.history.pushState(null, '', hash);
+		}
 	}
 
 	private async _onClick(event: Event): Promise<void> {
@@ -281,11 +332,11 @@ export class MobileApp {
 			return;
 		}
 		if (action === 'go') {
-			this._openTab((element.dataset.screen ?? 'needs_you') as TabName);
+			this._open((element.dataset.screen ?? 'needs_you') as TabName, null);
 		} else if (action === 'open-pane') {
-			this._openPane(paneId);
+			this._open(this.tab, paneId);
 		} else if (action === 'back') {
-			this._openTab(this.tab);
+			this._open(this.tab, null);
 		} else if (action === 'refresh') {
 			await this.refresh();
 		} else if (action === 'answer') {

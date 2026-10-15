@@ -48,17 +48,17 @@ export class PaneScreen {
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
 		const interruptHtmlContent =
 			isWorking ? PaneScreen.renderDangerButton('interrupt', 'Interrupt', paneId) : '';
+		const hasActions = denyHtmlContent !== '' || interruptHtmlContent !== '';
+		const buttonsHtmlContent = `${denyHtmlContent}${interruptHtmlContent}`;
+		const actionsHtmlContent =
+			hasActions ? /* html */`<div class="actions">${buttonsHtmlContent}</div>` : '';
 		const screenHtmlContent = /* html */`
 			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent)}
 			<main class="pane-main">
 				<div class="sub">${subtitle}</div>
 				${PaneScreen.renderQuestion(agent)}
 				<pre class="output">${outputHtmlContent === '' ? '…' : outputHtmlContent}</pre>
-				<div class="actions">
-					<button class="button" data-action="refresh">↻ Refresh</button>
-					${denyHtmlContent}
-					${interruptHtmlContent}
-				</div>
+				${actionsHtmlContent}
 			</main>
 			<div class="composer">
 				<textarea

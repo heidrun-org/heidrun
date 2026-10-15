@@ -29,7 +29,8 @@ export class ScreenHeader {
 	}
 
 	/**
-	 * Draws the top bar of the screen of one pane: a back button, the title, and a badge.
+	 * Draws the top bar of the screen of one pane: a back button, the title, a badge, and a button that refreshes
+	 * the output.
 	 * @param title The title of the screen.
 	 * @param badgeHtmlContent The HTML of the badge, or an empty text.
 	 * @returns The HTML of the top bar.
@@ -40,6 +41,22 @@ export class ScreenHeader {
 				<button class="back" data-action="back" aria-label="Back">‹</button>
 				<h1>${HtmlEscape.escape(title)}</h1>
 				${badgeHtmlContent}
+				<button class="icon-button" data-action="refresh" aria-label="Refresh" title="Refresh">
+					<svg
+						viewBox="0 0 24 24"
+						width="20"
+						height="20"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M20 12a8 8 0 1 1-2.34-5.66"/>
+						<path d="M20 4v4h-4"/>
+					</svg>
+				</button>
 			</header>
 		`;
 		return headerHtmlContent;

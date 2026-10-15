@@ -41,6 +41,21 @@ describe('Pane screen', () => {
 		expect(span?.style.color).toBe('rgb(36, 114, 200)');
 	});
 
+	it('has a refresh icon in the header, and no button Refresh below the output', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-finished');
+		const icon = document.querySelector('header button[data-action="refresh"]');
+		expect(icon?.getAttribute('aria-label')).toBe('Refresh');
+		expect(icon?.textContent?.trim()).toBe('');
+		expect(document.querySelectorAll('[data-action="refresh"]')).toHaveLength(1);
+		expect(harness.text()).not.toContain('Refresh');
+		expect(document.querySelector('.actions')).toBeNull();
+		const stateCalls = mac.callsOf('state').length;
+		await harness.tap('header button[data-action="refresh"]');
+		expect(mac.callsOf('state').length).toBe(stateCalls + 1);
+	});
+
 	it('shows the menu of a blocked coding agent, and answers it', async () => {
 		const mac = Fixtures.mac();
 		const harness = await AppHarness.start(mac);

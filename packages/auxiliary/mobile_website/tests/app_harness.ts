@@ -12,6 +12,9 @@ import { FakeMac } from './fake_mac';
  * One page, started on an empty document, with fake timers.
  */
 export class AppHarness {
+	/** The page that started last. The next start stops it, so an old page does not listen to the window. */
+	private static current: MobileApp | null = null;
+
 	/** The element that holds the screen. */
 	readonly root: HTMLElement;
 
@@ -31,10 +34,13 @@ export class AppHarness {
 	 * Starts a page that is paired with the fake Mac.
 	 * @param mac The fake Mac.
 	 * @param isPaired False to start a phone that has no pairing key.
+	 * @param hash The part of the address after the path when the page opens, for example `#/panes`.
 	 * @returns The page, after its first refresh.
 	 */
-	static async start(mac: FakeMac, isPaired = true): Promise<AppHarness> {
+	static async start(mac: FakeMac, isPaired = true, hash = ''): Promise<AppHarness> {
+		AppHarness.current?.stop();
 		vi.useFakeTimers();
+		window.history.replaceState(null, '', `/${hash}`);
 		document.body.innerHTML = '<div id="app"></div><div id="overlay"></div>';
 		window.localStorage.clear();
 		if (isPaired) {
@@ -44,6 +50,7 @@ export class AppHarness {
 		const root = document.getElementById('app') as HTMLElement;
 		const overlay = document.getElementById('overlay') as HTMLElement;
 		const harness = new AppHarness(root, overlay, new MobileApp(root, overlay));
+		AppHarness.current = harness.app;
 		await harness.app.start();
 		return harness;
 	}
