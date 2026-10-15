@@ -1,3 +1,7 @@
+---
+description: "From your iPhone or your iPad, see the coding agents, allow or refuse a blocked request, send a prompt, and read the end of the output."
+---
+
 # The phone access
 
 A coding agent can wait for an hour only for one permission, while you are away from your desk.
