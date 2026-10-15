@@ -169,7 +169,7 @@ Every command for GitHub in this section has a matching command for GitLab, as [
 
 ### Creating an issue
 
-Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
+Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue". Write the text of the issue as the section "Writing the text of an issue" says.
 
 ### Attaching an image to an issue
 
@@ -184,6 +184,13 @@ On GitLab, the `--attach` option of the `glab` command works in the same way, bu
 - When the issue already exists: `glab issue update <issue number> --attach './screenshot.png'`
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
+
+### Writing the text of an issue
+
+These two rules apply to the body of an issue, and to every comment that you write in an issue.
+
+- Every file name of the repository that you write in the text of an issue is a link to the file. Write the file name as the label of the link, and the address of the file on GitHub as the target, for example `[HOW_TO_RELEASE.md](https://github.com/heidrun-org/heidrun/blob/main/HOW_TO_RELEASE.md)`. Link to the branch `main`, or to the branch that holds the file when `main` does not have the file yet. On GitLab, the address of a file has the form `https://<host>/<group>/<project>/-/blob/main/<path>`.
+- Every issue that you write in the text of an issue is its own bullet that starts with a dash, and the bullet holds only the plain address of the issue, for example `- https://github.com/heidrun-org/heidrun/issues/506`. GitHub changes such a bullet into the title, the state, and the number of the issue. A numbered list, a link with a label, or an issue number inside a sentence shows only the number. Write the words that explain the issues above the list, not inside the bullet. On GitLab, write each issue as its own bullet in the same way, with a plus sign after the reference, for example `- #506+`, so that GitLab shows the title.
 
 ## Starting Heidrun to test it or to take a screenshot
 
