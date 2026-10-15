@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_chat_sessions/src/storage`
+# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/storage`
 
 ## Purpose
 Holds the SQLite file with its five tables, and turns the rows of a query into text.

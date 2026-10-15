@@ -184,12 +184,6 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
-  packages/auxiliary/data_layer_chat_sessions: {}
-
-  packages/auxiliary/data_layer_code_hosting: {}
-
-  packages/auxiliary/data_layer_source_control: {}
-
   packages/auxiliary/raw_coding_agent_cli: {}
 
   packages/auxiliary/website_public:
@@ -215,6 +209,12 @@ importers:
       vue:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
+
+  packages/data_layers/data_layer_chat_sessions: {}
+
+  packages/data_layers/data_layer_code_hosting: {}
+
+  packages/data_layers/data_layer_source_control: {}
 
   packages/dev_tools/agents_rules_checker:
     devDependencies:

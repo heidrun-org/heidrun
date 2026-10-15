@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_code_hosting`
+# Directory Context: `/packages/data_layers/data_layer_code_hosting`
 
 ## Purpose
 A Rust library and a command line tool that read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_code_hosting` is the name of the package and the name of the executable.

@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_code_hosting/src/storage`
+# Directory Context: `/packages/data_layers/data_layer_code_hosting/src/storage`
 
 ## Purpose
 Holds the SQLite file with its two tables, and turns the rows of a query into text.

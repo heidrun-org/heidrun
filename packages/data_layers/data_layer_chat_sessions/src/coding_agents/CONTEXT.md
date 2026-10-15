@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_chat_sessions/src/coding_agents`
+# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/coding_agents`
 
 ## Purpose
 Finds the chat session files of Claude Code and of Codex for one folder, reads what each file holds without a model, and turns it into the stored shape.

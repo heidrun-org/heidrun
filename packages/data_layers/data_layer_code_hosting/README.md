@@ -145,7 +145,7 @@ ORDER BY number"
 The desktop application uses the library as a path dependency, as it does for `raw_coding_agent_cli`:
 
 ```toml
-data_layer_code_hosting = { path = "../../auxiliary/data_layer_code_hosting" }
+data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
 ```
 
 ```rust

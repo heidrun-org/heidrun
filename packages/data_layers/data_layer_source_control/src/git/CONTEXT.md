@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_source_control/src/git`
+# Directory Context: `/packages/data_layers/data_layer_source_control/src/git`
 
 ## Purpose
 Reads the commits of a Git repository: the hashes of every commit that the branches, the remote branches, and the tags reach, and the facts of each commit, 500 commits at a time.
