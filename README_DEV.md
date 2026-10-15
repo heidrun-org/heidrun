@@ -57,6 +57,7 @@ The command runs the tests of the six packages, and ends with a non-zero exit co
 | `pnpm --filter data_layer_user_activity test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_user_activity`: the JSON schema, the SQLite file, the reading of the file of user activity records, the modes initialize and update, and the read-only query. The tests of the command line use a fake file of user activity records in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter data_layer_chat_sessions test` | The Rust tests (`cargo test`) of `packages/data_layers/data_layer_chat_sessions`: the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the JSON schema, the SQLite file with its link tables, the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file. |
 | `pnpm --filter change_log_generator test` | The Vitest tests of `packages/dev_tools/change_log_generator`, the generator of the change log. The test files sit in the folder `tests`. |
+| `pnpm --filter install_script_tests test` | The Vitest tests of `packages/dev_tools/install_script_tests`, the tests of the script `scripts/install.sh`. They run the script with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, and install in a temporary folder in place of `/Applications`. The test files sit in the folder `tests`. |
 | `pnpm --filter worktree_tools test` | The Vitest tests of `packages/dev_tools/worktree_tools`, the tools that create a worktree and clean the old target folders. The test files sit in the folder `tests`. |
 
 When you add a feature, add the matching tests in the same change. When you fix a bug, add a test that fails without the fix.
@@ -90,7 +91,26 @@ Options:
 
 When the release already exists and you do not use `--recreate`, the command replaces the disk image and rewrites the text of the release. The release keeps its first date.
 
-The disk image is built for the architecture of your machine only, and it is not signed and not notarized. macOS shows a warning when someone opens it.
+The command uploads the disk image twice: once with the version in its name, for example `Heidrun_0.2.7_aarch64.dmg`, and once with a name that never changes, `Heidrun_aarch64.dmg`. The second copy gives the web address of the latest disk image, `https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg`, which the script `scripts/install.sh` uses. The command stops when the build does not give a disk image for Apple silicon (a file that ends with `_aarch64.dmg`).
+
+The disk image is built for the architecture of your machine only, and it is not signed and not notarized. macOS shows a warning when someone opens it from a web browser.
+
+## Install the application with one command
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh
+```
+
+The script [`scripts/install.sh`](scripts/install.sh) installs the latest release in `/Applications`. A web browser puts the quarantine mark `com.apple.quarantine` on a file that it downloads, and macOS checks the signature of an application only when the application has this mark, so it shows the message "damaged" for Heidrun. The command `curl` does not put the mark, so the application opens with no message. The script does these steps, in this order:
+
+1. It stops with a message when the computer is not macOS, when the processor is not Apple silicon, when `/Applications/Heidrun.app` is running, or when the user cannot write in `/Applications`.
+2. It downloads `Heidrun_aarch64.dmg` of the latest release into a temporary folder, with `curl -fL`.
+3. It mounts the disk image with `hdiutil attach -nobrowse -readonly -mountpoint`.
+4. It replaces `/Applications/Heidrun.app` with the copy from the disk image, with `ditto`.
+5. It ejects the disk image and deletes the temporary folder, also when a step fails.
+6. It prints the installed version, read from `Contents/Info.plist` of the application.
+
+The environment variable `HEIDRUN_APPLICATIONS_FOLDER` changes the folder that receives `Heidrun.app`. The tests use it, and a developer can use it to try the script with no change to `/Applications`. The tests of the script are the package [`packages/dev_tools/install_script_tests`](packages/dev_tools/install_script_tests). The script cannot work for a release that has no file `Heidrun_aarch64.dmg`: v0.2.7 and the releases before it do not have it.
 
 ## Work in a Git worktree
 

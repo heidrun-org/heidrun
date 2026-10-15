@@ -1,0 +1,14 @@
+{
+  "name": "install_script_tests",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.7",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "vitest": "^2.1.9"
+  }
+}
