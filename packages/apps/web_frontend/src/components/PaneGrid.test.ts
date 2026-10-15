@@ -3,10 +3,19 @@ import { mount } from "@vue/test-utils";
 import type { PaneLayoutSnapshot } from "../lib/types";
 
 const mocks = await vi.hoisted(async () => {
-  const { ref } = await import("vue");
+  const { computed, ref } = await import("vue");
+  const gridLayout = ref<unknown>(null);
+  const gridPanes = ref<unknown[]>([]);
+  const hiddenTabs = ref<unknown[]>([]);
   return {
-    gridLayout: ref<unknown>(null),
-    gridPanes: ref<unknown[]>([]),
+    gridLayout,
+    gridPanes,
+    /** The tabs that the developer opened before the selected tab, as the store gives them. */
+    hiddenTabs,
+    keptTabs: computed(() => [
+      ...hiddenTabs.value,
+      { tabId: "selected", isSelected: true, panes: gridPanes.value, layout: gridLayout.value },
+    ]),
     setSplitRatios: vi.fn(),
   };
 });
@@ -18,6 +27,7 @@ vi.mock("../stores/session", () => ({
 vi.mock("../stores/pinned_panes", () => ({
   gridLayout: mocks.gridLayout,
   gridPanes: mocks.gridPanes,
+  keptTabs: mocks.keptTabs,
 }));
 
 // The panes show terminals, which need a real browser: the lines between the panes are the subject of these tests.
@@ -74,6 +84,7 @@ beforeEach(() => {
   mocks.setSplitRatios.mockClear();
   mocks.gridLayout.value = null;
   mocks.gridPanes.value = [];
+  mocks.hiddenTabs.value = [];
   document.body.innerHTML = "";
 });
 
@@ -307,5 +318,81 @@ describe("PaneGrid without pane", () => {
   it("does not show the screen when the tab has a pane", () => {
     const wrapper = mountPaneGrid(THREE_PANES);
     expect(wrapper.find(".empty-tab-screen").exists()).toBe(false);
+  });
+});
+
+describe("PaneGrid tab switch", () => {
+  /** The tab two of the store tests: one pane that fills the area. */
+  const SECOND_TAB: PaneLayoutSnapshot = {
+    workspace_id: "w1",
+    tab_id: "w1:t2",
+    zoomed: false,
+    area: AREA,
+    focused_pane_id: "w1:p4",
+    panes: [{ pane_id: "w1:p4", focused: true, rect: AREA }],
+    splits: [],
+  };
+
+  /** Selects the second tab: the first tab stays in the list of the opened tabs, and the grid shows the second tab. */
+  function selectSecondTab(wrapper: ReturnType<typeof mountPaneGrid>) {
+    mocks.hiddenTabs.value = [
+      {
+        tabId: "first",
+        isSelected: false,
+        panes: THREE_PANES.panes.map((layoutPane) => ({ pane_id: layoutPane.pane_id })),
+        layout: THREE_PANES,
+      },
+    ];
+    mocks.gridLayout.value = SECOND_TAB;
+    mocks.gridPanes.value = [{ pane_id: "w1:p4" }];
+    return wrapper.vm.$nextTick();
+  }
+
+  it("keeps the elements of the panes of the old tab, so that their terminals stay alive", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    const oldCells = wrapper.findAll(".cell").map((cell) => cell.element);
+    await selectSecondTab(wrapper);
+    const cells = wrapper.findAll(".cell");
+    expect(cells.length).toBe(4);
+    expect(cells.slice(0, 3).map((cell) => cell.element)).toEqual(oldCells);
+  });
+
+  it("hides the panes of the old tab and shows the pane of the new tab", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    await selectSecondTab(wrapper);
+    const hidden = wrapper.findAll(".cell").map((cell) => cell.classes("is-hidden"));
+    expect(hidden).toEqual([true, true, true, false]);
+  });
+
+  it("shows the old panes again, with the same elements, when the old tab is selected again", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    const oldCells = wrapper.findAll(".cell").map((cell) => cell.element);
+    await selectSecondTab(wrapper);
+    mocks.hiddenTabs.value = [];
+    mocks.gridLayout.value = THREE_PANES;
+    mocks.gridPanes.value = THREE_PANES.panes.map((layoutPane) => ({ pane_id: layoutPane.pane_id }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.findAll(".cell").map((cell) => cell.element)).toEqual(oldCells);
+    expect(wrapper.findAll(".cell").map((cell) => cell.classes("is-hidden"))).toEqual([false, false, false]);
+  });
+
+  it("gives each pane of a hidden tab the place that its own tab gives it", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    await selectSecondTab(wrapper);
+    const style = (wrapper.findAll(".cell")[1].element as HTMLElement).style;
+    expect({ left: style.left, top: style.top, height: style.height }).toEqual({
+      left: "calc(50% - 1px)",
+      top: "0px",
+      height: "50%",
+    });
+  });
+
+  it("shows the empty screen when the selected tab has no pane, whatever the hidden tabs hold", async () => {
+    const wrapper = mountPaneGrid(THREE_PANES);
+    await selectSecondTab(wrapper);
+    mocks.gridPanes.value = [];
+    mocks.gridLayout.value = null;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".empty .empty-tab-screen").exists()).toBe(true);
   });
 });

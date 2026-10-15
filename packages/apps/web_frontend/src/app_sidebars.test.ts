@@ -42,7 +42,7 @@ async function mountApp() {
   session.state.selectedPaneId = "p1";
   settingsStore.settings.leftCollapsed = false;
   settingsStore.settings.rightCollapsed = false;
-  settingsStore.settings.leftSidebarSection = "actions";
+  settingsStore.settings.leftSidebarSection = "launchers";
   settingsStore.settings.rightSidebarSection = "toHandle";
   const wrapper = shallowMount(App, { attachTo: document.body, global: { stubs: { TopBar: false, Icon: false, MoreMenu: true, ThemeMenu: true } } });
   mountedWindows.push(wrapper);
@@ -159,7 +159,7 @@ describe("collapsing both sidebars", () => {
 });
 
 describe("opening a sidebar section while its sidebar is collapsed", () => {
-  it("expands the right sidebar, with the Notes sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
+  it("expands the right sidebar, with the Clipboard sidebar section, when the shortcut Shift+Command+P pins a text", async () => {
     const { wrapper, settings, notes } = await mountApp();
     settings.rightCollapsed = true;
     await wrapper.vm.$nextTick();

@@ -1,7 +1,7 @@
 # Documentation index
 
 - Created: 13 October 2026
-- Last updated: 13 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../AGENTS.md)
 - Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337)
@@ -12,7 +12,9 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [agents_rules/](agents_rules/index.md): the rules that every coding agent follows when it works on Heidrun.
 - [analytics/](analytics/index.md): the analytics of the code of a project.
 - [architecture/](architecture/index.md): how Heidrun is built.
+- [documentation_by_ai/](documentation_by_ai/index.md): the learned documentation process and the one-generation, one-build workflow.
 - [marketing/](marketing/index.md): the marketing rules, the mythology texts, and the method to record videos.
 - [potential_ideas/](potential_ideas/index.md): the ideas that nobody has decided to build yet.
 - [release_notes/](release_notes/index.md): the text that starts every GitHub release.
+- [statistics/](statistics/index.md): the four data layers, and the statistics that read them.
 - [team_collaboration_process/](team_collaboration_process/index.md): how the people who work on Heidrun work together.

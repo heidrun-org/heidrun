@@ -24,13 +24,16 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 
 - The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
   - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
-  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, and the column of pinned panes.
-  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Source control, Code hosting, and Files sidebar sections, and the sidebar icon bar.
-  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the Chats sidebar section, and the Chats sort dropdown menu.
-  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Chats sidebar section or the dynamic topics.
+  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
+  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
+  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
+  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Past chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Past chats sidebar section or the dynamic topics.
   - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search field, and the saved search. Read it when you change the Code hosting sidebar section.
   - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
   - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
+  - [person_work.md](docs/agents_rules/glossary/person_work.md): the definition of each word of the statistic of the work of one person: the Work of one person tab, its source, the Git history, the AI cost, the person, the person chooser, the time range, the day, the three totals, and the bar chart. Read it when you change the tab "Work of one person" of the Statistics window.
+  - [statistics_charts.md](docs/agents_rules/glossary/statistics_charts.md): the definition of the chart legend and of the chart information card, which every chart of the Statistics window has. Read it when you add or change a chart of the Statistics window.
+  - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot. Read it when you change the detection of the activity of the developer, its sidebar section, or the Statistics window.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -38,8 +41,15 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The window, in the folder `docs/agents_rules/user_interface/window`:
   - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
   - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
+  - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
+  - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
+  - [statistics_charts.md](docs/agents_rules/user_interface/window/statistics_charts.md): the rules that every chart of the Statistics window follows: a chart legend, and a chart information card in HTML with an arrow that points to the bar under the pointer. Read it each time that you add or change a chart of the Statistics window, and add the same legend, the same card, and the same tests to a new chart.
+  - [statistics_user_activity.md](docs/agents_rules/user_interface/window/statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
+  - [statistics_user_activity_stacked_bars.md](docs/agents_rules/user_interface/window/statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
+  - [statistics_person_work.md](docs/agents_rules/user_interface/window/statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.
+  - [statistics_ai_cost.md](docs/agents_rules/user_interface/window/statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
   - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
-  - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, and the counts.
+  - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
   - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
 - The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
@@ -47,20 +57,22 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
   - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
-  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the notes.
+  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the clipboard.
   - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
   - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
   - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
-  - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the Files sidebar section.
+  - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the File explorer sidebar section.
   - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
-- The Chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
+  - [user_activity.md](docs/agents_rules/user_interface/sidebars/user_activity.md): the User activity sidebar section, the detection of the activity of the developer, and the user activity records.
+- The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
   - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
-  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, its cache, and the width of an information card.
+  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, the tokens, and the estimated cost, its cache, and the width of an information card.
+  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the section "Past chats" of the Settings window, with the delay between two reads of the chats.
   - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
     - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
     - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
-    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card.
+    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card, with the tokens and the estimated cost of the chat.
     - [worktrees_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/worktrees_line.md): the worktrees line and its information card.
   - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
     - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
@@ -114,7 +126,7 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository has three parts: the Issue Fix Setup, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you make the change. In the Issue Fix Review, the developer tests the change. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
 The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
 
@@ -126,9 +138,24 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
    - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
 3. Make the change in the temporary worktree. Every commit message mentions the issue number.
 
+### Issue Fix Review
+
+The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+
+1. Tell the developer to look at the result.
+2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
+   ```bash
+   cd <path of the temporary worktree> && pnpm dev
+   ```
+3. Say in one or two short lines what to look at, so that the developer can validate the change.
+4. Only then ask whether the developer is satisfied and wants the pull request.
+
+- Give the command line again each time that the developer asks for a change and you change the work.
+- Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
+
 ### Issue Fix Completion
 
-The Issue Fix Completion starts when the developer is satisfied with the change.
+The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
 2. Create a pull request (on GitLab, a merge request) from the temporary branch.
@@ -142,7 +169,7 @@ Every command for GitHub in this section has a matching command for GitLab, as [
 
 ### Creating an issue
 
-Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue".
+Create an issue with the `gh` command: `gh issue create --title "<title>" --body "<body>"`. On GitLab, use the `glab` command: `glab issue create --title "<title>" --description "<body>"`. If you have screenshots related to the issue, attach them in the same command, as described in the section "Attaching an image to an issue". Write the text of the issue as the section "Writing the text of an issue" says.
 
 ### Attaching an image to an issue
 
@@ -158,6 +185,13 @@ On GitLab, the `--attach` option of the `glab` command works in the same way, bu
 
 Never commit an image to the repository, and never push an image to a branch, only to show it in an issue. If you need a screenshot in a specific place in the body, write `![Alt text](screenshot.png)` in the body, and the `--attach` flag rewrites the reference to the uploaded file.
 
+### Writing the text of an issue
+
+These two rules apply to the body of an issue, and to every comment that you write in an issue.
+
+- Every file name of the repository that you write in the text of an issue is a link to the file. Write the file name as the label of the link, and the address of the file on GitHub as the target, for example `[HOW_TO_RELEASE.md](https://github.com/heidrun-org/heidrun/blob/main/HOW_TO_RELEASE.md)`. Link to the branch `main`, or to the branch that holds the file when `main` does not have the file yet. On GitLab, the address of a file has the form `https://<host>/<group>/<project>/-/blob/main/<path>`.
+- Every issue that you write in the text of an issue is its own bullet that starts with a dash, and the bullet holds only the plain address of the issue, for example `- https://github.com/heidrun-org/heidrun/issues/506`. GitHub changes such a bullet into the title, the state, and the number of the issue. A numbered list, a link with a label, or an issue number inside a sentence shows only the number. Write the words that explain the issues above the list, not inside the bullet. On GitLab, write each issue as its own bullet in the same way, with a plus sign after the reference, for example `- #506+`, so that GitLab shows the title.
+
 ## Starting Heidrun to test it or to take a screenshot
 
 Always start Heidrun with the command line option `--no-splash-screen` when you start it to test it, and above all when you take a screenshot. Without the option, the splash screen covers the application for 3 seconds after the main window appears, so a screenshot taken in this time shows the splash screen and not the application, and you wait for nothing.
@@ -166,6 +200,14 @@ Always start Heidrun with the command line option `--no-splash-screen` when you 
 - For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
 - The rules of the splash screen are in [docs/agents_rules/user_interface/window/window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md), in the section "Splash screen".
 
+## Environment variables
+
+The file `.env.example` at the root of the repository lists and explains every environment variable that the application reads. A developer copies it to the file `.env`, which Git ignores, and removes the comment sign of each variable that the developer wants. A development build of the application loads the file `.env` at the start, with the module `packages/apps/desktop_tauri/src/environment_file.rs`. A release build never loads it. A variable that is already set in the shell keeps the value of the shell.
+
+- When you add code that reads an environment variable, add the variable to `.env.example` in the same change: a block of comments that says what the variable does, its default value, and its accepted values, then the variable on one commented-out line.
+- Keep every variable of `.env.example` commented out, so that a copy of the file changes nothing.
+- The Rust test of the module `environment_file` fails when `.env.example` and the code do not list the same variables.
+
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
@@ -173,6 +215,10 @@ Always start Heidrun with the command line option `--no-splash-screen` when you 
 - `pnpm --filter desktop_tauri test` runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
 - `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the splash image component, the favicon, and a complete build of the website. The test files sit in the folder `tests`.
 - `pnpm --filter raw_coding_agent_cli test` runs `cargo test` for the package `packages/auxiliary/raw_coding_agent_cli`, with fake `claude` and `codex` commands. The tests of the command line sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_code_hosting test` runs `cargo test` for the package `packages/data_layers/data_layer_code_hosting`: the two JSON schemas, the SQLite file, the reading of the pages of GitHub with a fake GitHub, the modes initialize and update, and the read-only query. The tests of the command line use a fake `gh` command and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_source_control test` runs `cargo test` for the package `packages/data_layers/data_layer_source_control`: the JSON schema, the SQLite file, the reading of the commits of a real Git repository, the modes initialize and update, and the read-only query. The tests of the command line use a real Git repository in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_user_activity test` runs `cargo test` for the package `packages/data_layers/data_layer_user_activity`: the JSON schema, the SQLite file, the reading of the file of user activity records, the modes initialize and update, and the read-only query. The tests of the command line use a fake file of user activity records in a temporary folder and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
+- `pnpm --filter data_layer_chat_sessions test` runs `cargo test` for the package `packages/data_layers/data_layer_chat_sessions`: the reading of the chat session files of Claude Code and of Codex, the cache of the scans, the JSON schema, the SQLite file with its link tables, the modes initialize and update, and the read-only query. The tests of the command line use fake folders of the two coding agents and a real Git repository with a fake remote, and sit in the folder `tests`, and the other Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.

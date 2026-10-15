@@ -859,40 +859,58 @@ export function newTerminal() {
   });
 }
 
-export function splitPane(direction: "right" | "down" = "right", paneId?: string) {
+/**
+ * Splits a pane and starts a terminal in the new pane, then selects the new pane. Without a pane to split, creates a new tab
+ * with a terminal.
+ * @param direction - where the new pane goes: to the right of the pane, or below it
+ * @param paneId - the pane to split, the selected pane when it is not given
+ * @returns the new pane, or undefined when no pane was split
+ */
+export async function splitPane(direction: "right" | "down" = "right", paneId?: string): Promise<PaneInfo | undefined> {
   const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : selectedPane.value;
-  if (!p) return newTerminal();
+  if (!p) {
+    await newTerminal();
+    return undefined;
+  }
   return guard(async () => {
     const pane = await api.split(p.pane_id, direction, p.cwd);
     await refresh();
     if (pane) selectPane(pane);
+    return pane;
   });
-}
-
-export async function newWorkspace(cwd: string | null, label: string | null) {
-  // The raw socket API wants absolute paths.
-  if (cwd?.startsWith("~")) {
-    const home = (await homeDir()).replace(/\/$/, "");
-    cwd = home + cwd.slice(1);
-  }
-  return guard(() => api.newWorkspace(cwd, label));
 }
 
 /**
  * Creates a workspace for a folder, then selects it with its first tab and its first pane, so that the developer sees that
  * the workspace exists. A failure shows a toast.
- * @param cwd - the absolute path of the folder of the workspace
+ * @param cwd - the path of the folder of the workspace, absolute or starting with `~`
  * @param label - the name of the workspace
- * @returns a promise that ends when the workspace is selected, or when the failure is shown
+ * @returns the first pane of the new workspace, or undefined when the workspace was not created
  */
-export function openFolderAsWorkspace(cwd: string, label: string) {
+export async function newWorkspace(cwd: string | null, label: string | null): Promise<PaneInfo | undefined> {
+  // The raw socket API wants absolute paths.
+  if (cwd?.startsWith("~")) {
+    const home = (await homeDir()).replace(/\/$/, "");
+    cwd = home + cwd.slice(1);
+  }
   return guard(async () => {
     const created = await api.newWorkspace(cwd, label);
     await refresh();
     if (created.root_pane) {
       selectPane(created.root_pane);
     }
+    return created.root_pane;
   });
+}
+
+/**
+ * Creates a workspace for a folder, then selects it with its first tab and its first pane.
+ * @param cwd - the absolute path of the folder of the workspace
+ * @param label - the name of the workspace
+ * @returns a promise that ends when the workspace is selected, or when the failure is shown
+ */
+export async function openFolderAsWorkspace(cwd: string, label: string): Promise<void> {
+  await newWorkspace(cwd, label);
 }
 
 export function closePane(paneId: string) {
@@ -983,7 +1001,21 @@ export function shiftTab(delta: -1 | 1) {
   return moveTab(list[i].tab_id, delta > 0 ? target + 1 : target);
 }
 
-export function closeTab(tabId: string) {
+/** Tells if a tab is the only tab of its workspace. A workspace always has at least one tab. */
+function isLastTabOfItsWorkspace(tabId: string): boolean {
+  const allTabs = state.snapshot?.tabs ?? [];
+  const tab = allTabs.find((candidate) => candidate.tab_id === tabId);
+  if (tab === undefined) {
+    return false;
+  }
+  return allTabs.filter((candidate) => candidate.workspace_id === tab.workspace_id).length <= 1;
+}
+
+export async function closeTab(tabId: string) {
+  if (isLastTabOfItsWorkspace(tabId)) {
+    toast(t("sessionStore.error.lastTab"), "error");
+    return undefined;
+  }
   return guard(() => api.closeTab(tabId));
 }
 

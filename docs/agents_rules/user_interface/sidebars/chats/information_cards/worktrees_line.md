@@ -1,4 +1,4 @@
-# Chats sidebar section: the worktrees line
+# Past chats sidebar section: the worktrees line
 
 - Created: 14 October 2026
 - Last updated: 14 October 2026

@@ -1,0 +1,19 @@
+{
+  "title": "Activité de l’utilisateur",
+  "label": "Activité de l’utilisateur devant Heidrun",
+  "active": "Actif",
+  "notActive": "Inactif",
+  "activeSince": "depuis {time}",
+  "folderLabel": "Dossier de l’espace de travail sélectionné",
+  "noFolder": "Aucun espace de travail n’est sélectionné.",
+  "todayTitle": "Aujourd’hui, par dossier",
+  "noToday": "Aucune période active n’a fini aujourd’hui.",
+  "lastPeriodsTitle": "Dernières périodes actives",
+  "keyboardCount": "Clavier : {number}",
+  "mouseCount": "Souris : {number}",
+  "reason.cool_down": "aucune action pendant le délai de repos",
+  "reason.window_behind": "la fenêtre est passée derrière",
+  "reason.workspace_changed": "l’espace de travail a changé",
+  "reason.app_closed": "l’application s’est fermée",
+  "fileLabel": "Fichier des enregistrements"
+}

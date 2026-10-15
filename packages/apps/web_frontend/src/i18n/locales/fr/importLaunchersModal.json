@@ -1,0 +1,15 @@
+{
+  "title": "Importer des lanceurs",
+  "closeTitle": "Fermer la fenêtre (Échap)",
+  "empty": "Ce projet n’a aucun lanceur à importer : aucun package.json, Makefile ou fichier semblable avec des scripts n’a été trouvé.",
+  "cancel": "Annuler",
+  "import_one": "Importer {count} lanceur",
+  "import_other": "Importer {count} lanceurs",
+  "selectAll": "Tout sélectionner",
+  "selectNone": "Tout désélectionner",
+  "choosePackageJson": "Choisir un package.json",
+  "backToProject": "Retour au projet",
+  "emptyPicked": "Ce package.json n’a plus aucun lanceur à importer.",
+  "outsideRepository": "Le package.json doit être dans le dépôt.",
+  "notPackageJson": "Choisissez un fichier nommé package.json."
+}

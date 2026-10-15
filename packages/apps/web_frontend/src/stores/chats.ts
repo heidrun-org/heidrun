@@ -5,7 +5,7 @@ import { settings } from "./settings";
 /** A coding agent that saves its conversations on this Mac. */
 export type ChatAgent = "claude" | "codex";
 
-/** The coding agents of the selector of the Chats sidebar section, in this order. */
+/** The coding agents of the selector of the Past chats sidebar section, in this order. */
 export const CHAT_AGENTS: readonly ChatAgent[] = ["claude", "codex"];
 
 /**
@@ -55,6 +55,18 @@ export interface ChatMeta {
   files_written: string[];
 }
 
+/** The tokens that a chat used, and what they cost. The Rust side adds the tokens of the lines of the file of the chat. */
+export interface ChatUsage {
+  /** Every input token that was sent, with the ones that the provider read from its cache and wrote to it. */
+  input_tokens: number;
+  /** The input tokens that the provider read from its cache. They are a part of `input_tokens`. */
+  cached_input_tokens: number;
+  /** The output tokens, with the tokens of the reasoning. */
+  output_tokens: number;
+  /** The estimated cost in US dollars, at the public price of each model, or null when a model of the chat has no known price. */
+  cost_usd: number | null;
+}
+
 /** One saved conversation between the developer and a coding agent. */
 export interface Chat {
   /** The identifier that the coding agent gave to the conversation. */
@@ -65,6 +77,8 @@ export interface Chat {
   updated_at: number;
   /** What the scan of the file found. */
   meta: ChatMeta;
+  /** The tokens and the cost of the chat, or null when the chat used no token. */
+  usage?: ChatUsage | null;
 }
 
 /** The number of chats that the list shows at the start, then after each click on "Show more". The next clicks add 50. */
@@ -198,7 +212,7 @@ export async function showMoreChats(): Promise<void> {
 
 /**
  * Reads the first conversations of a folder again, in the order that the settings say. A change of folder empties the
- * lists first, and starts again with the first limit, so that the Chats sidebar section never shows the conversations of
+ * lists first, and starts again with the first limit, so that the Past chats sidebar section never shows the conversations of
  * another workspace. An answer for a folder, a limit, a sort key, or an order that is no longer the current one is dropped.
  * @param folder - the folder of the selected workspace, or null when no workspace is selected
  */

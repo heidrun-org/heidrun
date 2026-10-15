@@ -46,6 +46,14 @@ describe('DialogCloseButton', () => {
 		expect(button.text()).toBe('');
 	});
 
+	it('has a small X, with no larger font size, when the property isSmall is true', () => {
+		const wrapper = mount(DialogCloseButton, { props: { title: 'Close the window', label: 'Close', isSmall: true } });
+		const button = wrapper.get('button');
+		expect(button.classes()).toEqual(expect.arrayContaining(['btn', 'btn-sm', 'border-0']));
+		expect(button.classes()).not.toContain('fs-4');
+		expect(button.find('.bi-x-lg').exists()).toBe(true);
+	});
+
 	it('gives the tooltip and the name for the screen reader', () => {
 		const wrapper = mount(DialogCloseButton, { props: { title: 'Close the window', label: 'Close' } });
 		expect(wrapper.get('button').attributes('title')).toBe('Close the window');

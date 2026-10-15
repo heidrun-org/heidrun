@@ -1,0 +1,19 @@
+{
+  "title": "User activity",
+  "label": "Activity of the user in front of Heidrun",
+  "active": "Active",
+  "notActive": "Not active",
+  "activeSince": "since {time}",
+  "folderLabel": "Folder of the selected workspace",
+  "noFolder": "No workspace is selected.",
+  "todayTitle": "Today, by folder",
+  "noToday": "No active period ended today.",
+  "lastPeriodsTitle": "Last active periods",
+  "keyboardCount": "Keyboard: {number}",
+  "mouseCount": "Mouse: {number}",
+  "reason.cool_down": "no action for the cool down",
+  "reason.window_behind": "the window went behind",
+  "reason.workspace_changed": "the workspace changed",
+  "reason.app_closed": "the application closed",
+  "fileLabel": "Records file"
+}

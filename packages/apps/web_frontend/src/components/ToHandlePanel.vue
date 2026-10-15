@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { answerChoice, attention, dismiss, selectPane, state, tabLabel, workspaceLabel } from "../stores/session";
-import { statusLabel, ago, paneName } from "../lib/format";
+import { statusLabel, paneName } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import Icon from "./Icon.vue";
 import NeedsYouWorkspaces from "./NeedsYouWorkspaces.vue";
 import { settings } from "../stores/settings";
 import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
+
+/** The Bootstrap theme color of the card and of the badge of an agent: red when blocked, indigo for a question, blue when done. */
+function themeClass(p: AgentInfo): string {
+  if (p.agent_status === "blocked") return "theme-danger";
+  if (state.questions[p.pane_id]) return "theme-accent";
+  return "theme-primary";
+}
 
 /** The line under the name of the agent: its question, the reason it is blocked, or what it finished. */
 function summary(p: AgentInfo): string {
@@ -19,17 +27,20 @@ function summary(p: AgentInfo): string {
 
 <template>
   <div class="needs-you">
+    <header class="needs-you-title d-flex align-items-center">
+      <span class="fw-semibold text-truncate">{{ t("toHandlePanel.title") }}</span>
+    </header>
     <section class="to-handle" :aria-label="t('toHandlePanel.label')">
       <p v-if="attention.length === 0" class="empty">{{ t("toHandlePanel.empty") }}</p>
-      <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
+      <div v-for="p in attention" :key="p.pane_id" class="card" :class="[p.agent_status, themeClass(p), { question: p.agent_status !== 'blocked' && state.questions[p.pane_id] }]">
         <button :title="t('toHandlePanel.showPane')" class="card-main" @click="selectPane(p)">
           <span class="row">
             <span class="name">{{ workspaceLabel(p.workspace_id) }} – {{ tabLabel(p.tab_id) }}</span>
-            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge t-question">{{ t("toHandlePanel.question") }}</span>
-            <span v-else class="badge" :class="'t-' + p.agent_status">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
+            <span v-if="p.agent_status !== 'blocked' && state.questions[p.pane_id]" class="badge badge-outline">{{ t("toHandlePanel.question") }}</span>
+            <span v-else class="badge badge-outline">{{ statusLabel(p.agent_status).toUpperCase() }}</span>
           </span>
           <span class="desc"><span class="who">{{ paneName(p) }}</span> · {{ summary(p) }}</span>
-          <span v-if="state.since[p.pane_id]" class="when">{{ ago(state.since[p.pane_id]) }}</span>
+          <span v-if="state.since[p.pane_id]" class="when"><AbbreviatedTime :milliseconds="state.since[p.pane_id]" /></span>
         </button>
         <!-- The agent's own menu: answer without opening its tab. -->
         <div v-if="p.agent_status === 'blocked' && state.choices[p.pane_id]" class="choices">
@@ -63,21 +74,22 @@ function summary(p: AgentInfo): string {
 
 <style scoped>
 .needs-you { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.needs-you-title { flex: 0 0 auto; padding: 12px 14px 0; }
 .to-handle { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 6px 16px; }
 .empty { margin: 0; padding: 8px; color: var(--muted); font-size: var(--font-size); }
-.card { position: relative; border-radius: 10px; border: 1px solid #22344f; background: var(--tint-done); }
+.card { position: relative; border-radius: 10px; border: 1px solid var(--theme-border); background: var(--theme-bg-subtle); }
 .card-main {
   width: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 12px 34px 12px 12px;
   border: none; background: transparent; border-radius: 10px;
 }
 .card-x {
   position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px;
-  background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  background: transparent; color: var(--theme-fg); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-x:hover, .card-pin:hover { background: rgba(var(--wash), 0.08); color: var(--text); }
 .card-pin {
   position: absolute; top: 34px; right: 8px; width: 22px; height: 22px; border: none; border-radius: 6px; font-size: var(--font-size);
-  background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  background: transparent; color: var(--theme-fg); display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .card-pin.on { color: var(--accent); }
 .card.blocked { border-color: var(--pane-ring-blocked); background: var(--tint-err); }
@@ -96,12 +108,11 @@ function summary(p: AgentInfo): string {
 .choice-n { flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px; background: var(--choice-number-bg); color: var(--blocked);
   font: 600 var(--font-size) var(--mono); display: inline-flex; align-items: center; justify-content: center; }
 .choice-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.card.question { border-color: #4a3866; background: var(--tint-merged); }
 .card .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .name { font-size: var(--font-size); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { flex-shrink: 0; }
 .who { color: var(--text); font-weight: 500; }
-.badge { font-size: var(--font-size); font-weight: 600; letter-spacing: 0.4px; }
-.desc { font-size: var(--font-size); color: #b8bcc0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.when { font-size: var(--font-size); color: var(--muted); }
+.badge { --badge-color: var(--theme-fg-emphasis); font-size: var(--font-size); font-weight: 600; letter-spacing: 0.4px; }
+.desc { font-size: var(--font-size); color: var(--theme-fg-emphasis); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.when { font-size: var(--font-size); color: var(--theme-fg-emphasis); }
 </style>

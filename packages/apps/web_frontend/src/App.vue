@@ -42,15 +42,14 @@ import {
   selectedPane,
   shiftTab,
   shiftWorkspace,
-  splitPane,
   start,
   state,
   toast,
 } from "./stores/session";
-import { startDefaultNewTab } from "./stores/newPane";
+import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
-import { newCustomScriptModal } from "./stores/newCustomScript";
+import { newCustomLauncherModal } from "./stores/newCustomLauncher";
 import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -59,16 +58,18 @@ import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
 import { startGit } from "./stores/git";
+import { startGitBackgroundFetch } from "./stores/git_background_fetch";
 import { startAlerts } from "./stores/alerts";
 import { startStatusItem } from "./stores/statusItem";
+import { startUserActivity } from "./stores/user_activity";
 // Records Claude spend by workspace from the start, right sidebar open or not.
 import "./stores/spend";
 import { history, loadHistory } from "./stores/history";
 import AgentsInformationModal from "./components/AgentsInformationModal.vue";
-import NewCustomScriptModal from "./components/NewCustomScriptModal.vue";
+import NewCustomLauncherModal from "./components/NewCustomLauncherModal.vue";
 import SavedSearchModal from "./components/SavedSearchModal.vue";
-import ImportScriptsModal from "./components/ImportScriptsModal.vue";
-import { importScriptsModal } from "./stores/importScripts";
+import ImportLaunchersModal from "./components/ImportLaunchersModal.vue";
+import { importLaunchersModal } from "./stores/importLaunchers";
 import HistoryModal from "./components/HistoryModal.vue";
 import SettingsModal from "./components/SettingsModal.vue";
 import SkillFileModal from "./components/SkillFileModal.vue";
@@ -78,6 +79,8 @@ import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
 import ThreeJsDemoModal from "./components/ThreeJsDemoModal.vue";
 import { threeJsDemoModal } from "./stores/three_js_demo_modal";
+import StatisticsModal from "./components/StatisticsModal.vue";
+import { statisticsModal } from "./stores/statistics_modal";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
@@ -230,7 +233,7 @@ function onKey(e: KeyboardEvent) {
     case "KeyT":
       return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
     case "KeyD":
-      return run(() => splitPane(e.shiftKey ? "down" : "right"));
+      return run(() => startDefaultSplit(e.shiftKey ? "down" : "right"));
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;
@@ -267,11 +270,14 @@ function onKey(e: KeyboardEvent) {
 
 let unlistenDrop: (() => void) | null = null;
 onMounted(async () => {
+  // First of all: the detection of the activity of the user must see every action before the other listeners do.
+  startUserActivity();
   window.addEventListener("keydown", onKey, true);
   window.addEventListener("resize", onResize);
   start();
   startProjects();
   startGit();
+  startGitBackgroundFetch();
   startAlerts();
   startStatusItem();
   loadHistory();
@@ -340,6 +346,7 @@ onBeforeUnmount(() => {
     <CommandPalette v-if="state.paletteOpen" />
     <MacroEditor v-if="macroEditor.open" />
     <ThreeJsDemoModal v-if="threeJsDemoModal.open" />
+    <StatisticsModal v-if="statisticsModal.open" />
     <NoteModal v-if="notes.openId" />
     <RcModal v-if="remote.openFor" />
     <GitModal v-if="git.modal.open" />
@@ -350,9 +357,9 @@ onBeforeUnmount(() => {
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
-    <NewCustomScriptModal v-if="newCustomScriptModal.open" />
+    <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />
-    <ImportScriptsModal v-if="importScriptsModal.open" />
+    <ImportLaunchersModal v-if="importLaunchersModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
     <InstalledSkillModal v-if="installedSkillModal.open" />

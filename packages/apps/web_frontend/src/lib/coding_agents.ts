@@ -1,6 +1,6 @@
 import { readAntigravityModels, readCodexModels, type CodingAgentModel } from "./coding_agent_models";
 
-/** What the window Create a custom script needs to know to start one coding agent with a prompt. */
+/** What the window Create a custom launcher needs to know to start one coding agent with a prompt. */
 export type CodingAgentDefinition = {
   /** The identifier saved in the file `.heidrun/config.json`. */
   id: string;
@@ -12,7 +12,7 @@ export type CodingAgentDefinition = {
   executable: string;
   /**
    * True when the coding agent can start with a prompt and stay interactive, so that the developer can answer in the
-   * pane. The window Create a custom script offers only the coding agents for which this is true.
+   * pane. The window Create a custom launcher offers only the coding agents for which this is true.
    */
   canStartInteractiveWithPrompt: boolean;
   /**
@@ -138,11 +138,11 @@ export const CODING_AGENTS: CodingAgentDefinition[] = [
 /** The identifiers of the coding agents, in the order of the list. */
 export const CODING_AGENT_IDS = CODING_AGENTS.map((agent) => agent.id) as [string, ...string[]];
 
-/** The coding agents that the window Create a custom script offers: the ones that start interactive with a prompt. */
-export const CUSTOM_SCRIPT_CODING_AGENTS = CODING_AGENTS.filter((agent) => agent.canStartInteractiveWithPrompt);
+/** The coding agents that the window Create a custom launcher offers: the ones that start interactive with a prompt. */
+export const CUSTOM_LAUNCHER_CODING_AGENTS = CODING_AGENTS.filter((agent) => agent.canStartInteractiveWithPrompt);
 
-/** The identifiers of the coding agents that the window Create a custom script offers, in the order of the list. */
-export const CUSTOM_SCRIPT_CODING_AGENT_IDS = CUSTOM_SCRIPT_CODING_AGENTS.map((agent) => agent.id) as [string, ...string[]];
+/** The identifiers of the coding agents that the window Create a custom launcher offers, in the order of the list. */
+export const CUSTOM_LAUNCHER_CODING_AGENT_IDS = CUSTOM_LAUNCHER_CODING_AGENTS.map((agent) => agent.id) as [string, ...string[]];
 
 /** Finds the coding agent with the identifier `id`, or `undefined` when no coding agent has it. */
 export function findCodingAgent(id: string): CodingAgentDefinition | undefined {

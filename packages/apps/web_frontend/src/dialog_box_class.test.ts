@@ -20,7 +20,7 @@ const WINDOW_FILE_NAME_LIST = [
 	'HistoryModal.vue',
 	'IssueModal.vue',
 	'MosaicModal.vue',
-	'NewCustomScriptModal.vue',
+	'NewCustomLauncherModal.vue',
 	'SearchModal.vue',
 	'ShortcutsModal.vue',
 	'SkillFileModal.vue',

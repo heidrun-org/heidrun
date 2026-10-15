@@ -17,4 +17,20 @@ describe("the theme", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(document.documentElement.dataset.bsTheme).toBe("dark");
   });
+
+  it("gives the code colors of the same theme as the application, and no other choice exists", async () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener: () => {} }));
+    const { settings } = await import("./settings");
+    const { codeThemeClass, codeIsDark } = await import("./theme");
+
+    settings.theme = "light";
+    await nextTick();
+    expect(codeThemeClass.value).toBe("github-light");
+    expect(codeIsDark.value).toBe(false);
+
+    settings.theme = "dark";
+    await nextTick();
+    expect(codeThemeClass.value).toBe("github-dark");
+    expect(codeIsDark.value).toBe(true);
+  });
 });

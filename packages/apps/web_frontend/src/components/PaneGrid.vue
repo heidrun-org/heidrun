@@ -5,7 +5,8 @@ import PaneCard from "./PaneCard.vue";
 import { t } from "../i18n/index";
 import { PaneSeparators, type PaneOuterEdge, type PaneOuterEdges, type PaneSeparator } from "../lib/pane_separators";
 import { setSplitRatios } from "../stores/session";
-import { gridLayout, gridPanes } from "../stores/pinned_panes";
+import { gridLayout, keptTabs } from "../stores/pinned_panes";
+import type { AgentInfo, PaneLayoutSnapshot } from "../lib/types";
 
 // The columns of the window that sit against the panes: a corner where a line between panes reaches one of them
 // also moves that column. The parent moves the column, see `outerStart` and `outerMove`.
@@ -40,9 +41,14 @@ function overlapNeighbour(start: number, size: number) {
   return { start: `calc(${start}% - ${BORDER})`, size: `calc(${size}% + ${BORDER})` };
 }
 
-const placed = computed(() => {
-  const layout = gridLayout.value;
-  const panes = gridPanes.value;
+/**
+ * Gives the place of each pane of one tab.
+ *
+ * @param layout The layout of the tab without the pinned panes, or null when Herdr sent none.
+ * @param panes The panes of the tab that the grid draws.
+ * @returns The panes with their place, as CSS values.
+ */
+function placePanes(layout: PaneLayoutSnapshot | null, panes: AgentInfo[]) {
   if (!layout || !layout.area.width || !layout.area.height) {
     return panes.map((p, i) => {
       const horizontal = overlapNeighbour((i / panes.length) * 100, 100 / panes.length);
@@ -65,7 +71,15 @@ const placed = computed(() => {
         style: { left: horizontal.start, top: vertical.start, width: horizontal.size, height: vertical.size },
       };
     });
-});
+}
+
+// The panes of every tab that the developer opened sit in one list, so that a pane keeps its element, and its terminal, when
+// its tab is selected or not. A tab that is not selected is hidden, and its terminal stays alive with its screen.
+const placed = computed(() =>
+  keptTabs.value.flatMap((tab) => placePanes(tab.layout, tab.panes).map((cell) => ({ ...cell, isShown: tab.isSelected }))),
+);
+
+const isGridEmpty = computed(() => placed.value.some((cell) => cell.isShown) === false);
 
 // ---- Lines between panes, and corners where lines meet --------------------
 
@@ -260,10 +274,16 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
 
 <template>
   <div ref="gridEl" class="grid">
-    <div v-for="item in placed" :key="item.pane.pane_id" class="cell" :style="item.style">
+    <div
+      v-for="item in placed"
+      :key="item.pane.pane_id"
+      class="cell"
+      :class="{ 'is-hidden': item.isShown === false }"
+      :style="item.style"
+    >
       <PaneCard :pane="item.pane" />
     </div>
-    <div v-if="!placed.length" class="empty"><EmptyTabScreen /></div>
+    <div v-if="isGridEmpty" class="empty"><EmptyTabScreen /></div>
     <div
       v-for="item in separatorItems"
       :key="item.separator.splitId"
@@ -302,6 +322,8 @@ function onKey(e: KeyboardEvent, separator: PaneSeparator) {
   flex: 1; min-height: 0; position: relative;
 }
 .cell { position: absolute; }
+/* The pane of a tab that is not selected: it keeps its place and its size, so that its terminal does not change size. */
+.cell.is-hidden { visibility: hidden; }
 .empty {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   color: var(--muted); background: var(--bg); border: 1px solid var(--line); overflow: hidden;

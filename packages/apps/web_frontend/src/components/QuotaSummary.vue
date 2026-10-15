@@ -140,6 +140,6 @@ function formatCost(cost: number) {
 .percent { font-size: var(--font-size); }
 .percent { color: var(--text-2); }
 .unit { margin-left: 2px; font-size: 0.8em; color: var(--muted); }
-.ring .track { fill: none; stroke: var(--gauge-track); stroke-width: 3; }
+.ring .track { fill: none; stroke: var(--faint); stroke-width: 3; }
 .ring .arc { fill: none; stroke: var(--done); stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 0.4s; }
 </style>

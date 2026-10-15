@@ -26,9 +26,17 @@ function chat(id: string, parts: { title?: string; lastAt?: number; issues?: num
   };
 }
 
+/** The calls of the Tauri command `forge_cli_cached`, which is the only command that the keyword method uses. */
+function forgeCalls() {
+  return vi.mocked(invoke).mock.calls.filter(([command]) => command === "forge_cli_cached");
+}
+
 /** Makes the command `forge_cli_cached` answer the title of each issue from `titles`, and fail for another issue. */
 function forgeAnswers(titles: Record<number, string>) {
-  vi.mocked(invoke).mockImplementation(async (_command, args) => {
+  vi.mocked(invoke).mockImplementation(async (command, args) => {
+    if (command !== "forge_cli_cached") {
+      return undefined;
+    }
     const forgeArgs = (args as { args: string[] }).args;
     const title = titles[Number(forgeArgs[2])];
     if (title === undefined) {
@@ -67,7 +75,7 @@ describe("prepareKeywordTopics", () => {
     forgeAnswers({ 260: "Add dynamic topics" });
     const store = await startRun();
     await store.prepareKeywordTopics([chat("a", { title: "Sidebar", issues: [260] })], CONTEXT);
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(forgeCalls()).toHaveLength(1);
     expect(invoke).toHaveBeenCalledWith("forge_cli_cached", {
       cwd: "/work/app",
       tool: "gh",
@@ -98,7 +106,7 @@ describe("prepareKeywordTopics", () => {
     await store.prepareKeywordTopics(chats, CONTEXT);
     const entry = store.keywordEntries.a;
     await store.prepareKeywordTopics(chats, CONTEXT);
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(forgeCalls()).toHaveLength(1);
     expect(store.keywordEntries.a).toBe(entry);
   });
 
@@ -125,7 +133,7 @@ describe("prepareKeywordTopics", () => {
       [chat("a", { title: "Sidebar", issues: [260] }), chat("b", { title: "Cache", issues: [260] })],
       CONTEXT,
     );
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(forgeCalls()).toHaveLength(1);
     expect(store.keywordEntries.a.isComplete).toBe(true);
     expect(store.keywordEntries.b.isComplete).toBe(true);
   });
@@ -134,13 +142,37 @@ describe("prepareKeywordTopics", () => {
     forgeAnswers({ 3: "Three", 4: "Four", 5: "Five" });
     const store = await startRun();
     await store.prepareKeywordTopics([chat("a", { issues: [1, 2, 3, 4, 5] })], CONTEXT);
-    expect(vi.mocked(invoke).mock.calls.map((call) => (call[1] as { args: string[] }).args[2]).sort()).toEqual(["3", "4", "5"]);
+    expect(forgeCalls().map((call) => (call[1] as { args: string[] }).args[2]).sort()).toEqual(["3", "4", "5"]);
+  });
+
+  it("makes no entry and reads nothing on the forge while the option Dynamic topics is off", async () => {
+    forgeAnswers({ 260: "Add dynamic topics" });
+    const store = await startRun();
+    const { settings } = await import("./settings");
+    settings.dynamicTopics = false;
+    await store.prepareKeywordTopics([chat("a", { title: "Sidebar", issues: [260] })], CONTEXT);
+    expect(Object.keys(store.keywordEntries)).toEqual([]);
+    expect(forgeCalls()).toHaveLength(0);
+    expect(localStorage.getItem("heidrun.dynamicTopicsCache")).toBeNull();
+  });
+
+  it("makes the entry again when the option Dynamic topics is switched on", async () => {
+    forgeAnswers({ 260: "Add dynamic topics" });
+    const store = await startRun();
+    const { settings } = await import("./settings");
+    settings.dynamicTopics = false;
+    const chats = [chat("a", { title: "Sidebar", issues: [260] })];
+    await store.prepareKeywordTopics(chats, CONTEXT);
+    settings.dynamicTopics = true;
+    await store.prepareKeywordTopics(chats, CONTEXT);
+    expect(store.keywordEntries.a.isComplete).toBe(true);
+    expect(forgeCalls()).toHaveLength(1);
   });
 
   it("does not read the forge when the repository has no forge, and keeps the entry incomplete", async () => {
     const store = await startRun();
     await store.prepareKeywordTopics([chat("a", { title: "Sidebar", issues: [260] })], { ...CONTEXT, forge: null });
-    expect(invoke).not.toHaveBeenCalled();
+    expect(forgeCalls()).toHaveLength(0);
     expect(store.keywordEntries.a).toEqual({ lastAt: 100, isComplete: false, terms: { sidebar: 3 } });
   });
 
@@ -159,7 +191,7 @@ describe("prepareKeywordTopics", () => {
     let store = await startRun();
     await store.prepareKeywordTopics(chats, CONTEXT);
     await store.prepareKeywordTopics(chats, CONTEXT);
-    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(forgeCalls()).toHaveLength(1);
     expect(store.keywordEntries.a).toEqual({ lastAt: 100, isComplete: false, terms: { sidebar: 3 } });
     forgeAnswers({ 260: "Zebra" });
     store = await startRun();
@@ -187,7 +219,7 @@ describe("the saved cache", () => {
     store = await startRun();
     expect(store.keywordEntries.a.isComplete).toBe(true);
     await store.prepareKeywordTopics(chats, CONTEXT);
-    expect(invoke).not.toHaveBeenCalled();
+    expect(forgeCalls()).toHaveLength(0);
   });
 
   it("drops a saved cache of another version, a saved value that is not a cache, and a corrupted entry", async () => {

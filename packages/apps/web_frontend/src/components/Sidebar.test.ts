@@ -35,7 +35,7 @@ async function mountSidebar(snapshot: SessionSnapshot = SNAPSHOT) {
   for (const paneId of Object.keys(session.state.dismissed)) {
     delete session.state.dismissed[paneId];
   }
-  const wrapper = mount(Sidebar, { global: { stubs: { ActionsPanel: true, SourceControlPanel: true, CodeHostingPanel: true, FilesPanel: true } } });
+  const wrapper = mount(Sidebar, { global: { stubs: { LaunchersPanel: true, SourceControlPanel: true, CodeHostingPanel: true, FilesPanel: true } } });
   return { session, wrapper };
 }
 
@@ -67,7 +67,7 @@ beforeEach(async () => {
   const { refContext } = await import("../lib/refs");
   vi.mocked(refContext).mockResolvedValue(contextOf(null, null));
   (await import("../stores/git")).git.status = {};
-  settings.leftSidebarSection = "actions";
+  settings.leftSidebarSection = "launchers";
   settings.leftCollapsed = false;
 });
 
@@ -96,15 +96,15 @@ describe("Sidebar without the list of workspaces", () => {
 });
 
 describe("Sidebar icon bar of the left sidebar", () => {
-  it("shows the buttons Files, Scripts, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Notes", async () => {
+  it("shows the buttons File explorer, Launchers, Source Control, and Code hosting, in this order, and not the buttons Needs you, Workspaces, Pane, and Clipboard", async () => {
     const { wrapper } = await mountSidebar();
     const buttons = wrapper.findAll(".sidebar-icon-bar [role=tab]");
-    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["Files", "Scripts", "Source Control", "Code hosting"]);
+    expect(buttons.map((button) => button.attributes("aria-label"))).toEqual(["File explorer", "Launchers", "Source Control", "Code hosting"]);
     expect(buttons.map((button) => button.attributes("role"))).toEqual(["tab", "tab", "tab", "tab"]);
     expect(wrapper.get(".sidebar-icon-bar .icons").attributes("aria-label")).toBe("Left sidebar");
   });
 
-  it("shows one icon for each sidebar section, Files first: a folder for Files, a play button for Scripts, the Git logo for Source control, and a cloud for Code hosting", async () => {
+  it("shows one icon for each sidebar section, File explorer first: a folder for File explorer, a play button for Launchers, the Git logo for Source control, and a cloud for Code hosting", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i.bi").map((icon) => icon.classes()[1])).toEqual(["bi-folder2", "bi-play-circle", "bi-git", "bi-cloud"]);
   });
@@ -165,10 +165,10 @@ describe("Sidebar icon bar of the left sidebar", () => {
     expect(children).toEqual(["sidebar-icon-bar", "sidebar-section-body"]);
   });
 
-  it("shows the sidebar section Scripts first, and marks its button as active", async () => {
+  it("shows the sidebar section Launchers first, and marks its button as active", async () => {
     const { wrapper } = await mountSidebar();
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, true, false, false]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(true);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
   });
 
@@ -177,18 +177,18 @@ describe("Sidebar icon bar of the left sidebar", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[2].trigger("click");
     expect(settings.leftSidebarSection).toBe("sourceControl");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, true, false]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(true);
     const restarted = (await mountSidebar()).wrapper;
     expect(restarted.find("source-control-panel-stub").exists()).toBe(true);
   });
 
-  it("shows the sidebar section Files after a click on its button, and remembers it", async () => {
+  it("shows the sidebar section File explorer after a click on its button, and remembers it", async () => {
     const { wrapper } = await mountSidebar();
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[0].trigger("click");
     expect(settings.leftSidebarSection).toBe("files");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([true, false, false, false]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
     expect(wrapper.find("files-panel-stub").exists()).toBe(true);
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab] i")[0].classes()).toContain("bi-folder2");
@@ -199,7 +199,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[3].trigger("click");
     expect(settings.leftSidebarSection).toBe("codeHosting");
     expect(wrapper.findAll(".sidebar-icon-bar [role=tab]").map((button) => button.classes("on"))).toEqual([false, false, false, true]);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(false);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(false);
     expect(wrapper.find("source-control-panel-stub").exists()).toBe(false);
     expect(wrapper.find("files-panel-stub").exists()).toBe(false);
     expect(wrapper.find("code-hosting-panel-stub").exists()).toBe(true);
@@ -232,7 +232,7 @@ describe("Sidebar icon bar of the left sidebar", () => {
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     await wrapper.findAll(".sidebar-icon-bar [role=tab]")[1].trigger("click");
     expect(settings.leftCollapsed).toBe(false);
-    expect(wrapper.find("actions-panel-stub").exists()).toBe(true);
+    expect(wrapper.find("launchers-panel-stub").exists()).toBe(true);
   });
 
   it("collapses after a click on the collapse button, the first button of the sidebar icon bar, with an arrow toward the left edge", async () => {

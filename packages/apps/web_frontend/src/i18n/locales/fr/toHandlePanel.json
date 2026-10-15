@@ -1,4 +1,5 @@
 {
+  "title": "Vous attend",
   "label": "Agents qui vous attendent",
   "empty": "Aucun agent n’est bloqué, aucun agent n’a terminé, et aucun agent ne pose de question.",
   "waitingForDecision": "attend une décision",

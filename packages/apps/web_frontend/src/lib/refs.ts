@@ -153,6 +153,40 @@ export function findRefs(line: string, ctx: RefContext): RefMatch[] {
   while ((m = urlRe.exec(line))) urls.push([m.index, m.index + m[0].length]);
   const inUrl = (i: number) => urls.some(([s, e]) => i >= s && i < e);
 
+  // GitHub and GitLab issue and pull request addresses get the same hover actions as #12 and !34.
+  for (const [start, end] of urls) {
+    const address = line.slice(start, end).replace(/[.,;:!?]+$/, "");
+    let parsed: URL;
+    try {
+      parsed = new URL(address);
+    } catch {
+      continue;
+    }
+    const path = parsed.pathname.replace(/\/+$/, "");
+    const github = /\/(issues|pull)\/(\d+)$/.exec(path);
+    if (github && (parsed.hostname === "github.com" || ctx.forge === "github")) {
+      const kind = github[1] === "pull" ? "mr" : "issue";
+      const pathParts = path.slice(0, github.index).replace(/^\/+|\/+$/g, "").split("/");
+      const project = pathParts.slice(-2).join("/");
+      add(start, start + address.length, kind, address, {
+        type: kind,
+        number: Number(github[2]),
+        ...(project.length > 0 ? { project } : {}),
+      });
+      continue;
+    }
+    const gitlab = /\/-\/(issues|merge_requests)\/(\d+)$/.exec(path);
+    if (gitlab && (parsed.hostname !== "github.com" || ctx.forge === "gitlab")) {
+      const kind = gitlab[1] === "merge_requests" ? "mr" : "issue";
+      const project = path.slice(0, gitlab.index).replace(/^\/+|\/+$/g, "");
+      add(start, start + address.length, kind, address, {
+        type: kind,
+        number: Number(gitlab[2]),
+        ...(project.length > 0 ? { project } : {}),
+      });
+    }
+  }
+
   // 1. "PR #12", "MR !34", "merge request 34", "pull request #5"
   const explicit = /\b(PR|MR|pull request|merge request)\s?([#!]?)(\d+)\b/gi;
   while ((m = explicit.exec(line))) {

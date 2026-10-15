@@ -55,7 +55,7 @@ type Row = {
   labels: ChatReferenceLabel[];
   /** The text of the second small detail line when it holds no label. */
   extra: string;
-  /** The item as the card of the Chats sidebar section knows it. */
+  /** The item as the card of the Past chats sidebar section knows it. */
   reference: ChatReference;
 };
 

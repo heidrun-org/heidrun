@@ -2,7 +2,7 @@
   "name": "change_log_generator",
   "private": true,
   "license": "MIT",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

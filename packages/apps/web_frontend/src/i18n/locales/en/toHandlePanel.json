@@ -1,4 +1,5 @@
 {
+  "title": "Needs you",
   "label": "Agents that need you",
   "empty": "No agent is blocked, no agent has finished, and no agent asks a question.",
   "waitingForDecision": "waiting for a decision",

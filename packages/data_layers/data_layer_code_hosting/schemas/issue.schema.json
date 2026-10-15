@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Issue",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "number", "title", "body", "state", "stateReason", "author", "assignees", "labels",
+    "createdAt", "updatedAt", "closedAt", "commentCount"
+  ],
+  "properties": {
+    "number": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string" },
+    "body": { "type": "string" },
+    "state": { "enum": ["OPEN", "CLOSED"] },
+    "stateReason": { "enum": ["COMPLETED", "NOT_PLANNED", "REOPENED", "DUPLICATE", null] },
+    "author": { "type": ["string", "null"], "description": "Login of the author. Null when the account is deleted." },
+    "assignees": { "type": "array", "items": { "type": "string" }, "description": "Logins." },
+    "labels": { "type": "array", "items": { "type": "string" }, "description": "Names." },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "closedAt": { "type": ["string", "null"], "format": "date-time" },
+    "commentCount": { "type": "integer", "minimum": 0 }
+  }
+}

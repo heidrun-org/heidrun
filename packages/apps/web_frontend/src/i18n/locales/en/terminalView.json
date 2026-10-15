@@ -18,6 +18,7 @@
   "pin": "Pin",
   "pinTitle": "Pin the selected text",
   "detached": "Terminal detached.",
+  "heldByAnotherClient": "Another client holds this terminal.",
   "reattach": "Reattach",
   "reattachTitle": "Attach to this terminal",
   "takeControl": "Take control",

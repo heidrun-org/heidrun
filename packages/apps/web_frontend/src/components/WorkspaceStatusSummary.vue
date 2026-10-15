@@ -8,12 +8,12 @@ import ScrollingLine from "./ScrollingLine.vue";
 import { askConfirm } from "../stores/confirm";
 import { settings } from "../stores/settings";
 import { currentGit, workspaceCwd } from "../stores/git";
+import { openNewWorkspace } from "../stores/newPane";
 import {
   allPanes,
   closeWorkspace,
   finishRename,
   moveWorkspace,
-  newWorkspace,
   otherWorkspaceStatus,
   selectWorkspace,
   startRename,
@@ -156,7 +156,7 @@ async function createWorkspace(): Promise<void> {
     return;
   }
   const label = path.split("/").filter(Boolean).pop() ?? null;
-  await newWorkspace(path, label);
+  await openNewWorkspace(path, label);
 }
 
 // The command search renames the workspace too: the field replaces the name, so the card must not stay open.

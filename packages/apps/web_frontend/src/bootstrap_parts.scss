@@ -23,6 +23,7 @@
 @use "bootstrap/scss/menu";
 @use "bootstrap/scss/nav";
 @use "bootstrap/scss/popover";
+@use "bootstrap/scss/tooltip";
 @use "bootstrap/scss/progress";
 @use "bootstrap/scss/alert";
 @use "bootstrap/scss/badge";
@@ -112,6 +113,7 @@ $application-utilities: (
     property: gap,
     class: gap,
     values: (
+      1: 0.25rem,
       2: 0.5rem,
       3: 1rem,
     ),
@@ -205,6 +207,15 @@ $application-utilities: (
     class: fst,
     values: (
       italic: italic,
+    ),
+  ),
+  // The monospace font of the application is the variable --mono, not the variable --font-mono of Bootstrap.
+  "font-family": (
+    important: true,
+    property: font-family,
+    class: font,
+    values: (
+      monospace: var(--mono),
     ),
   ),
   "text-align": (
@@ -381,6 +392,10 @@ select.form-control {
 .popover {
   --popover-max-width: 340px;
   --popover-font-size: var(--font-size);
+}
+
+.tooltip {
+  --tooltip-font-size: var(--font-size);
 }
 
 // The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.

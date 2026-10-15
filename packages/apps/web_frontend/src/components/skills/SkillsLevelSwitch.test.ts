@@ -23,18 +23,31 @@ async function mountSwitch() {
 describe("SkillsLevelSwitch", () => {
   it("shows the choice User first, then Workspace", async () => {
     const { wrapper } = await mountSwitch();
-    expect(wrapper.findAll(".levelChoice button").map((button) => button.text())).toEqual(["User", "Workspace"]);
+    expect(wrapper.findAll(".levelChoice label").map((label) => label.text())).toEqual(["User", "Workspace"]);
+  });
+
+  it("draws the choice as a Bootstrap button group of radio inputs, like the choice of the language in the Settings window", async () => {
+    const { wrapper } = await mountSwitch();
+    const group = wrapper.get(".levelChoice");
+    expect(group.classes()).toContain("btn-group");
+    expect(group.attributes("role")).toBe("group");
+    for (const label of group.findAll("label")) {
+      expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
+    }
+    expect(group.findAll("input[type=radio]")).toHaveLength(2);
+    expect(wrapper.find(".seg").exists()).toBe(false);
   });
 
   it("starts on the workspace level", async () => {
     const { wrapper, settings } = await mountSwitch();
     expect(settings.skillsLevel).toBe("workspace");
-    expect(wrapper.get(".levelChoice button.on").text()).toBe("Workspace");
+    const radios = wrapper.findAll(".levelChoice input[type=radio]");
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([false, true]);
   });
 
   it("changes the level and keeps it in the saved settings", async () => {
     const { wrapper, settings } = await mountSwitch();
-    await wrapper.findAll(".levelChoice button")[0].trigger("click");
+    await wrapper.findAll(".levelChoice input[type=radio]")[0].setValue(true);
     expect(settings.skillsLevel).toBe("user");
     await flushPromises();
     expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").skillsLevel).toBe("user");
@@ -43,6 +56,7 @@ describe("SkillsLevelSwitch", () => {
   it("restores the last level chosen", async () => {
     localStorage.setItem("heidrun.settings", JSON.stringify({ skillsLevel: "user" }));
     const { wrapper } = await mountSwitch();
-    expect(wrapper.get(".levelChoice button.on").text()).toBe("User");
+    const radios = wrapper.findAll(".levelChoice input[type=radio]");
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false]);
   });
 });

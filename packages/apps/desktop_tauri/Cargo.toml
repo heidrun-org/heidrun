@@ -1,6 +1,6 @@
 [package]
 name = "heidrun"
-version = "0.2.5"
+version = "0.2.7"
 description = "Interface graphique pour Herdr"
 license = "MIT"
 edition = "2021"
@@ -22,6 +22,14 @@ serde_json = { version = "1", features = ["preserve_order"] }
 tokio = { version = "1", features = ["net", "io-util", "time", "sync", "process", "macros"] }
 # Runs the coding agent tools (codex, claude): the package of the repository that the change log generator uses too
 raw_coding_agent_cli = { path = "../../auxiliary/raw_coding_agent_cli" }
+# Finds the chat session files of Claude Code and of Codex, and reads what each one holds
+data_layer_chat_sessions = { path = "../../data_layers/data_layer_chat_sessions" }
+# Reads the user activity records of the developer into the SQLite file of the data layer, for the Statistics window
+data_layer_user_activity = { path = "../../data_layers/data_layer_user_activity" }
+# Reads the commits of a repository into the SQLite file of the data layer, for the Statistics window
+data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
+# Reads the pull requests and the issues of a repository into the SQLite file of the data layer, for the Statistics window
+data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
 portable-pty = "0.9"
 base64 = "0.22"
 dirs = "6"
@@ -37,3 +45,5 @@ tauri-plugin-dialog = "2"
 tauri-plugin-window-state = "2"
 # Skills: the search on skills.sh and the download from GitHub
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# The file .env of the developer: its variables go into the environment, in a development build only
+dotenvy = "0.15"

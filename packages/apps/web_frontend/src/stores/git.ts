@@ -135,7 +135,8 @@ export function workspaceCwd(wsId: string): string | null {
   return p ? p.foreground_cwd || p.cwd || null : null;
 }
 
-async function loadStatus(wsId: string) {
+/** Reads the Git status of a workspace again. A failure leaves the status empty. */
+export async function loadStatus(wsId: string) {
   const cwd = workspaceCwd(wsId);
   if (!cwd) {
     git.status[wsId] = null;

@@ -4,6 +4,59 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] - 2026-10-15
+
+### Added
+
+- Install a skill from the web address of its folder on GitHub. ([#507](https://github.com/heidrun-org/heidrun/pull/507))
+- View developer activity in the Statistics window, with selectable slot lengths and workspaces, stacked bars, a legend, and chart information cards. ([#481](https://github.com/heidrun-org/heidrun/pull/481), [#491](https://github.com/heidrun-org/heidrun/pull/491), [#505](https://github.com/heidrun-org/heidrun/pull/505))
+- View one person’s work in the Statistics window. ([#485](https://github.com/heidrun-org/heidrun/pull/485))
+- Show a usage wheel for a pane’s context window, with an information card. ([#479](https://github.com/heidrun-org/heidrun/pull/479))
+- Show tokens and estimated cost for each chat in the Past chats sidebar section. ([#447](https://github.com/heidrun-org/heidrun/pull/447))
+- Detect developer activity and show it in the User activity sidebar section. ([#454](https://github.com/heidrun-org/heidrun/pull/454))
+- Fetch the remote repository in the background, with a setting for the delay. ([#434](https://github.com/heidrun-org/heidrun/pull/434))
+- Add an option to show ignored files in the File explorer sidebar section. ([#437](https://github.com/heidrun-org/heidrun/pull/437))
+- Add saved searches to the Code hosting sidebar section. ([#377](https://github.com/heidrun-org/heidrun/pull/377))
+- Add the Code hosting sidebar section. ([#373](https://github.com/heidrun-org/heidrun/pull/373))
+- Add back and forward navigation through the history of focused panes. ([#387](https://github.com/heidrun-org/heidrun/pull/387))
+- Start the default command when splitting a pane or adding a tab. ([#478](https://github.com/heidrun-org/heidrun/pull/478))
+- Select a new workspace immediately and run the default command in its first tab. ([#421](https://github.com/heidrun-org/heidrun/pull/421))
+- Show the list of workspaces at the bottom of the Needs you sidebar section. ([#418](https://github.com/heidrun-org/heidrun/pull/418))
+- Show the date and time of the build in the About Heidrun window. ([#477](https://github.com/heidrun-org/heidrun/pull/477))
+- Add a window with a Three.js demo to the desktop application. ([#399](https://github.com/heidrun-org/heidrun/pull/399))
+- Add a video explaining how to pronounce Heiðrún to the website’s About page. ([#402](https://github.com/heidrun-org/heidrun/pull/402))
+- Add context menus to file and folder rows in the File explorer sidebar section. ([#385](https://github.com/heidrun-org/heidrun/pull/385), [#445](https://github.com/heidrun-org/heidrun/pull/445))
+- Add the option to enable or disable dynamic topics in Settings. ([#429](https://github.com/heidrun-org/heidrun/pull/429))
+
+### Changed
+
+- Keep terminals in open tabs running when switching tabs. ([#496](https://github.com/heidrun-org/heidrun/pull/496))
+- Update the Statistics window with tab buttons in a thin title bar and helpful tooltips. ([#497](https://github.com/heidrun-org/heidrun/pull/497))
+- Use theme colors for the Needs you cards and show a question mark after abbreviated times with the exact time in its tooltip. ([#502](https://github.com/heidrun-org/heidrun/pull/502))
+- Make the User and Workspace choices look like the Language choice. ([#492](https://github.com/heidrun-org/heidrun/pull/492))
+- Move the large Git window controls to the title bar and rename “Reading” to “Preview.” ([#448](https://github.com/heidrun-org/heidrun/pull/448))
+- Give the Clipboard and Needs you sidebar sections titles like the other sidebar sections. ([#433](https://github.com/heidrun-org/heidrun/pull/433))
+- Replace the “All workspaces” check box in the Clipboard sidebar section with a switch. ([#436](https://github.com/heidrun-org/heidrun/pull/436))
+- Rename the Files sidebar section to File explorer, Notes to Clipboard, Scripts to Launchers, and Chats to Past chats. ([#437](https://github.com/heidrun-org/heidrun/pull/437), [#436](https://github.com/heidrun-org/heidrun/pull/436), [#431](https://github.com/heidrun-org/heidrun/pull/431), [#426](https://github.com/heidrun-org/heidrun/pull/426))
+- Rebuild the Settings window with Bootstrap components. ([#416](https://github.com/heidrun-org/heidrun/pull/416))
+- Show each chat’s worktree name in its summary. ([#413](https://github.com/heidrun-org/heidrun/pull/413))
+- Show a clear message when another client holds a terminal, and give each worktree its own Herdr session. ([#484](https://github.com/heidrun-org/heidrun/pull/484))
+- Read the models and effort levels from each coding agent’s tool, and add Antigravity to the coding agent list. ([#393](https://github.com/heidrun-org/heidrun/pull/393), [#395](https://github.com/heidrun-org/heidrun/pull/395))
+- Import scripts from any repository `package.json` and add the current working directory to the Command line kind. ([#388](https://github.com/heidrun-org/heidrun/pull/388))
+- Improve the Code hosting sidebar section’s logo, buttons, and saved search windows. ([#384](https://github.com/heidrun-org/heidrun/pull/384))
+- Rebuild the Scripts sidebar section and the Create a custom script window. ([#382](https://github.com/heidrun-org/heidrun/pull/382))
+- Add a Flux Lines background to the public website homepage. ([#439](https://github.com/heidrun-org/heidrun/pull/439))
+- Remove the fixed maximum width of the left and right sidebars. ([#397](https://github.com/heidrun-org/heidrun/pull/397))
+
+### Removed
+
+- Remove Visual Studio Code variables from the Herdr server environment. ([#480](https://github.com/heidrun-org/heidrun/pull/480))
+
+### Fixed
+
+- Prevent closing the last tab in a workspace and show an error notification. ([#427](https://github.com/heidrun-org/heidrun/pull/427))
+- Show folders ignored by Git only once in the File explorer sidebar section. ([#444](https://github.com/heidrun-org/heidrun/pull/444))
+
 ## [0.2.5] - 2026-10-13
 
 ### Added

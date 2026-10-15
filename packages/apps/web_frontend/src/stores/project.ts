@@ -4,10 +4,10 @@ import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
 import { allowCommand } from "./guards";
 import { t } from "../i18n/index";
-import { parseProjectConfig, type Action, type ProjectConfig, type ScriptAgent } from "../lib/project_config";
-import { scriptNameFromCommand } from "../lib/script_name";
+import { parseProjectConfig, type Launcher, type ProjectConfig, type LauncherAgent } from "../lib/project_config";
+import { launcherNameFromCommand } from "../lib/launcher_name";
 
-export type { Action };
+export type { Launcher };
 
 export interface Detected {
   label: string;
@@ -26,14 +26,14 @@ interface Project {
   detected: Detected[];
 }
 
-export type ActionStatus = "idle" | "running" | "finished";
+export type LauncherStatus = "idle" | "running" | "finished";
 
 const CONFIG_PATH = ".heidrun/config.json";
 
 export const project = reactive({
   byWorkspace: {} as Record<string, Project | undefined>,
   errors: {} as Record<string, string | undefined>,
-  /** `${workspaceId}:${actionId}` → pane running the action. */
+  /** `${workspaceId}:${launcherId}` → pane running the launcher. */
   panes: {} as Record<string, string>,
   /** pane id → is a command in the foreground. */
   busy: {} as Record<string, boolean>,
@@ -84,104 +84,104 @@ export const currentProject = computed(() =>
   session.selectedWorkspaceId ? project.byWorkspace[session.selectedWorkspaceId] : undefined,
 );
 
-/** Identifies a script by its command and its folder: the same command in two folders makes two scripts. */
-export function scriptKey(script: { command: string; cwd?: string }): string {
-  return `${script.cwd ?? ""}\n${script.command}`;
+/** Identifies a launcher by its command and its folder: the same command in two folders makes two launchers. */
+export function launcherKey(launcher: { command: string; cwd?: string }): string {
+  return `${launcher.cwd ?? ""}\n${launcher.command}`;
 }
 
-/** The detected scripts that are not yet scripts of the current project. */
-export function withoutImportedScripts(detected: Detected[]): Detected[] {
+/** The detected commands that are not yet launchers of the current project. */
+export function withoutImportedLaunchers(detected: Detected[]): Detected[] {
   const p = currentProject.value;
   if (!p) return [];
-  const taken = new Set(p.config.actions.map(scriptKey));
-  return detected.filter((d) => !taken.has(scriptKey(d)));
+  const taken = new Set(p.config.launchers.map(launcherKey));
+  return detected.filter((d) => !taken.has(launcherKey(d)));
 }
 
-export const suggestions = computed(() => withoutImportedScripts(currentProject.value?.detected ?? []));
+export const suggestions = computed(() => withoutImportedLaunchers(currentProject.value?.detected ?? []));
 
 function slug(label: string): string {
-  const base = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "action";
+  const base = label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "launcher";
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
 /**
- * Adds a custom script. Without a name, the name is the first 20 characters of the command. With `agent`, the script is of
+ * Adds a custom launcher. Without a name, the name is the first 20 characters of the command. With `agent`, the launcher is of
  * the kind Coding agent: its command is the command line that starts the coding agent, and `cwd` is its folder.
  * `description` is optional text on several lines.
  */
-export async function addAction(workspaceId: string, label: string, command: string, agent?: ScriptAgent, cwd?: string, description?: string) {
+export async function addLauncher(workspaceId: string, label: string, command: string, agent?: LauncherAgent, cwd?: string, description?: string) {
   const p = project.byWorkspace[workspaceId];
   if (!p || !command.trim()) return;
-  const name = label.trim() || scriptNameFromCommand(command);
-  const action: Action = { id: slug(name), label: name, command: command.trim() };
+  const name = label.trim() || launcherNameFromCommand(command);
+  const launcher: Launcher = { id: slug(name), label: name, command: command.trim() };
   if (agent !== undefined) {
-    action.agent = agent;
+    launcher.agent = agent;
   }
   if (description !== undefined && description.trim() !== "") {
-    action.description = description.trim();
+    launcher.description = description.trim();
   }
   if (cwd !== undefined && cwd.trim() !== "") {
-    action.cwd = cwd.trim();
+    launcher.cwd = cwd.trim();
   }
-  p.config.actions.push(action);
+  p.config.launchers.push(launcher);
   await saveProject(workspaceId);
 }
 
-export async function removeAction(workspaceId: string, id: string) {
+export async function removeLauncher(workspaceId: string, id: string) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
-  p.config.actions = p.config.actions.filter((a) => a.id !== id);
+  p.config.launchers = p.config.launchers.filter((a) => a.id !== id);
   delete project.panes[`${workspaceId}:${id}`];
   await saveProject(workspaceId);
 }
 
-/** Replaces the values of the custom script `id`. A field that `values` does not have is removed from the script. */
-export async function updateAction(workspaceId: string, id: string, values: Omit<Action, "id">) {
+/** Replaces the values of the custom launcher `id`. A field that `values` does not have is removed from the launcher. */
+export async function updateLauncher(workspaceId: string, id: string, values: Omit<Launcher, "id">) {
   const p = project.byWorkspace[workspaceId];
-  const index = p?.config.actions.findIndex((x) => x.id === id) ?? -1;
+  const index = p?.config.launchers.findIndex((x) => x.id === id) ?? -1;
   if (p === undefined || index === -1) return;
-  p.config.actions[index] = { id, ...values };
+  p.config.launchers[index] = { id, ...values };
   await saveProject(workspaceId);
 }
 
-export function actionPane(workspaceId: string, action: Action) {
-  const paneId = project.panes[`${workspaceId}:${action.id}`];
+export function launcherPane(workspaceId: string, launcher: Launcher) {
+  const paneId = project.panes[`${workspaceId}:${launcher.id}`];
   return paneId ? allPanes.value.find((p) => p.pane_id === paneId) ?? null : null;
 }
 
-export function actionStatus(workspaceId: string, action: Action): ActionStatus {
-  const pane = actionPane(workspaceId, action);
+export function launcherStatus(workspaceId: string, launcher: Launcher): LauncherStatus {
+  const pane = launcherPane(workspaceId, launcher);
   if (!pane) return "idle";
   return project.busy[pane.pane_id] ? "running" : "finished";
 }
 
 /**
- * Runs an action in its own tab, named after it. If its tab is still open the
+ * Runs a launcher in its own tab, named after it. If its tab is still open the
  * click just brings it to the front; "rerun" types the command again in it.
  */
-export async function runAction(workspaceId: string, action: Action, rerun = false) {
+export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
-  const existing = actionPane(workspaceId, action);
+  const existing = launcherPane(workspaceId, launcher);
   // A click that will type the command: through the guards first.
   const willType = !existing || (rerun && !project.busy[existing.pane_id]);
-  if (willType && !(await allowCommand(action.command, p.root, `${workspaceLabel(workspaceId)} · ${action.label}`))) return;
+  if (willType && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);
     if (rerun && !project.busy[existing.pane_id]) {
-      await api.run(existing.pane_id, action.command).catch((e) => toast(String(e)));
+      await api.run(existing.pane_id, launcher.command).catch((e) => toast(String(e)));
       project.busy[existing.pane_id] = true;
     }
     return;
   }
-  const cwd = action.cwd ? `${p.root.replace(/\/$/, "")}/${action.cwd}` : p.root;
+  const cwd = launcher.cwd ? `${p.root.replace(/\/$/, "")}/${launcher.cwd}` : p.root;
   try {
-    const pane = await api.newTab(workspaceId, cwd, action.label);
-    project.panes[`${workspaceId}:${action.id}`] = pane.pane_id;
+    const pane = await api.newTab(workspaceId, cwd, launcher.label);
+    project.panes[`${workspaceId}:${launcher.id}`] = pane.pane_id;
     // Let the shell print its prompt before typing into it.
     await new Promise((r) => setTimeout(r, 350));
-    await api.run(pane.pane_id, action.command);
+    await api.run(pane.pane_id, launcher.command);
     project.busy[pane.pane_id] = true;
     await refresh();
     const fresh = allPanes.value.find((x) => x.pane_id === pane.pane_id);
@@ -191,8 +191,8 @@ export async function runAction(workspaceId: string, action: Action, rerun = fal
   }
 }
 
-export async function stopAction(workspaceId: string, action: Action) {
-  const pane = actionPane(workspaceId, action);
+export async function stopLauncher(workspaceId: string, launcher: Launcher) {
+  const pane = launcherPane(workspaceId, launcher);
   if (pane) await api.sendKeys(pane.pane_id, ["ctrl+c"]).catch(() => {});
 }
 
@@ -235,7 +235,7 @@ export function startProjects() {
   if (started) return;
   started = true;
   window.setInterval(pollBusy, 2500);
-  // Load the project file of the workspace in view (actions, badge, palette).
+  // Load the project file of the workspace in view (launchers, badge, palette).
   watch(
     () => [session.selectedWorkspaceId, !!session.snapshot] as const,
     ([id, ready]) => {

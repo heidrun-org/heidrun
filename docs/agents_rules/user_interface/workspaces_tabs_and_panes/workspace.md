@@ -4,7 +4,8 @@
 - Last updated: 14 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary/index.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [Tabs](tabs.md)
+- Related issue: [issue 379](https://github.com/heidrun-org/heidrun/issues/379)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -18,6 +19,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The list of workspaces has no separator line between the workspaces, and no space between two rows: between the two separator lines, the pointer is always on a workspace. Each row is 32 pixels tall, with the padding inside the row. One separator line sits between the list and the entry "New workspace…" at the end of the information card.
 - The line after the workspace status bar section has 6 more pixels of space on each side than the other lines of the status bar, so that the workspace status bar section is not packed against the next status bar section.
 - Each workspace of the list offers the rename of the workspace, the close of the workspace, and the move of the workspace by drag and drop. The rename puts a text field in the place of the name in the status bar. A double click on the workspace status bar section does not rename the workspace.
+- The entry "New workspace…" asks for a folder, then creates the workspace with the name of the folder and selects it at once, with its first tab and its first pane. Herdr creates this first tab with the workspace, so Heidrun creates no other tab. The pane of this first tab runs the default command of a new tab, the option `newTabCommand` of the settings, the same as a plain click on the plus button of the tab bar ([tabs.md](tabs.md)). With "terminal", the pane is the shell that Herdr started in the folder. With "claude" or "codex", Heidrun renames the first tab after the command and starts the command in the first pane ([issue 379](https://github.com/heidrun-org/heidrun/issues/379)).
 - The Needs you sidebar section shows the same list of workspaces, in the same order, with the same selection and the same drag and drop, but without the rename and the close ([needs_you_workspaces.md](../sidebars/needs_you_workspaces.md)).
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
 - Heidrun saves the identifier of the selected workspace each time that the selection changes, in the option `selectedWorkspaceId` of the store `settings.ts`. At the next start, Heidrun selects this workspace again, with its last tab and its last pane. When this workspace does not exist any more, Heidrun selects the workspace that Herdr has focused, or the first workspace.

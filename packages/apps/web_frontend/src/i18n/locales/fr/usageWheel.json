@@ -1,0 +1,9 @@
+{
+  "title": "Fenêtre de contexte",
+  "label": "Fenêtre de contexte : {value} % utilisés",
+  "percentLabel": "Utilisé",
+  "percentValue": "{value} %",
+  "usedLabel": "Jetons utilisés",
+  "sizeLabel": "Taille de la fenêtre",
+  "tokens": "{value} jetons"
+}
