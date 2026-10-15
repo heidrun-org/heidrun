@@ -132,10 +132,11 @@ mod tests {
     fn the_attach_command_uses_the_heidrun_session() {
         let _guard = crate::herdr::ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         crate::herdr::clear_env();
-        assert_eq!(attach_arguments("term_1", false), vec!["--session", "heidrun", "terminal", "attach", "term_1"]);
+        let session = crate::herdr::session_name();
+        assert_eq!(attach_arguments("term_1", false), vec!["--session", session.as_str(), "terminal", "attach", "term_1"]);
         assert_eq!(
             attach_arguments("term_1", true),
-            vec!["--session", "heidrun", "terminal", "attach", "term_1", "--takeover"]
+            vec!["--session", session.as_str(), "terminal", "attach", "term_1", "--takeover"]
         );
     }
 }

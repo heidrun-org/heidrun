@@ -52,7 +52,46 @@ pub fn config_dir() -> PathBuf {
 
 /// The name of the Herdr session that Heidrun uses, unless the environment variable `HERDR_SOCKET_PATH` or
 /// `HERDR_SESSION` chooses another one. Heidrun never uses the default session: that session belongs to the terminal.
+/// A development build that runs from a worktree adds the name of the worktree, see `session_name`.
 pub const HEIDRUN_SESSION: &str = "heidrun";
+
+/// The part of a path that comes before the name of a worktree. The tool `pnpm worktree:create` makes every worktree
+/// inside this folder of the main checkout.
+const WORKTREES_FOLDER: &str = "/.claude/worktrees/";
+
+/// The longest part of a session name that comes from the name of a worktree. The socket of a session is a Unix socket,
+/// and its full path must stay shorter than 104 bytes on macOS.
+const WORKTREE_PART_MAX_LENGTH: usize = 32;
+
+/// The name of the Herdr session for the build whose package folder is `manifest_dir`. Herdr allows one attach client
+/// for each terminal, so two Heidrun applications in one session refuse each other's terminals. A development build
+/// that comes from a worktree therefore gets its own session, `heidrun_` followed by the name of the worktree. Every
+/// other build, the release build and the development build of the main checkout, uses the session `heidrun`.
+fn session_name_for(manifest_dir: &str, is_development_build: bool) -> String {
+    if is_development_build == false {
+        return HEIDRUN_SESSION.to_string();
+    }
+    let Some((_, after_worktrees_folder)) = manifest_dir.split_once(WORKTREES_FOLDER) else {
+        return HEIDRUN_SESSION.to_string();
+    };
+    let worktree = after_worktrees_folder.split("/packages/").next().unwrap_or(after_worktrees_folder);
+    let cleaned: String = worktree
+        .chars()
+        .map(|character| if character.is_ascii_alphanumeric() || character == '-' { character } else { '_' })
+        .collect();
+    let end_of_name = cleaned.trim_matches('_');
+    let start = end_of_name.len().saturating_sub(WORKTREE_PART_MAX_LENGTH);
+    let worktree_part = end_of_name[start..].trim_start_matches('_');
+    if worktree_part.is_empty() {
+        return HEIDRUN_SESSION.to_string();
+    }
+    format!("{HEIDRUN_SESSION}_{worktree_part}")
+}
+
+/// The name of the Herdr session that this build of Heidrun uses when no environment variable chooses one.
+pub fn session_name() -> String {
+    session_name_for(env!("CARGO_MANIFEST_DIR"), cfg!(debug_assertions))
+}
 
 /// The value of an environment variable, or `None` when the variable is not set or is empty.
 fn non_empty_variable(name: &str) -> Option<String> {
@@ -66,22 +105,22 @@ fn is_session_chosen_by_environment() -> bool {
 }
 
 /// The socket of the session that Heidrun uses: the path in `HERDR_SOCKET_PATH`, else the socket of the session named
-/// in `HERDR_SESSION`, else the socket of the session `heidrun`.
+/// in `HERDR_SESSION`, else the socket of the session that `session_name` gives.
 pub fn socket_path() -> PathBuf {
     if let Some(path) = non_empty_variable("HERDR_SOCKET_PATH") {
         return PathBuf::from(path);
     }
-    let name = non_empty_variable("HERDR_SESSION").unwrap_or_else(|| HEIDRUN_SESSION.to_string());
+    let name = non_empty_variable("HERDR_SESSION").unwrap_or_else(session_name);
     config_dir().join("sessions").join(name).join("herdr.sock")
 }
 
-/// The arguments of a Herdr command line: `--session heidrun` first, then `arguments`. When the environment chooses the
-/// session, the arguments are `arguments` alone.
+/// The arguments of a Herdr command line: `--session` and the name that `session_name` gives first, then `arguments`.
+/// When the environment chooses the session, the arguments are `arguments` alone.
 pub fn command_arguments(arguments: &[&str]) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
     if is_session_chosen_by_environment() == false {
         result.push("--session".to_string());
-        result.push(HEIDRUN_SESSION.to_string());
+        result.push(session_name());
     }
     result.extend(arguments.iter().map(|argument| argument.to_string()));
     result
@@ -124,17 +163,17 @@ pub fn remove_editor_variables(command: &mut std::process::Command) {
     }
 }
 
-/// The arguments of the command that stops the session `heidrun` when the user quits Heidrun. `None` when the session
-/// stays running: the user chose "Keep agents running after quit", or the environment chooses a session that is not
-/// the session of Heidrun.
+/// The arguments of the command that stops the session of Heidrun, the name that `session_name` gives, when the user
+/// quits Heidrun. `None` when the session stays running: the user chose "Keep agents running after quit", or the
+/// environment chooses a session that is not the session of Heidrun.
 pub fn stop_session_arguments(is_keeping_agents_running: bool) -> Option<Vec<String>> {
     if is_keeping_agents_running || is_session_chosen_by_environment() {
         return None;
     }
-    Some(vec!["session".to_string(), "stop".to_string(), HEIDRUN_SESSION.to_string()])
+    Some(vec!["session".to_string(), "stop".to_string(), session_name()])
 }
 
-/// Stops the session `heidrun`, and waits for the end of the command. Does nothing when `stop_session_arguments` gives
+/// Stops the session of Heidrun, and waits for the end of the command. Does nothing when `stop_session_arguments` gives
 /// `None`. The error of the command is ignored: the application quits anyway.
 pub fn stop_session_on_quit(is_keeping_agents_running: bool) {
     let Some(arguments) = stop_session_arguments(is_keeping_agents_running) else {
@@ -375,8 +414,47 @@ mod herdr_tests {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_env();
         std::env::set_var("XDG_CONFIG_HOME", "/xdg");
-        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/sessions/heidrun/herdr.sock"));
+        assert_eq!(socket_path(), PathBuf::from(format!("/xdg/herdr/sessions/{}/herdr.sock", session_name())));
         clear_env();
+    }
+
+    #[test]
+    fn a_release_build_and_the_main_checkout_use_the_session_heidrun() {
+        let main_checkout = "/Users/someone/webwork/heidrun/packages/apps/desktop_tauri";
+        let worktree = "/Users/someone/webwork/heidrun/.claude/worktrees/fix-terminal-detached-483/packages/apps/desktop_tauri";
+        assert_eq!(session_name_for(main_checkout, true), "heidrun");
+        assert_eq!(session_name_for(main_checkout, false), "heidrun");
+        assert_eq!(session_name_for(worktree, false), "heidrun");
+    }
+
+    #[test]
+    fn a_development_build_in_a_worktree_uses_its_own_session() {
+        let worktree = "/Users/someone/webwork/heidrun/.claude/worktrees/fix-terminal-detached-483/packages/apps/desktop_tauri";
+        assert_eq!(session_name_for(worktree, true), "heidrun_fix-terminal-detached-483");
+        let other_worktree = "/Users/someone/webwork/heidrun/.claude/worktrees/other-fix-12/packages/apps/desktop_tauri";
+        assert_ne!(session_name_for(worktree, true), session_name_for(other_worktree, true));
+    }
+
+    #[test]
+    fn the_session_of_a_nested_worktree_uses_every_folder_of_its_name() {
+        let nested = "/Users/someone/webwork/heidrun/.claude/worktrees/codex/files-ai-documentation-409/packages/apps/desktop_tauri";
+        assert_eq!(session_name_for(nested, true), "heidrun_codex_files-ai-documentation-409");
+    }
+
+    #[test]
+    fn the_session_of_a_worktree_with_a_long_name_keeps_the_end_of_the_name() {
+        let long_name = "a-very-long-name-for-a-worktree-that-would-make-the-socket-path-too-long-1234";
+        let manifest_dir = format!("/Users/someone/heidrun/.claude/worktrees/{long_name}/packages/apps/desktop_tauri");
+        let session = session_name_for(&manifest_dir, true);
+        assert!(session.starts_with("heidrun_"));
+        assert!(session.ends_with("too-long-1234"));
+        assert!(session.len() <= "heidrun_".len() + WORKTREE_PART_MAX_LENGTH);
+    }
+
+    #[test]
+    fn the_session_of_a_worktree_has_only_letters_digits_hyphens_and_underscores() {
+        let manifest_dir = "/Users/someone/heidrun/.claude/worktrees/my fix.v2/packages/apps/desktop_tauri";
+        assert_eq!(session_name_for(manifest_dir, true), "heidrun_my_fix_v2");
     }
 
     #[test]
@@ -386,7 +464,7 @@ mod herdr_tests {
         std::env::set_var("XDG_CONFIG_HOME", "/xdg");
         std::env::set_var("HERDR_SOCKET_PATH", "");
         std::env::set_var("HERDR_SESSION", "");
-        assert_eq!(socket_path(), PathBuf::from("/xdg/herdr/sessions/heidrun/herdr.sock"));
+        assert_eq!(socket_path(), PathBuf::from(format!("/xdg/herdr/sessions/{}/herdr.sock", session_name())));
         clear_env();
     }
 
@@ -394,10 +472,11 @@ mod herdr_tests {
     fn a_command_line_uses_the_heidrun_session_when_no_environment_variable_is_set() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_env();
-        assert_eq!(command_arguments(&["pane", "run", "w1:p1", "ls"]), vec!["--session", "heidrun", "pane", "run", "w1:p1", "ls"]);
+        let session = session_name();
+        assert_eq!(command_arguments(&["pane", "run", "w1:p1", "ls"]), vec!["--session", session.as_str(), "pane", "run", "w1:p1", "ls"]);
         assert_eq!(
             command_arguments_from(&["workspace".to_string(), "list".to_string()]),
-            vec!["--session", "heidrun", "workspace", "list"]
+            vec!["--session", session.as_str(), "workspace", "list"]
         );
         clear_env();
     }
@@ -418,8 +497,15 @@ mod herdr_tests {
     fn the_server_starts_in_the_heidrun_session() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_env();
-        assert_eq!(server_shell_command(std::path::Path::new("/opt/homebrew/bin/herdr")), "exec '/opt/homebrew/bin/herdr' --session heidrun server");
-        assert_eq!(server_shell_command(std::path::Path::new("/it's/herdr")), "exec '/it'\\''s/herdr' --session heidrun server");
+        let session = session_name();
+        assert_eq!(
+            server_shell_command(std::path::Path::new("/opt/homebrew/bin/herdr")),
+            format!("exec '/opt/homebrew/bin/herdr' --session {session} server")
+        );
+        assert_eq!(
+            server_shell_command(std::path::Path::new("/it's/herdr")),
+            format!("exec '/it'\\''s/herdr' --session {session} server")
+        );
         std::env::set_var("HERDR_SESSION", "work");
         assert_eq!(server_shell_command(std::path::Path::new("/opt/herdr")), "exec '/opt/herdr' server");
         clear_env();
@@ -480,7 +566,7 @@ mod herdr_tests {
     fn the_quit_step_stops_only_the_heidrun_session() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         clear_env();
-        assert_eq!(stop_session_arguments(false), Some(vec!["session".to_string(), "stop".to_string(), "heidrun".to_string()]));
+        assert_eq!(stop_session_arguments(false), Some(vec!["session".to_string(), "stop".to_string(), session_name()]));
         clear_env();
     }
 
