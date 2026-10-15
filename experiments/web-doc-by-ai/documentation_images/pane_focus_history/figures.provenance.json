@@ -1,0 +1,72 @@
+{
+  "created": "14 October 2026",
+  "page": "packages/auxiliary/website_public/docs/documentation/pane_focus_history.md",
+  "method": "Deterministic SVG: original image bytes embedded as a data URL, translated and scaled inside a rectangular clip; separate vector annotation layers. No application pixels were redrawn or raster-edited.",
+  "design_width_css_pixels": 600,
+  "figures": [
+    {
+      "figure": "controls_annotated.svg",
+      "original_path": "packages/auxiliary/website_public/docs/public/documentation_images/pane_focus_history/controls.png",
+      "original_sha256": "923e60cf12b2befec1f9b16ffdd25c9869d0d0d327ccaf9470bc124c42146a36",
+      "original_dimensions_pixels": {
+        "width": 3456,
+        "height": 2168
+      },
+      "original_media_type": "image/jpeg",
+      "original_format_note": "Original capture has a .png filename but contains JPEG bytes; original bytes and filename are preserved.",
+      "embedded_media_type": "image/jpeg",
+      "crop_rectangle_original_pixels": {
+        "x": 1188,
+        "y": 0,
+        "width": 460,
+        "height": 100
+      },
+      "annotations": [
+        {
+          "label": "Back \u2014 previous pane",
+          "meaning": "Left arrow button; circle and arrow identify Back."
+        },
+        {
+          "label": "Forward \u2014 next pane",
+          "meaning": "Right arrow button; circle and arrow identify Forward."
+        }
+      ],
+      "capture_limit": "Shows controls or the open list, not a completed navigation action."
+    },
+    {
+      "figure": "history_list_annotated.svg",
+      "original_path": "packages/auxiliary/website_public/docs/public/documentation_images/pane_focus_history/history_list.png",
+      "original_sha256": "df5a0907460a5dee8073b70911e2f1ba461478cc5736798cc67deb37fb997e15",
+      "original_dimensions_pixels": {
+        "width": 3456,
+        "height": 2168
+      },
+      "original_media_type": "image/jpeg",
+      "original_format_note": "Original capture has a .png filename but contains JPEG bytes; original bytes and filename are preserved.",
+      "embedded_media_type": "image/jpeg",
+      "crop_rectangle_original_pixels": {
+        "x": 1204,
+        "y": 4,
+        "width": 590,
+        "height": 370
+      },
+      "annotations": [
+        {
+          "label": "Choose a pane",
+          "meaning": "Outline surrounds the authentic open Back button list; arrow points to the list."
+        }
+      ],
+      "capture_limit": "Shows controls or the open list, not a completed navigation action."
+    }
+  ],
+  "styling": {
+    "matte": "pure gray #808080 at 0.25 fill opacity; screenshot and annotation layers unchanged",
+    "annotations": "Dark labels with white outline and glow; muted blue #79acd2 target outlines and single continuous arrow silhouettes with dark outlines and white glow.",
+    "padding": "24 CSS pixels around screenshot; expanded target outlines",
+    "checked_themes": [
+      "dark",
+      "light"
+    ],
+    "context": "Each figure includes an authentic wider view of the full window width and top 814 original pixels, showing top bar, window controls, tabs and sidebars; blue outline locates the close-up below."
+  }
+}

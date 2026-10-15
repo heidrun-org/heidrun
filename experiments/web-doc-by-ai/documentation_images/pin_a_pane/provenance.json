@@ -1,0 +1,40 @@
+{
+  "figures": [
+    {
+      "figure": "pin_button.svg",
+      "original_capture_from_repository_root": "tmp/web_doc_by_ai/results/pinning_luna_medium_20261014/native_before_pin.jpg",
+      "preserved_copy": "pin_button_original.jpg",
+      "sha256": "66b8ee0a307d8716b2c18fc9b8ee402ec75ee0977aedc399c21413414cb456c0",
+      "crop_rectangle_original_pixels": {
+        "x": 620,
+        "y": 60,
+        "width": 1120,
+        "height": 340
+      },
+      "annotation_meaning": "Pin the pane",
+      "target_original_pixels": {
+        "x": 1450,
+        "y": 210
+      },
+      "matte": "#808080 at 25% fill opacity outside the capture only"
+    },
+    {
+      "figure": "pinned_column.svg",
+      "original_capture_from_repository_root": "tmp/web_doc_by_ai/results/pinning_luna_medium_20261014/native_pinned.jpg",
+      "preserved_copy": "pinned_column_original.jpg",
+      "sha256": "132ddae408ec43b7e32bc47f5bf0dc82e4479e76482560c73fa9aa5c9d5b454a",
+      "crop_rectangle_original_pixels": {
+        "x": 2220,
+        "y": 60,
+        "width": 780,
+        "height": 340
+      },
+      "annotation_meaning": "Unpin the pane",
+      "target_original_pixels": {
+        "x": 2718,
+        "y": 210
+      },
+      "matte": "#808080 at 25% fill opacity outside the capture only"
+    }
+  ]
+}

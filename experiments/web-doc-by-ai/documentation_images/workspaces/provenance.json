@@ -1,0 +1,65 @@
+{
+  "created": "15 October 2026",
+  "page": "packages/auxiliary/website_public/docs/documentation/create_and_switch_workspaces.md",
+  "method": "Deterministic SVG with original JPEG bytes embedded as data URLs and separate vector annotation layers. No application pixels were redrawn or raster-edited.",
+  "design_width_css_pixels": 600,
+  "figures": [
+    {
+      "figure": "status_bar_workspace.svg",
+      "original_path": "tmp/web_doc_by_ai/results/workspaces_luna_medium_20261015/native_initial.jpg",
+      "original_sha256": "b5f6ca083e6543e726b7e23c051ade000030ede8084489ba958c695c4620b96f",
+      "original_dimensions_pixels": {
+        "width": 3456,
+        "height": 2168
+      },
+      "original_media_type": "image/jpeg",
+      "embedded_media_type": "image/jpeg",
+      "crop_rectangle_original_pixels": {
+        "x": 0,
+        "y": 1980,
+        "width": 700,
+        "height": 188
+      },
+      "annotations": [
+        {
+          "label": "Workspace status bar section",
+          "meaning": "The outlined name at the bottom left opens the workspace information card."
+        }
+      ],
+      "capture_limit": "Authentic interface capture; does not show workspace creation or selection outcome."
+    },
+    {
+      "figure": "workspace_information_card.svg",
+      "original_path": "tmp/web_doc_by_ai/results/workspaces_luna_medium_20261015/native_card.jpg",
+      "original_sha256": "9e2b942e1ab954491023581a85dd0415cb67e41837a35789574ac13bf50c1732",
+      "original_dimensions_pixels": {
+        "width": 3456,
+        "height": 2168
+      },
+      "original_media_type": "image/jpeg",
+      "embedded_media_type": "image/jpeg",
+      "crop_rectangle_original_pixels": {
+        "x": 0,
+        "y": 1400,
+        "width": 900,
+        "height": 700
+      },
+      "annotations": [
+        {
+          "label": "Workspace information card",
+          "meaning": "The workspace rows select a workspace; New workspace\u2026 opens the folder chooser."
+        }
+      ],
+      "capture_limit": "Authentic interface capture; does not show workspace creation or selection outcome."
+    }
+  ],
+  "styling": {
+    "matte": "pure gray #808080 at 0.25 fill opacity; screenshot and annotation layers unchanged",
+    "annotations": "Dark label with white outline and glow; muted blue target outline with pale glow.",
+    "padding": "24 CSS pixels around the crop",
+    "checked_themes": [
+      "dark"
+    ],
+    "context": "Crops include the left window edge and bottom status bar; the workspace card figure shows the workspace list and New workspace\u2026 entry."
+  }
+}

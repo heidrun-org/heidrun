@@ -1,0 +1,23 @@
+{
+  "source_capture": "../results/pane_focus_history_live_remaining_20261014/entry_retry_forward_1.jpg",
+  "copied_file": "tabs_source.jpg",
+  "sha256": "b67fdd6a69329c5ac28d67469681247a6ff6e950d05658e42759c61f0c4a7f3b",
+  "source_dimensions_pixels": [
+    3456,
+    2168
+  ],
+  "crop_rectangle_source_pixels": [
+    650,
+    0,
+    1800,
+    250
+  ],
+  "figure": "tabs_annotated.svg",
+  "annotations": {
+    "outlined region": "The visible tab bar in this screenshot crop.",
+    "nested outlined region": "The selected second tab.",
+    "arrow label Tab bar": "Identifies the tab bar.",
+    "arrow label Selected tab": "Identifies the selected second tab."
+  },
+  "notes": "SVG embeds the original JPEG bytes as a data URI and clips them to the crop. Screenshot pixels are unchanged; the gray matte is visible only around the screenshot crop. The capture shows tab location and selection, not renaming."
+}

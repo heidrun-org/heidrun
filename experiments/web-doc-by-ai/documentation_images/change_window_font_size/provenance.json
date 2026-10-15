@@ -1,0 +1,29 @@
+{
+  "capture_date": "15 October 2026",
+  "figures": [
+    {
+      "figure": "settings.svg",
+      "original_path": "../results/window_font_size_luna_medium_20261015/native_settings_baseline.jpg",
+      "original_sha256": "54a1a58d1fba1a9b64e1fa4aa316aeb0b2ac429d4bd213d6548dfc475185931f",
+      "crop_rectangle_pixels": [
+        850,
+        430,
+        1800,
+        1000
+      ],
+      "annotations": "Settings controls: Decrease the font size, current value, Increase the font size, and Reset"
+    },
+    {
+      "figure": "command_palette.svg",
+      "original_path": "../results/window_font_size_luna_medium_20261015/native_palette.jpg",
+      "original_sha256": "d58e73961c76bc43c14761ef4bb6c1a5565e2821e69f0d5e86269c5e7f42bc44",
+      "crop_rectangle_pixels": [
+        1000,
+        150,
+        1450,
+        1050
+      ],
+      "annotations": "Command palette showing the three named font-size actions below separate Run commands"
+    }
+  ]
+}
