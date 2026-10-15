@@ -41,6 +41,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The window, in the folder `docs/agents_rules/user_interface/window`:
   - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
   - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
+  - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
   - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
   - [statistics_charts.md](docs/agents_rules/user_interface/window/statistics_charts.md): the rules that every chart of the Statistics window follows: a chart legend, and a chart information card in HTML with an arrow that points to the bar under the pointer. Read it each time that you add or change a chart of the Statistics window, and add the same legend, the same card, and the same tests to a new chart.
   - [statistics_user_activity.md](docs/agents_rules/user_interface/window/statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
@@ -125,7 +126,7 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository has three parts: the Issue Fix Setup, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you make the change. In the Issue Fix Review, the developer tests the change. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
 The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
 
@@ -137,9 +138,24 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
    - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
 3. Make the change in the temporary worktree. Every commit message mentions the issue number.
 
+### Issue Fix Review
+
+The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+
+1. Tell the developer to look at the result.
+2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
+   ```bash
+   cd <path of the temporary worktree> && pnpm dev
+   ```
+3. Say in one or two short lines what to look at, so that the developer can validate the change.
+4. Only then ask whether the developer is satisfied and wants the pull request.
+
+- Give the command line again each time that the developer asks for a change and you change the work.
+- Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
+
 ### Issue Fix Completion
 
-The Issue Fix Completion starts when the developer is satisfied with the change.
+The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
 2. Create a pull request (on GitLab, a merge request) from the temporary branch.

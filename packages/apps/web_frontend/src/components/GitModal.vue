@@ -6,7 +6,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { currentForge, currentGit, git, refreshGit } from "../stores/git";
 import { settings } from "../stores/settings";
 import { codeThemeClass } from "../stores/theme";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { diffStats, parseDiff, splitDiff, type DiffLine } from "../lib/diff";
 import { highlightFile, highlightLine, languageFor } from "../lib/highlight";
 import { isMarkdown, renderMarkdown } from "../lib/markdown";
@@ -395,7 +395,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           <div v-else-if="selectedFile" class="foot muted">
             <template v-if="mode === 'preview'">{{ t("gitModal.previewTitle") }} · </template>
             {{ selectedFile.status === "??" ? t("gitModal.untracked") : t("gitModal.comparedToHead") }}
-            <template v-if="st?.last_time"> · {{ t("gitModal.lastCommit", { time: ago(st.last_time * 1000) }) }}</template>
+            <template v-if="st?.last_time"> · <AbbreviatedTime :milliseconds="st.last_time * 1000" phrase-key="gitModal.lastCommit" /></template>
             · {{ t("gitModal.footerKeys") }}
           </div>
         </section>

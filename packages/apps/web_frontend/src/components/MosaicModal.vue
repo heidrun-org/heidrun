@@ -6,7 +6,7 @@ import { mosaic } from "../stores/mosaic";
 import { allPanes, paneFullName, selectPane } from "../stores/session";
 import { agentList, showSubagent, subagents } from "../stores/subagents";
 import { settings } from "../stores/settings";
-import { ago } from "../lib/format";
+import AbbreviatedTime from "./AbbreviatedTime.vue";
 import { t } from "../i18n/index";
 
 interface Transcript {
@@ -164,7 +164,7 @@ function onKey(e: KeyboardEvent) {
             <span class="dot" :class="{ on: active(tile) }"></span>
             <span class="t-name">{{ title(tile) }}</span>
             <span v-if="isShown(tile)" class="tag">{{ t("mosaicModal.shown") }}</span>
-            <span class="t-when">{{ ago(tile.modified * 1000) }}</span>
+            <span class="t-when"><AbbreviatedTime :milliseconds="tile.modified * 1000" /></span>
           </span>
           <span v-if="tile.description" class="t-desc">{{ tile.description }}</span>
           <span class="lines mono" :data-id="tile.id"><span v-for="(l, i) in tile.lines" :key="i" class="l" :class="{ tool: l.startsWith('⏺ ') && /^⏺ \w+\(/.test(l), res: l.startsWith('  ⎿'), you: l.startsWith('> ') }">{{ l }}</span></span>

@@ -3,6 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import Fs from "node:fs";
 import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
+import { fullDateText } from "../lib/chat_dates";
 
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) }));
 vi.mock("../lib/api", async (importOriginal) => {
@@ -95,6 +96,32 @@ describe("ToHandlePanel cards", () => {
     const questionCard = cards.find((card) => card.classes("question"));
     expect(questionCard?.get(".badge").text()).toBe("QUESTION");
     expect(questionCard?.get(".desc").text()).toContain("Which color?");
+  });
+
+  it("gives each card a Bootstrap theme color, and an outline badge with no gray background", async () => {
+    const { wrapper, session } = await mountToHandlePanel();
+    session.state.questions["p3"] = { text: "Which color?" } as never;
+    await wrapper.vm.$nextTick();
+    const cards = wrapper.findAll(".card");
+    const themeOf = (cardClass: string) => cards.find((card) => card.classes(cardClass))?.classes().filter((name) => name.startsWith("theme-"));
+    expect(themeOf("blocked")).toEqual(["theme-danger"]);
+    expect(themeOf("question")).toEqual(["theme-accent"]);
+    expect(themeOf("done")).toEqual(["theme-primary"]);
+    for (const card of cards) {
+      expect(card.get(".badge").classes()).toEqual(expect.arrayContaining(["badge", "badge-outline"]));
+      expect(card.get(".badge").classes().some((name) => name.startsWith("t-"))).toBe(false);
+    }
+  });
+
+  it("shows a circled question mark after the time of a card, with the exact time as its title", async () => {
+    const { wrapper, session } = await mountToHandlePanel();
+    const finishedAt = Date.now() - 2 * 60_000;
+    session.state.since["p1"] = finishedAt;
+    await wrapper.vm.$nextTick();
+    const doneCard = wrapper.findAll(".card").find((card) => card.classes("done"));
+    const mark = doneCard?.get(".when [data-exact-time]");
+    expect(doneCard?.get(".when").text()).toBe("2 min ago");
+    expect(mark?.attributes("title")).toBe(fullDateText(finishedAt));
   });
 
   it("shows the sentence that says nothing is to handle when no agent calls", async () => {
@@ -231,6 +258,21 @@ describe("ToHandlePanel colors of a blocked card", () => {
   it("has no fixed color in the rules of the blocked card and of the choice rows, so that the light theme can change them", () => {
     expect(blockedRules.length).toBeGreaterThan(0);
     expect(blockedRules).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
+  });
+
+  it("colors the card, the text, and the badge with the theme tokens of Bootstrap, and with no fixed color", () => {
+    const rules = panelText
+      .split("\n")
+      .filter((line) => /^\.(card \{|card\.question|desc|when|badge)/.test(line) === true)
+      .join("\n");
+    expect(rules).not.toMatch(/#[0-9a-fA-F]{3,6}\b/);
+    expect(rules).not.toContain("--tint-");
+    expect(rules).not.toContain("--muted");
+    expect(rules).not.toContain(".card.question");
+    expect(rules).toMatch(/\.card \{[^}]*border: 1px solid var\(--theme-border\); background: var\(--theme-bg-subtle\);/);
+    expect(rules).toMatch(/\.desc \{[^}]*color: var\(--theme-fg-emphasis\);/);
+    expect(rules).toMatch(/\.when \{[^}]*color: var\(--theme-fg-emphasis\);/);
+    expect(rules).toMatch(/\.badge \{ --badge-color: var\(--theme-fg-emphasis\);/);
   });
 
   it("gives the choice rows a color in the dark theme and in the light theme", () => {
