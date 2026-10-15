@@ -9,19 +9,15 @@ import { t } from "../../i18n/index";
       <div class="title">{{ t("settingsSkills.levelTitle") }}</div>
       <div class="keys">{{ t("settingsSkills.levelHelp") }}</div>
     </div>
-    <div class="seg levelChoice" role="radiogroup" :aria-label="t('settingsSkills.levelLabel')">
-      <button
-        role="radio"
-        :aria-checked="settings.skillsLevel === 'user'"
-        :class="{ on: settings.skillsLevel === 'user' }"
-        @click="settings.skillsLevel = 'user'"
-      >{{ t("settingsSkills.levelUser") }}</button>
-      <button
-        role="radio"
-        :aria-checked="settings.skillsLevel === 'workspace'"
-        :class="{ on: settings.skillsLevel === 'workspace' }"
-        @click="settings.skillsLevel = 'workspace'"
-      >{{ t("settingsSkills.levelWorkspace") }}</button>
+    <div class="btn-group levelChoice" role="group" :aria-label="t('settingsSkills.levelLabel')">
+      <label class="btn-check btn-outline theme-secondary">
+        <input v-model="settings.skillsLevel" type="radio" name="skills-level" autocomplete="off" value="user" />
+        {{ t("settingsSkills.levelUser") }}
+      </label>
+      <label class="btn-check btn-outline theme-secondary">
+        <input v-model="settings.skillsLevel" type="radio" name="skills-level" autocomplete="off" value="workspace" />
+        {{ t("settingsSkills.levelWorkspace") }}
+      </label>
     </div>
   </div>
 </template>

@@ -79,10 +79,4 @@ h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .close:hover { background: var(--hover); color: var(--text); }
 .pane { flex: 1; min-height: 0; padding: 14px 22px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .pane :deep(.keys) { font-size: var(--font-size); color: var(--muted); line-height: 1.5; }
-.pane :deep(.seg) { display: flex; padding: 3px; border-radius: 9px; background: var(--bg); gap: 3px; }
-.pane :deep(.seg button) {
-  flex: 1; height: 30px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  font-size: var(--font-size); font-weight: 500;
-}
-.pane :deep(.seg button.on) { background: var(--hover); color: var(--text); }
 </style>
