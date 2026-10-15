@@ -6,9 +6,22 @@ import { SiteFiles } from './site_files';
 const pages = SiteFiles.listPages();
 
 describe('website pages', () => {
-	it('finds the four expected pages', () => {
+	it('finds the twelve expected pages', () => {
 		const names = pages.map((page) => Path.relative(SiteFiles.docsDir, page)).sort();
-		expect(names).toEqual(['about.md', 'documentation/index.md', 'documentation/shortcuts.md', 'index.md']);
+		expect(names).toEqual([
+			'about.md',
+			'documentation/index.md',
+			'documentation/shortcuts.md',
+			'features/ai.md',
+			'features/needs_you.md',
+			'features/panes.md',
+			'features/past_chats.md',
+			'features/phone_access.md',
+			'features/quotas.md',
+			'features/sidebar_sections.md',
+			'features/statistics.md',
+			'index.md',
+		]);
 	});
 
 	for (const page of pages) {
@@ -30,7 +43,7 @@ describe('website pages', () => {
 			});
 
 			it('has no relative link to a missing page', () => {
-				const links = [...text.matchAll(/\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
+				const links = [...text.matchAll(/(?<!!)\[[^\]]*\]\((\/[^)\s]*)\)/g)].map((match) => match[1]);
 				for (const link of links) {
 					expect(SiteFiles.markdownFileOfLink(link), link).not.toBeNull();
 				}
@@ -54,20 +67,32 @@ describe('home page', () => {
 		expect(home).toMatch(/^layout: home$/m);
 	});
 
-	it('has a call to action to the documentation and one to the about page', () => {
-		expect(home).toContain('link: /documentation/');
+	it('has a call to action to the latest release, one to the repository, and one to the about page', () => {
+		expect(home).toContain('link: https://github.com/heidrun-org/heidrun/releases/latest');
+		expect(home).toContain('link: https://github.com/heidrun-org/heidrun\n');
 		expect(home).toContain('link: /about');
 	});
 
-	it('lists six features', () => {
-		const features = home.split('\n').filter((line) => line.startsWith('  - title:'));
-		expect(features).toHaveLength(6);
+	it('shows the eleven sections under the hero, in the order of issue 509', () => {
+		const sections = [...home.matchAll(/^<(Home\w+)(?: section-id="([\w-]+)")? \/>$/gm)]
+			.map((match) => (match[2] === undefined ? match[1] : `${match[1]} ${match[2]}`));
+		expect(sections).toEqual([
+			'HomeProblem',
+			'HomeValhalla',
+			'HomeFeature know-which-one-needs-you',
+			'HomeFeature real-terminals',
+			'HomeFeature watch-the-mead-level',
+			'HomeFeature valhalla-fits-in-a-pocket',
+			'HomeLonghouse',
+			'HomeQuickStart',
+			'HomeOpenSource',
+			'HomeMythology',
+			'HomeSkal',
+		]);
 	});
 
-	it('gives every feature a title and a description', () => {
-		const titles = home.match(/^  - title: .+$/gm) ?? [];
-		const details = home.match(/^    details: .+$/gm) ?? [];
-		expect(details).toHaveLength(titles.length);
+	it('has no list of features, which the section "The whole longhouse in one window" replaces', () => {
+		expect(home).not.toMatch(/^features:/m);
 	});
 
 	it('names the splash image that exists in the public folder', () => {

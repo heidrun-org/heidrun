@@ -26,6 +26,19 @@ describe('website build', () => {
 		}
 	});
 
+	it('writes a page for every feature page', () => {
+		for (const name of ['needs_you', 'panes', 'quotas', 'phone_access', 'sidebar_sections', 'past_chats', 'statistics', 'ai']) {
+			expect(Fs.existsSync(Path.join(outDir, 'features', `${name}.html`)), name).toBe(true);
+		}
+	});
+
+	it('links the home page to every feature page, with the base path', () => {
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		for (const name of ['needs_you', 'panes', 'quotas', 'phone_access', 'sidebar_sections', 'past_chats', 'statistics', 'ai']) {
+			expect(html, name).toContain(`href="/heidrun/features/${name}`);
+		}
+	});
+
 	it('uses the base path in the links to the assets', () => {
 		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
 		expect(html).toContain('/heidrun/assets/');
@@ -50,6 +63,32 @@ describe('website build', () => {
 		for (const page of ['about.html', 'documentation/index.html', 'documentation/shortcuts.html']) {
 			const html = Fs.readFileSync(Path.join(outDir, page), 'utf8');
 			expect(html, page).not.toContain('flux-lines');
+		}
+	});
+
+	it('puts every section of the homepage in the home page', () => {
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		const ids = [
+			'the-problem',
+			'welcome-to-valhalla',
+			'know-which-one-needs-you',
+			'real-terminals',
+			'watch-the-mead-level',
+			'valhalla-fits-in-a-pocket',
+			'the-whole-longhouse',
+			'board-the-longship',
+			'built-by-the-herd',
+			'who-is-heidrun',
+			'skal',
+		];
+		for (const id of ids) {
+			expect(html, id).toContain(`id="${id}"`);
+		}
+	});
+
+	it('copies the screenshots of the homepage', () => {
+		for (const name of ['window.png', 'needs_you.png', 'panes.png', 'quotas.png']) {
+			expect(Fs.existsSync(Path.join(outDir, 'screenshots', name)), name).toBe(true);
 		}
 	});
 
