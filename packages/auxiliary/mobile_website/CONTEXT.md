@@ -7,6 +7,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - `index.html`: the entry of Vite. It names `src/main.ts` and `public/manifest.webmanifest`.
 - `src/mobile_app.ts`: the class `MobileApp`. It holds the open screen, refreshes the data, and handles the taps.
 - `src/mobile_api.ts`: the pairing key of the phone, and the calls to the mobile server.
+- `src/output_text.ts`: shortens the output of a pane, which is a copy of a terminal screen with many empty lines.
 - `src/screens/`: one class for each screen. See its own CONTEXT.md.
 - `src/components/`: the parts that several screens share. See its own CONTEXT.md.
 - `tests/`: the Vitest tests, which run the whole page against a fake Mac.
@@ -17,6 +18,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 ## Rules
 - This package has no `src/index.ts` and no `exports` entry. No package imports it. The package `mobile_server` reads only the folder `dist`.
 - This package imports nothing from `web_frontend`, and nothing from `desktop_tauri`.
+- A refresh never moves what the developer reads. The page draws a screen again only when its HTML changed, and a new HTML keeps the scroll of the page and of the output. The output follows its end only when the developer already looks at the end. A test checks it.
 - The page has no framework, no inline script, no inline style, and no event attribute in its HTML. The header `Content-Security-Policy` of the mobile server allows only files of its own address, and a test checks every screen.
 - Every text that comes from the Mac or from a coding agent goes through `HtmlEscape.escape` before it enters a template. A test with hostile text checks it.
 - The page calls only the closed list of methods of the mobile server (`state`, `read`, `answer`, `prompt`, `keys`), with the header `x-herdr-token`.

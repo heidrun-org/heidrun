@@ -48,7 +48,7 @@ export class PaneScreen {
 			isWorking ? PaneScreen.renderDangerButton('interrupt', 'Interrupt', paneId) : '';
 		const screenHtmlContent = /* html */`
 			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent)}
-			<main>
+			<main class="pane-main">
 				<div class="sub">${subtitle}</div>
 				${PaneScreen.renderQuestion(agent)}
 				<pre class="output">${HtmlEscape.escape(output === '' ? '…' : output)}</pre>

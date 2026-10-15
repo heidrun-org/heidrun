@@ -271,10 +271,19 @@ main {
   word-break: break-word;
 }
 
+.pane-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.pane-main > * {
+  flex-shrink: 0;
+}
+
 .output {
+  flex: 1 0 8rem;
   margin: 10px 0;
   padding: 10px;
-  max-height: 52vh;
   overflow: auto;
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -288,6 +297,7 @@ main {
 }
 
 .actions {
+  flex: none;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;

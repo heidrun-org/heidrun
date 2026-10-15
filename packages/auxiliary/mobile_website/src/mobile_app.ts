@@ -1,5 +1,6 @@
 import { MobileApi, UnpairedError } from './mobile_api';
 import type { CallResult, ConfirmRequest, ScreenName, Snapshot, TabName } from './mobile_types';
+import { OutputText } from './output_text';
 import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
@@ -29,6 +30,9 @@ export class MobileApp {
 	/** The number of lines of the output of a pane that the page asks for. */
 	static readonly outputLines = 80;
 
+	/** The distance from the end of the output, in pixels, under which the developer is said to look at the end. */
+	static readonly endToleranceInPixels = 24;
+
 	/** The time that a message stays on the screen, in milliseconds. */
 	static readonly toastMs = 3200;
 
@@ -55,6 +59,12 @@ export class MobileApp {
 
 	/** The end of the output of the pane that is open. */
 	private output = '';
+
+	/** The HTML that the root element holds now. The screen is drawn again only when the new HTML differs. */
+	private renderedHtml = '';
+
+	/** Names the screen that the root element shows. A new screen starts at the top. A refresh keeps the scroll. */
+	private renderedKey = '';
 
 	/** The timer of the next refresh, or null. */
 	private timer: ReturnType<typeof setTimeout> | null = null;
@@ -113,7 +123,7 @@ export class MobileApp {
 					lines: MobileApp.outputLines,
 				});
 				if (typeof result.text === 'string') {
-					this.output = result.text.replace(/\s+$/, '');
+					this.output = OutputText.tidy(result.text);
 				}
 			}
 		} catch (error) {
@@ -165,17 +175,48 @@ export class MobileApp {
 			return;
 		}
 		if (MobileApi.pairingKey() === '') {
-			this.root.innerHTML = MessageScreen.pairing();
+			this._show(MessageScreen.pairing(), 'message');
 			return;
 		}
 		if (this.snapshot === null) {
-			this.root.innerHTML = MessageScreen.connecting(this.isOnline);
+			this._show(MessageScreen.connecting(this.isOnline), 'message');
 			return;
 		}
-		this.root.innerHTML = this._screenHtmlContent(this.snapshot) + BottomBar.render(this.tab);
+		const screenHtmlContent = this._screenHtmlContent(this.snapshot) + BottomBar.render(this.tab);
+		this._show(screenHtmlContent, `${this.screen}:${this.paneId ?? ''}`);
+	}
+
+	/**
+	 * Puts the HTML of a screen in the root element, and keeps where the developer scrolled. A refresh with the
+	 * same HTML changes nothing. A refresh of the same screen keeps the scroll of the page and of the output, and
+	 * the output follows its end only when the developer already looks at the end. A new screen starts at the top,
+	 * and its output starts at the end.
+	 * @param htmlContent The HTML of the screen and of the bottom bar.
+	 * @param key The name of the screen: two refreshes of the same screen have the same name.
+	 */
+	private _show(htmlContent: string, key: string): void {
+		if (htmlContent === this.renderedHtml) {
+			return;
+		}
+		const isSameScreen = key === this.renderedKey;
+		const oldOutput = this.root.querySelector('.output');
+		const oldMain = this.root.querySelector('main');
+		const isAtEnd =
+			oldOutput === null ||
+			oldOutput.scrollHeight - oldOutput.scrollTop - oldOutput.clientHeight <=
+				MobileApp.endToleranceInPixels;
+		const outputTop = oldOutput?.scrollTop ?? 0;
+		const mainTop = oldMain?.scrollTop ?? 0;
+		this.root.innerHTML = htmlContent;
+		this.renderedHtml = htmlContent;
+		this.renderedKey = key;
 		const output = this.root.querySelector('.output');
 		if (output !== null) {
-			output.scrollTop = output.scrollHeight;
+			output.scrollTop = isSameScreen && isAtEnd === false ? outputTop : output.scrollHeight;
+		}
+		const main = this.root.querySelector('main');
+		if (main !== null && isSameScreen) {
+			main.scrollTop = mainTop;
 		}
 	}
 
