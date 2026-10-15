@@ -4,6 +4,7 @@
 The packages of experiments: code that tries an idea outside the application, so that the experiment does not change the real project.
 
 ## Key Exports & Entry Points
+- `parallax_dino_runner/`: a static web page with a game: a dinosaur like the dinosaur of Chrome Dino runs to the right, in three lanes, in front of parallax layers. See its own CONTEXT.md.
 - `multi_layer_graph/`: a command line tool that builds the multi-layer graph of a repository from the SQLite file of the data layer packages, and a page that shows the graph in 2D and in 3D. See its own CONTEXT.md.
 
 ## Rules
@@ -13,3 +14,4 @@ The packages of experiments: code that tries an idea outside the application, so
 
 ## Background
 - The folder comes from [issue #510](https://github.com/heidrun-org/heidrun/issues/510) and its plan, [issue #530](https://github.com/heidrun-org/heidrun/issues/530).
+- The package `parallax_dino_runner` comes from [issue #536](https://github.com/heidrun-org/heidrun/issues/536) and its plan, [issue #538](https://github.com/heidrun-org/heidrun/issues/538).
