@@ -65,7 +65,7 @@ describe('Needs you screen', () => {
 		expect(mac.callsOf('read').map((call) => call.params)).toEqual([
 			{
 				paneId: 'p-asking',
-				lines: 80,
+				lines: 300,
 				ansi: true,
 			},
 		]);

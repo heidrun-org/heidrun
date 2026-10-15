@@ -30,7 +30,7 @@ export class MobileApp {
 	static readonly paneRefreshMs = 2500;
 
 	/** The number of lines of the output of a pane that the page asks for. */
-	static readonly outputLines = 80;
+	static readonly outputLines = 300;
 
 	/** The distance from the end of the output, in pixels, under which the developer is said to look at the end. */
 	static readonly endToleranceInPixels = 24;

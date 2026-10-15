@@ -43,6 +43,7 @@ export class PaneScreen {
 		const subtitle = HtmlEscape.escape(`${agent.name}${contextText} · ${ageText}`);
 		const placeholder = HtmlEscape.escape(`Prompt for ${agent.name}…`);
 		const outputHtmlContent = OutputText.toHtml(output);
+		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
 		const isBlocked = agent.status === 'blocked';
 		const isWorking = agent.status === 'working';
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
@@ -57,7 +58,7 @@ export class PaneScreen {
 			<main class="pane-main">
 				<div class="sub">${subtitle}</div>
 				${PaneScreen.renderQuestion(agent)}
-				<pre class="output">${outputHtmlContent === '' ? '…' : outputHtmlContent}</pre>
+				<pre class="output"><code class="output-text">${shownHtmlContent}</code></pre>
 				${actionsHtmlContent}
 			</main>
 			<div class="composer">

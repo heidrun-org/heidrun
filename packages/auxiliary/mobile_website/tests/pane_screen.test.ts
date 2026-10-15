@@ -10,6 +10,7 @@ describe('Pane screen', () => {
 		const harness = await AppHarness.start(mac);
 		await harness.openPane('p-working');
 		expect(document.querySelector('.output')?.textContent).toBe('line one\nline two');
+		expect(document.querySelector('.output > code.output-text')?.textContent).toBe('line one\nline two');
 		expect(document.querySelector('header .badge')?.textContent).toBe('Working');
 		expect(harness.text()).toContain('Codex · context 42 % · 2 min ago');
 	});
@@ -39,6 +40,13 @@ describe('Pane screen', () => {
 		const span = document.querySelector<HTMLElement>('.output span');
 		expect(span?.textContent).toBe('two');
 		expect(span?.style.color).toBe('rgb(36, 114, 200)');
+	});
+
+	it('asks the Mac for 300 lines, so a tall screen shows more than the end of the screen', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		expect(mac.callsOf('read').pop()?.params.lines).toBe(300);
 	});
 
 	it('has a refresh icon in the header, and no button Refresh below the output', async () => {

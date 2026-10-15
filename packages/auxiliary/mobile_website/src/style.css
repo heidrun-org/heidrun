@@ -296,6 +296,8 @@ main {
 }
 
 .output {
+  display: flex;
+  flex-direction: column;
   flex: 1 0 8rem;
   margin: 10px 0;
   padding: 10px;
@@ -309,6 +311,14 @@ main {
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* A text shorter than the panel sits at the bottom, next to the field for a prompt, like a terminal. An automatic
+   margin keeps the panel scrollable when the text is longer than the panel. */
+.output-text {
+  display: block;
+  margin-top: auto;
+  font: inherit;
 }
 
 .a-bold {
