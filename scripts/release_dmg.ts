@@ -21,6 +21,13 @@ const __dirname = import.meta.dirname;
  */
 class ReleaseDmg {
 	/**
+	 * The name of the second copy of the disk image for Apple silicon. This name never changes, so the web address
+	 * https://github.com/heidrun-org/heidrun/releases/latest/download/Heidrun_aarch64.dmg is always the latest disk
+	 * image, and the script scripts/install.sh downloads it.
+	 */
+	private static readonly LATEST_DMG_FILE_NAME = 'Heidrun_aarch64.dmg';
+
+	/**
 	 * Builds the disk image, then creates the GitHub release if it does not exist, uploads the disk image,
 	 * and prints the URL of the release.
 	 * @param argv The command line arguments, in the format of `process.argv`.
@@ -35,7 +42,8 @@ class ReleaseDmg {
 					+ 'package.json. The release is created when it does not exist, and its text is rewritten when it '
 					+ 'exists. The text of the release is the file '
 					+ 'docs/release_notes/prefix.md, then the file of the option --notes-file, then the list of changes '
-					+ 'that GitHub generates.',
+					+ 'that GitHub generates. The disk image is uploaded twice: with its version in its name, and as a '
+					+ 'copy named Heidrun_aarch64.dmg for the script scripts/install.sh.',
 			)
 			.option(
 				'--notes-file <path>',
@@ -84,8 +92,19 @@ class ReleaseDmg {
 			ReleaseDmg._fail(`No disk image for version ${version} found in ${dmgDir}.`);
 		}
 		const dmgPaths = dmgFileNames.map((fileName) => Path.join(dmgDir, fileName));
+		const aarch64DmgPath = dmgPaths.find((dmgPath) => dmgPath.endsWith('_aarch64.dmg'));
+		if (aarch64DmgPath === undefined) {
+			ReleaseDmg._fail(
+				`No disk image for Apple silicon (a file that ends with _aarch64.dmg) in ${dmgDir}.`,
+				`The script scripts/install.sh needs the file ${ReleaseDmg.LATEST_DMG_FILE_NAME} in every release.`,
+				'Run this command on a Mac with Apple silicon.',
+			);
+		}
 
 		const bodyDir = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'release_dmg_'));
+		const latestDmgPath = Path.join(bodyDir, ReleaseDmg.LATEST_DMG_FILE_NAME);
+		Fs.copyFileSync(aarch64DmgPath, latestDmgPath);
+		const uploadPaths = [...dmgPaths, latestDmgPath];
 		const bodyPath = Path.join(bodyDir, 'release_body.md');
 		const prefixText = Fs.readFileSync(prefixPath, 'utf8').trimEnd();
 		const notesText = notesPath !== undefined ? Fs.readFileSync(notesPath, 'utf8').trim() : '';
@@ -101,7 +120,7 @@ class ReleaseDmg {
 			isReleaseExisting = false;
 		}
 		if (isReleaseExisting === true) {
-			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...dmgPaths, '--clobber'], rootDir);
+			ReleaseDmg._run('gh', ['release', 'upload', tagName, ...uploadPaths, '--clobber'], rootDir);
 			const generatedNotes = ChildProcess.spawnSync(
 				'gh',
 				['api', 'repos/{owner}/{repo}/releases/generate-notes', '-f', `tag_name=${tagName}`, '--jq', '.body'],
@@ -126,7 +145,7 @@ class ReleaseDmg {
 					'release',
 					'create',
 					tagName,
-					...dmgPaths,
+					...uploadPaths,
 					'--target',
 					commitSha,
 					'--title',

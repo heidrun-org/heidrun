@@ -48,6 +48,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [statistics_user_activity_stacked_bars.md](docs/agents_rules/user_interface/window/statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
   - [statistics_person_work.md](docs/agents_rules/user_interface/window/statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.
   - [statistics_ai_cost.md](docs/agents_rules/user_interface/window/statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
+  - [statistics_totals.md](docs/agents_rules/user_interface/window/statistics_totals.md): the lines added and deleted, and the average per day under each total, of the tab "Work of one person": what they are, how the value is written, where the calculation is, and the tests.
   - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
   - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
   - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
@@ -140,7 +141,9 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 
 ### Issue Fix Review
 
-The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). The Issue Fix Review has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)). Never put the two messages in one message.
+
+The first message asks the developer to review. Always do these steps, in this order:
 
 1. Tell the developer to look at the result.
 2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
@@ -148,9 +151,11 @@ The Issue Fix Review starts when the change is done in the temporary worktree. W
    cd <path of the temporary worktree> && pnpm dev
    ```
 3. Say in one or two short lines what to look at, so that the developer can validate the change.
-4. Only then ask whether the developer is satisfied and wants the pull request.
+4. Stop. The first message has no question and no button, and it says nothing about the pull request (on GitLab, the merge request) or about the merge. Write the command line in the closing text of the message, never before a question box, so that the developer always sees it.
 
-- Give the command line again each time that the developer asks for a change and you change the work.
+The developer runs the application, then says that the result is reviewed. The second message comes only after that. It asks one question: whether the result is good. It does not ask about the pull request or about the merge.
+
+- Give the command line again each time that the developer asks for a change and you change the work. Then start again with the first message.
 - Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
 
 ### Issue Fix Completion
@@ -223,5 +228,6 @@ The file `.env.example` at the root of the repository lists and explains every e
 - `pnpm --filter change_log_generator test` runs the Vitest tests of the package `packages/dev_tools/change_log_generator`: the range of the pull requests, the heading, the place of a section in the file, and the command line. The test files sit in the folder `tests`.
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
+- `pnpm --filter install_script_tests test` runs the Vitest tests of the package `packages/dev_tools/install_script_tests`: the script `scripts/install.sh`, run with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, in a temporary folder in place of `/Applications`. It checks the copy, the eject, the deletion of the temporary folder, and the message of each stop. The test files sit in the folder `tests`.
 - `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it. The test files sit in the folder `tests`.
 - When you add a feature, add the tests that match the feature in the same change. When you fix a bug, add a test that fails without the fix.
