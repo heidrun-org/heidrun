@@ -3,6 +3,7 @@
 use serde::Deserialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 use super::cache::{FILE_LIST_TTL, FileListEntry, SkillTextEntry, cache_folder, cached_files, fallback_to_cached_text, file_list_cache, is_recent, now_seconds, read_text_entry, text_cache_folder, write_entry, write_text_entry};
+use super::folder_address::FolderAddress;
 use super::repository_paths::{candidate_dirs, encode_path, pick_skill_dir};
 use super::skill_text::parse_name;
 use super::types::RepositoryFile;
@@ -16,6 +17,9 @@ pub(super) const SKILL_PARENTS: [&str; 5] = ["skills", "", ".claude/skills", "sk
 #[derive(Deserialize)]
 pub(super) struct TreeResponse {
     pub(super) tree: Vec<TreeEntry>,
+    /// True when GitHub cut the list because the folder holds too many files.
+    #[serde(default)]
+    pub(super) truncated: bool,
 }
 
 #[derive(Deserialize)]
@@ -78,21 +82,84 @@ pub(super) async fn fetch_repository_files(client: &reqwest::Client, source: &st
     let response = client.get(&url).send().await.map_err(|e| format!("skills_download_failed: {e}"))?;
     let status = response.status().as_u16();
     if status == 403 || status == 429 {
-        return Err(match rate_limit_reset(response.headers()) {
-            Some(reset) => format!("skills_github_rate_limit: {reset}"),
-            None => "skills_github_rate_limit".into(),
-        });
+        return Err(rate_limit_error(response.headers()));
     }
     if status != 200 {
         return Err(format!("skills_download_failed: HTTP {status}"));
     }
     let parsed: TreeResponse = response.json().await.map_err(|e| format!("skills_download_failed: {e}"))?;
-    Ok(parsed
-        .tree
+    Ok(files_of_tree(parsed))
+}
+
+/// The error for a call that GitHub refuses because of its rate limit.
+pub(super) fn rate_limit_error(headers: &reqwest::header::HeaderMap) -> String {
+    match rate_limit_reset(headers) {
+        Some(reset) => format!("skills_github_rate_limit: {reset}"),
+        None => "skills_github_rate_limit".into(),
+    }
+}
+
+/// The files (not the folders) of an answer of the GitHub tree call.
+pub(super) fn files_of_tree(tree: TreeResponse) -> Vec<RepositoryFile> {
+    tree.tree
         .into_iter()
         .filter(|entry| entry.kind == "blob")
         .map(|entry| RepositoryFile { path: entry.path, size: entry.size.unwrap_or(0) })
-        .collect())
+        .collect()
+}
+
+/// Downloads the `SKILL.md` text of the folder of an address. The error is `skills_folder_not_found: <folder>` when
+/// GitHub has no such file, which is also what GitHub says for a private repository.
+pub(super) async fn fetch_folder_text(client: &reqwest::Client, address: &FolderAddress) -> Result<String, String> {
+    let url = format!("https://raw.githubusercontent.com/{}/{}/SKILL.md", address.source, encode_path(&address.reference_and_path()));
+    let response = client.get(&url).send().await.map_err(|e| format!("skills_download_failed: {e}"))?;
+    let status = response.status().as_u16();
+    if status == 404 {
+        return Err(folder_not_found(address));
+    }
+    if response.status().is_success() == false {
+        return Err(format!("skills_download_failed: HTTP {status}"));
+    }
+    response.text().await.map_err(|e| format!("skills_download_failed: {e}"))
+}
+
+/// The error for a folder that GitHub does not give.
+pub(super) fn folder_not_found(address: &FolderAddress) -> String {
+    format!("skills_folder_not_found: {}/{}", address.source, address.reference_and_path())
+}
+
+/// All the files below the folder of an address, each with its path inside the folder, in one call to GitHub. The
+/// address does not say where the branch ends and the path of the folder starts, so the shortest branch is tried
+/// first, then each longer one, until GitHub knows the folder.
+pub(super) async fn list_folder_files(client: &reqwest::Client, address: &FolderAddress) -> Result<Vec<RepositoryFile>, String> {
+    for branch_length in address.branch_lengths() {
+        let (branch, path) = address.split(branch_length);
+        if let Some(files) = fetch_folder_files(client, &address.source, &branch, &path).await? {
+            return Ok(files);
+        }
+    }
+    Err(folder_not_found(address))
+}
+
+/// The files below `path` on `branch`, or `None` when GitHub does not know this branch with this folder.
+async fn fetch_folder_files(client: &reqwest::Client, source: &str, branch: &str, path: &str) -> Result<Option<Vec<RepositoryFile>>, String> {
+    let url = format!("https://api.github.com/repos/{source}/git/trees/{}:{}?recursive=1", encode_path(branch), encode_path(path));
+    let response = client.get(&url).send().await.map_err(|e| format!("skills_download_failed: {e}"))?;
+    let status = response.status().as_u16();
+    if status == 404 || status == 422 {
+        return Ok(None);
+    }
+    if status == 403 || status == 429 {
+        return Err(rate_limit_error(response.headers()));
+    }
+    if status != 200 {
+        return Err(format!("skills_download_failed: HTTP {status}"));
+    }
+    let parsed: TreeResponse = response.json().await.map_err(|e| format!("skills_download_failed: {e}"))?;
+    if parsed.truncated {
+        return Err("skills_too_many_files".into());
+    }
+    Ok(Some(files_of_tree(parsed)))
 }
 
 /// Finds the folder of a skill in its repository: the folder and the text of its `SKILL.md` file.
