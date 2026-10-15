@@ -15,6 +15,8 @@ Under the title of each chat, a summary of up to four lines shows:
 
 Click a line of the summary to see more in an information card. The information card of the dates also gives the tokens of the chat and its estimated cost: what the tokens would cost at the public price of the model. On a subscription, you pay something else.
 
+![The Past chats sidebar section with the selector of the coding agent, the Chats sort dropdown menu, the dynamic topic bar, and four chats with their dynamic topics and their summary.](/screenshots/features/past_chats.png){width=300}
+
 ## Open an old chat again
 
 Each row has two buttons:

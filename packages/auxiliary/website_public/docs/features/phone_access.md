@@ -25,4 +25,6 @@ Heidrun serves a small web page from your Mac. From your iPhone or your iPad, yo
 3. Scan the QR code with the camera of the phone, then open the link in Safari.
 4. In Safari, tap Share, then "Add to Home Screen". Heidrun then opens like an application.
 
+![The section "Mobile access" of the Settings window before the phone access is on: the switch "Turn on mobile access", and the two steps to do before.](/screenshots/features/phone_access.png)
+
 *Even Odin leaves Valhalla sometimes. Now the einherjar can still reach him.*

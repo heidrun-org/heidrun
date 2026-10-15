@@ -150,6 +150,16 @@ describe('links of the homepage to the feature pages', () => {
 	});
 });
 
+describe('captures of the feature pages', () => {
+	it('has no capture in the folder docs/public/screenshots/features that no page shows', () => {
+		const folder = Path.join(SiteFiles.docsDir, 'public/screenshots/features');
+		const texts = EXPECTED_PAGES.map((page) => Fs.readFileSync(SiteFiles.markdownFileOfLink(page.link) ?? '', 'utf8')).join('\n');
+		for (const name of Fs.readdirSync(folder)) {
+			expect(texts, name).toContain(`/screenshots/features/${name}`);
+		}
+	});
+});
+
 describe('feature pages', () => {
 	for (const page of EXPECTED_PAGES) {
 		const filePath = SiteFiles.markdownFileOfLink(page.link) ?? '';
@@ -185,6 +195,11 @@ describe('feature pages', () => {
 
 			it('never names a part that the application does not have', () => {
 				expect(text).not.toMatch(/inspector/i);
+			});
+
+			it('shows at least one real capture, except the page about the use of AI', () => {
+				const images = [...text.matchAll(/!\[[^\]]{30,}\]\(\/screenshots\/[^)\s]+\.png\)/g)];
+				expect(images.length).toBeGreaterThanOrEqual(page.link === '/features/ai' ? 0 : 1);
 			});
 
 			it('shows only images that exist in the folder docs/public', () => {

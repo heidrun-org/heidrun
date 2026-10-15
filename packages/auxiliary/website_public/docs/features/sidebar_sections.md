@@ -52,4 +52,6 @@ Heidrun saves the launchers in the file `.heidrun/config.json` of the repository
 
 The Clipboard sidebar section, in the right sidebar, lists the notes that you pinned from the text of a terminal. Find a command, an error, or an answer again later. The switch "All workspaces" shows the notes of every workspace.
 
+![The Clipboard sidebar section with two notes pinned from the text of two terminals, each with its buttons Copy and Send to.](/screenshots/features/clipboard.png){width=300}
+
 *A Viking keeps the axe, the shield, and the horn of mead within reach. You keep your files, your branches, and your issues within reach.*
