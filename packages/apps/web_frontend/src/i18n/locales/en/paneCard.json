@@ -9,9 +9,9 @@
   "unpinTitle": "Unpin the pane (the agent continues)",
   "pinTitle": "Pin the pane: it stays visible when you change tab or workspace",
   "splitRight": "Split right",
-  "splitRightTitle": "Split right (⌘D)",
+  "splitRightTitle": "Split right with the default command of a new tab (⌘D, shift click: start a terminal)",
   "splitDown": "Split down",
-  "splitDownTitle": "Split down (⇧⌘D)",
+  "splitDownTitle": "Split down with the default command of a new tab (⇧⌘D, shift click: start a terminal)",
   "close": "Close the pane (⌘W)",
   "closeConfirm": "Close"
 }

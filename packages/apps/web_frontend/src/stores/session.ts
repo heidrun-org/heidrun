@@ -859,13 +859,24 @@ export function newTerminal() {
   });
 }
 
-export function splitPane(direction: "right" | "down" = "right", paneId?: string) {
+/**
+ * Splits a pane and starts a terminal in the new pane, then selects the new pane. Without a pane to split, creates a new tab
+ * with a terminal.
+ * @param direction - where the new pane goes: to the right of the pane, or below it
+ * @param paneId - the pane to split, the selected pane when it is not given
+ * @returns the new pane, or undefined when no pane was split
+ */
+export async function splitPane(direction: "right" | "down" = "right", paneId?: string): Promise<PaneInfo | undefined> {
   const p = paneId ? allPanes.value.find((x) => x.pane_id === paneId) : selectedPane.value;
-  if (!p) return newTerminal();
+  if (!p) {
+    await newTerminal();
+    return undefined;
+  }
   return guard(async () => {
     const pane = await api.split(p.pane_id, direction, p.cwd);
     await refresh();
     if (pane) selectPane(pane);
+    return pane;
   });
 }
 

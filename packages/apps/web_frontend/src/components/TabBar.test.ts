@@ -198,7 +198,7 @@ describe("TabBar plus button", () => {
   it("is after the last tab, and has an accessible name", async () => {
     const { wrapper } = await mountTabBar();
     const plus = wrapper.get("button.add");
-    expect(plus.attributes("aria-label")).toBe("Create a tab with the default command of a new tab (shift click: start the previous tab again)");
+    expect(plus.attributes("aria-label")).toBe("Create a tab with the default command of a new tab (shift click: start a terminal)");
     expect(plus.attributes("title")).toBe(plus.attributes("aria-label"));
     const tabRow = wrapper.get("[role=tablist]").element;
     expect(tabRow.compareDocumentPosition(plus.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
