@@ -75,6 +75,7 @@ describe('bootstrap_parts.scss', () => {
 			'.form-control:focus-visible,\n.form-control:focus-within',
 			'.menu',
 			'.popover',
+			'.tooltip',
 			'.progress',
 			'.alert',
 			'.badge',
@@ -163,10 +164,10 @@ describe('bootstrap_parts.scss', () => {
 		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
 	});
 
-	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the tooltip, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
-		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.tooltip', '.tooltip-inner', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
 			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
 	});
@@ -191,12 +192,17 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).toMatch(/\.list-group \{[^}]*--list-group-action-active-bg: var\(--hover-soft\)/);
 	});
 
-	it('has the Bootstrap part of the nav with tabs, and gives the links of the nav no transition', () => {
+	it('has the Bootstrap part of the nav with tabs and pills, and gives the links of the nav no transition', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		for (const selector of ['.nav', '.nav-link', '.nav-tabs']) {
+		for (const selector of ['.nav', '.nav-link', '.nav-tabs', '.nav-pills']) {
 			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
 		expect(cssText).not.toContain('transition-duration: var(--nav-link-transition-duration)');
+	});
+
+	it('draws the text of a tooltip with the variable --font-size, so that the font size setting reaches it', () => {
+		const cssText = BootstrapPartsTestHelper.compile();
+		expect(cssText).toMatch(/\n\.tooltip \{[^}]*--tooltip-font-size: var\(--font-size\)/);
 	});
 
 	it('draws the focus ring of a field on its border, so that no dark border shows inside the ring', () => {

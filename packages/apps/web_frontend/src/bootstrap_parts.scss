@@ -23,6 +23,7 @@
 @use "bootstrap/scss/menu";
 @use "bootstrap/scss/nav";
 @use "bootstrap/scss/popover";
+@use "bootstrap/scss/tooltip";
 @use "bootstrap/scss/progress";
 @use "bootstrap/scss/alert";
 @use "bootstrap/scss/badge";
@@ -390,6 +391,10 @@ select.form-control {
 .popover {
   --popover-max-width: 340px;
   --popover-font-size: var(--font-size);
+}
+
+.tooltip {
+  --tooltip-font-size: var(--font-size);
 }
 
 // The usage bar of a quota card is thin, and the notice under it is compact. A notice does not add a margin under itself.

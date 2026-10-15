@@ -100,10 +100,14 @@ describe("StatisticsModal", () => {
     expect(wrapper.find("button[aria-label='Close (Escape)']").exists()).toBe(true);
   });
 
-  it("has two tabs, User activity and Work of one person, built as a Bootstrap tab list, and User activity is the selected tab", async () => {
+  it("has two tabs, User activity and Work of one person, built as a Bootstrap tab list in the title bar, and User activity is the selected tab", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const tabList = wrapper.get('[role="tablist"]');
-    expect(tabList.classes()).toEqual(expect.arrayContaining(["nav", "nav-tabs"]));
+    expect(tabList.classes()).toEqual(expect.arrayContaining(["nav", "nav-pills"]));
+    expect(tabList.attributes("aria-label")).toBe("Kinds of statistics");
+    expect(wrapper.get(".dialog-header").find('[role="tablist"]').exists()).toBe(true);
+    expect(wrapper.get(".dialog-body").find('[role="tablist"]').exists()).toBe(false);
+    expect(wrapper.find(".nav-tabs").exists()).toBe(false);
     const tabs = tabList.findAll('[role="tab"]');
     expect(tabs.map((tab) => tab.text())).toEqual(["User activity", "Work of one person"]);
     expect(tabs.map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false"]);
@@ -117,6 +121,32 @@ describe("StatisticsModal", () => {
       expect(pane.attributes("id")).toBe(tabs[index].attributes("aria-controls"));
       expect(pane.attributes("aria-labelledby")).toBe(tabs[index].attributes("id"));
     }
+  });
+
+  it("puts the title bar in this order: the title, the two tab buttons, and the close button", async () => {
+    const { wrapper } = await mountStatisticsModal([]);
+    const header = wrapper.get(".dialog-header").element;
+    const children = Array.from(header.children);
+    expect(children[0].classList.contains("dialog-title")).toBe(true);
+    expect(children[1].getAttribute("role")).toBe("tablist");
+    expect(children[2].getAttribute("aria-label")).toBe("Close (Escape)");
+  });
+
+  it("shows an HTML tooltip under each tab button when the pointer is over it, and hides it when the pointer leaves", async () => {
+    const { wrapper } = await mountStatisticsModal([]);
+    const parts = wrapper.get('[role="tablist"]').findAll("li > span");
+    expect(parts).toHaveLength(2);
+    expect(wrapper.find(".tooltip").exists()).toBe(false);
+    await parts[0].trigger("pointerenter");
+    await flushPromises();
+    expect(wrapper.get(".tooltip .tooltip-inner strong").text()).toBe("User activity");
+    expect(wrapper.findAll(".tooltip .tooltip-inner li").length).toBeGreaterThan(0);
+    await parts[0].trigger("pointerleave");
+    expect(wrapper.find(".tooltip").exists()).toBe(false);
+    await parts[1].trigger("pointerenter");
+    await flushPromises();
+    expect(wrapper.get(".tooltip .tooltip-inner strong").text()).toBe("Work of one person");
+    expect(wrapper.get(".tooltip .tooltip-inner").text()).toContain("AI cost");
   });
 
   it("reads the work of the people only when the tab Work of one person is shown, and only once while the window stays open", async () => {

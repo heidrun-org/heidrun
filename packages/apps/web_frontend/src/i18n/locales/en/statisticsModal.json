@@ -1,7 +1,9 @@
 {
   "title": "Statistics",
   "close": "Close (Escape)",
+  "tabListLabel": "Kinds of statistics",
   "userActivityTab": "User activity",
+  "userActivityTabTooltip": "<p><strong>User activity</strong></p><p>How long you are active in front of Heidrun.</p><ul><li>One bar for each slot of time.</li><li>Choose the time range, the slot length, and the workspaces.</li></ul>",
   "rangeLabel": "Time range",
   "rangeHour": "Last hour",
   "rangeHourTitle": "Show the user activity time of the last hour",
@@ -39,6 +41,7 @@
   "hoursTooltip": "{start} to {end}: {hours} h {minutes} min",
   "dayTooltip": "{day}: {hours} h {minutes} min",
   "personWorkTab": "Work of one person",
+  "personWorkTabTooltip": "<p><strong>Work of one person</strong></p><p>How much one person does, with one bar for each day.</p><ul><li><strong>Git history</strong>: the commits and the pull requests of the person, and the number of issues.</li><li><strong>AI cost</strong>: the estimated cost of the chats of the coding agents.</li></ul>",
   "personWorkPersonLabel": "Person",
   "personWorkSevenDays": "Last 7 days",
   "personWorkSevenDaysTitle": "Show the work of the person over the last 7 days, with one bar for each day",

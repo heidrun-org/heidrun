@@ -12,7 +12,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [README.md](README.md): the overview of this folder, for people.
 - [colors_and_scroll_bars.md](colors_and_scroll_bars.md): the colors and the scroll bars.
 - [layout.md](layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
-- [statistics_window.md](statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
+- [statistics_window.md](statistics_window.md): the item "Statistics" of the More menu, the Statistics window, the buttons of its tabs in the title bar, and where the data of the tab "User activity" comes from.
 - [statistics_user_activity.md](statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
 - [statistics_person_work.md](statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the person chooser, the time range, the totals, the bar chart of each day, what counts, and where its data comes from.
 - [statistics_ai_cost.md](statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
