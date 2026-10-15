@@ -183,7 +183,7 @@ onMounted(load);
     </div>
     <div style="flex: 1 1 0; min-height: 240px">
       <div v-if="errorText !== ''" class="alert alert-danger" role="alert">{{ t("statisticsModal.loadError", { error: errorText }) }}</div>
-      <span v-else-if="slots === null" class="form-text">{{ t("statisticsModal.loading") }}</span>
+      <span v-else-if="slots === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.loading") }}</span>
       <span v-else-if="workspaceChoices.length > 0 && chosenFolders.length === 0" class="form-text">{{ t("statisticsModal.workspacesNone") }}</span>
       <UserActivityHistogram v-else :slots="slots" :range-id="rangeId" :slot-length-id="slotLengthId" />
     </div>

@@ -100,16 +100,21 @@ describe("StatisticsModal", () => {
     expect(wrapper.find("button[aria-label='Close (Escape)']").exists()).toBe(true);
   });
 
-  it("has two tabs, User activity and Work of one person, built as a Bootstrap tab list in the title bar, and User activity is the selected tab", async () => {
+  it("has two tabs, User activity and Work of one person, built as a Bootstrap button group in the title bar, and User activity is the selected tab", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const tabList = wrapper.get('[role="tablist"]');
-    expect(tabList.classes()).toEqual(expect.arrayContaining(["nav", "nav-pills"]));
+    expect(tabList.classes()).toContain("btn-group");
     expect(tabList.attributes("aria-label")).toBe("Kinds of statistics");
     expect(wrapper.get(".dialog-header").find('[role="tablist"]').exists()).toBe(true);
     expect(wrapper.get(".dialog-body").find('[role="tablist"]').exists()).toBe(false);
     expect(wrapper.find(".nav-tabs").exists()).toBe(false);
+    expect(wrapper.find(".nav-pills").exists()).toBe(false);
     const tabs = tabList.findAll('[role="tab"]');
     expect(tabs.map((tab) => tab.text())).toEqual(["User activity", "Work of one person"]);
+    for (const tab of tabs) {
+      expect(tab.classes()).toEqual(expect.arrayContaining(["btn", "btn-sm", "btn-outline", "theme-secondary"]));
+      expect(tab.element.parentElement).toBe(tabList.element);
+    }
     expect(tabs.map((tab) => tab.attributes("aria-selected"))).toEqual(["true", "false"]);
     expect(tabs[0].classes()).toContain("active");
     expect(tabs[1].classes()).not.toContain("active");
@@ -123,30 +128,36 @@ describe("StatisticsModal", () => {
     }
   });
 
-  it("puts the title bar in this order: the title, the two tab buttons, and the close button", async () => {
+  it("has a thin title bar: the title at the left, then at the right the two tab buttons and a small close button", async () => {
     const { wrapper } = await mountStatisticsModal([]);
-    const header = wrapper.get(".dialog-header").element;
-    const children = Array.from(header.children);
+    const header = wrapper.get(".dialog-header");
+    expect(header.attributes("style")).toContain("--dialog-header-padding");
+    const children = Array.from(header.element.children);
     expect(children[0].classList.contains("dialog-title")).toBe(true);
+    expect(children[0].classList.contains("me-auto")).toBe(true);
     expect(children[1].getAttribute("role")).toBe("tablist");
     expect(children[2].getAttribute("aria-label")).toBe("Close (Escape)");
+    expect(children[2].classList.contains("btn-sm")).toBe(true);
+    expect(children[2].classList.contains("fs-4")).toBe(false);
   });
 
   it("shows an HTML tooltip under each tab button when the pointer is over it, and hides it when the pointer leaves", async () => {
     const { wrapper } = await mountStatisticsModal([]);
-    const parts = wrapper.get('[role="tablist"]').findAll("li > span");
-    expect(parts).toHaveLength(2);
-    expect(wrapper.find(".tooltip").exists()).toBe(false);
-    await parts[0].trigger("pointerenter");
+    const tabs = wrapper.get('[role="tablist"]').findAll('[role="tab"]');
+    const tooltip = () => document.body.querySelector(".tooltip");
+    expect(tooltip()).toBeNull();
+    await tabs[0].trigger("pointerenter");
     await flushPromises();
-    expect(wrapper.get(".tooltip .tooltip-inner strong").text()).toBe("User activity");
-    expect(wrapper.findAll(".tooltip .tooltip-inner li").length).toBeGreaterThan(0);
-    await parts[0].trigger("pointerleave");
-    expect(wrapper.find(".tooltip").exists()).toBe(false);
-    await parts[1].trigger("pointerenter");
+    expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("User activity");
+    expect(tooltip()?.querySelectorAll(".tooltip-inner li").length).toBeGreaterThan(0);
+    expect(tabs[0].attributes("aria-describedby")).toBe(tooltip()?.getAttribute("id"));
+    await tabs[0].trigger("pointerleave");
+    expect(tooltip()).toBeNull();
+    expect(tabs[0].attributes("aria-describedby")).toBeUndefined();
+    await tabs[1].trigger("pointerenter");
     await flushPromises();
-    expect(wrapper.get(".tooltip .tooltip-inner strong").text()).toBe("Work of one person");
-    expect(wrapper.get(".tooltip .tooltip-inner").text()).toContain("AI cost");
+    expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("Work of one person");
+    expect(tooltip()?.querySelector(".tooltip-inner")?.textContent).toContain("AI cost");
   });
 
   it("reads the work of the people only when the tab Work of one person is shown, and only once while the window stays open", async () => {
@@ -169,8 +180,7 @@ describe("StatisticsModal", () => {
 
   it("has a Bootstrap radio button group with Last hour, Last day, and Last week, and Last hour is chosen at first", async () => {
     const { wrapper } = await mountStatisticsModal([]);
-    const group = wrapper.get(".btn-group");
-    expect(group.attributes("aria-label")).toBe("Time range");
+    const group = wrapper.get('.btn-group[aria-label="Time range"]');
     const buttons = group.findAll("label.btn-check.btn-outline.theme-secondary");
     expect(buttons.map((button) => button.text())).toEqual(["Last hour", "Last day", "Last week"]);
     for (const button of buttons) {

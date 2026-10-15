@@ -25,7 +25,7 @@ A small card that opens on a click, never when the mouse pointer only moves over
 
 ### HTML tooltip
 
-A small box with a text written in HTML (a bold title, a sentence, a list) that opens below a part when the pointer is over the part or when the part has the keyboard focus, and closes when they leave. It is not an information card: an information card opens on a click and can hold buttons, and an HTML tooltip never takes the pointer and holds no button. The buttons of the tabs in the title bar of the Statistics window have one.
+A small box with a text written in HTML (a bold title, a sentence, a list) that opens below an element when the pointer is over the element or when the element has the keyboard focus, and closes when they leave. It is a child of the element `body`, and it draws no element around the element that owns it. It is not an information card: an information card opens on a click and can hold buttons, and an HTML tooltip never takes the pointer and holds no button. The buttons of the tabs in the title bar of the Statistics window have one.
 
 ### Workspace status bar section
 

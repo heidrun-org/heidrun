@@ -2,20 +2,21 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId } from "vue";
 import DOMPurify from "dompurify";
 
-// A part of the screen that shows a small tooltip below it, with a text that is written in HTML, so the text can have
-// bold words, paragraphs, and lists. The tooltip opens when the pointer is over the part and when the part has the
-// keyboard focus. It closes when the pointer leaves the part and when the keyboard focus leaves it. The tooltip never
-// takes the pointer, so it never flickers. The HTML is cleaned with DOMPurify before it is shown. The slot is the part: it
-// receives `describedBy`, the identifier of the tooltip while the tooltip is open, for the attribute `aria-describedby`
-// of the button inside the slot. The tooltip is placed again when the window changes its size, so that it stays inside
-// the window.
+// A small tooltip below an element, with a text that is written in HTML, so the text can have bold words, paragraphs, and
+// lists. The component draws no element of its own around the element. The slot gives `triggerProps`, and the element that
+// owns the tooltip receives them with `v-bind`: the four event handlers, and the attribute `aria-describedby` while the
+// tooltip is open. The tooltip opens when the pointer is over the element and when the element has the keyboard focus. It
+// closes when the pointer leaves and when the keyboard focus leaves. The tooltip never takes the pointer, so it never
+// flickers. The tooltip is a child of the element `body`, so it is never a sibling of the element, for example inside a
+// button group. The HTML is cleaned with DOMPurify before it is shown. The tooltip is placed again when the window
+// changes its size, so that it stays inside the window.
 
 const props = defineProps<{
   /** The text of the tooltip, written in HTML. */
   html: string;
 }>();
 
-/** The space between the part and the tooltip, and between the tooltip and the edge of the window, in pixels. */
+/** The space between the element and the tooltip, and between the tooltip and the edge of the window, in pixels. */
 const GAP = 8;
 
 /** The widest tooltip, as a CSS length. A narrow window makes it narrower. */
@@ -24,7 +25,8 @@ const MAX_WIDTH = "24rem";
 /** The identifier of the tooltip, for the screen reader. Two tooltips never have the same identifier. */
 const tooltipId = `html-tooltip-${useId()}`;
 
-const root = ref<HTMLElement | null>(null);
+/** The element that owns the tooltip, or `null` while the tooltip is closed. */
+const trigger = ref<HTMLElement | null>(null);
 const tooltip = ref<HTMLElement | null>(null);
 const arrow = ref<HTMLElement | null>(null);
 
@@ -40,12 +42,12 @@ const arrowStyle = ref<Record<string, string>>({});
 /** The text of the tooltip, cleaned. */
 const safeHtml = computed(() => DOMPurify.sanitize(props.html));
 
-/** Puts the tooltip below the part, in the middle of it, and inside the window, with its arrow under the part. */
+/** Puts the tooltip below the element, in the middle of it, and inside the window, with its arrow under the element. */
 function place() {
-  if (root.value === null || tooltip.value === null) {
+  if (trigger.value === null || tooltip.value === null) {
     return;
   }
-  const part = root.value.getBoundingClientRect();
+  const part = trigger.value.getBoundingClientRect();
   const { height, width } = tooltip.value.getBoundingClientRect();
   const arrowHalfWidth = arrow.value === null ? 0 : arrow.value.getBoundingClientRect().width / 2;
   const left = Math.max(GAP, Math.min(part.left + part.width / 2 - width / 2, window.innerWidth - width - GAP));
@@ -59,7 +61,8 @@ function place() {
   isPlaced.value = true;
 }
 
-async function open() {
+async function open(event: Event) {
+  trigger.value = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
   if (isOpen.value === true) {
     return;
   }
@@ -72,8 +75,18 @@ async function open() {
 
 function close() {
   isOpen.value = false;
+  trigger.value = null;
   window.removeEventListener("resize", place);
 }
+
+/** What the element that owns the tooltip receives with `v-bind`. */
+const triggerProps = computed(() => ({
+  "aria-describedby": isOpen.value ? tooltipId : undefined,
+  onPointerenter: open,
+  onPointerleave: close,
+  onFocusin: open,
+  onFocusout: close,
+}));
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", place);
@@ -81,16 +94,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <span
-    ref="root"
-    class="d-inline-flex"
-    role="presentation"
-    @pointerenter="open"
-    @pointerleave="close"
-    @focusin="open"
-    @focusout="close"
-  >
-    <slot :describedBy="isOpen ? tooltipId : undefined" />
+  <slot :triggerProps="triggerProps" />
+  <Teleport to="body">
     <div
       v-if="isOpen"
       :id="tooltipId"
@@ -103,7 +108,7 @@ onBeforeUnmount(() => {
       <!-- eslint-disable-next-line vue/no-v-html -- the text is cleaned with DOMPurify above -->
       <div class="tooltip-inner text-start" v-html="safeHtml"></div>
     </div>
-  </span>
+  </Teleport>
 </template>
 
 <style scoped>
