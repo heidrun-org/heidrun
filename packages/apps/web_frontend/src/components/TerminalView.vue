@@ -30,6 +30,7 @@ import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
 import { trailingDebounce, type TrailingDebounce } from "../lib/trailing_debounce";
 import { createRefitHold, type RefitHold } from "../lib/refit_hold";
+import { decideAfterStop, retryDelayMs } from "../lib/terminal_attach_retry";
 import { resolvedTheme } from "../stores/theme";
 import { t } from "../i18n/index";
 
@@ -106,6 +107,8 @@ const hasSelection = ref(false);
 
 const el = ref<HTMLDivElement>();
 const exited = ref(false);
+/** True when Herdr refused the attach because another client holds the terminal. */
+const heldByAnotherClient = ref(false);
 const id = crypto.randomUUID();
 
 let term: Terminal | null = null;
@@ -135,7 +138,10 @@ function decode(b64: string): Uint8Array {
 
 // Herdr refuses an attach while it is reading the same terminal for someone else
 // (the app's own pane.read polling, another client…): "has a read in progress; retry".
-// That is transient: retry quietly a few times before showing "Terminal détaché".
+// That is transient: retry quietly a few times before showing "Terminal detached".
+// Herdr also refuses an attach while another client holds the terminal. That client can be the old attach client of
+// this application, which is still stopping, so retry twice. After that, show the choice at once, and keep the text
+// of the refusal on the screen: see `decideAfterStop`.
 let spawnedAt = 0;
 let retries = 0;
 let lastOutput = "";
@@ -171,6 +177,7 @@ async function attach(takeover = false, quiet = false) {
   if (!term) return;
   refitHold?.cancel();
   exited.value = false;
+  heldByAnotherClient.value = false;
   if (!quiet) retries = 0;
   spawnedAt = Date.now();
   lastOutput = "";
@@ -437,16 +444,16 @@ onMounted(async () => {
     }),
     await listen<{ id: string }>("pty://exit", (e) => {
       if (e.payload.id !== id) return;
-      const early = Date.now() - spawnedAt < 4000;
-      const busy = /read in progress|retry/i.test(lastOutput);
-      if ((busy || early) && retries < 6) {
+      const outcome = decideAfterStop(lastOutput, Date.now() - spawnedAt, retries);
+      if (outcome === "retry") {
         retries++;
         window.setTimeout(() => {
           term?.reset();
           attach(false, true);
-        }, 250 * retries);
+        }, retryDelayMs(lastOutput, retries));
         return;
       }
+      heldByAnotherClient.value = outcome === "held";
       exited.value = true;
     }),
   );
@@ -966,7 +973,7 @@ onBeforeUnmount(() => {
       <button :title="t('terminalView.pinTitle')" class="btn" @click="pinSelection">{{ t("terminalView.pin") }} <kbd>⇧⌘P</kbd></button>
     </div>
     <div v-if="exited" class="overlay">
-      <p>{{ t("terminalView.detached") }}</p>
+      <p>{{ heldByAnotherClient ? t("terminalView.heldByAnotherClient") : t("terminalView.detached") }}</p>
       <div class="actions">
         <button :title="t('terminalView.reattachTitle')" class="btn" @click="attach(false)">{{ t("terminalView.reattach") }}</button>
         <button :title="t('terminalView.takeControlTitle')" class="btn" @click="attach(true)">{{ t("terminalView.takeControl") }}</button>

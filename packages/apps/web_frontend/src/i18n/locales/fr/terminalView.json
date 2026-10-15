@@ -18,6 +18,7 @@
   "pin": "Épingler",
   "pinTitle": "Épingler le texte sélectionné",
   "detached": "Terminal détaché.",
+  "heldByAnotherClient": "Un autre client tient ce terminal.",
   "reattach": "Rattacher",
   "reattachTitle": "Rattacher ce terminal",
   "takeControl": "Prendre le contrôle",
