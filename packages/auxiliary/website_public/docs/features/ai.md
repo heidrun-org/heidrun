@@ -1,3 +1,7 @@
+---
+description: "What Heidrun sends to a language model, when it sends it, what stays on your computer, and how to switch it off."
+---
+
 # The use of AI
 
 You want to know what a tool sends to a language model before you give it your code.

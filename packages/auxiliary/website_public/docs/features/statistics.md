@@ -1,3 +1,7 @@
+---
+description: "The Statistics window shows when you work in front of Heidrun, and the work and the AI cost of each person, with one bar for each day."
+---
+
 # The Statistics window
 
 You feel that you worked all day, and that the coding agents did most of the work. Without numbers, you cannot know how long you really worked, what each person changed, or what the coding agents cost.

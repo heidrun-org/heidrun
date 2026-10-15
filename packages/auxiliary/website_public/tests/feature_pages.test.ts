@@ -28,12 +28,31 @@ type Link = {
 /** Reads a feature page for the tests. */
 class FeaturePageReader {
 	/**
-	 * Gives the lines of the text of a page that are not empty.
+	 * Gives the lines of the text of a page that are not empty, without the frontmatter.
 	 * @param text - The Markdown text of the page.
-	 * @returns The lines that hold a character other than a space.
+	 * @returns The lines that hold a character other than a space, after the frontmatter.
 	 */
 	static nonEmptyLines(text: string): string[] {
-		return text.split('\n').filter((line) => line.trim() !== '');
+		return FeaturePageReader.withoutFrontmatter(text).split('\n').filter((line) => line.trim() !== '');
+	}
+
+	/**
+	 * Gives the description that the frontmatter of a page holds.
+	 * @param text - The Markdown text of the page.
+	 * @returns The description with no quotes, or null when the page has none.
+	 */
+	static description(text: string): string | null {
+		const match = text.match(/^---\n(?:[^\n]*\n)*?description: "([^"\n]*)"\n(?:[^\n]*\n)*?---\n/);
+		return match === null ? null : match[1];
+	}
+
+	/**
+	 * Removes the frontmatter block at the start of a page.
+	 * @param text - The Markdown text of the page.
+	 * @returns The text after the closing line of the frontmatter, or the whole text when the page has no frontmatter.
+	 */
+	static withoutFrontmatter(text: string): string {
+		return text.replace(/^---\n[\s\S]*?\n---\n/, '');
 	}
 
 	/**
@@ -173,6 +192,14 @@ describe('feature pages', () => {
 
 			it('has the title of its link in the sidebar', () => {
 				expect(lines[0]).toBe(`# ${page.text}`);
+			});
+
+			it('has one sentence of description in its frontmatter, for the link preview card', () => {
+				const description = FeaturePageReader.description(text);
+				expect(description).not.toBeNull();
+				expect(description?.length).toBeGreaterThanOrEqual(40);
+				expect(description?.length).toBeLessThanOrEqual(200);
+				expect(description?.endsWith('.')).toBe(true);
 			});
 
 			it('first says what Heidrun does, then ends with exactly one joke', () => {
