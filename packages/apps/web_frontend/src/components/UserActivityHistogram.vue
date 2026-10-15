@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { Data, Layout } from "plotly.js-basic-dist-min";
+import { ChartTheme } from "../lib/chart_theme";
 import { timeOptions } from "../lib/format";
 import { PlotlyLoader, type PlotlyModule } from "../lib/plotly_loader";
 import type { UserActivityRangeId, UserActivitySlot } from "../lib/user_activity_slots";
@@ -44,28 +45,6 @@ const chart = ref<HTMLDivElement>();
 let plotly: PlotlyModule | null = null;
 let resizeObserver: ResizeObserver | null = null;
 let isUnmounted = false;
-
-/**
- * Gives a color of the theme as a text that Plotly.js can read. Plotly.js does not read the functions `light-dark` and
- * `color-mix` that the theme of Bootstrap uses, so the browser resolves the color first, and a canvas turns it into
- * `rgba(...)`.
- */
-function readThemeColor(token: string): string {
-  const probe = document.createElement("span");
-  probe.style.color = `var(${token})`;
-  chart.value?.appendChild(probe);
-  const resolved = getComputedStyle(probe).color;
-  probe.remove();
-  const context = document.createElement("canvas").getContext("2d");
-  if (context === null) {
-    return resolved;
-  }
-  context.clearRect(0, 0, 1, 1);
-  context.fillStyle = resolved;
-  context.fillRect(0, 0, 1, 1);
-  const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
-  return `rgba(${red}, ${green}, ${blue}, ${alpha / 255})`;
-}
 
 /** The text of a time of the clock, following the language and the time format of the settings. */
 function clockText(time: number): string {
@@ -125,8 +104,8 @@ function draw(): void {
   if (plotly === null || element === undefined) {
     return;
   }
-  const textColor = readThemeColor("--fg-body");
-  const lineColor = readThemeColor("--border-color");
+  const textColor = ChartTheme.readColor("--fg-body", chart.value);
+  const lineColor = ChartTheme.readColor("--border-color", chart.value);
   const data: Data[] = [
     {
       type: "bar",
@@ -134,7 +113,7 @@ function draw(): void {
       y: props.slots.map((slot) => slot.activeTimeMs / (props.rangeId === "week" ? 60 * MINUTE_MS : MINUTE_MS)),
       customdata: props.slots.map(tooltipText),
       hovertemplate: "%{customdata}<extra></extra>",
-      marker: { color: readThemeColor("--primary-bg") },
+      marker: { color: ChartTheme.readColor("--primary-bg", chart.value) },
     },
   ];
   const layout: Partial<Layout> = {

@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 pub const CACHE_FILE_NAME: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 4;
+const CACHE_VERSION: u32 = 5;
 
 /// The result of the scan of one file, valid while the size and the modification date of the file stay the same.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

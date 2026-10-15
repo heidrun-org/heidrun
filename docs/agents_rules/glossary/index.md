@@ -4,7 +4,7 @@
 - Last updated: 15 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
 
 This file lists the files of this folder, for agents and tools.
 
@@ -17,3 +17,4 @@ This file lists the files of this folder, for agents and tools.
 - [status_bar.md](status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
 - [pane_focus_history.md](pane_focus_history.md): the top bar, the pane focus history, the Back button, and the Forward button.
 - [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot.
+- [person_work.md](person_work.md): the Work of one person tab, its source, the Git history, the AI cost, the person, the person chooser, the time range of the Work of one person tab, the day, the three totals, and the bar chart of the work of one person.

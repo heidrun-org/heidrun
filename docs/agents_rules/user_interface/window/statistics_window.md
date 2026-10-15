@@ -4,8 +4,8 @@
 - Last updated: 15 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md)
-- Related issue: [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 474](https://github.com/heidrun-org/heidrun/issues/474)
+- Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md), [Tab "Work of one person"](statistics_person_work.md)
+- Related issue: [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 474](https://github.com/heidrun-org/heidrun/issues/474), [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
 
 This file is a part of the rules of the window of Heidrun. The words are defined in [glossary/user_activity.md](../../glossary/user_activity.md).
 
@@ -17,10 +17,10 @@ This file is a part of the rules of the window of Heidrun. The words are defined
 ## The window
 
 - The Statistics window is as large as the large Git window: 94% of the width and 90% of the height of the application window. It has a title bar with the title "Statistics" and a close button, like the other windows built with Bootstrap. The key Escape and a click outside the window close it.
-- Under the title bar, the window has a Bootstrap tab list (`nav nav-tabs`), as the page [Tab](https://getbootstrap.com/docs/6.0/components/tab/) of Bootstrap describes it: each tab is a `button` with `role="tab"`, `aria-selected`, and `aria-controls`, and each tab pane has `role="tabpanel"` and `aria-labelledby`. Vue switches the tabs, because the application does not load the JavaScript of Bootstrap. The window has one tab for now: "User activity". The tab "User activity" is selected when the window opens.
+- Under the title bar, the window has a Bootstrap tab list (`nav nav-tabs`), as the page [Tab](https://getbootstrap.com/docs/6.0/components/tab/) of Bootstrap describes it: each tab is a `button` with `role="tab"`, `aria-selected`, and `aria-controls`, and each tab pane has `role="tabpanel"` and `aria-labelledby`. Vue switches the tabs, because the application does not load the JavaScript of Bootstrap. The window has two tabs: "User activity", and "Work of one person" ([statistics_person_work.md](statistics_person_work.md)). The tab "User activity" is selected when the window opens.
 - The tab fills the height of the window: the radio button group is at the top, and the histogram takes the rest of the height, with at least 240 pixels.
 - The window uses Bootstrap components and theme variables, and no custom CSS. The only own rule is the dark layer behind the window, as in the window "Three.js demo".
-- The window reads the data again each time that it opens. It does not read the data again while it stays open.
+- The window reads the user activity data again each time that it opens. It does not read it again while it stays open. The tab "Work of one person" reads the Git history when it is shown for the first time, and the AI cost when the developer chooses it for the first time.
 - While the data is read, the window shows the text "Reading the user activity…". When the data cannot be read, it shows the error in a Bootstrap alert, and no chart.
 - Every text of the window is in every language, and `pnpm --filter web_frontend check:translations` shows no key of the window as missing.
 

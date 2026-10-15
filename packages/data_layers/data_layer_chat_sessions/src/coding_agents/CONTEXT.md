@@ -5,7 +5,7 @@ Finds the chat session files of Claude Code and of Codex for one folder, reads w
 
 ## Key Exports & Entry Points
 - `scan.rs`: `Scan`, `ChatMeta`, `feed_claude_line`, `feed_codex_line`, and `scan_file`: the title, the dates, the messages, the folders, the issues, the pull requests, and the files that the coding agent wrote.
-- `tokens.rs`: `TokenScan`, `TokenCounts`, and `TokensByModel`: the tokens of each model.
+- `tokens.rs`: `TokenScan`, `TokenCounts`, `TokensByModel`, `TokensByHour`, and `UNDATED_HOUR`: the tokens of each model, and of each hour in UTC. A request without a readable date is in `UNDATED_HOUR`.
 - `scan_cache.rs`: `ScanCache`, which keeps the scan of each file until its size or its date changes, and continues the scan of a file that only grew.
 - `session_files.rs`: `find_claude_session_files`, `find_codex_session_files`, `read_codex_titles`, and `title_of_scan`.
 - `session_reader.rs`: `read_chat_sessions`, which gives the `ChatSessionRecord` of each file.

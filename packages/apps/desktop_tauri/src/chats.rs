@@ -15,7 +15,7 @@
 use crate::model_prices::PriceTable;
 use data_layer_chat_sessions::{
     feed_claude_line, feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
-    title_of_scan, ChatMeta, ScanCache, SessionFile, TokensByModel, CACHE_FILE_NAME,
+    title_of_scan, ChatMeta, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashSet};
@@ -26,7 +26,7 @@ use std::sync::Mutex;
 const TITLE_LENGTH: usize = 160;
 
 /// The most conversations that one call returns for one coding agent.
-const MAX_LIMIT: usize = 10_000;
+pub(crate) const MAX_LIMIT: usize = 10_000;
 
 /// One conversation.
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -41,6 +41,9 @@ pub struct Chat {
     /// The tokens that the conversation used, for each model. The front end gets `usage`, not this.
     #[serde(skip)]
     pub tokens: TokensByModel,
+    /// The tokens that the conversation used, for each hour and each model. The statistic of the AI cost reads it.
+    #[serde(skip)]
+    pub token_hours: TokensByHour,
     /// The tokens and the cost of the conversation, or `None` when the conversation used no token.
     pub usage: Option<ChatUsage>,
 }
@@ -153,7 +156,7 @@ pub async fn chats_list(folder: String, limit: usize, sort_key: SortKey, order: 
     tauri::async_runtime::spawn_blocking(move || list(&folder, limit, sorting)).await.map_err(|e| e.to_string())
 }
 
-fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
+pub(crate) fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
     let root = crate::project::find_root(Path::new(folder)).display().to_string();
     let mut guard = CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let cache = guard.get_or_insert_with(|| ScanCache::open(cache_path()));
@@ -208,7 +211,7 @@ fn take_chats(
     limit: usize,
     root: &str,
     sorting: Sorting,
-    title_of: &mut dyn FnMut(&mut ScanCache, &SessionFile) -> Option<(String, ChatMeta, TokensByModel)>,
+    title_of: &mut dyn FnMut(&mut ScanCache, &SessionFile) -> Option<(String, ChatMeta, TokenScan)>,
 ) -> AgentChats {
     let mut found = AgentChats::default();
     if sorting.key == SortKey::LastUpdated {
@@ -252,14 +255,24 @@ fn take_chats(
 fn chat_of(
     cache: &mut ScanCache,
     file: &SessionFile,
-    title_of: &mut dyn FnMut(&mut ScanCache, &SessionFile) -> Option<(String, ChatMeta, TokensByModel)>,
+    title_of: &mut dyn FnMut(&mut ScanCache, &SessionFile) -> Option<(String, ChatMeta, TokenScan)>,
 ) -> Option<Chat> {
-    let (text, meta, tokens) = title_of(cache, file)?;
+    let (text, meta, token_scan) = title_of(cache, file)?;
     let title = crate::claude::short(&text, TITLE_LENGTH);
     if title.is_empty() {
         return None;
     }
-    Some(Chat { id: file.id.clone(), title, updated_at: file.modified, meta, usage: ChatUsage::of(&tokens), tokens })
+    let tokens = token_scan.totals();
+    let token_hours = token_scan.by_hour();
+    Some(Chat {
+        id: file.id.clone(),
+        title,
+        updated_at: file.modified,
+        meta,
+        usage: ChatUsage::of(&tokens),
+        tokens,
+        token_hours,
+    })
 }
 
 /// The number that a conversation is sorted by: a date in milliseconds since 1970, or a count.
@@ -304,7 +317,7 @@ fn claude_chats(cache: &mut ScanCache, projects: &Path, folder: &str, limit: usi
     let files = find_claude_session_files(cache, projects, folder);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_claude_line);
-        title_of_scan(&scan).map(|text| (text, scan.meta, scan.tokens.totals()))
+        title_of_scan(&scan).map(|text| (text, scan.meta, scan.tokens))
     })
 }
 
@@ -316,7 +329,7 @@ fn codex_chats(cache: &mut ScanCache, home: &Path, folder: &str, limit: usize, s
     let files = find_codex_session_files(cache, home, folder);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
-        titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens.totals()))
+        titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens))
     })
 }
 
@@ -914,6 +927,30 @@ mod tests {
         assert_eq!(json["usage"]["input_tokens"], 5_000);
         assert_eq!(json["usage"]["cost_usd"], Value::Null);
         assert!(json.get("tokens").is_none());
+        assert!(json.get("token_hours").is_none());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn gives_the_tokens_of_a_chat_for_each_hour_of_its_requests() {
+        let dir = scratch("usage-hours");
+        let answer_at = |timestamp: &str, id: &str, output: u64| {
+            answer_line(id, "claude-opus-5", output).replacen(r#"{"type":"assistant","#, &format!(r#"{{"type":"assistant","timestamp":"{timestamp}","#), 1)
+        };
+        let lines = [
+            user_line("2026-10-11T10:00:00.000Z", "hello"),
+            answer_at("2026-10-11T10:10:00.000Z", "msg_1", 100),
+            answer_at("2026-10-11T10:50:00.000Z", "msg_2", 100),
+            answer_at("2026-10-13T08:05:00.000Z", "msg_3", 300),
+        ];
+        write_chat(&dir, "Three days", &lines, 100);
+        let found = claude(&mut ScanCache::in_memory(), &dir, 5);
+        let hours = &found.chats[0].token_hours;
+        // 1 hour is 3 600 000 milliseconds: 2026-10-11 10:00 UTC is the hour 497 698, and 2026-10-13 08:00 UTC is 497 744.
+        assert_eq!(hours.keys().copied().collect::<Vec<_>>(), vec![497_698, 497_744]);
+        assert_eq!(hours[&497_698]["claude-opus-5"].output, 200);
+        assert_eq!(hours[&497_744]["claude-opus-5"].output, 300);
+        assert_eq!(found.chats[0].tokens["claude-opus-5"].output, 500);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

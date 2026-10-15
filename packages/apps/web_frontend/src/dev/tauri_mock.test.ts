@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { clearMocks } from '@tauri-apps/api/mocks';
 import { afterEach, describe, expect, it } from 'vitest';
+import type { AiCostItems } from '../lib/ai_cost';
+import type { PersonWorkItems } from '../lib/person_work';
 import type { SessionSnapshot } from '../lib/types';
 import { TauriMock } from './tauri_mock';
 import { TauriMockFixture } from './tauri_mock_fixture';
@@ -260,5 +262,53 @@ describe('TauriMock user activity', () => {
 		}
 		const startedAtList = records.map((record) => Date.parse(record.startedAt));
 		expect(startedAtList).toEqual([...startedAtList].sort((first, second) => first - second));
+	});
+});
+
+describe('TauriMock work of one person', () => {
+	afterEach(() => {
+		clearMocks();
+		delete tauriWindow.__TAURI_INTERNALS__;
+	});
+
+	it('answers the Tauri command person_work_in_range with the fake work of two people in the last 30 days', async () => {
+		TauriMock.install();
+		const until = new Date(2026, 9, 15).getTime();
+		const items = await invoke<PersonWorkItems>('person_work_in_range', {
+			folder: '/Users/demo/webwork/heidrun',
+			since: new Date(until - 30 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(items.repository).toBe('heidrun-org/heidrun');
+		expect(items.codeHostingError).toBeNull();
+		expect(new Set(items.commits.map((commit) => commit.authorName))).toEqual(new Set(['Jérôme Étienne', 'Eric']));
+		expect(items.pullRequests.length).toBeGreaterThan(10);
+		expect(items.issues.length).toBeGreaterThan(3);
+		for (const time of [...items.commits.map((commit) => commit.committedAt), ...items.pullRequests.map((item) => item.createdAt)]) {
+			expect(Date.parse(time)).toBeLessThan(until);
+			expect(Date.parse(time)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
+		}
+	});
+
+	it('answers the Tauri command ai_cost_in_range with the fake chats of Claude Code and of Codex in the last 30 days', async () => {
+		TauriMock.install();
+		const until = new Date(2026, 9, 15).getTime();
+		const items = await invoke<AiCostItems>('ai_cost_in_range', {
+			folder: '/Users/demo/webwork/heidrun',
+			since: new Date(until - 30 * 86_400_000).toISOString(),
+			until: new Date(until).toISOString(),
+		});
+		expect(new Set(items.chats.map((chat) => chat.codingAgent))).toEqual(new Set(['claude', 'codex']));
+		expect(items.chats.filter((chat) => chat.hours.every((hour) => hour.costUsd === null))).toHaveLength(1);
+		expect(items.chats.length).toBeGreaterThan(60);
+		const longChats = items.chats.filter((chat) => {
+			const days = new Set(chat.hours.map((hour) => new Date(hour.at).toDateString()));
+			return days.size > 1;
+		});
+		expect(longChats.length).toBeGreaterThan(3);
+		for (const hour of items.chats.flatMap((chat) => chat.hours)) {
+			expect(Date.parse(hour.at)).toBeLessThan(until);
+			expect(Date.parse(hour.at)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
+		}
 	});
 });

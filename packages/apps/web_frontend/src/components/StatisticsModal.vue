@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import DialogCloseButton from "./DialogCloseButton.vue";
+import PersonWorkTab from "./PersonWorkTab.vue";
 import UserActivityHistogram from "./UserActivityHistogram.vue";
 import { UserActivity, type UserActivityRecord } from "../lib/user_activity";
 import { UserActivitySlots, type UserActivityRangeId, type UserActivitySlot } from "../lib/user_activity_slots";
@@ -11,11 +12,15 @@ import { t } from "../i18n/index";
 
 // The Statistics window, with one tab for each kind of statistic. The tab "User activity" holds the histogram of the
 // user activity time, and a radio button group that chooses its time range: the last hour, the last day, or the last
-// week. The records come from the data layer, and they are read again each time that the window opens, because the
-// window is built again.
+// week. The tab "Work of one person" holds the bar chart of the commits and of the pull requests of one person. The data
+// comes from the data layer, and it is read again each time that the window opens, because the window is built again. The
+// tab "Work of one person" reads its data when it is shown for the first time, and keeps it while the window stays open.
 
 /** The tabs of the window, from left to right. */
-const TABS = [{ id: "user_activity", labelKey: "statisticsModal.userActivityTab" }] as const;
+const TABS = [
+  { id: "user_activity", labelKey: "statisticsModal.userActivityTab" },
+  { id: "person_work", labelKey: "statisticsModal.personWorkTab" },
+] as const;
 
 /** The choices of the radio button group of the tab "User activity", from left to right. */
 const RANGE_CHOICES = [
@@ -26,6 +31,15 @@ const RANGE_CHOICES = [
 
 /** The tab that shows. */
 const activeTab = ref<(typeof TABS)[number]["id"]>("user_activity");
+
+/** True from the first time that the tab "Work of one person" is shown: the tab then stays built, with its data. */
+const hasShownPersonWork = ref(false);
+
+watch(activeTab, (tab) => {
+  if (tab === "person_work") {
+    hasShownPersonWork.value = true;
+  }
+});
 
 /** The time range of the histogram. The window starts with the last hour. */
 const rangeId = ref<UserActivityRangeId>("hour");
@@ -130,6 +144,17 @@ onBeforeUnmount(() => {
               <UserActivityHistogram v-else-if="slots !== null" :slots="slots" :range-id="rangeId" />
               <span v-else class="form-text">{{ t("statisticsModal.loading") }}</span>
             </div>
+          </div>
+          <div
+            id="statistics-tab-person_work-pane"
+            class="tab-pane tab-pane-instant flex-column"
+            :class="{ 'show active d-flex': activeTab === 'person_work' }"
+            style="height: 100%"
+            role="tabpanel"
+            aria-labelledby="statistics-tab-person_work"
+            tabindex="0"
+          >
+            <PersonWorkTab v-if="hasShownPersonWork" />
           </div>
         </div>
       </div>

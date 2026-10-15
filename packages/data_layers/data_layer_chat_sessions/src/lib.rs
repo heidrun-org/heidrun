@@ -27,7 +27,7 @@ pub use coding_agents::session_files::{
     claude_folder_name, find_claude_session_files, find_codex_session_files, read_codex_titles, title_of_scan, SessionFile,
 };
 pub use coding_agents::session_reader::{format_date, parse_date, read_chat_sessions};
-pub use coding_agents::tokens::{TokenCounts, TokenScan, TokensByModel, UNKNOWN_MODEL};
+pub use coding_agents::tokens::{TokenCounts, TokenScan, TokensByHour, TokensByModel, UNDATED_HOUR, UNKNOWN_MODEL};
 pub use model::schemas::validate_chat_session_value;
 pub use model::types::{
     ChatSession, ChatSessionRecord, ChatSessionRelations, ChatSessionTable, CodingAgent, ModelTokens, QueryRow,

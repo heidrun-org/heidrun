@@ -83,6 +83,10 @@ export class TauriMock {
 				);
 			case 'user_activity_records_in_range':
 				return TauriMockFixture.buildUserActivityRecords(Date.parse((payload as { until: string }).until));
+			case 'person_work_in_range':
+				return TauriMockFixture.buildPersonWorkItems(Date.parse((payload as { until: string }).until));
+			case 'ai_cost_in_range':
+				return TauriMockFixture.buildAiCostItems(Date.parse((payload as { until: string }).until));
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',

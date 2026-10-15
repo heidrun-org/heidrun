@@ -7,7 +7,7 @@
   "agentsInformationLabel": "Agents information",
   "agentsInformationTitle": "Show the account quotas and the activity of all agents",
   "statisticsLabel": "Statistics",
-  "statisticsTitle": "Show the statistics: the user activity time of the last hour",
+  "statisticsTitle": "Show the statistics: the user activity time, the work of one person, and the AI cost",
   "skillsHeading": "Skills",
   "installedSkillLabel": "Installed skill",
   "installedSkillTitle": "Show the installed skills: inspect or delete a skill",

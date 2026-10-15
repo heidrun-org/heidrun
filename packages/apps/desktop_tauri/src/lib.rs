@@ -1,8 +1,10 @@
+mod ai_cost;
 mod chats;
 mod chats_files;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
+mod data_layer_lock;
 mod environment_file;
 mod files;
 mod forge_cache;
@@ -13,6 +15,7 @@ mod legacy;
 mod herdr;
 mod mobile;
 mod model_prices;
+mod person_work;
 mod project;
 mod pty;
 mod skills;
@@ -356,6 +359,8 @@ pub fn run() {
             user_activity::user_activity_append,
             user_activity::user_activity_read,
             user_activity::user_activity_records_in_range,
+            person_work::person_work_in_range,
+            ai_cost::ai_cost_in_range,
             files::files_list,
             files::folder_children,
             files::files_resolve,
