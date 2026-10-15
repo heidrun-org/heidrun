@@ -112,6 +112,7 @@ export class MobileApp {
 		this._writeAddress(true);
 		this.root.addEventListener('click', (event) => void this._onClick(event));
 		this.overlay.addEventListener('click', (event) => void this._onClick(event));
+		this.root.addEventListener('keydown', (event) => void this._onKeyDown(event));
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
 		window.addEventListener('popstate', this.onPopState);
 		await this.refresh();
@@ -355,6 +356,23 @@ export class MobileApp {
 		} else if (action === 'send') {
 			await this._sendPrompt(paneId);
 		}
+	}
+
+	/**
+	 * Sends the prompt when the developer presses Cmd+Enter or Ctrl+Enter in the field for a prompt. A plain Enter
+	 * and Shift+Enter keep adding a new line.
+	 * @param event The key that the developer pressed.
+	 */
+	private async _onKeyDown(event: KeyboardEvent): Promise<void> {
+		const isModified = event.metaKey || event.ctrlKey;
+		const isSendKey = event.key === 'Enter' && isModified && event.isComposing === false;
+		const target = event.target;
+		const isPromptField = target instanceof HTMLTextAreaElement && target.id === PaneScreen.promptFieldId;
+		if (isSendKey === false || isPromptField === false || this.paneId === null) {
+			return;
+		}
+		event.preventDefault();
+		await this._sendPrompt(this.paneId);
 	}
 
 	private async _sendPrompt(paneId: string): Promise<void> {

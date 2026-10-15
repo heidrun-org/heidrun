@@ -79,6 +79,24 @@ export class AppHarness {
 	}
 
 	/**
+	 * Presses a key in the field where the developer types a prompt, then lets the calls and the timers run.
+	 * @param key The name of the key, for example `Enter`.
+	 * @param modifiers The modifier keys that are down, and the other fields of the keyboard event.
+	 * @returns The keyboard event, so a test can read `defaultPrevented`.
+	 */
+	async press(key: string, modifiers: KeyboardEventInit): Promise<KeyboardEvent> {
+		const event = new KeyboardEvent('keydown', {
+			key,
+			bubbles: true,
+			cancelable: true,
+			...modifiers,
+		});
+		this.field().dispatchEvent(event);
+		await this.settle();
+		return event;
+	}
+
+	/**
 	 * Gives the field where the developer types a prompt.
 	 * @returns The field of the screen of one pane.
 	 */

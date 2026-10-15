@@ -124,6 +124,67 @@ describe('Pane screen prompt', () => {
 		expect(harness.toast()).toBe('Prompt sent');
 	});
 
+	it('sends the prompt when the developer presses Cmd+Enter or Ctrl+Enter in the field', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		harness.field().value = 'first';
+		const commandEnter = await harness.press('Enter', { metaKey: true });
+		expect(commandEnter.defaultPrevented).toBe(true);
+		harness.field().value = 'second';
+		await harness.press('Enter', { ctrlKey: true });
+		expect(mac.callsOf('prompt').map((call) => call.params)).toEqual([
+			{
+				paneId: 'p-working',
+				text: 'first',
+			},
+			{
+				paneId: 'p-working',
+				text: 'second',
+			},
+		]);
+		expect(harness.field().value).toBe('');
+		expect(harness.toast()).toBe('Prompt sent');
+	});
+
+	it('does not send the prompt on Enter alone, on Shift+Enter, or on Cmd with another key', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		harness.field().value = 'run the tests';
+		const enter = await harness.press('Enter', {});
+		await harness.press('Enter', { shiftKey: true });
+		await harness.press('a', { metaKey: true });
+		await harness.press('Enter', { metaKey: true, isComposing: true });
+		expect(enter.defaultPrevented).toBe(false);
+		expect(mac.callsOf('prompt')).toHaveLength(0);
+		expect(harness.field().value).toBe('run the tests');
+	});
+
+	it('sends nothing on Cmd+Enter when the field is empty', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		await harness.press('Enter', { metaKey: true });
+		expect(mac.callsOf('prompt')).toHaveLength(0);
+	});
+
+	it('sends nothing on Cmd+Enter outside the field for a prompt', async () => {
+		const mac = Fixtures.mac();
+		const harness = await AppHarness.start(mac);
+		await harness.openPane('p-working');
+		harness.field().value = 'run the tests';
+		const event = new KeyboardEvent('keydown', {
+			key: 'Enter',
+			metaKey: true,
+			bubbles: true,
+			cancelable: true,
+		});
+		document.querySelector('.output')?.dispatchEvent(event);
+		await harness.settle();
+		expect(mac.callsOf('prompt')).toHaveLength(0);
+	});
+
 	it('sends nothing when the field is empty or has only spaces', async () => {
 		const mac = Fixtures.mac();
 		const harness = await AppHarness.start(mac);
