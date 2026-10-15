@@ -5,9 +5,10 @@ import DOMPurify from "dompurify";
 // A small tooltip below an element, with a text that is written in HTML, so the text can have bold words, paragraphs, and
 // lists. The component draws no element of its own around the element. The slot gives `triggerProps`, and the element that
 // owns the tooltip receives them with `v-bind`: the four event handlers, and the attribute `aria-describedby` while the
-// tooltip is open. The tooltip opens when the pointer is over the element and when the element has the keyboard focus. It
-// closes when the pointer leaves and when the keyboard focus leaves. The tooltip never takes the pointer, so it never
-// flickers. The tooltip is a child of the element `body`, so it is never a sibling of the element, for example inside a
+// tooltip is open. The tooltip opens after a short delay, as the tooltip of the HTML attribute `title` does, when the
+// pointer stays over the element and when the element keeps the keyboard focus. It closes at once when the pointer leaves
+// and when the keyboard focus leaves, and a pointer that leaves before the delay ends opens nothing. The tooltip never
+// takes the pointer, so it never flickers. The tooltip is a child of the element `body`, so it is never a sibling of the element, for example inside a
 // button group. The HTML is cleaned with DOMPurify before it is shown. The tooltip is placed again when the window
 // changes its size, so that it stays inside the window.
 
@@ -15,6 +16,9 @@ const props = defineProps<{
   /** The text of the tooltip, written in HTML. */
   html: string;
 }>();
+
+/** The time that the pointer or the keyboard focus must stay on the element before the tooltip opens, in milliseconds. */
+const OPEN_DELAY = 500;
 
 /** The space between the element and the tooltip, and between the tooltip and the edge of the window, in pixels. */
 const GAP = 8;
@@ -29,6 +33,9 @@ const tooltipId = `html-tooltip-${useId()}`;
 const trigger = ref<HTMLElement | null>(null);
 const tooltip = ref<HTMLElement | null>(null);
 const arrow = ref<HTMLElement | null>(null);
+
+/** The timer that opens the tooltip after the delay, or `null` when no timer runs. */
+let openTimer: ReturnType<typeof setTimeout> | null = null;
 
 /** True while the tooltip is open. */
 const isOpen = ref(false);
@@ -61,9 +68,10 @@ function place() {
   isPlaced.value = true;
 }
 
-async function open(event: Event) {
-  trigger.value = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-  if (isOpen.value === true) {
+/** Opens the tooltip now, and places it. */
+async function show() {
+  openTimer = null;
+  if (trigger.value === null || isOpen.value === true) {
     return;
   }
   isPlaced.value = false;
@@ -73,7 +81,21 @@ async function open(event: Event) {
   place();
 }
 
+/** Starts the timer that opens the tooltip, unless the tooltip is open or a timer already runs. */
+function open(event: Event) {
+  trigger.value = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  if (isOpen.value === true || openTimer !== null) {
+    return;
+  }
+  openTimer = setTimeout(show, OPEN_DELAY);
+}
+
+/** Stops the timer, and closes the tooltip at once. */
 function close() {
+  if (openTimer !== null) {
+    clearTimeout(openTimer);
+    openTimer = null;
+  }
   isOpen.value = false;
   trigger.value = null;
   window.removeEventListener("resize", place);
@@ -89,6 +111,9 @@ const triggerProps = computed(() => ({
 }));
 
 onBeforeUnmount(() => {
+  if (openTimer !== null) {
+    clearTimeout(openTimer);
+  }
   window.removeEventListener("resize", place);
 });
 </script>

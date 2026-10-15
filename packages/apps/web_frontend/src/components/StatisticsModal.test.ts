@@ -146,7 +146,11 @@ describe("StatisticsModal", () => {
     const tabs = wrapper.get('[role="tablist"]').findAll('[role="tab"]');
     const tooltip = () => document.body.querySelector(".tooltip");
     expect(tooltip()).toBeNull();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     await tabs[0].trigger("pointerenter");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(tooltip()).toBeNull();
+    await vi.advanceTimersByTimeAsync(500);
     await flushPromises();
     expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("User activity");
     expect(tooltip()?.querySelectorAll(".tooltip-inner li").length).toBeGreaterThan(0);
@@ -155,7 +159,9 @@ describe("StatisticsModal", () => {
     expect(tooltip()).toBeNull();
     expect(tabs[0].attributes("aria-describedby")).toBeUndefined();
     await tabs[1].trigger("pointerenter");
+    await vi.advanceTimersByTimeAsync(600);
     await flushPromises();
+    vi.useRealTimers();
     expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("Work of one person");
     expect(tooltip()?.querySelector(".tooltip-inner")?.textContent).toContain("AI cost");
   });
