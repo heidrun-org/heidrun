@@ -12,16 +12,21 @@ import {
   type UserActivitySlot,
   type UserActivitySlotLengthId,
 } from "../lib/user_activity_slots";
+import type { UserActivityWorkspaceSlots } from "../lib/user_activity_workspaces";
 import { locale, t } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
 
-// The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. The slot length is a choice of the
-// developer, so the vertical axis, the labels under the bars, and the tooltips follow the slot length. Plotly.js is loaded
-// only when the window opens, so the other windows do not pay for its size.
+// The histogram of the user activity time: one bar for each slot, drawn with Plotly.js. Each bar is stacked: it has one
+// part of one color for each chosen workspace. The slot length is a choice of the developer, so the vertical axis, the
+// labels under the bars, and the tooltips follow the slot length. Plotly.js is loaded only when the window opens, so the
+// other windows do not pay for its size.
+// Issue: https://github.com/heidrun-org/heidrun/issues/498
 
 const props = defineProps<{
-  /** The slots, the oldest first. */
+  /** The slots of all the chosen workspaces together, the oldest first. They give the labels and the total of each bar. */
   slots: UserActivitySlot[];
+  /** The slots of each chosen workspace, in the order of the colors. Each one is one part of each bar. */
+  workspaceSlots: UserActivityWorkspaceSlots[];
   /** The time range of the histogram. */
   rangeId: UserActivityRangeId;
   /** The length of one slot. */
@@ -66,6 +71,9 @@ const AXIS_TITLE_KEYS: Record<HeightUnit, string> = {
 
 /** One minute, in milliseconds. */
 const MINUTE_MS = 60_000;
+
+/** The color of the bars when no workspace is chosen yet, as the name of a CSS variable of the theme. */
+const NO_WORKSPACE_COLOR_TOKEN = "--primary-bg";
 
 const chart = ref<HTMLDivElement>();
 let plotly: PlotlyModule | null = null;
@@ -112,37 +120,63 @@ function ticks(): { values: number[]; texts: string[] } {
 }
 
 /**
- * The tooltip of the bar of a slot. A slot of one hour or less gives its start and its end, and the user activity time in
- * minutes and seconds. A slot of six hours gives its start and its end, and the user activity time in hours and minutes.
- * A slot of one day gives its day, and the user activity time in hours and minutes. In the last week, the start of a slot
- * that is shorter than one day also gives its day.
+ * The length of a user activity time, in the unit that follows the slot length. A slot of one hour or less gives minutes
+ * and seconds. A slot of six hours or of one day gives hours and minutes.
  */
-function tooltipText(slot: UserActivitySlot): string {
+function durationText(activeTimeMs: number): string {
   const length = USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId];
-  const totalMinutes = Math.round(slot.activeTimeMs / MINUTE_MS);
+  if (length.unit === "day" || (length.unit === "hour" && length.amount > 1)) {
+    const totalMinutes = Math.round(activeTimeMs / MINUTE_MS);
+    return t("statisticsModal.durationHoursMinutes", { hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 });
+  }
+  const totalSeconds = Math.round(activeTimeMs / 1000);
+  return t("statisticsModal.durationMinutesSeconds", { minutes: Math.floor(totalSeconds / 60), seconds: totalSeconds % 60 });
+}
+
+/** Writes a text of a user into the markup of a tooltip of Plotly.js, so a name with a sign "<" is shown as it is. */
+function escapeMarkup(text: string): string {
+  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+/**
+ * The first line of the tooltip of a slot, with the total of all the chosen workspaces. A slot of one hour or less gives
+ * its start and its end, and the user activity time in minutes and seconds. A slot of six hours gives its start and its
+ * end, and the user activity time in hours and minutes. A slot of one day gives its day, and the user activity time in
+ * hours and minutes. In the last week, the start of a slot that is shorter than one day also gives its day.
+ */
+function totalTooltipText(slot: UserActivitySlot): string {
+  const length = USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId];
   if (length.unit === "day") {
-    return t("statisticsModal.dayTooltip", {
-      day: dayText(slot.startedAt, "long"),
-      hours: Math.floor(totalMinutes / 60),
-      minutes: totalMinutes % 60,
-    });
+    return t("statisticsModal.dayTooltip", { day: dayText(slot.startedAt, "long"), time: durationText(slot.activeTimeMs) });
   }
   const start = props.rangeId === "week" ? `${dayText(slot.startedAt, "long")}, ${clockText(slot.startedAt)}` : clockText(slot.startedAt);
-  if (length.unit === "hour" && length.amount > 1) {
-    return t("statisticsModal.hoursTooltip", {
-      start,
-      end: clockText(slot.endedAt),
-      hours: Math.floor(totalMinutes / 60),
-      minutes: totalMinutes % 60,
-    });
+  return t("statisticsModal.tooltip", { start, end: clockText(slot.endedAt), time: durationText(slot.activeTimeMs) });
+}
+
+/**
+ * The tooltip of the bar of the slot at an index. The first line is the total. When two or more workspaces are chosen, one
+ * line follows for each workspace that has user activity time in the slot, with the name and the time of the workspace.
+ */
+function tooltipText(slot: UserActivitySlot, index: number): string {
+  const lines = [totalTooltipText(slot)];
+  if (props.workspaceSlots.length < 2) {
+    return lines[0];
   }
-  const totalSeconds = Math.round(slot.activeTimeMs / 1000);
-  return t("statisticsModal.tooltip", {
-    start,
-    end: clockText(slot.endedAt),
-    minutes: Math.floor(totalSeconds / 60),
-    seconds: totalSeconds % 60,
-  });
+  for (const workspace of props.workspaceSlots) {
+    const { activeTimeMs } = workspace.slots[index];
+    if (activeTimeMs > 0) {
+      lines.push(t("statisticsModal.workspaceTooltipLine", { workspace: escapeMarkup(workspace.name), time: durationText(activeTimeMs) }));
+    }
+  }
+  return lines.join("<br>");
+}
+
+/** The parts of each bar, from the bottom to the top: one for each chosen workspace, or one empty part when none is chosen. */
+function parts(): { name: string; colorToken: string; slots: UserActivitySlot[] }[] {
+  if (props.workspaceSlots.length > 0) {
+    return props.workspaceSlots;
+  }
+  return [{ name: "", colorToken: NO_WORKSPACE_COLOR_TOKEN, slots: props.slots }];
 }
 
 /**
@@ -166,16 +200,17 @@ function draw(): void {
   }
   const textColor = ChartTheme.readColor("--fg-body", chart.value);
   const lineColor = ChartTheme.readColor("--border-color", chart.value);
-  const data: Data[] = [
-    {
-      type: "bar",
-      x: props.slots.map((_slot, index) => index),
-      y: props.slots.map((slot) => slot.activeTimeMs / UNIT_MS[VERTICAL_AXES[props.slotLengthId].unit]),
-      customdata: props.slots.map(tooltipText),
-      hovertemplate: "%{customdata}<extra></extra>",
-      marker: { color: ChartTheme.readColor("--primary-bg", chart.value) },
-    },
-  ];
+  const unitMs = UNIT_MS[VERTICAL_AXES[props.slotLengthId].unit];
+  const customdata = props.slots.map(tooltipText);
+  const data: Data[] = parts().map((part) => ({
+    type: "bar",
+    name: part.name,
+    x: props.slots.map((_slot, index) => index),
+    y: part.slots.map((slot) => slot.activeTimeMs / unitMs),
+    customdata,
+    hovertemplate: "%{customdata}<extra></extra>",
+    marker: { color: ChartTheme.readColor(part.colorToken, element) },
+  }));
   const { values: tickValues, texts: tickTexts } = ticks();
   const layout: Partial<Layout> = {
     autosize: true,
@@ -185,6 +220,9 @@ function draw(): void {
     plot_bgcolor: "rgba(0, 0, 0, 0)",
     font: { color: textColor },
     bargap: 0.15,
+    barmode: "stack",
+    showlegend: false,
+    hoverlabel: { bgcolor: ChartTheme.readColor("--bg-body", element), bordercolor: lineColor, font: { color: textColor } },
     xaxis: {
       type: "linear",
       title: { text: t(isDaySlot() === true ? "statisticsModal.dayAxis" : "statisticsModal.slotStartAxis") },
@@ -219,7 +257,7 @@ onMounted(async () => {
 });
 
 // The theme sets its attributes on the page in its own watcher, so the colors are read on the next tick.
-watch([resolvedTheme, locale, () => props.slots, () => props.rangeId, () => props.slotLengthId], async () => {
+watch([resolvedTheme, locale, () => props.slots, () => props.workspaceSlots, () => props.rangeId, () => props.slotLengthId], async () => {
   await nextTick();
   draw();
 });

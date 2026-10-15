@@ -12,16 +12,25 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 const plotly = { react: vi.fn(), purge: vi.fn(), Plots: { resize: vi.fn() } };
 vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 
+/** The chart reads each color from the theme: the test reads the name of the CSS variable of each color instead. */
+vi.mock("../lib/chart_theme", () => ({ ChartTheme: { readColor: (token: string) => token } }));
+
 /** The workspace that runs the active period is the selected workspace: the test selects the folder of a workspace. */
 vi.mock("../stores/user_activity", async (importOriginal) => {
   const { ref } = await import("vue");
   return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
 });
 
+/** One trace of Plotly.js: one part of each stacked bar. */
+type Trace = { type: string; name: string; x: number[]; y: number[]; customdata: string[]; marker: { color: string } };
+
 /** What one call to `Plotly.react` drew. */
 type Drawing = {
-  data: { type: string; x: number[]; y: number[]; customdata: string[] };
+  data: Trace;
+  traces: Trace[];
   layout: {
+    barmode: string;
+    showlegend: boolean;
     yaxis: { range?: number[]; autorange?: boolean; title: { text: string } };
     xaxis: { tickvals: number[]; ticktext: string[]; title: { text: string } };
   };
@@ -42,12 +51,12 @@ async function waitForDrawings(drawingCount: number): Promise<void> {
 /** The last drawing that the chart gave to Plotly.js. */
 function lastDrawing(): Drawing {
   const call = plotly.react.mock.calls[plotly.react.mock.calls.length - 1];
-  return { data: call[1][0], layout: call[2] };
+  return { data: call[1][0], traces: call[1], layout: call[2] };
 }
 
-/** The sum of the heights of the bars of a drawing. */
+/** The sum of the heights of the bars of a drawing, with all the parts of the stacked bars. */
 function sumOfBars(): number {
-  return lastDrawing().data.y.reduce((total, value) => total + value, 0);
+  return lastDrawing().traces.reduce((total, trace) => total + trace.y.reduce((sum, value) => sum + value, 0), 0);
 }
 
 /** A record of an active period that ended `startedAgoMs` ago and lasted `durationMs`, in one workspace. */
@@ -370,5 +379,129 @@ describe("UserActivityTab: the workspaces", () => {
     expect(message.text()).toBe("Reading the user activity…");
     expect(message.element.firstElementChild?.classList.contains("spinner-border")).toBe(true);
     expect(message.get(".spinner-border").attributes("aria-hidden")).toBe("true");
+  });
+});
+
+describe("UserActivityTab: the stacked bars", () => {
+  /** The length of a slot of the last hour at first: five minutes. */
+  const SLOT_MS = 5 * 60_000;
+
+  /** A record of an active period inside the slot before the current slot, so that no slot limit cuts it. */
+  function recordInPreviousSlot(workspaceFolder: string, offsetInSeconds: number, durationInSeconds: number) {
+    const currentSlotStartedAt = new Date();
+    currentSlotStartedAt.setMinutes(Math.floor(currentSlotStartedAt.getMinutes() / 5) * 5, 0, 0);
+    const startedAt = currentSlotStartedAt.getTime() - SLOT_MS + offsetInSeconds * 1000;
+    return {
+      workspaceFolder,
+      startedAt: new Date(startedAt).toISOString(),
+      endedAt: new Date(startedAt + durationInSeconds * 1000).toISOString(),
+    };
+  }
+
+  /** The records of two workspaces: "Heidrun app" has 4 minutes in total, and "old_experiment" has 2 minutes. */
+  const records = () => [
+    recordOf(OPEN_FOLDER, 30 * 60_000, 3 * 60_000),
+    recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000),
+    recordOf(OPEN_FOLDER, 10 * 60_000, 60_000),
+  ];
+
+  /** The sum of the heights of the parts of one trace of the last drawing. */
+  function sumOfTrace(index: number): number {
+    return lastDrawing().traces[index].y.reduce((total, value) => total + value, 0);
+  }
+
+  it("stacks the bars, with one part for each chosen workspace, and no legend", async () => {
+    await mountUserActivityTab(records());
+    await waitForDrawings(1);
+    const { traces, layout } = lastDrawing();
+    expect(layout.barmode).toBe("stack");
+    expect(layout.showlegend).toBe(false);
+    expect(traces.map((trace) => trace.name)).toEqual(["Heidrun app", "old_experiment"]);
+    expect(traces.every((trace) => trace.type === "bar" && trace.x.length === 12)).toBe(true);
+    expect(sumOfTrace(0)).toBeCloseTo(4, 5);
+    expect(sumOfTrace(1)).toBeCloseTo(2, 5);
+  });
+
+  it("gives each workspace its own color, in the order of the buttons", async () => {
+    await mountUserActivityTab(records());
+    await waitForDrawings(1);
+    expect(lastDrawing().traces.map((trace) => trace.marker.color)).toEqual(["--blue-500", "--orange-500"]);
+  });
+
+  it("keeps the color of a workspace when another workspace is hidden, and when the time range changes", async () => {
+    const { wrapper } = await mountUserActivityTab(records());
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-workspace-0").setValue(false);
+    await waitForDrawings(2);
+    expect(lastDrawing().traces.map((trace) => [trace.name, trace.marker.color])).toEqual([["old_experiment", "--orange-500"]]);
+    await wrapper.get("#statistics-range-day").setValue(true);
+    await waitForDrawings(3);
+    expect(lastDrawing().traces.map((trace) => [trace.name, trace.marker.color])).toEqual([["old_experiment", "--orange-500"]]);
+  });
+
+  it("shows the color of each workspace on its button, and none on the button All workspaces", async () => {
+    const { wrapper } = await mountUserActivityTab(records());
+    const dotOf = (title: string) => wrapper.find(`label[title*='${title}'] span[aria-hidden='true']`);
+    expect(dotOf("/work/heidrun").attributes("style")).toContain("var(--blue-500)");
+    expect(dotOf("/work/old_experiment").attributes("style")).toContain("var(--orange-500)");
+    expect(wrapper.find("label[title*='every workspace'] span[aria-hidden='true']").exists()).toBe(false);
+  });
+
+  it("keeps the color on the button of a workspace that is hidden", async () => {
+    const { wrapper } = await mountUserActivityTab(records());
+    await wrapper.get("#statistics-workspace-1").setValue(false);
+    expect(wrapper.get("label[title*='/work/old_experiment'] span[aria-hidden='true']").attributes("style")).toContain("var(--orange-500)");
+  });
+
+  it("draws one part with the user activity time of the only workspace, and one line in the tooltip", async () => {
+    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
+    await waitForDrawings(1);
+    const { traces } = lastDrawing();
+    expect(traces).toHaveLength(1);
+    expect(traces[0].marker.color).toBe("--blue-500");
+    expect(traces[0].customdata[10]).toMatch(/^.+ to .+: 1 min 30 s$/);
+  });
+
+  it("draws one part of height 0 for each slot when there is no workspace", async () => {
+    await mountUserActivityTab([]);
+    await waitForDrawings(1);
+    const { traces } = lastDrawing();
+    expect(traces).toHaveLength(1);
+    expect(traces[0].y).toEqual(new Array(12).fill(0));
+  });
+
+  it("gives the total and then the time of each workspace in the tooltip of a slot, and only in the slots that have time", async () => {
+    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
+    await waitForDrawings(1);
+    const { traces } = lastDrawing();
+    expect(traces[0].customdata[10]).toMatch(/^.+ to .+: 2 min 0 s<br>Heidrun app: 1 min 30 s<br>old_experiment: 0 min 30 s$/);
+    expect(traces[1].customdata[10]).toBe(traces[0].customdata[10]);
+    expect(traces[0].customdata[9]).toMatch(/^.+ to .+: 0 min 0 s$/);
+  });
+
+  it("leaves a workspace out of the tooltip of a slot where it has no time", async () => {
+    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordOf(CLOSED_FOLDER, 40 * 60_000, 30_000)]);
+    await waitForDrawings(1);
+    const tooltip = lastDrawing().traces[0].customdata[10];
+    expect(tooltip).toContain("Heidrun app: 1 min 30 s");
+    expect(tooltip).not.toContain("old_experiment");
+  });
+
+  it("writes the time of each workspace in hours and minutes in the tooltip of a slot of six hours", async () => {
+    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await chooseSlotLength(wrapper, "six_hours", 3);
+    const tooltips = lastDrawing().traces[0].customdata.filter((tooltip) => tooltip.includes("<br>"));
+    expect(tooltips.length).toBeGreaterThan(0);
+    expect(tooltips.every((tooltip) => /^.+ to .+: \d+ h \d+ min<br>Heidrun app: \d+ h \d+ min<br>old_experiment: \d+ h \d+ min$/.test(tooltip))).toBe(true);
+  });
+
+  it("writes the name of a workspace as text in the tooltip, so a sign '<' of a folder does not make markup", async () => {
+    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot("/work/a<b>&c", 180, 30)]);
+    await waitForDrawings(1);
+    const tooltip = lastDrawing().traces[0].customdata[10];
+    expect(tooltip).toContain("a&lt;b&gt;&amp;c: 0 min 30 s");
+    expect(tooltip).not.toContain("a<b>");
   });
 });

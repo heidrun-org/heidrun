@@ -1,6 +1,15 @@
+import {
+	UserActivitySlots,
+	type UserActivityPeriodTimes,
+	type UserActivityRangeId,
+	type UserActivitySlot,
+	type UserActivitySlotLengthId,
+} from "./user_activity_slots";
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	UserActivityWorkspaces — lists the workspaces that the histogram can show, and filters the records by them
+//	UserActivityWorkspaces — lists the workspaces that the histogram can show, gives each one a color, and cuts the user
+//	activity time of each one into slots
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -25,6 +34,40 @@ export type UserActivityOpenWorkspace = {
 	/** The label of the workspace. */
 	label: string;
 };
+
+/** The user activity time of one workspace, cut into slots. It is one part of each stacked bar of the histogram. */
+export type UserActivityWorkspaceSlots = {
+	/** The folder of the workspace. */
+	folder: string;
+	/** The name of the workspace, the same as on its button. */
+	name: string;
+	/** The name of the CSS variable that gives the color of the workspace, for example `--blue-500`. */
+	colorToken: string;
+	/** The slots of the workspace, the oldest first. */
+	slots: UserActivitySlot[];
+};
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	Constants
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * The colors of the workspaces in the histogram, as the names of CSS variables of the color scales of Bootstrap. A
+ * workspace takes the color at its place in the list of the choices, which is sorted by name. The list starts again from
+ * the first color after the last color.
+ */
+export const USER_ACTIVITY_WORKSPACE_COLOR_TOKENS: readonly string[] = [
+	"--blue-500",
+	"--orange-500",
+	"--green-500",
+	"--purple-500",
+	"--red-500",
+	"--teal-500",
+	"--yellow-500",
+	"--pink-500",
+];
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,6 +105,62 @@ export class UserActivityWorkspaces {
 			return { folder: choice.folder, name: isShared === true ? `${choice.name} (${choice.folder})` : choice.name };
 		});
 		return choices.sort((a, b) => a.name.localeCompare(b.name) || a.folder.localeCompare(b.folder));
+	}
+
+	/**
+	 * Gives the color of a workspace. The color depends only on the place of the workspace in the list of the choices, so
+	 * it stays the same in every slot, every time range, and every slot length, and when the developer hides a workspace.
+	 *
+	 * @param index - The place of the workspace in the list of the choices.
+	 * @returns The name of the CSS variable that gives the color, for example `--blue-500`.
+	 */
+	static colorToken(index: number): string {
+		return USER_ACTIVITY_WORKSPACE_COLOR_TOKENS[index % USER_ACTIVITY_WORKSPACE_COLOR_TOKENS.length];
+	}
+
+	/**
+	 * Cuts the user activity time of each chosen workspace into slots. The running active period counts only in the
+	 * slots of its own workspace.
+	 *
+	 * @param choices - The workspaces that the developer can choose, sorted by name.
+	 * @param chosenFolders - The folders of the chosen workspaces.
+	 * @param records - The active periods that ended.
+	 * @param runningPeriodStartedAt - The start of the active period that runs now, or `null` when no period runs.
+	 * @param runningPeriodFolder - The folder of the workspace of the running period, or `null` when none is selected.
+	 * @param now - The current time, in milliseconds.
+	 * @param rangeId - The range. The default is the last hour.
+	 * @param slotLengthId - The slot length. The default is the slot length that the range starts with.
+	 * @returns One entry for each chosen workspace, in the order of the choices.
+	 */
+	static slotsByWorkspace(
+		choices: readonly UserActivityWorkspaceChoice[],
+		chosenFolders: readonly string[],
+		records: readonly (UserActivityPeriodTimes & { workspaceFolder: string })[],
+		runningPeriodStartedAt: number | null,
+		runningPeriodFolder: string | null,
+		now: number,
+		rangeId: UserActivityRangeId = "hour",
+		slotLengthId?: UserActivitySlotLengthId,
+	): UserActivityWorkspaceSlots[] {
+		const workspaceSlots: UserActivityWorkspaceSlots[] = [];
+		for (const [index, choice] of choices.entries()) {
+			if (chosenFolders.includes(choice.folder) === false) {
+				continue;
+			}
+			workspaceSlots.push({
+				folder: choice.folder,
+				name: choice.name,
+				colorToken: UserActivityWorkspaces.colorToken(index),
+				slots: UserActivitySlots.compute(
+					UserActivityWorkspaces.filterRecords(records, [choice.folder]),
+					UserActivityWorkspaces.runningPeriodStartedAt(runningPeriodStartedAt, runningPeriodFolder, [choice.folder]),
+					now,
+					rangeId,
+					slotLengthId,
+				),
+			});
+		}
+		return workspaceSlots;
 	}
 
 	/**

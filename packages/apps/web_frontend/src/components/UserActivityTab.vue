@@ -11,13 +11,18 @@ import {
   type UserActivitySlot,
   type UserActivitySlotLengthId,
 } from "../lib/user_activity_slots";
-import { UserActivityWorkspaces, type UserActivityWorkspaceChoice } from "../lib/user_activity_workspaces";
+import {
+  UserActivityWorkspaces,
+  type UserActivityWorkspaceChoice,
+  type UserActivityWorkspaceSlots,
+} from "../lib/user_activity_workspaces";
 import { workspaceCwd } from "../stores/project";
 import { workspaces } from "../stores/session";
 import { activePeriodStartedAt, selectedWorkspaceFolder } from "../stores/user_activity";
 import { t } from "../i18n/index";
 
-// The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. The
+// The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. Each bar
+// of the histogram is stacked, with one color for each chosen workspace, and the button of each workspace shows its color. The
 // time range is the last hour, the last day, or the last week. The slot length depends on the time range, and it goes back
 // to the slot length that the time range starts with each time that the time range changes. The workspaces are all of them
 // at first, and the developer can hide any workspace. The records are read once, for the longest time range, when the
@@ -72,6 +77,23 @@ const slots = computed<UserActivitySlot[] | null>(() => {
   return UserActivitySlots.compute(
     UserActivityWorkspaces.filterRecords(records.value, chosenFolders.value),
     UserActivityWorkspaces.runningPeriodStartedAt(runningPeriodStartedAt.value, runningPeriodFolder.value, chosenFolders.value),
+    readAt.value,
+    rangeId.value,
+    slotLengthId.value,
+  );
+});
+
+/** The slots of each chosen workspace, in the order of the colors: the parts of the stacked bars. */
+const workspaceSlots = computed<UserActivityWorkspaceSlots[]>(() => {
+  if (records.value === null) {
+    return [];
+  }
+  return UserActivityWorkspaces.slotsByWorkspace(
+    workspaceChoices.value,
+    chosenFolders.value,
+    records.value,
+    runningPeriodStartedAt.value,
+    runningPeriodFolder.value,
     readAt.value,
     rangeId.value,
     slotLengthId.value,
@@ -177,6 +199,11 @@ onMounted(load);
             autocomplete="off"
             :value="choice.folder"
           />
+          <span
+            class="d-inline-flex me-2"
+            aria-hidden="true"
+            :style="{ width: '0.75em', height: '0.75em', borderRadius: '50%', background: `var(${UserActivityWorkspaces.colorToken(index)})` }"
+          ></span>
           {{ choice.name }}
         </label>
       </div>
@@ -185,7 +212,7 @@ onMounted(load);
       <div v-if="errorText !== ''" class="alert alert-danger" role="alert">{{ t("statisticsModal.loadError", { error: errorText }) }}</div>
       <span v-else-if="slots === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.loading") }}</span>
       <span v-else-if="workspaceChoices.length > 0 && chosenFolders.length === 0" class="form-text">{{ t("statisticsModal.workspacesNone") }}</span>
-      <UserActivityHistogram v-else :slots="slots" :range-id="rangeId" :slot-length-id="slotLengthId" />
+      <UserActivityHistogram v-else :slots="slots" :workspace-slots="workspaceSlots" :range-id="rangeId" :slot-length-id="slotLengthId" />
     </div>
   </div>
 </template>

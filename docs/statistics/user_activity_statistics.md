@@ -5,13 +5,13 @@
 - Status: Maintained description of the statistic of the tab "User activity"
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: user activity](../agents_rules/glossary/user_activity.md), [Statistics window](../agents_rules/user_interface/window/statistics_window.md), [User activity sidebar section](../agents_rules/user_interface/sidebars/user_activity.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 474](https://github.com/heidrun-org/heidrun/issues/474)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 474](https://github.com/heidrun-org/heidrun/issues/474), [issue 498](https://github.com/heidrun-org/heidrun/issues/498)
 
 This file describes the statistic of the tab "User activity" of the Statistics window, and the data layer that it reads. The words are defined in the [glossary of the user activity](../agents_rules/glossary/user_activity.md). The rules of the window are in [statistics_window.md](../agents_rules/user_interface/window/statistics_window.md). The data layers are explained in [the_four_data_layers.md](the_four_data_layers.md).
 
 ## What the statistic shows
 
-One histogram of the user activity time: the time that the developer is in front of Heidrun. The developer chooses the last hour (12 slots of five minutes), the last day (24 slots of one hour), or the last week (7 slots of one day). Each bar is the user activity time of one slot, and the bars add the time of all the workspaces together.
+One histogram of the user activity time: the time that the developer is in front of Heidrun. The developer chooses the last hour (12 slots of five minutes), the last day (24 slots of one hour), or the last week (7 slots of one day). Each bar is the user activity time of one slot. The bar is stacked: it has one part of one color for each chosen workspace, and its height is the time of all the chosen workspaces together.
 
 ## The data layer that it reads
 
@@ -94,6 +94,5 @@ The tests are listed in [statistics_window.md](../agents_rules/user_interface/wi
 
 ## Open points
 
-- A bar with one color for each workspace is a later step ([issue 473](https://github.com/heidrun-org/heidrun/issues/473)).
 - A later issue can find the repository of a record from the remote `origin` of its folder, when the folder still exists ([issue 474](https://github.com/heidrun-org/heidrun/issues/474)).
 - A later issue can move the writing of the file into the data layer. Today only the web frontend writes it.
