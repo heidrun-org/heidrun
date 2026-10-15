@@ -216,6 +216,8 @@ importers:
 
   packages/data_layers/data_layer_source_control: {}
 
+  packages/data_layers/data_layer_user_activity: {}
+
   packages/dev_tools/agents_rules_checker:
     devDependencies:
       '@types/node':
