@@ -54,20 +54,32 @@ describe('home page', () => {
 		expect(home).toMatch(/^layout: home$/m);
 	});
 
-	it('has a call to action to the documentation and one to the about page', () => {
-		expect(home).toContain('link: /documentation/');
+	it('has a call to action to the latest release, one to the repository, and one to the about page', () => {
+		expect(home).toContain('link: https://github.com/heidrun-org/heidrun/releases/latest');
+		expect(home).toContain('link: https://github.com/heidrun-org/heidrun\n');
 		expect(home).toContain('link: /about');
 	});
 
-	it('lists six features', () => {
-		const features = home.split('\n').filter((line) => line.startsWith('  - title:'));
-		expect(features).toHaveLength(6);
+	it('shows the eleven sections under the hero, in the order of issue 509', () => {
+		const sections = [...home.matchAll(/^<(Home\w+)(?: section-id="([\w-]+)")? \/>$/gm)]
+			.map((match) => (match[2] === undefined ? match[1] : `${match[1]} ${match[2]}`));
+		expect(sections).toEqual([
+			'HomeProblem',
+			'HomeValhalla',
+			'HomeFeature know-which-one-needs-you',
+			'HomeFeature real-terminals',
+			'HomeFeature watch-the-mead-level',
+			'HomeFeature valhalla-fits-in-a-pocket',
+			'HomeLonghouse',
+			'HomeQuickStart',
+			'HomeOpenSource',
+			'HomeMythology',
+			'HomeSkal',
+		]);
 	});
 
-	it('gives every feature a title and a description', () => {
-		const titles = home.match(/^  - title: .+$/gm) ?? [];
-		const details = home.match(/^    details: .+$/gm) ?? [];
-		expect(details).toHaveLength(titles.length);
+	it('has no list of features, which the section "The whole longhouse in one window" replaces', () => {
+		expect(home).not.toMatch(/^features:/m);
 	});
 
 	it('names the splash image that exists in the public folder', () => {
