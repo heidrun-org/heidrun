@@ -36,12 +36,24 @@ export class DinosaurRules {
 	}
 
 	/**
+	 * Gives the lane that the dinosaur is in: the lane that is nearest to the lane position of the dinosaur. The
+	 * picture of the dinosaur is in this lane, so a thing touches the dinosaur only when the picture of the thing is in
+	 * the same lane.
+	 * @param dinosaur The dinosaur.
+	 * @returns The lane, as a whole number.
+	 */
+	static nearestLane(dinosaur: Dinosaur): number {
+		const lane = Math.round(dinosaur.lanePosition);
+		return lane;
+	}
+
+	/**
 	 * Gives the lane where a shot of the dinosaur flies: the nearest lane.
 	 * @param dinosaur The dinosaur.
 	 * @returns The lane, as a whole number.
 	 */
 	static shootingLane(dinosaur: Dinosaur): number {
-		const lane = Math.round(dinosaur.lanePosition);
+		const lane = DinosaurRules.nearestLane(dinosaur);
 		return lane;
 	}
 

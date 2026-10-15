@@ -1,4 +1,5 @@
 import { AmmunitionRules } from './ammunition_rules.ts';
+import { DinosaurRules } from './dinosaur_rules.ts';
 import { GameSettings } from './game_settings.ts';
 import type { Dinosaur, GameState, Thing } from './game_types.ts';
 import { ThingRules } from './thing_rules.ts';
@@ -11,8 +12,8 @@ import { ThingRules } from './thing_rules.ts';
 
 /**
  * The rules of the touch between the dinosaur and the things. The dinosaur touches a thing when it shares a lane
- * with the thing, shares the distance with the thing, and its feet are lower than the top of the thing. During a lane
- * change, the dinosaur is in two lanes.
+ * with the thing, shares the distance with the thing, and its feet are lower than the top of the thing. The dinosaur
+ * is always in one lane only: the lane where its picture is, so a hit always matches the picture.
  */
 export class CollisionRules {
 	/**
@@ -33,16 +34,14 @@ export class CollisionRules {
 	}
 
 	/**
-	 * Tells whether the dinosaur is in a lane. During a lane change, the dinosaur is in the two lanes between which
-	 * it moves.
+	 * Tells whether the dinosaur is in a lane. During a lane change, the dinosaur is in the lane that is nearest to
+	 * its picture, and it leaves a lane as soon as the picture is nearer to the next lane.
 	 * @param dinosaur The dinosaur.
 	 * @param lane The lane.
 	 * @returns True when the dinosaur is in the lane.
 	 */
 	static isInLane(dinosaur: Dinosaur, lane: number): boolean {
-		const firstLane = Math.floor(dinosaur.lanePosition + GameSettings.LANE_TOLERANCE);
-		const lastLane = Math.ceil(dinosaur.lanePosition - GameSettings.LANE_TOLERANCE);
-		const isInLane = lane >= firstLane && lane <= lastLane;
+		const isInLane = DinosaurRules.nearestLane(dinosaur) === lane;
 		return isInLane;
 	}
 

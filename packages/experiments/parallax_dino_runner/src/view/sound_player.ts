@@ -24,8 +24,8 @@ export class SoundPlayer {
 	/** One second of white noise, which every noise sound reads, or null before the first key press. */
 	private _noiseBuffer: AudioBuffer | null = null;
 
-	/** True when the player turned the sound off. */
-	private _isMuted = false;
+	/** True when the sound is off. The sound is off at the start, and the player turns it on with a key. */
+	private _isMuted = true;
 
 	/**
 	 * Starts the audio context at the first call, and wakes it up when the browser stopped it. Call it from a key
@@ -45,7 +45,7 @@ export class SoundPlayer {
 	}
 
 	/**
-	 * Turns the sound off, or on again. A short note tells the player that the sound is on.
+	 * Turns the sound on when it is off, and off when it is on. A short note tells the player that the sound is on.
 	 * @returns True when the sound is off now.
 	 */
 	toggleMuted(): boolean {
@@ -88,7 +88,11 @@ export class SoundPlayer {
 			this._tone('sine', 1320, 1320, 0.14, 0.14, 0.14);
 		} else if (event === 'hit') {
 			this._tone('sawtooth', 420, 55, 0.6, 0.18, 0);
-			this._noise(0.35, 0.3, 1600, 150, 0);
+			this._noise(0.35, 0.3, 1600, 150, 0);} else if (event === 'finish') {
+			this._tone('square', 523, 523, 0.1, 0.1, 0);
+			this._tone('square', 659, 659, 0.1, 0.1, 0.1);
+			this._tone('square', 784, 784, 0.1, 0.1, 0.2);
+			this._tone('square', 1047, 1047, 0.4, 0.1, 0.3);
 		}
 	}
 

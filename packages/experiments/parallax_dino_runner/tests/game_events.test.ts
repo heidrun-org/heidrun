@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { GameSettings, GameWorld, SeededRandom, ShootingRules, ThingRules } from '../src/index.ts';
+import { GameSettings, SeededRandom, ShootingRules, ThingRules } from '../src/index.ts';
 import { TestStates } from './test_states.ts';
 
 describe('Game events', () => {
 	it('gives the event "start" when a run starts, and takes the events only one time', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		expect(gameWorld.takeEvents()).toEqual(['start']);
 		expect(gameWorld.takeEvents()).toEqual([]);
 	});
 
 	it('gives the event "jump" for a jump, and no event for a jump in the air', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		gameWorld.takeEvents();
 		gameWorld.command('jump');
@@ -21,7 +21,7 @@ describe('Game events', () => {
 	});
 
 	it('gives the event "laneChange" for each lane change, and no event at the last lane', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		gameWorld.takeEvents();
 		gameWorld.command('laneUp');
@@ -31,7 +31,7 @@ describe('Game events', () => {
 	});
 
 	it('gives the event "shoot" for a shot, and the event "shootEmpty" with no ammunition', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		gameWorld.takeEvents();
 		gameWorld.state.ammunition = 1;
@@ -51,7 +51,7 @@ describe('Game events', () => {
 	});
 
 	it('gives the event "crate" when the dinosaur picks up a crate', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		gameWorld.takeEvents();
 		gameWorld.state.things = [];
@@ -61,7 +61,7 @@ describe('Game events', () => {
 	});
 
 	it('gives the event "hit" when the run ends, and keeps it for the page during a restart', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('start');
 		gameWorld.takeEvents();
 		gameWorld.state.things = [];
@@ -72,7 +72,7 @@ describe('Game events', () => {
 	});
 
 	it('gives no event while the world waits', () => {
-		const gameWorld = new GameWorld(1);
+		const gameWorld = TestStates.createGameWorld();
 		gameWorld.command('jump');
 		gameWorld.command('shoot');
 		TestStates.runSteps(gameWorld, 10);

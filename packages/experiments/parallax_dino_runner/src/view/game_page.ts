@@ -1,4 +1,6 @@
 import { GameSettings, GameWorld } from '../index.ts';
+import { CommitLoader } from './commit_loader.ts';
+import type { LoadedCommits } from './commit_loader.ts';
 import { KeyboardInput } from './keyboard_input.ts';
 import { SceneRenderer } from './scene_renderer.ts';
 import { SoundPlayer } from './sound_player.ts';
@@ -12,7 +14,8 @@ import { SoundPlayer } from './sound_player.ts';
 /**
  * The page of the game. It owns the canvas, it gives the keys to the world, it runs the rules in fixed steps of one
  * sixtieth of a second, it plays the sound of each event, and it draws one picture after each frame of the browser.
- * Add "?seed=42" to the address of the page to play the same world again.
+ * It reads the commits to play with from the file `commits.json` next to the page. Add "?seed=42" to the address of
+ * the page to play the same world again.
  */
 export class GamePage {
 	/** The longest time that one frame can give to the rules, in seconds. A tab that was hidden does not jump ahead. */
@@ -27,6 +30,9 @@ export class GamePage {
 	/** The world of the game. */
 	private _gameWorld: GameWorld;
 
+	/** A text for the player when the commits are fake, or null. */
+	private _notice: string | null;
+
 	/** The sounds of the game. */
 	private _soundPlayer = new SoundPlayer();
 
@@ -40,17 +46,24 @@ export class GamePage {
 	 * @param canvas The canvas of the page.
 	 * @param context The drawing context of the canvas.
 	 * @param seed The seed of the random numbers of the world.
+	 * @param loadedCommits The commits to play with.
 	 */
-	private constructor(canvas: HTMLCanvasElement, context: CanvasRenderingContext2D, seed: number) {
+	private constructor(
+		canvas: HTMLCanvasElement,
+		context: CanvasRenderingContext2D,
+		seed: number,
+		loadedCommits: LoadedCommits,
+	) {
 		this._canvas = canvas;
 		this._context = context;
-		this._gameWorld = new GameWorld(seed);
+		this._gameWorld = new GameWorld(seed, loadedCommits.commits);
+		this._notice = loadedCommits.notice;
 	}
 
 	/**
-	 * Starts the game on the page that is open.
+	 * Reads the commits, then starts the game on the page that is open.
 	 */
-	static start(): void {
+	static async start(): Promise<void> {
 		const canvas = document.getElementById('game');
 		if (canvas instanceof HTMLCanvasElement === false) {
 			throw new Error('The page has no canvas with the identifier "game".');
@@ -59,7 +72,8 @@ export class GamePage {
 		if (context === null) {
 			throw new Error('The browser gives no drawing context for the canvas.');
 		}
-		const gamePage = new GamePage(canvas, context, GamePage._readSeed());
+		const loadedCommits = await CommitLoader.load();
+		const gamePage = new GamePage(canvas, context, GamePage._readSeed(), loadedCommits);
 		gamePage._run();
 	}
 
@@ -127,11 +141,17 @@ export class GamePage {
 		for (const event of this._gameWorld.takeEvents()) {
 			this._soundPlayer.play(event);
 		}
-		SceneRenderer.render(this._context, this._gameWorld.state, this._canvas.width, this._canvas.height);
+		SceneRenderer.render(
+			this._context,
+			this._gameWorld.state,
+			this._canvas.width,
+			this._canvas.height,
+			this._notice,
+		);
 		window.requestAnimationFrame((nextTime) => {
 			this._frame(nextTime);
 		});
 	}
 }
 
-GamePage.start();
+void GamePage.start();

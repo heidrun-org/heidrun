@@ -21,6 +21,7 @@
     "data_layer:user_activity": "pnpm --silent --filter data_layer_user_activity cli",
     "experiment:multi_layer_graph": "pnpm --filter multi_layer_graph dev",
     "experiment:parallax_dino_runner": "pnpm --filter parallax_dino_runner dev",
+    "experiment:parallax_dino_runner:commits": "pnpm --filter parallax_dino_runner commits:build",
     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts",
     "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build"
   },

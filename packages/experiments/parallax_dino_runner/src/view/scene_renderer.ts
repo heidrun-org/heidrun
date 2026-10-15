@@ -1,5 +1,5 @@
 import type { GameState } from '../index.ts';
-import { GameSettings } from '../index.ts';
+import { DinosaurRules, GameSettings } from '../index.ts';
 import { BackdropPainter } from './backdrop_painter.ts';
 import { DinosaurPainter } from './dinosaur_painter.ts';
 import { GroundPainter } from './ground_painter.ts';
@@ -15,7 +15,8 @@ import { ThingPainter } from './thing_painter.ts';
 
 /**
  * Draws one whole picture of the game, from back to front: the sky, the clouds, the mountains, the hills, the ground,
- * then the lanes from the far lane to the near lane, and last the counters and the messages. The picture is scaled
+ * then the lanes from the far lane to the near lane, and last the counters, the bar of the next commit, and the
+ * messages. The picture is scaled
  * so that its design height fits the window.
  */
 export class SceneRenderer {
@@ -25,12 +26,14 @@ export class SceneRenderer {
 	 * @param gameState The state of the game.
 	 * @param pixelWidth The width of the canvas, in pixels of the screen.
 	 * @param pixelHeight The height of the canvas, in pixels of the screen.
+	 * @param notice A text for the player that the message of the phase "ready" shows, or null.
 	 */
 	static render(
 		context: CanvasRenderingContext2D,
 		gameState: GameState,
 		pixelWidth: number,
 		pixelHeight: number,
+		notice: string | null,
 	): void {
 		const scale = Math.min(pixelHeight / LaneLayout.VISIBLE_HEIGHT, pixelWidth / LaneLayout.VISIBLE_WIDTH);
 		const designWidth = pixelWidth / scale;
@@ -51,7 +54,8 @@ export class SceneRenderer {
 		context.restore();
 
 		HudPainter.paintCounters(context, gameState, designWidth);
-		HudPainter.paintMessage(context, gameState, designWidth, designHeight);
+		HudPainter.paintCommitBar(context, gameState, designWidth);
+		HudPainter.paintMessage(context, gameState, designWidth, designHeight, notice);
 		context.restore();
 	}
 
@@ -78,7 +82,7 @@ export class SceneRenderer {
 				ThingPainter.paintBullet(context, bullet);
 			}
 		}
-		if (Math.round(gameState.dinosaur.lanePosition) === lane) {
+		if (DinosaurRules.nearestLane(gameState.dinosaur) === lane) {
 			DinosaurPainter.paint(context, gameState);
 		}
 	}

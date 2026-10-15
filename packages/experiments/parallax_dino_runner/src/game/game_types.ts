@@ -4,16 +4,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+import type { CommitRecord } from './commit_types.ts';
+
 /**
  * The phase of the game. In the phase "ready", the world waits for the player. In the phase "running", the world
- * moves. In the phase "over", the dinosaur hit something and the world stops.
+ * moves. In the phase "paused", the player stopped the world, and the world goes on from the same place. In the phase
+ * "over", the dinosaur hit something and the world stops. In the phase "finished", the dinosaur passed the newest
+ * commit and the world stops.
  */
-export type GamePhase = 'ready' | 'running' | 'over';
+export type GamePhase = 'ready' | 'running' | 'paused' | 'over' | 'finished';
 
 /**
  * A command that the player gives to the game.
  */
-export type GameCommand = 'start' | 'jump' | 'laneUp' | 'laneDown' | 'shoot';
+export type GameCommand = 'start' | 'pause' | 'jump' | 'laneUp' | 'laneDown' | 'shoot';
 
 /**
  * Something that happened during the game, for the sounds. The state keeps the events until the page takes them.
@@ -27,7 +31,8 @@ export type GameEvent =
 	| 'rockShrunk'
 	| 'rockDestroyed'
 	| 'crate'
-	| 'hit';
+	| 'hit'
+	| 'finish';
 
 /**
  * The size of a rock.
@@ -54,7 +59,8 @@ export type Dinosaur = {
 };
 
 /**
- * A thing that stands in one lane and moves toward the dinosaur: a cactus, a rock, or a crate of ammunition.
+ * A thing that stands in one lane and moves toward the dinosaur: a cactus, a rock, or a crate of ammunition. A cactus
+ * or a rock is a commit.
  */
 export type Thing = {
 	/** The number that tells this thing from every other thing of the run. */
@@ -63,6 +69,8 @@ export type Thing = {
 	kind: ThingKind;
 	/** The size of the rock. It is null when the thing is not a rock. */
 	rockSize: RockSize | null;
+	/** The commit that this thing stands for. It is null for a crate. */
+	commit: CommitRecord | null;
 	/** The lane of the thing, from 0 (far lane) to 2 (near lane). */
 	lane: number;
 	/** The distance in front of the dinosaur, in units, measured from the middle of the thing. */
@@ -133,6 +141,8 @@ export type GameState = {
 	distance: number;
 	/** The speed of the world, in units per second. */
 	speed: number;
+	/** The distance in front of the dinosaur of the newest commit, in units. It is null until that commit appears. */
+	lastCommitX: number | null;
 	/** The number of shots that the player has. */
 	ammunition: number;
 	/** The best score of this page. */

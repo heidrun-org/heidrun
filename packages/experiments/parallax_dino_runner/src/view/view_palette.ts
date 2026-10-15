@@ -56,6 +56,21 @@ export class ViewPalette {
 	/** The color of the lit side of a rock. */
 	static readonly ROCK_LIGHT = '#a9aeb7';
 
+	/** The color of the edge of a rock that is a merge commit. */
+	static readonly MERGE_ROCK_DARK = '#5b4d88';
+
+	/** The color of the middle of a rock that is a merge commit. */
+	static readonly MERGE_ROCK = '#7d6bb4';
+
+	/** The color of the lit side of a rock that is a merge commit. */
+	static readonly MERGE_ROCK_LIGHT = '#a597d3';
+
+	/** The color of the mark above a merge commit. */
+	static readonly MERGE_MARK = '#f2b632';
+
+	/** The color of the edge of the mark above a merge commit. */
+	static readonly MERGE_MARK_EDGE = '#8a5d00';
+
 	/** The color of a crate of ammunition. */
 	static readonly CRATE = '#b07a3a';
 

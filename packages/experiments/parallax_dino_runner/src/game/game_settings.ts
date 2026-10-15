@@ -33,9 +33,6 @@ export class GameSettings {
 	/** The time that the dinosaur needs to go from one lane to the next lane, in seconds. */
 	static readonly LANE_CHANGE_SECONDS = 0.15;
 
-	/** The tolerance that tells whether the dinosaur is in a lane, in lanes. */
-	static readonly LANE_TOLERANCE = 0.000001;
-
 	/** The upward speed of a jump, in units per second. */
 	static readonly JUMP_SPEED = 912;
 
@@ -75,38 +72,35 @@ export class GameSettings {
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
 
-	/** The distance in front of the dinosaur where a new row of things appears, in units. */
+	/** The distance in front of the dinosaur where a new commit appears, in units. */
 	static readonly SPAWN_X = 1500;
 
 	/** The distance behind the dinosaur where a thing disappears, in units. */
 	static readonly REMOVE_X = -300;
 
-	/** The distance of the first row of things at the start of a run, in units. */
+	/** The distance of the first commit at the start of a run, in units. */
 	static readonly FIRST_ROW_X = 900;
 
-	/** The smallest distance between two rows of things, in units. */
+	/** The smallest distance between two commits, in units. */
 	static readonly MINIMUM_GAP = 480;
 
-	/** The time that the dinosaur needs to cross the gap between two rows at the least, in seconds. */
+	/** The time that the dinosaur needs to cross the gap between two commits at the least, in seconds. */
 	static readonly GAP_SECONDS = 0.9;
 
-	/** The largest random addition to the gap between two rows, in units. */
+	/** The largest random addition to the gap between two commits, in units. */
 	static readonly GAP_RANDOM = 420;
 
-	/** The chance that a lane of a row stays empty, from 0 to 1. */
-	static readonly EMPTY_LANE_CHANCE = 0.5;
+	/** The lines changed, added plus deleted, from which a commit is a medium rock. Below it, it is a small rock. */
+	static readonly MEDIUM_ROCK_MIN_LINES = 100;
 
-	/** The chance that a lane of a row holds a cactus, from 0 to 1. The other lanes hold a rock. */
-	static readonly CACTUS_CHANCE = 0.2;
+	/** The number of lines changed, added plus deleted, from which a commit is a large rock. */
+	static readonly LARGE_ROCK_MIN_LINES = 1000;
 
-	/** The chance that a rock is small, from 0 to 1. */
-	static readonly SMALL_ROCK_CHANCE = 0.4;
+	/** The chance that a crate of ammunition appears between a commit and the commit before it, from 0 to 1. */
+	static readonly CRATE_ROW_CHANCE = 0.35;
 
-	/** The chance that a rock is medium, from 0 to 1. The other rocks are large. */
-	static readonly MEDIUM_ROCK_CHANCE = 0.35;
-
-	/** The chance that a row also holds a crate of ammunition in an empty lane, from 0 to 1. */
-	static readonly CRATE_ROW_CHANCE = 0.25;
+	/** The distance of the newest commit, behind the dinosaur, where the run ends, in units. */
+	static readonly FINISH_X = -150;
 
 	/** The width of a cactus, in units. */
 	static readonly CACTUS_WIDTH = 28;
