@@ -271,6 +271,7 @@ mod tests {
             "svg" => "image/svg+xml",
             "png" => "image/png",
             "jpg" | "jpeg" => "image/jpeg",
+            "webp" => "image/webp",
             "ico" => "image/x-icon",
             other => panic!("the test does not know the type of a file .{other}: {path}"),
         }

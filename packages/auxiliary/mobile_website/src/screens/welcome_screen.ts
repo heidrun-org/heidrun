@@ -1,10 +1,10 @@
 import identity from '../../../../../data/identity.json';
-import splashImageUrl from '../assets/heidrun_splash_screen.jpg';
+import babyGoatImageUrl from '../assets/baby_goat.webp';
 import { HtmlEscape } from '../html_escape';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WelcomeScreen — the first page: the goat, the name, what Heidrun does, and the button "Go to the app"
+//	WelcomeScreen — the first page: the baby goat, the name, what Heidrun does, and the button "Go to the app"
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -22,7 +22,7 @@ export class WelcomeScreen {
 		const name = HtmlEscape.escape(identity.title);
 		const motto = HtmlEscape.escape(identity.motto.en);
 		const description = WelcomeScreen.renderSentences(identity.description.en);
-		const imageUrl = HtmlEscape.escape(splashImageUrl);
+		const imageUrl = HtmlEscape.escape(babyGoatImageUrl);
 		const screenHtmlContent = /* html */`
 			<main class="welcome">
 				<div class="welcome-picture">
@@ -31,7 +31,7 @@ export class WelcomeScreen {
 						src="${imageUrl}"
 						width="640"
 						height="640"
-						alt="The goat Heiðrún on top of Valhalla, pouring mead into a cauldron"
+						alt="The baby goat of Heidrun, with a golden crown and golden horns"
 					>
 				</div>
 				<div class="welcome-text">

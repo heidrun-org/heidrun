@@ -41,6 +41,7 @@ pub fn content_type_of(path: &str) -> &'static str {
         Some("svg") => "image/svg+xml",
         Some("png") => "image/png",
         Some("jpg") | Some("jpeg") => "image/jpeg",
+        Some("webp") => "image/webp",
         Some("ico") => "image/x-icon",
         Some("txt") => "text/plain; charset=utf-8",
         _ => "application/octet-stream",

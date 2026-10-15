@@ -31,7 +31,7 @@ Heidrun Mobile grows this page into a real application. The pairing key, the Tai
 
 ### Welcome page
 
-The first page. It shows the goat in a small circle at the top, then the name "Heidrun", the motto, and the description of the product on two lines, "Keep your agents working." and "Know which one needs you.", all centered, and the button "Go to the app" at the bottom of the screen, where the thumb is. It needs no data from the Mac, so it shows before the pairing, and before the Mac answers. When the address of the page names no screen, the page opens on the welcome page. The button "Go to the app" opens the Dashboard.
+The first page. It shows the baby goat in a big circle at the top, then the name "Heidrun", the motto, and the description of the product on two lines, "Keep your agents working." and "Know which one needs you.", all centered, and the button "Go to the app" at the bottom of the screen, where the thumb is. It needs no data from the Mac, so it shows before the pairing, and before the Mac answers. When the address of the page names no screen, the page opens on the welcome page. The button "Go to the app" opens the Dashboard.
 
 ### Dashboard
 

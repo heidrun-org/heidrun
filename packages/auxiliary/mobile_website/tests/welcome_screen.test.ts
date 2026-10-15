@@ -21,7 +21,7 @@ describe('Welcome page', () => {
 		expect(window.location.hash).toBe('#/welcome');
 	});
 
-	it('shows the goat, the name, the motto, and the description of Heidrun from the identity file', async () => {
+	it('shows the baby goat, and the name, the motto, and the description from the identity file', async () => {
 		const harness = await AppHarness.start(Fixtures.mac(), true, '');
 		expect(document.querySelector('.welcome-name')?.textContent).toBe(identity.title);
 		expect(document.querySelector('.welcome-motto')?.textContent).toBe(identity.motto.en);
@@ -33,8 +33,8 @@ describe('Welcome page', () => {
 		]);
 		expect(lineTexts.join(' ')).toBe(identity.description.en);
 		const image = document.querySelector<HTMLImageElement>('.welcome-image');
-		expect(image?.getAttribute('src')).toMatch(/\.jpg$/);
-		expect(image?.getAttribute('alt')).toContain('goat');
+		expect(image?.getAttribute('src')).toMatch(/\.webp$/);
+		expect(image?.getAttribute('alt')).toContain('baby goat');
 		expect(harness.text()).toContain('Go to the app');
 	});
 
