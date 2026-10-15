@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Multi-layer graph</title>
+		<style>
+			/* The graph fills the window, under the two panels. */
+			body {
+				background: #fcfcfb;
+			}
+			#graph {
+				position: fixed;
+				inset: 0;
+			}
+			#hover-label {
+				max-width: 28rem;
+			}
+			.side-panel {
+				width: 20rem;
+				max-height: calc(100vh - 2rem);
+			}
+		</style>
+	</head>
+	<body>
+		<div id="graph"></div>
+		<div class="card shadow position-absolute top-0 start-0 m-3 side-panel overflow-auto z-1">
+			<div class="card-body vstack gap-3">
+				<div>
+					<h1 class="h6 mb-0">Multi-layer graph</h1>
+					<div id="repository" class="text-sm fg-3"></div>
+				</div>
+				<div class="vstack gap-1">
+					<label for="search" class="text-sm fw-medium">Search</label>
+					<input id="search" class="form-control form-control-sm" type="search"
+						placeholder="Text of a label, then Enter" autocomplete="off" />
+					<div id="search-result" class="text-xs fg-3"></div>
+				</div>
+				<div class="vstack gap-1">
+					<label for="layout-select" class="text-sm fw-medium">Layout</label>
+					<select id="layout-select" class="form-control form-control-sm"></select>
+				</div>
+				<div id="layer-panel"></div>
+				<div id="status" class="text-xs fg-3" role="status"></div>
+			</div>
+		</div>
+		<div id="node-card"
+			class="card shadow position-absolute top-0 end-0 m-3 side-panel overflow-auto z-1 d-none"></div>
+		<div id="hover-label" class="position-absolute z-3 pe-none d-none card shadow px-2 py-1 text-sm"></div>
+		<script type="module" src="/src/viewer/multi_layer_graph_page.ts"></script>
+	</body>
+</html>
