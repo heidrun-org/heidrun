@@ -270,6 +270,7 @@ mod tests {
             "webmanifest" => "application/manifest+json",
             "svg" => "image/svg+xml",
             "png" => "image/png",
+            "jpg" | "jpeg" => "image/jpeg",
             "ico" => "image/x-icon",
             other => panic!("the test does not know the type of a file .{other}: {path}"),
         }

@@ -46,12 +46,12 @@ describe('Panes screen', () => {
 });
 
 describe('Bottom bar', () => {
-	it('has the five buttons, with Home highlighted at the start', async () => {
-		await AppHarness.start(Fixtures.mac(), true, '');
+	it('has the five buttons, with Dashboard highlighted on the dashboard', async () => {
+		await AppHarness.start(Fixtures.mac(), true, '#/dashboard');
 		const buttons = [...document.querySelectorAll('.bar-button')];
 		const labels = buttons.map((button) => button.textContent?.trim());
-		expect(labels).toEqual(['Home', 'Needs you', 'Panes', 'Macros', 'Launchers']);
-		expect(document.querySelector('.bar-button-active')?.textContent).toContain('Home');
+		expect(labels).toEqual(['Dashboard', 'Needs you', 'Panes', 'Macros', 'Launchers']);
+		expect(document.querySelector('.bar-button-active')?.textContent).toContain('Dashboard');
 		expect(document.querySelector('.bar-button-active')?.getAttribute('aria-current')).toBe('page');
 	});
 

@@ -5,16 +5,16 @@ import { Fixtures } from './fixtures';
 const screenTitle = (): string => document.querySelector('header h1')?.textContent ?? '';
 
 describe('Navigation and address', () => {
-	it('opens the screen Home, and puts it in the address, when the page opens with no address', async () => {
+	it('opens the welcome page, and puts it in the address, when the page opens with no address', async () => {
 		await AppHarness.start(Fixtures.mac(), true, '');
-		expect(screenTitle()).toBe('Home');
-		expect(window.location.hash).toBe('#/home');
+		expect(document.querySelector('.welcome')).not.toBeNull();
+		expect(window.location.hash).toBe('#/welcome');
 	});
 
-	it('opens the screen Home when the address is only the sign "#"', async () => {
+	it('opens the welcome page when the address is only the sign "#"', async () => {
 		await AppHarness.start(Fixtures.mac(), true, '#');
-		expect(screenTitle()).toBe('Home');
-		expect(window.location.hash).toBe('#/home');
+		expect(document.querySelector('.welcome')).not.toBeNull();
+		expect(window.location.hash).toBe('#/welcome');
 	});
 
 	it('puts the screen in the address when the developer taps the bottom bar', async () => {
@@ -25,8 +25,8 @@ describe('Navigation and address', () => {
 		expect(window.location.hash).toBe('#/macros');
 		await harness.tap('button[data-screen="needs_you"]');
 		expect(window.location.hash).toBe('#/needs-you');
-		await harness.tap('button[data-screen="home"]');
-		expect(window.location.hash).toBe('#/home');
+		await harness.tap('button[data-screen="dashboard"]');
+		expect(window.location.hash).toBe('#/dashboard');
 	});
 
 	it('puts the pane in the address, after the screen where the developer opened it', async () => {
@@ -62,10 +62,10 @@ describe('Navigation and address', () => {
 		expect(panesButton?.getAttribute('aria-current')).toBe('page');
 	});
 
-	it('opens the screen Home when the address is wrong', async () => {
+	it('opens the welcome page when the address is wrong', async () => {
 		await AppHarness.start(Fixtures.mac(), true, '#/nowhere/p-1');
-		expect(screenTitle()).toBe('Home');
-		expect(window.location.hash).toBe('#/home');
+		expect(document.querySelector('.welcome')).not.toBeNull();
+		expect(window.location.hash).toBe('#/welcome');
 	});
 
 	it('says that the coding agent does not exist anymore when the address names a missing pane', async () => {
@@ -81,6 +81,7 @@ describe('Navigation and address', () => {
 
 	it('goes back to the earlier screen with the button Back of the browser, and forward again', async () => {
 		const harness = await AppHarness.start(Fixtures.mac(), true, '');
+		await harness.tap('.welcome-button');
 		await harness.openPane('p-working');
 		expect(screenTitle()).toBe('heidrun · fix-35');
 		window.history.back();
@@ -88,21 +89,25 @@ describe('Navigation and address', () => {
 		await harness.settle();
 		expect(screenTitle()).toBe('Panes');
 		window.history.back();
-		await vi.waitFor(() => expect(window.location.hash).toBe('#/home'));
+		await vi.waitFor(() => expect(window.location.hash).toBe('#/dashboard'));
 		await harness.settle();
-		expect(screenTitle()).toBe('Home');
+		expect(screenTitle()).toBe('Dashboard');
+		window.history.back();
+		await vi.waitFor(() => expect(window.location.hash).toBe('#/welcome'));
+		await harness.settle();
+		expect(document.querySelector('.welcome')).not.toBeNull();
 		window.history.forward();
-		await vi.waitFor(() => expect(window.location.hash).toBe('#/panes'));
+		await vi.waitFor(() => expect(window.location.hash).toBe('#/dashboard'));
 		await harness.settle();
-		expect(screenTitle()).toBe('Panes');
+		expect(screenTitle()).toBe('Dashboard');
 	});
 
-	it('keeps the pairing key out of the address after a scan of the QR code, and opens Home', async () => {
+	it('keeps the pairing key out of the address after a scan, and opens the welcome page', async () => {
 		const mac = Fixtures.mac();
 		mac.acceptedKey = 'b'.repeat(64);
 		const harness = await AppHarness.start(mac, false, `#t=${'b'.repeat(64)}`);
-		expect(window.location.hash).toBe('#/home');
-		expect(screenTitle()).toBe('Home');
+		expect(window.location.hash).toBe('#/welcome');
+		expect(document.querySelector('.welcome')).not.toBeNull();
 		expect(window.location.href).not.toContain('bbbb');
 		expect(window.localStorage.getItem('hd-token')).toBe('b'.repeat(64));
 		expect(harness.text()).not.toContain('Pairing needed');

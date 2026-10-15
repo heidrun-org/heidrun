@@ -99,8 +99,11 @@ export type CallResult = {
 	text?: string;
 };
 
-/** The screens that the bottom bar opens. */
-export type TabName = 'home' | 'needs_you' | 'panes' | 'macros' | 'launchers';
+/**
+ * The screens that the address of the page names, except the screen of one pane: the welcome page, and the five
+ * screens that the bottom bar opens. The welcome page has no button in the bottom bar.
+ */
+export type TabName = 'welcome' | 'dashboard' | 'needs_you' | 'panes' | 'macros' | 'launchers';
 
 /** Every screen: the five screens of the bottom bar, and the screen of one pane. */
 export type ScreenName = TabName | 'pane';

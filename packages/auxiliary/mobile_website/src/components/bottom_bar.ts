@@ -17,15 +17,19 @@ type BarButton = {
 };
 
 /**
- * Draws the bottom bar: Home, Needs you, Panes, Macros, and Launchers.
+ * Draws the bottom bar: Dashboard, Needs you, Panes, Macros, and Launchers.
  */
 export class BottomBar {
 	/** The five buttons, from left to right. */
 	private static readonly buttons: BarButton[] = [
 		{
-			tab: 'home',
-			label: 'Home',
-			iconHtmlContent: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+			tab: 'dashboard',
+			label: 'Dashboard',
+			iconHtmlContent:
+				'<rect x="3" y="3" width="7" height="9" rx="1.5"/>' +
+				'<rect x="14" y="3" width="7" height="5" rx="1.5"/>' +
+				'<rect x="14" y="12" width="7" height="9" rx="1.5"/>' +
+				'<rect x="3" y="16" width="7" height="5" rx="1.5"/>',
 		},
 		{
 			tab: 'needs_you',

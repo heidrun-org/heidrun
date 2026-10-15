@@ -140,6 +140,63 @@ main {
   color: var(--text-2);
 }
 
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+
+/* Automatic margins center the content, and keep it reachable by scrolling on a short screen. */
+.welcome > :first-child {
+  margin-top: auto;
+}
+
+.welcome > :last-child {
+  margin-bottom: auto;
+}
+
+.welcome-image {
+  width: min(100%, 360px);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+}
+
+.welcome-name {
+  margin: 14px 0 0;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.welcome-motto {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.welcome-description {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+
+.welcome-line {
+  display: block;
+}
+
+.welcome-button {
+  width: min(100%, 320px);
+  padding: 14px 20px;
+  font-size: 17px;
+}
+
 .counts {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -177,12 +234,12 @@ main {
   color: var(--blocked);
 }
 
-.home-summary {
+.dashboard-summary {
   margin: 10px 4px 0;
   white-space: normal;
 }
 
-.home-total {
+.dashboard-total {
   margin: 18px 4px 0;
   color: var(--muted);
 }

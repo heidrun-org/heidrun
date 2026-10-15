@@ -109,7 +109,7 @@ describe('Rendering safety', () => {
 	it('uses no inline script, no inline style, and no event attribute on any screen', async () => {
 		const mac = new FakeMac(FakeMac.snapshotOf([hostileAgent(), FakeMac.agent({})], ['p-hostile']));
 		const harness = await AppHarness.start(mac);
-		const screens = ['home', 'needs_you', 'panes', 'macros', 'launchers'];
+		const screens = ['dashboard', 'needs_you', 'panes', 'macros', 'launchers'];
 		for (const screen of screens) {
 			await harness.tap(`button[data-screen="${screen}"]`);
 			expect(problemsOf(harness.root), screen).toEqual([]);

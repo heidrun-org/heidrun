@@ -3,7 +3,8 @@ import { ScreenAddress } from '../src/screen_address';
 
 describe('ScreenAddress', () => {
 	it('writes the address of each screen of the bottom bar', () => {
-		expect(ScreenAddress.format('home', null)).toBe('#/home');
+		expect(ScreenAddress.format('welcome', null)).toBe('#/welcome');
+		expect(ScreenAddress.format('dashboard', null)).toBe('#/dashboard');
 		expect(ScreenAddress.format('needs_you', null)).toBe('#/needs-you');
 		expect(ScreenAddress.format('panes', null)).toBe('#/panes');
 		expect(ScreenAddress.format('macros', null)).toBe('#/macros');
@@ -20,7 +21,7 @@ describe('ScreenAddress', () => {
 	});
 
 	it('reads back what it wrote, for every screen and for a strange pane identifier', () => {
-		for (const tab of ['home', 'needs_you', 'panes', 'macros', 'launchers'] as const) {
+		for (const tab of ['welcome', 'dashboard', 'needs_you', 'panes', 'macros', 'launchers'] as const) {
 			for (const paneId of [null, 'p-1', 'w1Y:p/B ?#', 'é']) {
 				expect(ScreenAddress.parse(ScreenAddress.format(tab, paneId))).toEqual({
 					tab,
@@ -30,10 +31,10 @@ describe('ScreenAddress', () => {
 		}
 	});
 
-	it('leads to the screen Home when the address is empty, wrong, or unknown', () => {
+	it('leads to the welcome page when the address is empty, wrong, or unknown', () => {
 		for (const hash of ['', '#', '#/', '#/nothing', '#/nothing/p-1', '#t=abc']) {
 			expect(ScreenAddress.parse(hash), hash).toEqual({
-				tab: 'home',
+				tab: 'welcome',
 				paneId: null,
 			});
 		}

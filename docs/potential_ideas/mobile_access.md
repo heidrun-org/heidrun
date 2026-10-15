@@ -29,9 +29,13 @@ Heidrun Mobile grows this page into a real application. The pairing key, the Tai
 
 ## The screens
 
-### Home
+### Welcome page
 
-The first screen. It shows the whole situation at a glance: how many coding agents need the developer, how many work, and the usage limits. A tap on a count opens the screen with the details. When the address of the page names no screen, the page opens on Home.
+The first page. It shows the goat, the name "Heidrun", the motto, and the description of the product on two lines, "Keep your agents working." and "Know which one needs you.", and the button "Go to the app". It needs no data from the Mac, so it shows before the pairing, and before the Mac answers. When the address of the page names no screen, the page opens on the welcome page. The button "Go to the app" opens the Dashboard.
+
+### Dashboard
+
+The first screen of the application. It shows the whole situation at a glance: how many coding agents need the developer, how many work, and the usage limits. A tap on a count opens the screen with the details. It is the first button of the bottom bar.
 
 ### Needs your attention
 

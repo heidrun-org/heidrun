@@ -13,6 +13,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - `src/color_painter.ts`: sets the colors of the output after its HTML is in the page.
 - `dev/`: the development server with a fake Mac, and the proxy to the real desktop application. See its own CONTEXT.md.
 - `src/screens/`: one class for each screen. See its own CONTEXT.md.
+- `src/assets/`: the pictures that the screens import. See its own CONTEXT.md.
 - `src/components/`: the parts that several screens share. See its own CONTEXT.md.
 - `tests/`: the Vitest tests, which run the whole page against a fake Mac.
 - `dist/`: the built website. Git ignores it. The package `mobile_server` holds this folder inside its program at build time.
@@ -24,7 +25,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - This package has no `src/index.ts` and no `exports` entry. No package imports it. The package `mobile_server` reads only the folder `dist`.
 - This package imports nothing from `web_frontend`, and nothing from `desktop_tauri`.
 - A refresh never moves what the developer reads. The page draws a screen again only when its HTML changed, and a new HTML keeps the scroll of the page and of the output. The output follows its end only when the developer already looks at the end. A test checks it.
-- The address of the page always names the screen that is open (`#/needs-you`, `#/panes`, `#/panes/<pane>`), so a reload and the buttons Back and Forward of the browser lead to the same screen. The server needs no route for it, because "#" is never sent. A test checks it.
+- The address of the page always names the screen that is open (`#/welcome`, `#/dashboard`, `#/needs-you`, `#/panes`, `#/panes/<pane>`), and an empty or wrong address leads to the welcome page, so a reload and the buttons Back and Forward of the browser lead to the same screen. The server needs no route for it, because "#" is never sent. A test checks it.
 - The page has no framework, no inline script, no inline style, and no event attribute in its HTML. The header `Content-Security-Policy` of the mobile server allows only files of its own address, and a test checks every screen.
 - The output of a pane carries each color in the attribute `data-fg` or `data-bg`, always as `#rrggbb` from `AnsiPalette`, never as the text that the Mac sent. `ColorPainter.paint` turns the attributes into styles with the style object of the element, which the content security policy allows. The call `read` always sends `ansi: true`.
 - Every text that comes from the Mac or from a coding agent goes through `HtmlEscape.escape` before it enters a template. A test with hostile text checks it.

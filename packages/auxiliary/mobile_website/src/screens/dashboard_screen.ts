@@ -5,15 +5,15 @@ import { ScreenHeader } from '../components/screen_header';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	HomeScreen — the first page: how many coding agents need the developer, how many work, and the usage limits
+//	DashboardScreen — how many coding agents need the developer, how many work, and the usage limits
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The first page of the website. It gives the whole situation at a glance, and each count is a button that opens the
- * screen with the details.
+ * The dashboard: the page that the button "Go to the app" of the welcome page opens. It gives the whole situation at
+ * a glance, and each count is a button that opens the screen with the details.
  */
-export class HomeScreen {
+export class DashboardScreen {
 	/**
 	 * Draws the screen.
 	 * @param snapshot The answer of the method `state`.
@@ -25,21 +25,21 @@ export class HomeScreen {
 		const needYouCount = SnapshotQueries.attentionAgents(snapshot).length;
 		const workingCount = agents.filter((agent) => agent.status === 'working').length;
 		const summary = needYouCount === 0 ? 'Nothing waits for your decision.' : 'Open Needs you to answer.';
-		const quotasHtmlContent = HomeScreen.renderQuotas(snapshot.quotas);
+		const quotasHtmlContent = DashboardScreen.renderQuotas(snapshot.quotas);
 		const isHot = needYouCount > 0;
-		const needYouHtmlContent = HomeScreen.renderCount('needs_you', needYouCount, 'Need you', isHot);
-		const workingHtmlContent = HomeScreen.renderCount('panes', workingCount, 'Working', false);
-		const total = HomeScreen.renderTotal(agents.length, snapshot.workspaces.length);
+		const needYouHtmlContent = DashboardScreen.renderCount('needs_you', needYouCount, 'Need you', isHot);
+		const workingHtmlContent = DashboardScreen.renderCount('panes', workingCount, 'Working', false);
+		const total = DashboardScreen.renderTotal(agents.length, snapshot.workspaces.length);
 		const screenHtmlContent = /* html */`
-			${ScreenHeader.renderTab('Home', isOnline)}
+			${ScreenHeader.renderTab('Dashboard', isOnline)}
 			<main>
 				<div class="counts">
 					${needYouHtmlContent}
 					${workingHtmlContent}
 				</div>
-				<div class="sub home-summary">${summary}</div>
+				<div class="sub dashboard-summary">${summary}</div>
 				${quotasHtmlContent}
-				<div class="sub home-total">${total}</div>
+				<div class="sub dashboard-total">${total}</div>
 			</main>
 		`;
 		return screenHtmlContent;
