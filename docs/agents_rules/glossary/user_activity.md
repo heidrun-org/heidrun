@@ -1,11 +1,11 @@
 # Glossary of Heidrun: user activity
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: User activity sidebar section](../user_interface/sidebars/user_activity.md)
-- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440)
+- Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: User activity sidebar section](../user_interface/sidebars/user_activity.md), [User interface of Heidrun: Statistics window](../user_interface/window/statistics_window.md)
+- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473)
 
 This document gives one short definition for each word of the activity of the developer in front of Heidrun. The other words of Heidrun are in [index.md](index.md).
 
@@ -34,3 +34,21 @@ One line of the file `~/.config/heidrun/user_activity.jsonl`: the description of
 ### User activity sidebar section
 
 The sidebar section of the right sidebar that shows the user activity records of today, with the icon `stopwatch`. It is a view to check by eye that the detection of the activity of the developer works.
+
+## The Statistics window
+
+### Statistics window
+
+The large window that the item "Statistics" of the More menu opens. It is as large as the large Git window. It has a tab list, and the tab "User activity" is its first tab.
+
+### User activity tab
+
+The tab "User activity" of the Statistics window. It holds one histogram of the user activity time, and a radio button group that chooses its time range: the last hour, the last day, or the last week.
+
+### Histogram of the user activity time
+
+The bar chart of the User activity tab. It shows the user activity time of the last hour, of the last day, or of the last week, as the developer chooses, with one bar for each slot.
+
+### Slot
+
+One bar of a histogram of the user activity time. In the histogram of the last hour, a slot is five minutes long and starts on a multiple of five minutes of the clock, for example 14:05 to 14:10. In the histogram of the last day, a slot is one hour long. In the histogram of the last week, a slot is one day long. The last slot of a histogram is the slot of the current time, and it is not finished.

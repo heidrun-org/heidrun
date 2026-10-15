@@ -1,10 +1,10 @@
 # Glossary of Heidrun index
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473)
 
 This file lists the files of this folder, for agents and tools.
 
@@ -16,4 +16,4 @@ This file lists the files of this folder, for agents and tools.
 - [code_hosting.md](code_hosting.md): the search field and the saved search of the Code hosting sidebar section.
 - [status_bar.md](status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
 - [pane_focus_history.md](pane_focus_history.md): the top bar, the pane focus history, the Back button, and the Forward button.
-- [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, and the User activity sidebar section.
+- [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot.

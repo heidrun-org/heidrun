@@ -1,7 +1,7 @@
 # User interface of Heidrun: User activity sidebar section
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 15 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [Sidebars](sidebars.md), [Status bar](../window/status_bar.md)
@@ -25,6 +25,7 @@ This file is a part of the rules of the sidebars of Heidrun. The words are defin
 - `endedAt` is the time when the developer stopped to be active: `lastActionAt` plus the cool down, or the earlier time of the event that ended the active period.
 - `endReason` is one of `cool_down`, `window_behind`, `workspace_changed`, and `app_closed`. After `workspace_changed`, when the developer is still active, a new active period starts at once in the new workspace, and the change counts as its first action. The record of an active period that is running when the application quits through the menu may be lost, because the page has no time to write it.
 - A record never holds a key that the developer typed, and never a text of the screen. The counts are numbers only.
+- The Statistics window reads the records through the data layer, not from the file ([statistics_window.md](../window/statistics_window.md)).
 - The file keeps the records of the last 400 days. A line that is not a JSON object with a valid `endedAt` is removed at the next read.
 
 ## The User activity sidebar section
