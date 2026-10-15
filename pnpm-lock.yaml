@@ -192,6 +192,24 @@ importers:
 
   packages/auxiliary/mobile_server: {}
 
+  packages/auxiliary/mobile_website:
+    devDependencies:
+      bootstrap-icons:
+        specifier: ^1.13.2
+        version: 1.13.2
+      jsdom:
+        specifier: ^25.0.1
+        version: 25.0.1
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.21(@types/node@26.6.5)(sass@1.105.1)
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
+
   packages/auxiliary/raw_coding_agent_cli: {}
 
   packages/auxiliary/website_public:

@@ -52,7 +52,7 @@ async fn call(app: &AppHandle, method: &str, params: Value) -> Result<Value, Str
         Ok(Ok(v)) => Ok(v),
         _ => {
             state.pending.lock().unwrap().remove(&id);
-            Err("L’app Heidrun ne répond pas sur le Mac".into())
+            Err("Heidrun does not answer on the Mac".into())
         }
     }
 }

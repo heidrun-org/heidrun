@@ -1,7 +1,7 @@
 # Heidrun Mobile
 
 - Created: 12 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Idea that nobody has decided to build yet
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related issue: [issue 274](https://github.com/heidrun-org/heidrun/issues/274)
@@ -10,7 +10,7 @@ Heidrun Mobile is an idea for a second front end of Heidrun. It is a small appli
 
 ## What exists today
 
-Heidrun already has a first mobile access. It is a small web page that the application serves from the Mac, only on the Tailscale address of the Mac, and every request needs a pairing key. The developer scans a QR code, then adds the page to the Home Screen of the iPhone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [index.html](../../packages/auxiliary/mobile_website/index.html), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
+Heidrun already has a first mobile access. It is a small web page that the application serves from the Mac, only on the Tailscale address of the Mac, and every request needs a pairing key. The developer scans a QR code, then adds the page to the Home Screen of the iPhone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [mobile_website](../../packages/auxiliary/mobile_website/CONTEXT.md), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
 
 Today the page does four things:
 
@@ -29,9 +29,17 @@ Heidrun Mobile grows this page into a real application. The pairing key, the Tai
 
 ## The screens
 
+### Welcome page
+
+The first page. It shows the baby goat in a big circle at the top, then the name "Heidrun", the motto, and the description of the product on two lines, "Keep your agents working." and "Know which one needs you.", all centered, and the button "Go to the app" at the bottom of the screen, where the thumb is. It needs no data from the Mac, so it shows before the pairing, and before the Mac answers. When the address of the page names no screen, the page opens on the welcome page. The button "Go to the app" opens the Dashboard.
+
+### Dashboard
+
+The first screen of the application. It shows the whole situation at a glance: how many coding agents need the developer, how many work, and the usage limits. A tap on a count opens the screen with the details. It is the first button of the bottom bar.
+
 ### Needs your attention
 
-The first screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the Needs you sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
+The second screen. It lists every agent that is blocked, that asks a question, or that has finished, with a status dot for each one. It shows the same information as the Needs you sidebar section of Heidrun desktop, and the blocked agents come first. A tap on an agent opens its pane.
 
 ### Panes
 
