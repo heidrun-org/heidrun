@@ -293,7 +293,7 @@ mod tests {
         assert!(!policy.contains("unsafe-inline"));
         assert!(!policy.contains("unsafe-eval"));
         let bytes = axum::body::to_bytes(response.into_body(), 1024 * 1024).await.unwrap();
-        assert!(String::from_utf8(bytes.to_vec()).unwrap().contains("<title>Heidrun</title>"));
+        assert!(String::from_utf8(bytes.to_vec()).unwrap().contains("<title>Heidrun Mobile</title>"));
     }
 
     #[tokio::test]

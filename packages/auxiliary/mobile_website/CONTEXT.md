@@ -12,6 +12,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - `src/screen_address.ts`: writes and reads the screen that is open in the part of the address after "#".
 - `src/color_painter.ts`: sets the colors of the output after its HTML is in the page.
 - `dev/`: the development server with a fake Mac, and the proxy to the real desktop application. See its own CONTEXT.md.
+- `public/`: the files that Vite copies as they are to the root of the website: the manifest, and `favicon.svg`, which is the same image as `data/images/heidrun_favicon.svg`. A test checks it.
 - `src/screens/`: one class for each screen. See its own CONTEXT.md.
 - `src/assets/`: the pictures that the screens import. See its own CONTEXT.md.
 - `src/components/`: the parts that several screens share. See its own CONTEXT.md.
