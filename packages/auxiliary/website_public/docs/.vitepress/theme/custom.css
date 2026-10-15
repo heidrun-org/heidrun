@@ -1,3 +1,23 @@
+/* The brand color of the website is the mead of the splash image and the accent of the application. */
+:root {
+	--vp-c-brand-1: #9a5b00;
+	--vp-c-brand-2: #b36b06;
+	--vp-c-brand-3: #f2a93b;
+	--vp-c-brand-soft: rgba(242, 169, 59, 0.16);
+	--vp-button-brand-text: #241700;
+	--vp-button-brand-bg: #f2a93b;
+	--vp-button-brand-hover-text: #241700;
+	--vp-button-brand-hover-bg: #f5b955;
+	--vp-button-brand-active-text: #241700;
+	--vp-button-brand-active-bg: #e0962a;
+}
+
+.dark {
+	--vp-c-brand-1: #f2a93b;
+	--vp-c-brand-2: #f5b955;
+	--vp-c-brand-3: #e0962a;
+}
+
 .VPHero .container {
 	text-align: center;
 }

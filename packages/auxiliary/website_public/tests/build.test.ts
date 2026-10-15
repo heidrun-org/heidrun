@@ -53,6 +53,32 @@ describe('website build', () => {
 		}
 	});
 
+	it('puts every section of the homepage in the home page', () => {
+		const html = Fs.readFileSync(Path.join(outDir, 'index.html'), 'utf8');
+		const ids = [
+			'the-problem',
+			'welcome-to-valhalla',
+			'know-which-one-needs-you',
+			'real-terminals',
+			'watch-the-mead-level',
+			'valhalla-fits-in-a-pocket',
+			'the-whole-longhouse',
+			'board-the-longship',
+			'built-by-the-herd',
+			'who-is-heidrun',
+			'skal',
+		];
+		for (const id of ids) {
+			expect(html, id).toContain(`id="${id}"`);
+		}
+	});
+
+	it('copies the screenshots of the homepage', () => {
+		for (const name of ['window.png', 'needs_you.png', 'panes.png', 'quotas.png']) {
+			expect(Fs.existsSync(Path.join(outDir, 'screenshots', name)), name).toBe(true);
+		}
+	});
+
 	it('copies the splash image', () => {
 		expect(Fs.existsSync(Path.join(outDir, 'heidrun_splash_screen.png'))).toBe(true);
 	});
