@@ -20,7 +20,7 @@ vi.mock("../stores/user_activity", async (importOriginal) => {
 
 /** What one call to `Plotly.react` drew. */
 type Drawing = {
-  data: { type: string; x: string[]; y: number[]; customdata: string[] };
+  data: { type: string; x: number[]; y: number[]; customdata: string[] };
   layout: { yaxis: { range?: number[]; autorange?: boolean } };
 };
 
@@ -196,7 +196,7 @@ describe("StatisticsModal", () => {
 
   it("gives the same period to the three time ranges, in minutes for the last hour and the last day, and in hours for the last week", async () => {
     const now = Date.now();
-    const record = { startedAt: new Date(now - 60_000).toISOString(), endedAt: new Date(now - 30_000).toISOString() };
+    const record = { workspaceFolder: "/work/heidrun", startedAt: new Date(now - 60_000).toISOString(), endedAt: new Date(now - 30_000).toISOString() };
     const { wrapper } = await mountStatisticsModal([record]);
     await waitForDrawings(1);
     expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5, 5);
@@ -210,7 +210,7 @@ describe("StatisticsModal", () => {
 
   it("writes the tooltip of the last hour with the start, the end, and the minutes and seconds, and the tooltip of the last week with the day, the hours, and the minutes", async () => {
     const now = Date.now();
-    const record = { startedAt: new Date(now - 3_600_000).toISOString(), endedAt: new Date(now - 60_000).toISOString() };
+    const record = { workspaceFolder: "/work/heidrun", startedAt: new Date(now - 3_600_000).toISOString(), endedAt: new Date(now - 60_000).toISOString() };
     const { wrapper } = await mountStatisticsModal([record]);
     await waitForDrawings(1);
     expect(lastDrawing().data.customdata.every((tooltip) => /^.+ to .+: \d+ min \d+ s$/.test(tooltip))).toBe(true);

@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: User activity sidebar section](../user_interface/sidebars/user_activity.md), [User interface of Heidrun: Statistics window](../user_interface/window/statistics_window.md)
-- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473)
+- Related issue: [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486)
 
 This document gives one short definition for each word of the activity of the developer in front of Heidrun. The other words of Heidrun are in [index.md](index.md).
 
@@ -43,7 +43,7 @@ The large window that the item "Statistics" of the More menu opens. It is as lar
 
 ### User activity tab
 
-The tab "User activity" of the Statistics window. It holds one histogram of the user activity time, and a radio button group that chooses its time range: the last hour, the last day, or the last week.
+The tab "User activity" of the Statistics window. It holds one histogram of the user activity time, and three choices: the time range (the last hour, the last day, or the last week), the slot length, and the workspaces.
 
 ### Histogram of the user activity time
 
@@ -51,4 +51,4 @@ The bar chart of the User activity tab. It shows the user activity time of the l
 
 ### Slot
 
-One bar of a histogram of the user activity time. In the histogram of the last hour, a slot is five minutes long and starts on a multiple of five minutes of the clock, for example 14:05 to 14:10. In the histogram of the last day, a slot is one hour long. In the histogram of the last week, a slot is one day long. The last slot of a histogram is the slot of the current time, and it is not finished.
+One bar of a histogram of the user activity time. The developer chooses the slot length, and each time range offers three lengths: 1, 5, or 10 minutes in the last hour (5 at first), 15 minutes, 30 minutes, or 1 hour in the last day (1 hour at first), and 1 hour, 6 hours, or 1 day in the last week (1 day at first). A slot of minutes or hours starts on a multiple of its length of the clock, for example 14:05 to 14:10 for a slot of five minutes. The last slot of a histogram is the slot of the current time, and it is not finished.
