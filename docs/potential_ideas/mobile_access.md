@@ -10,7 +10,7 @@ Heidrun Mobile is an idea for a second front end of Heidrun. It is a small appli
 
 ## What exists today
 
-Heidrun already has a first mobile access. It is a small web page that the application serves from the Mac, only on the Tailscale address of the Mac, and every request needs a pairing key. The developer scans a QR code, then adds the page to the Home Screen of the iPhone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [index.html](../../packages/auxiliary/mobile_website/index.html), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
+Heidrun already has a first mobile access. It is a small web page that the application serves from the Mac, only on the Tailscale address of the Mac, and every request needs a pairing key. The developer scans a QR code, then adds the page to the Home Screen of the iPhone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [mobile_website](../../packages/auxiliary/mobile_website/CONTEXT.md), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
 
 Today the page does four things:
 

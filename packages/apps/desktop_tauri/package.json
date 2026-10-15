@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test": "cargo test",
+    "test": "pnpm --filter mobile_website build && cargo test",
     "target:clean": "tsx ../../dev_tools/worktree_tools/src/target_clean_cli.ts"
   },
   "devDependencies": {

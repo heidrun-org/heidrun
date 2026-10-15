@@ -4,6 +4,6 @@
   "license": "MIT",
   "version": "0.2.7",
   "scripts": {
-    "test": "cargo test"
+    "test": "pnpm --filter mobile_website build && cargo test"
   }
 }

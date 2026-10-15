@@ -1,0 +1,109 @@
+import { vi } from 'vitest';
+import { MobileApp } from '../src/mobile_app';
+import { FakeMac } from './fake_mac';
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	AppHarness — starts the page against a fake Mac, and taps on it
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * One page, started on an empty document, with fake timers.
+ */
+export class AppHarness {
+	/** The element that holds the screen. */
+	readonly root: HTMLElement;
+
+	/** The element that holds the message and the confirmation sheet. */
+	readonly overlay: HTMLElement;
+
+	/** The page. */
+	readonly app: MobileApp;
+
+	private constructor(root: HTMLElement, overlay: HTMLElement, app: MobileApp) {
+		this.root = root;
+		this.overlay = overlay;
+		this.app = app;
+	}
+
+	/**
+	 * Starts a page that is paired with the fake Mac.
+	 * @param mac The fake Mac.
+	 * @param isPaired False to start a phone that has no pairing key.
+	 * @returns The page, after its first refresh.
+	 */
+	static async start(mac: FakeMac, isPaired = true): Promise<AppHarness> {
+		vi.useFakeTimers();
+		document.body.innerHTML = '<div id="app"></div><div id="overlay"></div>';
+		window.localStorage.clear();
+		if (isPaired) {
+			window.localStorage.setItem('hd-token', FakeMac.key);
+		}
+		mac.install();
+		const root = document.getElementById('app') as HTMLElement;
+		const overlay = document.getElementById('overlay') as HTMLElement;
+		const harness = new AppHarness(root, overlay, new MobileApp(root, overlay));
+		await harness.app.start();
+		return harness;
+	}
+
+	/**
+	 * Taps on an element, then lets the calls and the timers of 1 millisecond run.
+	 * @param selector The CSS selector of the element.
+	 */
+	async tap(selector: string): Promise<void> {
+		const element = document.querySelector<HTMLElement>(selector);
+		if (element === null) {
+			throw new Error(`no element for ${selector}`);
+		}
+		element.click();
+		await this.settle();
+	}
+
+	/**
+	 * Opens the screen Panes, then taps on the row of one coding agent, which opens its pane. The screen Needs you
+	 * lists only the coding agents that need the developer, so it cannot open every pane.
+	 * @param paneId The identifier of the pane.
+	 */
+	async openPane(paneId: string): Promise<void> {
+		await this.tap('button[data-screen="panes"]');
+		await this.tap(`[data-action="open-pane"][data-pane-id="${paneId}"]`);
+	}
+
+	/**
+	 * Gives the field where the developer types a prompt.
+	 * @returns The field of the screen of one pane.
+	 */
+	field(): HTMLTextAreaElement {
+		const field = document.getElementById('prompt-field');
+		if (field instanceof HTMLTextAreaElement === false) {
+			throw new Error('the screen has no field for a prompt');
+		}
+		return field;
+	}
+
+	/**
+	 * Gives the text of the message at the bottom of the screen.
+	 * @returns The text of the message, or null when no message is shown.
+	 */
+	toast(): string | null {
+		return this.overlay.querySelector('.toast')?.textContent ?? null;
+	}
+
+	/**
+	 * Lets the pending calls and the timers of a few milliseconds run.
+	 * @param milliseconds The time to let pass.
+	 */
+	async settle(milliseconds = 5): Promise<void> {
+		await vi.advanceTimersByTimeAsync(milliseconds);
+	}
+
+	/**
+	 * Gives the text of the screen.
+	 * @returns The visible text of the root element.
+	 */
+	text(): string {
+		return this.root.textContent ?? '';
+	}
+}

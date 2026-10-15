@@ -4,9 +4,9 @@
   "version": "0.2.7",
   "identifier": "dev.edefiez.herdrdesk",
   "build": {
-    "beforeDevCommand": "pnpm --filter web_frontend dev",
+    "beforeDevCommand": "pnpm --filter mobile_website build && pnpm --filter web_frontend dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm --filter web_frontend build",
+    "beforeBuildCommand": "pnpm --filter mobile_website build && pnpm --filter web_frontend build",
     "frontendDist": "../web_frontend/dist"
   },
   "app": {

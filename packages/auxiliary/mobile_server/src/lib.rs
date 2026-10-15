@@ -4,6 +4,7 @@
 
 mod access;
 mod config;
+mod embedded;
 mod handler;
 mod router;
 mod server;

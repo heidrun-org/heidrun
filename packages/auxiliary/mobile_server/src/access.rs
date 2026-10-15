@@ -25,11 +25,11 @@ impl Denial {
     /// The status and the text that the phone receives.
     pub fn status_and_text(&self) -> (StatusCode, &'static str) {
         match self {
-            Denial::UnexpectedHost => (StatusCode::FORBIDDEN, "hôte inattendu"),
-            Denial::UnexpectedOrigin => (StatusCode::FORBIDDEN, "origine refusée"),
-            Denial::Off => (StatusCode::SERVICE_UNAVAILABLE, "Accès mobile désactivé sur le Mac"),
-            Denial::TooManyAttempts => (StatusCode::TOO_MANY_REQUESTS, "Trop d’essais : réessaie dans une minute"),
-            Denial::Unpaired => (StatusCode::UNAUTHORIZED, "Appairage nécessaire : scanne le QR code dans Heidrun"),
+            Denial::UnexpectedHost => (StatusCode::FORBIDDEN, "Unexpected host"),
+            Denial::UnexpectedOrigin => (StatusCode::FORBIDDEN, "Origin refused"),
+            Denial::Off => (StatusCode::SERVICE_UNAVAILABLE, "Mobile access is off on the Mac"),
+            Denial::TooManyAttempts => (StatusCode::TOO_MANY_REQUESTS, "Too many attempts: try again in one minute"),
+            Denial::Unpaired => (StatusCode::UNAUTHORIZED, "Pairing needed: scan the QR code in Heidrun"),
         }
     }
 }
