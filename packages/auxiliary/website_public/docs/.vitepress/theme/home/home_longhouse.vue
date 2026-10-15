@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { withBase } from 'vitepress';
 import HomeJoke from './home_joke.vue';
 import { LONGHOUSE } from './home_content';
 </script>
@@ -15,12 +16,18 @@ import { LONGHOUSE } from './home_content';
 					<h3 class="home-longhouse-place">{{ group.place }}</h3>
 					<dl class="home-longhouse-items">
 						<div v-for="item in group.items" :key="item.name" class="home-longhouse-item">
-							<dt class="home-longhouse-name">{{ item.name }}</dt>
+							<dt class="home-longhouse-name">
+								<a v-if="item.href !== undefined" :href="withBase(item.href)">{{ item.name }}</a>
+								<template v-else>{{ item.name }}</template>
+							</dt>
 							<dd class="home-longhouse-description">{{ item.description }}</dd>
 						</div>
 					</dl>
 				</div>
 			</div>
+			<p class="home-read-more">
+				<a :href="withBase(LONGHOUSE.aiLink.href)">{{ LONGHOUSE.aiLink.text }} →</a>
+			</p>
 			<HomeJoke :text="LONGHOUSE.joke" />
 		</div>
 	</section>
@@ -54,6 +61,13 @@ import { LONGHOUSE } from './home_content';
 .home-longhouse-name {
 	font-weight: 600;
 	color: var(--vp-c-text-1);
+}
+
+.home-longhouse-name a {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: var(--home-accent);
+	text-underline-offset: 3px;
 }
 
 .home-longhouse-description {

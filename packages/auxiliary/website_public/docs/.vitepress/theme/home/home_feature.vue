@@ -31,6 +31,9 @@ const isReversed = computed(() => index.value % 2 === 1);
 				<h2 class="home-title">{{ section.title }}</h2>
 				<p v-for="paragraph in section.paragraphs" :key="paragraph" class="home-paragraph">{{ paragraph }}</p>
 				<HomeJoke :text="section.joke" />
+				<p class="home-read-more">
+					<a :href="withBase(section.readMore.href)">{{ section.readMore.text }} →</a>
+				</p>
 			</div>
 			<figure v-if="section.screenshot !== undefined" class="home-shot home-feature-shot">
 				<img
