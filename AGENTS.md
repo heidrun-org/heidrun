@@ -122,7 +122,7 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has two parts: the Issue Fix Setup, then the Issue Fix Completion. Between the two parts, you make the change and the developer tests it. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository has three parts: the Issue Fix Setup, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you make the change. In the Issue Fix Review, the developer tests the change. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
 The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
 
@@ -134,9 +134,24 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
    - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
 3. Make the change in the temporary worktree. Every commit message mentions the issue number.
 
+### Issue Fix Review
+
+The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). Before you ask anything about the pull request (on GitLab, the merge request) or about the merge, always do these steps, in this order:
+
+1. Tell the developer to look at the result.
+2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
+   ```bash
+   cd <path of the temporary worktree> && pnpm dev
+   ```
+3. Say in one or two short lines what to look at, so that the developer can validate the change.
+4. Only then ask whether the developer is satisfied and wants the pull request.
+
+- Give the command line again each time that the developer asks for a change and you change the work.
+- Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
+
 ### Issue Fix Completion
 
-The Issue Fix Completion starts when the developer is satisfied with the change.
+The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
 2. Create a pull request (on GitLab, a merge request) from the temporary branch.
