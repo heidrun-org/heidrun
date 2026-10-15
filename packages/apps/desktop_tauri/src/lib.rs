@@ -75,6 +75,9 @@ async fn herdr_server_start() -> Result<String, String> {
     if let Some(home) = dirs::home_dir() {
         cmd.current_dir(home);
     }
+    // Every pane inherits the environment of the server. Without this, a coding agent in a pane connects to Visual
+    // Studio Code when the developer started Heidrun from the terminal of Visual Studio Code.
+    herdr::remove_editor_variables(&mut cmd);
     #[cfg(unix)]
     {
         // Own process group: the server is not stopped by a signal sent to Heidrun. Heidrun stops the server itself
