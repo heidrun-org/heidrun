@@ -161,10 +161,10 @@ main {
 /* The goat is bigger than the circle and stands on the same line, so its head and its horns go out of the top. */
 .welcome-image {
   position: absolute;
-  left: -9%;
-  bottom: 3.95%;
+  left: -6%;
+  bottom: 4.24%;
   display: block;
-  width: 118%;
+  width: 112%;
   height: auto;
   pointer-events: none;
 }
