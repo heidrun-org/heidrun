@@ -1000,7 +1000,7 @@ onBeforeUnmount(() => {
 /* The padding is part of the hover zone, and reaches down to the hovered text. */
 .chips { position: absolute; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0 4px; }
 .chip-actions { height: 26px; display: flex; align-items: flex-start; gap: 4px; }
-.chip-detail { max-width: 352px; overflow: hidden; color: var(--text-2); font-size: 11px; line-height: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.chip-detail { max-width: 352px; overflow: hidden; color: var(--text-2); font-size: calc(var(--font-size) * 0.7); line-height: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .chip { height: 22px; padding: 0 9px; border-radius: 6px;
   border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: var(--font-size); font-weight: 500;
   white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;

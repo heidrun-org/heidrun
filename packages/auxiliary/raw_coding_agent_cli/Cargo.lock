@@ -61,7 +61,7 @@ dependencies = [
 
 [[package]]
 name = "raw_coding_agent_cli"
-version = "0.2.5"
+version = "0.2.7"
 dependencies = [
  "tokio",
 ]

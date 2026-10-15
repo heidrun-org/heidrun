@@ -2,7 +2,7 @@
   "name": "data_layer_user_activity",
   "private": true,
   "license": "MIT",
-  "version": "0.2.5",
+  "version": "0.2.7",
   "scripts": {
     "cli": "cargo run --quiet --",
     "test": "cargo test"
