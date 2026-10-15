@@ -81,6 +81,8 @@ export class TauriMock {
 					(payload as { sortKey?: ChatSortKey }).sortKey,
 					(payload as { order?: ChatSortOrder }).order,
 				);
+			case 'user_activity_records_in_range':
+				return TauriMockFixture.buildUserActivityRecords(Date.parse((payload as { until: string }).until));
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',

@@ -355,6 +355,7 @@ pub fn run() {
             history::history_export,
             user_activity::user_activity_append,
             user_activity::user_activity_read,
+            user_activity::user_activity_records_in_range,
             files::files_list,
             files::folder_children,
             files::files_resolve,

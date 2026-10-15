@@ -1,5 +1,6 @@
 import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
+import type { UserActivityRecord } from '../lib/user_activity';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -243,6 +244,45 @@ export class TauriMockFixture {
 			last_time: null,
 			remote: null,
 		};
+	}
+
+	/**
+	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last week, in UTC, as the
+	 * data layer gives them. Seven periods are in the last hour, and they cross the limits of the slots of five minutes.
+	 * The last slot of the last hour has no period. Four more periods fall on each of the seven days, from three hours
+	 * before the end of the time range, and they are 20 to 55 minutes long.
+	 * - issue #473
+	 *
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970.
+	 * @returns The fake user activity records, the oldest first.
+	 */
+	static buildUserActivityRecords(until: number): UserActivityRecord[] {
+		const secondsBeforeUntil: [number, number][] = [
+			[56 * 60, 54 * 60 + 20],
+			[51 * 60, 47 * 60 + 30],
+			[44 * 60, 43 * 60],
+			[31 * 60 + 40, 26 * 60 + 10],
+			[19 * 60, 16 * 60 + 50],
+			[9 * 60 + 30, 9 * 60],
+			[4 * 60, 2 * 60 + 30],
+		];
+		for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+			for (let sessionIndex = 0; sessionIndex < 4; sessionIndex += 1) {
+				const startedBefore = dayIndex * 24 * 3600 + (3 + 3 * sessionIndex) * 3600;
+				const lengthMinutes = 20 + ((dayIndex * 7 + sessionIndex * 11) % 36);
+				secondsBeforeUntil.push([startedBefore, startedBefore - lengthMinutes * 60]);
+			}
+		}
+		secondsBeforeUntil.sort((first, second) => second[0] - first[0]);
+		return secondsBeforeUntil.map(([startedBefore, endedBefore]) => ({
+			workspaceFolder: '/Users/demo/webwork/heidrun',
+			startedAt: new Date(until - startedBefore * 1000).toISOString(),
+			lastActionAt: new Date(until - endedBefore * 1000).toISOString(),
+			endedAt: new Date(until - endedBefore * 1000).toISOString(),
+			keyboardActionCount: 40,
+			mouseActionCount: 12,
+			endReason: 'cool_down',
+		}));
 	}
 
 	/**

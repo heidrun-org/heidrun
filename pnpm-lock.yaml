@@ -140,6 +140,9 @@ importers:
       marked:
         specifier: ^14.1.4
         version: 14.1.4
+      plotly.js-basic-dist-min:
+        specifier: ^4.1.2
+        version: 4.1.2
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -153,6 +156,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@types/plotly.js-basic-dist-min':
+        specifier: ^2.12.4
+        version: 2.12.4
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
@@ -1231,6 +1237,12 @@ packages:
   '@types/node@26.6.5':
     resolution: {integrity: sha512-uMzsv9stDdofIZBx4UGh4Z9ZgXnGC9seRDscilBcTHAeOFk67MZg/k9bWVfO+bk4qZmG+l52hRnLwUiH2LnJTg==}
 
+  '@types/plotly.js-basic-dist-min@2.12.4':
+    resolution: {integrity: sha512-BtvgBR52ZQ9N346gq8eAom9vwh1HAcGTxIUDrQXRMEP75XrSaOF/bXm8PtrZ9WGNUIxo9NxZ6+juKWamJKkYyQ==}
+
+  '@types/plotly.js@3.0.15':
+    resolution: {integrity: sha512-ftBxk2fB7BxxeMpT0IVEb/3HKpYTXO5nCdR5mGEz6gHpLd6GGRFxvDVoG1gpD/gBAgoN36KIyRflxCnOfWlskQ==}
+
   '@types/qrcode@1.5.6':
     resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
 
@@ -2058,6 +2070,9 @@ packages:
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
+
+  plotly.js-basic-dist-min@4.1.2:
+    resolution: {integrity: sha512-LvfKTeVYIKzEyMj9TuH+8ot0I7IMG1fET2YxgUtbpZVHd2fBrOlBFsk26wKgnAckHyNhKG7vDk4tEyqGCYs2Aw==}
 
   pngjs@5.0.0:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
@@ -3334,6 +3349,12 @@ snapshots:
     dependencies:
       undici-types: 8.9.0
 
+  '@types/plotly.js-basic-dist-min@2.12.4':
+    dependencies:
+      '@types/plotly.js': 3.0.15
+
+  '@types/plotly.js@3.0.15': {}
+
   '@types/qrcode@1.5.6':
     dependencies:
       '@types/node': 26.6.5
@@ -4228,6 +4249,8 @@ snapshots:
   pkg-dir@4.2.0:
     dependencies:
       find-up: 4.1.0
+
+  plotly.js-basic-dist-min@4.1.2: {}
 
   pngjs@5.0.0: {}
 
