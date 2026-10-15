@@ -4,6 +4,8 @@ afterEach(() => {
 	vi.useRealTimers();
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
-	document.body.innerHTML = '';
-	window.localStorage.clear();
+	if (typeof document !== 'undefined') {
+		document.body.innerHTML = '';
+		window.localStorage.clear();
+	}
 });
