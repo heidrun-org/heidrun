@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_chat_sessions`
+# Directory Context: `/packages/data_layers/data_layer_chat_sessions`
 
 ## Purpose
 A Rust library and a command line tool that read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The desktop application uses the library to find the chat session files and to read what each one holds. The name `data_layer_chat_sessions` is the name of the package and the name of the executable.

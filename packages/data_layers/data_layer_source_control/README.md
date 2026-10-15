@@ -138,7 +138,7 @@ ORDER BY committedAt"
 The desktop application can use the library as a path dependency, as it does for `raw_coding_agent_cli`:
 
 ```toml
-data_layer_source_control = { path = "../../auxiliary/data_layer_source_control" }
+data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
 ```
 
 ```rust

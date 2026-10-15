@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_source_control`
+# Directory Context: `/packages/data_layers/data_layer_source_control`
 
 ## Purpose
 A Rust library and a command line tool that read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_source_control` is the name of the package and the name of the executable.

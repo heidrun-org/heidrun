@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_chat_sessions/src/model`
+# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/model`
 
 ## Purpose
 Holds the facts that the package stores, and the JSON schema check that guards them.

@@ -1,4 +1,4 @@
-# Directory Context: `/packages/auxiliary/data_layer_code_hosting/src/github`
+# Directory Context: `/packages/data_layers/data_layer_code_hosting/src/github`
 
 ## Purpose
 Reads the issues and the pull requests of a GitHub repository, one page of 100 items at a time, and turns them into the stored shape.
