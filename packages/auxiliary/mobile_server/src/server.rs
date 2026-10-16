@@ -120,16 +120,15 @@ impl MobileServer {
     /// nothing listens before that. A run that is already going stops, and the new pairing key applies at once, even to
     /// connections that are still open.
     pub fn start(&self, handler: Arc<dyn MobileCallHandler>, config: &MobileConfig) -> impl Future<Output = ()> + Send + 'static {
-        self.inner.lock().unwrap().record = Some(Arc::new(TunnelRecord::new(record_path())));
+        self.inner.lock().unwrap().record = Some(Arc::new(TunnelRecord::new(record_folder(), std::process::id())));
         self.start_with(handler, config, Arc::new(tunnel::find_ngrok), Timing::default())
     }
 
-    /// For the button "Stop the old ngrok" of the error `ngrokAddressInUse`: kills the recorded program `ngrok` of an
-    /// earlier or of another Heidrun, but never the program of this Heidrun. True when a program was killed. The tunnel
-    /// starts again at the next try.
+    /// For the button "Stop the old ngrok" of the error `ngrokAddressInUse`: kills the recorded program `ngrok` of every
+    /// earlier or other Heidrun, but never the program of this Heidrun. True when a program was killed. The tunnel starts
+    /// again at the next try.
     pub fn stop_leftover_tunnel(&self) -> bool {
-        let own_process_id = self.inner.lock().unwrap().tunnel.as_ref().and_then(|child| child.id());
-        TunnelRecord::new(record_path()).kill_recorded(own_process_id)
+        TunnelRecord::new(record_folder(), std::process::id()).kill_recorded()
     }
 
     /// Accepts this new pairing key from now on, and refuses the old key at once, even on connections that are still open.
@@ -201,9 +200,9 @@ fn pairing_qr(host: &str, token: &str) -> Option<String> {
     )
 }
 
-/// The file that holds the process id of the program `ngrok`, next to the file `mobile.json`.
-fn record_path() -> PathBuf {
-    crate::config::config_folder().join("mobile_ngrok.pid")
+/// The folder of the records of the program `ngrok` of each Heidrun, next to the file `mobile.json`.
+fn record_folder() -> PathBuf {
+    crate::config::config_folder().join("mobile_ngrok")
 }
 
 fn kill_tunnel(inner: &mut Inner) {
