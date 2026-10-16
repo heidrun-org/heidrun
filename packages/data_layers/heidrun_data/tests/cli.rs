@@ -12,7 +12,10 @@ use std::process::{Command, Stdio};
 const FAKE_GH_SCRIPT: &str = r#"#!/bin/sh
 if [ -f "$FAKE_GH_DIRECTORY/fail" ]; then echo "fake gh: not signed in" >&2; exit 1; fi
 if [ "$1" = "repo" ]; then echo "fake-owner/fake-name"; exit 0; fi
+if [ "$1" = "pr" ] && [ "$2" = "diff" ]; then cat "$FAKE_GH_DIRECTORY/pull_request.diff"; exit 0; fi
 case "$*" in
+  *"issue(number: 1)"*) cat "$FAKE_GH_DIRECTORY/issue.json" ;;
+  *"pullRequest(number: 2)"*) cat "$FAKE_GH_DIRECTORY/pull_request.json" ;;
   *"pullRequests("*) cat "$FAKE_GH_DIRECTORY/pull_requests.json" ;;
   *) cat "$FAKE_GH_DIRECTORY/issues.json" ;;
 esac
@@ -24,6 +27,35 @@ const TYPED: &str = r#"{"type":"user","cwd":"FOLDER","timestamp":"2026-10-11T10:
 /// A date in October 2026, in the format ISO 8601.
 fn date(day: u32) -> String {
     format!("2026-10-{day:02}T10:00:00Z")
+}
+
+/// The answer of GitHub for the issue 1 and its comments.
+fn issue_answer() -> String {
+    json!({ "data": { "repository": { "issue": {
+        "number": 1, "title": "An issue", "body": "The text of the issue.", "createdAt": date(1), "state": "CLOSED",
+        "author": { "login": "jeromeetienne" },
+        "comments": { "pageInfo": { "hasNextPage": false, "endCursor": null }, "nodes": [
+            { "createdAt": date(2), "body": "A comment.", "author": { "login": "eric" } },
+        ] },
+    } } } })
+    .to_string()
+}
+
+/// The answer of GitHub for the pull request 2, its comments, and its reviews.
+fn pull_request_answer() -> String {
+    json!({ "data": { "repository": { "pullRequest": {
+        "number": 2, "title": "A pull request", "body": "Fixes #1.", "createdAt": date(1), "state": "MERGED",
+        "author": { "login": "jeromeetienne" },
+        "comments": { "pageInfo": { "hasNextPage": false, "endCursor": null }, "nodes": [] },
+        "reviews": { "nodes": [{
+            "submittedAt": date(2), "body": "", "state": "COMMENTED", "author": { "login": "eric" },
+            "comments": { "nodes": [{
+                "createdAt": date(2), "body": "Rename this.", "path": "first.txt", "line": 1, "originalLine": 1,
+                "author": { "login": "eric" },
+            }] },
+        }] },
+    } } } })
+    .to_string()
 }
 
 /// The answer of GitHub for one page of issues that is the last page.
@@ -145,6 +177,9 @@ impl Fixture {
         }
         std::fs::write(folder.join("issues.json"), issues_answer()).unwrap();
         std::fs::write(folder.join("pull_requests.json"), pull_requests_answer()).unwrap();
+        std::fs::write(folder.join("issue.json"), issue_answer()).unwrap();
+        std::fs::write(folder.join("pull_request.json"), pull_request_answer()).unwrap();
+        std::fs::write(folder.join("pull_request.diff"), "diff --git a/first.txt b/first.txt\n+First commit\n").unwrap();
         let project = folder.join("claude").join("projects").join(claude_folder_name(&repository.display().to_string()));
         std::fs::create_dir_all(&project).unwrap();
         let typed = TYPED.replace("FOLDER", &repository.display().to_string());
@@ -153,6 +188,22 @@ impl Fixture {
         let user_activity_file = folder.join("user_activity.jsonl");
         std::fs::write(&user_activity_file, format!("{}\n{}\n", user_activity_line(10), user_activity_line(11))).unwrap();
         Fixture { database_path: folder.join("data_layer.sqlite"), repository, user_activity_file, folder }
+    }
+
+    /// Writes a compressed chat session file of Codex with the id `id`, which started in the repository.
+    fn write_compressed_codex_file(&self, id: &str) {
+        let folder = self.folder.join("codex").join("sessions").join("2026").join("10").join("10");
+        std::fs::create_dir_all(&folder).unwrap();
+        let at = "2026-10-10T10:00:00.000Z";
+        let lines = [
+            json!({ "type": "session_meta", "timestamp": at, "payload": { "id": id, "cwd": self.repository.display().to_string() } }),
+            json!({ "type": "response_item", "timestamp": at, "payload": { "type": "message", "role": "user", "content": [{ "type": "input_text", "text": "Fix the issue 1" }] } }),
+            json!({ "type": "response_item", "timestamp": at, "payload": { "type": "function_call", "name": "shell", "arguments": "{\"command\":[\"ls\"]}" } }),
+            json!({ "type": "response_item", "timestamp": at, "payload": { "type": "message", "role": "assistant", "content": [{ "type": "output_text", "text": "Done." }] } }),
+        ];
+        let text: String = lines.iter().map(|line| format!("{line}\n")).collect();
+        let path = folder.join(format!("rollout-2026-10-10T10-00-00-{id}.jsonl.zst"));
+        std::fs::write(path, zstd::encode_all(text.as_bytes(), 0).unwrap()).unwrap();
     }
 
     /// Runs the executable in the Git repository with the fake sources, and gives `input` on the standard input.
@@ -471,4 +522,84 @@ fn schema_with_the_format_sql_prints_the_create_table_statements() {
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     assert!(result.stdout.starts_with("CREATE TABLE commits (\n    repository TEXT NOT NULL,"), "{}", result.stdout);
     assert_eq!(result.stdout.matches("CREATE TABLE").count(), 9);
+}
+
+#[test]
+fn read_chat_session_prints_the_records_of_a_chat_session_of_claude_code() {
+    let fixture = Fixture::new("read_claude");
+    let result = fixture.run(&["read", "chat_session", "a-chat-session", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(result.json_lines(), vec![json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1" })]);
+    assert!(!fixture.database_path.exists());
+}
+
+#[test]
+fn read_chat_session_prints_the_records_of_a_compressed_chat_session_of_codex_from_a_sub_folder() {
+    let fixture = Fixture::new("read_codex");
+    let id = "01a12c31-175b-7513-b12c-bba764f46402";
+    fixture.write_compressed_codex_file(id);
+    std::fs::create_dir_all(fixture.repository.join("sub")).unwrap();
+    let folder = fixture.repository.join("sub").display().to_string();
+    let result = fixture.run(&["read", "chat_session", id, "--folder", &folder, "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    let roles: Vec<Value> = result.json_lines().into_iter().map(|line| line["role"].clone()).collect();
+    assert_eq!(roles, vec![json!("developer"), json!("tool"), json!("coding_agent")]);
+    let result = fixture.run(&["read", "chat_session", id, "--format", "table"]);
+    assert_eq!(result.stdout.lines().next(), Some("[2026-10-10T10:00:00.000Z] developer: Fix the issue 1"));
+}
+
+#[test]
+fn read_chat_session_with_an_unknown_id_fails_with_one_json_error() {
+    let fixture = Fixture::new("read_unknown");
+    let result = fixture.run(&["read", "chat_session", "nothing", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    let error: Value = serde_json::from_str(result.stderr.trim_end()).unwrap();
+    assert!(error["error"].as_str().unwrap().contains("has the id nothing"), "{error}");
+}
+
+#[test]
+fn read_commit_prints_the_message_the_files_and_the_diff_of_a_commit_of_the_real_repository() {
+    let fixture = Fixture::new("read_commit");
+    let result = fixture.run(&["read", "commit", "HEAD", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    let commit = &result.json_lines()[0];
+    assert_eq!(commit["message"], json!("Second commit"));
+    assert_eq!(commit["authorName"], json!("Ada Author"));
+    assert_eq!(commit["files"], json!([{ "path": "second.txt", "insertions": 1, "deletions": 0 }]));
+    assert!(commit["diff"].as_str().unwrap().contains("+Second commit"), "{commit}");
+    let result = fixture.run(&["read", "commit", "HEAD~1", "--no-diff", "--format", "jsonl"]);
+    let commit = &result.json_lines()[0];
+    assert_eq!(commit["message"], json!("First commit"));
+    assert_eq!(commit.get("diff"), None);
+    let result = fixture.run(&["read", "commit", "0000000", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+}
+
+#[test]
+fn read_issue_prints_the_body_then_the_comments_that_the_fake_gh_returns() {
+    let fixture = Fixture::new("read_issue");
+    let result = fixture.run(&["read", "issue", "1", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(
+        result.json_lines(),
+        vec![
+            json!({ "kind": "issue", "author": "jeromeetienne", "at": date(1), "number": 1, "title": "An issue", "state": "CLOSED", "text": "The text of the issue." }),
+            json!({ "kind": "comment", "author": "eric", "at": date(2), "text": "A comment." }),
+        ]
+    );
+}
+
+#[test]
+fn read_pull_request_prints_the_body_the_review_comments_and_the_diff() {
+    let fixture = Fixture::new("read_pull_request");
+    let result = fixture.run(&["read", "pull_request", "2", "--repository", "fake-owner/fake-name", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    let lines = result.json_lines();
+    let kinds: Vec<Value> = lines.iter().map(|line| line["kind"].clone()).collect();
+    assert_eq!(kinds, vec![json!("pull_request"), json!("review"), json!("review_comment"), json!("diff")]);
+    assert_eq!(lines[2]["path"], json!("first.txt"));
+    assert_eq!(lines[2]["line"], json!(1));
+    assert_eq!(lines[3]["text"], json!("diff --git a/first.txt b/first.txt\n+First commit\n"));
+    let result = fixture.run(&["read", "pull_request", "2", "--no-diff", "--format", "jsonl"]);
+    assert_eq!(result.json_lines().len(), 3);
 }

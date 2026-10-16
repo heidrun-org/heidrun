@@ -22,7 +22,7 @@ mod synchronization;
 mod test_samples;
 
 pub use coding_agents::agent_homes::{claude_dir, codex_home};
-pub use coding_agents::scan::{feed_claude_line, feed_codex_line, ChatMeta, Scan};
+pub use coding_agents::scan::{feed_claude_line, feed_codex_line, read_lines_from, shorten, ChatMeta, Scan};
 pub use coding_agents::scan_cache::{ScanCache, CACHE_FILE_NAME};
 pub use coding_agents::session_files::{
     claude_folder_name, find_claude_agent_files, find_claude_session_files, find_codex_session_files, is_in_folder,

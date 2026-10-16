@@ -1,12 +1,15 @@
-//! The command line `heidrun_data`: the commands sources, update, initialize, schema, and query.
+//! The command line `heidrun_data`: the commands sources, update, initialize, schema, query, and read.
 
 mod command_line;
 
-use command_line::{find_format, parse, CommonOptions, Parsed, QueryRequest, SchemaRequest, SynchronizationRequest};
+use command_line::{
+    find_format, parse, CommonOptions, Parsed, QueryRequest, ReadKind, ReadRequest, SchemaRequest, SynchronizationRequest,
+};
 use heidrun_data::{
     add_limit, data_schema_text, default_database_path, format_error, read_catalog, synchronize, write_rows, Format,
     HeidrunDatabase, QueryRow, SynchronizationOptions,
 };
+use heidrun_data::{read_chat_session, read_code_hosting, read_commit, read_pull_request_diff, CodeHostingKind};
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -60,7 +63,7 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
     let format = format_of(&request.common);
     let options = SynchronizationOptions {
         database_path: database_path(&request.common)?,
-        folder: absolute_path(&request.folder, || std::env::current_dir().map_err(|error| error.to_string()))?,
+        folder: folder_of(&request.folder)?,
         repository: request.repository.clone(),
         user_activity_file: absolute_path(&request.file, || Ok(data_layer_user_activity::default_user_activity_file_path()))?,
         claude_projects_folder: data_layer_chat_sessions::claude_dir().join("projects"),
@@ -141,6 +144,86 @@ fn run_query(request: &QueryRequest) -> Result<(), String> {
     Ok(())
 }
 
+/// The absolute path of the folder of the option `--folder`, or else of the current folder.
+fn folder_of(option: &Option<String>) -> Result<PathBuf, String> {
+    absolute_path(option, || std::env::current_dir().map_err(|error| error.to_string()))
+}
+
+/// The root of the main checkout of the repository that holds `folder`, so that the chat sessions of the main checkout and
+/// of every worktree below it are found from any worktree. The root of the folder when `git` cannot tell.
+fn main_root(folder: &std::path::Path) -> PathBuf {
+    use data_layer_source_control::GitRunner;
+    let runner = data_layer_source_control::GitCommandRunner::new(folder);
+    let common_folder = runner.run(&["rev-parse", "--path-format=absolute", "--git-common-dir"], None);
+    match common_folder.ok().map(|text| PathBuf::from(text.trim())) {
+        Some(path) if path.file_name().is_some_and(|name| name == ".git") => {
+            path.parent().map(PathBuf::from).unwrap_or_else(|| data_layer_chat_sessions::find_root(folder))
+        }
+        _ => data_layer_chat_sessions::find_root(folder),
+    }
+}
+
+/// Prints the content of one thing from its source.
+fn run_read(request: &ReadRequest) -> Result<(), String> {
+    let format = format_of(&request.common);
+    let folder = folder_of(&request.folder)?;
+    match request.kind {
+        ReadKind::ChatSession => {
+            if !folder.is_dir() {
+                return Err(format!("The folder {} does not exist.", folder.display()));
+            }
+            let root = main_root(&folder);
+            let records = read_chat_session(
+                &request.key,
+                &root,
+                &data_layer_chat_sessions::claude_dir().join("projects"),
+                &data_layer_chat_sessions::codex_home(),
+                request.is_full,
+            )?;
+            match format {
+                Format::Table => {
+                    for record in &records {
+                        println!("[{}] {}: {}", record.at.as_deref().unwrap_or("no date"), record.role.name(), record.text);
+                    }
+                }
+                _ => print_rows(&records.iter().map(|record| record.to_row()).collect::<Vec<_>>(), format),
+            }
+        }
+        ReadKind::Commit => {
+            let runner = data_layer_source_control::GitCommandRunner::new(&folder);
+            let commit = read_commit(&runner, &request.key, request.has_diff)?;
+            match format {
+                Format::Table => print!("{}", commit.to_text()),
+                _ => print_rows(&[commit.to_row()], format),
+            }
+        }
+        ReadKind::Issue | ReadKind::PullRequest => {
+            let repository = match &request.repository {
+                Some(repository) => repository.clone(),
+                None => data_layer_code_hosting::find_repository(&folder)?,
+            };
+            let number: u64 = request.key.parse().map_err(|_| format!("The key {} is not a number.", request.key))?;
+            let kind = match request.kind {
+                ReadKind::Issue => CodeHostingKind::Issue,
+                _ => CodeHostingKind::PullRequest,
+            };
+            let mut entries = read_code_hosting(&data_layer_code_hosting::GhGraphqlRunner, kind, &repository, number)?;
+            if kind == CodeHostingKind::PullRequest && request.has_diff {
+                entries.push(read_pull_request_diff(&repository, number)?);
+            }
+            match format {
+                Format::Table => {
+                    for entry in &entries {
+                        print!("{}", entry.to_text());
+                    }
+                }
+                _ => print_rows(&entries.iter().map(|entry| entry.to_row()).collect::<Vec<_>>(), format),
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Runs the command line. Returns false when at least one source failed, and its error is already printed.
 fn run(parsed: Parsed) -> Result<bool, String> {
     match parsed {
@@ -152,6 +235,7 @@ fn run(parsed: Parsed) -> Result<bool, String> {
         Parsed::Synchronize(request) => run_synchronization(&request),
         Parsed::Schema(request) => run_schema(&request).map(|()| true),
         Parsed::Query(request) => run_query(&request).map(|()| true),
+        Parsed::Read(request) => run_read(&request).map(|()| true),
     }
 }
 
