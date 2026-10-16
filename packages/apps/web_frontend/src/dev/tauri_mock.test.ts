@@ -247,18 +247,18 @@ describe('TauriMock user activity', () => {
 		delete tauriWindow.__TAURI_INTERNALS__;
 	});
 
-	it('answers the Tauri command user_activity_records_in_range with fake active periods of the last week that end before the end of the range', async () => {
+	it('answers the Tauri command user_activity_records_in_range with fake active periods of the last 30 days that end before the end of the range', async () => {
 		TauriMock.install();
 		const until = Date.now();
 		const records = await invoke<{ workspaceFolder: string; startedAt: string; endedAt: string }[]>('user_activity_records_in_range', {
-			since: new Date(until - 7 * 86_400_000).toISOString(),
+			since: new Date(until - 30 * 86_400_000).toISOString(),
 			until: new Date(until).toISOString(),
 		});
 		expect(records.length).toBeGreaterThan(30);
 		for (const record of records) {
 			expect(Date.parse(record.startedAt)).toBeLessThan(Date.parse(record.endedAt));
 			expect(Date.parse(record.endedAt)).toBeLessThanOrEqual(until);
-			expect(Date.parse(record.startedAt)).toBeGreaterThanOrEqual(until - 7 * 86_400_000);
+			expect(Date.parse(record.startedAt)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
 		}
 		const startedAtList = records.map((record) => Date.parse(record.startedAt));
 		expect(startedAtList).toEqual([...startedAtList].sort((first, second) => first - second));
@@ -268,7 +268,7 @@ describe('TauriMock user activity', () => {
 		TauriMock.install();
 		const until = Date.now();
 		const records = await invoke<{ workspaceFolder: string }[]>('user_activity_records_in_range', {
-			since: new Date(until - 7 * 86_400_000).toISOString(),
+			since: new Date(until - 30 * 86_400_000).toISOString(),
 			until: new Date(until).toISOString(),
 		});
 		expect(new Set(records.map((record) => record.workspaceFolder)).size).toBe(3);

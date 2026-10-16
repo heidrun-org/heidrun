@@ -128,7 +128,7 @@ export class UserActivityWorkspaces {
 	 * @param runningPeriodStartedAt - The start of the active period that runs now, or `null` when no period runs.
 	 * @param runningPeriodFolder - The folder of the workspace of the running period, or `null` when none is selected.
 	 * @param now - The current time, in milliseconds.
-	 * @param rangeId - The range. The default is the last hour.
+	 * @param rangeId - The range. The default is the last day.
 	 * @param slotLengthId - The slot length. The default is the slot length that the range starts with.
 	 * @returns One entry for each chosen workspace, in the order of the choices.
 	 */
@@ -139,7 +139,7 @@ export class UserActivityWorkspaces {
 		runningPeriodStartedAt: number | null,
 		runningPeriodFolder: string | null,
 		now: number,
-		rangeId: UserActivityRangeId = "hour",
+		rangeId: UserActivityRangeId = "day",
 		slotLengthId?: UserActivitySlotLengthId,
 	): UserActivityWorkspaceSlots[] {
 		const workspaceSlots: UserActivityWorkspaceSlots[] = [];

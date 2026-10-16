@@ -249,9 +249,9 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last week, in UTC, as the
-	 * data layer gives them. Seven periods are in the last hour, and they cross the limits of the slots of five minutes.
-	 * The last slot of the last hour has no period. Four more periods fall on each of the seven days, from three hours
+	 * The answer of the Tauri command `user_activity_records_in_range`: fake active periods in the last 30 days, in UTC, as the
+	 * data layer gives them. Seven periods are in the last hour, and the last two minutes
+	 * have no period. Four more periods fall on each of the 30 days, from three hours
 	 * before the end of the time range, and they are 20 to 55 minutes long. Each period belongs to one of three folders: the
 	 * folder of the first workspace for three periods of every five, the folder of the second workspace for one period of
 	 * every five, and the folder of a worktree that was removed for the last one, so that the histogram has workspaces to
@@ -272,7 +272,7 @@ export class TauriMockFixture {
 			[9 * 60 + 30, 9 * 60],
 			[4 * 60, 2 * 60 + 30],
 		];
-		for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+		for (let dayIndex = 0; dayIndex < 30; dayIndex += 1) {
 			for (let sessionIndex = 0; sessionIndex < 4; sessionIndex += 1) {
 				const startedBefore = dayIndex * 24 * 3600 + (3 + 3 * sessionIndex) * 3600;
 				const lengthMinutes = 20 + ((dayIndex * 7 + sessionIndex * 11) % 36);
