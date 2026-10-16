@@ -10,6 +10,7 @@
   "revoke": "Révoquer les appareils appairés",
   "starting": "Ouverture du tunnel…",
   "tunnelNote": "Quand tu l’actives, Heidrun ouvre un tunnel ngrok avec le programme ngrok. L’adresse du tunnel est la même à chaque fois. Quand tu le désactives, ou quand tu quittes Heidrun, le tunnel se ferme.",
+  "ngrokNotInstalled": "Le programme ngrok n’est pas installé sur cet ordinateur. Sans lui, l’accès mobile est impossible. Installe-le avec la commande brew install ngrok. Puis crée un compte gratuit sur ngrok.com, et lance la commande ngrok config add-authtoken suivie de ton jeton.",
   "error.ngrokMissing": "Le programme ngrok n’est pas installé sur cet ordinateur, et Heidrun en a besoin pour ouvrir le tunnel. Installe-le avec la commande brew install ngrok. Puis crée un compte gratuit sur ngrok.com, et lance la commande ngrok config add-authtoken suivie de ton jeton. Heidrun réessaie toutes les quelques secondes.",
   "error.ngrokCannotStart": "Heidrun ne peut pas démarrer le programme ngrok.",
   "error.ngrokNoAddress": "Le programme ngrok n’a donné aucune adresse après 30 secondes. Vérifie la connexion Internet de cet ordinateur. Heidrun réessaie dans quelques secondes.",

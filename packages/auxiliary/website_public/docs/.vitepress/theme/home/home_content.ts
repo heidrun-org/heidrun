@@ -445,7 +445,8 @@ export const QUICK_START = {
 	joke: 'Four commands. A longship needs more oars than that.',
 	download: {
 		title: 'Download the application',
-		text: 'Download the file for macOS on Apple silicon from the latest release, and drag Heidrun into the folder Applications. Heidrun needs Herdr 0.9 or later.',
+		text: 'Download the file for macOS on Apple silicon from the latest release, and drag Heidrun into the folder Applications. First install Herdr 0.9 or later: Heidrun needs it, and does not install it. The program ngrok is optional: only the mobile access uses it.',
+		herdrInstallCommand: 'curl -fsSL https://herdr.dev/install.sh | sh',
 		buttonText: 'Download for macOS',
 		herdrLinkText: 'Get Herdr',
 	},

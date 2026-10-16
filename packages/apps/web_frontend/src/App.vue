@@ -77,6 +77,7 @@ import InstalledSkillModal from "./components/InstalledSkillModal.vue";
 import FindNewSkillsModal from "./components/FindNewSkillsModal.vue";
 import FilesModal from "./components/FilesModal.vue";
 import AboutModal from "./components/AboutModal.vue";
+import MissingProgramsModal from "./components/MissingProgramsModal.vue";
 import ThreeJsDemoModal from "./components/ThreeJsDemoModal.vue";
 import { threeJsDemoModal } from "./stores/three_js_demo_modal";
 import StatisticsModal from "./components/StatisticsModal.vue";
@@ -306,6 +307,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="app">
     <SplashScreen />
+    <MissingProgramsModal />
     <AboutModal />
     <TopBar />
     <div class="body">

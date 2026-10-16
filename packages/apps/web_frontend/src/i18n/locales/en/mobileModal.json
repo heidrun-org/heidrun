@@ -10,6 +10,7 @@
   "revoke": "Revoke the paired devices",
   "starting": "Opening the tunnel…",
   "tunnelNote": "When you turn it on, Heidrun opens an ngrok tunnel with the program ngrok. The address of the tunnel is the same each time. When you turn it off, or when you quit Heidrun, the tunnel closes.",
+  "ngrokNotInstalled": "The program ngrok is not installed on this computer. Without it, the mobile access is impossible. Install it with the command brew install ngrok. Then create a free account at ngrok.com, and run the command ngrok config add-authtoken followed by your token.",
   "error.ngrokMissing": "The program ngrok is not installed on this computer, and Heidrun needs it to open the tunnel. Install it with the command brew install ngrok. Then create a free account at ngrok.com, and run the command ngrok config add-authtoken followed by your token. Heidrun tries again every few seconds.",
   "error.ngrokCannotStart": "Heidrun cannot start the program ngrok.",
   "error.ngrokNoAddress": "The program ngrok gave no address after 30 seconds. Check the Internet connection of this computer. Heidrun tries again in a few seconds.",

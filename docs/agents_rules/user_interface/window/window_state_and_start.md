@@ -1,7 +1,7 @@
-# User interface of Heidrun: state of the window, splash screen, and goat sounds
+# User interface of Heidrun: state of the window, splash screen, missing programs, and goat sounds
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -29,6 +29,17 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The splash screen has a sound button at its bottom right corner. A click on the sound button plays a goat bleat, and does not close the splash screen. See the section "Goat sounds".
 - The command line option `--no-splash-screen` starts Heidrun without the splash screen. The main window then appears at once, and shows the application.
 - A program that drives Heidrun, for example to take a screenshot, uses this option, so that it never waits for the splash screen to close. In development, run `pnpm dev -- -- --no-splash-screen`: the command `tauri dev` gives the arguments after its second `--` to the application, and the arguments after its first `--` to `cargo`. For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
+
+## Missing programs
+
+Heidrun installs no program of another maker ([issue 546](https://github.com/heidrun-org/heidrun/issues/546)). The end user installs Herdr, which is required, and ngrok, which is optional and only for the mobile access.
+
+- At the start, the command `required_programs_status` of [required_programs.rs](../../../../packages/apps/desktop_tauri/src/required_programs.rs) tests that each program is on the computer. It tests only that the program exists, not its version.
+- When a program is missing, the notice of the missing programs ([MissingProgramsModal.vue](../../../../packages/apps/web_frontend/src/components/MissingProgramsModal.vue)) shows under the splash screen, so the end user sees it when the splash screen closes. The notice names each missing program, says if it is required or optional, and gives its install command.
+- The button "Continue" closes the notice, and the end user goes into the main window. When Herdr is missing, the main window shows the Offline screen.
+- The test also reads the version of Herdr with `herdr --version`. A Herdr older than 0.9 is named in the notice like a missing Herdr, with a text that asks for an update. When the output has no version that Heidrun can read, Herdr is not called too old.
+- The notice names a missing Herdr, or a Herdr older than 0.9, at every start, and a missing ngrok only once. After that, the Mobile access section of the Settings window keeps the reminder of a missing ngrok, and says that the mobile access is impossible without it.
+- The install commands are in [missing_programs.ts](../../../../packages/apps/web_frontend/src/lib/missing_programs.ts), and are the same in `README.md` and on the home page of the website.
 
 ## Goat sounds
 

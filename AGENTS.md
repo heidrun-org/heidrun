@@ -54,7 +54,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [statistics_totals.md](docs/agents_rules/user_interface/window/statistics_totals.md): the lines added and deleted, and the average per day under each total, of the tab "Work of one person": what they are, how the value is written, where the calculation is, and the tests.
   - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
   - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
-  - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, and the goat sounds.
+  - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, the notice of the missing programs Herdr and ngrok, and the goat sounds.
 - The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
