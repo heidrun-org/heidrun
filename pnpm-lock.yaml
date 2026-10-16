@@ -190,6 +190,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/auxiliary/heidrun_ctrl: {}
+
   packages/auxiliary/mobile_server: {}
 
   packages/auxiliary/mobile_website:
@@ -236,9 +238,9 @@ importers:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
 
-  packages/data_layers/data_layer_coding_agents: {}
-
   packages/data_layers/data_layer_code_hosting: {}
+
+  packages/data_layers/data_layer_coding_agents: {}
 
   packages/data_layers/data_layer_source_control: {}
 

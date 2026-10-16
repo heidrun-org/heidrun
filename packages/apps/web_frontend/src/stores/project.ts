@@ -230,11 +230,44 @@ async function pollBusy() {
   }
 }
 
+/** The text of the file .heidrun/config.json of each workspace, as the last read gave it. */
+const lastConfigTexts: Record<string, string | undefined> = {};
+
+/** How often the window reads the file .heidrun/config.json of the workspace in view again, in milliseconds. */
+const CONFIG_READ_INTERVAL = 1000;
+
+/**
+ * Loads the project of the workspace in view again when another program, such as the command line heidrun_ctrl, changed its
+ * file .heidrun/config.json. The first read of a workspace only records the text.
+ */
+export async function reloadProjectWhenFileChanged(): Promise<void> {
+  const workspaceId = session.selectedWorkspaceId;
+  if (workspaceId === null || workspaceId === undefined || project.byWorkspace[workspaceId] === undefined) {
+    return;
+  }
+  const cwd = workspaceCwd(workspaceId);
+  if (cwd === null) {
+    return;
+  }
+  let text: string;
+  try {
+    text = await invoke<string>("project_config_text", { cwd });
+  } catch {
+    return;
+  }
+  const before = lastConfigTexts[workspaceId];
+  lastConfigTexts[workspaceId] = text;
+  if (before !== undefined && before !== text) {
+    await loadProject(workspaceId);
+  }
+}
+
 let started = false;
 export function startProjects() {
   if (started) return;
   started = true;
   window.setInterval(pollBusy, 2500);
+  window.setInterval(() => void reloadProjectWhenFileChanged(), CONFIG_READ_INTERVAL);
   // Load the project file of the workspace in view (launchers, badge, palette).
   watch(
     () => [session.selectedWorkspaceId, !!session.snapshot] as const,
