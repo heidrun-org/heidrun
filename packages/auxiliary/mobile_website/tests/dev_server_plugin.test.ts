@@ -41,12 +41,12 @@ describe('Pairing lines of the development server', () => {
 	});
 });
 
-const startVite = async (realTarget: string | null): Promise<number> => {
+const startVite = async (realTarget: string | null, tunnelHost: string | null = null): Promise<number> => {
 	const server: ViteDevServer = await createServer({
 		configFile: false,
 		root: process.cwd(),
 		logLevel: 'silent',
-		plugins: [DevServerPlugin.create(realTarget)],
+		plugins: [DevServerPlugin.create(realTarget, tunnelHost)],
 		server: {
 			host: '127.0.0.1',
 			port: 0,
@@ -142,6 +142,32 @@ describe('DevServerPlugin with the real desktop application', () => {
 		expect(seen).toHaveLength(1);
 		expect(seen[0].host).toBe(`127.0.0.1:${upstreamPort}`);
 		expect(seen[0].origin).toBe(target);
+		expect(seen[0]['x-herdr-token']).toBe('c'.repeat(64));
+	});
+
+	it('sends the host name of the tunnel in the headers host and origin, when it is given', async () => {
+		const seen: Array<Record<string, string | string[] | undefined>> = [];
+		const upstream = Http.createServer((request, response) => {
+			seen.push(request.headers);
+			response.setHeader('content-type', 'application/json');
+			response.end('{"answer":"from the real application"}');
+		});
+		await new Promise<void>((resolve) => upstream.listen(0, '127.0.0.1', resolve));
+		cleanups.push(() => new Promise<void>((resolve) => upstream.close(() => resolve())));
+		const upstreamPort = (upstream.address() as AddressInfo).port;
+		const vitePort = await startVite(`http://127.0.0.1:${upstreamPort}`, 'words-of-the-tunnel.ngrok-free.dev');
+		await post(
+			vitePort,
+			'POST',
+			{
+				'x-herdr-token': 'c'.repeat(64),
+				origin: `http://127.0.0.1:${vitePort}`,
+			},
+			'{"method":"state"}',
+		);
+		expect(seen).toHaveLength(1);
+		expect(seen[0].host).toBe('words-of-the-tunnel.ngrok-free.dev');
+		expect(seen[0].origin).toBe('https://words-of-the-tunnel.ngrok-free.dev');
 		expect(seen[0]['x-herdr-token']).toBe('c'.repeat(64));
 	});
 });

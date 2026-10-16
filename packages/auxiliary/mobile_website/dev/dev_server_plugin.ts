@@ -23,15 +23,18 @@ export class DevServerPlugin {
 	 * Builds the plugin.
 	 * @param realTarget The address of the mobile server of the desktop application, for example
 	 * `http://127.0.0.1:47823`, or null to answer with the fake computer.
+	 * @param tunnelHost The host name of the ngrok tunnel of the desktop application, for example
+	 * `words-of-the-tunnel.ngrok-free.dev`, or null. The mobile server accepts no other host name, so the proxy sends
+	 * this one in the headers `Host` and `Origin`.
 	 * @returns The plugin.
 	 */
-	static create(realTarget: string | null): Plugin {
+	static create(realTarget: string | null, tunnelHost: string | null = null): Plugin {
 		const devApi = new DevApi();
 		return {
 			name: 'mobile-website-dev-api',
 			apply: 'serve',
 			config() {
-				return realTarget === null ? {} : DevServerPlugin.proxyConfig(realTarget);
+				return realTarget === null ? {} : DevServerPlugin.proxyConfig(realTarget, tunnelHost);
 			},
 			configureServer(server) {
 				if (realTarget === null) {
@@ -48,14 +51,19 @@ export class DevServerPlugin {
 		};
 	}
 
-	private static proxyConfig(realTarget: string): UserConfig {
+	private static proxyConfig(realTarget: string, tunnelHost: string | null): UserConfig {
 		const apiProxy: ProxyOptions = {
 			target: realTarget,
 			changeOrigin: true,
 			configure: (proxy) => {
 				proxy.on('proxyReq', (proxyRequest) => {
-					// The mobile server refuses an origin that is not its own address.
-					proxyRequest.setHeader('origin', realTarget);
+					// The mobile server refuses a host and an origin that are not the ones of its tunnel.
+					if (tunnelHost === null) {
+						proxyRequest.setHeader('origin', realTarget);
+						return;
+					}
+					proxyRequest.setHeader('host', tunnelHost);
+					proxyRequest.setHeader('origin', `https://${tunnelHost}`);
 				});
 			},
 		};

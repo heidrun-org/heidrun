@@ -10,7 +10,7 @@ Heidrun Mobile is an idea for a second front end of Heidrun. It is a small appli
 
 ## What exists today
 
-Heidrun already has a first mobile access. It is a small web page that the application serves from the Mac, only on the Tailscale address of the Mac, and every request needs a pairing key. The developer scans a QR code, then adds the page to the Home Screen of the iPhone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [mobile_website](../../packages/auxiliary/mobile_website/CONTEXT.md), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
+Heidrun already has a first mobile access. It is a small web page that the application serves from the computer. An ngrok tunnel gives the page a fixed public HTTPS address, and every request needs a pairing key. The developer scans a QR code with the camera of the phone. See [mobile.rs](../../packages/apps/desktop_tauri/src/mobile.rs), [mobile_server](../../packages/auxiliary/mobile_server/CONTEXT.md), [mobile_website](../../packages/auxiliary/mobile_website/CONTEXT.md), and [mobile.ts](../../packages/apps/web_frontend/src/stores/mobile.ts).
 
 Today the page does four things:
 
@@ -19,12 +19,12 @@ Today the page does four things:
 - It sends a prompt to an agent, and it interrupts an agent.
 - It shows the end of the output of an agent.
 
-Heidrun Mobile grows this page into a real application. The pairing key, the Tailscale address, and the guards stay as they are.
+Heidrun Mobile grows this page into a real application. The pairing key, the tunnel, and the guards stay as they are.
 
 ## The idea
 
-- Heidrun Mobile is a different front end for Heidrun desktop. It is a progressive web application, so it installs on the Home Screen of the phone and works like an application.
-- The developer connects the phone to the Mac through Tailscale, which is a virtual private network. The agents keep running on the Mac. The phone is only a remote control.
+- Heidrun Mobile is a different front end for Heidrun desktop. It is a progressive web application, so it installs on the Home Screen of the phone and works like an application. With the free plan of ngrok, Chrome on Android cannot install it (see "What to prove before the build").
+- The developer connects the phone to the computer through an ngrok tunnel. The agents keep running on the computer. The phone is only a remote control.
 - Heidrun Mobile is made for a small screen. It shows only a few parts of Heidrun desktop, and not the whole window.
 
 ## The screens
@@ -74,10 +74,10 @@ Heidrun Mobile does not show the Git sidebar section, the Past chats sidebar sec
 
 ## What to prove before the build
 
-Some features of a progressive web application work only on a secure address, which means an address that starts with `https`. Today the page uses `http` on the Tailscale address. These features need a live test with a real iPhone:
+Some features of a progressive web application work only on a secure address, which means an address that starts with `https`. Today the page uses `https` through the ngrok tunnel, and the address of the tunnel is the same each time that the tunnel opens. These features need a live test with a real phone:
 
-1. The service worker, which the installation as an application needs. Does it work on the Tailscale address? Tailscale can give a certificate for the name of the Mac, if the developer turns on its HTTPS option.
-2. The notifications. On the iPhone, they work only after the installation on the Home Screen, and they use a push service of Apple. Does this work when the Mac is reachable only through Tailscale?
+1. The service worker, which the installation as an application needs. It was built, then removed: with the free plan of ngrok, Chrome on Android says that the application cannot be installed, because the warning page of ngrok (`ERR_NGROK_6024`) replaces the manifest and the icons for every request with no cookie. The same request with the header `ngrok-skip-browser-warning` gets the real files. A tunnel with no warning page is needed first: a paid plan of ngrok, or an own domain with a tunnel with a name of Cloudflare ([issue #549](https://github.com/heidrun-org/heidrun/issues/549)). Not yet tested: the iPhone, and whether an installed application on the iPhone keeps the pairing key. The iPhone may give an installed application a storage of its own, apart from Safari.
+2. The notifications. On the iPhone, they work only after the installation on the Home Screen, and they use a push service of Apple. Does this work with the address of the tunnel, and does it work again after the address changes?
 3. The microphone. Does the Web Speech API work in an application installed on the Home Screen? If it does not, the microphone key of the iPhone keyboard is the fallback.
 
 If the first test fails, the notifications and the microphone fail with it, and the plan must change before any code is written.

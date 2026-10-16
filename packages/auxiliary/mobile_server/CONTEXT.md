@@ -1,31 +1,37 @@
 # Directory Context: `/packages/auxiliary/mobile_server`
 
 ## Purpose
-The mobile server of Heidrun Mobile. It serves the mobile website on the Tailscale address of the Mac only, checks the pairing key of every request, and hands each call of the phone to the desktop application. It knows nothing about coding agents and nothing about Tauri.
+The mobile server of Heidrun Mobile. It serves the mobile website on the loopback address only. An ngrok tunnel, made by the program `ngrok`, gives that address a fixed public HTTPS address. The server checks the host name of the tunnel and the pairing key of every request, and hands each call of the phone to the desktop application. It knows nothing about coding agents and nothing about Tauri.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `MobileServer`, `MobileStatus`, `MobileConfig`, `load_config`, `save_config`, `new_token`, `MobileCallHandler`, and `CallFuture`.
+- `src/lib.rs`: the only public interface of the library. It exports `MobileServer`, `MobileStatus`, `MobileError`, `MobileErrorKind`, `MobileConfig`, `load_config`, `save_config`, `new_token`, `MobileCallHandler`, and `CallFuture`.
 - `src/handler.rs`: the trait `MobileCallHandler`, which the desktop application implements.
-- `src/router.rs`: the route `/api` for the calls of the phone, with the closed list of methods, and the files of the mobile website for every other address.
-- `src/embedded.rs`: the files of the mobile website, and the `Content-Type` of each file.
-- `build.rs`: puts the folder `dist` of the package `mobile_website` inside the program.
+- `src/router.rs`: the route `/api` with the closed list of methods, and the files of the mobile website for every other address.
+- `src/embedded.rs` and `build.rs`: the files of the folder `dist` of `mobile_website`, held inside the program, and the `Content-Type` of each file.
 - `src/access.rs`: the checks of a request: the header Host, the header Origin, the pairing key, and the lock after ten bad keys.
-- `src/server.rs`: the life of the server: it listens, follows the Tailscale address, and stops.
-- `src/tailscale.rs`: the Tailscale address of the Mac.
+- `src/server.rs`: the life of the server: it listens, keeps the tunnel open, shows its address, and stops.
+- `src/tunnel.rs`: finds and starts the program `ngrok`, and reads its messages and the address of the tunnel. It also holds the fake `ngrok` program of the tests.
 - `src/config.rs`: the file `mobile.json`, and the creation of a pairing key.
-- Command to test this folder: `pnpm --filter mobile_server test`. The command builds the package `mobile_website` first.
+- Command to test this folder: `pnpm --filter mobile_server test`. The command builds `mobile_website` first. The test `live_...` opens a real tunnel with a signed-in `ngrok`, so it runs only by hand: `cargo test live_ -- --ignored --nocapture`.
 
 ## Rules
-- This package imports nothing from Tauri and nothing from another package of the workspace. The only thing that it reads from another package is the folder `dist` of `mobile_website`, at build time. The desktop application gives the server what it needs through the trait `MobileCallHandler`.
-- The server listens only on an address of the range 100.64.0.0/10, which is the Tailscale range. The variable `HEIDRUN_MOBILE_BIND` may set a Tailscale address or a loopback address for a test on the Mac, and never `0.0.0.0`.
-- Every route of the closed list of methods needs the pairing key, and a method that is not in the list never reaches the handler. A new method goes in `METHODS` in `src/router.rs`, and in no other place.
-- The files that the server serves are the files of the folder `dist` of the package `mobile_website`, held inside the program by `build.rs`. This package never restates the page. A build without that folder fails with a message that says to run `pnpm --filter mobile_website build`.
-- A request for a file finds only a path of the embedded table, so no address reaches the disk. The header `Content-Security-Policy` allows only files of the server itself (`script-src 'self'; style-src 'self'`), and a test refuses `unsafe-inline` and `unsafe-eval`.
-- Every file of `dist` is served with a `Content-Type` that a test lists on its own. A file of a new kind stops the test until its type is added.
-- The pairing key is checked on every request, so a new key cuts off the connections that are still open, and the right key is never locked out.
-- `MobileServer::start` returns a future and listens only when the caller spawns it, because this package does not own an async runtime.
-- The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
-- The texts that the server sends to the phone are in English, like the texts of the mobile website.
+- This package imports nothing from Tauri and nothing from another package. The only thing that it reads from another package is the folder `dist` of `mobile_website`, at build time.
+- The server listens only on `127.0.0.1`, never on `0.0.0.0` and never on an address of the network, and no variable changes this.
+- The only host name that passes is the host name of the tunnel, and the header Origin must be `https://` followed by it. The loopback address and every other name are refused, even with the right key. Before the tunnel has an address, every request is refused.
+- The host name comes only from the record `started tunnel` of the log of `ngrok`: an `https` host name with no port and no path. An address in any other record or line never counts.
+- The address is published as soon as `ngrok` announces it, because the address of the account is fixed and every name server already knows it.
+- `ngrok` is started with `--inspect=false`, so its local web interface never remembers a request, and the pairing key in it.
+- The codes `ERR_NGROK_4018` and `ERR_NGROK_334` in the messages of `ngrok` give the errors `ngrokNotSignedIn` and `ngrokAddressInUse`. After `ngrokNotSignedIn`, the next try waits three times longer.
+- `stop` and a new run kill the program `ngrok` at once, with no async runtime. A task of an older run changes nothing, because every change checks the number of its run.
+- The program is started as `ngrok http 127.0.0.1:<port> --inspect=false --log=stdout --log-format=json`. The variable `HEIDRUN_NGROK` gives its path, and without it the usual folders are searched, because an application that the Finder starts has no `PATH`.
+- Every route of the closed list of methods needs the pairing key, and a method outside the list never reaches the handler. A new method goes in `METHODS` in `src/router.rs`, and nowhere else.
+- A new key (`replace_token`, or a new run) cuts off open connections at once, and the right key is never locked out. `replace_token` keeps the tunnel and its address.
+- The server serves only the embedded files, so no address reaches the disk. The header `Content-Security-Policy` allows only files of the server itself, and a test refuses `unsafe-inline` and `unsafe-eval`. A test lists the `Content-Type` of every file of `dist` on its own.
+- `MobileServer::start` returns a future and listens only when the caller spawns it, because this package owns no async runtime.
+- The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one.
+- The texts that the server sends to the phone are in English. The status errors are codes: the Settings window writes the sentence.
 
 ## Background
-- The package was created by step 1 of [issue #525](https://github.com/heidrun-org/heidrun/issues/525), the plan of [issue #524](https://github.com/heidrun-org/heidrun/issues/524). It holds the code that was in `packages/apps/desktop_tauri/src/mobile.rs` before, with no change of behavior. Step 2 replaced the one embedded file with the embedded folder `dist`, and changed the texts to English.
+- The package comes from [issue #525](https://github.com/heidrun-org/heidrun/issues/525), the plan of [issue #524](https://github.com/heidrun-org/heidrun/issues/524).
+- The tunnel replaced the first way to reach the server in [issue #542](https://github.com/heidrun-org/heidrun/issues/542), which answers the open choice of [issue #541](https://github.com/heidrun-org/heidrun/issues/541).
+- The choice of ngrok, for a fixed address and a QR code that is scanned once, is in [issue #549](https://github.com/heidrun-org/heidrun/issues/549).

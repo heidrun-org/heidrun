@@ -12,7 +12,7 @@ pub struct MobileConfig {
     pub enabled: bool,
     /// The pairing key: 32 random bytes as hexadecimal text. Empty until the first time that the access is turned on.
     pub token: String,
-    /// The port of the server on the Tailscale address.
+    /// The port of the server on the loopback address. The tunnel forwards to this port.
     pub port: u16,
 }
 
