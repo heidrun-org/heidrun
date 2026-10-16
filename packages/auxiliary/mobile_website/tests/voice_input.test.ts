@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { VoiceInput } from '../src/voice_input';
 import { AppHarness } from './app_harness';
 import { Fixtures } from './fixtures';
 
@@ -64,6 +65,21 @@ describe('Microphone button', () => {
 		expect(FakeRecognition.last?.isStarted).toBe(false);
 		expect(document.querySelector('[data-action="voice"]')?.getAttribute('aria-pressed')).toBe('false');
 		expect(computer.callsOf('prompt')).toEqual([]);
+	});
+
+	it('does not repeat the words when each result holds the whole text heard until then, like Chrome on Android', async () => {
+		vi.stubGlobal('webkitSpeechRecognition', FakeRecognition);
+		const harness = await AppHarness.start(Fixtures.computer());
+		await harness.openPane('p-working');
+		await harness.tap('[data-action="voice"]');
+		FakeRecognition.last?.say('hello', 'hello how', 'hello how are', 'hello how are you today');
+		expect(harness.field().value).toBe('hello how are you today');
+		expect(FakeRecognition.last?.continuous).toBe(false);
+	});
+
+	it('keeps two sentences that do not repeat each other', () => {
+		expect(VoiceInput.joinResults(['fix the test', ' and commit '])).toBe('fix the test and commit');
+		expect(VoiceInput.joinResults(['are', 'are you', 'are you good'])).toBe('are you good');
 	});
 
 	it('keeps the words when a refresh comes while the microphone listens', async () => {

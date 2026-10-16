@@ -79,6 +79,30 @@ export class VoiceInput {
 	}
 
 	/**
+	 * Joins the results of the recognition into one text. Chrome on Android gives each result as the whole text
+	 * heard until then ("hello", "hello how", "hello how are"), so a result that starts with the text of the
+	 * result before it replaces that result, and the words are not repeated.
+	 * @param transcripts The text of each result, in order.
+	 * @returns The words heard, once each.
+	 */
+	static joinResults(transcripts: string[]): string {
+		const parts: string[] = [];
+		for (const transcript of transcripts) {
+			const part = transcript.trim();
+			if (part === '') {
+				continue;
+			}
+			const last = parts[parts.length - 1];
+			if (last !== undefined && part.startsWith(last)) {
+				parts[parts.length - 1] = part;
+			} else {
+				parts.push(part);
+			}
+		}
+		return parts.join(' ');
+	}
+
+	/**
 	 * Tells if the microphone listens now.
 	 * @returns True between `start` and the end of the recognition.
 	 */
@@ -97,14 +121,15 @@ export class VoiceInput {
 		}
 		const recognition = new Recognition();
 		recognition.lang = navigator.language;
-		recognition.continuous = true;
+		// One sentence for each tap: Chrome on Android repeats the words in continuous mode.
+		recognition.continuous = false;
 		recognition.interimResults = true;
 		recognition.onresult = (event) => {
-			const parts: string[] = [];
+			const transcripts: string[] = [];
 			for (let index = 0; index < event.results.length; index++) {
-				parts.push(event.results[index][0].transcript.trim());
+				transcripts.push(event.results[index][0].transcript);
 			}
-			listener.onText(parts.filter((part) => part !== '').join(' '));
+			listener.onText(VoiceInput.joinResults(transcripts));
 		};
 		recognition.onerror = (event) => {
 			listener.onError(VoiceInput._errorMessage(event.error));
