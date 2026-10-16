@@ -623,3 +623,89 @@ fn update_waits_while_another_program_holds_the_lock_of_the_sqlite_file() {
     assert!(child.wait().unwrap().success());
     assert_eq!(fixture.query("SELECT count(*) AS count FROM user_activity_records"), vec![json!({ "count": 2 })]);
 }
+
+/// The text of the `SKILL.md` of the package.
+fn skill_text() -> String {
+    std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("SKILL.md")).unwrap()
+}
+
+/// The help of the program and of each command, in one text.
+fn all_help_text(fixture: &Fixture) -> String {
+    let mut text = String::new();
+    for arguments in [vec!["--help"], vec!["sources", "-h"], vec!["update", "-h"], vec!["schema", "-h"], vec!["query", "-h"], vec!["read", "-h"]] {
+        text.push_str(&fixture.run_with_input(&arguments, "").stdout);
+    }
+    text
+}
+
+#[test]
+fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does_not_have() {
+    let fixture = Fixture::new("skill_help");
+    let help = all_help_text(&fixture);
+    let skill = skill_text();
+    let words = |text: &str| -> Vec<String> {
+        text.split(|c: char| !(c.is_ascii_alphanumeric() || c == '_' || c == '-')).map(str::to_string).collect()
+    };
+    let help_words = words(&help);
+    for line in skill.lines().filter(|line| !line.starts_with("description:")) {
+        let mut rest = line;
+        while let Some(at) = rest.find("heidrun_data ") {
+            rest = &rest[at + "heidrun_data ".len()..];
+            let command = words(rest).into_iter().next().unwrap_or_default();
+            if command.is_empty() || command.starts_with('-') {
+                continue;
+            }
+            assert!(["sources", "update", "initialize", "schema", "query", "read"].contains(&command.as_str()), "{command}: {line}");
+        }
+        for word in words(line).into_iter().filter(|word| word.starts_with("--") && word.trim_matches('-').len() > 0) {
+            assert!(help_words.contains(&word), "The help has no option {word}");
+        }
+    }
+    for kind in ["chat_session", "commit", "issue", "pull_request"] {
+        assert!(skill.contains(&format!("heidrun_data read {kind}")), "{kind}");
+        assert!(help.contains(kind), "{kind}");
+    }
+    for source in ["source_control", "code_hosting", "chat_sessions", "user_activity"] {
+        assert!(skill.contains(source) && help.contains(source), "{source}");
+    }
+}
+
+#[test]
+fn the_skill_names_every_table_and_every_column_that_the_schema_prints() {
+    let fixture = Fixture::new("skill_schema");
+    let skill = skill_text();
+    for table in fixture.run(&["schema", "--format", "jsonl"]).json_lines() {
+        assert!(skill.contains(&format!("`{}`", table["table"].as_str().unwrap())), "{}", table["table"]);
+        let is_link_table = table["dataSchema"].is_null();
+        if is_link_table {
+            for column in table["columns"].as_array().unwrap() {
+                assert!(skill.contains(&format!("`{}`", column["name"].as_str().unwrap())), "{column}");
+            }
+        }
+    }
+}
+
+#[test]
+fn the_example_queries_of_the_skill_run_on_the_fixtures_and_give_at_least_one_row() {
+    let fixture = Fixture::new("skill_queries");
+    fixture.update(&["--format", "jsonl"]);
+    let skill = skill_text();
+    let mut ran = 0;
+    for block in skill.split("```bash").skip(1) {
+        let block = block.split("```").next().unwrap();
+        let Some(start) = block.find("heidrun_data query --format jsonl \"") else { continue };
+        let sql = &block[start + "heidrun_data query --format jsonl \"".len()..];
+        let sql = &sql[..sql.rfind('"').unwrap()];
+        if sql.contains('<') || sql.contains("...") {
+            continue;
+        }
+        let sql = sql
+            .replace("heidrun-org/heidrun", "fake-owner/fake-name")
+            .replace("issueNumber = 500", "issueNumber = 1")
+            .replace("'2026-10-01'", "'2026-10-01T00:00:00Z'");
+        let rows = fixture.query(&sql);
+        assert!(!rows.is_empty(), "No row for: {sql}");
+        ran += 1;
+    }
+    assert_eq!(ran, 2);
+}
