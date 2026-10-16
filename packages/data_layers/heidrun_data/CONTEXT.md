@@ -13,7 +13,7 @@ A Rust library and one command line tool, `heidrun_data`, that give a coding age
 - Command to test this folder: `pnpm --filter heidrun_data test`
 
 ## Rules
-- The four sources are `source_control`, `code_hosting`, `chat_sessions`, and `user_activity`: the names of the packages without the prefix `data_layer_`. `update` and `initialize` always run them in this order, whatever the order of the arguments.
+- The four sources are `source_control`, `code_hosting`, `coding_agents`, and `user_activity`: the names of the packages without the prefix `data_layer_`. `update` and `initialize` always run them in this order, whatever the order of the arguments.
 - A source that fails does not stop the others. The command prints one error for each source that failed, and exits with the code 1 when at least one source failed.
 - `update` and `initialize` call the `synchronize` of each data layer library, never its executable. Only the four data layer packages create and write their tables: this package adds no table and no field.
 - `schema` prints the columns from the tables that the four packages create on a temporary file, and the JSON schemas from the libraries, so this package copies no column and no field. `read` writes nothing and opens no SQLite file.

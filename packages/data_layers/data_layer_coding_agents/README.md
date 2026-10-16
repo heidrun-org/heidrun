@@ -1,17 +1,17 @@
 # data_layer_coding_agents
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 463](https://github.com/heidrun-org/heidrun/issues/463). The name `data_layer_coding_agents` is the name of the package and the name of the executable. A chat session is what the rest of Heidrun calls a chat.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both read the chat sessions that Claude Code and Codex saved for a repository, and the coding agent configuration (the memory files, the subagents, and the skills), and write the facts of each one in a SQLite file. It is the coding agents source of the data layer of Heidrun. The package was named `data_layer_chat_sessions` until [issue 569](https://github.com/heidrun-org/heidrun/issues/569) added the coding agent configuration. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 463](https://github.com/heidrun-org/heidrun/issues/463). The name `data_layer_coding_agents` is the name of the package and the name of the executable. A chat session is what the rest of Heidrun calls a chat.
 
 ## What it contains
 
 - `src/lib.rs`: the public interface of the library.
 - `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `data_layer_coding_agents`.
-- `src/coding_agents/`: the reading of the chat session files of Claude Code and of Codex. The desktop application uses this folder to list its Past chats sidebar section.
-- `src/storage/`: the SQLite file. The file `database.rs` holds the file and its five tables. The file `query_formatter.rs` writes the rows of a query as a text table or as JSON.
-- `src/model/`: the facts. The file `types.rs` holds the data shapes. The file `schemas.rs` checks a chat session against its JSON schema.
+- `src/coding_agents/`: the reading of the chat session files of Claude Code and of Codex, and of the coding agent configuration. The desktop application uses this folder to list its Past chats sidebar section.
+- `src/storage/`: the SQLite file. The file `database.rs` holds the five tables of the chat sessions, and the file `configuration_database.rs` holds the three tables of the coding agent configuration. The file `query_formatter.rs` writes the rows of a query as a text table or as JSON.
+- `src/model/`: the facts. The file `types.rs` holds the data shapes. The file `schemas.rs` checks each row against its JSON schema.
 - `src/repository_finder.rs`: finds the root and the repository `owner/name` of a folder. It is the only code that runs the command `git`.
 - `src/synchronization.rs`: the two modes, `initialize` and `update`.
-- `schemas/`: the file `chat_session.schema.json`. It is the only place that says which facts the column `data` stores.
+- `schemas/`: the files `chat_session.schema.json`, `memory_file.schema.json`, `subagent.schema.json`, and `skill.schema.json`. They are the only place that says which facts the column `data` stores.
 - `tests/`: the tests of the executable, with fake folders of the two coding agents. The tests of the library sit at the end of each source file.
 
 ## Command line
@@ -45,11 +45,12 @@ How the two modes work:
 - `update` reads again the chat session files that changed at the date of the last read or later, and adds or changes only these rows.
 - The date of the last read is the largest value of the column `updatedAt` of the table `chat_sessions`, for the repository. The package keeps no other state. When the table has no row for the repository, `update` reads everything, as `initialize` does.
 - Each mode can run again and again. A row that is already in the table is replaced, with its link rows, and no row is written two times.
-- The command prints a report of two lines on the standard output. It exits with code 1 and prints an error message on the standard error output when it fails.
+- Both modes read every memory file, subagent, and skill, because they are few. A row whose file is gone is not deleted: its field `removedAt` takes the date of the read.
+- The command prints a report of three lines on the standard output. It exits with code 1 and prints an error message on the standard error output when it fails.
 
 ## The database
 
-The SQLite file has five tables. The table `chat_sessions` has one row for each chat session, with these four columns, and no other column:
+The SQLite file has eight tables. The table `chat_sessions` has one row for each chat session, with these four columns, and no other column:
 
 | Column | Content |
 | --- | --- |
@@ -70,6 +71,18 @@ The four link tables hold what each chat session is linked to, one row for each 
 | `chat_session_files` | `path` | The files that the coding agent wrote. |
 
 The columns `repository` and `issueNumber` of `chat_session_issues` join the columns `repository` and `number` of the table `issues` of `data_layer_code_hosting`, in the same SQLite file. The columns of `chat_session_pull_requests` join the table `pull_requests` the same way.
+
+### The coding agent configuration
+
+The three tables `memory_files`, `subagents`, and `skills` have the same four columns as `chat_sessions`. The column `id` is the absolute path of the file, or of the folder of a skill, so it joins the column `path` of `chat_session_files`: the chat sessions that wrote the file. The column `data` holds the facts of the header of the file, never its body.
+
+| Table | Folders | Facts of the column `data` |
+| --- | --- | --- |
+| `memory_files` | `~/.claude/projects/<project folder>/memory/*.md` | The name, the description, the type (`user`, `feedback`, `project`, or `reference`), and `originChatSessionId`, the chat session that wrote it. |
+| `subagents` | `.claude/agents/*.md` of the repository and of `~/.claude` | The name and the description. |
+| `skills` | The folders with a `SKILL.md` in `.claude/skills` and `.agents/skills` of the repository, `~/.claude/skills`, `~/.codex/skills`, and `~/.agents/skills` | The name and the description. |
+
+Every row also has the coding agent (`CLAUDE_CODE`, `CODEX`, or `null` for a folder `.agents`), the scope (`PROJECT` or `USER`), the folder, and the dates `createdAt`, `updatedAt`, and `removedAt`. The words are in the [glossary](../../../docs/agents_rules/glossary/coding_agent_configuration.md).
 
 ## Query
 

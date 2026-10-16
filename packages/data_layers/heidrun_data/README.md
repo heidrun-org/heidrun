@@ -24,7 +24,7 @@ Run the command from the root of the repository, with the npm script `data_layer
 ```sh
 pnpm --silent data_layer sources --format jsonl
 pnpm --silent data_layer update --format jsonl
-pnpm --silent data_layer update chat_sessions code_hosting --format jsonl
+pnpm --silent data_layer update coding_agents code_hosting --format jsonl
 pnpm --silent data_layer query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
 pnpm --silent data_layer --help
 ```
@@ -43,7 +43,7 @@ pnpm --silent data_layer --help
 | `--database <path>` | all | The SQLite file. The default is `~/.config/heidrun/data_layer.sqlite`. |
 | `--format <name>` | all | `jsonl`, `json`, or `table`. The default is `table` at a terminal and `jsonl` in a pipe. `--json` is the same as `--format json`. |
 | `--verbose` | all | Prints the progress on the standard error output. |
-| `--repository <owner/name>` | `update`, `initialize` | The name of the repository, for `source_control`, `code_hosting`, and `chat_sessions`. |
+| `--repository <owner/name>` | `update`, `initialize` | The name of the repository, for `source_control`, `code_hosting`, and `coding_agents`. |
 | `--folder <path>` | `update`, `initialize` | The folder of the Git repository, for the same three sources. |
 | `--file <path>` | `update`, `initialize` | The file of the user activity records, for `user_activity`. |
 
