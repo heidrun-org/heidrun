@@ -1,11 +1,11 @@
 # The four data layers
 
 - Created: 15 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained description of the four data layers
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: chats](../agents_rules/glossary/chats.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464), [issue 564](https://github.com/heidrun-org/heidrun/issues/564)
 
 This file says what we mean by a data layer, and describes the four data layers of Heidrun. The two files [user_activity_statistics.md](user_activity_statistics.md) and [work_of_one_person_statistics.md](work_of_one_person_statistics.md) describe the statistics that read them.
 
@@ -39,7 +39,7 @@ The mode `update` of each data layer reads only what is new:
 - Each data layer creates and writes only its own tables.
 - The tables join each other in one way only. The columns `repository` and `issueNumber` of `chat_session_issues` join the columns `repository` and `number` of `issues`. The table `chat_session_pull_requests` joins `pull_requests` the same way. The text `Fixes #N` in the field `body` of a pull request is the only link from a pull request to its issue, because the field `closingIssuesReferences` of GitHub is empty here.
 - A user activity record holds the folder of a workspace and not the name of a repository, so `user_activity_records` joins no other table.
-- The data layers set no waiting time on the file, so two writes at the same time fail with the error "database is locked". The desktop application takes one lock, in `packages/apps/desktop_tauri/src/data_layer_lock.rs`, before each command that writes the file.
+- The data layers set no waiting time on the file, so two writes at the same time fail with the error "database is locked". The desktop application takes one lock, in `packages/apps/desktop_tauri/src/data_layer_lock.rs`, before each command that writes the file. The command `heidrun_data update` does not take this lock yet: a later step of [issue 564](https://github.com/heidrun-org/heidrun/issues/564) moves the lock into the library of `heidrun_data`.
 
 ## The rules that the four data layers share
 
@@ -48,6 +48,7 @@ The mode `update` of each data layer reads only what is new:
 - Each data layer has the modes `initialize` and `update`, and the read-only command `query`. A mode can run again and again, and never writes a row two times. The command `query` opens the file read only, so it never changes the file and never creates it.
 - Each data layer is a Rust library and a command line tool. The script `pnpm --silent data_layer:<name>` at the root of the repository runs the command line tool, and the script `pnpm --filter <package> test` runs the tests. The calls of the library are blocking.
 - No data layer imports another data layer. They share the SQLite file only.
+- The package [`heidrun_data`](../../packages/data_layers/heidrun_data/README.md) is not a data layer. It is one command line for a coding agent that calls the four libraries: `update` and `initialize` of every source or of the sources given, `query` with a default `LIMIT`, and `sources`, with the output formats `jsonl`, `json`, and `table`. The script `pnpm --silent data_layer` runs it. It is the only package that imports more than one data layer ([issue 564](https://github.com/heidrun-org/heidrun/issues/564)).
 - Every data layer has the same folders: `src/model`, `src/storage`, the folder that reads the source, `src/synchronization.rs`, `schemas`, and `tests`.
 
 ## How Heidrun uses the four data layers
