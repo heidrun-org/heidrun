@@ -1,11 +1,11 @@
-# data_layer_chat_sessions
+# data_layer_coding_agents
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 463](https://github.com/heidrun-org/heidrun/issues/463). The name `data_layer_chat_sessions` is the name of the package and the name of the executable. A chat session is what the rest of Heidrun calls a chat.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The data layer as a whole is [issue 452](https://github.com/heidrun-org/heidrun/issues/452), and this package comes from [issue 463](https://github.com/heidrun-org/heidrun/issues/463). The name `data_layer_coding_agents` is the name of the package and the name of the executable. A chat session is what the rest of Heidrun calls a chat.
 
 ## What it contains
 
 - `src/lib.rs`: the public interface of the library.
-- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `data_layer_chat_sessions`.
+- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `data_layer_coding_agents`.
 - `src/coding_agents/`: the reading of the chat session files of Claude Code and of Codex. The desktop application uses this folder to list its Past chats sidebar section.
 - `src/storage/`: the SQLite file. The file `database.rs` holds the file and its five tables. The file `query_formatter.rs` writes the rows of a query as a text table or as JSON.
 - `src/model/`: the facts. The file `types.rs` holds the data shapes. The file `schemas.rs` checks a chat session against its JSON schema.
@@ -16,14 +16,14 @@ A Rust library and a command line tool for [Heidrun](../../../README.md). Both r
 
 ## Command line
 
-Run the command from the root of the repository, with the npm script `data_layer:chat_sessions`. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer, which a program that reads the answer needs. The first run builds the executable, which takes some time. It has three commands: `initialize` and `update` fill the database, and `query` reads it. The commands `initialize` and `update` need no network and no account: they read the files of the two coding agents on this computer.
+Run the command from the root of the repository, with the npm script `data_layer:coding_agents`. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer, which a program that reads the answer needs. The first run builds the executable, which takes some time. It has three commands: `initialize` and `update` fill the database, and `query` reads it. The commands `initialize` and `update` need no network and no account: they read the files of the two coding agents on this computer.
 
 ```sh
-pnpm --silent data_layer:chat_sessions initialize                     # read everything since the beginning
-pnpm --silent data_layer:chat_sessions update                         # read only what changed since the last read
-pnpm --silent data_layer:chat_sessions update --verbose               # the same, and print the progress
-pnpm --silent data_layer:chat_sessions initialize --database /path/to/a.sqlite --folder /path/to/repository
-pnpm --silent data_layer:chat_sessions query "SELECT count(*) AS count FROM chat_sessions"
+pnpm --silent data_layer:coding_agents initialize                     # read everything since the beginning
+pnpm --silent data_layer:coding_agents update                         # read only what changed since the last read
+pnpm --silent data_layer:coding_agents update --verbose               # the same, and print the progress
+pnpm --silent data_layer:coding_agents initialize --database /path/to/a.sqlite --folder /path/to/repository
+pnpm --silent data_layer:coding_agents query "SELECT count(*) AS count FROM chat_sessions"
 ```
 
 The command runs in the folder of the package, so give a database file and a folder with absolute paths.
@@ -80,7 +80,7 @@ Each query below works on the real database.
 The chat sessions and the messages of the developer for each coding agent:
 
 ```sh
-pnpm --silent data_layer:chat_sessions query "SELECT json_extract(data, '$.codingAgent') AS coding_agent, count(*) AS chat_sessions, sum(json_extract(data, '$.userMessageCount')) AS messages
+pnpm --silent data_layer:coding_agents query "SELECT json_extract(data, '$.codingAgent') AS coding_agent, count(*) AS chat_sessions, sum(json_extract(data, '$.userMessageCount')) AS messages
 FROM chat_sessions
 GROUP BY coding_agent"
 ```
@@ -88,7 +88,7 @@ GROUP BY coding_agent"
 The five issues that the most chat sessions mention:
 
 ```sh
-pnpm --silent data_layer:chat_sessions query "SELECT issueNumber AS issue, count(*) AS chat_sessions
+pnpm --silent data_layer:coding_agents query "SELECT issueNumber AS issue, count(*) AS chat_sessions
 FROM chat_session_issues
 GROUP BY issueNumber
 ORDER BY chat_sessions DESC, issue DESC
@@ -98,7 +98,7 @@ LIMIT 5"
 The output tokens of each model:
 
 ```sh
-pnpm --silent data_layer:chat_sessions query "SELECT json_extract(tokens.value, '$.model') AS model, sum(json_extract(tokens.value, '$.output')) AS output_tokens
+pnpm --silent data_layer:coding_agents query "SELECT json_extract(tokens.value, '$.model') AS model, sum(json_extract(tokens.value, '$.output')) AS output_tokens
 FROM chat_sessions, json_each(json_extract(chat_sessions.data, '$.tokens')) AS tokens
 GROUP BY model
 ORDER BY output_tokens DESC"
@@ -107,7 +107,7 @@ ORDER BY output_tokens DESC"
 ## Tests
 
 ```sh
-pnpm --filter data_layer_chat_sessions test
+pnpm --filter data_layer_coding_agents test
 ```
 
 The command runs `cargo test`. The tests of the executable use fake folders of the two coding agents, given by the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, and a real Git repository with a fake remote `origin`, so they need no network and no account.

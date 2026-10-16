@@ -1,9 +1,9 @@
-//! The arguments of the command line `data_layer_chat_sessions`.
+//! The arguments of the command line `data_layer_coding_agents`.
 
-use data_layer_chat_sessions::SynchronizationMode;
+use data_layer_coding_agents::SynchronizationMode;
 
 /// The text of the option `--help`.
-pub const HELP: &str = r#"Usage: data_layer_chat_sessions <command> [options]
+pub const HELP: &str = r#"Usage: data_layer_coding_agents <command> [options]
 
 Reads the chat sessions that Claude Code and Codex saved for a repository, and writes
 them in a SQLite file. The table "chat_sessions" has one row for each chat session, with
@@ -44,10 +44,10 @@ Exit codes:
   1   An error happened. The message is on the standard error output.
 
 Examples:
-  $ data_layer_chat_sessions initialize
-  $ data_layer_chat_sessions update --verbose
-  $ data_layer_chat_sessions query "SELECT id, json_extract(data, '$.title') AS title FROM chat_sessions LIMIT 5"
-  $ data_layer_chat_sessions query --json "SELECT count(*) AS count FROM chat_session_issues"
+  $ data_layer_coding_agents initialize
+  $ data_layer_coding_agents update --verbose
+  $ data_layer_coding_agents query "SELECT id, json_extract(data, '$.title') AS title FROM chat_sessions LIMIT 5"
+  $ data_layer_coding_agents query --json "SELECT count(*) AS count FROM chat_session_issues"
 "#;
 
 /// What the arguments ask for.

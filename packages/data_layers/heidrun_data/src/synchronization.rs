@@ -176,13 +176,13 @@ fn synchronize_code_hosting(
     })
 }
 
-/// Reads the chat sessions of Claude Code and of Codex, with `data_layer_chat_sessions`.
+/// Reads the chat sessions of Claude Code and of Codex, with `data_layer_coding_agents`.
 fn synchronize_chat_sessions(
     mode: SynchronizationMode,
     options: &SynchronizationOptions,
     log: &dyn Fn(&str),
 ) -> Result<SourceReport, String> {
-    use data_layer_chat_sessions as layer;
+    use data_layer_coding_agents as layer;
     if !options.folder.is_dir() {
         return Err(format!("The folder {} does not exist.", options.folder.display()));
     }

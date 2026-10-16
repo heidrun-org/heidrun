@@ -1,4 +1,4 @@
-# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/model`
+# Directory Context: `/packages/data_layers/data_layer_coding_agents/src/model`
 
 ## Purpose
 Holds the facts that the package stores, and the JSON schema check that guards them.
@@ -6,7 +6,7 @@ Holds the facts that the package stores, and the JSON schema check that guards t
 ## Key Exports & Entry Points
 - `types.rs`: `ChatSession`, `ChatSessionRelations`, `ChatSessionRecord`, `ModelTokens`, `CodingAgent`, `ChatSessionTable`, `SynchronizationMode`, `SynchronizationReport`, and `QueryRow`.
 - `schemas.rs`: `validate_chat_session_value`, and the checked conversion that `src/storage/database.rs` calls.
-- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+- Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
 - Nothing here imports from `src/coding_agents/` or from `src/storage/`.

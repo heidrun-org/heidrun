@@ -1,9 +1,9 @@
-//! The command line `data_layer_chat_sessions`: the commands initialize, update, and query.
+//! The command line `data_layer_coding_agents`: the commands initialize, update, and query.
 
 mod command_line;
 
 use command_line::{parse, Parsed, QueryRequest, SynchronizationRequest, HELP};
-use data_layer_chat_sessions::{
+use data_layer_coding_agents::{
     claude_dir, codex_home, default_database_path, describe_since, find_repository, find_root, ignore_log, synchronize,
     to_json, to_table, ChatSessionsDatabase,
 };

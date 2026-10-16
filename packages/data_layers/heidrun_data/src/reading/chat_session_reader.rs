@@ -1,8 +1,8 @@
 //! Reads the records of one chat session file of Claude Code or of Codex, found with the library of
-//! `data_layer_chat_sessions`, which also opens the compressed files of Codex.
+//! `data_layer_coding_agents`, which also opens the compressed files of Codex.
 
 use crate::output::QueryRow;
-use data_layer_chat_sessions::{
+use data_layer_coding_agents::{
     find_claude_session_files, find_codex_session_files, read_lines_from, shorten, FolderScope, ScanCache, SessionFile,
 };
 use serde_json::{json, Value};

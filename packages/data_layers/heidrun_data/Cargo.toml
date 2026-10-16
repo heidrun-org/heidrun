@@ -16,7 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 # The four data layer libraries. This package is the only one that imports more than one of them.
-data_layer_chat_sessions = { path = "../data_layer_chat_sessions" }
+data_layer_coding_agents = { path = "../data_layer_coding_agents" }
 data_layer_code_hosting = { path = "../data_layer_code_hosting" }
 data_layer_source_control = { path = "../data_layer_source_control" }
 data_layer_user_activity = { path = "../data_layer_user_activity" }

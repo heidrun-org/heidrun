@@ -10,7 +10,7 @@ The command `read`: the content of one chat session, one commit, one issue, or o
 
 ## Rules
 - Nothing here opens the SQLite file, and nothing here writes a file.
-- The chat session files are found with the library of `data_layer_chat_sessions`, with the scope of the folder and of the folders below it, so a chat session of a worktree is found too.
+- The chat session files are found with the library of `data_layer_coding_agents`, with the scope of the folder and of the folders below it, so a chat session of a worktree is found too.
 - `git` runs only through the `GitRunner` of `data_layer_source_control`, and the GraphQL queries only through the `GraphqlRunner` of `data_layer_code_hosting`. The diff of a pull request is the only call of `gh` here, with `gh pr diff`.
 - GitHub only, as `data_layer_code_hosting`: the support of GitLab comes at the same time as in that package.
 

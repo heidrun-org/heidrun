@@ -500,7 +500,7 @@ fn schema_of_a_table_prints_bytes_equal_to_the_json_schema_file_of_its_package()
     let fixture = Fixture::new("schema_table");
     let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
     for (table, file) in [
-        ("chat_sessions", "data_layer_chat_sessions/schemas/chat_session.schema.json"),
+        ("chat_sessions", "data_layer_coding_agents/schemas/chat_session.schema.json"),
         ("commits", "data_layer_source_control/schemas/commit.schema.json"),
         ("issues", "data_layer_code_hosting/schemas/issue.schema.json"),
         ("pull_requests", "data_layer_code_hosting/schemas/pull_request.schema.json"),

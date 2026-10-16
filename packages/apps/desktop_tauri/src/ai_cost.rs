@@ -1,14 +1,14 @@
 //! The AI cost of the chats of one repository, for the tab "Work of one person" of the Statistics window.
 //!
 //! The cost of a chat is the estimate of `chats.rs`: the tokens of each model, at the public price of the model. The package
-//! `data_layer_chat_sessions` keeps the tokens of each chat for each hour, in UTC, so a chat that lasts several days gives its
+//! `data_layer_coding_agents` keeps the tokens of each chat for each hour, in UTC, so a chat that lasts several days gives its
 //! cost and its tokens to each hour where its requests were, and the web page cuts the hours into the days of the time zone of
 //! the computer. The web page shows the cost in US dollars, or the tokens, as the developer chooses.
 
 use crate::chats::{Chats, SortKey, SortOrder, Sorting, MAX_LIMIT};
 use crate::model_prices::PriceTable;
 use crate::person_work::parse_time;
-use data_layer_chat_sessions::{FolderScope, UNDATED_HOUR};
+use data_layer_coding_agents::{FolderScope, UNDATED_HOUR};
 use serde::Serialize;
 
 /// The name of Claude Code in the field `coding_agent`, the identifier of the coding agent in the web page.
@@ -123,7 +123,7 @@ mod tests {
     use super::*;
     use crate::chats::{AgentChats, Chat, ChatUsage};
     use crate::model_prices::ModelPrice;
-    use data_layer_chat_sessions::{ChatMeta, TokenCounts, TokensByHour, TokensByModel};
+    use data_layer_coding_agents::{ChatMeta, TokenCounts, TokensByHour, TokensByModel};
     use std::collections::BTreeMap;
 
     /// 14 October 2026, 12:00:00 in UTC, in milliseconds since 1 January 1970.

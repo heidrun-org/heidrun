@@ -136,7 +136,7 @@ fn temporary_path() -> PathBuf {
 fn read_catalog_at(path: &Path) -> Result<Vec<TableShape>, String> {
     drop(data_layer_source_control::SourceControlDatabase::open(path)?);
     drop(data_layer_code_hosting::CodeHostingDatabase::open(path)?);
-    drop(data_layer_chat_sessions::ChatSessionsDatabase::open(path)?);
+    drop(data_layer_coding_agents::ChatSessionsDatabase::open(path)?);
     drop(data_layer_user_activity::UserActivityDatabase::open(path)?);
     let connection = Connection::open(path).map_err(|error| format!("The schema cannot be read: {error}"))?;
     all_tables().into_iter().map(|(source, table)| read_table_shape(&connection, source, table)).collect()

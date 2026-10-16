@@ -1,6 +1,6 @@
 # heidrun_data
 
-A Rust library and one command line tool for [Heidrun](../../../README.md). It gives a coding agent (Claude Code, Codex, or Antigravity) the data of the [four data layers](../../../docs/statistics/the_four_data_layers.md) of Heidrun with one command, in place of four. It is not a data layer: it calls the libraries of [data_layer_source_control](../data_layer_source_control/README.md), [data_layer_code_hosting](../data_layer_code_hosting/README.md), [data_layer_chat_sessions](../data_layer_chat_sessions/README.md), and [data_layer_user_activity](../data_layer_user_activity/README.md), and adds no table to the SQLite file. The package comes from the plan of [issue 564](https://github.com/heidrun-org/heidrun/issues/564).
+A Rust library and one command line tool for [Heidrun](../../../README.md). It gives a coding agent (Claude Code, Codex, or Antigravity) the data of the [four data layers](../../../docs/statistics/the_four_data_layers.md) of Heidrun with one command, in place of four. It is not a data layer: it calls the libraries of [data_layer_source_control](../data_layer_source_control/README.md), [data_layer_code_hosting](../data_layer_code_hosting/README.md), [data_layer_coding_agents](../data_layer_coding_agents/README.md), and [data_layer_user_activity](../data_layer_user_activity/README.md), and adds no table to the SQLite file. The package comes from the plan of [issue 564](https://github.com/heidrun-org/heidrun/issues/564).
 
 ## What it contains
 

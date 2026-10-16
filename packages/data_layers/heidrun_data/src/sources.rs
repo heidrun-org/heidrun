@@ -8,7 +8,7 @@ pub enum Source {
     SourceControl,
     /// The issues and the pull requests of the GitHub repository, written by `data_layer_code_hosting`.
     CodeHosting,
-    /// The chat sessions of Claude Code and of Codex, written by `data_layer_chat_sessions`.
+    /// The chat sessions of Claude Code and of Codex, written by `data_layer_coding_agents`.
     ChatSessions,
     /// The user activity records of the developer, written by `data_layer_user_activity`.
     UserActivity,
@@ -83,7 +83,7 @@ const CHAT_SESSIONS_TABLES: &[Table] = &[
         date_column: Some("updatedAt"),
         data_schema: Some(DataSchema {
             file_name: "chat_session.schema.json",
-            text: data_layer_chat_sessions::CHAT_SESSION_SCHEMA,
+            text: data_layer_coding_agents::CHAT_SESSION_SCHEMA,
         }),
         joins: &[],
     },

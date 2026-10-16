@@ -1,4 +1,4 @@
-# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/coding_agents`
+# Directory Context: `/packages/data_layers/data_layer_coding_agents/src/coding_agents`
 
 ## Purpose
 Finds the chat session files of Claude Code and of Codex for one folder, reads what each file holds without a model, and turns it into the stored shape.
@@ -10,7 +10,7 @@ Finds the chat session files of Claude Code and of Codex for one folder, reads w
 - `session_files.rs`: `find_claude_session_files`, `find_codex_session_files`, `find_claude_agent_files`, `FolderScope`, `read_codex_titles`, and `title_of_scan`. `FolderScope` says whether the folders below the folder of the workspace count.
 - `session_reader.rs`: `read_chat_sessions`, which gives the `ChatSessionRecord` of each file.
 - `agent_homes.rs`: `claude_dir` and `codex_home`.
-- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+- Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
 - Nothing here imports from `src/storage/`. Only `session_reader.rs` imports from `src/model/`.

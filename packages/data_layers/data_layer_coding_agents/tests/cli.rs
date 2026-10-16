@@ -1,7 +1,7 @@
-//! Tests of the executable `data_layer_chat_sessions`, with fake folders of Claude Code and of Codex given by the variables
+//! Tests of the executable `data_layer_coding_agents`, with fake folders of Claude Code and of Codex given by the variables
 //! `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, and a real Git repository with the remote `origin` `fake-owner/fake-name`.
 
-use data_layer_chat_sessions::{ChatSessionTable, ChatSessionsDatabase};
+use data_layer_coding_agents::{ChatSessionTable, ChatSessionsDatabase};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, SystemTime};
@@ -39,7 +39,7 @@ fn write_file(path: &Path, text: &str, age_seconds: u64) {
 impl Fixture {
     /// Makes the folders. The repository holds two chat sessions of Claude Code (`older` and `newer`).
     fn new(name: &str) -> Self {
-        let folder = std::env::temp_dir().join(format!("data_layer_chat_sessions_cli_{name}_{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("data_layer_coding_agents_cli_{name}_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         let repository = folder.join("repository").canonicalize_or_create();
         for arguments in [vec!["init", "-q"], vec!["remote", "add", "origin", "git@github.com:fake-owner/fake-name.git"]] {
@@ -55,7 +55,7 @@ impl Fixture {
 
     /// Runs the executable with the fake folders of the coding agents.
     fn run(&self, arguments: &[&str]) -> CliResult {
-        let output = Command::new(env!("CARGO_BIN_EXE_data_layer_chat_sessions"))
+        let output = Command::new(env!("CARGO_BIN_EXE_data_layer_coding_agents"))
             .args(arguments)
             .env("CLAUDE_CONFIG_DIR", self.folder.join("claude"))
             .env("CODEX_HOME", self.folder.join("codex"))
@@ -105,7 +105,7 @@ impl CanonicalizeOrCreate for PathBuf {
 fn prints_the_help_and_exits_with_the_code_0() {
     let result = Fixture::new("help").run(&["--help"]);
     assert_eq!(result.exit_code, Some(0));
-    assert!(result.stdout.contains("Usage: data_layer_chat_sessions"));
+    assert!(result.stdout.contains("Usage: data_layer_coding_agents"));
     assert!(result.stdout.contains("initialize") && result.stdout.contains("chat_session_issues"));
 }
 

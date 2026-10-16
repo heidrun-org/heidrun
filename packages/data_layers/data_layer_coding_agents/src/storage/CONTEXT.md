@@ -1,4 +1,4 @@
-# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/storage`
+# Directory Context: `/packages/data_layers/data_layer_coding_agents/src/storage`
 
 ## Purpose
 Holds the SQLite file with its five tables, and turns the rows of a query into text.
@@ -6,7 +6,7 @@ Holds the SQLite file with its five tables, and turns the rows of a query into t
 ## Key Exports & Entry Points
 - `database.rs`: `ChatSessionsDatabase`, which writes the chat sessions with their link rows, finds a row, and runs a read-only query.
 - `query_formatter.rs`: `to_table`, `to_json`, and `NO_ROW_TEXT`.
-- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+- Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
 - Nothing here imports from `src/coding_agents/`.

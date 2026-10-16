@@ -53,9 +53,9 @@ The first read of a repository reads every pull request and every issue from Git
 
 ### The data layer that it uses
 
-The source "AI cost" uses `data_layer_chat_sessions` as a library. It does not read the SQLite file, and it does not write it, so it takes no lock. The tables `chat_sessions` and the four link tables are not read.
+The source "AI cost" uses `data_layer_coding_agents` as a library. It does not read the SQLite file, and it does not write it, so it takes no lock. The tables `chat_sessions` and the four link tables are not read.
 
-The reason: the cost needs the tokens of each hour and each model, and the table `chat_sessions` stores the tokens of each model only. The tokens of each hour are in the scan cache `~/.config/heidrun/chats_cache.json`, which the scan cache of the library holds. `data_layer_chat_sessions` stores no cost, because the cost depends on a price list that changes.
+The reason: the cost needs the tokens of each hour and each model, and the table `chat_sessions` stores the tokens of each model only. The tokens of each hour are in the scan cache `~/.config/heidrun/chats_cache.json`, which the scan cache of the library holds. `data_layer_coding_agents` stores no cost, because the cost depends on a price list that changes.
 
 ### The way of the data
 
@@ -70,7 +70,7 @@ A chat that uses a model with no known price has no cost in every hour. A line o
 
 | Part | Place |
 | --- | --- |
-| The data layers | `packages/data_layers/data_layer_source_control`, `data_layer_code_hosting`, and `data_layer_chat_sessions` |
+| The data layers | `packages/data_layers/data_layer_source_control`, `data_layer_code_hosting`, and `data_layer_coding_agents` |
 | The command `person_work_in_range` | `packages/apps/desktop_tauri/src/person_work.rs` |
 | The command `ai_cost_in_range` | `packages/apps/desktop_tauri/src/ai_cost.rs` |
 | The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |

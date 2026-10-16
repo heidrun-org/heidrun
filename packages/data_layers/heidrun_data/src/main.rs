@@ -66,8 +66,8 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
         folder: folder_of(&request.folder)?,
         repository: request.repository.clone(),
         user_activity_file: absolute_path(&request.file, || Ok(data_layer_user_activity::default_user_activity_file_path()))?,
-        claude_projects_folder: data_layer_chat_sessions::claude_dir().join("projects"),
-        codex_home: data_layer_chat_sessions::codex_home(),
+        claude_projects_folder: data_layer_coding_agents::claude_dir().join("projects"),
+        codex_home: data_layer_coding_agents::codex_home(),
     };
     let print_progress = |message: &str| eprintln!("{message}");
     let ignore_progress = |_: &str| {};
@@ -157,9 +157,9 @@ fn main_root(folder: &std::path::Path) -> PathBuf {
     let common_folder = runner.run(&["rev-parse", "--path-format=absolute", "--git-common-dir"], None);
     match common_folder.ok().map(|text| PathBuf::from(text.trim())) {
         Some(path) if path.file_name().is_some_and(|name| name == ".git") => {
-            path.parent().map(PathBuf::from).unwrap_or_else(|| data_layer_chat_sessions::find_root(folder))
+            path.parent().map(PathBuf::from).unwrap_or_else(|| data_layer_coding_agents::find_root(folder))
         }
-        _ => data_layer_chat_sessions::find_root(folder),
+        _ => data_layer_coding_agents::find_root(folder),
     }
 }
 
@@ -176,8 +176,8 @@ fn run_read(request: &ReadRequest) -> Result<(), String> {
             let records = read_chat_session(
                 &request.key,
                 &root,
-                &data_layer_chat_sessions::claude_dir().join("projects"),
-                &data_layer_chat_sessions::codex_home(),
+                &data_layer_coding_agents::claude_dir().join("projects"),
+                &data_layer_coding_agents::codex_home(),
                 request.is_full,
             )?;
             match format {

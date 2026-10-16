@@ -1,11 +1,11 @@
-# Directory Context: `/packages/data_layers/data_layer_chat_sessions`
+# Directory Context: `/packages/data_layers/data_layer_coding_agents`
 
 ## Purpose
-A Rust library and a command line tool that read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The desktop application uses the library to find the chat session files and to read what each one holds. The name `data_layer_chat_sessions` is the name of the package and the name of the executable.
+A Rust library and a command line tool that read the chat sessions that Claude Code and Codex saved for a repository, and write the facts of each one in a SQLite file. It is the Past chats source of the data layer of Heidrun. The desktop application uses the library to find the chat session files and to read what each one holds. The name `data_layer_coding_agents` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface of the library. It exports `ChatSessionsDatabase`, `synchronize`, `read_chat_sessions`, `ScanCache`, the functions that find the chat session files, `feed_claude_line`, `feed_codex_line`, `read_lines_from` (the lines of a chat session file, compressed or not), `shorten`, `to_table`, `to_json`, `find_repository`, `find_root`, `claude_dir`, `codex_home`, `default_database_path`, `CHAT_SESSION_SCHEMA` (the text of the JSON schema), and the data types.
-- `src/main.rs`: the command line, and the executable `data_layer_chat_sessions`. The module `src/command_line.rs` reads its arguments.
+- `src/main.rs`: the command line, and the executable `data_layer_coding_agents`. The module `src/command_line.rs` reads its arguments.
 - `src/coding_agents/`: the reading of the chat session files of the two coding agents — see its own CONTEXT.md.
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.
 - `src/model/`: the data types, and the JSON schema check — see its own CONTEXT.md.
@@ -13,8 +13,8 @@ A Rust library and a command line tool that read the chat sessions that Claude C
 - `src/synchronization.rs`: the two modes, `initialize` and `update`.
 - `schemas/`: the file `chat_session.schema.json`. It is the only place that says which facts the column `data` stores.
 - `tests/`: the tests of the executable, with fake folders of the coding agents. The tests of the library sit at the end of each source file, and `src/test_samples.rs` holds their sample data.
-- Command to run this folder: `pnpm --silent data_layer:chat_sessions --help`
-- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+- Command to run this folder: `pnpm --silent data_layer:coding_agents --help`
+- Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
 - The SQLite file has the table `chat_sessions` with exactly the columns `repository`, `id`, `updatedAt`, and `data`, and four link tables: `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, and `chat_session_files`. The facts are never split into more columns, and a relation is never copied into `data`.
