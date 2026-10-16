@@ -54,6 +54,14 @@ export type SavedSearch = {
   query: string;
 };
 
+/** The saved searches of the two lists of the Code hosting sidebar section (issue #607): each list has its own. */
+export type SavedSearches = {
+  /** The saved searches of the list "Issues", in the order of their buttons. */
+  issues: SavedSearch[];
+  /** The saved searches of the list "Pull requests" or "Merge requests", in the order of their buttons. */
+  requests: SavedSearch[];
+};
+
 const defaults = {
   fontId: "geist",
   fontSize: FONT_DEFAULT,
@@ -215,8 +223,8 @@ const defaults = {
   searchThisWorkspace: false,
   /** Clipboard sidebar section: the list shows the notes of every workspace, not only of the selected workspace. */
   notesShowAll: false,
-  /** Sidebar section Code hosting: the saved searches, in the order of their buttons. */
-  codeHostingSavedSearches: [] as SavedSearch[],
+  /** Sidebar section Code hosting: the saved searches of each list, in the order of their buttons. */
+  codeHostingSavedSearches: { issues: [], requests: [] } as SavedSearches,
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -280,6 +288,19 @@ function keepSavedSearches(value: unknown[]): SavedSearch[] {
   return kept;
 }
 
+/**
+ * Keeps the saved searches of each list that have a name and a search that are texts, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the saved searches of each list that can be used
+ */
+function keepSavedSearchLists(value: unknown): SavedSearches {
+  const candidate = value as Partial<Record<keyof SavedSearches, unknown>> | null;
+  return {
+    issues: keepSavedSearches(Array.isArray(candidate?.issues) ? candidate.issues : []),
+    requests: keepSavedSearches(Array.isArray(candidate?.requests) ? candidate.requests : []),
+  };
+}
+
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
 const RENAMED_SETTINGS: Record<string, string> = {
   dockedPanes: "pinnedPanes",
@@ -341,8 +362,14 @@ function load(): typeof defaults {
     }
     delete stored.leftOpen;
     delete stored.rightOpen;
+    // The saved searches were one list for the two lists of the Code hosting sidebar section. Each list has its own
+    // saved searches now (issue #607): the old list is copied into both lists, so that nothing is lost.
+    if (Array.isArray(stored.codeHostingSavedSearches)) {
+      const oldList = stored.codeHostingSavedSearches;
+      stored.codeHostingSavedSearches = { issues: oldList, requests: structuredClone(oldList) };
+    }
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
-    saved.codeHostingSavedSearches = keepSavedSearches(saved.codeHostingSavedSearches);
+    saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
     return saved;
   } catch {
     return { ...defaults };

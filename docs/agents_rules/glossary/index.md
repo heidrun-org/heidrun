@@ -14,7 +14,7 @@ This file lists the files of this folder, for agents and tools.
 - [chats.md](chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
 - [coding_agent_configuration.md](coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item.
 - [dynamic_topics.md](dynamic_topics.md): the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar.
-- [code_hosting.md](code_hosting.md): the search field and the saved search of the Code hosting sidebar section.
+- [code_hosting.md](code_hosting.md): the search line, the search field, and the saved search of the Code hosting sidebar section.
 - [status_bar.md](status_bar.md): the status bar, the status bar section, the information card, the HTML tooltip, and the Workspace status bar section.
 - [pane_focus_history.md](pane_focus_history.md): the top bar, the pane focus history, the Back button, and the Forward button.
 - [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot.

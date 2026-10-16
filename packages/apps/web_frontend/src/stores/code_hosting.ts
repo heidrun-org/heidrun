@@ -1,10 +1,12 @@
 // The Code hosting sidebar section: the open issues, and the open pull requests (GitHub) or merge requests (GitLab), of
 // the repository of the selected workspace. They are read with `gh` or `glab` through the Tauri command
 // `forge_cli_cached`, which keeps each answer on the disk for ten minutes. A refresh asks the hosting service again.
-// A search filters the two lists: `gh` takes it as it is, and for GitLab it is translated into filters.
+// Each list has its own search, its own status, and its own failure: `gh` takes a search as it is, and for GitLab it is
+// translated into filters.
 // - issue #370
 // - issue #374
 // - issue #378
+// - issue #607
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { t } from "../i18n/index";
@@ -46,8 +48,15 @@ export type CodeHostingItem = {
   baseBranch: string | null;
 };
 
-/** What the sidebar section shows: "idle" before the first load, "noRemote" for a repository without a remote address. */
+/**
+ * What the sidebar section shows: "idle" before the first load, "loading" while the remote address is read, "ready"
+ * when the two lists can show, "noRemote" for a repository without a remote address, and "failed" when the remote
+ * address cannot be read.
+ */
 export type CodeHostingStatus = "idle" | "loading" | "ready" | "noRemote" | "failed";
+
+/** What one list shows: "idle" before its first load, then "loading", "ready", or "failed". */
+export type CodeHostingListStatus = "idle" | "loading" | "ready" | "failed";
 
 /** The state of the Code hosting sidebar section. */
 export const codeHosting = reactive({
@@ -59,15 +68,22 @@ export const codeHosting = reactive({
   forge: null as Forge | null,
   /** The address of the repository on its hosting service, or null when it is not known yet. */
   webBase: null as string | null,
-  /** The search that the two lists show the result of, in the search language of GitHub. Empty: no search. */
-  search: "",
+  /** The search of each list, in the search language of GitHub. Empty: no search. */
+  search: { issues: "", requests: "" } as Record<CodeHostingGroup, string>,
   /** What the sidebar section shows. */
   status: "idle" as CodeHostingStatus,
-  /** The first line of the failure of `gh` or `glab`, or an empty text. */
+  /** What each list shows. */
+  listStatus: { issues: "idle", requests: "idle" } as Record<CodeHostingGroup, CodeHostingListStatus>,
+  /** The first line of the failure of `gh` or `glab` for the remote address, or an empty text. */
   error: "",
+  /** The first line of the failure of `gh` or `glab` for each list, or an empty text. */
+  listError: { issues: "", requests: "" } as Record<CodeHostingGroup, string>,
   /** The lists that are folded. */
   folded: { issues: false, requests: false } as Record<CodeHostingGroup, boolean>,
 });
+
+/** The two lists, from the top. */
+export const CODE_HOSTING_GROUPS: CodeHostingGroup[] = ["issues", "requests"];
 
 /**
  * The hosting service of a repository, from its remote address. A host that is not GitHub is read as GitLab, as
@@ -101,6 +117,9 @@ export async function readCodeHostingForge(folder: string | null): Promise<Forge
 
 /** The number of the last load: an older load that ends later does not replace the lists. */
 let lastLoad = 0;
+
+/** The number of the last load of each list: an older load of a list that ends later does not replace its items. */
+const lastListLoad: Record<CodeHostingGroup, number> = { issues: 0, requests: 0 };
 
 /** The failure of a search that GitLab cannot do. Its message is shown as it is, and says the word. */
 class CodeHostingSearchError extends Error {}
@@ -210,17 +229,19 @@ function runForge(folder: string, tool: "gh" | "glab", args: string[], isRefresh
 }
 
 /**
- * Reads the open issues and the open pull requests of a repository on GitHub. A search goes to `gh` as it is.
+ * Reads the open issues or the open pull requests of a repository on GitHub. A search goes to `gh` as it is.
  * @param folder - the folder of the repository
+ * @param group - the list to read
  * @param isRefresh - true to ask GitHub again even when a fresh answer is kept
- * @param search - the search, or an empty text for no search
- * @returns the two lists
+ * @param search - the search of this list, or an empty text for no search
+ * @returns the items of the list
  */
-async function readGithub(
+async function readGithubList(
   folder: string,
+  group: CodeHostingGroup,
   isRefresh: boolean,
   search: string,
-): Promise<{ issues: CodeHostingItem[]; requests: CodeHostingItem[] }> {
+): Promise<CodeHostingItem[]> {
   const common = [
     "--state",
     githubState(search),
@@ -229,14 +250,11 @@ async function readGithub(
     ...githubSearchArguments(search),
     "--json",
   ];
-  const [issuesAnswer, requestsAnswer] = await Promise.all([
-    runForge(folder, "gh", ["issue", "list", ...common, GITHUB_ISSUE_FIELDS], isRefresh),
-    runForge(folder, "gh", ["pr", "list", ...common, GITHUB_PULL_REQUEST_FIELDS], isRefresh),
-  ]);
-  return {
-    issues: (JSON.parse(issuesAnswer) as GithubItem[]).map(itemOfGithub),
-    requests: (JSON.parse(requestsAnswer) as GithubItem[]).map(itemOfGithub),
-  };
+  const args =
+    group === "issues"
+      ? ["issue", "list", ...common, GITHUB_ISSUE_FIELDS]
+      : ["pr", "list", ...common, GITHUB_PULL_REQUEST_FIELDS];
+  return (JSON.parse(await runForge(folder, "gh", args, isRefresh)) as GithubItem[]).map(itemOfGithub);
 }
 
 /**
@@ -279,55 +297,84 @@ async function readGitlabList(
 }
 
 /**
- * Translates a search into the filters of GitLab for the two lists.
- * @param search - the search
- * @param login - the login of the person who is signed in, for `@me`, or null when it is not known
- * @returns the translation for the issues, and the translation for the merge requests
- */
-function translateBoth(search: string, login: string | null): Record<CodeHostingGroup, GitlabTranslation> {
-  return { issues: translateForGitlab("issues", search, login), requests: translateForGitlab("requests", search, login) };
-}
-
-/**
- * Reads the open issues and the open merge requests of a repository on GitLab. GitLab has no search language, so the
+ * Reads the open issues or the open merge requests of a repository on GitLab. GitLab has no search language, so the
  * search is translated into filters. A word that GitLab cannot do stops the reading, with a message that names it.
  * @param folder - the folder of the repository
+ * @param group - the list to read
  * @param isRefresh - true to ask GitLab again even when a fresh answer is kept
- * @param search - the search, or an empty text for no search
- * @returns the two lists
+ * @param search - the search of this list, or an empty text for no search
+ * @returns the items of the list
  */
-async function readGitlab(
+async function readGitlabGroup(
   folder: string,
+  group: CodeHostingGroup,
   isRefresh: boolean,
   search: string,
-): Promise<{ issues: CodeHostingItem[]; requests: CodeHostingItem[] }> {
+): Promise<CodeHostingItem[]> {
   // A first translation with a made-up login finds a word that GitLab cannot do before `glab` is asked for the login.
-  const firstTranslation = translateBoth(search, "login");
-  for (const translation of [firstTranslation.issues, firstTranslation.requests]) {
-    if (translation.kind === "cannot") {
-      throw new CodeHostingSearchError(t("codeHostingPanel.gitlabCannot", { word: translation.word }));
-    }
+  const firstTranslation = translateForGitlab(group, search, "login");
+  if (firstTranslation.kind === "cannot") {
+    throw new CodeHostingSearchError(t("codeHostingPanel.gitlabCannot", { word: firstTranslation.word }));
   }
   const login = usesCurrentUser(search) ? await readGitlabLogin(folder, isRefresh) : null;
-  const { issues: issuesTranslation, requests: requestsTranslation } = translateBoth(search, login);
-  const [issues, requests] = await Promise.all([
-    readGitlabList(folder, isRefresh, "issues", issuesTranslation),
-    readGitlabList(folder, isRefresh, "merge_requests", requestsTranslation),
-  ]);
-  return { issues, requests };
+  const translation = translateForGitlab(group, search, login);
+  return readGitlabList(folder, isRefresh, group === "issues" ? "issues" : "merge_requests", translation);
 }
 
 /**
- * Loads the two lists of the repository of a folder, filtered by the search `codeHosting.search`. The lists stay empty
- * and the status is "noRemote" when the repository has no remote address.
+ * Loads one list of the repository of a folder, filtered by the search of this list `codeHosting.search`. The other
+ * list does not change. The hosting service of the repository must be known: `loadCodeHosting` reads it.
+ * @param folder - the root folder of the Git repository of the selected workspace
+ * @param group - the list to load
+ * @param isRefresh - true to ask the hosting service again, and not to use the cache
+ * @returns nothing
+ */
+async function loadCodeHostingList(folder: string, group: CodeHostingGroup, isRefresh = false): Promise<void> {
+  const thisLoad = ++lastListLoad[group];
+  codeHosting[group] = [];
+  codeHosting.listError[group] = "";
+  const forge = codeHosting.forge;
+  if (forge === null) {
+    codeHosting.listStatus[group] = "idle";
+    return;
+  }
+  codeHosting.listStatus[group] = "loading";
+  try {
+    const search = codeHosting.search[group];
+    const items =
+      forge === "github"
+        ? await readGithubList(folder, group, isRefresh, search)
+        : await readGitlabGroup(folder, group, isRefresh, search);
+    if (thisLoad !== lastListLoad[group]) {
+      return;
+    }
+    codeHosting[group] = items;
+    codeHosting.listStatus[group] = "ready";
+  } catch (failure) {
+    if (thisLoad !== lastListLoad[group]) {
+      return;
+    }
+    codeHosting.listError[group] =
+      failure instanceof CodeHostingSearchError ? failure.message : String(failure).split("\n")[0].slice(0, 300);
+    codeHosting.listStatus[group] = "failed";
+  }
+}
+
+/**
+ * Loads the two lists of the repository of a folder, each one filtered by its own search. The lists stay empty and the
+ * status is "noRemote" when the repository has no remote address.
  * @param folder - the root folder of the Git repository of the selected workspace, or null when there is none
  * @param isRefresh - true after a click on "Refresh": the hosting service is asked again, and the cache is not used
  * @returns nothing
  */
 export async function loadCodeHosting(folder: string | null, isRefresh = false): Promise<void> {
   const thisLoad = ++lastLoad;
-  codeHosting.issues = [];
-  codeHosting.requests = [];
+  for (const group of CODE_HOSTING_GROUPS) {
+    lastListLoad[group] += 1;
+    codeHosting[group] = [];
+    codeHosting.listStatus[group] = "idle";
+    codeHosting.listError[group] = "";
+  }
   codeHosting.error = "";
   if (folder === null) {
     codeHosting.status = "idle";
@@ -346,36 +393,50 @@ export async function loadCodeHosting(folder: string | null, isRefresh = false):
       codeHosting.status = "noRemote";
       return;
     }
-    const search = codeHosting.search;
-    const lists =
-      forge === "github" ? await readGithub(folder, isRefresh, search) : await readGitlab(folder, isRefresh, search);
-    if (thisLoad !== lastLoad) {
-      return;
-    }
     codeHosting.forge = forge;
     codeHosting.webBase = context.base;
-    codeHosting.issues = lists.issues;
-    codeHosting.requests = lists.requests;
     codeHosting.status = "ready";
+    await Promise.all(CODE_HOSTING_GROUPS.map((group) => loadCodeHostingList(folder, group, isRefresh)));
   } catch (failure) {
     if (thisLoad !== lastLoad) {
       return;
     }
-    codeHosting.error =
-      failure instanceof CodeHostingSearchError ? failure.message : String(failure).split("\n")[0].slice(0, 300);
+    codeHosting.error = String(failure).split("\n")[0].slice(0, 300);
     codeHosting.status = "failed";
   }
 }
 
 /**
- * Runs a search: the two lists show the items that match it. An empty search shows all the open items.
+ * Runs a search in one list: this list shows the items that match it, and the other list does not change. An empty
+ * search shows all the open items.
  * @param folder - the root folder of the Git repository of the selected workspace, or null when there is none
+ * @param group - the list that the search is for
  * @param text - the search, in the search language of GitHub
  * @returns nothing
  */
-export async function searchCodeHosting(folder: string | null, text: string): Promise<void> {
-  codeHosting.search = text.trim();
-  await loadCodeHosting(folder);
+export async function searchCodeHosting(folder: string | null, group: CodeHostingGroup, text: string): Promise<void> {
+  codeHosting.search[group] = text.trim();
+  if (folder === null) {
+    return;
+  }
+  if (codeHosting.forge === null) {
+    await loadCodeHosting(folder);
+    return;
+  }
+  await loadCodeHostingList(folder, group);
+}
+
+/**
+ * The title of a list: "Issues", then "Pull requests" on GitHub or "Merge requests" on GitLab.
+ * @param group - the list
+ * @param forge - the hosting service of the repository
+ * @returns the title
+ */
+export function codeHostingGroupTitle(group: CodeHostingGroup, forge: Forge | null): string {
+  if (group === "issues") {
+    return t("codeHostingPanel.group.issues");
+  }
+  return t(forge === "gitlab" ? "codeHostingPanel.group.mergeRequests" : "codeHostingPanel.group.pullRequests");
 }
 
 /**

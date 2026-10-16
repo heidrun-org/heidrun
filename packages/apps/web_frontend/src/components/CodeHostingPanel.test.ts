@@ -104,8 +104,8 @@ beforeEach(() => {
   vi.mocked(openUrl).mockResolvedValue(undefined);
   codeHosting.folded.issues = false;
   codeHosting.folded.requests = false;
-  codeHosting.search = "";
-  settings.codeHostingSavedSearches = [];
+  codeHosting.search = { issues: "", requests: "" };
+  settings.codeHostingSavedSearches = { issues: [], requests: [] };
   savedSearchModal.open = false;
 });
 
@@ -127,18 +127,17 @@ describe("CodeHostingPanel on GitHub", () => {
     expect(headers.map((header) => header.get(".count").text())).toEqual(["2", "1"]);
   });
 
-  it("keeps the header, the search field, and the saved searches outside of the scroll area, so that only the lists scroll", async () => {
-    settings.codeHostingSavedSearches = [{ name: "Mine", query: "author:@me" }];
+  it("keeps only the header outside of the scroll area, and puts the search lines of the two lists inside of it", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Mine", query: "author:@me" }], requests: [] };
     answerGithub();
     const wrapper = await mountPanel();
     const scrollArea = wrapper.get(".scroll-area");
     const panel = wrapper.get(".code-hosting").element;
     expect(scrollArea.find("header").exists()).toBe(false);
-    expect(scrollArea.find("[role='search']").exists()).toBe(false);
-    expect(scrollArea.find("[data-saved-search]").exists()).toBe(false);
     expect(wrapper.get("header").element.parentElement).toBe(panel);
-    expect(wrapper.get("[role='search']").element.parentElement).toBe(panel);
-    expect(wrapper.get("[data-saved-search='all']").element.parentElement?.parentElement).toBe(panel);
+    expect(wrapper.findAll("[role='search']")).toHaveLength(2);
+    expect(scrollArea.findAll("[role='search']")).toHaveLength(2);
+    expect(scrollArea.findAll("[data-saved-search='all']")).toHaveLength(1);
     expect(scrollArea.findAll(".group")).toHaveLength(2);
   });
 
@@ -264,6 +263,38 @@ describe("CodeHostingPanel on GitHub", () => {
     expect(card).toContain("jeromeetienne opened this issue");
   });
 
+  it("shows in the card the repository line with the two buttons, then the whole title with its number, then the state", async () => {
+    answerGithub();
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    const card = wrapper.get(".popover");
+    const line = card.get("[data-reference-repository-line]");
+    expect(line.text()).toBe("team/app on Oct 13");
+    expect(line.get("a").attributes("href")).toBe("https://example.com/team/app");
+    expect(line.element.parentElement?.querySelectorAll(".btn-group button")).toHaveLength(2);
+    expect(card.get("[data-reference-title]").text()).toBe("Add the Code hosting sidebar section #370");
+    expect(card.get(".badge.state").classes()).toContain("state-open");
+    await line.get("a").trigger("click");
+    expect(openUrl).toHaveBeenCalledWith("https://example.com/team/app");
+  });
+
+  it("shows the number of a merge request of GitLab after its title in the card", async () => {
+    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+    vi.mocked(invoke).mockImplementation(async (_command, payload) => {
+      const { args } = payload as { args: string[] };
+      return JSON.stringify(
+        args[1].startsWith("projects/:fullpath/issues")
+          ? []
+          : [{ iid: 5, title: "A merge request", web_url: "https://gitlab.com/t/a/-/merge_requests/5", author: { username: "eric" } }],
+      );
+    });
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    expect(wrapper.get(".popover [data-reference-title]").text()).toBe("A merge request !5");
+  });
+
   it("reads a pull request with gh pr view when its card opens", async () => {
     answerGithub();
     const wrapper = await mountPanel();
@@ -271,6 +302,76 @@ describe("CodeHostingPanel on GitHub", () => {
     await flushPromises();
     const call = vi.mocked(invoke).mock.calls.find(([, payload]) => (payload as { args: string[] }).args[1] === "view");
     expect(call?.[1]).toMatchObject({ args: expect.arrayContaining(["pr", "view", "371"]) });
+  });
+
+  /** Answers like `answerGithub`, except that the details of an item wait until the test calls `finish`. */
+  function answerDetailsLater() {
+    answerGithub();
+    const answerAll = vi.mocked(invoke).getMockImplementation();
+    const control = { finish: () => {} };
+    vi.mocked(invoke).mockImplementation(async (command, payload) => {
+      const { args } = payload as { args: string[] };
+      if (args[1] === "view") {
+        await new Promise<void>((resolve) => {
+          control.finish = resolve;
+        });
+      }
+      return answerAll?.(command, payload);
+    });
+    return control;
+  }
+
+  const busyWheel = "[data-information-card-busy]";
+
+  it("opens the card with everything in it at its first appearance when the details come at once, with no wheel and no Loading", async () => {
+    answerGithub();
+    const wrapper = await mountPanel();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await vi.advanceTimersByTimeAsync(0);
+    const card = wrapper.get(".popover").text();
+    expect(card).toContain("The lists are raw.");
+    expect(card).toContain("jeromeetienne opened this issue");
+    expect(card).not.toContain("Loading");
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(wrapper.find(busyWheel).exists()).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("does not open the card while the details are read, shows a wheel on the row after 0.3 second, and opens the full card at the end", async () => {
+    const control = answerDetailsLater();
+    const wrapper = await mountPanel();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const row = wrapper.findAll(".information-card-part")[0];
+    await row.trigger("click");
+    await vi.advanceTimersByTimeAsync(299);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    expect(wrapper.find(busyWheel).exists()).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(row.find(busyWheel).attributes("aria-label")).toBe("Reading the details of #370");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(busyWheel).exists()).toBe(false);
+    const card = wrapper.get(".popover").text();
+    expect(card).toContain("The lists are raw.");
+    expect(card).not.toContain("Loading");
+    vi.useRealTimers();
+  });
+
+  it("cancels the opening of the card at a second click on the row, and shows no card when the details come later", async () => {
+    const control = answerDetailsLater();
+    const wrapper = await mountPanel();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const row = wrapper.findAll(".information-card-part")[0];
+    await row.trigger("click");
+    await vi.advanceTimersByTimeAsync(300);
+    await row.trigger("click");
+    expect(wrapper.find(busyWheel).exists()).toBe(false);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    vi.useRealTimers();
   });
 
   it("folds and unfolds a list after a click on its header, and keeps the other list", async () => {
@@ -283,6 +384,22 @@ describe("CodeHostingPanel on GitHub", () => {
     expect(wrapper.findAll(".item")).toHaveLength(1);
     await toggle.trigger("click");
     expect(wrapper.findAll(".item")).toHaveLength(3);
+  });
+
+  it("folds and unfolds a list after a click anywhere on its header: the empty space, the badge, the title, and the arrow", async () => {
+    answerGithub();
+    const wrapper = await mountPanel();
+    const header = groupOf(wrapper, "issues").get(".group-header");
+    for (const part of [header, header.get(".count"), header.get(".group-toggle"), header.get(".group-toggle i")]) {
+      expect(groupOf(wrapper, "issues").find("form.search").exists()).toBe(true);
+      await part.trigger("click");
+      expect(groupOf(wrapper, "issues").find("form.search").exists()).toBe(false);
+      expect(header.get(".group-toggle").attributes("aria-expanded")).toBe("false");
+      await part.trigger("click");
+      expect(groupOf(wrapper, "issues").find("form.search").exists()).toBe(true);
+      expect(header.get(".group-toggle").attributes("aria-expanded")).toBe("true");
+    }
+    expect(groupOf(wrapper, "requests").find("form.search").exists()).toBe(true);
   });
 
   it("reads the lists again, without the cache, after a click on the refresh button", async () => {
@@ -375,216 +492,521 @@ describe("CodeHostingPanel without lists", () => {
     expect(wrapper.find(".group").exists()).toBe(false);
   });
 
-  it("shows the failure of gh or glab instead of the lists", async () => {
+  it("shows the failure of gh or glab in each list, under its search line, instead of its rows", async () => {
     vi.mocked(refContext).mockResolvedValue(contextOf("github"));
     vi.mocked(invoke).mockRejectedValue("gh: not logged in");
     const wrapper = await mountPanel();
-    expect(wrapper.get(".failure").text()).toBe("gh: not logged in");
+    expect(wrapper.findAll(".failure").map((failure) => failure.text())).toEqual(["gh: not logged in", "gh: not logged in"]);
+    expect(wrapper.findAll("[data-code-hosting-item]")).toHaveLength(0);
+    expect(wrapper.findAll("form.search")).toHaveLength(2);
+  });
+
+  it("shows the failure of the remote address instead of the lists", async () => {
+    vi.mocked(refContext).mockRejectedValue("git: not a repository");
+    const wrapper = await mountPanel();
+    expect(wrapper.get(".failure").text()).toBe("git: not a repository");
     expect(wrapper.find(".group").exists()).toBe(false);
   });
 });
 
-/** The searches that `gh` received, in order: the text after `--search` of each call of `gh issue list`. */
-function issueSearches(): (string | null)[] {
+/**
+ * The searches that `gh` received for one list, in order: the text after `--search` of each call.
+ * @param command - "issue" for the list of issues, "pr" for the list of pull requests
+ */
+function searchesOf(command: "issue" | "pr"): (string | null)[] {
   return vi
     .mocked(invoke)
     .mock.calls.map(([, payload]) => (payload as { args: string[] }).args)
-    .filter((args) => args[0] === "issue" && args[1] === "list")
+    .filter((args) => args[0] === command && args[1] === "list")
     .map((args) => (args.includes("--search") ? args[args.indexOf("--search") + 1] : null));
 }
 
-/** Answers `gh` with one issue for the search "label:bug", and with none for every other search. */
+/** The searches that `gh` received for the list of issues. */
+function issueSearches(): (string | null)[] {
+  return searchesOf("issue");
+}
+
+/** The searches that `gh` received for the list of pull requests. */
+function pullRequestSearches(): (string | null)[] {
+  return searchesOf("pr");
+}
+
+/**
+ * Answers `gh` with one issue for no search, "label:bug", or "is:issue", and one pull request for no search, "is:draft", or
+ * "is:pr".
+ */
 function answerSearches() {
   vi.mocked(refContext).mockResolvedValue(contextOf("github"));
   vi.mocked(invoke).mockImplementation(async (_command, payload) => {
     const { args } = payload as { args: string[] };
     const search = args.includes("--search") ? args[args.indexOf("--search") + 1] : null;
-    if (args[0] === "issue" && (search === null || search === "label:bug")) {
+    if (args[0] === "issue" && (search === null || search === "label:bug" || search === "is:issue")) {
       return JSON.stringify([{ number: 7, title: "A bug", url: "https://github.com/o/r/issues/7", author: { login: "eric" } }]);
+    }
+    if (args[0] === "pr" && (search === null || search === "is:draft" || search === "is:pr")) {
+      return JSON.stringify([{ number: 8, title: "A change", url: "https://github.com/o/r/pull/8", author: { login: "eric" } }]);
     }
     return "[]";
   });
 }
 
-/** Writes a text in the search field and presses the key Enter. */
-async function search(wrapper: Awaited<ReturnType<typeof mountPanel>>, text: string) {
-  await wrapper.get("form.search input").setValue(text);
-  await wrapper.get("form.search").trigger("submit");
+/** The two lists of the panel by their group: "issues" or "requests". */
+type PanelWrapper = Awaited<ReturnType<typeof mountPanel>>;
+
+/** The part of the panel for one list. */
+function groupOf(wrapper: PanelWrapper, group: "issues" | "requests") {
+  return wrapper.get(`section[data-group='${group}']`);
+}
+
+/** The value of the search field of one list. */
+function fieldValue(wrapper: PanelWrapper, group: "issues" | "requests"): string {
+  return (groupOf(wrapper, group).get("form.search input").element as HTMLInputElement).value;
+}
+
+/** Writes a text in the search field of a list and presses the key Enter. */
+async function search(wrapper: PanelWrapper, group: "issues" | "requests", text: string) {
+  await groupOf(wrapper, group).get("form.search input").setValue(text);
+  await groupOf(wrapper, group).get("form.search").trigger("submit");
   await flushPromises();
 }
 
+describe("CodeHostingPanel header", () => {
+  it("keeps only the title Code hosting and the button Refresh, with no button group", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    const header = wrapper.get("header");
+    expect(header.get(".title").text()).toBe("Code hosting");
+    expect(header.findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh"]);
+    expect(header.find(".btn-group").exists()).toBe(false);
+    expect(header.find("[data-save-search]").exists()).toBe(false);
+    expect(header.find("[data-edit-saved-search]").exists()).toBe(false);
+    expect(header.get("button i").classes()[1]).toBe("bi-arrow-clockwise");
+  });
+
+  it("keeps the button Refresh for a repository without a remote address", async () => {
+    vi.mocked(refContext).mockResolvedValue({ ...contextOf("github"), base: null, forge: null });
+    const wrapper = await mountPanel();
+    expect(wrapper.get("header").findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh"]);
+  });
+});
+
+describe("CodeHostingPanel search lines", () => {
+  it("shows a search line under the title of each list, with a field named for its list", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    for (const group of ["issues", "requests"] as const) {
+      const field = groupOf(wrapper, group).get("form.search input");
+      expect(field.attributes("placeholder")).toBe("Search");
+      expect(field.attributes("title")).toBe("Write a search, for example: author:@me label:bug");
+    }
+    expect(groupOf(wrapper, "issues").get("form.search input").attributes("aria-label")).toBe("Search the issues");
+    expect(groupOf(wrapper, "requests").get("form.search input").attributes("aria-label")).toBe("Search the pull requests");
+  });
+
+  it("names the field of the second list for the merge requests on GitLab", async () => {
+    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+    vi.mocked(invoke).mockResolvedValue("[]");
+    const wrapper = await mountPanel();
+    expect(groupOf(wrapper, "requests").get("form.search input").attributes("aria-label")).toBe("Search the merge requests");
+  });
+
+  it("puts, in each list, the title, then the search line, then the saved searches, then a separator, then the rows", async () => {
+    settings.codeHostingSavedSearches = {
+      issues: [{ name: "Bugs", query: "label:bug" }],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
+    answerSearches();
+    const wrapper = await mountPanel();
+    for (const group of ["issues", "requests"] as const) {
+      const parts = Array.from(groupOf(wrapper, group).element.children).map((part) => part.classList[0]);
+      expect(parts).toEqual(["group-header", "search", "saved", "list-separator", "items"]);
+    }
+  });
+
+  it("puts the buttons Search, Save this search, and Edit the saved search at the right of the field, on the same line", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    for (const group of ["issues", "requests"] as const) {
+      const form = groupOf(wrapper, group).get("form.search");
+      expect(Array.from(form.element.children).map((part) => part.tagName)).toEqual(["INPUT", "BUTTON", "BUTTON", "BUTTON"]);
+      expect(form.findAll("button").map((button) => button.attributes("aria-label"))).toEqual([
+        "Search",
+        "Save this search",
+        "Edit the saved search",
+      ]);
+      expect(form.findAll("button i").map((icon) => icon.classes()[1])).toEqual(["bi-search", "bi-bookmark-plus", "bi-pencil"]);
+      expect(form.findAll("button").every((button) => button.text() === "")).toBe(true);
+    }
+  });
+
+  it("shows no line of saved searches in a list that has none, and only its own saved searches in a list that has some", async () => {
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
+    answerSearches();
+    const wrapper = await mountPanel();
+    expect(groupOf(wrapper, "issues").get(".saved").findAll("button").map((button) => button.text())).toEqual(["All", "Bugs"]);
+    expect(groupOf(wrapper, "requests").find(".saved").exists()).toBe(false);
+    settings.codeHostingSavedSearches.requests.push({ name: "Drafts", query: "is:draft" });
+    await flushPromises();
+    expect(groupOf(wrapper, "requests").get(".saved").findAll("button").map((button) => button.text())).toEqual(["All", "Drafts"]);
+    expect(groupOf(wrapper, "issues").get(".saved").findAll("button").map((button) => button.text())).toEqual(["All", "Bugs"]);
+  });
+
+  it("hides the search line, the saved searches, and the separator of a folded list, and keeps them in the other list", async () => {
+    settings.codeHostingSavedSearches = {
+      issues: [{ name: "Bugs", query: "label:bug" }],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
+    answerSearches();
+    const wrapper = await mountPanel();
+    await groupOf(wrapper, "issues").get(".group-toggle").trigger("click");
+    const folded = groupOf(wrapper, "issues");
+    expect(folded.find("form.search").exists()).toBe(false);
+    expect(folded.find(".saved").exists()).toBe(false);
+    expect(folded.find(".list-separator").exists()).toBe(false);
+    expect(groupOf(wrapper, "requests").find("form.search").exists()).toBe(true);
+    expect(groupOf(wrapper, "requests").find(".saved").exists()).toBe(true);
+    await folded.get(".group-toggle").trigger("click");
+    expect(groupOf(wrapper, "issues").find("form.search").exists()).toBe(true);
+  });
+
+  it("shows no search line for a repository without a remote address", async () => {
+    vi.mocked(refContext).mockResolvedValue({ ...contextOf("github"), base: null, forge: null });
+    const wrapper = await mountPanel();
+    expect(wrapper.find("form.search").exists()).toBe(false);
+  });
+});
+
 describe("CodeHostingPanel searches", () => {
-  it("shows a search field above the two lists, and no line of saved searches while there is none", async () => {
-    answerSearches();
+  /** Answers `gh` with one issue that has the label Design for no search or "label:Design", and the details of an item. */
+  function answerLabelSearches() {
+    vi.mocked(refContext).mockResolvedValue(contextOf("github"));
+    vi.mocked(invoke).mockImplementation(async (_command, payload) => {
+      const { args } = payload as { args: string[] };
+      if (args[1] === "view") {
+        return JSON.stringify({ title: "A bug", state: "OPEN", body: "", labels: [{ name: "Design", color: "1d76db" }], author: null });
+      }
+      const search = args.includes("--search") ? args[args.indexOf("--search") + 1] : null;
+      if (args[0] === "issue" && (search === null || search === "label:Design" || search === "author:@me label:Design")) {
+        return JSON.stringify([
+          { number: 7, title: "A bug", url: "https://github.com/o/r/issues/7", author: { login: "eric" }, labels: [{ name: "Design", color: "1d76db" }] },
+        ]);
+      }
+      return "[]";
+    });
+  }
+
+  it("adds the label of the card to the search field of the list at a click, and runs the search of this list at once", async () => {
+    answerLabelSearches();
     const wrapper = await mountPanel();
-    const field = wrapper.get("form.search input");
-    expect(field.attributes("placeholder")).toBe("Search");
-    expect(field.attributes("title")).toBe("Write a search, for example: author:@me label:bug");
-    expect(wrapper.get("form.search").element.compareDocumentPosition(wrapper.get(".groups").element)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
-    expect(wrapper.find(".saved").exists()).toBe(false);
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    const label = wrapper.get(".popover [data-reference-label]");
+    expect(label.text()).toBe("Design");
+    await label.trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "issues")).toBe("label:Design");
+    expect(codeHosting.search.issues).toBe("label:Design");
+    expect(issueSearches()).toEqual([null, "label:Design"]);
+    expect(pullRequestSearches()).toEqual([null]);
+    expect(wrapper.find(".popover").exists()).toBe(false);
   });
 
-  it("runs the search when the key Enter is pressed, and shows the items that gh gives for it", async () => {
+  it("removes the label from the search field at the second click on it, and runs the search of this list at once", async () => {
+    answerLabelSearches();
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    await wrapper.get(".popover [data-reference-label]").trigger("click");
+    await flushPromises();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    expect(wrapper.get(".popover [data-reference-label]").attributes("aria-pressed")).toBe("true");
+    await wrapper.get(".popover [data-reference-label]").trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "issues")).toBe("");
+    expect(codeHosting.search.issues).toBe("");
+    expect(issueSearches()).toEqual([null, "label:Design", null]);
+  });
+
+  it("keeps the other words of the search field when a label is added, and runs the whole search", async () => {
+    answerLabelSearches();
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    await groupOf(wrapper, "issues").get("form.search input").setValue("author:@me");
+    await wrapper.get(".popover [data-reference-label]").trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "issues")).toBe("author:@me label:Design");
+    expect(issueSearches()).toEqual([null, "author:@me label:Design"]);
+  });
+
+  it("puts the label in the field of the list of the card only: the other list keeps its field and its search", async () => {
+    answerLabelSearches();
+    const wrapper = await mountPanel();
+    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await flushPromises();
+    await wrapper.get(".popover [data-reference-label]").trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "requests")).toBe("");
+    expect(codeHosting.search.requests).toBe("");
+    expect(pullRequestSearches()).toEqual([null]);
+  });
+
+  it("runs the search of the list of issues when the key Enter is pressed, reads only this list, and keeps the other list", async () => {
     answerSearches();
     const wrapper = await mountPanel();
-    expect(wrapper.findAll("[data-code-hosting-item]")).toHaveLength(1);
-    await search(wrapper, "  label:other  ");
+    expect(wrapper.findAll("[data-code-hosting-item]")).toHaveLength(2);
+    await search(wrapper, "issues", "  label:other  ");
     expect(issueSearches()).toEqual([null, "label:other"]);
-    expect(codeHosting.search).toBe("label:other");
-    expect(wrapper.findAll("[data-code-hosting-item]")).toHaveLength(0);
-    expect(wrapper.findAll(".group-header").map((header) => header.get(".count").text())).toEqual(["0", "0"]);
+    expect(pullRequestSearches()).toEqual([null]);
+    expect(codeHosting.search).toEqual({ issues: "label:other", requests: "" });
+    expect(groupOf(wrapper, "issues").findAll("[data-code-hosting-item]")).toHaveLength(0);
+    expect(groupOf(wrapper, "requests").findAll("[data-code-hosting-item]")).toHaveLength(1);
+    expect(wrapper.findAll(".group-header").map((header) => header.get(".count").text())).toEqual(["0", "1"]);
   });
 
-  it("says that no item matches the search, instead of No open issue, while a search runs", async () => {
+  it("runs the search of the list of pull requests when the key Enter is pressed, reads only this list, and keeps the other list", async () => {
     answerSearches();
     const wrapper = await mountPanel();
-    await search(wrapper, "label:other");
+    await search(wrapper, "requests", "is:draft");
+    expect(pullRequestSearches()).toEqual([null, "is:draft"]);
+    expect(issueSearches()).toEqual([null]);
+    expect(codeHosting.search).toEqual({ issues: "", requests: "is:draft" });
+    expect(groupOf(wrapper, "issues").findAll("[data-code-hosting-item]")).toHaveLength(1);
+  });
+
+  it("runs the search at a click on the button Search of the list", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    await groupOf(wrapper, "requests").get("form.search input").setValue("label:other");
+    await groupOf(wrapper, "requests").get("button[data-run-search]").trigger("click");
+    await flushPromises();
+    expect(pullRequestSearches()).toEqual([null, "label:other"]);
+  });
+
+  it("says that no item matches the search in a list that runs a search, and says No open in a list that has none", async () => {
+    answerSearches();
+    const wrapper = await mountPanel();
+    await search(wrapper, "issues", "label:other");
+    await search(wrapper, "requests", "label:other");
     expect(wrapper.findAll(".empty").map((line) => line.text())).toEqual([
       "No issue matches the search.",
       "No pull request matches the search.",
     ]);
-    await search(wrapper, "");
-    await wrapper.get("form.search input").setValue("");
-    expect(wrapper.findAll(".empty").map((line) => line.text())).toEqual(["No open pull request."]);
+    await search(wrapper, "issues", "");
+    expect(wrapper.findAll(".empty").map((line) => line.text())).toEqual(["No pull request matches the search."]);
+    await search(wrapper, "requests", "");
+    vi.mocked(invoke).mockResolvedValue("[]");
+    await wrapper.get("button[aria-label='Refresh']").trigger("click");
+    await flushPromises();
+    expect(wrapper.findAll(".empty").map((line) => line.text())).toEqual(["No open issue.", "No open pull request."]);
   });
 
-  it("keeps the search field and the search in place when the list is refreshed", async () => {
+  it("keeps the search field and the search of each list in place when the lists are refreshed", async () => {
     answerSearches();
     const wrapper = await mountPanel();
-    await search(wrapper, "label:bug");
+    await search(wrapper, "issues", "label:bug");
+    await search(wrapper, "requests", "is:draft");
     vi.mocked(invoke).mockClear();
     await wrapper.get("button[aria-label='Refresh']").trigger("click");
     await flushPromises();
     expect(issueSearches()).toEqual(["label:bug"]);
-    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("label:bug");
+    expect(pullRequestSearches()).toEqual(["is:draft"]);
+    expect(fieldValue(wrapper, "issues")).toBe("label:bug");
+    expect(fieldValue(wrapper, "requests")).toBe("is:draft");
   });
 
-  it("shows, on the title line, one button group with the buttons Save this search, Edit the saved search, and Refresh, in this order", async () => {
+  it("disables Save this search of a list while its field is empty, and while its text is already a saved search of this list", async () => {
     answerSearches();
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
     const wrapper = await mountPanel();
-    const group = wrapper.get("header .btn-group");
-    expect(group.attributes("role")).toBe("group");
-    expect(group.findAll("button").map((button) => button.attributes("aria-label"))).toEqual([
-      "Save this search",
-      "Edit the saved search",
-      "Refresh",
-    ]);
-    expect(group.findAll("button i").map((icon) => icon.classes()[1])).toEqual(["bi-bookmark-plus", "bi-pencil", "bi-arrow-clockwise"]);
-    expect(wrapper.get("header .title").text()).toBe("Code hosting");
+    const save = (group: "issues" | "requests") => groupOf(wrapper, group).get("button[data-save-search]");
+    expect(save("issues").attributes("disabled")).toBeDefined();
+    await groupOf(wrapper, "issues").get("form.search input").setValue("author:@me");
+    expect(save("issues").attributes("disabled")).toBeUndefined();
+    await groupOf(wrapper, "issues").get("form.search input").setValue("  label:bug ");
+    expect(save("issues").attributes("disabled")).toBeDefined();
+    await groupOf(wrapper, "requests").get("form.search input").setValue("label:bug");
+    expect(save("requests").attributes("disabled")).toBeUndefined();
   });
 
-  it("keeps only the field and the button Search on the line of the search field, and only All and the saved searches on the next line", async () => {
+  it("opens the window Save this search for the list of the button, with the text of its field", async () => {
     answerSearches();
-    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
     const wrapper = await mountPanel();
-    expect(wrapper.get("form.search").findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Search"]);
-    expect(wrapper.get(".saved").findAll("button").map((button) => button.text())).toEqual(["All", "Bugs"]);
-    expect(wrapper.find(".saved .bi-pencil").exists()).toBe(false);
+    await groupOf(wrapper, "requests").get("form.search input").setValue("  is:draft -author:eric ");
+    await groupOf(wrapper, "requests").get("button[data-save-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "save", group: "requests", query: "is:draft -author:eric" });
+    await groupOf(wrapper, "issues").get("form.search input").setValue("label:bug");
+    await groupOf(wrapper, "issues").get("button[data-save-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "save", group: "issues", query: "label:bug" });
   });
 
-  it("disables Save this search while the search field is empty, and while its text is already a saved search", async () => {
+  it("disables Edit the saved search of a list while no saved search runs in it: All is pressed, or the search is not saved", async () => {
     answerSearches();
-    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
     const wrapper = await mountPanel();
-    const save = () => wrapper.get("button[data-save-search]");
-    expect(save().attributes("disabled")).toBeDefined();
-    await wrapper.get("form.search input").setValue("author:@me");
-    expect(save().attributes("disabled")).toBeUndefined();
-    await wrapper.get("form.search input").setValue("  label:bug ");
-    expect(save().attributes("disabled")).toBeDefined();
-  });
-
-  it("opens the window Save this search with the text of the search field when Save this search is clicked", async () => {
-    answerSearches();
-    const wrapper = await mountPanel();
-    await wrapper.get("form.search input").setValue("  label:bug -author:eric ");
-    await wrapper.get("button[data-save-search]").trigger("click");
-    expect(savedSearchModal).toMatchObject({ open: true, mode: "save", query: "label:bug -author:eric" });
-  });
-
-  it("disables Edit the saved search while no saved search runs: All is pressed, or the search is not saved", async () => {
-    answerSearches();
-    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
-    const wrapper = await mountPanel();
-    const edit = () => wrapper.get("button[data-edit-saved-search]");
+    const edit = () => groupOf(wrapper, "issues").get("button[data-edit-saved-search]");
     expect(edit().attributes("disabled")).toBeDefined();
-    await search(wrapper, "author:@me");
+    await search(wrapper, "issues", "author:@me");
     expect(edit().attributes("disabled")).toBeDefined();
   });
 
-  it("opens the window Edit the saved search for the saved search that runs now", async () => {
+  it("opens the window Edit the saved search for the saved search that runs now in the list of the button", async () => {
     answerSearches();
-    settings.codeHostingSavedSearches = [
-      { name: "Mine", query: "author:@me" },
-      { name: "Bugs", query: "label:bug" },
-    ];
+    settings.codeHostingSavedSearches = {
+      issues: [
+        { name: "Mine", query: "author:@me" },
+        { name: "Bugs", query: "label:bug" },
+      ],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
     const wrapper = await mountPanel();
-    await wrapper.findAll(".saved-button")[2].trigger("click");
+    await groupOf(wrapper, "issues").findAll(".saved-button")[2].trigger("click");
     await flushPromises();
-    expect(wrapper.get("button[data-edit-saved-search]").attributes("disabled")).toBeUndefined();
-    await wrapper.get("button[data-edit-saved-search]").trigger("click");
-    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", name: "Bugs" });
-  });
-
-  it("shows in the search field a search that runs from elsewhere, such as the window Save this search", async () => {
-    answerSearches();
-    const wrapper = await mountPanel();
-    codeHosting.search = "label:bug";
+    const edit = groupOf(wrapper, "issues").get("button[data-edit-saved-search]");
+    expect(edit.attributes("disabled")).toBeUndefined();
+    expect(groupOf(wrapper, "requests").get("button[data-edit-saved-search]").attributes("disabled")).toBeDefined();
+    await edit.trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", group: "issues", name: "Bugs" });
+    await groupOf(wrapper, "requests").findAll(".saved-button")[1].trigger("click");
     await flushPromises();
-    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("label:bug");
+    await groupOf(wrapper, "requests").get("button[data-edit-saved-search]").trigger("click");
+    expect(savedSearchModal).toMatchObject({ open: true, mode: "edit", group: "requests", name: "Drafts" });
   });
 
-  it("shows no button Save this search and no button Edit the saved search for a repository without a remote address", async () => {
-    vi.mocked(refContext).mockResolvedValue({ ...contextOf("github"), base: null, forge: null });
-    const wrapper = await mountPanel();
-    expect(wrapper.get("header .btn-group").findAll("button").map((button) => button.attributes("aria-label"))).toEqual(["Refresh"]);
-  });
-
-  it("fills the search field and runs the search at a click on a saved search, and runs no search at a click on All", async () => {
+  it("shows in the search field of its list a search that runs from elsewhere, such as the window Save this search", async () => {
     answerSearches();
-    settings.codeHostingSavedSearches = [
-      { name: "Bugs", query: "label:bug" },
-      { name: "Mine", query: "author:@me" },
-    ];
     const wrapper = await mountPanel();
-    const buttons = wrapper.findAll(".saved-button");
+    codeHosting.search.requests = "is:draft";
+    await flushPromises();
+    expect(fieldValue(wrapper, "requests")).toBe("is:draft");
+    expect(fieldValue(wrapper, "issues")).toBe("");
+  });
+
+  it("fills the search field of the list and runs the search of this list at a click on a saved search or on All", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = {
+      issues: [
+        { name: "Bugs", query: "label:bug" },
+        { name: "Mine", query: "author:@me" },
+      ],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
+    const wrapper = await mountPanel();
+    const buttons = groupOf(wrapper, "issues").findAll(".saved-button");
     expect(buttons.map((button) => button.text())).toEqual(["All", "Bugs", "Mine"]);
     expect(buttons[1].attributes("title")).toBe("label:bug");
     await buttons[2].trigger("click");
     await flushPromises();
-    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("author:@me");
-    await wrapper.findAll(".saved-button")[0].trigger("click");
+    expect(fieldValue(wrapper, "issues")).toBe("author:@me");
+    expect(fieldValue(wrapper, "requests")).toBe("");
+    await groupOf(wrapper, "issues").findAll(".saved-button")[0].trigger("click");
     await flushPromises();
-    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("");
-    expect(issueSearches()).toEqual([null, "author:@me", null]);
+    expect(fieldValue(wrapper, "issues")).toBe("is:issue");
+    expect(issueSearches()).toEqual([null, "author:@me", "is:issue"]);
+    expect(pullRequestSearches()).toEqual([null]);
+    await groupOf(wrapper, "requests").findAll(".saved-button")[1].trigger("click");
+    await flushPromises();
+    expect(pullRequestSearches()).toEqual([null, "is:draft"]);
+    expect(issueSearches()).toEqual([null, "author:@me", "is:issue"]);
   });
 
-  it("marks the saved search that runs now, and All when no search runs", async () => {
+  it("writes is:issue in the search field of the issues, and is:pr in the search field of the pull requests, at a click on All", async () => {
     answerSearches();
-    settings.codeHostingSavedSearches = [{ name: "Bugs", query: "label:bug" }];
+    settings.codeHostingSavedSearches = {
+      issues: [{ name: "Bugs", query: "label:bug" }],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
     const wrapper = await mountPanel();
-    expect(wrapper.findAll(".saved-button").map((button) => button.attributes("aria-pressed"))).toEqual(["true", "false"]);
-    await wrapper.findAll(".saved-button")[1].trigger("click");
+    await search(wrapper, "issues", "label:bug");
+    await search(wrapper, "requests", "is:draft");
+    await groupOf(wrapper, "issues").findAll(".saved-button")[0].trigger("click");
     await flushPromises();
-    expect(wrapper.findAll(".saved-button").map((button) => button.attributes("aria-pressed"))).toEqual(["false", "true"]);
-    expect(wrapper.findAll(".saved-button")[1].classes()).toContain("active");
+    await groupOf(wrapper, "requests").findAll(".saved-button")[0].trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "issues")).toBe("is:issue");
+    expect(fieldValue(wrapper, "requests")).toBe("is:pr");
+    expect(codeHosting.search).toEqual({ issues: "is:issue", requests: "is:pr" });
+    expect(issueSearches()).toEqual([null, "label:bug", "is:issue"]);
+    expect(pullRequestSearches()).toEqual([null, "is:draft", "is:pr"]);
+    expect(groupOf(wrapper, "issues").findAll("[data-code-hosting-item]")).toHaveLength(1);
   });
 
-  it("shows the message of GitLab for a word that it cannot do, and keeps the search field", async () => {
+  it("presses All when the search is empty, and when the search is the one that All writes, and says No open for an empty list", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [] };
+    const wrapper = await mountPanel();
+    const all = () => groupOf(wrapper, "issues").get("[data-saved-search='all']");
+    expect(all().attributes("aria-pressed")).toBe("true");
+    await search(wrapper, "issues", "label:other");
+    expect(all().attributes("aria-pressed")).toBe("false");
+    expect(groupOf(wrapper, "issues").get(".empty").text()).toBe("No issue matches the search.");
+    await all().trigger("click");
+    await flushPromises();
+    expect(all().attributes("aria-pressed")).toBe("true");
+    expect(all().classes()).toContain("active");
+    await search(wrapper, "issues", "is:issue");
+    expect(all().attributes("aria-pressed")).toBe("true");
+  });
+
+  it("writes no search at a click on All for a repository on GitLab, because GitLab cannot read is:issue", async () => {
+    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+    vi.mocked(invoke).mockResolvedValue("[]");
+    settings.codeHostingSavedSearches = { issues: [{ name: "Bugs", query: "label:bug" }], requests: [{ name: "Drafts", query: "is:draft" }] };
+    const wrapper = await mountPanel();
+    await search(wrapper, "issues", "label:bug");
+    await search(wrapper, "requests", "is:draft");
+    await groupOf(wrapper, "issues").get("[data-saved-search='all']").trigger("click");
+    await groupOf(wrapper, "requests").get("[data-saved-search='all']").trigger("click");
+    await flushPromises();
+    expect(fieldValue(wrapper, "issues")).toBe("");
+    expect(fieldValue(wrapper, "requests")).toBe("");
+    expect(groupOf(wrapper, "issues").find(".failure").exists()).toBe(false);
+    expect(groupOf(wrapper, "requests").find(".failure").exists()).toBe(false);
+  });
+
+  it("marks the saved search that runs now in its list, and All when no search runs in this list", async () => {
+    answerSearches();
+    settings.codeHostingSavedSearches = {
+      issues: [{ name: "Bugs", query: "label:bug" }],
+      requests: [{ name: "Drafts", query: "is:draft" }],
+    };
+    const wrapper = await mountPanel();
+    const pressed = (group: "issues" | "requests") =>
+      groupOf(wrapper, group)
+        .findAll(".saved-button")
+        .map((button) => button.attributes("aria-pressed"));
+    expect(pressed("issues")).toEqual(["true", "false"]);
+    await groupOf(wrapper, "issues").findAll(".saved-button")[1].trigger("click");
+    await flushPromises();
+    expect(pressed("issues")).toEqual(["false", "true"]);
+    expect(pressed("requests")).toEqual(["true", "false"]);
+    expect(groupOf(wrapper, "issues").findAll(".saved-button")[1].classes()).toContain("active");
+  });
+
+  it("shows the message of GitLab for a word that it cannot do in the list of the search only, and keeps the search line", async () => {
     vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
     vi.mocked(invoke).mockResolvedValue("[]");
     const wrapper = await mountPanel();
-    await search(wrapper, "mentions:@me");
-    expect(wrapper.get(".failure").text()).toBe("GitLab cannot do this search: mentions:@me");
-    expect(wrapper.find(".group").exists()).toBe(false);
-    expect((wrapper.get("form.search input").element as HTMLInputElement).value).toBe("mentions:@me");
+    await search(wrapper, "issues", "mentions:@me");
+    expect(groupOf(wrapper, "issues").get(".failure").text()).toBe("GitLab cannot do this search: mentions:@me");
+    expect(groupOf(wrapper, "requests").find(".failure").exists()).toBe(false);
+    expect(fieldValue(wrapper, "issues")).toBe("mentions:@me");
+    expect(groupOf(wrapper, "issues").find(".items").exists()).toBe(false);
   });
 
-  it("shows no search field for a repository without a remote address", async () => {
-    vi.mocked(refContext).mockResolvedValue({ ...contextOf("github"), base: null, forge: null });
+  it("shows Loading under the search line of a list while its search runs, and keeps the search line", async () => {
+    answerSearches();
     const wrapper = await mountPanel();
-    expect(wrapper.find("form.search").exists()).toBe(false);
+    let answer: (text: string) => void = () => {};
+    vi.mocked(invoke).mockImplementation(() => new Promise((resolve) => (answer = resolve)));
+    await groupOf(wrapper, "issues").get("form.search input").setValue("label:bug");
+    await groupOf(wrapper, "issues").get("form.search").trigger("submit");
+    await flushPromises();
+    expect(groupOf(wrapper, "issues").get(".empty").text()).toBe("Loading…");
+    expect(groupOf(wrapper, "issues").find("form.search").exists()).toBe(true);
+    expect(groupOf(wrapper, "requests").findAll("[data-code-hosting-item]")).toHaveLength(1);
+    answer("[]");
+    await flushPromises();
   });
 });
