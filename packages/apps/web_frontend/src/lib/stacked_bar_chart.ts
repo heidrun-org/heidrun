@@ -16,8 +16,8 @@ export type StackedBarSeries = {
 	valueTexts: string[];
 };
 
-/** The unit of the vertical axis: a count of whole items, or an amount in US dollars. */
-export type StackedBarUnit = "count" | "dollars";
+/** The unit of the vertical axis: a count of whole items, an amount in US dollars, or a number of tokens. */
+export type StackedBarUnit = "count" | "dollars" | "tokens";
 
 /** Everything that the component `StackedBarChart.vue` needs to draw one chart. */
 export type StackedBarChartContent = {

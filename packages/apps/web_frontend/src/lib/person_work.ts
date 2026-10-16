@@ -120,6 +120,32 @@ const NO_REPLY_EMAIL = /^(?:\d+\+)?([^@+]+)@users\.noreply\.github\.com$/i;
  */
 export class PersonWork {
 	/**
+	 * Joins the items of several workspaces into one set of items. Two workspaces of the same repository, for example a
+	 * folder and its worktree, read the same facts, so the repository counts once.
+	 *
+	 * @param itemsOfWorkspaces - What the command `person_work_in_range` gave for each workspace.
+	 * @returns The items of all the repositories. The repository is the names of the repositories, and the error of GitHub is
+	 * the errors of the workspaces, each one once, or `null` when no workspace has an error.
+	 */
+	static merge(itemsOfWorkspaces: PersonWorkItems[]): PersonWorkItems {
+		const items = new Map<string, PersonWorkItems>();
+		for (const candidate of itemsOfWorkspaces) {
+			if (items.has(candidate.repository) === false) {
+				items.set(candidate.repository, candidate);
+			}
+		}
+		const repositories = [...items.values()];
+		const errors = [...new Set(repositories.flatMap((one) => (one.codeHostingError === null ? [] : [one.codeHostingError])))];
+		return {
+			repository: repositories.map((one) => one.repository).join(", "),
+			commits: repositories.flatMap((one) => one.commits),
+			pullRequests: repositories.flatMap((one) => one.pullRequests),
+			issues: repositories.flatMap((one) => one.issues),
+			codeHostingError: errors.length === 0 ? null : errors.join("; "),
+		};
+	}
+
+	/**
 	 * Finds the people that appear in the items, the person with the most items first.
 	 *
 	 * @param items - The three kinds of items.

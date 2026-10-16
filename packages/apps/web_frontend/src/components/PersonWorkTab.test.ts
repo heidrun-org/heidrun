@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount, type VueWrapper } from "@vue/test-utils";
 import type { AiCostItems } from "../lib/ai_cost";
 import type { PersonWorkItems } from "../lib/person_work";
@@ -14,16 +14,32 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 const plotly = { react: vi.fn(), purge: vi.fn(), Plots: { resize: vi.fn() } };
 vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 
-/** The tab reads the repository of the selected workspace: the test chooses the folder of the workspace. */
+/** A workspace that is open in the test, as the store gives it. */
+type TestWorkspace = { workspaceId: string; label: string; folder: string };
+
+/** The tab reads the repository of an open workspace: the test chooses the open workspaces and the selected workspace. */
 vi.mock("../stores/user_activity", async () => {
   const { ref } = await import("vue");
-  return { selectedWorkspaceFolder: ref<string | null>("/work/heidrun") };
+  return { selectedWorkspaceId: ref<string | null>(null), openWorkspaces: ref<TestWorkspace[]>([]) };
 });
 
-/** Chooses the folder of the selected workspace. The module of the store is replaced by a plain reference that the test can set. */
-async function selectFolder(folder: string | null): Promise<void> {
-  const { selectedWorkspaceFolder } = await import("../stores/user_activity");
-  (selectedWorkspaceFolder as unknown as { value: string | null }).value = folder;
+/** The two workspaces that are open at the start of each test. The first one is selected. */
+const WORKSPACES: TestWorkspace[] = [
+  { workspaceId: "workspace-heidrun", label: "heidrun", folder: "/work/heidrun" },
+  { workspaceId: "workspace-mobile", label: "mobile", folder: "/work/mobile" },
+];
+
+/**
+ * Chooses the workspaces that are open, and the selected workspace. The module of the store is replaced by plain references
+ * that the test can set.
+ *
+ * @param workspaces - The workspaces that are open.
+ * @param selectedId - The identifier of the selected workspace, or `null` when no workspace is selected.
+ */
+async function openWorkspacesAre(workspaces: TestWorkspace[], selectedId: string | null = workspaces[0]?.workspaceId ?? null): Promise<void> {
+  const store = await import("../stores/user_activity");
+  (store.openWorkspaces as unknown as { value: TestWorkspace[] }).value = workspaces;
+  (store.selectedWorkspaceId as unknown as { value: string | null }).value = selectedId;
 }
 
 /** The functions that the chart registered for the events of Plotly.js, by the name of the event. */
@@ -35,7 +51,7 @@ type Drawing = {
   layout: {
     barmode: string;
     title: { text: string };
-    yaxis: { dtick?: number; tickprefix?: string };
+    yaxis: { dtick?: number; tickprefix?: string; ticksuffix?: string };
     legend: { orientation: string; x: number; y: number };
   };
 };
@@ -106,30 +122,38 @@ function sampleItems(): PersonWorkItems {
 }
 
 /**
- * Four chats: a chat of Claude Code that lasts two days (2.5 yesterday and 1.5 today), a chat of Claude Code of ten days ago
- * (3), a chat of Codex that costs 0.5 two days ago, and a chat of Codex of yesterday that has no known price.
+ * Four chats: a chat of Claude Code that lasts two days (2.5 dollars and 25,000 tokens yesterday, and 1.5 dollars and 15,000
+ * tokens today), a chat of Claude Code of ten days ago (3 dollars and 30,000 tokens), a chat of Codex that costs 0.5 dollars
+ * and used 5,000 tokens two days ago, and a chat of Codex of yesterday that has no known price and used 20,000 tokens.
  */
 function sampleAiCostItems(): AiCostItems {
   return {
     chats: [
-      { codingAgent: "claude", hours: [{ at: daysAgo(10), costUsd: 3 }] },
-      { codingAgent: "codex", hours: [{ at: daysAgo(2), costUsd: 0.5 }] },
+      { id: "chat-1", codingAgent: "claude", hours: [{ at: daysAgo(10), costUsd: 3, tokens: 30_000 }] },
+      { id: "chat-2", codingAgent: "codex", hours: [{ at: daysAgo(2), costUsd: 0.5, tokens: 5_000 }] },
       {
+        id: "chat-3",
         codingAgent: "claude",
         hours: [
-          { at: daysAgo(1), costUsd: 2.5 },
-          { at: daysAgo(0), costUsd: 1.5 },
+          { at: daysAgo(1), costUsd: 2.5, tokens: 25_000 },
+          { at: daysAgo(0), costUsd: 1.5, tokens: 15_000 },
         ],
       },
-      { codingAgent: "codex", hours: [{ at: daysAgo(1), costUsd: null }] },
+      { id: "chat-4", codingAgent: "codex", hours: [{ at: daysAgo(1), costUsd: null, tokens: 20_000 }] },
     ],
   };
 }
 
+/**
+ * The tabs that the tests of this file mounted. The tab watches the store of the workspaces, and the test replaces the store
+ * by plain references that every test shares, so a tab that stays mounted reads again when the next test changes them.
+ */
+const mountedTabs: VueWrapper[] = [];
+
 /** Mounts the tab with the items that the commands give, or with an error. A promise that never ends keeps a read pending. */
 async function mountPersonWorkTab(
-  result: PersonWorkItems | Error | Promise<never> = sampleItems(),
-  aiCost: AiCostItems | Error | Promise<never> = sampleAiCostItems(),
+  result: PersonWorkItems | Error | Promise<PersonWorkItems> = sampleItems(),
+  aiCost: AiCostItems | Error | Promise<AiCostItems> = sampleAiCostItems(),
 ) {
   invoke.mockReset();
   invoke.mockImplementation(async (command: string) => {
@@ -143,6 +167,7 @@ async function mountPersonWorkTab(
   });
   const { default: PersonWorkTab } = await import("./PersonWorkTab.vue");
   const wrapper = mount(PersonWorkTab, { attachTo: document.body });
+  mountedTabs.push(wrapper);
   await flushPromises();
   return wrapper;
 }
@@ -196,10 +221,59 @@ function aiCostPerDayOf(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>)
   return ["claude", "codex", "total"].map((id) => wrapper.get(`[data-total="${id}"] [data-per-day]`).text());
 }
 
+/** The commits, the pull requests, and the issues of the second workspace, a repository that is not the first one. */
+function mobileItems(): PersonWorkItems {
+  return {
+    repository: "heidrun-org/mobile",
+    commits: [{ authorName: "Jerome Etienne", authorEmail: "jerome@example.com", committedAt: daysAgo(1), insertions: 40, deletions: 4 }],
+    pullRequests: [{ author: "jeromeetienne", createdAt: daysAgo(2) }],
+    issues: [],
+    codeHostingError: null,
+  };
+}
+
+/** The chats of the second workspace: a chat of Codex that costs 9 dollars and used 90,000 tokens today. */
+function mobileAiCostItems(): AiCostItems {
+  return { chats: [{ id: "mobile-1", codingAgent: "codex", hours: [{ at: daysAgo(0), costUsd: 9, tokens: 90_000 }] }] };
+}
+
+/** Makes the two commands answer with the data of each folder. A folder that the answers do not hold gives an error. */
+function answerByFolder(answers: Record<string, { gitHistory: PersonWorkItems | Error; aiCost: AiCostItems | Error }>): void {
+  invoke.mockImplementation(async (command: string, parameters: { folder: string }) => {
+    const answer = answers[parameters?.folder]?.[command === "person_work_in_range" ? "gitHistory" : "aiCost"];
+    if (command !== "person_work_in_range" && command !== "ai_cost_in_range") {
+      return undefined;
+    }
+    if (answer === undefined) {
+      throw new Error(`no answer for ${parameters?.folder}`);
+    }
+    return answer instanceof Error ? Promise.reject(answer) : answer;
+  });
+}
+
+/** The checkbox of a workspace, in the buttons of the workspaces. */
+function workspaceBox(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>, workspaceId: string) {
+  return wrapper.get(`#statistics-person-workspace-${workspaceId}`);
+}
+
+/** Chooses or drops a workspace, and waits for the reads. */
+async function chooseWorkspace(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>, workspaceId: string, isChosen: boolean): Promise<void> {
+  await workspaceBox(wrapper, workspaceId).setValue(isChosen);
+  await flushPromises();
+}
+
+/** The names of the workspaces that are chosen, in the order of the buttons. */
+function chosenWorkspaceNames(wrapper: Awaited<ReturnType<typeof mountPersonWorkTab>>): string[] {
+  return wrapper
+    .findAll('input[id^="statistics-person-workspace-workspace-"]')
+    .filter((input) => (input.element as HTMLInputElement).checked)
+    .map((input) => input.element.closest("label")?.textContent?.trim() ?? "");
+}
+
 beforeEach(async () => {
   localStorage.clear();
   vi.resetModules();
-  await selectFolder("/work/heidrun");
+  await openWorkspacesAre(WORKSPACES);
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener: () => {} }));
   vi.stubGlobal(
     "ResizeObserver",
@@ -220,6 +294,12 @@ beforeEach(async () => {
   });
   plotly.purge.mockReset();
   document.body.innerHTML = "";
+});
+
+afterEach(() => {
+  for (const wrapper of mountedTabs.splice(0)) {
+    wrapper.unmount();
+  }
 });
 
 describe("PersonWorkTab", () => {
@@ -378,10 +458,11 @@ describe("PersonWorkTab", () => {
     expect(plotly.react).not.toHaveBeenCalled();
   });
 
-  it("tells that no workspace is selected, and reads nothing", async () => {
-    await selectFolder(null);
+  it("tells that no workspace is open, and reads nothing", async () => {
+    await openWorkspacesAre([]);
     const wrapper = await mountPersonWorkTab();
-    expect(wrapper.text()).toContain("No workspace is selected");
+    expect(wrapper.text()).toContain("No workspace is open");
+    expect(wrapper.find("#statistics-person-workspace").exists()).toBe(false);
     expect(personWorkCalls()).toHaveLength(0);
   });
 
@@ -491,7 +572,7 @@ describe("PersonWorkTab", () => {
   });
 
   it("does not tell about the chats with no known price when every chat has a price", async () => {
-    const wrapper = await mountPersonWorkTab(sampleItems(), { chats: [{ codingAgent: "claude", hours: [{ at: daysAgo(0), costUsd: 1 }] }] });
+    const wrapper = await mountPersonWorkTab(sampleItems(), { chats: [{ id: "chat-5", codingAgent: "claude", hours: [{ at: daysAgo(0), costUsd: 1, tokens: 100 }] }] });
     await chooseAiCost(wrapper);
     expect(wrapper.find('[data-note="without-price"]').exists()).toBe(false);
   });
@@ -529,5 +610,294 @@ describe("PersonWorkTab", () => {
     await wrapper.get("#statistics-person-source-git_history").setValue(true);
     expect(wrapper.find(".alert.theme-danger").exists()).toBe(false);
     expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
+  });
+
+  it("has a button with a checkbox for each open workspace, and only the selected workspace is chosen at first", async () => {
+    await openWorkspacesAre(WORKSPACES, "workspace-mobile");
+    const wrapper = await mountPersonWorkTab();
+    const boxes = wrapper.findAll('input[id^="statistics-person-workspace-workspace-"]');
+    expect(boxes.map((box) => box.element.closest("label")?.textContent?.trim())).toEqual(["heidrun", "mobile"]);
+    expect(boxes.every((box) => box.attributes("type") === "checkbox")).toBe(true);
+    expect(boxes.every((box) => box.element.closest("label")?.className.includes("btn-check btn-outline theme-secondary"))).toBe(true);
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["mobile"]);
+    expect(wrapper.find('[role="group"][aria-label="Workspaces"]').exists()).toBe(true);
+    expect(personWorkCalls()).toHaveLength(1);
+    expect((personWorkCalls()[0][1] as { folder: string }).folder).toBe("/work/mobile");
+  });
+
+  it("chooses the first open workspace at first when the selected workspace is not in the list", async () => {
+    await openWorkspacesAre(WORKSPACES, null);
+    const wrapper = await mountPersonWorkTab();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun"]);
+    expect((personWorkCalls()[0][1] as { folder: string }).folder).toBe("/work/heidrun");
+  });
+
+  it("shows the workspace buttons for the source AI cost too", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    expect(wrapper.find("#statistics-person-workspace-workspace-mobile").exists()).toBe(true);
+  });
+
+  it("reads the commits, the pull requests, and the issues of another workspace when only that workspace is chosen", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    await chooseWorkspace(wrapper, "workspace-heidrun", false);
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["mobile"]);
+    expect(personWorkCalls()).toHaveLength(2);
+    expect((personWorkCalls()[1][1] as { folder: string }).folder).toBe("/work/mobile");
+    expect(totalsOf(wrapper)).toEqual(["1", "1", "0", "40", "4"]);
+  });
+
+  it("adds up the work of every chosen workspace, and reads only the workspace that is new", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun", "mobile"]);
+    expect(personWorkCalls()).toHaveLength(2);
+    expect(totalsOf(wrapper)).toEqual(["4", "2", "1", "58", "10"]);
+    expect(wrapper.get("#statistics-person").findAll("option").map((option) => option.text())).toEqual(["Jerome Etienne", "Eric"]);
+  });
+
+  it("counts a repository once when two chosen workspaces read the same repository", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: sampleItems(), aiCost: sampleAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
+  });
+
+  it("chooses every workspace with the button All workspaces, and none when every workspace is chosen", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    const all = wrapper.get("#statistics-person-workspace-all");
+    expect(all.element.closest("label")?.textContent?.trim()).toBe("All workspaces");
+    expect((all.element as HTMLInputElement).checked).toBe(false);
+    await all.setValue(true);
+    await flushPromises();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun", "mobile"]);
+    expect((all.element as HTMLInputElement).checked).toBe(true);
+    await all.setValue(false);
+    await flushPromises();
+    expect(chosenWorkspaceNames(wrapper)).toEqual([]);
+  });
+
+  it("tells that no workspace is chosen, and shows no total and no chart, when every workspace is dropped", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await chooseWorkspace(wrapper, "workspace-heidrun", false);
+    expect(wrapper.text()).toContain("No workspace is chosen. Choose a workspace to see its work.");
+    expect(wrapper.find('[data-total="commits"]').exists()).toBe(false);
+    expect(wrapper.find("#statistics-person").exists()).toBe(false);
+    await chooseAiCost(wrapper);
+    expect(wrapper.text()).toContain("No workspace is chosen");
+    expect(aiCostCalls()).toHaveLength(0);
+  });
+
+  it("keeps what a workspace gave when the workspace is dropped, and does not read it again when it comes back", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    await chooseWorkspace(wrapper, "workspace-mobile", false);
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(totalsOf(wrapper)).toEqual(["4", "2", "1", "58", "10"]);
+    expect(personWorkCalls()).toHaveLength(2);
+  });
+
+  it("shows the reading in progress, and not the work, while a chosen workspace is read", async () => {
+    const wrapper = await mountPersonWorkTab();
+    invoke.mockImplementation(async () => new Promise<never>(() => {}));
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(wrapper.text()).toContain("Reading the commits, the pull requests, and the issues…");
+    expect(wrapper.find('[data-total="commits"]').exists()).toBe(false);
+  });
+
+  it("shows the error of a workspace, and still shows the work of the workspaces that were read", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: new Error("not a repository"), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(wrapper.get(".alert.theme-danger").text()).toContain("not a repository");
+    expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
+    await chooseWorkspace(wrapper, "workspace-heidrun", false);
+    expect(wrapper.get(".alert.theme-danger").text()).toContain("not a repository");
+    expect(wrapper.find('[data-total="commits"]').exists()).toBe(false);
+  });
+
+  it("reads the chats of another workspace when that workspace is chosen with the source AI cost, and adds them up", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    expect(aiCostCalls()).toHaveLength(1);
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(aiCostCalls()).toHaveLength(2);
+    expect((aiCostCalls()[1][1] as { folder: string }).folder).toBe("/work/mobile");
+    expect(aiCostTotalsOf(wrapper)).toEqual(["$4.00", "$9.50", "$13.50"]);
+    expect(personWorkCalls()).toHaveLength(1);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    expect(aiCostTotalsOf(wrapper)).toEqual(["40.00 KT", "115.00 KT", "155.00 KT"]);
+  });
+
+  it("counts a chat once when two chosen workspaces list the same chat", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    answerByFolder({ "/work/mobile": { gitHistory: sampleItems(), aiCost: sampleAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(aiCostTotalsOf(wrapper)).toEqual(["$4.00", "$0.50", "$4.50"]);
+  });
+
+  it("reads the data of a workspace only for the source that is shown, and the other source the next time that it is chosen", async () => {
+    const wrapper = await mountPersonWorkTab();
+    answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostItems() } });
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(aiCostCalls()).toHaveLength(0);
+    await chooseAiCost(wrapper);
+    expect(aiCostCalls().map((call) => (call[1] as { folder: string }).folder)).toEqual(["/work/heidrun", "/work/mobile"]);
+    await chooseWorkspace(wrapper, "workspace-mobile", false);
+    expect(personWorkCalls()).toHaveLength(2);
+    await wrapper.get("#statistics-person-source-git_history").setValue(true);
+    await flushPromises();
+    expect(personWorkCalls()).toHaveLength(2);
+    expect(aiCostCalls()).toHaveLength(2);
+  });
+
+  it("reads a folder once when two chosen workspaces have the same folder", async () => {
+    await openWorkspacesAre([...WORKSPACES, { workspaceId: "workspace-copy", label: "copy", folder: "/work/heidrun" }]);
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-workspace-all").setValue(true);
+    await flushPromises();
+    expect(personWorkCalls().map((call) => (call[1] as { folder: string }).folder)).toEqual(["/work/heidrun", "/work/mobile"]);
+  });
+
+  it("keeps the source, the unit, and the time range when the workspaces change", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect(radioGroup(wrapper, "statistics-person-period").checked).toEqual([false, true]);
+    expect(radioGroup(wrapper, "statistics-person-source").checked).toEqual([false, true]);
+    expect(radioGroup(wrapper, "statistics-person-unit").checked).toEqual([false, true]);
+  });
+
+  it("drops a workspace that closes, and chooses the first open workspace when no chosen workspace stays open", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    await openWorkspacesAre([WORKSPACES[1]], "workspace-mobile");
+    await flushPromises();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["mobile"]);
+    await openWorkspacesAre([{ workspaceId: "workspace-new", label: "new", folder: "/work/new" }], "workspace-new");
+    await flushPromises();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["new"]);
+  });
+
+  it("has a radio button group of the unit of the AI cost, with US dollars chosen at first, for the source AI cost only", async () => {
+    const wrapper = await mountPersonWorkTab();
+    expect(wrapper.find('input[name="statistics-person-unit"]').exists()).toBe(false);
+    await chooseAiCost(wrapper);
+    const group = radioGroup(wrapper, "statistics-person-unit");
+    expect(group.texts).toEqual(["US dollars", "Tokens"]);
+    expect(group.checked).toEqual([true, false]);
+    expect(group.classes.every((name) => name.includes("btn-check") && name.includes("btn-outline") && name.includes("theme-secondary"))).toBe(true);
+    await wrapper.get("#statistics-person-source-git_history").setValue(true);
+    expect(wrapper.find('input[name="statistics-person-unit"]').exists()).toBe(false);
+  });
+
+  it("shows the tokens of each coding agent and the total in the time range when Tokens is chosen, with the tokens of a chat with no known price", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    expect(aiCostTotalsOf(wrapper)).toEqual(["40.00 KT", "25.00 KT", "65.00 KT"]);
+    expect(wrapper.get('[data-total="claude"]').text()).toContain("Claude Code");
+    expect(wrapper.get('[data-total="total"]').text()).toContain("Total");
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    expect(aiCostTotalsOf(wrapper)).toEqual(["70.00 KT", "25.00 KT", "95.00 KT"]);
+  });
+
+  it("shows the average of tokens per day under each total, rounded to a whole number of tokens", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    expect(aiCostPerDayOf(wrapper)).toEqual(["5.71 KT per day", "3.57 KT per day", "9.29 KT per day"]);
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    expect(aiCostPerDayOf(wrapper)).toEqual(["2.33 KT per day", "833 per day", "3.17 KT per day"]);
+  });
+
+  it("shows the cost in US dollars again when US dollars is chosen again", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await wrapper.get("#statistics-person-unit-dollars").setValue(true);
+    expect(aiCostTotalsOf(wrapper)).toEqual(["$4.00", "$0.50", "$4.50"]);
+    expect(aiCostCalls()).toHaveLength(1);
+  });
+
+  it("draws the tokens of each day in the bars, with the same unit on every tick of the vertical axis", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().layout.title.text).toBe("Tokens of each day, for each coding agent"));
+    const { traces, layout } = lastDrawing();
+    expect(traces.map((trace) => trace.name)).toEqual(["Claude Code", "Codex"]);
+    expect(traces[0].y).toEqual([0, 0, 0, 0, 0, 25, 15]);
+    expect(traces[1].y).toEqual([0, 0, 0, 0, 5, 20, 0]);
+    expect(layout.yaxis.ticksuffix).toBe(" KT");
+    expect(layout.yaxis.tickprefix).toBeUndefined();
+    expect(wrapper.get('[role="img"]').attributes("aria-label")).toBe("Bar chart of the tokens of the chats of each coding agent, for each day");
+  });
+
+  it("draws a number of tokens under one thousand as it is, and a number of millions with the unit MT", async () => {
+    const small = { chats: [{ id: "chat-6", codingAgent: "claude", hours: [{ at: daysAgo(0), costUsd: 1, tokens: 800 }] }] };
+    const wrapper = await mountPersonWorkTab(sampleItems(), small);
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().layout.title.text).toBe("Tokens of each day, for each coding agent"));
+    expect(lastDrawing().traces[0].y).toEqual([0, 0, 0, 0, 0, 0, 800]);
+    expect(lastDrawing().layout.yaxis.ticksuffix).toBe("");
+    const large = { chats: [{ id: "chat-7", codingAgent: "claude", hours: [{ at: daysAgo(0), costUsd: 1, tokens: 3_000_000 }] }] };
+    const largeWrapper = await mountPersonWorkTab(sampleItems(), large);
+    await chooseAiCost(largeWrapper);
+    await largeWrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().layout.yaxis.ticksuffix).toBe(" MT"));
+    expect(lastDrawing().traces[0].y).toEqual([0, 0, 0, 0, 0, 0, 3]);
+  });
+
+  it("shows the day, the total, and the tokens of each coding agent that has tokens, in the chart information card", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().layout.title.text).toBe("Tokens of each day, for each coding agent"));
+    await hoverDay(5);
+    expect(cardOf(wrapper)?.total).toBe("45.00 KT");
+    expect(cardOf(wrapper)?.rows).toEqual([
+      ["Claude Code", "25.00 KT"],
+      ["Codex", "20.00 KT"],
+    ]);
+    await hoverDay(4);
+    expect(cardOf(wrapper)?.total).toBe("5.00 KT");
+    expect(cardOf(wrapper)?.rows).toEqual([["Codex", "5.00 KT"]]);
+    await hoverDay(0);
+    expect(cardOf(wrapper)?.total).toBe("0");
+    expect(cardOf(wrapper)?.rows).toEqual([]);
+  });
+
+  it("does not tell about the chats with no known price when the unit is tokens, because a chat with no known price has tokens", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    expect(wrapper.find('[data-note="without-price"]').exists()).toBe(true);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    expect(wrapper.find('[data-note="without-price"]').exists()).toBe(false);
+    await wrapper.get("#statistics-person-unit-dollars").setValue(true);
+    expect(wrapper.find('[data-note="without-price"]').exists()).toBe(true);
+  });
+
+  it("shows zero tokens, and no chart, when the time range has no chat and the unit is tokens", async () => {
+    const wrapper = await mountPersonWorkTab(sampleItems(), { chats: [] });
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    expect(wrapper.text()).toContain("No chat of a coding agent used tokens in the last 30 days.");
+    expect(aiCostTotalsOf(wrapper)).toEqual(["0", "0", "0"]);
+    expect(plotly.react).toHaveBeenCalledTimes(1);
   });
 });

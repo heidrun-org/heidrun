@@ -200,3 +200,44 @@ describe("PersonWork.compute", () => {
 		expect(result.days.every((day) => day.commitCount === 0 && day.pullRequestCount === 0)).toBe(true);
 	});
 });
+
+describe("PersonWork.merge", () => {
+	it("joins the commits, the pull requests, and the issues of several repositories", () => {
+		const heidrun = items({
+			repository: "heidrun-org/heidrun",
+			commits: [commit("Jerome", "jerome@example.com", at(12, 10), 5, 1)],
+			pullRequests: [opened("jerome", at(12, 11))],
+		});
+		const mobile = items({
+			repository: "heidrun-org/mobile",
+			commits: [commit("Jerome", "jerome@example.com", at(13, 10), 7, 2)],
+			issues: [opened("jerome", at(13, 11))],
+		});
+		const merged = PersonWork.merge([heidrun, mobile]);
+		expect(merged.repository).toBe("heidrun-org/heidrun, heidrun-org/mobile");
+		expect(merged.commits).toHaveLength(2);
+		expect(merged.pullRequests).toHaveLength(1);
+		expect(merged.issues).toHaveLength(1);
+		const result = PersonWork.compute(merged, PersonWork.findPersons(merged)[0].id, NOW, 7);
+		expect([result.commitCount, result.insertionCount, result.deletionCount]).toEqual([2, 12, 3]);
+	});
+
+	it("counts a repository once when two workspaces read it, for example a folder and its worktree", () => {
+		const one = items({ commits: [commit("Jerome", "jerome@example.com", at(12, 10), 5, 1)] });
+		const merged = PersonWork.merge([one, { ...one }]);
+		expect(merged.repository).toBe("heidrun-org/heidrun");
+		expect(merged.commits).toHaveLength(1);
+	});
+
+	it("gives the errors of GitHub of the workspaces, each one once, or null when there is none", () => {
+		const first = items({ repository: "a/a", codeHostingError: "no network" });
+		const second = items({ repository: "b/b", codeHostingError: "no network" });
+		const third = items({ repository: "c/c", codeHostingError: "bad token" });
+		expect(PersonWork.merge([first, second, third]).codeHostingError).toBe("no network; bad token");
+		expect(PersonWork.merge([items({ repository: "a/a" }), items({ repository: "b/b" })]).codeHostingError).toBeNull();
+	});
+
+	it("gives empty items when there is no workspace", () => {
+		expect(PersonWork.merge([])).toEqual({ repository: "", commits: [], pullRequests: [], issues: [], codeHostingError: null });
+	});
+});
