@@ -1,7 +1,7 @@
 //! The program `ngrok` that an earlier Heidrun left running. A hard stop of Heidrun (Ctrl+C on `pnpm dev`, a restart of
 //! `tauri dev`, a crash) does not kill `ngrok`, and the leftover program keeps the fixed address of the account, so the
 //! next tunnel fails with `ERR_NGROK_334` (issue 583). Heidrun records the process id of each `ngrok` that it starts in a
-//! file, and kills only a recorded process that is still an `ngrok`.
+//! file of its own, and kills only a recorded process that is still an `ngrok`.
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -13,69 +13,84 @@ const ORPHAN_PARENT: u32 = 1;
 /// How long a killed `ngrok` may take to end.
 const END_WAIT: Duration = Duration::from_secs(3);
 
-/// The file that holds the process id of the last `ngrok` that Heidrun started.
+/// The records of the `ngrok` of each Heidrun: one file per Heidrun, named after the process id of that Heidrun, that holds
+/// the process id of its `ngrok`. With one file for all, a second Heidrun wrote over the record of the first (issue 585).
 pub struct TunnelRecord {
-    /// The path of the file.
-    path: PathBuf,
+    /// The folder of the files.
+    folder: PathBuf,
+    /// The process id of this Heidrun: the name of its own file.
+    owner_id: u32,
 }
 
 impl TunnelRecord {
-    /// The record in the file `path`.
-    pub fn new(path: PathBuf) -> Self {
-        Self { path }
+    /// The records in the folder `folder`, for the Heidrun with the process id `owner_id`.
+    pub fn new(folder: PathBuf, owner_id: u32) -> Self {
+        Self { folder, owner_id }
     }
 
-    /// Writes the process id of the `ngrok` that Heidrun just started.
+    /// Writes the process id of the `ngrok` that this Heidrun just started.
     pub fn save(&self, process_id: u32) {
-        if let Some(folder) = self.path.parent() {
-            let _ = std::fs::create_dir_all(folder);
-        }
-        let _ = std::fs::write(&self.path, process_id.to_string());
+        let _ = std::fs::create_dir_all(&self.folder);
+        let _ = std::fs::write(self.path_of(self.owner_id), process_id.to_string());
     }
 
-    /// Removes the file, after Heidrun killed its `ngrok`.
+    /// Removes the file of this Heidrun, after it killed its `ngrok`.
     pub fn clear(&self) {
-        let _ = std::fs::remove_file(&self.path);
+        let _ = std::fs::remove_file(self.path_of(self.owner_id));
     }
 
-    /// At the start of a tunnel: kills the recorded `ngrok` when its Heidrun ended, so its parent is now the first process
-    /// of the system. An `ngrok` whose Heidrun still runs is not killed. True when a program was killed.
+    /// At the start of a tunnel: kills each recorded `ngrok` whose Heidrun ended, so its parent is now the first process of
+    /// the system. An `ngrok` whose Heidrun still runs is not killed. True when a program was killed.
     pub fn kill_leftover(&self) -> bool {
-        self.kill_if(|parent_id| parent_id == ORPHAN_PARENT)
+        self.kill_each(true, |parent_id| parent_id == ORPHAN_PARENT)
     }
 
-    /// For the button "Stop the old ngrok": kills the recorded `ngrok`, whatever its parent, unless it is `own_process_id`,
-    /// the `ngrok` of this Heidrun. True when a program was killed. False when the other `ngrok` is not a recorded one.
-    pub fn kill_recorded(&self, own_process_id: Option<u32>) -> bool {
-        let Some(process_id) = self.read() else {
-            return false;
-        };
-        if own_process_id == Some(process_id) {
-            return false;
-        }
-        self.kill_if(|_| true)
+    /// For the button "Stop the old ngrok": kills the recorded `ngrok` of every other Heidrun, whatever its parent, but
+    /// never the `ngrok` of this Heidrun. True when a program was killed. False when the other `ngrok` is not a recorded one.
+    pub fn kill_recorded(&self) -> bool {
+        self.kill_each(false, |_| true)
     }
 
-    fn read(&self) -> Option<u32> {
-        std::fs::read_to_string(&self.path).ok()?.trim().parse().ok()
+    fn path_of(&self, owner_id: u32) -> PathBuf {
+        self.folder.join(format!("{owner_id}.pid"))
     }
 
-    fn kill_if(&self, is_parent_accepted: impl Fn(u32) -> bool) -> bool {
-        let Some(process_id) = self.read() else {
-            return false;
+    /// Each record of the folder: its file and the process id of its `ngrok`. The file of this Heidrun is left out when
+    /// `is_own_included` is false.
+    fn records(&self, is_own_included: bool) -> Vec<(PathBuf, u32)> {
+        let Ok(entries) = std::fs::read_dir(&self.folder) else {
+            return Vec::new();
         };
-        let Some((parent_id, command)) = process_info(process_id) else {
-            self.clear();
-            return false;
-        };
-        if !is_ngrok(&command) || !is_parent_accepted(parent_id) {
-            return false;
+        entries
+            .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+            .filter(|path| path.extension().is_some_and(|extension| extension == "pid"))
+            .filter(|path| is_own_included || *path != self.path_of(self.owner_id))
+            .filter_map(|path| {
+                let process_id = std::fs::read_to_string(&path).ok()?.trim().parse().ok()?;
+                Some((path, process_id))
+            })
+            .collect()
+    }
+
+    /// Kills each recorded `ngrok` whose parent `is_parent_accepted` accepts. A record of a process that has ended, or that
+    /// is no longer an `ngrok`, is removed, and the process is never killed.
+    fn kill_each(&self, is_own_included: bool, is_parent_accepted: impl Fn(u32) -> bool) -> bool {
+        let mut is_any_killed = false;
+        for (path, process_id) in self.records(is_own_included) {
+            let Some((parent_id, command)) = process_info(process_id) else {
+                let _ = std::fs::remove_file(&path);
+                continue;
+            };
+            if !is_ngrok(&command) {
+                let _ = std::fs::remove_file(&path);
+                continue;
+            }
+            if is_parent_accepted(parent_id) && kill_and_wait(process_id) {
+                let _ = std::fs::remove_file(&path);
+                is_any_killed = true;
+            }
         }
-        let is_killed = kill_and_wait(process_id);
-        if is_killed {
-            self.clear();
-        }
-        is_killed
+        is_any_killed
     }
 }
 
@@ -155,25 +170,38 @@ mod tests {
         process_id
     }
 
+    /// The process id of this Heidrun, in the tests.
+    const THIS_HEIDRUN: u32 = 111;
+
+    /// The process id of another Heidrun, in the tests.
+    const OTHER_HEIDRUN: u32 = 222;
+
+    fn records_of(folder: &Path, owner_id: u32) -> TunnelRecord {
+        TunnelRecord::new(folder.join("records"), owner_id)
+    }
+
+    fn record_file(folder: &Path, owner_id: u32) -> PathBuf {
+        folder.join("records").join(format!("{owner_id}.pid"))
+    }
+
     #[test]
     fn a_recorded_ngrok_with_no_parent_is_killed() {
         let folder = temporary_folder("orphan");
         let process_id = start_orphan(&fake_ngrok(&folder));
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
-        record.save(process_id);
-        assert_eq!(record.kill_leftover(), true);
+        records_of(&folder, OTHER_HEIDRUN).save(process_id);
+        assert_eq!(records_of(&folder, THIS_HEIDRUN).kill_leftover(), true);
         assert_eq!(process_info(process_id), None);
-        assert_eq!(folder.join("ngrok.pid").exists(), false);
+        assert_eq!(record_file(&folder, OTHER_HEIDRUN).exists(), false);
     }
 
     #[test]
     fn a_recorded_ngrok_whose_heidrun_still_runs_is_not_killed_at_the_start() {
         let folder = temporary_folder("parent");
         let mut child = Command::new(fake_ngrok(&folder)).arg("600").spawn().unwrap();
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
-        record.save(child.id());
-        assert_eq!(record.kill_leftover(), false);
+        records_of(&folder, OTHER_HEIDRUN).save(child.id());
+        assert_eq!(records_of(&folder, THIS_HEIDRUN).kill_leftover(), false);
         assert_eq!(process_info(child.id()).is_some(), true);
+        assert_eq!(record_file(&folder, OTHER_HEIDRUN).exists(), true);
         child.kill().unwrap();
         child.wait().unwrap();
     }
@@ -182,50 +210,65 @@ mod tests {
     fn a_recorded_process_that_is_not_ngrok_is_never_killed() {
         let folder = temporary_folder("not_ngrok");
         let process_id = start_orphan(Path::new("/bin/sleep"));
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
-        record.save(process_id);
-        assert_eq!(record.kill_leftover(), false);
-        assert_eq!(record.kill_recorded(None), false);
+        records_of(&folder, OTHER_HEIDRUN).save(process_id);
+        assert_eq!(records_of(&folder, THIS_HEIDRUN).kill_recorded(), false);
         assert_eq!(process_info(process_id).is_some(), true);
+        assert_eq!(record_file(&folder, OTHER_HEIDRUN).exists(), false);
         kill_and_wait(process_id);
     }
 
     #[test]
-    fn the_button_kills_a_recorded_ngrok_whose_heidrun_still_runs() {
-        let folder = temporary_folder("button");
-        let mut child = Command::new(fake_ngrok(&folder)).arg("600").spawn().unwrap();
-        let process_id = child.id();
-        // The parent reaps the ended program, like the other Heidrun does.
-        let parent = std::thread::spawn(move || child.wait());
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
-        record.save(process_id);
-        assert_eq!(record.kill_recorded(None), true);
-        parent.join().unwrap().unwrap();
+    fn the_start_of_a_second_heidrun_keeps_the_record_of_the_first() {
+        let folder = temporary_folder("two_records");
+        let program = fake_ngrok(&folder);
+        let mut first = Command::new(&program).arg("600").spawn().unwrap();
+        let mut second = Command::new(&program).arg("600").spawn().unwrap();
+        records_of(&folder, OTHER_HEIDRUN).save(first.id());
+        let this_record = records_of(&folder, THIS_HEIDRUN);
+        this_record.save(second.id());
+        this_record.clear();
+        assert_eq!(std::fs::read_to_string(record_file(&folder, OTHER_HEIDRUN)).unwrap(), first.id().to_string());
+        for child in [&mut first, &mut second] {
+            child.kill().unwrap();
+            child.wait().unwrap();
+        }
     }
 
     #[test]
-    fn the_button_never_kills_the_ngrok_of_this_heidrun() {
-        let folder = temporary_folder("own");
-        let mut child = Command::new(fake_ngrok(&folder)).arg("600").spawn().unwrap();
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
-        record.save(child.id());
-        assert_eq!(record.kill_recorded(Some(child.id())), false);
-        assert_eq!(process_info(child.id()).is_some(), true);
-        child.kill().unwrap();
-        child.wait().unwrap();
+    fn the_button_kills_the_ngrok_of_the_other_heidrun_and_keeps_the_ngrok_of_this_heidrun() {
+        let folder = temporary_folder("button");
+        let program = fake_ngrok(&folder);
+        let other = Command::new(&program).arg("600").spawn().unwrap();
+        let other_id = other.id();
+        // The parent reaps the ended program, like the other Heidrun does.
+        let other_parent = std::thread::spawn(move || {
+            let mut other = other;
+            other.wait()
+        });
+        let mut own = Command::new(&program).arg("600").spawn().unwrap();
+        records_of(&folder, OTHER_HEIDRUN).save(other_id);
+        let this_record = records_of(&folder, THIS_HEIDRUN);
+        this_record.save(own.id());
+        assert_eq!(this_record.kill_recorded(), true);
+        other_parent.join().unwrap().unwrap();
+        assert_eq!(process_info(own.id()).is_some(), true);
+        assert_eq!(record_file(&folder, THIS_HEIDRUN).exists(), true);
+        assert_eq!(this_record.kill_recorded(), false);
+        own.kill().unwrap();
+        own.wait().unwrap();
     }
 
     #[test]
     fn nothing_is_killed_with_no_record_or_with_an_ended_process() {
         let folder = temporary_folder("empty");
-        let record = TunnelRecord::new(folder.join("ngrok.pid"));
+        let record = records_of(&folder, THIS_HEIDRUN);
         assert_eq!(record.kill_leftover(), false);
-        assert_eq!(record.kill_recorded(None), false);
+        assert_eq!(record.kill_recorded(), false);
         let mut child = Command::new("/usr/bin/true").spawn().unwrap();
         child.wait().unwrap();
-        record.save(child.id());
+        records_of(&folder, OTHER_HEIDRUN).save(child.id());
         assert_eq!(record.kill_leftover(), false);
-        assert_eq!(folder.join("ngrok.pid").exists(), false);
+        assert_eq!(record_file(&folder, OTHER_HEIDRUN).exists(), false);
     }
 
     #[test]
