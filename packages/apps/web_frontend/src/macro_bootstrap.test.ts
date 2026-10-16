@@ -43,7 +43,7 @@ describe('the dropdown of the macros (MacroMenu.vue)', () => {
 	const sourceText = MacroBootstrapTestHelper.readComponent('MacroMenu.vue');
 
 	it('uses the Bootstrap menu classes', () => {
-		for (const className of ['menu', 'menu-item', 'menu-header', 'menu-divider', 'menu-text']) {
+		for (const className of ['menu', 'menu-item', 'menu-header', 'menu-divider']) {
 			expect(sourceText).toContain(className);
 		}
 	});

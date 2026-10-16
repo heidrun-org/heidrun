@@ -210,17 +210,24 @@ export function launcherStatus(workspaceId: string, launcher: Launcher): Launche
   return project.busy[pane.pane_id] ? "running" : "finished";
 }
 
+/** Will a run type the command of the launcher? No when its tab is open and the run only brings the tab to the front, or when its command still runs. */
+export function launcherWillType(workspaceId: string, launcher: Launcher, rerun = false): boolean {
+  const existing = launcherPane(workspaceId, launcher);
+  return !existing || (rerun && !project.busy[existing.pane_id]);
+}
+
 /**
  * Runs a launcher in its own tab, named after it. If its tab is still open the
  * click just brings it to the front; "rerun" types the command again in it.
+ * "checked": the caller already passed the command through the guards (the phone asks its own confirmation).
  */
-export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false) {
+export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false, checked = false) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = launcherPane(workspaceId, launcher);
   // A click that will type the command: through the guards first.
-  const willType = !existing || (rerun && !project.busy[existing.pane_id]);
-  if (willType && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
+  const willType = launcherWillType(workspaceId, launcher, rerun);
+  if (willType && !checked && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);
@@ -285,11 +292,44 @@ async function pollBusy() {
   }
 }
 
+/** The text of the file .heidrun/config.json of each workspace, as the last read gave it. */
+const lastConfigTexts: Record<string, string | undefined> = {};
+
+/** How often the window reads the file .heidrun/config.json of the workspace in view again, in milliseconds. */
+const CONFIG_READ_INTERVAL = 1000;
+
+/**
+ * Loads the project of the workspace in view again when another program, such as the command line heidrun_ctrl, changed its
+ * file .heidrun/config.json. The first read of a workspace only records the text.
+ */
+export async function reloadProjectWhenFileChanged(): Promise<void> {
+  const workspaceId = session.selectedWorkspaceId;
+  if (workspaceId === null || workspaceId === undefined || project.byWorkspace[workspaceId] === undefined) {
+    return;
+  }
+  const cwd = workspaceCwd(workspaceId);
+  if (cwd === null) {
+    return;
+  }
+  let text: string;
+  try {
+    text = await invoke<string>("project_config_text", { cwd });
+  } catch {
+    return;
+  }
+  const before = lastConfigTexts[workspaceId];
+  lastConfigTexts[workspaceId] = text;
+  if (before !== undefined && before !== text) {
+    await loadProject(workspaceId);
+  }
+}
+
 let started = false;
 export function startProjects() {
   if (started) return;
   started = true;
   window.setInterval(pollBusy, 2500);
+  window.setInterval(() => void reloadProjectWhenFileChanged(), CONFIG_READ_INTERVAL);
   // Load the project file of the workspace in view (launchers, badge, palette).
   watch(
     () => [session.selectedWorkspaceId, !!session.snapshot] as const,

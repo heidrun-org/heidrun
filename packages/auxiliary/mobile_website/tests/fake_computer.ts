@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { AgentView, CallResult, Snapshot } from '../src/mobile_types';
+import type { AgentView, CallResult, LaunchersAnswer, MacrosAnswer, Snapshot } from '../src/mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,6 +30,19 @@ export class FakeComputer {
 	/** The answer of the method `read`. */
 	outputText = 'first line\nlast line\n';
 
+	/** True when the fake computer lets the phone type in a plain terminal, like the setting of Heidrun. */
+	terminalTypingAllowed = true;
+
+	/** The answer of the method `macros`. */
+	macrosAnswer: MacrosAnswer = {
+		macros: [],
+	};
+
+	/** The answer of the method `launchers`. */
+	launchersAnswer: LaunchersAnswer = {
+		workspaces: [],
+	};
+
 	/** Every call, in order. */
 	calls: RecordedCall[] = [];
 
@@ -58,6 +71,7 @@ export class FakeComputer {
 	static agent(overrides: Partial<AgentView>): AgentView {
 		return {
 			paneId: 'p-1',
+			hasCodingAgent: true,
 			name: 'Claude Code',
 			kind: 'claude',
 			workspace: 'heidrun',
@@ -80,6 +94,7 @@ export class FakeComputer {
 	static snapshotOf(agents: AgentView[], attention: string[]): Snapshot {
 		return {
 			now: 1_000_000,
+			terminalTypingAllowed: true,
 			attention,
 			workspaces: [
 				{
@@ -123,10 +138,16 @@ export class FakeComputer {
 			return new Response('unpaired', { status: 401 });
 		}
 		if (body.method === 'state') {
-			return Response.json(this.snapshot);
+			return Response.json({ ...this.snapshot, terminalTypingAllowed: this.terminalTypingAllowed });
 		}
 		if (body.method === 'read') {
 			return Response.json({ text: this.outputText });
+		}
+		if (body.method === 'macros') {
+			return Response.json(this.macrosAnswer);
+		}
+		if (body.method === 'launchers') {
+			return Response.json(this.launchersAnswer);
 		}
 		const answers = this.answers[body.method] ?? [{ ok: true }];
 		const answer = answers.length > 1 ? answers.shift() : answers[0];

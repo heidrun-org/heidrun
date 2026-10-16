@@ -22,7 +22,7 @@ export class PanesScreen {
 	static render(snapshot: Snapshot, isOnline: boolean | null): string {
 		const workspacesHtmlContent =
 			snapshot.workspaces.length === 0
-				? /* html */`<div class="empty">No pane runs a coding agent.</div>`
+				? /* html */`<div class="empty">No pane is open.</div>`
 				: snapshot.workspaces
 						.map((workspace) => {
 							const label = HtmlEscape.escape(workspace.label);

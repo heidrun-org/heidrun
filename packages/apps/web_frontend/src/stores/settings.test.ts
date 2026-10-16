@@ -62,6 +62,10 @@ describe("settings", () => {
     expect(settings.mouseMode).toBe("select");
   });
 
+  it("does not let the phone type in a terminal by default", () => {
+    expect(settings.mobileTerminalTyping).toBe(false);
+  });
+
   it("shows the status item in the macOS menu bar by default", () => {
     expect(settings.showStatusItem).toBe(true);
   });

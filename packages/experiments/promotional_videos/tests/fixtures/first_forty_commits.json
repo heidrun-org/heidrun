@@ -1,0 +1,364 @@
+{
+ "commits": [
+  {
+   "hash": "0856054456ecd57a35ec5109277bb27848a686f1",
+   "committedAt": "2026-10-05T05:08:31.000Z",
+   "subject": "Herdr Desk : squelette Tauri + Vue",
+   "insertions": 4498,
+   "deletions": 0,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "89e13b2bb59c829761c0762386fcf3cfff103aaf",
+   "committedAt": "2026-10-05T05:55:48.000Z",
+   "subject": "Fermeture onglets/panneaux, police du terminal, division en bas, masquer les cartes et les barres latérales",
+   "insertions": 5576,
+   "deletions": 63,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "010a6fe1404a8b816111996762d60b3f2a52542b",
+   "committedAt": "2026-10-05T06:16:30.000Z",
+   "subject": "Renommage en place des workspaces, onglets et panneaux ; titre Workspace – Onglet dans À traiter",
+   "insertions": 161,
+   "deletions": 19,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "3f2f35637e01e5ee255b5c5088a453de295e926f",
+   "committedAt": "2026-10-05T06:18:30.000Z",
+   "subject": "Copier/coller dans les terminaux (OSC 52 de Herdr, ⌥+glisser, ⌘C)",
+   "insertions": 416,
+   "deletions": 3,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "cc74d5839e4bb7bea14c6108a2ed8b708e0fbb28",
+   "committedAt": "2026-10-05T06:19:16.000Z",
+   "subject": "Raccourcis de navigation : ⌥⌘←/→ onglets, ⌥⌘↑/↓ et ⌘1-9 workspaces",
+   "insertions": 58,
+   "deletions": 3,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "e2b3538533bcca6023f22bcb87944abab91763b1",
+   "committedAt": "2026-10-05T06:24:25.000Z",
+   "subject": "Sélection de texte à la souris par défaut ; réorganisation des workspaces et onglets (glisser-déposer, ⇧⌥⌘ flèches)",
+   "insertions": 214,
+   "deletions": 14,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "81aacf6ccb4c008625dff3b7dd05fad69ac73777",
+   "committedAt": "2026-10-05T06:55:30.000Z",
+   "subject": "Panneau de droite à onglets : notes épinglées depuis le terminal et actions de projet (.herdr-desk.json)",
+   "insertions": 823,
+   "deletions": 10,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "320fe70d969b37058ed244c009b6e42090f5b441",
+   "committedAt": "2026-10-05T07:00:51.000Z",
+   "subject": "Notes : fenêtre centrale déplaçable, redimensionnable et modifiable",
+   "insertions": 230,
+   "deletions": 4,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "ddfa6e3eea5cf2a20c4a119fa58a6b7ca434da37",
+   "committedAt": "2026-10-05T07:07:49.000Z",
+   "subject": "Actions récentes, réordonnancement des actions/suggestions/notes, cartes À traiter fermées mémorisées",
+   "insertions": 246,
+   "deletions": 11,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "a9000775d3110a333a4277cd8fb0bb37ef422a8d",
+   "committedAt": "2026-10-05T07:13:03.000Z",
+   "subject": "Suivi Claude : branchement sur la status line existante, quotas du compte dans l'inspecteur",
+   "insertions": 351,
+   "deletions": 22,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "34a75550c5ead370d35ab81edef68b68b767b714",
+   "committedAt": "2026-10-05T07:14:08.000Z",
+   "subject": "Barres latérales redimensionnables",
+   "insertions": 103,
+   "deletions": 6,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "b2be0f9fc9d64256bc6e5c87b8c121a682d54f8d",
+   "committedAt": "2026-10-05T07:35:45.000Z",
+   "subject": "Jauges plus grandes à trois couleurs (60/80 %), valeurs stables entre deux rapports, status line masquable dans le terminal",
+   "insertions": 143,
+   "deletions": 31,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "d09d4e51cc916551d99899d7944bf9b6b081c607",
+   "committedAt": "2026-10-05T07:39:03.000Z",
+   "subject": "Quotas Claude : lecture la plus récente par fenêtre, plus de valeurs périmées d'une autre session",
+   "insertions": 49,
+   "deletions": 22,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "e1a11cc52f2cec493274241bafd5ff91291a2c9f",
+   "committedAt": "2026-10-05T07:42:07.000Z",
+   "subject": "Démarrage du serveur Herdr en arrière-plan depuis l'app, sans terminal",
+   "insertions": 78,
+   "deletions": 8,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "d0bb25bdb9d7cf95475354e234cbcd7fb2bee9d5",
+   "committedAt": "2026-10-05T07:56:03.000Z",
+   "subject": "Renommer les panneaux par double-clic dans la liste Panneaux ; nom vide = nom automatique",
+   "insertions": 34,
+   "deletions": 17,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "3dbb936b43e1c8a6993956f2e09dddbc289dbc63",
+   "committedAt": "2026-10-05T08:03:24.000Z",
+   "subject": "Remote Control Claude : état par session, activation depuis l'inspecteur, auto-connexion",
+   "insertions": 151,
+   "deletions": 2,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "39c8017cf73c81e801517c1d17b408e2c4bdcc6a",
+   "committedAt": "2026-10-05T08:05:49.000Z",
+   "subject": "Remote Control : détection sur les messages de Claude Code, lien de session copiable",
+   "insertions": 56,
+   "deletions": 9,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "9a97ac59d72d7550c912d3b0036bd46cd4675a08",
+   "committedAt": "2026-10-05T08:14:38.000Z",
+   "subject": "Remote Control : fenêtre avec lien copiable, ouverture navigateur et QR code généré localement",
+   "insertions": 520,
+   "deletions": 6,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "0949ee695718fc6a7b7f2767f9262066b1cde4e8",
+   "committedAt": "2026-10-05T08:17:10.000Z",
+   "subject": "Fenêtre Remote Control plus large : URL sur une ligne, boutons alignés",
+   "insertions": 7,
+   "deletions": 5,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "97adc539b258af5ee888b67364565cd926521265",
+   "committedAt": "2026-10-05T08:19:53.000Z",
+   "subject": "Molette : défilement de l'historique du panneau ; ⌥ + molette pour l'historique des commandes",
+   "insertions": 60,
+   "deletions": 0,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "8621ecdd85078abdf3a57aa6d9782eddabaa8a0c",
+   "committedAt": "2026-10-05T08:30:46.000Z",
+   "subject": "Saisie multiligne : ⇧↵ / ⌥↵ dans le terminal et la barre de saisie",
+   "insertions": 54,
+   "deletions": 8,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "d9d6799102683ce0988db54a7820b2fb33c3ad8a",
+   "committedAt": "2026-10-05T09:06:47.000Z",
+   "subject": "Activité : flux de tous les agents avec workspace, onglet et nom ; clic pour y aller",
+   "insertions": 87,
+   "deletions": 12,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "9ba62936cc926c06cce291316507cbd037b68e77",
+   "committedAt": "2026-10-05T09:18:21.000Z",
+   "subject": "Panneau de droite : Session puis Tous les agents ; références colorées et cliquables dans les terminaux",
+   "insertions": 519,
+   "deletions": 93,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "d93c0eca813c6a0a30c02142d447f8407141d888",
+   "committedAt": "2026-10-05T09:24:33.000Z",
+   "subject": "Onglets : l'ordre déplacé est conservé (ne plus trier sur le numéro stable) ; dépôt possible entre deux onglets",
+   "insertions": 9,
+   "deletions": 4,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "60633e1d5bb97dbc9186293c5a8733dcbc8bece7",
+   "committedAt": "2026-10-05T09:52:34.000Z",
+   "subject": "Activité : une ligne par travail (début, fin, durée) au lieu d'une ligne par changement d'état",
+   "insertions": 98,
+   "deletions": 19,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "8cb38d4080879ed54e0b79dc92033b7916c7d884",
+   "committedAt": "2026-10-05T11:37:03.000Z",
+   "subject": "Actions au survol (ouvrir, lancer /commande, faire le point N) ; À traiter en bas de la barre latérale",
+   "insertions": 293,
+   "deletions": 40,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "30a8cdd2b46be8e7456c36b675c39b6edd9839cc",
+   "committedAt": "2026-10-05T11:38:03.000Z",
+   "subject": "Activité : travaux en cours (bloqués d'abord) avant les terminés",
+   "insertions": 4,
+   "deletions": 0,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "c0c55c53ef3b4a00670c4567a686e8bec4bc1e35",
+   "committedAt": "2026-10-05T11:40:25.000Z",
+   "subject": "Contexte : remis à 0 après /clear (nouvelle session sans réponse) ; oubli de la dernière valeur au changement de session",
+   "insertions": 14,
+   "deletions": 1,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "d2b2d45aff2afd58ee795bf92f3903a4a5acde46",
+   "committedAt": "2026-10-05T12:43:25.000Z",
+   "subject": "Commandes « ! » de Claude : ▷ Exécuter au survol, commande multiligne remise sur une ligne",
+   "insertions": 104,
+   "deletions": 14,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "7cd79b5ce448a1a35e71db46e0ba1414add1f7a8",
+   "committedAt": "2026-10-05T13:00:10.000Z",
+   "subject": "Envoyer à… : agents groupés par workspace, nommés par onglet",
+   "insertions": 46,
+   "deletions": 11,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "45e88b4f59d8adcf434356b81603b5ee0041f1b0",
+   "committedAt": "2026-10-05T13:23:43.000Z",
+   "subject": "Bouton d'action au survol : sur la même ligne, après le texte (ne passe plus par la ligne du dessus)",
+   "insertions": 19,
+   "deletions": 9,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "cc08d5583f7732b476c93b496a89fe81d0e40dfa",
+   "committedAt": "2026-10-05T13:42:02.000Z",
+   "subject": "Workspaces : étiquettes Claude / Codex, workspaces sans agent atténués",
+   "insertions": 29,
+   "deletions": 1,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "ef53d0e6db2a8f9b35a702b5eb0cd855e382b6ac",
+   "committedAt": "2026-10-05T13:42:52.000Z",
+   "subject": "Activité : × pour retirer un travail terminé, « Effacer terminés »",
+   "insertions": 58,
+   "deletions": 24,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "e430875a49a675d7f45625e593591eda3178dd78",
+   "committedAt": "2026-10-05T13:45:18.000Z",
+   "subject": "Workspaces avec agent en tête (ordre d'origine conservé), séparateur avant les autres",
+   "insertions": 47,
+   "deletions": 13,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "7aa5f56f523e81e2835b8389533795f6efc6f1df",
+   "committedAt": "2026-10-05T14:01:01.000Z",
+   "subject": "Mémorise le dernier onglet de chaque workspace et le dernier panneau de chaque onglet",
+   "insertions": 28,
+   "deletions": 4,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "4155bc73bb83172143f0f9d483cf622d352c34c7",
+   "committedAt": "2026-10-05T14:20:41.000Z",
+   "subject": "Liste des agents de Claude cliquable (▷ Voir <agent>, retour à main)",
+   "insertions": 63,
+   "deletions": 0,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "eb0a991cb8cb92c08c5d4e2f335af20da30a4735",
+   "committedAt": "2026-10-05T14:23:10.000Z",
+   "subject": "Liste des agents : détection plus tolérante (autres puces, retrait, sélection)",
+   "insertions": 5,
+   "deletions": 3,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "e8e9103e66b12db62807736387512480f30470d3",
+   "committedAt": "2026-10-05T14:26:36.000Z",
+   "subject": "Liste des agents : bouton juste après la description, pas après la durée",
+   "insertions": 4,
+   "deletions": 1,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "78983c17d0b4ea573ffa01e41ed55b30d81144a2",
+   "committedAt": "2026-10-05T14:31:10.000Z",
+   "subject": "Liste des agents : part de la sélection affichée (❯) pour aller vers l'agent choisi, y compris main",
+   "insertions": 52,
+   "deletions": 5,
+   "isMerge": false,
+   "lane": 1
+  },
+  {
+   "hash": "eff87c735e8f8881829ab0a5ba80603d8db8d762",
+   "committedAt": "2026-10-05T14:52:10.000Z",
+   "subject": "Clic dans la zone de saisie de Claude : rend le focus au texte quand la liste des agents est sélectionnée",
+   "insertions": 46,
+   "deletions": 0,
+   "isMerge": false,
+   "lane": 1
+  }
+ ]
+}

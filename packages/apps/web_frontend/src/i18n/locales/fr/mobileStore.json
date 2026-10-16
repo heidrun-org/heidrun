@@ -8,5 +8,9 @@
   "error.agentBlocked": "L’agent attend une décision : réponds d’abord à son menu",
   "promptReceived": "Consigne reçue du téléphone pour {name}",
   "error.unknownAction": "Action inconnue",
-  "error.unknownMethod": "Méthode inconnue"
+  "error.unknownMethod": "Méthode inconnue",
+  "error.launcherNotFound": "Lanceur introuvable (supprimé ?) : rafraîchis",
+  "launcherStarted": "Lanceur démarré depuis le téléphone : {name}",
+  "error.terminalReadOnly": "Ce panneau est un terminal : le téléphone peut seulement le lire, ou y taper une commande",
+  "error.terminalTypingOff": "La saisie dans les terminaux depuis le téléphone est désactivée : active-la dans la fenêtre Réglages de Heidrun, dans Accès mobile"
 }

@@ -1,4 +1,4 @@
-import type { AgentView, CallResult, Snapshot } from '../src/mobile_types';
+import type { AgentView, CallResult, LaunchersAnswer, LauncherView, MacrosAnswer, Snapshot } from '../src/mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,13 +24,31 @@ export class DevApi {
 	static readonly pairingKey = '0123456789abcdef'.repeat(4);
 
 	/** The closed list of methods, the same as the list of the mobile server. */
-	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys'];
+	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys', 'macros', 'launchers', 'launch', 'pushKey', 'subscribe', 'unsubscribe'];
 
 	/** The command that the fake computer asks the developer to check once more, like the guards of Heidrun do. */
 	private static readonly dangerousCommand = 'rm -rf build';
 
 	/** The coding agents, which change when the developer answers. */
 	private readonly agents: AgentView[];
+
+	/** The launchers of the workspace "heidrun", which change when the developer runs or stops one. */
+	private readonly launchers: LauncherView[] = [
+		{
+			id: 'dev',
+			label: 'Dev server',
+			description: 'Starts Heidrun with pnpm dev',
+			command: 'pnpm dev',
+			status: 'idle',
+		},
+		{
+			id: 'clean',
+			label: 'Clean',
+			description: null,
+			command: DevApi.dangerousCommand,
+			status: 'finished',
+		},
+	];
 
 	/** The prompts that the developer sent, for each pane. */
 	private readonly prompts = new Map<string, string[]>();
@@ -84,6 +102,16 @@ export class DevApi {
 				status: 'done',
 				since: now - 52 * 60_000,
 			}),
+			DevApi.agent(now, {
+				paneId: 'p-terminal',
+				hasCodingAgent: false,
+				name: 'zsh',
+				kind: 'Terminal',
+				tab: 'shell',
+				status: 'unknown',
+				since: null,
+				context: null,
+			}),
 		];
 	}
 
@@ -130,11 +158,36 @@ export class DevApi {
 	 * @param params The parameters of the method.
 	 * @returns The answer of the method.
 	 */
-	call(method: string, params: Record<string, unknown>): Snapshot | CallResult {
+	call(method: string, params: Record<string, unknown>): Snapshot | MacrosAnswer | LaunchersAnswer | CallResult {
 		const paneId = String(params.paneId ?? '');
 		const agent = this.agents.find((candidate) => candidate.paneId === paneId) ?? null;
 		if (method === 'state') {
 			return this.snapshot();
+		}
+		if (method === 'pushKey') {
+			return {
+				key: 'BDevelopmentServerHasNoPushKey',
+			};
+		}
+		if (method === 'subscribe' || method === 'unsubscribe') {
+			return {
+				ok: true,
+			};
+		}
+		if (method === 'launchers') {
+			return {
+				workspaces: [
+					{
+						id: 'w-1',
+						label: 'heidrun',
+						error: null,
+						launchers: this.launchers,
+					},
+				],
+			};
+		}
+		if (method === 'launch') {
+			return this.launch(params);
 		}
 		if (agent === null) {
 			return {
@@ -145,6 +198,17 @@ export class DevApi {
 			return {
 				text: this.output(agent),
 			};
+		}
+		if (agent.hasCodingAgent === false && method !== 'read' && method !== 'prompt') {
+			return {
+				error: 'This pane is a terminal: the phone can only read it, or type a command in it',
+			};
+		}
+		if (agent.hasCodingAgent === false && method === 'prompt') {
+			return this.typeInTerminal(agent, params);
+		}
+		if (method === 'macros') {
+			return DevApi.macros(agent);
 		}
 		if (method === 'prompt') {
 			this.prompts.set(paneId, [...(this.prompts.get(paneId) ?? []), String(params.text ?? '')]);
@@ -164,6 +228,7 @@ export class DevApi {
 	private static agent(now: number, overrides: Partial<AgentView>): AgentView {
 		return {
 			paneId: 'p-1',
+			hasCodingAgent: true,
 			name: 'Claude Code',
 			kind: 'claude',
 			workspace: 'heidrun',
@@ -177,12 +242,77 @@ export class DevApi {
 		};
 	}
 
+	private static macros(agent: AgentView): MacrosAnswer {
+		return {
+			macros: [
+				{
+					id: 'progress',
+					label: 'Progress',
+					description: 'Asks the coding agent where it is',
+					source: 'personal',
+					text: `Where are you, ${agent.name}? Answer in 5 lines.`,
+				},
+				{
+					id: 'review',
+					label: 'Review the branch',
+					description: '',
+					source: 'project',
+					text: `Review the branch of ${agent.tab}: security, bugs, tests.`,
+				},
+			],
+		};
+	}
+
+	private typeInTerminal(agent: AgentView, params: Record<string, unknown>): CallResult {
+		const text = String(params.text ?? '');
+		if (text.includes('rm -rf') && (params.confirmed !== true || params.command !== text)) {
+			return {
+				confirm: {
+					command: text,
+					why: 'The command deletes files. Check it before it runs.',
+				},
+			};
+		}
+		this.prompts.set(agent.paneId, [...(this.prompts.get(agent.paneId) ?? []), text]);
+		return {
+			ok: true,
+		};
+	}
+
+	private launch(params: Record<string, unknown>): CallResult {
+		const launcher = this.launchers.find((candidate) => candidate.id === params.launcherId);
+		if (launcher === undefined) {
+			return {
+				error: 'Launcher not found (removed?): refresh',
+			};
+		}
+		if (params.action === 'stop') {
+			launcher.status = 'finished';
+			return {
+				ok: true,
+			};
+		}
+		if (launcher.command === DevApi.dangerousCommand && params.confirmed !== true) {
+			return {
+				confirm: {
+					command: launcher.command,
+					why: 'The command deletes files. Check it before it runs.',
+				},
+			};
+		}
+		launcher.status = 'running';
+		return {
+			ok: true,
+		};
+	}
+
 	private snapshot(): Snapshot {
 		const attention = this.agents
 			.filter((agent) => agent.status === 'blocked' || agent.question !== null)
 			.map((agent) => agent.paneId);
 		return {
 			now: Date.now(),
+			terminalTypingAllowed: true,
 			attention,
 			workspaces: [
 				{
@@ -234,6 +364,15 @@ export class DevApi {
 	 */
 	private output(agent: AgentView): string {
 		const code = (codes: string, text: string): string => `\u001b[${codes}m${text}\u001b[0m`;
+		if (agent.hasCodingAgent === false) {
+			const typed = (this.prompts.get(agent.paneId) ?? []).map((command) => `$ ${command}`);
+			return [
+				`${code('1;32', 'jerome@computer')} ${code('1;34', '~/webwork/heidrun')} $ git status`,
+				'On branch dev_jerome',
+				code('32', 'nothing to commit, working tree clean'),
+				...typed,
+			].join('\r\n');
+		}
 		const blue = '38;2;99;168;248';
 		const gray = '48;2;30;30;30';
 		const prompts = this.prompts.get(agent.paneId) ?? [];

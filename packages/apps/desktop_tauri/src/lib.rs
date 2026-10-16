@@ -12,6 +12,7 @@ mod git_source_control;
 mod history;
 mod legacy;
 mod herdr;
+mod macros;
 mod mobile;
 mod model_prices;
 mod person_work;
@@ -319,6 +320,10 @@ pub fn run() {
             project::project_package_scripts,
             project::project_save,
             project::project_refs,
+            project::project_config_text,
+            macros::macros_hard_coded,
+            macros::macros_personal_read,
+            macros::macros_personal_write,
             git::git_status,
             git::forge_cli,
             forge_cache::forge_cli_cached,
@@ -378,6 +383,7 @@ pub fn run() {
             files::file_trash,
             mobile::mobile_reply,
             mobile::mobile_status,
+            mobile::mobile_push,
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,

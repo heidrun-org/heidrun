@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { settings } from "../stores/settings";
 
@@ -30,5 +31,19 @@ export async function notify(title: string, body?: string): Promise<boolean> {
   } catch {
     // Notifications are a convenience: never break the UI for them.
     return false;
+  }
+}
+
+/**
+ * Wakes the phones that asked for a push: a coding agent needs the developer. The push does not depend on the focus of
+ * the window or on the pane that is open, because a phone is for a developer who is away. The quiet hours still apply.
+ * A failure is ignored: nothing else depends on the push.
+ */
+export async function notifyPhone(): Promise<void> {
+  if (isQuiet()) return;
+  try {
+    await invoke("mobile_push");
+  } catch {
+    /* no phone, or the push service does not answer */
   }
 }

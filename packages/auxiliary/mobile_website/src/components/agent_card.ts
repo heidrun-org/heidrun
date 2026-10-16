@@ -59,8 +59,9 @@ export class AgentCard {
 	static renderRow(agent: AgentView): string {
 		const paneId = HtmlEscape.escape(agent.paneId);
 		const context = HtmlEscape.escape(agent.context ?? '');
+		const badgeText = agent.hasCodingAgent === false ? 'Terminal' : `${context} %`;
 		const contextHtmlContent =
-			agent.context === null ? '' : /* html */`<span class="badge">${context} %</span>`;
+			agent.hasCodingAgent && agent.context === null ? '' : /* html */`<span class="badge">${badgeText}</span>`;
 		const rowHtmlContent = /* html */`
 			<button class="card row" data-action="open-pane" data-pane-id="${paneId}">
 				<span class="dot dot-${StatusLabels.colorName(agent)}"></span>

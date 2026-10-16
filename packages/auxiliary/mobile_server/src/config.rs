@@ -46,10 +46,15 @@ fn load_from(path: &Path) -> MobileConfig {
 }
 
 fn save_to(path: &Path, config: &MobileConfig) -> Result<(), String> {
+    let body = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
+    write_private(path, &body)
+}
+
+/// Writes a file that this user alone can read, from the first byte.
+pub(crate) fn write_private(path: &Path, body: &str) -> Result<(), String> {
     if let Some(d) = path.parent() {
         std::fs::create_dir_all(d).map_err(|e| e.to_string())?;
     }
-    let body = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
     // The token gives access to the agents: readable by this user only, from the start.
     let mut opts = std::fs::OpenOptions::new();
     opts.write(true).create(true).truncate(true);
@@ -68,12 +73,17 @@ fn save_to(path: &Path, config: &MobileConfig) -> Result<(), String> {
     Ok(())
 }
 
-/// A new pairing key: 32 random bytes as hex.
-pub fn new_token() -> Result<String, String> {
+/// 32 random bytes from the system.
+pub(crate) fn random_bytes() -> Result<[u8; 32], String> {
     use std::io::Read;
     let mut buf = [0u8; 32];
     std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut buf)).map_err(|e| format!("aléa indisponible : {e}"))?;
-    Ok(buf.iter().map(|b| format!("{b:02x}")).collect())
+    Ok(buf)
+}
+
+/// A new pairing key: 32 random bytes as hex.
+pub fn new_token() -> Result<String, String> {
+    Ok(random_bytes()?.iter().map(|b| format!("{b:02x}")).collect())
 }
 
 #[cfg(test)]

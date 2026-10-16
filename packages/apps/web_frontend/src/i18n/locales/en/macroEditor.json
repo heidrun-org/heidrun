@@ -19,5 +19,7 @@
   "textRequired": "Write the text of the macro first",
   "saved": "Macro saved",
   "addedToProject": "Macro added to the project (.heidrun/config.json)",
-  "deleteLabel": "Delete"
+  "deleteLabel": "Delete",
+  "hardCoded": "hard-coded",
+  "hardCodedNotice": "This macro is hard-coded in Heidrun. It cannot be changed or deleted."
 }

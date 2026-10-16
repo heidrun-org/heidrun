@@ -21,7 +21,7 @@ export class DashboardScreen {
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
 	static render(snapshot: Snapshot, isOnline: boolean | null): string {
-		const agents = SnapshotQueries.agents(snapshot);
+		const agents = SnapshotQueries.codingAgents(snapshot);
 		const needYouCount = SnapshotQueries.attentionAgents(snapshot).length;
 		const workingCount = agents.filter((agent) => agent.status === 'working').length;
 		const summary = needYouCount === 0 ? 'Nothing waits for your decision.' : 'Open Needs you to answer.';
@@ -31,7 +31,7 @@ export class DashboardScreen {
 		const workingHtmlContent = DashboardScreen.renderCount('panes', workingCount, 'Working', false);
 		const total = DashboardScreen.renderTotal(agents.length, snapshot.workspaces.length);
 		const screenHtmlContent = /* html */`
-			${ScreenHeader.renderTab('Dashboard', isOnline)}
+			${ScreenHeader.renderTab('Dashboard', isOnline, true)}
 			<main>
 				<div class="counts">
 					${needYouHtmlContent}

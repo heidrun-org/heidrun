@@ -79,7 +79,7 @@ class SettingsBootstrapTestHelper {
 }
 
 describe('the Settings window (issue 412)', () => {
-	it('writes no style rule of its own, except the dark layer behind the window and the box of the QR code', () => {
+	it('writes no style rule of its own, except the dark layer behind the window, the box of the QR code, and the box of the command', () => {
 		const styledClassNameList: Record<string, string[]> = {};
 		for (const fileName of SettingsBootstrapTestHelper.FILE_NAMES) {
 			const classNameList = SettingsBootstrapTestHelper.listStyledClassNames(SettingsBootstrapTestHelper.readComponent(fileName));
@@ -89,7 +89,7 @@ describe('the Settings window (issue 412)', () => {
 		}
 		expect(styledClassNameList).toEqual({
 			'SettingsModal.vue': ['overlay'],
-			'settings/SettingsMobileAccessSection.vue': ['qr'],
+			'settings/SettingsMobileAccessSection.vue': ['qr', 'command'],
 		});
 	});
 

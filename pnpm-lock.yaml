@@ -190,6 +190,8 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/auxiliary/heidrun_ctrl: {}
+
   packages/auxiliary/mobile_server: {}
 
   packages/auxiliary/mobile_website:
@@ -236,9 +238,9 @@ importers:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
 
-  packages/data_layers/data_layer_coding_agents: {}
-
   packages/data_layers/data_layer_code_hosting: {}
+
+  packages/data_layers/data_layer_coding_agents: {}
 
   packages/data_layers/data_layer_source_control: {}
 
@@ -395,6 +397,34 @@ importers:
       vite:
         specifier: ^5.4.0
         version: 5.4.21(@types/node@26.6.5)(sass@1.105.1)
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
+
+  packages/experiments/promotional_videos:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+      parallax_dino_runner:
+        specifier: workspace:*
+        version: link:../parallax_dino_runner
+      playwright-core:
+        specifier: 1.58.2
+        version: 1.58.2
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.21(@types/node@26.6.5)(sass@1.105.1)
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
@@ -2310,6 +2340,11 @@ packages:
   pkg-dir@4.2.0:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
+
+  playwright-core@1.58.2:
+    resolution: {integrity: sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   plotly.js-basic-dist-min@4.1.2:
     resolution: {integrity: sha512-LvfKTeVYIKzEyMj9TuH+8ot0I7IMG1fET2YxgUtbpZVHd2fBrOlBFsk26wKgnAckHyNhKG7vDk4tEyqGCYs2Aw==}
@@ -4628,6 +4663,8 @@ snapshots:
   pkg-dir@4.2.0:
     dependencies:
       find-up: 4.1.0
+
+  playwright-core@1.58.2: {}
 
   plotly.js-basic-dist-min@4.1.2: {}
 

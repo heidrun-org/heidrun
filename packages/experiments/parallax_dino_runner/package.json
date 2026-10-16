@@ -11,7 +11,7 @@
     "dev": "vite --open",
     "build": "vite build",
     "commits:build": "tsx src/commit_export/cli.ts",
-    "test": "vitest run"
+    "test": "vitest run --minWorkers=1 --maxWorkers=2"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

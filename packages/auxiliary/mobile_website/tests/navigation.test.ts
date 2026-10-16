@@ -21,8 +21,8 @@ describe('Navigation and address', () => {
 		const harness = await AppHarness.start(Fixtures.computer());
 		await harness.tap('button[data-screen="panes"]');
 		expect(window.location.hash).toBe('#/panes');
-		await harness.tap('button[data-screen="macros"]');
-		expect(window.location.hash).toBe('#/macros');
+		await harness.tap('button[data-screen="launchers"]');
+		expect(window.location.hash).toBe('#/launchers');
 		await harness.tap('button[data-screen="needs_you"]');
 		expect(window.location.hash).toBe('#/needs-you');
 		await harness.tap('button[data-screen="dashboard"]');
