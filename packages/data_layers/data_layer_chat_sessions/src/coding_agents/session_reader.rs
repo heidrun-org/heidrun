@@ -1,9 +1,9 @@
 //! Reads the chat sessions of one folder from the files of Claude Code and of Codex, and turns each one into the stored shape.
 
-use crate::coding_agents::scan::{feed_claude_line, feed_codex_line, shorten, Scan};
+use crate::coding_agents::scan::{feed_codex_line, shorten, Scan};
 use crate::coding_agents::scan_cache::ScanCache;
 use crate::coding_agents::session_files::{
-    find_claude_session_files, find_codex_session_files, read_codex_titles, title_of_scan, SessionFile,
+    find_claude_session_files, find_codex_session_files, read_codex_titles, title_of_scan, FolderScope, SessionFile,
 };
 use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent, ModelTokens};
 use chrono::{DateTime, SecondsFormat, Utc};
@@ -12,7 +12,8 @@ use std::path::Path;
 /// The most characters of the title of a stored chat session. A longer title ends with an ellipsis.
 const TITLE_LENGTH: usize = 160;
 
-/// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. A chat session
+/// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. The compressed
+/// files of Codex are read, and the tokens of the subagents and of the workflows of a chat session of Claude Code count for it. A chat session
 /// whose file changed before `modified_since` (milliseconds since 1970) is not read. A chat session without a title and
 /// without a message is left out. `log` receives one line of progress for each coding agent.
 pub fn read_chat_sessions(
@@ -26,16 +27,16 @@ pub fn read_chat_sessions(
     let is_recent = |file: &SessionFile| modified_since.is_none_or(|since| file.modified >= since);
     let mut records = Vec::new();
 
-    let claude_files = find_claude_session_files(cache, claude_projects, folder);
+    let claude_files = find_claude_session_files(cache, claude_projects, folder, FolderScope::Exactly);
     let recent_files: Vec<&SessionFile> = claude_files.iter().filter(|file| is_recent(file)).collect();
     log(&format!("claude code: {} chat session files, {} to read", claude_files.len(), recent_files.len()));
     for file in recent_files {
-        let scan = cache.scan(file, feed_claude_line);
+        let scan = cache.scan_claude(file);
         let title = title_of_scan(&scan);
         records.extend(record_of(CodingAgent::ClaudeCode, file, &scan, title));
     }
 
-    let codex_files = find_codex_session_files(cache, codex_home, folder);
+    let codex_files = find_codex_session_files(cache, codex_home, folder, FolderScope::Exactly);
     let recent_files: Vec<&SessionFile> = codex_files.iter().filter(|file| is_recent(file)).collect();
     log(&format!("codex: {} chat session files, {} to read", codex_files.len(), recent_files.len()));
     let titles = read_codex_titles(codex_home);
@@ -100,7 +101,10 @@ fn record_of(coding_agent: CodingAgent, file: &SessionFile, scan: &Scan, title: 
 mod tests {
     use super::*;
     use crate::coding_agents::session_files::claude_folder_name;
-    use crate::test_samples::{codex_file, codex_message, ignore_log, temp_folder, write_file};
+    use crate::test_samples::{
+        claude_answer_line, claude_user_line, codex_compressed_file, codex_file, codex_message, ignore_log, temp_folder,
+        write_file,
+    };
 
     const TYPED: &str = r#"{"type":"user","cwd":"/work/app","timestamp":"2026-10-11T10:00:00.000Z","message":{"role":"user","content":"Fix the issue 250"}}"#;
     const ANSWER: &str = r#"{"type":"assistant","cwd":"/work/app","timestamp":"2026-10-11T10:00:05.000Z","message":{"id":"msg_1","model":"claude-opus-5","role":"assistant","content":[{"type":"text","text":"Opening pull request #249"},{"type":"tool_use","name":"Write","input":{"file_path":"/work/app/a.ts"}}],"usage":{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":300,"output_tokens":5}}}"#;
@@ -195,5 +199,36 @@ mod tests {
         let found = read(&directory, None);
         assert_eq!(found[0].chat_session.title.chars().count(), TITLE_LENGTH + 1);
         assert!(found[0].chat_session.title.ends_with('…'));
+    }
+
+    #[test]
+    fn reads_a_compressed_chat_session_of_codex_but_not_a_chat_session_below_the_folder() {
+        let directory = temp_folder("reader_compressed");
+        let old = "01a12c31-175b-7513-b12c-bba764f46420";
+        let below = "01a12c31-175b-7513-b12c-bba764f46421";
+        codex_compressed_file(&directory, "2026/09/25", old, "/work/app", &[&codex_message("Please fix issue 250")], 5);
+        codex_file(&directory, "2026/10/10", below, "/work/app/docs", &[&codex_message("Write the guide")], 5);
+        let mut records = read(&directory, None);
+        records.sort_by(|a, b| a.chat_session.id.cmp(&b.chat_session.id));
+        assert_eq!(records.iter().map(|record| record.chat_session.id.as_str()).collect::<Vec<_>>(), vec![old]);
+        assert_eq!(records[0].chat_session.title, "Please fix issue 250");
+        assert_eq!(records[0].relations.issues, vec![250]);
+    }
+
+    #[test]
+    fn counts_the_tokens_of_the_subagents_for_the_chat_session_and_does_not_read_a_chat_session_of_a_worktree() {
+        let directory = temp_folder("reader_agents");
+        claude_file(&directory, "abc", &[TYPED, ANSWER], 100);
+        let project = directory.join("projects").join(claude_folder_name("/work/app"));
+        let agent = format!("{}\n", claude_answer_line("a1", 70));
+        write_file(&project.join("abc").join("subagents").join("agent-1.jsonl"), &agent, 100);
+        let worktree = directory.join("projects").join(claude_folder_name("/work/app/.claude/worktrees/fix"));
+        write_file(&worktree.join("wt.jsonl"), &format!("{}\n", claude_user_line("/work/app/.claude/worktrees/fix", "Hi")), 50);
+        let records = read(&directory, None);
+        assert_eq!(records.len(), 1);
+        let chat_session = &records.iter().find(|record| record.chat_session.id == "abc").unwrap().chat_session;
+        let output: u64 = chat_session.tokens.iter().map(|tokens| tokens.output).sum();
+        assert_eq!(output, 5 + 70);
+        assert_eq!(chat_session.user_message_count, 1);
     }
 }

@@ -73,7 +73,7 @@ async function mountStatisticsModal(records: unknown[] | Error) {
 }
 
 /** Clicks the radio button of a time range, and waits for the next drawing of the chart. */
-async function chooseRange(wrapper: VueWrapper, rangeId: "hour" | "day" | "week", drawingCount: number): Promise<void> {
+async function chooseRange(wrapper: VueWrapper, rangeId: "day" | "week" | "month", drawingCount: number): Promise<void> {
   await wrapper.get(`#statistics-range-${rangeId}`).setValue(true);
   await waitForDrawings(drawingCount);
 }
@@ -200,11 +200,11 @@ describe("StatisticsModal", () => {
     expect(personWorkCalls()).toHaveLength(1);
   });
 
-  it("has a Bootstrap radio button group with Last hour, Last day, and Last week, and Last hour is chosen at first", async () => {
+  it("has a Bootstrap radio button group with Last day, Last week, and Last month, and Last day is chosen at first", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const group = wrapper.get('.btn-group[aria-label="Time range"]');
     const buttons = group.findAll("label.btn-check.btn-outline.theme-secondary");
-    expect(buttons.map((button) => button.text())).toEqual(["Last hour", "Last day", "Last week"]);
+    expect(buttons.map((button) => button.text())).toEqual(["Last day", "Last week", "Last month"]);
     for (const button of buttons) {
       expect(button.attributes("title")).not.toBe("");
       expect(button.get("input").attributes("type")).toBe("radio");
@@ -213,37 +213,28 @@ describe("StatisticsModal", () => {
     expect(checked).toEqual([true, false, false]);
   });
 
-  it("reads the records of the last week through the data layer each time that it opens", async () => {
+  it("reads the records of the last month through the data layer each time that it opens", async () => {
     const first = await mountStatisticsModal([]);
     expect(recordRangeCalls()).toHaveLength(1);
     const { since, until } = recordRangeCalls()[0][1] as { since: string; until: string };
     const range = Date.parse(until) - Date.parse(since);
-    expect(range).toBeGreaterThanOrEqual(6 * 24 * 3_600_000 - 3_600_000);
-    expect(range).toBeLessThanOrEqual(7 * 24 * 3_600_000);
+    expect(range).toBeGreaterThanOrEqual(29 * 24 * 3_600_000 - 3_600_000);
+    expect(range).toBeLessThanOrEqual(30 * 24 * 3_600_000 + 3_600_000);
     first.wrapper.unmount();
     vi.resetModules();
     await mountStatisticsModal([]);
     expect(recordRangeCalls()).toHaveLength(1);
   });
 
-  it("draws one histogram at first, the last hour: twelve bars, and a vertical axis from 0 to 5 minutes", async () => {
+  it("draws one histogram at first, the last day: twenty-four bars, and a vertical axis from 0 to 60 minutes", async () => {
     await mountStatisticsModal([]);
     await waitForDrawings(1);
     const drawing = lastDrawing();
     expect(drawing.data.type).toBe("bar");
-    expect(drawing.data.x).toHaveLength(12);
-    expect(drawing.layout.yaxis.range).toEqual([0, 5]);
-    expect(drawing.layout.yaxis.autorange).toBe(false);
-    expect(plotly.react).toHaveBeenCalledTimes(1);
-  });
-
-  it("draws the last day when Last day is chosen: twenty-four bars, and a vertical axis from 0 to 60 minutes", async () => {
-    const { wrapper } = await mountStatisticsModal([]);
-    await waitForDrawings(1);
-    await chooseRange(wrapper, "day", 2);
-    const drawing = lastDrawing();
     expect(drawing.data.x).toHaveLength(24);
     expect(drawing.layout.yaxis.range).toEqual([0, 60]);
+    expect(drawing.layout.yaxis.autorange).toBe(false);
+    expect(plotly.react).toHaveBeenCalledTimes(1);
   });
 
   it("draws the last week when Last week is chosen: seven bars, and a vertical axis in hours that follows the longest day", async () => {
@@ -256,21 +247,31 @@ describe("StatisticsModal", () => {
     expect(drawing.layout.yaxis.range).toBeUndefined();
   });
 
-  it("gives the same period to the three time ranges, in minutes for the last hour and the last day, and in hours for the last week", async () => {
+  it("draws the last month when Last month is chosen: thirty bars, and a vertical axis in hours that follows the longest day", async () => {
+    const { wrapper } = await mountStatisticsModal([]);
+    await waitForDrawings(1);
+    await chooseRange(wrapper, "month", 2);
+    const drawing = lastDrawing();
+    expect(drawing.data.x).toHaveLength(30);
+    expect(drawing.layout.yaxis.autorange).toBe(true);
+    expect(drawing.layout.yaxis.range).toBeUndefined();
+  });
+
+  it("gives the same period to the three time ranges, in minutes for the last day, and in hours for the last week and the last month", async () => {
     const now = Date.now();
     const record = { workspaceFolder: "/work/heidrun", startedAt: new Date(now - 60_000).toISOString(), endedAt: new Date(now - 30_000).toISOString() };
     const { wrapper } = await mountStatisticsModal([record]);
     await waitForDrawings(1);
     expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5, 5);
-    await chooseRange(wrapper, "day", 2);
-    expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5, 5);
-    await chooseRange(wrapper, "week", 3);
+    await chooseRange(wrapper, "week", 2);
     expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5 / 60, 5);
-    await chooseRange(wrapper, "hour", 4);
+    await chooseRange(wrapper, "month", 3);
+    expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5 / 60, 5);
+    await chooseRange(wrapper, "day", 4);
     expect(sumOfBars(lastDrawing())).toBeCloseTo(0.5, 5);
   });
 
-  it("shows the tooltip of the last hour with the start, the end, and the minutes and seconds, and the tooltip of the last week with the day, the hours, and the minutes", async () => {
+  it("shows the tooltip of the last day with the start, the end, and the minutes and seconds, and the tooltip of the last week with the day, the hours, and the minutes", async () => {
     const now = Date.now();
     const record = { workspaceFolder: "/work/heidrun", startedAt: new Date(now - 3_600_000).toISOString(), endedAt: new Date(now - 60_000).toISOString() };
     const { wrapper } = await mountStatisticsModal([record]);

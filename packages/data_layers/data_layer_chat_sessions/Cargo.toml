@@ -25,3 +25,5 @@ jsonschema = { version = "0.58", default-features = false }
 dirs = "6"
 # The dates of the records of a chat session file
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+# Codex compresses the files of its old chat sessions with zstd, in files that end with `.jsonl.zst`
+zstd = "0.14"

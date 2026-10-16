@@ -1,11 +1,11 @@
 # User interface of Heidrun: Statistics window, tab "User activity", the stacked bars
 
 - Created: 15 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Charts of the Statistics window](statistics_charts.md), [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [Tab "User activity"](statistics_user_activity.md), [Statistics window](statistics_window.md)
-- Related issue: [issue 498](https://github.com/heidrun-org/heidrun/issues/498)
+- Related issue: [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 552](https://github.com/heidrun-org/heidrun/issues/552)
 
 This file is a part of the rules of the tab "User activity". It gives the rules of the stacked bars of the histogram of the user activity time: the parts, the colors, the legend, and the chart information card. The other rules of the tab are in [statistics_user_activity.md](statistics_user_activity.md).
 
@@ -18,7 +18,7 @@ This file is a part of the rules of the tab "User activity". It gives the rules 
 ## The chart legend and the chart information card
 
 - The histogram follows [statistics_charts.md](statistics_charts.md). The chart legend gives the name of each chosen workspace, in the order of the buttons, and it is not drawn while no workspace is listed.
-- The title of the chart information card gives the start and the end of the slot, or the day for a slot of 1 day. In the last week, the start of a slot that is shorter than 1 day also gives its day.
+- The title of the chart information card gives the start and the end of the slot, or the day for a slot of 1 day. In the last week and in the last month, the start of a slot that is shorter than 1 day also gives its day.
 - The total is the word "Total" and the user activity time in minutes and seconds, or in hours and minutes for a slot of 6 hours or of 1 day.
 - When two or more workspaces are chosen, one row follows for each workspace that has time in the slot, with its time in the same unit.
 

@@ -15,8 +15,8 @@ The item "Statistics" of the More menu opens the Statistics window. The Statisti
 The tab "User activity" shows when and where you work in front of Heidrun.
 
 - The histogram of the user activity time has one bar for each slot of time. Each bar has one color for each workspace, so you see where your time went.
-- Choose the time range: the last hour, the last day, or the last week.
-- Choose the slot length, for example 5 minutes in the last hour, or 1 day in the last week.
+- Choose the time range: the last day, the last week, or the last month.
+- Choose the slot length, for example 1 hour in the last day, or 1 day in the last month.
 - Choose the workspaces to show.
 
 ![The tab "User activity" of the Statistics window: the histogram of the last day with one bar for each hour, and the information card of one bar with the time of each workspace.](/screenshots/features/statistics_user_activity.png)
@@ -30,7 +30,7 @@ Heidrun keeps each active period in the file `~/.config/heidrun/user_activity.js
 The tab "Work of one person" shows the work of the last 7 days or of the last 30 days, with one bar for each day. Choose the source of the numbers:
 
 - "Git history": the commits, the pull requests, and the issues of one person, in the repository of the selected workspace. The person chooser lists each person who worked in the last 30 days, the most active person first. Five totals give the number of commits, of pull requests, of issues, of lines added, and of lines deleted. Under each total, its average per day.
-- "AI cost": the estimated cost in US dollars of the chats of Claude Code and of Codex on this computer, for each day. Three totals give the cost of Claude Code, the cost of Codex, and the two together, each with its average cost per day.
+- "AI cost": the estimated cost in US dollars of the chats of Claude Code and of Codex on this computer, for each day. It counts the chats that started in a worktree or in a sub-folder of the repository, the subagents and the workflows of Claude Code, and the old chats that Codex compressed. Three totals give the cost of Claude Code, the cost of Codex, and the two together, each with its average cost per day.
 
 ![The tab "Work of one person" of the Statistics window with the source "Git history": the three totals, and one bar for each of the last 7 days with the commits and the pull requests.](/screenshots/features/statistics_person_work.png)
 

@@ -12,7 +12,7 @@ use crate::coding_agents::tokens::TokenScan;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeSet;
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::path::Path;
 
 /// The most digits of the number of an issue or of a pull request. A longer number is not a reference.
@@ -135,15 +135,35 @@ impl ChatMeta {
 
 // ---- Reading a file ----------------------------------------------------------------------------------------------
 
+/// The end of the name of a chat session file that was compressed with zstd. Codex compresses the files of its old chat
+/// sessions: `rollout-<date>-<id>.jsonl` becomes `rollout-<date>-<id>.jsonl.zst`.
+pub const COMPRESSED_EXTENSION: &str = "zst";
+
+/// True when the file at `path` is compressed with zstd, because its name ends with `.zst`.
+pub fn is_compressed(path: &Path) -> bool {
+    path.extension().and_then(|extension| extension.to_str()) == Some(COMPRESSED_EXTENSION)
+}
+
+/// A reader of the content of the file at `path`, from the byte `from`. For a compressed file, the content is the text after
+/// the decompression, and `from` counts the bytes of this text. `None` when the file cannot be opened, is not valid zstd, or
+/// holds less than `from` bytes.
+pub fn open_lines(path: &Path, from: u64) -> Option<Box<dyn BufRead>> {
+    let mut file = std::fs::File::open(path).ok()?;
+    if is_compressed(path) {
+        let mut reader = BufReader::new(zstd::Decoder::new(file).ok()?);
+        let skipped = std::io::copy(&mut Read::by_ref(&mut reader).take(from), &mut std::io::sink()).ok()?;
+        return (skipped == from).then(|| Box::new(reader) as Box<dyn BufRead>);
+    }
+    file.seek(SeekFrom::Start(from)).ok()?;
+    Some(Box::new(BufReader::new(file)))
+}
+
 /// Calls `each` with every complete line of the file from the byte `from`, and returns the byte after the last complete
 /// line. A line is complete when it ends with a line break, or when it is valid JSON: the coding agent may still be writing
-/// the last line. A line that is not valid text is skipped. A file that cannot be read has no line.
+/// the last line. A line that is not valid text is skipped. A file that cannot be read has no line. A compressed file is read
+/// after its decompression, and a compressed file that stops in the middle gives the lines before the break.
 pub fn read_lines_from(path: &Path, from: u64, mut each: impl FnMut(&str)) -> u64 {
-    let Ok(mut file) = std::fs::File::open(path) else { return from };
-    if file.seek(SeekFrom::Start(from)).is_err() {
-        return from;
-    }
-    let mut reader = BufReader::new(file);
+    let Some(mut reader) = open_lines(path, from) else { return from };
     let mut line = Vec::new();
     let mut offset = from;
     loop {
@@ -193,6 +213,17 @@ pub fn feed_claude_line(scan: &mut Scan, line: &str) {
         if let Ok(record) = serde_json::from_str::<Value>(line) {
             scan.tokens.note_claude_answer(&record);
             feed_claude_assistant(scan, &record);
+        }
+    }
+}
+
+/// Reads one line of a file of a subagent or of a workflow of Claude Code into `scan`: only the tokens of its answers count.
+/// The lines of the user in these files are the prompts that the main agent wrote, not messages of the developer, and the
+/// title, the dates, the references, and the written files belong to the chat that started the subagent.
+pub fn feed_claude_tokens_line(scan: &mut Scan, line: &str) {
+    if line.contains(r#""type":"assistant""#) {
+        if let Ok(record) = serde_json::from_str::<Value>(line) {
+            scan.tokens.note_claude_answer(&record);
         }
     }
 }
@@ -347,7 +378,7 @@ fn date_in(line: &str) -> Option<i64> {
 }
 
 /// The folder of a line, from the first field `"cwd":"<folder>"`. A folder with an escape in its name is skipped.
-fn folder_in(line: &str) -> Option<String> {
+pub(crate) fn folder_in(line: &str) -> Option<String> {
     let after = &line[line.find(r#""cwd":""#)? + r#""cwd":""#.len()..];
     let folder = &after[..after.find('"')?];
     if folder.is_empty() || folder.contains('\\') {
@@ -665,5 +696,54 @@ mod tests {
         scan_file(&path, 0, &mut scan, feed_claude_line);
         assert_eq!(scan.meta.user_messages, 1);
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn reads_a_compressed_file_like_the_same_file_that_is_not_compressed() {
+        let lines = "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"one\"}}\n\
+                     {\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"two\"}}\n";
+        let path = std::env::temp_dir().join(format!("hd-chats-scan-{}-zst.jsonl.zst", std::process::id()));
+        std::fs::write(&path, zstd::encode_all(lines.as_bytes(), 0).unwrap()).unwrap();
+        assert!(is_compressed(&path));
+        let mut scan = Scan::default();
+        let offset = scan_file(&path, 0, &mut scan, feed_claude_line);
+        assert_eq!((scan.meta.user_messages, offset), (2, lines.len() as u64));
+        let mut rest = Scan::default();
+        let first_line = lines.find('\n').unwrap() as u64 + 1;
+        assert_eq!(scan_file(&path, first_line, &mut rest, feed_claude_line), lines.len() as u64);
+        assert_eq!((rest.meta.user_messages, rest.first_message.as_deref()), (1, Some("two")));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn gives_no_line_for_a_compressed_file_that_is_not_valid_or_that_stops_in_the_middle() {
+        let name = |text: &str| std::env::temp_dir().join(format!("hd-chats-scan-{}-{text}.jsonl.zst", std::process::id()));
+        let not_zstd = name("not-zstd");
+        std::fs::write(&not_zstd, "{\"type\":\"user\"}\n").unwrap();
+        let mut scan = Scan::default();
+        assert_eq!(scan_file(&not_zstd, 0, &mut scan, feed_claude_line), 0);
+        let line = "{\"type\":\"user\",\"message\":{\"role\":\"user\",\"content\":\"one\"}}\n";
+        let filler: String = (0..60_000).map(|number| format!("{{\"type\":\"progress\",\"number\":{number}}}\n")).collect();
+        let mut bytes = zstd::encode_all(format!("{line}{filler}").as_bytes(), 0).unwrap();
+        bytes.truncate(bytes.len() - 5);
+        let cut = name("cut");
+        std::fs::write(&cut, bytes).unwrap();
+        let mut scan = Scan::default();
+        scan_file(&cut, 0, &mut scan, feed_claude_line);
+        assert_eq!(scan.meta.user_messages, 1);
+        assert_eq!(scan_file(&cut, 10_000_000, &mut Scan::default(), feed_claude_line), 10_000_000);
+        let _ = std::fs::remove_file(&not_zstd);
+        let _ = std::fs::remove_file(&cut);
+    }
+
+    #[test]
+    fn keeps_only_the_tokens_of_the_answers_of_a_file_of_a_subagent() {
+        let user = r#"{"type":"user","cwd":"/work/app","message":{"role":"user","content":"Search the code of issue 250"}}"#;
+        let answer = r#"{"type":"assistant","message":{"id":"msg_1","model":"claude-opus-5","content":[{"type":"tool_use","name":"Write","input":{"file_path":"/work/app/a.ts"}}],"usage":{"input_tokens":4,"output_tokens":9}}}"#;
+        let mut scan = Scan::default();
+        feed_claude_tokens_line(&mut scan, user);
+        feed_claude_tokens_line(&mut scan, answer);
+        assert_eq!(scan.tokens.totals()["claude-opus-5"].output, 9);
+        assert_eq!((scan.meta, scan.first_message), (ChatMeta::default(), None));
     }
 }

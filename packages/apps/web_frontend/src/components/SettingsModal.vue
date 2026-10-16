@@ -3,15 +3,12 @@ import { onBeforeUnmount, onMounted } from "vue";
 import DialogCloseButton from "./DialogCloseButton.vue";
 import Icon from "./Icon.vue";
 import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
+import SettingsConfirmationsSection from "./settings/SettingsConfirmationsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
-import SettingsFinishedItemsSection from "./settings/SettingsFinishedItemsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
-import SettingsNeedsYouSection from "./settings/SettingsNeedsYouSection.vue";
-import SettingsNewTabSection from "./settings/SettingsNewTabSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
-import SettingsMouseSection from "./settings/SettingsMouseSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
-import SettingsPastChatsSection from "./settings/SettingsPastChatsSection.vue";
+import SettingsSidebarsSection from "./settings/SettingsSidebarsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
 import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
@@ -19,15 +16,12 @@ import { t } from "../i18n/index";
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
-  { id: "newTab", icon: "plus-lg", labelKey: "settingsModal.newTab" },
-  { id: "mouse", icon: "mouse", labelKey: "settingsModal.mouse" },
-  { id: "finishedItems", icon: "check2-circle", labelKey: "settingsModal.finishedItems" },
-  { id: "needsYou", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.needsYou" },
-  { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
-  { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
-  { id: "pastChats", icon: "chat-left-text", labelKey: "settingsModal.pastChats" },
+  { id: "confirmations", icon: "shield-check", labelKey: "settingsModal.confirmations" },
+  { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
+  { id: "sidebars", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.sidebars" },
   { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
+  { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
 ];
 
 function close() {
@@ -74,15 +68,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <h3 class="m-0 fw-semibold">{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
           <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
           <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
-          <SettingsNewTabSection v-else-if="settingsModal.section === 'newTab'" />
-          <SettingsMouseSection v-else-if="settingsModal.section === 'mouse'" />
-          <SettingsFinishedItemsSection v-else-if="settingsModal.section === 'finishedItems'" />
-          <SettingsNeedsYouSection v-else-if="settingsModal.section === 'needsYou'" />
-          <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
-          <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
-          <SettingsPastChatsSection v-else-if="settingsModal.section === 'pastChats'" />
+          <SettingsConfirmationsSection v-else-if="settingsModal.section === 'confirmations'" />
+          <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
+          <SettingsSidebarsSection v-else-if="settingsModal.section === 'sidebars'" />
           <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />
+          <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
         </section>
       </div>
     </dialog>

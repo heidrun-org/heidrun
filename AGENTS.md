@@ -65,13 +65,13 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
   - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search field of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
   - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the File explorer sidebar section.
-  - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the section "Needs you" of the Settings window.
+  - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the heading "Needs you" of the section "Sidebars" of the Settings window.
   - [user_activity.md](docs/agents_rules/user_interface/sidebars/user_activity.md): the User activity sidebar section, the detection of the activity of the developer, and the user activity records.
 - The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
   - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
   - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
   - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, the tokens, and the estimated cost, its cache, and the width of an information card.
-  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the section "Past chats" of the Settings window, with the delay between two reads of the chats.
+  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the heading "Past chats" of the section "Sidebars" of the Settings window, with the delay between two reads of the chats.
   - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
     - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
     - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.

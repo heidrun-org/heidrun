@@ -1,7 +1,7 @@
 # Glossary of Heidrun: chats
 
 - Created: 14 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: chats](../user_interface/sidebars/chats/index.md)
@@ -13,7 +13,7 @@ This document gives one short definition for each word of the chats, the chat se
 
 ### Chat
 
-One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
+One saved conversation between the developer and a coding agent, for example Claude Code or Codex. The coding agent saves each chat in a file on the disk of the developer. A chat belongs to a workspace when the coding agent ran in the folder of that workspace. The source "AI cost" of the Statistics window also counts the chats that ran in a folder below it, such as a worktree. A chat is not a pane: the pane is the terminal, and the chat is the saved conversation.
 
 ### Chat session
 

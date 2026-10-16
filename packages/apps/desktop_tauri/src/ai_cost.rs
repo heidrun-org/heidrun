@@ -8,7 +8,7 @@
 use crate::chats::{Chats, SortKey, SortOrder, Sorting, MAX_LIMIT};
 use crate::model_prices::PriceTable;
 use crate::person_work::parse_time;
-use data_layer_chat_sessions::UNDATED_HOUR;
+use data_layer_chat_sessions::{FolderScope, UNDATED_HOUR};
 use serde::Serialize;
 
 /// The name of Claude Code in the field `coding_agent`, the identifier of the coding agent in the web page.
@@ -102,8 +102,8 @@ fn costs_in_range(chats: &Chats, table: &PriceTable, since: i64, until: i64) -> 
     AiCostItems { chats: found.into_iter().map(|(_, cost)| cost).collect() }
 }
 
-/// Called by the Statistics window to read the AI cost of the chats of the repository that holds `folder`, for the hours in the
-/// time range from `since` to `until`, two texts in ISO 8601.
+/// Called by the Statistics window to read the AI cost of the chats of the repository that holds `folder`, with the chats of the
+/// folders below its root, for the hours in the time range from `since` to `until`, two texts in ISO 8601.
 #[tauri::command]
 pub async fn ai_cost_in_range(folder: String, since: String, until: String) -> Result<AiCostItems, String> {
     let since = parse_time(&since)?.timestamp_millis();
@@ -111,7 +111,7 @@ pub async fn ai_cost_in_range(folder: String, since: String, until: String) -> R
     // Off the main thread: the first read of the files of the coding agents takes a moment.
     tauri::async_runtime::spawn_blocking(move || {
         let sorting = Sorting { key: SortKey::LastUpdated, order: SortOrder::Descending };
-        let chats = crate::chats::list(&folder, MAX_LIMIT, sorting);
+        let chats = crate::chats::list(&folder, MAX_LIMIT, sorting, FolderScope::WithFoldersBelow);
         costs_in_range(&chats, &crate::model_prices::current(), since, until)
     })
     .await

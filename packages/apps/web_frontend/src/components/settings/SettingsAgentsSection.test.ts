@@ -29,7 +29,7 @@ describe("SettingsAgentsSection", () => {
   it("starts with every agent switched off", async () => {
     const { wrapper, settings } = await mountSection();
     expect(settings.ownedAgents).toEqual([]);
-    expect(wrapper.findAll("input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false]);
+    expect(wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false]);
   });
 
   it("draws each switch with the Bootstrap class switch", async () => {
@@ -101,6 +101,44 @@ describe("SettingsAgentsSection", () => {
     vi.resetModules();
     const second = await mountSection();
     expect(second.settings.ownedAgents).toEqual(["claude"]);
-    expect(second.wrapper.findAll("input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false]);
+    expect(second.wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false]);
+  });
+});
+
+describe("SettingsAgentsSection, the settings that moved here from other sections (issue #556)", () => {
+  it("holds, after the list of coding agents, the heading Default command of a new tab, then the heading Quit", async () => {
+    const { wrapper } = await mountSection();
+    expect(wrapper.findAll("h4").map((heading) => heading.text())).toEqual(["Default command of a new tab", "Quit"]);
+  });
+
+  it("shows the three commands of a new tab, and saves the one that is chosen", async () => {
+    const { wrapper, settings } = await mountSection();
+    const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+    await group.findAll("input[type=radio]")[2].setValue(true);
+    expect(settings.newTabCommand).toBe("codex");
+  });
+
+  it("shows the switch Keep agents running after quit as a Bootstrap switch, switched off by default, linked to its setting", async () => {
+    const { wrapper, settings } = await mountSection();
+    const label = wrapper.findAll("label").find((candidate) => candidate.text() === "Keep agents running after quit");
+    expect(label).toBeDefined();
+    const switchInput = wrapper.get(`input[id="${label!.attributes("for")}"]`);
+    expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
+    expect((switchInput.element as HTMLInputElement).checked).toBe(false);
+    await switchInput.setValue(true);
+    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
+  });
+
+  it("explains the switch Keep agents running after quit in an information card that opens from a circled question mark, and does not switch when the question mark is clicked", async () => {
+    const { wrapper, settings } = await mountSection();
+    const mark = wrapper.get(".information-card-part");
+    expect(mark.get('[role="img"]').attributes("aria-label")).toBe("What does this setting do?");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    await mark.trigger("click");
+    const card = wrapper.get(".popover");
+    expect(card.classes()).toContain("bs-popover-bottom");
+    expect(card.text()).toContain("Heidrun stops its Herdr session");
+    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
   });
 });

@@ -46,23 +46,20 @@ const props = defineProps<{
 
 /** The keys of the texts of each range: the title, and the description for the screen reader. */
 const RANGE_TEXTS = {
-  hour: { chartTitle: "statisticsModal.hourChartTitle", chartLabel: "statisticsModal.hourChartLabel" },
   day: { chartTitle: "statisticsModal.dayChartTitle", chartLabel: "statisticsModal.dayChartLabel" },
   week: { chartTitle: "statisticsModal.weekChartTitle", chartLabel: "statisticsModal.weekChartLabel" },
+  month: { chartTitle: "statisticsModal.monthChartTitle", chartLabel: "statisticsModal.monthChartLabel" },
 } as const;
 
 /** The unit of the height of the bars. */
-type HeightUnit = "seconds" | "minutes" | "hours";
+type HeightUnit = "minutes" | "hours";
 
 /**
- * The vertical axis of each slot length: the unit, the top, and the space between two lines. A slot of one minute goes
- * from 0 to 60 seconds. A slot of 5 minutes to one hour goes from 0 to the length of the slot, in minutes. A slot of six
- * hours goes from 0 to 6 hours. The top is `null` for a slot of one day, which follows the longest day.
+ * The vertical axis of each slot length: the unit, the top, and the space between two lines. A slot of 15 minutes to one
+ * hour goes from 0 to the length of the slot, in minutes. A slot of six hours goes from 0 to 6 hours. The top is `null`
+ * for a slot of one day, which follows the longest day.
  */
 const VERTICAL_AXES: Record<UserActivitySlotLengthId, { unit: HeightUnit; top: number | null; step: number | null }> = {
-  one_minute: { unit: "seconds", top: 60, step: 10 },
-  five_minutes: { unit: "minutes", top: 5, step: 1 },
-  ten_minutes: { unit: "minutes", top: 10, step: 2 },
   fifteen_minutes: { unit: "minutes", top: 15, step: 5 },
   thirty_minutes: { unit: "minutes", top: 30, step: 5 },
   one_hour: { unit: "minutes", top: 60, step: 10 },
@@ -71,11 +68,10 @@ const VERTICAL_AXES: Record<UserActivitySlotLengthId, { unit: HeightUnit; top: n
 };
 
 /** The length of a unit of height, in milliseconds. */
-const UNIT_MS: Record<HeightUnit, number> = { seconds: 1000, minutes: 60_000, hours: 3_600_000 };
+const UNIT_MS: Record<HeightUnit, number> = { minutes: 60_000, hours: 3_600_000 };
 
 /** The key of the title of the vertical axis, for each unit of height. */
 const AXIS_TITLE_KEYS: Record<HeightUnit, string> = {
-  seconds: "statisticsModal.secondsAxis",
   minutes: "statisticsModal.minutesAxis",
   hours: "statisticsModal.hoursAxis",
 };
@@ -118,22 +114,17 @@ function isDaySlot(): boolean {
   return USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId].unit === "day";
 }
 
-/** The minutes since midnight, on the clock of the computer, at the start of a slot. */
-function minutesSinceMidnight(time: number): number {
-  const date = new Date(time);
-  return date.getHours() * 60 + date.getMinutes();
-}
-
 /**
- * The tick of the horizontal axis. A slot has a label when it starts at a multiple of the label step since midnight. A
- * label that sits on a midnight is the day, and any other label is the time of the clock.
+ * The tick of the horizontal axis. A slot has a label when `UserActivitySlots.hasLabel` says so. A label that sits on a
+ * midnight is the day, and any other label is the time of the clock.
  */
 function ticks(): { values: number[]; texts: string[] } {
   const step = UserActivitySlots.labelStepInMinutes(props.rangeId, props.slotLengthId);
   const values: number[] = [];
   const texts: string[] = [];
+  const lastSlotStartedAt = props.slots[props.slots.length - 1]?.startedAt ?? 0;
   props.slots.forEach((slot, index) => {
-    if (minutesSinceMidnight(slot.startedAt) % step !== 0) {
+    if (UserActivitySlots.hasLabel(slot.startedAt, lastSlotStartedAt, step) === false) {
       return;
     }
     values.push(index);
@@ -163,13 +154,13 @@ function escapeMarkup(text: string): string {
 
 /**
  * The title of the chart information card of a slot. A slot of one day gives its day. Any other slot gives its start and its end. In
- * the last week, the start of a slot that is shorter than one day also gives its day.
+ * the last week and in the last month, the start of a slot that is shorter than one day also gives its day.
  */
 function slotTitleText(slot: UserActivitySlot): string {
   if (USER_ACTIVITY_SLOT_LENGTHS[props.slotLengthId].unit === "day") {
     return dayText(slot.startedAt, "long");
   }
-  const start = props.rangeId === "week" ? `${dayText(slot.startedAt, "long")}, ${clockText(slot.startedAt)}` : clockText(slot.startedAt);
+  const start = props.rangeId === "week" || props.rangeId === "month" ? `${dayText(slot.startedAt, "long")}, ${clockText(slot.startedAt)}` : clockText(slot.startedAt);
   return t("statisticsModal.slotRangeTitle", { start, end: clockText(slot.endedAt) });
 }
 
