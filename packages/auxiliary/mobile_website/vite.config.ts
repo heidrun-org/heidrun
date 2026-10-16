@@ -12,7 +12,7 @@ export default defineConfig({
 		strictPort: true,
 	},
 	build: {
-		// The iPhone and the iPad run Safari 16 or later.
+		// The page must run on Safari 16 or later, the oldest browser engine of the phones that it supports.
 		target: 'safari16',
 		sourcemap: false,
 		// The page runs under a content security policy that allows only files of its own address: no inline

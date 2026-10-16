@@ -13,3 +13,4 @@ The Vitest tests of the mobile website. They start the whole page in jsdom again
 ## Rules
 - A test never calls a real server. It uses `FakeComputer`.
 - A test of a screen taps on the page. It does not call a `render` method, so it tests the same path as the phone.
+- `mobile_words.test.ts` reads the files of the mobile website, of the mobile server, and of the documents about the mobile access. It fails on the word "Mac" or "Tailscale" in any of them, and on the word "iPhone" or "iPad" in the code.
