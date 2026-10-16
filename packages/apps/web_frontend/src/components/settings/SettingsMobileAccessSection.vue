@@ -83,7 +83,7 @@ async function openPairingLink(link: string) {
         </button>
         <div v-if="isLeftoverNotFound" class="mt-2 old-ngrok-not-found">
           {{ t("mobileModal.oldNgrokNotFound") }}
-          <code class="d-block mono mt-1 user-select-all kill-all-ngrok">{{ KILL_ALL_NGROK_COMMAND }}</code>
+          <code class="command d-block mono mt-2 p-2 rounded user-select-all kill-all-ngrok">{{ KILL_ALL_NGROK_COMMAND }}</code>
         </div>
       </template>
     </div>
@@ -117,4 +117,5 @@ async function openPairingLink(link: string) {
 <style scoped>
 .qr { width: 220px; flex-shrink: 0; }
 .qr :deep(svg) { display: block; width: 100%; height: auto; }
+.command { background: var(--field); color: var(--text); }
 </style>
