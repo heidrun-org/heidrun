@@ -38,7 +38,9 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
   - [statistics_charts.md](docs/agents_rules/glossary/statistics_charts.md): the definition of the chart legend and of the chart information card, which every chart of the Statistics window has. Read it when you add or change a chart of the Statistics window.
   - [macros.md](docs/agents_rules/glossary/macros.md): the definition of each word of the macros: the macro, the hard-coded macro, the personal macro, the personal macro file, the project macro, and the command line `heidrun_ctrl`. Read it when you change the macros or the command line `heidrun_ctrl`.
   - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot. Read it when you change the detection of the activity of the developer, its sidebar section, or the Statistics window.
+  - [issue_fix_workflow.md](docs/agents_rules/glossary/issue_fix_workflow.md): the definition of each word of the Issue Fix Workflow: the Issue Fix Workflow, the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, the Issue Fix Completion, the added request, the related added request, and the unrelated added request. Read it when you change the section "Issue Fix Workflow" of this file.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
+- [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md): the rules of the part Issue Fix Implementation: the two kinds of added request, the comment on the issue, the new issue, and the description of the pull request. Read this file each time that the developer asks for more work that the issue does not describe.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
 
@@ -136,7 +138,7 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has three parts: the Issue Fix Setup, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you make the change. In the Issue Fix Review, the developer tests the change. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository has four parts: the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you prepare the work. In the Issue Fix Implementation, you make the change. In the Issue Fix Review, the developer tests the change. Each time that the developer asks for a change in the Issue Fix Review, the work goes back to the Issue Fix Implementation. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
 
 The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
 
@@ -150,11 +152,20 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 3. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
    - To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
    - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
-4. Make the change in the temporary worktree. Every commit message mentions the issue number.
+
+### Issue Fix Implementation
+
+The Issue Fix Implementation starts when the Issue Fix Setup is done. It starts again each time that the developer asks for a change in the Issue Fix Review ([issue 610](https://github.com/heidrun-org/heidrun/issues/610)).
+
+1. Make the change in the temporary worktree. Every commit message mentions the issue number.
+2. When the developer asks for more work that the issue does not describe, this work is an added request. Follow [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md). In short:
+   - A related added request stays in the same issue and in the same temporary worktree. When the work is done, add one comment to the issue that lists what the developer asked, what changed, and which files changed.
+   - An unrelated added request becomes a new issue, with its own temporary worktree. Ask the developer before you create the new issue.
+3. When the change is done, start the Issue Fix Review.
 
 ### Issue Fix Review
 
-The Issue Fix Review starts when the change is done in the temporary worktree. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). The Issue Fix Review has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)). Never put the two messages in one message.
+The Issue Fix Review starts when the Issue Fix Implementation is done. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). The Issue Fix Review has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)). Never put the two messages in one message.
 
 The first message asks the developer to review. Always do these steps, in this order:
 
@@ -168,7 +179,7 @@ The first message asks the developer to review. Always do these steps, in this o
 
 The developer runs the application, then says that the result is reviewed. The second message comes only after that. It asks one question: whether the result is good. It does not ask about the pull request or about the merge.
 
-- Give the command line again each time that the developer asks for a change and you change the work. Then start again with the first message.
+- Each time that the developer asks for a change, go back to the Issue Fix Implementation. Then give the command line again, and start again with the first message.
 - Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
 
 ### Issue Fix Completion
@@ -176,7 +187,7 @@ The developer runs the application, then says that the result is reviewed. The s
 The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
 
 1. Make the last commit. It uses `fixes #<issue number>` in its message.
-2. Create a pull request (on GitLab, a merge request) from the temporary branch.
+2. Create a pull request (on GitLab, a merge request) from the temporary branch. Its description lists each added request, as [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md) says.
 3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
 4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
 5. Close the issue.
