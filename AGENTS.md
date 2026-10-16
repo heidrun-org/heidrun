@@ -227,6 +227,7 @@ The file `.env.example` at the root of the repository lists and explains every e
 ## Tests
 
 - `pnpm test` at the repository root runs the tests of every package, and exits with a non-zero code when a test fails.
+- The script `test` of every package that uses Vitest is `vitest run --minWorkers=1 --maxWorkers=2`, so that Vitest starts at most two worker processes at the same time, and the computer of the developer stays fast. Vitest 2 needs both options: the default minimum is the number of processor cores minus one, and Vitest stops with an error when the minimum is higher than the maximum. Give both options to every new package that uses Vitest.
 - `pnpm --filter web_frontend test` runs the Vitest tests of the package `packages/apps/web_frontend`. The test files sit next to the code, and are named `*.test.ts`.
 - `pnpm --filter desktop_tauri test` builds the package `mobile_website`, then runs `cargo test` for the package `packages/apps/desktop_tauri`. The Rust tests sit in a `#[cfg(test)]` module at the end of each source file.
 - `pnpm --filter website_public test` runs the Vitest tests of the package `packages/auxiliary/website_public`: the configuration, the pages, the page of shortcuts, the identity texts, the macOS quarantine message in the release text and the developer documents, the splash image component, the favicon, the link preview cards (the Open Graph tags, the X card tags, and the card image), and a complete build of the website. The test files sit in the folder `tests`.
