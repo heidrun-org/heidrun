@@ -50,7 +50,7 @@ Only Chrome on Android shows a notification, in a normal tab, through a service 
 
 - The gear button of the Dashboard opens the settings window. There the developer allows the notifications, turns the push on or off, and sends a test notification.
 - The server makes a key once and keeps it in the file `mobile_push.json`, readable by this user only. The phone asks for the key with the method `pushKey`, asks its browser for a push subscription, and gives the address of the push service to the server with the method `subscribe`.
-- When a coding agent asks a question, finishes, or is blocked, and it is not in the quiet hours, the window of Heidrun calls the command `mobile_push`, which does nothing while the mobile access is off. The server sends a request with no body to each phone, so the push service learns nothing about the coding agent.
+- When a coding agent asks a question, finishes, or is blocked, and it is not in the quiet hours (the focus of the window and the open pane do not matter, because a phone is for a developer who is away), the window of Heidrun calls the command `mobile_push`, which does nothing while the mobile access is off. The server sends a request with no body to each phone, so the push service learns nothing about the coding agent.
 - The service worker shows the fixed text "A coding agent needs you." A tap opens the screen Needs you.
 
 ## What stays out

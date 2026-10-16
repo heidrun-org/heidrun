@@ -2,7 +2,7 @@ import { computed, reactive, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
 import * as api from "../lib/api";
-import { notify } from "../lib/notify";
+import { notify, notifyPhone } from "../lib/notify";
 import { settings } from "./settings";
 import { agentKind, codexWindows, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
@@ -606,7 +606,7 @@ export async function answerChoice(paneId: string, n: number, checked = false, e
  * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
  * shows in « À traiter » and gets its own notification.
  */
-async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false) {
+async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false, pushToPhone = false) {
   // Let the agent finish drawing its answer.
   await new Promise((r) => window.setTimeout(r, 700));
   let question: string | null = null;
@@ -625,10 +625,12 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
     state.questions[paneId] = { text: question, at: Date.now() };
     // Shown again even if an earlier "terminé" card was closed.
     delete state.dismissed[paneId];
-    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`, true);
+    if (pushToPhone) void notifyPhone();
+    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
   } else {
     delete state.questions[paneId];
-    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws, true);
+    if (pushToPhone) void notifyPhone();
+    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
   }
 }
 
@@ -665,13 +667,14 @@ function applySnapshot(snap: SessionSnapshot) {
     if (after === "blocked") {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
+      void notifyPhone();
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
-        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws, true);
+        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
       }
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).
       const away = !document.hasFocus() || state.selectedPaneId !== pane.pane_id;
-      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away);
+      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away, true);
     }
   }
 

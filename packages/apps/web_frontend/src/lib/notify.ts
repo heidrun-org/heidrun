@@ -19,9 +19,8 @@ export function isQuiet(d = new Date()): boolean {
 let granted: boolean | null = null;
 
 /** Resolves to true when the notification was actually shown (not in quiet hours). */
-export async function notify(title: string, body?: string, toPhone = false): Promise<boolean> {
+export async function notify(title: string, body?: string): Promise<boolean> {
   if (isQuiet()) return false;
-  if (toPhone) void pushToPhone();
   try {
     if (granted === null) {
       granted = await isPermissionGranted();
@@ -35,8 +34,13 @@ export async function notify(title: string, body?: string, toPhone = false): Pro
   }
 }
 
-/** Wakes the phones that asked for a push. A failure is ignored: the desktop notification does not depend on it. */
-async function pushToPhone(): Promise<void> {
+/**
+ * Wakes the phones that asked for a push: a coding agent needs the developer. The push does not depend on the focus of
+ * the window or on the pane that is open, because a phone is for a developer who is away. The quiet hours still apply.
+ * A failure is ignored: nothing else depends on the push.
+ */
+export async function notifyPhone(): Promise<void> {
+  if (isQuiet()) return;
   try {
     await invoke("mobile_push");
   } catch {

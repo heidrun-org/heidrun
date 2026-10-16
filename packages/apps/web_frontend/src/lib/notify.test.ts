@@ -10,7 +10,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) })
 
 import { invoke } from "@tauri-apps/api/core";
 import { sendNotification } from "@tauri-apps/plugin-notification";
-import { isQuiet, notify } from "./notify";
+import { isQuiet, notify, notifyPhone } from "./notify";
 import { settings } from "../stores/settings";
 
 const at = (hours: number, minutes = 0) => new Date(2026, 0, 15, hours, minutes);
@@ -72,11 +72,11 @@ describe("notify", () => {
   });
 });
 
-describe("notify to the phone", () => {
-  it("wakes the phones only when asked to", async () => {
+describe("notifyPhone", () => {
+  it("wakes the phones, and the desktop notification does not", async () => {
     await notify("Title", "body");
     expect(invoke).not.toHaveBeenCalled();
-    await notify("Title", "body", true);
+    await notifyPhone();
     expect(invoke).toHaveBeenCalledWith("mobile_push");
   });
 
@@ -85,14 +85,13 @@ describe("notify to the phone", () => {
     settings.quietTo = "23:59";
     vi.useFakeTimers();
     vi.setSystemTime(at(12));
-    await notify("Title", "body", true);
+    await notifyPhone();
     vi.useRealTimers();
     expect(invoke).not.toHaveBeenCalled();
   });
 
-  it("still shows the desktop notification when the push fails", async () => {
+  it("does not fail when the push fails", async () => {
     vi.mocked(invoke).mockRejectedValueOnce(new Error("no push"));
-    expect(await notify("Title", "body", true)).toBe(true);
-    expect(sendNotification).toHaveBeenCalled();
+    await expect(notifyPhone()).resolves.toBeUndefined();
   });
 });

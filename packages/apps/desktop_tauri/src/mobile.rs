@@ -83,7 +83,7 @@ fn status_of(state: &MobileState) -> MobileStatus {
 #[tauri::command]
 pub async fn mobile_push() -> Result<mobile_server::push::PushReport, String> {
     if !is_push_wanted(&mobile_server::load_config()) {
-        return Ok(mobile_server::push::PushReport { sent: 0, removed: 0 });
+        return Ok(mobile_server::push::PushReport { sent: 0, removed: 0, failures: Vec::new() });
     }
     mobile_server::push::send_all().await
 }

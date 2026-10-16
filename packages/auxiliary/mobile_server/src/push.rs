@@ -37,6 +37,8 @@ pub struct PushReport {
     pub sent: usize,
     /// The count of the phones that the push service refused for ever, which the server forgot.
     pub removed: usize,
+    /// One line for each phone that the push service did not accept: the code and the text of its answer.
+    pub failures: Vec<String>,
 }
 
 fn push_path() -> PathBuf {
@@ -145,10 +147,10 @@ pub async fn send_all() -> Result<PushReport, String> {
 async fn send_all_from(path: &Path) -> Result<PushReport, String> {
     let (file, key) = load_with_key(path)?;
     if file.subscriptions.is_empty() {
-        return Ok(PushReport { sent: 0, removed: 0 });
+        return Ok(PushReport { sent: 0, removed: 0, failures: Vec::new() });
     }
     let client = reqwest::Client::builder().timeout(Duration::from_secs(10)).build().map_err(|e| e.to_string())?;
-    let mut report = PushReport { sent: 0, removed: 0 };
+    let mut report = PushReport { sent: 0, removed: 0, failures: Vec::new() };
     for endpoint in &file.subscriptions {
         let value = authorization(&file, &key, endpoint, now_seconds())?;
         let answer = client
@@ -159,13 +161,20 @@ async fn send_all_from(path: &Path) -> Result<PushReport, String> {
             .header("Content-Length", "0")
             .send()
             .await;
-        match answer.map(|a| a.status().as_u16()) {
-            Ok(code) if (200..300).contains(&code) => report.sent += 1,
-            Ok(404) | Ok(410) => {
-                unsubscribe_from(path, endpoint)?;
-                report.removed += 1;
+        match answer {
+            Ok(response) => {
+                let code = response.status().as_u16();
+                if (200..300).contains(&code) {
+                    report.sent += 1;
+                } else if code == 404 || code == 410 {
+                    unsubscribe_from(path, endpoint)?;
+                    report.removed += 1;
+                } else {
+                    let text = response.text().await.unwrap_or_default();
+                    report.failures.push(format!("{code} {text}"));
+                }
             }
-            _ => {}
+            Err(error) => report.failures.push(error.to_string()),
         }
     }
     Ok(report)
@@ -272,7 +281,7 @@ mod tests {
         subscribe_to(&path, &format!("{address}/a"), false).unwrap();
         subscribe_to(&path, &format!("{address}/b"), false).unwrap();
         let report = send_all_from(&path).await.unwrap();
-        assert_eq!(report, PushReport { sent: 1, removed: 1 });
+        assert_eq!(report, PushReport { sent: 1, removed: 1, failures: Vec::new() });
         assert_eq!(load_from(&path).subscriptions, [format!("{address}/a")]);
         let requests = task.await.unwrap();
         assert!(requests[0].starts_with("post /a "));
@@ -280,9 +289,16 @@ mod tests {
         assert!(requests[0].contains("ttl: 600"));
     }
 
+    /// Wakes the real phones of this computer. Run by hand: `cargo test live_ -- --ignored --nocapture`.
+    #[tokio::test]
+    #[ignore]
+    async fn live_sends_to_the_real_phones() {
+        println!("{:?}", send_all().await);
+    }
+
     #[tokio::test]
     async fn sends_nothing_when_no_phone_asked() {
         let path = temporary_path("empty");
-        assert_eq!(send_all_from(&path).await.unwrap(), PushReport { sent: 0, removed: 0 });
+        assert_eq!(send_all_from(&path).await.unwrap(), PushReport { sent: 0, removed: 0, failures: Vec::new() });
     }
 }
