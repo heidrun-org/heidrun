@@ -170,6 +170,7 @@ The Issue Fix Completion starts when the developer says that the result of the I
 3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
 4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
 5. Close the issue.
+6. Rename the chat according to its content.
 
 ## GitHub and GitLab
 
