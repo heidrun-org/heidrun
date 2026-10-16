@@ -49,3 +49,33 @@ Run these seven tests before a metric goes into [metrics_examples.md](metrics_ex
 4. Run the seven tests above.
 5. Write the limits. If a limit is a gap of a link, add it to [inputs_links.md](inputs_links.md) too.
 6. Add the metric to [metrics_examples.md](metrics_examples.md), with the four parts, in the same form as the ten metrics there.
+
+## A prompt to discover new metrics
+
+Give this prompt to a coding agent (Claude Code, Codex, or Antigravity) that runs at the root of the repository. The prompt holds the rules of this file, so the coding agent proposes metrics that pass the seven tests, and runs them before it shows them. Replace `<count>` with the number of metrics that you want, for example 5.
+
+```text
+Find <count> new metrics for the folder docs/analytics of this repository.
+
+Read these three files first, in this order:
+- docs/analytics/inputs.md: the three inputs (the chat sessions of the coding agents, the commits, the issues and the pull requests).
+- docs/analytics/inputs_links.md: how the inputs link to each other in the SQLite file ~/.config/heidrun/data_layer.sqlite, and the known gaps of each link.
+- docs/analytics/metrics_rules.md: what a metric is, what it is not, and the seven tests.
+
+Then read docs/analytics/metrics_examples.md, so that you do not propose a metric that already exists.
+
+A metric is one number, with a definition in one sentence, that joins the chat sessions with at least one other input, and that one SQL query gives on the SQLite file, read only. A metric gives the facts and never a conclusion, a policy, a target, a benchmark of the coding agents, or a judgment of a person. A number that one input gives alone is not a metric for this folder.
+
+For each metric that you propose:
+1. Write the definition in one sentence.
+2. Write the SQL query. Open the file read only with `sqlite3 -readonly ~/.config/heidrun/data_layer.sqlite`, filter on repository = 'heidrun-org/heidrun', and read a field of the column data with json_extract(data, '$.field'). Never write the file.
+3. Run the query, and write the result with the date of today and the numbers of the rows (issue numbers, pull request numbers, ids of the chat sessions), so that a person can go and look.
+4. Run the seven tests of metrics_rules.md on the result, and write the result of each test in one line. Drop the metric when one test fails, and say which one.
+5. Write the limits: the link that the metric rests on, the rows that it counts wrongly, and the range of dates that it covers.
+
+Start from the links, not from the numbers: for each link of inputs_links.md, ask what the two inputs say together that neither says alone. Prefer a metric that names a known fact and also says one new thing, over a metric that only surprises.
+
+Give the metrics that passed the seven tests in the form of metrics_examples.md: a heading, then the parts Definition, the query in a sql code block, Result, What it says, and Limits. Then list the metrics that you dropped, with the test that they failed, in one line each. Change no file: the developer adds the metrics to metrics_examples.md after reading them.
+```
+
+The prompt changes no file on purpose: the developer reads the proposals, and adds the good ones to [metrics_examples.md](metrics_examples.md) by hand, so that every metric of that file passed under the eyes of a person.
