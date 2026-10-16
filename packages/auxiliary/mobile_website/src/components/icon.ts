@@ -1,9 +1,12 @@
 import arrowClockwise from 'bootstrap-icons/icons/arrow-clockwise.svg?raw';
 import bell from 'bootstrap-icons/icons/bell.svg?raw';
 import chevronLeft from 'bootstrap-icons/icons/chevron-left.svg?raw';
+import gear from 'bootstrap-icons/icons/gear.svg?raw';
 import grid from 'bootstrap-icons/icons/grid.svg?raw';
 import lightningCharge from 'bootstrap-icons/icons/lightning-charge.svg?raw';
+import micFill from 'bootstrap-icons/icons/mic-fill.svg?raw';
 import play from 'bootstrap-icons/icons/play.svg?raw';
+import playFill from 'bootstrap-icons/icons/play-fill.svg?raw';
 import sendFill from 'bootstrap-icons/icons/send-fill.svg?raw';
 import stopFill from 'bootstrap-icons/icons/stop-fill.svg?raw';
 import viewStacked from 'bootstrap-icons/icons/view-stacked.svg?raw';
@@ -19,9 +22,12 @@ export type IconName =
 	| 'arrow-clockwise'
 	| 'bell'
 	| 'chevron-left'
+	| 'gear'
 	| 'grid'
 	| 'lightning-charge'
+	| 'mic-fill'
 	| 'play'
+	| 'play-fill'
 	| 'send-fill'
 	| 'stop-fill'
 	| 'view-stacked';
@@ -37,9 +43,12 @@ export class Icon {
 		'arrow-clockwise': arrowClockwise,
 		'bell': bell,
 		'chevron-left': chevronLeft,
+		'gear': gear,
 		'grid': grid,
 		'lightning-charge': lightningCharge,
+		'mic-fill': micFill,
 		'play': play,
+		'play-fill': playFill,
 		'send-fill': sendFill,
 		'stop-fill': stopFill,
 		'view-stacked': viewStacked,

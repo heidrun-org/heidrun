@@ -5,6 +5,7 @@ import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { mobile, mobileStatus, revokeMobile, setMobile, stopLeftoverNgrok } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { toast } from "../../stores/session";
+import { settings } from "../../stores/settings";
 import { requiredProgramsStatus } from "../../lib/api";
 import { t } from "../../i18n/index";
 
@@ -72,6 +73,10 @@ async function openPairingLink(link: string) {
 
     <SettingsSwitchRow :model-value="st?.enabled === true" :is-disabled="mobile.busy" :label="t('mobileModal.enable')" @update:model-value="setMobile($event)" />
 
+    <div class="d-flex flex-column gap-1">
+      <SettingsSwitchRow v-model="settings.mobileTerminalTyping" :label="t('mobileModal.terminalTyping')" />
+      <p class="m-0 form-text">{{ t("mobileModal.terminalTypingNote") }}</p>
+    </div>
     <div v-if="isNgrokReminderVisible" class="alert theme-warning ngrok-reminder" role="alert">{{ t("mobileModal.ngrokNotInstalled") }}</div>
 
     <div v-if="st?.error" class="alert theme-danger" role="alert">

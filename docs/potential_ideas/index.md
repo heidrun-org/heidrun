@@ -9,6 +9,5 @@
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [mobile_access.md](mobile_access.md): Heidrun Mobile, a phone front end for Heidrun.
 - [statistic_from_a_sentence.md](statistic_from_a_sentence.md): describe a statistic in words, and a language model writes the query and the view. The developer judges this idea far-fetched.
 - [usage_statistics.md](usage_statistics.md): statistics about the repositories, the issues, and the logs of the coding agents.

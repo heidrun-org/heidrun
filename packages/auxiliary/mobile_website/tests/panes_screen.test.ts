@@ -22,16 +22,17 @@ describe('Panes screen', () => {
 		expect(document.querySelector('.list .card .badge')?.textContent).toBe('42 %');
 	});
 
-	it('says that no pane runs a coding agent when the list is empty', async () => {
+	it('says that no pane is open when the list is empty', async () => {
 		const computer = new FakeComputer({
 			now: 1_000_000,
+			terminalTypingAllowed: true,
 			attention: [],
 			workspaces: [],
 			quotas: [],
 		});
 		const harness = await AppHarness.start(computer);
 		await harness.tap('button[data-screen="panes"]');
-		expect(harness.text()).toContain('No pane runs a coding agent.');
+		expect(harness.text()).toContain('No pane is open.');
 	});
 
 	it('opens the pane of a coding agent, and the button Back returns to the list of panes', async () => {
@@ -46,11 +47,11 @@ describe('Panes screen', () => {
 });
 
 describe('Bottom bar', () => {
-	it('has the five buttons, with Dashboard highlighted on the dashboard', async () => {
+	it('has the four buttons, with Dashboard highlighted on the dashboard', async () => {
 		await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
 		const buttons = [...document.querySelectorAll('.bar-button')];
 		const labels = buttons.map((button) => button.textContent?.trim());
-		expect(labels).toEqual(['Dashboard', 'Needs you', 'Panes', 'Macros', 'Launchers']);
+		expect(labels).toEqual(['Dashboard', 'Needs you', 'Panes', 'Launchers']);
 		expect(document.querySelector('.bar-button-active')?.textContent).toContain('Dashboard');
 		expect(document.querySelector('.bar-button-active')?.getAttribute('aria-current')).toBe('page');
 	});
@@ -62,12 +63,11 @@ describe('Bottom bar', () => {
 		expect(document.querySelector('.bar-button-active')?.textContent).toContain('Panes');
 	});
 
-	it('opens the screens Macros and Launchers, which say that they come later', async () => {
+	it('opens the Launchers screen, and has no Macros screen', async () => {
 		const harness = await AppHarness.start(Fixtures.computer());
-		await harness.tap('button[data-screen="macros"]');
-		expect(harness.text()).toContain('The macros come in a later version.');
+		expect(document.querySelector('button[data-screen="macros"]')).toBeNull();
 		await harness.tap('button[data-screen="launchers"]');
-		expect(harness.text()).toContain('The launchers come in a later version.');
+		expect(document.querySelector('header h1')?.textContent).toBe('Launchers');
 		await harness.tap('button[data-screen="needs_you"]');
 		expect(harness.text()).toContain('Run this command?');
 	});

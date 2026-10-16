@@ -155,17 +155,24 @@ export function launcherStatus(workspaceId: string, launcher: Launcher): Launche
   return project.busy[pane.pane_id] ? "running" : "finished";
 }
 
+/** Will a run type the command of the launcher? No when its tab is open and the run only brings the tab to the front, or when its command still runs. */
+export function launcherWillType(workspaceId: string, launcher: Launcher, rerun = false): boolean {
+  const existing = launcherPane(workspaceId, launcher);
+  return !existing || (rerun && !project.busy[existing.pane_id]);
+}
+
 /**
  * Runs a launcher in its own tab, named after it. If its tab is still open the
  * click just brings it to the front; "rerun" types the command again in it.
+ * "checked": the caller already passed the command through the guards (the phone asks its own confirmation).
  */
-export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false) {
+export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false, checked = false) {
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = launcherPane(workspaceId, launcher);
   // A click that will type the command: through the guards first.
-  const willType = !existing || (rerun && !project.busy[existing.pane_id]);
-  if (willType && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
+  const willType = launcherWillType(workspaceId, launcher, rerun);
+  if (willType && !checked && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);

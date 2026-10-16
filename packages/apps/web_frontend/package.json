@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --minWorkers=1 --maxWorkers=2",
     "check:translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {

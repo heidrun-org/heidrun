@@ -573,6 +573,46 @@ main {
   background: var(--line-strong);
 }
 
+.mic-button {
+  flex: none;
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--field);
+  color: var(--text-2);
+}
+
+.mic-button:active {
+  background: var(--line-strong);
+}
+
+.mic-button-listening {
+  background: var(--blocked);
+  color: #ffffff;
+}
+
+.macro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+}
+
+.launcher .actions {
+  margin-top: 10px;
+}
+
+.launcher .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .send-button {
   flex: none;
   align-self: flex-end;
@@ -679,4 +719,9 @@ main {
   margin: 0 0 10px;
   color: var(--text-2);
   font-size: 14px;
+}
+
+.settings-sheet .sheet-box {
+  max-height: 85vh;
+  overflow-y: auto;
 }

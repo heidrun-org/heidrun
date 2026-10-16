@@ -1,0 +1,6 @@
+# The videos and the music files are big, and the license of a music file forbids to redistribute it alone.
+# Git keeps only the README.md of the music folder.
+outputs/*
+!outputs/music/
+outputs/music/*
+!outputs/music/README.md

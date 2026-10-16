@@ -41,11 +41,11 @@ describe('DevApi', () => {
 		expect(devApi.handle(key, '{}').status).toBe(400);
 	});
 
-	it('answers `state` with four coding agents, and puts the three that need the developer in attention', () => {
+	it('answers `state` with four coding agents and one plain terminal, and puts the ones that need the developer in attention', () => {
 		const snapshot = call(new DevApi(), 'state') as Snapshot;
 		const agents = snapshot.workspaces.flatMap((workspace) => workspace.agents);
 		const paneIds = agents.map((agent) => agent.paneId).sort();
-		expect(paneIds).toEqual(['p-asking', 'p-blocked', 'p-finished', 'p-working']);
+		expect(paneIds).toEqual(['p-asking', 'p-blocked', 'p-finished', 'p-terminal', 'p-working']);
 		expect([...snapshot.attention].sort()).toEqual(['p-asking', 'p-blocked']);
 		expect(snapshot.quotas.length).toBeGreaterThan(0);
 	});

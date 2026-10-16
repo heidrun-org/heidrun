@@ -20,8 +20,11 @@ import {
   workspaceLabel,
 } from "./session";
 import { guardHit } from "./guards";
+import { macros, macrosOfProjectConfig, resolveMacroVariables, type Macro } from "./macros";
+import { launcherStatus, launcherWillType, loadProject, project, runLauncher, stopLauncher, workspaceCwd } from "./project";
 import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
+import { settings } from "./settings";
 import { t } from "../i18n/index";
 
 export interface MobileError {
@@ -99,6 +102,8 @@ function agentView(p: AgentInfo) {
   const menu = state.choices[p.pane_id];
   return {
     paneId: p.pane_id,
+    /** True when a coding agent runs in the pane. A plain terminal is read-only on the phone. */
+    hasCodingAgent: !!p.agent,
     name: paneName(p),
     kind: agentKind(p),
     workspace: workspaceLabel(p.workspace_id),
@@ -112,10 +117,13 @@ function agentView(p: AgentInfo) {
 }
 
 function snapshot() {
-  const agents = allPanes.value.filter((p) => p.agent);
+  // Every pane, with or without a coding agent: the phone shows the plain terminals too.
+  const agents = allPanes.value;
   const claude = quotas.value.find((q) => q.provider === "claude");
   return {
     now: Date.now(),
+    /** The setting of the Settings window: may the phone type in a plain terminal? Off: the phone only reads it. */
+    terminalTypingAllowed: settings.mobileTerminalTyping,
     attention: attention.value.map((p) => p.pane_id),
     workspaces: sessionWorkspaces.value
       .map((w) => ({ id: w.workspace_id, label: w.label, agents: agents.filter((p) => p.workspace_id === w.workspace_id).map(agentView) }))
@@ -124,16 +132,102 @@ function snapshot() {
   };
 }
 
-const agentPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id && p.agent) ?? null;
+/** The project file of a workspace, read once when the phone asks for it and the desktop has not read it yet. */
+async function workspaceProject(workspaceId: string) {
+  if (!project.byWorkspace[workspaceId] && workspaceCwd(workspaceId)) await loadProject(workspaceId);
+  return project.byWorkspace[workspaceId];
+}
+
+/**
+ * The macros that the menu of macros of the desktop shows for a pane: the personal macros, then the macros of the project of its workspace.
+ * The text of each macro has its variables replaced for the pane, and the phone writes it into the field for a prompt, like the keyboard.
+ */
+async function macroList(pane: AgentInfo) {
+  const p = await workspaceProject(pane.workspace_id);
+  const entries: [Macro, "personal" | "project"][] = [
+    ...macros.personal.map((m): [Macro, "personal"] => [m, "personal"]),
+    ...macrosOfProjectConfig(p?.config).map((m): [Macro, "project"] => [m, "project"]),
+  ];
+  const list = [];
+  for (const [m, source] of entries) {
+    list.push({ id: m.id, label: m.label, description: m.description, source, text: await resolveMacroVariables(m.text, pane.pane_id) });
+  }
+  return { macros: list };
+}
+
+/** The launchers of the project of each workspace, with their status. A workspace whose project has no launcher is left out. */
+async function launcherList() {
+  const list = [];
+  for (const w of sessionWorkspaces.value) {
+    const p = await workspaceProject(w.workspace_id);
+    const error = project.errors[w.workspace_id] ?? null;
+    if (!error && !p?.config.launchers.length) continue;
+    list.push({
+      id: w.workspace_id,
+      label: w.label,
+      error,
+      launchers: (p?.config.launchers ?? []).map((a) => ({
+        id: a.id,
+        label: a.label,
+        description: a.description ?? null,
+        command: a.command,
+        status: launcherStatus(w.workspace_id, a),
+      })),
+    });
+  }
+  return { workspaces: list };
+}
+
+async function launch(params: Params) {
+  const workspaceId = String(params.workspaceId ?? "");
+  const p = await workspaceProject(workspaceId);
+  const launcher = p?.config.launchers.find((a) => a.id === params.launcherId);
+  if (!p || !launcher) return { error: t("mobileStore.error.launcherNotFound") };
+  if (params.action === "stop") {
+    await stopLauncher(workspaceId, launcher);
+    return { ok: true };
+  }
+  if (params.action !== "run") return { error: t("mobileStore.error.unknownAction") };
+  // The same guards as a click on the desktop, but the phone asks the confirmation, not a window of the desktop.
+  if (launcherWillType(workspaceId, launcher, true)) {
+    const hit = await guardHit(launcher.command, p.root);
+    if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
+    if (hit && (params.confirmed !== true || params.command !== launcher.command)) return { confirm: { command: launcher.command, why: hit.why } };
+  }
+  await runLauncher(workspaceId, launcher, true, true);
+  toast(t("mobileStore.launcherStarted", { name: `${workspaceLabel(workspaceId)} · ${launcher.label}` }));
+  return { ok: true };
+}
+
+/** A command typed on the phone in a plain terminal: the whole text passes the guards, then it runs like a launcher does. */
+async function typeInTerminal(pane: AgentInfo, text: string, cwd: string | null, params: Params) {
+  // The desktop decides, not the phone: a phone that ignores the setting still cannot type.
+  if (!settings.mobileTerminalTyping) return { error: t("mobileStore.error.terminalTypingOff") };
+  const hit = await guardHit(text, cwd);
+  if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
+  if (hit && (params.confirmed !== true || params.command !== text)) return { confirm: { command: text, why: hit.why } };
+  await api.run(pane.pane_id, text);
+  toast(t("mobileStore.promptReceived", { name: paneFullName(pane) }));
+  return { ok: true };
+}
+
+const anyPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id) ?? null;
 
 type Params = Record<string, unknown>;
 
-async function handle(method: string, params: Params): Promise<unknown> {
+/** Answers one call of the phone. Exported for the tests. */
+export async function handleMobileCall(method: string, params: Params): Promise<unknown> {
   mobile.lastSeen = Date.now();
   if (method === "state") return snapshot();
-  const pane = agentPane(params.paneId);
+  if (method === "launchers") return launcherList();
+  if (method === "launch") return launch(params);
+  const pane = anyPane(params.paneId);
   if (!pane) return { error: t("mobileStore.error.agentNotFound") };
+  // A plain terminal: the phone may read its output, or type a command in it (the phone asks its own confirmation to unlock the typing). Nothing else.
+  if (!pane.agent && method !== "read" && method !== "prompt") return { error: t("mobileStore.error.terminalReadOnly") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
+
+  if (method === "macros") return macroList(pane);
 
   if (method === "read") {
     const lines = Math.min(200, Math.max(10, Number(params.lines) || 60));
@@ -162,6 +256,7 @@ async function handle(method: string, params: Params): Promise<unknown> {
   if (method === "prompt") {
     const text = String(params.text ?? "").trim();
     if (!text) return { error: t("mobileStore.error.emptyPrompt") };
+    if (!pane.agent) return typeInTerminal(pane, text, cwd, params);
     // A menu on screen would take the text as its answer ("2" picks option 2): never.
     if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: t("mobileStore.error.agentBlocked") };
     const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);
@@ -196,7 +291,7 @@ export function startMobile() {
     const { id, method, params } = e.payload;
     let result: unknown;
     try {
-      result = await handle(method, params ?? {});
+      result = await handleMobileCall(method, params ?? {});
     } catch (err) {
       result = { error: String(err).slice(0, 300) };
     }
