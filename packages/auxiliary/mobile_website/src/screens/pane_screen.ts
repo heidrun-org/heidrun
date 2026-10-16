@@ -30,7 +30,7 @@ export class PaneScreen {
 	static render(agent: AgentView | null, output: string, isVoiceAvailable: boolean): string {
 		if (agent === null) {
 			const missingHtmlContent = /* html */`
-				${ScreenHeader.renderPane('Coding agent', '')}
+				${ScreenHeader.renderPane('Coding agent', '', false)}
 				<main><div class="empty">This coding agent does not exist anymore.</div></main>
 			`;
 			return missingHtmlContent;
@@ -50,7 +50,7 @@ export class PaneScreen {
 		const actionsHtmlContent =
 			denyHtmlContent === '' ? '' : /* html */`<div class="actions">${denyHtmlContent}</div>`;
 		const screenHtmlContent = /* html */`
-			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent)}
+			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent, true)}
 			<main class="pane-main">
 				${PaneScreen.renderQuestion(agent)}
 				<pre class="output"><code class="output-text">${shownHtmlContent}</code></pre>

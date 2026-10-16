@@ -603,10 +603,6 @@ main {
   text-align: left;
 }
 
-.card.row:disabled {
-  opacity: 0.45;
-}
-
 .launcher .actions {
   margin-top: 10px;
 }

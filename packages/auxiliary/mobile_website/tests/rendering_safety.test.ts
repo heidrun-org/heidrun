@@ -115,8 +115,7 @@ describe('Rendering safety', () => {
 					label: attack,
 					description: attack,
 					source: 'project',
-					workspaceId: attack,
-					workspace: attack,
+					text: attack,
 				},
 			],
 		};
@@ -138,12 +137,15 @@ describe('Rendering safety', () => {
 				},
 			],
 		};
-		const harness = await AppHarness.start(computer, true, '#/macros');
+		const harness = await AppHarness.start(computer);
+		await harness.openPane('p-hostile');
+		await harness.tap('[data-action="open-macros"]');
+		expect(harness.overlay.querySelector('img')).toBeNull();
+		expect(harness.overlay.textContent).toContain(attack);
+		expect(problemsOf(harness.overlay)).toEqual([]);
+		await harness.tap('[data-action="insert-macro"]');
+		expect(harness.field().value).toBe(attack);
 		expect(document.querySelector('img')).toBeNull();
-		expect(harness.text()).toContain(attack);
-		await harness.tap('[data-action="pick-macro"]');
-		expect(document.querySelector('img')).toBeNull();
-		expect(problemsOf(harness.root)).toEqual([]);
 		await harness.tap('button[data-screen="launchers"]');
 		expect(document.querySelector('img')).toBeNull();
 		expect(harness.text()).toContain(attack);
@@ -154,7 +156,7 @@ describe('Rendering safety', () => {
 		const agents = [hostileAgent(), FakeComputer.agent({})];
 		const computer = new FakeComputer(FakeComputer.snapshotOf(agents, ['p-hostile']));
 		const harness = await AppHarness.start(computer);
-		const screens = ['dashboard', 'needs_you', 'panes', 'macros', 'launchers'];
+		const screens = ['dashboard', 'needs_you', 'panes', 'launchers'];
 		for (const screen of screens) {
 			await harness.tap(`button[data-screen="${screen}"]`);
 			expect(problemsOf(harness.root), screen).toEqual([]);

@@ -36,14 +36,15 @@ Every pane that runs a coding agent, grouped by workspace and then by tab, with 
 
 - The end of the output, with the colors of the terminal.
 - The menu of a blocked coding agent, and the button Refuse.
+- The macro button in the top bar.
 - The field for a prompt, the microphone button, the Interrupt button while the coding agent works, and the button Send.
 - The microphone button shows only when the browser has the Web Speech API. The words go into the field after the text that is already there. Nothing is sent before the developer taps Send.
 
 ## Macros
 
-- The personal macros under "My macros", then the macros of the project of each workspace under "Project · workspace".
-- A tap on a macro shows the panes that can receive it. A blocked coding agent cannot receive a macro, so its row is disabled. The button Cancel goes back to the list.
-- A tap on a pane sends the macro with the method `prompt`, then opens the screen of that pane. The phone sends the identifier of the macro, never its text: the computer replaces the variables of the macro for that pane.
+- There is no Macros screen, because a macro goes to one pane. The macro button is in the top bar of the screen of one pane.
+- A tap on the macro button asks the computer for the macros of that pane: the personal macros, then the macros of the project of its workspace. The computer replaces the variables of each macro for that pane.
+- A tap on a macro writes its text into the field for a prompt, after the text that is already there, like the keyboard. Nothing is sent before the developer taps Send, so the macro passes the same guards as a typed prompt.
 
 ## Launchers
 

@@ -27,7 +27,7 @@ Heidrun Mobile is the second front end of Heidrun. It is a mobile website that t
 The rules of each screen are in [the user interface of Heidrun Mobile](../agents_rules/user_interface/heidrun_mobile/screens.md). In short:
 
 - The welcome page, the Dashboard, the Needs you screen, the Panes screen, and the screen of one pane.
-- The Macros screen: a macro goes to the coding agent of one pane, as a prompt.
+- The macro button in the top bar of the screen of one pane: a macro writes its text into the field for a prompt.
 - The Launchers screen: a launcher runs or stops on the computer.
 - The microphone button on the screen of one pane: the voice fills the field for a prompt, with the Web Speech API of the browser.
 

@@ -53,38 +53,23 @@ beforeEach(() => {
 });
 
 describe("the method macros", () => {
-  it("lists the personal macros, then the macros of the project of each workspace", async () => {
-    expect(await handleMobileCall("macros", {})).toEqual({
-      macros: [
-        { id: "progress", label: "Progress", description: "Where are you?", source: "personal", workspaceId: null, workspace: null },
-        { id: "review", label: "Review", description: "", source: "project", workspaceId: "w1", workspace: "heidrun" },
-      ],
-    });
-  });
-});
-
-describe("the method prompt with a macro", () => {
-  it("sends the text of the macro, with its variables replaced for the pane", async () => {
-    expect(await handleMobileCall("prompt", { paneId: "p1", macroId: "progress", macroSource: "personal" })).toEqual({ ok: true });
-    expect(api.prompt).toHaveBeenCalledWith("p1", expect.stringMatching(/^Where are you\? \S/));
+  it("lists the personal macros, then the macros of the project of the workspace of the pane, with the variables replaced", async () => {
+    const answer = (await handleMobileCall("macros", { paneId: "p1" })) as { macros: Record<string, unknown>[] };
+    expect(answer.macros.map((m) => [m.id, m.source])).toEqual([
+      ["progress", "personal"],
+      ["review", "project"],
+    ]);
+    expect(answer.macros[0].text).toMatch(/^Where are you\? \S/);
+    expect(answer.macros[0].text).not.toContain("{agent}");
+    expect(answer.macros[1]).toEqual({ id: "review", label: "Review", description: "", source: "project", text: "Review the branch" });
   });
 
-  it("sends a macro of a project", async () => {
-    await handleMobileCall("prompt", { paneId: "p1", macroId: "review", macroSource: "project", macroWorkspaceId: "w1" });
-    expect(api.prompt).toHaveBeenCalledWith("p1", "Review the branch");
+  it("refuses a pane that does not exist", async () => {
+    expect(await handleMobileCall("macros", { paneId: "gone" })).toHaveProperty("error");
   });
 
-  it("refuses a macro that does not exist anymore", async () => {
-    const answer = await handleMobileCall("prompt", { paneId: "p1", macroId: "gone", macroSource: "personal" });
-    expect(answer).toHaveProperty("error");
-    expect(api.prompt).not.toHaveBeenCalled();
-  });
-
-  it("asks the confirmation of a shell command of a macro, like a typed prompt", async () => {
-    macros.personal = [{ id: "clean", label: "Clean", description: "", text: "! rm -rf build" }];
-    vi.mocked(guardHit).mockResolvedValue({ level: "confirm", why: "deletes files" } as never);
-    const answer = await handleMobileCall("prompt", { paneId: "p1", macroId: "clean", macroSource: "personal" });
-    expect(answer).toEqual({ confirm: { command: "rm -rf build", why: "deletes files" } });
+  it("sends nothing: the phone writes the text into the field for a prompt", async () => {
+    await handleMobileCall("macros", { paneId: "p1" });
     expect(api.prompt).not.toHaveBeenCalled();
   });
 });

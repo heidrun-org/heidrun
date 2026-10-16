@@ -8,8 +8,7 @@ The screens of the mobile website. Each screen is one class with one static meth
 - `dashboard_screen.ts`: the Dashboard: the count of coding agents that need the developer, the count that work, and the usage limits. Each count opens a screen.
 - `needs_you_screen.ts`: the coding agents that wait for the developer, and the usage limits.
 - `panes_screen.ts`: every coding agent, grouped by workspace and by tab.
-- `pane_screen.ts`: one pane: the end of its output, its menu, a field for a prompt, the microphone button, and the buttons that stop it.
-- `macros_screen.ts`: the personal macros and the macros of each project, then the choice of the pane that receives the macro.
+- `pane_screen.ts`: one pane: the end of its output, its menu, the macro button, a field for a prompt, the microphone button, and the buttons that stop it.
 - `launchers_screen.ts`: the launchers of the project of each workspace, with the buttons Run and Stop.
 - `message_screen.ts`: the screens that the page shows before it has data: pairing needed, and connecting.
 

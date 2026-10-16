@@ -7,7 +7,6 @@ describe('ScreenAddress', () => {
 		expect(ScreenAddress.format('dashboard', null)).toBe('#/dashboard');
 		expect(ScreenAddress.format('needs_you', null)).toBe('#/needs-you');
 		expect(ScreenAddress.format('panes', null)).toBe('#/panes');
-		expect(ScreenAddress.format('macros', null)).toBe('#/macros');
 		expect(ScreenAddress.format('launchers', null)).toBe('#/launchers');
 	});
 
@@ -21,7 +20,7 @@ describe('ScreenAddress', () => {
 	});
 
 	it('reads back what it wrote, for every screen and for a strange pane identifier', () => {
-		for (const tab of ['welcome', 'dashboard', 'needs_you', 'panes', 'macros', 'launchers'] as const) {
+		for (const tab of ['welcome', 'dashboard', 'needs_you', 'panes', 'launchers'] as const) {
 			for (const paneId of [null, 'p-1', 'w1Y:p/B ?#', 'é']) {
 				expect(ScreenAddress.parse(ScreenAddress.format(tab, paneId))).toEqual({
 					tab,

@@ -27,7 +27,11 @@ The secret that the QR code gives to the phone. The phone sends it with each cal
 
 ### Bottom bar
 
-The row of five buttons at the bottom of the mobile website: Dashboard, Needs you, Panes, Macros, and Launchers.
+The row of four buttons at the bottom of the mobile website: Dashboard, Needs you, Panes, and Launchers.
+
+### Macro button
+
+The button with a lightning in the top bar of the screen of one pane. A tap opens the list of the macros of the pane, and a tap on a macro writes its text into the field for a prompt.
 
 ### Microphone button
 

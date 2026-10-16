@@ -114,26 +114,21 @@ async function workspaceProject(workspaceId: string) {
   return project.byWorkspace[workspaceId];
 }
 
-/** The personal macros, then the macros of the project of each workspace. The phone sends back `source`, `workspaceId` and `id` to name one. */
-async function macroList() {
-  const list: { id: string; label: string; description: string; source: "personal" | "project"; workspaceId: string | null; workspace: string | null }[] =
-    macros.personal.map((m) => ({ id: m.id, label: m.label, description: m.description, source: "personal", workspaceId: null, workspace: null }));
-  for (const w of sessionWorkspaces.value) {
-    const p = await workspaceProject(w.workspace_id);
-    for (const m of macrosOfProjectConfig(p?.config)) {
-      list.push({ id: m.id, label: m.label, description: m.description, source: "project", workspaceId: w.workspace_id, workspace: w.label });
-    }
+/**
+ * The macros that the menu of macros of the desktop shows for a pane: the personal macros, then the macros of the project of its workspace.
+ * The text of each macro has its variables replaced for the pane, and the phone writes it into the field for a prompt, like the keyboard.
+ */
+async function macroList(pane: AgentInfo) {
+  const p = await workspaceProject(pane.workspace_id);
+  const entries: [Macro, "personal" | "project"][] = [
+    ...macros.personal.map((m): [Macro, "personal"] => [m, "personal"]),
+    ...macrosOfProjectConfig(p?.config).map((m): [Macro, "project"] => [m, "project"]),
+  ];
+  const list = [];
+  for (const [m, source] of entries) {
+    list.push({ id: m.id, label: m.label, description: m.description, source, text: await resolveMacroVariables(m.text, pane.pane_id) });
   }
   return { macros: list };
-}
-
-async function findMacro(params: Params): Promise<Macro | null> {
-  const id = String(params.macroId ?? "");
-  if (params.macroSource === "project") {
-    const p = await workspaceProject(String(params.macroWorkspaceId ?? ""));
-    return macrosOfProjectConfig(p?.config).find((m) => m.id === id) ?? null;
-  }
-  return macros.personal.find((m) => m.id === id) ?? null;
 }
 
 /** The launchers of the project of each workspace, with their status. A workspace whose project has no launcher is left out. */
@@ -188,12 +183,13 @@ type Params = Record<string, unknown>;
 export async function handleMobileCall(method: string, params: Params): Promise<unknown> {
   mobile.lastSeen = Date.now();
   if (method === "state") return snapshot();
-  if (method === "macros") return macroList();
   if (method === "launchers") return launcherList();
   if (method === "launch") return launch(params);
   const pane = agentPane(params.paneId);
   if (!pane) return { error: t("mobileStore.error.agentNotFound") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
+
+  if (method === "macros") return macroList(pane);
 
   if (method === "read") {
     const lines = Math.min(200, Math.max(10, Number(params.lines) || 60));
@@ -220,13 +216,7 @@ export async function handleMobileCall(method: string, params: Params): Promise<
   }
 
   if (method === "prompt") {
-    // A macro goes through the same path as a typed prompt, after its variables are replaced for this pane.
-    let text = String(params.text ?? "").trim();
-    if (params.macroId !== undefined) {
-      const macro = await findMacro(params);
-      if (!macro) return { error: t("mobileStore.error.macroNotFound") };
-      text = (await resolveMacroVariables(macro.text, pane.pane_id)).trim();
-    }
+    const text = String(params.text ?? "").trim();
     if (!text) return { error: t("mobileStore.error.emptyPrompt") };
     // A menu on screen would take the text as its answer ("2" picks option 2): never.
     if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: t("mobileStore.error.agentBlocked") };

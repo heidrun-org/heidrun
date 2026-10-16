@@ -15,12 +15,12 @@ import type { ScreenLocation } from './screen_address';
 import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
+import { MacroSheet } from './components/macro_sheet';
 import { MessageScreen } from './screens/message_screen';
 import { DashboardScreen } from './screens/dashboard_screen';
 import { NeedsYouScreen } from './screens/needs_you_screen';
 import { PanesScreen } from './screens/panes_screen';
 import { PaneScreen } from './screens/pane_screen';
-import { MacrosScreen } from './screens/macros_screen';
 import { LaunchersScreen } from './screens/launchers_screen';
 import { WelcomeScreen } from './screens/welcome_screen';
 import { VoiceInput } from './voice_input';
@@ -75,11 +75,8 @@ export class MobileApp {
 	/** The end of the output of the pane that is open. */
 	private output = '';
 
-	/** The last answer of the method `macros`, or null before the first answer on the Macros screen. */
-	private macros: MacroView[] | null = null;
-
-	/** The key of the macro that the developer tapped on the Macros screen, or null when the screen shows the list. */
-	private chosenMacroKey: string | null = null;
+	/** The macros of the macro sheet that is open, or an empty list when no macro sheet is open. */
+	private macros: MacroView[] = [];
 
 	/** The last answer of the method `launchers`, or null before the first answer on the Launchers screen. */
 	private launchers: LaunchersAnswer | null = null;
@@ -181,9 +178,6 @@ export class MobileApp {
 				if (typeof result.text === 'string') {
 					this.output = result.text;
 				}
-			}
-			if (this.screen === 'macros') {
-				this.macros = (await MobileApi.call<MacrosAnswer>('macros')).macros;
 			}
 			if (this.screen === 'launchers') {
 				this.launchers = await MobileApi.call<LaunchersAnswer>('launchers');
@@ -298,9 +292,6 @@ export class MobileApp {
 		if (this.screen === 'panes') {
 			return PanesScreen.render(snapshot, this.isOnline);
 		}
-		if (this.screen === 'macros') {
-			return MacrosScreen.render(this.macros, this._chosenMacro(), snapshot, this.isOnline);
-		}
 		if (this.screen === 'launchers') {
 			return LaunchersScreen.render(this.launchers, this.isOnline);
 		}
@@ -325,14 +316,9 @@ export class MobileApp {
 		void this.refresh();
 	}
 
-	private _chosenMacro(): MacroView | null {
-		const macros = this.macros ?? [];
-		return macros.find((macro) => MacrosScreen.keyOf(macro) === this.chosenMacroKey) ?? null;
-	}
-
 	private _applyLocation(location: ScreenLocation): void {
 		this.voiceInput.stop();
-		this.chosenMacroKey = null;
+		this._closeMacroSheet();
 		this.tab = location.tab;
 		this.screen = location.paneId === null ? location.tab : 'pane';
 		this.paneId = location.paneId;
@@ -401,39 +387,63 @@ export class MobileApp {
 			await this._sendPrompt(paneId);
 		} else if (action === 'voice') {
 			this._toggleVoice(element);
-		} else if (action === 'pick-macro') {
-			this.chosenMacroKey = element.dataset.macroKey ?? null;
-			this._render();
-		} else if (action === 'cancel-macro') {
-			this.chosenMacroKey = null;
-			this._render();
-		} else if (action === 'send-macro') {
-			await this._sendMacro(paneId);
+		} else if (action === 'open-macros') {
+			await this._openMacroSheet();
+		} else if (action === 'macro-sheet-close') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this._closeMacroSheet();
+			}
+		} else if (action === 'insert-macro') {
+			this._insertMacro(Number(element.dataset.index));
 		} else if (action === 'run-launcher' || action === 'stop-launcher') {
 			await this._launch(element, action === 'run-launcher' ? 'run' : 'stop');
 		}
 	}
 
 	/**
-	 * Sends the chosen macro to the coding agent of a pane, then opens the pane. The computer replaces the variables
-	 * of the macro, and the macro passes the same guards as a prompt.
-	 * @param paneId The identifier of the pane.
+	 * Asks the computer for the macros of the open pane, then opens the macro sheet.
 	 */
-	private async _sendMacro(paneId: string): Promise<void> {
-		const macro = this._chosenMacro();
-		if (macro === null) {
+	private async _openMacroSheet(): Promise<void> {
+		if (this.paneId === null) {
 			return;
 		}
-		const params = {
-			paneId,
-			macroId: macro.id,
-			macroSource: macro.source,
-			macroWorkspaceId: macro.workspaceId,
-		};
-		if (await this._act('prompt', params)) {
-			this._toast(`Macro sent: ${macro.label}`);
-			this._open('macros', paneId);
+		try {
+			const answer = await MobileApi.call<MacrosAnswer & CallResult>('macros', {
+				paneId: this.paneId,
+			});
+			if (typeof answer.error === 'string') {
+				this._toast(answer.error);
+				return;
+			}
+			this._closeMacroSheet();
+			this.macros = answer.macros;
+			this.overlay.insertAdjacentHTML('beforeend', MacroSheet.render(this.macros));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : String(error);
+			this._toast(`No answer from the computer: ${reason}`);
 		}
+	}
+
+	private _closeMacroSheet(): void {
+		this.overlay.querySelector('.macro-sheet')?.remove();
+		this.macros = [];
+	}
+
+	/**
+	 * Writes the text of a macro into the field for a prompt, after the text that is already there, like the
+	 * keyboard. Nothing is sent before the developer taps Send.
+	 * @param index The place of the macro in the macro sheet.
+	 */
+	private _insertMacro(index: number): void {
+		const macro = this.macros[index];
+		this._closeMacroSheet();
+		const field = this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`);
+		if (macro === undefined || field === null) {
+			return;
+		}
+		const textBefore = field.value.trimEnd();
+		field.value = textBefore === '' ? macro.text : `${textBefore} ${macro.text}`;
+		field.focus();
 	}
 
 	/**

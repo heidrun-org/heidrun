@@ -30,13 +30,21 @@ export class ScreenHeader {
 	}
 
 	/**
-	 * Draws the top bar of the screen of one pane: a back button, the title, a badge, and a button that refreshes
-	 * the output.
+	 * Draws the top bar of the screen of one pane: a back button, the title, a badge, the macro button, and a button
+	 * that refreshes the output.
 	 * @param title The title of the screen.
 	 * @param badgeHtmlContent The HTML of the badge, or an empty text.
+	 * @param isMacroButtonShown True to show the macro button, which opens the list of the macros of the pane.
 	 * @returns The HTML of the top bar.
 	 */
-	static renderPane(title: string, badgeHtmlContent: string): string {
+	static renderPane(title: string, badgeHtmlContent: string, isMacroButtonShown: boolean): string {
+		const macroHtmlContent = isMacroButtonShown
+			? /* html */`
+				<button class="icon-button" data-action="open-macros" aria-label="Macros" title="Macros">
+					${Icon.render('lightning-charge', 20)}
+				</button>
+			`
+			: '';
 		const headerHtmlContent = /* html */`
 			<header class="top">
 				<button class="back" data-action="back" aria-label="Back">
@@ -44,6 +52,7 @@ export class ScreenHeader {
 				</button>
 				<h1>${HtmlEscape.escape(title)}</h1>
 				${badgeHtmlContent}
+				${macroHtmlContent}
 				<button class="icon-button" data-action="refresh" aria-label="Refresh" title="Refresh">
 					${Icon.render('arrow-clockwise', 20)}
 				</button>

@@ -154,9 +154,6 @@ export class DevApi {
 		if (method === 'state') {
 			return this.snapshot();
 		}
-		if (method === 'macros') {
-			return DevApi.macros();
-		}
 		if (method === 'launchers') {
 			return {
 				workspaces: [
@@ -182,10 +179,11 @@ export class DevApi {
 				text: this.output(agent),
 			};
 		}
+		if (method === 'macros') {
+			return DevApi.macros(agent);
+		}
 		if (method === 'prompt') {
-			const macro = DevApi.macros().macros.find((candidate) => candidate.id === params.macroId);
-			const text = macro === undefined ? String(params.text ?? '') : `(macro) ${macro.label}`;
-			this.prompts.set(paneId, [...(this.prompts.get(paneId) ?? []), text]);
+			this.prompts.set(paneId, [...(this.prompts.get(paneId) ?? []), String(params.text ?? '')]);
 			this.setWorking(agent);
 			return {
 				ok: true,
@@ -215,7 +213,7 @@ export class DevApi {
 		};
 	}
 
-	private static macros(): MacrosAnswer {
+	private static macros(agent: AgentView): MacrosAnswer {
 		return {
 			macros: [
 				{
@@ -223,16 +221,14 @@ export class DevApi {
 					label: 'Progress',
 					description: 'Asks the coding agent where it is',
 					source: 'personal',
-					workspaceId: null,
-					workspace: null,
+					text: `Where are you, ${agent.name}? Answer in 5 lines.`,
 				},
 				{
 					id: 'review',
 					label: 'Review the branch',
 					description: '',
 					source: 'project',
-					workspaceId: 'w-1',
-					workspace: 'heidrun',
+					text: `Review the branch of ${agent.tab}: security, bugs, tests.`,
 				},
 			],
 		};

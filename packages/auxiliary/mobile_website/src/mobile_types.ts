@@ -99,7 +99,7 @@ export type CallResult = {
 	text?: string;
 };
 
-/** One macro: a text that the developer sends to a coding agent as a prompt. */
+/** One macro: a text that the page writes into the field for a prompt of one pane, like the keyboard. */
 export type MacroView = {
 	/** The identifier of the macro, unique in its source. */
 	id: string;
@@ -107,17 +107,15 @@ export type MacroView = {
 	label: string;
 	/** One short line that says what the macro does. It can be empty. */
 	description: string;
-	/** Where the macro comes from: the macros of the developer, or the file `.heidrun/config.json` of a project. */
+	/** Where the macro comes from: the macros of the developer, or the file `.heidrun/config.json` of the project. */
 	source: 'personal' | 'project';
-	/** The identifier of the workspace of the project, or null for a personal macro. */
-	workspaceId: string | null;
-	/** The label of the workspace of the project, or null for a personal macro. */
-	workspace: string | null;
+	/** The text of the macro, with its variables replaced for the pane by the computer. */
+	text: string;
 };
 
 /** The answer of the method `macros`. */
 export type MacrosAnswer = {
-	/** The personal macros, then the macros of the project of each workspace. */
+	/** The personal macros, then the macros of the project of the workspace of the pane. */
 	macros: MacroView[];
 };
 
@@ -157,10 +155,10 @@ export type LaunchersAnswer = {
 };
 
 /**
- * The screens that the address of the page names, except the screen of one pane: the welcome page, and the five
+ * The screens that the address of the page names, except the screen of one pane: the welcome page, and the four
  * screens that the bottom bar opens. The welcome page has no button in the bottom bar.
  */
-export type TabName = 'welcome' | 'dashboard' | 'needs_you' | 'panes' | 'macros' | 'launchers';
+export type TabName = 'welcome' | 'dashboard' | 'needs_you' | 'panes' | 'launchers';
 
-/** Every screen: the five screens of the bottom bar, and the screen of one pane. */
+/** Every screen: the four screens of the bottom bar, and the screen of one pane. */
 export type ScreenName = TabName | 'pane';
