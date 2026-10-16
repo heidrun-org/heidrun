@@ -30,11 +30,42 @@ pub fn write_file(path: &Path, text: &str, age_seconds: u64) {
     std::fs::File::options().write(true).open(path).unwrap().set_modified(modified).unwrap();
 }
 
+/// Writes `text` compressed with zstd in a file with its folders, and sets its modification date to `age_seconds` seconds
+/// before now.
+pub fn write_compressed_file(path: &Path, text: &str, age_seconds: u64) {
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(path, zstd::encode_all(text.as_bytes(), 0).unwrap()).unwrap();
+    let modified = SystemTime::now() - Duration::from_secs(age_seconds);
+    std::fs::File::options().write(true).open(path).unwrap().set_modified(modified).unwrap();
+}
+
 /// A chat session file of Codex for `folder`, in the folder of Codex `home`, with `messages` after its first line.
 pub fn codex_file(home: &Path, day: &str, id: &str, folder: &str, messages: &[&str], age_seconds: u64) {
     let first = format!(r#"{{"type":"session_meta","payload":{{"id":"{id}","cwd":"{folder}"}}}}"#);
     let name = format!("rollout-2026-10-10T01-02-03-{id}.jsonl");
     write_file(&home.join("sessions").join(day).join(name), &format!("{first}\n{}\n", messages.join("\n")), age_seconds);
+}
+
+/// The same chat session file of Codex as `codex_file`, compressed with zstd, as Codex does for its old chat sessions.
+pub fn codex_compressed_file(home: &Path, day: &str, id: &str, folder: &str, messages: &[&str], age_seconds: u64) {
+    let first = format!(r#"{{"type":"session_meta","payload":{{"id":"{id}","cwd":"{folder}"}}}}"#);
+    let name = format!("rollout-2026-10-10T01-02-03-{id}.jsonl.zst");
+    let text = format!("{first}\n{}\n", messages.join("\n"));
+    write_compressed_file(&home.join("sessions").join(day).join(name), &text, age_seconds);
+}
+
+/// A line of Claude Code that holds a message of the developer, typed in `folder`.
+pub fn claude_user_line(folder: &str, text: &str) -> String {
+    format!(
+        r#"{{"type":"user","cwd":"{folder}","timestamp":"2026-10-11T10:00:00.000Z","message":{{"role":"user","content":"{text}"}}}}"#
+    )
+}
+
+/// A line of Claude Code that holds the answer `id` of the model `opus`, with `output` output tokens.
+pub fn claude_answer_line(id: &str, output: u64) -> String {
+    format!(
+        r#"{{"type":"assistant","timestamp":"2026-10-11T10:00:05.000Z","message":{{"id":"{id}","model":"opus","content":[],"usage":{{"input_tokens":10,"output_tokens":{output}}}}}}}"#
+    )
 }
 
 /// A line of Codex that holds a message of the developer.

@@ -2,7 +2,8 @@
 //!
 //! The package `data_layer_chat_sessions` finds the chat session files and reads what each one holds, without a model, and
 //! keeps the result in `chats_cache.json`, in the data folder of Heidrun, until the size or the modification date of the file
-//! changes. This file turns what the package reads into the list of the Past chats sidebar section: the title, the summary,
+//! changes. It also reads the files that Codex compressed (`.jsonl.zst`), and it adds the tokens of the subagents and of the
+//! workflows of a conversation of Claude Code to that conversation. This file turns what the package reads into the list of the Past chats sidebar section: the title, the summary,
 //! the tokens, the cost, the sort, and the limit.
 //!
 //! A conversation without a title shows its first message. A conversation without a title and without a message is not
@@ -14,8 +15,8 @@
 
 use crate::model_prices::PriceTable;
 use data_layer_chat_sessions::{
-    feed_claude_line, feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
-    title_of_scan, ChatMeta, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
+    feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
+    title_of_scan, ChatMeta, FolderScope, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashSet};
@@ -153,10 +154,15 @@ fn cache_path() -> PathBuf {
 pub async fn chats_list(folder: String, limit: usize, sort_key: SortKey, order: SortOrder) -> Result<Chats, String> {
     let sorting = Sorting { key: sort_key, order };
     // Off the main thread: the first read of the files of a coding agent takes a moment.
-    tauri::async_runtime::spawn_blocking(move || list(&folder, limit, sorting)).await.map_err(|e| e.to_string())
+    tauri::async_runtime::spawn_blocking(move || list(&folder, limit, sorting, FolderScope::Exactly))
+        .await
+        .map_err(|e| e.to_string())
 }
 
-pub(crate) fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
+/// The conversations of the repository that holds `folder`, for the folders that `scope` says. The Past chats sidebar section
+/// lists only the conversations that started in the root of the repository (`FolderScope::Exactly`), and the statistic of
+/// the AI cost also counts the ones that started in a worktree or in a sub-folder (`FolderScope::WithFoldersBelow`).
+pub(crate) fn list(folder: &str, limit: usize, sorting: Sorting, scope: FolderScope) -> Chats {
     let root = crate::project::find_root(Path::new(folder)).display().to_string();
     let mut guard = CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let cache = guard.get_or_insert_with(|| ScanCache::open(cache_path()));
@@ -165,6 +171,7 @@ pub(crate) fn list(folder: &str, limit: usize, sorting: Sorting) -> Chats {
         &crate::claude::claude_dir().join("projects"),
         &crate::usage::codex_home(),
         &root,
+        scope,
         limit,
         sorting,
     );
@@ -187,14 +194,15 @@ fn list_in(
     projects: &Path,
     codex_home: &Path,
     folder: &str,
+    scope: FolderScope,
     limit: usize,
     sorting: Sorting,
 ) -> Chats {
     let limit = limit.clamp(1, MAX_LIMIT);
     Chats {
         root: folder.to_string(),
-        claude: claude_chats(cache, projects, folder, limit, sorting),
-        codex: codex_chats(cache, codex_home, folder, limit, sorting),
+        claude: claude_chats(cache, projects, folder, scope, limit, sorting),
+        codex: codex_chats(cache, codex_home, folder, scope, limit, sorting),
     }
 }
 
@@ -313,20 +321,34 @@ fn strip_worktree(relative: &str) -> &str {
 
 // ---- Claude Code ------------------------------------------------------------------------------------------------
 
-fn claude_chats(cache: &mut ScanCache, projects: &Path, folder: &str, limit: usize, sorting: Sorting) -> AgentChats {
-    let files = find_claude_session_files(cache, projects, folder);
+fn claude_chats(
+    cache: &mut ScanCache,
+    projects: &Path,
+    folder: &str,
+    scope: FolderScope,
+    limit: usize,
+    sorting: Sorting,
+) -> AgentChats {
+    let files = find_claude_session_files(cache, projects, folder, scope);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
-        let scan = cache.scan(file, feed_claude_line);
+        let scan = cache.scan_claude(file);
         title_of_scan(&scan).map(|text| (text, scan.meta, scan.tokens))
     })
 }
 
 // ---- Codex -------------------------------------------------------------------------------------------------------
 
-fn codex_chats(cache: &mut ScanCache, home: &Path, folder: &str, limit: usize, sorting: Sorting) -> AgentChats {
+fn codex_chats(
+    cache: &mut ScanCache,
+    home: &Path,
+    folder: &str,
+    scope: FolderScope,
+    limit: usize,
+    sorting: Sorting,
+) -> AgentChats {
     let titles = read_codex_titles(home);
     let folder = folder.trim_end_matches('/');
-    let files = find_codex_session_files(cache, home, folder);
+    let files = find_codex_session_files(cache, home, folder, scope);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
         titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens))
@@ -372,7 +394,7 @@ mod tests {
     }
 
     fn claude(cache: &mut ScanCache, dir: &Path, limit: usize) -> AgentChats {
-        claude_chats(cache, &dir.join("projects"), "/work/app", limit, Sorting::default())
+        claude_chats(cache, &dir.join("projects"), "/work/app", FolderScope::Exactly, limit, Sorting::default())
     }
 
     #[test]
@@ -412,7 +434,7 @@ mod tests {
         write(&claude_folder(&dir).join("b.jsonl"), "", 5);
         assert_eq!(claude(&mut ScanCache::in_memory(), &dir, 10), AgentChats::default());
         assert_eq!(
-            claude_chats(&mut ScanCache::in_memory(), &dir.join("projects"), "/work/other", 10, Sorting::default()),
+            claude_chats(&mut ScanCache::in_memory(), &dir.join("projects"), "/work/other", FolderScope::Exactly, 10, Sorting::default()),
             AgentChats::default()
         );
         let _ = std::fs::remove_dir_all(&dir);
@@ -601,7 +623,7 @@ mod tests {
             "{{\"id\":\"{a}\",\"thread_name\":\"Old name\"}}\n{{\"id\":\"{a}\",\"thread_name\":\"Describe image\"}}\n{{\"id\":\"{b}\",\"thread_name\":\"Newer\"}}\n{{\"id\":\"{c}\",\"thread_name\":\"Elsewhere\"}}\n"
         );
         write(&dir.join("session_index.jsonl"), &index, 1);
-        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", 10, Sorting::default());
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Newer", "Describe image"]);
         assert_eq!(found.chats[1].id, a);
         let _ = std::fs::remove_dir_all(&dir);
@@ -614,7 +636,7 @@ mod tests {
         let real = codex_message("Please fix issue 250");
         codex_file(&dir, "2026/10/10", id, "/work/app", &[&real], 5);
         write(&dir.join("session_index.jsonl"), &format!("{{\"id\":\"{id}\",\"thread_name\":\"Fix it\"}}\n"), 1);
-        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", 5, Sorting::default());
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 5, Sorting::default());
         assert_eq!(titles(&found), vec!["Fix it"]);
         assert_eq!(found.chats[0].meta.user_messages, 1);
         assert_eq!(found.chats[0].meta.issues.iter().collect::<Vec<_>>(), vec![&250]);
@@ -630,7 +652,7 @@ mod tests {
         let environment = codex_message("<environment_context>cwd</environment_context>");
         let real = codex_message("Write the   change log");
         codex_file(&dir, "2026/10/10", id, "/work/app", &[&agents, &environment, &real], 5);
-        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", 10, Sorting::default());
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Write the change log"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -650,7 +672,7 @@ mod tests {
         }
         write(&dir.join("session_index.jsonl"), &index, 1);
         let mut cache = ScanCache::in_memory();
-        let found = codex_chats(&mut cache, &dir, "/work/app", 2, Sorting::default());
+        let found = codex_chats(&mut cache, &dir, "/work/app", FolderScope::Exactly, 2, Sorting::default());
         assert_eq!(titles(&found), vec!["Chat 2", "Chat 1"]);
         assert!(found.has_more);
         assert_eq!(cache.codex_folder_count(), 3);
@@ -660,7 +682,7 @@ mod tests {
     #[test]
     fn lists_nothing_when_the_folders_of_the_coding_agents_do_not_exist() {
         let dir = scratch("nothing");
-        let found = list_in(&mut ScanCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5, Sorting::default());
+        let found = list_in(&mut ScanCache::in_memory(), &dir.join("projects"), &dir, "/work/app", FolderScope::Exactly, 5, Sorting::default());
         assert_eq!(found.claude, AgentChats::default());
         assert_eq!(found.codex, AgentChats::default());
         let _ = std::fs::remove_dir_all(&dir);
@@ -669,7 +691,7 @@ mod tests {
     #[test]
     fn answers_the_root_of_the_repository_that_it_listed() {
         let dir = scratch("root");
-        let found = list_in(&mut ScanCache::in_memory(), &dir.join("projects"), &dir, "/work/app", 5, Sorting::default());
+        let found = list_in(&mut ScanCache::in_memory(), &dir.join("projects"), &dir, "/work/app", FolderScope::Exactly, 5, Sorting::default());
         assert_eq!(found.root, "/work/app");
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -706,7 +728,7 @@ mod tests {
     }
 
     fn sorted(dir: &Path, limit: usize, key: SortKey, order: SortOrder) -> AgentChats {
-        claude_chats(&mut ScanCache::in_memory(), &dir.join("projects"), "/work/app", limit, Sorting { key, order })
+        claude_chats(&mut ScanCache::in_memory(), &dir.join("projects"), "/work/app", FolderScope::Exactly, limit, Sorting { key, order })
     }
 
     #[test]
@@ -738,7 +760,7 @@ mod tests {
         }
         let mut cache = ScanCache::in_memory();
         let sorting = Sorting { key: SortKey::LastUpdated, order: SortOrder::Ascending };
-        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", FolderScope::Exactly, 2, sorting);
         assert_eq!(titles(&found), vec!["Chat 1", "Chat 2"]);
         assert!(found.has_more);
         assert_eq!(cache.scan_count(), 2, "the two newer files were not opened");
@@ -836,11 +858,11 @@ mod tests {
         }
         let mut cache = ScanCache::in_memory();
         let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Descending };
-        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 2, sorting);
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", FolderScope::Exactly, 2, sorting);
         assert_eq!(found.chats.len(), 2);
         assert!(found.has_more);
         assert_eq!(cache.scan_count(), 4, "every file was opened");
-        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", 4, sorting);
+        let found = claude_chats(&mut cache, &dir.join("projects"), "/work/app", FolderScope::Exactly, 4, sorting);
         assert_eq!(found.chats.len(), 4);
         assert!(!found.has_more);
         let _ = std::fs::remove_dir_all(&dir);
@@ -867,10 +889,10 @@ mod tests {
         let index = format!("{{\"id\":\"{one}\",\"thread_name\":\"One\"}}\n{{\"id\":\"{two}\",\"thread_name\":\"Two\"}}\n");
         write(&dir.join("session_index.jsonl"), &index, 1);
         let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Descending };
-        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", 5, sorting);
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 5, sorting);
         assert_eq!(titles(&found), vec!["Two", "One"]);
         let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Ascending };
-        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", 5, sorting);
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 5, sorting);
         assert_eq!(titles(&found), vec!["One", "Two"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -951,6 +973,83 @@ mod tests {
         assert_eq!(hours[&497_698]["claude-opus-5"].output, 200);
         assert_eq!(hours[&497_744]["claude-opus-5"].output, 300);
         assert_eq!(found.chats[0].tokens["claude-opus-5"].output, 500);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A line of Claude Code that holds a message of the developer, typed in `folder`.
+    fn claude_user_line(folder: &str, text: &str) -> String {
+        format!(
+            r#"{{"type":"user","cwd":"{folder}","timestamp":"2026-10-11T10:00:00.000Z","message":{{"role":"user","content":"{text}"}}}}"#
+        )
+    }
+
+    /// A line of Claude Code that holds the answer `id` of the model `claude-opus-5`, with `output` output tokens, at `at`.
+    fn claude_answer_line(id: &str, at: &str, output: u64) -> String {
+        format!(
+            r#"{{"type":"assistant","timestamp":"{at}","message":{{"id":"{id}","model":"claude-opus-5","content":[],"usage":{{"output_tokens":{output}}}}}}}"#
+        )
+    }
+
+    #[test]
+    fn lists_the_conversations_that_started_in_a_worktree_or_in_a_sub_folder_but_not_the_ones_of_a_folder_next_to_it() {
+        let dir = scratch("claude-below");
+        let chat = |folder: &str, name: &str| {
+            let project = dir.join("projects").join(claude_folder_name(folder));
+            write(&project.join(format!("{name}.jsonl")), &format!("{}\n", claude_user_line(folder, name)), 10);
+        };
+        chat("/work/app", "In the root");
+        chat("/work/app/.claude/worktrees/fix-1", "In a worktree");
+        chat("/work/app/docs", "In a sub-folder");
+        chat("/work/app-site", "Next to it");
+        let found = |scope: FolderScope| {
+            let found = claude_chats(&mut ScanCache::in_memory(), &dir.join("projects"), "/work/app", scope, 10, Sorting::default());
+            let mut found_titles: Vec<String> = found.chats.iter().map(|chat| chat.title.clone()).collect();
+            found_titles.sort();
+            found_titles
+        };
+        assert_eq!(found(FolderScope::Exactly), vec!["In the root"]);
+        assert_eq!(found(FolderScope::WithFoldersBelow), vec!["In a sub-folder", "In a worktree", "In the root"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn counts_the_tokens_of_the_subagents_and_of_the_workflows_in_the_conversation_that_started_them() {
+        let dir = scratch("claude-agents");
+        let folder = claude_folder(&dir);
+        let main = format!("{}\n{}\n", claude_user_line("/work/app", "Fix it"), claude_answer_line("m1", "2026-10-11T10:00:05.000Z", 5));
+        write(&folder.join("abc.jsonl"), &main, 100);
+        let agent = format!("{}\n", claude_answer_line("a1", "2026-10-11T12:00:05.000Z", 70));
+        write(&folder.join("abc").join("subagents").join("agent-1.jsonl"), &agent, 100);
+        let workflow = format!("{}\n", claude_answer_line("b1", "2026-10-11T10:30:00.000Z", 200));
+        write(&folder.join("abc").join("subagents").join("workflows").join("wf_1").join("agent-2.jsonl"), &workflow, 100);
+        let found = claude(&mut ScanCache::in_memory(), &dir, 10);
+        assert_eq!(found.chats.len(), 1);
+        assert_eq!(found.chats[0].usage.as_ref().map(|usage| usage.output_tokens), Some(5 + 70 + 200));
+        assert_eq!(found.chats[0].meta.user_messages, 1);
+        let by_hour: Vec<u64> = found.chats[0].token_hours.values().map(|models| models["claude-opus-5"].output).collect();
+        assert_eq!(by_hour, vec![5 + 200, 70]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn lists_the_compressed_conversations_of_codex_and_the_ones_of_a_sub_folder() {
+        let dir = scratch("codex-compressed");
+        let old = "01a12c31-175b-7513-b12c-bba764f46430";
+        let below = "01a12c31-175b-7513-b12c-bba764f46431";
+        let first = format!(r#"{{"type":"session_meta","payload":{{"id":"{old}","cwd":"/work/app"}}}}"#);
+        let text = format!("{first}\n{}\n", codex_message("Fix the tab bar"));
+        let path = dir.join("sessions/2026/09/25").join(format!("rollout-2026-09-25T01-02-03-{old}.jsonl.zst"));
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, zstd::encode_all(text.as_bytes(), 0).unwrap()).unwrap();
+        codex_file(&dir, "2026/10/10", below, "/work/app/docs", &[&codex_message("Write the guide")], 5);
+        let found = |scope: FolderScope| {
+            let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", scope, 10, Sorting::default());
+            let mut found_titles: Vec<String> = found.chats.iter().map(|chat| chat.title.clone()).collect();
+            found_titles.sort();
+            found_titles
+        };
+        assert_eq!(found(FolderScope::Exactly), vec!["Fix the tab bar"]);
+        assert_eq!(found(FolderScope::WithFoldersBelow), vec!["Fix the tab bar", "Write the guide"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

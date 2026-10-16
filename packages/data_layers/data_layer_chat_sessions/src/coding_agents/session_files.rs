@@ -1,13 +1,23 @@
 //! Finds the chat session files of one folder, and the titles of the chat sessions of Codex.
 //!
 //! Claude Code writes one file for each chat session: `<claude dir>/projects/<folder name>/<id>.jsonl`. The folder name is the
-//! folder of the workspace with every character that is not a letter or a digit replaced by a dash.
+//! folder where the chat session started, with every character that is not a letter or a digit replaced by a dash. A chat
+//! session that started in a folder below the folder of the workspace, for example in a worktree
+//! (`<folder>/.claude/worktrees/<name>`) or in a sub-folder, has its own folder name that starts with the folder name of the
+//! workspace, then a dash. The caller chooses with a `FolderScope` whether these chat sessions count. Because the replacement
+//! loses the slashes, the first `cwd` of the files of such a folder gives the real folder, and it must be the folder of the
+//! workspace or a folder below it: the folder of a repository next to it, such as `<folder>-site`, is not one of its chat
+//! sessions.
 //!
-//! Codex writes one file for each chat session: `<codex home>/sessions/YYYY/MM/DD/rollout-<date>-<id>.jsonl`. The first line
-//! gives the folder of the chat session (`payload.cwd`). The titles are in `<codex home>/session_index.jsonl`: each line has the
-//! id of a chat session and its title (`thread_name`).
+//! The subagents and the workflows of a chat session write their own files, below the folder `<id>/subagents` that sits next
+//! to `<id>.jsonl`. Their tokens count for the chat session that started them, so `find_claude_agent_files` lists them.
+//!
+//! Codex writes one file for each chat session: `<codex home>/sessions/YYYY/MM/DD/rollout-<date>-<id>.jsonl`, and it
+//! compresses the files of its old chat sessions with zstd, into `rollout-<date>-<id>.jsonl.zst`. The first line gives the
+//! folder of the chat session (`payload.cwd`), which must be in the `FolderScope` of the workspace. The titles are
+//! in `<codex home>/session_index.jsonl`: each line has the id of a chat session and its title (`thread_name`).
 
-use crate::coding_agents::scan::{read_lines_from, Scan};
+use crate::coding_agents::scan::{is_compressed, read_lines_from, Scan};
 use crate::coding_agents::scan_cache::ScanCache;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -48,38 +58,89 @@ pub fn claude_folder_name(folder: &str) -> String {
     folder.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect()
 }
 
-/// The chat session files of Claude Code for `folder`, in `projects`. The cache forgets the files of this folder that do not
-/// exist any more.
-pub fn find_claude_session_files(cache: &mut ScanCache, projects: &Path, folder: &str) -> Vec<SessionFile> {
-    let directory = projects.join(claude_folder_name(folder));
-    let mut files = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(&directory) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|extension| extension.to_str()) != Some("jsonl") {
-                continue;
-            }
-            let Some(id) = path.file_stem().map(|stem| stem.to_string_lossy().into_owned()) else { continue };
-            let Ok(metadata) = entry.metadata() else { continue };
-            files.push(SessionFile::new(path, id, &metadata));
+/// Which folders give the chat session files of a workspace.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FolderScope {
+    /// Only the folder of the workspace itself: the chat sessions that started in this folder.
+    Exactly,
+    /// The folder of the workspace and the folders below it, such as its worktrees and its sub-folders.
+    WithFoldersBelow,
+}
+
+impl FolderScope {
+    /// True when the chat sessions that started in `path` belong to the workspace `folder`. A slash at the end of either one
+    /// does not count.
+    pub fn includes(self, path: &str, folder: &str) -> bool {
+        match self {
+            FolderScope::Exactly => path.trim_end_matches('/') == folder.trim_end_matches('/'),
+            FolderScope::WithFoldersBelow => is_in_folder(path, folder),
         }
     }
-    let present: HashSet<String> = files.iter().map(|file| file.path.display().to_string()).collect();
-    cache.forget_missing(&directory, &present);
+}
+
+/// True when `path` is `folder` or a folder below it. A slash at the end of either one does not count.
+pub fn is_in_folder(path: &str, folder: &str) -> bool {
+    let folder = folder.trim_end_matches('/');
+    let path = path.trim_end_matches('/');
+    path == folder || path.strip_prefix(folder).is_some_and(|rest| rest.starts_with('/'))
+}
+
+/// The chat session files of Claude Code for `folder`, and for the folders below it when `scope` says so, in `projects`. The
+/// cache forgets the files of these folders that do not exist any more.
+pub fn find_claude_session_files(
+    cache: &mut ScanCache,
+    projects: &Path,
+    folder: &str,
+    scope: FolderScope,
+) -> Vec<SessionFile> {
+    let mut files = Vec::new();
+    for directory in claude_directories(cache, projects, folder, scope) {
+        let mut present = HashSet::new();
+        if let Ok(entries) = std::fs::read_dir(&directory) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|extension| extension.to_str()) != Some("jsonl") {
+                    continue;
+                }
+                let Some(id) = path.file_stem().map(|stem| stem.to_string_lossy().into_owned()) else { continue };
+                let Ok(metadata) = entry.metadata() else { continue };
+                present.insert(path.display().to_string());
+                files.push(SessionFile::new(path, id, &metadata));
+            }
+        }
+        cache.forget_missing_claude(&directory, &present);
+    }
     files
 }
 
-/// The chat session files of Codex for `folder`, in `home`. The cache forgets the files that do not exist any more.
-pub fn find_codex_session_files(cache: &mut ScanCache, home: &Path, folder: &str) -> Vec<SessionFile> {
+/// The files of the subagents and of the workflows that the chat session file `main` of Claude Code started: every file
+/// `.jsonl` below the folder `subagents` that sits next to `main`, at any depth (`<id>/subagents/agent-<id>.jsonl`, and
+/// `<id>/subagents/workflows/<workflow>/agent-<id>.jsonl`). The cache forgets the files of this folder that do not exist any
+/// more.
+pub fn find_claude_agent_files(cache: &mut ScanCache, main: &Path) -> Vec<SessionFile> {
+    let agents = main.with_extension("").join("subagents");
+    let mut files = Vec::new();
+    collect_agent_files(&agents, 0, &mut files);
+    let present: HashSet<String> = files.iter().map(|file| file.path.display().to_string()).collect();
+    cache.forget_missing(&agents, &present);
+    files
+}
+
+/// The chat session files of Codex for `folder`, and for the folders below it when `scope` says so, in `home`. The
+/// compressed files are in. A chat session that is in the two forms is listed once, with its file that is not compressed.
+/// The cache forgets the files that do not exist any more.
+pub fn find_codex_session_files(cache: &mut ScanCache, home: &Path, folder: &str, scope: FolderScope) -> Vec<SessionFile> {
     let mut rollouts = Vec::new();
     collect_rollouts(&home.join("sessions"), 0, &mut rollouts);
     let present: HashSet<String> = rollouts.iter().map(|path| path.display().to_string()).collect();
     cache.forget_missing(&home.join("sessions"), &present);
-    let folder = folder.trim_end_matches('/');
+    rollouts.sort_by_key(|path| is_compressed(path));
+    let mut ids = HashSet::new();
     let mut files = Vec::new();
     for path in rollouts {
         let Some(id) = codex_id(&path) else { continue };
-        if cache.codex_folder(&path).as_deref().map(|found| found.trim_end_matches('/')) != Some(folder) {
+        let Some(found) = cache.codex_folder(&path) else { continue };
+        if scope.includes(&found, folder) == false || ids.insert(id.clone()) == false {
             continue;
         }
         let Ok(metadata) = std::fs::metadata(&path) else { continue };
@@ -107,7 +168,54 @@ pub fn title_of_scan(scan: &Scan) -> Option<String> {
     scan.title.clone().filter(|title| !title.trim().is_empty()).or_else(|| scan.first_message.clone())
 }
 
-/// Walks `sessions/YYYY/MM/DD` and lists the files `rollout-*.jsonl`.
+/// The folders of Claude Code to read for `folder`: the folder of the workspace itself, then, when `scope` says so, each
+/// folder whose name starts with the name of the folder of the workspace and a dash, when the real folder of its chat
+/// sessions is below `folder`.
+fn claude_directories(cache: &mut ScanCache, projects: &Path, folder: &str, scope: FolderScope) -> Vec<PathBuf> {
+    let name = claude_folder_name(folder.trim_end_matches('/'));
+    let prefix = format!("{name}-");
+    let mut directories = vec![projects.join(&name)];
+    if scope == FolderScope::Exactly {
+        return directories;
+    }
+    let mut below: Vec<PathBuf> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(projects) {
+        for entry in entries.flatten() {
+            let is_candidate = entry.file_name().to_str().is_some_and(|candidate| candidate.starts_with(&prefix));
+            if is_candidate && entry.path().is_dir() {
+                below.push(entry.path());
+            }
+        }
+    }
+    below.sort();
+    let present: HashSet<String> = below.iter().map(|directory| directory.display().to_string()).collect();
+    cache.forget_missing_claude_folders(&projects.join(&prefix).display().to_string(), &present);
+    for directory in below {
+        if cache.claude_folder(&directory).is_some_and(|found| scope.includes(&found, folder)) {
+            directories.push(directory);
+        }
+    }
+    directories
+}
+
+/// Lists the files `.jsonl` in `directory` and in the folders below it, down to a depth of four folders.
+fn collect_agent_files(directory: &Path, depth: u8, found: &mut Vec<SessionFile>) {
+    let Ok(entries) = std::fs::read_dir(directory) else { return };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if depth < 4 {
+                collect_agent_files(&path, depth + 1, found);
+            }
+        } else if path.extension().and_then(|extension| extension.to_str()) == Some("jsonl") {
+            let Some(id) = path.file_stem().map(|stem| stem.to_string_lossy().into_owned()) else { continue };
+            let Ok(metadata) = entry.metadata() else { continue };
+            found.push(SessionFile::new(path, id, &metadata));
+        }
+    }
+}
+
+/// Walks `sessions/YYYY/MM/DD` and lists the files `rollout-*.jsonl` and `rollout-*.jsonl.zst`.
 fn collect_rollouts(directory: &Path, depth: u8, found: &mut Vec<PathBuf>) {
     let Ok(entries) = std::fs::read_dir(directory) else { return };
     for entry in entries.flatten() {
@@ -117,16 +225,18 @@ fn collect_rollouts(directory: &Path, depth: u8, found: &mut Vec<PathBuf>) {
                 collect_rollouts(&path, depth + 1, found);
             }
         } else if let Some(name) = path.file_name().and_then(|name| name.to_str()) {
-            if name.starts_with("rollout-") && name.ends_with(".jsonl") {
+            if name.starts_with("rollout-") && (name.ends_with(".jsonl") || name.ends_with(".jsonl.zst")) {
                 found.push(path);
             }
         }
     }
 }
 
-/// The identifier of a chat session of Codex: the last 36 characters of the name of its file, without the extension.
+/// The identifier of a chat session of Codex: the last 36 characters of the name of its file, without the extension
+/// `.jsonl` or `.jsonl.zst`.
 fn codex_id(path: &Path) -> Option<String> {
-    let stem: Vec<char> = path.file_stem()?.to_str()?.chars().collect();
+    let name = path.file_name()?.to_str()?;
+    let stem: Vec<char> = name.strip_suffix(".jsonl.zst").or_else(|| name.strip_suffix(".jsonl"))?.chars().collect();
     if stem.len() < CODEX_ID_LENGTH {
         return None;
     }
@@ -136,7 +246,9 @@ fn codex_id(path: &Path) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_samples::{codex_file, temp_folder, write_file};
+    use crate::test_samples::{
+        claude_user_line, codex_compressed_file, codex_file, codex_message, temp_folder, write_file,
+    };
 
     #[test]
     fn names_the_folder_of_claude_code_with_dashes() {
@@ -154,11 +266,22 @@ mod tests {
         write_file(&project.join("a.jsonl"), "{}\n", 10);
         write_file(&project.join("note.txt"), "not a chat session", 10);
         write_file(&directory.join("projects").join(claude_folder_name("/work/other")).join("b.jsonl"), "{}\n", 10);
-        let mut files = find_claude_session_files(&mut ScanCache::in_memory(), &directory.join("projects"), "/work/app");
+        let mut files = find_claude_session_files(
+            &mut ScanCache::in_memory(),
+            &directory.join("projects"),
+            "/work/app",
+            FolderScope::Exactly,
+        );
         files.sort_by(|a, b| a.id.cmp(&b.id));
         assert_eq!(files.iter().map(|file| file.id.as_str()).collect::<Vec<_>>(), vec!["a"]);
         assert_eq!(files[0].size, 3);
-        assert!(find_claude_session_files(&mut ScanCache::in_memory(), &directory.join("nothing"), "/work/app").is_empty());
+        assert!(find_claude_session_files(
+            &mut ScanCache::in_memory(),
+            &directory.join("nothing"),
+            "/work/app",
+            FolderScope::Exactly
+        )
+        .is_empty());
     }
 
     #[test]
@@ -171,7 +294,7 @@ mod tests {
         codex_file(&directory, "2026/10/11", b, "/work/app/", &[], 10);
         codex_file(&directory, "2026/10/11", c, "/work/other", &[], 10);
         let mut cache = ScanCache::in_memory();
-        let mut files = find_codex_session_files(&mut cache, &directory, "/work/app");
+        let mut files = find_codex_session_files(&mut cache, &directory, "/work/app", FolderScope::Exactly);
         files.sort_by(|x, y| x.id.cmp(&y.id));
         assert_eq!(files.iter().map(|file| file.id.as_str()).collect::<Vec<_>>(), vec![b, a]);
         assert_eq!(cache.codex_folder_count(), 3);
@@ -204,5 +327,77 @@ mod tests {
         let path = Path::new("/x/rollout-2026-10-10T01-02-03-01a12c31-175b-7513-b12c-bba764f46402.jsonl");
         assert_eq!(codex_id(path).as_deref(), Some("01a12c31-175b-7513-b12c-bba764f46402"));
         assert_eq!(codex_id(Path::new("/x/short.jsonl")), None);
+        let compressed = Path::new("/x/rollout-2026-10-10T01-02-03-01a12c31-175b-7513-b12c-bba764f46402.jsonl.zst");
+        assert_eq!(codex_id(compressed).as_deref(), Some("01a12c31-175b-7513-b12c-bba764f46402"));
+    }
+
+    #[test]
+    fn tells_a_folder_from_a_folder_below_it_and_from_a_folder_that_only_starts_with_the_same_letters() {
+        assert!(is_in_folder("/work/app", "/work/app"));
+        assert!(is_in_folder("/work/app/", "/work/app"));
+        assert!(is_in_folder("/work/app/.claude/worktrees/fix", "/work/app/"));
+        assert!(!is_in_folder("/work/app-site", "/work/app"));
+        assert!(!is_in_folder("/work", "/work/app"));
+    }
+
+    #[test]
+    fn finds_the_files_of_claude_code_below_the_folder_but_not_the_ones_of_a_folder_next_to_it() {
+        let directory = temp_folder("find_claude_below");
+        let projects = directory.join("projects");
+        let chat = |folder: &str, name: &str| {
+            let project = projects.join(claude_folder_name(folder));
+            write_file(&project.join(format!("{name}.jsonl")), &format!("{}\n", claude_user_line(folder, "hello")), 10);
+        };
+        chat("/work/app", "root");
+        chat("/work/app/.claude/worktrees/fix-1", "worktree");
+        chat("/work/app/docs/guides", "sub_folder");
+        chat("/work/app-site", "next_to_it");
+        chat("/work/other", "other");
+        let mut cache = ScanCache::in_memory();
+        let found = |cache: &mut ScanCache, folder: &str, scope: FolderScope| {
+            let mut files = find_claude_session_files(cache, &projects, folder, scope);
+            files.sort_by(|a, b| a.id.cmp(&b.id));
+            files.into_iter().map(|file| file.id).collect::<Vec<_>>()
+        };
+        assert_eq!(found(&mut cache, "/work/app", FolderScope::Exactly), vec!["root"]);
+        assert_eq!(found(&mut cache, "/work/app", FolderScope::WithFoldersBelow), vec!["root", "sub_folder", "worktree"]);
+        assert_eq!(cache.claude_folder(&projects.join(claude_folder_name("/work/app-site"))).as_deref(), Some("/work/app-site"));
+        assert_eq!(found(&mut cache, "/work/app/", FolderScope::WithFoldersBelow).len(), 3);
+    }
+
+    #[test]
+    fn finds_the_compressed_files_of_codex_and_lists_a_chat_session_once() {
+        let directory = temp_folder("find_codex_zst");
+        let old = "01a12c31-175b-7513-b12c-bba764f46410";
+        let both = "01a12c31-175b-7513-b12c-bba764f46411";
+        let other = "01a12c31-175b-7513-b12c-bba764f46412";
+        codex_compressed_file(&directory, "2026/09/25", old, "/work/app", &[&codex_message("Old")], 100);
+        codex_compressed_file(&directory, "2026/10/08", both, "/work/app/docs", &[&codex_message("Both")], 50);
+        codex_file(&directory, "2026/10/08", both, "/work/app/docs", &[&codex_message("Both")], 40);
+        codex_compressed_file(&directory, "2026/10/08", other, "/work/other", &[], 50);
+        let mut cache = ScanCache::in_memory();
+        let mut files = find_codex_session_files(&mut cache, &directory, "/work/app", FolderScope::WithFoldersBelow);
+        files.sort_by(|x, y| x.id.cmp(&y.id));
+        assert_eq!(files.iter().map(|file| file.id.as_str()).collect::<Vec<_>>(), vec![old, both]);
+        let exactly = find_codex_session_files(&mut cache, &directory, "/work/app", FolderScope::Exactly);
+        assert_eq!(exactly.iter().map(|file| file.id.as_str()).collect::<Vec<_>>(), vec![old]);
+        assert_eq!(files[1].path.extension().and_then(|extension| extension.to_str()), Some("jsonl"));
+        assert_eq!(cache.codex_folder_count(), 4);
+    }
+
+    #[test]
+    fn finds_the_files_of_the_subagents_and_of_the_workflows_of_a_chat_session_of_claude_code() {
+        let directory = temp_folder("find_agents");
+        let project = directory.join("projects").join(claude_folder_name("/work/app"));
+        write_file(&project.join("abc.jsonl"), "{}\n", 10);
+        let agents = project.join("abc").join("subagents");
+        write_file(&agents.join("agent-1.jsonl"), "{}\n", 10);
+        write_file(&agents.join("agent-1.meta.json"), "{}", 10);
+        write_file(&agents.join("workflows").join("wf_1").join("agent-2.jsonl"), "{}\n", 10);
+        write_file(&project.join("other").join("subagents").join("agent-3.jsonl"), "{}\n", 10);
+        let mut files = find_claude_agent_files(&mut ScanCache::in_memory(), &project.join("abc.jsonl"));
+        files.sort_by(|a, b| a.id.cmp(&b.id));
+        assert_eq!(files.iter().map(|file| file.id.as_str()).collect::<Vec<_>>(), vec!["agent-1", "agent-2"]);
+        assert!(find_claude_agent_files(&mut ScanCache::in_memory(), &project.join("missing.jsonl")).is_empty());
     }
 }
