@@ -407,6 +407,7 @@ export type SettingsSection =
   | "terminal"
   | "agents"
   | "confirmations"
+  | "guards"
   | "notifications"
   | "sidebars"
   | "dynamicTopics"

@@ -22,21 +22,21 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the eight sections in the sidebar, by topic (issue #556), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
+  it("lists the nine sections in the sidebar, by topic (issues #556 and #596), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Notifications", "Sidebars", "Dynamic topics", "Mobile access"]);
+    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
     await links[3].trigger("click");
     expect(wrapper.get("h3").text()).toBe("Confirmations");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false]);
     expect(links[3].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
     wrapper.unmount();
@@ -50,6 +50,16 @@ describe("SettingsModal: section Sidebars (issues #442 and #556)", () => {
     const wrapper = await mountSettings();
     expect(wrapper.get("section h3").text()).toBe("Sidebars");
     expect(wrapper.findAll("section h4").map((heading) => heading.text())).toEqual(["Needs you", "Past chats", "Source control"]);
+    wrapper.unmount();
+  });
+
+  it("opens the section Guards when the confirmation window asks for the section by its identifier guards (issue #596)", async () => {
+    const { openSettings, settingsModal } = await import("../stores/settings");
+    openSettings("guards");
+    const wrapper = await mountSettings();
+    expect(settingsModal.section).toBe("guards");
+    expect(wrapper.get("section h3").text()).toBe("Guards");
+    expect(wrapper.find('[data-field="no-project"]').exists()).toBe(true);
     wrapper.unmount();
   });
 
@@ -153,6 +163,19 @@ describe("SettingsModal: key Escape", () => {
     wrapper.unmount();
   });
 
+  it("leaves the Settings window open on the key Escape while the guard window is open over it (issue #596)", async () => {
+    const wrapper = await mountSettings();
+    const { settingsModal } = await import("../stores/settings");
+    const { closeGuardWindow, openNewGuardWindow } = await import("../stores/guard_window");
+    openNewGuardWindow();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(settingsModal.open).toBe(true);
+    closeGuardWindow();
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(settingsModal.open).toBe(false);
+    wrapper.unmount();
+  });
+
   it("closes only the open information card of the section Dynamic topics on the first key Escape, and the window on the second", async () => {
     const { settingsModal } = await import("../stores/settings");
     const wrapper = await mountSettings();
@@ -210,8 +233,8 @@ describe("SettingsModal: heading Needs you of the section Sidebars (issues #417 
   it("uses a different icon for the section Sidebars than for the section Notifications, because the bell is the icon of the Needs you sidebar section", async () => {
     const wrapper = await mountSettings();
     const icons = wrapper.findAll("nav .nav-link").map((entry) => entry.get("i").classes().find((name) => name.startsWith("bi-")));
-    const sidebarsIcon = icons[5];
-    const notificationsIcon = icons[4];
+    const sidebarsIcon = icons[6];
+    const notificationsIcon = icons[5];
     expect(sidebarsIcon).toBe("bi-layout-sidebar-inset-reverse");
     expect(notificationsIcon).toBe("bi-bell");
     wrapper.unmount();

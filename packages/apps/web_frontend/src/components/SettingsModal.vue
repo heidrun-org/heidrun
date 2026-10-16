@@ -6,10 +6,12 @@ import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsConfirmationsSection from "./settings/SettingsConfirmationsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
+import SettingsGuardsSection from "./settings/SettingsGuardsSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
 import SettingsSidebarsSection from "./settings/SettingsSidebarsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
+import { guardWindow } from "../stores/guard_window";
 import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
 
@@ -18,6 +20,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
   { id: "confirmations", icon: "shield-check", labelKey: "settingsModal.confirmations" },
+  { id: "guards", icon: "shield-exclamation", labelKey: "settingsModal.guards" },
   { id: "notifications", icon: "bell", labelKey: "settingsModal.notifications" },
   { id: "sidebars", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.sidebars" },
   { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
@@ -29,6 +32,10 @@ function close() {
 }
 function onKey(e: KeyboardEvent) {
   if (e.key === "Escape") {
+    // The guard window is open over this window: the key belongs to the guard window.
+    if (guardWindow.isOpen) {
+      return;
+    }
     // An open information card closes first: the key reaches the card, which closes alone.
     if (e.target instanceof Element && e.target.closest(".information-card-part.is-open") !== null) {
       return;
@@ -70,6 +77,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
           <SettingsConfirmationsSection v-else-if="settingsModal.section === 'confirmations'" />
+          <SettingsGuardsSection v-else-if="settingsModal.section === 'guards'" />
           <SettingsNotificationsSection v-else-if="settingsModal.section === 'notifications'" />
           <SettingsSidebarsSection v-else-if="settingsModal.section === 'sidebars'" />
           <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />

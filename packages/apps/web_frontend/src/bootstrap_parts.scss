@@ -18,6 +18,8 @@
 @use "bootstrap/scss/forms/form-text";
 @use "bootstrap/scss/forms/form-control";
 @use "bootstrap/scss/forms/switch";
+@use "bootstrap/scss/forms/radio";
+@use "bootstrap/scss/forms/form-field";
 @use "bootstrap/scss/helpers/theme-colors";
 @use "bootstrap/scss/dialog";
 @use "bootstrap/scss/menu";
@@ -97,6 +99,7 @@ $application-utilities: (
     property: align-items,
     class: align-items,
     values: (
+      start: flex-start,
       center: center,
     ),
   ),
@@ -152,11 +155,21 @@ $application-utilities: (
       auto: auto,
     ),
   ),
+  "margin-top": (
+    important: true,
+    property: margin-top,
+    class: mt,
+    values: (
+      1: 0.25rem,
+      2: 0.5rem,
+    ),
+  ),
   "margin-bottom": (
     important: true,
     property: margin-bottom,
     class: mb,
     values: (
+      2: 0.5rem,
       3: 1rem,
     ),
   ),

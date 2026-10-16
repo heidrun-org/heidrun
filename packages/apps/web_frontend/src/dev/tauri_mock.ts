@@ -93,6 +93,11 @@ export class TauriMock {
 					remote: 'git@github.com:heidrun-org/heidrun.git',
 					references: null,
 				};
+			case 'project_load':
+				return TauriMockFixture.buildProject((payload as { cwd: string }).cwd);
+			case 'project_save':
+				TauriMockFixture.setProjectConfig((payload as { config: unknown }).config);
+				return null;
 			case 'forge_cli_cached': {
 				const args = (payload as { args: string[] }).args;
 				return args[1] === 'list' ? TauriMockFixture.buildForgeListAnswer(args) : TauriMockFixture.buildForgeAnswer(args);

@@ -2,9 +2,10 @@ import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
-import { allowCommand } from "./guards";
+import { allowCommand, forgetProjectGuards } from "./guards";
 import { t } from "../i18n/index";
-import { parseProjectConfig, type Launcher, type ProjectConfig, type LauncherAgent } from "../lib/project_config";
+import { parseProjectConfig, type Launcher, type ProjectConfig, type ProjectGuard, type LauncherAgent } from "../lib/project_config";
+import { withBuiltInGuard, withProjectGuard, withoutProjectGuard } from "../lib/guards_edit";
 import { launcherNameFromCommand } from "../lib/launcher_name";
 
 export type { Launcher };
@@ -142,6 +143,60 @@ export async function updateLauncher(workspaceId: string, id: string, values: Om
   if (p === undefined || index === -1) return;
   p.config.launchers[index] = { id, ...values };
   await saveProject(workspaceId);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	Guards
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Replaces the key `guards` of the project, writes the file `.heidrun/config.json`, and makes the next command read the
+ * new guards. When the file cannot be written, the key `guards` of the project goes back to its old value.
+ */
+async function changeGuards(workspaceId: string, change: (guards: ProjectConfig["guards"]) => ProjectConfig["guards"]): Promise<boolean> {
+  const p = project.byWorkspace[workspaceId];
+  if (p === undefined) {
+    return false;
+  }
+  const oldGuards = p.config.guards;
+  const newGuards = change(oldGuards);
+  if (newGuards === undefined) {
+    delete p.config.guards;
+  } else {
+    p.config.guards = newGuards;
+  }
+  const isSaved = await saveProject(workspaceId);
+  if (isSaved === false) {
+    if (oldGuards === undefined) {
+      delete p.config.guards;
+    } else {
+      p.config.guards = oldGuards;
+    }
+    return false;
+  }
+  forgetProjectGuards();
+  return true;
+}
+
+/** Turns the built-in guard `key` on or off for the project. Returns false when the file could not be written. */
+export function setBuiltInGuardEnabled(workspaceId: string, key: string, isEnabled: boolean): Promise<boolean> {
+  return changeGuards(workspaceId, (guards) => withBuiltInGuard(guards, key, isEnabled));
+}
+
+/**
+ * Saves a guard of the project. `originalName` is the name of the guard that the guard window edited, or null for a new guard.
+ * The old lists `block` and `confirm` of the file become guards of the key `projectGuards`. Returns false when the file could
+ * not be written.
+ */
+export function saveProjectGuard(workspaceId: string, guard: ProjectGuard, originalName: string | null): Promise<boolean> {
+  return changeGuards(workspaceId, (guards) => withProjectGuard(guards, guard, originalName));
+}
+
+/** Removes the guard of the project that has this name. Returns false when the file could not be written. */
+export function removeProjectGuard(workspaceId: string, name: string): Promise<boolean> {
+  return changeGuards(workspaceId, (guards) => withoutProjectGuard(guards, name));
 }
 
 export function launcherPane(workspaceId: string, launcher: Launcher) {
