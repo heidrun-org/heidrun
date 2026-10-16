@@ -1,7 +1,7 @@
 # Rule: every support for GitHub is also a support for GitLab
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](glossary/index.md)
@@ -33,6 +33,7 @@ Each row gives the `gh` command and the matching `glab` command. In the `glab` o
 | Create an issue | `gh issue create --title "<title>" --body "<body>"` | `glab issue create --title "<title>" --description "<body>"` |
 | Attach a file when you create an issue | `gh issue create --title "<title>" --body "<body>" --attach './screenshot.png#Alt text'` | `glab issue create --title "<title>" --description "<body>" --attach './screenshot.png'` |
 | Attach a file to an existing issue | `gh issue edit <number> --attach './screenshot.png#Alt text'` | `glab issue update <number> --attach './screenshot.png'` |
+| Comment on an issue | `gh issue comment <number> --body "<comment>"` | `glab issue note <number> --message "<comment>"` |
 | Close an issue | `gh issue close <number>` | `glab issue close <number>` |
 | Create a pull request or a merge request | `gh pr create --title "<title>" --body "<body>"` | `glab mr create --title "<title>" --description "<body>"` |
 | Merge a pull request or a merge request | `gh pr merge <number>` | `glab mr merge <number>` |
