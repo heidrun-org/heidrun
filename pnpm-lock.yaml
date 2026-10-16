@@ -244,6 +244,8 @@ importers:
 
   packages/data_layers/data_layer_user_activity: {}
 
+  packages/data_layers/heidrun_data: {}
+
   packages/dev_tools/agents_rules_checker:
     devDependencies:
       '@types/node':
