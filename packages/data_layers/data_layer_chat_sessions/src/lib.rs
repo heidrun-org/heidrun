@@ -30,7 +30,7 @@ pub use coding_agents::session_files::{
 };
 pub use coding_agents::session_reader::{format_date, parse_date, read_chat_sessions};
 pub use coding_agents::tokens::{TokenCounts, TokenScan, TokensByHour, TokensByModel, UNDATED_HOUR, UNKNOWN_MODEL};
-pub use model::schemas::validate_chat_session_value;
+pub use model::schemas::{validate_chat_session_value, CHAT_SESSION_SCHEMA};
 pub use model::types::{
     ChatSession, ChatSessionRecord, ChatSessionRelations, ChatSessionTable, CodingAgent, ModelTokens, QueryRow,
     SynchronizationMode, SynchronizationReport,

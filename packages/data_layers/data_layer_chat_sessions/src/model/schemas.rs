@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::sync::OnceLock;
 
 /// The text of the file `schemas/chat_session.schema.json`.
-const CHAT_SESSION_SCHEMA: &str = include_str!("../../schemas/chat_session.schema.json");
+pub const CHAT_SESSION_SCHEMA: &str = include_str!("../../schemas/chat_session.schema.json");
 
 /// The compiled check of a chat session. It is built at the first use.
 static CHAT_SESSION_VALIDATOR: OnceLock<Validator> = OnceLock::new();

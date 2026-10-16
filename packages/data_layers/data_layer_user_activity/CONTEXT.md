@@ -4,7 +4,7 @@
 A Rust library and a command line tool that read the user activity records of the developer from the file `user_activity.jsonl`, and write each one in the table `user_activity_records` of a SQLite file. It is the User activity source of the data layer of Heidrun. The name `data_layer_user_activity` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `UserActivityDatabase`, `UserActivityFileReader`, `synchronize`, `to_table`, `to_json`, `default_user_activity_file_path`, `default_database_path`, `validate_user_activity_record_value`, and the data types.
+- `src/lib.rs`: the only public interface of the library. It exports `UserActivityDatabase`, `UserActivityFileReader`, `synchronize`, `to_table`, `to_json`, `default_user_activity_file_path`, `default_database_path`, `validate_user_activity_record_value`, `USER_ACTIVITY_RECORD_SCHEMA` (the text of the JSON schema), and the data types.
 - `src/main.rs`: the command line, and the executable. The module `src/command_line.rs` reads its arguments.
 - `src/user_activity_file/`: the reading of the file — see its own CONTEXT.md.
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.

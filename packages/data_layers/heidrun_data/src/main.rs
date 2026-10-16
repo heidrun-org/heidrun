@@ -1,11 +1,11 @@
-//! The command line `heidrun_data`: the commands sources, update, initialize, and query.
+//! The command line `heidrun_data`: the commands sources, update, initialize, schema, and query.
 
 mod command_line;
 
-use command_line::{find_format, parse, CommonOptions, Parsed, QueryRequest, SynchronizationRequest};
+use command_line::{find_format, parse, CommonOptions, Parsed, QueryRequest, SchemaRequest, SynchronizationRequest};
 use heidrun_data::{
-    add_limit, default_database_path, format_error, synchronize, write_rows, Format, HeidrunDatabase, QueryRow,
-    SynchronizationOptions,
+    add_limit, data_schema_text, default_database_path, format_error, read_catalog, synchronize, write_rows, Format,
+    HeidrunDatabase, QueryRow, SynchronizationOptions,
 };
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
@@ -98,6 +98,25 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
     Ok(is_success)
 }
 
+/// Prints the shape of every table, or the JSON schema of one table.
+fn run_schema(request: &SchemaRequest) -> Result<(), String> {
+    if let Some(table) = &request.table {
+        print!("{}", data_schema_text(table)?);
+        return Ok(());
+    }
+    let format = format_of(&request.common);
+    let catalog = read_catalog()?;
+    match format {
+        Format::Sql => {
+            let statements: Vec<&str> = catalog.iter().map(|shape| shape.create_statement.as_str()).collect();
+            println!("{}", statements.join("\n\n"));
+        }
+        Format::Table => print_rows(&catalog.iter().map(|shape| shape.to_table_row()).collect::<Vec<_>>(), format),
+        _ => print_rows(&catalog.iter().map(|shape| shape.to_row()).collect::<Vec<_>>(), format),
+    }
+    Ok(())
+}
+
 /// Runs one read-only SQL statement, and prints the rows.
 fn run_query(request: &QueryRequest) -> Result<(), String> {
     let format = format_of(&request.common);
@@ -131,6 +150,7 @@ fn run(parsed: Parsed) -> Result<bool, String> {
         }
         Parsed::Sources(common) => run_sources(&common).map(|()| true),
         Parsed::Synchronize(request) => run_synchronization(&request),
+        Parsed::Schema(request) => run_schema(&request).map(|()| true),
         Parsed::Query(request) => run_query(&request).map(|()| true),
     }
 }

@@ -416,3 +416,59 @@ fn the_default_format_is_jsonl_when_the_standard_output_is_not_a_terminal() {
     let result = fixture.run(&["sources"]);
     assert_eq!(result.json_lines().len(), 4);
 }
+
+#[test]
+fn schema_with_no_table_prints_every_table_of_the_file_with_no_database_file() {
+    let fixture = Fixture::new("schema_all");
+    let result = fixture.run(&["schema", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    let lines = result.json_lines();
+    let tables: Vec<&str> = lines.iter().map(|line| line["table"].as_str().unwrap()).collect();
+    assert_eq!(
+        tables,
+        [
+            "commits",
+            "issues",
+            "pull_requests",
+            "chat_sessions",
+            "chat_session_folders",
+            "chat_session_issues",
+            "chat_session_pull_requests",
+            "chat_session_files",
+            "user_activity_records",
+        ]
+    );
+    assert_eq!(lines[0]["primaryKey"], json!(["repository", "hash"]));
+    assert_eq!(lines[0]["dataSchema"], json!("commit.schema.json"));
+    assert_eq!(lines[5]["joins"][1]["table"], json!("issues"));
+    assert!(!fixture.database_path.exists());
+}
+
+#[test]
+fn schema_of_a_table_prints_bytes_equal_to_the_json_schema_file_of_its_package() {
+    let fixture = Fixture::new("schema_table");
+    let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+    for (table, file) in [
+        ("chat_sessions", "data_layer_chat_sessions/schemas/chat_session.schema.json"),
+        ("commits", "data_layer_source_control/schemas/commit.schema.json"),
+        ("issues", "data_layer_code_hosting/schemas/issue.schema.json"),
+        ("pull_requests", "data_layer_code_hosting/schemas/pull_request.schema.json"),
+        ("user_activity_records", "data_layer_user_activity/schemas/user_activity_record.schema.json"),
+    ] {
+        let result = fixture.run(&["schema", table, "--format", "jsonl"]);
+        assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+        assert_eq!(result.stdout, std::fs::read_to_string(folder.join(file)).unwrap(), "{table}");
+    }
+    let result = fixture.run(&["schema", "chat_session_files", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(result.stderr.contains("link table"), "{}", result.stderr);
+}
+
+#[test]
+fn schema_with_the_format_sql_prints_the_create_table_statements() {
+    let fixture = Fixture::new("schema_sql");
+    let result = fixture.run(&["schema", "--format", "sql"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert!(result.stdout.starts_with("CREATE TABLE commits (\n    repository TEXT NOT NULL,"), "{}", result.stdout);
+    assert_eq!(result.stdout.matches("CREATE TABLE").count(), 9);
+}

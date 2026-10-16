@@ -4,7 +4,7 @@
 A Rust library and a command line tool that read every issue and every pull request of a GitHub repository, and write the facts of each one in two tables of a SQLite file. It is the Code hosting source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_code_hosting` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `CodeHostingDatabase`, `GithubReader`, `GraphqlRunner`, `GhGraphqlRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `default_database_path`, `validate_issue_value`, `validate_pull_request_value`, and the data types.
+- `src/lib.rs`: the only public interface of the library. It exports `CodeHostingDatabase`, `GithubReader`, `GraphqlRunner`, `GhGraphqlRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `default_database_path`, `validate_issue_value`, `validate_pull_request_value`, `ISSUE_SCHEMA` and `PULL_REQUEST_SCHEMA` (the texts of the JSON schemas), and the data types.
 - `src/main.rs`: the command line, and the executable `data_layer_code_hosting`. The module `src/command_line.rs` reads its arguments.
 - `src/github/`: the reading of the issues and of the pull requests of GitHub, through a `GraphqlRunner` — see its own CONTEXT.md.
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.

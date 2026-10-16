@@ -19,7 +19,7 @@ mod test_samples;
 
 pub use git::git_reader::{ignore_log, GitReader};
 pub use git::git_runner::{find_repository, parse_repository, GitCommandRunner, GitRunner};
-pub use model::schemas::validate_commit_value;
+pub use model::schemas::{validate_commit_value, COMMIT_SCHEMA};
 pub use model::types::{Commit, QueryRow, SynchronizationMode, SynchronizationReport};
 pub use storage::database::SourceControlDatabase;
 pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};

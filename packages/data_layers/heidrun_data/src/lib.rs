@@ -1,10 +1,12 @@
 //! `heidrun_data`: one command line that gives a coding agent the data of the four data layers of Heidrun. It calls the
 //! libraries of the four data layer packages, and never their executables.
 //!
-//! The library has five parts:
+//! The library has six parts:
 //! - `Source` names the four sources, their tables, and the fixed order in which they are read.
 //! - `synchronize` runs the mode initialize or update of each source that is asked for. A source that fails does not stop
 //!   the others.
+//! - `read_catalog` and `data_schema_text` give the shape of the tables: their columns, their keys, their joins, and the
+//!   JSON schema of their column `data`.
 //! - `HeidrunDatabase` is the SQLite file, open read only. It runs one query, and counts the rows of each source.
 //! - `add_limit` adds a `LIMIT` to a statement that has none.
 //! - `Format` and `write_rows` write rows as JSON lines, as a JSON list, or as a text table.
@@ -14,13 +16,15 @@
 mod database;
 mod output;
 mod query_limit;
+mod schema;
 mod sources;
 mod synchronization;
 
 pub use database::{HeidrunDatabase, SourceSummary};
 pub use output::{format_error, write_rows, Format, QueryRow};
 pub use query_limit::{add_limit, DEFAULT_LIMIT};
-pub use sources::Source;
+pub use schema::{data_schema_text, read_catalog, Column, TableShape};
+pub use sources::{all_tables, find_table, DataSchema, Join, Source, Table};
 pub use synchronization::{synchronize, SourceReport, SynchronizationMode, SynchronizationOptions};
 
 use std::path::PathBuf;

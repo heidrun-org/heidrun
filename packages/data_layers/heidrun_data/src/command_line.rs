@@ -19,13 +19,17 @@ Commands:
   update [<source>...]       Read what is new in every source, or in the sources given.
   initialize [<source>...]   Read every source since the beginning, or the sources
                              given.
+  schema [<table>]           Print the tables, their columns, their primary keys, the
+                             joins of the link tables, and the JSON schema of the
+                             column "data". With a table, print that JSON schema.
   query <sql>                Run one read-only SQL statement on the SQLite file. The
                              column "data" holds JSON: use json_extract(data, '$.field').
 
 Options of every command:
   --database <path>          The SQLite file.
                              (default: "~/.config/heidrun/data_layer.sqlite")
-  --format <name>            The format of the output: jsonl, json, or table.
+  --format <name>            The format of the output: jsonl, json, or table, and
+                             sql for the command schema.
                              (default: jsonl when the standard output is not a
                              terminal, table when it is)
   --json                     The same as --format json.
@@ -49,6 +53,8 @@ Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data update --format jsonl
   $ heidrun_data update chat_sessions code_hosting --format jsonl
+  $ heidrun_data schema --format jsonl
+  $ heidrun_data schema chat_sessions
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
 "#;
 
@@ -73,6 +79,36 @@ Options:
 Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data sources --format table
+"#;
+
+/// The text of `heidrun_data schema --help`.
+pub const SCHEMA_HELP: &str = r#"Usage: heidrun_data schema [<table>] [options]
+
+With no table, prints one row per table of the SQLite file: its source, its columns,
+its primary key, the name of the JSON schema of its column "data", and, for a link
+table, the tables that it joins and the columns that join them. Read it before you
+write SQL, so that you never guess a column or a join.
+
+With a table, prints the JSON schema of the column "data" of that table, as the data
+layer package holds it: the fields, their types, and the description of each field.
+The output is the text of the JSON schema file, whatever the format.
+
+The tables and the columns come from the four data layer packages, so the command
+needs no SQLite file.
+
+Options:
+  --format <name>            jsonl, json, table, or sql. With sql, prints the CREATE
+                             TABLE statements.
+  --json                     The same as --format json.
+  --database <path>          Not used: the shape comes from the packages.
+  --verbose                  Not used.
+  -h, --help                 Print this help.
+
+Examples:
+  $ heidrun_data schema --format jsonl
+  $ heidrun_data schema --format sql
+  $ heidrun_data schema commits
+  $ heidrun_data schema chat_sessions
 "#;
 
 /// The text of `heidrun_data update --help` and of `heidrun_data initialize --help`.
@@ -168,8 +204,19 @@ pub enum Parsed {
     Sources(CommonOptions),
     /// Run the mode initialize or the mode update.
     Synchronize(SynchronizationRequest),
+    /// Print the shape of the tables, or the JSON schema of one table.
+    Schema(SchemaRequest),
     /// Run one read-only SQL statement.
     Query(QueryRequest),
+}
+
+/// The request to print the shape of the tables.
+#[derive(Debug, PartialEq)]
+pub struct SchemaRequest {
+    /// The options of every command.
+    pub common: CommonOptions,
+    /// The table whose JSON schema to print, or `None` to print every table.
+    pub table: Option<String>,
 }
 
 /// The request to run the mode initialize or the mode update.
@@ -210,7 +257,7 @@ fn value_of<'a>(name: &str, inline: Option<String>, rest: &mut impl Iterator<Ite
 
 /// The format of a name, or an error that lists the three names.
 fn format_of(name: &str) -> Result<Format, String> {
-    Format::from_name(name).ok_or_else(|| format!("The format {name} is not known: use jsonl, json, or table."))
+    Format::from_name(name).ok_or_else(|| format!("The format {name} is not known: use jsonl, json, or table, or sql for the command schema."))
 }
 
 /// The format that the arguments ask for, read without the other checks, so that an error of the arguments is written in
@@ -291,23 +338,27 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if is_help {
             return Ok(Parsed::Help(HELP));
         }
-        return Err("A command is needed: sources, update, initialize, or query. Run with --help.".to_string());
+        return Err("A command is needed: sources, update, initialize, schema, or query. Run with --help.".to_string());
     };
     let mode = match command.as_str() {
         "update" => Some(SynchronizationMode::Update),
         "initialize" => Some(SynchronizationMode::Initialize),
-        "query" | "sources" => None,
+        "query" | "sources" | "schema" => None,
         _ if is_help => return Ok(Parsed::Help(HELP)),
         _ => {
-            return Err(format!("The command {command} is not known: use sources, update, initialize, or query."));
+            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, or query."));
         }
     };
     if is_help {
         return Ok(Parsed::Help(match command.as_str() {
             "query" => QUERY_HELP,
             "sources" => SOURCES_HELP,
+            "schema" => SCHEMA_HELP,
             _ => SYNCHRONIZATION_HELP,
         }));
+    }
+    if common.format == Some(Format::Sql) && command != "schema" {
+        return Err(format!("The format sql is for the command schema only, and not for {command}."));
     }
     let synchronization_options = [("--repository", repository.is_some()), ("--folder", folder.is_some()), ("--file", file.is_some())];
     if let Some(mode) = mode {
@@ -326,6 +377,19 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     }
     if let Some((option, _)) = synchronization_options.iter().find(|(_, is_given)| *is_given) {
         return Err(format!("The option {option} is for update and initialize, and not for {command}."));
+    }
+    if command == "schema" {
+        if limit.is_some() {
+            return Err("The option --limit is for the command query only, and not for schema.".to_string());
+        }
+        let table = positionals.next();
+        if let Some(extra) = positionals.next() {
+            return Err(format!("The command schema takes at most one table, and got more: {extra}."));
+        }
+        if table.is_some() && common.format == Some(Format::Sql) {
+            return Err("The format sql prints every table: give no table with it.".to_string());
+        }
+        return Ok(Parsed::Schema(SchemaRequest { common, table }));
     }
     if command == "sources" {
         if limit.is_some() {
@@ -425,6 +489,25 @@ mod tests {
     }
 
     #[test]
+    fn reads_schema_with_or_without_a_table_and_the_format_sql_for_schema_only() {
+        assert_eq!(
+            parse(&arguments(&["schema", "--format", "sql"])),
+            Ok(Parsed::Schema(SchemaRequest {
+                common: CommonOptions { database: None, format: Some(Format::Sql), verbose: false },
+                table: None,
+            }))
+        );
+        assert_eq!(
+            parse(&arguments(&["schema", "commits"])),
+            Ok(Parsed::Schema(SchemaRequest { common: CommonOptions::default(), table: Some("commits".into()) }))
+        );
+        assert!(parse(&arguments(&["query", "SELECT 1", "--format", "sql"])).unwrap_err().contains("schema only"));
+        assert!(parse(&arguments(&["schema", "commits", "--format", "sql"])).unwrap_err().contains("give no table"));
+        assert!(parse(&arguments(&["schema", "commits", "issues"])).unwrap_err().contains("at most one table"));
+        assert!(parse(&arguments(&["schema", "--limit", "3"])).unwrap_err().contains("--limit"));
+    }
+
+    #[test]
     fn reads_the_help_of_the_program_and_of_each_command() {
         assert_eq!(parse(&arguments(&["--help"])), Ok(Parsed::Help(HELP)));
         assert_eq!(parse(&arguments(&["-h", "unknown"])), Ok(Parsed::Help(HELP)));
@@ -432,6 +515,7 @@ mod tests {
         assert_eq!(parse(&arguments(&["initialize", "-h"])), Ok(Parsed::Help(SYNCHRONIZATION_HELP)));
         assert_eq!(parse(&arguments(&["query", "--help"])), Ok(Parsed::Help(QUERY_HELP)));
         assert_eq!(parse(&arguments(&["sources", "--help"])), Ok(Parsed::Help(SOURCES_HELP)));
+        assert_eq!(parse(&arguments(&["schema", "--help"])), Ok(Parsed::Help(SCHEMA_HELP)));
     }
 
     #[test]
