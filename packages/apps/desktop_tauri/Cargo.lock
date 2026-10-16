@@ -1820,6 +1820,7 @@ dependencies = [
  "data_layer_user_activity",
  "dirs 6.0.0",
  "dotenvy",
+ "heidrun_data",
  "mobile_server",
  "portable-pty",
  "raw_coding_agent_cli",
@@ -1836,6 +1837,19 @@ dependencies = [
  "tokio",
  "trash",
  "zstd",
+]
+
+[[package]]
+name = "heidrun_data"
+version = "0.2.7"
+dependencies = [
+ "data_layer_chat_sessions",
+ "data_layer_code_hosting",
+ "data_layer_source_control",
+ "data_layer_user_activity",
+ "dirs 6.0.0",
+ "rusqlite",
+ "serde_json",
 ]
 
 [[package]]

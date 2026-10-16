@@ -14,6 +14,8 @@ pub enum Format {
     Json,
     /// A text table, for a person. The default when the standard output is a terminal.
     Table,
+    /// The `CREATE TABLE` statements. For the command schema only.
+    Sql,
 }
 
 impl Format {
@@ -23,6 +25,7 @@ impl Format {
             "jsonl" => Some(Format::Jsonl),
             "json" => Some(Format::Json),
             "table" => Some(Format::Table),
+            "sql" => Some(Format::Sql),
             _ => None,
         }
     }
@@ -39,7 +42,7 @@ impl Format {
 
     /// True for the two JSON formats.
     pub fn is_json(self) -> bool {
-        self != Format::Table
+        matches!(self, Format::Jsonl | Format::Json)
     }
 }
 
@@ -53,7 +56,7 @@ pub fn write_rows(rows: &[QueryRow], format: Format) -> String {
             .collect::<Vec<_>>()
             .join("\n"),
         Format::Json => serde_json::to_string_pretty(rows).expect("A row always becomes JSON"),
-        Format::Table => data_layer_source_control::to_table(rows),
+        Format::Table | Format::Sql => data_layer_source_control::to_table(rows),
     }
 }
 
@@ -114,6 +117,7 @@ mod tests {
         assert_eq!(Format::from_name("jsonl"), Some(Format::Jsonl));
         assert_eq!(Format::from_name("json"), Some(Format::Json));
         assert_eq!(Format::from_name("table"), Some(Format::Table));
+        assert_eq!(Format::from_name("sql"), Some(Format::Sql));
         assert_eq!(Format::from_name("csv"), None);
         assert_eq!(Format::default_for(true), Format::Table);
         assert_eq!(Format::default_for(false), Format::Jsonl);

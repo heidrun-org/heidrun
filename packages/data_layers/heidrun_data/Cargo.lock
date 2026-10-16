@@ -360,6 +360,7 @@ dependencies = [
  "dirs",
  "rusqlite",
  "serde_json",
+ "zstd",
 ]
 
 [[package]]

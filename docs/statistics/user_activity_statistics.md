@@ -86,7 +86,7 @@ The [file `README.md` of the package](../../packages/data_layers/data_layer_user
 | --- | --- |
 | The data layer | `packages/data_layers/data_layer_user_activity` |
 | The commands `user_activity_append`, `user_activity_read`, and `user_activity_records_in_range` | `packages/apps/desktop_tauri/src/user_activity.rs` |
-| The lock of the SQLite file | `packages/apps/desktop_tauri/src/data_layer_lock.rs` |
+| The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |
 | The window and the chart | `packages/apps/web_frontend/src/components/StatisticsModal.vue` and `UserActivityHistogram.vue` |
 | The calculation of the slots | `packages/apps/web_frontend/src/lib/user_activity_slots.ts` |
 

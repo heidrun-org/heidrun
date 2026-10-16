@@ -4,7 +4,7 @@
 A Rust library and a command line tool that read every commit of a Git repository, merges included, and write the facts of each one in the table `commits` of a SQLite file. It is the Source control source of the data layer of Heidrun. The desktop application can use the library. The name `data_layer_source_control` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `SourceControlDatabase`, `GitReader`, `GitRunner`, `GitCommandRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `parse_repository`, `default_database_path`, `validate_commit_value`, and the data types.
+- `src/lib.rs`: the only public interface of the library. It exports `SourceControlDatabase`, `GitReader`, `GitRunner`, `GitCommandRunner`, `synchronize`, `to_table`, `to_json`, `find_repository`, `parse_repository`, `default_database_path`, `validate_commit_value`, `COMMIT_SCHEMA` (the text of the JSON schema), and the data types.
 - `src/main.rs`: the command line, and the executable `data_layer_source_control`. The module `src/command_line.rs` reads its arguments.
 - `src/git/`: the reading of the commits, through a `GitRunner` — see its own CONTEXT.md.
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.

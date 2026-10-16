@@ -19,7 +19,7 @@ mod test_samples;
 
 pub use github::github_reader::{ignore_log, GithubReader, ISSUES_QUERY, PULL_REQUESTS_QUERY};
 pub use github::graphql_runner::{find_repository, GhGraphqlRunner, GraphqlRunner};
-pub use model::schemas::{validate_issue_value, validate_pull_request_value};
+pub use model::schemas::{validate_issue_value, validate_pull_request_value, ISSUE_SCHEMA, PULL_REQUEST_SCHEMA};
 pub use model::types::{
     CodeHostingTable, Issue, IssueState, IssueStateReason, PullRequest, PullRequestState, QueryRow, SynchronizationMode,
     SynchronizationReport,

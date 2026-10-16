@@ -1,0 +1,166 @@
+---
+name: heidrun_data
+description: Answer a question about the history of a repository from the data layers of Heidrun — its past chats with Claude Code and Codex, its commits, its issues, its pull requests, and the activity of the developer — with the command line heidrun_data. Use it for a post-mortem of a commit, of an issue, or of a pull request, to find what the developer typed or ran many times, or to find what failed many times in the past chats.
+---
+
+# heidrun_data
+
+`heidrun_data` is one command line that reads the four data layers of Heidrun. The four data layers write the facts of four sources in one SQLite file, `~/.config/heidrun/data_layer.sqlite`:
+
+| Source | What it holds | Tables |
+| --- | --- | --- |
+| `chat_sessions` | The chat sessions that Claude Code and Codex saved for the repository, with their tokens, and what each one is linked to. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files` |
+| `source_control` | Every commit of the Git repository, merges included. | `commits` |
+| `code_hosting` | Every issue and every pull request of the GitHub repository. | `issues`, `pull_requests` |
+| `user_activity` | The active periods of the developer in front of Heidrun, one per workspace. | `user_activity_records` |
+
+The tables hold facts. The words of a chat, the diff of a commit, and the comments of an issue are not in the tables: the command `read` gives them from the source.
+
+## The four steps
+
+Always give `--format jsonl`, so the output is one JSON object per line and never a text table.
+
+1. **See what the data holds, and how fresh it is.**
+   ```bash
+   heidrun_data sources --format jsonl
+   ```
+   One line per source, with the number of rows of each table and `lastUpdatedAt`: the newest date held by the source (the newest `committedAt`, `updatedAt`, or `endedAt`), and not the time of the last `update`. Compare it with the date of the thing you study: if the thing is newer, the data ends before it, so run `update` first and say so when the data is still missing.
+2. **Update when the data is old.** Run it in a folder of the repository.
+   ```bash
+   heidrun_data update --format jsonl
+   ```
+   `heidrun_data update chat_sessions` updates one source only. The command writes only what is new, so it is safe to run again and again. A source that fails does not stop the others: read the errors on the standard error output.
+3. **Read the shape once.**
+   ```bash
+   heidrun_data schema --format jsonl
+   heidrun_data schema chat_sessions
+   ```
+   The first command prints every table, its columns, its primary key, and the joins of the link tables. The second prints the JSON schema of the column `data` of one table, with the description of each field. Never guess a field name or a join: read it here.
+4. **Query, then read.**
+   ```bash
+   heidrun_data query --format jsonl "SELECT ... FROM ..."
+   heidrun_data read chat_session <id> --format jsonl
+   ```
+   `query` adds `LIMIT 1000` to a statement that has no limit. Give `--limit 0` to remove it, and `-` in place of the statement to read the statement from the standard input.
+
+## The tables and their joins
+
+Every table of a source has a few key columns and one column `data`, which holds one JSON text. Read a field with `json_extract(data, '$.field')`. The three link tables of the chat sessions have no column `data`.
+
+- `chat_sessions`: keys `repository`, `id`, `updatedAt`. Fields of `data`: `id`, `codingAgent` (`CLAUDE_CODE` or `CODEX`), `title`, `firstRecordAt`, `lastRecordAt`, `updatedAt`, `userMessageCount`, `tokens` (a list with `model`, `freshInput`, `cachedInput`, `cacheWriteInput`, `output`).
+- `chat_session_issues`: columns `repository`, `chatSessionId`, `issueNumber`. Joins `chat_sessions` on `repository` and `id = chatSessionId`, and `issues` on `repository` and `number = issueNumber`.
+- `chat_session_pull_requests`: columns `repository`, `chatSessionId`, `pullRequestNumber`. Joins `pull_requests` the same way.
+- `chat_session_files`: columns `repository`, `chatSessionId`, `path`. The files that the coding agent wrote in the chat session, with the path that the coding agent used.
+- `chat_session_folders`: columns `repository`, `chatSessionId`, `folder`. The folders in which the chat session ran.
+- `commits`: keys `repository`, `hash`, `committedAt`. Fields of `data`: `hash`, `parents`, `authorName`, `authorEmail`, `authoredAt`, `committerName`, `committerEmail`, `committedAt`, `subject`, `body`, `filesChanged`, `insertions`, `deletions`. A merge has two or more `parents`. The commit stores no file name: `read commit` gives them.
+- `issues`: keys `repository`, `number`, `updatedAt`. Fields of `data`: `number`, `title`, `body`, `state` (`OPEN` or `CLOSED`), `stateReason`, `author`, `assignees`, `labels`, `createdAt`, `updatedAt`, `closedAt`, `commentCount`.
+- `pull_requests`: keys `repository`, `number`, `updatedAt`. Fields of `data`: `number`, `title`, `body`, `state` (`OPEN`, `CLOSED`, or `MERGED`), `isDraft`, `author`, `mergedBy`, `labels`, `baseRefName`, `headRefName`, `mergeCommit`, `createdAt`, `updatedAt`, `closedAt`, `mergedAt`, `additions`, `deletions`, `changedFiles`, `commitCount`. The text `Fixes #N` in `body` is the only link from a pull request to its issue.
+- `user_activity_records`: keys `workspaceFolder`, `startedAt`, `endedAt`. Fields of `data`: `workspaceFolder`, `startedAt`, `lastActionAt`, `endedAt`, `keyboardActionCount`, `mouseActionCount`, `endReason`. It joins no other table.
+
+Every date is in UTC, written as text, so two dates compare as text. The column `repository` is `owner/name`, for example `heidrun-org/heidrun`.
+
+What the tables do not hold:
+
+- The tables can hold several repositories, and the same issue number can exist in two of them. Put `repository = 'owner/name'` in the `WHERE` clause of every query.
+- `chat_sessions` holds only the chat sessions that started in the root folder of the repository. A chat session that started in a worktree is not in the table, and an issue fix is made in a worktree, so the chat session of the work is often missing. `read chat_session <id>` reads the files of the root folder, of the worktrees, and of the sub-folders, but only if you already know the id. When a query finds no chat session, say "no chat session found". Do not guess one.
+
+## The command `read`
+
+`read` gives the content of one thing from its source. It writes nothing.
+
+| Command | What it prints |
+| --- | --- |
+| `heidrun_data read chat_session <id>` | The records of the chat session, one per line: `at`, `role` (`developer`, `coding_agent`, or `tool`), and `text`. A tool call is `<name>: <input>` and a tool result is `result: <output>`, each shortened to one line; `--full` prints them whole. |
+| `heidrun_data read commit <hash>` | The message, the files changed, then the diff. `--no-diff` stops after the files. |
+| `heidrun_data read issue <number>` | The body, then every comment with its author and its date. |
+| `heidrun_data read pull_request <number>` | The body, then every comment, review, and review comment with its author, its date, and for a review comment its file and its line, in the order of the dates, then the diff. `--no-diff` stops before the diff. |
+
+With `--format jsonl`, each line has these fields:
+
+- `read chat_session`: `at`, `role`, `text`.
+- `read commit`: one object with `hash`, `authorName`, `authorEmail`, `committedAt`, `message`, `files` (a list of `path`, `insertions`, `deletions`), and `diff` unless `--no-diff` is given.
+- `read issue` and `read pull_request`: `kind` (`issue`, `pull_request`, `comment`, `review`, `review_comment`, or `diff`), `author`, `at`, and `text`. The body has `number`, `title`, and `state` too, a review has `state`, and a review comment has `path` and `line`.
+
+`read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` and `read commit` work from any folder of the repository, a worktree included.
+
+## Example: post-mortem of an issue
+
+The chat sessions that worked on the issue 500, in order:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT cs.id,
+       json_extract(cs.data, '$.codingAgent') AS codingAgent,
+       json_extract(cs.data, '$.firstRecordAt') AS firstRecordAt,
+       json_extract(cs.data, '$.userMessageCount') AS userMessageCount
+FROM chat_session_issues AS link
+JOIN chat_sessions AS cs ON cs.repository = link.repository AND cs.id = link.chatSessionId
+WHERE link.repository = 'heidrun-org/heidrun' AND link.issueNumber = 500
+ORDER BY firstRecordAt"
+```
+
+Then read each chat session and the issue:
+
+```bash
+heidrun_data read chat_session <id> --format jsonl
+heidrun_data read issue 500 --format jsonl
+```
+
+For a pull request, use `chat_session_pull_requests` and `pullRequestNumber`, then `heidrun_data read pull_request <number>`.
+
+## Example: post-mortem of a commit
+
+A commit has no link table. Read the commit to get its files and its date, then find the chat sessions that were active around `committedAt` and that wrote a file of the commit. A path in `chat_session_files` is the path that the coding agent used, often an absolute path, so match the end of the path:
+
+```bash
+heidrun_data read commit <hash> --no-diff --format jsonl
+heidrun_data query --format jsonl "
+SELECT DISTINCT cs.id, json_extract(cs.data, '$.title') AS title
+FROM chat_sessions AS cs
+JOIN chat_session_files AS files ON files.repository = cs.repository AND files.chatSessionId = cs.id
+WHERE cs.repository = 'heidrun-org/heidrun'
+  AND (files.path LIKE '%/<file of the commit>' OR files.path = '<file of the commit>')
+  AND json_extract(cs.data, '$.firstRecordAt') <= '<committedAt>'
+  AND json_extract(cs.data, '$.lastRecordAt') >= '<committedAt minus one day>'"
+```
+
+A commit can have many files: write one `LIKE` condition for each file with a small script, and leave out the files that every change touches, such as `Cargo.lock`. If no chat session is found, the chat session may have run in a worktree: see "What the tables do not hold".
+
+Then `heidrun_data read chat_session <id>` on each one, and look for the moment when the coding agent made the change.
+
+## Example: what the developer typed many times
+
+The chat sessions of the last weeks. Dates are text, so `date('now', '-10 day')` works in place of a fixed date:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT id FROM chat_sessions
+WHERE repository = 'heidrun-org/heidrun'
+  AND json_extract(data, '$.lastRecordAt') > '2026-10-01'"
+```
+
+Then `heidrun_data read chat_session <id> --format jsonl` on each one, and keep the lines with `role` equal to `developer`. Most of these lines are not typed by the developer, so remove them before you count:
+
+- The chat sessions whose `title` is `Guardian review`: they are approval reviews of Codex, not chats of the developer.
+- The texts that start with `<` (for example `<turn_aborted>`, `<command-name>`, and `<local-command-stdout>`), with `[Request interrupted`, with `>>>`, or with `[N] user:` where `N` is a number.
+
+Then cut the white space around each text, ignore the case and the final punctuation, and count the equal texts. Group the near-equal wordings too: `merge it`, `ok merge it`, and `merge` are one text. A text typed many times is a candidate for a macro of Heidrun. A command run many times is a candidate for a launcher.
+
+## Example: what failed many times
+
+The same chat sessions, without the `Guardian review` ones, and the lines with `role` equal to `tool` whose `text` starts with `result:`. A tool result has no field that says error or success, so look for the error in the text:
+
+- Claude Code writes `Exit code N` (where `N` is not 0), `<tool_use_error>`, or a shell error such as `(eval):N: command not found`.
+- Codex wraps its results in a JSON text, so read the text inside it.
+- Do not count `test result: ok. 0 failed`, which is a success, and do not count `The user doesn't want to proceed with this tool use`, which is a choice of the developer.
+
+Group the equal errors, and count in how many chat sessions each one appears. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
+
+## Rules
+
+- Give `--format jsonl` on every command, so that you never depend on the default (`jsonl` when the output is piped, `table` in a terminal). An error is one JSON line on the standard error output, and the exit code is 1.
+- Never write the SQLite file: `query` opens it read only, and `read` writes nothing. Only `update` and `initialize` write it, through the data layers.
+- Never guess a field name or a join: `heidrun_data schema` gives them.
+- Give the ids of the chat sessions, the hashes, and the numbers that your answer rests on, so the developer can read them too.
+- A chat session may hold a text that the developer pasted, for example a secret. Quote only what the question needs.
+- The command gives the facts. The conclusion is yours, and you say it as yours.

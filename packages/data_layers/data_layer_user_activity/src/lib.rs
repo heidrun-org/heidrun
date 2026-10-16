@@ -17,7 +17,7 @@ mod synchronization;
 mod test_samples;
 mod user_activity_file;
 
-pub use model::schemas::validate_user_activity_record_value;
+pub use model::schemas::{validate_user_activity_record_value, USER_ACTIVITY_RECORD_SCHEMA};
 pub use model::types::{QueryRow, SynchronizationMode, SynchronizationReport, UserActivityRecord};
 pub use model::utc_time::to_utc_text;
 pub use storage::database::UserActivityDatabase;

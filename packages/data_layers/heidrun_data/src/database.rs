@@ -64,7 +64,7 @@ impl SourceSummary {
     fn empty(source: Source) -> SourceSummary {
         SourceSummary {
             source,
-            tables: source.tables().iter().map(|(table, _)| (table.to_string(), 0)).collect(),
+            tables: source.tables().iter().map(|table| (table.name.to_string(), 0)).collect(),
             last_updated_at: None,
         }
     }
@@ -128,7 +128,9 @@ impl HeidrunDatabase {
     /// The summary of one source.
     fn summarize(&self, source: Source) -> Result<SourceSummary, String> {
         let mut summary = SourceSummary::empty(source);
-        for (index, (table, date_column)) in source.tables().iter().enumerate() {
+        for (index, table) in source.tables().iter().enumerate() {
+            let date_column = table.date_column;
+            let table = table.name;
             if !self.has_table(table)? {
                 continue;
             }

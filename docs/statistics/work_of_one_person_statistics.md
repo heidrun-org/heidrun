@@ -73,7 +73,7 @@ A chat that uses a model with no known price has no cost in every hour. A line o
 | The data layers | `packages/data_layers/data_layer_source_control`, `data_layer_code_hosting`, and `data_layer_chat_sessions` |
 | The command `person_work_in_range` | `packages/apps/desktop_tauri/src/person_work.rs` |
 | The command `ai_cost_in_range` | `packages/apps/desktop_tauri/src/ai_cost.rs` |
-| The lock of the SQLite file | `packages/apps/desktop_tauri/src/data_layer_lock.rs` |
+| The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |
 | The tab and the chart | `packages/apps/web_frontend/src/components/PersonWorkTab.vue` and `StackedBarChart.vue` |
 | The calculations | `packages/apps/web_frontend/src/lib/person_work.ts`, `ai_cost.ts`, and `calendar_days.ts` |
 

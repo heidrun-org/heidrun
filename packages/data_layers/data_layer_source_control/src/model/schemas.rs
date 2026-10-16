@@ -7,7 +7,7 @@ use serde_json::Value;
 use std::sync::OnceLock;
 
 /// The text of the file `schemas/commit.schema.json`.
-const COMMIT_SCHEMA: &str = include_str!("../../schemas/commit.schema.json");
+pub const COMMIT_SCHEMA: &str = include_str!("../../schemas/commit.schema.json");
 
 /// The compiled check of a commit. It is built at the first use.
 static COMMIT_VALIDATOR: OnceLock<Validator> = OnceLock::new();

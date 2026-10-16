@@ -15,17 +15,23 @@ Gives a coding agent the data of the four data layers of Heidrun, in one SQLite 
 
 Commands:
   sources                    Print the four sources, their tables, the number of rows
-                             of each table, and when each source was last updated.
+                             of each table, and the newest date of each source.
   update [<source>...]       Read what is new in every source, or in the sources given.
   initialize [<source>...]   Read every source since the beginning, or the sources
                              given.
+  schema [<table>]           Print the tables, their columns, their primary keys, the
+                             joins of the link tables, and the JSON schema of the
+                             column "data". With a table, print that JSON schema.
   query <sql>                Run one read-only SQL statement on the SQLite file. The
                              column "data" holds JSON: use json_extract(data, '$.field').
+  read <kind> <key>          Print the content of one thing from its source: a
+                             chat_session, a commit, an issue, or a pull_request.
 
 Options of every command:
   --database <path>          The SQLite file.
                              (default: "~/.config/heidrun/data_layer.sqlite")
-  --format <name>            The format of the output: jsonl, json, or table.
+  --format <name>            The format of the output: jsonl, json, or table, and
+                             sql for the command schema.
                              (default: jsonl when the standard output is not a
                              terminal, table when it is)
   --json                     The same as --format json.
@@ -49,14 +55,64 @@ Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data update --format jsonl
   $ heidrun_data update chat_sessions code_hosting --format jsonl
+  $ heidrun_data schema --format jsonl
+  $ heidrun_data schema chat_sessions
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
+  $ heidrun_data read issue 500 --format jsonl
+"#;
+
+/// The text of `heidrun_data read --help`.
+pub const READ_HELP: &str = r#"Usage: heidrun_data read <kind> <key> [options]
+
+Prints the content of one thing, which the tables do not store, from its source. It
+reads the source each time and writes nothing.
+
+Kinds:
+  chat_session <id>          The records of the chat session, one per line: "at",
+                             "role" (developer, coding_agent, or tool), and "text". A
+                             tool call is "<name>: <input>", and a tool result is
+                             "result: <output>", each shortened to one line unless
+                             --full is given. The id is the column "id" of the table
+                             chat_sessions. Reads the files of Claude Code and of
+                             Codex for the repository, its worktrees, and its
+                             sub-folders.
+  commit <hash>              The message, the files changed with their line counts,
+                             then the diff. A merge is compared with its first parent.
+                             Needs the command git.
+  issue <number>             The body, then every comment with its author and its
+                             date. Needs the command gh, signed in.
+  pull_request <number>      The body, then every comment, review, and review comment
+                             with its author, its date, and for a review comment its
+                             file and its line, in the order of the dates, then the
+                             diff. Needs the command gh, signed in.
+
+Options:
+  --repository <owner/name>  The repository of an issue or of a pull request.
+                             (default: the remote "origin" of the folder)
+  --folder <path>            The folder of the Git repository, or a folder inside it.
+                             (default: the current folder)
+  --full                     For chat_session: print the tool calls and the tool
+                             results whole.
+  --no-diff                  For commit and pull_request: print no diff.
+  --format <name>            jsonl, json, or table.
+  --json                     The same as --format json.
+  --database <path>          Not used: read never opens the SQLite file.
+  --verbose                  Not used.
+  -h, --help                 Print this help.
+
+Examples:
+  $ heidrun_data read chat_session 0b7c2c5e-8f5d-4a59-9a43-0b6c1b1b2f10 --format jsonl
+  $ heidrun_data read commit HEAD --no-diff --format jsonl
+  $ heidrun_data read issue 500 --format jsonl
+  $ heidrun_data read pull_request 565 --no-diff --format jsonl
 "#;
 
 /// The text of `heidrun_data sources --help`.
 pub const SOURCES_HELP: &str = r#"Usage: heidrun_data sources [options]
 
-Prints one row per source: its tables with the number of rows of each one, and the date
-of the last update of the source. The date is the largest "committedAt" of the commits,
+Prints one row per source: its tables with the number of rows of each one, and the
+newest date of the source ("lastUpdatedAt"). It is not the time of the last update
+command. The date is the largest "committedAt" of the commits,
 "updatedAt" of the issues, the pull requests, and the chat sessions, and "endedAt" of
 the user activity records. When the SQLite file does not exist, every table has 0 rows,
 and the file is not created.
@@ -73,6 +129,36 @@ Options:
 Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data sources --format table
+"#;
+
+/// The text of `heidrun_data schema --help`.
+pub const SCHEMA_HELP: &str = r#"Usage: heidrun_data schema [<table>] [options]
+
+With no table, prints one row per table of the SQLite file: its source, its columns,
+its primary key, the name of the JSON schema of its column "data", and, for a link
+table, the tables that it joins and the columns that join them. Read it before you
+write SQL, so that you never guess a column or a join.
+
+With a table, prints the JSON schema of the column "data" of that table, as the data
+layer package holds it: the fields, their types, and the description of each field.
+The output is the text of the JSON schema file, whatever the format.
+
+The tables and the columns come from the four data layer packages, so the command
+needs no SQLite file.
+
+Options:
+  --format <name>            jsonl, json, table, or sql. With sql, prints the CREATE
+                             TABLE statements.
+  --json                     The same as --format json.
+  --database <path>          Not used: the shape comes from the packages.
+  --verbose                  Not used.
+  -h, --help                 Print this help.
+
+Examples:
+  $ heidrun_data schema --format jsonl
+  $ heidrun_data schema --format sql
+  $ heidrun_data schema commits
+  $ heidrun_data schema chat_sessions
 "#;
 
 /// The text of `heidrun_data update --help` and of `heidrun_data initialize --help`.
@@ -168,8 +254,53 @@ pub enum Parsed {
     Sources(CommonOptions),
     /// Run the mode initialize or the mode update.
     Synchronize(SynchronizationRequest),
+    /// Print the shape of the tables, or the JSON schema of one table.
+    Schema(SchemaRequest),
     /// Run one read-only SQL statement.
     Query(QueryRequest),
+    /// Print the content of one thing from its source.
+    Read(ReadRequest),
+}
+
+/// The kind of the thing that `read` prints.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReadKind {
+    /// A chat session of Claude Code or of Codex.
+    ChatSession,
+    /// A commit of the Git repository.
+    Commit,
+    /// An issue of the GitHub repository.
+    Issue,
+    /// A pull request of the GitHub repository.
+    PullRequest,
+}
+
+/// The request to print the content of one thing.
+#[derive(Debug, PartialEq)]
+pub struct ReadRequest {
+    /// The options of every command.
+    pub common: CommonOptions,
+    /// The kind of the thing.
+    pub kind: ReadKind,
+    /// The key of the thing: the id of a chat session, the hash of a commit, or the number of an issue or a pull request.
+    pub key: String,
+    /// The repository of an issue or of a pull request, or `None` for the remote `origin` of the folder.
+    pub repository: Option<String>,
+    /// The folder of the Git repository, or `None` for the current folder.
+    pub folder: Option<String>,
+    /// True when the tool calls and the tool results of a chat session are printed whole.
+    pub is_full: bool,
+    /// True when the diff of a commit or of a pull request is printed.
+    pub has_diff: bool,
+}
+
+/// The request to print the shape of the tables.
+#[derive(Debug, PartialEq)]
+pub struct SchemaRequest {
+    /// The options of every command.
+    pub common: CommonOptions,
+    /// The table whose JSON schema to print, or `None` to print every table.
+    pub table: Option<String>,
 }
 
 /// The request to run the mode initialize or the mode update.
@@ -210,7 +341,7 @@ fn value_of<'a>(name: &str, inline: Option<String>, rest: &mut impl Iterator<Ite
 
 /// The format of a name, or an error that lists the three names.
 fn format_of(name: &str) -> Result<Format, String> {
-    Format::from_name(name).ok_or_else(|| format!("The format {name} is not known: use jsonl, json, or table."))
+    Format::from_name(name).ok_or_else(|| format!("The format {name} is not known: use jsonl, json, or table, or sql for the command schema."))
 }
 
 /// The format that the arguments ask for, read without the other checks, so that an error of the arguments is written in
@@ -244,6 +375,8 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     let mut folder = None;
     let mut file = None;
     let mut limit = None;
+    let mut is_full = false;
+    let mut has_diff = true;
     let mut is_help = false;
     let mut positionals: Vec<String> = Vec::new();
     let mut options_ended = false;
@@ -278,6 +411,8 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--repository" => repository = Some(value_of("--repository", inline, &mut rest)?),
             "--folder" => folder = Some(value_of("--folder", inline, &mut rest)?),
             "--file" => file = Some(value_of("--file", inline, &mut rest)?),
+            "--full" => is_full = true,
+            "--no-diff" => has_diff = false,
             "--limit" => {
                 let text = value_of("--limit", inline, &mut rest)?;
                 let count = text.parse::<u64>().map_err(|_| format!("The option --limit needs a whole number, and got {text}."))?;
@@ -291,23 +426,69 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if is_help {
             return Ok(Parsed::Help(HELP));
         }
-        return Err("A command is needed: sources, update, initialize, or query. Run with --help.".to_string());
+        return Err("A command is needed: sources, update, initialize, schema, query, or read. Run with --help.".to_string());
     };
     let mode = match command.as_str() {
         "update" => Some(SynchronizationMode::Update),
         "initialize" => Some(SynchronizationMode::Initialize),
-        "query" | "sources" => None,
+        "query" | "sources" | "schema" | "read" => None,
         _ if is_help => return Ok(Parsed::Help(HELP)),
         _ => {
-            return Err(format!("The command {command} is not known: use sources, update, initialize, or query."));
+            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, query, or read."));
         }
     };
     if is_help {
         return Ok(Parsed::Help(match command.as_str() {
             "query" => QUERY_HELP,
             "sources" => SOURCES_HELP,
+            "schema" => SCHEMA_HELP,
+            "read" => READ_HELP,
             _ => SYNCHRONIZATION_HELP,
         }));
+    }
+    if command != "read" {
+        if is_full {
+            return Err(format!("The option --full is for the command read only, and not for {command}."));
+        }
+        if !has_diff {
+            return Err(format!("The option --no-diff is for the command read only, and not for {command}."));
+        }
+    }
+    if command == "read" {
+        if limit.is_some() || file.is_some() {
+            return Err("The options --limit and --file are not for the command read.".to_string());
+        }
+        let kind_name = positionals
+            .next()
+            .ok_or("The command read needs a kind (chat_session, commit, issue, or pull_request) and a key.")?;
+        let kind = match kind_name.as_str() {
+            "chat_session" => ReadKind::ChatSession,
+            "commit" => ReadKind::Commit,
+            "issue" => ReadKind::Issue,
+            "pull_request" => ReadKind::PullRequest,
+            _ => {
+                return Err(format!(
+                    "The kind {kind_name} is not known: use chat_session, commit, issue, or pull_request."
+                ))
+            }
+        };
+        let key = positionals.next().ok_or_else(|| format!("The command read {kind_name} needs a key."))?;
+        if let Some(extra) = positionals.next() {
+            return Err(format!("The command read takes one kind and one key, and got more: {extra}."));
+        }
+        if is_full && kind != ReadKind::ChatSession {
+            return Err("The option --full is for read chat_session only.".to_string());
+        }
+        if !has_diff && !matches!(kind, ReadKind::Commit | ReadKind::PullRequest) {
+            return Err("The option --no-diff is for read commit and read pull_request only.".to_string());
+        }
+        if matches!(kind, ReadKind::Issue | ReadKind::PullRequest) && key.parse::<u64>().is_err() {
+            return Err(format!("The key of read {kind_name} is a number, and got {key}."));
+        }
+        return Ok(Parsed::Read(ReadRequest { common, kind, key, repository, folder, is_full, has_diff }));
+    }
+    if common.format == Some(Format::Sql) && command != "schema" {
+        return Err(format!("The format sql is for the command schema only, and not for {command}."));
     }
     let synchronization_options = [("--repository", repository.is_some()), ("--folder", folder.is_some()), ("--file", file.is_some())];
     if let Some(mode) = mode {
@@ -326,6 +507,19 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     }
     if let Some((option, _)) = synchronization_options.iter().find(|(_, is_given)| *is_given) {
         return Err(format!("The option {option} is for update and initialize, and not for {command}."));
+    }
+    if command == "schema" {
+        if limit.is_some() {
+            return Err("The option --limit is for the command query only, and not for schema.".to_string());
+        }
+        let table = positionals.next();
+        if let Some(extra) = positionals.next() {
+            return Err(format!("The command schema takes at most one table, and got more: {extra}."));
+        }
+        if table.is_some() && common.format == Some(Format::Sql) {
+            return Err("The format sql prints every table: give no table with it.".to_string());
+        }
+        return Ok(Parsed::Schema(SchemaRequest { common, table }));
     }
     if command == "sources" {
         if limit.is_some() {
@@ -425,6 +619,60 @@ mod tests {
     }
 
     #[test]
+    fn reads_schema_with_or_without_a_table_and_the_format_sql_for_schema_only() {
+        assert_eq!(
+            parse(&arguments(&["schema", "--format", "sql"])),
+            Ok(Parsed::Schema(SchemaRequest {
+                common: CommonOptions { database: None, format: Some(Format::Sql), verbose: false },
+                table: None,
+            }))
+        );
+        assert_eq!(
+            parse(&arguments(&["schema", "commits"])),
+            Ok(Parsed::Schema(SchemaRequest { common: CommonOptions::default(), table: Some("commits".into()) }))
+        );
+        assert!(parse(&arguments(&["query", "SELECT 1", "--format", "sql"])).unwrap_err().contains("schema only"));
+        assert!(parse(&arguments(&["schema", "commits", "--format", "sql"])).unwrap_err().contains("give no table"));
+        assert!(parse(&arguments(&["schema", "commits", "issues"])).unwrap_err().contains("at most one table"));
+        assert!(parse(&arguments(&["schema", "--limit", "3"])).unwrap_err().contains("--limit"));
+    }
+
+    #[test]
+    fn reads_read_with_its_kind_its_key_and_its_options() {
+        assert_eq!(
+            parse(&arguments(&["read", "chat_session", "abc", "--full", "--folder", "/a"])),
+            Ok(Parsed::Read(ReadRequest {
+                common: CommonOptions::default(),
+                kind: ReadKind::ChatSession,
+                key: "abc".into(),
+                repository: None,
+                folder: Some("/a".into()),
+                is_full: true,
+                has_diff: true,
+            }))
+        );
+        assert_eq!(
+            parse(&arguments(&["read", "pull_request", "565", "--no-diff", "--repository", "o/n"])),
+            Ok(Parsed::Read(ReadRequest {
+                common: CommonOptions::default(),
+                kind: ReadKind::PullRequest,
+                key: "565".into(),
+                repository: Some("o/n".into()),
+                folder: None,
+                is_full: false,
+                has_diff: false,
+            }))
+        );
+        assert!(parse(&arguments(&["read", "branch", "main"])).unwrap_err().contains("The kind branch is not known"));
+        assert!(parse(&arguments(&["read", "issue"])).unwrap_err().contains("needs a key"));
+        assert!(parse(&arguments(&["read", "issue", "five"])).unwrap_err().contains("is a number"));
+        assert!(parse(&arguments(&["read", "issue", "5", "--no-diff"])).unwrap_err().contains("--no-diff"));
+        assert!(parse(&arguments(&["read", "commit", "abc", "--full"])).unwrap_err().contains("--full"));
+        assert!(parse(&arguments(&["query", "SELECT 1", "--full"])).unwrap_err().contains("--full"));
+        assert!(parse(&arguments(&["update", "--no-diff"])).unwrap_err().contains("--no-diff"));
+    }
+
+    #[test]
     fn reads_the_help_of_the_program_and_of_each_command() {
         assert_eq!(parse(&arguments(&["--help"])), Ok(Parsed::Help(HELP)));
         assert_eq!(parse(&arguments(&["-h", "unknown"])), Ok(Parsed::Help(HELP)));
@@ -432,6 +680,8 @@ mod tests {
         assert_eq!(parse(&arguments(&["initialize", "-h"])), Ok(Parsed::Help(SYNCHRONIZATION_HELP)));
         assert_eq!(parse(&arguments(&["query", "--help"])), Ok(Parsed::Help(QUERY_HELP)));
         assert_eq!(parse(&arguments(&["sources", "--help"])), Ok(Parsed::Help(SOURCES_HELP)));
+        assert_eq!(parse(&arguments(&["schema", "--help"])), Ok(Parsed::Help(SCHEMA_HELP)));
+        assert_eq!(parse(&arguments(&["read", "--help"])), Ok(Parsed::Help(READ_HELP)));
     }
 
     #[test]
