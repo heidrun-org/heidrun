@@ -10,6 +10,8 @@
 export type ProgramStatus = {
 	/** True when the program is on this computer. */
 	isInstalled: boolean;
+	/** True when the program is on this computer, but its version is older than the version that Heidrun needs. */
+	isTooOld: boolean;
 };
 
 /**
@@ -40,8 +42,8 @@ export const INSTALL_COMMANDS: Record<ProgramName, string> = {
  */
 export class MissingPrograms {
 	/**
-	 * Chooses the programs that the notice names. A missing Herdr is named at every start, because Heidrun cannot show a
-	 * terminal without it. A missing ngrok is named only once, because it is optional: the Mobile access section of the
+	 * Chooses the programs that the notice names. A missing Herdr, or a Herdr older than 0.9, is named at every start,
+	 * because Heidrun cannot show a terminal without it. A missing ngrok is named only once, because it is optional: the Mobile access section of the
 	 * Settings window keeps the reminder after that.
 	 *
 	 * @param status - The state of each program.
@@ -50,7 +52,7 @@ export class MissingPrograms {
 	 */
 	static toShow(status: RequiredProgramsStatus, isNgrokNoticeShown: boolean): ProgramName[] {
 		const programNames: ProgramName[] = [];
-		if (status.herdr.isInstalled === false) {
+		if (status.herdr.isInstalled === false || status.herdr.isTooOld === true) {
 			programNames.push('herdr');
 		}
 		if (status.ngrok.isInstalled === false && (isNgrokNoticeShown === false || programNames.length > 0)) {

@@ -20,8 +20,11 @@ vi.mock("@tauri-apps/api/core", () => ({
 const openWrappers: VueWrapper[] = [];
 
 /** Mounts the notice with a fake state of the two programs, as at the start of Heidrun. */
-async function mountNotice(isHerdrInstalled: boolean, isNgrokInstalled: boolean, language: "en" | "fr" = "en") {
-  fake.programs = { herdr: { isInstalled: isHerdrInstalled }, ngrok: { isInstalled: isNgrokInstalled } };
+async function mountNotice(isHerdrInstalled: boolean, isNgrokInstalled: boolean, language: "en" | "fr" = "en", isHerdrTooOld = false) {
+  fake.programs = {
+    herdr: { isInstalled: isHerdrInstalled, isTooOld: isHerdrTooOld },
+    ngrok: { isInstalled: isNgrokInstalled, isTooOld: false },
+  };
   const { settings } = await import("../stores/settings");
   settings.language = language;
   const { default: MissingProgramsModal } = await import("./MissingProgramsModal.vue");
@@ -61,6 +64,14 @@ describe("MissingProgramsModal", () => {
     expect(herdr.text()).toContain("Required");
     expect(herdr.get(".command").text()).toBe("curl -fsSL https://herdr.dev/install.sh | sh");
     expect(wrapper.find('[data-program="ngrok"]').exists()).toBe(false);
+  });
+
+  it("asks for an update of a Herdr older than 0.9, with the install command", async () => {
+    const { wrapper } = await mountNotice(true, true, "en", true);
+    const herdr = wrapper.get('[data-program="herdr"]');
+    expect(herdr.text()).toContain("Heidrun needs Herdr 0.9 or later, and the Herdr on this computer is older.");
+    expect(herdr.text()).toContain("After the update, quit Heidrun and open it again.");
+    expect(herdr.get(".command").text()).toBe("curl -fsSL https://herdr.dev/install.sh | sh");
   });
 
   it("names a missing ngrok as optional and only for the mobile access, with its install command", async () => {

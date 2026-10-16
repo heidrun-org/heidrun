@@ -7,6 +7,8 @@ import { t } from "../i18n/index";
 
 /** The programs that the notice names. The notice is closed when the list is empty. */
 const programNames = ref<ProgramName[]>([]);
+/** True when Herdr is installed, but older than the version that Heidrun needs: the notice asks for an update. */
+const isHerdrTooOld = ref(false);
 const continueButton = ref<HTMLButtonElement>();
 
 // The notice is under the splash screen, so the user sees it when the splash screen closes (issue 546).
@@ -14,6 +16,7 @@ onMounted(async () => {
   try {
     const status = await requiredProgramsStatus();
     programNames.value = MissingPrograms.toShow(status, settings.ngrokMissingNoticeShown);
+    isHerdrTooOld.value = status.herdr.isInstalled === true && status.herdr.isTooOld === true;
   } catch {
     // Outside Heidrun (a plain browser), there is no program to test.
     return;
@@ -24,6 +27,12 @@ onMounted(async () => {
   await nextTick();
   continueButton.value?.focus();
 });
+
+/** The key of the translated text of `part` for `programName`: a Herdr that is too old has its own texts. */
+function textKey(programName: ProgramName, part: "reason" | "after") {
+  const variant = programName === "herdr" && isHerdrTooOld.value ? "tooOld." : "";
+  return `missingProgramsModal.${programName}.${variant}${part}`;
+}
 
 function close() {
   programNames.value = [];
@@ -41,10 +50,10 @@ function close() {
             {{ t(programName === "herdr" ? "missingProgramsModal.required" : "missingProgramsModal.optional") }}
           </span>
         </h3>
-        <p class="m-0">{{ t(`missingProgramsModal.${programName}.reason`) }}</p>
+        <p class="m-0">{{ t(textKey(programName, "reason")) }}</p>
         <p class="m-0">{{ t("missingProgramsModal.installWith") }}</p>
         <code class="command mono p-2 rounded">{{ INSTALL_COMMANDS[programName] }}</code>
-        <p class="m-0 form-text">{{ t(`missingProgramsModal.${programName}.after`) }}</p>
+        <p class="m-0 form-text">{{ t(textKey(programName, "after")) }}</p>
       </section>
       <div class="d-flex justify-content-end">
         <button ref="continueButton" class="btn lg primary" type="button" @click="close">{{ t("missingProgramsModal.continue") }}</button>
