@@ -24,7 +24,7 @@ Always give `--format jsonl`, so the output is one JSON object per line and neve
    ```bash
    heidrun_data sources --format jsonl
    ```
-   One line per source, with the number of rows of each table and the date of the last update.
+   One line per source, with the number of rows of each table and `lastUpdatedAt`: the newest date held by the source (the newest `committedAt`, `updatedAt`, or `endedAt`), and not the time of the last `update`. Compare it with the date of the thing you study: if the thing is newer, the data ends before it, so run `update` first and say so when the data is still missing.
 2. **Update when the data is old.** Run it in a folder of the repository.
    ```bash
    heidrun_data update --format jsonl
@@ -59,6 +59,11 @@ Every table of a source has a few key columns and one column `data`, which holds
 
 Every date is in UTC, written as text, so two dates compare as text. The column `repository` is `owner/name`, for example `heidrun-org/heidrun`.
 
+What the tables do not hold:
+
+- The tables can hold several repositories, and the same issue number can exist in two of them. Put `repository = 'owner/name'` in the `WHERE` clause of every query.
+- `chat_sessions` holds only the chat sessions that started in the root folder of the repository. A chat session that started in a worktree is not in the table, and an issue fix is made in a worktree, so the chat session of the work is often missing. `read chat_session <id>` reads the files of the root folder, of the worktrees, and of the sub-folders, but only if you already know the id. When a query finds no chat session, say "no chat session found". Do not guess one.
+
 ## The command `read`
 
 `read` gives the content of one thing from its source. It writes nothing.
@@ -70,7 +75,13 @@ Every date is in UTC, written as text, so two dates compare as text. The column 
 | `heidrun_data read issue <number>` | The body, then every comment with its author and its date. |
 | `heidrun_data read pull_request <number>` | The body, then every comment, review, and review comment with its author, its date, and for a review comment its file and its line, in the order of the dates, then the diff. `--no-diff` stops before the diff. |
 
-`read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` finds the chat sessions of the repository, of its worktrees, and of its sub-folders, from any folder of the repository.
+With `--format jsonl`, each line has these fields:
+
+- `read chat_session`: `at`, `role`, `text`.
+- `read commit`: one object with `hash`, `authorName`, `authorEmail`, `committedAt`, `message`, `files` (a list of `path`, `insertions`, `deletions`), and `diff` unless `--no-diff` is given.
+- `read issue` and `read pull_request`: `kind` (`issue`, `pull_request`, `comment`, `review`, `review_comment`, or `diff`), `author`, `at`, and `text`. The body has `number`, `title`, and `state` too, a review has `state`, and a review comment has `path` and `line`.
+
+`read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` and `read commit` work from any folder of the repository, a worktree included.
 
 ## Example: post-mortem of an issue
 
@@ -113,11 +124,13 @@ WHERE cs.repository = 'heidrun-org/heidrun'
   AND json_extract(cs.data, '$.lastRecordAt') >= '<committedAt minus one day>'"
 ```
 
+A commit can have many files: write one `LIKE` condition for each file with a small script, and leave out the files that every change touches, such as `Cargo.lock`. If no chat session is found, the chat session may have run in a worktree: see "What the tables do not hold".
+
 Then `heidrun_data read chat_session <id>` on each one, and look for the moment when the coding agent made the change.
 
 ## Example: what the developer typed many times
 
-The chat sessions of the last weeks:
+The chat sessions of the last weeks. Dates are text, so `date('now', '-10 day')` works in place of a fixed date:
 
 ```bash
 heidrun_data query --format jsonl "
@@ -126,15 +139,26 @@ WHERE repository = 'heidrun-org/heidrun'
   AND json_extract(data, '$.lastRecordAt') > '2026-10-01'"
 ```
 
-Then `heidrun_data read chat_session <id> --format jsonl` on each one, keep the lines with `role` equal to `developer`, and count the equal texts. A text typed many times is a candidate for a macro of Heidrun. A command run many times is a candidate for a launcher.
+Then `heidrun_data read chat_session <id> --format jsonl` on each one, and keep the lines with `role` equal to `developer`. Most of these lines are not typed by the developer, so remove them before you count:
+
+- The chat sessions whose `title` is `Guardian review`: they are approval reviews of Codex, not chats of the developer.
+- The texts that start with `<` (for example `<turn_aborted>`, `<command-name>`, and `<local-command-stdout>`), with `[Request interrupted`, with `>>>`, or with `[N] user:` where `N` is a number.
+
+Then cut the white space around each text, ignore the case and the final punctuation, and count the equal texts. Group the near-equal wordings too: `merge it`, `ok merge it`, and `merge` are one text. A text typed many times is a candidate for a macro of Heidrun. A command run many times is a candidate for a launcher.
 
 ## Example: what failed many times
 
-The same chat sessions, and the lines with `role` equal to `tool` whose `text` starts with `result:`. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
+The same chat sessions, without the `Guardian review` ones, and the lines with `role` equal to `tool` whose `text` starts with `result:`. A tool result has no field that says error or success, so look for the error in the text:
+
+- Claude Code writes `Exit code N` (where `N` is not 0), `<tool_use_error>`, or a shell error such as `(eval):N: command not found`.
+- Codex wraps its results in a JSON text, so read the text inside it.
+- Do not count `test result: ok. 0 failed`, which is a success, and do not count `The user doesn't want to proceed with this tool use`, which is a choice of the developer.
+
+Group the equal errors, and count in how many chat sessions each one appears. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
 
 ## Rules
 
-- Give `--format jsonl` on every command.
+- Give `--format jsonl` on every command, so that you never depend on the default (`jsonl` when the output is piped, `table` in a terminal). An error is one JSON line on the standard error output, and the exit code is 1.
 - Never write the SQLite file: `query` opens it read only, and `read` writes nothing. Only `update` and `initialize` write it, through the data layers.
 - Never guess a field name or a join: `heidrun_data schema` gives them.
 - Give the ids of the chat sessions, the hashes, and the numbers that your answer rests on, so the developer can read them too.

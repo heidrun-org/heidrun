@@ -15,7 +15,7 @@ Gives a coding agent the data of the four data layers of Heidrun, in one SQLite 
 
 Commands:
   sources                    Print the four sources, their tables, the number of rows
-                             of each table, and when each source was last updated.
+                             of each table, and the newest date of each source.
   update [<source>...]       Read what is new in every source, or in the sources given.
   initialize [<source>...]   Read every source since the beginning, or the sources
                              given.
@@ -110,8 +110,9 @@ Examples:
 /// The text of `heidrun_data sources --help`.
 pub const SOURCES_HELP: &str = r#"Usage: heidrun_data sources [options]
 
-Prints one row per source: its tables with the number of rows of each one, and the date
-of the last update of the source. The date is the largest "committedAt" of the commits,
+Prints one row per source: its tables with the number of rows of each one, and the
+newest date of the source ("lastUpdatedAt"). It is not the time of the last update
+command. The date is the largest "committedAt" of the commits,
 "updatedAt" of the issues, the pull requests, and the chat sessions, and "endedAt" of
 the user activity records. When the SQLite file does not exist, every table has 0 rows,
 and the file is not created.
