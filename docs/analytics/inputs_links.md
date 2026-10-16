@@ -7,7 +7,7 @@
 - Related rules: [The four data layers](../statistics/the_four_data_layers.md)
 - Related issue: [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 561](https://github.com/heidrun-org/heidrun/issues/561)
 
-Every metric of [metrics.md](metrics.md) rests on a link between two of the three inputs of [inputs.md](inputs.md): a chat session, a commit, an issue, or a pull request. This file says how each link is made in the SQLite file of the data layers, how complete each link is on this repository, and which gaps are known. A better link is worth more than a new metric, because every metric inherits the gaps of its links.
+Every metric of [metrics_examples.md](metrics_examples.md) rests on a link between two of the three inputs of [inputs.md](inputs.md): a chat session, a commit, an issue, or a pull request. This file says how each link is made in the SQLite file of the data layers, how complete each link is on this repository, and which gaps are known. A better link is worth more than a new metric, because every metric inherits the gaps of its links.
 
 ## The links
 

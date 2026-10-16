@@ -7,11 +7,11 @@
 - Related rules: [The four data layers](../statistics/the_four_data_layers.md)
 - Related issue: [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 561](https://github.com/heidrun-org/heidrun/issues/561)
 
-This file lists the metrics that the join of the three inputs of [inputs.md](inputs.md) gives, and that no single input gives alone: the chat sessions of the coding agents, the commits, and the issues and the pull requests. Each metric has one definition, one SQL query on the SQLite file of the data layers, its result on this repository, what the result says, and its limits. The metrics are independent from the user interface of Heidrun: every query runs with `sqlite3 -readonly ~/.config/heidrun/data_layer.sqlite`, or with the command `query` of a data layer. The links that the queries use, and their gaps, are in [links.md](links.md).
+This file lists the metrics that the join of the three inputs of [inputs.md](inputs.md) gives, and that no single input gives alone: the chat sessions of the coding agents, the commits, and the issues and the pull requests. Each metric has one definition, one SQL query on the SQLite file of the data layers, its result on this repository, what the result says, and its limits. The metrics are independent from the user interface of Heidrun: every query runs with `sqlite3 -readonly ~/.config/heidrun/data_layer.sqlite`, or with the command `query` of a data layer. The links that the queries use, and their gaps, are in [inputs_links.md](inputs_links.md).
 
 The results were taken on 16 October 2026 on the repository `heidrun-org/heidrun`: 306 chat sessions from 9 to 14 October 2026, 900 commits from 5 to 16 October 2026, 313 issues, and 248 pull requests. Every query filters on `repository = 'heidrun-org/heidrun'`, because the SQLite file holds the commits of three repositories.
 
-The ten metrics follow two rules of [issue 561](https://github.com/heidrun-org/heidrun/issues/561): join the chats with one other source, and give the means and never a policy. A metric says a number. The conclusion belongs to the developer, or to the coding agent that reads the number.
+The ten metrics follow the rules of [metrics_rules.md](metrics_rules.md): a metric joins the chat sessions with one other input, is one SQL query, says a number, and leaves the conclusion to the developer, or to the coding agent that reads the number.
 
 ## 1. The price of a line that survived
 
@@ -60,7 +60,7 @@ ORDER BY struggle DESC;
 
 **What it says.** The three issues of the dynamic topics and the two issues of the layout redesign are the five hardest pieces of work of the week, and the data says it without anyone remembering it. On the files of a new issue, the same number from the past predicts the fight before it starts.
 
-**Limits.** Issues 199 and 200 share the same 5 chat sessions, so they get the same struggle. The link counts a chat session that discussed the issue, not only one that fixed it (see [links.md](links.md)).
+**Limits.** Issues 199 and 200 share the same 5 chat sessions, so they get the same struggle. The link counts a chat session that discussed the issue, not only one that fixed it (see [inputs_links.md](inputs_links.md)).
 
 ## 3. How much of you an issue took
 
@@ -155,7 +155,7 @@ GROUP BY coding_agent;
 
 **What it says.** On this repository, a chat session of Codex needs more messages of the developer and writes fewer tokens than a chat session of Claude Code. Whether that is the coding agent or the kind of work given to each one is the next question, and the join with the issues (their labels, their files) answers it.
 
-**Limits.** This is not a benchmark. The two coding agents did not get the same issues. The tokens are not comparable in dollars without a price per model and per kind of token (see [links.md](links.md)).
+**Limits.** This is not a benchmark. The two coding agents did not get the same issues. The tokens are not comparable in dollars without a price per model and per kind of token (see [inputs_links.md](inputs_links.md)).
 
 ## 7. Hot files
 
@@ -173,7 +173,7 @@ ORDER BY chats DESC;
 
 **What it says.** The two hottest files are the two files of instructions for the coding agents, which says that the rules of the project change more often than any file of code. The hot files of code come after.
 
-**Limits.** The paths are absolute and include files outside the repository (the memory of Claude Code, the scratchpad folder). The metric needs the change of `data_layer_chat_sessions` described in [links.md](links.md). The commits store no file path, so the join with the lines added and deleted of each file is not possible yet.
+**Limits.** The paths are absolute and include files outside the repository (the memory of Claude Code, the scratchpad folder). The metric needs the change of `data_layer_chat_sessions` described in [inputs_links.md](inputs_links.md). The commits store no file path, so the join with the lines added and deleted of each file is not possible yet.
 
 ## 8. The fix that needed a fix
 
@@ -245,6 +245,6 @@ ORDER BY output_tokens DESC;
 
 ## What to do next
 
-- Fix the links first, as [links.md](links.md) says: relative paths in `chat_session_files`, the chat sessions of the worktrees, and a link from a chat session to a commit. Every metric above inherits their gaps.
+- Fix the links first, as [inputs_links.md](inputs_links.md) says: relative paths in `chat_session_files`, the chat sessions of the worktrees, and a link from a chat session to a commit. Every metric above inherits their gaps.
 - Add the price per model and per kind of token, so that metrics 1, 3, 6, and 10 can be written in dollars.
 - Give the ten queries to a coding agent through the command `heidrun_data` of [issue 564](https://github.com/heidrun-org/heidrun/issues/564), so that the coding agent answers "why" on top of the numbers.

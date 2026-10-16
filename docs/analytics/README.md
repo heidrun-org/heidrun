@@ -10,4 +10,4 @@ This folder describes the analytics of the code of a project: how to connect the
 
 Read `inputs.md` first. It describes the three inputs: the source code and its history, the GitHub issues, pull requests, and reviews, and the agent sessions.
 
-Then read `links.md`. It says how the three inputs link to each other in the SQLite file of the data layers, and which links are missing. Then read `metrics.md`. It gives the ten metrics that the join of the three inputs makes possible, with the SQL query of each one and its result on this repository. The metrics are independent from the user interface of Heidrun: they run on the SQLite file alone.
+Then read `inputs_links.md`. It says how the three inputs link to each other in the SQLite file of the data layers, and which links are missing. Then read `metrics_rules.md`. It says what a metric is, what it is not, and how to evaluate one. Then read `metrics_examples.md`. It gives the ten metrics that the join of the three inputs makes possible, with the SQL query of each one and its result on this repository. The metrics are independent from the user interface of Heidrun: they run on the SQLite file alone.
