@@ -7,9 +7,9 @@ The screens of the mobile website. Each screen is one class with one static meth
 - `welcome_screen.ts`: the welcome page, which is the first page: the baby goat in a big circle, the name, the motto, the description of Heidrun, and the button "Go to the app" at the bottom of the screen. It has no header, no bottom bar, and needs no data from the computer.
 - `dashboard_screen.ts`: the Dashboard: the count of coding agents that need the developer, the count that work, and the usage limits. Each count opens a screen.
 - `needs_you_screen.ts`: the coding agents that wait for the developer, and the usage limits.
-- `panes_screen.ts`: every coding agent, grouped by workspace and by tab.
-- `pane_screen.ts`: one pane: the end of its output, its menu, a field for a prompt, and the buttons that stop it.
-- `placeholder_screen.ts`: the screens Macros and Launchers, which say that they come in a later version.
+- `panes_screen.ts`: every pane, with or without a coding agent, grouped by workspace and by tab.
+- `pane_screen.ts`: one pane (a plain terminal is read-only, with no field for a prompt): the end of its output, its menu, the macro button, a field for a prompt, the microphone button, and the buttons that stop it.
+- `launchers_screen.ts`: the launchers of the project of each workspace, with the buttons Run and Stop.
 - `message_screen.ts`: the screens that the page shows before it has data: pairing needed, and connecting.
 
 ## Rules

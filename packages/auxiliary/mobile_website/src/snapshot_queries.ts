@@ -12,12 +12,21 @@ import { StatusLabels } from './components/status_labels';
  */
 export class SnapshotQueries {
 	/**
-	 * Lists every coding agent of every workspace.
+	 * Lists every pane of every workspace, with or without a coding agent.
 	 * @param snapshot The answer of the method `state`.
-	 * @returns The coding agents, workspace after workspace.
+	 * @returns The panes, workspace after workspace.
 	 */
 	static agents(snapshot: Snapshot): AgentView[] {
 		return snapshot.workspaces.flatMap((workspace) => workspace.agents);
+	}
+
+	/**
+	 * Lists the panes that run a coding agent, without the plain terminals.
+	 * @param snapshot The answer of the method `state`.
+	 * @returns The coding agents, workspace after workspace.
+	 */
+	static codingAgents(snapshot: Snapshot): AgentView[] {
+		return SnapshotQueries.agents(snapshot).filter((agent) => agent.hasCodingAgent);
 	}
 
 	/**

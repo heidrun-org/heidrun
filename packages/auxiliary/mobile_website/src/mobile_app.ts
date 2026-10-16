@@ -1,18 +1,33 @@
 import { MobileApi, UnpairedError } from './mobile_api';
-import type { CallResult, ConfirmRequest, ScreenName, Snapshot, TabName } from './mobile_types';
+import type {
+	CallResult,
+	ConfirmRequest,
+	LaunchersAnswer,
+	MacrosAnswer,
+	MacroView,
+	ScreenName,
+	Snapshot,
+	TabName,
+	TerminalTyping,
+} from './mobile_types';
 import { ColorPainter } from './color_painter';
 import { ScreenAddress } from './screen_address';
 import type { ScreenLocation } from './screen_address';
 import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
+import { MacroSheet } from './components/macro_sheet';
+import { SettingsSheet } from './components/settings_sheet';
+import { TypingSheet } from './components/typing_sheet';
 import { MessageScreen } from './screens/message_screen';
 import { DashboardScreen } from './screens/dashboard_screen';
 import { NeedsYouScreen } from './screens/needs_you_screen';
 import { PanesScreen } from './screens/panes_screen';
 import { PaneScreen } from './screens/pane_screen';
-import { PlaceholderScreen } from './screens/placeholder_screen';
+import { LaunchersScreen } from './screens/launchers_screen';
 import { WelcomeScreen } from './screens/welcome_screen';
+import { VoiceInput } from './voice_input';
+import { PhoneNotifications } from './phone_notifications';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,6 +78,21 @@ export class MobileApp {
 
 	/** The end of the output of the pane that is open. */
 	private output = '';
+
+	/** The identifier of the plain terminal where the developer allowed typing, or null. It resets on a new screen. */
+	private typingPaneId: string | null = null;
+
+	/** The macros of the macro sheet that is open, or an empty list when no macro sheet is open. */
+	private macros: MacroView[] = [];
+
+	/** The last answer of the method `launchers`, or null before the first answer on the Launchers screen. */
+	private launchers: LaunchersAnswer | null = null;
+
+	/** The service worker and the notifications of the browser. */
+	private readonly phoneNotifications = new PhoneNotifications();
+
+	/** The microphone that fills the field for a prompt. */
+	private readonly voiceInput = new VoiceInput();
 
 	/** The HTML that the root element holds now. The screen is drawn again only when the new HTML differs. */
 	private renderedHtml = '';
@@ -117,6 +147,10 @@ export class MobileApp {
 		this.root.addEventListener('keydown', (event) => void this._onKeyDown(event));
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
 		window.addEventListener('popstate', this.onPopState);
+		void this.phoneNotifications.register().then(() => {
+			this._render();
+			this._refreshSettingsSheet();
+		});
 		await this.refresh();
 	}
 
@@ -159,6 +193,9 @@ export class MobileApp {
 					this.output = result.text;
 				}
 			}
+			if (this.screen === 'launchers') {
+				this.launchers = await MobileApi.call<LaunchersAnswer>('launchers');
+			}
 		} catch (error) {
 			this.isOnline = false;
 			if (error instanceof UnpairedError) {
@@ -195,6 +232,9 @@ export class MobileApp {
 	 */
 	private _isTyping(): boolean {
 		const active = document.activeElement;
+		if (this.voiceInput.isListening()) {
+			return true;
+		}
 		return (
 			this.screen === 'pane' &&
 			active !== null &&
@@ -261,20 +301,17 @@ export class MobileApp {
 	private _screenHtmlContent(snapshot: Snapshot): string {
 		if (this.screen === 'pane') {
 			const agent = this.paneId === null ? null : SnapshotQueries.agentById(snapshot, this.paneId);
-			return PaneScreen.render(agent, this.output);
+			let terminalTyping: TerminalTyping = 'off';
+			if (snapshot.terminalTypingAllowed) {
+				terminalTyping = agent !== null && agent.paneId === this.typingPaneId ? 'unlocked' : 'locked';
+			}
+			return PaneScreen.render(agent, this.output, VoiceInput.isAvailable(), terminalTyping);
 		}
 		if (this.screen === 'panes') {
 			return PanesScreen.render(snapshot, this.isOnline);
 		}
-		if (this.screen === 'macros') {
-			return PlaceholderScreen.render('Macros', 'The macros come in a later version.', this.isOnline);
-		}
 		if (this.screen === 'launchers') {
-			return PlaceholderScreen.render(
-				'Launchers',
-				'The launchers come in a later version.',
-				this.isOnline,
-			);
+			return LaunchersScreen.render(this.launchers, this.isOnline);
 		}
 		if (this.screen === 'needs_you') {
 			return NeedsYouScreen.render(snapshot, this.isOnline);
@@ -298,6 +335,9 @@ export class MobileApp {
 	}
 
 	private _applyLocation(location: ScreenLocation): void {
+		this.voiceInput.stop();
+		this._closeMacroSheet();
+		this.typingPaneId = null;
 		this.tab = location.tab;
 		this.screen = location.paneId === null ? location.tab : 'pane';
 		this.paneId = location.paneId;
@@ -364,7 +404,157 @@ export class MobileApp {
 			}
 		} else if (action === 'send') {
 			await this._sendPrompt(paneId);
+		} else if (action === 'voice') {
+			this._toggleVoice(element);
+		} else if (action === 'notifications-enable') {
+			const permission = await this.phoneNotifications.requestPermission();
+			if (permission === 'granted') {
+				await this.phoneNotifications.subscribePush();
+			}
+			this._refreshSettingsSheet();
+		} else if (action === 'push-on') {
+			const problem = await this.phoneNotifications.subscribePush();
+			this._refreshSettingsSheet();
+			this._toast(problem === null ? 'The push is on' : `The push failed: ${problem}`);
+		} else if (action === 'push-off') {
+			const problem = await this.phoneNotifications.unsubscribePush();
+			this._refreshSettingsSheet();
+			this._toast(problem === null ? 'The push is off' : `The push failed: ${problem}`);
+		} else if (action === 'notifications-test') {
+			const problem = await this.phoneNotifications.showTest();
+			this._toast(problem === null ? 'Test notification sent' : `The notification failed: ${problem}`);
+		} else if (action === 'typing-ask') {
+			this.overlay.insertAdjacentHTML('beforeend', TypingSheet.render());
+		} else if (action === 'typing-cancel') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this.overlay.querySelector('.typing-sheet')?.remove();
+			}
+		} else if (action === 'typing-allow') {
+			this.overlay.querySelector('.typing-sheet')?.remove();
+			this.typingPaneId = this.paneId;
+			this._render();
+			this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`)?.focus();
+		} else if (action === 'open-settings') {
+			this.overlay.insertAdjacentHTML('beforeend', SettingsSheet.render(this.phoneNotifications.getStatus()));
+		} else if (action === 'settings-close') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this.overlay.querySelector(`.${SettingsSheet.className}`)?.remove();
+			}
+		} else if (action === 'open-macros') {
+			await this._openMacroSheet();
+		} else if (action === 'macro-sheet-close') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this._closeMacroSheet();
+			}
+		} else if (action === 'insert-macro') {
+			this._insertMacro(Number(element.dataset.index));
+		} else if (action === 'run-launcher' || action === 'stop-launcher') {
+			await this._launch(element, action === 'run-launcher' ? 'run' : 'stop');
 		}
+	}
+
+	/**
+	 * Asks the computer for the macros of the open pane, then opens the macro sheet.
+	 */
+	private async _openMacroSheet(): Promise<void> {
+		if (this.paneId === null) {
+			return;
+		}
+		try {
+			const answer = await MobileApi.call<MacrosAnswer & CallResult>('macros', {
+				paneId: this.paneId,
+			});
+			if (typeof answer.error === 'string') {
+				this._toast(answer.error);
+				return;
+			}
+			this._closeMacroSheet();
+			this.macros = answer.macros;
+			this.overlay.insertAdjacentHTML('beforeend', MacroSheet.render(this.macros));
+		} catch (error) {
+			const reason = error instanceof Error ? error.message : String(error);
+			this._toast(`No answer from the computer: ${reason}`);
+		}
+	}
+
+	/**
+	 * Draws the settings sheet again with the latest state of the notifications, when the sheet is open.
+	 */
+	private _refreshSettingsSheet(): void {
+		const sheet = this.overlay.querySelector(`.${SettingsSheet.className}`);
+		if (sheet === null) {
+			return;
+		}
+		sheet.outerHTML = SettingsSheet.render(this.phoneNotifications.getStatus());
+	}
+
+	private _closeMacroSheet(): void {
+		this.overlay.querySelector('.macro-sheet')?.remove();
+		this.macros = [];
+	}
+
+	/**
+	 * Writes the text of a macro into the field for a prompt, after the text that is already there, like the
+	 * keyboard. Nothing is sent before the developer taps Send.
+	 * @param index The place of the macro in the macro sheet.
+	 */
+	private _insertMacro(index: number): void {
+		const macro = this.macros[index];
+		this._closeMacroSheet();
+		const field = this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`);
+		if (macro === undefined || field === null) {
+			return;
+		}
+		const textBefore = field.value.trimEnd();
+		field.value = textBefore === '' ? macro.text : `${textBefore} ${macro.text}`;
+		field.focus();
+	}
+
+	/**
+	 * Runs or stops a launcher on the computer.
+	 * @param element The button that the developer tapped. It names the workspace and the launcher.
+	 * @param launchAction `run` to run the command of the launcher, `stop` to send Ctrl+C to its tab.
+	 */
+	private async _launch(element: HTMLElement, launchAction: 'run' | 'stop'): Promise<void> {
+		const params = {
+			workspaceId: element.dataset.workspaceId ?? '',
+			launcherId: element.dataset.launcherId ?? '',
+			action: launchAction,
+		};
+		if (await this._act('launch', params)) {
+			this._toast(launchAction === 'run' ? 'Launcher started' : 'Launcher stopped (Ctrl+C)');
+			this._refreshSoon(1200);
+		}
+	}
+
+	/**
+	 * Starts or stops the microphone. The words go into the field for a prompt, after the text that is already
+	 * there. The developer reads them, then taps Send.
+	 * @param button The microphone button.
+	 */
+	private _toggleVoice(button: HTMLElement): void {
+		if (this.voiceInput.isListening()) {
+			this.voiceInput.stop();
+			return;
+		}
+		const field = this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`);
+		if (field === null) {
+			return;
+		}
+		const textBefore = field.value.trimEnd();
+		button.classList.add('mic-button-listening');
+		button.setAttribute('aria-pressed', 'true');
+		this.voiceInput.start({
+			onText: (text) => {
+				field.value = textBefore === '' ? text : `${textBefore} ${text}`;
+			},
+			onError: (message) => this._toast(message),
+			onEnd: () => {
+				button.classList.remove('mic-button-listening');
+				button.setAttribute('aria-pressed', 'false');
+				field.focus();
+			},
+		});
 	}
 
 	/**

@@ -7,6 +7,7 @@ import type { IconName } from '../src/components/icon';
 const iconNames: IconName[] = [
 	'arrow-clockwise',
 	'bell',
+	'gear',
 	'chevron-left',
 	'grid',
 	'lightning-charge',
@@ -34,12 +35,12 @@ describe('Icons', () => {
 			'bi bi-grid',
 			'bi bi-bell',
 			'bi bi-view-stacked',
-			'bi bi-lightning-charge',
 			'bi bi-play',
 		]);
 		await harness.openPane('p-working');
 		expect(document.querySelector('.back svg.bi-chevron-left')).not.toBeNull();
 		expect(document.querySelector('.icon-button svg.bi-arrow-clockwise')).not.toBeNull();
+		expect(document.querySelector('[data-action="open-macros"] svg.bi-lightning-charge')).not.toBeNull();
 		expect(document.querySelector('.send-button svg.bi-send-fill')).not.toBeNull();
 		expect(document.querySelector('.stop-button svg.bi-stop-fill')).not.toBeNull();
 	});

@@ -51,8 +51,11 @@ watch(
 );
 
 /** Macros of the selected workspace's project, from the key `prompts` of .heidrun/config.json. The key keeps the old name, because the file is shared with other people. */
-export const projectMacros = computed<Macro[]>(() => {
-  const list = (currentProject.value?.config as { prompts?: unknown } | undefined)?.prompts;
+export const projectMacros = computed<Macro[]>(() => macrosOfProjectConfig(currentProject.value?.config));
+
+/** The macros of one project, from the key `prompts` of its .heidrun/config.json. The phone asks for the macros of every workspace, not only of the selected one. */
+export function macrosOfProjectConfig(config: unknown): Macro[] {
+  const list = (config as { prompts?: unknown } | undefined)?.prompts;
   if (!Array.isArray(list)) return [];
   // Hand-written entries: label and id may be missing.
   return (list as Partial<Macro>[])
@@ -63,7 +66,7 @@ export const projectMacros = computed<Macro[]>(() => {
       description: typeof p.description === "string" ? p.description : "",
       text: p.text!,
     }));
-});
+}
 
 const slug = (s: string) =>
   `${s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "modele"}-${Math.random().toString(36).slice(2, 5)}`;

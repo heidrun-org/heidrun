@@ -27,7 +27,6 @@ export class ScreenAddress {
 		dashboard: 'dashboard',
 		needs_you: 'needs-you',
 		panes: 'panes',
-		macros: 'macros',
 		launchers: 'launchers',
 	};
 

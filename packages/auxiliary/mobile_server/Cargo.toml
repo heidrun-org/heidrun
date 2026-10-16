@@ -17,6 +17,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 dirs = "6"
+# The push to a phone: the key of the server signs a token (ES256), and a request without body wakes the phone
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "std"] }
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["io-util", "macros", "net", "rt", "sync", "time"] }

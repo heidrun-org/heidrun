@@ -4,7 +4,7 @@ import type { IconName } from './icon';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	BottomBar — the five buttons at the bottom of every screen
+//	BottomBar — the four buttons at the bottom of every screen
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -19,10 +19,10 @@ type BarButton = {
 };
 
 /**
- * Draws the bottom bar: Dashboard, Needs you, Panes, Macros, and Launchers.
+ * Draws the bottom bar: Dashboard, Needs you, Panes, and Launchers.
  */
 export class BottomBar {
-	/** The five buttons, from left to right. */
+	/** The four buttons, from left to right. */
 	private static readonly buttons: BarButton[] = [
 		{
 			tab: 'dashboard',
@@ -38,11 +38,6 @@ export class BottomBar {
 			tab: 'panes',
 			label: 'Panes',
 			iconName: 'view-stacked',
-		},
-		{
-			tab: 'macros',
-			label: 'Macros',
-			iconName: 'lightning-charge',
 		},
 		{
 			tab: 'launchers',
