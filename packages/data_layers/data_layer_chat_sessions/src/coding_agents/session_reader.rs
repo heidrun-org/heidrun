@@ -15,7 +15,7 @@ const TITLE_LENGTH: usize = 160;
 /// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. The compressed
 /// files of Codex are read, and the tokens of the subagents and of the workflows of a chat session of Claude Code count for it. A chat session
 /// whose file changed before `modified_since` (milliseconds since 1970) is not read. A chat session without a title and
-/// without a message is left out. `log` receives one line of progress for each coding agent.
+/// without a message is left out, and so is a review chat of Codex. `log` receives one line of progress for each coding agent.
 pub fn read_chat_sessions(
     cache: &mut ScanCache,
     claude_projects: &Path,
@@ -42,6 +42,9 @@ pub fn read_chat_sessions(
     let titles = read_codex_titles(codex_home);
     for file in recent_files {
         let scan = cache.scan(file, feed_codex_line);
+        if scan.meta.is_review_chat {
+            continue;
+        }
         let title = titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan));
         records.extend(record_of(CodingAgent::Codex, file, &scan, title));
     }
@@ -170,6 +173,19 @@ mod tests {
         assert_eq!((records[0].chat_session.id.as_str(), records[0].chat_session.title.as_str()), (id, "Fix it"));
         assert_eq!(records[0].chat_session.coding_agent, CodingAgent::Codex);
         assert_eq!(records[0].relations.issues, vec![250]);
+    }
+
+    #[test]
+    fn leaves_out_a_review_chat_of_codex() {
+        let directory = temp_folder("reader_codex_review");
+        let id = "01a12c31-175b-7513-b12c-bba764f46430";
+        let review = format!(
+            r#"{{"type":"session_meta","payload":{{"id":"{id}","cwd":"/work/app","source":{{"subagent":{{"other":"guardian"}}}}}}}}"#
+        );
+        let name = format!("rollout-2026-10-10T01-02-03-{id}.jsonl");
+        let text = format!("{review}\n{}\n", codex_message("Review this command"));
+        write_file(&directory.join("sessions").join("2026/10/10").join(name), &text, 5);
+        assert!(read(&directory, None).is_empty());
     }
 
     #[test]

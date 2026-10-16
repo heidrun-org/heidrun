@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Chat summary](../sidebars/chats/chat_summary.md), [Workspace selector](statistics_person_work_workspace.md)
-- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 558](https://github.com/heidrun-org/heidrun/issues/558), [issue 559](https://github.com/heidrun-org/heidrun/issues/559)
+- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 558](https://github.com/heidrun-org/heidrun/issues/558), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 557](https://github.com/heidrun-org/heidrun/issues/557)
 
 This file is a part of the rules of the tab "Work of one person". The layout of the tab, the two radio button groups, and the bar chart are in [statistics_person_work.md](statistics_person_work.md). The words are defined in [glossary/person_work.md](../../glossary/person_work.md).
 
@@ -15,6 +15,7 @@ This file is a part of the rules of the tab "Work of one person". The layout of 
 - The package `data_layer_chat_sessions` keeps the tokens of each chat for each hour and each model, with the hour of the record of each request, in UTC. The cost of a chat is cut in the same hours: each hour has the cost of the tokens of that hour at the prices of its models. The web page puts each hour in the day that holds its start, in the time zone of the computer. A chat that lasts several days is therefore in several bars, with the cost of each day. In a time zone with a half hour, for example India, the tokens of at most one half hour can be on the next day or on the day before.
 - The program reads every file of the chats: for Codex, the files `.jsonl` and the files `.jsonl.zst` that Codex made from its old chats with zstd; for Claude Code, the file of each chat, and the files of its subagents and of its workflows below the folder `<chat id>/subagents`. The tokens of a subagent or of a workflow count for the chat that started it, at the hour of each answer. A chat of a folder next to the repository, such as `<repository>-site`, does not count.
 - The tokens of a request whose record has no date count at the date of the last record of the chat, or at the date of the last change of its file when no record has a date.
+- A review chat of Codex does not count, as it is not in the Past chats sidebar section ([chats_list.md](../sidebars/chats/chats_list.md)).
 - A chat that used no token does not count. A chat with a model that has no known price counts as a chat with no cost in every hour, because a cost without the tokens of that model would be too small. A line of text under the chart says how many such chats have tokens in the time range.
 
 ## The unit: US dollars or tokens

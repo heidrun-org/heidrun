@@ -19,7 +19,7 @@ const CLAUDE_FOLDER_LINES: usize = 200;
 pub const CACHE_FILE_NAME: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 5;
+const CACHE_VERSION: u32 = 6;
 
 /// The result of the scan of one file, valid while the size and the modification date of the file stay the same.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
