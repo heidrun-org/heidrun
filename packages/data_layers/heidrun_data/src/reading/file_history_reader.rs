@@ -131,7 +131,7 @@ mod tests {
 
     /// A tool call record with a date.
     fn tool_call(text: &str) -> ChatRecord {
-        ChatRecord { at: Some("2026-10-11T10:00:00.000Z".into()), role: Role::Tool, text: text.into() }
+        ChatRecord { at: Some("2026-10-11T10:00:00.000Z".into()), role: Role::Tool, text: text.into(), is_error: None }
     }
 
     #[test]

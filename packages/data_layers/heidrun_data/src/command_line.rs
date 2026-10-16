@@ -221,7 +221,8 @@ Options:
   --format <name>            jsonl, json, or table.
   --json                     The same as --format json.
   --verbose                  Print the progress of each source on the standard error
-                             output.
+                             output, and a line when the command waits for the lock
+                             of the SQLite file.
   -h, --help                 Print this help.
 
 An option that a source does not use is not an error: the other sources use it.
@@ -511,6 +512,9 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if !has_diff && !matches!(kind, ReadKind::Commit | ReadKind::PullRequest) {
             return Err("The option --no-diff is for read commit and read pull_request only.".to_string());
         }
+        if repository.is_some() && !matches!(kind, ReadKind::Issue | ReadKind::PullRequest) {
+            return Err("The option --repository is for read issue and read pull_request only.".to_string());
+        }
         if matches!(kind, ReadKind::Issue | ReadKind::PullRequest) && key.parse::<u64>().is_err() {
             return Err(format!("The key of read {kind_name} is a number, and got {key}."));
         }
@@ -735,6 +739,10 @@ mod tests {
         assert!(parse(&arguments(&["sources", "--limit", "5"])).unwrap_err().contains("--limit"));
         assert!(parse(&arguments(&["query", "--folder", "a", "SELECT 1"])).unwrap_err().contains("--folder"));
         assert!(parse(&arguments(&["sources", "--repository", "a/b"])).unwrap_err().contains("--repository"));
+        for kind in ["chat_session", "commit"] {
+            let error = parse(&arguments(&["read", kind, "a", "--repository", "a/b"])).unwrap_err();
+            assert!(error.contains("--repository"), "{error}");
+        }
         assert!(parse(&arguments(&["query", "--file", "a", "SELECT 1"])).unwrap_err().contains("--file"));
     }
 

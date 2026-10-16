@@ -1,6 +1,6 @@
 //! Runs the mode initialize or the mode update of each source that is asked for, with the library of its data layer package.
 
-use crate::database_lock::lock_database;
+use crate::database_lock::lock_database_and_report_wait;
 use crate::output::QueryRow;
 use crate::sources::Source;
 use serde_json::{json, Value};
@@ -99,7 +99,7 @@ pub fn synchronize(
         .into_iter()
         .map(|source| {
             log(&format!("source {}: mode {}", source.name(), mode.name()));
-            let result = lock_database(&options.database_path)
+            let result = lock_database_and_report_wait(&options.database_path, log)
                 .and_then(|_guard| synchronize_source(mode, source, options, log));
             (source, result)
         })

@@ -4,7 +4,8 @@
 pub const DEFAULT_LIMIT: u64 = 1000;
 
 /// The statement with `LIMIT <limit>` at its end, or the statement as it is when the limit is 0, when the statement is not a
-/// `SELECT`, a `WITH`, or a `VALUES`, or when the word `LIMIT` is already in it, outside the quoted texts and the comments.
+/// `SELECT`, a `WITH`, or a `VALUES`, or when the word `LIMIT` is already in it, outside the quoted texts, the comments, and
+/// the parentheses. A `LIMIT` inside a subquery limits only the subquery, so it does not count.
 /// The comments are removed from a statement that gets a limit, and the limit goes on a new line, so a comment at the end
 /// cannot hide it.
 pub fn add_limit(sql: &str, limit: u64) -> String {
@@ -12,13 +13,9 @@ pub fn add_limit(sql: &str, limit: u64) -> String {
         return sql.to_string();
     }
     let (without_comments, code_only) = split_statement(sql);
-    let words: Vec<String> = code_only
-        .split(|character: char| !(character.is_ascii_alphanumeric() || character == '_'))
-        .filter(|word| !word.is_empty())
-        .map(str::to_ascii_uppercase)
-        .collect();
+    let words = upper_case_words(&code_only);
     let is_read = matches!(words.first().map(String::as_str), Some("SELECT" | "WITH" | "VALUES"));
-    if !is_read || words.iter().any(|word| word == "LIMIT") {
+    if !is_read || upper_case_words(&outside_parentheses(&code_only)).iter().any(|word| word == "LIMIT") {
         return sql.to_string();
     }
     let mut statement = without_comments.trim_end();
@@ -26,6 +23,34 @@ pub fn add_limit(sql: &str, limit: u64) -> String {
         statement = rest.trim_end();
     }
     format!("{statement}\nLIMIT {limit}")
+}
+
+/// The words of a text, in upper case.
+fn upper_case_words(text: &str) -> Vec<String> {
+    text.split(|character: char| !(character.is_ascii_alphanumeric() || character == '_'))
+        .filter(|word| !word.is_empty())
+        .map(str::to_ascii_uppercase)
+        .collect()
+}
+
+/// The text with each character inside parentheses changed to one space, so only the words at the depth 0 stay.
+fn outside_parentheses(code_only: &str) -> String {
+    let mut depth = 0usize;
+    code_only
+        .chars()
+        .map(|character| match character {
+            '(' => {
+                depth += 1;
+                ' '
+            }
+            ')' => {
+                depth = depth.saturating_sub(1);
+                ' '
+            }
+            _ if depth > 0 => ' ',
+            _ => character,
+        })
+        .collect()
 }
 
 /// The statement in two forms: without its comments, and without its comments and its quoted texts. A comment and a quoted
@@ -97,6 +122,16 @@ mod tests {
     fn adds_nothing_when_the_statement_has_a_limit() {
         assert_eq!(add_limit("SELECT * FROM commits LIMIT 5", 1000), "SELECT * FROM commits LIMIT 5");
         assert_eq!(add_limit("SELECT * FROM commits\nlimit 5 offset 2", 1000), "SELECT * FROM commits\nlimit 5 offset 2");
+    }
+
+    #[test]
+    fn adds_the_limit_when_the_only_limit_is_inside_a_subquery() {
+        let sql = "SELECT c.id FROM chat_sessions AS c, (SELECT 1 LIMIT 1) WHERE c.repository = 'a/b'";
+        assert_eq!(add_limit(sql, 1000), format!("{sql}\nLIMIT 1000"));
+        let sql = "WITH a AS (SELECT 1 LIMIT 1) SELECT * FROM a";
+        assert_eq!(add_limit(sql, 5), format!("{sql}\nLIMIT 5"));
+        let sql = "SELECT * FROM (SELECT 1 LIMIT 1) LIMIT 3";
+        assert_eq!(add_limit(sql, 5), sql);
     }
 
     #[test]
