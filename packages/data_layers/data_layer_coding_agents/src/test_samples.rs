@@ -1,8 +1,7 @@
 //! Sample data and helpers for the tests of the package. Only the tests compile this file.
 
-use crate::model::types::{
-    ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent, ModelTokens,
-};
+use crate::model::configuration_types::{ConfigurationItem, ConfigurationKind, ConfigurationScope};
+use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent, ModelTokens};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
@@ -105,5 +104,24 @@ pub fn chat_session_record(id: &str) -> ChatSessionRecord {
             pull_requests: vec![249],
             files_written: vec!["/work/app/a.ts".into(), "/work/app/b.ts".into()],
         },
+    }
+}
+
+/// A configuration item of a kind that follows the JSON schema of the kind, created on the day 1 and changed on the day 2. A
+/// memory file has a type and the chat session that wrote it.
+pub fn configuration_item(kind: ConfigurationKind, id: &str) -> ConfigurationItem {
+    let is_memory_file = kind == ConfigurationKind::MemoryFile;
+    ConfigurationItem {
+        id: id.to_string(),
+        coding_agent: Some(CodingAgent::ClaudeCode),
+        scope: ConfigurationScope::Project,
+        folder: "/work/app/.claude".into(),
+        name: "a-name".into(),
+        description: Some("A description".into()),
+        created_at: date(1),
+        updated_at: date(2),
+        removed_at: None,
+        memory_type: if is_memory_file { Some("feedback".into()) } else { None },
+        origin_chat_session_id: if is_memory_file { Some("abc".into()) } else { None },
     }
 }

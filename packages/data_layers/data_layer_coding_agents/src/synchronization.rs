@@ -3,10 +3,15 @@
 //! The date of the last read is not stored anywhere else: it is the largest value of the column `updatedAt` of the table
 //! `chat_sessions`, for the repository. The mode update reads again only the chat session files that changed at this date or
 //! later. When the table has no row for the repository, the mode update reads everything, as the mode initialize does.
+//!
+//! The tables of the configuration of the coding agent are small, so both modes read every memory file, subagent, and skill.
 
+use crate::coding_agents::configuration_reader::{read_configuration, ConfigurationFolders};
 use crate::coding_agents::scan_cache::ScanCache;
-use crate::coding_agents::session_reader::{parse_date, read_chat_sessions};
+use crate::coding_agents::session_reader::{format_date, parse_date, read_chat_sessions};
+use crate::model::configuration_types::ConfigurationWriteCount;
 use crate::model::types::{SynchronizationMode, SynchronizationReport};
+use crate::storage::configuration_database::ConfigurationDatabase;
 use crate::storage::database::ChatSessionsDatabase;
 use std::path::Path;
 
@@ -40,6 +45,37 @@ pub fn run(
         since,
         chat_session_count: records.len(),
     })
+}
+
+/// Reads the memory files, the subagents, and the skills of the repository, and writes them in the database. A row whose
+/// file the read does not find any more is marked as removed at the date of now. `log` receives one line of progress for
+/// each table.
+///
+/// # Errors
+/// An error when the database cannot be written, or when an item does not follow its JSON schema.
+pub fn run_configuration(
+    repository: &str,
+    folders: &ConfigurationFolders,
+    database: &mut ConfigurationDatabase,
+    log: &dyn Fn(&str),
+) -> Result<Vec<ConfigurationWriteCount>, String> {
+    let milliseconds = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_millis() as i64)
+        .unwrap_or_default();
+    let now = format_date(milliseconds).ok_or("The date of now cannot be written.")?;
+    let mut counts = Vec::new();
+    for read in read_configuration(folders) {
+        let count = database.write_configuration(repository, &read, &now)?;
+        log(&format!(
+            "{}: written row count {}, marked as removed {}",
+            read.kind.table_name(),
+            count.written_count,
+            count.removed_count
+        ));
+        counts.push(count);
+    }
+    Ok(counts)
 }
 
 /// Writes in words the date where a read starts: `since the beginning` for `None`, otherwise `since` and the date.
@@ -142,6 +178,31 @@ mod tests {
         let report = synchronize(SynchronizationMode::Initialize, &directory, &mut database);
         assert_eq!(report.chat_session_count, 0);
         assert_eq!(database.count_rows(ChatSessionTable::ChatSessions, REPOSITORY), Ok(0));
+    }
+
+    #[test]
+    fn writes_the_configuration_and_marks_a_removed_skill_on_the_next_run() {
+        use crate::model::configuration_types::ConfigurationKind;
+        let directory = temp_folder("configuration_run");
+        let folders = ConfigurationFolders {
+            root: directory.join("app"),
+            claude_dir: directory.join("claude"),
+            codex_home: directory.join("codex"),
+            agents_home: directory.join("agents"),
+        };
+        let skill_file = folders.root.join(".claude/skills/a/SKILL.md");
+        write_file(&skill_file, "---\nname: a\n---\n", 10);
+        write_file(&folders.claude_dir.join("agents/b.md"), "---\nname: b\n---\n", 10);
+        let mut database = ConfigurationDatabase::open(&directory.join("data_layer.sqlite")).unwrap();
+        let counts = run_configuration(REPOSITORY, &folders, &mut database, &ignore_log).unwrap();
+        let written: Vec<(usize, usize)> = counts.iter().map(|count| (count.written_count, count.removed_count)).collect();
+        assert_eq!(written, [(0, 0), (1, 0), (1, 0)]);
+        std::fs::remove_file(&skill_file).unwrap();
+        let counts = run_configuration(REPOSITORY, &folders, &mut database, &ignore_log).unwrap();
+        assert_eq!((counts[2].written_count, counts[2].removed_count), (0, 1));
+        let skill_id = folders.root.join(".claude/skills/a").display().to_string();
+        let skill = database.find_item(ConfigurationKind::Skill, REPOSITORY, &skill_id).unwrap().unwrap();
+        assert!(skill.removed_at.is_some());
     }
 
     #[test]

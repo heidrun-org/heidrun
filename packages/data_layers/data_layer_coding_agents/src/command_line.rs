@@ -5,17 +5,23 @@ use data_layer_coding_agents::SynchronizationMode;
 /// The text of the option `--help`.
 pub const HELP: &str = r#"Usage: data_layer_coding_agents <command> [options]
 
-Reads the chat sessions that Claude Code and Codex saved for a repository, and writes
-them in a SQLite file. The table "chat_sessions" has one row for each chat session, with
-its facts as JSON. Four link tables hold what each chat session is linked to:
-"chat_session_folders", "chat_session_issues", "chat_session_pull_requests",
-and "chat_session_files".
+Reads the chat sessions that Claude Code and Codex saved for a repository, and the
+configuration of the coding agent, and writes them in a SQLite file. The table
+"chat_sessions" has one row for each chat session, with its facts as JSON. Four link
+tables hold what each chat session is linked to: "chat_session_folders",
+"chat_session_issues", "chat_session_pull_requests", and "chat_session_files".
+
+The configuration of the coding agent has three tables, with one row for each memory
+file, subagent, or skill: "memory_files", "subagents", and "skills". The column "id"
+is the absolute path, so it joins the column "path" of "chat_session_files". A row
+whose file is gone stays, with the date of the removal in "removedAt".
 
 Commands:
   initialize                 Read every chat session since the beginning.
   update                     Read only the chat sessions whose file changed since
                              the last read. When the table is empty, read
-                             everything.
+                             everything. Both commands read the whole
+                             configuration of the coding agent.
   query <sql>                Run one SQL statement on the database, and print the
                              rows. The database is open read only, so a statement
                              that writes fails. The column "data" holds JSON: use
@@ -37,7 +43,8 @@ Options:
   -h, --help                 Print this help.
 
 The folders of the chat sessions are "~/.claude" (or the variable CLAUDE_CONFIG_DIR)
-and "~/.codex" (or the variable CODEX_HOME).
+and "~/.codex" (or the variable CODEX_HOME). The skills are also read in "~/.agents",
+and in the folders ".claude" and ".agents" of the repository.
 
 Exit codes:
   0   The command worked.
@@ -48,6 +55,7 @@ Examples:
   $ data_layer_coding_agents update --verbose
   $ data_layer_coding_agents query "SELECT id, json_extract(data, '$.title') AS title FROM chat_sessions LIMIT 5"
   $ data_layer_coding_agents query --json "SELECT count(*) AS count FROM chat_session_issues"
+  $ data_layer_coding_agents query "SELECT json_extract(data, '$.name') AS name FROM skills"
 "#;
 
 /// What the arguments ask for.
