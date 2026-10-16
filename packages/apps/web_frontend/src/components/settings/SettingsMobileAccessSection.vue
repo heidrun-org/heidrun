@@ -47,6 +47,8 @@ onBeforeUnmount(() => {
 // The button "Stop the old ngrok" (issue 583). When no ngrok of Heidrun was killed, the other ngrok runs somewhere else, and
 // the developer closes it by hand.
 const isLeftoverNotFound = ref(false);
+/** The command that stops every ngrok of this computer, the same in every language. */
+const KILL_ALL_NGROK_COMMAND = "pkill -x ngrok";
 async function stopOldNgrok() {
   const isKilled = await stopLeftoverNgrok();
   isLeftoverNotFound.value = isKilled === false;
@@ -79,7 +81,10 @@ async function openPairingLink(link: string) {
         <button type="button" class="btn mt-2 stop-old-ngrok" :disabled="mobile.busy" @click="stopOldNgrok">
           {{ t("mobileModal.stopOldNgrok") }}
         </button>
-        <div v-if="isLeftoverNotFound" class="mt-2 old-ngrok-not-found">{{ t("mobileModal.oldNgrokNotFound") }}</div>
+        <div v-if="isLeftoverNotFound" class="mt-2 old-ngrok-not-found">
+          {{ t("mobileModal.oldNgrokNotFound") }}
+          <code class="d-block mono mt-1 user-select-all kill-all-ngrok">{{ KILL_ALL_NGROK_COMMAND }}</code>
+        </div>
       </template>
     </div>
 

@@ -182,6 +182,7 @@ describe("SettingsMobileAccessSection, when something goes wrong", () => {
     await wrapper.get(".stop-old-ngrok").trigger("click");
     await flushPromises();
     expect(wrapper.get(".old-ngrok-not-found").text()).toContain("Heidrun did not start the other ngrok. Close it by hand");
+    expect(wrapper.get(".kill-all-ngrok").text()).toBe("pkill -x ngrok");
   });
 
   it("shows the last message of ngrok under the sentence when it stopped", async () => {
