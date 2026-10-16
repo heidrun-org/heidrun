@@ -8,8 +8,9 @@ pub enum Source {
     SourceControl,
     /// The issues and the pull requests of the GitHub repository, written by `data_layer_code_hosting`.
     CodeHosting,
-    /// The chat sessions of Claude Code and of Codex, written by `data_layer_chat_sessions`.
-    ChatSessions,
+    /// The chat sessions of Claude Code and of Codex, and the configuration of the coding agent (the memory files, the
+    /// subagents, and the skills), written by `data_layer_coding_agents`.
+    CodingAgents,
     /// The user activity records of the developer, written by `data_layer_user_activity`.
     UserActivity,
 }
@@ -76,14 +77,19 @@ const CODE_HOSTING_TABLES: &[Table] = &[
     },
 ];
 
-/// The tables of the chat sessions.
-const CHAT_SESSIONS_TABLES: &[Table] = &[
+/// The table of one kind of the configuration of the coding agent.
+const fn configuration_table(name: &'static str, file_name: &'static str, text: &'static str) -> Table {
+    Table { name, date_column: Some("updatedAt"), data_schema: Some(DataSchema { file_name, text }), joins: &[] }
+}
+
+/// The tables of the coding agents: the chat sessions, their link tables, and the configuration of the coding agent.
+const CODING_AGENTS_TABLES: &[Table] = &[
     Table {
         name: "chat_sessions",
         date_column: Some("updatedAt"),
         data_schema: Some(DataSchema {
             file_name: "chat_session.schema.json",
-            text: data_layer_chat_sessions::CHAT_SESSION_SCHEMA,
+            text: data_layer_coding_agents::CHAT_SESSION_SCHEMA,
         }),
         joins: &[],
     },
@@ -104,6 +110,9 @@ const CHAT_SESSIONS_TABLES: &[Table] = &[
         ],
     },
     Table { name: "chat_session_files", date_column: None, data_schema: None, joins: &[CHAT_SESSION_JOIN] },
+    configuration_table("memory_files", "memory_file.schema.json", data_layer_coding_agents::MEMORY_FILE_SCHEMA),
+    configuration_table("subagents", "subagent.schema.json", data_layer_coding_agents::SUBAGENT_SCHEMA),
+    configuration_table("skills", "skill.schema.json", data_layer_coding_agents::SKILL_SCHEMA),
 ];
 
 /// The tables of the user activity.
@@ -119,14 +128,14 @@ const USER_ACTIVITY_TABLES: &[Table] = &[Table {
 
 impl Source {
     /// The four sources, in the fixed order of `update` and `initialize`. The two sources that the others link to come first.
-    pub const ALL: [Source; 4] = [Source::SourceControl, Source::CodeHosting, Source::ChatSessions, Source::UserActivity];
+    pub const ALL: [Source; 4] = [Source::SourceControl, Source::CodeHosting, Source::CodingAgents, Source::UserActivity];
 
     /// The name of the source on the command line and in the output.
     pub fn name(self) -> &'static str {
         match self {
             Source::SourceControl => "source_control",
             Source::CodeHosting => "code_hosting",
-            Source::ChatSessions => "chat_sessions",
+            Source::CodingAgents => "coding_agents",
             Source::UserActivity => "user_activity",
         }
     }
@@ -141,7 +150,7 @@ impl Source {
         match self {
             Source::SourceControl => SOURCE_CONTROL_TABLES,
             Source::CodeHosting => CODE_HOSTING_TABLES,
-            Source::ChatSessions => CHAT_SESSIONS_TABLES,
+            Source::CodingAgents => CODING_AGENTS_TABLES,
             Source::UserActivity => USER_ACTIVITY_TABLES,
         }
     }
@@ -177,8 +186,8 @@ mod tests {
     #[test]
     fn sorts_the_sources_in_the_fixed_order_whatever_the_order_given() {
         assert_eq!(
-            Source::in_fixed_order(&[Source::UserActivity, Source::ChatSessions, Source::CodeHosting, Source::ChatSessions]),
-            vec![Source::CodeHosting, Source::ChatSessions, Source::UserActivity]
+            Source::in_fixed_order(&[Source::UserActivity, Source::CodingAgents, Source::CodeHosting, Source::CodingAgents]),
+            vec![Source::CodeHosting, Source::CodingAgents, Source::UserActivity]
         );
     }
 

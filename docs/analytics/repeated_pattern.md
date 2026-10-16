@@ -13,8 +13,8 @@ This file answers one question: can we learn from the chat sessions, for example
 
 **Not with the tables. Yes with the files.**
 
-- The tables of the data layer `data_layer_chat_sessions` store facts only: the id, the coding agent, the title, the dates, the number of developer messages, the tokens, and the links to the issues, the pull requests, the files, and the folders. They store no message text, so a repeated message cannot be found in them.
-- The chat session files are on the disk: the files `*.jsonl` of Claude Code in the folder `~/.claude/projects/<project>`, and the files `*.jsonl.zst` of Codex in the folder `~/.codex`. The library of `data_layer_chat_sessions` already opens them line by line to build the tables. So the repeated patterns are found by a read of these files, not by a query of the SQLite file.
+- The tables of the data layer `data_layer_coding_agents` store facts only: the id, the coding agent, the title, the dates, the number of developer messages, the tokens, and the links to the issues, the pull requests, the files, and the folders. They store no message text, so a repeated message cannot be found in them.
+- The chat session files are on the disk: the files `*.jsonl` of Claude Code in the folder `~/.claude/projects/<project>`, and the files `*.jsonl.zst` of Codex in the folder `~/.codex`. The library of `data_layer_coding_agents` already opens them line by line to build the tables. So the repeated patterns are found by a read of these files, not by a query of the SQLite file.
 
 ## The proof on this repository
 

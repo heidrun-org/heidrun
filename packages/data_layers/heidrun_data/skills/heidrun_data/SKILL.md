@@ -1,6 +1,6 @@
 ---
 name: heidrun_data
-description: Answer a question about the history of a repository from the data layers of Heidrun, its past chats with Claude Code and Codex, its commits, its issues, its pull requests, and the activity of the developer, with the command line heidrun_data. Use it for a post-mortem of a commit, of an issue, or of a pull request, to find what the developer typed or ran many times, or to find what failed many times in the past chats.
+description: Answer a question about the history of a repository from the data layers of Heidrun, its past chats with Claude Code and Codex, the memory files, subagents, and skills of the coding agent, its commits, its issues, its pull requests, and the activity of the developer, with the command line heidrun_data. Use it for a post-mortem of a commit, of an issue, or of a pull request, to find what the developer typed or ran many times, or to find what failed many times in the past chats.
 ---
 
 # heidrun_data
@@ -9,7 +9,7 @@ description: Answer a question about the history of a repository from the data l
 
 | Source | What it holds | Tables |
 | --- | --- | --- |
-| `chat_sessions` | The chat sessions that Claude Code and Codex saved for the repository, with their tokens, and what each one is linked to. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files` |
+| `coding_agents` | The chat sessions that Claude Code and Codex saved for the repository, with their tokens, and what each one is linked to. The configuration of the coding agent: the memory files of Claude Code, the subagents, and the skills. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills` |
 | `source_control` | Every commit of the Git repository, merges included. | `commits` |
 | `code_hosting` | Every issue and every pull request of the GitHub repository. | `issues`, `pull_requests` |
 | `user_activity` | The active periods of the developer in front of Heidrun, one per workspace. | `user_activity_records` |
@@ -34,7 +34,7 @@ Always give `--format jsonl`, so the output is one JSON object per line and neve
    ```bash
    heidrun_data update --format jsonl
    ```
-   `heidrun_data update chat_sessions` updates one source only. The command writes only what is new, so it is safe to run again and again. A source that fails does not stop the others: read the errors on the standard error output. The command waits while the desktop application Heidrun writes the SQLite file. Give `--verbose` to see the line `waiting for the lock file <path>` on the standard error output: a command that prints this line and then nothing for a minute is waiting for the lock, not broken.
+   `heidrun_data update coding_agents` updates one source only. The command writes only what is new, so it is safe to run again and again. A source that fails does not stop the others: read the errors on the standard error output. The command waits while the desktop application Heidrun writes the SQLite file. Give `--verbose` to see the line `waiting for the lock file <path>` on the standard error output: a command that prints this line and then nothing for a minute is waiting for the lock, not broken.
 3. **Read the shape once.**
    ```bash
    heidrun_data schema --format jsonl
@@ -63,6 +63,7 @@ Every table of a source has a few key columns and one column `data`, which holds
 - `chat_session_pull_requests`: columns `repository`, `chatSessionId`, `pullRequestNumber`. Joins `pull_requests` the same way.
 - `chat_session_files`: columns `repository`, `chatSessionId`, `path`. The files that the coding agent wrote in the chat session, with the path that the coding agent used, often an absolute path.
 - `chat_session_folders`: columns `repository`, `chatSessionId`, `folder`. The folders in which the chat session ran.
+- `memory_files`, `subagents`, and `skills`: keys `repository`, `id`, `updatedAt`. The `id` is the absolute path of the file, or of the folder of a skill, so it joins `chat_session_files` on `repository` and `path = id`: the chat sessions that wrote the file. A row whose file is gone stays, with the date in the field `removedAt`. A memory file has the fields `memoryType` and `originChatSessionId`, the chat session that wrote it. A skill or a subagent with the scope `USER` is in the home folder of the developer, and is the same for every repository.
 - `commits`: keys `repository`, `hash`, `committedAt`. A commit has no link table, and stores no file name: `read commit` gives the files.
 - `issues` and `pull_requests`: keys `repository`, `number`, `updatedAt`. The text `Fixes #N` in the body of a pull request is the only link from a pull request to its issue.
 - `user_activity_records`: keys `workspaceFolder`, `startedAt`, `endedAt`. It joins no other table.
@@ -83,12 +84,14 @@ What the tables do not hold:
 | `heidrun_data read chat_session <id>` | The records of the chat session, one per line: `at`, `role` (`developer`, `coding_agent`, or `tool`), `text`, and `isError`. A tool call is `<name>: <input>` and a tool result is `result: <output>`, each shortened to one line; `--full` prints them whole. |
 | `heidrun_data read commit <hash>` | The message, the files changed, then the diff. `--no-diff` stops after the files. |
 | `heidrun_data read issue <number>` | The body, then every comment with its author and its date. |
+| `heidrun_data read file_history <path>` | Every tool call of a chat session that wrote the file (`Write`, `Edit`, `Bash`, `apply_patch`, ...), in the order of the dates, with its chat session and its input in full. The `old_string` and `new_string` of an `Edit` are the diff. Give the absolute path: a file name alone matches the end of the path, so it can find another file with the same name. A shell command counts only when it names the path and has a sign of a write (`>`, `sed -i`, `tee`, `mv`, `cp`, `rm`), so check the result. A change made by hand is not found. It reads every chat session file, so it can take some seconds. |
 | `heidrun_data read pull_request <number>` | The body, then every comment, review, and review comment with its author, its date, and for a review comment its file and its line, in the order of the dates, then the diff. `--no-diff` stops before the diff. |
 
 With `--format jsonl`, each line has these fields:
 
 - `read chat_session`: `at`, `role`, `text`, `isError`. `isError` is `true` for a tool result that Claude Code marks as failed, `false` for a tool result that Claude Code marks as a success, and `null` when the coding agent gives no mark: for every other record, and for every record of Codex.
 - `read commit`: one object with `hash`, `authorName`, `authorEmail`, `committedAt`, `message`, `files` (a list of `path`, `insertions`, `deletions`), and `diff` unless `--no-diff` is given.
+- `read file_history`: `at`, `chatSessionId`, `tool`, and `input`, the input of the tool call as JSON.
 - `read issue` and `read pull_request`: `kind` (`issue`, `pull_request`, `comment`, `review`, `review_comment`, or `diff`), `author`, `at`, and `text`. The body has `number`, `title`, and `state` too, a review has `state`, and a review comment has `path` and `line`.
 
 `read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` and `read commit` work from any folder of the repository, a worktree included.
@@ -137,6 +140,25 @@ WHERE cs.repository = 'heidrun-org/heidrun'
 A commit can have many files: write one `LIKE` condition for each file, and leave out the files that every change touches, such as `Cargo.lock`. If no chat session is found, the chat session may have run in a worktree: see "What the tables do not hold".
 
 Then `heidrun_data read chat_session <id>` on each one, and look for the moment when the coding agent made the change.
+
+## Example: the corrections of the developer
+
+A memory file of type `feedback` is a correction that the developer gave to the coding agent, with the chat session where it happened:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT json_extract(data, '$.name') AS name,
+       json_extract(data, '$.description') AS description,
+       json_extract(data, '$.originChatSessionId') AS chatSessionId,
+       updatedAt
+FROM memory_files
+WHERE repository = 'heidrun-org/heidrun'
+  AND json_extract(data, '$.memoryType') = 'feedback'
+  AND json_extract(data, '$.removedAt') IS NULL
+ORDER BY updatedAt"
+```
+
+The tables keep only the last state of a memory file. Its changes, with the text before and after, are in the chat sessions: `heidrun_data read file_history <id of the row> --format jsonl` gives each tool call that wrote it, and `read chat_session <chatSessionId>` shows why.
 
 ## Example: what the developer typed, ran, or hit many times
 

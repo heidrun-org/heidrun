@@ -5,7 +5,7 @@
 - Status: Maintained description of the four data layers
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: chats](../agents_rules/glossary/chats.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464), [issue 564](https://github.com/heidrun-org/heidrun/issues/564)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464), [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 569](https://github.com/heidrun-org/heidrun/issues/569)
 
 This file says what we mean by a data layer, and describes the four data layers of Heidrun. The two files [user_activity_statistics.md](user_activity_statistics.md) and [work_of_one_person_statistics.md](work_of_one_person_statistics.md) describe the statistics that read them.
 
@@ -21,7 +21,7 @@ The statistics read the facts from the SQLite file. They do not ask GitHub, Git,
 | --- | --- | --- | --- |
 | [`data_layer_source_control`](../../packages/data_layers/data_layer_source_control/README.md) | Source control (Git) | Every commit of a Git repository, merges included, with the command `git log`. | `commits` |
 | [`data_layer_code_hosting`](../../packages/data_layers/data_layer_code_hosting/README.md) | Code hosting (GitHub) | Every issue and every pull request of a GitHub repository, with the command `gh api graphql`. | `issues`, `pull_requests` |
-| [`data_layer_chat_sessions`](../../packages/data_layers/data_layer_chat_sessions/README.md) | Chat sessions | The chat session files that Claude Code and Codex save on this computer for the repository. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files` |
+| [`data_layer_coding_agents`](../../packages/data_layers/data_layer_coding_agents/README.md) | Coding agents | The chat session files that Claude Code and Codex save on this computer for the repository, and the coding agent configuration: the memory files, the subagents, and the skills ([issue 569](https://github.com/heidrun-org/heidrun/issues/569)). | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills` |
 | [`data_layer_user_activity`](../../packages/data_layers/data_layer_user_activity/README.md) | User activity | The file `~/.config/heidrun/user_activity.jsonl`, which the web frontend writes. | `user_activity_records` |
 
 The mode `update` of each data layer reads only what is new:
@@ -30,14 +30,14 @@ The mode `update` of each data layer reads only what is new:
 | --- | --- | --- |
 | `data_layer_source_control` | `repository`, `hash` | The commits whose hash is not in the table. |
 | `data_layer_code_hosting` | `repository`, `number` | The items that changed after the largest `updatedAt` of the table. |
-| `data_layer_chat_sessions` | `repository`, `id` | The chat session files that changed at the largest `updatedAt` or later. |
+| `data_layer_coding_agents` | `repository`, `id` | The chat session files that changed at the largest `updatedAt` or later. Every memory file, subagent, and skill, each time. |
 | `data_layer_user_activity` | `workspaceFolder`, `startedAt` | The records whose `endedAt` is later than the largest `endedAt` of the table. |
 
 ## The SQLite file
 
 - The default path is `~/.config/heidrun/data_layer.sqlite`. The option `--database` of each command line tool replaces it.
 - Each data layer creates and writes only its own tables.
-- The tables join each other in one way only. The columns `repository` and `issueNumber` of `chat_session_issues` join the columns `repository` and `number` of `issues`. The table `chat_session_pull_requests` joins `pull_requests` the same way. The text `Fixes #N` in the field `body` of a pull request is the only link from a pull request to its issue, because the field `closingIssuesReferences` of GitHub is empty here.
+- The tables join each other in one way only. The columns `repository` and `issueNumber` of `chat_session_issues` join the columns `repository` and `number` of `issues`. The table `chat_session_pull_requests` joins `pull_requests` the same way. The column `id` of `memory_files`, `subagents`, and `skills` is an absolute path, and joins the column `path` of `chat_session_files`: the chat sessions that wrote the file. The text `Fixes #N` in the field `body` of a pull request is the only link from a pull request to its issue, because the field `closingIssuesReferences` of GitHub is empty here.
 - A user activity record holds the folder of a workspace and not the name of a repository, so `user_activity_records` joins no other table.
 - The data layers set no waiting time on the file, so two writes at the same time fail with the error "database is locked". The desktop application and the command `heidrun_data update` take one lock before each write of the file: `lock_database` in `packages/data_layers/heidrun_data/src/database_lock.rs`. The lock holds for the threads of one program, and for the programs of the computer through the lock file `data_layer.sqlite.lock` next to the SQLite file ([issue 564](https://github.com/heidrun-org/heidrun/issues/564)).
 
@@ -48,7 +48,7 @@ The mode `update` of each data layer reads only what is new:
 - Each data layer has the modes `initialize` and `update`, and the read-only command `query`. A mode can run again and again, and never writes a row two times. The command `query` opens the file read only, so it never changes the file and never creates it.
 - Each data layer is a Rust library and a command line tool. The script `pnpm --silent data_layer:<name>` at the root of the repository runs the command line tool, and the script `pnpm --filter <package> test` runs the tests. The calls of the library are blocking.
 - No data layer imports another data layer. They share the SQLite file only.
-- The package [`heidrun_data`](../../packages/data_layers/heidrun_data/README.md) is not a data layer. It is one command line for a coding agent that calls the four libraries: `update` and `initialize` of every source or of the sources given, `query` with a default `LIMIT`, `sources`, `schema`, and `read` (the content of a chat session, a commit, an issue, or a pull request, which the tables do not store), with the output formats `jsonl`, `json`, and `table`. Its [SKILL.md](../../packages/data_layers/heidrun_data/SKILL.md) teaches a coding agent to use it. The script `pnpm --silent data_layer` runs it. It is the only package that imports more than one data layer ([issue 564](https://github.com/heidrun-org/heidrun/issues/564)).
+- The package [`heidrun_data`](../../packages/data_layers/heidrun_data/README.md) is not a data layer. It is one command line for a coding agent that calls the four libraries: `update` and `initialize` of every source or of the sources given, `query` with a default `LIMIT`, `sources`, `schema`, and `read` (the content of a chat session, a commit, an issue, or a pull request, which the tables do not store), with the output formats `jsonl`, `json`, and `table`. Its [SKILL.md](../../packages/data_layers/heidrun_data/SKILL.md) teaches a coding agent to use it. The script `pnpm --silent data_layer:heidrun_data` runs it. It is the only package that imports more than one data layer ([issue 564](https://github.com/heidrun-org/heidrun/issues/564)).
 - Every data layer has the same folders: `src/model`, `src/storage`, the folder that reads the source, `src/synchronization.rs`, `schemas`, and `tests`.
 
 ## How Heidrun uses the four data layers
@@ -57,18 +57,18 @@ The mode `update` of each data layer reads only what is new:
 | --- | --- | --- |
 | Statistics window, tab "User activity" | `data_layer_user_activity` | Yes. See [user_activity_statistics.md](user_activity_statistics.md). |
 | Statistics window, tab "Work of one person", source "Git history" | `data_layer_source_control`, `data_layer_code_hosting` | Yes. See [work_of_one_person_statistics.md](work_of_one_person_statistics.md). |
-| Statistics window, tab "Work of one person", source "AI cost" | `data_layer_chat_sessions` | No. It uses the library to read the chat session files, with the scan cache `~/.config/heidrun/chats_cache.json`. |
-| Past chats sidebar section | `data_layer_chat_sessions` | No. It uses the same library and the same scan cache. |
+| Statistics window, tab "Work of one person", source "AI cost" | `data_layer_coding_agents` | No. It uses the library to read the chat session files, with the scan cache `~/.config/heidrun/chats_cache.json`. |
+| Past chats sidebar section | `data_layer_coding_agents` | No. It uses the same library and the same scan cache. |
 
-The desktop application never opens the five tables of `data_layer_chat_sessions`. Only the command line tool fills them.
+The desktop application never opens the eight tables of `data_layer_coding_agents`. Only the command line tool fills them.
 
 The program refreshes a data layer when a statistic needs it: each command runs the mode `update` first, then reads. No timer refreshes the SQLite file.
 
 ## Open points
 
 - GitHub only: `data_layer_code_hosting` reads GitHub. The rule of GitHub and GitLab support requires the same support for GitLab, and it is not written yet ([comment of issue 455](https://github.com/heidrun-org/heidrun/issues/455)).
-- Two names for one source: [issue 452](https://github.com/heidrun-org/heidrun/issues/452) calls the third source "Chat sessions", and the file `README.md` of `data_layer_chat_sessions` also calls it the "Past chats source".
+- The package `data_layer_chat_sessions` became `data_layer_coding_agents`, and the source `chat_sessions` of `heidrun_data` became `coding_agents`, when the package began to read the coding agent configuration too ([issue 569](https://github.com/heidrun-org/heidrun/issues/569)). [Issue 452](https://github.com/heidrun-org/heidrun/issues/452) calls this source "Chat sessions".
 - Two meanings of the word "source": a data layer reads a source of information, and the tab "Work of one person" has a source, "Git history" or "AI cost". These are two different things.
 - The master issue [issue 464](https://github.com/heidrun-org/heidrun/issues/464) says that no issue exists yet for the source "User activity". [Issue 474](https://github.com/heidrun-org/heidrun/issues/474) is merged.
-- `data_layer_chat_sessions` stores no relation to people, because no signal in a chat session tells that it mentions a person. It reads the chat sessions of the root of the repository only, and not those of its worktrees.
+- `data_layer_coding_agents` stores no relation to people, because no signal in a chat session tells that it mentions a person. It reads the chat sessions of the root of the repository only, and not those of its worktrees.
 - The space of the statistics, with the cost in time or in money and the human or the AI, is in [issue 451](https://github.com/heidrun-org/heidrun/issues/451). The definition of a segment is not decided yet.

@@ -173,7 +173,7 @@ ORDER BY chats DESC;
 
 **What it says.** The two hottest files are the two files of instructions for the coding agents, which says that the rules of the project change more often than any file of code. The hot files of code come after.
 
-**Limits.** The paths are absolute and include files outside the repository (the memory of Claude Code, the scratchpad folder). The metric needs the change of `data_layer_chat_sessions` described in [inputs_links.md](inputs_links.md). The commits store no file path, so the join with the lines added and deleted of each file is not possible yet.
+**Limits.** The paths are absolute and include files outside the repository (the memory of Claude Code, the scratchpad folder). The metric needs the change of `data_layer_coding_agents` described in [inputs_links.md](inputs_links.md). The commits store no file path, so the join with the lines added and deleted of each file is not possible yet.
 
 ## 8. The fix that needed a fix
 

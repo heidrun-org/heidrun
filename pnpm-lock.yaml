@@ -236,7 +236,7 @@ importers:
         specifier: ^3.5.43
         version: 3.5.43(typescript@5.9.3)
 
-  packages/data_layers/data_layer_chat_sessions: {}
+  packages/data_layers/data_layer_coding_agents: {}
 
   packages/data_layers/data_layer_code_hosting: {}
 

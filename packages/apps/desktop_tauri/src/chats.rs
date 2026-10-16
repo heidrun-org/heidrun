@@ -1,6 +1,6 @@
 //! Chats: the conversations that Claude Code and Codex saved on this Mac for the folder of a workspace.
 //!
-//! The package `data_layer_chat_sessions` finds the chat session files and reads what each one holds, without a model, and
+//! The package `data_layer_coding_agents` finds the chat session files and reads what each one holds, without a model, and
 //! keeps the result in `chats_cache.json`, in the data folder of Heidrun, until the size or the modification date of the file
 //! changes. It also reads the files that Codex compressed (`.jsonl.zst`), and it adds the tokens of the subagents and of the
 //! workflows of a conversation of Claude Code to that conversation. This file turns what the package reads into the list of the Past chats sidebar section: the title, the summary,
@@ -14,7 +14,7 @@
 //! of the folder is opened, then the conversations are sorted and cut to `limit`.
 
 use crate::model_prices::PriceTable;
-use data_layer_chat_sessions::{
+use data_layer_coding_agents::{
     feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
     title_of_scan, ChatMeta, FolderScope, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
 };
@@ -351,6 +351,9 @@ fn codex_chats(
     let files = find_codex_session_files(cache, home, folder, scope);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
+        if scan.meta.is_review_chat {
+            return None;
+        }
         titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens))
     })
 }
@@ -358,7 +361,7 @@ fn codex_chats(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use data_layer_chat_sessions::claude_folder_name;
+    use data_layer_coding_agents::claude_folder_name;
     use serde_json::Value;
     use std::time::{Duration, SystemTime};
 
@@ -626,6 +629,24 @@ mod tests {
         let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Newer", "Describe image"]);
         assert_eq!(found.chats[1].id, a);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn does_not_list_a_review_chat_of_codex() {
+        let dir = scratch("codex-review");
+        let normal = "01a12c31-175b-7513-b12c-bba764f46431";
+        let review = "01a12c31-175b-7513-b12c-bba764f46432";
+        codex_file(&dir, "2026/10/10", normal, "/work/app", &[&codex_message("Please fix issue 250")], 10);
+        let first = format!(
+            r#"{{"type":"session_meta","payload":{{"id":"{review}","cwd":"/work/app","source":{{"subagent":{{"other":"guardian"}}}}}}}}"#
+        );
+        let name = format!("rollout-2026-10-10T01-02-03-{review}.jsonl");
+        let text = format!("{first}\n{}\n", codex_message("Review this command"));
+        write(&dir.join("sessions").join("2026/10/10").join(name), &text, 5);
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
+        assert_eq!(titles(&found), vec!["Please fix issue 250"]);
+        assert_eq!(found.has_more, false);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
