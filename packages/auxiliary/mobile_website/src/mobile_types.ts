@@ -93,7 +93,9 @@ export type NotificationStatus = {
 	worker: 'not-registered' | 'registered' | 'failed';
 	/** The permission that the developer gave, or `unsupported` when the browser has no notifications. */
 	permission: NotificationPermission | 'unsupported';
-	/** The text of the last error of the service worker, or null. */
+	/** The push from the computer: `off` until the developer turns it on, `on` when the computer knows this phone. */
+	push: 'off' | 'on' | 'failed';
+	/** The text of the last error of the service worker or of the push, or null. */
 	error: string | null;
 };
 
@@ -122,6 +124,8 @@ export type CallResult = {
 	ok?: boolean;
 	/** The end of the output of a pane, for the method `read`. */
 	text?: string;
+	/** The public key of the computer for the push, for the method `pushKey`: URL-safe base 64. */
+	key?: string;
 };
 
 /** One macro: a text that the page writes into the field for a prompt of one pane, like the keyboard. */

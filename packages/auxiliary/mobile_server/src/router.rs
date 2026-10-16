@@ -22,7 +22,10 @@ const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; script-src 'self'; st
 const ASSETS_CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 
 /// A closed list: nothing else than these few actions is reachable from the phone.
-const METHODS: &[&str] = &["state", "read", "answer", "prompt", "keys", "macros", "launchers", "launch"];
+const METHODS: &[&str] = &["state", "read", "answer", "prompt", "keys", "macros", "launchers", "launch", "pushKey", "subscribe", "unsubscribe"];
+
+/// The methods that the server answers itself, because they touch the file of the push keys, not a coding agent.
+const PUSH_METHODS: &[&str] = &["pushKey", "subscribe", "unsubscribe"];
 
 const MAX_BODY_BYTES: usize = 64 * 1024;
 
@@ -99,9 +102,24 @@ async fn api(State(shared): State<Shared>, headers: HeaderMap, body: Bytes) -> R
     if !METHODS.contains(&call.method.as_str()) {
         return (StatusCode::NOT_FOUND, "Unknown method").into_response();
     }
+    if PUSH_METHODS.contains(&call.method.as_str()) {
+        return match push_call(&call.method, &call.params) {
+            Ok(v) => axum::Json(v).into_response(),
+            Err(e) => (StatusCode::SERVICE_UNAVAILABLE, e).into_response(),
+        };
+    }
     match shared.handler.handle_call(call.method, call.params).await {
         Ok(v) => axum::Json(v).into_response(),
         Err(e) => (StatusCode::SERVICE_UNAVAILABLE, e).into_response(),
+    }
+}
+
+fn push_call(method: &str, params: &Value) -> Result<Value, String> {
+    let endpoint = params.get("endpoint").and_then(Value::as_str).unwrap_or("");
+    match method {
+        "pushKey" => Ok(serde_json::json!({ "key": crate::push::public_key()? })),
+        "subscribe" => crate::push::subscribe(endpoint).map(|_| serde_json::json!({ "ok": true })),
+        _ => crate::push::unsubscribe(endpoint).map(|_| serde_json::json!({ "ok": true })),
     }
 }
 
@@ -203,6 +221,29 @@ mod tests {
             assert_eq!(status, StatusCode::OK, "method {method:?}");
         }
         assert_eq!(handler.calls.load(Ordering::Relaxed), methods.len());
+    }
+
+    #[tokio::test]
+    async fn the_push_methods_are_answered_by_the_server_and_never_reach_the_handler() {
+        let folder = std::env::temp_dir().join(format!("mobile_server_router_push_{}", std::process::id()));
+        std::env::set_var("HEIDRUN_DIR", &folder);
+        let (router, handler) = setup(Some(TOKEN));
+        let ask = |method: &str, endpoint: &str| {
+            let body = serde_json::to_vec(&json!({ "method": method, "params": { "endpoint": endpoint } })).unwrap();
+            api_request(HOST, None, Some(TOKEN), body)
+        };
+        let response = router.clone().oneshot(ask("pushKey", "")).await.unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = axum::body::to_bytes(response.into_body(), 4096).await.unwrap();
+        let key = serde_json::from_slice::<Value>(&bytes).unwrap()["key"].as_str().unwrap().to_string();
+        assert_eq!(key.len(), 87);
+        assert_eq!(status_of(router.clone(), ask("subscribe", "https://push.example.com/a")).await, StatusCode::OK);
+        assert_eq!(status_of(router.clone(), ask("subscribe", "http://push.example.com/a")).await, StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(status_of(router.clone(), ask("unsubscribe", "https://push.example.com/a")).await, StatusCode::OK);
+        assert_eq!(handler.calls.load(Ordering::Relaxed), 0);
+        let without_key = api_request(HOST, None, None, serde_json::to_vec(&json!({ "method": "pushKey" })).unwrap());
+        assert_eq!(status_of(router, without_key).await, StatusCode::UNAUTHORIZED);
+        let _ = std::fs::remove_dir_all(folder);
     }
 
     #[tokio::test]

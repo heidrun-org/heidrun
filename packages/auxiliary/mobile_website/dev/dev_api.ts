@@ -24,7 +24,7 @@ export class DevApi {
 	static readonly pairingKey = '0123456789abcdef'.repeat(4);
 
 	/** The closed list of methods, the same as the list of the mobile server. */
-	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys', 'macros', 'launchers', 'launch'];
+	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys', 'macros', 'launchers', 'launch', 'pushKey', 'subscribe', 'unsubscribe'];
 
 	/** The command that the fake computer asks the developer to check once more, like the guards of Heidrun do. */
 	private static readonly dangerousCommand = 'rm -rf build';
@@ -163,6 +163,16 @@ export class DevApi {
 		const agent = this.agents.find((candidate) => candidate.paneId === paneId) ?? null;
 		if (method === 'state') {
 			return this.snapshot();
+		}
+		if (method === 'pushKey') {
+			return {
+				key: 'BDevelopmentServerHasNoPushKey',
+			};
+		}
+		if (method === 'subscribe' || method === 'unsubscribe') {
+			return {
+				ok: true,
+			};
 		}
 		if (method === 'launchers') {
 			return {

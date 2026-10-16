@@ -6,6 +6,9 @@ vi.mock("@tauri-apps/plugin-notification", () => ({
   sendNotification: vi.fn(),
 }));
 
+vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
+
+import { invoke } from "@tauri-apps/api/core";
 import { sendNotification } from "@tauri-apps/plugin-notification";
 import { isQuiet, notify } from "./notify";
 import { settings } from "../stores/settings";
@@ -66,5 +69,30 @@ describe("notify", () => {
     settings.quietTo = `${String((now.getHours() + 1) % 24).padStart(2, "0")}:00`;
     expect(await notify("Title")).toBe(false);
     expect(sendNotification).not.toHaveBeenCalled();
+  });
+});
+
+describe("notify to the phone", () => {
+  it("wakes the phones only when asked to", async () => {
+    await notify("Title", "body");
+    expect(invoke).not.toHaveBeenCalled();
+    await notify("Title", "body", true);
+    expect(invoke).toHaveBeenCalledWith("mobile_push");
+  });
+
+  it("wakes no phone in the quiet hours", async () => {
+    settings.quietFrom = "00:00";
+    settings.quietTo = "23:59";
+    vi.useFakeTimers();
+    vi.setSystemTime(at(12));
+    await notify("Title", "body", true);
+    vi.useRealTimers();
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("still shows the desktop notification when the push fails", async () => {
+    vi.mocked(invoke).mockRejectedValueOnce(new Error("no push"));
+    expect(await notify("Title", "body", true)).toBe(true);
+    expect(sendNotification).toHaveBeenCalled();
   });
 });

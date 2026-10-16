@@ -625,10 +625,10 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
     state.questions[paneId] = { text: question, at: Date.now() };
     // Shown again even if an earlier "terminé" card was closed.
     delete state.dismissed[paneId];
-    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`);
+    if (notifyQuestion) notify(t("sessionStore.notify.question", { name }), `${ws ? `${ws} · ` : ""}${question}`, true);
   } else {
     delete state.questions[paneId];
-    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws);
+    if (notifyDone) notify(t("sessionStore.notify.done", { name }), ws, true);
   }
 }
 
@@ -666,7 +666,7 @@ function applySnapshot(snap: SessionSnapshot) {
       state.pulse[pane.pane_id] = now;
       window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
-        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);
+        notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws, true);
       }
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).

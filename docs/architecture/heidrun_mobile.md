@@ -41,5 +41,13 @@ Heidrun Mobile does not show the Source control sidebar section, the Past chats 
 
 ## What is not done
 
-- The notifications, on Android only. Chrome on Android shows a Web Push notification in a normal tab, with a service worker on `https`. An iPhone shows a notification only from an installed progressive web application, so there is no notification on an iPhone. The Dashboard already has a live test section (service worker `sw.js`, permission, test notification). Next: the push from the computer, after the live test works on a real Android phone ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
+- The push live test on a real Android phone: a push from the computer when a coding agent needs the developer ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
+
+## Notifications
+
+Only Android can show a notification, with Chrome in a normal tab. An iPhone shows a notification only from an installed progressive web application, so there is no notification on an iPhone. The live test of the service worker, the permission, and a local test notification works on a real Android phone through the ngrok address. The push from the computer works like this:
+
+- The server makes a key once and keeps it in the file `mobile_push.json`. The phone asks for it with the method `pushKey`, asks its browser for a push subscription, and gives the address of the push service to the server with the method `subscribe`.
+- When a coding agent asks a question, finishes, or is blocked, and it is not in the quiet hours, the window of Heidrun calls the command `mobile_push`, and the server sends a request with no body to each phone. The push service sees nothing about the coding agent.
+- The service worker shows the fixed text "A coding agent needs you." A tap opens the screen Needs you.
 - The microphone needs a live test on a real phone through the ngrok address. When the Web Speech API does not work, the page shows no microphone button, and the microphone key of the keyboard of the phone is the fallback.

@@ -23,6 +23,7 @@ export class NotificationsPanel {
 			['Browser support', status.isSupported ? 'yes' : 'no'],
 			['Service worker', NotificationsPanel._workerText(status)],
 			['Permission', status.permission],
+			['Push from the computer', status.push],
 		];
 		const rowsHtmlContent = rows
 			.map(([name, value]) => /* html */`<div class="usage-row notification-row"><span>${name}</span><span>${HtmlEscape.escape(value)}</span></div>`)
@@ -45,6 +46,23 @@ export class NotificationsPanel {
 		return status.worker === 'registered' ? 'registered' : 'not registered';
 	}
 
+	private static _renderButtons(status: NotificationStatus): string {
+		if (status.permission !== 'granted') {
+			const enableHtmlContent = /* html */`
+				<button class="button button-primary" data-action="notifications-enable">Enable notifications</button>
+			`;
+			return enableHtmlContent;
+		}
+		const testHtmlContent = /* html */`
+			<button class="button" data-action="notifications-test">Send a test notification</button>
+		`;
+		const pushHtmlContent =
+			status.push === 'on'
+				? /* html */`<button class="button" data-action="push-off">Turn off the push</button>`
+				: /* html */`<button class="button button-primary" data-action="push-on">Turn on the push</button>`;
+		return `${pushHtmlContent}${testHtmlContent}`;
+	}
+
 	private static _renderActions(status: NotificationStatus): string {
 		if (status.isSupported === false) {
 			const unsupportedHtmlContent = /* html */`
@@ -58,10 +76,7 @@ export class NotificationsPanel {
 			`;
 			return deniedHtmlContent;
 		}
-		const isGranted = status.permission === 'granted';
-		const actionHtmlContent = isGranted
-			? /* html */`<button class="button" data-action="notifications-test">Send a test notification</button>`
-			: /* html */`<button class="button button-primary" data-action="notifications-enable">Enable notifications</button>`;
+		const actionHtmlContent = NotificationsPanel._renderButtons(status);
 		const actionsHtmlContent = /* html */`<div class="actions">${actionHtmlContent}</div>`;
 		return actionsHtmlContent;
 	}

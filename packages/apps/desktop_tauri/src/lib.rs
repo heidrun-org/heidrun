@@ -376,6 +376,7 @@ pub fn run() {
             files::file_trash,
             mobile::mobile_reply,
             mobile::mobile_status,
+            mobile::mobile_push,
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,

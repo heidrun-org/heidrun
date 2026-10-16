@@ -1,4 +1,5 @@
-import type { NotificationStatus } from './mobile_types';
+import { MobileApi } from './mobile_api';
+import type { CallResult, NotificationStatus } from './mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -47,6 +48,7 @@ export class PhoneNotifications {
 				worker: 'registered',
 				error: null,
 			};
+			await this._syncExistingPush();
 		} catch (error) {
 			this.registration = null;
 			this.status = {
@@ -67,6 +69,80 @@ export class PhoneNotifications {
 			return 'denied';
 		}
 		return Notification.requestPermission();
+	}
+
+	/**
+	 * Asks the browser for a push subscription with the key of the computer, then tells the computer where to send
+	 * the push. The permission must be granted first.
+	 * @returns The text of the error, or null when the computer knows this phone.
+	 */
+	async subscribePush(): Promise<string | null> {
+		if (this.registration === null) {
+			return 'The service worker is not registered';
+		}
+		try {
+			const answer = await MobileApi.call<CallResult>('pushKey');
+			if (answer.key === undefined) {
+				throw new Error(answer.error ?? 'The computer sent no key');
+			}
+			const key = PhoneNotifications._keyBytes(answer.key);
+			let subscription = await this.registration.pushManager.getSubscription();
+			if (subscription !== null && PhoneNotifications._isSameKey(subscription, key) === false) {
+				await subscription.unsubscribe();
+				subscription = null;
+			}
+			subscription ??= await this.registration.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: key,
+			});
+			await MobileApi.call<CallResult>('subscribe', {
+				endpoint: subscription.endpoint,
+			});
+			this.status = {
+				...this.status,
+				push: 'on',
+				error: null,
+			};
+			return null;
+		} catch (error) {
+			const text = PhoneNotifications._errorText(error);
+			this.status = {
+				...this.status,
+				push: 'failed',
+				error: text,
+			};
+			return text;
+		}
+	}
+
+	/**
+	 * Stops the push: the browser forgets the subscription, and the computer forgets this phone.
+	 * @returns The text of the error, or null when the push is off.
+	 */
+	async unsubscribePush(): Promise<string | null> {
+		try {
+			const subscription = (await this.registration?.pushManager.getSubscription()) ?? null;
+			if (subscription !== null) {
+				await MobileApi.call<CallResult>('unsubscribe', {
+					endpoint: subscription.endpoint,
+				});
+				await subscription.unsubscribe();
+			}
+			this.status = {
+				...this.status,
+				push: 'off',
+				error: null,
+			};
+			return null;
+		} catch (error) {
+			const text = PhoneNotifications._errorText(error);
+			this.status = {
+				...this.status,
+				push: 'failed',
+				error: text,
+			};
+			return text;
+		}
 	}
 
 	/**
@@ -104,8 +180,33 @@ export class PhoneNotifications {
 			isSupported,
 			worker: 'not-registered',
 			permission: PhoneNotifications._permission(),
+			push: 'off',
 			error: null,
 		};
+	}
+
+	/** When the browser has a subscription already, the computer is told again: it may have forgotten this phone. */
+	private async _syncExistingPush(): Promise<void> {
+		const subscription = await this.registration?.pushManager?.getSubscription();
+		if (subscription === null || subscription === undefined || PhoneNotifications._permission() !== 'granted') {
+			return;
+		}
+		await this.subscribePush();
+	}
+
+	private static _keyBytes(key: string): Uint8Array<ArrayBuffer> {
+		const base64 = key.replace(/-/g, '+').replace(/_/g, '/');
+		const text = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='));
+		return Uint8Array.from(text, (character) => character.charCodeAt(0));
+	}
+
+	private static _isSameKey(subscription: PushSubscription, key: Uint8Array<ArrayBuffer>): boolean {
+		const known = subscription.options.applicationServerKey;
+		if (known === null) {
+			return false;
+		}
+		const bytes = new Uint8Array(known);
+		return bytes.length === key.length && bytes.every((value, index) => value === key[index]);
 	}
 
 	private static _permission(): NotificationPermission | 'unsupported' {

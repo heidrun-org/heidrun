@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import { settings } from "../stores/settings";
 
@@ -18,8 +19,9 @@ export function isQuiet(d = new Date()): boolean {
 let granted: boolean | null = null;
 
 /** Resolves to true when the notification was actually shown (not in quiet hours). */
-export async function notify(title: string, body?: string): Promise<boolean> {
+export async function notify(title: string, body?: string, toPhone = false): Promise<boolean> {
   if (isQuiet()) return false;
+  if (toPhone) void pushToPhone();
   try {
     if (granted === null) {
       granted = await isPermissionGranted();
@@ -30,5 +32,14 @@ export async function notify(title: string, body?: string): Promise<boolean> {
   } catch {
     // Notifications are a convenience: never break the UI for them.
     return false;
+  }
+}
+
+/** Wakes the phones that asked for a push. A failure is ignored: the desktop notification does not depend on it. */
+async function pushToPhone(): Promise<void> {
+  try {
+    await invoke("mobile_push");
+  } catch {
+    /* no phone, or the push service does not answer */
   }
 }

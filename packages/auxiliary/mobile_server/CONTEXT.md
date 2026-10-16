@@ -12,6 +12,7 @@ The mobile server of Heidrun Mobile. It serves the mobile website on the loopbac
 - `src/server.rs`: the life of the server: it listens, keeps the tunnel open, shows its address, and stops.
 - `src/tunnel.rs`: finds and starts the program `ngrok`, and reads its messages and the address of the tunnel. It also holds the fake `ngrok` program of the tests.
 - `src/config.rs`: the file `mobile.json`, and the creation of a pairing key.
+- `src/push.rs`: the key of the server and the phones in the file `mobile_push.json` (readable by this user only), and `send_all`, which wakes each phone with a request that has no body.
 - Command to test this folder: `pnpm --filter mobile_server test`. The command builds `mobile_website` first. The test `live_...` opens a real tunnel with a signed-in `ngrok`, so it runs only by hand: `cargo test live_ -- --ignored --nocapture`.
 
 ## Rules
@@ -24,7 +25,7 @@ The mobile server of Heidrun Mobile. It serves the mobile website on the loopbac
 - The codes `ERR_NGROK_4018` and `ERR_NGROK_334` in the messages of `ngrok` give the errors `ngrokNotSignedIn` and `ngrokAddressInUse`. After `ngrokNotSignedIn`, the next try waits three times longer.
 - `stop` and a new run kill the program `ngrok` at once, with no async runtime. A task of an older run changes nothing, because every change checks the number of its run.
 - The program is started as `ngrok http 127.0.0.1:<port> --inspect=false --log=stdout --log-format=json`. The variable `HEIDRUN_NGROK` gives its path, and without it the usual folders are searched, because an application that the Finder starts has no `PATH`.
-- Every route of the closed list of methods needs the pairing key, and a method outside the list never reaches the handler. A new method goes in `METHODS` in `src/router.rs`, and nowhere else.
+- Every route of the closed list of methods needs the pairing key, and a method outside the list never reaches the handler. A new method goes in `METHODS` in `src/router.rs`. The methods `pushKey`, `subscribe`, and `unsubscribe` never reach the handler.
 - A new key (`replace_token`, or a new run) cuts off open connections at once, and the right key is never locked out. `replace_token` keeps the tunnel and its address.
 - The server serves only the embedded files, so no address reaches the disk. The header `Content-Security-Policy` allows only files of the server itself, and a test refuses `unsafe-inline` and `unsafe-eval`. A test lists the `Content-Type` of every file of `dist` on its own.
 - `MobileServer::start` returns a future and listens only when the caller spawns it, because this package owns no async runtime.

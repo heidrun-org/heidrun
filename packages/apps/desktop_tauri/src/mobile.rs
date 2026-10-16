@@ -79,6 +79,12 @@ fn status_of(state: &MobileState) -> MobileStatus {
     state.server.status(&mobile_server::load_config())
 }
 
+/// Wakes the phones that asked for a push: a coding agent needs the developer. The phone shows a fixed text.
+#[tauri::command]
+pub async fn mobile_push() -> Result<mobile_server::push::PushReport, String> {
+    mobile_server::push::send_all().await
+}
+
 #[tauri::command]
 pub fn mobile_status(state: State<'_, MobileState>) -> MobileStatus {
     status_of(&state)

@@ -403,8 +403,19 @@ export class MobileApp {
 		} else if (action === 'voice') {
 			this._toggleVoice(element);
 		} else if (action === 'notifications-enable') {
-			await this.phoneNotifications.requestPermission();
+			const permission = await this.phoneNotifications.requestPermission();
+			if (permission === 'granted') {
+				await this.phoneNotifications.subscribePush();
+			}
 			this._render();
+		} else if (action === 'push-on') {
+			const problem = await this.phoneNotifications.subscribePush();
+			this._render();
+			this._toast(problem === null ? 'The push is on' : `The push failed: ${problem}`);
+		} else if (action === 'push-off') {
+			const problem = await this.phoneNotifications.unsubscribePush();
+			this._render();
+			this._toast(problem === null ? 'The push is off' : `The push failed: ${problem}`);
 		} else if (action === 'notifications-test') {
 			const problem = await this.phoneNotifications.showTest();
 			this._toast(problem === null ? 'Test notification sent' : `The notification failed: ${problem}`);

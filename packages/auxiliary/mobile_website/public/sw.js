@@ -14,6 +14,23 @@ self.addEventListener('activate', (event) => {
 });
 
 /**
+ * The computer sends a push when a coding agent needs the developer. The push has no body, so the notification has a
+ * fixed text. Chrome on Android needs a visible notification for every push.
+ */
+self.addEventListener('push', (event) => {
+	event.waitUntil(
+		self.registration.showNotification('Heidrun', {
+			body: 'A coding agent needs you.',
+			tag: 'heidrun-needs-you',
+			renotify: true,
+			data: {
+				screen: '/needs-you',
+			},
+		}),
+	);
+});
+
+/**
  * A tap on a notification opens the screen that the notification names, in the window of the page when one is open.
  * The notification carries the part of the address after "#" in `data.screen`, for example `/panes/p-1`.
  */
