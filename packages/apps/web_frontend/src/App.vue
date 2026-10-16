@@ -12,6 +12,7 @@ import Resizer from "./components/Resizer.vue";
 import RcModal from "./components/RcModal.vue";
 import ConfirmModal from "./components/ConfirmModal.vue";
 import DangerModal from "./components/DangerModal.vue";
+import GuardModal from "./components/GuardModal.vue";
 import GitModal from "./components/GitModal.vue";
 import { git, merging } from "./stores/git";
 import MergeModal from "./components/MergeModal.vue";
@@ -47,6 +48,7 @@ import {
   toast,
 } from "./stores/session";
 import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
+import { guardWindow } from "./stores/guard_window";
 import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomLauncherModal } from "./stores/newCustomLauncher";
@@ -365,6 +367,7 @@ onBeforeUnmount(() => {
     <ImportLaunchersModal v-if="importLaunchersModal.open" />
     <HistoryModal v-if="history.open" />
     <SettingsModal v-if="settingsModal.open" />
+    <GuardModal v-if="guardWindow.isOpen" />
     <InstalledSkillModal v-if="installedSkillModal.open" />
     <FindNewSkillsModal v-if="findNewSkillsModal.open" />
     <SkillFileModal v-if="skills.view !== null" />

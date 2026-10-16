@@ -163,6 +163,18 @@ describe('TauriMock', () => {
 		]);
 	});
 
+	it('keeps the configuration of the fake project that the Tauri command project_save writes, for the Tauri command project_load', async () => {
+		TauriMock.install();
+		const first = await invoke<{ root: string; config: unknown }>('project_load', { cwd: '/Users/demo/webwork/heidrun' });
+		expect(first.root).toBe('/Users/demo/webwork/heidrun');
+		expect(first.config).toEqual({ version: 1, launchers: [] });
+		const config = { version: 1, launchers: [], guards: { disabled: ['guards.why.gitClean'] } };
+		await invoke('project_save', { root: '/Users/demo/webwork/heidrun', config });
+		const second = await invoke<{ config: unknown }>('project_load', { cwd: '/Users/demo/webwork/heidrun' });
+		expect(second.config).toEqual(config);
+		TauriMockFixture.setProjectConfig({ version: 1, launchers: [] });
+	});
+
 	it('answers the root of the repository with the chats, and the commands that the files line of a chat calls', async () => {
 		TauriMock.install();
 		const result = await invoke<{ root: string }>('chats_list', { folder: '/Users/demo/webwork/heidrun', limit: 5 });

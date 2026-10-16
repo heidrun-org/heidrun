@@ -215,6 +215,35 @@ export class TauriMockFixture {
 		TauriMockFixture._topicClusterRows = { ...rows };
 	}
 
+	/** The content of the file `.heidrun/config.json` of the fake project, which the mock keeps as the file on the disk does. */
+	private static _projectConfig: unknown = { version: 1, launchers: [] };
+
+	/**
+	 * The answer of the Tauri command `project_load`: the fake project, with the configuration that the last call of
+	 * `setProjectConfig` saved.
+	 *
+	 * @param cwd - The folder of the workspace.
+	 * @returns The root, the path of the configuration file, the configuration, and no detected command.
+	 */
+	static buildProject(cwd: string): unknown {
+		return {
+			root: cwd,
+			config_path: `${cwd}/.heidrun/config.json`,
+			config: JSON.parse(JSON.stringify(TauriMockFixture._projectConfig)),
+			detected: [],
+		};
+	}
+
+	/**
+	 * Replaces the configuration of the fake project, as the Tauri command `project_save` does.
+	 *
+	 * @param config - The new content of the file `.heidrun/config.json`.
+	 * @returns Nothing.
+	 */
+	static setProjectConfig(config: unknown): void {
+		TauriMockFixture._projectConfig = JSON.parse(JSON.stringify(config));
+	}
+
 	/**
 	 * The answer of the Tauri command `git_status`: one staged file and one changed file, as in the screenshots of the
 	 * Source control sidebar section.

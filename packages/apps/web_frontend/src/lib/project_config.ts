@@ -41,10 +41,40 @@ export const referencesSchema = z.strictObject({
   enabled: z.boolean().optional(),
 });
 
-/** The `guards` section: commands that ask for a confirmation, and commands that are blocked. */
+/** How a line of a project guard compares itself with a command. */
+export const guardMatchTypeSchema = z.enum(["contains", "startsWith", "endsWith", "regex"]);
+
+/** What Heidrun does with a command that a project guard matches: ask the developer to confirm, or forbid the command. */
+export const guardActionSchema = z.enum(["confirm", "block"]);
+
+/** One line of a project guard: a type, and the text that the type compares with the command. */
+export const guardMatchSchema = z.strictObject({
+  type: guardMatchTypeSchema,
+  text: z.string().min(1),
+});
+
+/**
+ * A guard of the project. A command matches the guard when it matches at least one line. The name is unique in the
+ * project, and the description is shown in the confirmation window.
+ */
+export const projectGuardSchema = z.strictObject({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  action: guardActionSchema,
+  matches: z.array(guardMatchSchema).min(1),
+});
+
+/**
+ * The `guards` section: the guards of the project, and the built-in guards that are turned off for the project. Each
+ * item of `disabled` is the key of a built-in guard, for example `guards.why.gitClean`. The lists `confirm` and
+ * `block` are the lists of the files written before the key `projectGuards`: each item is a regular expression, and
+ * Heidrun reads it as a project guard named after the item.
+ */
 export const guardsSchema = z.strictObject({
+  projectGuards: z.array(projectGuardSchema).optional(),
   confirm: z.array(z.string()).optional(),
   block: z.array(z.string()).optional(),
+  disabled: z.array(z.string()).optional(),
 });
 
 /** A macro of the project. */
@@ -69,6 +99,10 @@ export type LauncherAgent = z.infer<typeof launcherAgentSchema>;
 export type Launcher = z.infer<typeof launcherSchema>;
 export type ProjectReferences = z.infer<typeof referencesSchema>;
 export type ProjectGuardsConfig = z.infer<typeof guardsSchema>;
+export type GuardMatchType = z.infer<typeof guardMatchTypeSchema>;
+export type GuardAction = z.infer<typeof guardActionSchema>;
+export type GuardMatch = z.infer<typeof guardMatchSchema>;
+export type ProjectGuard = z.infer<typeof projectGuardSchema>;
 export type ProjectMacro = z.infer<typeof macroSchema>;
 export type ProjectConfig = z.infer<typeof projectConfigSchema>;
 

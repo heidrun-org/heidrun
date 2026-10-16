@@ -5,7 +5,7 @@
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -22,6 +22,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [statistics_git_history.md](statistics_git_history.md): the source "Git history" of the tab "Work of one person": what counts, and where its data comes from.
 - [statistics_ai_cost.md](statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the unit (US dollars or tokens), the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
 - [statistics_totals.md](statistics_totals.md): the lines added and deleted, and the average per day under each total, of the tab "Work of one person": what they are, how the value is written, where the calculation is, and the tests.
+- [settings_guards.md](settings_guards.md): the Guards section of the Settings window, the guard window, and the button "Change this guard" of the confirmation window.
 - [status_bar.md](status_bar.md): the status bar and the menu of the status item.
 - [status_bar_git.md](status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
 - [window_state_and_start.md](window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, the notice of the missing programs Herdr and ngrok, and the goat sounds.

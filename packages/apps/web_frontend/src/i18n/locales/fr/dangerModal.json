@@ -7,6 +7,8 @@
   "close": "Fermer",
   "cancel": "Annuler",
   "cancelTitle": "Annuler et ne pas exécuter la commande",
+  "changeGuard": "Changer ce garde-fou",
+  "changeGuardTitle": "Annuler la commande et ouvrir la section Garde-fous des réglages sur ce garde-fou",
   "runAnyway": "Exécuter quand même",
   "runAnywayTitle": "Exécuter la commande quand même"
 }

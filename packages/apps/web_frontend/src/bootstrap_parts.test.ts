@@ -105,6 +105,7 @@ describe('bootstrap_parts.scss', () => {
 			'.flex-column',
 			'.flex-wrap',
 			'.flex-fill',
+			'.align-items-start',
 			'.align-items-center',
 			'.align-self-start',
 			'.gap-1',
@@ -116,6 +117,9 @@ describe('bootstrap_parts.scss', () => {
 			'.me-2',
 			'.me-auto',
 			'.my-auto',
+			'.mt-1',
+			'.mt-2',
+			'.mb-2',
 			'.mb-3',
 			'.p-2',
 			'.ps-3',
@@ -165,10 +169,10 @@ describe('bootstrap_parts.scss', () => {
 		expect(layerText).toMatch(/^ {2}\.d-flex \{\s*display: flex !important;/m);
 	});
 
-	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the switch, the popover, the tooltip, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
+	it('has the Bootstrap parts of the dialog, the menu, the close button, the form fields, the radio button, the switch, the popover, the tooltip, the progress bar, the alert, the list group, the spinner, the button group, and the badge', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
 		expect(BootstrapPartsTestHelper.compile()).toContain('.popover-arrow {');
-		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.switch', '.popover', '.popover-body', '.tooltip', '.tooltip-inner', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
+		for (const selector of ['.dialog', '.dialog-header', '.dialog-title', '.dialog-body', '.dialog-footer', '.menu', '.menu-item', '.menu-header', '.menu-divider', '.menu-text', '.btn-close', '.form-control', '.form-label', '.form-text', '.form-field', '.form-field-content', '.radio', '.switch', '.popover', '.popover-body', '.tooltip', '.tooltip-inner', '.progress', '.progress-bar', '.alert', '.theme-success', '.theme-warning', '.theme-danger', '.list-group', '.list-group-item', '.list-group-flush', '.spinner-border', '.spinner-sm', '.btn-group', '.badge']) {
 			expect(cssText).toMatch(new RegExp(`^\\s*${selector.replace('.', '\\.')}[ ,{]`, 'm'));
 		}
 	});

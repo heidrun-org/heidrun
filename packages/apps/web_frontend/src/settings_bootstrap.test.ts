@@ -23,6 +23,7 @@ class SettingsBootstrapTestHelper {
 		'settings/SettingsConfirmationsSection.vue',
 		'settings/SettingsDynamicTopicsSection.vue',
 		'settings/SettingsGeneralSection.vue',
+		'settings/SettingsGuardsSection.vue',
 		'settings/SettingsMobileAccessSection.vue',
 		'settings/SettingsNotificationsSection.vue',
 		'settings/SettingsSidebarsSection.vue',
