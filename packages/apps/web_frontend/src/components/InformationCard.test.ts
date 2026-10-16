@@ -261,3 +261,128 @@ describe("InformationCard width", () => {
     expect(usual.get(".popover").attributes("style") ?? "").not.toContain("width: 16rem");
   });
 });
+
+describe("InformationCard with a preparation", () => {
+  /** A card whose function `prepare` ends when the test calls `finish`. */
+  function mountPreparedCard(onOpen: () => void = () => {}) {
+    const control = { finish: () => {}, fail: () => {}, prepare: vi.fn() };
+    control.prepare.mockImplementation(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          control.finish = resolve;
+          control.fail = () => reject(new Error("The forge does not answer."));
+        }),
+    );
+    const wrapper = mount(InformationCard, {
+      attachTo: document.body,
+      props: { label: "Details of #370", busyLabel: "Reading the details of #370", prepare: control.prepare, onOpen },
+      slots: { default: "<span>row</span>", card: "<button>Inside the card</button>" },
+    });
+    return { wrapper, control };
+  }
+
+  const busy = "[data-information-card-busy]";
+
+  it("does not open the card at the click, and opens it when the preparation is done", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const onOpen = vi.fn();
+    const { wrapper, control } = mountPreparedCard(onOpen);
+    await wrapper.trigger("click");
+    expect(control.prepare).toHaveBeenCalledTimes(1);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    expect(onOpen).not.toHaveBeenCalled();
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    expect(wrapper.classes()).toContain("is-open");
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("shows no spinning wheel when the preparation takes less than 0.3 second", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, control } = mountPreparedCard();
+    await wrapper.trigger("click");
+    await vi.advanceTimersByTimeAsync(299);
+    expect(wrapper.find(busy).exists()).toBe(false);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(wrapper.find(busy).exists()).toBe(false);
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("shows a spinning wheel after 0.3 second, and hides it when the card opens", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, control } = mountPreparedCard();
+    await wrapper.trigger("click");
+    await vi.advanceTimersByTimeAsync(300);
+    const wheel = wrapper.get(busy);
+    expect(wheel.attributes("role")).toBe("status");
+    expect(wheel.attributes("aria-label")).toBe("Reading the details of #370");
+    expect(wrapper.attributes("aria-busy")).toBe("true");
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(busy).exists()).toBe(false);
+    expect(wrapper.attributes("aria-busy")).toBeUndefined();
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("cancels the opening at a second click on the part, and never opens the card", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, control } = mountPreparedCard();
+    await wrapper.trigger("click");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(wrapper.find(busy).exists()).toBe(true);
+    await wrapper.trigger("click");
+    expect(wrapper.find(busy).exists()).toBe(false);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(".popover").exists()).toBe(false);
+    expect(control.prepare).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("cancels the opening on the key Escape and on a press outside", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const first = mountPreparedCard();
+    await first.wrapper.trigger("click");
+    await first.wrapper.trigger("keydown", { key: "Escape" });
+    first.control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(first.wrapper.find(".popover").exists()).toBe(false);
+    const second = mountPreparedCard();
+    await second.wrapper.trigger("click");
+    document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    second.control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(second.wrapper.find(".popover").exists()).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("opens the card with what it has when the preparation fails", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, control } = mountPreparedCard();
+    await wrapper.trigger("click");
+    control.fail();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("can open the card again after a cancelled opening", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const { wrapper, control } = mountPreparedCard();
+    await wrapper.trigger("click");
+    await wrapper.trigger("click");
+    await wrapper.trigger("click");
+    expect(control.prepare).toHaveBeenCalledTimes(2);
+    control.finish();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(wrapper.find(".popover").exists()).toBe(true);
+    vi.useRealTimers();
+  });
+});

@@ -109,36 +109,77 @@ describe("saved searches of the Code hosting sidebar section", () => {
     return (await import("./settings")).settings;
   }
 
-  it("are none by default", () => {
-    expect(settings.codeHostingSavedSearches).toEqual([]);
+  it("are none by default, in each of the two lists", () => {
+    expect(settings.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
   });
 
-  it("are read again when the application starts again", async () => {
-    const reloaded = await settingsFrom({ codeHostingSavedSearches: [{ name: "Mine", query: "author:@me" }] });
-    expect(reloaded.codeHostingSavedSearches).toEqual([{ name: "Mine", query: "author:@me" }]);
+  it("are read again when the application starts again, for each list", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: {
+        issues: [{ name: "Mine", query: "author:@me" }],
+        requests: [{ name: "To review", query: "review-requested:@me" }],
+      },
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual({
+      issues: [{ name: "Mine", query: "author:@me" }],
+      requests: [{ name: "To review", query: "review-requested:@me" }],
+    });
   });
 
-  it("drop an entry without a name or a search as text, and keep the others", async () => {
+  it("are copied into both lists once, when the saved value is the old single list", async () => {
     const reloaded = await settingsFrom({
       codeHostingSavedSearches: [
         { name: "Mine", query: "author:@me" },
-        { name: "", query: "label:bug" },
-        { name: "No search" },
-        { name: 4, query: "x" },
-        null,
-        "text",
-        { name: "Mentions me", query: "mentions:@me", extra: true },
+        { name: "Bugs", query: "label:bug" },
       ],
     });
-    expect(reloaded.codeHostingSavedSearches).toEqual([
-      { name: "Mine", query: "author:@me" },
-      { name: "Mentions me", query: "mentions:@me" },
-    ]);
+    expect(reloaded.codeHostingSavedSearches).toEqual({
+      issues: [
+        { name: "Mine", query: "author:@me" },
+        { name: "Bugs", query: "label:bug" },
+      ],
+      requests: [
+        { name: "Mine", query: "author:@me" },
+        { name: "Bugs", query: "label:bug" },
+      ],
+    });
+    expect(reloaded.codeHostingSavedSearches.issues).not.toBe(reloaded.codeHostingSavedSearches.requests);
   });
 
-  it("are none when the saved value is not a list", async () => {
+  it("do not change one list when the other list changes after the copy", async () => {
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: [{ name: "Mine", query: "author:@me" }] });
+    reloaded.codeHostingSavedSearches.issues.push({ name: "Bugs", query: "label:bug" });
+    expect(reloaded.codeHostingSavedSearches.requests).toEqual([{ name: "Mine", query: "author:@me" }]);
+  });
+
+  it("drop an entry without a name or a search as text, and keep the others, in each list", async () => {
+    const entries = [
+      { name: "Mine", query: "author:@me" },
+      { name: "", query: "label:bug" },
+      { name: "No search" },
+      { name: 4, query: "x" },
+      null,
+      "text",
+      { name: "Mentions me", query: "mentions:@me", extra: true },
+    ];
+    const reloaded = await settingsFrom({ codeHostingSavedSearches: { issues: entries, requests: entries } });
+    const kept = [
+      { name: "Mine", query: "author:@me" },
+      { name: "Mentions me", query: "mentions:@me" },
+    ];
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: kept, requests: kept });
+  });
+
+  it("are none in a list that is missing or is not a list", async () => {
+    const reloaded = await settingsFrom({
+      codeHostingSavedSearches: { issues: [{ name: "Mine", query: "author:@me" }], requests: "To review" },
+    });
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [{ name: "Mine", query: "author:@me" }], requests: [] });
+  });
+
+  it("are none when the saved value is not a list or an object", async () => {
     const reloaded = await settingsFrom({ codeHostingSavedSearches: "Mine" });
-    expect(reloaded.codeHostingSavedSearches).toEqual([]);
+    expect(reloaded.codeHostingSavedSearches).toEqual({ issues: [], requests: [] });
   });
 });
 

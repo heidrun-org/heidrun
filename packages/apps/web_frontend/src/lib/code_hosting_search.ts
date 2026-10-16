@@ -109,6 +109,47 @@ export function githubSearchArguments(text: string): string[] {
 }
 
 /**
+ * Tells whether a word is `label:` followed by a name, for example `label:bug` or `label:"good first issue"`, with no
+ * minus sign. The names of labels are compared without the difference between capital letters and small letters, as
+ * GitHub compares them.
+ * @param word - the word of a search
+ * @param labelName - the name of the label
+ * @returns true when the word asks for this label
+ */
+function isLabelWord(word: SearchWord, labelName: string): boolean {
+  return word.qualifier === "label" && word.isNegated === false && word.value.toLowerCase() === labelName.toLowerCase();
+}
+
+/**
+ * Tells whether a search asks for a label with the word `label:`.
+ * @param text - the search
+ * @param labelName - the name of the label
+ * @returns true when the search holds the word `label:` with this name
+ */
+export function searchHasLabel(text: string, labelName: string): boolean {
+  return parseSearch(text).some((word) => isLabelWord(word, labelName));
+}
+
+/**
+ * Adds a label to a search when the search does not ask for it, and removes the label when the search asks for it. A name
+ * with a space is written between double quotes. The other words of the search stay as they are, separated by one space.
+ * @param text - the search
+ * @param labelName - the name of the label
+ * @returns the new search
+ */
+export function toggleLabelInSearch(text: string, labelName: string): string {
+  const words = parseSearch(text);
+  if (words.some((word) => isLabelWord(word, labelName))) {
+    return words
+      .filter((word) => isLabelWord(word, labelName) === false)
+      .map((word) => word.text)
+      .join(" ");
+  }
+  const value = /\s/.test(labelName) ? `"${labelName}"` : labelName;
+  return [...words.map((word) => word.text), `label:${value}`].join(" ");
+}
+
+/**
  * Tells whether a search needs the login of the person who is signed in, because it uses `@me`.
  * @param text - the search
  * @returns true when a word of the search has the value `@me`

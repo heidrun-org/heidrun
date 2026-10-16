@@ -44,8 +44,8 @@ describe("chatReferenceName", () => {
 
 describe("chatReferenceState", () => {
   it("shows an open issue in green with the issue icon, and an open pull request with the Git icon", () => {
-    expect(chatReferenceState("issue", "open")).toEqual({ text: "Open", icon: "record-circle", look: "bg-success" });
-    expect(chatReferenceState("pull_request", "open")).toEqual({ text: "Open", icon: "git", look: "bg-success" });
+    expect(chatReferenceState("issue", "open")).toEqual({ text: "Open", icon: "record-circle", look: "state-open" });
+    expect(chatReferenceState("pull_request", "open")).toEqual({ text: "Open", icon: "git", look: "state-open" });
   });
 
   it("shows a merged pull request in purple", () => {
@@ -58,7 +58,7 @@ describe("chatReferenceState", () => {
 
   it("shows a closed issue in purple, and a closed pull request in red", () => {
     expect(chatReferenceState("issue", "closed")).toEqual({ text: "Closed", icon: "check-circle", look: "state-done" });
-    expect(chatReferenceState("pull_request", "closed")).toEqual({ text: "Closed", icon: "x-circle", look: "bg-danger" });
+    expect(chatReferenceState("pull_request", "closed")).toEqual({ text: "Closed", icon: "x-circle", look: "state-closed" });
   });
 
   it("shows another state as the forge says it", () => {

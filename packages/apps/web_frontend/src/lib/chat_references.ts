@@ -55,7 +55,7 @@ export type ChatReferenceState = {
   text: string;
   /** The icon of the state. */
   icon: string;
-  /** The class of the color of the pill: "bg-success", "bg-danger", "state-done", or "state-other". */
+  /** The class of the color of the pill: "state-open", "state-closed", "state-done", or "state-other". */
   look: string;
 };
 
@@ -68,7 +68,7 @@ export type ChatReferenceState = {
  */
 export function chatReferenceState(kind: ChatReferenceKind, rawState: string): ChatReferenceState {
   if (rawState === "open") {
-    return { text: t("chatsPanel.stateOpen"), icon: kind === "issue" ? "record-circle" : "git", look: "bg-success" };
+    return { text: t("chatsPanel.stateOpen"), icon: kind === "issue" ? "record-circle" : "git", look: "state-open" };
   }
   if (rawState === "merged") {
     return { text: t("chatsPanel.stateMerged"), icon: "sign-merge-right", look: "state-done" };
@@ -78,7 +78,7 @@ export function chatReferenceState(kind: ChatReferenceKind, rawState: string): C
     return {
       text: t("chatsPanel.stateClosed"),
       icon: isIssue ? "check-circle" : "x-circle",
-      look: isIssue ? "state-done" : "bg-danger",
+      look: isIssue ? "state-done" : "state-closed",
     };
   }
   return { text: rawState, icon: "circle-half", look: "state-other" };

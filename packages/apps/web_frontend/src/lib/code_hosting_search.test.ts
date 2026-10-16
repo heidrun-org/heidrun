@@ -3,7 +3,9 @@ import {
   githubSearchArguments,
   githubState,
   parseSearch,
+  searchHasLabel,
   splitSearch,
+  toggleLabelInSearch,
   translateForGitlab,
   usesCurrentUser,
 } from "./code_hosting_search";
@@ -177,5 +179,51 @@ describe("translateForGitlab", () => {
       kind: "filters",
       parameters: ["state=opened", "labels=a%26state%3Dclosed"],
     });
+  });
+});
+
+describe("toggleLabelInSearch", () => {
+  it("adds the label to an empty search", () => {
+    expect(toggleLabelInSearch("", "enhancement")).toBe("label:enhancement");
+  });
+
+  it("adds the label after the words that are already in the search", () => {
+    expect(toggleLabelInSearch("author:@me label:bug", "enhancement")).toBe("author:@me label:bug label:enhancement");
+  });
+
+  it("removes the label when the search already asks for it, and keeps the other words", () => {
+    expect(toggleLabelInSearch("author:@me label:enhancement label:bug", "enhancement")).toBe("author:@me label:bug");
+  });
+
+  it("removes the label and leaves an empty search when it was the only word", () => {
+    expect(toggleLabelInSearch("label:enhancement", "enhancement")).toBe("");
+  });
+
+  it("writes the name of a label between double quotes when it has a space, and removes it the same way", () => {
+    const added = toggleLabelInSearch("is:open", "Simple Work");
+    expect(added).toBe('is:open label:"Simple Work"');
+    expect(toggleLabelInSearch(added, "Simple Work")).toBe("is:open");
+  });
+
+  it("finds the label whatever the capital letters, and with or without quotes", () => {
+    expect(toggleLabelInSearch("label:Enhancement", "enhancement")).toBe("");
+    expect(toggleLabelInSearch('label:"enhancement"', "enhancement")).toBe("");
+  });
+
+  it("adds the label, and keeps the word, when the search holds the same label with a minus sign", () => {
+    expect(toggleLabelInSearch("-label:bug", "bug")).toBe("-label:bug label:bug");
+  });
+
+  it("does not take a label that only starts with the same letters", () => {
+    expect(toggleLabelInSearch("label:bug-report", "bug")).toBe("label:bug-report label:bug");
+  });
+});
+
+describe("searchHasLabel", () => {
+  it("tells whether the search asks for the label", () => {
+    expect(searchHasLabel("author:@me label:bug", "bug")).toBe(true);
+    expect(searchHasLabel("author:@me label:bug", "enhancement")).toBe(false);
+    expect(searchHasLabel("-label:bug", "bug")).toBe(false);
+    expect(searchHasLabel("", "bug")).toBe(false);
   });
 });
