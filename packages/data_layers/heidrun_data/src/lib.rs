@@ -7,8 +7,9 @@
 //!   the others.
 //! - `read_catalog` and `data_schema_text` give the shape of the tables: their columns, their keys, their joins, and the
 //!   JSON schema of their column `data`.
-//! - `read_chat_session`, `read_commit`, and `read_code_hosting` give the content that the tables do not store: the
-//!   records of a chat session, the diff of a commit, and the comments of an issue or of a pull request.
+//! - `read_chat_session`, `read_commit`, `read_code_hosting`, and `read_file_history` give the content that the tables do
+//!   not store: the records of a chat session, the diff of a commit, the comments of an issue or of a pull request, and
+//!   the tool calls that wrote one file.
 //! - `lock_database` is the one lock of the SQLite file, for the threads of a program and for the programs of the
 //!   computer. The desktop application and `synchronize` take it before each write.
 //! - `HeidrunDatabase` is the SQLite file, open read only. It runs one query, and counts the rows of each source.
@@ -33,6 +34,7 @@ pub use query_limit::{add_limit, DEFAULT_LIMIT};
 pub use reading::chat_session_reader::{read_chat_session, ChatRecord, Role, SHORT_TOOL_LENGTH};
 pub use reading::code_hosting_reader::{read_code_hosting, read_pull_request_diff, CodeHostingKind, Entry};
 pub use reading::commit_reader::{read_commit, ChangedFile, CommitContent};
+pub use reading::file_history_reader::{read_file_history, FileChange};
 pub use schema::{data_schema_text, read_catalog, Column, TableShape};
 pub use sources::{all_tables, find_table, DataSchema, Join, Source, Table};
 pub use synchronization::{synchronize, SourceReport, SynchronizationMode, SynchronizationOptions};

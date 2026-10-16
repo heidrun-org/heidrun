@@ -133,7 +133,7 @@ fn claude_result_text(content: Option<&Value>) -> String {
 
 /// Reads one line of a file of Claude Code. A note of the program (`isMeta`) and a line of a subagent (`isSidechain`) are
 /// skipped, and so is the thinking of the coding agent.
-fn read_claude_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecord>) {
+pub(crate) fn read_claude_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecord>) {
     let kind = record.get("type").and_then(Value::as_str);
     if !matches!(kind, Some("user") | Some("assistant"))
         || record.get("isMeta").and_then(Value::as_bool) == Some(true)
@@ -170,7 +170,7 @@ fn read_claude_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecor
 /// Reads one line of a file of Codex: the messages, the tool calls, and their results. The message that holds the
 /// instructions of `AGENTS.md`, the message that describes the environment, the reasoning, and the events, which repeat the
 /// messages, are skipped.
-fn read_codex_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecord>) {
+pub(crate) fn read_codex_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecord>) {
     if record.get("type").and_then(Value::as_str) != Some("response_item") {
         return;
     }

@@ -87,6 +87,14 @@ Kinds:
                              with its author, its date, and for a review comment its
                              file and its line, in the order of the dates, then the
                              diff. Needs the command gh, signed in.
+  file_history <path>        Every tool call of a chat session that wrote the file, in
+                             the order of the dates: "at", "chatSessionId", "tool"
+                             (Write, Edit, Bash, apply_patch, ...), and "input", whole.
+                             The "old_string" and "new_string" of an Edit are the
+                             diff. Give the path as the coding agent wrote it, most
+                             often absolute, for example the column "id" of the
+                             table memory_files. A change made by hand, outside a
+                             coding agent, is not found.
 
 Options:
   --repository <owner/name>  The repository of an issue or of a pull request.
@@ -107,6 +115,7 @@ Examples:
   $ heidrun_data read commit HEAD --no-diff --format jsonl
   $ heidrun_data read issue 500 --format jsonl
   $ heidrun_data read pull_request 565 --no-diff --format jsonl
+  $ heidrun_data read file_history /Users/me/.claude/projects/-Users-me-app/memory/MEMORY.md --format table
 "#;
 
 /// The text of `heidrun_data sources --help`.
@@ -277,6 +286,8 @@ pub enum ReadKind {
     Issue,
     /// A pull request of the GitHub repository.
     PullRequest,
+    /// The tool calls of the chat sessions that wrote one file.
+    FileHistory,
 }
 
 /// The request to print the content of one thing.
@@ -286,7 +297,8 @@ pub struct ReadRequest {
     pub common: CommonOptions,
     /// The kind of the thing.
     pub kind: ReadKind,
-    /// The key of the thing: the id of a chat session, the hash of a commit, or the number of an issue or a pull request.
+    /// The key of the thing: the id of a chat session, the hash of a commit, the number of an issue or a pull request, or
+    /// the path of a file.
     pub key: String,
     /// The repository of an issue or of a pull request, or `None` for the remote `origin` of the folder.
     pub repository: Option<String>,
@@ -464,15 +476,16 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         }
         let kind_name = positionals
             .next()
-            .ok_or("The command read needs a kind (chat_session, commit, issue, or pull_request) and a key.")?;
+            .ok_or("The command read needs a kind (chat_session, commit, issue, pull_request, or file_history) and a key.")?;
         let kind = match kind_name.as_str() {
             "chat_session" => ReadKind::ChatSession,
             "commit" => ReadKind::Commit,
             "issue" => ReadKind::Issue,
             "pull_request" => ReadKind::PullRequest,
+            "file_history" => ReadKind::FileHistory,
             _ => {
                 return Err(format!(
-                    "The kind {kind_name} is not known: use chat_session, commit, issue, or pull_request."
+                    "The kind {kind_name} is not known: use chat_session, commit, issue, pull_request, or file_history."
                 ))
             }
         };

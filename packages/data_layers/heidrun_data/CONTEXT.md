@@ -4,7 +4,7 @@
 A Rust library and one command line tool, `heidrun_data`, that give a coding agent the data of the four data layers of Heidrun in one SQLite file, and the `SKILL.md` that teaches a coding agent to use it. It is not a data layer package: it calls the libraries of the four data layer packages, and stores nothing of its own.
 
 ## Key Exports & Entry Points
-- `src/lib.rs`: the only public interface of the library. It exports `Source`, `synchronize`, `SynchronizationMode`, `SynchronizationOptions`, `SourceReport`, `lock_database`, `HeidrunDatabase`, `SourceSummary`, `read_catalog`, `data_schema_text`, `read_chat_session`, `read_commit`, `read_code_hosting`, `add_limit`, `Format`, `write_rows`, `format_error`, and `default_database_path`.
+- `src/lib.rs`: the only public interface of the library. It exports `Source`, `synchronize`, `SynchronizationMode`, `SynchronizationOptions`, `SourceReport`, `lock_database`, `HeidrunDatabase`, `SourceSummary`, `read_catalog`, `data_schema_text`, `read_chat_session`, `read_commit`, `read_code_hosting`, `read_file_history`, `add_limit`, `Format`, `write_rows`, `format_error`, and `default_database_path`.
 - `src/main.rs`: the command line, and the executable `heidrun_data`. The module `src/command_line.rs` reads its arguments and holds the texts of the help.
 - `src/reading/`: the command `read`, the content that the tables do not store — see its own CONTEXT.md.
 - `skills/heidrun_data/`: the skill that teaches a coding agent the commands, the tables, and the joins. The folder is standalone: `SKILL.md`, and the folder `references` with the documents that the skill rests on, as links to their place in `docs`. A test compares `SKILL.md` with the help and with the output of `schema`.

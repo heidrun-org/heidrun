@@ -84,12 +84,14 @@ What the tables do not hold:
 | `heidrun_data read chat_session <id>` | The records of the chat session, one per line: `at`, `role` (`developer`, `coding_agent`, or `tool`), and `text`. A tool call is `<name>: <input>` and a tool result is `result: <output>`, each shortened to one line; `--full` prints them whole. |
 | `heidrun_data read commit <hash>` | The message, the files changed, then the diff. `--no-diff` stops after the files. |
 | `heidrun_data read issue <number>` | The body, then every comment with its author and its date. |
+| `heidrun_data read file_history <path>` | Every tool call of a chat session that wrote the file (`Write`, `Edit`, `Bash`, `apply_patch`, ...), in the order of the dates, with its chat session and its input whole. The `old_string` and `new_string` of an `Edit` are the diff. A change made by hand is not found. |
 | `heidrun_data read pull_request <number>` | The body, then every comment, review, and review comment with its author, its date, and for a review comment its file and its line, in the order of the dates, then the diff. `--no-diff` stops before the diff. |
 
 With `--format jsonl`, each line has these fields:
 
 - `read chat_session`: `at`, `role`, `text`.
 - `read commit`: one object with `hash`, `authorName`, `authorEmail`, `committedAt`, `message`, `files` (a list of `path`, `insertions`, `deletions`), and `diff` unless `--no-diff` is given.
+- `read file_history`: `at`, `chatSessionId`, `tool`, and `input`, the input of the tool call as JSON.
 - `read issue` and `read pull_request`: `kind` (`issue`, `pull_request`, `comment`, `review`, `review_comment`, or `diff`), `author`, `at`, and `text`. The body has `number`, `title`, and `state` too, a review has `state`, and a review comment has `path` and `line`.
 
 `read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` and `read commit` work from any folder of the repository, a worktree included.
@@ -156,7 +158,7 @@ WHERE repository = 'heidrun-org/heidrun'
 ORDER BY updatedAt"
 ```
 
-The same join on `chat_session_files` gives every chat session that changed a memory file, a subagent, or a skill, and `read chat_session <id>` shows why.
+The tables keep only the last state of a memory file. Its changes, with the text before and after, are in the chat sessions: `heidrun_data read file_history <id of the row> --format jsonl` gives each tool call that wrote it, and `read chat_session <chatSessionId>` shows why.
 
 ## Example: what the developer typed, ran, or hit many times
 

@@ -554,6 +554,39 @@ fn read_chat_session_prints_the_records_of_a_chat_session_of_claude_code() {
 }
 
 #[test]
+fn read_file_history_prints_the_write_and_the_edit_of_a_memory_file_and_not_its_reads() {
+    let fixture = Fixture::new("read_file_history");
+    let project = fixture.folder.join("claude").join("projects").join(claude_folder_name(&fixture.repository.display().to_string()));
+    let memory_file = project.join("memory").join("merge-only.md").display().to_string();
+    let tool_call = |at: &str, name: &str, input: Value| {
+        json!({ "type": "assistant", "cwd": fixture.repository.display().to_string(), "timestamp": at, "message": { "content": [
+            { "type": "tool_use", "name": name, "input": input },
+        ] } })
+        .to_string()
+    };
+    let lines = [
+        tool_call("2026-10-12T10:00:02.000Z", "Edit", json!({ "file_path": memory_file, "old_string": "blah", "new_string": "blibli" })),
+        tool_call("2026-10-12T10:00:00.000Z", "Write", json!({ "file_path": memory_file, "content": "blah" })),
+        tool_call("2026-10-12T10:00:01.000Z", "Read", json!({ "file_path": memory_file })),
+        tool_call("2026-10-12T10:00:03.000Z", "Bash", json!({ "command": format!("cat {memory_file}") })),
+    ];
+    std::fs::write(project.join("memory-chat.jsonl"), format!("{}\n", lines.join("\n"))).unwrap();
+    let result = fixture.run(&["read", "file_history", &memory_file, "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(
+        result.json_lines(),
+        vec![
+            json!({ "at": "2026-10-12T10:00:00.000Z", "chatSessionId": "memory-chat", "tool": "Write", "input": { "file_path": memory_file, "content": "blah" } }),
+            json!({ "at": "2026-10-12T10:00:02.000Z", "chatSessionId": "memory-chat", "tool": "Edit", "input": { "file_path": memory_file, "old_string": "blah", "new_string": "blibli" } }),
+        ]
+    );
+    let result = fixture.run(&["read", "file_history", &memory_file, "--format", "table"]);
+    assert!(result.stdout.contains("memory-chat Edit\n  file_path:"), "{}", result.stdout);
+    assert!(result.stdout.contains("  new_string:\n    blibli\n"), "{}", result.stdout);
+    assert!(!fixture.database_path.exists());
+}
+
+#[test]
 fn read_chat_session_prints_the_records_of_a_compressed_chat_session_of_codex_from_a_sub_folder() {
     let fixture = Fixture::new("read_codex");
     let id = "01a12c31-175b-7513-b12c-bba764f46402";
@@ -682,7 +715,7 @@ fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does
             assert!(help_words.contains(&word), "The help has no option {word}");
         }
     }
-    for kind in ["chat_session", "commit", "issue", "pull_request"] {
+    for kind in ["chat_session", "commit", "issue", "pull_request", "file_history"] {
         assert!(skill.contains(&format!("heidrun_data read {kind}")), "{kind}");
         assert!(help.contains(kind), "{kind}");
     }

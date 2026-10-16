@@ -9,7 +9,9 @@ use heidrun_data::{
     add_limit, data_schema_text, default_database_path, format_error, read_catalog, synchronize, write_rows, Format,
     HeidrunDatabase, QueryRow, SynchronizationOptions,
 };
-use heidrun_data::{read_chat_session, read_code_hosting, read_commit, read_pull_request_diff, CodeHostingKind};
+use heidrun_data::{
+    read_chat_session, read_code_hosting, read_commit, read_file_history, read_pull_request_diff, CodeHostingKind,
+};
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -188,6 +190,25 @@ fn run_read(request: &ReadRequest) -> Result<(), String> {
                     }
                 }
                 _ => print_rows(&records.iter().map(|record| record.to_row()).collect::<Vec<_>>(), format),
+            }
+        }
+        ReadKind::FileHistory => {
+            if !folder.is_dir() {
+                return Err(format!("The folder {} does not exist.", folder.display()));
+            }
+            let changes = read_file_history(
+                &request.key,
+                &main_root(&folder),
+                &data_layer_coding_agents::claude_dir().join("projects"),
+                &data_layer_coding_agents::codex_home(),
+            );
+            match format {
+                Format::Table => {
+                    for change in &changes {
+                        print!("{}", change.to_text());
+                    }
+                }
+                _ => print_rows(&changes.iter().map(|change| change.to_row()).collect::<Vec<_>>(), format),
             }
         }
         ReadKind::Commit => {

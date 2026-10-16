@@ -123,13 +123,18 @@ pub fn data_schema_text(table_name: &str) -> Result<&'static str, String> {
     }
 }
 
-/// A path for the temporary SQLite file of the catalog, which no other run uses.
+/// The number of temporary SQLite files that this program asked for. Two threads can read the same date, because the clock
+/// of macOS counts in microseconds, so the number keeps their files apart.
+static TEMPORARY_FILE_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// A path for the temporary SQLite file of the catalog, which no other run and no other thread uses.
 fn temporary_path() -> PathBuf {
     let nanoseconds = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
         .unwrap_or_default();
-    std::env::temp_dir().join(format!("heidrun_data_schema_{}_{nanoseconds}.sqlite", std::process::id()))
+    let count = TEMPORARY_FILE_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    std::env::temp_dir().join(format!("heidrun_data_schema_{}_{nanoseconds}_{count}.sqlite", std::process::id()))
 }
 
 /// Creates the tables of the four packages in the file at `path`, and reads their shapes.
