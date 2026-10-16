@@ -1,6 +1,7 @@
 //! Tests of the executable `heidrun_data`, with a real Git repository of two commits and the remote `origin`
 //! `fake-owner/fake-name`, a fake `gh` command put at the start of the PATH, a fake folder of Claude Code with one chat
-//! session, an empty fake folder of Codex, and a fake file of two user activity records.
+//! session and one memory file, an empty fake folder of Codex, one skill in the folder `.agents` of the repository, a fake
+//! home folder, and a fake file of two user activity records.
 
 use serde_json::{json, Value};
 use std::io::Write;
@@ -184,6 +185,12 @@ impl Fixture {
         std::fs::create_dir_all(&project).unwrap();
         let typed = TYPED.replace("FOLDER", &repository.display().to_string());
         std::fs::write(project.join("a-chat-session.jsonl"), format!("{typed}\n")).unwrap();
+        std::fs::create_dir_all(project.join("memory")).unwrap();
+        let memory_text = "---\nname: merge-only\ndescription: Never rebase\nmetadata:\n  type: feedback\n  originSessionId: a-chat-session\n---\n";
+        std::fs::write(project.join("memory").join("merge-only.md"), memory_text).unwrap();
+        std::fs::create_dir_all(repository.join(".agents/skills/style")).unwrap();
+        std::fs::write(repository.join(".agents/skills/style/SKILL.md"), "---\nname: style\ndescription: The style\n---\n").unwrap();
+        std::fs::create_dir_all(folder.join("home")).unwrap();
         std::fs::create_dir_all(folder.join("codex")).unwrap();
         let user_activity_file = folder.join("user_activity.jsonl");
         std::fs::write(&user_activity_file, format!("{}\n{}\n", user_activity_line(10), user_activity_line(11))).unwrap();
@@ -214,6 +221,7 @@ impl Fixture {
             .env("FAKE_GH_DIRECTORY", &self.folder)
             .env("CLAUDE_CONFIG_DIR", self.folder.join("claude"))
             .env("CODEX_HOME", self.folder.join("codex"))
+            .env("HOME", self.folder.join("home"))
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .env_remove("HEIDRUN_DIR")
@@ -282,7 +290,12 @@ fn update_with_no_source_writes_the_tables_of_the_four_sources_in_one_run() {
         vec![
             json!({ "source": "source_control", "mode": "update", "repository": "fake-owner/fake-name", "writtenRows": { "commits": 2 } }),
             json!({ "source": "code_hosting", "mode": "update", "repository": "fake-owner/fake-name", "writtenRows": { "issues": 1, "pull_requests": 1 } }),
-            json!({ "source": "chat_sessions", "mode": "update", "repository": "fake-owner/fake-name", "writtenRows": { "chat_sessions": 1 } }),
+            json!({
+                "source": "coding_agents",
+                "mode": "update",
+                "repository": "fake-owner/fake-name",
+                "writtenRows": { "chat_sessions": 1, "memory_files": 1, "subagents": 0, "skills": 1 },
+            }),
             json!({ "source": "user_activity", "mode": "update", "repository": null, "writtenRows": { "user_activity_records": 2 } }),
         ]
     );
@@ -305,7 +318,7 @@ fn update_with_one_source_that_fails_writes_the_other_three_and_exits_with_the_c
     let result = fixture.update(&["--format", "jsonl"]);
     assert_eq!(result.exit_code, Some(1));
     let sources: Vec<Value> = result.json_lines().into_iter().map(|line| line["source"].clone()).collect();
-    assert_eq!(sources, vec![json!("source_control"), json!("chat_sessions"), json!("user_activity")]);
+    assert_eq!(sources, vec![json!("source_control"), json!("coding_agents"), json!("user_activity")]);
     let error_lines: Vec<&str> = result.stderr.lines().collect();
     assert_eq!(error_lines.len(), 1, "{}", result.stderr);
     let error: Value = serde_json::from_str(error_lines[0]).unwrap();
@@ -375,10 +388,11 @@ fn sources_prints_the_tables_the_rows_and_the_last_date_of_each_source() {
         "source": "code_hosting", "tables": { "issues": 1, "pull_requests": 1 }, "lastUpdatedAt": date(5),
     }));
     assert_eq!(lines[2]["tables"]["chat_session_issues"], json!(1));
+    assert_eq!((lines[2]["tables"]["memory_files"].clone(), lines[2]["tables"]["skills"].clone()), (json!(1), json!(1)));
     assert_eq!(lines[3]["lastUpdatedAt"], json!("2026-10-14T11:10:05.000Z"));
     let result = fixture.run(&["sources", "--format", "table"]);
     assert!(result.stdout.starts_with("source "), "{}", result.stdout);
-    assert!(result.stdout.ends_with("row count: 9\n"), "{}", result.stdout);
+    assert!(result.stdout.ends_with("row count: 12\n"), "{}", result.stdout);
 }
 
 #[test]
@@ -486,6 +500,9 @@ fn schema_with_no_table_prints_every_table_of_the_file_with_no_database_file() {
             "chat_session_issues",
             "chat_session_pull_requests",
             "chat_session_files",
+            "memory_files",
+            "subagents",
+            "skills",
             "user_activity_records",
         ]
     );
@@ -500,7 +517,10 @@ fn schema_of_a_table_prints_bytes_equal_to_the_json_schema_file_of_its_package()
     let fixture = Fixture::new("schema_table");
     let folder = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
     for (table, file) in [
-        ("chat_sessions", "data_layer_chat_sessions/schemas/chat_session.schema.json"),
+        ("chat_sessions", "data_layer_coding_agents/schemas/chat_session.schema.json"),
+        ("memory_files", "data_layer_coding_agents/schemas/memory_file.schema.json"),
+        ("subagents", "data_layer_coding_agents/schemas/subagent.schema.json"),
+        ("skills", "data_layer_coding_agents/schemas/skill.schema.json"),
         ("commits", "data_layer_source_control/schemas/commit.schema.json"),
         ("issues", "data_layer_code_hosting/schemas/issue.schema.json"),
         ("pull_requests", "data_layer_code_hosting/schemas/pull_request.schema.json"),
@@ -521,7 +541,7 @@ fn schema_with_the_format_sql_prints_the_create_table_statements() {
     let result = fixture.run(&["schema", "--format", "sql"]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     assert!(result.stdout.starts_with("CREATE TABLE commits (\n    repository TEXT NOT NULL,"), "{}", result.stdout);
-    assert_eq!(result.stdout.matches("CREATE TABLE").count(), 9);
+    assert_eq!(result.stdout.matches("CREATE TABLE").count(), 12);
 }
 
 #[test]
@@ -531,6 +551,51 @@ fn read_chat_session_prints_the_records_of_a_chat_session_of_claude_code() {
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     assert_eq!(result.json_lines(), vec![json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1" })]);
     assert!(!fixture.database_path.exists());
+}
+
+#[test]
+fn read_file_history_prints_the_write_and_the_edit_of_a_memory_file_and_not_its_reads() {
+    let fixture = Fixture::new("read_file_history");
+    let project = fixture.folder.join("claude").join("projects").join(claude_folder_name(&fixture.repository.display().to_string()));
+    let memory_file = project.join("memory").join("merge-only.md").display().to_string();
+    let tool_call = |at: &str, name: &str, input: Value| {
+        json!({ "type": "assistant", "cwd": fixture.repository.display().to_string(), "timestamp": at, "message": { "content": [
+            { "type": "tool_use", "name": name, "input": input },
+        ] } })
+        .to_string()
+    };
+    let lines = [
+        tool_call("2026-10-12T10:00:02.000Z", "Edit", json!({ "file_path": memory_file, "old_string": "blah", "new_string": "blibli" })),
+        tool_call("2026-10-12T10:00:00.000Z", "Write", json!({ "file_path": memory_file, "content": "blah" })),
+        tool_call("2026-10-12T10:00:01.000Z", "Read", json!({ "file_path": memory_file })),
+        tool_call("2026-10-12T10:00:03.000Z", "Bash", json!({ "command": format!("cat {memory_file}") })),
+    ];
+    std::fs::write(project.join("memory-chat.jsonl"), format!("{}\n", lines.join("\n"))).unwrap();
+    let result = fixture.run(&["read", "file_history", &memory_file, "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(
+        result.json_lines(),
+        vec![
+            json!({ "at": "2026-10-12T10:00:00.000Z", "chatSessionId": "memory-chat", "tool": "Write", "input": { "file_path": memory_file, "content": "blah" } }),
+            json!({ "at": "2026-10-12T10:00:02.000Z", "chatSessionId": "memory-chat", "tool": "Edit", "input": { "file_path": memory_file, "old_string": "blah", "new_string": "blibli" } }),
+        ]
+    );
+    let result = fixture.run(&["read", "file_history", &memory_file, "--format", "table"]);
+    assert!(result.stdout.contains("memory-chat Edit\n  file_path:"), "{}", result.stdout);
+    assert!(result.stdout.contains("  new_string:\n    blibli\n"), "{}", result.stdout);
+    assert!(!fixture.database_path.exists());
+}
+
+#[test]
+fn the_help_of_read_names_every_sign_of_a_write_of_read_file_history() {
+    let fixture = Fixture::new("read_file_history_help");
+    let help = fixture.run(&["read", "--help"]).stdout;
+    for sign in heidrun_data::WRITE_SIGNS {
+        assert!(help.contains(sign.trim()), "The help of read does not name the sign {sign}");
+    }
+    let result = fixture.run(&["read", "file_history", "/a.md", "--full", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(help.contains("so --full is\n                             refused"), "{help}");
 }
 
 #[test]
@@ -662,11 +727,11 @@ fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does
             assert!(help_words.contains(&word), "The help has no option {word}");
         }
     }
-    for kind in ["chat_session", "commit", "issue", "pull_request"] {
+    for kind in ["chat_session", "commit", "issue", "pull_request", "file_history"] {
         assert!(skill.contains(&format!("heidrun_data read {kind}")), "{kind}");
         assert!(help.contains(kind), "{kind}");
     }
-    for source in ["source_control", "code_hosting", "chat_sessions", "user_activity"] {
+    for source in ["source_control", "code_hosting", "coding_agents", "user_activity"] {
         assert!(skill.contains(source) && help.contains(source), "{source}");
     }
 }
@@ -708,5 +773,5 @@ fn the_example_queries_of_the_skill_run_on_the_fixtures_and_give_at_least_one_ro
         assert!(!rows.is_empty(), "No row for: {sql}");
         ran += 1;
     }
-    assert_eq!(ran, 3);
+    assert_eq!(ran, 4);
 }

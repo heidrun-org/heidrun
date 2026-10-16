@@ -17,7 +17,7 @@ One saved conversation between the developer and a coding agent, for example Cla
 
 ### Chat session
 
-The word that the data layer uses for a chat: one saved conversation between the developer and a coding agent. The package `data_layer_chat_sessions` reads the chat sessions from the files of the coding agents, and the Past chats sidebar section lists the same conversations as chats. Use "chat" for what the developer sees in the user interface, and "chat session" for the package and its tables.
+The word that the data layer uses for a chat: one saved conversation between the developer and a coding agent. The package `data_layer_coding_agents` reads the chat sessions from the files of the coding agents, and the Past chats sidebar section lists the same conversations as chats. Use "chat" for what the developer sees in the user interface, and "chat session" for the package and its tables.
 
 ### Estimated cost of a chat
 

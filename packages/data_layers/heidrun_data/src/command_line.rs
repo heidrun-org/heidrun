@@ -8,9 +8,11 @@ pub const HELP: &str = r#"Usage: heidrun_data <command> [options]
 Gives a coding agent the data of the four data layers of Heidrun, in one SQLite file:
   source_control   the commits of the Git repository         (table commits)
   code_hosting     the issues and the pull requests of GitHub (tables issues, pull_requests)
-  chat_sessions    the chat sessions of Claude Code and Codex (table chat_sessions and
+  coding_agents    the chat sessions of Claude Code and Codex (table chat_sessions and
                    the link tables chat_session_folders, chat_session_issues,
-                   chat_session_pull_requests, chat_session_files)
+                   chat_session_pull_requests, chat_session_files), and the
+                   configuration of the coding agent (tables memory_files,
+                   subagents, skills)
   user_activity    the active periods of the developer        (table user_activity_records)
 
 Commands:
@@ -54,7 +56,7 @@ Exit codes:
 Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data update --format jsonl
-  $ heidrun_data update chat_sessions code_hosting --format jsonl
+  $ heidrun_data update coding_agents code_hosting --format jsonl
   $ heidrun_data schema --format jsonl
   $ heidrun_data schema chat_sessions
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
@@ -85,6 +87,26 @@ Kinds:
                              with its author, its date, and for a review comment its
                              file and its line, in the order of the dates, then the
                              diff. Needs the command gh, signed in.
+  file_history <path>        Every tool call of a chat session that wrote the file, in
+                             the order of the dates: "at", "chatSessionId", "tool"
+                             (Write, Edit, Bash, apply_patch, ...), and "input". The
+                             "old_string" and "new_string" of an Edit are the diff.
+                             Reads the files of Claude Code and of Codex for the
+                             repository, its worktrees, and its sub-folders.
+                             Give the path as the coding agent wrote it, most often
+                             absolute, for example the column "id" of the table
+                             memory_files. A file name or a relative path matches
+                             the end of the path, so it can also find another file
+                             with the same name.
+                             A shell command counts when it names the path and has
+                             a sign of a write: ">", "sed -i", "tee", "mv", "cp",
+                             "rm", 'w' or "w" (the mode of a Python open), or
+                             "apply_patch". A change made by hand, outside a coding
+                             agent, is not found.
+                             The input is always printed in full, so --full is
+                             refused. The format table prints each field of the
+                             input on its own lines. It reads every chat session
+                             file, so it can take some seconds.
 
 Options:
   --repository <owner/name>  The repository of an issue or of a pull request.
@@ -105,6 +127,7 @@ Examples:
   $ heidrun_data read commit HEAD --no-diff --format jsonl
   $ heidrun_data read issue 500 --format jsonl
   $ heidrun_data read pull_request 565 --no-diff --format jsonl
+  $ heidrun_data read file_history /Users/me/.claude/projects/-Users-me-app/memory/MEMORY.md --format table
 "#;
 
 /// The text of `heidrun_data sources --help`.
@@ -168,7 +191,7 @@ pub const SYNCHRONIZATION_HELP: &str = r#"Usage: heidrun_data update [<source>..
 update reads only what is new in each source. initialize reads each source since the
 beginning. With no source, both read the four sources. The sources always run in this
 order, whatever the order of the arguments: source_control, code_hosting,
-chat_sessions, user_activity.
+coding_agents, user_activity.
 
 A source that fails does not stop the others. The command prints one report row for
 each source that worked, with the number of rows written in each table, and one error
@@ -178,17 +201,19 @@ at least one source failed.
 The sources:
   source_control             Needs the command git.
   code_hosting               Needs the command gh, signed in.
-  chat_sessions              Reads the folders of Claude Code and of Codex.
+  coding_agents              Reads the folders of Claude Code, of Codex, and
+                             "~/.agents", and the folders ".claude" and ".agents"
+                             of the repository.
   user_activity              Reads the file of the user activity records.
 
 Options:
   --database <path>          The SQLite file. It is created when it does not exist.
                              (default: "~/.config/heidrun/data_layer.sqlite")
   --repository <owner/name>  The name of the repository. For source_control,
-                             code_hosting, and chat_sessions.
+                             code_hosting, and coding_agents.
                              (default: the remote "origin" of the folder)
   --folder <path>            The folder of the Git repository, or a folder inside it.
-                             For source_control, code_hosting, and chat_sessions.
+                             For source_control, code_hosting, and coding_agents.
                              (default: the current folder)
   --file <path>              The file of the user activity records. For user_activity.
                              (default: "user_activity.jsonl" in the folder of the
@@ -203,7 +228,7 @@ An option that a source does not use is not an error: the other sources use it.
 
 Examples:
   $ heidrun_data update --format jsonl
-  $ heidrun_data update chat_sessions --format jsonl
+  $ heidrun_data update coding_agents --format jsonl
   $ heidrun_data initialize source_control --verbose --format jsonl
 "#;
 
@@ -273,6 +298,8 @@ pub enum ReadKind {
     Issue,
     /// A pull request of the GitHub repository.
     PullRequest,
+    /// The tool calls of the chat sessions that wrote one file.
+    FileHistory,
 }
 
 /// The request to print the content of one thing.
@@ -282,7 +309,8 @@ pub struct ReadRequest {
     pub common: CommonOptions,
     /// The kind of the thing.
     pub kind: ReadKind,
-    /// The key of the thing: the id of a chat session, the hash of a commit, or the number of an issue or a pull request.
+    /// The key of the thing: the id of a chat session, the hash of a commit, the number of an issue or a pull request, or
+    /// the path of a file.
     pub key: String,
     /// The repository of an issue or of a pull request, or `None` for the remote `origin` of the folder.
     pub repository: Option<String>,
@@ -460,15 +488,16 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         }
         let kind_name = positionals
             .next()
-            .ok_or("The command read needs a kind (chat_session, commit, issue, or pull_request) and a key.")?;
+            .ok_or("The command read needs a kind (chat_session, commit, issue, pull_request, or file_history) and a key.")?;
         let kind = match kind_name.as_str() {
             "chat_session" => ReadKind::ChatSession,
             "commit" => ReadKind::Commit,
             "issue" => ReadKind::Issue,
             "pull_request" => ReadKind::PullRequest,
+            "file_history" => ReadKind::FileHistory,
             _ => {
                 return Err(format!(
-                    "The kind {kind_name} is not known: use chat_session, commit, issue, or pull_request."
+                    "The kind {kind_name} is not known: use chat_session, commit, issue, pull_request, or file_history."
                 ))
             }
         };
@@ -498,7 +527,7 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         let mut sources = Vec::new();
         for name in positionals {
             let source = Source::from_name(&name).ok_or_else(|| {
-                format!("The source {name} is not known: use source_control, code_hosting, chat_sessions, or user_activity.")
+                format!("The source {name} is not known: use source_control, code_hosting, coding_agents, or user_activity.")
             })?;
             sources.push(source);
         }
@@ -568,7 +597,7 @@ mod tests {
                 "initialize",
                 "user_activity",
                 "--database=a.sqlite",
-                "chat_sessions",
+                "coding_agents",
                 "--repository",
                 "owner/name",
                 "--folder",
@@ -581,7 +610,7 @@ mod tests {
             ])),
             Ok(Parsed::Synchronize(SynchronizationRequest {
                 mode: SynchronizationMode::Initialize,
-                sources: vec![Source::ChatSessions, Source::UserActivity],
+                sources: vec![Source::CodingAgents, Source::UserActivity],
                 common: CommonOptions { database: Some("a.sqlite".into()), format: Some(Format::Table), verbose: true },
                 repository: Some("owner/name".into()),
                 folder: Some("/a/folder".into()),

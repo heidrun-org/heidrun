@@ -143,11 +143,11 @@ mod tests {
     fn the_file_env_example_lists_exactly_the_variables_that_the_sources_read() {
         let mut read = BTreeSet::new();
         let manifest_folder = Path::new(env!("CARGO_MANIFEST_DIR"));
-        // The package `data_layer_chat_sessions` reads the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME` for the application.
+        // The package `data_layer_coding_agents` reads the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME` for the application.
         // The package `mobile_server` reads the variables `HEIDRUN_DIR` and `HEIDRUN_NGROK` for the application.
         let source_folders = [
             manifest_folder.join("src"),
-            manifest_folder.join("../../data_layers/data_layer_chat_sessions/src"),
+            manifest_folder.join("../../data_layers/data_layer_coding_agents/src"),
             manifest_folder.join("../../auxiliary/mobile_server/src"),
         ];
         for file in source_folders.iter().flat_map(|folder| rust_files(folder)) {

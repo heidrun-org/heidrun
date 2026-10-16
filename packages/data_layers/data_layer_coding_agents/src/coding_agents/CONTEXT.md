@@ -1,7 +1,7 @@
-# Directory Context: `/packages/data_layers/data_layer_chat_sessions/src/coding_agents`
+# Directory Context: `/packages/data_layers/data_layer_coding_agents/src/coding_agents`
 
 ## Purpose
-Finds the chat session files of Claude Code and of Codex for one folder, reads what each file holds without a model, and turns it into the stored shape.
+Finds the chat session files of Claude Code and of Codex for one folder, reads what each file holds without a model, and turns it into the stored shape. Reads the coding agent configuration of a repository: the memory files, the subagents, and the skills.
 
 ## Key Exports & Entry Points
 - `scan.rs`: `Scan`, `ChatMeta`, `feed_claude_line`, `feed_codex_line`, `feed_claude_tokens_line`, and `scan_file`: the title, the dates, the messages, the folders, the issues, the pull requests, and the files that the coding agent wrote. A file that ends with `.zst` is decompressed while it is read (`open_lines`).
@@ -9,11 +9,12 @@ Finds the chat session files of Claude Code and of Codex for one folder, reads w
 - `scan_cache.rs`: `ScanCache`, which keeps the scan of each file until its size or its date changes, and continues the scan of a file that only grew. `scan_claude` adds the tokens of the subagents and of the workflows of a chat to the chat.
 - `session_files.rs`: `find_claude_session_files`, `find_codex_session_files`, `find_claude_agent_files`, `FolderScope`, `read_codex_titles`, and `title_of_scan`. `FolderScope` says whether the folders below the folder of the workspace count.
 - `session_reader.rs`: `read_chat_sessions`, which gives the `ChatSessionRecord` of each file.
-- `agent_homes.rs`: `claude_dir` and `codex_home`.
-- Command to test this folder: `pnpm --filter data_layer_chat_sessions test`
+- `configuration_reader.rs`: `read_configuration`, `ConfigurationFolders`, and `read_header`, the fields of the header of a file between its two lines `---`.
+- `agent_homes.rs`: `claude_dir`, `codex_home`, and `agents_home`.
+- Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 
 ## Rules
-- Nothing here imports from `src/storage/`. Only `session_reader.rs` imports from `src/model/`.
+- Nothing here imports from `src/storage/`. Only `session_reader.rs` and `configuration_reader.rs` import from `src/model/`.
 - The code never runs a model, never runs `git`, and never writes in the folders of the coding agents.
 - A scan stops at the end of the last complete line, so that the next scan of the same file continues from there. For a compressed file the byte is a position in the decompressed text.
 - The files of the subagents and of the workflows of a chat of Claude Code (`<chat id>/subagents/**/*.jsonl`) give tokens only: their user lines are prompts of the main agent, not messages of the developer.

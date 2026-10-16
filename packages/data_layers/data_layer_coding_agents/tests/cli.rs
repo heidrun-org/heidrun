@@ -1,7 +1,8 @@
-//! Tests of the executable `data_layer_chat_sessions`, with fake folders of Claude Code and of Codex given by the variables
-//! `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, and a real Git repository with the remote `origin` `fake-owner/fake-name`.
+//! Tests of the executable `data_layer_coding_agents`, with fake folders of Claude Code and of Codex given by the variables
+//! `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, a fake home folder given by the variable `HOME` for the folder `~/.agents`, and a
+//! real Git repository with the remote `origin` `fake-owner/fake-name`.
 
-use data_layer_chat_sessions::{ChatSessionTable, ChatSessionsDatabase};
+use data_layer_coding_agents::{ChatSessionTable, ChatSessionsDatabase, ConfigurationDatabase, ConfigurationKind};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, SystemTime};
@@ -39,7 +40,7 @@ fn write_file(path: &Path, text: &str, age_seconds: u64) {
 impl Fixture {
     /// Makes the folders. The repository holds two chat sessions of Claude Code (`older` and `newer`).
     fn new(name: &str) -> Self {
-        let folder = std::env::temp_dir().join(format!("data_layer_chat_sessions_cli_{name}_{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("data_layer_coding_agents_cli_{name}_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         let repository = folder.join("repository").canonicalize_or_create();
         for arguments in [vec!["init", "-q"], vec!["remote", "add", "origin", "git@github.com:fake-owner/fake-name.git"]] {
@@ -55,10 +56,11 @@ impl Fixture {
 
     /// Runs the executable with the fake folders of the coding agents.
     fn run(&self, arguments: &[&str]) -> CliResult {
-        let output = Command::new(env!("CARGO_BIN_EXE_data_layer_chat_sessions"))
+        let output = Command::new(env!("CARGO_BIN_EXE_data_layer_coding_agents"))
             .args(arguments)
             .env("CLAUDE_CONFIG_DIR", self.folder.join("claude"))
             .env("CODEX_HOME", self.folder.join("codex"))
+            .env("HOME", self.folder.join("home"))
             .output()
             .unwrap();
         CliResult {
@@ -105,17 +107,17 @@ impl CanonicalizeOrCreate for PathBuf {
 fn prints_the_help_and_exits_with_the_code_0() {
     let result = Fixture::new("help").run(&["--help"]);
     assert_eq!(result.exit_code, Some(0));
-    assert!(result.stdout.contains("Usage: data_layer_chat_sessions"));
+    assert!(result.stdout.contains("Usage: data_layer_coding_agents"));
     assert!(result.stdout.contains("initialize") && result.stdout.contains("chat_session_issues"));
 }
 
 #[test]
-fn initialize_writes_every_chat_session_and_prints_a_report_of_two_lines() {
+fn initialize_writes_every_chat_session_and_prints_a_report_of_three_lines() {
     let fixture = Fixture::new("initialize");
     let result = fixture.run_with_options("initialize", &[]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     let lines: Vec<&str> = result.stdout.lines().collect();
-    assert_eq!(lines.len(), 2, "{}", result.stdout);
+    assert_eq!(lines.len(), 3, "{}", result.stdout);
     assert!(lines[0].starts_with("fake-owner/fake-name -> ") && lines[0].ends_with("(initialize)"), "{}", lines[0]);
     assert_eq!(lines[1], "chat sessions: 2 written, read since the beginning");
     let database = ChatSessionsDatabase::open_read_only(&fixture.database_path).unwrap();
@@ -123,6 +125,35 @@ fn initialize_writes_every_chat_session_and_prints_a_report_of_two_lines() {
     let relations = database.find_relations("fake-owner/fake-name", "newer").unwrap();
     assert_eq!(relations.issues, vec![250]);
     assert_eq!(relations.folders, vec![fixture.repository.display().to_string()]);
+}
+
+#[test]
+fn initialize_and_update_write_the_memory_files_the_subagents_and_the_skills_and_mark_a_removed_file() {
+    let fixture = Fixture::new("configuration");
+    let project = fixture.folder.join("claude").join("projects").join(claude_folder_name(&fixture.repository.display().to_string()));
+    let memory_file = project.join("memory").join("never-rebase.md");
+    let memory_text = "---\nname: never-rebase\ndescription: Merge only\nmetadata:\n  type: feedback\n  originSessionId: newer\n---\nNever rebase.\n";
+    write_file(&memory_file, memory_text, 100);
+    write_file(&fixture.repository.join(".claude/agents/reviewer.md"), "---\nname: reviewer\n---\n", 100);
+    write_file(&fixture.repository.join(".agents/skills/style/SKILL.md"), "---\nname: style\n---\n", 100);
+    write_file(&fixture.folder.join("home/.agents/skills/find/SKILL.md"), "---\nname: find\n---\n", 100);
+    let result = fixture.run_with_options("initialize", &[]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(
+        result.stdout.lines().nth(2),
+        Some("configuration: memory_files 1 written, 0 removed, subagents 1 written, 0 removed, skills 2 written, 0 removed")
+    );
+    std::fs::remove_file(&memory_file).unwrap();
+    let result = fixture.run_with_options("update", &[]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert!(result.stdout.contains("memory_files 0 written, 1 removed,"), "{}", result.stdout);
+    let database = ConfigurationDatabase::open(&fixture.database_path).unwrap();
+    let item = database
+        .find_item(ConfigurationKind::MemoryFile, "fake-owner/fake-name", &memory_file.display().to_string())
+        .unwrap()
+        .unwrap();
+    assert_eq!((item.memory_type.as_deref(), item.origin_chat_session_id.as_deref()), (Some("feedback"), Some("newer")));
+    assert!(item.removed_at.is_some());
 }
 
 #[test]

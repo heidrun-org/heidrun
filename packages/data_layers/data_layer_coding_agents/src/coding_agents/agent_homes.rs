@@ -1,4 +1,4 @@
-//! The folders where Claude Code and Codex keep their files.
+//! The folders where Claude Code and Codex keep their files, and the folder `.agents` that several coding agents read.
 
 use std::path::PathBuf;
 
@@ -20,4 +20,9 @@ pub fn codex_home() -> PathBuf {
         }
     }
     dirs::home_dir().unwrap_or_default().join(".codex")
+}
+
+/// The folder `.agents` of the home folder, which several coding agents read: `~/.agents`.
+pub fn agents_home() -> PathBuf {
+    dirs::home_dir().unwrap_or_default().join(".agents")
 }

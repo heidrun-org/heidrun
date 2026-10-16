@@ -12,7 +12,7 @@ use std::path::PathBuf;
 const SCRIPT: &str = include_str!("../../../../scripts/claude-statusline.sh");
 
 pub(crate) fn claude_dir() -> PathBuf {
-    data_layer_chat_sessions::claude_dir()
+    data_layer_coding_agents::claude_dir()
 }
 
 fn desk_dir() -> PathBuf {

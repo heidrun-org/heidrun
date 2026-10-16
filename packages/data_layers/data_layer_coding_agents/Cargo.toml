@@ -1,5 +1,5 @@
 [package]
-name = "data_layer_chat_sessions"
+name = "data_layer_coding_agents"
 version = "0.2.7"
 description = "Reads the chat sessions of Claude Code and Codex for a repository into a SQLite file, and runs read-only queries on them"
 license = "MIT"
@@ -7,11 +7,11 @@ edition = "2021"
 publish = false
 
 [lib]
-name = "data_layer_chat_sessions"
+name = "data_layer_coding_agents"
 path = "src/lib.rs"
 
 [[bin]]
-name = "data_layer_chat_sessions"
+name = "data_layer_coding_agents"
 path = "src/main.rs"
 
 [dependencies]

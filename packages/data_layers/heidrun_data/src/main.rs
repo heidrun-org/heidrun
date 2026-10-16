@@ -9,7 +9,9 @@ use heidrun_data::{
     add_limit, data_schema_text, default_database_path, format_error, read_catalog, synchronize, write_rows, Format,
     HeidrunDatabase, QueryRow, SynchronizationOptions,
 };
-use heidrun_data::{read_chat_session, read_code_hosting, read_commit, read_pull_request_diff, CodeHostingKind};
+use heidrun_data::{
+    read_chat_session, read_code_hosting, read_commit, read_file_history, read_pull_request_diff, CodeHostingKind,
+};
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -66,8 +68,9 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
         folder: folder_of(&request.folder)?,
         repository: request.repository.clone(),
         user_activity_file: absolute_path(&request.file, || Ok(data_layer_user_activity::default_user_activity_file_path()))?,
-        claude_projects_folder: data_layer_chat_sessions::claude_dir().join("projects"),
-        codex_home: data_layer_chat_sessions::codex_home(),
+        claude_dir: data_layer_coding_agents::claude_dir(),
+        codex_home: data_layer_coding_agents::codex_home(),
+        agents_home: data_layer_coding_agents::agents_home(),
     };
     let print_progress = |message: &str| eprintln!("{message}");
     let ignore_progress = |_: &str| {};
@@ -157,9 +160,9 @@ fn main_root(folder: &std::path::Path) -> PathBuf {
     let common_folder = runner.run(&["rev-parse", "--path-format=absolute", "--git-common-dir"], None);
     match common_folder.ok().map(|text| PathBuf::from(text.trim())) {
         Some(path) if path.file_name().is_some_and(|name| name == ".git") => {
-            path.parent().map(PathBuf::from).unwrap_or_else(|| data_layer_chat_sessions::find_root(folder))
+            path.parent().map(PathBuf::from).unwrap_or_else(|| data_layer_coding_agents::find_root(folder))
         }
-        _ => data_layer_chat_sessions::find_root(folder),
+        _ => data_layer_coding_agents::find_root(folder),
     }
 }
 
@@ -176,8 +179,8 @@ fn run_read(request: &ReadRequest) -> Result<(), String> {
             let records = read_chat_session(
                 &request.key,
                 &root,
-                &data_layer_chat_sessions::claude_dir().join("projects"),
-                &data_layer_chat_sessions::codex_home(),
+                &data_layer_coding_agents::claude_dir().join("projects"),
+                &data_layer_coding_agents::codex_home(),
                 request.is_full,
             )?;
             match format {
@@ -187,6 +190,25 @@ fn run_read(request: &ReadRequest) -> Result<(), String> {
                     }
                 }
                 _ => print_rows(&records.iter().map(|record| record.to_row()).collect::<Vec<_>>(), format),
+            }
+        }
+        ReadKind::FileHistory => {
+            if !folder.is_dir() {
+                return Err(format!("The folder {} does not exist.", folder.display()));
+            }
+            let changes = read_file_history(
+                &request.key,
+                &main_root(&folder),
+                &data_layer_coding_agents::claude_dir().join("projects"),
+                &data_layer_coding_agents::codex_home(),
+            );
+            match format {
+                Format::Table => {
+                    for change in &changes {
+                        print!("{}", change.to_text());
+                    }
+                }
+                _ => print_rows(&changes.iter().map(|change| change.to_row()).collect::<Vec<_>>(), format),
             }
         }
         ReadKind::Commit => {

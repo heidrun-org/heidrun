@@ -1,11 +1,12 @@
-//! The command line `data_layer_chat_sessions`: the commands initialize, update, and query.
+//! The command line `data_layer_coding_agents`: the commands initialize, update, and query.
 
 mod command_line;
 
 use command_line::{parse, Parsed, QueryRequest, SynchronizationRequest, HELP};
-use data_layer_chat_sessions::{
-    claude_dir, codex_home, default_database_path, describe_since, find_repository, find_root, ignore_log, synchronize,
-    to_json, to_table, ChatSessionsDatabase,
+use data_layer_coding_agents::{
+    agents_home, claude_dir, codex_home, default_database_path, describe_since, find_main_root, find_repository, find_root, ignore_log,
+    synchronize, synchronize_configuration, to_json, to_table, ChatSessionsDatabase, ConfigurationDatabase,
+    ConfigurationFolders,
 };
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -30,7 +31,7 @@ fn repository_root(option: &Option<String>) -> Result<PathBuf, String> {
     Ok(find_root(&folder))
 }
 
-/// Runs the mode initialize or the mode update, and prints a report of two lines on the standard output.
+/// Runs the mode initialize or the mode update, and prints a report of three lines on the standard output.
 fn run_synchronization(request: &SynchronizationRequest) -> Result<(), String> {
     let root = repository_root(&request.folder)?;
     let repository = match &request.repository {
@@ -55,6 +56,20 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<(), String> {
     )?;
     println!("{} -> {} ({})", report.repository, database_path.display(), report.mode.name());
     println!("chat sessions: {} written, read {}", report.chat_session_count, describe_since(report.since.as_deref()));
+    let folders = ConfigurationFolders {
+        main_root: find_main_root(&root),
+        root,
+        claude_dir: claude_dir(),
+        codex_home: codex_home(),
+        agents_home: agents_home(),
+    };
+    let mut database = ConfigurationDatabase::open(&database_path)?;
+    let counts = synchronize_configuration(&repository, &folders, &mut database, log)?;
+    let parts: Vec<String> = counts
+        .iter()
+        .map(|count| format!("{} {} written, {} removed", count.kind.table_name(), count.written_count, count.removed_count))
+        .collect();
+    println!("configuration: {}", parts.join(", "));
     Ok(())
 }
 

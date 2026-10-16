@@ -1,6 +1,6 @@
 //! Chats: the conversations that Claude Code and Codex saved on this Mac for the folder of a workspace.
 //!
-//! The package `data_layer_chat_sessions` finds the chat session files and reads what each one holds, without a model, and
+//! The package `data_layer_coding_agents` finds the chat session files and reads what each one holds, without a model, and
 //! keeps the result in `chats_cache.json`, in the data folder of Heidrun, until the size or the modification date of the file
 //! changes. It also reads the files that Codex compressed (`.jsonl.zst`), and it adds the tokens of the subagents and of the
 //! workflows of a conversation of Claude Code to that conversation. This file turns what the package reads into the list of the Past chats sidebar section: the title, the summary,
@@ -14,7 +14,7 @@
 //! of the folder is opened, then the conversations are sorted and cut to `limit`.
 
 use crate::model_prices::PriceTable;
-use data_layer_chat_sessions::{
+use data_layer_coding_agents::{
     feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
     title_of_scan, ChatMeta, FolderScope, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
 };
@@ -361,7 +361,7 @@ fn codex_chats(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use data_layer_chat_sessions::claude_folder_name;
+    use data_layer_coding_agents::claude_folder_name;
     use serde_json::Value;
     use std::time::{Duration, SystemTime};
 
