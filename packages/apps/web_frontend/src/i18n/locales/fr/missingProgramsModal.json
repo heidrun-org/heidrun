@@ -1,0 +1,13 @@
+{
+  "title": "Heidrun a besoin de programmes qui ne sont pas installés",
+  "required": "Obligatoire",
+  "optional": "Facultatif",
+  "installWith": "Pour l’installer, lance cette commande dans un terminal :",
+  "continue": "Continuer",
+  "herdr.name": "Herdr",
+  "herdr.reason": "Heidrun ne peut afficher ni terminal ni agent de code sans Herdr.",
+  "herdr.after": "Après l’installation, clique sur « Démarrer Herdr » dans la fenêtre principale.",
+  "ngrok.name": "ngrok",
+  "ngrok.reason": "Seul l’accès mobile utilise ngrok. Toutes les autres parties de Heidrun fonctionnent sans lui.",
+  "ngrok.after": "Puis crée un compte gratuit sur ngrok.com, et lance la commande ngrok config add-authtoken suivie de ton jeton. Cet avis ne s’affiche plus pour ngrok."
+}

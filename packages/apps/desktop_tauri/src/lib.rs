@@ -17,6 +17,7 @@ mod model_prices;
 mod person_work;
 mod project;
 mod pty;
+mod required_programs;
 mod skills;
 mod status_item;
 mod status_item_icon;
@@ -307,6 +308,7 @@ pub fn run() {
             herdr_watch_panes,
             herdr_paths,
             herdr_server_start,
+            required_programs::required_programs_status,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,

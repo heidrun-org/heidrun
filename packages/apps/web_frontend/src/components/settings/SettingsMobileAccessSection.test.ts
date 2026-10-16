@@ -6,8 +6,18 @@ const opener = vi.hoisted(() => ({ openUrl: vi.fn(async (_address: string) => {}
 vi.mock("@tauri-apps/plugin-opener", () => opener);
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 
-const fake = vi.hoisted(() => ({ status: null as unknown }));
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async (command: string) => (command === "mobile_status" ? fake.status : null)) }));
+const fake = vi.hoisted(() => ({ status: null as unknown, programs: null as unknown }));
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(async (command: string) => {
+    if (command === "mobile_status") {
+      return fake.status;
+    }
+    if (command === "required_programs_status") {
+      return fake.programs;
+    }
+    return null;
+  }),
+}));
 
 const openWrappers: VueWrapper[] = [];
 
@@ -32,6 +42,7 @@ const OFF = { enabled: false, running: false, url: null, qr: null, link: null, e
 const WORDS_OF_THE_FIRST_WORK = [/iPhone/, /iPad/, /Tailscale/i, /Safari/, /Home Screen/, /\bMac\b/];
 
 beforeEach(() => {
+  fake.programs = null;
   opener.openUrl.mockClear();
   localStorage.clear();
   vi.resetModules();
@@ -171,5 +182,35 @@ describe("SettingsMobileAccessSection, in French", () => {
     for (const word of WORDS_OF_THE_FIRST_WORK) {
       expect(wrapper.text()).not.toMatch(word);
     }
+  });
+});
+
+describe("SettingsMobileAccessSection, the reminder of a missing ngrok (issue 546)", () => {
+  it("says, before the access is on, that the mobile access is impossible without ngrok, and how to install it", async () => {
+    fake.programs = { herdr: { isInstalled: true }, ngrok: { isInstalled: false } };
+    const wrapper = await mountSection(OFF);
+    const reminder = wrapper.get(".ngrok-reminder");
+    expect(reminder.text()).toContain("Without it, the mobile access is impossible.");
+    expect(reminder.text()).toContain("brew install ngrok");
+    expect(reminder.text()).toContain("ngrok config add-authtoken");
+  });
+
+  it("shows no reminder when ngrok is installed", async () => {
+    fake.programs = { herdr: { isInstalled: true }, ngrok: { isInstalled: true } };
+    const wrapper = await mountSection(OFF);
+    expect(wrapper.find(".ngrok-reminder").exists()).toBe(false);
+  });
+
+  it("shows only the error, and no reminder, when the access is on and the error already says that ngrok is missing", async () => {
+    fake.programs = { herdr: { isInstalled: true }, ngrok: { isInstalled: false } };
+    const wrapper = await mountSection({ ...OPENING, error: { kind: "ngrokMissing", detail: "" } });
+    expect(wrapper.find(".ngrok-reminder").exists()).toBe(false);
+    expect(wrapper.findAll(".alert")).toHaveLength(1);
+  });
+
+  it("says the same thing in French", async () => {
+    fake.programs = { herdr: { isInstalled: true }, ngrok: { isInstalled: false } };
+    const wrapper = await mountSection(OFF, "fr");
+    expect(wrapper.get(".ngrok-reminder").text()).toContain("Sans lui, l’accès mobile est impossible.");
   });
 });

@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { mobile, mobileStatus, revokeMobile, setMobile } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { toast } from "../../stores/session";
+import { requiredProgramsStatus } from "../../lib/api";
 import { t } from "../../i18n/index";
 
 const st = computed(() => mobile.status);
 const errorText = computed(() => (st.value?.error ? t(`mobileModal.error.${st.value.error.kind}`) : ""));
+// The reminder of a missing ngrok shows before the developer turns the mobile access on (issue 546). When the mobile access
+// is on, the error "ngrokMissing" of the status says the same thing, so the reminder hides.
+const isNgrokInstalled = ref(true);
+const isNgrokReminderVisible = computed(() => isNgrokInstalled.value === false && st.value?.error?.kind !== "ngrokMissing");
 const isOpeningTheTunnel = computed(() => st.value?.enabled === true && st.value.running === false && st.value.error === null);
 
 // The tunnel needs a few seconds to open: ask for the status every second until it is open.
@@ -24,6 +29,11 @@ function scheduleNextStatus() {
 }
 onMounted(async () => {
   isMounted = true;
+  requiredProgramsStatus()
+    .then((status) => {
+      isNgrokInstalled.value = status.ngrok.isInstalled;
+    })
+    .catch(() => {});
   await mobileStatus();
   if (isMounted) {
     scheduleNextStatus();
@@ -48,6 +58,8 @@ async function openPairingLink(link: string) {
     <p class="m-0">{{ t("mobileModal.lead") }}</p>
 
     <SettingsSwitchRow :model-value="st?.enabled === true" :is-disabled="mobile.busy" :label="t('mobileModal.enable')" @update:model-value="setMobile($event)" />
+
+    <div v-if="isNgrokReminderVisible" class="alert theme-warning ngrok-reminder" role="alert">{{ t("mobileModal.ngrokNotInstalled") }}</div>
 
     <div v-if="st?.error" class="alert theme-danger" role="alert">
       {{ errorText }}
