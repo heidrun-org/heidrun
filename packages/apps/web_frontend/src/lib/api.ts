@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import type { RequiredProgramsStatus } from "./missing_programs";
 import type { CodexUsage, PaneInfo, SessionSnapshot, TabInfo, WorkspaceInfo } from "./types";
 
 export function request<T = any>(method: string, params: Record<string, unknown> = {}): Promise<T> {
@@ -24,6 +25,11 @@ export function paths(): Promise<{ socket: string; socket_exists: boolean; bin: 
 
 export function startServer(): Promise<string> {
   return invoke("herdr_server_start");
+}
+
+/** Tells which programs of other makers are installed: Herdr, which is required, and ngrok, for the mobile access only. */
+export function requiredProgramsStatus(): Promise<RequiredProgramsStatus> {
+  return invoke("required_programs_status");
 }
 
 /** Shows the main window, which is created hidden so that the user never sees it empty before the splash image. */

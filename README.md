@@ -50,7 +50,17 @@ The full list of features, shortcuts, and settings is in the [documentation](htt
 
 ## Installation
 
-On a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun in `/Applications`, and macOS opens Heidrun with no message "damaged". Quit Heidrun before you run it.
+First install [Herdr](https://herdr.dev) 0.9 or later. Heidrun needs it, and does not install it:
+
+```sh
+curl -fsSL https://herdr.dev/install.sh | sh
+```
+
+The program ngrok is optional: only the mobile access uses it. Install it only if you want to answer your coding agents from your phone, with `brew install ngrok`. Then create a free account at ngrok.com, and run `ngrok config add-authtoken` followed by your token.
+
+When a program is missing, Heidrun says so at the start, with the command that installs it.
+
+Then, on a Mac with Apple silicon, run this command in a terminal. It installs the latest Heidrun in `/Applications`, and macOS opens Heidrun with no message "damaged". Quit Heidrun before you run it.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/heidrun-org/heidrun/main/scripts/install.sh | sh

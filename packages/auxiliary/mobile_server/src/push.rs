@@ -1,7 +1,7 @@
 //! The push to the phones: the key of the server, the list of the phones that asked for a push, and the request that wakes
 //! a phone. The request has no body, so the push service sees nothing about the coding agents; the phone shows a fixed text.
 
-use crate::config::{data_dir, random_bytes, write_private};
+use crate::config::{config_folder, random_bytes, write_private};
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 use p256::ecdsa::signature::Signer;
@@ -42,7 +42,7 @@ pub struct PushReport {
 }
 
 fn push_path() -> PathBuf {
-    data_dir().join("mobile_push.json")
+    config_folder().join("mobile_push.json")
 }
 
 fn load_from(path: &Path) -> PushFile {

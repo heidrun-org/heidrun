@@ -129,3 +129,12 @@ describe('HomeQuickStart', () => {
 		expect(button.text()).toBe(QUICK_START.source.copyText);
 	});
 });
+
+describe('HomeQuickStart, the dependencies (issue 546)', () => {
+	it('shows the install command of Herdr next to the download, and says that ngrok is only for the mobile access', () => {
+		const wrapper = mount(HomeQuickStart);
+		expect(wrapper.get('.home-quick-start-herdr').text()).toBe('curl -fsSL https://herdr.dev/install.sh | sh');
+		expect(QUICK_START.download.text).toContain('First install Herdr');
+		expect(QUICK_START.download.text).toContain('only the mobile access uses it');
+	});
+});

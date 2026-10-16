@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
-import { mobile, mobileStatus, revokeMobile, setMobile } from "../../stores/mobile";
+import { mobile, mobileStatus, revokeMobile, setMobile, stopLeftoverNgrok } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { toast } from "../../stores/session";
 import { settings } from "../../stores/settings";
+import { requiredProgramsStatus } from "../../lib/api";
 import { t } from "../../i18n/index";
 
 const st = computed(() => mobile.status);
 const errorText = computed(() => (st.value?.error ? t(`mobileModal.error.${st.value.error.kind}`) : ""));
+// The reminder of a missing ngrok shows before the developer turns the mobile access on (issue 546). When the mobile access
+// is on, the error "ngrokMissing" of the status says the same thing, so the reminder hides.
+const isNgrokInstalled = ref(true);
+const isNgrokReminderVisible = computed(() => isNgrokInstalled.value === false && st.value?.error?.kind !== "ngrokMissing");
 const isOpeningTheTunnel = computed(() => st.value?.enabled === true && st.value.running === false && st.value.error === null);
 
 // The tunnel needs a few seconds to open: ask for the status every second until it is open.
@@ -25,6 +30,11 @@ function scheduleNextStatus() {
 }
 onMounted(async () => {
   isMounted = true;
+  requiredProgramsStatus()
+    .then((status) => {
+      isNgrokInstalled.value = status.ngrok.isInstalled;
+    })
+    .catch(() => {});
   await mobileStatus();
   if (isMounted) {
     scheduleNextStatus();
@@ -34,6 +44,19 @@ onBeforeUnmount(() => {
   isMounted = false;
   window.clearTimeout(timer);
 });
+
+// The button "Stop the old ngrok" (issue 583). When no ngrok of Heidrun was killed, the other ngrok runs somewhere else, and
+// the developer closes it by hand.
+const isLeftoverNotFound = ref(false);
+/** The command that stops every ngrok of this computer, the same in every language. */
+const KILL_ALL_NGROK_COMMAND = "pkill -x ngrok";
+async function stopOldNgrok() {
+  const isKilled = await stopLeftoverNgrok();
+  isLeftoverNotFound.value = isKilled === false;
+  if (isKilled === true) {
+    toast(t("mobileModal.oldNgrokStopped"));
+  }
+}
 
 async function openPairingLink(link: string) {
   try {
@@ -54,10 +77,20 @@ async function openPairingLink(link: string) {
       <SettingsSwitchRow v-model="settings.mobileTerminalTyping" :label="t('mobileModal.terminalTyping')" />
       <p class="m-0 form-text">{{ t("mobileModal.terminalTypingNote") }}</p>
     </div>
+    <div v-if="isNgrokReminderVisible" class="alert theme-warning ngrok-reminder" role="alert">{{ t("mobileModal.ngrokNotInstalled") }}</div>
 
     <div v-if="st?.error" class="alert theme-danger" role="alert">
       {{ errorText }}
       <div v-if="st.error.detail" class="mono mt-1">{{ st.error.detail }}</div>
+      <template v-if="st.error.kind === 'ngrokAddressInUse'">
+        <button type="button" class="btn mt-2 stop-old-ngrok" :disabled="mobile.busy" @click="stopOldNgrok">
+          {{ t("mobileModal.stopOldNgrok") }}
+        </button>
+        <div v-if="isLeftoverNotFound" class="mt-2 old-ngrok-not-found">
+          {{ t("mobileModal.oldNgrokNotFound") }}
+          <code class="command d-block mono mt-2 p-2 rounded user-select-all kill-all-ngrok">{{ KILL_ALL_NGROK_COMMAND }}</code>
+        </div>
+      </template>
     </div>
 
     <template v-if="st?.enabled && st.running && st.qr">
@@ -89,4 +122,5 @@ async function openPairingLink(link: string) {
 <style scoped>
 .qr { width: 220px; flex-shrink: 0; }
 .qr :deep(svg) { display: block; width: 100%; height: auto; }
+.command { background: var(--field); color: var(--text); }
 </style>

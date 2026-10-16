@@ -24,6 +24,9 @@ const copyCommands = async (): Promise<void> => {
 				<div class="home-quick-start-path">
 					<h3 class="home-quick-start-heading">{{ QUICK_START.download.title }}</h3>
 					<p class="home-paragraph">{{ QUICK_START.download.text }}</p>
+					<div class="home-quick-start-code home-quick-start-herdr">
+						<pre><code><span class="home-quick-start-line">{{ QUICK_START.download.herdrInstallCommand }}</span></code></pre>
+					</div>
 					<div class="home-actions">
 						<a class="home-button home-button-brand" :href="DOWNLOAD_URL">{{ QUICK_START.download.buttonText }}</a>
 						<a class="home-button" :href="HERDR_URL">{{ QUICK_START.download.herdrLinkText }}</a>
@@ -69,6 +72,10 @@ const copyCommands = async (): Promise<void> => {
 	border-radius: 10px;
 	background: #181818;
 	overflow: hidden;
+}
+
+.home-quick-start-herdr {
+	margin-bottom: 16px;
 }
 
 .home-quick-start-bar {

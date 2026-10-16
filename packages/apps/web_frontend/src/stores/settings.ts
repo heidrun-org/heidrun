@@ -98,6 +98,8 @@ const defaults = {
   leftWidth: 280,
   /** Start the Herdr server in the background when it is not running. */
   autoStartHerdr: true,
+  /** True when the notice of the missing programs already named the missing ngrok once: it does not name it again (issue 546). */
+  ngrokMissingNoticeShown: false,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
   keepAgentsRunningAfterQuit: false,
   /** A click on the cross of a workspace in the information card of the Workspace status bar section opens the confirmation dialog "Close the workspace". Off: the workspace closes at once. */

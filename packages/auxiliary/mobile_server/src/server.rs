@@ -3,6 +3,7 @@
 use crate::access::AccessGuard;
 use crate::config::MobileConfig;
 use crate::handler::MobileCallHandler;
+use crate::leftover_tunnel::TunnelRecord;
 use crate::router::{router, Shared};
 use crate::tunnel;
 use serde::Serialize;
@@ -96,6 +97,9 @@ struct Inner {
     tunnel_host: Option<String>,
     /// The program `ngrok`. It is here, and not in the task, so that `stop` kills it at once, with no async runtime.
     tunnel: Option<Child>,
+    /// The file that holds the process id of the program `ngrok`, so that the next Heidrun kills it after a hard stop.
+    /// None in the tests of the server, which must not touch the file of the developer.
+    record: Option<Arc<TunnelRecord>>,
     error: Option<MobileError>,
 }
 
@@ -116,7 +120,15 @@ impl MobileServer {
     /// nothing listens before that. A run that is already going stops, and the new pairing key applies at once, even to
     /// connections that are still open.
     pub fn start(&self, handler: Arc<dyn MobileCallHandler>, config: &MobileConfig) -> impl Future<Output = ()> + Send + 'static {
+        self.inner.lock().unwrap().record = Some(Arc::new(TunnelRecord::new(record_folder(), std::process::id())));
         self.start_with(handler, config, Arc::new(tunnel::find_ngrok), Timing::default())
+    }
+
+    /// For the button "Stop the old ngrok" of the error `ngrokAddressInUse`: kills the recorded program `ngrok` of every
+    /// earlier or other Heidrun, but never the program of this Heidrun. True when a program was killed. The tunnel starts
+    /// again at the next try.
+    pub fn stop_leftover_tunnel(&self) -> bool {
+        TunnelRecord::new(record_folder(), std::process::id()).kill_recorded()
     }
 
     /// Accepts this new pairing key from now on, and refuses the old key at once, even on connections that are still open.
@@ -188,9 +200,17 @@ fn pairing_qr(host: &str, token: &str) -> Option<String> {
     )
 }
 
+/// The folder of the records of the program `ngrok` of each Heidrun, next to the file `mobile.json`.
+fn record_folder() -> PathBuf {
+    crate::config::config_folder().join("mobile_ngrok")
+}
+
 fn kill_tunnel(inner: &mut Inner) {
     if let Some(mut child) = inner.tunnel.take() {
         let _ = child.start_kill();
+        if let Some(record) = &inner.record {
+            record.clear();
+        }
     }
 }
 
@@ -290,6 +310,11 @@ async fn supervise(
 /// published at once when the program announces it: the host name of the account is fixed, so every name server already
 /// knows it.
 async fn run_tunnel(inner: &Mutex<Inner>, guard: &Mutex<AccessGuard>, run: u64, program: &Path, local_port: u16, stop: &mut watch::Receiver<bool>, timing: Timing) -> TunnelEnd {
+    let record = inner.lock().unwrap().record.clone();
+    if let Some(record) = &record {
+        let record = record.clone();
+        let _ = tokio::task::spawn_blocking(move || record.kill_leftover()).await;
+    }
     let (child, mut messages) = match tunnel::spawn(program, local_port) {
         Ok(started) => started,
         Err(e) => return TunnelEnd::Failed(MobileError::new(MobileErrorKind::NgrokCannotStart, format!("{}: {e}", program.display()))),
@@ -298,6 +323,9 @@ async fn run_tunnel(inner: &Mutex<Inner>, guard: &Mutex<AccessGuard>, run: u64, 
         let mut inner = inner.lock().unwrap();
         if inner.run != run {
             return TunnelEnd::Stopped;
+        }
+        if let (Some(record), Some(process_id)) = (&record, child.id()) {
+            record.save(process_id);
         }
         inner.tunnel = Some(child);
     }
