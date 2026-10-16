@@ -17,8 +17,8 @@ const WRITE_TOOLS: [&str; 5] = ["Write", "Edit", "MultiEdit", "NotebookEdit", "a
 const READ_TOOLS: [&str; 4] = ["Read", "Grep", "Glob", "LS"];
 
 /// The texts that show that a command of the shell writes, moves, or removes a file. A command that only reads the file,
-/// for example `cat <path>`, has none of them.
-const WRITE_SIGNS: [&str; 9] = [">", "sed -i", "tee ", "mv ", "cp ", "rm ", "'w'", "\"w\"", "apply_patch"];
+/// for example `cat <path>`, has none of them. The help of `read` names each one, and a test checks it.
+pub const WRITE_SIGNS: [&str; 9] = [">", "sed -i", "tee ", "mv ", "cp ", "rm ", "'w'", "\"w\"", "apply_patch"];
 
 /// One tool call that wrote the file.
 #[derive(Debug, Clone, PartialEq)]

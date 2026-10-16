@@ -34,7 +34,7 @@ pub use query_limit::{add_limit, DEFAULT_LIMIT};
 pub use reading::chat_session_reader::{read_chat_session, ChatRecord, Role, SHORT_TOOL_LENGTH};
 pub use reading::code_hosting_reader::{read_code_hosting, read_pull_request_diff, CodeHostingKind, Entry};
 pub use reading::commit_reader::{read_commit, ChangedFile, CommitContent};
-pub use reading::file_history_reader::{read_file_history, FileChange};
+pub use reading::file_history_reader::{read_file_history, FileChange, WRITE_SIGNS};
 pub use schema::{data_schema_text, read_catalog, Column, TableShape};
 pub use sources::{all_tables, find_table, DataSchema, Join, Source, Table};
 pub use synchronization::{synchronize, SourceReport, SynchronizationMode, SynchronizationOptions};

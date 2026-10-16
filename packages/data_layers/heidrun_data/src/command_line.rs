@@ -89,12 +89,24 @@ Kinds:
                              diff. Needs the command gh, signed in.
   file_history <path>        Every tool call of a chat session that wrote the file, in
                              the order of the dates: "at", "chatSessionId", "tool"
-                             (Write, Edit, Bash, apply_patch, ...), and "input", whole.
-                             The "old_string" and "new_string" of an Edit are the
-                             diff. Give the path as the coding agent wrote it, most
-                             often absolute, for example the column "id" of the
-                             table memory_files. A change made by hand, outside a
-                             coding agent, is not found.
+                             (Write, Edit, Bash, apply_patch, ...), and "input". The
+                             "old_string" and "new_string" of an Edit are the diff.
+                             Reads the files of Claude Code and of Codex for the
+                             repository, its worktrees, and its sub-folders.
+                             Give the path as the coding agent wrote it, most often
+                             absolute, for example the column "id" of the table
+                             memory_files. A file name or a relative path matches
+                             the end of the path, so it can also find another file
+                             with the same name.
+                             A shell command counts when it names the path and has
+                             a sign of a write: ">", "sed -i", "tee", "mv", "cp",
+                             "rm", 'w' or "w" (the mode of a Python open), or
+                             "apply_patch". A change made by hand, outside a coding
+                             agent, is not found.
+                             The input is always printed in full, so --full is
+                             refused. The format table prints each field of the
+                             input on its own lines. It reads every chat session
+                             file, so it can take some seconds.
 
 Options:
   --repository <owner/name>  The repository of an issue or of a pull request.

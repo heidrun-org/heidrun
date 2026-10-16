@@ -587,6 +587,18 @@ fn read_file_history_prints_the_write_and_the_edit_of_a_memory_file_and_not_its_
 }
 
 #[test]
+fn the_help_of_read_names_every_sign_of_a_write_of_read_file_history() {
+    let fixture = Fixture::new("read_file_history_help");
+    let help = fixture.run(&["read", "--help"]).stdout;
+    for sign in heidrun_data::WRITE_SIGNS {
+        assert!(help.contains(sign.trim()), "The help of read does not name the sign {sign}");
+    }
+    let result = fixture.run(&["read", "file_history", "/a.md", "--full", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(help.contains("so --full is\n                             refused"), "{help}");
+}
+
+#[test]
 fn read_chat_session_prints_the_records_of_a_compressed_chat_session_of_codex_from_a_sub_folder() {
     let fixture = Fixture::new("read_codex");
     let id = "01a12c31-175b-7513-b12c-bba764f46402";
