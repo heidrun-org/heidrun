@@ -82,7 +82,15 @@ fn status_of(state: &MobileState) -> MobileStatus {
 /// Wakes the phones that asked for a push: a coding agent needs the developer. The phone shows a fixed text.
 #[tauri::command]
 pub async fn mobile_push() -> Result<mobile_server::push::PushReport, String> {
+    if !is_push_wanted(&mobile_server::load_config()) {
+        return Ok(mobile_server::push::PushReport { sent: 0, removed: 0 });
+    }
     mobile_server::push::send_all().await
+}
+
+/// A push goes out only while the mobile access is on: the developer who turned it off wants no phone to be woken.
+fn is_push_wanted(config: &mobile_server::MobileConfig) -> bool {
+    config.enabled
 }
 
 #[tauri::command]
@@ -124,4 +132,17 @@ pub fn mobile_revoke(state: State<'_, MobileState>) -> Result<MobileStatus, Stri
         state.server.replace_token(&config.token);
     }
     Ok(status_of(&state))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_push_goes_out_only_while_the_mobile_access_is_on() {
+        let mut config = mobile_server::MobileConfig::default();
+        assert!(!is_push_wanted(&config));
+        config.enabled = true;
+        assert!(is_push_wanted(&config));
+    }
 }
