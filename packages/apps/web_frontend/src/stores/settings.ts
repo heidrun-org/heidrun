@@ -401,17 +401,14 @@ export function resetZoom() {
 
 /** The sections of the Settings window. */
 export type SettingsSection =
-  | "terminal"
-  | "newTab"
-  | "mouse"
-  | "finishedItems"
-  | "needsYou"
-  | "notifications"
   | "general"
-  | "mobileAccess"
+  | "terminal"
   | "agents"
-  | "pastChats"
-  | "dynamicTopics";
+  | "confirmations"
+  | "notifications"
+  | "sidebars"
+  | "dynamicTopics"
+  | "mobileAccess";
 
 /** State of the Settings window: not saved, the window starts closed on the first section. */
 export const settingsModal = reactive({

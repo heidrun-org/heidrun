@@ -1,11 +1,11 @@
 # User interface of Heidrun: the list of workspaces of the Needs you sidebar section
 
 - Created: 14 October 2026
-- Last updated: 14 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [User interface of Heidrun: panes](../workspaces_tabs_and_panes/panes.md), [User interface of Heidrun: workspace](../workspaces_tabs_and_panes/workspace.md)
-- Related issue: [issue 417](https://github.com/heidrun-org/heidrun/issues/417)
+- Related issue: [issue 417](https://github.com/heidrun-org/heidrun/issues/417), [issue 556](https://github.com/heidrun-org/heidrun/issues/556)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -23,8 +23,9 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The row has no button to rename or to close a workspace. The information card of the workspace status bar section keeps them.
 - The list shows nothing when Herdr has no workspace.
 
-## The section "Needs you" of the Settings window
+## The heading "Needs you" of the section "Sidebars" of the Settings window
 
-- The Settings window has a section "Needs you", between the sections "Finished items" and "Notifications" (icon `layout-sidebar-inset-reverse`, because the icon `bell` is the icon of the section "Notifications" and of the Needs you sidebar section).
-- The section has one Bootstrap switch, "Show the workspaces", and a help line under it. The switch is the option `showWorkspacesInNeedsYou` of the settings, and the default is on. The change applies at once, with no restart. When the switch is off, the Needs you sidebar section shows only the cards.
-- The section is the component `SettingsNeedsYouSection.vue`, and the switch is a `SettingsSwitchRow.vue`.
+- The Settings window has a section "Sidebars" (icon `layout-sidebar-inset-reverse`, because the icon `bell` is the icon of the section "Notifications" and of the Needs you sidebar section). The section has one heading for each sidebar section: "Needs you", "Past chats", and "Source control".
+- Under the heading "Needs you", the section has one Bootstrap switch, "Show the workspaces", and a help line under it. The switch is the option `showWorkspacesInNeedsYou` of the settings, and the default is on. The change applies at once, with no restart. When the switch is off, the Needs you sidebar section shows only the cards.
+- Under the same heading, the choice "Hide the finished items after" is a Bootstrap button group of four radio inputs: "5 min", "15 min", "1 h", and "Never". It is the option `finishedTtl` of the settings.
+- The section is the component `SettingsSidebarsSection.vue`, and the switch is a `SettingsSwitchRow.vue` ([issue 556](https://github.com/heidrun-org/heidrun/issues/556)).

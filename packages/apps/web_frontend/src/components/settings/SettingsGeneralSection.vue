@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import Icon from "../Icon.vue";
-import InformationCard from "../InformationCard.vue";
-import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { timeOptions } from "../../lib/format";
 import { LANGUAGES, locale, t } from "../../i18n/index";
@@ -11,15 +8,6 @@ const TIME_FORMATS = [
   { id: "auto", labelKey: "settingsGeneral.timeAuto" },
   { id: "12h", labelKey: "settingsGeneral.time12" },
   { id: "24h", labelKey: "settingsGeneral.time24" },
-] as const;
-
-/** The choices of the delay of the fetch in the background, in minutes, in the order of the buttons. 0 is off. */
-const GIT_FETCH_CHOICES = [
-  { minutes: 0, labelKey: "settingsGeneral.gitFetchOff" },
-  { minutes: 1, labelKey: "settingsGeneral.gitFetch1" },
-  { minutes: 5, labelKey: "settingsGeneral.gitFetch5" },
-  { minutes: 10, labelKey: "settingsGeneral.gitFetch10" },
-  { minutes: 30, labelKey: "settingsGeneral.gitFetch30" },
 ] as const;
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -89,50 +77,6 @@ const timeExample = computed(() => {
         </label>
       </div>
       <div class="form-text">{{ t("settingsGeneral.workingDaysHelp") }}</div>
-    </div>
-
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.askBeforeClosingTitle") }}</h4>
-      <SettingsSwitchRow v-model="settings.confirmWorkspaceClose" :label="t('settingsGeneral.confirmWorkspaceClose')" />
-      <SettingsSwitchRow v-model="settings.confirmTabClose" :label="t('settingsGeneral.confirmTabClose')" />
-      <SettingsSwitchRow v-model="settings.confirmPaneClose" :label="t('settingsGeneral.confirmPaneClose')" />
-    </div>
-
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.askBeforeDeletingTitle") }}</h4>
-      <SettingsSwitchRow v-model="settings.confirmSavedSearchDelete" :label="t('settingsGeneral.confirmSavedSearchDelete')" />
-    </div>
-
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.quitTitle") }}</h4>
-      <SettingsSwitchRow v-model="settings.keepAgentsRunningAfterQuit" :label="t('settingsGeneral.keepAgentsRunning')">
-        <InformationCard :label="t('settingsGeneral.keepAgentsRunningHelpLabel')" placement="bottom">
-          <span class="text-body-secondary" role="img" :aria-label="t('settingsGeneral.keepAgentsRunningHelpLabel')">
-            <Icon name="question-circle" />
-          </span>
-          <template #card>
-            <div class="list-group list-group-flush">
-              <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
-                <Icon name="question-circle" />
-                {{ t("settingsGeneral.keepAgentsRunning") }}
-              </div>
-              <div class="list-group-item text-body-secondary">{{ t("settingsGeneral.keepAgentsRunningHelp") }}</div>
-            </div>
-          </template>
-        </InformationCard>
-      </SettingsSwitchRow>
-    </div>
-
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.gitTitle") }}</h4>
-      <div>{{ t("settingsGeneral.gitFetchLabel") }}</div>
-      <div class="btn-group" role="group" :aria-label="t('settingsGeneral.gitFetchLabel')">
-        <label v-for="choice in GIT_FETCH_CHOICES" :key="choice.minutes" class="btn-check btn-outline theme-secondary">
-          <input v-model="settings.gitFetchMinutes" type="radio" name="git-fetch-minutes" autocomplete="off" :value="choice.minutes" />
-          {{ t(choice.labelKey) }}
-        </label>
-      </div>
-      <div class="form-text">{{ t("settingsGeneral.gitFetchHelp") }}</div>
     </div>
   </div>
 </template>

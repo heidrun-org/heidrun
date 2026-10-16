@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { FONTS, FONT_DEFAULT, FONT_MAX, FONT_MIN, resetZoom, settings, zoom } from "../../stores/settings";
 import { t } from "../../i18n/index";
+
+/** The two mouse modes, in the order of the buttons. */
+const MOUSE_MODES = [
+  { id: "select", labelKey: "fontMenu.mouseSelect", titleKey: "fontMenu.mouseSelectTitle" },
+  { id: "app", labelKey: "fontMenu.mouseApp", titleKey: "fontMenu.mouseAppTitle" },
+] as const;
 </script>
 
 <template>
@@ -24,5 +30,18 @@ import { t } from "../../i18n/index";
       ❯ flutter test → 12 passed <template v-if="settings.fontId === 'inconsolata-powerline'">  main </template>
     </div>
     <div class="form-text"><kbd class="mono">⌘+</kbd> {{ t("fontMenu.keyIncrease") }} · <kbd class="mono">⌘−</kbd> {{ t("fontMenu.keyDecrease") }} · <kbd class="mono">⌘0</kbd> {{ t("fontMenu.keyDefault") }}</div>
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("fontMenu.mouseLabel") }}</h4>
+      <div class="btn-group" role="group" :aria-label="t('fontMenu.mouseLabel')">
+        <label v-for="mode in MOUSE_MODES" :key="mode.id" class="btn-check btn-outline theme-secondary" :title="t(mode.titleKey)">
+          <input v-model="settings.mouseMode" type="radio" name="mouse-mode" autocomplete="off" :value="mode.id" />
+          {{ t(mode.labelKey) }}
+        </label>
+      </div>
+      <div class="form-text">
+        <template v-if="settings.mouseMode === 'select'">{{ t("fontMenu.mouseSelectHelpBefore") }}<kbd class="mono">⌘C</kbd>{{ t("fontMenu.mouseSelectHelpAfter") }}</template>
+        <template v-else>{{ t("fontMenu.mouseAppHelpBefore") }}<kbd class="mono">⌥</kbd>{{ t("fontMenu.mouseAppHelpAfter") }}</template>
+      </div>
+    </div>
   </div>
 </template>
