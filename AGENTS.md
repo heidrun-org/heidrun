@@ -138,6 +138,9 @@ The Issue Fix Setup starts when the developer asks you to fix an issue, for exam
 
 1. Read the issue.
 2. Rename the chat according to its content.
+   - The identifier of this chat is in the environment variable `CLAUDE_CODE_HOST_SESSION_ID`. Read it with `echo $CLAUDE_CODE_HOST_SESSION_ID`, then give it as `session_id` to the tool `mcp__ccd_session_mgmt__set_session_title`.
+   - Never search for this chat in the list of sessions: this chat is often missing from the list. Never tell the developer that the rename is not possible before you read the variable.
+   - For Codex, or when the variable is empty, skip this step and say so in one line.
 3. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
    - To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
    - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
