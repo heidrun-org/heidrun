@@ -11,6 +11,7 @@ vi.mock("../lib/refs", async (importOriginal) => {
 import { refContext } from "../lib/refs";
 import {
   codeHosting,
+  codeHostingGroupTitle,
   forgeOfContext,
   itemPrefix,
   loadCodeHosting,
@@ -45,7 +46,9 @@ beforeEach(() => {
   codeHosting.forge = null;
   codeHosting.status = "idle";
   codeHosting.error = "";
-  codeHosting.search = "";
+  codeHosting.search = { issues: "", requests: "" };
+  codeHosting.listStatus = { issues: "idle", requests: "idle" };
+  codeHosting.listError = { issues: "", requests: "" };
 });
 
 describe("loadCodeHosting on GitHub", () => {
@@ -239,34 +242,58 @@ describe("loadCodeHosting on GitLab", () => {
 });
 
 describe("searchCodeHosting on GitHub", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.mocked(refContext).mockResolvedValue(contextOf("github"));
     vi.mocked(invoke).mockResolvedValue("[]");
+    await loadCodeHosting("/work/heidrun");
+    vi.mocked(invoke).mockClear();
   });
 
-  it("gives the search to gh as it is, after --limit and before --json, for the issues and for the pull requests", async () => {
-    await searchCodeHosting("/work/heidrun", "  author:@me -label:bug  ");
-    expect(codeHosting.search).toBe("author:@me -label:bug");
+  it("gives the search to gh as it is, after --limit and before --json, and reads only the list that it is for", async () => {
+    await searchCodeHosting("/work/heidrun", "issues", "  author:@me -label:bug  ");
+    expect(codeHosting.search.issues).toBe("author:@me -label:bug");
+    expect(codeHosting.search.requests).toBe("");
     expect(forgeCalls().map((call) => call.args.slice(0, 8))).toEqual([
       ["issue", "list", "--state", "open", "--limit", "100", "--search", "author:@me -label:bug"],
-      ["pr", "list", "--state", "open", "--limit", "100", "--search", "author:@me -label:bug"],
     ]);
-    expect(forgeCalls().map((call) => call.args[8])).toEqual(["--json", "--json"]);
+    expect(forgeCalls()[0].args[8]).toBe("--json");
+  });
+
+  it("gives the search of the list of pull requests to gh pr list, and reads no issue", async () => {
+    await searchCodeHosting("/work/heidrun", "requests", "review-requested:@me");
+    expect(codeHosting.search.requests).toBe("review-requested:@me");
+    expect(codeHosting.search.issues).toBe("");
+    expect(forgeCalls().map((call) => call.args.slice(0, 8))).toEqual([
+      ["pr", "list", "--state", "open", "--limit", "100", "--search", "review-requested:@me"],
+    ]);
+  });
+
+  it("does not change the other list: its items, its search, and its status stay", async () => {
+    vi.mocked(invoke).mockImplementation(async (_command, payload) => {
+      const { args } = payload as { args: string[] };
+      return JSON.stringify(
+        args[0] === "issue"
+          ? [{ number: 1, title: "an issue", url: "https://x/1" }]
+          : [{ number: 2, title: "a pull request", url: "https://x/2" }],
+      );
+    });
+    await loadCodeHosting("/work/heidrun");
+    await searchCodeHosting("/work/heidrun", "issues", "label:bug");
+    expect(codeHosting.requests.map((item) => item.number)).toEqual([2]);
+    expect(codeHosting.search.requests).toBe("");
+    expect(codeHosting.listStatus).toEqual({ issues: "ready", requests: "ready" });
   });
 
   it("reads all the items when the search names a state, so that the search decides", async () => {
-    await searchCodeHosting("/work/heidrun", "is:closed");
-    expect(forgeCalls().map((call) => call.args.slice(2, 4))).toEqual([
-      ["--state", "all"],
-      ["--state", "all"],
-    ]);
+    await searchCodeHosting("/work/heidrun", "issues", "is:closed");
+    expect(forgeCalls().map((call) => call.args.slice(2, 4))).toEqual([["--state", "all"]]);
   });
 
-  it("shows all the open items again for an empty search", async () => {
-    await searchCodeHosting("/work/heidrun", "label:bug");
+  it("shows all the open items of the list again for an empty search", async () => {
+    await searchCodeHosting("/work/heidrun", "issues", "label:bug");
     vi.mocked(invoke).mockClear();
-    await searchCodeHosting("/work/heidrun", "   ");
-    expect(codeHosting.search).toBe("");
+    await searchCodeHosting("/work/heidrun", "issues", "   ");
+    expect(codeHosting.search.issues).toBe("");
     expect(forgeCalls()[0].args).toEqual([
       "issue",
       "list",
@@ -279,36 +306,75 @@ describe("searchCodeHosting on GitHub", () => {
     ]);
   });
 
-  it("keeps the search when the lists load again, for a refresh or for another repository", async () => {
-    await searchCodeHosting("/work/heidrun", "label:bug");
+  it("keeps the search of each list when the lists load again, for a refresh or for another repository", async () => {
+    await searchCodeHosting("/work/heidrun", "issues", "label:bug");
+    await searchCodeHosting("/work/heidrun", "requests", "review-requested:@me");
     vi.mocked(invoke).mockClear();
     await loadCodeHosting("/work/other", true);
-    expect(forgeCalls()[0].args.slice(6, 8)).toEqual(["--search", "label:bug"]);
+    expect(forgeCalls().map((call) => call.args.slice(0, 8))).toEqual([
+      ["issue", "list", "--state", "open", "--limit", "100", "--search", "label:bug"],
+      ["pr", "list", "--state", "open", "--limit", "100", "--search", "review-requested:@me"],
+    ]);
   });
 
   it("keeps the items that gh answers for the search", async () => {
     vi.mocked(invoke).mockResolvedValue(
       JSON.stringify([{ number: 7, title: "Found", url: "https://github.com/o/r/issues/7", author: { login: "eric" } }]),
     );
-    await searchCodeHosting("/work/heidrun", "author:eric");
-    expect(codeHosting.status).toBe("ready");
+    await searchCodeHosting("/work/heidrun", "issues", "author:eric");
+    expect(codeHosting.listStatus.issues).toBe("ready");
     expect(codeHosting.issues.map((item) => item.number)).toEqual([7]);
+  });
+
+  it("loads the two lists, each one with its own search, when the hosting service is not known yet", async () => {
+    codeHosting.forge = null;
+    vi.mocked(invoke).mockClear();
+    await searchCodeHosting("/work/heidrun", "issues", "label:bug");
+    expect(forgeCalls().map((call) => call.args.slice(0, 2))).toEqual([
+      ["issue", "list"],
+      ["pr", "list"],
+    ]);
+    expect(forgeCalls()[0].args).toContain("label:bug");
+    expect(forgeCalls()[1].args).not.toContain("--search");
+  });
+
+  it("shows the failure in the list that failed only, and keeps the other list", async () => {
+    vi.mocked(invoke).mockRejectedValue("gh: rate limit\nwait");
+    await searchCodeHosting("/work/heidrun", "issues", "label:bug");
+    expect(codeHosting.listStatus).toEqual({ issues: "failed", requests: "ready" });
+    expect(codeHosting.listError.issues).toBe("gh: rate limit");
+    expect(codeHosting.listError.requests).toBe("");
+    expect(codeHosting.status).toBe("ready");
+  });
+
+  it("ignores the answer of an older search of a list that ends after a newer search of the same list", async () => {
+    let answerOlder: (text: string) => void = () => {};
+    vi.mocked(invoke).mockImplementationOnce(() => new Promise((resolve) => (answerOlder = resolve)));
+    const older = searchCodeHosting("/work/heidrun", "issues", "label:old");
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
+    vi.mocked(invoke).mockImplementation(async () => JSON.stringify([{ number: 9, title: "newer", url: "https://x/9" }]));
+    await searchCodeHosting("/work/heidrun", "issues", "label:new");
+    answerOlder(JSON.stringify([{ number: 1, title: "older", url: "https://x/1" }]));
+    await older;
+    expect(codeHosting.issues.map((item) => item.title)).toEqual(["newer"]);
   });
 });
 
 describe("searchCodeHosting on GitLab", () => {
-  /** Answers `glab api user` with a login, and every other call with an empty list. */
-  function answerGitlab() {
+  /** Answers `glab api user` with a login, and every other call with an empty list, then loads the two lists. */
+  async function answerGitlab() {
     vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
     vi.mocked(invoke).mockImplementation(async (_command, payload) => {
       const { args } = payload as { args: string[] };
       return args[1] === "user" ? JSON.stringify({ username: "jerome" }) : "[]";
     });
+    await loadCodeHosting("/work/app");
+    vi.mocked(invoke).mockClear();
   }
 
-  it("translates the search into the filters of GitLab, for the issues and for the merge requests", async () => {
-    answerGitlab();
-    await searchCodeHosting("/work/app", "label:bug -author:eric");
+  it("translates the search into the filters of GitLab, for the list of issues only", async () => {
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "issues", "label:bug -author:eric");
     expect(forgeCalls()).toEqual([
       {
         tool: "glab",
@@ -317,57 +383,63 @@ describe("searchCodeHosting on GitLab", () => {
           "projects/:fullpath/issues?state=opened&not%5Bauthor_username%5D=eric&labels=bug&per_page=100&with_labels_details=true",
         ],
       },
-      {
-        tool: "glab",
-        args: ["api", "projects/:fullpath/merge_requests?state=opened&not%5Bauthor_username%5D=eric&labels=bug&per_page=100"],
-      },
     ]);
-    expect(codeHosting.status).toBe("ready");
+    expect(codeHosting.listStatus.issues).toBe("ready");
+  });
+
+  it("translates the search into the filters of GitLab, for the list of merge requests only", async () => {
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "requests", "label:bug");
+    expect(forgeCalls()).toEqual([
+      { tool: "glab", args: ["api", "projects/:fullpath/merge_requests?state=opened&labels=bug&per_page=100"] },
+    ]);
   });
 
   it("reads the login with glab api user for @me, and does not read it when the search has no @me", async () => {
-    answerGitlab();
-    await searchCodeHosting("/work/app", "author:@me");
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "issues", "author:@me");
     expect(forgeCalls()[0]).toEqual({ tool: "glab", args: ["api", "user"] });
     expect(forgeCalls()[1].args[1]).toBe("projects/:fullpath/issues?state=opened&author_username=jerome&per_page=100&with_labels_details=true");
     vi.mocked(invoke).mockClear();
-    await searchCodeHosting("/work/app", "label:bug");
+    await searchCodeHosting("/work/app", "issues", "label:bug");
     expect(forgeCalls().map((call) => call.args[1])).not.toContain("user");
   });
 
-  it("says that GitLab cannot do a word, names it, and shows no list", async () => {
-    answerGitlab();
-    await searchCodeHosting("/work/app", "label:bug mentions:eric");
-    expect(codeHosting.status).toBe("failed");
-    expect(codeHosting.error).toBe("GitLab cannot do this search: mentions:eric");
+  it("says that GitLab cannot do a word, names it, and shows no item in this list only", async () => {
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "issues", "label:bug mentions:eric");
+    expect(codeHosting.listStatus).toEqual({ issues: "failed", requests: "ready" });
+    expect(codeHosting.listError.issues).toBe("GitLab cannot do this search: mentions:eric");
+    expect(codeHosting.listError.requests).toBe("");
     expect(forgeCalls()).toEqual([]);
     expect(codeHosting.issues).toEqual([]);
-    expect(codeHosting.requests).toEqual([]);
   });
 
   it("says that GitLab cannot do a word before it asks glab for the login, even when the search has @me", async () => {
-    answerGitlab();
-    await searchCodeHosting("/work/app", "author:@me mentions:eric");
-    expect(codeHosting.error).toBe("GitLab cannot do this search: mentions:eric");
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "requests", "author:@me mentions:eric");
+    expect(codeHosting.listError.requests).toBe("GitLab cannot do this search: mentions:eric");
     expect(forgeCalls()).toEqual([]);
   });
 
   it("calls GitLab for no list that the search leaves empty, such as the issues for review-requested", async () => {
-    answerGitlab();
-    await searchCodeHosting("/work/app", "review-requested:eric");
+    await answerGitlab();
+    await searchCodeHosting("/work/app", "issues", "review-requested:eric");
+    expect(forgeCalls()).toEqual([]);
+    expect(codeHosting.listStatus.issues).toBe("ready");
+    expect(codeHosting.issues).toEqual([]);
+    await searchCodeHosting("/work/app", "requests", "review-requested:eric");
     expect(forgeCalls()).toEqual([
       { tool: "glab", args: ["api", "projects/:fullpath/merge_requests?state=opened&reviewer_username=eric&per_page=100"] },
     ]);
-    expect(codeHosting.status).toBe("ready");
-    expect(codeHosting.issues).toEqual([]);
   });
 
-  it("shows the failure of glab api user as the first line of the failure", async () => {
-    vi.mocked(refContext).mockResolvedValue(contextOf("gitlab"));
+  it("shows the failure of glab api user as the first line of the failure of the list", async () => {
+    await answerGitlab();
     vi.mocked(invoke).mockRejectedValue(new Error("glab: not signed in\nmore"));
-    await searchCodeHosting("/work/app", "author:@me");
-    expect(codeHosting.status).toBe("failed");
-    expect(codeHosting.error).toBe("Error: glab: not signed in");
+    await searchCodeHosting("/work/app", "issues", "author:@me");
+    expect(codeHosting.listStatus.issues).toBe("failed");
+    expect(codeHosting.listError.issues).toBe("Error: glab: not signed in");
   });
 });
 
@@ -385,14 +457,23 @@ describe("loadCodeHosting when nothing can be read", () => {
     expect(invoke).not.toHaveBeenCalled();
   });
 
-  it("says failed with the first line of the failure, and empty lists, when gh does not answer", async () => {
+  it("says failed with the first line of the failure, in each list, and empty lists, when gh does not answer", async () => {
     vi.mocked(refContext).mockResolvedValue(contextOf("github"));
     vi.mocked(invoke).mockRejectedValue("gh: not logged in\nrun gh auth login");
     await loadCodeHosting("/work/heidrun");
-    expect(codeHosting.status).toBe("failed");
-    expect(codeHosting.error).toBe("gh: not logged in");
+    expect(codeHosting.status).toBe("ready");
+    expect(codeHosting.listStatus).toEqual({ issues: "failed", requests: "failed" });
+    expect(codeHosting.listError).toEqual({ issues: "gh: not logged in", requests: "gh: not logged in" });
     expect(codeHosting.issues).toEqual([]);
     expect(codeHosting.requests).toEqual([]);
+  });
+
+  it("says failed with the first line of the failure when the remote address cannot be read", async () => {
+    vi.mocked(refContext).mockRejectedValue("git: not a repository\nmore");
+    await loadCodeHosting("/work/heidrun");
+    expect(codeHosting.status).toBe("failed");
+    expect(codeHosting.error).toBe("git: not a repository");
+    expect(invoke).not.toHaveBeenCalled();
   });
 
   it("empties the lists of the earlier repository while the next one loads", async () => {
@@ -462,5 +543,15 @@ describe("itemPrefix", () => {
     expect(itemPrefix("requests", "github")).toBe("#");
     expect(itemPrefix("issues", "gitlab")).toBe("#");
     expect(itemPrefix("issues", "github")).toBe("#");
+  });
+});
+
+describe("codeHostingGroupTitle", () => {
+  it("is Issues for the first list, then Pull requests on GitHub and Merge requests on GitLab", () => {
+    expect(codeHostingGroupTitle("issues", "github")).toBe("Issues");
+    expect(codeHostingGroupTitle("issues", "gitlab")).toBe("Issues");
+    expect(codeHostingGroupTitle("requests", "github")).toBe("Pull requests");
+    expect(codeHostingGroupTitle("requests", "gitlab")).toBe("Merge requests");
+    expect(codeHostingGroupTitle("requests", null)).toBe("Pull requests");
   });
 });

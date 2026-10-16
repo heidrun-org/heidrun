@@ -5,6 +5,7 @@
   "titleEdit": "Edit the saved search",
   "closeTitle": "Close the window (Escape)",
   "closeLabel": "Close (Escape)",
+  "list": "List",
   "name": "Name",
   "search": "Search",
   "nameExists": "A saved search has this name. Save replaces its search.",
