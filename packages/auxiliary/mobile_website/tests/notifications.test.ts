@@ -76,25 +76,30 @@ afterEach(() => {
 	getSubscription.mockResolvedValue(null);
 });
 
+/** The text of the settings window. */
+const sheetText = (): string => document.querySelector('.settings-sheet')?.textContent ?? '';
+
 const rowOf = (name: string): string | null => {
 	const rows = [...document.querySelectorAll('.notification-row')];
 	const row = rows.find((candidate) => candidate.querySelector('span')?.textContent === name);
 	return row?.querySelectorAll('span')[1]?.textContent ?? null;
 };
 
-describe('Notifications section of the Dashboard', () => {
+describe('Notifications in the settings window of the Dashboard', () => {
 	it('says that the browser cannot show notifications, and offers no button', async () => {
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
-		expect(harness.text()).toContain('Notifications');
+		await harness.tap('[data-action="open-settings"]');
+		expect(sheetText()).toContain('Notifications');
 		expect(rowOf('Browser support')).toBe('no');
-		expect(harness.text()).toContain('Chrome on Android needs an address that starts with https.');
+		expect(sheetText()).toContain('Chrome on Android needs an address that starts with https.');
 		expect(document.querySelector('[data-action^="notifications-"]')).toBeNull();
 	});
 
 	it('registers the service worker at /sw.js, and shows the button Enable notifications', async () => {
 		const register = vi.fn(async () => registration());
 		installBrowser(register);
-		await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		expect(register).toHaveBeenCalledWith('/sw.js');
 		expect(rowOf('Address with https')).toBe('yes');
 		expect(rowOf('Browser support')).toBe('yes');
@@ -108,13 +113,15 @@ describe('Notifications section of the Dashboard', () => {
 			throw new TypeError('Failed to register a ServiceWorker: bad MIME type');
 		});
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		expect(rowOf('Service worker')).toBe('failed');
-		expect(harness.text()).toContain('TypeError: Failed to register a ServiceWorker: bad MIME type');
+		expect(sheetText()).toContain('TypeError: Failed to register a ServiceWorker: bad MIME type');
 	});
 
 	it('asks the browser for the permission at a tap, then offers the test notification', async () => {
 		installBrowser(async () => registration());
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-enable"]');
 		expect(FakeNotification.requestPermission).toHaveBeenCalledTimes(1);
 		expect(rowOf('Permission')).toBe('granted');
@@ -126,9 +133,10 @@ describe('Notifications section of the Dashboard', () => {
 		installBrowser(async () => registration());
 		FakeNotification.answer = 'denied';
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-enable"]');
 		expect(rowOf('Permission')).toBe('denied');
-		expect(harness.text()).toContain('allow them in the settings of the browser');
+		expect(sheetText()).toContain('allow them in the settings of the browser');
 		expect(document.querySelector('[data-action^="notifications-"]')).toBeNull();
 	});
 
@@ -136,6 +144,7 @@ describe('Notifications section of the Dashboard', () => {
 		installBrowser(async () => registration());
 		FakeNotification.permission = 'granted';
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-test"]');
 		expect(showNotification).toHaveBeenCalledWith('Heidrun', {
 			body: 'Test notification: a coding agent needs you.',
@@ -155,8 +164,27 @@ describe('Notifications section of the Dashboard', () => {
 		}));
 		FakeNotification.permission = 'granted';
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-test"]');
 		expect(harness.toast()).toBe('The notification failed: Error: no permission');
+	});
+});
+
+describe('The gear button of the Dashboard', () => {
+	it('opens the settings window with the notifications, and Close removes it', async () => {
+		const harness = await AppHarness.start(Fixtures.computer(), true, '#/dashboard');
+		expect(document.querySelector('.settings-sheet')).toBeNull();
+		expect(harness.text()).not.toContain('Notifications');
+		await harness.tap('[data-action="open-settings"]');
+		expect(sheetText()).toContain('Settings');
+		expect(sheetText()).toContain('Notifications');
+		await harness.tap('button[data-action="settings-close"]');
+		expect(document.querySelector('.settings-sheet')).toBeNull();
+	});
+
+	it('is only on the Dashboard', async () => {
+		await AppHarness.start(Fixtures.computer(), true, '#/panes');
+		expect(document.querySelector('[data-action="open-settings"]')).toBeNull();
 	});
 });
 
@@ -165,6 +193,7 @@ describe('The push from the computer', () => {
 		installBrowser(async () => registration());
 		const computer = computerWithPushKey();
 		const harness = await AppHarness.start(computer, true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-enable"]');
 		expect(subscribe).toHaveBeenCalledTimes(1);
 		const options = subscribe.mock.calls[0][0] as { userVisibleOnly: boolean; applicationServerKey: Uint8Array };
@@ -187,6 +216,7 @@ describe('The push from the computer', () => {
 		});
 		const computer = computerWithPushKey();
 		const harness = await AppHarness.start(computer, true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.settle();
 		expect(subscribe).not.toHaveBeenCalled();
 		expect(computer.callsOf('subscribe').map((call) => call.params)).toEqual([{ endpoint: 'https://push.example.com/old' }]);
@@ -204,6 +234,7 @@ describe('The push from the computer', () => {
 			unsubscribe,
 		});
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.settle();
 		expect(unsubscribe).toHaveBeenCalledTimes(1);
 		expect(subscribe).toHaveBeenCalledTimes(1);
@@ -213,9 +244,10 @@ describe('The push from the computer', () => {
 		installBrowser(async () => registration());
 		subscribe.mockRejectedValueOnce(new Error('push service error'));
 		const harness = await AppHarness.start(computerWithPushKey(), true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="notifications-enable"]');
 		expect(rowOf('Push from the computer')).toBe('failed');
-		expect(harness.text()).toContain('Error: push service error');
+		expect(sheetText()).toContain('Error: push service error');
 		expect(document.querySelector('[data-action="push-on"]')).not.toBeNull();
 	});
 
@@ -224,6 +256,7 @@ describe('The push from the computer', () => {
 		FakeNotification.permission = 'granted';
 		const computer = computerWithPushKey();
 		const harness = await AppHarness.start(computer, true, '#/dashboard');
+		await harness.tap('[data-action="open-settings"]');
 		await harness.tap('[data-action="push-on"]');
 		getSubscription.mockResolvedValue({ endpoint: 'https://push.example.com/a', unsubscribe });
 		await harness.tap('[data-action="push-off"]');

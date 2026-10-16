@@ -11,7 +11,7 @@ This document gives one short definition for each word of Heidrun Mobile. The ot
 
 ### Heidrun Mobile
 
-The second front end of Heidrun: a mobile website on the phone that controls the coding agents that run on the computer. See [heidrun_mobile.md](../../architecture/heidrun_mobile.md).
+The second front end of Heidrun: a mobile website on the phone that controls the coding agents that run on the computer. See [mobile_access.md](../../mobile_access/mobile_access.md).
 
 ### Mobile website
 

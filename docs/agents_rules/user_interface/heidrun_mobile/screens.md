@@ -24,7 +24,7 @@ The first page: the baby goat in a big circle, the name, the motto, and the butt
 
 The count of coding agents that need the developer, the count that work, and the usage limits. A tap on a count opens the screen with the details.
 
-The section "Notifications" shows five raw values: an address with https, the support of the browser, the service worker `sw.js`, the permission, and the push from the computer. It shows the text of any error as it is. The button "Enable notifications" asks the permission at a tap, then turns the push on. The buttons "Turn on the push", "Turn off the push", and "Send a test notification" follow. The service worker has no cache and no fetch handler. Only Chrome on Android can show a notification ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
+The top bar of the Dashboard has a gear button. It opens the settings window of the phone, a sheet over the Dashboard with a Close button. The settings window holds the section "Notifications", which shows five raw values: an address with https, the support of the browser, the service worker `sw.js`, the permission, and the push from the computer. It shows the text of any error as it is. The button "Enable notifications" asks the permission at a tap, then turns the push on. The buttons "Turn on the push" or "Turn off the push", and "Send a test notification", follow. No other screen has the gear button. The service worker has no cache and no fetch handler. Only Chrome on Android can show a notification ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
 
 ## Needs you
 

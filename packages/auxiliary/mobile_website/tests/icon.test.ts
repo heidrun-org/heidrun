@@ -7,6 +7,7 @@ import type { IconName } from '../src/components/icon';
 const iconNames: IconName[] = [
 	'arrow-clockwise',
 	'bell',
+	'gear',
 	'chevron-left',
 	'grid',
 	'lightning-charge',

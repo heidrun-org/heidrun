@@ -15,15 +15,24 @@ export class ScreenHeader {
 	 * Draws the top bar of a screen of the bottom bar: the title and the state of the connection to the computer.
 	 * @param title The title of the screen.
 	 * @param isOnline True when the last call worked, false when it failed, null before the first call.
+	 * @param isSettingsButtonShown True to show the gear button, which opens the settings of the phone.
 	 * @returns The HTML of the top bar.
 	 */
-	static renderTab(title: string, isOnline: boolean | null): string {
+	static renderTab(title: string, isOnline: boolean | null, isSettingsButtonShown = false): string {
+		const settingsHtmlContent = isSettingsButtonShown
+			? /* html */`
+				<button class="icon-button" data-action="open-settings" aria-label="Settings" title="Settings">
+					${Icon.render('gear', 20)}
+				</button>
+			`
+			: '';
 		const connection = isOnline === true ? 'dot-ok' : isOnline === false ? 'dot-blocked' : 'dot-idle';
 		const connectionText = isOnline === true ? 'Connected' : 'Not connected';
 		const headerHtmlContent = /* html */`
 			<header class="top">
 				<h1>${HtmlEscape.escape(title)}</h1>
 				<span class="dot ${connection}" role="img" aria-label="${connectionText}"></span>
+				${settingsHtmlContent}
 			</header>
 		`;
 		return headerHtmlContent;

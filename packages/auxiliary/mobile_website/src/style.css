@@ -720,3 +720,8 @@ main {
   color: var(--text-2);
   font-size: 14px;
 }
+
+.settings-sheet .sheet-box {
+  max-height: 85vh;
+  overflow-y: auto;
+}

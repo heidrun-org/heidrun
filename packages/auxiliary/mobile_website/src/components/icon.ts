@@ -1,6 +1,7 @@
 import arrowClockwise from 'bootstrap-icons/icons/arrow-clockwise.svg?raw';
 import bell from 'bootstrap-icons/icons/bell.svg?raw';
 import chevronLeft from 'bootstrap-icons/icons/chevron-left.svg?raw';
+import gear from 'bootstrap-icons/icons/gear.svg?raw';
 import grid from 'bootstrap-icons/icons/grid.svg?raw';
 import lightningCharge from 'bootstrap-icons/icons/lightning-charge.svg?raw';
 import micFill from 'bootstrap-icons/icons/mic-fill.svg?raw';
@@ -21,6 +22,7 @@ export type IconName =
 	| 'arrow-clockwise'
 	| 'bell'
 	| 'chevron-left'
+	| 'gear'
 	| 'grid'
 	| 'lightning-charge'
 	| 'mic-fill'
@@ -41,6 +43,7 @@ export class Icon {
 		'arrow-clockwise': arrowClockwise,
 		'bell': bell,
 		'chevron-left': chevronLeft,
+		'gear': gear,
 		'grid': grid,
 		'lightning-charge': lightningCharge,
 		'mic-fill': micFill,

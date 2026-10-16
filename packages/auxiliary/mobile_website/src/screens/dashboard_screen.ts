@@ -1,8 +1,7 @@
-import type { NotificationStatus, QuotaView, Snapshot } from '../mobile_types';
+import type { QuotaView, Snapshot } from '../mobile_types';
 import { HtmlEscape } from '../html_escape';
 import { SnapshotQueries } from '../snapshot_queries';
 import { ScreenHeader } from '../components/screen_header';
-import { NotificationsPanel } from '../components/notifications_panel';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,10 +18,9 @@ export class DashboardScreen {
 	 * Draws the screen.
 	 * @param snapshot The answer of the method `state`.
 	 * @param isOnline True when the last call worked, false when it failed, null before the first call.
-	 * @param notifications What the page knows about the notifications of the phone.
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
-	static render(snapshot: Snapshot, isOnline: boolean | null, notifications: NotificationStatus): string {
+	static render(snapshot: Snapshot, isOnline: boolean | null): string {
 		const agents = SnapshotQueries.codingAgents(snapshot);
 		const needYouCount = SnapshotQueries.attentionAgents(snapshot).length;
 		const workingCount = agents.filter((agent) => agent.status === 'working').length;
@@ -33,7 +31,7 @@ export class DashboardScreen {
 		const workingHtmlContent = DashboardScreen.renderCount('panes', workingCount, 'Working', false);
 		const total = DashboardScreen.renderTotal(agents.length, snapshot.workspaces.length);
 		const screenHtmlContent = /* html */`
-			${ScreenHeader.renderTab('Dashboard', isOnline)}
+			${ScreenHeader.renderTab('Dashboard', isOnline, true)}
 			<main>
 				<div class="counts">
 					${needYouHtmlContent}
@@ -42,7 +40,6 @@ export class DashboardScreen {
 				<div class="sub dashboard-summary">${summary}</div>
 				${quotasHtmlContent}
 				<div class="sub dashboard-total">${total}</div>
-				${NotificationsPanel.render(notifications)}
 			</main>
 		`;
 		return screenHtmlContent;

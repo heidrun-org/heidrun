@@ -17,6 +17,7 @@ import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
 import { MacroSheet } from './components/macro_sheet';
+import { SettingsSheet } from './components/settings_sheet';
 import { TypingSheet } from './components/typing_sheet';
 import { MessageScreen } from './screens/message_screen';
 import { DashboardScreen } from './screens/dashboard_screen';
@@ -146,7 +147,10 @@ export class MobileApp {
 		this.root.addEventListener('keydown', (event) => void this._onKeyDown(event));
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
 		window.addEventListener('popstate', this.onPopState);
-		void this.phoneNotifications.register().then(() => this._render());
+		void this.phoneNotifications.register().then(() => {
+			this._render();
+			this._refreshSettingsSheet();
+		});
 		await this.refresh();
 	}
 
@@ -312,7 +316,7 @@ export class MobileApp {
 		if (this.screen === 'needs_you') {
 			return NeedsYouScreen.render(snapshot, this.isOnline);
 		}
-		return DashboardScreen.render(snapshot, this.isOnline, this.phoneNotifications.getStatus());
+		return DashboardScreen.render(snapshot, this.isOnline);
 	}
 
 	/**
@@ -407,14 +411,14 @@ export class MobileApp {
 			if (permission === 'granted') {
 				await this.phoneNotifications.subscribePush();
 			}
-			this._render();
+			this._refreshSettingsSheet();
 		} else if (action === 'push-on') {
 			const problem = await this.phoneNotifications.subscribePush();
-			this._render();
+			this._refreshSettingsSheet();
 			this._toast(problem === null ? 'The push is on' : `The push failed: ${problem}`);
 		} else if (action === 'push-off') {
 			const problem = await this.phoneNotifications.unsubscribePush();
-			this._render();
+			this._refreshSettingsSheet();
 			this._toast(problem === null ? 'The push is off' : `The push failed: ${problem}`);
 		} else if (action === 'notifications-test') {
 			const problem = await this.phoneNotifications.showTest();
@@ -430,6 +434,12 @@ export class MobileApp {
 			this.typingPaneId = this.paneId;
 			this._render();
 			this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`)?.focus();
+		} else if (action === 'open-settings') {
+			this.overlay.insertAdjacentHTML('beforeend', SettingsSheet.render(this.phoneNotifications.getStatus()));
+		} else if (action === 'settings-close') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this.overlay.querySelector(`.${SettingsSheet.className}`)?.remove();
+			}
 		} else if (action === 'open-macros') {
 			await this._openMacroSheet();
 		} else if (action === 'macro-sheet-close') {
@@ -465,6 +475,17 @@ export class MobileApp {
 			const reason = error instanceof Error ? error.message : String(error);
 			this._toast(`No answer from the computer: ${reason}`);
 		}
+	}
+
+	/**
+	 * Draws the settings sheet again with the latest state of the notifications, when the sheet is open.
+	 */
+	private _refreshSettingsSheet(): void {
+		const sheet = this.overlay.querySelector(`.${SettingsSheet.className}`);
+		if (sheet === null) {
+			return;
+		}
+		sheet.outerHTML = SettingsSheet.render(this.phoneNotifications.getStatus());
 	}
 
 	private _closeMacroSheet(): void {
