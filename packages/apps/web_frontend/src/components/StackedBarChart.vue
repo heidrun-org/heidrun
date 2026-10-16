@@ -12,14 +12,15 @@ import {
 } from "../lib/chart_information_card";
 import { ChartTheme } from "../lib/chart_theme";
 import { PlotlyLoader, type PlotlyModule } from "../lib/plotly_loader";
+import { tokenUnitFor, type TokenUnit } from "../lib/chat_usage";
 import type { StackedBarSeries, StackedBarUnit } from "../lib/stacked_bar_chart";
 import { locale } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
 
 // A bar chart with one bar for each label, and in each bar one color for each series, one on top of the other. The tab "Work
-// of one person" uses it for the commits and the pull requests of each day, and for the AI cost of each day. Like every chart
-// of the Statistics window, it has a legend above the bars, and a chart information card that opens beside the bar under the
-// pointer. Plotly.js is loaded only when the window opens, so the other windows do not pay for its size.
+// of one person" uses it for the commits and the pull requests of each day, and for the AI cost or the tokens of each day.
+// Like every chart of the Statistics window, it has a legend above the bars, and a chart information card that opens beside
+// the bar under the pointer. Plotly.js is loaded only when the window opens, so the other windows do not pay for its size.
 // Issue: https://github.com/heidrun-org/heidrun/issues/498
 
 const props = defineProps<{
@@ -37,7 +38,7 @@ const props = defineProps<{
   horizontalAxisTitle: string;
   /** The title of the vertical axis. */
   verticalAxisTitle: string;
-  /** The unit of the vertical axis: whole numbers, or US dollars. */
+  /** The unit of the vertical axis: whole numbers, US dollars, or tokens. */
   verticalAxisUnit: StackedBarUnit;
   /** The text that a screen reader reads for the chart. */
   chartLabel: string;
@@ -97,8 +98,14 @@ function onUnhover(): void {
   hovered.value = null;
 }
 
-/** Gives the settings of the vertical axis that depend on its unit. */
-function unitAxis(highestBar: number): Partial<Layout["yaxis"]> {
+/**
+ * Gives the settings of the vertical axis that depend on its unit. With tokens, every tick has the same unit, the biggest
+ * unit that does not go over the highest bar, so the ticks read "5 MT", "10 MT", and "15 MT".
+ */
+function unitAxis(highestBar: number, tokenUnit: TokenUnit | null): Partial<Layout["yaxis"]> {
+  if (tokenUnit !== null) {
+    return { ticksuffix: tokenUnit.suffix === "" ? "" : ` ${tokenUnit.suffix}`, tickformat: ",.2~f" };
+  }
   if (props.verticalAxisUnit === "dollars") {
     return { tickprefix: "$", tickformat: ",.2~f" };
   }
@@ -114,11 +121,13 @@ function draw(): void {
   const textColor = ChartTheme.readColor("--fg-body", element);
   const lineColor = ChartTheme.readColor("--border-color", element);
   const highestBar = Math.max(1, ...props.labels.map((_, index) => props.series.reduce((sum, one) => sum + one.values[index], 0)));
+  const tokenUnit = props.verticalAxisUnit === "tokens" ? tokenUnitFor(highestBar) : null;
+  const unitSize = tokenUnit === null ? 1 : tokenUnit.size;
   const data: Data[] = props.series.map((one) => ({
     type: "bar",
     name: one.name,
     x: props.labels,
-    y: one.values,
+    y: one.values.map((value) => value / unitSize),
     hoverinfo: "none",
     marker: { color: ChartTheme.readColor(one.colorToken, element) },
   }));
@@ -147,7 +156,7 @@ function draw(): void {
       gridcolor: lineColor,
       zerolinecolor: lineColor,
       rangemode: "tozero",
-      ...unitAxis(highestBar),
+      ...unitAxis(highestBar, tokenUnit),
     },
   };
   plotly.react(element, data, layout, { displayModeBar: false });

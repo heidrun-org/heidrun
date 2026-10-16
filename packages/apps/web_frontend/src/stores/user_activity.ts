@@ -2,7 +2,7 @@ import { computed, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { UserActivity, type UserActivityActionKind, type UserActivityRecord } from "../lib/user_activity";
 import { workspaceCwd } from "./project";
-import { state } from "./session";
+import { state, workspaces } from "./session";
 
 /** The events that count as an action of the user, with the kind of action of each event. */
 const ACTION_KINDS = {
@@ -24,6 +24,27 @@ export const userActivityRecordsOfToday = ref<UserActivityRecord[]>([]);
 /** The folder of the selected workspace, or `null` when no workspace is selected. */
 export const selectedWorkspaceFolder = computed(() =>
 	state.selectedWorkspaceId === null ? null : workspaceCwd(state.selectedWorkspaceId),
+);
+
+/** A workspace that is open in Heidrun, with the folder of its repository. */
+export type OpenWorkspace = {
+	/** The identifier of the workspace. */
+	workspaceId: string;
+	/** The name of the workspace, as the list of workspaces shows it. */
+	label: string;
+	/** The folder of the workspace. */
+	folder: string;
+};
+
+/** The identifier of the selected workspace, or `null` when no workspace is selected. */
+export const selectedWorkspaceId = computed(() => state.selectedWorkspaceId);
+
+/** The workspaces that are open in Heidrun, in the order of the list of workspaces. A workspace with no known folder is left out. */
+export const openWorkspaces = computed<OpenWorkspace[]>(() =>
+	workspaces.value.flatMap((workspace) => {
+		const folder = workspaceCwd(workspace.workspace_id);
+		return folder === null ? [] : [{ workspaceId: workspace.workspace_id, label: workspace.label, folder }];
+	}),
 );
 
 /** The rule that tells whether the user is active, and builds the records. `null` until `startUserActivity` runs. */

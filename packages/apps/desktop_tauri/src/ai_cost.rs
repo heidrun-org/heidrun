@@ -2,7 +2,8 @@
 //!
 //! The cost of a chat is the estimate of `chats.rs`: the tokens of each model, at the public price of the model. The package
 //! `data_layer_chat_sessions` keeps the tokens of each chat for each hour, in UTC, so a chat that lasts several days gives its
-//! cost to each hour where its requests were, and the web page cuts the hours into the days of the time zone of the computer.
+//! cost and its tokens to each hour where its requests were, and the web page cuts the hours into the days of the time zone of
+//! the computer. The web page shows the cost in US dollars, or the tokens, as the developer chooses.
 
 use crate::chats::{Chats, SortKey, SortOrder, Sorting, MAX_LIMIT};
 use crate::model_prices::PriceTable;
@@ -19,7 +20,7 @@ const CODEX: &str = "codex";
 /// The number of milliseconds in one hour.
 const HOUR_MILLISECONDS: i64 = 3_600_000;
 
-/// The cost of one chat in one hour.
+/// The cost and the tokens of one chat in one hour.
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct HourCost {
@@ -29,12 +30,17 @@ pub struct HourCost {
     /// The estimated cost in US dollars of the tokens of the chat in this hour. `None` when a model of the chat has no known
     /// price: the chat has no cost in every hour, because a cost without the tokens of that model would be too small.
     pub cost_usd: Option<f64>,
+    /// The tokens of the chat in this hour, for every model: the input tokens (with the ones read from the cache and written
+    /// to it) and the output tokens. A chat with a model that has no known price has its tokens too.
+    pub tokens: u64,
 }
 
 /// The cost of one chat.
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ChatCost {
+    /// The identifier of the chat for its coding agent. The web page uses it to count a chat once when two workspaces list it.
+    pub id: String,
     /// The identifier of the coding agent: `claude` or `codex`.
     pub coding_agent: String,
     /// The hours of the time range where the chat used tokens, the oldest first.
@@ -77,13 +83,15 @@ fn costs_in_range(chats: &Chats, table: &PriceTable, since: i64, until: i64) -> 
                     continue;
                 }
                 let cost_usd = is_priced.then(|| table.cost(models).unwrap_or(0.0));
-                hours.push((start, HourCost { at: utc_text(start), cost_usd }));
+                let tokens: u64 = models.values().map(|counts| counts.input_total() + counts.output).sum();
+                hours.push((start, HourCost { at: utc_text(start), cost_usd, tokens }));
             }
             hours.sort_by_key(|(start, _)| *start);
             let Some(first) = hours.first().map(|(start, _)| *start) else { continue };
             found.push((
                 first,
                 ChatCost {
+                    id: chat.id.clone(),
                     coding_agent: coding_agent.to_string(),
                     hours: hours.into_iter().map(|(_, hour_cost)| hour_cost).collect(),
                 },
@@ -178,6 +186,11 @@ mod tests {
         chat_cost.hours.iter().map(|hour| (hour.at.as_str(), hour.cost_usd)).collect()
     }
 
+    /// The tokens of each hour of a chat.
+    fn tokens_of(chat_cost: &ChatCost) -> Vec<u64> {
+        chat_cost.hours.iter().map(|hour| hour.tokens).collect()
+    }
+
     #[test]
     fn a_chat_gives_the_cost_of_each_hour_where_it_used_tokens_and_keeps_its_coding_agent() {
         let hours = TokensByHour::from([(NOON_HOUR, hour(1_000, 200)), (NOON_HOUR + 26, hour(500, 0))]);
@@ -189,6 +202,33 @@ mod tests {
             costs_of(&items.chats[0]),
             vec![("2026-10-14T12:00:00.000Z", Some(2.0)), ("2026-10-15T14:00:00.000Z", Some(0.5))]
         );
+    }
+
+    #[test]
+    fn the_tokens_of_an_hour_are_the_input_tokens_and_the_output_tokens_of_every_model() {
+        let counts = |fresh_input, cached_input, cache_write_input, output| TokenCounts {
+            fresh_input,
+            cached_input,
+            cache_write_input,
+            output,
+        };
+        let models = TokensByModel::from([
+            (MODEL.to_string(), counts(1_000, 4_000, 500, 200)),
+            ("claude-sonnet-5".to_string(), counts(10, 0, 0, 5)),
+        ]);
+        let hours = TokensByHour::from([(NOON_HOUR, models), (NOON_HOUR + 1, hour(7, 3))]);
+        let chats = chats_of(vec![chat(Some(NOON), NOON, hours, Some(1.0))], vec![]);
+        let items = costs_in_range(&chats, &table(), NOON - HOUR, NOON + 4 * HOUR);
+        assert_eq!(tokens_of(&items.chats[0]), vec![5_715, 10]);
+    }
+
+    #[test]
+    fn a_chat_with_no_known_price_has_its_tokens() {
+        let hours = TokensByHour::from([(NOON_HOUR, hour(1_000, 200))]);
+        let chats = chats_of(vec![chat(Some(NOON), NOON, hours, None)], vec![]);
+        let items = costs_in_range(&chats, &table(), NOON - HOUR, NOON + HOUR);
+        assert_eq!(costs_of(&items.chats[0]), vec![("2026-10-14T12:00:00.000Z", None)]);
+        assert_eq!(tokens_of(&items.chats[0]), vec![1_200]);
     }
 
     #[test]
@@ -255,9 +295,11 @@ mod tests {
         let hours = TokensByHour::from([(NOON_HOUR, hour(1_500, 0))]);
         let chats = chats_of(vec![chat(Some(NOON), NOON, hours, Some(1.5))], vec![]);
         let json = serde_json::to_value(costs_in_range(&chats, &table(), NOON - HOUR, NOON + HOUR)).unwrap();
+        assert_eq!(json["chats"][0]["id"], "a-chat");
         assert_eq!(json["chats"][0]["codingAgent"], "claude");
         assert_eq!(json["chats"][0]["hours"][0]["at"], "2026-10-14T12:00:00.000Z");
         assert_eq!(json["chats"][0]["hours"][0]["costUsd"], 1.5);
+        assert_eq!(json["chats"][0]["hours"][0]["tokens"], 1_500);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
-import type { AiCostItems } from '../lib/ai_cost';
+import type { AiCostChat, AiCostItems } from '../lib/ai_cost';
 import type { PersonWorkItems } from '../lib/person_work';
 import type { UserActivityRecord } from '../lib/user_activity';
 
@@ -357,8 +357,9 @@ export class TauriMockFixture {
 	}
 
 	/**
-	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost of each hour
-	 * where it used tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
+	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost and the tokens
+	 * of each hour where it used tokens. An hour that costs one dollar used 400,000 tokens, and an hour with no known price used
+	 * 200,000 tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
 	 * costs a few cents. Every fourth day, a longer chat of Claude Code goes on after midnight and costs money on the next day
 	 * too. Codex has one chat every other day that costs under 2 dollars. One chat of Codex has no known price.
 	 * - issue #482
@@ -372,28 +373,23 @@ export class TauriMockFixture {
 		const hour = (dayEnd: number, hoursBefore: number, costUsd: number | null) => ({
 			at: new Date(dayEnd - hoursBefore * hourMs).toISOString(),
 			costUsd,
+			tokens: Math.round((costUsd ?? 0.5) * 400_000),
 		});
 		const result: AiCostItems = { chats: [] };
+		const addChat = (codingAgent: string, hours: AiCostChat['hours']) => {
+			result.chats.push({ id: `fake-chat-${result.chats.length + 1}`, codingAgent, hours });
+		};
 		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
 			const dayEnd = until - daysBefore * dayMs;
 			const cost = 1 + ((daysBefore * 7 + 3) % 5);
-			result.chats.push({
-				codingAgent: 'claude',
-				hours: [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)],
-			});
-			result.chats.push({
-				codingAgent: 'claude',
-				hours: [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)],
-			});
+			addChat('claude', [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)]);
+			addChat('claude', [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)]);
 			if (daysBefore % 4 === 2) {
-				result.chats.push({
-					codingAgent: 'claude',
-					hours: [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)],
-				});
+				addChat('claude', [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)]);
 			}
 			if (daysBefore % 2 === 1) {
 				const costUsd = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
-				result.chats.push({ codingAgent: 'codex', hours: [hour(dayEnd, 6, costUsd)] });
+				addChat('codex', [hour(dayEnd, 6, costUsd)]);
 			}
 		}
 		return result;

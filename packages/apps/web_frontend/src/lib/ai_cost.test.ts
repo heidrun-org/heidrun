@@ -9,9 +9,20 @@ function at(monthDay: number, hour: number): string {
 	return new Date(2026, 9, monthDay, hour).toISOString();
 }
 
-/** A chat of one coding agent with the hours `[monthDay, hour, costUsd]`. */
-function chat(codingAgent: string, hours: Array<[number, number, number | null]>): AiCostChat {
-	return { codingAgent, hours: hours.map(([monthDay, hour, costUsd]) => ({ at: at(monthDay, hour), costUsd })) };
+/** The number of chats that the tests built: each chat has its own identifier, unless the test gives one. */
+let chatCount = 0;
+
+/**
+ * A chat of one coding agent with the hours `[monthDay, hour, costUsd, tokens]`. The tokens are 0 when the hour gives none.
+ * The chat has a new identifier, unless `id` is given.
+ */
+function chat(codingAgent: string, hours: Array<[number, number, number | null, number?]>, id?: string): AiCostChat {
+	chatCount += 1;
+	return {
+		id: id ?? `chat-${chatCount}`,
+		codingAgent,
+		hours: hours.map(([monthDay, hour, costUsd, tokens]) => ({ at: at(monthDay, hour), costUsd, tokens: tokens ?? 0 })),
+	};
 }
 
 describe("AiCost.compute", () => {
@@ -102,7 +113,7 @@ describe("AiCost.compute", () => {
 			{
 				chats: [
 					chat("antigravity", [[14, 10, 5]]),
-					{ codingAgent: "claude", hours: [{ at: "yesterday", costUsd: 5 }] },
+					{ id: "chat-bad-hour", codingAgent: "claude", hours: [{ at: "yesterday", costUsd: 5, tokens: 500 }] },
 				],
 			},
 			NOW,
@@ -110,11 +121,89 @@ describe("AiCost.compute", () => {
 		);
 		expect(result.chatCount).toBe(0);
 		expect(result.totalCost).toBe(0);
+		expect(result.totalTokens).toBe(0);
 	});
 
-	it("gives days with a cost of zero when there is no chat", () => {
+	it("gives days with a cost of zero and no token when there is no chat", () => {
 		const result = AiCost.compute({ chats: [] }, NOW, 7);
 		expect(result.days.every((day) => day.costByAgent.claude === 0 && day.costByAgent.codex === 0)).toBe(true);
+		expect(result.days.every((day) => day.tokensByAgent.claude === 0 && day.tokensByAgent.codex === 0)).toBe(true);
 		expect(result.totalCost).toBe(0);
+		expect(result.totalTokens).toBe(0);
+	});
+});
+
+describe("AiCost.compute, the tokens", () => {
+	const chats = [
+		chat("claude", [
+			[14, 10, 2.5, 1_000],
+			[14, 20, 1.25, 500],
+		]),
+		chat("codex", [[14, 9, 0.5, 200]]),
+		chat("claude", [[12, 11, 4, 3_000]]),
+		chat("claude", [[7, 8, 100, 90_000]]),
+	];
+
+	it("adds the tokens of each hour of each coding agent on the day of the hour", () => {
+		const result = AiCost.compute({ chats }, NOW, 7);
+		expect(result.days.map((day) => [day.tokensByAgent.claude, day.tokensByAgent.codex])).toEqual([
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[3_000, 0],
+			[0, 0],
+			[1_500, 200],
+		]);
+	});
+
+	it("gives the tokens of each coding agent and the total of the time range, and ignores an hour that is older", () => {
+		const result = AiCost.compute({ chats }, NOW, 7);
+		expect(result.totalTokensByAgent).toEqual({ claude: 4_500, codex: 200 });
+		expect(result.totalTokens).toBe(4_700);
+	});
+
+	it("counts the older hours again in a longer time range", () => {
+		const result = AiCost.compute({ chats }, NOW, 30);
+		expect(result.totalTokensByAgent.claude).toBe(94_500);
+		expect(result.totalTokens).toBe(94_700);
+	});
+
+	it("counts the tokens of a chat with no known price, and counts no cost for it", () => {
+		const unpriced = chat("claude", [
+			[14, 10, null, 700],
+			[13, 10, null, 300],
+		]);
+		const result = AiCost.compute({ chats: [unpriced, chat("codex", [[14, 10, 2, 50]])] }, NOW, 7);
+		expect(result.totalTokensByAgent).toEqual({ claude: 1_000, codex: 50 });
+		expect(result.days.map((day) => day.tokensByAgent.claude).slice(5)).toEqual([300, 700]);
+		expect(result.totalCost).toBe(2);
+		expect(result.chatWithoutPriceCount).toBe(1);
+	});
+});
+
+describe("AiCost.merge", () => {
+	it("joins the chats of several workspaces, in the order of the workspaces", () => {
+		const first = { chats: [chat("claude", [[14, 10, 1]], "a"), chat("codex", [[14, 10, 2]], "b")] };
+		const second = { chats: [chat("claude", [[14, 11, 3]], "c")] };
+		expect(AiCost.merge([first, second]).chats.map((one) => one.id)).toEqual(["a", "b", "c"]);
+	});
+
+	it("counts a chat once when two workspaces list it", () => {
+		const shared = chat("claude", [[14, 10, 5, 100]], "same");
+		const merged = AiCost.merge([{ chats: [shared] }, { chats: [{ ...shared }, chat("claude", [[14, 11, 1, 10]], "other")] }]);
+		expect(merged.chats.map((one) => one.id)).toEqual(["same", "other"]);
+		const result = AiCost.compute(merged, NOW, 7);
+		expect(result.totalCost).toBe(6);
+		expect(result.totalTokens).toBe(110);
+	});
+
+	it("counts two chats with the same identifier once for each coding agent", () => {
+		const merged = AiCost.merge([{ chats: [chat("claude", [[14, 10, 1]], "same"), chat("codex", [[14, 10, 1]], "same")] }]);
+		expect(merged.chats).toHaveLength(2);
+	});
+
+	it("gives no chat when there is no workspace", () => {
+		expect(AiCost.merge([])).toEqual({ chats: [] });
 	});
 });

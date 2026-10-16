@@ -15,10 +15,15 @@ const plotly = { react: vi.fn(), purge: vi.fn(), Plots: { resize: vi.fn() } };
 const plotlyHandlers: Record<string, (event: unknown) => void> = {};
 vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 
-/** The tab "Work of one person" reads the repository of the selected workspace: the test selects the folder of a workspace. */
+/** The tab "Work of one person" reads the repository of a workspace that is open: the test opens one workspace and selects it. */
 vi.mock("../stores/user_activity", async (importOriginal) => {
   const { ref } = await import("vue");
-  return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
+  return {
+    ...(await importOriginal<typeof import("../stores/user_activity")>()),
+    selectedWorkspaceFolder: ref("/work/heidrun"),
+    selectedWorkspaceId: ref("workspace-1"),
+    openWorkspaces: ref([{ workspaceId: "workspace-1", label: "heidrun", folder: "/work/heidrun" }]),
+  };
 });
 
 /** What one call to `Plotly.react` drew. */

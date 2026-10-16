@@ -12,6 +12,14 @@ const TOKEN_UNITS = [
   { size: 1_000, suffix: "KT" },
 ] as const;
 
+/** The unit of a number of tokens: how many tokens it holds, and its suffix. A number under one thousand has no suffix. */
+export type TokenUnit = {
+  /** The number of tokens in one unit: 1, 1000, 1 million, 1 billion, or 1 trillion. */
+  size: number;
+  /** The suffix after the number: "KT", "MT", "BT", "TT", or "" for a unit of one token. */
+  suffix: string;
+};
+
 /** A number of tokens as the card shows it: short, and with the full number when the short text is rounded. */
 export type TokenCountText = {
   /** The short text: "84", "20.61 KT", "3.10 MT", "1.23 BT". */
@@ -53,6 +61,16 @@ export function tokenCountText(count: number): TokenCountText {
     text: `${round(unit).toLocaleString(locale.value, digits)} ${unit.suffix}`,
     full: t("chatsPanel.tokenCountFull", { value: number }),
   };
+}
+
+/**
+ * The biggest unit that does not go over a number of tokens, for the vertical axis of a chart where every tick has the same
+ * unit.
+ * @param count - the number of tokens, for example the highest bar of the chart
+ * @returns the unit: KT (thousand), MT (million), BT (billion), or TT (trillion), or one token for a number under one thousand
+ */
+export function tokenUnitFor(count: number): TokenUnit {
+  return TOKEN_UNITS.find((unit) => count >= unit.size) ?? { size: 1, suffix: "" };
 }
 
 /**

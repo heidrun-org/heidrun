@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import StackedBarChart from "./StackedBarChart.vue";
-import { AI_COST_AGENT_IDS, AiCost, type AiCostAgentId, type AiCostItems } from "../lib/ai_cost";
+import { AI_COST_AGENT_IDS, AiCost, type AiCostAgentId, type AiCostByAgent, type AiCostItems, type AiTokensByAgent } from "../lib/ai_cost";
 import { AveragePerDay } from "../lib/average_per_day";
 import { CalendarDays } from "../lib/calendar_days";
-import { costText } from "../lib/chat_usage";
+import { costText, tokenCountText } from "../lib/chat_usage";
 import { findCodingAgent } from "../lib/coding_agents";
 import { DayText } from "../lib/day_text";
 import { UserActivity } from "../lib/user_activity";
@@ -17,13 +17,16 @@ import {
   type PersonWorkPeriodId,
 } from "../lib/person_work";
 import type { StackedBarChartContent } from "../lib/stacked_bar_chart";
-import { selectedWorkspaceFolder } from "../stores/user_activity";
+import { openWorkspaces, selectedWorkspaceId } from "../stores/user_activity";
 import { locale, t } from "../i18n/index";
 
-// The tab "Work of one person" of the Statistics window. A radio button group chooses the source of the bar chart: the Git
-// history (the commits and the pull requests of one person, with the number of issues and the lines), or the AI cost (the
-// estimated cost of the chats of each coding agent). Each total has its average per day under it. Each source reads its data once, for the longest time range, the first time that it is
-// shown, and cuts it again when the person or the time range changes.
+// The tab "Work of one person" of the Statistics window. Checkboxes in the shape of buttons choose the workspaces that the tab
+// reads: one workspace, several, or all. A radio button group chooses the source of the bar chart: the Git history (the
+// commits and the pull requests of one person, with the number of issues and the lines), or the AI cost (the chats of each
+// coding agent). For the AI cost, a second radio button group chooses the unit: US dollars or tokens. Each total has its
+// average per day under it. Each source reads the data of each folder once, for the longest time range, the first time that a
+// chosen workspace needs it, joins the data of the chosen workspaces, and cuts it again when the workspaces, the person, the
+// time range, or the unit changes.
 
 /** The choices of the radio button group of the source, from left to right. */
 const SOURCE_CHOICES = [
@@ -37,6 +40,12 @@ const PERIOD_CHOICES = [
   { id: "thirty_days", labelKey: "statisticsModal.personWorkThirtyDays", titleKey: "statisticsModal.personWorkThirtyDaysTitle" },
 ] as const satisfies readonly { id: PersonWorkPeriodId; labelKey: string; titleKey: string }[];
 
+/** The choices of the radio button group of the unit of the AI cost, from left to right. */
+const UNIT_CHOICES = [
+  { id: "dollars", labelKey: "statisticsModal.personWorkUnitDollars", titleKey: "statisticsModal.personWorkUnitDollarsTitle" },
+  { id: "tokens", labelKey: "statisticsModal.personWorkUnitTokens", titleKey: "statisticsModal.personWorkUnitTokensTitle" },
+] as const satisfies readonly { id: UnitId; labelKey: string; titleKey: string }[];
+
 /** The color of each coding agent in the chart of the AI cost, as the name of a CSS variable of the theme. */
 const AI_COST_COLOR_TOKENS: Record<AiCostAgentId, string> = {
   claude: "--accent",
@@ -46,36 +55,119 @@ const AI_COST_COLOR_TOKENS: Record<AiCostAgentId, string> = {
 /** The source of the bar chart: the Git history, or the AI cost. */
 type SourceId = "git_history" | "ai_cost";
 
-/** The folder of the selected workspace, or `null` when no workspace is selected. It is read once, when the tab opens. */
-const folder = ref<string | null>(null);
+/** The unit of the AI cost: US dollars, or tokens. */
+type UnitId = "dollars" | "tokens";
+
+/** What the read of one folder gave: it is reading, it gave the items, or it failed. */
+type FolderRead<Items> =
+  | { state: "reading" }
+  | { state: "done"; items: Items; readAt: number }
+  | { state: "failed"; error: string };
+
+/** Gives the identifiers of the workspaces that the tab starts with: the selected workspace, or else the first open workspace. */
+function firstWorkspaceIds(): string[] {
+  const open = openWorkspaces.value;
+  const first = open.find((workspace) => workspace.workspaceId === selectedWorkspaceId.value) ?? open[0];
+  return first === undefined ? [] : [first.workspaceId];
+}
+
+/** The identifiers of the workspaces that the developer chose. The selected workspace alone at first. */
+const chosenWorkspaceIds = ref<string[]>(firstWorkspaceIds());
+
+/** True when every open workspace is chosen. */
+const isEveryWorkspaceChosen = computed(
+  () => openWorkspaces.value.length > 0 && openWorkspaces.value.every((workspace) => chosenWorkspaceIds.value.includes(workspace.workspaceId)),
+);
+
+/** The folders of the chosen workspaces, each folder once, in the order of the list of workspaces. */
+const chosenFolders = computed(() => [
+  ...new Set(openWorkspaces.value.filter((workspace) => chosenWorkspaceIds.value.includes(workspace.workspaceId)).map((workspace) => workspace.folder)),
+]);
 
 /** The source of the bar chart. The tab starts with the Git history. */
 const sourceId = ref<SourceId>("git_history");
 
+/** The unit of the AI cost. The tab starts with US dollars. */
+const unitId = ref<UnitId>("dollars");
+
 /** The time range of the chart. The tab starts with the last seven days. */
 const periodId = ref<PersonWorkPeriodId>("seven_days");
 
-/** What the command `person_work_in_range` gave, or `null` while it reads. */
-const items = ref<PersonWorkItems | null>(null);
+/** What the command `person_work_in_range` gave for each folder that the tab asked for. The tab keeps it while the window is open. */
+const gitHistoryReads = reactive<Record<string, FolderRead<PersonWorkItems>>>({});
 
-/** The time of the read of the Git history, in milliseconds since 1 January 1970. The days of the chart follow it. */
-const readAt = ref(0);
+/** What the command `ai_cost_in_range` gave for each folder that the tab asked for. The tab keeps it while the window is open. */
+const aiCostReads = reactive<Record<string, FolderRead<AiCostItems>>>({});
 
 /** The identifier of the person of the chart, or `null` before the people are known. */
 const personId = ref<string | null>(null);
 
-const errorText = ref("");
+/**
+ * Gives the reads of the chosen folders. A folder that the tab did not ask for yet counts as a folder that it is reading,
+ * because the tab asks for it before the next drawing.
+ *
+ * @param reads - The reads of the source.
+ * @returns The reads of the chosen folders, in the order of the folders.
+ */
+function readsOfChosenFolders<Items>(reads: Record<string, FolderRead<Items>>): FolderRead<Items>[] {
+  return chosenFolders.value.map((folder) => reads[folder] ?? { state: "reading" });
+}
 
-/** What the command `ai_cost_in_range` gave, or `null` while it reads, and before the first time that the source is shown. */
-const aiCostItems = ref<AiCostItems | null>(null);
+/** The items of the chosen folders that were read, and the time of the last read. `null` when no chosen folder was read. */
+function joinedReads<Items>(reads: Record<string, FolderRead<Items>>): { itemsOfFolders: Items[]; readAt: number } | null {
+  const done = readsOfChosenFolders(reads).flatMap((read) => (read.state === "done" ? [read] : []));
+  if (done.length === 0) {
+    return null;
+  }
+  return { itemsOfFolders: done.map((read) => read.items), readAt: Math.max(...done.map((read) => read.readAt)) };
+}
 
-/** The time of the read of the AI cost, in milliseconds since 1 January 1970. The days of the chart follow it. */
-const aiCostReadAt = ref(0);
+/** The errors of the chosen folders that could not be read, each error once, as one text. Empty when every read worked. */
+function errorTextOf<Items>(reads: Record<string, FolderRead<Items>>): string {
+  const errors = readsOfChosenFolders(reads).flatMap((read) => (read.state === "failed" ? [read.error] : []));
+  return [...new Set(errors)].join("; ");
+}
 
-const aiCostErrorText = ref("");
+/** True while a chosen folder is read. */
+function isReading<Items>(reads: Record<string, FolderRead<Items>>): boolean {
+  return readsOfChosenFolders(reads).some((read) => read.state === "reading");
+}
 
-/** True from the first time that the AI cost is shown. The tab reads the AI cost once. */
-let hasRequestedAiCost = false;
+/** The commits, the pull requests, and the issues of the chosen workspaces, joined, or `null` when no chosen folder was read. */
+const gitHistoryJoined = computed(() => {
+  const joined = joinedReads(gitHistoryReads);
+  return joined === null ? null : { items: PersonWork.merge(joined.itemsOfFolders), readAt: joined.readAt };
+});
+
+/** The chats of the chosen workspaces, joined, or `null` when no chosen folder was read. */
+const aiCostJoined = computed(() => {
+  const joined = joinedReads(aiCostReads);
+  return joined === null ? null : { items: AiCost.merge(joined.itemsOfFolders), readAt: joined.readAt };
+});
+
+/** The commits, the pull requests, and the issues of the chosen workspaces, or `null` when no chosen folder was read. */
+const items = computed(() => gitHistoryJoined.value?.items ?? null);
+
+/** The time of the last read of the Git history, in milliseconds since 1 January 1970. The days of the chart follow it. */
+const readAt = computed(() => gitHistoryJoined.value?.readAt ?? 0);
+
+/** The errors of the Git history of the chosen workspaces. Empty when every read worked. */
+const errorText = computed(() => errorTextOf(gitHistoryReads));
+
+/** The chats of the chosen workspaces, or `null` when no chosen folder was read. */
+const aiCostItems = computed(() => aiCostJoined.value?.items ?? null);
+
+/** The time of the last read of the AI cost, in milliseconds since 1 January 1970. The days of the chart follow it. */
+const aiCostReadAt = computed(() => aiCostJoined.value?.readAt ?? 0);
+
+/** The errors of the AI cost of the chosen workspaces. Empty when every read worked. */
+const aiCostErrorText = computed(() => errorTextOf(aiCostReads));
+
+/** True while a chosen workspace gives its commits, its pull requests, and its issues. */
+const isGitHistoryReading = computed(() => isReading(gitHistoryReads));
+
+/** True while a chosen workspace gives its chats. */
+const isAiCostReading = computed(() => isReading(aiCostReads));
 
 /**
  * Writes a cost in US dollars. A cost of exactly zero is "$0.00": the text "Less than $0.01" of `costText` is for a small
@@ -86,6 +178,16 @@ function dollarsText(dollars: number): string {
     return (0).toLocaleString(locale.value, { style: "currency", currency: "USD" });
   }
   return costText(dollars);
+}
+
+/** Writes a number of tokens as the card of a chat writes it, for example "20.61 KT". An average is rounded to whole tokens. */
+function tokensText(tokens: number): string {
+  return tokenCountText(Math.round(tokens)).text;
+}
+
+/** Writes an amount of the AI cost in the unit that the developer chose: US dollars, or tokens. */
+function amountText(amount: number): string {
+  return unitId.value === "tokens" ? tokensText(amount) : dollarsText(amount);
 }
 
 /** The number of days of the chart. */
@@ -139,20 +241,29 @@ const aiCostResult = computed(() => {
   return AiCost.compute(aiCostItems.value, aiCostReadAt.value, dayCount.value);
 });
 
+/** The amount of a coding agent on a day, or in the whole time range, in the unit that the developer chose. */
+function agentAmount(byAgentCost: AiCostByAgent, byAgentTokens: AiTokensByAgent, agentId: AiCostAgentId): number {
+  return unitId.value === "tokens" ? byAgentTokens[agentId] : byAgentCost[agentId];
+}
+
 /** The totals of the AI cost under the chooser, from left to right: each coding agent, then the two together. */
 const aiCostTotals = computed(() =>
   [
     ...AI_COST_AGENT_IDS.map((agentId) => ({
       id: agentId,
       label: findCodingAgent(agentId)?.label ?? agentId,
-      cost: aiCostResult.value?.totalByAgent[agentId] ?? 0,
+      amount: aiCostResult.value === null ? 0 : agentAmount(aiCostResult.value.totalByAgent, aiCostResult.value.totalTokensByAgent, agentId),
     })),
-    { id: "total", label: t("statisticsModal.personWorkAiCostTotal"), cost: aiCostResult.value?.totalCost ?? 0 },
+    {
+      id: "total",
+      label: t("statisticsModal.personWorkAiCostTotal"),
+      amount: (unitId.value === "tokens" ? aiCostResult.value?.totalTokens : aiCostResult.value?.totalCost) ?? 0,
+    },
   ].map((total) => ({
     id: total.id,
     label: total.label,
-    valueText: dollarsText(total.cost),
-    perDayText: t("statisticsModal.personWorkPerDay", { value: dollarsText(AveragePerDay.of(total.cost, dayCount.value)) }),
+    valueText: amountText(total.amount),
+    perDayText: t("statisticsModal.personWorkPerDay", { value: amountText(AveragePerDay.of(total.amount, dayCount.value)) }),
   })),
 );
 
@@ -188,27 +299,30 @@ const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
   };
 });
 
-/** The bar chart of the AI cost, or `null` before the chats are read, or when no chat is in the time range. */
+/** The bar chart of the AI cost or of the tokens, or `null` before the chats are read, or when no chat is in the time range. */
 const aiCostChart = computed<StackedBarChartContent | null>(() => {
   if (aiCostResult.value === null || aiCostResult.value.chatCount === 0) {
     return null;
   }
   const days = aiCostResult.value.days;
+  const isTokens = unitId.value === "tokens";
   return {
     labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
     series: AI_COST_AGENT_IDS.map((agentId) => ({
       name: findCodingAgent(agentId)?.label ?? agentId,
       colorToken: AI_COST_COLOR_TOKENS[agentId],
-      values: days.map((day) => day.costByAgent[agentId]),
-      valueTexts: days.map((day) => dollarsText(day.costByAgent[agentId])),
+      values: days.map((day) => agentAmount(day.costByAgent, day.tokensByAgent, agentId)),
+      valueTexts: days.map((day) => amountText(agentAmount(day.costByAgent, day.tokensByAgent, agentId))),
     })),
     titles: days.map((day) => DayText.cardTitle(day.startedAt)),
-    totals: days.map((day) => dollarsText(AI_COST_AGENT_IDS.reduce((sum, agentId) => sum + day.costByAgent[agentId], 0))),
-    title: t("statisticsModal.personWorkAiCostChartTitle"),
+    totals: days.map((day) =>
+      amountText(AI_COST_AGENT_IDS.reduce((sum, agentId) => sum + agentAmount(day.costByAgent, day.tokensByAgent, agentId), 0)),
+    ),
+    title: t(isTokens ? "statisticsModal.personWorkAiTokensChartTitle" : "statisticsModal.personWorkAiCostChartTitle"),
     horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
-    verticalAxisTitle: t("statisticsModal.personWorkAiCostVerticalAxis"),
-    verticalAxisUnit: "dollars",
-    chartLabel: t("statisticsModal.personWorkAiCostChartLabel"),
+    verticalAxisTitle: t(isTokens ? "statisticsModal.personWorkAiTokensVerticalAxis" : "statisticsModal.personWorkAiCostVerticalAxis"),
+    verticalAxisUnit: isTokens ? "tokens" : "dollars",
+    chartLabel: t(isTokens ? "statisticsModal.personWorkAiTokensChartLabel" : "statisticsModal.personWorkAiCostChartLabel"),
   };
 });
 
@@ -220,32 +334,25 @@ function longestRange(now: number): { since: string; until: string } {
   };
 }
 
-/** Reads the commits, the pull requests, and the issues of the longest time range through the data layer. */
-async function load() {
-  folder.value = selectedWorkspaceFolder.value;
-  if (folder.value === null) {
+/**
+ * Reads the data of one folder through the data layer, and keeps the answer, or the error, for the folder. A read that is
+ * already asked for, or done, is not asked for again.
+ *
+ * @param command - The Tauri command: `person_work_in_range` or `ai_cost_in_range`.
+ * @param reads - The reads of the source, by folder.
+ * @param folderToRead - The folder of a chosen workspace.
+ */
+async function readFolder<Items>(command: string, reads: Record<string, FolderRead<Items>>, folderToRead: string): Promise<void> {
+  if (reads[folderToRead] !== undefined) {
     return;
   }
+  reads[folderToRead] = { state: "reading" };
   const now = Date.now();
   try {
-    items.value = await invoke<PersonWorkItems>("person_work_in_range", { folder: folder.value, ...longestRange(now) });
-    readAt.value = now;
+    const items = await invoke<Items>(command, { folder: folderToRead, ...longestRange(now) });
+    reads[folderToRead] = { state: "done", items, readAt: now };
   } catch (error) {
-    errorText.value = String(error);
-  }
-}
-
-/** Reads the chats of the longest time range, with their estimated cost. */
-async function loadAiCost() {
-  if (folder.value === null) {
-    return;
-  }
-  const now = Date.now();
-  try {
-    aiCostItems.value = await invoke<AiCostItems>("ai_cost_in_range", { folder: folder.value, ...longestRange(now) });
-    aiCostReadAt.value = now;
-  } catch (error) {
-    aiCostErrorText.value = String(error);
+    reads[folderToRead] = { state: "failed", error: String(error) };
   }
 }
 
@@ -256,20 +363,40 @@ watch(persons, (list) => {
   }
 });
 
-// The window does not read the chats before the developer asks for the AI cost.
-watch(sourceId, (source) => {
-  if (source === "ai_cost" && hasRequestedAiCost === false) {
-    hasRequestedAiCost = true;
-    void loadAiCost();
+// A workspace that closes cannot stay chosen. When no chosen workspace stays open, the first open workspace takes its place.
+watch(openWorkspaces, (list) => {
+  const stillOpen = chosenWorkspaceIds.value.filter((workspaceId) => list.some((workspace) => workspace.workspaceId === workspaceId));
+  if (stillOpen.length === chosenWorkspaceIds.value.length) {
+    return;
   }
+  chosenWorkspaceIds.value = stillOpen.length > 0 ? stillOpen : firstWorkspaceIds();
 });
 
-onMounted(load);
+/** Chooses every workspace when one is not chosen, and no workspace when every one is chosen. */
+function toggleEveryWorkspace(): void {
+  chosenWorkspaceIds.value = isEveryWorkspaceChosen.value === true ? [] : openWorkspaces.value.map((workspace) => workspace.workspaceId);
+}
+
+// A source reads its data only when it is shown, and only for the chosen folders that it did not read yet. The window does not
+// read the chats before the developer asks for the AI cost.
+watch(
+  [chosenFolders, sourceId],
+  ([folders, source]) => {
+    for (const folder of folders) {
+      if (source === "git_history") {
+        void readFolder("person_work_in_range", gitHistoryReads, folder);
+      } else {
+        void readFolder("ai_cost_in_range", aiCostReads, folder);
+      }
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
   <div class="d-flex flex-column" style="height: 100%">
-    <span v-if="folder === null" class="form-text">{{ t("statisticsModal.personWorkNoWorkspace") }}</span>
+    <span v-if="openWorkspaces.length === 0" class="form-text">{{ t("statisticsModal.personWorkNoWorkspace") }}</span>
     <template v-else>
       <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
         <div class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkSourceLabel')">
@@ -279,6 +406,19 @@ onMounted(load);
               v-model="sourceId"
               type="radio"
               name="statistics-person-source"
+              autocomplete="off"
+              :value="choice.id"
+            />
+            {{ t(choice.labelKey) }}
+          </label>
+        </div>
+        <div v-if="sourceId === 'ai_cost'" class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkUnitLabel')">
+          <label v-for="choice in UNIT_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+            <input
+              :id="`statistics-person-unit-${choice.id}`"
+              v-model="unitId"
+              type="radio"
+              name="statistics-person-unit"
               autocomplete="off"
               :value="choice.id"
             />
@@ -305,10 +445,41 @@ onMounted(load);
           </label>
         </div>
       </div>
-      <template v-if="sourceId === 'git_history'">
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
+        <div class="d-flex flex-wrap gap-2" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
+          <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesAllTitle')">
+            <input
+              id="statistics-person-workspace-all"
+              type="checkbox"
+              autocomplete="off"
+              :checked="isEveryWorkspaceChosen"
+              @change="toggleEveryWorkspace"
+            />
+            {{ t("statisticsModal.workspacesAll") }}
+          </label>
+          <label
+            v-for="workspace in openWorkspaces"
+            :key="workspace.workspaceId"
+            class="btn-check btn-outline theme-secondary"
+            :title="t('statisticsModal.personWorkWorkspaceTitle', { folder: workspace.folder })"
+          >
+            <input
+              :id="`statistics-person-workspace-${workspace.workspaceId}`"
+              v-model="chosenWorkspaceIds"
+              type="checkbox"
+              autocomplete="off"
+              :value="workspace.workspaceId"
+            />
+            {{ workspace.label }}
+          </label>
+        </div>
+      </div>
+      <span v-if="chosenFolders.length === 0" class="form-text">{{ t("statisticsModal.personWorkWorkspacesNone") }}</span>
+      <template v-else-if="sourceId === 'git_history'">
         <div v-if="errorText !== ''" class="alert theme-danger" role="alert">{{ t("statisticsModal.personWorkLoadError", { error: errorText }) }}</div>
-        <span v-else-if="items === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkLoading") }}</span>
-        <template v-else>
+        <span v-if="isGitHistoryReading" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkLoading") }}</span>
+        <template v-else-if="items !== null">
           <div v-if="items.codeHostingError !== null" class="alert theme-warning" role="alert">
             {{ t("statisticsModal.personWorkCodeHostingError", { error: items.codeHostingError }) }}
           </div>
@@ -333,8 +504,8 @@ onMounted(load);
         <div v-if="aiCostErrorText !== ''" class="alert theme-danger" role="alert">
           {{ t("statisticsModal.personWorkAiCostLoadError", { error: aiCostErrorText }) }}
         </div>
-        <span v-else-if="aiCostResult === null" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
-        <template v-else>
+        <span v-if="isAiCostReading" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
+        <template v-else-if="aiCostResult !== null">
           <div class="d-flex flex-wrap gap-3 mb-3">
             <div v-for="total in aiCostTotals" :key="total.id" :data-total="total.id" class="d-flex flex-column">
               <div class="d-flex align-items-center gap-2">
@@ -348,7 +519,7 @@ onMounted(load);
           <div v-if="aiCostChart !== null" style="flex: 1 1 0; min-height: 240px">
             <StackedBarChart v-bind="aiCostChart" />
           </div>
-          <span v-if="aiCostResult.chatWithoutPriceCount > 0" class="form-text" data-note="without-price">
+          <span v-if="unitId === 'dollars' && aiCostResult.chatWithoutPriceCount > 0" class="form-text" data-note="without-price">
             {{ t("statisticsModal.personWorkAiCostWithoutPrice", { count: aiCostResult.chatWithoutPriceCount }) }}
           </span>
         </template>
