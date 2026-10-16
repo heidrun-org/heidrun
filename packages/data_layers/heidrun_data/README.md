@@ -12,7 +12,7 @@ A Rust library and one command line tool for [Heidrun](../../../README.md). It g
 - `src/schema.rs`: the shape of the tables, for the command `schema`.
 - `src/database_lock.rs`: the one lock of the SQLite file, which the desktop application takes too.
 - `src/reading/`: the command `read`: a chat session, a commit, an issue, or a pull request.
-- `SKILL.md`: the skill for a coding agent.
+- `skills/heidrun_data/`: the skill for a coding agent, [SKILL.md](skills/heidrun_data/SKILL.md), with its folder `references`. The files of `references` are links to their place in the folder `docs` of the repository, so copy the skill with `cp -RL skills/heidrun_data <destination>` to install it outside the repository: the option `-L` copies the files in place of the links.
 - `src/query_limit.rs`: the `LIMIT` added to a query that has none.
 - `src/output.rs`: the three output formats, and the errors.
 - `tests/`: the tests of the executable.
