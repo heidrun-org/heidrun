@@ -7,5 +7,7 @@
   "default.reviewMergeRequestDescription": "Sécurité, bugs, tests, résumé",
   "default.handoverNoteDescription": "Commite, puis écris ce qui est fait et ce qui reste",
   "default.progressDescription": "Cinq lignes sur ce qui est fait et ce qui reste",
-  "default.explainSelectionDescription": "Explique le texte sélectionné"
+  "default.explainSelectionDescription": "Explique le texte sélectionné",
+  "personalFileInvalid": "Le fichier des macros personnelles est illisible, donc rien n'est enregistré : {reason}",
+  "personalFileNotRead": "Heidrun lit encore le fichier des macros personnelles. Réessaie dans un instant."
 }

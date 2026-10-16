@@ -23,7 +23,7 @@ import { startDefaultNewTab, startDefaultSplit } from "../stores/newPane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runLauncher } from "../stores/project";
-import { macros, projectMacros, resolveMacroVariables } from "../stores/macros";
+import { hardCodedMacros, macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
 import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
@@ -64,7 +64,7 @@ const items = computed<Item[]>(() => {
   }
 
   // Macros: fill the input bar (editable before sending).
-  for (const macro of [...projectMacros.value, ...macros.personal].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
+  for (const macro of [...projectMacros.value, ...macros.personal, ...hardCodedMacros.value].filter((x) => !lower || x.label.toLowerCase().includes(lower)).slice(0, 6)) {
     list.push({
       section: t("commandPalette.section.macros"),
       label: macro.label,

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
-import { nextTick, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { insertText } from "../stores/session";
-import { macroEditor, macros, projectMacros, resolveMacroVariables, type Macro } from "../stores/macros";
+import { hardCodedMacros, macroEditor, macros, projectMacros, resolveMacroVariables, type Macro } from "../stores/macros";
 import { t } from "../i18n/index";
 
 const props = defineProps<{ paneId: string }>();
@@ -48,6 +48,18 @@ function onKeyDown(event: KeyboardEvent) {
   }
 }
 
+/** The groups of the menu that have macros, in order: the project, the personal macros, then the hard-coded macros. */
+const groups = computed(() =>
+  [
+    { id: "project", title: t("macroMenu.project"), items: projectMacros.value },
+    { id: "personal", title: t("macroMenu.personal"), items: macros.personal },
+    { id: "hardCoded", title: t("macroMenu.hardCoded"), items: hardCodedMacros.value },
+  ].filter((group) => group.items.length > 0),
+);
+
+/** The titles of the groups show only when the menu has more than one group. */
+const hasSeveralGroups = computed(() => groups.value.length > 1);
+
 // A click writes the text; a Shift+click writes it and presses Enter.
 async function useMacro(macro: Macro, event: MouseEvent) {
   close();
@@ -85,21 +97,20 @@ onBeforeUnmount(close);
       :style="{ top: `${position.top}px`, right: `${position.right}px`, width: 'min(320px, calc(100vw - 16px))', maxHeight: '70vh' }"
       @mousedown.stop
     >
-      <template v-for="group in [{ id: 'project', title: t('macroMenu.project'), items: projectMacros }, { id: 'personal', title: t('macroMenu.personal'), items: macros.personal }]" :key="group.id">
-        <template v-if="group.items.length > 0">
-          <div v-if="projectMacros.length > 0" class="menu-header">{{ group.title }}</div>
-          <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="menu-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
-            <span class="d-block fw-medium">{{ macro.label }}</span>
-            <span v-if="macro.description !== ''" class="d-block text-body-secondary">{{ macro.description }}</span>
-          </button>
-        </template>
+      <template v-for="(group, index) in groups" :key="group.id">
+        <div v-if="index > 0" class="menu-divider" role="separator"></div>
+        <div v-if="hasSeveralGroups" class="menu-header">{{ group.title }}</div>
+        <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="menu-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
+          <span class="d-flex flex-column gap-1 align-self-start">
+            <span class="fw-medium">{{ macro.label }}</span>
+            <small v-if="macro.description !== ''" class="text-body-secondary">{{ macro.description }}</small>
+          </span>
+        </button>
       </template>
       <div class="menu-divider" role="separator"></div>
       <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit">
         <Icon name="pencil" /> {{ t("macroMenu.edit") }}
       </button>
-      <div class="menu-divider" role="separator"></div>
-      <div class="menu-text text-body-secondary">{{ t("macroMenu.hint") }}</div>
     </div>
   </Teleport>
 </template>

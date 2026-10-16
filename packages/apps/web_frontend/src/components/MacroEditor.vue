@@ -5,15 +5,16 @@ import Icon from "./Icon.vue";
 import { askConfirm } from "../stores/confirm";
 import { currentProject } from "../stores/project";
 import { toast } from "../stores/session";
-import { VARIABLES, addMacro, macroEditor, macros, projectMacros, removeMacro, updateMacro } from "../stores/macros";
+import { VARIABLES, addMacro, hardCodedMacros, macroEditor, macros, projectMacros, removeMacro, updateMacro } from "../stores/macros";
 import { t } from "../i18n/index";
 
 const NEW = "__new__";
 
-/** The selector value of a macro: where it is kept, then its id. */
+/** The selector value of a macro: where it is kept, then its id. A hard-coded macro can be read, and nothing else. */
 const choices = computed(() => [
-  ...projectMacros.value.map((macro) => ({ value: `project:${macro.id}`, fromProject: true, macro })),
-  ...macros.personal.map((macro) => ({ value: `personal:${macro.id}`, fromProject: false, macro })),
+  ...projectMacros.value.map((macro) => ({ value: `project:${macro.id}`, fromProject: true, isHardCoded: false, macro })),
+  ...macros.personal.map((macro) => ({ value: `personal:${macro.id}`, fromProject: false, isHardCoded: false, macro })),
+  ...hardCodedMacros.value.map((macro) => ({ value: `hardCoded:${macro.id}`, fromProject: false, isHardCoded: true, macro })),
 ]);
 
 const selected = ref<string>(NEW);
@@ -23,6 +24,7 @@ const text = ref("");
 const inProject = ref(false);
 
 const isNew = computed(() => selected.value === NEW);
+const isHardCoded = computed(() => selected.value.startsWith("hardCoded:"));
 
 function fillFields() {
   const choice = choices.value.find((c) => c.value === selected.value);
@@ -39,12 +41,22 @@ function fillFields() {
 
 watch(selected, fillFields);
 
+// Another program, such as the command line heidrun_ctrl, may delete the macro that is open.
+watch(choices, () => {
+  if (selected.value !== NEW && choices.value.some((choice) => choice.value === selected.value) === false) {
+    startNew();
+  }
+});
+
 function startNew() {
   selected.value = NEW;
   fillFields();
 }
 
 async function save() {
+  if (isHardCoded.value) {
+    return;
+  }
   if (text.value.trim() === "") {
     toast(t("macroEditor.textRequired"));
     return;
@@ -73,7 +85,15 @@ async function remove() {
   if (choice === undefined) {
     return;
   }
-  await removeMacro(choice.macro.id, choice.fromProject);
+  if (choice.isHardCoded) {
+    return;
+  }
+  try {
+    await removeMacro(choice.macro.id, choice.fromProject);
+  } catch (error) {
+    toast(String(error));
+    return;
+  }
   startNew();
 }
 
@@ -97,7 +117,7 @@ function onKeyDown(event: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener("keydown", onKeyDown, true);
-  const first = choices.value[0];
+  const first = choices.value.find((choice) => choice.isHardCoded === false);
   if (first !== undefined) {
     selected.value = first.value;
   }
@@ -120,7 +140,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
             <select id="macro-editor-select" v-model="selected" class="form-control">
               <option :value="NEW">{{ t("macroEditor.newOption") }}</option>
               <option v-for="choice in choices" :key="choice.value" :value="choice.value">
-                {{ choice.macro.label }}{{ choice.fromProject ? ` (${t("macroEditor.project")})` : "" }}
+                {{ choice.macro.label }}{{ choice.fromProject ? ` (${t("macroEditor.project")})` : "" }}{{ choice.isHardCoded ? ` (${t("macroEditor.hardCoded")})` : "" }}
               </option>
             </select>
             <button type="button" class="btn" :title="t('macroEditor.newTitle')" @click="startNew"><Icon name="plus-lg" /> {{ t("macroEditor.new") }}</button>
@@ -129,17 +149,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
 
         <div class="mb-3">
           <label class="form-label" for="macro-editor-label">{{ t("macroEditor.labelField") }}</label>
-          <input id="macro-editor-label" v-model="label" class="form-control" autocomplete="off" spellcheck="false" />
+          <input id="macro-editor-label" v-model="label" class="form-control" autocomplete="off" spellcheck="false" :readonly="isHardCoded" />
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="macro-editor-description">{{ t("macroEditor.description") }}</label>
-          <input id="macro-editor-description" v-model="description" class="form-control" autocomplete="off" spellcheck="false" />
+          <input id="macro-editor-description" v-model="description" class="form-control" autocomplete="off" spellcheck="false" :readonly="isHardCoded" />
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="macro-editor-text">{{ t("macroEditor.text") }}</label>
-          <textarea id="macro-editor-text" v-model="text" class="form-control" rows="7" spellcheck="false"></textarea>
+          <textarea id="macro-editor-text" v-model="text" class="form-control" rows="7" spellcheck="false" :readonly="isHardCoded"></textarea>
           <div class="form-text mono" :title="t('macroEditor.variablesTitle')">{{ VARIABLES.join(" ") }}</div>
         </div>
 
@@ -150,9 +170,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeyDown, true));
       </div>
 
       <div class="dialog-footer">
-        <button v-if="!isNew" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
-        <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
-        <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
+        <div v-if="isHardCoded" class="text-body-secondary me-auto">{{ t("macroEditor.hardCodedNotice") }}</div>
+        <button v-if="!isNew && !isHardCoded" type="button" class="btn text-danger-emphasis me-auto" :title="t('macroEditor.delete')" @click="askRemove"><Icon name="trash" /> {{ t("macroEditor.deleteLabel") }}</button>
+        <template v-if="!isHardCoded">
+          <button type="button" class="btn lg" :title="t('macroEditor.discardTitle')" @click="discard">{{ t("macroEditor.discard") }}</button>
+          <button type="button" class="btn lg primary" @click="save">{{ t("macroEditor.save") }}</button>
+        </template>
       </div>
     </dialog>
   </div>

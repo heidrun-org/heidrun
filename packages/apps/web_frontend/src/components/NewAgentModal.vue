@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { agentCommand, listAgents, newAgent, type AgentDef } from "../stores/agents";
 import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
-import { macros, projectMacros } from "../stores/macros";
+import { hardCodedMacros, macros, projectMacros } from "../stores/macros";
 import { loadCodingAgentModels, modelsOf } from "../stores/coding_agent_models";
 import { forgetNewPaneValues, loadNewPaneValues, saveNewPaneValues, startNewPane } from "../stores/newPane";
 import { t } from "../i18n/index";
@@ -21,7 +21,7 @@ const busy = ref(false);
 const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
-const allMacros = computed(() => [...projectMacros.value, ...macros.personal]);
+const allMacros = computed(() => [...projectMacros.value, ...macros.personal, ...hardCodedMacros.value]);
 // The models that the tools list now: the same list as the window Create a custom launcher. This window offers only Claude Code and Codex.
 for (const toolId of ["claude", "codex"]) {
   void loadCodingAgentModels(toolId);

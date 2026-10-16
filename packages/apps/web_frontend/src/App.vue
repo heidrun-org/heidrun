@@ -5,7 +5,7 @@ import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
 import TabBar from "./components/TabBar.vue";
 import MacroEditor from "./components/MacroEditor.vue";
-import { macroEditor } from "./stores/macros";
+import { macroEditor, startMacros } from "./stores/macros";
 import RightPanel from "./components/RightPanel.vue";
 import NoteModal from "./components/NoteModal.vue";
 import Resizer from "./components/Resizer.vue";
@@ -277,6 +277,7 @@ onMounted(async () => {
   window.addEventListener("resize", onResize);
   start();
   startProjects();
+  startMacros();
   startGit();
   startGitBackgroundFetch();
   startAlerts();

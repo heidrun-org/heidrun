@@ -3,6 +3,6 @@
   "title": "Macros. Clic : insérer. Maj+clic : insérer et envoyer.",
   "project": "Projet",
   "personal": "Mes macros",
-  "edit": "Modifier les macros…",
-  "hint": "Clic : insérer. Maj+clic : insérer et envoyer."
+  "edit": "Modifier",
+  "hardCoded": "Intégrées"
 }
