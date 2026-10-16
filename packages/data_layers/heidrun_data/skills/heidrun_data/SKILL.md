@@ -34,7 +34,7 @@ Always give `--format jsonl`, so the output is one JSON object per line and neve
    ```bash
    heidrun_data update --format jsonl
    ```
-   `heidrun_data update chat_sessions` updates one source only. The command writes only what is new, so it is safe to run again and again. A source that fails does not stop the others: read the errors on the standard error output. The command waits, in silence, while the desktop application Heidrun writes the SQLite file: a command that gives nothing for a minute is waiting for the lock, not broken.
+   `heidrun_data update chat_sessions` updates one source only. The command writes only what is new, so it is safe to run again and again. A source that fails does not stop the others: read the errors on the standard error output. The command waits while the desktop application Heidrun writes the SQLite file. Give `--verbose` to see the line `waiting for the lock file <path>` on the standard error output: a command that prints this line and then nothing for a minute is waiting for the lock, not broken.
 3. **Read the shape once.**
    ```bash
    heidrun_data schema --format jsonl
@@ -46,7 +46,7 @@ Always give `--format jsonl`, so the output is one JSON object per line and neve
    heidrun_data query --format jsonl "SELECT ... FROM ..."
    heidrun_data read chat_session <id> --format jsonl
    ```
-   `query` adds `LIMIT 1000` to a statement that has no limit. Give `--limit 0` to remove it, and `-` in place of the statement to read the statement from the standard input.
+   `query` adds `LIMIT 1000` to a statement that has no limit outside the parentheses: a `LIMIT` in a subquery does not count. Give `--limit 0` to remove it, and `-` in place of the statement to read the statement from the standard input.
 
 In the examples below, replace `heidrun-org/heidrun` with the repository of the folder. The file can hold several repositories, and this query lists them:
 
@@ -80,14 +80,14 @@ What the tables do not hold:
 
 | Command | What it prints |
 | --- | --- |
-| `heidrun_data read chat_session <id>` | The records of the chat session, one per line: `at`, `role` (`developer`, `coding_agent`, or `tool`), and `text`. A tool call is `<name>: <input>` and a tool result is `result: <output>`, each shortened to one line; `--full` prints them whole. |
+| `heidrun_data read chat_session <id>` | The records of the chat session, one per line: `at`, `role` (`developer`, `coding_agent`, or `tool`), `text`, and `isError`. A tool call is `<name>: <input>` and a tool result is `result: <output>`, each shortened to one line; `--full` prints them whole. |
 | `heidrun_data read commit <hash>` | The message, the files changed, then the diff. `--no-diff` stops after the files. |
 | `heidrun_data read issue <number>` | The body, then every comment with its author and its date. |
 | `heidrun_data read pull_request <number>` | The body, then every comment, review, and review comment with its author, its date, and for a review comment its file and its line, in the order of the dates, then the diff. `--no-diff` stops before the diff. |
 
 With `--format jsonl`, each line has these fields:
 
-- `read chat_session`: `at`, `role`, `text`.
+- `read chat_session`: `at`, `role`, `text`, `isError`. `isError` is `true` for a tool result that Claude Code marks as failed, `false` for a tool result that Claude Code marks as a success, and `null` when the coding agent gives no mark: for every other record, and for every record of Codex.
 - `read commit`: one object with `hash`, `authorName`, `authorEmail`, `committedAt`, `message`, `files` (a list of `path`, `insertions`, `deletions`), and `diff` unless `--no-diff` is given.
 - `read issue` and `read pull_request`: `kind` (`issue`, `pull_request`, `comment`, `review`, `review_comment`, or `diff`), `author`, `at`, and `text`. The body has `number`, `title`, and `state` too, a review has `state`, and a review comment has `path` and `line`.
 
@@ -153,7 +153,7 @@ Dates are text, so `date('now', '-10 day')` can replace the fixed date. Then `he
 
 - **What the developer typed**: the lines with `role` equal to `developer`. Not all of them are typed: skip the chat sessions whose `title` is `Guardian review` (approval reviews of Codex), and the texts that start with `<` (`<turn_aborted>`, `<command-name>`, `<local-command-stdout>`), with `[Request interrupted`, with `>>>`, or with `[N] user:` where `N` is a number. A text typed many times is a candidate for a macro of Heidrun.
 - **What the developer ran**: the lines with `role` equal to `tool` whose text starts with `Bash:` (Claude Code) or `shell:` (Codex). A command run many times is a candidate for a launcher of Heidrun.
-- **What failed**: the lines with `role` equal to `tool` whose text starts with `result:`. Claude Code marks a failed tool result in its file, but `read chat_session` does not print the mark yet (https://github.com/heidrun-org/heidrun/issues/567), so look in the text: `Exit code N` where `N` is not 0, `<tool_use_error>`, or a shell error such as `command not found`. Codex wraps its results in a JSON text, so read the text inside it. Do not count `test result: ok. 0 failed`, which is a success, and do not count `The user doesn't want to proceed with this tool use`, which is a choice of the developer. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
+- **What failed**: the lines with `role` equal to `tool` whose text starts with `result:`. For Claude Code, count the lines with `isError` equal to `true`: the mark comes from Claude Code, so it is exact. For Codex, `isError` is `null`, so look in the text: `Exit code N` where `N` is not 0, `<tool_use_error>`, or a shell error such as `command not found`. Codex wraps its results in a JSON text, so read the text inside it. Do not count `test result: ok. 0 failed`, which is a success, and do not count `The user doesn't want to proceed with this tool use`, which is a choice of the developer. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
 
 ## References
 

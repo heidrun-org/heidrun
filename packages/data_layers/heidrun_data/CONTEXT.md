@@ -17,9 +17,9 @@ A Rust library and one command line tool, `heidrun_data`, that give a coding age
 - A source that fails does not stop the others. The command prints one error for each source that failed, and exits with the code 1 when at least one source failed.
 - `update` and `initialize` call the `synchronize` of each data layer library, never its executable. Only the four data layer packages create and write their tables: this package adds no table and no field.
 - `schema` prints the columns from the tables that the four packages create on a temporary file, and the JSON schemas from the libraries, so this package copies no column and no field. `read` writes nothing and opens no SQLite file.
-- `lock_database` is the one lock of the SQLite file: a lock in memory for the threads, and the lock file `<database>.lock` for the other programs. The desktop application and each source of `update` and `initialize` take it before each write.
+- `lock_database` is the one lock of the SQLite file: a lock in memory for the threads, and the lock file `<database>.lock` for the other programs. The desktop application and each source of `update` and `initialize` take it before each write, and `update --verbose` prints `waiting for the lock file <path>` when another program holds it.
 - `query` and `sources` open the SQLite file read only, so they never change the file and never create it. `sources` reports 0 rows when the file does not exist.
-- `query` adds `LIMIT <count>` (default 1000) to a `SELECT`, `WITH`, or `VALUES` statement that has no `LIMIT`, and `--limit 0` adds nothing.
+- `query` adds `LIMIT <count>` (default 1000) to a `SELECT`, `WITH`, or `VALUES` statement that has no `LIMIT` outside the parentheses, and `--limit 0` adds nothing.
 - The output is `jsonl`, `json`, or `table`. The default is `table` when the standard output is a terminal, and `jsonl` when it is not. With a JSON format, every error is one JSON object on one line of the standard error output, with the fields `error` and `source`.
 - `src/output.rs` only turns rows into text. The code sends the progress lines to a log function and never prints them itself, except `src/main.rs`.
 - The calls are blocking. The package knows nothing about Tauri. The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`.

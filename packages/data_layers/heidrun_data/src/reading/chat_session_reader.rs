@@ -42,12 +42,15 @@ pub struct ChatRecord {
     pub role: Role,
     /// The text. A tool call is `<name>: <input>`, and a tool result is `result: <output>`.
     pub text: String,
+    /// The error flag of a tool result: `Some(true)` when the coding agent marks the tool result as failed, `Some(false)`
+    /// when it marks it as a success, and `None` when the coding agent gives no flag, or for any other record.
+    pub is_error: Option<bool>,
 }
 
 impl ChatRecord {
-    /// The record as one row: `at`, `role`, and `text`.
+    /// The record as one row: `at`, `role`, `text`, and `isError`.
     pub fn to_row(&self) -> QueryRow {
-        match json!({ "at": self.at, "role": self.role.name(), "text": self.text }) {
+        match json!({ "at": self.at, "role": self.role.name(), "text": self.text, "isError": self.is_error }) {
             Value::Object(row) => row,
             _ => unreachable!("The record is an object"),
         }
@@ -150,19 +153,21 @@ fn read_claude_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecor
         _ => return,
     };
     for part in &parts {
-        let (role, text) = match part.get("type").and_then(Value::as_str) {
-            Some("text") => (text_role, value_text(part.get("text"))),
+        let (role, text, is_error) = match part.get("type").and_then(Value::as_str) {
+            Some("text") => (text_role, value_text(part.get("text")), None),
             Some("tool_use") => {
                 let name = part.get("name").and_then(Value::as_str).unwrap_or("tool");
-                (Role::Tool, tool_text(&format!("{name}: {}", value_text(part.get("input"))), is_full))
+                (Role::Tool, tool_text(&format!("{name}: {}", value_text(part.get("input"))), is_full), None)
             }
-            Some("tool_result") => {
-                (Role::Tool, tool_text(&format!("result: {}", claude_result_text(part.get("content"))), is_full))
-            }
+            Some("tool_result") => (
+                Role::Tool,
+                tool_text(&format!("result: {}", claude_result_text(part.get("content"))), is_full),
+                part.get("is_error").and_then(Value::as_bool),
+            ),
             _ => continue,
         };
         if !text.trim().is_empty() {
-            records.push(ChatRecord { at: at.clone(), role, text });
+            records.push(ChatRecord { at: at.clone(), role, text, is_error });
         }
     }
 }
@@ -178,7 +183,7 @@ fn read_codex_record(record: &Value, is_full: bool, records: &mut Vec<ChatRecord
     let at = record.get("timestamp").and_then(Value::as_str).map(str::to_string);
     let push = |records: &mut Vec<ChatRecord>, role: Role, text: String| {
         if !text.trim().is_empty() {
-            records.push(ChatRecord { at: at.clone(), role, text });
+            records.push(ChatRecord { at: at.clone(), role, text, is_error: None });
         }
     };
     match payload.get("type").and_then(Value::as_str) {
@@ -233,7 +238,23 @@ mod tests {
 
     /// A record with a date.
     fn record(role: Role, text: &str) -> ChatRecord {
-        ChatRecord { at: Some("2026-10-11T10:00:00.000Z".into()), role, text: text.into() }
+        ChatRecord { at: Some("2026-10-11T10:00:00.000Z".into()), role, text: text.into(), is_error: None }
+    }
+
+    #[test]
+    fn reads_the_error_flag_of_a_tool_result_of_claude_code() {
+        let result = |flag: Option<bool>| {
+            let mut part = json!({ "type": "tool_result", "content": "Exit code 1" });
+            if let Some(flag) = flag {
+                part["is_error"] = json!(flag);
+            }
+            json!({ "type": "user", "message": { "content": [part] } })
+        };
+        let lines = [result(Some(true)), result(Some(false)), result(None)];
+        let flags: Vec<Option<bool>> = claude_records(&lines, false).iter().map(|record| record.is_error).collect();
+        assert_eq!(flags, vec![Some(true), Some(false), None]);
+        let row = claude_records(&lines[..1], false)[0].to_row();
+        assert_eq!(row["isError"], json!(true));
     }
 
     #[test]

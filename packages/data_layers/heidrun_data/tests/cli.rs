@@ -529,7 +529,7 @@ fn read_chat_session_prints_the_records_of_a_chat_session_of_claude_code() {
     let fixture = Fixture::new("read_claude");
     let result = fixture.run(&["read", "chat_session", "a-chat-session", "--format", "jsonl"]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
-    assert_eq!(result.json_lines(), vec![json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1" })]);
+    assert_eq!(result.json_lines(), vec![json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1", "isError": null })]);
     assert!(!fixture.database_path.exists());
 }
 

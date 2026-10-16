@@ -6,9 +6,9 @@
 //! of the operating system, for the other programs. The operating system frees the lock of the file when the program
 //! ends, even when it crashes.
 
-use std::fs::File;
+use std::fs::{File, TryLockError};
 use std::path::{Path, PathBuf};
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard, TryLockError as ThreadTryLockError};
 
 /// The lock of the threads of this program.
 static THREAD_LOCK: Mutex<()> = Mutex::new(());
@@ -34,8 +34,25 @@ pub fn lock_file_path(database_path: &Path) -> PathBuf {
 /// # Errors
 /// An error when the folder or the lock file cannot be created, or when the operating system refuses the lock.
 pub fn lock_database(database_path: &Path) -> Result<DatabaseLock, String> {
-    let thread_guard = THREAD_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    lock_database_and_report_wait(database_path, &|_| {})
+}
+
+/// Takes the lock of the SQLite file like `lock_database`, and gives the line `waiting for the lock file <path>` to `log`
+/// when another thread or another program holds the lock, before it waits.
+///
+/// # Errors
+/// An error when the folder or the lock file cannot be created, or when the operating system refuses the lock.
+pub fn lock_database_and_report_wait(database_path: &Path, log: &dyn Fn(&str)) -> Result<DatabaseLock, String> {
     let path = lock_file_path(database_path);
+    let wait_message = format!("waiting for the lock file {}", path.display());
+    let thread_guard = match THREAD_LOCK.try_lock() {
+        Ok(guard) => guard,
+        Err(ThreadTryLockError::Poisoned(poisoned)) => poisoned.into_inner(),
+        Err(ThreadTryLockError::WouldBlock) => {
+            log(&wait_message);
+            THREAD_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+        }
+    };
     if let Some(folder) = path.parent() {
         std::fs::create_dir_all(folder)
             .map_err(|error| format!("The folder {} cannot be created: {error}", folder.display()))?;
@@ -46,7 +63,15 @@ pub fn lock_database(database_path: &Path) -> Result<DatabaseLock, String> {
         .write(true)
         .open(&path)
         .map_err(|error| format!("The lock file {} cannot be opened: {error}", path.display()))?;
-    file.lock().map_err(|error| format!("The lock file {} cannot be locked: {error}", path.display()))?;
+    let lock_error = |error: std::io::Error| format!("The lock file {} cannot be locked: {error}", path.display());
+    match file.try_lock() {
+        Ok(()) => {}
+        Err(TryLockError::WouldBlock) => {
+            log(&wait_message);
+            file.lock().map_err(lock_error)?;
+        }
+        Err(TryLockError::Error(error)) => return Err(lock_error(error)),
+    }
     Ok(DatabaseLock { _file: file, _thread_guard: thread_guard })
 }
 
@@ -96,5 +121,27 @@ mod tests {
         drop(guard);
         thread.join().unwrap();
         assert!(is_taken.load(Ordering::SeqCst));
+    }
+
+    #[test]
+    fn reports_the_wait_when_another_program_holds_the_lock_file() {
+        let path = database_path("report");
+        drop(lock_database(&path).unwrap());
+        let other_program = File::options().write(true).open(lock_file_path(&path)).unwrap();
+        other_program.lock().unwrap();
+        let lines = Arc::new(Mutex::new(Vec::<String>::new()));
+        let thread = {
+            let path = path.clone();
+            let lines = Arc::clone(&lines);
+            std::thread::spawn(move || {
+                let log = |line: &str| lines.lock().unwrap().push(line.to_string());
+                drop(lock_database_and_report_wait(&path, &log).unwrap());
+            })
+        };
+        std::thread::sleep(Duration::from_millis(200));
+        drop(other_program);
+        thread.join().unwrap();
+        let expected = format!("waiting for the lock file {}", lock_file_path(&path).display());
+        assert!(lines.lock().unwrap().contains(&expected));
     }
 }

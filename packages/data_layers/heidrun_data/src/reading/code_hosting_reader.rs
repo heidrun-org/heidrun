@@ -24,7 +24,7 @@ query($owner: String!, $name: String!, $cursor: String) {
 }
 "#;
 
-/// The query of one pull request with one page of its comments, and its reviews with their comments on the lines.
+/// The query of one pull request with one page of its comments.
 const PULL_REQUEST_QUERY: &str = r#"
 query($owner: String!, $name: String!, $cursor: String) {
     repository(owner: $owner, name: $name) {
@@ -35,12 +35,40 @@ query($owner: String!, $name: String!, $cursor: String) {
                 pageInfo { hasNextPage endCursor }
                 nodes { createdAt body author { login } }
             }
-            reviews(first: 100) {
+        }
+    }
+}
+"#;
+
+/// The query of one page of the reviews of one pull request, each with the first page of its comments on the lines.
+const REVIEWS_QUERY: &str = r#"
+query($owner: String!, $name: String!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: NUMBER) {
+            reviews(first: 100, after: $cursor) {
+                pageInfo { hasNextPage endCursor }
                 nodes {
-                    submittedAt body state
+                    id submittedAt body state
                     author { login }
-                    comments(first: 100) { nodes { createdAt body path line originalLine author { login } } }
+                    comments(first: 100) {
+                        pageInfo { hasNextPage endCursor }
+                        nodes { createdAt body path line originalLine author { login } }
+                    }
                 }
+            }
+        }
+    }
+}
+"#;
+
+/// The query of one page of the comments on the lines of one review, after its first page.
+const REVIEW_COMMENTS_QUERY: &str = r#"
+query($id: ID!, $cursor: String) {
+    node(id: $id) {
+        ... on PullRequestReview {
+            comments(first: 100, after: $cursor) {
+                pageInfo { hasNextPage endCursor }
+                nodes { createdAt body path line originalLine author { login } }
             }
         }
     }
@@ -183,28 +211,6 @@ pub fn read_code_hosting(
                     ("state".to_string(), Value::from(text_of(node, "state"))),
                 ],
             });
-            for review in node.pointer("/reviews/nodes").and_then(Value::as_array).into_iter().flatten() {
-                entries.push(Entry {
-                    kind: "review".to_string(),
-                    author: author_of(review),
-                    at: review.get("submittedAt").and_then(Value::as_str).map(str::to_string),
-                    text: text_of(review, "body"),
-                    extra: vec![("state".to_string(), Value::from(text_of(review, "state")))],
-                });
-                for comment in review.pointer("/comments/nodes").and_then(Value::as_array).into_iter().flatten() {
-                    let line = comment.get("line").filter(|line| !line.is_null()).or_else(|| comment.get("originalLine"));
-                    entries.push(Entry {
-                        kind: "review_comment".to_string(),
-                        author: author_of(comment),
-                        at: comment.get("createdAt").and_then(Value::as_str).map(str::to_string),
-                        text: text_of(comment, "body"),
-                        extra: vec![
-                            ("path".to_string(), Value::from(text_of(comment, "path"))),
-                            ("line".to_string(), line.cloned().unwrap_or(Value::Null)),
-                        ],
-                    });
-                }
-            }
         }
         for comment in node.pointer("/comments/nodes").and_then(Value::as_array).into_iter().flatten() {
             entries.push(Entry {
@@ -215,19 +221,106 @@ pub fn read_code_hosting(
                 extra: Vec::new(),
             });
         }
-        let page = node.pointer("/comments/pageInfo");
-        let has_next_page = page.and_then(|page| page.get("hasNextPage")).and_then(Value::as_bool) == Some(true);
-        let next_cursor = page.and_then(|page| page.get("endCursor")).and_then(Value::as_str).map(str::to_string);
-        match next_cursor {
-            Some(next_cursor) if has_next_page => cursor = Some(next_cursor),
-            _ => break,
+        match next_cursor(node.get("comments")) {
+            Some(next) => cursor = Some(next),
+            None => break,
         }
+    }
+    if kind == CodeHostingKind::PullRequest {
+        read_reviews(runner, owner, name, number, &mut entries)?;
     }
     entries.sort_by(|left, right| {
         let is_body = |entry: &Entry| entry.kind == kind.name();
         is_body(right).cmp(&is_body(left)).then_with(|| left.at.cmp(&right.at))
     });
     Ok(entries)
+}
+
+/// Reads every page of the reviews of a pull request, and every page of the comments on the lines of each review.
+///
+/// # Errors
+/// An error when a query fails.
+fn read_reviews(
+    runner: &dyn GraphqlRunner,
+    owner: &str,
+    name: &str,
+    number: u64,
+    entries: &mut Vec<Entry>,
+) -> Result<(), String> {
+    let query = REVIEWS_QUERY.replace("NUMBER", &number.to_string());
+    let variables = [("owner", Some(owner)), ("name", Some(name))];
+    let reviews = read_all_nodes(runner, &query, &variables, "/data/repository/pullRequest/reviews", None)?;
+    for review in &reviews {
+        entries.push(Entry {
+            kind: "review".to_string(),
+            author: author_of(review),
+            at: review.get("submittedAt").and_then(Value::as_str).map(str::to_string),
+            text: text_of(review, "body"),
+            extra: vec![("state".to_string(), Value::from(text_of(review, "state")))],
+        });
+        let mut comments = review.pointer("/comments/nodes").and_then(Value::as_array).cloned().unwrap_or_default();
+        if let Some(cursor) = next_cursor(review.get("comments")) {
+            let id = text_of(review, "id");
+            let variables = [("id", Some(id.as_str()))];
+            comments.extend(read_all_nodes(runner, REVIEW_COMMENTS_QUERY, &variables, "/data/node/comments", Some(cursor))?);
+        }
+        for comment in &comments {
+            let line = comment.get("line").filter(|line| !line.is_null()).or_else(|| comment.get("originalLine"));
+            entries.push(Entry {
+                kind: "review_comment".to_string(),
+                author: author_of(comment),
+                at: comment.get("createdAt").and_then(Value::as_str).map(str::to_string),
+                text: text_of(comment, "body"),
+                extra: vec![
+                    ("path".to_string(), Value::from(text_of(comment, "path"))),
+                    ("line".to_string(), line.cloned().unwrap_or(Value::Null)),
+                ],
+            });
+        }
+    }
+    Ok(())
+}
+
+/// Reads the nodes of every page of one connection of GitHub, from the page after `cursor`. `pointer` is the place of the
+/// connection in the answer, and the variable `cursor` comes after `variables`.
+///
+/// # Errors
+/// An error when a query fails, or when the answer has no connection at `pointer`.
+fn read_all_nodes(
+    runner: &dyn GraphqlRunner,
+    query: &str,
+    variables: &[(&str, Option<&str>)],
+    pointer: &str,
+    cursor: Option<String>,
+) -> Result<Vec<Value>, String> {
+    let mut nodes = Vec::new();
+    let mut cursor = cursor;
+    loop {
+        let mut page_variables = variables.to_vec();
+        page_variables.push(("cursor", cursor.as_deref()));
+        let answer = runner.run(query, &page_variables)?;
+        if let Some(errors) = answer.get("errors") {
+            return Err(format!("GitHub answered with errors: {errors}"));
+        }
+        let connection = answer
+            .pointer(pointer)
+            .filter(|connection| !connection.is_null())
+            .ok_or_else(|| format!("The answer of GitHub has nothing at {pointer}."))?;
+        nodes.extend(connection.get("nodes").and_then(Value::as_array).cloned().unwrap_or_default());
+        match next_cursor(Some(connection)) {
+            Some(next) => cursor = Some(next),
+            None => return Ok(nodes),
+        }
+    }
+}
+
+/// The cursor of the next page of a connection, or `None` when the connection has no next page.
+fn next_cursor(connection: Option<&Value>) -> Option<String> {
+    let page = connection?.get("pageInfo")?;
+    if page.get("hasNextPage").and_then(Value::as_bool) != Some(true) {
+        return None;
+    }
+    page.get("endCursor").and_then(Value::as_str).map(str::to_string)
 }
 
 /// The diff of a pull request, with the command `gh pr diff`.
@@ -264,8 +357,9 @@ mod tests {
 
     impl GraphqlRunner for FakeRunner {
         fn run(&self, query: &str, variables: &[(&str, Option<&str>)]) -> Result<Value, String> {
-            assert!(query.contains("(number: 7)"));
-            self.cursors.borrow_mut().push(variables[2].1.map(str::to_string));
+            assert!(query.contains("(number: 7)") || query.contains("node(id: $id)"));
+            let cursor = variables.iter().find(|(key, _)| *key == "cursor").and_then(|(_, value)| *value);
+            self.cursors.borrow_mut().push(cursor.map(str::to_string));
             Ok(self.answers.borrow_mut().remove(0))
         }
     }
@@ -319,7 +413,10 @@ mod tests {
     #[test]
     fn reads_the_reviews_and_the_review_comments_of_a_pull_request_in_the_order_of_their_dates() {
         let runner = FakeRunner {
-            answers: RefCell::new(vec![answer("pullRequest", vec![comment("ada", 5)], None)]),
+            answers: RefCell::new(vec![
+                answer("pullRequest", vec![comment("ada", 5)], None),
+                answer("pullRequest", Vec::new(), None),
+            ]),
             cursors: RefCell::new(Vec::new()),
         };
         let entries = read_code_hosting(&runner, CodeHostingKind::PullRequest, "owner/name", 7).unwrap();
@@ -327,6 +424,55 @@ mod tests {
         assert_eq!(kinds, ["pull_request", "review_comment", "review", "comment"]);
         assert_eq!(Value::Object(entries[1].to_row())["path"], json!("a.rs"));
         assert_eq!(Value::Object(entries[1].to_row())["line"], json!(12));
+    }
+
+    #[test]
+    fn reads_every_page_of_the_reviews_and_of_the_review_comments_of_a_pull_request() {
+        let review = |id: &str, day: u32, comments_next: Option<&str>| {
+            json!({
+                "id": id, "submittedAt": format!("2026-10-{day:02}T10:00:00Z"), "body": "", "state": "COMMENTED",
+                "author": { "login": "bob" },
+                "comments": {
+                    "pageInfo": { "hasNextPage": comments_next.is_some(), "endCursor": comments_next },
+                    "nodes": [{ "createdAt": format!("2026-10-{day:02}T09:00:00Z"), "body": "First.", "path": "a.rs", "line": 1, "author": { "login": "bob" } }],
+                },
+            })
+        };
+        let reviews_page = |reviews: Vec<Value>, next: Option<&str>| {
+            json!({ "data": { "repository": { "pullRequest": { "reviews": {
+                "pageInfo": { "hasNextPage": next.is_some(), "endCursor": next }, "nodes": reviews,
+            } } } } })
+        };
+        let review_comments_page = json!({ "data": { "node": { "comments": {
+            "pageInfo": { "hasNextPage": false, "endCursor": null },
+            "nodes": [{ "createdAt": "2026-10-03T09:30:00Z", "body": "Second.", "path": "a.rs", "line": 2, "author": { "login": "bob" } }],
+        } } } });
+        let runner = FakeRunner {
+            answers: RefCell::new(vec![
+                answer("pullRequest", Vec::new(), None),
+                reviews_page(vec![review("review-1", 3, Some("comments-1"))], Some("reviews-1")),
+                reviews_page(vec![review("review-2", 4, None)], None),
+                review_comments_page,
+            ]),
+            cursors: RefCell::new(Vec::new()),
+        };
+        let entries = read_code_hosting(&runner, CodeHostingKind::PullRequest, "owner/name", 7).unwrap();
+        assert_eq!(
+            *runner.cursors.borrow(),
+            vec![None, None, Some("reviews-1".to_string()), Some("comments-1".to_string())]
+        );
+        let texts: Vec<(&str, &str)> = entries.iter().map(|entry| (entry.kind.as_str(), entry.text.as_str())).collect();
+        assert_eq!(
+            texts,
+            [
+                ("pull_request", "The body."),
+                ("review_comment", "First."),
+                ("review_comment", "Second."),
+                ("review", ""),
+                ("review_comment", "First."),
+                ("review", ""),
+            ]
+        );
     }
 
     #[test]
