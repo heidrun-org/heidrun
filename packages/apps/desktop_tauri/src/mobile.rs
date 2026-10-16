@@ -119,3 +119,10 @@ pub fn mobile_revoke(state: State<'_, MobileState>) -> Result<MobileStatus, Stri
     }
     Ok(status_of(&state))
 }
+
+/// The button "Stop the old ngrok" of the error `ngrokAddressInUse`: kills the program `ngrok` that an earlier or another
+/// Heidrun started, never the program of this Heidrun (issue 583). True when a program was killed.
+#[tauri::command]
+pub async fn mobile_stop_leftover_ngrok(app: AppHandle) -> bool {
+    tauri::async_runtime::spawn_blocking(move || app.state::<MobileState>().server.stop_leftover_tunnel()).await.unwrap_or(false)
+}
