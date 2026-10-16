@@ -62,12 +62,12 @@ describe('Bottom bar', () => {
 		expect(document.querySelector('.bar-button-active')?.textContent).toContain('Panes');
 	});
 
-	it('opens the screens Macros and Launchers, which say that they come later', async () => {
+	it('opens the screens Macros and Launchers', async () => {
 		const harness = await AppHarness.start(Fixtures.computer());
 		await harness.tap('button[data-screen="macros"]');
-		expect(harness.text()).toContain('The macros come in a later version.');
+		expect(document.querySelector('header h1')?.textContent).toBe('Macros');
 		await harness.tap('button[data-screen="launchers"]');
-		expect(harness.text()).toContain('The launchers come in a later version.');
+		expect(document.querySelector('header h1')?.textContent).toBe('Launchers');
 		await harness.tap('button[data-screen="needs_you"]');
 		expect(harness.text()).toContain('Run this command?');
 	});

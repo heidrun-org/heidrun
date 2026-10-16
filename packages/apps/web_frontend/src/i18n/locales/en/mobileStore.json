@@ -8,5 +8,8 @@
   "error.agentBlocked": "The agent is waiting for a decision: answer its menu first",
   "promptReceived": "Prompt received from the phone for {name}",
   "error.unknownAction": "Unknown action",
-  "error.unknownMethod": "Unknown method"
+  "error.unknownMethod": "Unknown method",
+  "error.macroNotFound": "Macro not found (removed?): refresh",
+  "error.launcherNotFound": "Launcher not found (removed?): refresh",
+  "launcherStarted": "Launcher started from the phone: {name}"
 }

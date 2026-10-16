@@ -87,7 +87,7 @@ export type ConfirmRequest = {
 	why: string;
 };
 
-/** The answer of the methods `read`, `answer`, `prompt`, and `keys`. */
+/** The answer of the methods `read`, `answer`, `prompt`, `keys`, and `launch`. */
 export type CallResult = {
 	/** A text for the developer, when the call did not work. */
 	error?: string;
@@ -97,6 +97,63 @@ export type CallResult = {
 	ok?: boolean;
 	/** The end of the output of a pane, for the method `read`. */
 	text?: string;
+};
+
+/** One macro: a text that the developer sends to a coding agent as a prompt. */
+export type MacroView = {
+	/** The identifier of the macro, unique in its source. */
+	id: string;
+	/** The name of the macro. */
+	label: string;
+	/** One short line that says what the macro does. It can be empty. */
+	description: string;
+	/** Where the macro comes from: the macros of the developer, or the file `.heidrun/config.json` of a project. */
+	source: 'personal' | 'project';
+	/** The identifier of the workspace of the project, or null for a personal macro. */
+	workspaceId: string | null;
+	/** The label of the workspace of the project, or null for a personal macro. */
+	workspace: string | null;
+};
+
+/** The answer of the method `macros`. */
+export type MacrosAnswer = {
+	/** The personal macros, then the macros of the project of each workspace. */
+	macros: MacroView[];
+};
+
+/** The status of one launcher: never run, its command runs now, or its command finished. */
+export type LauncherStatus = 'idle' | 'running' | 'finished';
+
+/** One launcher: a command of a project that runs in its own tab. */
+export type LauncherView = {
+	/** The identifier of the launcher, unique in its project. */
+	id: string;
+	/** The name of the launcher. */
+	label: string;
+	/** What the launcher does, or null when the launcher has no description. */
+	description: string | null;
+	/** The command line of the launcher. */
+	command: string;
+	/** The status of the launcher. */
+	status: LauncherStatus;
+};
+
+/** One workspace and the launchers of its project. */
+export type LauncherWorkspaceView = {
+	/** The identifier of the workspace. */
+	id: string;
+	/** The label of the workspace. */
+	label: string;
+	/** Why the file `.heidrun/config.json` of the project cannot be read, or null. */
+	error: string | null;
+	/** The launchers of the project. */
+	launchers: LauncherView[];
+};
+
+/** The answer of the method `launchers`. */
+export type LaunchersAnswer = {
+	/** The workspaces whose project has a launcher. */
+	workspaces: LauncherWorkspaceView[];
 };
 
 /**

@@ -8,5 +8,8 @@
   "error.agentBlocked": "L’agent attend une décision : réponds d’abord à son menu",
   "promptReceived": "Consigne reçue du téléphone pour {name}",
   "error.unknownAction": "Action inconnue",
-  "error.unknownMethod": "Méthode inconnue"
+  "error.unknownMethod": "Méthode inconnue",
+  "error.macroNotFound": "Macro introuvable (supprimée ?) : rafraîchis",
+  "error.launcherNotFound": "Lanceur introuvable (supprimé ?) : rafraîchis",
+  "launcherStarted": "Lanceur démarré depuis le téléphone : {name}"
 }

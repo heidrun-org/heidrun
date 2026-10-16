@@ -20,6 +20,8 @@ import {
   workspaceLabel,
 } from "./session";
 import { guardHit } from "./guards";
+import { macros, macrosOfProjectConfig, resolveMacroVariables, type Macro } from "./macros";
+import { launcherStatus, launcherWillType, loadProject, project, runLauncher, stopLauncher, workspaceCwd } from "./project";
 import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
@@ -106,13 +108,89 @@ function snapshot() {
   };
 }
 
+/** The project file of a workspace, read once when the phone asks for it and the desktop has not read it yet. */
+async function workspaceProject(workspaceId: string) {
+  if (!project.byWorkspace[workspaceId] && workspaceCwd(workspaceId)) await loadProject(workspaceId);
+  return project.byWorkspace[workspaceId];
+}
+
+/** The personal macros, then the macros of the project of each workspace. The phone sends back `source`, `workspaceId` and `id` to name one. */
+async function macroList() {
+  const list: { id: string; label: string; description: string; source: "personal" | "project"; workspaceId: string | null; workspace: string | null }[] =
+    macros.personal.map((m) => ({ id: m.id, label: m.label, description: m.description, source: "personal", workspaceId: null, workspace: null }));
+  for (const w of sessionWorkspaces.value) {
+    const p = await workspaceProject(w.workspace_id);
+    for (const m of macrosOfProjectConfig(p?.config)) {
+      list.push({ id: m.id, label: m.label, description: m.description, source: "project", workspaceId: w.workspace_id, workspace: w.label });
+    }
+  }
+  return { macros: list };
+}
+
+async function findMacro(params: Params): Promise<Macro | null> {
+  const id = String(params.macroId ?? "");
+  if (params.macroSource === "project") {
+    const p = await workspaceProject(String(params.macroWorkspaceId ?? ""));
+    return macrosOfProjectConfig(p?.config).find((m) => m.id === id) ?? null;
+  }
+  return macros.personal.find((m) => m.id === id) ?? null;
+}
+
+/** The launchers of the project of each workspace, with their status. A workspace whose project has no launcher is left out. */
+async function launcherList() {
+  const list = [];
+  for (const w of sessionWorkspaces.value) {
+    const p = await workspaceProject(w.workspace_id);
+    const error = project.errors[w.workspace_id] ?? null;
+    if (!error && !p?.config.launchers.length) continue;
+    list.push({
+      id: w.workspace_id,
+      label: w.label,
+      error,
+      launchers: (p?.config.launchers ?? []).map((a) => ({
+        id: a.id,
+        label: a.label,
+        description: a.description ?? null,
+        command: a.command,
+        status: launcherStatus(w.workspace_id, a),
+      })),
+    });
+  }
+  return { workspaces: list };
+}
+
+async function launch(params: Params) {
+  const workspaceId = String(params.workspaceId ?? "");
+  const p = await workspaceProject(workspaceId);
+  const launcher = p?.config.launchers.find((a) => a.id === params.launcherId);
+  if (!p || !launcher) return { error: t("mobileStore.error.launcherNotFound") };
+  if (params.action === "stop") {
+    await stopLauncher(workspaceId, launcher);
+    return { ok: true };
+  }
+  if (params.action !== "run") return { error: t("mobileStore.error.unknownAction") };
+  // The same guards as a click on the desktop, but the phone asks the confirmation, not a window of the desktop.
+  if (launcherWillType(workspaceId, launcher, true)) {
+    const hit = await guardHit(launcher.command, p.root);
+    if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
+    if (hit && (params.confirmed !== true || params.command !== launcher.command)) return { confirm: { command: launcher.command, why: hit.why } };
+  }
+  await runLauncher(workspaceId, launcher, true, true);
+  toast(t("mobileStore.launcherStarted", { name: `${workspaceLabel(workspaceId)} · ${launcher.label}` }));
+  return { ok: true };
+}
+
 const agentPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id && p.agent) ?? null;
 
 type Params = Record<string, unknown>;
 
-async function handle(method: string, params: Params): Promise<unknown> {
+/** Answers one call of the phone. Exported for the tests. */
+export async function handleMobileCall(method: string, params: Params): Promise<unknown> {
   mobile.lastSeen = Date.now();
   if (method === "state") return snapshot();
+  if (method === "macros") return macroList();
+  if (method === "launchers") return launcherList();
+  if (method === "launch") return launch(params);
   const pane = agentPane(params.paneId);
   if (!pane) return { error: t("mobileStore.error.agentNotFound") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
@@ -142,7 +220,13 @@ async function handle(method: string, params: Params): Promise<unknown> {
   }
 
   if (method === "prompt") {
-    const text = String(params.text ?? "").trim();
+    // A macro goes through the same path as a typed prompt, after its variables are replaced for this pane.
+    let text = String(params.text ?? "").trim();
+    if (params.macroId !== undefined) {
+      const macro = await findMacro(params);
+      if (!macro) return { error: t("mobileStore.error.macroNotFound") };
+      text = (await resolveMacroVariables(macro.text, pane.pane_id)).trim();
+    }
     if (!text) return { error: t("mobileStore.error.emptyPrompt") };
     // A menu on screen would take the text as its answer ("2" picks option 2): never.
     if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: t("mobileStore.error.agentBlocked") };
@@ -178,7 +262,7 @@ export function startMobile() {
     const { id, method, params } = e.payload;
     let result: unknown;
     try {
-      result = await handle(method, params ?? {});
+      result = await handleMobileCall(method, params ?? {});
     } catch (err) {
       result = { error: String(err).slice(0, 300) };
     }

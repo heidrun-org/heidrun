@@ -106,6 +106,50 @@ describe('Rendering safety', () => {
 		expect(problemsOf(harness.overlay)).toEqual([]);
 	});
 
+	it('puts the texts of the macros and of the launchers in the page as text, never as markup', async () => {
+		const computer = new FakeComputer(FakeComputer.snapshotOf([hostileAgent()], ['p-hostile']));
+		computer.macrosAnswer = {
+			macros: [
+				{
+					id: attack,
+					label: attack,
+					description: attack,
+					source: 'project',
+					workspaceId: attack,
+					workspace: attack,
+				},
+			],
+		};
+		computer.launchersAnswer = {
+			workspaces: [
+				{
+					id: attack,
+					label: attack,
+					error: attack,
+					launchers: [
+						{
+							id: attack,
+							label: attack,
+							description: null,
+							command: attack,
+							status: 'idle',
+						},
+					],
+				},
+			],
+		};
+		const harness = await AppHarness.start(computer, true, '#/macros');
+		expect(document.querySelector('img')).toBeNull();
+		expect(harness.text()).toContain(attack);
+		await harness.tap('[data-action="pick-macro"]');
+		expect(document.querySelector('img')).toBeNull();
+		expect(problemsOf(harness.root)).toEqual([]);
+		await harness.tap('button[data-screen="launchers"]');
+		expect(document.querySelector('img')).toBeNull();
+		expect(harness.text()).toContain(attack);
+		expect(problemsOf(harness.root)).toEqual([]);
+	});
+
 	it('uses no inline script, no inline style, and no event attribute on any screen', async () => {
 		const agents = [hostileAgent(), FakeComputer.agent({})];
 		const computer = new FakeComputer(FakeComputer.snapshotOf(agents, ['p-hostile']));

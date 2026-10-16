@@ -77,7 +77,9 @@ const codeAndDocumentPaths = [
 const documentPaths = [
 	'SECURITY.md',
 	'.env.example',
-	'docs/potential_ideas/mobile_access.md',
+	'docs/architecture/heidrun_mobile.md',
+	'docs/agents_rules/glossary/heidrun_mobile.md',
+	'docs/agents_rules/user_interface/heidrun_mobile/screens.md',
 	'packages/auxiliary/website_public/docs/features/phone_access.md',
 ];
 

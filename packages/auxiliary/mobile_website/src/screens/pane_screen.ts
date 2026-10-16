@@ -23,9 +23,11 @@ export class PaneScreen {
 	 * Draws the screen.
 	 * @param agent The coding agent of the pane, or null when the pane does not exist anymore.
 	 * @param output The end of the output of the pane.
+	 * @param isVoiceAvailable True when the browser can turn the voice into text: the screen shows the microphone
+	 * button. False: the microphone key of the keyboard of the phone is the fallback.
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
-	static render(agent: AgentView | null, output: string): string {
+	static render(agent: AgentView | null, output: string, isVoiceAvailable: boolean): string {
 		if (agent === null) {
 			const missingHtmlContent = /* html */`
 				${ScreenHeader.renderPane('Coding agent', '')}
@@ -44,6 +46,7 @@ export class PaneScreen {
 		const isWorking = agent.status === 'working';
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
 		const stopHtmlContent = isWorking ? PaneScreen.renderStopButton(paneId) : '';
+		const micHtmlContent = isVoiceAvailable ? PaneScreen.renderMicButton() : '';
 		const actionsHtmlContent =
 			denyHtmlContent === '' ? '' : /* html */`<div class="actions">${denyHtmlContent}</div>`;
 		const screenHtmlContent = /* html */`
@@ -60,6 +63,7 @@ export class PaneScreen {
 					rows="1"
 					enterkeyhint="send"
 				></textarea>
+				${micHtmlContent}
 				${stopHtmlContent}
 				<button
 					class="send-button"
@@ -110,6 +114,26 @@ export class PaneScreen {
 		}
 		const lineHtmlContent = /* html */`<div class="${className}">${HtmlEscape.escape(text)}</div>`;
 		return lineHtmlContent;
+	}
+
+	/**
+	 * Draws the microphone button. A tap starts to listen, and the words go into the field for a prompt. A second
+	 * tap stops to listen.
+	 * @returns The HTML of the button.
+	 */
+	private static renderMicButton(): string {
+		const buttonHtmlContent = /* html */`
+			<button
+				class="mic-button"
+				data-action="voice"
+				aria-label="Dictate"
+				aria-pressed="false"
+				title="Dictate the prompt"
+			>
+				${Icon.render('mic-fill', 20)}
+			</button>
+		`;
+		return buttonHtmlContent;
 	}
 
 	/**

@@ -22,7 +22,7 @@ const CONTENT_SECURITY_POLICY: &str = "default-src 'none'; script-src 'self'; st
 const ASSETS_CACHE_CONTROL: &str = "public, max-age=31536000, immutable";
 
 /// A closed list: nothing else than these few actions is reachable from the phone.
-const METHODS: &[&str] = &["state", "read", "answer", "prompt", "keys"];
+const METHODS: &[&str] = &["state", "read", "answer", "prompt", "keys", "macros", "launchers", "launch"];
 
 const MAX_BODY_BYTES: usize = 64 * 1024;
 
@@ -196,11 +196,13 @@ mod tests {
     #[tokio::test]
     async fn every_method_of_the_closed_list_reaches_the_handler() {
         let (router, handler) = setup(Some(TOKEN));
-        for method in ["state", "answer", "prompt", "keys"] {
+        // The fake handler fails on "read", for the test of the error 503.
+        let methods = ["state", "answer", "prompt", "keys", "macros", "launchers", "launch"];
+        for method in methods {
             let status = status_of(router.clone(), api_request(HOST, None, Some(TOKEN), call_body(method))).await;
             assert_eq!(status, StatusCode::OK, "method {method:?}");
         }
-        assert_eq!(handler.calls.load(Ordering::Relaxed), 4);
+        assert_eq!(handler.calls.load(Ordering::Relaxed), methods.len());
     }
 
     #[tokio::test]

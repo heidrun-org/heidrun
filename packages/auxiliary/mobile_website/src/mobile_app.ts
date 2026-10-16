@@ -1,5 +1,14 @@
 import { MobileApi, UnpairedError } from './mobile_api';
-import type { CallResult, ConfirmRequest, ScreenName, Snapshot, TabName } from './mobile_types';
+import type {
+	CallResult,
+	ConfirmRequest,
+	LaunchersAnswer,
+	MacrosAnswer,
+	MacroView,
+	ScreenName,
+	Snapshot,
+	TabName,
+} from './mobile_types';
 import { ColorPainter } from './color_painter';
 import { ScreenAddress } from './screen_address';
 import type { ScreenLocation } from './screen_address';
@@ -11,8 +20,10 @@ import { DashboardScreen } from './screens/dashboard_screen';
 import { NeedsYouScreen } from './screens/needs_you_screen';
 import { PanesScreen } from './screens/panes_screen';
 import { PaneScreen } from './screens/pane_screen';
-import { PlaceholderScreen } from './screens/placeholder_screen';
+import { MacrosScreen } from './screens/macros_screen';
+import { LaunchersScreen } from './screens/launchers_screen';
 import { WelcomeScreen } from './screens/welcome_screen';
+import { VoiceInput } from './voice_input';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -63,6 +74,18 @@ export class MobileApp {
 
 	/** The end of the output of the pane that is open. */
 	private output = '';
+
+	/** The last answer of the method `macros`, or null before the first answer on the Macros screen. */
+	private macros: MacroView[] | null = null;
+
+	/** The key of the macro that the developer tapped on the Macros screen, or null when the screen shows the list. */
+	private chosenMacroKey: string | null = null;
+
+	/** The last answer of the method `launchers`, or null before the first answer on the Launchers screen. */
+	private launchers: LaunchersAnswer | null = null;
+
+	/** The microphone that fills the field for a prompt. */
+	private readonly voiceInput = new VoiceInput();
 
 	/** The HTML that the root element holds now. The screen is drawn again only when the new HTML differs. */
 	private renderedHtml = '';
@@ -159,6 +182,12 @@ export class MobileApp {
 					this.output = result.text;
 				}
 			}
+			if (this.screen === 'macros') {
+				this.macros = (await MobileApi.call<MacrosAnswer>('macros')).macros;
+			}
+			if (this.screen === 'launchers') {
+				this.launchers = await MobileApi.call<LaunchersAnswer>('launchers');
+			}
 		} catch (error) {
 			this.isOnline = false;
 			if (error instanceof UnpairedError) {
@@ -195,6 +224,9 @@ export class MobileApp {
 	 */
 	private _isTyping(): boolean {
 		const active = document.activeElement;
+		if (this.voiceInput.isListening()) {
+			return true;
+		}
 		return (
 			this.screen === 'pane' &&
 			active !== null &&
@@ -261,20 +293,16 @@ export class MobileApp {
 	private _screenHtmlContent(snapshot: Snapshot): string {
 		if (this.screen === 'pane') {
 			const agent = this.paneId === null ? null : SnapshotQueries.agentById(snapshot, this.paneId);
-			return PaneScreen.render(agent, this.output);
+			return PaneScreen.render(agent, this.output, VoiceInput.isAvailable());
 		}
 		if (this.screen === 'panes') {
 			return PanesScreen.render(snapshot, this.isOnline);
 		}
 		if (this.screen === 'macros') {
-			return PlaceholderScreen.render('Macros', 'The macros come in a later version.', this.isOnline);
+			return MacrosScreen.render(this.macros, this._chosenMacro(), snapshot, this.isOnline);
 		}
 		if (this.screen === 'launchers') {
-			return PlaceholderScreen.render(
-				'Launchers',
-				'The launchers come in a later version.',
-				this.isOnline,
-			);
+			return LaunchersScreen.render(this.launchers, this.isOnline);
 		}
 		if (this.screen === 'needs_you') {
 			return NeedsYouScreen.render(snapshot, this.isOnline);
@@ -297,7 +325,14 @@ export class MobileApp {
 		void this.refresh();
 	}
 
+	private _chosenMacro(): MacroView | null {
+		const macros = this.macros ?? [];
+		return macros.find((macro) => MacrosScreen.keyOf(macro) === this.chosenMacroKey) ?? null;
+	}
+
 	private _applyLocation(location: ScreenLocation): void {
+		this.voiceInput.stop();
+		this.chosenMacroKey = null;
 		this.tab = location.tab;
 		this.screen = location.paneId === null ? location.tab : 'pane';
 		this.paneId = location.paneId;
@@ -364,7 +399,88 @@ export class MobileApp {
 			}
 		} else if (action === 'send') {
 			await this._sendPrompt(paneId);
+		} else if (action === 'voice') {
+			this._toggleVoice(element);
+		} else if (action === 'pick-macro') {
+			this.chosenMacroKey = element.dataset.macroKey ?? null;
+			this._render();
+		} else if (action === 'cancel-macro') {
+			this.chosenMacroKey = null;
+			this._render();
+		} else if (action === 'send-macro') {
+			await this._sendMacro(paneId);
+		} else if (action === 'run-launcher' || action === 'stop-launcher') {
+			await this._launch(element, action === 'run-launcher' ? 'run' : 'stop');
 		}
+	}
+
+	/**
+	 * Sends the chosen macro to the coding agent of a pane, then opens the pane. The computer replaces the variables
+	 * of the macro, and the macro passes the same guards as a prompt.
+	 * @param paneId The identifier of the pane.
+	 */
+	private async _sendMacro(paneId: string): Promise<void> {
+		const macro = this._chosenMacro();
+		if (macro === null) {
+			return;
+		}
+		const params = {
+			paneId,
+			macroId: macro.id,
+			macroSource: macro.source,
+			macroWorkspaceId: macro.workspaceId,
+		};
+		if (await this._act('prompt', params)) {
+			this._toast(`Macro sent: ${macro.label}`);
+			this._open('macros', paneId);
+		}
+	}
+
+	/**
+	 * Runs or stops a launcher on the computer.
+	 * @param element The button that the developer tapped. It names the workspace and the launcher.
+	 * @param launchAction `run` to run the command of the launcher, `stop` to send Ctrl+C to its tab.
+	 */
+	private async _launch(element: HTMLElement, launchAction: 'run' | 'stop'): Promise<void> {
+		const params = {
+			workspaceId: element.dataset.workspaceId ?? '',
+			launcherId: element.dataset.launcherId ?? '',
+			action: launchAction,
+		};
+		if (await this._act('launch', params)) {
+			this._toast(launchAction === 'run' ? 'Launcher started' : 'Launcher stopped (Ctrl+C)');
+			this._refreshSoon(1200);
+		}
+	}
+
+	/**
+	 * Starts or stops the microphone. The words go into the field for a prompt, after the text that is already
+	 * there. The developer reads them, then taps Send.
+	 * @param button The microphone button.
+	 */
+	private _toggleVoice(button: HTMLElement): void {
+		if (this.voiceInput.isListening()) {
+			this.voiceInput.stop();
+			return;
+		}
+		const field = this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`);
+		if (field === null) {
+			return;
+		}
+		const textBefore = field.value.trimEnd();
+		button.classList.add('mic-button-listening');
+		button.setAttribute('aria-pressed', 'true');
+		this.voiceInput.start({
+			onText: (text) => {
+				field.value = textBefore === '' ? text : `${textBefore} ${text}`;
+			},
+			onError: (message) => this._toast(message),
+			onEnd: () => {
+				button.classList.remove('mic-button-listening');
+				button.setAttribute('aria-pressed', 'false');
+				field.focus();
+			},
+		});
 	}
 
 	/**

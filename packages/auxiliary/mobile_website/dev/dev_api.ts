@@ -1,4 +1,4 @@
-import type { AgentView, CallResult, Snapshot } from '../src/mobile_types';
+import type { AgentView, CallResult, LaunchersAnswer, LauncherView, MacrosAnswer, Snapshot } from '../src/mobile_types';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,13 +24,31 @@ export class DevApi {
 	static readonly pairingKey = '0123456789abcdef'.repeat(4);
 
 	/** The closed list of methods, the same as the list of the mobile server. */
-	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys'];
+	private static readonly methods = ['state', 'read', 'answer', 'prompt', 'keys', 'macros', 'launchers', 'launch'];
 
 	/** The command that the fake computer asks the developer to check once more, like the guards of Heidrun do. */
 	private static readonly dangerousCommand = 'rm -rf build';
 
 	/** The coding agents, which change when the developer answers. */
 	private readonly agents: AgentView[];
+
+	/** The launchers of the workspace "heidrun", which change when the developer runs or stops one. */
+	private readonly launchers: LauncherView[] = [
+		{
+			id: 'dev',
+			label: 'Dev server',
+			description: 'Starts Heidrun with pnpm dev',
+			command: 'pnpm dev',
+			status: 'idle',
+		},
+		{
+			id: 'clean',
+			label: 'Clean',
+			description: null,
+			command: DevApi.dangerousCommand,
+			status: 'finished',
+		},
+	];
 
 	/** The prompts that the developer sent, for each pane. */
 	private readonly prompts = new Map<string, string[]>();
@@ -130,11 +148,29 @@ export class DevApi {
 	 * @param params The parameters of the method.
 	 * @returns The answer of the method.
 	 */
-	call(method: string, params: Record<string, unknown>): Snapshot | CallResult {
+	call(method: string, params: Record<string, unknown>): Snapshot | MacrosAnswer | LaunchersAnswer | CallResult {
 		const paneId = String(params.paneId ?? '');
 		const agent = this.agents.find((candidate) => candidate.paneId === paneId) ?? null;
 		if (method === 'state') {
 			return this.snapshot();
+		}
+		if (method === 'macros') {
+			return DevApi.macros();
+		}
+		if (method === 'launchers') {
+			return {
+				workspaces: [
+					{
+						id: 'w-1',
+						label: 'heidrun',
+						error: null,
+						launchers: this.launchers,
+					},
+				],
+			};
+		}
+		if (method === 'launch') {
+			return this.launch(params);
 		}
 		if (agent === null) {
 			return {
@@ -147,7 +183,9 @@ export class DevApi {
 			};
 		}
 		if (method === 'prompt') {
-			this.prompts.set(paneId, [...(this.prompts.get(paneId) ?? []), String(params.text ?? '')]);
+			const macro = DevApi.macros().macros.find((candidate) => candidate.id === params.macroId);
+			const text = macro === undefined ? String(params.text ?? '') : `(macro) ${macro.label}`;
+			this.prompts.set(paneId, [...(this.prompts.get(paneId) ?? []), text]);
 			this.setWorking(agent);
 			return {
 				ok: true,
@@ -174,6 +212,56 @@ export class DevApi {
 			context: 42,
 			menu: null,
 			...overrides,
+		};
+	}
+
+	private static macros(): MacrosAnswer {
+		return {
+			macros: [
+				{
+					id: 'progress',
+					label: 'Progress',
+					description: 'Asks the coding agent where it is',
+					source: 'personal',
+					workspaceId: null,
+					workspace: null,
+				},
+				{
+					id: 'review',
+					label: 'Review the branch',
+					description: '',
+					source: 'project',
+					workspaceId: 'w-1',
+					workspace: 'heidrun',
+				},
+			],
+		};
+	}
+
+	private launch(params: Record<string, unknown>): CallResult {
+		const launcher = this.launchers.find((candidate) => candidate.id === params.launcherId);
+		if (launcher === undefined) {
+			return {
+				error: 'Launcher not found (removed?): refresh',
+			};
+		}
+		if (params.action === 'stop') {
+			launcher.status = 'finished';
+			return {
+				ok: true,
+			};
+		}
+		if (launcher.command === DevApi.dangerousCommand && params.confirmed !== true) {
+			return {
+				confirm: {
+					command: launcher.command,
+					why: 'The command deletes files. Check it before it runs.',
+				},
+			};
+		}
+		launcher.status = 'running';
+		return {
+			ok: true,
 		};
 	}
 
