@@ -13,7 +13,7 @@ The mobile website of Heidrun Mobile: the page that the phone opens to keep the 
 - `src/color_painter.ts`: sets the colors of the output after its HTML is in the page.
 - `src/voice_input.ts`: the microphone, with the Web Speech API of the browser. No Web Speech API: no microphone button.
 - `dev/`: the development server with a fake computer, and the proxy to the real desktop application. See its own CONTEXT.md.
-- `public/`: the files that Vite copies as they are: the manifest, and `favicon.svg`, the same image as `data/images/heidrun_favicon.svg`.
+- `public/`: the files that Vite copies as they are: the manifest, the service worker `sw.js` (for notifications; no cache), and `favicon.svg`, the same image as `data/images/heidrun_favicon.svg`.
 - `src/screens/`: one class for each screen. See its own CONTEXT.md.
 - `src/assets/`: the pictures that the screens import. See its own CONTEXT.md.
 - `src/components/`: the parts that several screens share. See its own CONTEXT.md.

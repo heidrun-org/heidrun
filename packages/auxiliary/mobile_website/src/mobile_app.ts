@@ -26,6 +26,7 @@ import { PaneScreen } from './screens/pane_screen';
 import { LaunchersScreen } from './screens/launchers_screen';
 import { WelcomeScreen } from './screens/welcome_screen';
 import { VoiceInput } from './voice_input';
+import { PhoneNotifications } from './phone_notifications';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -86,6 +87,9 @@ export class MobileApp {
 	/** The last answer of the method `launchers`, or null before the first answer on the Launchers screen. */
 	private launchers: LaunchersAnswer | null = null;
 
+	/** The service worker and the notifications of the browser. */
+	private readonly phoneNotifications = new PhoneNotifications();
+
 	/** The microphone that fills the field for a prompt. */
 	private readonly voiceInput = new VoiceInput();
 
@@ -142,6 +146,7 @@ export class MobileApp {
 		this.root.addEventListener('keydown', (event) => void this._onKeyDown(event));
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
 		window.addEventListener('popstate', this.onPopState);
+		void this.phoneNotifications.register().then(() => this._render());
 		await this.refresh();
 	}
 
@@ -307,7 +312,7 @@ export class MobileApp {
 		if (this.screen === 'needs_you') {
 			return NeedsYouScreen.render(snapshot, this.isOnline);
 		}
-		return DashboardScreen.render(snapshot, this.isOnline);
+		return DashboardScreen.render(snapshot, this.isOnline, this.phoneNotifications.getStatus());
 	}
 
 	/**
@@ -397,6 +402,12 @@ export class MobileApp {
 			await this._sendPrompt(paneId);
 		} else if (action === 'voice') {
 			this._toggleVoice(element);
+		} else if (action === 'notifications-enable') {
+			await this.phoneNotifications.requestPermission();
+			this._render();
+		} else if (action === 'notifications-test') {
+			const problem = await this.phoneNotifications.showTest();
+			this._toast(problem === null ? 'Test notification sent' : `The notification failed: ${problem}`);
 		} else if (action === 'typing-ask') {
 			this.overlay.insertAdjacentHTML('beforeend', TypingSheet.render());
 		} else if (action === 'typing-cancel') {

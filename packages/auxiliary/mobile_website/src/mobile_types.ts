@@ -83,6 +83,20 @@ export type Snapshot = {
 	quotas: QuotaView[];
 };
 
+/** What the page knows about the notifications of the phone. */
+export type NotificationStatus = {
+	/** True when the page runs on a secure address: `https`, or the address of the same device. */
+	isSecure: boolean;
+	/** True when the browser has the service workers and the notifications. */
+	isSupported: boolean;
+	/** The service worker: not registered yet, registered, or failed. */
+	worker: 'not-registered' | 'registered' | 'failed';
+	/** The permission that the developer gave, or `unsupported` when the browser has no notifications. */
+	permission: NotificationPermission | 'unsupported';
+	/** The text of the last error of the service worker, or null. */
+	error: string | null;
+};
+
 /**
  * What the developer can do to type in a plain terminal. `off`: the setting of Heidrun on the computer forbids it.
  * `locked`: the setting allows it, and the developer must say yes first. `unlocked`: the developer said yes for the

@@ -67,7 +67,7 @@ describe('Dashboard screen', () => {
 			},
 		];
 		await AppHarness.start(computer, true, '#/dashboard');
-		const rows = [...document.querySelectorAll('.usage-row')];
+		const rows = [...document.querySelectorAll('.usage-row:not(.notification-row)')];
 		const names = rows.map((row) => row.querySelector('span')?.textContent);
 		expect(names).toEqual(['5-hour limit', 'Weekly limit']);
 		expect(rows.map((row) => row.querySelector('.usage-percent')?.textContent)).toEqual(['42 %', '62 %']);

@@ -41,5 +41,5 @@ Heidrun Mobile does not show the Source control sidebar section, the Past chats 
 
 ## What is not done
 
-- The notifications, on Android only. Chrome on Android shows a Web Push notification in a normal tab, with a service worker on `https`. An iPhone shows a notification only from an installed progressive web application, so there is no notification on an iPhone. First do a live test on a real Android phone: the service worker through the ngrok address, then one push from the computer ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
+- The notifications, on Android only. Chrome on Android shows a Web Push notification in a normal tab, with a service worker on `https`. An iPhone shows a notification only from an installed progressive web application, so there is no notification on an iPhone. The Dashboard already has a live test section (service worker `sw.js`, permission, test notification). Next: the push from the computer, after the live test works on a real Android phone ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
 - The microphone needs a live test on a real phone through the ngrok address. When the Web Speech API does not work, the page shows no microphone button, and the microphone key of the keyboard of the phone is the fallback.

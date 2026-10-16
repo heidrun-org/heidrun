@@ -344,6 +344,17 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn the_service_worker_is_served_as_javascript_from_the_root_and_is_not_kept() {
+        let (router, _) = setup(Some(TOKEN));
+        let response = get_response(router, "/sw.js").await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(response.headers()[header::CONTENT_TYPE].to_str().unwrap().starts_with("text/javascript"));
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-store");
+        let bytes = axum::body::to_bytes(response.into_body(), 64 * 1024).await.unwrap();
+        assert!(String::from_utf8(bytes.to_vec()).unwrap().contains("notificationclick"));
+    }
+
+    #[tokio::test]
     async fn an_address_that_is_not_a_file_of_the_website_is_a_404() {
         let (router, _) = setup(Some(TOKEN));
         let addresses = [

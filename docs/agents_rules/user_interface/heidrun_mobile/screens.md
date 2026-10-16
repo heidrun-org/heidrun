@@ -24,6 +24,8 @@ The first page: the baby goat in a big circle, the name, the motto, and the butt
 
 The count of coding agents that need the developer, the count that work, and the usage limits. A tap on a count opens the screen with the details.
 
+The section "Notifications" shows four raw values: an address with https, the support of the browser, the service worker `sw.js`, and the permission. It shows the text of any error as it is. The button "Enable notifications" asks the permission at a tap, then the button "Send a test notification" shows a notification through the service worker. The service worker has no cache and no fetch handler. Only Chrome on Android can show a notification. This section is a live test; the push from the computer comes after it works ([issue 581](https://github.com/heidrun-org/heidrun/issues/581)).
+
 ## Needs you
 
 The coding agents that wait for the developer. The blocked coding agents come first, each one with its menu.
