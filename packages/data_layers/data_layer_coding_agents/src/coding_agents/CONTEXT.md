@@ -19,6 +19,7 @@ Finds the chat session files of Claude Code and of Codex for one folder, reads w
 - A scan stops at the end of the last complete line, so that the next scan of the same file continues from there. For a compressed file the byte is a position in the decompressed text.
 - The files of the subagents and of the workflows of a chat of Claude Code (`<chat id>/subagents/**/*.jsonl`) give tokens only: their user lines are prompts of the main agent, not messages of the developer.
 - A folder of Claude Code that starts with the name of the folder of the workspace is a chat folder below it only when its first `cwd` is the folder of the workspace or a folder below it, so `<folder>-site` is never one.
+- A review chat of Codex (`ChatMeta::is_review_chat`, the source `{"subagent":{"other":"guardian"}}` of its record `session_meta`) is never a chat session ([issue 557](https://github.com/heidrun-org/heidrun/issues/557)).
 - A chat of Codex that exists as `.jsonl` and as `.jsonl.zst` is listed once, with the file that is not compressed.
 - The Past chats list and the SQLite file use `FolderScope::Exactly`; only the AI cost of the Statistics window uses `FolderScope::WithFoldersBelow` ([issue 558](https://github.com/heidrun-org/heidrun/issues/558)).
 - A change in what `ChatMeta` or `TokenScan` holds needs a new `CACHE_VERSION` in `scan_cache.rs`, so that the desktop application reads the old files again.

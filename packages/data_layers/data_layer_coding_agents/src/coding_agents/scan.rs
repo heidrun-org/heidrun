@@ -45,6 +45,10 @@ pub struct ChatMeta {
     pub pull_requests: BTreeSet<u32>,
     /// The files that the coding agent wrote: the files of its Write and Edit tools, and the files of its patches.
     pub files_written: BTreeSet<String>,
+    /// True when the chat is a review chat of Codex: a chat that Codex starts to review an approval request, with the source
+    /// `{"subagent":{"other":"guardian"}}` in its first record. The developer typed none of its messages.
+    #[serde(default)]
+    pub is_review_chat: bool,
 }
 
 /// What a scan found, and the state that lets the next scan continue.
@@ -285,6 +289,12 @@ fn feed_claude_tool_use(scan: &mut Scan, part: &Value) {
 /// Reads one line of a file of Codex into `scan`.
 pub fn feed_codex_line(scan: &mut Scan, line: &str) {
     scan.meta.note_line(line);
+    if line.contains(r#""type":"session_meta""#) {
+        if let Ok(record) = serde_json::from_str::<Value>(line) {
+            scan.meta.is_review_chat |= is_codex_review_source(&record);
+        }
+        return;
+    }
     if line.contains(r#""type":"turn_context""#) || line.contains(r#""type":"token_count""#) {
         if let Ok(record) = serde_json::from_str::<Value>(line) {
             scan.tokens.note_codex_record(&record);
@@ -298,6 +308,18 @@ pub fn feed_codex_line(scan: &mut Scan, line: &str) {
         scan.meta.note_references(line, is_command_with_references(line));
         note_patch_files(&mut scan.meta, line);
     }
+}
+
+/// True when the record `session_meta` of Codex has the source of a review chat: `{"subagent":{"other":"guardian"}}`.
+fn is_codex_review_source(record: &Value) -> bool {
+    record.get("type").and_then(Value::as_str) == Some("session_meta")
+        && record
+            .get("payload")
+            .and_then(|payload| payload.get("source"))
+            .and_then(|source| source.get("subagent"))
+            .and_then(|subagent| subagent.get("other"))
+            .and_then(Value::as_str)
+            == Some("guardian")
 }
 
 fn feed_codex_message(scan: &mut Scan, record: &Value) {
@@ -569,6 +591,19 @@ mod tests {
         assert!(scan.meta.first_messages[0].ends_with('…'));
         assert_eq!(scan.meta.first_messages[0].chars().count(), MESSAGE_LENGTH + 1);
         assert_eq!(scan.meta.first_messages[1..], ["second", "third"]);
+    }
+
+    #[test]
+    fn marks_a_review_chat_of_codex_and_only_a_review_chat() {
+        let review = r#"{"type":"session_meta","payload":{"id":"x","parent_thread_id":"y","cwd":"/work/app","source":{"subagent":{"other":"guardian"}}}}"#;
+        let normal = r#"{"type":"session_meta","payload":{"id":"x","cwd":"/work/app","source":"vscode"}}"#;
+        let mut scan = Scan::default();
+        feed_codex_line(&mut scan, review);
+        assert!(scan.meta.is_review_chat);
+        assert_eq!(scan.meta.folders.iter().collect::<Vec<_>>(), vec!["/work/app"]);
+        let mut scan = Scan::default();
+        feed_codex_line(&mut scan, normal);
+        assert_eq!(scan.meta.is_review_chat, false);
     }
 
     #[test]

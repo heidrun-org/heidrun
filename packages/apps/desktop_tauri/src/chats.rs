@@ -351,6 +351,9 @@ fn codex_chats(
     let files = find_codex_session_files(cache, home, folder, scope);
     take_chats(cache, files, limit, folder, sorting, &mut |cache, file| {
         let scan = cache.scan(file, feed_codex_line);
+        if scan.meta.is_review_chat {
+            return None;
+        }
         titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan)).map(|text| (text, scan.meta, scan.tokens))
     })
 }
@@ -626,6 +629,24 @@ mod tests {
         let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
         assert_eq!(titles(&found), vec!["Newer", "Describe image"]);
         assert_eq!(found.chats[1].id, a);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn does_not_list_a_review_chat_of_codex() {
+        let dir = scratch("codex-review");
+        let normal = "01a12c31-175b-7513-b12c-bba764f46431";
+        let review = "01a12c31-175b-7513-b12c-bba764f46432";
+        codex_file(&dir, "2026/10/10", normal, "/work/app", &[&codex_message("Please fix issue 250")], 10);
+        let first = format!(
+            r#"{{"type":"session_meta","payload":{{"id":"{review}","cwd":"/work/app","source":{{"subagent":{{"other":"guardian"}}}}}}}}"#
+        );
+        let name = format!("rollout-2026-10-10T01-02-03-{review}.jsonl");
+        let text = format!("{first}\n{}\n", codex_message("Review this command"));
+        write(&dir.join("sessions").join("2026/10/10").join(name), &text, 5);
+        let found = codex_chats(&mut ScanCache::in_memory(), &dir, "/work/app", FolderScope::Exactly, 10, Sorting::default());
+        assert_eq!(titles(&found), vec!["Please fix issue 250"]);
+        assert_eq!(found.has_more, false);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
