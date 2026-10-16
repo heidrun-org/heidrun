@@ -22,7 +22,7 @@ describe('Panes screen', () => {
 		expect(document.querySelector('.list .card .badge')?.textContent).toBe('42 %');
 	});
 
-	it('says that no pane runs a coding agent when the list is empty', async () => {
+	it('says that no pane is open when the list is empty', async () => {
 		const computer = new FakeComputer({
 			now: 1_000_000,
 			attention: [],
@@ -31,7 +31,7 @@ describe('Panes screen', () => {
 		});
 		const harness = await AppHarness.start(computer);
 		await harness.tap('button[data-screen="panes"]');
-		expect(harness.text()).toContain('No pane runs a coding agent.');
+		expect(harness.text()).toContain('No pane is open.');
 	});
 
 	it('opens the pane of a coding agent, and the button Back returns to the list of panes', async () => {

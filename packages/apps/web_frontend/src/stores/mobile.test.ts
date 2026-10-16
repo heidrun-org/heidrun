@@ -11,6 +11,8 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => undefi
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
   prompt: vi.fn(async () => undefined),
+  read: vi.fn(async () => "terminal output"),
+  sendKeys: vi.fn(async () => undefined),
 }));
 vi.mock("./guards", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./guards")>()),
@@ -40,7 +42,10 @@ beforeEach(() => {
       { workspace_id: "w2", label: "website", number: 2 },
     ],
     tabs: [{ tab_id: "t1", workspace_id: "w1", label: "fix-35" }],
-    panes: [{ pane_id: "p1", tab_id: "t1", workspace_id: "w1", cwd: "/work/heidrun", agent: "claude", agent_status: "idle" }],
+    panes: [
+      { pane_id: "p1", tab_id: "t1", workspace_id: "w1", cwd: "/work/heidrun", agent: "claude", agent_status: "idle" },
+      { pane_id: "p2", tab_id: "t1", workspace_id: "w1", cwd: "/work/heidrun", agent: null, agent_status: "unknown", label: "shell" },
+    ],
   } as never;
   macros.personal = [{ id: "progress", label: "Progress", description: "Where are you?", text: "Where are you? {agent}" }];
   project.byWorkspace.w1 = {
@@ -50,6 +55,30 @@ beforeEach(() => {
   project.byWorkspace.w2 = { root: "/work/website", config: { version: 1, launchers: [] } } as never;
   project.errors.w1 = undefined;
   project.errors.w2 = undefined;
+});
+
+describe("a plain terminal", () => {
+  it("is in the state, with hasCodingAgent false, next to the pane of a coding agent", async () => {
+    const answer = (await handleMobileCall("state", {})) as { workspaces: { agents: { paneId: string; hasCodingAgent: boolean }[] }[] };
+    const panes = answer.workspaces.flatMap((w) => w.agents);
+    expect(panes.map((p) => [p.paneId, p.hasCodingAgent])).toEqual([
+      ["p1", true],
+      ["p2", false],
+    ]);
+  });
+
+  it("can be read", async () => {
+    expect(await handleMobileCall("read", { paneId: "p2", lines: 60 })).toEqual({ text: "terminal output" });
+  });
+
+  it("refuses every call that writes: a prompt, an answer, a key, and the macros", async () => {
+    for (const method of ["prompt", "answer", "keys", "macros"]) {
+      const answer = await handleMobileCall(method, { paneId: "p2", text: "ls", action: "interrupt", n: 1 });
+      expect(answer, method).toHaveProperty("error");
+    }
+    expect(api.prompt).not.toHaveBeenCalled();
+    expect(api.sendKeys).not.toHaveBeenCalled();
+  });
 });
 
 describe("the method macros", () => {

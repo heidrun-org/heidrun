@@ -10,5 +10,6 @@
   "error.unknownAction": "Action inconnue",
   "error.unknownMethod": "Méthode inconnue",
   "error.launcherNotFound": "Lanceur introuvable (supprimé ?) : rafraîchis",
-  "launcherStarted": "Lanceur démarré depuis le téléphone : {name}"
+  "launcherStarted": "Lanceur démarré depuis le téléphone : {name}",
+  "error.terminalReadOnly": "Ce panneau est un terminal : le téléphone ne peut que le lire"
 }

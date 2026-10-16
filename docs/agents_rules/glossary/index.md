@@ -19,5 +19,5 @@ This file lists the files of this folder, for agents and tools.
 - [pane_focus_history.md](pane_focus_history.md): the top bar, the pane focus history, the Back button, and the Forward button.
 - [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot.
 - [statistics_charts.md](statistics_charts.md): the chart legend and the chart information card of the charts of the Statistics window.
-- [heidrun_mobile.md](heidrun_mobile.md): Heidrun Mobile, the mobile website, the mobile server, the pairing key, the bottom bar, the macro button, and the microphone button.
+- [heidrun_mobile.md](heidrun_mobile.md): Heidrun Mobile, the mobile website, the mobile server, the pairing key, the bottom bar, the plain terminal on the phone, the macro button, and the microphone button.
 - [person_work.md](person_work.md): the Work of one person tab, its source, the Git history, the AI cost, the person, the person chooser, the time range of the Work of one person tab, the day, the totals, the average per day, and the bar chart of the work of one person.

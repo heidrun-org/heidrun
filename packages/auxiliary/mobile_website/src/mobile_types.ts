@@ -25,10 +25,12 @@ export type AgentMenu = {
 	options: MenuOption[];
 };
 
-/** One pane that runs a coding agent. */
+/** One pane: it runs a coding agent, or it is a plain terminal that the phone only reads. */
 export type AgentView = {
 	/** The identifier of the pane. */
 	paneId: string;
+	/** True when a coding agent runs in the pane. False for a plain terminal, which the phone only reads. */
+	hasCodingAgent: boolean;
 	/** The name of the coding agent, for example Claude Code. */
 	name: string;
 	/** The kind of the coding agent. */

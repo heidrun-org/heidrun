@@ -83,6 +83,8 @@ function agentView(p: AgentInfo) {
   const menu = state.choices[p.pane_id];
   return {
     paneId: p.pane_id,
+    /** True when a coding agent runs in the pane. A plain terminal is read-only on the phone. */
+    hasCodingAgent: !!p.agent,
     name: paneName(p),
     kind: agentKind(p),
     workspace: workspaceLabel(p.workspace_id),
@@ -96,7 +98,8 @@ function agentView(p: AgentInfo) {
 }
 
 function snapshot() {
-  const agents = allPanes.value.filter((p) => p.agent);
+  // Every pane, with or without a coding agent: the phone shows the plain terminals too.
+  const agents = allPanes.value;
   const claude = quotas.value.find((q) => q.provider === "claude");
   return {
     now: Date.now(),
@@ -175,7 +178,7 @@ async function launch(params: Params) {
   return { ok: true };
 }
 
-const agentPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id && p.agent) ?? null;
+const anyPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id) ?? null;
 
 type Params = Record<string, unknown>;
 
@@ -185,8 +188,10 @@ export async function handleMobileCall(method: string, params: Params): Promise<
   if (method === "state") return snapshot();
   if (method === "launchers") return launcherList();
   if (method === "launch") return launch(params);
-  const pane = agentPane(params.paneId);
+  const pane = anyPane(params.paneId);
   if (!pane) return { error: t("mobileStore.error.agentNotFound") };
+  // A plain terminal is read-only: the phone may read its output, and nothing else.
+  if (!pane.agent && method !== "read") return { error: t("mobileStore.error.terminalReadOnly") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
 
   if (method === "macros") return macroList(pane);

@@ -102,6 +102,16 @@ export class DevApi {
 				status: 'done',
 				since: now - 52 * 60_000,
 			}),
+			DevApi.agent(now, {
+				paneId: 'p-terminal',
+				hasCodingAgent: false,
+				name: 'zsh',
+				kind: 'Terminal',
+				tab: 'shell',
+				status: 'unknown',
+				since: null,
+				context: null,
+			}),
 		];
 	}
 
@@ -179,6 +189,11 @@ export class DevApi {
 				text: this.output(agent),
 			};
 		}
+		if (agent.hasCodingAgent === false && method !== 'read') {
+			return {
+				error: 'This pane is a terminal: the phone only reads it',
+			};
+		}
 		if (method === 'macros') {
 			return DevApi.macros(agent);
 		}
@@ -200,6 +215,7 @@ export class DevApi {
 	private static agent(now: number, overrides: Partial<AgentView>): AgentView {
 		return {
 			paneId: 'p-1',
+			hasCodingAgent: true,
 			name: 'Claude Code',
 			kind: 'claude',
 			workspace: 'heidrun',
@@ -318,6 +334,9 @@ export class DevApi {
 	 */
 	private output(agent: AgentView): string {
 		const code = (codes: string, text: string): string => `\u001b[${codes}m${text}\u001b[0m`;
+		if (agent.hasCodingAgent === false) {
+			return [`${code('1;32', 'jerome@computer')} ${code('1;34', '~/webwork/heidrun')} $ git status`, 'On branch dev_jerome', code('32', 'nothing to commit, working tree clean')].join('\r\n');
+		}
 		const blue = '38;2;99;168;248';
 		const gray = '48;2;30;30;30';
 		const prompts = this.prompts.get(agent.paneId) ?? [];

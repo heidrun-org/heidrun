@@ -68,6 +68,7 @@ export class FakeComputer {
 	static agent(overrides: Partial<AgentView>): AgentView {
 		return {
 			paneId: 'p-1',
+			hasCodingAgent: true,
 			name: 'Claude Code',
 			kind: 'claude',
 			workspace: 'heidrun',

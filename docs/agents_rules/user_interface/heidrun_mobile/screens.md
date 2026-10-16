@@ -30,7 +30,7 @@ The coding agents that wait for the developer. The blocked coding agents come fi
 
 ## Panes
 
-Every pane that runs a coding agent, grouped by workspace and then by tab, with a status dot. A tap opens the screen of one pane.
+Every pane, grouped by workspace and then by tab, with a status dot. A pane that runs a plain terminal has the badge "Terminal". A tap opens the screen of one pane.
 
 ## Screen of one pane
 
@@ -39,6 +39,11 @@ Every pane that runs a coding agent, grouped by workspace and then by tab, with 
 - The macro button in the top bar.
 - The field for a prompt, the microphone button, the Interrupt button while the coding agent works, and the button Send.
 - The microphone button shows only when the browser has the Web Speech API. The words go into the field after the text that is already there. Nothing is sent before the developer taps Send.
+
+## Screen of a plain terminal
+
+- The phone only reads a plain terminal: the screen shows its output and the line "The phone only reads a terminal.". It has no field for a prompt, no macro button, no microphone button, and no button that stops it.
+- The desktop application refuses every call about a plain terminal except `read`. A plain terminal is not counted in the Dashboard, and is not in the Needs you screen.
 
 ## Macros
 

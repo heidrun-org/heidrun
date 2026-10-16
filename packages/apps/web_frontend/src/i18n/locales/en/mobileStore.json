@@ -10,5 +10,6 @@
   "error.unknownAction": "Unknown action",
   "error.unknownMethod": "Unknown method",
   "error.launcherNotFound": "Launcher not found (removed?): refresh",
-  "launcherStarted": "Launcher started from the phone: {name}"
+  "launcherStarted": "Launcher started from the phone: {name}",
+  "error.terminalReadOnly": "This pane is a terminal: the phone only reads it"
 }

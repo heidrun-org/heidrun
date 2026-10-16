@@ -34,6 +34,9 @@ export class StatusLabels {
 	 * @returns "Question" for a coding agent that asks a question, else the word of its status.
 	 */
 	static label(agent: AgentView): string {
+		if (agent.hasCodingAgent === false) {
+			return 'Terminal';
+		}
 		if (StatusLabels.isAskingQuestion(agent)) {
 			return 'Question';
 		}
@@ -46,6 +49,9 @@ export class StatusLabels {
 	 * @returns One of "blocked", "question", "working", "done", or "idle".
 	 */
 	static colorName(agent: AgentView): string {
+		if (agent.hasCodingAgent === false) {
+			return 'idle';
+		}
 		if (agent.status === 'blocked') {
 			return 'blocked';
 		}

@@ -29,6 +29,10 @@ The secret that the QR code gives to the phone. The phone sends it with each cal
 
 The row of four buttons at the bottom of the mobile website: Dashboard, Needs you, Panes, and Launchers.
 
+### Plain terminal on the phone
+
+A pane in which no coding agent runs. The phone lists it with the badge "Terminal" and shows its output, and the phone never writes to it.
+
 ### Macro button
 
 The button with a lightning in the top bar of the screen of one pane. A tap opens the list of the macros of the pane, and a tap on a macro writes its text into the field for a prompt.

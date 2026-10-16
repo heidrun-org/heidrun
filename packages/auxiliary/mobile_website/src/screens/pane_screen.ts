@@ -42,6 +42,9 @@ export class PaneScreen {
 		const placeholder = HtmlEscape.escape(`Prompt for ${agent.name}…`);
 		const outputHtmlContent = OutputText.toHtml(output);
 		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
+		if (agent.hasCodingAgent === false) {
+			return PaneScreen.renderTerminal(agent, outputHtmlContent, badgeHtmlContent);
+		}
 		const isBlocked = agent.status === 'blocked';
 		const isWorking = agent.status === 'working';
 		const denyHtmlContent = isBlocked ? PaneScreen.renderDangerButton('deny', 'Refuse', paneId) : '';
@@ -77,6 +80,26 @@ export class PaneScreen {
 			</div>
 		`;
 		return screenHtmlContent;
+	}
+
+	/**
+	 * Draws the screen of a plain terminal. The phone only reads it: no field for a prompt, no macro button, no
+	 * microphone, and no button that stops it.
+	 * @param agent The pane of the plain terminal.
+	 * @param outputHtmlContent The HTML of the end of its output.
+	 * @param badgeHtmlContent The HTML of the badge of the header.
+	 * @returns The HTML of the screen, without the bottom bar.
+	 */
+	private static renderTerminal(agent: AgentView, outputHtmlContent: string, badgeHtmlContent: string): string {
+		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
+		const terminalHtmlContent = /* html */`
+			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent, false)}
+			<main class="pane-main">
+				<div class="question">The phone only reads a terminal.</div>
+				<pre class="output"><code class="output-text">${shownHtmlContent}</code></pre>
+			</main>
+		`;
+		return terminalHtmlContent;
 	}
 
 	/**
