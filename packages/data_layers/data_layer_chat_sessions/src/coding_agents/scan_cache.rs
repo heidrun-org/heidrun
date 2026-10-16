@@ -4,13 +4,16 @@
 //! seconds. The cache keeps the result of the scan of each file, valid while the size and the modification date of the file
 //! stay the same. A file that only grew is not read again from its start: the scan continues from where it stopped.
 
-use crate::coding_agents::scan::{scan_file, Scan};
-use crate::coding_agents::session_files::SessionFile;
+use crate::coding_agents::scan::{feed_claude_line, feed_claude_tokens_line, folder_in, open_lines, scan_file, Scan};
+use crate::coding_agents::session_files::{find_claude_agent_files, SessionFile};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashSet};
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
+
+/// The most lines of a file of Claude Code that are read to find its folder. The first lines hold the field `cwd`.
+const CLAUDE_FOLDER_LINES: usize = 200;
 
 /// The name of the file of the cache, in the folder of the data of Heidrun.
 pub const CACHE_FILE_NAME: &str = "chats_cache.json";
@@ -40,6 +43,10 @@ struct CacheContent {
     scans: BTreeMap<String, CacheEntry>,
     /// The folder that the first line of each file of Codex gives, by path. A file never changes its folder.
     codex_folders: BTreeMap<String, String>,
+    /// The folder where the chat sessions of each folder of Claude Code started, by path of the folder of Claude Code. It
+    /// is the first field `cwd` of the first file that has one: a folder of Claude Code never changes its folder.
+    #[serde(default)]
+    claude_folders: BTreeMap<String, String>,
 }
 
 /// The cache of the scans.
@@ -99,19 +106,58 @@ impl ScanCache {
         scan
     }
 
-    /// The folder that the first line of a file of Codex gives, or `None` when the file has no first line yet.
+    /// What the chat session file `file` of Claude Code holds, with the tokens of the subagents and of the workflows that it
+    /// started: their answers count for this chat session, and nothing else of their files does. The scan of each of their
+    /// files is kept in the cache like the scan of `file`.
+    pub fn scan_claude(&mut self, file: &SessionFile) -> Scan {
+        let mut scan = self.scan(file, feed_claude_line);
+        for agent_file in find_claude_agent_files(self, &file.path) {
+            let agent_scan = self.scan(&agent_file, feed_claude_tokens_line);
+            scan.tokens.add_tokens_of(&agent_scan.tokens);
+        }
+        scan
+    }
+
+    /// The folder that the first line of a file of Codex gives, or `None` when the file has no first line yet. The file can
+    /// be compressed.
     pub fn codex_folder(&mut self, path: &Path) -> Option<String> {
         let key = path.display().to_string();
         if let Some(folder) = self.content.codex_folders.get(&key) {
             return Some(folder.clone());
         }
         let mut first_line = String::new();
-        BufReader::new(std::fs::File::open(path).ok()?).read_line(&mut first_line).ok()?;
+        open_lines(path, 0)?.read_line(&mut first_line).ok()?;
         let record = serde_json::from_str::<Value>(&first_line).ok()?;
         let folder = record.get("payload")?.get("cwd")?.as_str()?.to_string();
         self.content.codex_folders.insert(key, folder.clone());
         self.is_dirty = true;
         Some(folder)
+    }
+
+    /// The folder where the chat sessions of the folder `directory` of Claude Code started: the first field `cwd` that the
+    /// first files give. `None` when no file of the folder has one yet.
+    pub fn claude_folder(&mut self, directory: &Path) -> Option<String> {
+        let key = directory.display().to_string();
+        if let Some(folder) = self.content.claude_folders.get(&key) {
+            return Some(folder.clone());
+        }
+        let mut files: Vec<PathBuf> = std::fs::read_dir(directory)
+            .ok()?
+            .flatten()
+            .map(|entry| entry.path())
+            .filter(|path| path.extension().and_then(|extension| extension.to_str()) == Some("jsonl"))
+            .collect();
+        files.sort();
+        for path in files {
+            let Some(reader) = open_lines(&path, 0) else { continue };
+            let found = reader.lines().take(CLAUDE_FOLDER_LINES).map_while(Result::ok).find_map(|line| folder_in(&line));
+            if let Some(folder) = found {
+                self.content.claude_folders.insert(key, folder.clone());
+                self.is_dirty = true;
+                return Some(folder);
+            }
+        }
+        None
     }
 
     /// Forgets what the cache holds for the files under `directory` that are not in `present` any more.
@@ -121,6 +167,36 @@ impl ScanCache {
         self.content.scans.retain(|key, _| !key.starts_with(&prefix) || present.contains(key));
         self.content.codex_folders.retain(|key, _| !key.starts_with(&prefix) || present.contains(key));
         if self.content.scans.len() + self.content.codex_folders.len() != before {
+            self.is_dirty = true;
+        }
+    }
+
+    /// Forgets what the cache holds for the files under the folder `directory` of Claude Code that are not in `present` any
+    /// more. The files of the subagents and of the workflows of a chat session are kept while the file of the chat session is
+    /// in `present`: `find_claude_agent_files` forgets the ones that were deleted.
+    pub fn forget_missing_claude(&mut self, directory: &Path, present: &HashSet<String>) {
+        let prefix = format!("{}/", directory.display());
+        let sessions: HashSet<&str> = present
+            .iter()
+            .filter_map(|path| Path::new(path).file_stem().and_then(|stem| stem.to_str()))
+            .collect();
+        let before = self.content.scans.len();
+        self.content.scans.retain(|key, _| match key.strip_prefix(&prefix) {
+            None => true,
+            Some(relative) => {
+                present.contains(key) || relative.split_once('/').is_some_and(|(session, _)| sessions.contains(session))
+            }
+        });
+        if self.content.scans.len() != before {
+            self.is_dirty = true;
+        }
+    }
+
+    /// Forgets the folder of every folder of Claude Code whose path starts with `prefix` and is not in `present` any more.
+    pub fn forget_missing_claude_folders(&mut self, prefix: &str, present: &HashSet<String>) {
+        let before = self.content.claude_folders.len();
+        self.content.claude_folders.retain(|key, _| !key.starts_with(prefix) || present.contains(key));
+        if self.content.claude_folders.len() != before {
             self.is_dirty = true;
         }
     }
@@ -145,7 +221,8 @@ impl ScanCache {
 mod tests {
     use super::*;
     use crate::coding_agents::scan::feed_claude_line;
-    use crate::test_samples::{temp_folder, write_file};
+    use crate::coding_agents::session_files::{claude_folder_name, find_claude_session_files, FolderScope};
+    use crate::test_samples::{claude_answer_line, claude_user_line, temp_folder, write_compressed_file, write_file};
 
     /// A line of Claude Code that holds the title of the chat session.
     fn title_line(title: &str) -> String {
@@ -252,5 +329,78 @@ mod tests {
         let present: HashSet<String> = [directory.join("a.jsonl").display().to_string()].into_iter().collect();
         cache.forget_missing(&directory, &present);
         assert_eq!(cache.scan_count(), 1);
+    }
+
+    #[test]
+    fn adds_the_tokens_of_the_subagents_and_of_the_workflows_to_the_chat_session_and_nothing_else() {
+        let directory = temp_folder("cache_agents");
+        let main = directory.join("abc.jsonl");
+        write_file(&main, &format!("{}\n{}\n", claude_user_line("/work/app", "Fix it"), claude_answer_line("m1", 5)), 100);
+        let agents = directory.join("abc").join("subagents");
+        let prompt = claude_user_line("/work/app", "Search the code, and write the file a.ts");
+        write_file(&agents.join("agent-1.jsonl"), &format!("{prompt}\n{}\n", claude_answer_line("a1", 7)), 100);
+        let workflow = agents.join("workflows").join("wf_1").join("agent-2.jsonl");
+        write_file(&workflow, &format!("{}\n{}\n", claude_answer_line("b1", 11), claude_answer_line("b2", 13)), 100);
+        let mut cache = ScanCache::in_memory();
+        let scan = cache.scan_claude(&file_at(&main));
+        assert_eq!(scan.tokens.totals()["opus"].output, 5 + 7 + 11 + 13);
+        assert_eq!(scan.meta.user_messages, 1);
+        assert_eq!(scan.first_message.as_deref(), Some("Fix it"));
+        assert_eq!(cache.scan_count(), 3);
+        assert_eq!(cache.scan_claude(&file_at(&main)).tokens.totals()["opus"].output, 36);
+        assert_eq!(cache.scan(&file_at(&main), feed_claude_line).tokens.totals()["opus"].output, 5);
+    }
+
+    #[test]
+    fn reads_a_new_file_of_a_subagent_and_forgets_a_deleted_one_without_losing_the_others() {
+        let directory = temp_folder("cache_agents_change");
+        let projects = directory.join("projects");
+        let project = projects.join(claude_folder_name("/work/app"));
+        write_file(&project.join("abc.jsonl"), &format!("{}\n", claude_user_line("/work/app", "Fix it")), 100);
+        let agents = project.join("abc").join("subagents");
+        write_file(&agents.join("agent-1.jsonl"), &format!("{}\n", claude_answer_line("a1", 7)), 100);
+        write_file(&agents.join("agent-2.jsonl"), &format!("{}\n", claude_answer_line("a2", 20)), 100);
+        let mut cache = ScanCache::in_memory();
+        let read = |cache: &mut ScanCache| {
+            let files = find_claude_session_files(cache, &projects, "/work/app", FolderScope::Exactly);
+            cache.scan_claude(&files[0]).tokens.totals().get("opus").map_or(0, |counts| counts.output)
+        };
+        assert_eq!(read(&mut cache), 27);
+        assert_eq!(read(&mut cache), 27);
+        assert_eq!(cache.scan_count(), 3);
+        std::fs::remove_file(agents.join("agent-2.jsonl")).unwrap();
+        assert_eq!(read(&mut cache), 7);
+        assert_eq!(cache.scan_count(), 2);
+        std::fs::remove_file(project.join("abc.jsonl")).unwrap();
+        find_claude_session_files(&mut cache, &projects, "/work/app", FolderScope::Exactly);
+        assert_eq!(cache.scan_count(), 0);
+    }
+
+    #[test]
+    fn keeps_the_folder_of_a_folder_of_claude_code_in_the_cache_and_forgets_a_folder_that_was_deleted() {
+        let directory = temp_folder("cache_claude_folder");
+        let projects = directory.join("projects");
+        let project = projects.join(claude_folder_name("/work/app/docs"));
+        write_file(&project.join("no_folder.jsonl"), "{\"type\":\"queue-operation\"}\n", 100);
+        let mut cache = ScanCache::in_memory();
+        assert_eq!(cache.claude_folder(&project), None);
+        write_file(&project.join("a.jsonl"), &format!("{}\n", claude_user_line("/work/app/docs", "Hello")), 100);
+        assert_eq!(cache.claude_folder(&project).as_deref(), Some("/work/app/docs"));
+        std::fs::remove_dir_all(&project).unwrap();
+        assert_eq!(cache.claude_folder(&project).as_deref(), Some("/work/app/docs"));
+        let prefix = projects.join(claude_folder_name("/work/app")).display().to_string();
+        cache.forget_missing_claude_folders(&prefix, &HashSet::new());
+        assert_eq!(cache.claude_folder(&project), None);
+    }
+
+    #[test]
+    fn reads_a_compressed_file_of_codex_again_from_its_start_when_it_changes() {
+        let path = temp_folder("cache_compressed").join("rollout-x.jsonl.zst");
+        let line = |text: &str| format!("{{\"type\":\"user\",\"message\":{{\"role\":\"user\",\"content\":\"{text}\"}}}}\n");
+        write_compressed_file(&path, &format!("{}{}", line("one"), line("two")), 100);
+        let mut cache = ScanCache::in_memory();
+        assert_eq!(cache.scan(&file_at(&path), feed_claude_line).meta.user_messages, 2);
+        write_compressed_file(&path, &format!("{}{}{}", line("one"), line("two"), line("three")), 50);
+        assert_eq!(cache.scan(&file_at(&path), feed_claude_line).meta.user_messages, 3);
     }
 }

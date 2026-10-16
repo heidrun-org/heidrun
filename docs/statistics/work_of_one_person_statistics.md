@@ -1,11 +1,11 @@
 # Work of one person statistics
 
 - Created: 15 October 2026
-- Last updated: 15 October 2026
+- Last updated: 16 October 2026
 - Status: Maintained description of the statistic of the tab "Work of one person"
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../agents_rules/glossary/person_work.md), [Tab "Work of one person"](../agents_rules/user_interface/window/statistics_person_work.md), [Source "AI cost"](../agents_rules/user_interface/window/statistics_ai_cost.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 482](https://github.com/heidrun-org/heidrun/issues/482)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 558](https://github.com/heidrun-org/heidrun/issues/558)
 
 This file describes the statistic of the tab "Work of one person" of the Statistics window, and the data layers that it reads. The words are defined in the [glossary of the work of one person](../agents_rules/glossary/person_work.md). The rules of the tab are in [statistics_person_work.md](../agents_rules/user_interface/window/statistics_person_work.md). The data layers are explained in [the_four_data_layers.md](the_four_data_layers.md).
 
@@ -60,7 +60,7 @@ The reason: the cost needs the tokens of each hour and each model, and the table
 ### The way of the data
 
 1. The developer chooses the source "AI cost" for the first time. The tab calls the command `ai_cost_in_range` once, with the folder of the selected workspace and the same 30 days as the Git history.
-2. The command lists the chats of Claude Code and of Codex of the folder, with the same function as the Past chats sidebar section. The library finds the chat session files and reads them, and it keeps the tokens of each hour in the scan cache.
+2. The command lists the chats of Claude Code and of Codex of the folder and of the folders below it, with the same function as the Past chats sidebar section, but with the scope `FolderScope::WithFoldersBelow`. The library finds the chat session files, including the files `.jsonl.zst` of Codex and the files of the subagents and of the workflows of Claude Code, and reads them. It keeps the tokens of each hour in the scan cache.
 3. The command keeps the chats that used tokens. For each hour of a chat that overlaps the time range, it computes the cost of the tokens of that hour at the public prices of their models (`model_prices.rs`).
 4. The tab puts each hour on the day that holds its start, in the time zone of the computer. The pure class `AiCost` does the calculation.
 

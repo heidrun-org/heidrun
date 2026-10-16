@@ -45,3 +45,18 @@ tauri-plugin-window-state = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 # The file .env of the developer: its variables go into the environment, in a development build only
 dotenvy = "0.15"
+
+[dev-dependencies]
+# The tests write a compressed file of Codex, as Codex does for its old chat sessions
+zstd = "0.14"
+
+# The first read of the chat files, for the AI cost, decompresses and scans gigabytes of text. The code that does it runs at
+# full speed in a development build too: it takes about 15 seconds instead of about 3 minutes.
+[profile.dev.package.zstd-sys]
+opt-level = 3
+
+[profile.dev.package.data_layer_chat_sessions]
+opt-level = 3
+
+[profile.dev.package.serde_json]
+opt-level = 3

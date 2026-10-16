@@ -37,7 +37,7 @@ The command runs in the folder of the package, so give a database file and a fol
 | `--json` | `query` | Prints the rows as a JSON list, and not as a text table. |
 | `--help` | all three | Shows the description and the options. |
 
-The chat session files are in `~/.claude/projects` for Claude Code (the variable `CLAUDE_CONFIG_DIR` changes the folder `~/.claude`) and in `~/.codex/sessions` for Codex (the variable `CODEX_HOME` changes the folder `~/.codex`). The command reads the chat sessions of the root of the repository only, and not the chat sessions of its worktrees.
+The chat session files are in `~/.claude/projects` for Claude Code (the variable `CLAUDE_CONFIG_DIR` changes the folder `~/.claude`) and in `~/.codex/sessions` for Codex (the variable `CODEX_HOME` changes the folder `~/.codex`). The command reads the chat sessions of the root of the repository only, and not the chat sessions of its worktrees. It reads the files that Codex compressed with zstd (`rollout-….jsonl.zst`) like the other files of Codex, and the tokens of each chat session of Claude Code include the tokens of its subagents and of its workflows. The library can also find the chat sessions of the folders below a folder (`FolderScope::WithFoldersBelow`), as the AI cost of the Statistics window needs.
 
 How the two modes work:
 

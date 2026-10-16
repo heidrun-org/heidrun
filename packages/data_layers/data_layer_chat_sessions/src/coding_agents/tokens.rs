@@ -132,6 +132,17 @@ impl TokenScan {
         hours
     }
 
+    /// Adds the tokens of `other`, for each hour and each model, to the finished tokens of this scan. The tokens of a
+    /// subagent or of a workflow of Claude Code count for the chat that started it. The state that lets this scan continue
+    /// does not change, so use it on a copy that is not kept.
+    pub fn add_tokens_of(&mut self, other: &TokenScan) {
+        for (hour, models) in other.by_hour() {
+            for (model, counts) in models {
+                self.finished.entry(hour).or_default().entry(model).or_default().add(&counts);
+            }
+        }
+    }
+
     /// Reads one record of type `assistant` of Claude Code.
     pub fn note_claude_answer(&mut self, record: &Value) {
         let Some(message) = record.get("message") else { return };
@@ -396,5 +407,22 @@ mod tests {
         scan.note_claude_answer(&answer("msg_2", "claude-opus-5", 1, 1, 1, 1));
         let scan: TokenScan = serde_json::from_str(&serde_json::to_string(&scan).unwrap()).unwrap();
         assert_eq!(scan.by_hour().keys().copied().collect::<Vec<_>>(), vec![UNDATED_HOUR, HOUR_10]);
+    }
+
+    #[test]
+    fn adds_the_tokens_of_another_scan_for_each_hour_and_each_model_without_changing_its_own_state() {
+        let mut scan = TokenScan::default();
+        scan.note_claude_answer(&answer("msg_1", "claude-opus-5", 10, 0, 0, 5));
+        let mut other = TokenScan::default();
+        other.note_claude_answer(&answer("msg_2", "claude-opus-5", 1, 0, 0, 7));
+        other.note_claude_answer(&answer("msg_3", "claude-sonnet-5", 2, 0, 0, 9));
+        let before = scan.clone();
+        let mut sum = scan.clone();
+        sum.add_tokens_of(&other);
+        assert_eq!(sum.totals()["claude-opus-5"].output, 12);
+        assert_eq!(sum.totals()["claude-sonnet-5"].output, 9);
+        assert_eq!(sum.answer, before.answer);
+        assert_eq!(sum.seen, before.seen);
+        assert_eq!(scan, before);
     }
 }
