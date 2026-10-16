@@ -30,16 +30,18 @@ impl SynchronizationMode {
 pub struct SynchronizationOptions {
     /// The absolute path of the SQLite file.
     pub database_path: PathBuf,
-    /// The folder of the Git repository, or a folder inside it. For source control, code hosting, and chat sessions.
+    /// The folder of the Git repository, or a folder inside it. For source control, code hosting, and coding agents.
     pub folder: PathBuf,
     /// The name of the repository in the format `owner/name`, or `None` for the one that each source finds from the folder.
     pub repository: Option<String>,
     /// The file of the user activity records. For user activity.
     pub user_activity_file: PathBuf,
-    /// The folder `projects` of Claude Code. For chat sessions.
-    pub claude_projects_folder: PathBuf,
-    /// The folder of Codex. For chat sessions.
+    /// The folder of the configuration of Claude Code, for example `~/.claude`. For coding agents.
+    pub claude_dir: PathBuf,
+    /// The folder of Codex. For coding agents.
     pub codex_home: PathBuf,
+    /// The folder `.agents` of the home folder, which several coding agents read. For coding agents.
+    pub agents_home: PathBuf,
 }
 
 /// The result of the synchronization of one source.
@@ -114,7 +116,7 @@ fn synchronize_source(
     match source {
         Source::SourceControl => synchronize_source_control(mode, options, log),
         Source::CodeHosting => synchronize_code_hosting(mode, options, log),
-        Source::ChatSessions => synchronize_chat_sessions(mode, options, log),
+        Source::CodingAgents => synchronize_coding_agents(mode, options, log),
         Source::UserActivity => synchronize_user_activity(mode, options, log),
     }
 }
@@ -176,8 +178,9 @@ fn synchronize_code_hosting(
     })
 }
 
-/// Reads the chat sessions of Claude Code and of Codex, with `data_layer_coding_agents`.
-fn synchronize_chat_sessions(
+/// Reads the chat sessions of Claude Code and of Codex, and the configuration of the coding agent, with
+/// `data_layer_coding_agents`.
+fn synchronize_coding_agents(
     mode: SynchronizationMode,
     options: &SynchronizationOptions,
     log: &dyn Fn(&str),
@@ -200,17 +203,22 @@ fn synchronize_chat_sessions(
         layer_mode,
         &repository,
         &root.display().to_string(),
-        &options.claude_projects_folder,
+        &options.claude_dir.join("projects"),
         &options.codex_home,
         &mut database,
         log,
     )?;
-    Ok(SourceReport {
-        source: Source::ChatSessions,
-        mode,
-        repository: Some(report.repository),
-        written_rows: vec![("chat_sessions".to_string(), report.chat_session_count)],
-    })
+    let folders = layer::ConfigurationFolders {
+        root,
+        claude_dir: options.claude_dir.clone(),
+        codex_home: options.codex_home.clone(),
+        agents_home: options.agents_home.clone(),
+    };
+    let mut configuration_database = layer::ConfigurationDatabase::open(&options.database_path)?;
+    let counts = layer::synchronize_configuration(&repository, &folders, &mut configuration_database, log)?;
+    let mut written_rows = vec![("chat_sessions".to_string(), report.chat_session_count)];
+    written_rows.extend(counts.iter().map(|count| (count.kind.table_name().to_string(), count.written_count)));
+    Ok(SourceReport { source: Source::CodingAgents, mode, repository: Some(report.repository), written_rows })
 }
 
 /// Reads the user activity records, with `data_layer_user_activity`.

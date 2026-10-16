@@ -8,9 +8,11 @@ pub const HELP: &str = r#"Usage: heidrun_data <command> [options]
 Gives a coding agent the data of the four data layers of Heidrun, in one SQLite file:
   source_control   the commits of the Git repository         (table commits)
   code_hosting     the issues and the pull requests of GitHub (tables issues, pull_requests)
-  chat_sessions    the chat sessions of Claude Code and Codex (table chat_sessions and
+  coding_agents    the chat sessions of Claude Code and Codex (table chat_sessions and
                    the link tables chat_session_folders, chat_session_issues,
-                   chat_session_pull_requests, chat_session_files)
+                   chat_session_pull_requests, chat_session_files), and the
+                   configuration of the coding agent (tables memory_files,
+                   subagents, skills)
   user_activity    the active periods of the developer        (table user_activity_records)
 
 Commands:
@@ -54,7 +56,7 @@ Exit codes:
 Examples:
   $ heidrun_data sources --format jsonl
   $ heidrun_data update --format jsonl
-  $ heidrun_data update chat_sessions code_hosting --format jsonl
+  $ heidrun_data update coding_agents code_hosting --format jsonl
   $ heidrun_data schema --format jsonl
   $ heidrun_data schema chat_sessions
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
@@ -168,7 +170,7 @@ pub const SYNCHRONIZATION_HELP: &str = r#"Usage: heidrun_data update [<source>..
 update reads only what is new in each source. initialize reads each source since the
 beginning. With no source, both read the four sources. The sources always run in this
 order, whatever the order of the arguments: source_control, code_hosting,
-chat_sessions, user_activity.
+coding_agents, user_activity.
 
 A source that fails does not stop the others. The command prints one report row for
 each source that worked, with the number of rows written in each table, and one error
@@ -178,17 +180,19 @@ at least one source failed.
 The sources:
   source_control             Needs the command git.
   code_hosting               Needs the command gh, signed in.
-  chat_sessions              Reads the folders of Claude Code and of Codex.
+  coding_agents              Reads the folders of Claude Code, of Codex, and
+                             "~/.agents", and the folders ".claude" and ".agents"
+                             of the repository.
   user_activity              Reads the file of the user activity records.
 
 Options:
   --database <path>          The SQLite file. It is created when it does not exist.
                              (default: "~/.config/heidrun/data_layer.sqlite")
   --repository <owner/name>  The name of the repository. For source_control,
-                             code_hosting, and chat_sessions.
+                             code_hosting, and coding_agents.
                              (default: the remote "origin" of the folder)
   --folder <path>            The folder of the Git repository, or a folder inside it.
-                             For source_control, code_hosting, and chat_sessions.
+                             For source_control, code_hosting, and coding_agents.
                              (default: the current folder)
   --file <path>              The file of the user activity records. For user_activity.
                              (default: "user_activity.jsonl" in the folder of the
@@ -203,7 +207,7 @@ An option that a source does not use is not an error: the other sources use it.
 
 Examples:
   $ heidrun_data update --format jsonl
-  $ heidrun_data update chat_sessions --format jsonl
+  $ heidrun_data update coding_agents --format jsonl
   $ heidrun_data initialize source_control --verbose --format jsonl
 "#;
 
@@ -498,7 +502,7 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         let mut sources = Vec::new();
         for name in positionals {
             let source = Source::from_name(&name).ok_or_else(|| {
-                format!("The source {name} is not known: use source_control, code_hosting, chat_sessions, or user_activity.")
+                format!("The source {name} is not known: use source_control, code_hosting, coding_agents, or user_activity.")
             })?;
             sources.push(source);
         }
@@ -568,7 +572,7 @@ mod tests {
                 "initialize",
                 "user_activity",
                 "--database=a.sqlite",
-                "chat_sessions",
+                "coding_agents",
                 "--repository",
                 "owner/name",
                 "--folder",
@@ -581,7 +585,7 @@ mod tests {
             ])),
             Ok(Parsed::Synchronize(SynchronizationRequest {
                 mode: SynchronizationMode::Initialize,
-                sources: vec![Source::ChatSessions, Source::UserActivity],
+                sources: vec![Source::CodingAgents, Source::UserActivity],
                 common: CommonOptions { database: Some("a.sqlite".into()), format: Some(Format::Table), verbose: true },
                 repository: Some("owner/name".into()),
                 folder: Some("/a/folder".into()),

@@ -137,6 +137,7 @@ fn read_catalog_at(path: &Path) -> Result<Vec<TableShape>, String> {
     drop(data_layer_source_control::SourceControlDatabase::open(path)?);
     drop(data_layer_code_hosting::CodeHostingDatabase::open(path)?);
     drop(data_layer_coding_agents::ChatSessionsDatabase::open(path)?);
+    drop(data_layer_coding_agents::ConfigurationDatabase::open(path)?);
     drop(data_layer_user_activity::UserActivityDatabase::open(path)?);
     let connection = Connection::open(path).map_err(|error| format!("The schema cannot be read: {error}"))?;
     all_tables().into_iter().map(|(source, table)| read_table_shape(&connection, source, table)).collect()
@@ -194,7 +195,7 @@ mod tests {
     #[test]
     fn reads_every_table_of_the_four_sources_with_its_columns_and_its_key() {
         let catalog = read_catalog().unwrap();
-        assert_eq!(catalog.len(), 9);
+        assert_eq!(catalog.len(), 12);
         let commits = &catalog[0];
         assert_eq!(commits.table.name, "commits");
         let names: Vec<&str> = commits.columns.iter().map(|column| column.name.as_str()).collect();

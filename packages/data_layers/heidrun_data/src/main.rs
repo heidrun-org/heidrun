@@ -66,8 +66,9 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
         folder: folder_of(&request.folder)?,
         repository: request.repository.clone(),
         user_activity_file: absolute_path(&request.file, || Ok(data_layer_user_activity::default_user_activity_file_path()))?,
-        claude_projects_folder: data_layer_coding_agents::claude_dir().join("projects"),
+        claude_dir: data_layer_coding_agents::claude_dir(),
         codex_home: data_layer_coding_agents::codex_home(),
+        agents_home: data_layer_coding_agents::agents_home(),
     };
     let print_progress = |message: &str| eprintln!("{message}");
     let ignore_progress = |_: &str| {};

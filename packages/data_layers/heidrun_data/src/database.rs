@@ -234,7 +234,7 @@ mod tests {
         assert_eq!(summaries[0].last_updated_at.as_deref(), Some("2026-10-03T10:00:00Z"));
         assert_eq!(summaries[1].tables, vec![("issues".to_string(), 1), ("pull_requests".to_string(), 0)]);
         assert_eq!(summaries[1].last_updated_at.as_deref(), Some("2026-10-02T10:00:00Z"));
-        assert_eq!(summaries[2].tables.len(), 5);
+        assert_eq!(summaries[2].tables.len(), 8);
         assert_eq!(summaries[2].last_updated_at, None);
     }
 
