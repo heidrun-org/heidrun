@@ -24,12 +24,21 @@ import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
+export interface MobileError {
+  /** What went wrong: `ngrokMissing`, `ngrokCannotStart`, `ngrokNoAddress`, `ngrokStopped`, `ngrokNotSignedIn`, `ngrokAddressInUse`, or `cannotListen`. */
+  kind: string;
+  /** The words of the system or of the program ngrok about the problem. It can be empty. */
+  detail: string;
+}
+
 export interface MobileStatus {
   enabled: boolean;
   running: boolean;
   url: string | null;
   qr: string | null;
-  error: string | null;
+  /** The pairing link: the address of the tunnel, then `#t=` and the pairing key. Null when `qr` is null. */
+  link: string | null;
+  error: MobileError | null;
 }
 
 export const mobile = reactive({

@@ -29,12 +29,11 @@ const MAX_BODY_BYTES: usize = 64 * 1024;
 /// What every route needs.
 #[derive(Clone)]
 pub struct Shared {
-    /// The pairing key and the count of the bad keys.
+    /// The pairing key, the host name of the tunnel (a request for any other Host is refused, which stops DNS
+    /// rebinding), and the count of the bad keys.
     pub guard: Arc<Mutex<AccessGuard>>,
     /// The desktop application.
     pub handler: Arc<dyn MobileCallHandler>,
-    /// "100.x.y.z:port": requests for any other Host are refused (DNS rebinding).
-    pub host: Arc<String>,
 }
 
 /// The routes of the server.
@@ -50,7 +49,7 @@ fn authorized(shared: &Shared, headers: &HeaderMap) -> Result<(), Response> {
     let host = header_text(headers, "host");
     let origin = header_text(headers, "origin");
     let given = header_text(headers, "x-herdr-token");
-    let result = shared.guard.lock().unwrap().authorize(&shared.host, host, origin, given, Instant::now());
+    let result = shared.guard.lock().unwrap().authorize(host, origin, given, Instant::now());
     result.map_err(|denial| denial.status_and_text().into_response())
 }
 
@@ -116,7 +115,7 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
     use tower::ServiceExt;
 
-    const HOST: &str = "100.64.0.1:47823";
+    const HOST: &str = "words-of-the-tunnel.ngrok-free.dev";
     const TOKEN: &str = "0123456789abcdef";
 
     /// Answers every call with the name of the method, and counts the calls.
@@ -129,7 +128,7 @@ mod tests {
             self.calls.fetch_add(1, Ordering::Relaxed);
             Box::pin(async move {
                 if method == "read" {
-                    return Err("Heidrun does not answer on the Mac".to_string());
+                    return Err("Heidrun does not answer on the computer".to_string());
                 }
                 Ok(json!({ "method": method, "params": params }))
             })
@@ -140,7 +139,8 @@ mod tests {
         let handler = Arc::new(FakeHandler { calls: AtomicUsize::new(0) });
         let mut guard = AccessGuard::default();
         guard.set_token(token.map(str::to_string));
-        let shared = Shared { guard: Arc::new(Mutex::new(guard)), handler: handler.clone(), host: Arc::new(HOST.to_string()) };
+        guard.set_tunnel_host(Some(HOST.to_string()));
+        let shared = Shared { guard: Arc::new(Mutex::new(guard)), handler: handler.clone() };
         (router(shared), handler)
     }
 
@@ -166,7 +166,7 @@ mod tests {
     #[tokio::test]
     async fn a_paired_call_reaches_the_handler_and_returns_its_answer() {
         let (router, handler) = setup(Some(TOKEN));
-        let response = router.oneshot(api_request(HOST, Some("http://100.64.0.1:47823"), Some(TOKEN), call_body("state"))).await.unwrap();
+        let response = router.oneshot(api_request(HOST, Some("https://words-of-the-tunnel.ngrok-free.dev"), Some(TOKEN), call_body("state"))).await.unwrap();
         assert_eq!(response.status(), StatusCode::OK);
         let bytes = axum::body::to_bytes(response.into_body(), 1024).await.unwrap();
         let answer: Value = serde_json::from_slice(&bytes).unwrap();
@@ -180,7 +180,7 @@ mod tests {
         let response = router.oneshot(api_request(HOST, None, Some(TOKEN), call_body("read"))).await.unwrap();
         assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
         let bytes = axum::body::to_bytes(response.into_body(), 1024).await.unwrap();
-        assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), "Heidrun does not answer on the Mac");
+        assert_eq!(String::from_utf8(bytes.to_vec()).unwrap(), "Heidrun does not answer on the computer");
     }
 
     #[tokio::test]
@@ -206,7 +206,15 @@ mod tests {
     #[tokio::test]
     async fn a_wrong_host_is_refused() {
         let (router, handler) = setup(Some(TOKEN));
-        let status = status_of(router, api_request("evil.example:47823", None, Some(TOKEN), call_body("state"))).await;
+        let status = status_of(router, api_request("evil.example", None, Some(TOKEN), call_body("state"))).await;
+        assert_eq!(status, StatusCode::FORBIDDEN);
+        assert_eq!(handler.calls.load(Ordering::Relaxed), 0);
+    }
+
+    #[tokio::test]
+    async fn the_loopback_address_is_refused_even_with_the_right_key() {
+        let (router, handler) = setup(Some(TOKEN));
+        let status = status_of(router, api_request("127.0.0.1:47823", None, Some(TOKEN), call_body("state"))).await;
         assert_eq!(status, StatusCode::FORBIDDEN);
         assert_eq!(handler.calls.load(Ordering::Relaxed), 0);
     }
@@ -214,7 +222,7 @@ mod tests {
     #[tokio::test]
     async fn a_wrong_origin_is_refused() {
         let (router, handler) = setup(Some(TOKEN));
-        let status = status_of(router, api_request(HOST, Some("http://evil.example"), Some(TOKEN), call_body("state"))).await;
+        let status = status_of(router, api_request(HOST, Some("https://evil.example"), Some(TOKEN), call_body("state"))).await;
         assert_eq!(status, StatusCode::FORBIDDEN);
         assert_eq!(handler.calls.load(Ordering::Relaxed), 0);
     }

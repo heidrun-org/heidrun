@@ -6,7 +6,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 ## Key Exports & Entry Points
 - `raw_coding_agent_cli/`: a Rust library and a command line tool that send one prompt to `codex`, `claude`, or `agy`. See its own CONTEXT.md.
 - `website_public/`: the public website and documentation, built with VitePress. See its own CONTEXT.md.
-- `mobile_server/`: a Rust library that serves the mobile website on the Tailscale address of the Mac, checks the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
+- `mobile_server/`: a Rust library that serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name of the tunnel and the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
 
 ## Rules

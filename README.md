@@ -43,7 +43,7 @@ Think of Valhalla: the coding agents are the einherjar (the warriors who feast a
 - **Inspector.** Allow or deny an agent request in one click, read the context of the agent, and ask another agent to fix a problem.
 - **Quotas in view.** The status bar shows your Claude and Codex quotas. The mead never runs out by surprise.
 - **Command palette.** Press <kbd>⌘</kbd><kbd>K</kbd> for every action. A real Viking does not use the mouse.
-- **Phone access.** Answer a blocked agent from your iPhone, over Tailscale. Valhalla fits in a pocket.
+- **Phone access.** Answer a blocked agent from your phone, through an ngrok tunnel. Valhalla fits in a pocket.
 - **Safe by default.** Dangerous commands ask for confirmation before they run. Even a berserker needs a second thought.
 
 The full list of features, shortcuts, and settings is in the [documentation](https://heidrun-org.github.io/heidrun/documentation/).

@@ -1,6 +1,7 @@
-//! The mobile server of Heidrun: it serves the mobile website on the Tailscale address of the Mac only, checks the
-//! pairing key of every request, and hands each call of the phone to the desktop application through the trait
-//! `MobileCallHandler`. The server knows nothing about coding agents, and nothing about Tauri.
+//! The mobile server of Heidrun: it serves the mobile website on the loopback address only, and an ngrok tunnel (the
+//! program `ngrok`) gives it a fixed public HTTPS address. It checks the host name of the tunnel and the pairing key of every
+//! request, and hands each call of the phone to the desktop application through the trait `MobileCallHandler`. The server
+//! knows nothing about coding agents, and nothing about Tauri.
 
 mod access;
 mod config;
@@ -8,8 +9,8 @@ mod embedded;
 mod handler;
 mod router;
 mod server;
-mod tailscale;
+mod tunnel;
 
 pub use config::{load_config, new_token, save_config, MobileConfig};
 pub use handler::{CallFuture, MobileCallHandler};
-pub use server::{MobileServer, MobileStatus};
+pub use server::{MobileError, MobileErrorKind, MobileServer, MobileStatus};

@@ -20,19 +20,19 @@ Open the address that the command prints (`http://127.0.0.1:5183/#t=...`).
 
 Use this way to see your real coding agents. You need two terminals.
 
-Terminal 1: start Heidrun, and keep it running. Then open the Settings window, and turn on the section "Mobile access". Heidrun restarts only when the calls between the page and the application change.
+Terminal 1: start Heidrun, and keep it running. Then open the Settings window, and turn on the section "Mobile access". The program `ngrok` must be installed and signed in. After a few seconds, the section shows the address of the tunnel, for example `https://words-of-the-tunnel.ngrok-free.dev/`. Copy its host name, which is the text between `https://` and the last `/`. Heidrun restarts only when the calls between the page and the application change.
 
 ```bash
-HEIDRUN_MOBILE_BIND=127.0.0.1 pnpm dev -- -- --no-splash-screen
+pnpm dev -- -- --no-splash-screen
 ```
 
-Terminal 2: start the website, and send its calls to the mobile server inside Heidrun.
+Terminal 2: start the website, and send its calls to the mobile server inside Heidrun. The mobile server answers only the host name of its tunnel, so give that host name in `MOBILE_API_HOST`. The host name is fixed for your ngrok account, so you can keep this command.
 
 ```bash
-MOBILE_API_TARGET=http://127.0.0.1:47823 pnpm --filter mobile_website dev
+MOBILE_API_TARGET=http://127.0.0.1:47823 MOBILE_API_HOST=words-of-the-tunnel.ngrok-free.dev pnpm --filter mobile_website dev
 ```
 
-Open the address that the second command prints (port 5183, with the pairing key). Do not open port 47823 to work on the page: that port serves the last built copy of the page, with no reload.
+Open the address that the second command prints (port 5183, with the pairing key). Do not open port 47823 to work on the page: that port refuses every request that does not come from the tunnel.
 
 ### Open the page on your phone
 

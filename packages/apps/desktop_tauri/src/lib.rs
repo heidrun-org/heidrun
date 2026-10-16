@@ -404,6 +404,7 @@ pub fn run() {
             // The app leaves for good: the Herdr session of Heidrun stops with it, like the processes of a normal macOS app.
             if let tauri::RunEvent::Exit = event {
                 herdr::stop_session_on_quit(KEEP_AGENTS_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
+                mobile::stop_on_quit(app);
             }
         });
 }

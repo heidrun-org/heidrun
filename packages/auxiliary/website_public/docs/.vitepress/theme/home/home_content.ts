@@ -323,8 +323,8 @@ export const FEATURES: HomeFeatureSection[] = [
 		id: 'valhalla-fits-in-a-pocket',
 		title: 'Valhalla fits in a pocket',
 		paragraphs: [
-			'Leave your desk. From your iPhone, see which coding agent waits, allow or refuse its request, send a prompt, and read the end of its output.',
-			'The phone access works only through Tailscale, never on the open Internet. Each phone pairs once, with a QR code.',
+			'Leave your desk. From your phone, see which coding agent waits, allow or refuse its request, send a prompt, and read the end of its output.',
+			'The phone connects through an ngrok tunnel, and every call needs a pairing key. Each phone pairs once, with a QR code.',
 		],
 		joke: 'Go get your coffee. Your coding agents will find you.',
 		readMore: {

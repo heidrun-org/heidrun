@@ -2,7 +2,7 @@
 //! phone to the app's window (event "mobile-call"), which answers with the same logic as the desktop UI (labels,
 //! menus, guards) through `mobile_reply`.
 //!
-//! The server itself (the Tailscale address, the pairing key, the page) is the package `mobile_server`.
+//! The server itself (the loopback address, the ngrok tunnel, the pairing key, the page) is the package `mobile_server`.
 
 use mobile_server::{CallFuture, MobileCallHandler, MobileServer, MobileStatus};
 use serde_json::{json, Value};
@@ -52,7 +52,7 @@ async fn call(app: &AppHandle, method: &str, params: Value) -> Result<Value, Str
         Ok(Ok(v)) => Ok(v),
         _ => {
             state.pending.lock().unwrap().remove(&id);
-            Err("Heidrun does not answer on the Mac".into())
+            Err("Heidrun does not answer on the computer".into())
         }
     }
 }
@@ -60,6 +60,11 @@ async fn call(app: &AppHandle, method: &str, params: Value) -> Result<Value, Str
 fn start(app: &AppHandle, state: &MobileState, config: &mobile_server::MobileConfig) {
     let bridge = Arc::new(WindowBridge { app: app.clone() });
     tauri::async_runtime::spawn(state.server.start(bridge, config));
+}
+
+/// Called when Heidrun quits: the server stops and the program `ngrok` is killed, so no tunnel stays open.
+pub fn stop_on_quit(app: &AppHandle) {
+    app.state::<MobileState>().server.stop();
 }
 
 /// Called at launch: the access comes back if it was on.
@@ -102,16 +107,15 @@ pub fn mobile_disable(state: State<'_, MobileState>) -> Result<MobileStatus, Str
     Ok(status_of(&state))
 }
 
-/// New token: every paired phone has to scan the QR code again.
+/// New token: every paired phone has to scan the QR code again. The tunnel stays open with the same address.
 #[tauri::command]
-pub async fn mobile_revoke(app: AppHandle, state: State<'_, MobileState>) -> Result<MobileStatus, String> {
+pub fn mobile_revoke(state: State<'_, MobileState>) -> Result<MobileStatus, String> {
     let mut config = mobile_server::load_config();
     config.token = mobile_server::new_token()?;
     mobile_server::save_config(&config)?;
     if config.enabled {
         // The new token applies at once, even to connections still open.
-        start(&app, &state, &config);
-        tokio::time::sleep(Duration::from_millis(400)).await;
+        state.server.replace_token(&config.token);
     }
     Ok(status_of(&state))
 }
