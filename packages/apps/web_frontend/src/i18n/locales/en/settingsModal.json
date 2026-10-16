@@ -5,13 +5,10 @@
   "closeLabel": "Close (Escape)",
   "general": "General",
   "terminal": "Terminal",
-  "newTab": "New tab",
-  "mouse": "Mouse",
-  "finishedItems": "Finished items",
+  "agents": "Coding agents",
+  "confirmations": "Confirmations",
   "notifications": "Notifications",
-  "mobileAccess": "Mobile access",
-  "agents": "Agents",
-  "pastChats": "Past chats",
+  "sidebars": "Sidebars",
   "dynamicTopics": "Dynamic topics",
-  "needsYou": "Needs you"
+  "mobileAccess": "Mobile access"
 }

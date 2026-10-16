@@ -20,13 +20,12 @@ class SettingsBootstrapTestHelper {
 	static readonly FILE_NAMES = [
 		'SettingsModal.vue',
 		'settings/SettingsAgentsSection.vue',
+		'settings/SettingsConfirmationsSection.vue',
 		'settings/SettingsDynamicTopicsSection.vue',
-		'settings/SettingsFinishedItemsSection.vue',
 		'settings/SettingsGeneralSection.vue',
 		'settings/SettingsMobileAccessSection.vue',
-		'settings/SettingsMouseSection.vue',
-		'settings/SettingsNewTabSection.vue',
 		'settings/SettingsNotificationsSection.vue',
+		'settings/SettingsSidebarsSection.vue',
 		'settings/SettingsSwitchRow.vue',
 		'settings/SettingsTerminalSection.vue',
 	];

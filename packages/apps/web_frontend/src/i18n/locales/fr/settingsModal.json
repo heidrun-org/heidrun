@@ -5,13 +5,10 @@
   "closeLabel": "Fermer (Échap)",
   "general": "Général",
   "terminal": "Terminal",
-  "newTab": "Nouvel onglet",
-  "mouse": "Souris",
-  "finishedItems": "Éléments terminés",
+  "agents": "Agents de code",
+  "confirmations": "Confirmations",
   "notifications": "Notifications",
-  "mobileAccess": "Accès mobile",
-  "agents": "Agents",
-  "pastChats": "Conversations passées",
+  "sidebars": "Barres latérales",
   "dynamicTopics": "Sujets dynamiques",
-  "needsYou": "Vous attend"
+  "mobileAccess": "Accès mobile"
 }

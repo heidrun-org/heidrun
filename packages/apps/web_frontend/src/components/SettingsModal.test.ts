@@ -22,36 +22,43 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the sections in the sidebar, with the section Needs you after the section Finished items, the section Past chats before the section Dynamic topics, the section Dynamic topics at the end, and without the section Skills", async () => {
+  it("lists the eight sections in the sidebar, by topic (issue #556), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "New tab", "Mouse", "Finished items", "Needs you", "Notifications", "Mobile access", "Agents", "Past chats", "Dynamic topics"]);
+    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Notifications", "Sidebars", "Dynamic topics", "Mobile access"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
     await links[3].trigger("click");
-    expect(wrapper.get("h3").text()).toBe("Mouse");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false, false]);
+    expect(wrapper.get("h3").text()).toBe("Confirmations");
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false]);
     expect(links[3].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
     wrapper.unmount();
   });
 });
 
-describe("SettingsModal: section Past chats (issue #442)", () => {
-  it("opens the section Past chats with the delay between two reads of the chats, and the icon of the Past chats sidebar section", async () => {
+describe("SettingsModal: section Sidebars (issues #442 and #556)", () => {
+  it("opens the section Sidebars with one heading for each sidebar section: Needs you, Past chats, and Source control", async () => {
     const { settingsModal } = await import("../stores/settings");
-    settingsModal.section = "pastChats";
+    settingsModal.section = "sidebars";
     const wrapper = await mountSettings();
-    expect(wrapper.get("section h3").text()).toBe("Past chats");
-    expect(wrapper.findAll("section .btn-group label").map((label) => label.text())).toEqual(["5 seconds", "10 seconds", "30 seconds", "1 minute"]);
-    const link = wrapper.findAll("nav .nav-link").find((entry) => entry.text() === "Past chats");
-    expect(link?.find(".bi-chat-left-text").exists()).toBe(true);
+    expect(wrapper.get("section h3").text()).toBe("Sidebars");
+    expect(wrapper.findAll("section h4").map((heading) => heading.text())).toEqual(["Needs you", "Past chats", "Source control"]);
+    wrapper.unmount();
+  });
+
+  it("opens the section Coding agents when another part of the application asks for the section by its identifier agents", async () => {
+    const { openSettings, settingsModal } = await import("../stores/settings");
+    openSettings("agents");
+    const wrapper = await mountSettings();
+    expect(settingsModal.section).toBe("agents");
+    expect(wrapper.get("section h3").text()).toBe("Coding agents");
     wrapper.unmount();
   });
 });
@@ -101,16 +108,15 @@ describe("SettingsModal: frame (issue #412)", () => {
   });
 });
 
-describe("SettingsModal: section New tab (issue #328)", () => {
+describe("SettingsModal: command of a new tab, in the section Coding agents (issues #328 and #556)", () => {
   it("shows the three commands as a Bootstrap button group of radio inputs, in the secondary color, with Terminal chosen by default", async () => {
     const wrapper = await mountSettings();
     const { settingsModal } = await import("../stores/settings");
-    settingsModal.section = "newTab";
+    settingsModal.section = "agents";
     await flushPromises();
-    expect(wrapper.get("h3").text()).toBe("New tab");
-    const group = wrapper.get(".btn-group");
+    expect(wrapper.get("h3").text()).toBe("Coding agents");
+    const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
     expect(group.attributes("role")).toBe("group");
-    expect(group.attributes("aria-label")).toBe("Default command of a new tab");
     const labels = group.findAll("label");
     expect(labels.map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
     for (const label of labels) {
@@ -128,9 +134,9 @@ describe("SettingsModal: section New tab (issue #328)", () => {
   ] as const)("saves the command of the radio input %i as %s", async (index, command) => {
     const wrapper = await mountSettings();
     const { settings, settingsModal } = await import("../stores/settings");
-    settingsModal.section = "newTab";
+    settingsModal.section = "agents";
     await flushPromises();
-    const radios = wrapper.get(".btn-group").findAll("input[type=radio]");
+    const radios = wrapper.get('.btn-group[aria-label="Default command of a new tab"]').findAll("input[type=radio]");
     await radios[index].setValue(true);
     expect(settings.newTabCommand).toBe(command);
     expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([0, 1, 2].map((position) => position === index));
@@ -182,13 +188,13 @@ describe("SettingsModal: status item", () => {
   });
 });
 
-describe("SettingsModal: section Needs you", () => {
+describe("SettingsModal: heading Needs you of the section Sidebars (issues #417 and #556)", () => {
   it("shows a switch for the list of workspaces, switched on by default, and saves the choice", async () => {
     const wrapper = await mountSettings();
     const { settings, settingsModal } = await import("../stores/settings");
-    settingsModal.section = "needsYou";
+    settingsModal.section = "sidebars";
     await flushPromises();
-    expect(wrapper.get("section h3").text()).toBe("Needs you");
+    expect(wrapper.get("section h3").text()).toBe("Sidebars");
     const label = wrapper.findAll("label").find((candidate) => candidate.text() === "Show the workspaces");
     expect(label).toBeDefined();
     const checkbox = wrapper.get(`input[id="${label!.attributes("for")}"]`);
@@ -201,12 +207,12 @@ describe("SettingsModal: section Needs you", () => {
     wrapper.unmount();
   });
 
-  it("uses a different icon than the section Notifications, because the bell is the icon of the Needs you sidebar section", async () => {
+  it("uses a different icon for the section Sidebars than for the section Notifications, because the bell is the icon of the Needs you sidebar section", async () => {
     const wrapper = await mountSettings();
     const icons = wrapper.findAll("nav .nav-link").map((entry) => entry.get("i").classes().find((name) => name.startsWith("bi-")));
-    const needsYouIcon = icons[5];
-    const notificationsIcon = icons[6];
-    expect(needsYouIcon).toBe("bi-layout-sidebar-inset-reverse");
+    const sidebarsIcon = icons[5];
+    const notificationsIcon = icons[4];
+    expect(sidebarsIcon).toBe("bi-layout-sidebar-inset-reverse");
     expect(notificationsIcon).toBe("bi-bell");
     wrapper.unmount();
   });
