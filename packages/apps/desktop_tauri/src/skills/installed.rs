@@ -126,7 +126,7 @@ mod tests {
         let skills = list_level("workspace", cwd_of(&workspace).as_deref());
         let names: Vec<_> = skills.iter().map(|s| s.name.as_str()).collect();
         assert_eq!(names, ["pdf", "release-notes"]);
-        assert_eq!(skills[0].origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: None }));
+        assert_eq!(skills[0].origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: None, folder_path: None }));
         assert_eq!(skills[0].description, "Read PDF files.");
         assert_eq!(skills[0].agents, ["codex"]);
         assert_eq!(skills[1].origin, None);

@@ -396,6 +396,8 @@ pub fn run() {
             skills::install::skills_install,
             skills::install::skills_preview_folder,
             skills::install::skills_install_folder,
+            skills::install::skills_preview_local_folder,
+            skills::install::skills_install_local_folder,
             skills::agent_folders::skills_link_agent,
         ])
         .build(tauri::generate_context!())

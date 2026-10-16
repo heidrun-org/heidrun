@@ -25,6 +25,10 @@ function onKey(e: KeyboardEvent) {
     return;
   }
   if (e.key === "Escape") {
+    // An open information card closes first: the key reaches the card, which closes alone.
+    if (e.target instanceof Element && e.target.closest(".information-card-part.is-open") !== null) {
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     emit("close");

@@ -59,4 +59,22 @@ describe("SkillsLevelSwitch", () => {
     const radios = wrapper.findAll(".levelChoice input[type=radio]");
     expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false]);
   });
+
+  it("has the title Installation level, with a circled question mark and one line of help", async () => {
+    const { wrapper } = await mountSwitch();
+    expect(wrapper.get(".title").text()).toBe("Installation level");
+    expect(wrapper.find(".title .bi-question-circle").exists()).toBe(true);
+    expect(wrapper.get(".keys").text()).toBe("Where a new skill is installed");
+  });
+
+  it("opens an information card with the blocks What it is, User, Workspace, and Coding agents", async () => {
+    const { wrapper } = await mountSwitch();
+    await wrapper.get(".information-card-part").trigger("click");
+    expect(wrapper.findAll("[data-help-block] .fw-medium").map((title) => title.text())).toEqual([
+      "What it is",
+      "User",
+      "Workspace",
+      "Coding agents",
+    ]);
+  });
 });

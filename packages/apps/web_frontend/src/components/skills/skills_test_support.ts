@@ -22,7 +22,15 @@ export const RESULT = { source: "anthropics/skills", skillId: "docx", name: "doc
 
 /** The web address of a skill folder on GitHub, and the one result that the window shows for it. */
 export const FOLDER_URL = "https://github.com/anthropics/skills/tree/main/skills/pdf";
-export const FOLDER_RESULT = { source: "anthropics/skills", skillId: "pdf", name: "pdf", installs: 0, folderUrl: FOLDER_URL };
+export const FOLDER_RESULT = { source: "anthropics/skills", skillId: "pdf", name: "pdf", installs: 0, folderUrl: FOLDER_URL, host: "github" as const };
+
+/** The web address of a skill folder on GitLab, and the one result that the window shows for it. */
+export const GITLAB_URL = "https://gitlab.com/acme/agent-skills/-/tree/main/skills/pdf";
+export const GITLAB_RESULT = { source: "acme/agent-skills", skillId: "pdf", name: "pdf", installs: 0, folderUrl: GITLAB_URL, host: "gitlab" as const };
+
+/** The full path of a skill folder on this computer, and the one result that the window shows for it. */
+export const LOCAL_PATH = "/Users/me/skills/pdf";
+export const LOCAL_RESULT = { source: "", skillId: "pdf", name: "pdf", installs: 0, folderPath: LOCAL_PATH };
 
 /**
  * Makes the fake backend answer the commands, selects a workspace, and loads the skills store.

@@ -1,12 +1,25 @@
-//! The web address of a skill folder in a GitHub repository, read as text. Pure functions: no input or output.
+//! The web address of a skill folder in a GitHub or GitLab repository, read as text. Pure functions: no input or output.
 
-use super::types::{is_valid_name, is_valid_source};
+use super::types::{is_valid_gitlab_source, is_valid_name, is_valid_source};
 
-/// A web address of a folder of a public GitHub repository, as shown by GitHub:
-/// `https://github.com/<owner>/<repository>/tree/<branch>/<path of the folder>`.
+/// The code hosting service that holds the repository of a skill folder.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub(super) enum CodeHost {
+    /// github.com
+    GitHub,
+    /// gitlab.com
+    GitLab,
+}
+
+/// A web address of a folder of a public repository, as shown by GitHub or GitLab:
+/// `https://github.com/<owner>/<repository>/tree/<branch>/<path of the folder>`, or
+/// `https://gitlab.com/<group>/<project>/-/tree/<branch>/<path of the folder>`. A GitLab project can be in subgroups:
+/// `https://gitlab.com/<group>/<subgroup>/<project>/-/tree/<branch>/<path of the folder>`.
 #[derive(Debug, PartialEq, Clone)]
 pub(super) struct FolderAddress {
-    /// The GitHub repository, as `owner/repository`.
+    /// The service that holds the repository.
+    pub(super) host: CodeHost,
+    /// The repository: `owner/repository` on GitHub, `group/project` (with the subgroups) on GitLab.
     pub(super) source: String,
     /// The parts of the address after `tree/`: the branch, then the path of the folder. A branch name can hold slashes,
     /// so the address alone does not say where the branch ends. At least two parts.
@@ -21,7 +34,10 @@ impl FolderAddress {
 
     /// The address in its normal form, without a query, a fragment, or a slash at the end.
     pub(super) fn url(&self) -> String {
-        format!("https://github.com/{}/tree/{}", self.source, self.parts.join("/"))
+        match self.host {
+            CodeHost::GitHub => format!("https://github.com/{}/tree/{}", self.source, self.parts.join("/")),
+            CodeHost::GitLab => format!("https://gitlab.com/{}/-/tree/{}", self.source, self.parts.join("/")),
+        }
     }
 
     /// The parts of the address after `tree/`, joined by slashes, as raw.githubusercontent.com reads them.
@@ -50,21 +66,36 @@ fn is_valid_part(part: &str) -> bool {
 pub(super) fn parse_folder_address(text: &str) -> Result<FolderAddress, String> {
     let invalid = || format!("skills_invalid_address: {}", text.trim());
     let trimmed = text.trim();
-    let rest = trimmed
-        .strip_prefix("https://github.com/")
-        .or_else(|| trimmed.strip_prefix("https://www.github.com/"))
-        .ok_or_else(invalid)?;
-    let rest = rest.split(['?', '#']).next().unwrap_or_default().trim_end_matches('/');
-    let mut parts = rest.split('/');
-    let (Some(owner), Some(repository), Some("tree")) = (parts.next(), parts.next(), parts.next()) else {
+    let (host, rest) = if let Some(rest) = trimmed.strip_prefix("https://github.com/").or_else(|| trimmed.strip_prefix("https://www.github.com/")) {
+        (CodeHost::GitHub, rest)
+    } else if let Some(rest) = trimmed.strip_prefix("https://gitlab.com/") {
+        (CodeHost::GitLab, rest)
+    } else {
         return Err(invalid());
     };
-    let source = format!("{owner}/{repository}");
-    let parts: Vec<String> = parts.map(str::to_string).collect();
-    if is_valid_source(&source) == false || parts.len() < 2 || parts.iter().all(|part| is_valid_part(part)) == false {
+    let rest = rest.split(['?', '#']).next().unwrap_or_default().trim_end_matches('/');
+    let (source, after_tree) = match host {
+        CodeHost::GitHub => {
+            let mut parts = rest.splitn(4, '/');
+            let (Some(owner), Some(repository), Some("tree"), Some(after_tree)) = (parts.next(), parts.next(), parts.next(), parts.next()) else {
+                return Err(invalid());
+            };
+            (format!("{owner}/{repository}"), after_tree)
+        }
+        CodeHost::GitLab => {
+            let (project, after_tree) = rest.split_once("/-/tree/").ok_or_else(invalid)?;
+            (project.to_string(), after_tree)
+        }
+    };
+    let parts: Vec<String> = after_tree.split('/').map(str::to_string).collect();
+    let is_valid_repository = match host {
+        CodeHost::GitHub => is_valid_source(&source),
+        CodeHost::GitLab => is_valid_gitlab_source(&source),
+    };
+    if is_valid_repository == false || parts.len() < 2 || parts.iter().all(|part| is_valid_part(part)) == false {
         return Err(invalid());
     }
-    let address = FolderAddress { source, parts };
+    let address = FolderAddress { host, source, parts };
     if is_valid_name(address.skill_id()) == false {
         return Err(invalid());
     }
@@ -76,7 +107,7 @@ mod tests {
     use super::*;
 
     fn address(parts: &[&str]) -> FolderAddress {
-        FolderAddress { source: "anthropics/skills".into(), parts: parts.iter().map(|part| part.to_string()).collect() }
+        FolderAddress { host: CodeHost::GitHub, source: "anthropics/skills".into(), parts: parts.iter().map(|part| part.to_string()).collect() }
     }
 
     #[test]
@@ -129,6 +160,44 @@ mod tests {
             "https://github.com/anthropics/skills/tree/main:x/pdf",
         ] {
             assert!(parse_folder_address(text).is_err(), "{text}");
+        }
+    }
+
+    fn gitlab_address(source: &str, parts: &[&str]) -> FolderAddress {
+        FolderAddress { host: CodeHost::GitLab, source: source.into(), parts: parts.iter().map(|part| part.to_string()).collect() }
+    }
+
+    #[test]
+    fn reads_the_address_of_a_skill_folder_on_gitlab() {
+        let parsed = parse_folder_address("https://gitlab.com/acme/agent-skills/-/tree/main/skills/pdf").unwrap();
+        assert_eq!(parsed, gitlab_address("acme/agent-skills", &["main", "skills", "pdf"]));
+        assert_eq!(parsed.skill_id(), "pdf");
+        assert_eq!(parsed.url(), "https://gitlab.com/acme/agent-skills/-/tree/main/skills/pdf");
+    }
+
+    #[test]
+    fn reads_the_address_of_a_gitlab_project_in_subgroups_and_a_branch_with_slashes() {
+        let parsed = parse_folder_address(" https://gitlab.com/acme/team/tools/-/tree/feature/skills/skills/pdf/?ref_type=heads#top ").unwrap();
+        assert_eq!(parsed.source, "acme/team/tools");
+        assert_eq!(parsed.parts, ["feature", "skills", "skills", "pdf"]);
+        assert_eq!(parsed.split(2), ("feature/skills".to_string(), "skills/pdf".to_string()));
+        assert_eq!(parsed.url(), "https://gitlab.com/acme/team/tools/-/tree/feature/skills/skills/pdf");
+    }
+
+    #[test]
+    fn refuses_a_text_that_is_not_the_address_of_a_folder_on_gitlab() {
+        for text in [
+            "https://gitlab.com/acme/agent-skills",
+            "https://gitlab.com/acme/agent-skills/-/tree/main",
+            "https://gitlab.com/acme/agent-skills/-/blob/main/skills/pdf/SKILL.md",
+            "https://gitlab.com/acme/-/tree/main/skills/pdf",
+            "https://gitlab.com/acme//agent-skills/-/tree/main/skills/pdf",
+            "http://gitlab.com/acme/agent-skills/-/tree/main/skills/pdf",
+            "https://gitlab.com.evil.example/acme/agent-skills/-/tree/main/skills/pdf",
+            "https://gitlab.com/acme/agent-skills/-/tree/main/../pdf",
+            "https://gitlab.com/acme/agent-skills/-/tree/main/skills/.hidden",
+        ] {
+            assert_eq!(parse_folder_address(text), Err(format!("skills_invalid_address: {text}")), "{text}");
         }
     }
 }

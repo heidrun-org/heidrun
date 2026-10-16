@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import SkillsHelpCard from "./SkillsHelpCard.vue";
 import { settings } from "../../stores/settings";
 import { t } from "../../i18n/index";
 </script>
@@ -6,7 +7,10 @@ import { t } from "../../i18n/index";
 <template>
   <div class="level">
     <div>
-      <div class="title">{{ t("settingsSkills.levelTitle") }}</div>
+      <div class="title d-flex align-items-center gap-2">
+        {{ t("settingsSkills.help_level_title") }}
+        <SkillsHelpCard topic="level" />
+      </div>
       <div class="keys">{{ t("settingsSkills.levelHelp") }}</div>
     </div>
     <div class="btn-group levelChoice" role="group" :aria-label="t('settingsSkills.levelLabel')">
