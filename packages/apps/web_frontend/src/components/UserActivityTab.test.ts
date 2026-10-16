@@ -189,12 +189,6 @@ describe("UserActivityTab: the slot length", () => {
   it("has a Bootstrap radio button group of slot lengths for each time range, with the default slot length chosen", async () => {
     const { wrapper } = await mountUserActivityTab([]);
     expect(buttonsOf(wrapper, "Slot length").map((button) => [button.text, button.isChecked])).toEqual([
-      ["1 minute", false],
-      ["5 minutes", true],
-      ["10 minutes", false],
-    ]);
-    await wrapper.get("#statistics-range-day").setValue(true);
-    expect(buttonsOf(wrapper, "Slot length").map((button) => [button.text, button.isChecked])).toEqual([
       ["15 minutes", false],
       ["30 minutes", false],
       ["1 hour", true],
@@ -205,39 +199,26 @@ describe("UserActivityTab: the slot length", () => {
       ["6 hours", false],
       ["1 day", true],
     ]);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    expect(buttonsOf(wrapper, "Slot length").map((button) => [button.text, button.isChecked])).toEqual([
+      ["6 hours", false],
+      ["1 day", true],
+    ]);
     for (const button of buttonsOf(wrapper, "Slot length")) {
       expect(button.input.attributes("type")).toBe("radio");
     }
   });
 
-  it("draws sixty bars of one minute for the last hour, with a vertical axis in seconds from 0 to 60", async () => {
+  it("draws twenty-four bars of one hour at first, then ninety-six bars of fifteen minutes and forty-eight bars of thirty minutes for the last day", async () => {
     const { wrapper } = await mountUserActivityTab([]);
     await waitForDrawings(1);
-    await chooseSlotLength(wrapper, "one_minute", 2);
-    const drawing = lastDrawing();
-    expect(drawing.data.x).toHaveLength(60);
-    expect(drawing.layout.yaxis.range).toEqual([0, 60]);
-    expect(drawing.layout.yaxis.title.text).toBe("Seconds of activity");
-  });
-
-  it("draws six bars of ten minutes for the last hour, with a vertical axis from 0 to 10 minutes", async () => {
-    const { wrapper } = await mountUserActivityTab([]);
-    await waitForDrawings(1);
-    await chooseSlotLength(wrapper, "ten_minutes", 2);
-    expect(lastDrawing().data.x).toHaveLength(6);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 10]);
-    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity");
-  });
-
-  it("draws ninety-six bars of fifteen minutes and forty-eight bars of thirty minutes for the last day", async () => {
-    const { wrapper } = await mountUserActivityTab([]);
-    await waitForDrawings(1);
-    await wrapper.get("#statistics-range-day").setValue(true);
-    await waitForDrawings(2);
-    await chooseSlotLength(wrapper, "fifteen_minutes", 3);
+    expect(lastDrawing().data.x).toHaveLength(24);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 60]);
+    await chooseSlotLength(wrapper, "fifteen_minutes", 2);
     expect(lastDrawing().data.x).toHaveLength(96);
     expect(lastDrawing().layout.yaxis.range).toEqual([0, 15]);
-    await chooseSlotLength(wrapper, "thirty_minutes", 4);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity");
+    await chooseSlotLength(wrapper, "thirty_minutes", 3);
     expect(lastDrawing().data.x).toHaveLength(48);
     expect(lastDrawing().layout.yaxis.range).toEqual([0, 30]);
   });
@@ -256,28 +237,48 @@ describe("UserActivityTab: the slot length", () => {
     expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity");
   });
 
+  it("draws thirty bars of one day at first, and one hundred twenty bars of six hours, for the last month", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    await waitForDrawings(2);
+    expect(lastDrawing().data.x).toHaveLength(30);
+    expect(lastDrawing().layout.yaxis.autorange).toBe(true);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity");
+    await chooseSlotLength(wrapper, "six_hours", 3);
+    expect(lastDrawing().data.x).toHaveLength(120);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 6]);
+    await chooseSlotLength(wrapper, "one_day", 4);
+    expect(lastDrawing().data.x).toHaveLength(30);
+  });
+
   it("goes back to the default slot length of a time range each time that the time range changes", async () => {
     const { wrapper } = await mountUserActivityTab([]);
     await waitForDrawings(1);
-    await chooseSlotLength(wrapper, "one_minute", 2);
-    await wrapper.get("#statistics-range-day").setValue(true);
+    await chooseSlotLength(wrapper, "thirty_minutes", 2);
+    await wrapper.get("#statistics-range-week").setValue(true);
     expect(buttonsOf(wrapper, "Slot length").map((button) => button.isChecked)).toEqual([false, false, true]);
     await waitForDrawings(3);
+    expect(lastDrawing().data.x).toHaveLength(7);
+    await chooseSlotLength(wrapper, "six_hours", 4);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    expect(buttonsOf(wrapper, "Slot length").map((button) => button.isChecked)).toEqual([false, true]);
+    await waitForDrawings(5);
+    expect(lastDrawing().data.x).toHaveLength(30);
+    await wrapper.get("#statistics-range-day").setValue(true);
+    expect(buttonsOf(wrapper, "Slot length").map((button) => button.isChecked)).toEqual([false, false, true]);
+    await waitForDrawings(6);
     expect(lastDrawing().data.x).toHaveLength(24);
-    await wrapper.get("#statistics-range-hour").setValue(true);
-    expect(buttonsOf(wrapper, "Slot length").map((button) => button.isChecked)).toEqual([false, true, false]);
-    await waitForDrawings(4);
-    expect(lastDrawing().data.x).toHaveLength(12);
   });
 
-  it("gives the same total of user activity time to every slot length of the last hour", async () => {
+  it("gives the same total of user activity time to every slot length of the last day", async () => {
     const { wrapper } = await mountUserActivityTab([recordOf(OPEN_FOLDER, 20 * 60_000, 4 * 60_000 + 30_000)]);
     await waitForDrawings(1);
     expect(sumOfBars()).toBeCloseTo(4.5, 5);
-    await chooseSlotLength(wrapper, "ten_minutes", 2);
+    await chooseSlotLength(wrapper, "thirty_minutes", 2);
     expect(sumOfBars()).toBeCloseTo(4.5, 5);
-    await chooseSlotLength(wrapper, "one_minute", 3);
-    expect(sumOfBars() * 1000).toBeCloseTo(4.5 * 60 * 1000, 3);
+    await chooseSlotLength(wrapper, "fifteen_minutes", 3);
+    expect(sumOfBars()).toBeCloseTo(4.5, 5);
   });
 
   it("labels the horizontal axis with at most thirteen labels, and labels the days of the last week with slots of one hour", async () => {
@@ -290,6 +291,30 @@ describe("UserActivityTab: the slot length", () => {
     expect(tickvals).toHaveLength(ticktext.length);
     expect(tickvals.length).toBeGreaterThanOrEqual(6);
     expect(lastDrawing().layout.xaxis.title.text).toBe("Start of the slot");
+  });
+
+  it("labels every third day of the last month, with ten labels for slots of one day and for slots of six hours", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    await waitForDrawings(2);
+    expect(lastDrawing().layout.xaxis.tickvals).toHaveLength(10);
+    expect(lastDrawing().layout.xaxis.tickvals[9]).toBe(29);
+    expect(lastDrawing().layout.xaxis.title.text).toBe("Day");
+    await chooseSlotLength(wrapper, "six_hours", 3);
+    expect(lastDrawing().layout.xaxis.tickvals).toHaveLength(10);
+    expect(lastDrawing().layout.xaxis.tickvals).toHaveLength(lastDrawing().layout.xaxis.ticktext.length);
+    expect(lastDrawing().layout.xaxis.title.text).toBe("Start of the slot");
+  });
+
+  it("writes the day and the clock in the tooltip of a slot of six hours of the last month", async () => {
+    const { wrapper } = await mountUserActivityTab([recordOf(OPEN_FOLDER, 2 * HOUR_MS, 30 * 60_000)]);
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    await chooseSlotLength(wrapper, "six_hours", 3);
+    await hoverSlot(firstSlotWithTime());
+    expect(tooltipOf(wrapper)?.title).toMatch(/^.+, .+ to .+$/);
+    expect(tooltipOf(wrapper)?.total).toMatch(/^\d+ h \d+ min$/);
   });
 
   it("writes the day and the clock in the tooltip of a slot of one hour of the last week, and the hours in the tooltip of a slot of six hours", async () => {
@@ -309,13 +334,13 @@ describe("UserActivityTab: the slot length", () => {
   it("reads the data layer only once for all the choices, from the start of the oldest slot of any choice", async () => {
     const { wrapper } = await mountUserActivityTab([]);
     await waitForDrawings(1);
-    await chooseSlotLength(wrapper, "one_minute", 2);
+    await chooseSlotLength(wrapper, "thirty_minutes", 2);
     await wrapper.get("#statistics-range-week").setValue(true);
     await chooseSlotLength(wrapper, "six_hours", 4);
     const calls = invoke.mock.calls.filter((call) => call[0] === "user_activity_records_in_range");
     expect(calls).toHaveLength(1);
     const { since, until } = calls[0][1] as { since: string; until: string };
-    expect(Date.parse(until) - Date.parse(since)).toBeGreaterThanOrEqual(167 * HOUR_MS);
+    expect(Date.parse(until) - Date.parse(since)).toBeGreaterThanOrEqual(713 * HOUR_MS);
   });
 });
 
@@ -381,10 +406,10 @@ describe("UserActivityTab: the workspaces", () => {
     const { wrapper } = await mountUserActivityTab(records());
     await waitForDrawings(1);
     await wrapper.get("#statistics-workspace-1").setValue(false);
-    await wrapper.get("#statistics-range-day").setValue(true);
-    await chooseSlotLength(wrapper, "thirty_minutes", 4);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await chooseSlotLength(wrapper, "six_hours", 4);
     expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([false, true, false]);
-    expect(sumOfBars()).toBeCloseTo(4, 5);
+    expect(sumOfBars()).toBeCloseTo(4 / 60, 5);
   });
 
   it("counts the running active period only while its workspace is chosen", async () => {
@@ -410,7 +435,7 @@ describe("UserActivityTab: the workspaces", () => {
     const { wrapper } = await mountUserActivityTab([]);
     await waitForDrawings(1);
     expect(wrapper.find('[role="group"][aria-label="Workspaces"]').exists()).toBe(false);
-    expect(lastDrawing().data.x).toHaveLength(12);
+    expect(lastDrawing().data.x).toHaveLength(24);
   });
 
   it("shows an error message when the records cannot be read", async () => {
@@ -429,14 +454,21 @@ describe("UserActivityTab: the workspaces", () => {
 });
 
 describe("UserActivityTab: the stacked bars", () => {
-  /** The length of a slot of the last hour at first: five minutes. */
-  const SLOT_MS = 5 * 60_000;
+  /** The length of a slot of the last day at first: one hour. */
+  const SLOT_MS = HOUR_MS;
 
-  /** A record of an active period inside the slot before the current slot, so that no slot limit cuts it. */
-  function recordInPreviousSlot(workspaceFolder: string, offsetInSeconds: number, durationInSeconds: number) {
+  /**
+   * A record of an active period inside a slot before the current slot, so that no slot limit cuts it.
+   *
+   * @param workspaceFolder - The folder of the workspace of the record.
+   * @param offsetInSeconds - The start of the period, in seconds after the start of the slot.
+   * @param durationInSeconds - The length of the period, in seconds.
+   * @param slotsBefore - How many slots before the current slot: 1 is the slot just before the current slot.
+   */
+  function recordInPreviousSlot(workspaceFolder: string, offsetInSeconds: number, durationInSeconds: number, slotsBefore = 1) {
     const currentSlotStartedAt = new Date();
-    currentSlotStartedAt.setMinutes(Math.floor(currentSlotStartedAt.getMinutes() / 5) * 5, 0, 0);
-    const startedAt = currentSlotStartedAt.getTime() - SLOT_MS + offsetInSeconds * 1000;
+    currentSlotStartedAt.setMinutes(0, 0, 0);
+    const startedAt = currentSlotStartedAt.getTime() - slotsBefore * SLOT_MS + offsetInSeconds * 1000;
     return {
       workspaceFolder,
       startedAt: new Date(startedAt).toISOString(),
@@ -463,7 +495,7 @@ describe("UserActivityTab: the stacked bars", () => {
     expect(layout.barmode).toBe("stack");
     expect(layout.showlegend).toBe(true);
     expect(traces.map((trace) => trace.name)).toEqual(["Heidrun app", "old_experiment"]);
-    expect(traces.every((trace) => trace.type === "bar" && trace.x.length === 12)).toBe(true);
+    expect(traces.every((trace) => trace.type === "bar" && trace.x.length === 24)).toBe(true);
     expect(sumOfTrace(0)).toBeCloseTo(4, 5);
     expect(sumOfTrace(1)).toBeCloseTo(2, 5);
   });
@@ -480,7 +512,7 @@ describe("UserActivityTab: the stacked bars", () => {
     await wrapper.get("#statistics-workspace-0").setValue(false);
     await waitForDrawings(2);
     expect(lastDrawing().traces.map((trace) => [trace.name, trace.marker.color])).toEqual([["old_experiment", "--orange-500"]]);
-    await wrapper.get("#statistics-range-day").setValue(true);
+    await wrapper.get("#statistics-range-week").setValue(true);
     await waitForDrawings(3);
     expect(lastDrawing().traces.map((trace) => [trace.name, trace.marker.color])).toEqual([["old_experiment", "--orange-500"]]);
   });
@@ -504,7 +536,7 @@ describe("UserActivityTab: the stacked bars", () => {
     await waitForDrawings(1);
     const { traces } = lastDrawing();
     expect(traces).toHaveLength(1);
-    expect(traces[0].y).toEqual(new Array(12).fill(0));
+    expect(traces[0].y).toEqual(new Array(24).fill(0));
   });
 
   it("gives the legend of the colors above the bars, and no way to hide a part from the legend", async () => {
@@ -540,7 +572,7 @@ describe("UserActivityTab: the stacked bars", () => {
   it("shows the title and the total in the tooltip of a slot of the only workspace, and no row", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     const tooltip = tooltipOf(wrapper);
     expect(tooltip?.title).toMatch(/^.+ to .+$/);
     expect(tooltip?.total).toBe("1 min 30 s");
@@ -550,7 +582,7 @@ describe("UserActivityTab: the stacked bars", () => {
   it("shows one row for each workspace that has time in the slot, with the total above the rows", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     const tooltip = tooltipOf(wrapper);
     expect(tooltip?.total).toBe("2 min 0 s");
     expect(tooltip?.rows).toEqual([
@@ -562,7 +594,7 @@ describe("UserActivityTab: the stacked bars", () => {
   it("shows the color of each workspace in the rows of the tooltip", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     const dots = wrapper.findAll('[role="tooltip"] [data-field="row"] span[aria-hidden="true"]');
     expect(dots.map((dot) => dot.attributes("style"))).toEqual([
       expect.stringContaining("var(--blue-500)"),
@@ -571,16 +603,16 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("leaves a workspace out of the rows of a slot where it has no time", async () => {
-    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordOf(CLOSED_FOLDER, 40 * 60_000, 30_000)]);
+    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 60, 30, 2)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     expect(tooltipOf(wrapper)?.rows).toEqual([["Heidrun app", "1 min 30 s"]]);
   });
 
   it("shows a total of 0 min 0 s, and no row, for a slot with no time", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot(CLOSED_FOLDER, 180, 30)]);
     await waitForDrawings(1);
-    await hoverSlot(9);
+    await hoverSlot(21);
     expect(tooltipOf(wrapper)?.total).toBe("0 min 0 s");
     expect(tooltipOf(wrapper)?.rows).toEqual([]);
   });
@@ -600,7 +632,7 @@ describe("UserActivityTab: the stacked bars", () => {
   it("writes the name of a workspace as text, so a sign '<' of a folder does not make markup, in the tooltip and in the legend", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot("/work/a<b>&c", 180, 30)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     expect(tooltipOf(wrapper)?.rows[0][0]).toBe("a<b>&c");
     expect(wrapper.find('[role="tooltip"] a').exists()).toBe(false);
     expect(lastDrawing().traces[0].name).toBe("a&lt;b&gt;&amp;c");
@@ -609,13 +641,13 @@ describe("UserActivityTab: the stacked bars", () => {
   it("hides the tooltip when the pointer leaves the bar, and when the time range changes", async () => {
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
     await waitForDrawings(1);
-    await hoverSlot(10);
+    await hoverSlot(22);
     expect(tooltipOf(wrapper)).not.toBeNull();
     plotlyHandlers.plotly_unhover({});
     await flushPromises();
     expect(tooltipOf(wrapper)).toBeNull();
-    await hoverSlot(10);
-    await wrapper.get("#statistics-range-day").setValue(true);
+    await hoverSlot(22);
+    await wrapper.get("#statistics-range-week").setValue(true);
     await waitForDrawings(2);
     await flushPromises();
     expect(tooltipOf(wrapper)).toBeNull();
@@ -626,7 +658,7 @@ describe("UserActivityTab: the stacked bars", () => {
     const boxSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(box);
     const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
     await waitForDrawings(1);
-    await hoverSlot(10, { x: 100, y: 50 });
+    await hoverSlot(22, { x: 100, y: 50 });
     const rightColumn = wrapper.get('[role="tooltip"]');
     expect(rightColumn.classes()).toContain("bs-popover-start");
     expect(rightColumn.classes()).not.toContain("bs-popover-end");

@@ -115,7 +115,7 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 		{ folder: GAMMA, name: "gamma" },
 	];
 
-	/** The current time of the tests: 10:07:30. The last slot of five minutes is 10:05 to 10:10, and it has index 11. */
+	/** The current time of the tests: 10:07:30. The last slot of one hour is 10:00 to 11:00, and it has index 23. */
 	const now = new Date(2026, 9, 15, 10, 7, 30).getTime();
 
 	/** A record of an active period that starts at a time of the clock, and lasts a number of seconds. */
@@ -138,9 +138,9 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [BETA, ALPHA], records, null, null, now);
 		expect(result.map((workspace) => workspace.folder)).toEqual([ALPHA, BETA]);
 		expect(result.map((workspace) => workspace.name)).toEqual(["alpha", "beta"]);
-		expect(result[0].slots).toHaveLength(12);
-		expect(result[0].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 0]);
-		expect(result[1].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 60, 60, 0]);
+		expect(result[0].slots).toHaveLength(24);
+		expect(result[0].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([...new Array(23).fill(0), 60]);
+		expect(result[1].slots.map((slot) => slot.activeTimeMs / 1000)).toEqual([...new Array(22).fill(0), 60, 60]);
 	});
 
 	it("keeps the color of a workspace when another workspace is hidden", () => {
@@ -153,10 +153,10 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 	});
 
 	it("gives the same colors in every time range", () => {
-		const colors = (rangeId: "hour" | "day" | "week") =>
+		const colors = (rangeId: "day" | "week" | "month") =>
 			UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, null, null, now, rangeId).map((workspace) => workspace.colorToken);
-		expect(colors("day")).toEqual(colors("hour"));
-		expect(colors("week")).toEqual(colors("hour"));
+		expect(colors("week")).toEqual(colors("day"));
+		expect(colors("month")).toEqual(colors("day"));
 	});
 
 	it("adds up, slot by slot, to the user activity time of all the chosen workspaces together", () => {
@@ -169,8 +169,8 @@ describe("UserActivityWorkspaces.slotsByWorkspace", () => {
 	it("counts the running active period only in the slots of its own workspace", () => {
 		const runningPeriodStartedAt = new Date(2026, 9, 15, 10, 6, 30).getTime();
 		const result = UserActivityWorkspaces.slotsByWorkspace(choices, [ALPHA, BETA], records, runningPeriodStartedAt, ALPHA, now);
-		expect(result[0].slots[11].activeTimeMs / 1000).toBe(60);
-		expect(result[1].slots[11].activeTimeMs).toBe(0);
+		expect(result[0].slots[23].activeTimeMs / 1000).toBe(120);
+		expect(result[1].slots[23].activeTimeMs / 1000).toBe(60);
 	});
 
 	it("gives a workspace with no user activity time in the range a part of height 0", () => {

@@ -23,23 +23,23 @@ import { t } from "../i18n/index";
 
 // The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. Each bar
 // of the histogram is stacked, with one color for each chosen workspace, and the legend of the histogram gives the colors. The
-// time range is the last hour, the last day, or the last week. The slot length depends on the time range, and it goes back
+// time range is the last day, the last week, or the last month. The slot length depends on the time range, and it goes back
 // to the slot length that the time range starts with each time that the time range changes. The workspaces are all of them
 // at first, and the developer can hide any workspace. The records are read once, for the longest time range, when the
 // window opens. Each choice then cuts the same records again, so a choice never reads the data layer again.
 
 /** The choices of the radio button group of the time range, from left to right. */
 const RANGE_CHOICES = [
-  { id: "hour", labelKey: "statisticsModal.rangeHour", titleKey: "statisticsModal.rangeHourTitle" },
   { id: "day", labelKey: "statisticsModal.rangeDay", titleKey: "statisticsModal.rangeDayTitle" },
   { id: "week", labelKey: "statisticsModal.rangeWeek", titleKey: "statisticsModal.rangeWeekTitle" },
+  { id: "month", labelKey: "statisticsModal.rangeMonth", titleKey: "statisticsModal.rangeMonthTitle" },
 ] as const satisfies readonly { id: UserActivityRangeId; labelKey: string; titleKey: string }[];
 
-/** The time range of the histogram. The tab starts with the last hour. */
-const rangeId = ref<UserActivityRangeId>("hour");
+/** The time range of the histogram. The tab starts with the last day. */
+const rangeId = ref<UserActivityRangeId>("day");
 
-/** The slot length of the histogram. The tab starts with the slot length that the last hour starts with. */
-const slotLengthId = ref<UserActivitySlotLengthId>(USER_ACTIVITY_RANGES.hour.defaultSlotLengthId);
+/** The slot length of the histogram. The tab starts with the slot length that the last day starts with. */
+const slotLengthId = ref<UserActivitySlotLengthId>(USER_ACTIVITY_RANGES.day.defaultSlotLengthId);
 
 /** The slot lengths that the developer can choose in the time range, from the shortest to the longest. */
 const slotLengthIds = computed(() => USER_ACTIVITY_RANGES[rangeId.value].slotLengthIds);

@@ -15,8 +15,8 @@ The item "Statistics" of the More menu opens the Statistics window. The Statisti
 The tab "User activity" shows when and where you work in front of Heidrun.
 
 - The histogram of the user activity time has one bar for each slot of time. Each bar has one color for each workspace, so you see where your time went.
-- Choose the time range: the last hour, the last day, or the last week.
-- Choose the slot length, for example 5 minutes in the last hour, or 1 day in the last week.
+- Choose the time range: the last day, the last week, or the last month.
+- Choose the slot length, for example 1 hour in the last day, or 1 day in the last month.
 - Choose the workspaces to show.
 
 ![The tab "User activity" of the Statistics window: the histogram of the last day with one bar for each hour, and the information card of one bar with the time of each workspace.](/screenshots/features/statistics_user_activity.png)
