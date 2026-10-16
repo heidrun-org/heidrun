@@ -200,8 +200,9 @@ fn read_person_work(
     let since = parse_time(since)?;
     let until = parse_time(until)?;
     let repository = source_control::find_repository(folder)?;
-    // Two commands that write the SQLite file at the same time would fail with "database is locked".
-    let _guard = crate::data_layer_lock::lock();
+    // Two commands that write the SQLite file at the same time would fail with "database is locked". The command line
+    // heidrun_data takes the same lock.
+    let _guard = heidrun_data::lock_database(database_path)?;
     synchronize_source_control(folder, database_path, &repository)?;
     let code_hosting_error = synchronize_code_hosting(database_path, &repository, runner).err();
     Ok(PersonWorkItems {

@@ -603,3 +603,23 @@ fn read_pull_request_prints_the_body_the_review_comments_and_the_diff() {
     let result = fixture.run(&["read", "pull_request", "2", "--no-diff", "--format", "jsonl"]);
     assert_eq!(result.json_lines().len(), 3);
 }
+
+#[test]
+fn update_waits_while_another_program_holds_the_lock_of_the_sqlite_file() {
+    let fixture = Fixture::new("update_lock");
+    let guard = heidrun_data::lock_database(&fixture.database_path).unwrap();
+    let file = fixture.user_activity_file.display().to_string();
+    let database = fixture.database_path.display().to_string();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_heidrun_data"))
+        .args(["update", "user_activity", "--file", &file, "--database", &database, "--format", "jsonl"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(700));
+    assert!(child.try_wait().unwrap().is_none(), "update did not wait for the lock");
+    assert!(!fixture.database_path.exists());
+    drop(guard);
+    assert!(child.wait().unwrap().success());
+    assert_eq!(fixture.query("SELECT count(*) AS count FROM user_activity_records"), vec![json!({ "count": 2 })]);
+}

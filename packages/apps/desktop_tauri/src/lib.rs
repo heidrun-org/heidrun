@@ -4,7 +4,6 @@ mod chats_files;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
-mod data_layer_lock;
 mod environment_file;
 mod files;
 mod forge_cache;

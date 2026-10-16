@@ -111,8 +111,9 @@ fn read_from_data_layer(
     let until = to_utc_text(until)?;
     // An append of a line must not run while the package reads the file, or the package could see half a line.
     let _guard = LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    // The other commands of the Statistics window write the same SQLite file, and the file has no waiting time.
-    let _database_guard = crate::data_layer_lock::lock();
+    // The other commands of the Statistics window and the command line heidrun_data write the same SQLite file, and the
+    // file has no waiting time.
+    let _database_guard = heidrun_data::lock_database(database_path)?;
     let mut writable = UserActivityDatabase::open(database_path)?;
     synchronize(SynchronizationMode::Update, &UserActivityFileReader::new(file), &mut writable, &|_| {})?;
     drop(writable);

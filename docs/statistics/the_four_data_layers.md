@@ -39,7 +39,7 @@ The mode `update` of each data layer reads only what is new:
 - Each data layer creates and writes only its own tables.
 - The tables join each other in one way only. The columns `repository` and `issueNumber` of `chat_session_issues` join the columns `repository` and `number` of `issues`. The table `chat_session_pull_requests` joins `pull_requests` the same way. The text `Fixes #N` in the field `body` of a pull request is the only link from a pull request to its issue, because the field `closingIssuesReferences` of GitHub is empty here.
 - A user activity record holds the folder of a workspace and not the name of a repository, so `user_activity_records` joins no other table.
-- The data layers set no waiting time on the file, so two writes at the same time fail with the error "database is locked". The desktop application takes one lock, in `packages/apps/desktop_tauri/src/data_layer_lock.rs`, before each command that writes the file. The command `heidrun_data update` does not take this lock yet: a later step of [issue 564](https://github.com/heidrun-org/heidrun/issues/564) moves the lock into the library of `heidrun_data`.
+- The data layers set no waiting time on the file, so two writes at the same time fail with the error "database is locked". The desktop application and the command `heidrun_data update` take one lock before each write of the file: `lock_database` in `packages/data_layers/heidrun_data/src/database_lock.rs`. The lock holds for the threads of one program, and for the programs of the computer through the lock file `data_layer.sqlite.lock` next to the SQLite file ([issue 564](https://github.com/heidrun-org/heidrun/issues/564)).
 
 ## The rules that the four data layers share
 

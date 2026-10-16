@@ -1,5 +1,6 @@
 //! Runs the mode initialize or the mode update of each source that is asked for, with the library of its data layer package.
 
+use crate::database_lock::lock_database;
 use crate::output::QueryRow;
 use crate::sources::Source;
 use serde_json::{json, Value};
@@ -83,8 +84,9 @@ impl SourceReport {
     }
 }
 
-/// Runs the mode on each source, one after the other, in the fixed order of `Source::ALL`. A source that fails does not
-/// stop the others. `log` receives the lines of progress of every source.
+/// Runs the mode on each source, one after the other, in the fixed order of `Source::ALL`. Each source takes the lock of
+/// the SQLite file while it writes, so it waits for the desktop application. A source that fails does not stop the others.
+/// `log` receives the lines of progress of every source.
 pub fn synchronize(
     mode: SynchronizationMode,
     sources: &[Source],
@@ -95,7 +97,9 @@ pub fn synchronize(
         .into_iter()
         .map(|source| {
             log(&format!("source {}: mode {}", source.name(), mode.name()));
-            (source, synchronize_source(mode, source, options, log))
+            let result = lock_database(&options.database_path)
+                .and_then(|_guard| synchronize_source(mode, source, options, log));
+            (source, result)
         })
         .collect()
 }

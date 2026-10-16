@@ -30,6 +30,8 @@ data_layer_user_activity = { path = "../../data_layers/data_layer_user_activity"
 data_layer_source_control = { path = "../../data_layers/data_layer_source_control" }
 # Reads the pull requests and the issues of a repository into the SQLite file of the data layer, for the Statistics window
 data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
+# The one lock of the SQLite file of the data layer, which the command line heidrun_data takes too
+heidrun_data = { path = "../../data_layers/heidrun_data" }
 portable-pty = "0.9"
 base64 = "0.22"
 dirs = "6"
