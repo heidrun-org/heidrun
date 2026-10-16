@@ -30,6 +30,9 @@ export class FakeComputer {
 	/** The answer of the method `read`. */
 	outputText = 'first line\nlast line\n';
 
+	/** True when the fake computer lets the phone type in a plain terminal, like the setting of Heidrun. */
+	terminalTypingAllowed = true;
+
 	/** The answer of the method `macros`. */
 	macrosAnswer: MacrosAnswer = {
 		macros: [],
@@ -91,6 +94,7 @@ export class FakeComputer {
 	static snapshotOf(agents: AgentView[], attention: string[]): Snapshot {
 		return {
 			now: 1_000_000,
+			terminalTypingAllowed: true,
 			attention,
 			workspaces: [
 				{
@@ -134,7 +138,7 @@ export class FakeComputer {
 			return new Response('unpaired', { status: 401 });
 		}
 		if (body.method === 'state') {
-			return Response.json(this.snapshot);
+			return Response.json({ ...this.snapshot, terminalTypingAllowed: this.terminalTypingAllowed });
 		}
 		if (body.method === 'read') {
 			return Response.json({ text: this.outputText });

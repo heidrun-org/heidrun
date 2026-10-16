@@ -5,6 +5,7 @@ import { macros } from "./macros";
 import { handleMobileCall } from "./mobile";
 import { project, runLauncher, stopLauncher } from "./project";
 import { state } from "./session";
+import { settings } from "./settings";
 
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => undefined) }));
@@ -12,6 +13,7 @@ vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),
   prompt: vi.fn(async () => undefined),
   read: vi.fn(async () => "terminal output"),
+  run: vi.fn(async () => undefined),
   sendKeys: vi.fn(async () => undefined),
 }));
 vi.mock("./guards", async (importOriginal) => ({
@@ -31,7 +33,10 @@ vi.mock("./session", async (importOriginal) => ({
 const LAUNCHER = { id: "dev", label: "Dev server", command: "pnpm dev" };
 
 beforeEach(() => {
+  settings.mobileTerminalTyping = true;
   vi.mocked(api.prompt).mockClear();
+  vi.mocked(api.run).mockClear();
+  vi.mocked(api.sendKeys).mockClear();
   vi.mocked(guardHit).mockReset();
   vi.mocked(guardHit).mockResolvedValue(null);
   vi.mocked(runLauncher).mockClear();
@@ -71,13 +76,55 @@ describe("a plain terminal", () => {
     expect(await handleMobileCall("read", { paneId: "p2", lines: 60 })).toEqual({ text: "terminal output" });
   });
 
-  it("refuses every call that writes: a prompt, an answer, a key, and the macros", async () => {
-    for (const method of ["prompt", "answer", "keys", "macros"]) {
+  it("refuses the calls other than read and prompt: an answer, a key, and the macros", async () => {
+    for (const method of ["answer", "keys", "macros"]) {
       const answer = await handleMobileCall(method, { paneId: "p2", text: "ls", action: "interrupt", n: 1 });
       expect(answer, method).toHaveProperty("error");
     }
-    expect(api.prompt).not.toHaveBeenCalled();
     expect(api.sendKeys).not.toHaveBeenCalled();
+  });
+
+  it("types a command that the guards let through, with the same function as a launcher", async () => {
+    expect(await handleMobileCall("prompt", { paneId: "p2", text: "git status" })).toEqual({ ok: true });
+    expect(guardHit).toHaveBeenCalledWith("git status", "/work/heidrun");
+    expect(api.run).toHaveBeenCalledWith("p2", "git status");
+    expect(api.prompt).not.toHaveBeenCalled();
+  });
+
+  it("asks the phone to confirm a command that the guards stop, then types it once confirmed", async () => {
+    vi.mocked(guardHit).mockResolvedValue({ level: "confirm", why: "deletes files" } as never);
+    expect(await handleMobileCall("prompt", { paneId: "p2", text: "rm -rf build" })).toEqual({
+      confirm: { command: "rm -rf build", why: "deletes files" },
+    });
+    expect(api.run).not.toHaveBeenCalled();
+    await handleMobileCall("prompt", { paneId: "p2", text: "rm -rf build", confirmed: true, command: "rm -rf build" });
+    expect(api.run).toHaveBeenCalledWith("p2", "rm -rf build");
+  });
+
+  it("never types a command that the project blocks, even when the phone confirmed", async () => {
+    vi.mocked(guardHit).mockResolvedValue({ level: "block", why: "forbidden" } as never);
+    const answer = await handleMobileCall("prompt", { paneId: "p2", text: "git push main", confirmed: true, command: "git push main" });
+    expect(answer).toHaveProperty("error");
+    expect(api.run).not.toHaveBeenCalled();
+  });
+
+  it("never types when the setting Allow typing in terminals from the phone is off, and says how to turn it on", async () => {
+    settings.mobileTerminalTyping = false;
+    const answer = (await handleMobileCall("prompt", { paneId: "p2", text: "git status" })) as { error: string };
+    expect(answer.error).toContain("Settings");
+    expect(api.run).not.toHaveBeenCalled();
+    expect(guardHit).not.toHaveBeenCalled();
+  });
+
+  it("tells the phone, in the state, whether typing in terminals is allowed", async () => {
+    expect(await handleMobileCall("state", {})).toHaveProperty("terminalTypingAllowed", true);
+    settings.mobileTerminalTyping = false;
+    expect(await handleMobileCall("state", {})).toHaveProperty("terminalTypingAllowed", false);
+  });
+
+  it("refuses an empty command", async () => {
+    expect(await handleMobileCall("prompt", { paneId: "p2", text: "  " })).toHaveProperty("error");
+    expect(api.run).not.toHaveBeenCalled();
   });
 });
 

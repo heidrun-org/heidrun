@@ -24,6 +24,7 @@ import { macros, macrosOfProjectConfig, resolveMacroVariables, type Macro } from
 import { launcherStatus, launcherWillType, loadProject, project, runLauncher, stopLauncher, workspaceCwd } from "./project";
 import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
+import { settings } from "./settings";
 import { t } from "../i18n/index";
 
 export interface MobileError {
@@ -103,6 +104,8 @@ function snapshot() {
   const claude = quotas.value.find((q) => q.provider === "claude");
   return {
     now: Date.now(),
+    /** The setting of the Settings window: may the phone type in a plain terminal? Off: the phone only reads it. */
+    terminalTypingAllowed: settings.mobileTerminalTyping,
     attention: attention.value.map((p) => p.pane_id),
     workspaces: sessionWorkspaces.value
       .map((w) => ({ id: w.workspace_id, label: w.label, agents: agents.filter((p) => p.workspace_id === w.workspace_id).map(agentView) }))
@@ -178,6 +181,18 @@ async function launch(params: Params) {
   return { ok: true };
 }
 
+/** A command typed on the phone in a plain terminal: the whole text passes the guards, then it runs like a launcher does. */
+async function typeInTerminal(pane: AgentInfo, text: string, cwd: string | null, params: Params) {
+  // The desktop decides, not the phone: a phone that ignores the setting still cannot type.
+  if (!settings.mobileTerminalTyping) return { error: t("mobileStore.error.terminalTypingOff") };
+  const hit = await guardHit(text, cwd);
+  if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
+  if (hit && (params.confirmed !== true || params.command !== text)) return { confirm: { command: text, why: hit.why } };
+  await api.run(pane.pane_id, text);
+  toast(t("mobileStore.promptReceived", { name: paneFullName(pane) }));
+  return { ok: true };
+}
+
 const anyPane = (id: unknown) => allPanes.value.find((p) => p.pane_id === id) ?? null;
 
 type Params = Record<string, unknown>;
@@ -190,8 +205,8 @@ export async function handleMobileCall(method: string, params: Params): Promise<
   if (method === "launch") return launch(params);
   const pane = anyPane(params.paneId);
   if (!pane) return { error: t("mobileStore.error.agentNotFound") };
-  // A plain terminal is read-only: the phone may read its output, and nothing else.
-  if (!pane.agent && method !== "read") return { error: t("mobileStore.error.terminalReadOnly") };
+  // A plain terminal: the phone may read its output, or type a command in it (the phone asks its own confirmation to unlock the typing). Nothing else.
+  if (!pane.agent && method !== "read" && method !== "prompt") return { error: t("mobileStore.error.terminalReadOnly") };
   const cwd = pane.foreground_cwd || pane.cwd || null;
 
   if (method === "macros") return macroList(pane);
@@ -223,6 +238,7 @@ export async function handleMobileCall(method: string, params: Params): Promise<
   if (method === "prompt") {
     const text = String(params.text ?? "").trim();
     if (!text) return { error: t("mobileStore.error.emptyPrompt") };
+    if (!pane.agent) return typeInTerminal(pane, text, cwd, params);
     // A menu on screen would take the text as its answer ("2" picks option 2): never.
     if (pane.agent_status === "blocked" || state.choices[pane.pane_id]) return { error: t("mobileStore.error.agentBlocked") };
     const shell = /^\s*!\s*(\S[\s\S]*)$/.exec(text);

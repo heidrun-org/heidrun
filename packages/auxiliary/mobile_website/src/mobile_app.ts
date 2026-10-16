@@ -8,6 +8,7 @@ import type {
 	ScreenName,
 	Snapshot,
 	TabName,
+	TerminalTyping,
 } from './mobile_types';
 import { ColorPainter } from './color_painter';
 import { ScreenAddress } from './screen_address';
@@ -16,6 +17,7 @@ import { SnapshotQueries } from './snapshot_queries';
 import { BottomBar } from './components/bottom_bar';
 import { ConfirmSheet } from './components/confirm_sheet';
 import { MacroSheet } from './components/macro_sheet';
+import { TypingSheet } from './components/typing_sheet';
 import { MessageScreen } from './screens/message_screen';
 import { DashboardScreen } from './screens/dashboard_screen';
 import { NeedsYouScreen } from './screens/needs_you_screen';
@@ -74,6 +76,9 @@ export class MobileApp {
 
 	/** The end of the output of the pane that is open. */
 	private output = '';
+
+	/** The identifier of the plain terminal where the developer allowed typing, or null. It resets on a new screen. */
+	private typingPaneId: string | null = null;
 
 	/** The macros of the macro sheet that is open, or an empty list when no macro sheet is open. */
 	private macros: MacroView[] = [];
@@ -287,7 +292,11 @@ export class MobileApp {
 	private _screenHtmlContent(snapshot: Snapshot): string {
 		if (this.screen === 'pane') {
 			const agent = this.paneId === null ? null : SnapshotQueries.agentById(snapshot, this.paneId);
-			return PaneScreen.render(agent, this.output, VoiceInput.isAvailable());
+			let terminalTyping: TerminalTyping = 'off';
+			if (snapshot.terminalTypingAllowed) {
+				terminalTyping = agent !== null && agent.paneId === this.typingPaneId ? 'unlocked' : 'locked';
+			}
+			return PaneScreen.render(agent, this.output, VoiceInput.isAvailable(), terminalTyping);
 		}
 		if (this.screen === 'panes') {
 			return PanesScreen.render(snapshot, this.isOnline);
@@ -319,6 +328,7 @@ export class MobileApp {
 	private _applyLocation(location: ScreenLocation): void {
 		this.voiceInput.stop();
 		this._closeMacroSheet();
+		this.typingPaneId = null;
 		this.tab = location.tab;
 		this.screen = location.paneId === null ? location.tab : 'pane';
 		this.paneId = location.paneId;
@@ -387,6 +397,17 @@ export class MobileApp {
 			await this._sendPrompt(paneId);
 		} else if (action === 'voice') {
 			this._toggleVoice(element);
+		} else if (action === 'typing-ask') {
+			this.overlay.insertAdjacentHTML('beforeend', TypingSheet.render());
+		} else if (action === 'typing-cancel') {
+			if (target === element || element.tagName === 'BUTTON') {
+				this.overlay.querySelector('.typing-sheet')?.remove();
+			}
+		} else if (action === 'typing-allow') {
+			this.overlay.querySelector('.typing-sheet')?.remove();
+			this.typingPaneId = this.paneId;
+			this._render();
+			this.root.querySelector<HTMLTextAreaElement>(`#${PaneScreen.promptFieldId}`)?.focus();
 		} else if (action === 'open-macros') {
 			await this._openMacroSheet();
 		} else if (action === 'macro-sheet-close') {

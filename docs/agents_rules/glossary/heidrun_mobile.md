@@ -31,7 +31,7 @@ The row of four buttons at the bottom of the mobile website: Dashboard, Needs yo
 
 ### Plain terminal on the phone
 
-A pane in which no coding agent runs. The phone lists it with the badge "Terminal" and shows its output, and the phone never writes to it.
+A pane in which no coding agent runs. The phone lists it with the badge "Terminal" and shows its output. The phone types in it only when the setting "Allow typing in terminals from the phone" is on and the developer says yes in the warning sheet, and every command passes the guards.
 
 ### Macro button
 

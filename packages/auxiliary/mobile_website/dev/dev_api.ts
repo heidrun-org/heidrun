@@ -189,10 +189,13 @@ export class DevApi {
 				text: this.output(agent),
 			};
 		}
-		if (agent.hasCodingAgent === false && method !== 'read') {
+		if (agent.hasCodingAgent === false && method !== 'read' && method !== 'prompt') {
 			return {
-				error: 'This pane is a terminal: the phone only reads it',
+				error: 'This pane is a terminal: the phone can only read it, or type a command in it',
 			};
+		}
+		if (agent.hasCodingAgent === false && method === 'prompt') {
+			return this.typeInTerminal(agent, params);
 		}
 		if (method === 'macros') {
 			return DevApi.macros(agent);
@@ -250,6 +253,22 @@ export class DevApi {
 		};
 	}
 
+	private typeInTerminal(agent: AgentView, params: Record<string, unknown>): CallResult {
+		const text = String(params.text ?? '');
+		if (text.includes('rm -rf') && (params.confirmed !== true || params.command !== text)) {
+			return {
+				confirm: {
+					command: text,
+					why: 'The command deletes files. Check it before it runs.',
+				},
+			};
+		}
+		this.prompts.set(agent.paneId, [...(this.prompts.get(agent.paneId) ?? []), text]);
+		return {
+			ok: true,
+		};
+	}
+
 	private launch(params: Record<string, unknown>): CallResult {
 		const launcher = this.launchers.find((candidate) => candidate.id === params.launcherId);
 		if (launcher === undefined) {
@@ -283,6 +302,7 @@ export class DevApi {
 			.map((agent) => agent.paneId);
 		return {
 			now: Date.now(),
+			terminalTypingAllowed: true,
 			attention,
 			workspaces: [
 				{
@@ -335,7 +355,13 @@ export class DevApi {
 	private output(agent: AgentView): string {
 		const code = (codes: string, text: string): string => `\u001b[${codes}m${text}\u001b[0m`;
 		if (agent.hasCodingAgent === false) {
-			return [`${code('1;32', 'jerome@computer')} ${code('1;34', '~/webwork/heidrun')} $ git status`, 'On branch dev_jerome', code('32', 'nothing to commit, working tree clean')].join('\r\n');
+			const typed = (this.prompts.get(agent.paneId) ?? []).map((command) => `$ ${command}`);
+			return [
+				`${code('1;32', 'jerome@computer')} ${code('1;34', '~/webwork/heidrun')} $ git status`,
+				'On branch dev_jerome',
+				code('32', 'nothing to commit, working tree clean'),
+				...typed,
+			].join('\r\n');
 		}
 		const blue = '38;2;99;168;248';
 		const gray = '48;2;30;30;30';

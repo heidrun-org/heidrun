@@ -5,6 +5,7 @@ import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { mobile, mobileStatus, revokeMobile, setMobile } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { toast } from "../../stores/session";
+import { settings } from "../../stores/settings";
 import { t } from "../../i18n/index";
 
 const st = computed(() => mobile.status);
@@ -48,6 +49,11 @@ async function openPairingLink(link: string) {
     <p class="m-0">{{ t("mobileModal.lead") }}</p>
 
     <SettingsSwitchRow :model-value="st?.enabled === true" :is-disabled="mobile.busy" :label="t('mobileModal.enable')" @update:model-value="setMobile($event)" />
+
+    <div class="d-flex flex-column gap-1">
+      <SettingsSwitchRow v-model="settings.mobileTerminalTyping" :label="t('mobileModal.terminalTyping')" />
+      <p class="m-0 form-text">{{ t("mobileModal.terminalTypingNote") }}</p>
+    </div>
 
     <div v-if="st?.error" class="alert theme-danger" role="alert">
       {{ errorText }}

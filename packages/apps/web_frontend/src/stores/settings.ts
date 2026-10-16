@@ -125,6 +125,8 @@ const defaults = {
   customLauncherEffort: "",
   /** Finished items (Activité, « À traiter » terminé) disappear after this many minutes; 0 = never. */
   finishedTtl: 15,
+  /** Settings window, section Mobile access: the phone may type a command in a plain terminal. Off: the phone only reads the terminals. */
+  mobileTerminalTyping: false,
   /** Settings window, section Needs you: the Needs you sidebar section shows the list of workspaces at its bottom. Off: it shows only the cards. */
   showWorkspacesInNeedsYou: true,
   /** Notifications. */

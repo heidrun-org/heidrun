@@ -16,5 +16,7 @@
   "error.ngrokStopped": "Le programme ngrok s’est arrêté. Heidrun le redémarre dans quelques secondes.",
   "error.ngrokNotSignedIn": "Le programme ngrok n’a pas de compte sur cet ordinateur. Crée un compte gratuit sur ngrok.com, puis lance la commande ngrok config add-authtoken suivie de ton jeton. Heidrun réessaie toutes les 15 secondes.",
   "error.ngrokAddressInUse": "Un autre programme ngrok utilise déjà l’adresse de ton compte ngrok. Ferme ce programme, ou quitte l’autre copie de Heidrun. Heidrun réessaie dans quelques secondes.",
-  "error.cannotListen": "Heidrun ne peut pas écouter sur l’adresse locale. Un autre programme utilise peut-être le port. Heidrun réessaie dans quelques secondes."
+  "error.cannotListen": "Heidrun ne peut pas écouter sur l’adresse locale. Un autre programme utilise peut-être le port. Heidrun réessaie dans quelques secondes.",
+  "terminalTyping": "Autoriser la saisie dans les terminaux depuis le téléphone",
+  "terminalTypingNote": "Le téléphone montre toujours les terminaux, en lecture seule. Quand c’est activé, le téléphone te demande encore une confirmation avant de te laisser taper, à chaque ouverture d’un terminal, et chaque commande tapée passe par les garde-fous."
 }

@@ -42,8 +42,11 @@ Every pane, grouped by workspace and then by tab, with a status dot. A pane that
 
 ## Screen of a plain terminal
 
-- The phone only reads a plain terminal: the screen shows its output and the line "The phone only reads a terminal.". It has no field for a prompt, no macro button, no microphone button, and no button that stops it.
-- The desktop application refuses every call about a plain terminal except `read`. A plain terminal is not counted in the Dashboard, and is not in the Needs you screen.
+- The phone always shows a plain terminal, to read: its output, and a line that says what the phone can do. A plain terminal has no macro button and no button that stops it. It is not counted in the Dashboard, and it is not in the Needs you screen.
+- The setting "Allow typing in terminals from the phone" in the section "Mobile access" of the Settings window is off by default. The desktop application checks it on every typed command, and the answer of the method `state` carries it as `terminalTypingAllowed`.
+- Setting off: the screen says that typing is off in the Settings window, and it has no button to type.
+- Setting on: the screen has the button "Type in this terminal…". A tap opens a warning sheet that says that typing on a phone is hard and that a mistake can run a command that the developer did not mean. Only the button "Yes, let me type" gives a field for a command. The phone asks again each time that the developer opens the terminal.
+- A command typed there goes through the method `prompt`, and the whole text passes the guards before it runs, like a launcher. A command that a guard stops opens the confirmation sheet, and a command that the project blocks never runs.
 
 ## Macros
 

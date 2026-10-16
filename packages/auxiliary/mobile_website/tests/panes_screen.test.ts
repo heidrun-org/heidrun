@@ -25,6 +25,7 @@ describe('Panes screen', () => {
 	it('says that no pane is open when the list is empty', async () => {
 		const computer = new FakeComputer({
 			now: 1_000_000,
+			terminalTypingAllowed: true,
 			attention: [],
 			workspaces: [],
 			quotas: [],

@@ -1,4 +1,4 @@
-import type { AgentView } from '../mobile_types';
+import type { AgentView, TerminalTyping } from '../mobile_types';
 import { HtmlEscape } from '../html_escape';
 import { OutputText } from '../output_text';
 import { StatusLabels } from '../components/status_labels';
@@ -25,9 +25,11 @@ export class PaneScreen {
 	 * @param output The end of the output of the pane.
 	 * @param isVoiceAvailable True when the browser can turn the voice into text: the screen shows the microphone
 	 * button. False: the microphone key of the keyboard of the phone is the fallback.
+	 * @param terminalTyping What the developer can do to type in a plain terminal. A coding agent always has its field
+	 * for a prompt.
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
-	static render(agent: AgentView | null, output: string, isVoiceAvailable: boolean): string {
+	static render(agent: AgentView | null, output: string, isVoiceAvailable: boolean, terminalTyping: TerminalTyping): string {
 		if (agent === null) {
 			const missingHtmlContent = /* html */`
 				${ScreenHeader.renderPane('Coding agent', '', false)}
@@ -43,7 +45,7 @@ export class PaneScreen {
 		const outputHtmlContent = OutputText.toHtml(output);
 		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
 		if (agent.hasCodingAgent === false) {
-			return PaneScreen.renderTerminal(agent, outputHtmlContent, badgeHtmlContent);
+			return PaneScreen.renderTerminal(agent, outputHtmlContent, badgeHtmlContent, isVoiceAvailable, terminalTyping);
 		}
 		const isBlocked = agent.status === 'blocked';
 		const isWorking = agent.status === 'working';
@@ -83,21 +85,65 @@ export class PaneScreen {
 	}
 
 	/**
-	 * Draws the screen of a plain terminal. The phone only reads it: no field for a prompt, no macro button, no
-	 * microphone, and no button that stops it.
+	 * Draws the screen of a plain terminal. The phone only reads it, until the developer allows typing: then the
+	 * screen has a field for a command. A terminal has no macro button and no button that stops it.
 	 * @param agent The pane of the plain terminal.
 	 * @param outputHtmlContent The HTML of the end of its output.
 	 * @param badgeHtmlContent The HTML of the badge of the header.
+	 * @param isVoiceAvailable True when the browser can turn the voice into text.
+	 * @param terminalTyping What the developer can do to type in this terminal.
 	 * @returns The HTML of the screen, without the bottom bar.
 	 */
-	private static renderTerminal(agent: AgentView, outputHtmlContent: string, badgeHtmlContent: string): string {
+	private static renderTerminal(
+		agent: AgentView,
+		outputHtmlContent: string,
+		badgeHtmlContent: string,
+		isVoiceAvailable: boolean,
+		terminalTyping: TerminalTyping,
+	): string {
 		const shownHtmlContent = outputHtmlContent === '' ? '…' : outputHtmlContent;
+		const paneId = HtmlEscape.escape(agent.paneId);
+		const noticeText = {
+			off: 'The phone only reads this terminal. Typing is off in the Settings window of Heidrun.',
+			locked: 'The phone only reads this terminal until you allow typing.',
+			unlocked: 'Every command passes the guards before it runs.',
+		}[terminalTyping];
+		const micHtmlContent = isVoiceAvailable ? PaneScreen.renderMicButton() : '';
+		const composerHtmlContent = terminalTyping === 'unlocked'
+			? /* html */`
+				<div class="composer">
+					<textarea
+						id="${PaneScreen.promptFieldId}"
+						placeholder="${HtmlEscape.escape(`Command for ${agent.name}…`)}"
+						rows="1"
+						enterkeyhint="send"
+					></textarea>
+					${micHtmlContent}
+					<button
+						class="send-button"
+						data-action="send"
+						data-pane-id="${paneId}"
+						aria-label="Send"
+						title="Send (Cmd+Enter)"
+					>
+						${Icon.render('send-fill', 20)}
+					</button>
+				</div>
+			`
+			: terminalTyping === 'locked'
+				? /* html */`
+					<div class="composer">
+						<button class="button button-danger" data-action="typing-ask">Type in this terminal…</button>
+					</div>
+				`
+				: '';
 		const terminalHtmlContent = /* html */`
 			${ScreenHeader.renderPane(`${agent.workspace} · ${agent.tab}`, badgeHtmlContent, false)}
 			<main class="pane-main">
-				<div class="question">The phone only reads a terminal.</div>
+				<div class="question">${noticeText}</div>
 				<pre class="output"><code class="output-text">${shownHtmlContent}</code></pre>
 			</main>
+			${composerHtmlContent}
 		`;
 		return terminalHtmlContent;
 	}

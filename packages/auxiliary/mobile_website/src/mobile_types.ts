@@ -73,6 +73,8 @@ export type QuotaView = {
 export type Snapshot = {
 	/** The time of the computer when it made the answer, in milliseconds since 1970. */
 	now: number;
+	/** True when the setting of Heidrun on the computer lets the phone type in a plain terminal. */
+	terminalTypingAllowed: boolean;
 	/** The identifiers of the panes that wait for the developer. */
 	attention: string[];
 	/** The workspaces, with their coding agents. */
@@ -80,6 +82,13 @@ export type Snapshot = {
 	/** The usage limits. */
 	quotas: QuotaView[];
 };
+
+/**
+ * What the developer can do to type in a plain terminal. `off`: the setting of Heidrun on the computer forbids it.
+ * `locked`: the setting allows it, and the developer must say yes first. `unlocked`: the developer said yes for the
+ * terminal that is open.
+ */
+export type TerminalTyping = 'off' | 'locked' | 'unlocked';
 
 /** A command that the guards of Heidrun want the developer to check once more. */
 export type ConfirmRequest = {
