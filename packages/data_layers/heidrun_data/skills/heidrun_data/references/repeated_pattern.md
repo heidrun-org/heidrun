@@ -1,0 +1,1 @@
+../../../../../../docs/analytics/repeated_pattern.md

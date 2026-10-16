@@ -7,7 +7,7 @@ A Rust library and one command line tool, `heidrun_data`, that give a coding age
 - `src/lib.rs`: the only public interface of the library. It exports `Source`, `synchronize`, `SynchronizationMode`, `SynchronizationOptions`, `SourceReport`, `lock_database`, `HeidrunDatabase`, `SourceSummary`, `read_catalog`, `data_schema_text`, `read_chat_session`, `read_commit`, `read_code_hosting`, `add_limit`, `Format`, `write_rows`, `format_error`, and `default_database_path`.
 - `src/main.rs`: the command line, and the executable `heidrun_data`. The module `src/command_line.rs` reads its arguments and holds the texts of the help.
 - `src/reading/`: the command `read`, the content that the tables do not store — see its own CONTEXT.md.
-- `SKILL.md`: the skill that teaches a coding agent the commands, the tables, and the joins. A test compares it with the help and with the output of `schema`.
+- `skills/heidrun_data/`: the skill that teaches a coding agent the commands, the tables, and the joins. The folder is standalone: `SKILL.md`, and the folder `references` with the documents that the skill rests on, as links to their place in `docs`. A test compares `SKILL.md` with the help and with the output of `schema`.
 - `tests/`: the tests of the executable. The tests of the library sit at the end of each source file.
 - Command to run this folder: `pnpm --silent data_layer --help`
 - Command to test this folder: `pnpm --filter heidrun_data test`

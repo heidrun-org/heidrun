@@ -624,9 +624,10 @@ fn update_waits_while_another_program_holds_the_lock_of_the_sqlite_file() {
     assert_eq!(fixture.query("SELECT count(*) AS count FROM user_activity_records"), vec![json!({ "count": 2 })]);
 }
 
-/// The text of the `SKILL.md` of the package.
+/// The text of the `SKILL.md` of the package, in the folder `skills/heidrun_data`.
 fn skill_text() -> String {
-    std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("SKILL.md")).unwrap()
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun_data").join("SKILL.md");
+    std::fs::read_to_string(path).unwrap()
 }
 
 /// The help of the program and of each command, in one text.
@@ -707,5 +708,5 @@ fn the_example_queries_of_the_skill_run_on_the_fixtures_and_give_at_least_one_ro
         assert!(!rows.is_empty(), "No row for: {sql}");
         ran += 1;
     }
-    assert_eq!(ran, 2);
+    assert_eq!(ran, 3);
 }
