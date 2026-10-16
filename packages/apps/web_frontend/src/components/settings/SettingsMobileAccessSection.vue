@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
-import { mobile, mobileStatus, revokeMobile, setMobile } from "../../stores/mobile";
+import { mobile, mobileStatus, revokeMobile, setMobile, stopLeftoverNgrok } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
 import { toast } from "../../stores/session";
 import { requiredProgramsStatus } from "../../lib/api";
@@ -44,6 +44,17 @@ onBeforeUnmount(() => {
   window.clearTimeout(timer);
 });
 
+// The button "Stop the old ngrok" (issue 583). When no ngrok of Heidrun was killed, the other ngrok runs somewhere else, and
+// the developer closes it by hand.
+const isLeftoverNotFound = ref(false);
+async function stopOldNgrok() {
+  const isKilled = await stopLeftoverNgrok();
+  isLeftoverNotFound.value = isKilled === false;
+  if (isKilled === true) {
+    toast(t("mobileModal.oldNgrokStopped"));
+  }
+}
+
 async function openPairingLink(link: string) {
   try {
     await openUrl(link);
@@ -64,6 +75,12 @@ async function openPairingLink(link: string) {
     <div v-if="st?.error" class="alert theme-danger" role="alert">
       {{ errorText }}
       <div v-if="st.error.detail" class="mono mt-1">{{ st.error.detail }}</div>
+      <template v-if="st.error.kind === 'ngrokAddressInUse'">
+        <button type="button" class="btn mt-2 stop-old-ngrok" :disabled="mobile.busy" @click="stopOldNgrok">
+          {{ t("mobileModal.stopOldNgrok") }}
+        </button>
+        <div v-if="isLeftoverNotFound" class="mt-2 old-ngrok-not-found">{{ t("mobileModal.oldNgrokNotFound") }}</div>
+      </template>
     </div>
 
     <template v-if="st?.enabled && st.running && st.qr">

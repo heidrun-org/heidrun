@@ -12,6 +12,7 @@ The mobile server of Heidrun Mobile. It serves the mobile website on the loopbac
 - `src/server.rs`: the life of the server: it listens, keeps the tunnel open, shows its address, and stops.
 - `src/tunnel.rs`: finds and starts the program `ngrok`, and reads its messages and the address of the tunnel. It also holds the fake `ngrok` program of the tests.
 - `src/config.rs`: the file `mobile.json`, and the creation of a pairing key.
+- `src/leftover_tunnel.rs`: the file `mobile_ngrok.pid`, and the kill of an `ngrok` that an earlier Heidrun left running.
 - Command to test this folder: `pnpm --filter mobile_server test`. The command builds `mobile_website` first. The test `live_...` opens a real tunnel with a signed-in `ngrok`, so it runs only by hand: `cargo test live_ -- --ignored --nocapture`.
 
 ## Rules
@@ -23,6 +24,7 @@ The mobile server of Heidrun Mobile. It serves the mobile website on the loopbac
 - `ngrok` is started with `--inspect=false`, so its local web interface never remembers a request, and the pairing key in it.
 - The codes `ERR_NGROK_4018` and `ERR_NGROK_334` in the messages of `ngrok` give the errors `ngrokNotSignedIn` and `ngrokAddressInUse`. After `ngrokNotSignedIn`, the next try waits three times longer.
 - `stop` and a new run kill the program `ngrok` at once, with no async runtime. A task of an older run changes nothing, because every change checks the number of its run.
+- Heidrun kills only the `ngrok` of the file `mobile_ngrok.pid`: at a start when its parent is process 1, and with the button "Stop the old ngrok" unless it is the `ngrok` of this Heidrun ([issue #583](https://github.com/heidrun-org/heidrun/issues/583)).
 - The program is started as `ngrok http 127.0.0.1:<port> --inspect=false --log=stdout --log-format=json`. The variable `HEIDRUN_NGROK` gives its path, and without it the usual folders are searched, because an application that the Finder starts has no `PATH`.
 - Every route of the closed list of methods needs the pairing key, and a method outside the list never reaches the handler. A new method goes in `METHODS` in `src/router.rs`, and nowhere else.
 - A new key (`replace_token`, or a new run) cuts off open connections at once, and the right key is never locked out. `replace_token` keeps the tunnel and its address.

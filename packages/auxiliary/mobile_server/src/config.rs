@@ -16,11 +16,15 @@ pub struct MobileConfig {
     pub port: u16,
 }
 
-fn config_path() -> PathBuf {
+/// The folder of the configuration of Heidrun: the variable `HEIDRUN_DIR`, or `~/.config/heidrun`.
+pub(crate) fn config_folder() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
-        .join("mobile.json")
+}
+
+fn config_path() -> PathBuf {
+    config_folder().join("mobile.json")
 }
 
 /// Reads the file `mobile.json`. A missing or a wrong file gives the default values.

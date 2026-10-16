@@ -74,6 +74,24 @@ export async function revokeMobile() {
   }
 }
 
+/**
+ * The button "Stop the old ngrok" of the error `ngrokAddressInUse` (issue 583): kills the program ngrok that an earlier or
+ * another Heidrun started. The tunnel opens again at the next try.
+ *
+ * @returns True when a program was killed, false when the other ngrok is not one that Heidrun started.
+ */
+export async function stopLeftoverNgrok(): Promise<boolean> {
+  mobile.busy = true;
+  try {
+    return await invoke<boolean>("mobile_stop_leftover_ngrok");
+  } catch (e) {
+    toast(String(e));
+    return false;
+  } finally {
+    mobile.busy = false;
+  }
+}
+
 // ---- What the phone may ask -----------------------------------------------------
 
 function agentView(p: AgentInfo) {

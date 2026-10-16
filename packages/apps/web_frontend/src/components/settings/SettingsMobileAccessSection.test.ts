@@ -6,9 +6,13 @@ const opener = vi.hoisted(() => ({ openUrl: vi.fn(async (_address: string) => {}
 vi.mock("@tauri-apps/plugin-opener", () => opener);
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 
-const fake = vi.hoisted(() => ({ status: null as unknown, programs: null as unknown }));
+const fake = vi.hoisted(() => ({ status: null as unknown, programs: null as unknown, isLeftoverKilled: false, stopCalls: 0 }));
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(async (command: string) => {
+    if (command === "mobile_stop_leftover_ngrok") {
+      fake.stopCalls += 1;
+      return fake.isLeftoverKilled;
+    }
     if (command === "mobile_status") {
       return fake.status;
     }
@@ -43,6 +47,8 @@ const WORDS_OF_THE_FIRST_WORK = [/iPhone/, /iPad/, /Tailscale/i, /Safari/, /Home
 
 beforeEach(() => {
   fake.programs = null;
+  fake.isLeftoverKilled = false;
+  fake.stopCalls = 0;
   opener.openUrl.mockClear();
   localStorage.clear();
   vi.resetModules();
@@ -151,6 +157,31 @@ describe("SettingsMobileAccessSection, when something goes wrong", () => {
   it("says that another program ngrok already uses the address of the account", async () => {
     const wrapper = await mountSection({ ...OPENING, error: { kind: "ngrokAddressInUse", detail: "ERR_NGROK_334" } });
     expect(wrapper.get(".alert").text()).toContain("Another program ngrok already uses the address of your ngrok account.");
+  });
+
+  it("shows the button Stop the old ngrok only with the error ngrokAddressInUse", async () => {
+    const wrapper = await mountSection({ ...OPENING, error: { kind: "ngrokAddressInUse", detail: "ERR_NGROK_334" } });
+    expect(wrapper.get(".stop-old-ngrok").text()).toBe("Stop the old ngrok");
+    vi.resetModules();
+    const otherWrapper = await mountSection({ ...OPENING, error: { kind: "ngrokStopped", detail: "" } });
+    expect(otherWrapper.find(".stop-old-ngrok").exists()).toBe(false);
+  });
+
+  it("stops the old ngrok with the button, and says nothing more when it was stopped", async () => {
+    fake.isLeftoverKilled = true;
+    const wrapper = await mountSection({ ...OPENING, error: { kind: "ngrokAddressInUse", detail: "ERR_NGROK_334" } });
+    await wrapper.get(".stop-old-ngrok").trigger("click");
+    await flushPromises();
+    expect(fake.stopCalls).toBe(1);
+    expect(wrapper.find(".old-ngrok-not-found").exists()).toBe(false);
+  });
+
+  it("says to close the other ngrok by hand when Heidrun did not start it", async () => {
+    fake.isLeftoverKilled = false;
+    const wrapper = await mountSection({ ...OPENING, error: { kind: "ngrokAddressInUse", detail: "ERR_NGROK_334" } });
+    await wrapper.get(".stop-old-ngrok").trigger("click");
+    await flushPromises();
+    expect(wrapper.get(".old-ngrok-not-found").text()).toContain("Heidrun did not start the other ngrok. Close it by hand");
   });
 
   it("shows the last message of ngrok under the sentence when it stopped", async () => {

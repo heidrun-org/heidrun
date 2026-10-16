@@ -381,6 +381,7 @@ pub fn run() {
             mobile::mobile_enable,
             mobile::mobile_disable,
             mobile::mobile_revoke,
+            mobile::mobile_stop_leftover_ngrok,
             skills::installed::skills_list,
             skills::installed::skills_read,
             skills::installed::skills_delete,

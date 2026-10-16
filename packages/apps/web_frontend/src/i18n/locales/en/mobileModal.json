@@ -17,5 +17,8 @@
   "error.ngrokStopped": "The program ngrok stopped. Heidrun starts it again in a few seconds.",
   "error.ngrokNotSignedIn": "The program ngrok has no account on this computer. Create a free account at ngrok.com, then run the command ngrok config add-authtoken followed by your token. Heidrun tries again every 15 seconds.",
   "error.ngrokAddressInUse": "Another program ngrok already uses the address of your ngrok account. Close that program, or quit the other copy of Heidrun. Heidrun tries again in a few seconds.",
+  "stopOldNgrok": "Stop the old ngrok",
+  "oldNgrokStopped": "The old ngrok is stopped. Heidrun opens the tunnel again in a few seconds.",
+  "oldNgrokNotFound": "Heidrun did not start the other ngrok. Close it by hand: it can run in a terminal, or on another computer with the same ngrok account.",
   "error.cannotListen": "Heidrun cannot listen on the local address. Another program may use the port. Heidrun tries again in a few seconds."
 }

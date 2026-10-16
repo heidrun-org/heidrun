@@ -7,6 +7,7 @@ mod access;
 mod config;
 mod embedded;
 mod handler;
+mod leftover_tunnel;
 mod router;
 mod server;
 mod tunnel;
