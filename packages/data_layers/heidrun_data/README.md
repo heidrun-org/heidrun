@@ -19,14 +19,14 @@ A Rust library and one command line tool for [Heidrun](../../../README.md). It g
 
 ## Command line
 
-Run the command from the root of the repository, with the npm script `data_layer`. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer. The command runs in the folder of the package, which is inside the repository of Heidrun, so the sources read the repository of Heidrun when the option `--folder` is not given.
+Run the command from the root of the repository, with the npm script `data_layer:heidrun_data`. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer. The command runs in the folder of the package, which is inside the repository of Heidrun, so the sources read the repository of Heidrun when the option `--folder` is not given.
 
 ```sh
-pnpm --silent data_layer sources --format jsonl
-pnpm --silent data_layer update --format jsonl
-pnpm --silent data_layer update coding_agents code_hosting --format jsonl
-pnpm --silent data_layer query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
-pnpm --silent data_layer --help
+pnpm --silent data_layer:heidrun_data sources --format jsonl
+pnpm --silent data_layer:heidrun_data update --format jsonl
+pnpm --silent data_layer:heidrun_data update coding_agents code_hosting --format jsonl
+pnpm --silent data_layer:heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
+pnpm --silent data_layer:heidrun_data --help
 ```
 
 | Command | Effect |

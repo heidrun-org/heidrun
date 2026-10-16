@@ -9,7 +9,7 @@ A Rust library and one command line tool, `heidrun_data`, that give a coding age
 - `src/reading/`: the command `read`, the content that the tables do not store — see its own CONTEXT.md.
 - `skills/heidrun_data/`: the skill that teaches a coding agent the commands, the tables, and the joins. The folder is standalone: `SKILL.md`, and the folder `references` with the documents that the skill rests on, as links to their place in `docs`. A test compares `SKILL.md` with the help and with the output of `schema`.
 - `tests/`: the tests of the executable. The tests of the library sit at the end of each source file.
-- Command to run this folder: `pnpm --silent data_layer --help`
+- Command to run this folder: `pnpm --silent data_layer:heidrun_data --help`
 - Command to test this folder: `pnpm --filter heidrun_data test`
 
 ## Rules

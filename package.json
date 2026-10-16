@@ -19,7 +19,7 @@
     "data_layer:coding_agents": "pnpm --silent --filter data_layer_coding_agents cli",
     "data_layer:source_control": "pnpm --silent --filter data_layer_source_control cli",
     "data_layer:user_activity": "pnpm --silent --filter data_layer_user_activity cli",
-    "data_layer": "pnpm --silent --filter heidrun_data cli",
+    "data_layer:heidrun_data": "pnpm --silent --filter heidrun_data cli",
     "experiment:multi_layer_graph": "pnpm --filter multi_layer_graph dev",
     "experiment:parallax_dino_runner": "pnpm --filter parallax_dino_runner dev",
     "experiment:parallax_dino_runner:commits": "pnpm --filter parallax_dino_runner commits:build",
