@@ -78,7 +78,7 @@ The three tables `memory_files`, `subagents`, and `skills` have the same four co
 
 | Table | Folders | Facts of the column `data` |
 | --- | --- | --- |
-| `memory_files` | `~/.claude/projects/<project folder>/memory/*.md` | The name, the description, the type (`user`, `feedback`, `project`, or `reference`), and `originChatSessionId`, the chat session that wrote it. |
+| `memory_files` | `~/.claude/projects/<project folder of the main checkout>/memory/*.md`, also from a worktree | The name, the description, the type (`user`, `feedback`, `project`, or `reference`), and `originChatSessionId`, the chat session that wrote it. |
 | `subagents` | `.claude/agents/*.md` of the repository and of `~/.claude` | The name and the description. |
 | `skills` | The folders with a `SKILL.md` in `.claude/skills` and `.agents/skills` of the repository, `~/.claude/skills`, `~/.codex/skills`, and `~/.agents/skills` | The name and the description. |
 

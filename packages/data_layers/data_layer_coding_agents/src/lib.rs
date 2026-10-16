@@ -46,7 +46,7 @@ pub use model::types::{
     ChatSession, ChatSessionRecord, ChatSessionRelations, ChatSessionTable, CodingAgent, ModelTokens, QueryRow,
     SynchronizationMode, SynchronizationReport,
 };
-pub use repository_finder::{find_repository, find_root, parse_repository};
+pub use repository_finder::{find_main_root, find_repository, find_root, parse_repository};
 pub use storage::configuration_database::ConfigurationDatabase;
 pub use storage::database::ChatSessionsDatabase;
 pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};

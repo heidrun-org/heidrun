@@ -186,6 +186,7 @@ mod tests {
         let directory = temp_folder("configuration_run");
         let folders = ConfigurationFolders {
             root: directory.join("app"),
+            main_root: directory.join("app"),
             claude_dir: directory.join("claude"),
             codex_home: directory.join("codex"),
             agents_home: directory.join("agents"),

@@ -209,6 +209,7 @@ fn synchronize_coding_agents(
         log,
     )?;
     let folders = layer::ConfigurationFolders {
+        main_root: layer::find_main_root(&root),
         root,
         claude_dir: options.claude_dir.clone(),
         codex_home: options.codex_home.clone(),

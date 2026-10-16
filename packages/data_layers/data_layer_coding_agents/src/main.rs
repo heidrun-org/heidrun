@@ -4,7 +4,7 @@ mod command_line;
 
 use command_line::{parse, Parsed, QueryRequest, SynchronizationRequest, HELP};
 use data_layer_coding_agents::{
-    agents_home, claude_dir, codex_home, default_database_path, describe_since, find_repository, find_root, ignore_log,
+    agents_home, claude_dir, codex_home, default_database_path, describe_since, find_main_root, find_repository, find_root, ignore_log,
     synchronize, synchronize_configuration, to_json, to_table, ChatSessionsDatabase, ConfigurationDatabase,
     ConfigurationFolders,
 };
@@ -56,7 +56,13 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<(), String> {
     )?;
     println!("{} -> {} ({})", report.repository, database_path.display(), report.mode.name());
     println!("chat sessions: {} written, read {}", report.chat_session_count, describe_since(report.since.as_deref()));
-    let folders = ConfigurationFolders { root, claude_dir: claude_dir(), codex_home: codex_home(), agents_home: agents_home() };
+    let folders = ConfigurationFolders {
+        main_root: find_main_root(&root),
+        root,
+        claude_dir: claude_dir(),
+        codex_home: codex_home(),
+        agents_home: agents_home(),
+    };
     let mut database = ConfigurationDatabase::open(&database_path)?;
     let counts = synchronize_configuration(&repository, &folders, &mut database, log)?;
     let parts: Vec<String> = counts

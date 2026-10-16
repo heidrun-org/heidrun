@@ -17,6 +17,28 @@ pub fn find_root(folder: &Path) -> PathBuf {
     folder.to_path_buf()
 }
 
+/// The folder of the main checkout of the repository at `root`: the parent of the common folder `.git` that `git rev-parse
+/// --git-common-dir` gives. In a worktree, it is the folder of the main checkout, where Claude Code keeps the memory of the
+/// repository. Returns `root` when `git` gives no common folder named `.git`, for example outside a Git repository.
+pub fn find_main_root(root: &Path) -> PathBuf {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
+        .output();
+    let Ok(output) = output else {
+        return root.to_path_buf();
+    };
+    if !output.status.success() {
+        return root.to_path_buf();
+    }
+    let common_folder = PathBuf::from(String::from_utf8_lossy(&output.stdout).trim());
+    match (common_folder.file_name(), common_folder.parent()) {
+        (Some(name), Some(parent)) if name == ".git" => parent.to_path_buf(),
+        _ => root.to_path_buf(),
+    }
+}
+
 /// The repository in the format `owner/name`, from the address of the remote `origin` of the repository at `root`.
 ///
 /// # Errors
@@ -83,6 +105,36 @@ mod tests {
         let worktree = temp_folder("find_root_worktree");
         std::fs::write(worktree.join(".git"), "gitdir: /elsewhere\n").unwrap();
         assert_eq!(find_root(&worktree), worktree);
+    }
+
+    #[test]
+    fn finds_the_main_checkout_from_a_worktree_and_from_the_main_checkout() {
+        let folder = temp_folder("find_main_root");
+        let main = folder.join("main");
+        std::fs::create_dir_all(&main).unwrap();
+        let main = main.canonicalize().unwrap();
+        let git = |args: &[&str]| {
+            let status = Command::new("git")
+                .arg("-C")
+                .arg(&main)
+                .args(args)
+                .env("GIT_CONFIG_GLOBAL", "/dev/null")
+                .env("GIT_AUTHOR_NAME", "Ada")
+                .env("GIT_AUTHOR_EMAIL", "ada@example.com")
+                .env("GIT_COMMITTER_NAME", "Ada")
+                .env("GIT_COMMITTER_EMAIL", "ada@example.com")
+                .status()
+                .unwrap();
+            assert!(status.success());
+        };
+        git(&["init", "-q"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "first"]);
+        let worktree = folder.join("worktree");
+        git(&["worktree", "add", "-q", &worktree.display().to_string()]);
+        assert_eq!(find_main_root(&worktree), main);
+        assert_eq!(find_main_root(&main), main);
+        let outside = temp_folder("find_main_root_outside");
+        assert_eq!(find_main_root(&outside), outside);
     }
 
     #[test]

@@ -2,7 +2,8 @@
 //! Code, and the skills of Claude Code, of Codex, and of the folders `.agents` that several coding agents read.
 //!
 //! The places, for the root folder `<root>` of the repository:
-//! - the memory files: `<Claude Code>/projects/<project folder of root>/memory/*.md`;
+//! - the memory files: `<Claude Code>/projects/<project folder of the main checkout>/memory/*.md`, because Claude Code keeps
+//!   one memory for the main checkout and all its worktrees;
 //! - the subagents: `<root>/.claude/agents/*.md` and `<Claude Code>/agents/*.md`;
 //! - the skills: the folders with a file `SKILL.md` in `<root>/.claude/skills`, `<root>/.agents/skills`,
 //!   `<Claude Code>/skills`, `<Codex>/skills`, and `~/.agents/skills`.
@@ -20,8 +21,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// The folders where the configuration of the coding agent is.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConfigurationFolders {
-    /// The root folder of the repository.
+    /// The root folder of the repository, or of the worktree.
     pub root: PathBuf,
+    /// The folder of the main checkout of the repository. It is `root` when `root` is not a worktree.
+    pub main_root: PathBuf,
     /// The folder of the configuration of Claude Code, for example `~/.claude`.
     pub claude_dir: PathBuf,
     /// The folder of Codex, for example `~/.codex`.
@@ -65,7 +68,7 @@ fn item_folders(kind: ConfigurationKind, folders: &ConfigurationFolders) -> Vec<
     let root = &folders.root;
     match kind {
         ConfigurationKind::MemoryFile => {
-            let project = claude_folder_name(&root.display().to_string());
+            let project = claude_folder_name(&folders.main_root.display().to_string());
             let memory = folders.claude_dir.join("projects").join(project).join("memory");
             vec![item_folder(memory, claude, ConfigurationScope::Project)]
         }
@@ -215,6 +218,7 @@ mod tests {
         let directory = temp_folder(name);
         ConfigurationFolders {
             root: directory.join("work").join("app"),
+            main_root: directory.join("work").join("app"),
             claude_dir: directory.join("claude"),
             codex_home: directory.join("codex"),
             agents_home: directory.join("agents"),
@@ -223,7 +227,7 @@ mod tests {
 
     /// The memory folder of Claude Code for the repository of the fake computer.
     fn memory_folder(folders: &ConfigurationFolders) -> PathBuf {
-        folders.claude_dir.join("projects").join(claude_folder_name(&folders.root.display().to_string())).join("memory")
+        folders.claude_dir.join("projects").join(claude_folder_name(&folders.main_root.display().to_string())).join("memory")
     }
 
     const MEMORY_TEXT: &str = "---\nname: never-rebase\ndescription: Never rebase, merge only\nmetadata:\n  node_type: memory\n  type: feedback\n  originSessionId: 43406b78-fddd\n  modified: 2026-10-13T04:00:53.815Z\n---\n\nNever rebase.\n";
@@ -263,6 +267,17 @@ mod tests {
         assert_eq!(item.origin_chat_session_id.as_deref(), Some("43406b78-fddd"));
         assert_eq!(item.removed_at, None);
         assert!(item.created_at <= item.updated_at);
+    }
+
+    #[test]
+    fn reads_the_memory_of_the_main_checkout_from_a_worktree() {
+        let mut folders = fake_folders("memory_worktree");
+        let main_memory = memory_folder(&folders);
+        folders.root = folders.root.join(".claude").join("worktrees").join("a-fix");
+        write_file(&main_memory.join("never-rebase.md"), MEMORY_TEXT, 10);
+        let items = &read_configuration(&folders)[0].items;
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].folder, main_memory.display().to_string());
     }
 
     #[test]
