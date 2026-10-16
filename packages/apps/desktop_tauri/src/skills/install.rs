@@ -1,11 +1,13 @@
-//! The preview and the installation of a skill: from the search on skills.sh, or from the web address of a skill folder
-//! on GitHub.
+//! The preview and the installation of a skill: from the search on skills.sh, from the web address of a skill folder on
+//! GitHub or GitLab, or from a skill folder on this computer.
 
 use std::path::{Path, PathBuf};
 use super::agent_folders::{AGENTS, REAL_FILES_AGENT, link_agents, skill_locations, skills_dir};
-use super::folder_address::{FolderAddress, parse_folder_address};
+use super::folder_address::{CodeHost, FolderAddress, parse_folder_address};
 use super::github::{fetch_folder_text, find_skill, http_client, list_folder_files, list_repository_files};
+use super::gitlab::{GITLAB_BASE, fetch_gitlab_folder_text, gitlab_file_url, list_gitlab_folder_files};
 use super::installed::{delete_locations, list_level};
+use super::local_folder::{copy_local_folder, read_local_skill};
 use super::repository_paths::{encode_path, files_in_dir};
 use super::types::{InstalledSkill, ORIGIN_FILE, SkillOrigin, is_valid_name, is_valid_source};
 
@@ -22,12 +24,20 @@ pub async fn skills_preview(source: String, skill_id: String) -> Result<String, 
     find_skill(&client, &source, &skill_id).await.map(|(_, text)| text)
 }
 
-/// The text of the `SKILL.md` file of the skill folder at a GitHub web address, to read it before the installation.
+/// The text of the `SKILL.md` file of the skill folder at a GitHub or GitLab web address, to read it before the
+/// installation.
 #[tauri::command]
 pub async fn skills_preview_folder(url: String) -> Result<String, String> {
     let address = parse_folder_address(&url)?;
     let client = http_client()?;
-    fetch_folder_text(&client, &address).await
+    folder_text(&client, &address).await
+}
+
+/// The text of the `SKILL.md` file of the skill folder at a full path on this computer, to read it before the
+/// installation. It is also the check of the folder: a path that is not a folder with a `SKILL.md` file is an error.
+#[tauri::command]
+pub fn skills_preview_local_folder(path: String) -> Result<String, String> {
+    read_local_skill(&path).map(|skill| skill.text)
 }
 
 /// Installs a skill of skills.sh at `level` for the agents `agents`: the whole folder of the skill, with the file
@@ -48,11 +58,11 @@ pub async fn skills_install(
     let (repository_dir, skill_text) = find_skill(&client, &source, &skill_id).await?;
     prepare_staging(&plan)?;
     let written = write_skill(&client, &source, &repository_dir, &skill_text, &plan.staging).await;
-    finish_install(&plan, SkillOrigin { source, skill_id, folder_url: None }, written)
+    finish_install(&plan, SkillOrigin { source, skill_id, folder_url: None, folder_path: None }, written)
 }
 
-/// Installs the skill folder at a GitHub web address, in the same way as `skills_install`: every file below the folder
-/// is downloaded, and the folder gets the name of the last part of the address. The repository must be public.
+/// Installs the skill folder at a GitHub or GitLab web address, in the same way as `skills_install`: every file below
+/// the folder is downloaded, and the folder gets the name of the last part of the address. The repository must be public.
 #[tauri::command]
 pub async fn skills_install_folder(
     level: String,
@@ -63,11 +73,41 @@ pub async fn skills_install_folder(
     let address = parse_folder_address(&url)?;
     let plan = plan_install(level, cwd, address.skill_id(), agents)?;
     let client = http_client()?;
-    let skill_text = fetch_folder_text(&client, &address).await?;
+    let skill_text = folder_text(&client, &address).await?;
     prepare_staging(&plan)?;
     let written = write_folder_skill(&client, &address, &skill_text, &plan.staging).await;
-    let origin = SkillOrigin { source: address.source.clone(), skill_id: address.skill_id().to_string(), folder_url: Some(address.url()) };
+    let origin = SkillOrigin {
+        source: address.source.clone(),
+        skill_id: address.skill_id().to_string(),
+        folder_url: Some(address.url()),
+        folder_path: None,
+    };
     finish_install(&plan, origin, written)
+}
+
+/// Installs the skill folder at a full path on this computer, in the same way as `skills_install_folder`: every file
+/// below the folder is copied, and the folder gets the name of the last part of the path. Nothing uses the network.
+#[tauri::command]
+pub fn skills_install_local_folder(level: String, cwd: Option<String>, path: String, agents: Vec<String>) -> Result<InstalledSkill, String> {
+    let skill = read_local_skill(&path)?;
+    let plan = plan_install(level, cwd, &skill.name, agents)?;
+    prepare_staging(&plan)?;
+    let written = copy_local_folder(&skill.folder, &plan.staging, MAX_FILES, MAX_FILE_BYTES as u64);
+    let origin = SkillOrigin {
+        source: String::new(),
+        skill_id: skill.name.clone(),
+        folder_url: None,
+        folder_path: Some(skill.folder.display().to_string()),
+    };
+    finish_install(&plan, origin, written)
+}
+
+/// The text of the `SKILL.md` file of the skill folder of an address, on GitHub or on GitLab.
+async fn folder_text(client: &reqwest::Client, address: &FolderAddress) -> Result<String, String> {
+    match address.host {
+        CodeHost::GitHub => fetch_folder_text(client, address).await,
+        CodeHost::GitLab => fetch_gitlab_folder_text(client, GITLAB_BASE, address).await,
+    }
 }
 
 /// What the installation of one skill needs, checked before any download.
@@ -150,14 +190,38 @@ pub(super) async fn write_skill(client: &reqwest::Client, source: &str, reposito
             continue;
         }
         let url = format!("https://raw.githubusercontent.com/{source}/HEAD/{}", encode_path(&file.path));
-        download_file(client, &url, &staging.join(&relative)).await?;
+        download_file(client, &url, &staging.join(&relative), None).await?;
     }
     Ok(())
 }
 
-/// Writes the files of the skill folder of an address into `staging`. Unlike `write_skill`, a list of files that GitHub
-/// refuses is an error, because the developer asked for every file below the folder.
+/// Writes the files of the skill folder of an address, on GitHub or on GitLab, into `staging`.
 pub(super) async fn write_folder_skill(client: &reqwest::Client, address: &FolderAddress, skill_text: &str, staging: &Path) -> Result<(), String> {
+    match address.host {
+        CodeHost::GitHub => write_github_folder_skill(client, address, skill_text, staging).await,
+        CodeHost::GitLab => write_gitlab_folder_skill(client, GITLAB_BASE, address, skill_text, staging).await,
+    }
+}
+
+/// Writes the files of the skill folder of a GitLab address into `staging`. GitLab gives no size in a list of files, so a
+/// file larger than `MAX_FILE_BYTES` is skipped after its download. `base` is `https://gitlab.com`, or a fake server.
+pub(super) async fn write_gitlab_folder_skill(client: &reqwest::Client, base: &str, address: &FolderAddress, skill_text: &str, staging: &Path) -> Result<(), String> {
+    std::fs::write(staging.join("SKILL.md"), skill_text).map_err(|e| format!("skills_install_failed: {e}"))?;
+    let folder = list_gitlab_folder_files(client, base, address, MAX_FILES).await?;
+    for (relative, _) in files_in_dir(&folder.files, "") {
+        if relative == Path::new("SKILL.md") {
+            continue;
+        }
+        let file_path = format!("{}/{}", folder.path, relative.display());
+        let url = gitlab_file_url(base, &address.source, &file_path, &folder.branch);
+        download_file(client, &url, &staging.join(&relative), Some(MAX_FILE_BYTES)).await?;
+    }
+    Ok(())
+}
+
+/// Writes the files of the skill folder of a GitHub address into `staging`. Unlike `write_skill`, a list of files that
+/// GitHub refuses is an error, because the developer asked for every file below the folder.
+async fn write_github_folder_skill(client: &reqwest::Client, address: &FolderAddress, skill_text: &str, staging: &Path) -> Result<(), String> {
     std::fs::write(staging.join("SKILL.md"), skill_text).map_err(|e| format!("skills_install_failed: {e}"))?;
     let folder_files = list_folder_files(client, address).await?;
     let files = files_in_dir(&folder_files, "");
@@ -170,18 +234,22 @@ pub(super) async fn write_folder_skill(client: &reqwest::Client, address: &Folde
             continue;
         }
         let url = format!("https://raw.githubusercontent.com/{}/{folder}/{}", address.source, encode_path(&file.path));
-        download_file(client, &url, &staging.join(&relative)).await?;
+        download_file(client, &url, &staging.join(&relative), None).await?;
     }
     Ok(())
 }
 
-/// Downloads the file at `url` and writes it at `target`, with the folders above it.
-async fn download_file(client: &reqwest::Client, url: &str, target: &Path) -> Result<(), String> {
+/// Downloads the file at `url` and writes it at `target`, with the folders above it. A file larger than `skip_above`
+/// bytes is not written.
+async fn download_file(client: &reqwest::Client, url: &str, target: &Path, skip_above: Option<usize>) -> Result<(), String> {
     let response = client.get(url).send().await.map_err(|e| format!("skills_download_failed: {e}"))?;
     if !response.status().is_success() {
         return Err(format!("skills_download_failed: HTTP {}", response.status().as_u16()));
     }
     let bytes = response.bytes().await.map_err(|e| format!("skills_download_failed: {e}"))?;
+    if skip_above.is_some_and(|limit| bytes.len() > limit) {
+        return Ok(());
+    }
     if let Some(parent) = target.parent() {
         std::fs::create_dir_all(parent).map_err(|e| format!("skills_install_failed: {e}"))?;
     }
@@ -229,6 +297,110 @@ mod tests {
         let _ = std::fs::remove_dir_all(&workspace);
     }
 
+    #[tokio::test]
+    async fn installs_the_files_of_a_gitlab_folder_and_skips_a_file_that_is_too_large() {
+        let tree_request = "/api/v4/projects/acme%2Fteam%2Fskills/repository/tree?ref=main&path=skills%2Fpdf&recursive=true&per_page=100&page=1";
+        let big = "x".repeat(MAX_FILE_BYTES + 1);
+        let server = fake_server(move |request| match request {
+            r if r == tree_request => FakeResponse::ok(
+                r#"[{"type":"blob","path":"skills/pdf/SKILL.md"},{"type":"tree","path":"skills/pdf/scripts"},
+                    {"type":"blob","path":"skills/pdf/scripts/a.py"},{"type":"blob","path":"skills/pdf/big.bin"}]"#,
+            ),
+            "/api/v4/projects/acme%2Fteam%2Fskills/repository/files/skills%2Fpdf%2Fscripts%2Fa.py/raw?ref=main" => FakeResponse::ok("print(1)"),
+            "/api/v4/projects/acme%2Fteam%2Fskills/repository/files/skills%2Fpdf%2Fbig.bin/raw?ref=main" => FakeResponse::ok(&big),
+            _ => FakeResponse::status(404),
+        })
+        .await;
+        let address = parse_folder_address("https://gitlab.com/acme/team/skills/-/tree/main/skills/pdf").unwrap();
+        let staging = temp_folder("gitlab-staging");
+        let client = reqwest::Client::new();
+        write_gitlab_folder_skill(&client, &server.base, &address, "# pdf", &staging).await.unwrap();
+        assert_eq!(std::fs::read_to_string(staging.join("SKILL.md")).unwrap(), "# pdf");
+        assert_eq!(std::fs::read_to_string(staging.join("scripts/a.py")).unwrap(), "print(1)");
+        assert!(staging.join("big.bin").exists() == false);
+        assert_eq!(server.requests().len(), 3, "one list, and one download for each file other than SKILL.md");
+        let _ = std::fs::remove_dir_all(&staging);
+    }
+
+    #[tokio::test]
+    async fn gives_the_error_of_gitlab_when_the_files_of_a_folder_cannot_be_listed() {
+        let server = fake_server(|_| FakeResponse::status(404)).await;
+        let address = parse_folder_address("https://gitlab.com/acme/skills/-/tree/main/skills/pdf").unwrap();
+        let staging = temp_folder("gitlab-missing");
+        let failed = write_gitlab_folder_skill(&reqwest::Client::new(), &server.base, &address, "# pdf", &staging).await;
+        assert_eq!(failed.unwrap_err(), "skills_folder_not_found: acme/skills/main/skills/pdf");
+        let _ = std::fs::remove_dir_all(&staging);
+    }
+
+    #[test]
+    fn previews_a_skill_folder_on_this_computer() {
+        let parent = temp_folder("local-preview");
+        let folder = write_skill_folder(&parent, "pdf", "---\nname: pdf\n---\n# pdf");
+        assert_eq!(skills_preview_local_folder(folder.display().to_string()).unwrap(), "---\nname: pdf\n---\n# pdf");
+        let empty = parent.join("empty");
+        std::fs::create_dir_all(&empty).unwrap();
+        let no_file = skills_preview_local_folder(empty.display().to_string());
+        assert_eq!(no_file.unwrap_err(), format!("skills_local_folder_no_skill_file: {}", empty.display()));
+        assert_eq!(skills_preview_local_folder("pdf".into()).unwrap_err(), "skills_invalid_path: pdf");
+        let _ = std::fs::remove_dir_all(&parent);
+    }
+
+    #[test]
+    fn installs_a_skill_from_a_folder_on_this_computer_for_every_agent() {
+        let parent = temp_folder("local-install-source");
+        let folder = write_skill_folder(&parent, "pdf", "---\nname: pdf\n---\n# pdf");
+        std::fs::create_dir_all(folder.join("scripts")).unwrap();
+        std::fs::write(folder.join("scripts/a.py"), "print(1)").unwrap();
+        std::fs::write(folder.join(ORIGIN_FILE), "{\"source\":\"x/y\",\"skill_id\":\"pdf\"}").unwrap();
+        let workspace = temp_folder("local-install-workspace");
+        let installed = skills_install_local_folder("workspace".into(), cwd_of(&workspace), folder.display().to_string(), vec!["claude".into(), "codex".into()]).unwrap();
+        assert_eq!(installed.name, "pdf");
+        assert_eq!(installed.agents, ["claude", "codex"]);
+        assert_eq!(
+            installed.origin,
+            Some(SkillOrigin { source: String::new(), skill_id: "pdf".into(), folder_url: None, folder_path: Some(folder.display().to_string()) })
+        );
+        let target = workspace.join(".agents/skills/pdf");
+        assert_eq!(std::fs::read_to_string(target.join("scripts/a.py")).unwrap(), "print(1)");
+        assert!(std::fs::symlink_metadata(workspace.join(".claude/skills/pdf")).unwrap().file_type().is_symlink());
+        assert!(std::fs::read_to_string(target.join(ORIGIN_FILE)).unwrap().contains("folder_path"), "the origin file is the one of the installation");
+        assert!(workspace.join(".agents/skills/.pdf.installing").exists() == false);
+        let _ = std::fs::remove_dir_all(&parent);
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn refuses_a_local_install_for_a_bad_path_no_agent_an_unknown_agent_or_an_installed_skill() {
+        let parent = temp_folder("local-refuse-source");
+        let folder = write_skill_folder(&parent, "pdf", "# pdf");
+        let path = folder.display().to_string();
+        let workspace = temp_folder("local-refuse-workspace");
+        let install = |path: &str, agents: Vec<String>| skills_install_local_folder("workspace".into(), cwd_of(&workspace), path.into(), agents);
+        assert_eq!(install("pdf", vec!["codex".into()]).unwrap_err(), "skills_invalid_path: pdf");
+        assert_eq!(install(&path, Vec::new()).unwrap_err(), "skills_no_agent");
+        assert_eq!(install(&path, vec!["cursor".into()]).unwrap_err(), "skills_unknown_agent: cursor");
+        install(&path, vec!["codex".into()]).unwrap();
+        assert_eq!(install(&path, vec!["codex".into()]).unwrap_err(), "skills_already_installed: pdf");
+        let _ = std::fs::remove_dir_all(&parent);
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
+    #[test]
+    fn leaves_nothing_behind_when_the_copy_of_a_local_folder_fails() {
+        let parent = temp_folder("local-fail-source");
+        let folder = write_skill_folder(&parent, "pdf", "# pdf");
+        for number in 0..=MAX_FILES {
+            std::fs::write(folder.join(format!("file_{number}.md")), "x").unwrap();
+        }
+        let workspace = temp_folder("local-fail-workspace");
+        let failed = skills_install_local_folder("workspace".into(), cwd_of(&workspace), folder.display().to_string(), vec!["codex".into()]);
+        assert_eq!(failed.unwrap_err(), "skills_too_many_files");
+        let skills_folder = workspace.join(".agents/skills");
+        assert!(std::fs::read_dir(&skills_folder).unwrap().count() == 0, "no folder and no hidden folder is left");
+        let _ = std::fs::remove_dir_all(&parent);
+        let _ = std::fs::remove_dir_all(&workspace);
+    }
+
     /// Runs against GitHub: `cargo test skills_live_folder -- --ignored`. The address names a folder of a public
     /// repository, and the install gives the same files as the install of the same skill from skills.sh.
     #[tokio::test]
@@ -240,7 +412,7 @@ mod tests {
         let workspace = temp_folder("live-folder");
         let installed = skills_install_folder("workspace".into(), cwd_of(&workspace), address.into(), vec!["claude".into(), "codex".into()]).await.unwrap();
         assert_eq!(installed.name, "pdf");
-        assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: Some(address.into()) }));
+        assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: Some(address.into()), folder_path: None }));
         assert_eq!(installed.agents, ["claude", "codex"]);
         let folder = workspace.join(".agents/skills/pdf");
         assert!(folder.join("SKILL.md").exists());
@@ -310,7 +482,7 @@ mod tests {
         let workspace = temp_folder("live");
         let cwd = workspace.display().to_string();
         let installed = skills_install("workspace".into(), Some(cwd.clone()), found.source.clone(), found.skill_id.clone(), vec!["claude".into(), "codex".into()]).await.unwrap();
-        assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: None }));
+        assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: None, folder_path: None }));
         assert!(workspace.join(".agents/skills/pdf/SKILL.md").exists());
         assert!(workspace.join(".agents/skills/pdf").join(ORIGIN_FILE).exists());
         let link = workspace.join(".claude/skills/pdf");

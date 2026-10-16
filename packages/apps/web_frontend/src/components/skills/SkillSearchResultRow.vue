@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import { settings } from "../../stores/settings";
-import { inspectResult, installSkill, isInstalledAtLevel, isSkillBusy, resultKey, type SearchResult } from "../../stores/skills";
+import { inspectResult, installSkill, isInstalledAtLevel, isSkillBusy, resultKey, resultOrigin, type SearchResult } from "../../stores/skills";
 import { t } from "../../i18n/index";
 
 defineProps<{ result: SearchResult }>();
@@ -11,7 +11,9 @@ defineProps<{ result: SearchResult }>();
   <div class="row">
     <div class="meta">
       <div class="name">{{ result.name }}</div>
-      <div v-if="result.folderUrl === undefined" class="sub">{{ result.source }} · {{ t("settingsSkills.installs", { total: result.installs.toLocaleString() }) }}</div>
+      <div v-if="resultOrigin(result) === 'skillsSh'" class="sub">{{ result.source }} · {{ t("settingsSkills.installs", { total: result.installs.toLocaleString() }) }}</div>
+      <div v-else-if="resultOrigin(result) === 'localFolder'" class="sub">{{ result.folderPath }} · {{ t("settingsSkills.originLocalFolder") }}</div>
+      <div v-else-if="resultOrigin(result) === 'gitlab'" class="sub">{{ result.source }} · {{ t("settingsSkills.gitlabFolder") }}</div>
       <div v-else class="sub">{{ result.source }} · {{ t("settingsSkills.githubFolder") }}</div>
     </div>
     <button class="btn" @click="inspectResult(result)"><Icon name="eye" /> {{ t("settingsSkills.inspect") }}</button>

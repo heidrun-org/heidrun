@@ -33,14 +33,21 @@ describe("errorText", () => {
     expect(errorText("something_else: boom")).toBe("something_else: boom");
   });
 
-  it("tells that a folder was not found on GitHub, or that an address is not a folder", async () => {
+  it("tells that a folder was not found, or that an address is not a folder", async () => {
     const { errorText } = await import("./skills");
     expect(errorText("skills_folder_not_found: a/b/main/skills/x")).toBe(
-      "This folder was not found on GitHub: a/b/main/skills/x. The repository must be public, and the folder must have a SKILL.md file.",
+      "This folder was not found: a/b/main/skills/x. The repository must be public, and the folder must have a SKILL.md file.",
     );
     expect(errorText("skills_invalid_address: https://example.com/x")).toBe(
-      "This is not the web address of a folder in a GitHub repository: https://example.com/x",
+      "This is not the web address of a skill folder on GitHub or GitLab: https://example.com/x",
     );
+  });
+
+  it("tells what is wrong with a folder on this computer", async () => {
+    const { errorText } = await import("./skills");
+    expect(errorText("skills_invalid_path: pdf")).toBe("This is not the full path of a folder: pdf");
+    expect(errorText("skills_local_folder_not_found: /a/b")).toBe("This folder was not found on this computer: /a/b");
+    expect(errorText("skills_local_folder_no_skill_file: /a/b")).toBe("This folder has no SKILL.md file: /a/b");
   });
 
   it("tells that a link already exists", async () => {
@@ -50,12 +57,35 @@ describe("errorText", () => {
 });
 
 describe("originLabel", () => {
-  it("says GitHub for a skill installed from a web address, and skills.sh for the others", async () => {
+  it("says GitHub or GitLab for a skill installed from a web address, Local folder for a copied folder, and skills.sh for the others", async () => {
     const { originLabel } = await import("./skills");
     const skill = { name: "pdf", description: "", level: "user" as const, path: "/p", agents: [] };
     const fromAddress = { ...skill, origin: { source: "a/b", skill_id: "pdf", folder_url: "https://github.com/a/b/tree/main/pdf" } };
     expect(originLabel(fromAddress)).toBe("GitHub · a/b");
+    const fromGitlab = { ...skill, origin: { source: "a/b", skill_id: "pdf", folder_url: "https://gitlab.com/a/b/-/tree/main/pdf" } };
+    expect(originLabel(fromGitlab)).toBe("GitLab · a/b");
+    const fromFolder = { ...skill, origin: { source: "", skill_id: "pdf", folder_path: "/Users/me/pdf" } };
+    expect(originLabel(fromFolder)).toBe("Local folder · /Users/me/pdf");
     expect(originLabel({ ...skill, origin: { source: "a/b", skill_id: "pdf" } })).toBe("skills.sh · a/b");
     expect(originLabel({ ...skill, origin: null })).toBe("Local");
+  });
+});
+
+describe("resultOrigin", () => {
+  it("tells the place of a result: skills.sh, a local folder, GitHub, or GitLab", async () => {
+    const { resultOrigin } = await import("./skills");
+    const base = { source: "a/b", skillId: "pdf", name: "pdf", installs: 0 };
+    expect(resultOrigin(base)).toBe("skillsSh");
+    expect(resultOrigin({ ...base, folderPath: "/x/pdf" })).toBe("localFolder");
+    expect(resultOrigin({ ...base, folderUrl: "https://github.com/a/b/tree/main/pdf", host: "github" })).toBe("github");
+    expect(resultOrigin({ ...base, folderUrl: "https://gitlab.com/a/b/-/tree/main/pdf", host: "gitlab" })).toBe("gitlab");
+  });
+
+  it("gives each result a key that differs between sources", async () => {
+    const { resultKey } = await import("./skills");
+    const base = { source: "a/b", skillId: "pdf", name: "pdf", installs: 0 };
+    expect(resultKey(base)).toBe("a/b/pdf");
+    expect(resultKey({ ...base, folderPath: "/x/pdf" })).toBe("/x/pdf");
+    expect(resultKey({ ...base, folderUrl: "https://github.com/a/b/tree/main/pdf" })).toBe("https://github.com/a/b/tree/main/pdf");
   });
 });

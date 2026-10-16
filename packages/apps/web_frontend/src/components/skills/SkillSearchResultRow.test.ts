@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
-import { FOLDER_RESULT, FOLDER_URL, INSTALLED, RESULT, pending, prepare } from "./skills_test_support";
+import { FOLDER_RESULT, FOLDER_URL, GITLAB_RESULT, GITLAB_URL, INSTALLED, LOCAL_PATH, LOCAL_RESULT, RESULT, pending, prepare } from "./skills_test_support";
 
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock("@tauri-apps/api/core", () => ({ invoke }));
@@ -179,8 +179,94 @@ describe("SkillSearchResultRow: web address of a skill folder", () => {
     await flushPromises();
     expect(session.state.toastKind).toBe("error");
     expect(session.state.toast).toBe(
-      "This folder was not found on GitHub: anthropics/skills/main/skills/pdf. The repository must be public, and the folder must have a SKILL.md file.",
+      "This folder was not found: anthropics/skills/main/skills/pdf. The repository must be public, and the folder must have a SKILL.md file.",
     );
+    expect(wrapper.find(".spinner").exists()).toBe(false);
+  });
+});
+
+describe("SkillSearchResultRow: web address of a skill folder on GitLab", () => {
+  it("shows the name and the project, with the words GitLab folder", async () => {
+    const { wrapper } = await mountRow(GITLAB_RESULT);
+    expect(wrapper.get(".name").text()).toBe("pdf");
+    expect(wrapper.get(".sub").text()).toBe("acme/agent-skills · GitLab folder");
+  });
+
+  it("shows the SKILL.md file of the folder, with GitLab as its origin", async () => {
+    const { wrapper, skills } = await mountRow(GITLAB_RESULT, { skills_preview_folder: "---\nname: pdf\n---" });
+    await wrapper.findAll("button")[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_preview_folder", { url: GITLAB_URL });
+    expect(skills.skills.view?.originLabel).toBe("GitLab · acme/agent-skills");
+  });
+
+  it("installs the folder with the command of the web addresses, like a folder on GitHub", async () => {
+    const { wrapper } = await mountRow(GITLAB_RESULT);
+    await wrapper.findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install_folder", {
+      level: "workspace",
+      cwd: "/work/heidrun",
+      url: GITLAB_URL,
+      agents: ["claude", "codex"],
+    });
+  });
+});
+
+describe("SkillSearchResultRow: local folder", () => {
+  it("shows the name of the folder, its full path, and the words Local folder", async () => {
+    const { wrapper } = await mountRow(LOCAL_RESULT);
+    expect(wrapper.get(".name").text()).toBe("pdf");
+    expect(wrapper.get(".sub").text()).toBe(`${LOCAL_PATH} · Local folder`);
+    expect(wrapper.findAll("button").map((button) => button.text())).toEqual(["Inspect", "Install"]);
+  });
+
+  it("shows the SKILL.md file of the folder, with Local folder as its origin", async () => {
+    const { wrapper, skills } = await mountRow(LOCAL_RESULT, { skills_preview_local_folder: "---\nname: pdf\n---" });
+    await wrapper.findAll("button")[0].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_preview_local_folder", { path: LOCAL_PATH });
+    expect(invoke).not.toHaveBeenCalledWith("skills_preview", expect.anything());
+    expect(skills.skills.view?.text).toContain("name: pdf");
+    expect(skills.skills.view?.originLabel).toBe(`Local folder · ${LOCAL_PATH}`);
+  });
+
+  it("installs the folder at the chosen level, for the agents that are switched on", async () => {
+    const { wrapper, session } = await mountRow(LOCAL_RESULT);
+    await wrapper.findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(invoke).toHaveBeenCalledWith("skills_install_local_folder", {
+      level: "workspace",
+      cwd: "/work/heidrun",
+      path: LOCAL_PATH,
+      agents: ["claude", "codex"],
+    });
+    expect(invoke).not.toHaveBeenCalledWith("skills_install", expect.anything());
+    expect(invoke).not.toHaveBeenCalledWith("skills_install_folder", expect.anything());
+    expect(session.state.toast).toBe("Skill pdf installed");
+  });
+
+  it("shows a skill as installed when a skill with the name of the folder is at the chosen level", async () => {
+    const { wrapper, settings } = await mountRow(LOCAL_RESULT);
+    expect(wrapper.findAll("button")).toHaveLength(2);
+    settings.skillsLevel = "user";
+    await flushPromises();
+    expect(wrapper.findAll("button")).toHaveLength(1);
+    expect(wrapper.get(".place").text()).toBe("Installed");
+  });
+
+  it("shows the error when the folder has no SKILL.md file, and removes the spinner", async () => {
+    const { wrapper, session } = await mountRow(LOCAL_RESULT);
+    invoke.mockImplementation(async (command: string) => {
+      if (command === "skills_install_local_folder") {
+        throw `skills_local_folder_no_skill_file: ${LOCAL_PATH}`;
+      }
+      return INSTALLED;
+    });
+    await wrapper.findAll("button")[1].trigger("click");
+    await flushPromises();
+    expect(session.state.toastKind).toBe("error");
+    expect(session.state.toast).toBe(`This folder has no SKILL.md file: ${LOCAL_PATH}`);
     expect(wrapper.find(".spinner").exists()).toBe(false);
   });
 });
