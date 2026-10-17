@@ -10,6 +10,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
 - `request_log/`: a Rust library that writes the log of the requests that the data layer receives, reads it, and measures its cost. The four data layer packages, `heidrun_data`, and `desktop_tauri` import it. See its own CONTEXT.md.
 - `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. The first commands are the macros: list, add, update, and delete. See its own CONTEXT.md.
+- `local_ai_embeddings/`: a Rust library and command line tool for computing text embeddings locally on the CPU or a supported accelerator. See its own CONTEXT.md.
 
 ## Rules
 - A package that produces the application goes in `packages/apps`, never here.
