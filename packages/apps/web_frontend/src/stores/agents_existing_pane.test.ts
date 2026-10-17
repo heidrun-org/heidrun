@@ -18,6 +18,9 @@ vi.mock("./session", async (importOriginal) => ({
   toast: vi.fn(),
 }));
 
+/** The text typed before Codex, which sets the colours of the terminal view in the dark theme (issue #636). */
+const DARK_COLORS = "printf '\\033]10;rgb:c9c9/cdcd/d1d1\\033\\\\\\033]11;rgb:1f1f/1f1f/1f1f\\033\\\\'; ";
+
 /** The first pane of a new workspace, which Herdr creates with the first tab of the workspace. */
 const ROOT_PANE = { pane_id: "w2:p1", tab_id: "w2:t1", workspace_id: "w2" } as PaneInfo;
 
@@ -61,7 +64,7 @@ describe("launchAgent with an existing pane (issue #379)", () => {
   it("types codex in the existing pane for the command Codex", async () => {
     expect(await launchInRootPane("codex")).toBe("ok");
     expect(api.newTab).not.toHaveBeenCalled();
-    expect(api.run).toHaveBeenCalledWith("w2:p1", "codex");
+    expect(api.run).toHaveBeenCalledWith("w2:p1", `${DARK_COLORS}codex`);
   });
 
   it("still opens a new tab when no pane exists", async () => {

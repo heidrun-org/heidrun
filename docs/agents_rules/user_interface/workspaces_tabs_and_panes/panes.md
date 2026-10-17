@@ -1,11 +1,11 @@
 # User interface of Heidrun: panes
 
 - Created: 13 October 2026
-- Last updated: 15 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -26,6 +26,15 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The panes of the selected tab that are not pinned fill the width that the column leaves. A tab whose panes are all pinned shows the same picture as an empty tab.
 - The header of a pinned pane in the column shows the pressed pin button, as in the panes of the selected tab. A click on the pressed pin button unpins the pane.
 - A pinned pane does not change when the developer selects another tab or another workspace. Only the panes of the selected tab change.
+
+## Colors of Codex
+
+- Codex chooses its light colors or its dark colors from the text color and the background color of the pane. It asks for both colors once, when it starts. When one of the two answers is missing, Codex keeps its dark colors, which cannot be read on a light background ([issue 636](https://github.com/heidrun-org/heidrun/issues/636)).
+- Heidrun attaches to a pane with `herdr terminal attach`, which leaves these two questions to the pane, so Herdr answers only with the colors that the shell of the pane set before. Every command of Heidrun that starts Codex therefore sets both colors first, with one `printf` in the shell. The commands are the new tab, the resume of a chat, and a launcher whose command starts with `codex`. The `printf` sends the two terminal commands `OSC 10` (the text color) and `OSC 11` (the background color). OSC means Operating System Command. A command that does not start Codex gets no `printf`.
+- The two colors are the text color and the background color of the terminal view in the theme that Heidrun uses at that moment. They come from `terminal_themes.ts`, the file that the terminal view draws with, so Codex chooses its colors for the very background that the developer sees. The code of this rule is in `terminal_colors.ts`.
+- A Codex that already runs keeps its colors when the developer changes the theme, because Codex asks for the colors only once. The developer restarts Codex, or resumes the chat, to get the colors of the new theme. A Codex that the developer starts by hand in a pane gets no colors from Heidrun, so it keeps its dark colors.
+- The command `/theme` of Codex changes only the colors of the code. It is not needed: Codex picks its light code theme on a light background by itself.
+- The tests are in `terminal_colors.test.ts` and in `agents_codex_colors.test.ts`.
 
 ## Needs you
 

@@ -81,7 +81,7 @@ describe('the theme colors', () => {
 
 	it('give the terminal themes the same background as a pane (--bg), in both themes', () => {
 		const { darkText, lightText } = ThemeColorsTestHelper.readThemeTexts();
-		const terminalText = ThemeColorsTestHelper.readSource('components/TerminalView.vue');
+		const terminalText = ThemeColorsTestHelper.readSource('lib/terminal_themes.ts');
 		const darkBackground = terminalText.match(/dark:\s*\{\s*background:\s*"(#[0-9a-f]{6})"/i);
 		const lightBackground = terminalText.match(/light:\s*\{\s*background:\s*"(#[0-9a-f]{6})"/i);
 		expect(darkBackground?.[1]).toBe(ThemeColorsTestHelper.readValue(darkText, '--bg'));

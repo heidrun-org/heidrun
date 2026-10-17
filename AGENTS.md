@@ -74,7 +74,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
-  - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes and the state "Needs you".
+  - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
   - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
 - The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
   - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the clipboard.

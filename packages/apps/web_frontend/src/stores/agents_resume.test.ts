@@ -16,6 +16,9 @@ vi.mock("./session", async (importOriginal) => ({
   toast: vi.fn(),
 }));
 
+/** The text typed before Codex, which sets the colours of the terminal view in the dark theme (issue #636). */
+const DARK_COLORS = "printf '\\033]10;rgb:c9c9/cdcd/d1d1\\033\\\\\\033]11;rgb:1f1f/1f1f/1f1f\\033\\\\'; ";
+
 const ID = "01a03a5e-a361-7ab2-af03-62ea1a76ce4b";
 
 /** Launches an agent that resumes a chat, and waits for the pause before the command is typed. */
@@ -54,7 +57,7 @@ describe("launchAgent with a chat to resume", () => {
 
   it("types codex resume with the session identifier for a chat of Codex", async () => {
     expect(await resume("codex", ID)).toBe("ok");
-    expect(api.run).toHaveBeenCalledWith("p1", `codex resume '${ID}'`);
+    expect(api.run).toHaveBeenCalledWith("p1", `${DARK_COLORS}codex resume '${ID}'`);
   });
 
   it("opens no tab and types nothing when the session identifier is not safe for a shell", async () => {
