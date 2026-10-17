@@ -5,11 +5,15 @@ use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
 use candle_transformers::models::bert::{BertModel, Config as BertConfig};
 use clap::ValueEnum;
-use hf_hub::{HFClientSync, HFRepositorySync, RepoTypeModel};
+use hf_hub::{HFClientSync, HFError, HFRepositorySync, RepoTypeModel};
 use serde::Serialize;
 use serde_json::Value;
 use std::path::PathBuf;
-use tokenizers::{PaddingParams, PaddingStrategy, Tokenizer, TruncationParams};
+use std::time::{Duration, Instant};
+use tokenizers::{PaddingParams, PaddingStrategy, Tokenizer};
+
+pub mod chunking;
+pub use chunking::{chunk_document, chunk_document_with_overlap, ChunkingMode, TextChunk};
 
 pub const DEFAULT_MODEL_ID: &str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2";
 
@@ -68,6 +72,8 @@ pub struct EmbeddingConfig {
     pub model_id: String,
     /// Local inference backend.
     pub backend: Backend,
+    /// Check Hugging Face for newer model files instead of immediately using cached files.
+    pub check_model_updates: bool,
 }
 
 impl Default for EmbeddingConfig {
@@ -75,6 +81,7 @@ impl Default for EmbeddingConfig {
         Self {
             model_id: DEFAULT_MODEL_ID.to_string(),
             backend: Backend::Cpu,
+            check_model_updates: false,
         }
     }
 }
@@ -86,6 +93,37 @@ pub struct TextEmbedding {
     pub text: String,
     /// The normalized sentence embedding.
     pub vector: Vec<f32>,
+}
+
+/// A source chunk and its normalized vector.
+#[derive(Clone, Debug, Serialize)]
+pub struct ChunkEmbedding {
+    #[serde(flatten)]
+    pub chunk: TextChunk,
+    pub vector: Vec<f32>,
+}
+
+/// Chunk vectors and an approximate normalized vector for the whole document.
+#[derive(Clone, Debug, Serialize)]
+pub struct DocumentEmbedding {
+    pub global_vector: Vec<f32>,
+    pub chunks: Vec<ChunkEmbedding>,
+}
+
+/// Time spent in each stage of loading a model.
+#[derive(Clone, Debug, Default)]
+pub struct ModelLoadTimings {
+    pub device_initialization: Duration,
+    pub repository_setup: Duration,
+    pub config_file_lookup: Duration,
+    pub tokenizer_file_lookup: Duration,
+    pub weights_file_lookup: Duration,
+    pub pooling_file_lookup: Duration,
+    pub sentence_config_file_lookup: Duration,
+    pub config_parsing: Duration,
+    pub tokenizer_setup: Duration,
+    pub weights_mapping: Duration,
+    pub model_setup: Duration,
 }
 
 /// A loaded model ready to compute local embeddings.
@@ -102,18 +140,56 @@ pub struct EmbeddingEngine {
 impl EmbeddingEngine {
     /// Downloads or reads cached model files and loads a supported BERT sentence embedding model.
     pub fn load(config: EmbeddingConfig) -> Result<Self> {
+        Self::load_with_timings(config).map(|(engine, _)| engine)
+    }
+
+    /// Loads a model and returns the time spent in each loading stage.
+    pub fn load_with_timings(config: EmbeddingConfig) -> Result<(Self, ModelLoadTimings)> {
+        let mut timings = ModelLoadTimings::default();
+        let started = Instant::now();
         let device = config.backend.device()?;
+        timings.device_initialization = started.elapsed();
+
+        let started = Instant::now();
         let client =
             HFClientSync::new().context("Could not initialize the Hugging Face model cache")?;
         let repository = model_repository(&client, &config.model_id)?;
-        let config_path = download(&repository, "config.json")?;
-        let tokenizer_path = download(&repository, "tokenizer.json")?;
-        let weights_path = download(&repository, "model.safetensors")?;
+        timings.repository_setup = started.elapsed();
+
+        let started = Instant::now();
+        let config_path = download(&repository, "config.json", config.check_model_updates)?;
+        timings.config_file_lookup = started.elapsed();
+
+        let started = Instant::now();
+        let tokenizer_path = download(&repository, "tokenizer.json", config.check_model_updates)?;
+        timings.tokenizer_file_lookup = started.elapsed();
+
+        let started = Instant::now();
+        let weights_path = download(&repository, "model.safetensors", config.check_model_updates)?;
+        timings.weights_file_lookup = started.elapsed();
+
+        let started = Instant::now();
         // Sentence Transformers model repositories include this file, but it is
         // not always copied into a local cache by tools that only download the
         // model weights. Mean pooling is the supported fallback for BERT models.
-        let pooling_path = download(&repository, "1_Pooling/config.json").ok();
+        let pooling_path = download(
+            &repository,
+            "1_Pooling/config.json",
+            config.check_model_updates,
+        )
+        .ok();
+        timings.pooling_file_lookup = started.elapsed();
 
+        let started = Instant::now();
+        let sentence_config_path = download(
+            &repository,
+            "sentence_bert_config.json",
+            config.check_model_updates,
+        )
+        .ok();
+        timings.sentence_config_file_lookup = started.elapsed();
+
+        let started = Instant::now();
         let model_config_json: Value = serde_json::from_slice(
             &std::fs::read(&config_path).context("Could not read the model configuration")?,
         )?;
@@ -123,39 +199,65 @@ impl EmbeddingEngine {
         }
         let model_config: BertConfig = serde_json::from_value(model_config_json)
             .context("The model has a BERT configuration that Candle cannot read")?;
+        let preferred_limit = if let Some(path) = sentence_config_path {
+            let settings: Value = serde_json::from_slice(&std::fs::read(path)?)?;
+            settings
+                .get("max_seq_length")
+                .and_then(Value::as_u64)
+                .map(usize::try_from)
+                .transpose()?
+        } else if config.model_id == DEFAULT_MODEL_ID {
+            Some(128)
+        } else {
+            None
+        };
+        let max_tokens = preferred_limit
+            .unwrap_or(model_config.max_position_embeddings)
+            .min(model_config.max_position_embeddings);
+        if max_tokens < 3 {
+            bail!("The model token limit must leave room for text and special tokens")
+        }
+        timings.config_parsing = started.elapsed();
 
+        let started = Instant::now();
         let mut tokenizer = Tokenizer::from_file(&tokenizer_path)
             .map_err(anyhow::Error::msg)
             .context("Could not read the model tokenizer")?;
         tokenizer
-            .with_truncation(Some(TruncationParams {
-                max_length: model_config.max_position_embeddings,
-                ..Default::default()
-            }))
+            .with_truncation(None)
             .map_err(anyhow::Error::msg)
             .context("Could not configure the model tokenizer")?;
         tokenizer.with_padding(Some(PaddingParams {
             strategy: PaddingStrategy::BatchLongest,
             ..Default::default()
         }));
+        timings.tokenizer_setup = started.elapsed();
 
         // Safety: the cached safetensors file is treated as immutable while Candle reads its memory map.
+        let started = Instant::now();
         let variables = unsafe {
             VarBuilder::from_mmaped_safetensors(&[weights_path], DType::F32, &device)
                 .context("Could not load model weights")?
         };
+        timings.weights_mapping = started.elapsed();
+
+        let started = Instant::now();
         let model = BertModel::load(variables, &model_config)
             .context("Could not load the BERT model weights into Candle")?;
+        timings.model_setup = started.elapsed();
 
-        Ok(Self {
-            model_id: config.model_id,
-            backend: config.backend,
-            model,
-            tokenizer,
-            device,
-            max_tokens: model_config.max_position_embeddings,
-            dimensions: model_config.hidden_size,
-        })
+        Ok((
+            Self {
+                model_id: config.model_id,
+                backend: config.backend,
+                model,
+                tokenizer,
+                device,
+                max_tokens,
+                dimensions: model_config.hidden_size,
+            },
+            timings,
+        ))
     }
 
     /// The configured model identifier.
@@ -168,7 +270,7 @@ impl EmbeddingEngine {
         self.backend
     }
 
-    /// Computes one normalized vector for each input text.
+    /// Computes vectors for short inputs; rejects oversized inputs instead of truncating them.
     pub fn embed(&mut self, texts: &[String]) -> Result<Vec<TextEmbedding>> {
         if texts.is_empty() {
             bail!("Provide at least one text to embed")
@@ -182,6 +284,12 @@ impl EmbeddingEngine {
             .encode_batch(texts.to_vec(), true)
             .map_err(anyhow::Error::msg)
             .context("Could not tokenize the input text")?;
+        if encodings
+            .iter()
+            .any(|encoding| encoding.len() > self.max_tokens)
+        {
+            bail!("Input exceeds the model limit of {} tokens; use embed_document to split longer text", self.max_tokens)
+        }
         let token_ids = encodings
             .iter()
             .map(|encoding| Tensor::new(encoding.get_ids(), &self.device))
@@ -211,6 +319,62 @@ impl EmbeddingEngine {
             .zip(vectors)
             .map(|(text, vector)| TextEmbedding { text, vector })
             .collect())
+    }
+
+    /// Splits a whole document, embeds every chunk, and averages the chunk vectors.
+    pub fn embed_document(
+        &mut self,
+        text: &str,
+        mode: ChunkingMode,
+        overlap_tokens: usize,
+    ) -> Result<DocumentEmbedding> {
+        let chunks = chunk_document_with_overlap(
+            text,
+            &self.tokenizer,
+            self.max_tokens,
+            mode,
+            overlap_tokens,
+        )?;
+        let mut embedded = Vec::with_capacity(chunks.len());
+        for batch in chunks.chunks(8) {
+            let texts = batch
+                .iter()
+                .map(|chunk| chunk.text.clone())
+                .collect::<Vec<_>>();
+            let vectors = self.embed(&texts)?;
+            embedded.extend(
+                batch
+                    .iter()
+                    .cloned()
+                    .zip(vectors)
+                    .map(|(chunk, embedding)| ChunkEmbedding {
+                        chunk,
+                        vector: embedding.vector,
+                    }),
+            );
+        }
+        let mut average = vec![0_f64; self.dimensions];
+        for chunk in &embedded {
+            let weight = chunk.chunk.token_count.saturating_sub(2).max(1) as f64;
+            for (sum, value) in average.iter_mut().zip(&chunk.vector) {
+                *sum += f64::from(*value) * weight;
+            }
+        }
+        let norm = average
+            .iter()
+            .map(|value| value * value)
+            .sum::<f64>()
+            .sqrt();
+        if !norm.is_finite() || norm == 0.0 {
+            bail!("Could not normalize the document's global vector")
+        }
+        Ok(DocumentEmbedding {
+            global_vector: average
+                .into_iter()
+                .map(|value| (value / norm) as f32)
+                .collect(),
+            chunks: embedded,
+        })
     }
 
     /// Returns the dimension of this model's sentence embeddings.
@@ -251,7 +415,30 @@ fn model_repository(
     Ok(client.model(owner.to_string(), name.to_string()))
 }
 
-fn download(repository: &HFRepositorySync<RepoTypeModel>, filename: &str) -> Result<PathBuf> {
+fn download(
+    repository: &HFRepositorySync<RepoTypeModel>,
+    filename: &str,
+    check_model_updates: bool,
+) -> Result<PathBuf> {
+    if !check_model_updates {
+        match repository
+            .download_file()
+            .filename(filename.to_string())
+            .revision("main".to_string())
+            .local_files_only(true)
+            .send()
+        {
+            Ok(path) => return Ok(path),
+            // Only an unknown cache entry needs a download. A cached record
+            // that an optional file does not exist must not trigger a new check.
+            Err(HFError::LocalEntryNotFound { .. }) => {}
+            Err(error) => {
+                return Err(error)
+                    .with_context(|| format!("Could not read cached model file `{filename}`"));
+            }
+        }
+    }
+
     repository
         .download_file()
         .filename(filename.to_string())
