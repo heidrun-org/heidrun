@@ -1,7 +1,11 @@
 //! The source control source of the data layer of Heidrun: reads every commit and every merge of a Git repository, and writes
 //! the facts of each one in the table `commits` of a SQLite file.
 //!
-//! The library has four parts:
+//! The library has seven parts:
+//! - `refresh_source_control` is the refresh interface: it copies the new commits of a repository into the SQLite file.
+//! - `find_commits` is the query interface: it reads the commits of a time range from the SQLite file only.
+//! - `find_file_existence`, `find_existing_folders`, and `find_worktree_branches` give the state of the working copy now,
+//!   with no history: which files and which worktree folders exist, and the branch of each worktree.
 //! - `SourceControlDatabase` is the SQLite file. It writes the rows, reads them, and runs a read-only query.
 //! - `GitReader` lists the commits of a repository and reads their facts, through a `GitRunner`. `GitCommandRunner` runs the
 //!   command `git`.
@@ -12,6 +16,8 @@
 
 mod git;
 mod model;
+mod query;
+mod refresh;
 mod storage;
 mod synchronization;
 #[cfg(test)]
@@ -19,8 +25,13 @@ mod test_samples;
 
 pub use git::git_reader::{ignore_log, GitReader};
 pub use git::git_runner::{find_repository, parse_repository, GitCommandRunner, GitRunner};
+pub use git::working_copy::{
+    find_existing_folders, find_file_existence, find_worktree_branches, FileExistence, WorktreeBranch,
+};
 pub use model::schemas::{validate_commit_value, COMMIT_SCHEMA};
 pub use model::types::{Commit, QueryRow, SynchronizationMode, SynchronizationReport};
+pub use query::find_commits;
+pub use refresh::refresh_source_control;
 pub use storage::database::SourceControlDatabase;
 pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};
 pub use synchronization::run as synchronize;

@@ -64,7 +64,7 @@ Every public operation of the four data layers and of `heidrun_data` is recorded
 | `requests info` | Prints the log file, its size, the version of its format, and the counts of requests, failures, unfinished requests, and damaged lines. |
 | `requests summary` | Prints the usage patterns: the count, the failures, and the total, mean, median, 90th, 95th, and 99th percentile, and longest time of each group of requests. `--by operation`, `--by pattern`, and `--by parameters` choose the group, and `--repeated` keeps the requests that were asked twice or more. |
 | `requests list` | Prints the requests one by one, with their parameters: the export of the log. |
-| `requests replay` | Runs recorded requests again through the data layer, and prints the original time next to the replay time. A query reads a snapshot. A synchronization writes a new file that `--isolated-database` names. |
+| `requests replay` | Runs recorded requests again through the data layer, and prints the original time next to the replay time. A query or a `find_*` call of the desktop application reads a snapshot. A synchronization or a `refresh_*` call writes a new file that `--isolated-database` names. |
 | `requests snapshot --to <path>` | Copies the SQLite file in a consistent file. |
 | `requests overhead` | Measures what the log costs a request, in time and in bytes. |
 

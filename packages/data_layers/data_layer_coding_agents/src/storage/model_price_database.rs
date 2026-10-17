@@ -69,7 +69,8 @@ impl ModelPriceDatabase {
         &self.database_path
     }
 
-    /// The latest version of the prices, or `None` when the file holds no price.
+    /// The latest version of the prices, or `None` when the file holds no price. The file is shared by the packages of the data
+    /// layer, so it can exist before the package wrote its price tables: it then holds no price.
     pub fn find_latest_version(&self) -> Result<Option<PriceVersion>, String> {
         let spec = RequestSpec::new(REQUEST_PACKAGE, "find_latest_price_version", RequestKind::Query).database(&self.database_path);
         record(spec, || self.find_latest_version_inside(), |found| Summary::count(usize::from(found.is_some())))
@@ -77,6 +78,15 @@ impl ModelPriceDatabase {
 
     /// The work of `find_latest_version`, between the start event and the completion event of its request.
     fn find_latest_version_inside(&self) -> Result<Option<PriceVersion>, String> {
+        let has_versions_table = self
+            .connection
+            .query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'model_price_versions'", [], |_| Ok(()))
+            .optional()
+            .map_err(|error| format!("The tables of the database cannot be read: {error}"))?
+            .is_some();
+        if has_versions_table == false {
+            return Ok(None);
+        }
         self.connection
             .query_row(
                 "SELECT version, retrievedAt, checkedAt, source, unit, contentHash, modelCount

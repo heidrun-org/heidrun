@@ -1,7 +1,11 @@
 //! The code hosting source of the data layer of Heidrun: reads every issue and every pull request of a GitHub repository, and
 //! writes the facts of each one in two tables of a SQLite file.
 //!
-//! The library has four parts:
+//! The library has six parts:
+//! - `refresh_code_hosting` is the refresh interface: it copies the issues and the pull requests that changed into the SQLite
+//!   file.
+//! - `find_issues_opened_between`, `find_pull_requests_opened_between`, `find_issues_by_numbers`, and
+//!   `find_pull_requests_by_numbers` are the query interface: they read the SQLite file only.
 //! - `CodeHostingDatabase` is the SQLite file. It writes the rows, reads them, and runs a read-only query.
 //! - `GithubReader` reads the pages of issues and of pull requests, through a `GraphqlRunner`. `GhGraphqlRunner` sends the
 //!   queries with the command `gh`.
@@ -12,6 +16,8 @@
 
 mod github;
 mod model;
+mod query;
+mod refresh;
 mod storage;
 mod synchronization;
 #[cfg(test)]
@@ -24,6 +30,10 @@ pub use model::types::{
     CodeHostingTable, Issue, IssueState, IssueStateReason, PullRequest, PullRequestState, QueryRow, SynchronizationMode,
     SynchronizationReport,
 };
+pub use query::{
+    find_issues_by_numbers, find_issues_opened_between, find_pull_requests_by_numbers, find_pull_requests_opened_between,
+};
+pub use refresh::{refresh_code_hosting, refresh_code_hosting_with_runner};
 pub use storage::database::CodeHostingDatabase;
 pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};
 pub use synchronization::{describe_since, run as synchronize};

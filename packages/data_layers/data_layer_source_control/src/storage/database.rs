@@ -6,6 +6,7 @@
 
 use crate::model::schemas::commit_to_checked_value;
 use crate::model::types::{Commit, QueryRow};
+use crate::model::utc_time::to_whole_second_text;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
@@ -13,6 +14,9 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use crate::REQUEST_PACKAGE;
 use request_log::{record, RequestKind, RequestSpec, Summary};
+
+/// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
+const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// The SQLite file of the source control data layer.
 pub struct SourceControlDatabase {
@@ -45,7 +49,8 @@ impl SourceControlDatabase {
                     committedAt TEXT NOT NULL,
                     data TEXT NOT NULL CHECK (json_valid(data)),
                     PRIMARY KEY (repository, hash)
-                )",
+                );
+                CREATE INDEX IF NOT EXISTS commits_committed_at ON commits (repository, committedAt);",
             )
             .map_err(|error| format!("The table commits cannot be created: {error}"))?;
         Ok(SourceControlDatabase { database_path: database_path.to_path_buf(), is_read_only: false, connection })
@@ -64,6 +69,9 @@ impl SourceControlDatabase {
         }
         let connection = Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|error| format!("The database file {} cannot be opened: {error}", database_path.display()))?;
+        connection
+            .busy_timeout(READ_WAITING_TIME)
+            .map_err(|error| format!("The waiting time of the database file cannot be set: {error}"))?;
         Ok(SourceControlDatabase { database_path: database_path.to_path_buf(), is_read_only: true, connection })
     }
 
@@ -180,6 +188,87 @@ impl SourceControlDatabase {
         }
     }
 
+    /// True when the table `table` exists in the SQLite file. The file is shared by the packages of the data layer, so it can exist
+    /// before the package wrote its own table.
+    ///
+    /// # Errors
+    /// An error when the tables of the file cannot be listed.
+    pub fn has_table(&self, table: &str) -> Result<bool, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "has_table", RequestKind::Query)
+            .choice("table", table)
+            .database(&self.database_path);
+        record(spec, || self.has_table_inside(table), |is_found| Summary::count(usize::from(*is_found)))
+    }
+
+    /// The work of `has_table`, between the start event and the completion event of its request.
+    fn has_table_inside(&self, table: &str) -> Result<bool, String> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1", params![table], |row| {
+                row.get::<_, i64>(0)
+            })
+            .map(|count| count > 0)
+            .map_err(|error| format!("The tables of the file cannot be listed: {error}"))
+    }
+
+    /// Reads the commits of a repository made in the time range from `since` (included) to `until` (excluded), the oldest
+    /// first. Both times are texts in the format ISO 8601 with an offset or in UTC. A merge brings in commits that count
+    /// already, so it is left out unless `include_merges` is true. The index on `repository` and `committedAt` answers the
+    /// range.
+    ///
+    /// # Errors
+    /// An error when a time is not a time with an offset, or when a row is not a commit.
+    pub fn find_commits_between(
+        &self,
+        repository: &str,
+        since: &str,
+        until: &str,
+        include_merges: bool,
+    ) -> Result<Vec<Commit>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_commits_between", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("since", since)
+            .parameter("until", until)
+            .choice("includeMerges", include_merges)
+            .database(&self.database_path);
+        record(spec, || self.find_commits_between_inside(repository, since, until, include_merges), |commits| {
+            Summary::count(commits.len())
+        })
+    }
+
+    /// The work of `find_commits_between`, between the start event and the completion event of its request.
+    fn find_commits_between_inside(
+        &self,
+        repository: &str,
+        since: &str,
+        until: &str,
+        include_merges: bool,
+    ) -> Result<Vec<Commit>, String> {
+        let since = to_whole_second_text(since)?;
+        let until = to_whole_second_text(until)?;
+        if self.has_table("commits")? == false {
+            return Ok(Vec::new());
+        }
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT data FROM commits WHERE repository = ?1 AND committedAt >= ?2 AND committedAt < ?3
+                 ORDER BY committedAt, hash",
+            )
+            .map_err(|error| format!("The commits cannot be read: {error}"))?;
+        let rows = statement
+            .query_map(params![repository, since, until], |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The commits cannot be read: {error}"))?;
+        let mut commits = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The commits cannot be read: {error}"))?;
+            let commit = serde_json::from_str::<Commit>(&data).map_err(|error| format!("A row is not a commit: {error}"))?;
+            if include_merges || !commit.is_merge() {
+                commits.push(commit);
+            }
+        }
+        Ok(commits)
+    }
+
     /// Runs one SQL statement and gives its rows. The SQLite functions on JSON work on the column `data`, for example
     /// `json_extract(data, '$.subject')`. A value that is a blob becomes the text `<blob, N bytes>`.
     ///
@@ -226,7 +315,7 @@ fn value_from_sqlite(value: ValueRef) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_samples::{commit, hash, merge_commit, temp_folder};
+    use crate::test_samples::{commit, date, hash, merge_commit, temp_folder};
 
     const REPOSITORY: &str = "heidrun-org/heidrun";
 
@@ -236,6 +325,73 @@ mod tests {
         let path = folder.join("a_folder_that_does_not_exist_yet").join("data_layer.sqlite");
         let database = SourceControlDatabase::open(&path).unwrap();
         (path, database)
+    }
+
+    /// A commit that was made on the day `day` at 10:00:00 in UTC.
+    fn commit_on(number: u32, day: u32) -> Commit {
+        Commit { committed_at: date(day), ..commit(number) }
+    }
+
+    #[test]
+    fn finds_the_commits_of_a_time_range_without_the_merges_in_the_order_of_their_date() {
+        let (_, mut database) = new_database("between");
+        let merge = Commit { committed_at: date(4), ..merge_commit(4, 1, 2) };
+        database
+            .upsert_commits(REPOSITORY, &[commit_on(3, 3), commit_on(1, 1), merge.clone(), commit_on(2, 2)])
+            .unwrap();
+        let found = database.find_commits_between(REPOSITORY, &date(1), &date(9), false).unwrap();
+        assert_eq!(found.iter().map(|commit| commit.hash.clone()).collect::<Vec<_>>(), vec![hash(1), hash(2), hash(3)]);
+        let with_merges = database.find_commits_between(REPOSITORY, &date(1), &date(9), true).unwrap();
+        assert_eq!(with_merges.len(), 4);
+        assert!(with_merges.contains(&merge));
+    }
+
+    #[test]
+    fn includes_the_start_of_the_range_and_excludes_its_end() {
+        let (_, mut database) = new_database("between_edges");
+        database.upsert_commits(REPOSITORY, &[commit_on(1, 1), commit_on(2, 2), commit_on(3, 3)]).unwrap();
+        let found = database.find_commits_between(REPOSITORY, &date(2), &date(3), false).unwrap();
+        assert_eq!(found.iter().map(|commit| commit.hash.clone()).collect::<Vec<_>>(), vec![hash(2)]);
+    }
+
+    #[test]
+    fn reads_a_range_written_with_an_offset_and_with_milliseconds() {
+        let (_, mut database) = new_database("between_offset");
+        database.upsert_commits(REPOSITORY, &[commit_on(2, 2)]).unwrap();
+        // The commit is at 10:00:00 in UTC on the day 2, which is 12:00:00 at +02:00. A start at 12:00:00.500 is after it.
+        let found =
+            database.find_commits_between(REPOSITORY, "2026-10-02T12:00:00+02:00", "2026-10-02T12:00:01+02:00", false);
+        assert_eq!(found.unwrap().len(), 1);
+        let found = database.find_commits_between(
+            REPOSITORY,
+            "2026-10-02T12:00:00.500+02:00",
+            "2026-10-03T00:00:00+02:00",
+            false,
+        );
+        assert_eq!(found.unwrap().len(), 0);
+    }
+
+    #[test]
+    fn reads_only_the_commits_of_the_repository_that_is_asked_for() {
+        let (_, mut database) = new_database("between_repository");
+        database.upsert_commits(REPOSITORY, &[commit_on(1, 1)]).unwrap();
+        database.upsert_commits("other-org/other", &[commit_on(2, 2)]).unwrap();
+        let found = database.find_commits_between(REPOSITORY, &date(1), &date(9), false).unwrap();
+        assert_eq!(found.len(), 1);
+    }
+
+    #[test]
+    fn has_an_index_on_the_repository_and_the_date_that_the_range_query_uses() {
+        let (path, _) = new_database("between_plan");
+        let read_only_database = SourceControlDatabase::open_read_only(&path).unwrap();
+        let rows = read_only_database
+            .query(
+                "EXPLAIN QUERY PLAN SELECT data FROM commits WHERE repository = 'a/b' AND committedAt >= '2026-10-01T00:00:00Z'
+                 AND committedAt < '2026-10-09T00:00:00Z'",
+            )
+            .unwrap();
+        let plan: Vec<String> = rows.iter().map(|row| row["detail"].as_str().unwrap().to_string()).collect();
+        assert!(plan.iter().any(|detail| detail.contains("commits_committed_at")), "{plan:?}");
     }
 
     #[test]

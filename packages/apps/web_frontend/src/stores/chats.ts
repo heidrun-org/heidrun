@@ -135,13 +135,13 @@ export function chooseChatAgent(agent: ChatAgent) {
  */
 export async function chooseChatSortKey(key: ChatSortKey): Promise<void> {
   settings.chatsSortKey = key;
-  await loadChats(chats.folder);
+  await readChats(chats.folder);
 }
 
 /** Saves the order that the developer chose in the dropdown menu, for the next start, and reads the chats again. */
 export async function chooseChatSortOrder(order: ChatSortOrder): Promise<void> {
   settings.chatsOrder = order;
-  await loadChats(chats.folder);
+  await readChats(chats.folder);
 }
 
 /** The coding agents that have at least one conversation in the folder, in the order of the selector. */
@@ -196,7 +196,7 @@ export function showLessChats(): void {
   }
 }
 
-/** Raises the number of chats that the list asks for, and reads the chats again. */
+/** Raises the number of chats that the list asks for, and reads the stored chats again. It does not synchronize. */
 export async function showMoreChats(): Promise<void> {
   if (chats.isShowingMore) {
     return;
@@ -204,16 +204,21 @@ export async function showMoreChats(): Promise<void> {
   chats.isShowingMore = true;
   chats.limit = nextChatLimit(chats.limit);
   try {
-    await loadChats(chats.folder);
+    await readChats(chats.folder);
   } finally {
     chats.isShowingMore = false;
   }
 }
 
+/** The synchronization that runs now, so that two refreshes of the same folder share one synchronization. */
+let runningSynchronization: { folder: string; promise: Promise<string | null> } | null = null;
+
 /**
- * Reads the first conversations of a folder again, in the order that the settings say. A change of folder empties the
- * lists first, and starts again with the first limit, so that the Past chats sidebar section never shows the conversations of
- * another workspace. An answer for a folder, a limit, a sort key, or an order that is no longer the current one is dropped.
+ * Refreshes the conversations of a folder: shows the stored conversations at once when the lists are empty, asks the Tauri
+ * command `chats_synchronize` to copy the new and changed chat files into the SQLite file of the data layer, then reads the
+ * stored conversations again. A failure of the synchronization is kept in `chats.error`, and the stored conversations stay. A
+ * change of folder empties the lists first, and starts again with the first limit, so that the Past chats sidebar section
+ * never shows the conversations of another workspace.
  * @param folder - the folder of the selected workspace, or null when no workspace is selected
  */
 export async function loadChats(folder: string | null): Promise<void> {
@@ -231,6 +236,42 @@ export async function loadChats(folder: string | null): Promise<void> {
     return;
   }
   chats.isLoading = chats.claude.length === 0 && chats.codex.length === 0;
+  if (chats.root === null) {
+    await readChats(folder);
+  }
+  if (chats.folder !== folder) {
+    return;
+  }
+  const synchronizationError = await synchronizeChats(folder);
+  await readChats(folder);
+  if (synchronizationError !== null && chats.folder === folder) {
+    chats.error = synchronizationError;
+  }
+}
+
+/** Copies the chat files of the folder into the SQLite file. Gives the reason of a failure, or null. */
+function synchronizeChats(folder: string): Promise<string | null> {
+  if (runningSynchronization === null || runningSynchronization.folder !== folder) {
+    const promise = invoke("chats_synchronize", { folder })
+      .then(() => null)
+      .catch((reason: unknown) => String(reason instanceof Error ? reason.message : reason))
+      .finally(() => {
+        runningSynchronization = null;
+      });
+    runningSynchronization = { folder, promise };
+  }
+  return runningSynchronization.promise;
+}
+
+/**
+ * Reads the stored conversations of a folder, in the order that the settings say. It does not synchronize. An answer for a
+ * folder, a limit, a sort key, or an order that is no longer the current one is dropped.
+ * @param folder - the folder of the selected workspace, or null when no workspace is selected
+ */
+async function readChats(folder: string | null): Promise<void> {
+  if (folder === null) {
+    return;
+  }
   const limit = chats.limit;
   const sortKey = settings.chatsSortKey;
   const order = settings.chatsOrder;

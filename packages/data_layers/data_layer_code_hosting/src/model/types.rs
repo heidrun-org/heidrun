@@ -3,6 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use std::collections::BTreeMap;
 
 /// The state of an issue.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -61,6 +62,10 @@ pub struct Issue {
     pub assignees: Vec<String>,
     /// The names of the labels of the issue.
     pub labels: Vec<String>,
+    /// The color of each label of the issue, as six hexadecimal digits without `#`, by the name of the label. A label that
+    /// GitHub gives no color has no entry. A row that an earlier version wrote has no such field, and it reads as no entry.
+    #[serde(default)]
+    pub label_colors: BTreeMap<String, String>,
     /// The date of creation, in the format ISO 8601.
     pub created_at: String,
     /// The date of the last change, in the format ISO 8601.
@@ -92,6 +97,10 @@ pub struct PullRequest {
     pub merged_by: Option<String>,
     /// The names of the labels of the pull request.
     pub labels: Vec<String>,
+    /// The color of each label of the pull request, as six hexadecimal digits without `#`, by the name of the label. A label
+    /// that GitHub gives no color has no entry. A row that an earlier version wrote has no such field, and it reads as no entry.
+    #[serde(default)]
+    pub label_colors: BTreeMap<String, String>,
     /// The name of the branch that the pull request merges into.
     pub base_ref_name: String,
     /// The name of the branch that the pull request merges from.

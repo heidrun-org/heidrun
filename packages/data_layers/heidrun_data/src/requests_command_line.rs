@@ -68,7 +68,11 @@ Replay:
   time next to the replay time. The replayed requests are written in the log with the origin "replay" and the identifier
   of the original request, so they never change the picture of the real usage. A replay times a request on the data of
   today, so the numbers of rows can differ from the original. A replay cannot run an operation that runs inside another
-  one: replay the request that holds it. A statement that the log cut or cleaned of a secret is not replayed.
+  one: replay the request that holds it. A statement that the log cut or cleaned of a secret is not replayed. A replay
+  runs a query, a find call (find_commits, find_user_activity_records, find_issues_opened_between,
+  find_pull_requests_opened_between, find_chat_list, find_ai_cost), a synchronization, and a refresh call
+  (refresh_source_control, refresh_user_activity, refresh_code_hosting, refresh_chat_sessions) of the desktop application.
+  The calls that fetch the price list are not replayed.
   - A query (a SQL statement, usage, find_usage) opens the SQLite file read only. Use a snapshot.
   - A synchronization writes, so it needs --isolated-database, a file that does not exist yet. It never writes the
     SQLite file of Heidrun. Without --allow-network, the source code_hosting is skipped, and no price list is fetched.

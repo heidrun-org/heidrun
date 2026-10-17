@@ -2,7 +2,7 @@
 //! repository, and the configuration of the coding agent (the memory files, the subagents, and the skills), and writes the
 //! facts of each one in a SQLite file.
 //!
-//! The library has five parts:
+//! The library has six parts:
 //! - `scan`, `tokens`, and `ScanCache` read one chat session file without a model: the title, the dates, the messages, the
 //!   folders, the issues, the pull requests, the files that the coding agent wrote, and the tokens of each model.
 //! - `find_claude_session_files`, `find_codex_session_files`, and `read_codex_titles` find the chat session files of one
@@ -14,16 +14,23 @@
 //!   agent, the memory files, the subagents, and the skills, and write it in the tables `memory_files`, `subagents`, and
 //!   `skills`.
 //! - `to_table` and `to_json` write the rows of a query as text.
+//! - `refresh_chat_sessions`, `refresh_ai_cost`, and `refresh_public_model_prices_when_due` copy the sources into the SQLite
+//!   file. `find_chat_list` and `find_ai_cost` read the SQLite file only and give typed rows. These five functions are
+//!   what the desktop application calls: it never reads a chat session file or runs SQL itself.
 //!
 //! The calls are blocking. A caller in an async program runs them in a blocking task.
 
 mod coding_agents;
 mod model;
 mod pricing;
+mod query;
+mod refresh;
 mod repository_finder;
 mod request_parameters;
 mod storage;
 mod synchronization;
+#[cfg(test)]
+mod ai_cost_tests;
 #[cfg(test)]
 mod test_samples;
 
@@ -35,9 +42,11 @@ pub use coding_agents::session_files::{
     claude_folder_name, find_claude_agent_files, find_claude_session_files, find_codex_session_files, is_in_folder,
     read_codex_titles, title_of_scan, FolderScope, SessionFile,
 };
-pub use coding_agents::session_reader::{format_date, parse_date, read_chat_sessions};
+pub use coding_agents::session_reader::{format_date, parse_date, read_chat_session_files, read_chat_sessions, ChatSessionRead};
 pub use coding_agents::token_usage_reader::{minutes_of, read_token_usage, TokenUsageFiles};
 pub use coding_agents::tokens::{model_tokens_of, TokenCounts, TokenScan, TokensByMinute, TokensByModel, UNKNOWN_MODEL};
+pub use model::ai_cost_types::{AiCostAnswer, AiCostHour, AiCostSynchronization, AiCostWorkspace};
+pub use model::chat_list_types::{AgentChats, Chat, ChatList, ChatUsage, SortKey, SortOrder, Sorting, MAX_LIMIT};
 pub use model::configuration_types::{
     ConfigurationItem, ConfigurationKind, ConfigurationRead, ConfigurationScope, ConfigurationWriteCount,
 };
@@ -59,8 +68,13 @@ pub use pricing::price_list_source::{
     price_list_source_of, FilePriceListSource, PriceListSource, WebPriceListSource,
 };
 pub use pricing::price_table::{without_date, PriceTable};
-pub use repository_finder::{find_main_root, find_repository, find_root, parse_repository};
-pub use request_parameters::usage_query_from_parameters;
+pub use query::{find_ai_cost, find_chat_list};
+pub use refresh::{
+    refresh_ai_cost, refresh_chat_sessions, refresh_model_prices, refresh_model_prices_when_due,
+    refresh_public_model_prices_when_due,
+};
+pub use repository_finder::{find_main_root, find_repository, find_repository_key, find_root, parse_repository};
+pub use request_parameters::{sorting_from_parameters, usage_query_from_parameters};
 pub use storage::configuration_database::ConfigurationDatabase;
 pub use storage::database::ChatSessionsDatabase;
 pub use storage::minute_text::{minute_text, parse_time_text, time_text};

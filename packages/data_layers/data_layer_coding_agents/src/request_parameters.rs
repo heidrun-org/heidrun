@@ -4,6 +4,7 @@
 //! The command `heidrun_data requests replay` reads the parameters of a recorded `find_usage` and runs it again with
 //! `usage_query_from_parameters`.
 
+use crate::model::chat_list_types::{SortKey, SortOrder, Sorting};
 use crate::model::token_usage_types::{UsageGrouping, UsageQuery};
 use crate::REQUEST_PACKAGE;
 use request_log::{RequestKind, RequestSpec};
@@ -31,6 +32,41 @@ pub(crate) fn usage_query_spec(operation: &'static str, query: &UsageQuery, data
         }
     }
     spec
+}
+
+/// The name of a sort key in the parameters of a recorded `find_chat_list`, the name that the web page writes.
+pub(crate) fn sort_key_name(key: SortKey) -> &'static str {
+    match key {
+        SortKey::CreatedOn => "created_on",
+        SortKey::LastUpdated => "last_updated",
+        SortKey::Messages => "messages",
+        SortKey::Issues => "issues",
+        SortKey::PullRequests => "pull_requests",
+        SortKey::FilesWritten => "files_written",
+    }
+}
+
+/// The name of a sort order in the parameters of a recorded `find_chat_list`.
+pub(crate) fn sort_order_name(order: SortOrder) -> &'static str {
+    match order {
+        SortOrder::Ascending => "ascending",
+        SortOrder::Descending => "descending",
+    }
+}
+
+/// The sorting that the parameters of a recorded `find_chat_list` hold.
+///
+/// # Errors
+/// An error when a parameter is missing, or when a name is not known.
+pub fn sorting_from_parameters(parameters: &Value) -> Result<Sorting, String> {
+    let name = |parameter: &str| {
+        parameters.get(parameter).and_then(Value::as_str).map(str::to_string).ok_or(format!("The parameter {parameter} is missing."))
+    };
+    let key = serde_json::from_value::<SortKey>(Value::String(name("sortKey")?))
+        .map_err(|error| format!("The sort key is not known: {error}"))?;
+    let order = serde_json::from_value::<SortOrder>(Value::String(name("sortOrder")?))
+        .map_err(|error| format!("The sort order is not known: {error}"))?;
+    Ok(Sorting { key, order })
 }
 
 /// The question about the token usage that the parameters of a recorded `find_usage` hold.
@@ -104,6 +140,17 @@ mod tests {
             let parameters = recorded_parameters(&original);
             assert_eq!(usage_query_from_parameters(&parameters), Ok(original));
         }
+    }
+
+    #[test]
+    fn each_sorting_comes_back_from_the_names_that_find_chat_list_records() {
+        for key in [SortKey::CreatedOn, SortKey::LastUpdated, SortKey::Messages, SortKey::Issues, SortKey::PullRequests, SortKey::FilesWritten] {
+            for order in [SortOrder::Ascending, SortOrder::Descending] {
+                let parameters = serde_json::json!({ "sortKey": sort_key_name(key), "sortOrder": sort_order_name(order) });
+                assert_eq!(sorting_from_parameters(&parameters), Ok(Sorting { key, order }));
+            }
+        }
+        assert!(sorting_from_parameters(&serde_json::json!({ "sortKey": "weight", "sortOrder": "ascending" })).is_err());
     }
 
     #[test]

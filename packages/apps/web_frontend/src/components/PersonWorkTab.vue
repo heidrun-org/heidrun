@@ -23,6 +23,7 @@ import {
   PERSON_WORK_PERIODS,
   PersonWork,
   type PersonWorkItems,
+  type PersonWorkSynchronization,
   type PersonWorkPeriodId,
   type PersonWorkSlotHours,
 } from "../lib/person_work";
@@ -123,8 +124,9 @@ const chosenFolders = computed(() => [
 ]);
 
 /**
- * The chosen folders as one text. Heidrun makes the list of the open workspaces again every few seconds, so `chosenFolders` is
- * a new array each time, with the same folders. A watch on the array would read again each time, and the chart would blink.
+ * The chosen folders as one text. Heidrun makes the list of the open workspaces again after each change that Herdr reports, so
+ * `chosenFolders` is a new array each time, with the same folders. A watch on the array would read again each time, and the
+ * chart would blink.
  */
 const chosenFoldersKey = computed(() => chosenFolders.value.join("\n"));
 
@@ -474,8 +476,16 @@ async function readGitHistory(folderToRead: string): Promise<void> {
   gitHistoryReads[folderToRead] = { state: "reading" };
   const now = Date.now();
   try {
-    const items = await invoke<PersonWorkItems>("person_work_in_range", { folder: folderToRead, ...longestRange(now) });
-    gitHistoryReads[folderToRead] = { state: "done", items, readAt: now };
+    const synchronization = await invoke<PersonWorkSynchronization>("person_work_synchronize", { folder: folderToRead });
+    const items = await invoke<Omit<PersonWorkItems, "codeHostingError">>("person_work_in_range", {
+      repository: synchronization.repository,
+      ...longestRange(now),
+    });
+    gitHistoryReads[folderToRead] = {
+      state: "done",
+      items: { ...items, codeHostingError: synchronization.codeHostingError },
+      readAt: now,
+    };
   } catch (error) {
     gitHistoryReads[folderToRead] = { state: "failed", error: String(error) };
   }
@@ -498,7 +508,12 @@ async function readAiCost(isImportAllowed: boolean): Promise<void> {
     const now = Date.now();
     const answer = await invoke<AiCostAnswer>("ai_cost_in_range", { folders, ...longestRange(now), timeZone: AiCost.timeZone() });
     if (readNumber === aiCostReadNumber) {
-      aiCostRead.value = { state: "done", answer, readAt: now, priceWarning: synchronization.priceWarning };
+      aiCostRead.value = {
+        state: "done",
+        answer: AiCost.mergeSynchronizationErrors(answer, synchronization),
+        readAt: now,
+        priceWarning: synchronization.priceWarning,
+      };
     }
   } catch (error) {
     if (readNumber === aiCostReadNumber) {

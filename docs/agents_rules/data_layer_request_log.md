@@ -16,6 +16,7 @@ This file gives the rules for every agent that adds or changes an operation of a
 - The operation name is the name of the public method. A rename of a public method changes the name in the log, so a rename is a change of the format: say it in the pull request.
 - The parameters of the `RequestSpec` are the values that decide the workload: the repository, the dates, the grouping, the mode, the SQL statement. Use `choice` for a value with a few possible values: it is part of the pattern, and a summary counts the requests that share it together. Never put the text of a chat, of a commit, of an issue, or of a file in a parameter.
 - The test of a new operation reads the events with `request_log::testing::capture`, and checks the tree of the requests with `testing::tree`, the kind, the parameters, the count, and the outcome. A request that fails writes a completion event with `outcome` failure and a category, never the text of the error.
+- The desktop application calls only the functions `refresh_*` and `find_*` ([data_layer_access.md](data_layer_access.md)). Each of them is a request of its own, and it holds the lower requests of the same package. A new `refresh_*` or `find_*` function does the same, and says its mode in the parameter `mode`, or in the detail `mode` of the completion event when it chooses the mode while it runs.
 - Nested requests are normal: a synchronization holds a collection, a write, and a lock. The nesting follows the call stack of the thread. Do not start a request in a new thread inside a request and expect it to be nested.
 
 ## What the log never does
@@ -40,4 +41,4 @@ This file gives the rules for every agent that adds or changes an operation of a
 
 - `heidrun_data requests` has six actions: `info`, `summary`, `list`, `replay`, `snapshot`, and `overhead`. Its help and the `SKILL.md` of `heidrun_data` say the same, and a test compares them.
 - A replay writes its requests with the origin `replay` and the identifier of the original request, and a summary of the real usage leaves them out. A replay of a query opens the SQLite file read only. A replay of a synchronization needs `--isolated-database`, a new file, and never writes the SQLite file of Heidrun.
-- A new operation that cannot run alone from its parameters is not replayable: the replay says so, and a test shows it.
+- A new operation that cannot run alone from its parameters is not replayable: the replay says so, and a test shows it. A new `find_*` function is replayable when its parameters in the log are enough to call it again, and a new `refresh_*` function is replayable when it also writes only the isolated file: add it to the lists `FIND_OPERATIONS` or `REFRESH_OPERATIONS` of `replay.rs` with a test.

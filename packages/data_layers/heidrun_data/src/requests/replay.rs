@@ -2,9 +2,10 @@
 //! duration that the log holds.
 //!
 //! The rules that keep a replay away from the real data:
-//! - A query (the SQL statements of the five packages, `read_usage`, and `find_usage`) opens the SQLite file read only, so a
-//!   replay can never change it. The file should be a snapshot, which the command `requests snapshot` makes.
-//! - A synchronization writes, so it needs `--isolated-database`: a file that does not exist yet, and that is not the default
+//! - A query (the SQL statements of the five packages, `read_usage`, `find_usage`, and the `find_*` calls of the desktop
+//!   application) opens the SQLite file read only, so a replay can never change it. The file should be a snapshot, which the
+//!   command `requests snapshot` makes.
+//! - A synchronization and a `refresh_*` call of the desktop application write, so they need `--isolated-database`: a file that does not exist yet, and that is not the default
 //!   file of Heidrun. The folder of the file holds the lock of the replay, so the replay never waits for the desktop
 //!   application. With `--start-from`, the isolated file starts as a copy of a snapshot, so a replay of the mode update
 //!   measures an incremental synchronization.
@@ -56,6 +57,22 @@ pub struct ReplayRun {
     pub error: Option<String>,
 }
 
+/// The calls of the desktop application that read the SQLite file and give typed rows, with all their parameters in the log.
+const FIND_OPERATIONS: [&str; 6] = [
+    "find_commits",
+    "find_user_activity_records",
+    "find_issues_opened_between",
+    "find_pull_requests_opened_between",
+    "find_chat_list",
+    "find_ai_cost",
+];
+
+/// The calls of the desktop application that copy one source into the SQLite file, with all their parameters in the log. The
+/// calls `refresh_ai_cost`, `refresh_model_prices`, and `refresh_model_prices_when_due` are not here: they fetch a price list from
+/// the network, and the check when due depends on the state of the process.
+const REFRESH_OPERATIONS: [&str; 4] =
+    ["refresh_source_control", "refresh_user_activity", "refresh_code_hosting", "refresh_chat_sessions"];
+
 /// The reason why a request cannot be replayed alone, or `None` when it can. The check reads the parameters only.
 pub fn replay_refusal(request: &PairedRequest) -> Option<String> {
     let start = &request.start;
@@ -71,11 +88,13 @@ pub fn replay_refusal(request: &PairedRequest) -> Option<String> {
     }
     let is_usage = start.operation == "read_usage" || start.operation == "find_usage";
     let is_synchronization = start.operation == "synchronize" && kind == RequestKind::Synchronization;
-    if is_usage || is_synchronization {
+    let is_find = kind == RequestKind::Query && FIND_OPERATIONS.contains(&start.operation.as_str());
+    let is_refresh = kind == RequestKind::Synchronization && REFRESH_OPERATIONS.contains(&start.operation.as_str());
+    if is_usage || is_synchronization || is_find || is_refresh {
         return None;
     }
     Some(format!(
-        "The operation {}.{} cannot be replayed: only a query, a usage query, and a synchronization run again.",
+        "The operation {}.{} cannot be replayed: only a query, a usage query, a find call, a refresh call of the sources, and a synchronization run again.",
         start.package, start.operation
     ))
 }
@@ -93,11 +112,17 @@ pub fn replay_request(request: &PairedRequest, options: &ReplayOptions, repeat: 
     if is_synchronization && repeat > 1 {
         return Err("A synchronization runs once for each request: a second run would find the data already written.".to_string());
     }
-    let prepared = if is_synchronization { Some(prepare_synchronization(request, options)?) } else { None };
+    let prepared = if REFRESH_OPERATIONS.contains(&request.start.operation.as_str()) {
+        Prepared::Refresh(prepare_refresh(request, options)?)
+    } else if is_synchronization {
+        Prepared::Synchronization(prepare_synchronization(request, options)?)
+    } else {
+        Prepared::Nothing
+    };
     let mut runs = Vec::new();
     for run in 1..=repeat.max(1) {
         let started = Instant::now();
-        let result = replaying(&request.start.request_id, || run_once(request, options, prepared.as_ref()));
+        let result = replaying(&request.start.request_id, || run_once(request, options, &prepared));
         let microseconds = u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
         let (result_count, error) = match result {
             Ok(count) => (count, None),
@@ -144,8 +169,19 @@ struct PreparedSynchronization {
     options: SynchronizationOptions,
 }
 
-/// Checks the rules of the isolation, makes the isolated file, and builds the options of the synchronization.
-fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> Result<PreparedSynchronization, String> {
+/// What a replay of a synchronization or of a refresh call prepared before it runs.
+enum Prepared {
+    /// A query: nothing to prepare, because the file is open read only.
+    Nothing,
+    /// A synchronization of `heidrun_data` or of one package.
+    Synchronization(PreparedSynchronization),
+    /// A `refresh_*` call of the desktop application: the isolated file that it writes.
+    Refresh(PathBuf),
+}
+
+/// Checks the rules of the isolation and makes the isolated file: it is not a file that a replay reads or the file of Heidrun,
+/// it does not exist yet, and with `--start-from` it starts as a copy of a snapshot.
+fn prepare_isolated_file(options: &ReplayOptions) -> Result<PathBuf, String> {
     let Some(isolated) = &options.isolated_database else {
         return Err("A synchronization writes, so its replay needs the option --isolated-database with a file that does not exist yet.".to_string());
     };
@@ -163,6 +199,12 @@ fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> 
         std::fs::copy(snapshot, &isolated)
             .map_err(|error| format!("The snapshot {} cannot be copied to {}: {error}", snapshot.display(), isolated.display()))?;
     }
+    Ok(isolated)
+}
+
+/// Checks the rules of the isolation, makes the isolated file, and builds the options of the synchronization.
+fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> Result<PreparedSynchronization, String> {
+    let isolated = prepare_isolated_file(options)?;
     let start = &request.start;
     let parameters = &start.parameters;
     let text = |name: &str| parameters.get(name).and_then(Value::as_str).map(str::to_string);
@@ -215,9 +257,34 @@ fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> 
     Ok(PreparedSynchronization { sources, mode, options: synchronization_options })
 }
 
+/// A path parameter of the original request, when `--use-recorded-paths` is on, else the default.
+fn recorded_path(options: &ReplayOptions, parameters: &Value, name: &str, default: PathBuf) -> PathBuf {
+    match (options.is_recorded_path_used, parameters.get(name).and_then(Value::as_str)) {
+        (true, Some(recorded)) => PathBuf::from(recorded),
+        _ => default,
+    }
+}
+
+/// A text parameter of the original request.
+///
+/// # Errors
+/// An error when the parameter is missing or is not a text.
+fn required_text(parameters: &Value, name: &str) -> Result<String, String> {
+    parameters.get(name).and_then(Value::as_str).map(str::to_string).ok_or(format!("The parameter {name} is missing."))
+}
+
+/// Checks the rules of the isolation for a `refresh_*` call, and makes the isolated file. The source `code_hosting` needs the
+/// option `--allow-network`.
+fn prepare_refresh(request: &PairedRequest, options: &ReplayOptions) -> Result<PathBuf, String> {
+    if request.start.operation == "refresh_code_hosting" && options.is_network_allowed == false {
+        return Err("The source code_hosting needs the option --allow-network.".to_string());
+    }
+    prepare_isolated_file(options)
+}
+
 /// One run of the replayed operation, through the interface of the package that received the original request. Gives the
 /// number of rows or items, when the operation counts them.
-fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: Option<&PreparedSynchronization>) -> Result<Option<u64>, String> {
+fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: &Prepared) -> Result<Option<u64>, String> {
     let start = &request.start;
     let parameters = &start.parameters;
     match (start.package.as_str(), start.operation.as_str()) {
@@ -246,8 +313,17 @@ fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: Option<&
             let database = data_layer_coding_agents::TokenUsageDatabase::open_read_only(&options.database_path)?;
             database.find_usage(&query).map(|rows| Some(rows.len() as u64))
         }
+        (_, operation) if FIND_OPERATIONS.contains(&operation) => run_find(operation, parameters, &options.database_path),
+        (_, operation) if REFRESH_OPERATIONS.contains(&operation) => {
+            let Prepared::Refresh(isolated) = prepared else {
+                return Err("The refresh call was not prepared.".to_string());
+            };
+            run_refresh(operation, parameters, options, isolated)
+        }
         (_, "synchronize") => {
-            let prepared = prepared.ok_or("The synchronization was not prepared.")?;
+            let Prepared::Synchronization(prepared) = prepared else {
+                return Err("The synchronization was not prepared.".to_string());
+            };
             let results = synchronize(prepared.mode, &prepared.sources, &prepared.options, &|_: &str| {});
             let first_error = results.iter().find_map(|(_, result)| result.as_ref().err().cloned());
             match first_error {
@@ -257,6 +333,82 @@ fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: Option<&
         }
         (package, operation) => Err(format!("The operation {package}.{operation} cannot be replayed.")),
     }
+}
+
+/// Runs a `find_*` call of the desktop application again on the SQLite file at `database_path`, and counts the rows. Every
+/// `find_*` call opens the file read only.
+fn run_find(operation: &str, parameters: &Value, database_path: &Path) -> Result<Option<u64>, String> {
+    let text = |name: &str| required_text(parameters, name);
+    let number = |name: &str| parameters.get(name).and_then(Value::as_i64).ok_or(format!("The parameter {name} is missing."));
+    let count = match operation {
+        "find_commits" => data_layer_source_control::find_commits(
+            database_path,
+            &text("repository")?,
+            &text("since")?,
+            &text("until")?,
+            parameters.get("includeMerges").and_then(Value::as_bool).unwrap_or(false),
+        )?
+        .len(),
+        "find_user_activity_records" => {
+            data_layer_user_activity::find_user_activity_records(database_path, &text("since")?, &text("until")?)?.len()
+        }
+        "find_issues_opened_between" => {
+            data_layer_code_hosting::find_issues_opened_between(database_path, &text("repository")?, &text("since")?, &text("until")?)?
+                .len()
+        }
+        "find_pull_requests_opened_between" => data_layer_code_hosting::find_pull_requests_opened_between(
+            database_path,
+            &text("repository")?,
+            &text("since")?,
+            &text("until")?,
+        )?
+        .len(),
+        "find_chat_list" => {
+            let limit = usize::try_from(number("limit")?).map_err(|_| "The parameter limit is wrong.".to_string())?;
+            let sorting = data_layer_coding_agents::sorting_from_parameters(parameters)?;
+            let list = data_layer_coding_agents::find_chat_list(database_path, &text("root")?, limit, sorting)?;
+            list.claude.chats.len() + list.codex.chats.len()
+        }
+        "find_ai_cost" => {
+            let roots: Vec<String> = parameters
+                .get("roots")
+                .and_then(Value::as_array)
+                .ok_or("The parameter roots is missing.")?
+                .iter()
+                .filter_map(|root| root.as_str().map(str::to_string))
+                .collect();
+            data_layer_coding_agents::find_ai_cost(database_path, &roots, number("since")?, number("until")?, &text("timeZone")?)?
+                .hours
+                .len()
+        }
+        other => return Err(format!("The operation {other} cannot be replayed.")),
+    };
+    Ok(Some(count as u64))
+}
+
+/// Runs a `refresh_*` call of the desktop application again, into the isolated file, and counts what it copied. The folders
+/// of the original request are read only with `--use-recorded-paths`.
+fn run_refresh(operation: &str, parameters: &Value, options: &ReplayOptions, isolated: &Path) -> Result<Option<u64>, String> {
+    let count = match operation {
+        "refresh_source_control" => {
+            let folder = recorded_path(options, parameters, "folder", options.folder.clone());
+            data_layer_source_control::refresh_source_control(isolated, &folder, &required_text(parameters, "repository")?)?.commit_count
+        }
+        "refresh_user_activity" => {
+            let file = recorded_path(options, parameters, "file", data_layer_user_activity::default_user_activity_file_path());
+            data_layer_user_activity::refresh_user_activity(isolated, &file)?.record_count
+        }
+        "refresh_code_hosting" => {
+            let report = data_layer_code_hosting::refresh_code_hosting(isolated, &required_text(parameters, "repository")?)?;
+            report.issue_count + report.pull_request_count
+        }
+        "refresh_chat_sessions" => {
+            let root = recorded_path(options, parameters, "root", options.folder.clone());
+            data_layer_coding_agents::refresh_chat_sessions(isolated, &root.display().to_string())?.chat_session_count
+        }
+        other => return Err(format!("The operation {other} cannot be replayed.")),
+    };
+    Ok(Some(count as u64))
 }
 
 /// Runs a statement through the read only interface of the package that received it, and counts the rows.
@@ -457,5 +609,100 @@ mod tests {
         assert_eq!(row["replayResultCount"], 1);
         assert_eq!(row["outcome"], "success");
         assert!(row["replayMilliseconds"].as_f64().unwrap() >= 0.0);
+    }
+
+    /// Runs `call` with a log in `folder`, and reads back the first request that it wrote.
+    fn recorded_call(folder: &Path, call: impl FnOnce()) -> PairedRequest {
+        let log_file = folder.join("data_layer_requests_call.jsonl");
+        let logger = Arc::new(Logger::new(LogSettings::for_file(&log_file)));
+        with_logger(logger, call);
+        read_log(&log_file, request_log::now_milliseconds()).unwrap().requests.remove(0)
+    }
+
+    /// A SQLite file that exists and holds no table of any package, so every `find_*` call gives an empty answer.
+    fn empty_database(folder: &Path) -> PathBuf {
+        let database_path = folder.join("empty.sqlite");
+        rusqlite::Connection::open(&database_path).unwrap().execute_batch("CREATE TABLE other (data TEXT)").unwrap();
+        database_path
+    }
+
+    #[test]
+    fn a_find_call_of_the_desktop_application_runs_again_on_the_snapshot_and_is_marked_as_a_replay() {
+        let (folder, _) = folder_with_database("replay-find");
+        let database_path = empty_database(&folder);
+        let (since, until) = ("2026-10-01T00:00:00Z", "2026-11-01T00:00:00Z");
+        let roots = vec!["/work/app".to_string()];
+        let originals = vec![
+            recorded_call(&folder, || {
+                data_layer_source_control::find_commits(&database_path, "a/b", since, until, true).unwrap();
+            }),
+            recorded_call(&folder, || {
+                data_layer_user_activity::find_user_activity_records(&database_path, since, until).unwrap();
+            }),
+            recorded_call(&folder, || {
+                data_layer_code_hosting::find_issues_opened_between(&database_path, "a/b", since, until).unwrap();
+            }),
+            recorded_call(&folder, || {
+                data_layer_code_hosting::find_pull_requests_opened_between(&database_path, "a/b", since, until).unwrap();
+            }),
+            recorded_call(&folder, || {
+                let sorting = data_layer_coding_agents::Sorting::default();
+                data_layer_coding_agents::find_chat_list(&database_path, "/work/app", 20, sorting).unwrap();
+            }),
+            recorded_call(&folder, || {
+                data_layer_coding_agents::find_ai_cost(&database_path, &roots, 0, 1000, "UTC").unwrap();
+            }),
+        ];
+        for original in &originals {
+            assert_eq!(replay_refusal(original), None, "{}", original.start.operation);
+            let (runs, events) =
+                request_log::testing::capture(|| replay_request(original, &options(&database_path), 2).unwrap());
+            assert!(runs.iter().all(|run| run.error.is_none() && run.result_count == Some(0)), "{} {runs:?}", original.start.operation);
+            let starts = request_log::testing::starts(&events);
+            let top: Vec<_> = starts.iter().filter(|start| start.parent_request_id.is_none()).collect();
+            assert_eq!(top.len(), 2, "{}", original.start.operation);
+            assert!(top.iter().all(|start| start.operation == original.start.operation));
+            assert!(starts.iter().all(|start| start.origin == request_log::ORIGIN_REPLAY));
+        }
+    }
+
+    #[test]
+    fn a_refresh_call_of_the_desktop_application_runs_again_only_in_a_new_isolated_file() {
+        let (folder, database_path) = folder_with_database("replay-refresh");
+        let records_file = folder.join("user_activity.jsonl");
+        let original = recorded_call(&folder, || {
+            data_layer_user_activity::refresh_user_activity(&folder.join("original.sqlite"), &records_file).unwrap();
+        });
+        assert_eq!(original.start.operation, "refresh_user_activity");
+        assert_eq!(replay_refusal(&original), None);
+        let without_file = replay_request(&original, &options(&database_path), 1).unwrap_err();
+        assert!(without_file.contains("--isolated-database"));
+        let mut replay_options = options(&database_path);
+        replay_options.isolated_database = Some(folder.join("isolated.sqlite"));
+        replay_options.is_recorded_path_used = true;
+        assert!(replay_request(&original, &replay_options, 2).unwrap_err().contains("runs once"));
+        let (runs, events) = request_log::testing::capture(|| replay_request(&original, &replay_options, 1).unwrap());
+        assert!(runs[0].error.is_none(), "{runs:?}");
+        assert!(folder.join("isolated.sqlite").exists());
+        assert!(request_log::testing::starts(&events).iter().all(|start| start.origin == request_log::ORIGIN_REPLAY));
+        assert!(replay_request(&original, &replay_options, 1).unwrap_err().contains("exists already"));
+        let mut code_hosting = original.clone();
+        code_hosting.start.operation = "refresh_code_hosting".to_string();
+        code_hosting.start.package = "code_hosting".to_string();
+        let mut other_file = options(&database_path);
+        other_file.isolated_database = Some(folder.join("other.sqlite"));
+        assert!(replay_request(&code_hosting, &other_file, 1).unwrap_err().contains("--allow-network"));
+        assert!(!folder.join("other.sqlite").exists());
+    }
+
+    #[test]
+    fn the_calls_that_use_the_network_for_prices_or_depend_on_the_state_of_the_process_are_refused() {
+        let (folder, _) = folder_with_database("replay-refused-refresh");
+        let mut original = recorded_query(&folder, "select 1");
+        original.start.kind = RequestKind::Synchronization;
+        for operation in ["refresh_ai_cost", "refresh_model_prices", "refresh_model_prices_when_due"] {
+            original.start.operation = operation.to_string();
+            assert!(replay_refusal(&original).unwrap().contains("cannot be replayed"), "{operation}");
+        }
     }
 }

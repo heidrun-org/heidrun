@@ -1,8 +1,8 @@
 //! Fills the tables of the chat sessions from the files of Claude Code and of Codex, in the mode initialize or update.
 //!
 //! The date of the last read is not stored anywhere else: it is the largest value of the column `updatedAt` of the table
-//! `chat_sessions`, for the repository. The mode update reads again only the chat session files that changed at this date or
-//! later. When the table has no row for the repository, the mode update reads everything, as the mode initialize does.
+//! `chat_sessions`, for the repository and the folder. The mode update reads again only the chat session files that changed at
+//! this date or later. When the table has no row for the folder, the mode update reads everything, as the mode initialize does.
 //!
 //! The tables of the configuration of the coding agent are small, so both modes read every memory file, subagent, and skill.
 //!
@@ -63,7 +63,7 @@ fn run_inside(
 ) -> Result<SynchronizationReport, String> {
     let since = match mode {
         SynchronizationMode::Initialize => None,
-        SynchronizationMode::Update => database.find_last_updated_at(repository)?,
+        SynchronizationMode::Update => database.find_last_updated_at_in_folder(repository, folder)?,
     };
     log(&format!("mode {}: chat sessions are read {}", mode.name(), describe_since(since.as_deref())));
     let modified_since = since.as_deref().and_then(parse_date);
@@ -411,7 +411,7 @@ mod tests {
         let tree = request_log::testing::tree(&events);
         assert_eq!(tree[0], "coding_agents.synchronize");
         for inside in [
-            "  coding_agents.read_chat_sessions",
+            "  coding_agents.read_chat_session_files",
             "    coding_agents.find_claude_session_files",
             "    coding_agents.find_codex_session_files",
             "  coding_agents.upsert_chat_sessions",

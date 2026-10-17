@@ -121,19 +121,31 @@ impl GroupBy {
     }
 }
 
-/// The words for what a request does with the data, which tell an initial import from an incremental synchronization.
+/// The words for what a request does with the data, which tell an initial import from an incremental synchronization. A
+/// synchronization that chooses its mode while it runs has no `mode` parameter, and its completion event says the mode in the
+/// detail `mode`.
 pub fn workload_of(request: &PairedRequest) -> &'static str {
     match request.start.kind {
         RequestKind::Query => "stored_data_query",
         RequestKind::Collection => "collection",
         RequestKind::Write => "database_write",
         RequestKind::Lock => "lock_wait",
-        RequestKind::Synchronization => match request.start.parameters.get("mode").and_then(Value::as_str) {
+        RequestKind::Synchronization => match synchronization_mode_of(request) {
             Some("initialize") => "initial_import",
             Some("update") => "incremental_synchronization",
             _ => "synchronization",
         },
     }
+}
+
+/// The mode of a synchronization: its parameter `mode`, or else the detail `mode` of its completion event.
+fn synchronization_mode_of(request: &PairedRequest) -> Option<&str> {
+    request
+        .start
+        .parameters
+        .get("mode")
+        .and_then(Value::as_str)
+        .or_else(|| request.complete.as_ref().and_then(|complete| complete.details.get("mode")).and_then(Value::as_str))
 }
 
 /// The durations of the requests that ended, with the numbers that describe how they spread.
@@ -463,6 +475,15 @@ mod tests {
         assert_eq!(workload_of(&refresh), "synchronization", "Without a mode, a synchronization is neither of the two");
         assert_eq!(workload_of(&collection), "collection");
         assert_eq!(workload_of(&query), "stored_data_query");
+    }
+
+    #[test]
+    fn a_synchronization_that_chooses_its_mode_while_it_runs_is_told_by_the_mode_in_its_completion_event() {
+        let mut refresh = request("desktop", "refresh_code_hosting", RequestKind::Synchronization, serde_json::json!({}), "", Some(6));
+        refresh.complete.as_mut().unwrap().details = serde_json::json!({ "mode": "initialize" });
+        assert_eq!(workload_of(&refresh), "initial_import");
+        refresh.complete.as_mut().unwrap().details = serde_json::json!({ "mode": "update" });
+        assert_eq!(workload_of(&refresh), "incremental_synchronization");
     }
 
     #[test]

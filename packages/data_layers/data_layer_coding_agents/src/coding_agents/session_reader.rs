@@ -8,6 +8,7 @@ use crate::coding_agents::session_files::{
 };
 use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent};
 use chrono::{DateTime, SecondsFormat, Utc};
+use std::collections::HashSet;
 use std::path::Path;
 use crate::REQUEST_PACKAGE;
 use request_log::{record_value, RequestKind, RequestSpec, Summary};
@@ -15,10 +16,19 @@ use request_log::{record_value, RequestKind, RequestSpec, Summary};
 /// The most characters of the title of a stored chat session. A longer title ends with an ellipsis.
 const TITLE_LENGTH: usize = 160;
 
-/// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. The compressed
-/// files of Codex are read, and the tokens of the subagents and of the workflows of a chat session of Claude Code count for it. A chat session
-/// whose file changed before `modified_since` (milliseconds since 1970) is not read. A chat session without a title and
-/// without a message is left out, and so is a review chat of Codex. `log` receives one line of progress for each coding agent.
+/// What a read of the chat session files of one folder found.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChatSessionRead {
+    /// The chat sessions that the read opened.
+    pub records: Vec<ChatSessionRecord>,
+    /// The identifiers of the chat sessions that exist after the read: the ones in `records`, and the ones whose file did not
+    /// change since `modified_since`, which the read did not open. A stored row whose identifier is not here is the row of a
+    /// chat session that does not exist any more.
+    pub kept_ids: HashSet<String>,
+}
+
+/// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. See
+/// `read_chat_session_files`.
 pub fn read_chat_sessions(
     cache: &mut ScanCache,
     claude_projects: &Path,
@@ -27,40 +37,60 @@ pub fn read_chat_sessions(
     modified_since: Option<i64>,
     log: &dyn Fn(&str),
 ) -> Vec<ChatSessionRecord> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_chat_sessions", RequestKind::Collection)
-        .parameter("folder", folder)
-        .parameter("modifiedSince", modified_since)
-        .state("scanCacheEntries", cache.scan_count());
-    record_value(
-        spec,
-        || read_chat_sessions_inside(cache, claude_projects, codex_home, folder, modified_since, log),
-        |records| Summary::count(records.len()),
-    )
+    read_chat_session_files(cache, claude_projects, codex_home, folder, modified_since, log).records
 }
 
-/// The work of `read_chat_sessions`, between the start event and the completion event of its request.
-fn read_chat_sessions_inside(
+/// Reads the chat sessions of Claude Code and of Codex whose folder is `folder`, in the order of the files. The compressed
+/// files of Codex are read, and the tokens of the subagents and of the workflows of a chat session of Claude Code count for it. A chat session
+/// whose file changed before `modified_since` (milliseconds since 1970) is not read. A chat session without a title and
+/// without a message is left out, and so is a review chat of Codex. `log` receives one line of progress for each coding agent.
+pub fn read_chat_session_files(
     cache: &mut ScanCache,
     claude_projects: &Path,
     codex_home: &Path,
     folder: &str,
     modified_since: Option<i64>,
     log: &dyn Fn(&str),
-) -> Vec<ChatSessionRecord> {
+) -> ChatSessionRead {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_chat_session_files", RequestKind::Collection)
+        .parameter("folder", folder)
+        .parameter("modifiedSince", modified_since)
+        .state("scanCacheEntries", cache.scan_count());
+    record_value(
+        spec,
+        || read_chat_session_files_inside(cache, claude_projects, codex_home, folder, modified_since, log),
+        |read| Summary::count(read.records.len()),
+    )
+}
+
+/// The work of `read_chat_session_files`, between the start event and the completion event of its request.
+fn read_chat_session_files_inside(
+    cache: &mut ScanCache,
+    claude_projects: &Path,
+    codex_home: &Path,
+    folder: &str,
+    modified_since: Option<i64>,
+    log: &dyn Fn(&str),
+) -> ChatSessionRead {
     let is_recent = |file: &SessionFile| modified_since.is_none_or(|since| file.modified >= since);
     let mut records = Vec::new();
+    let mut kept_ids = HashSet::new();
 
     let claude_files = find_claude_session_files(cache, claude_projects, folder, FolderScope::Exactly);
-    let recent_files: Vec<&SessionFile> = claude_files.iter().filter(|file| is_recent(file)).collect();
+    let (recent_files, older_files): (Vec<&SessionFile>, Vec<&SessionFile>) =
+        claude_files.iter().partition(|file| is_recent(file));
+    kept_ids.extend(older_files.iter().map(|file| file.id.clone()));
     log(&format!("claude code: {} chat session files, {} to read", claude_files.len(), recent_files.len()));
     for file in recent_files {
         let scan = cache.scan_claude(file);
         let title = title_of_scan(&scan);
-        records.extend(record_of(CodingAgent::ClaudeCode, file, &scan, title));
+        records.extend(record_of(CodingAgent::ClaudeCode, file, &scan, title, folder));
     }
 
     let codex_files = find_codex_session_files(cache, codex_home, folder, FolderScope::Exactly);
-    let recent_files: Vec<&SessionFile> = codex_files.iter().filter(|file| is_recent(file)).collect();
+    let (recent_files, older_files): (Vec<&SessionFile>, Vec<&SessionFile>) =
+        codex_files.iter().partition(|file| is_recent(file));
+    kept_ids.extend(older_files.iter().map(|file| file.id.clone()));
     log(&format!("codex: {} chat session files, {} to read", codex_files.len(), recent_files.len()));
     let titles = read_codex_titles(codex_home);
     for file in recent_files {
@@ -69,9 +99,10 @@ fn read_chat_sessions_inside(
             continue;
         }
         let title = titles.get(&file.id).cloned().or_else(|| title_of_scan(&scan));
-        records.extend(record_of(CodingAgent::Codex, file, &scan, title));
+        records.extend(record_of(CodingAgent::Codex, file, &scan, title, folder));
     }
-    records
+    kept_ids.extend(records.iter().map(|record| record.chat_session.id.clone()));
+    ChatSessionRead { records, kept_ids }
 }
 
 /// The date in milliseconds since 1970 as a text in the format ISO 8601, with the milliseconds and the zone `Z`. `None` when
@@ -86,7 +117,13 @@ pub fn parse_date(text: &str) -> Option<i64> {
 }
 
 /// The stored shape of the chat session of one file. `None` when the chat session has no title and no message.
-fn record_of(coding_agent: CodingAgent, file: &SessionFile, scan: &Scan, title: Option<String>) -> Option<ChatSessionRecord> {
+fn record_of(
+    coding_agent: CodingAgent,
+    file: &SessionFile,
+    scan: &Scan,
+    title: Option<String>,
+    folder: &str,
+) -> Option<ChatSessionRecord> {
     let title = shorten(&title?, TITLE_LENGTH);
     if title.is_empty() {
         return None;
@@ -102,6 +139,8 @@ fn record_of(coding_agent: CodingAgent, file: &SessionFile, scan: &Scan, title: 
         updated_at: format_date(file.modified)?,
         user_message_count: meta.user_messages,
         tokens,
+        folder: folder.to_string(),
+        first_messages: meta.first_messages.clone(),
     };
     let relations = ChatSessionRelations {
         folders: meta.folders.iter().cloned().collect(),
@@ -211,6 +250,36 @@ mod tests {
         let newest = parse_date(&read(&directory, None).iter().map(|record| record.chat_session.updated_at.clone()).max().unwrap());
         let records = read(&directory, newest);
         assert_eq!(records.iter().map(|record| record.chat_session.id.as_str()).collect::<Vec<_>>(), vec!["new"]);
+    }
+
+    #[test]
+    fn gives_the_folder_and_the_first_messages_of_each_chat_session() {
+        let directory = temp_folder("reader_folder");
+        claude_file(&directory, "abc", &[TYPED, ANSWER], 100);
+        let records = read(&directory, None);
+        assert_eq!(records[0].chat_session.folder, "/work/app");
+        assert_eq!(records[0].chat_session.first_messages, vec!["Fix the issue 250"]);
+    }
+
+    #[test]
+    fn keeps_the_identifier_of_a_chat_session_that_it_did_not_open_and_drops_the_one_that_lost_its_title() {
+        let directory = temp_folder("reader_kept");
+        claude_file(&directory, "old", &[TYPED], 1000);
+        claude_file(&directory, "new", &[TYPED], 10);
+        claude_file(&directory, "emptied", &[r#"{"type":"queue-operation"}"#], 5);
+        let since = parse_date(&format_date(chrono::Utc::now().timestamp_millis() - 100_000).unwrap());
+        let read = read_chat_session_files(
+            &mut ScanCache::in_memory(),
+            &directory.join("projects"),
+            &directory,
+            "/work/app",
+            since,
+            &ignore_log,
+        );
+        let mut kept: Vec<&str> = read.kept_ids.iter().map(String::as_str).collect();
+        kept.sort();
+        assert_eq!(kept, vec!["new", "old"]);
+        assert_eq!(read.records.len(), 1);
     }
 
     #[test]

@@ -1,7 +1,7 @@
 # User activity statistics
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained description of the statistic of the tab "User activity"
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: user activity](../agents_rules/glossary/user_activity.md), [Statistics window](../agents_rules/user_interface/window/statistics_window.md), [User activity sidebar section](../agents_rules/user_interface/sidebars/user_activity.md)
@@ -85,7 +85,8 @@ The [file `README.md` of the package](../../packages/data_layers/data_layer_user
 | Part | Place |
 | --- | --- |
 | The data layer | `packages/data_layers/data_layer_user_activity` |
-| The commands `user_activity_append`, `user_activity_read`, and `user_activity_records_in_range` | `packages/apps/desktop_tauri/src/user_activity.rs` |
+| The commands `user_activity_append` and `user_activity_read` | `packages/apps/desktop_tauri/src/user_activity.rs` |
+| The commands `user_activity_synchronize` and `user_activity_records_in_range` | `packages/apps/desktop_tauri/src/statistics/user_activity_records.rs` |
 | The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |
 | The window and the chart | `packages/apps/web_frontend/src/components/StatisticsModal.vue` and `UserActivityHistogram.vue` |
 | The calculation of the slots | `packages/apps/web_frontend/src/lib/user_activity_slots.ts` |
