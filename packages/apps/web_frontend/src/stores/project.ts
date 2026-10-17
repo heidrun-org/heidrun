@@ -7,6 +7,7 @@ import { t } from "../i18n/index";
 import { parseProjectConfig, type Launcher, type ProjectConfig, type ProjectGuard, type LauncherAgent } from "../lib/project_config";
 import { withBuiltInGuard, withProjectGuard, withoutProjectGuard } from "../lib/guards_edit";
 import { launcherNameFromCommand } from "../lib/launcher_name";
+import { withCodexColors } from "../lib/terminal_colors";
 
 export type { Launcher };
 
@@ -232,7 +233,7 @@ export async function runLauncher(workspaceId: string, launcher: Launcher, rerun
     selectTab(existing.tab_id);
     selectPane(existing);
     if (rerun && !project.busy[existing.pane_id]) {
-      await api.run(existing.pane_id, launcher.command).catch((e) => toast(String(e)));
+      await api.run(existing.pane_id, withCodexColors(launcher.command)).catch((e) => toast(String(e)));
       project.busy[existing.pane_id] = true;
     }
     return;
@@ -243,7 +244,7 @@ export async function runLauncher(workspaceId: string, launcher: Launcher, rerun
     project.panes[`${workspaceId}:${launcher.id}`] = pane.pane_id;
     // Let the shell print its prompt before typing into it.
     await new Promise((r) => setTimeout(r, 350));
-    await api.run(pane.pane_id, launcher.command);
+    await api.run(pane.pane_id, withCodexColors(launcher.command));
     project.busy[pane.pane_id] = true;
     await refresh();
     const fresh = allPanes.value.find((x) => x.pane_id === pane.pane_id);
