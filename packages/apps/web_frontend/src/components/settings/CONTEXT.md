@@ -5,7 +5,7 @@ The content of each section of the Settings window. The Settings window itself i
 
 ## Key Exports & Entry Points
 - `SettingsSwitchRow.vue`: one Bootstrap switch with its label, bound with `v-model`. The slot after the label holds an information card. Every boolean setting uses it.
-- `SettingsGeneralSection.vue`: the language and the time format (button groups of radio inputs), and the working days (button group of checkbox inputs).
+- `SettingsGeneralSection.vue`: the language, the time format, the working days, and the switch `goatSound` (read by `../../lib/goat_sounds.ts`).
 - `SettingsTerminalSection.vue`: the font, the font size that zooms the whole window, and the mouse behaviour (`mouseMode`).
 - `SettingsAgentsSection.vue`: the section "Coding agents". One switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents` (the whole row is the label of its switch, and `../StatusBar.vue` shows the quota of a coding agent only when its switch is on), the default command of a new tab (`newTabCommand`, started by the plus button of `../TabBar.vue` through `../../stores/newPane.ts`), and the heading "Quit" with the switch `keepAgentsRunningAfterQuit` and its information card.
 - `SettingsConfirmationsSection.vue`: the headings "Ask before closing" (workspace, tab, pane) and "Ask before deleting" (saved search). The settings are read by `../WorkspaceStatusSummary.vue`, `../TabBar.vue`, `../PaneCard.vue`, `../SavedSearchModal.vue`, and `../../stores/settings.ts`.

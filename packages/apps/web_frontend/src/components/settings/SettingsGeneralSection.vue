@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { timeOptions } from "../../lib/format";
 import { LANGUAGES, locale, t } from "../../i18n/index";
@@ -77,6 +78,12 @@ const timeExample = computed(() => {
         </label>
       </div>
       <div class="form-text">{{ t("settingsGeneral.workingDaysHelp") }}</div>
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("settingsGeneral.soundTitle") }}</h4>
+      <SettingsSwitchRow v-model="settings.goatSound" :label="t('settingsGeneral.goatSound')" />
+      <div class="form-text">{{ t("settingsGeneral.goatSoundHelp") }}</div>
     </div>
   </div>
 </template>
