@@ -1,18 +1,18 @@
 # User interface of Heidrun: Statistics window, the charts
 
 - Created: 15 October 2026
-- Last updated: 15 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: charts of the Statistics window](../../glossary/statistics_charts.md), [Statistics window](statistics_window.md), [Tab "User activity"](statistics_user_activity.md), [Tab "Work of one person"](statistics_person_work.md)
-- Related issue: [issue 498](https://github.com/heidrun-org/heidrun/issues/498)
+- Related issue: [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 629](https://github.com/heidrun-org/heidrun/issues/629)
 
 This file gives the rules that every chart of the Statistics window follows, today and in the future. Read it each time that you add a chart, or change a chart, in the Statistics window.
 
 ## Every chart has a legend and a chart information card
 
 - Every chart of the Statistics window has a chart legend and a chart information card (both words are defined in [glossary/statistics_charts.md](../../glossary/statistics_charts.md)). A new chart without them is not finished.
-- The chart legend is one line above the bars, at the left, in the order of the parts of a bar. A click on it does nothing, so a click never hides a color. The chart has no legend while it has no color to name.
+- The chart legend is one line above the bars, at the left, in the order of the parts of a bar. A click on it does nothing, so a click never hides a color, except in the bar chart of the tab "Work of one person" (`StackedBarChart.vue`): there a click on a name filters the chart, as [statistics_person_work.md](statistics_person_work.md) says, and the settings keep this filter between two runs. The chart has no legend while it has no color to name.
 - The tooltip of Plotly.js is always off (`hoverinfo` is `none` on every trace), because it takes only a few tags of HTML. The chart reads the events `plotly_hover` and `plotly_unhover` of Plotly.js, and draws the chart information card itself.
 - The chart information card is a popover of Bootstrap, written in HTML. It shows while the pointer is over a bar, it never takes the pointer, and it closes when the pointer leaves the bar, and when the data, the time range, the theme, or the language changes.
 - The chart information card sits beside the bar: at the right of a bar in the left half of the chart, and at the left of a bar in the right half. An arrow touches the bar at the height of the pointer. The middle of the card is at the height of the pointer, and the card stays inside the chart.

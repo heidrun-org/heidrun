@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
+import InformationCardContent from "../InformationCardContent.vue";
 import { t } from "../../i18n/index";
 
 // The circled question mark of an option of the Settings window, and the information card that it opens. The card has the
@@ -25,16 +26,10 @@ defineProps<{
       <Icon name="question-circle" />
     </span>
     <template #card>
-      <div class="list-group list-group-flush">
-        <div class="list-group-item d-flex align-items-center gap-2 fw-medium">
-          <Icon name="question-circle" />
-          {{ t(titleKey, params) }}
-        </div>
-        <div v-for="block in blocks" :key="block.titleKey + block.textKey" class="list-group-item" data-help-block>
-          <div class="fw-medium">{{ t(block.titleKey, params) }}</div>
-          <div class="text-body-secondary">{{ t(block.textKey, params) }}</div>
-        </div>
-      </div>
+      <InformationCardContent
+        :title="t(titleKey, params)"
+        :blocks="blocks.map((block) => ({ title: t(block.titleKey, params), text: t(block.textKey, params) }))"
+      />
     </template>
   </InformationCard>
 </template>

@@ -617,3 +617,32 @@ describe("code theme", () => {
     expect(Object.keys(restarted.settings)).not.toContain("codeTheme");
   });
 });
+
+describe("legend filters of the bar charts of the Statistics window", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(saved: unknown) {
+    localStorage.setItem("heidrun.settings", JSON.stringify(saved));
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("are none by default", () => {
+    expect(settings.statisticsLegendFilters).toEqual({});
+  });
+
+  it("are read again when the application starts again", async () => {
+    const reloaded = await settingsFrom({ statisticsLegendFilters: { ai_cost: "codex", git_history_lines: "lines_added" } });
+    expect(reloaded.statisticsLegendFilters).toEqual({ ai_cost: "codex", git_history_lines: "lines_added" });
+  });
+
+  it("drop an entry that is not a text, and keep the others", async () => {
+    const reloaded = await settingsFrom({ statisticsLegendFilters: { ai_cost: "codex", a: 4, b: null, c: "", d: ["x"] } });
+    expect(reloaded.statisticsLegendFilters).toEqual({ ai_cost: "codex" });
+  });
+
+  it("are none when the saved value is not an object", async () => {
+    expect((await settingsFrom({ statisticsLegendFilters: "codex" })).statisticsLegendFilters).toEqual({});
+    expect((await settingsFrom({ statisticsLegendFilters: ["codex"] })).statisticsLegendFilters).toEqual({});
+    expect((await settingsFrom({ statisticsLegendFilters: null })).statisticsLegendFilters).toEqual({});
+  });
+});
