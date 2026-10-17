@@ -1166,7 +1166,8 @@ export async function start() {
   if (!state.connected && settings.autoStartHerdr && state.error.includes("herdr_unreachable")) {
     await startHerdr();
   }
-  // Safety net: events invalidate the cache, a slow poll catches anything missed.
-  window.setInterval(() => scheduleRefresh(0), 5000);
+  // No timer reads the snapshot of Herdr: it gives the page a new list of workspaces each time, so everything that
+  // watches this list runs again. A lost event is covered by the refresh after "herdr://connected" and "herdr://resync".
+  // Codex writes its usage outside Heidrun and no event announces it, so the usage of Codex keeps a timer.
   window.setInterval(refreshCodex, 10_000);
 }
