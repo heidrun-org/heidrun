@@ -1,11 +1,11 @@
 # Past chats sidebar section: the references line
 
 - Created: 13 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../../../glossary/index.md)
-- Related issue: [issue 607](https://github.com/heidrun-org/heidrun/issues/607)
+- Related rules: [Glossary of Heidrun](../../../../glossary/index.md), [Data layer access](../../../../data_layer_access.md)
+- Related issue: [issue 607](https://github.com/heidrun-org/heidrun/issues/607), [issue 617](https://github.com/heidrun-org/heidrun/issues/617)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../../../glossary/index.md).
 
@@ -17,4 +17,4 @@ This file is a part of the rules of the user interface of Heidrun. The words are
   - The state is in a pill with a strong color and bold white text, so that it reads on the dark background: green `#238636` for open, purple `#8957e5` for merged and for a closed issue, red `#da3633` for a closed pull request.
   - The beginning of the description is plain text in at most five lines. The labels of an issue show in their colors, as plain pills that do nothing at a click (only the card of the Code hosting sidebar section has labels that change a search, see [code_hosting_search.md](../../code_hosting_search.md)), and the two branches of a pull request show as the receiving branch, an arrow, then the branch with the changes.
   - The last line shows the person who opened it, with the picture of that person. The line says "<login> opened this issue", and it never says "You": the card does not know the account of the developer (on GitHub, the picture at `https://github.com/<login>.png`; on GitLab, the `avatar_url` that GitLab gives). A person without a picture, a login that is not a person (for example `app/dependabot`), and a picture that does not load show the generic icon of a person. "Open in Heidrun" (the goat icon of Heidrun) opens the description and the comments in the issue window of Heidrun, and "Open in GitHub" (or "Open in GitLab") opens the web page. While the forge is read, or when it does not answer, the card shows the first line, the title when it is given, one separator, and the text of the wait or of the failure.
-- Each time the information card of the references line opens, the program reads every row from the forge with `gh` or `glab`, four rows at a time, through the Tauri command `forge_cli_cached`. The Tauri command keeps each answer on the disk, in `forge_cache.json` in the folder of the data of Heidrun, for ten minutes, so a second opening is immediate and a failure of the network does not empty the rows: an answer that is at most seven days old replaces a failure.
+- Each time the information card of the references line opens, the program reads every row, four rows at a time. On GitHub, it reads the stored rows with the Tauri command `chat_references_find`, after the Tauri command `chat_references_synchronize` copied the new issues and pull requests of the repository into the SQLite file, with the package `data_layer_code_hosting`, at most once in ten minutes for each folder. A failure of the network does not empty the rows: the stored rows show. On GitLab, the package reads GitHub only, so the program reads the rows live with `glab`, through the Tauri command `forge_cli_cached`, which keeps each answer on the disk, in `forge_cache.json` in the folder of the data of Heidrun, for ten minutes: an answer that is at most seven days old replaces a failure. This exception is listed in [data_layer_access.md](../../../../data_layer_access.md).

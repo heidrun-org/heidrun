@@ -32,14 +32,13 @@ The two sources read the data layers in two different ways.
 
 ### The way of the data
 
-1. The tab is shown for the first time. It calls the command `person_work_in_range` once, with the folder of the selected workspace and the 30 days that end today at midnight.
-2. The command finds the repository `owner/name` from the remote `origin` of the folder.
-3. The command takes the lock of the SQLite file.
-4. The command runs the mode `update` of `data_layer_source_control`. The mode runs `git log` and copies the new commits into the table `commits`.
-5. The command runs the mode `update` of `data_layer_code_hosting`. The mode asks GitHub, with the command `gh`, for the issues and the pull requests that changed, and copies them into the two tables.
-6. When GitHub fails, for example without a network, the command does not stop. It keeps the message of the error, and it reads the rows that an earlier read wrote. The tab shows a warning that the pull requests and the issues can be out of date.
-7. The command reads the rows of the repository with three read-only queries, `SELECT data FROM commits`, `SELECT data FROM pull_requests`, and `SELECT data FROM issues`, each with `WHERE repository = '<owner/name>'`. It keeps the rows of the time range, and it removes the merge commits.
-8. The tab cuts the same rows into the days of the two time ranges, for each person. The pure class `PersonWork` does the calculation.
+1. The tab is shown for the first time. It calls the command `person_work_synchronize` with the folder of the selected workspace.
+2. The command finds the repository `owner/name` from the remote `origin` of the folder, and takes the lock of the SQLite file.
+3. The command calls the function `refresh_source_control` of `data_layer_source_control`. The function runs `git log` and copies the new commits into the table `commits`.
+4. The command calls the function `refresh_code_hosting` of `data_layer_code_hosting`. The function asks GitHub, with the command `gh`, for the issues and the pull requests that changed, and copies them into the two tables.
+5. When GitHub fails, for example without a network, the command does not stop. It gives the message of the error and the repository in its answer. The tab shows a warning that the pull requests and the issues can be out of date.
+6. The tab calls the command `person_work_in_range` with the repository and the 30 days that end today at midnight. The command reads the SQLite file only, with the functions `find_commits`, `find_pull_requests_opened_between`, and `find_issues_opened_between`, so it works when Git and GitHub are not available. The functions remove the merge commits.
+7. The tab cuts the same rows into the days of the two time ranges, for each person. The pure class `PersonWork` does the calculation.
 
 The first read of a repository reads every pull request and every issue from GitHub, which takes about 20 seconds for this repository. The next reads take about 5 seconds.
 
@@ -68,8 +67,8 @@ The tab runs these two steps again each time that the source or the chosen works
 | Part | Place |
 | --- | --- |
 | The data layers | `packages/data_layers/data_layer_source_control`, `data_layer_code_hosting`, and `data_layer_coding_agents` |
-| The command `person_work_in_range` | `packages/apps/desktop_tauri/src/person_work.rs` |
-| The commands `ai_cost_synchronize` and `ai_cost_in_range` | `packages/apps/desktop_tauri/src/ai_cost.rs` |
+| The commands `person_work_synchronize` and `person_work_in_range` | `packages/apps/desktop_tauri/src/statistics/person_work.rs` |
+| The commands `ai_cost_synchronize` and `ai_cost_in_range` | `packages/apps/desktop_tauri/src/statistics/ai_cost.rs` |
 | The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |
 | The tab and the chart | `packages/apps/web_frontend/src/components/PersonWorkTab.vue` and `StackedBarChart.vue` |
 | The calculations | `packages/apps/web_frontend/src/lib/person_work.ts`, `ai_cost.ts`, `calendar_days.ts`, `calendar_slots.ts`, and `slot_text.ts` |

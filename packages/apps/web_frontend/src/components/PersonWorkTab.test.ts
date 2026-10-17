@@ -173,6 +173,11 @@ async function mountPersonWorkTab(
 ) {
   invoke.mockReset();
   invoke.mockImplementation(async (command: string, parameters: { folders?: string[] }) => {
+    if (command === "person_work_synchronize") {
+      return result instanceof Error
+        ? Promise.reject(result)
+        : Promise.resolve(result).then((items) => ({ repository: items.repository, codeHostingError: items.codeHostingError }));
+    }
     if (command === "person_work_in_range") {
       return result instanceof Error ? Promise.reject(result) : result;
     }
@@ -191,8 +196,16 @@ async function mountPersonWorkTab(
   return wrapper;
 }
 
-/** The calls that asked the data layer for the work of the people: the other stores also call `invoke` when they load. */
+/**
+ * The calls that asked the data layer to read the work of the people of one folder: the other stores also call `invoke` when
+ * they load. A read of a folder is one synchronization and one query, so the synchronizations count the reads.
+ */
 function personWorkCalls(): unknown[][] {
+  return invoke.mock.calls.filter((call) => call[0] === "person_work_synchronize");
+}
+
+/** The calls of the query `person_work_in_range`, which reads the SQLite file only. */
+function personWorkQueryCalls(): unknown[][] {
   return invoke.mock.calls.filter((call) => call[0] === "person_work_in_range");
 }
 
@@ -275,13 +288,18 @@ function answerByFolder(given: Record<string, { gitHistory: PersonWorkItems | Er
     "/work/heidrun": { gitHistory: sampleItems(), aiCost: sampleAiCostAnswer() },
     ...given,
   };
-  invoke.mockImplementation(async (command: string, parameters: { folder?: string; folders?: string[] }) => {
-    if (command === "person_work_in_range") {
+  invoke.mockImplementation(async (command: string, parameters: { folder?: string; folders?: string[]; repository?: string }) => {
+    if (command === "person_work_synchronize") {
       const answer = answers[parameters.folder ?? ""]?.gitHistory;
       if (answer === undefined) {
         throw new Error(`no answer for ${parameters.folder}`);
       }
-      return answer instanceof Error ? Promise.reject(answer) : answer;
+      return answer instanceof Error
+        ? Promise.reject(answer)
+        : { repository: `of:${parameters.folder}`, codeHostingError: answer.codeHostingError };
+    }
+    if (command === "person_work_in_range") {
+      return answers[(parameters.repository ?? "").replace("of:", "")]?.gitHistory;
     }
     if (command === "ai_cost_synchronize") {
       return synchronizationOf(parameters.folders ?? []);
@@ -351,11 +369,13 @@ afterEach(() => {
 });
 
 describe("PersonWorkTab", () => {
-  it("reads the repository of the selected workspace for the last 30 days, through the data layer", async () => {
+  it("synchronizes the repository of the selected workspace, then reads the last 30 days from the stored rows", async () => {
     await mountPersonWorkTab();
     expect(personWorkCalls()).toHaveLength(1);
-    const parameters = personWorkCalls()[0][1] as { folder: string; since: string; until: string };
-    expect(parameters.folder).toBe("/work/heidrun");
+    expect(personWorkCalls()[0][1]).toEqual({ folder: "/work/heidrun" });
+    expect(personWorkQueryCalls()).toHaveLength(1);
+    const parameters = personWorkQueryCalls()[0][1] as { repository: string; since: string; until: string };
+    expect(parameters.repository).toBe("heidrun-org/heidrun");
     const days = (Date.parse(parameters.until) - Date.parse(parameters.since)) / 86_400_000;
     expect(days).toBeGreaterThanOrEqual(29.9);
     expect(days).toBeLessThanOrEqual(30.1);

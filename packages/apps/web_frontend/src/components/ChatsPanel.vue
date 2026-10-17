@@ -18,6 +18,7 @@ import { dynamicTopicBarTopics, dynamicTopicChatCounts } from "../lib/dynamic_to
 import { chatSummaryLines } from "../lib/chat_summary";
 import { EMPTY_CONTEXT, refContext, type RefContext } from "../lib/refs";
 import { clusteredTopicsByChat } from "../lib/topic_clusters";
+import { prepareChatReferences } from "../stores/chat_references";
 import { keywordTopicsOf, prepareKeywordTopics } from "../stores/dynamic_topics";
 import { languageModelTopicsOf, prepareLanguageModelTopics } from "../stores/language_model_topics";
 import { prepareTopicClusters, topicClusterTable } from "../stores/topic_clusters";
@@ -53,6 +54,9 @@ watch(
     const context = await refContext(value);
     if (folder.value === value) {
       repository.value = context;
+      if (context.forge === "github") {
+        prepareChatReferences(value);
+      }
     }
   },
   { immediate: true },

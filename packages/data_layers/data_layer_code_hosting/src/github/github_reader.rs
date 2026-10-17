@@ -7,6 +7,7 @@ use crate::github::graphql_runner::GraphqlRunner;
 use crate::model::types::{Issue, IssueState, IssueStateReason, PullRequest, PullRequestState};
 use serde::Deserialize;
 use serde_json::Value;
+use std::collections::BTreeMap;
 
 /// The GraphQL query for one page of issues.
 pub const ISSUES_QUERY: &str = r#"
@@ -18,7 +19,7 @@ query($owner: String!, $name: String!, $cursor: String) {
                 number title body state stateReason createdAt updatedAt closedAt
                 author { login }
                 assignees(first: 20) { nodes { login } }
-                labels(first: 50) { nodes { name } }
+                labels(first: 50) { nodes { name color } }
                 comments { totalCount }
             }
         }
@@ -38,7 +39,7 @@ query($owner: String!, $name: String!, $cursor: String) {
                 author { login }
                 mergedBy { login }
                 mergeCommit { oid }
-                labels(first: 50) { nodes { name } }
+                labels(first: 50) { nodes { name color } }
                 commits { totalCount }
             }
         }
@@ -165,6 +166,15 @@ struct LoginNode {
 #[derive(Deserialize)]
 struct LabelNode {
     name: String,
+    color: Option<String>,
+}
+
+/// The colors of the labels of a GraphQL answer, by the name of the label. A label without a color has no entry.
+fn label_colors_of(labels: &[LabelNode]) -> BTreeMap<String, String> {
+    labels
+        .iter()
+        .filter_map(|label| label.color.as_ref().map(|color| (label.name.clone(), color.clone())))
+        .collect()
 }
 
 /// A commit in a GraphQL answer.
@@ -214,6 +224,7 @@ impl From<IssueNode> for Issue {
             state_reason: node.state_reason,
             author: node.author.map(|author| author.login),
             assignees: node.assignees.nodes.into_iter().map(|assignee| assignee.login).collect(),
+            label_colors: label_colors_of(&node.labels.nodes),
             labels: node.labels.nodes.into_iter().map(|label| label.name).collect(),
             created_at: node.created_at,
             updated_at: node.updated_at,
@@ -258,6 +269,7 @@ impl From<PullRequestNode> for PullRequest {
             is_draft: node.is_draft,
             author: node.author.map(|author| author.login),
             merged_by: node.merged_by.map(|merger| merger.login),
+            label_colors: label_colors_of(&node.labels.nodes),
             labels: node.labels.nodes.into_iter().map(|label| label.name).collect(),
             base_ref_name: node.base_ref_name,
             head_ref_name: node.head_ref_name,
@@ -292,13 +304,14 @@ mod tests {
     fn turns_an_issue_node_into_the_stored_shape() {
         let mut node = issue_node(12, &date(2));
         node["assignees"] = json!({ "nodes": [{ "login": "jeromeetienne" }, { "login": "eric" }] });
-        node["labels"] = json!({ "nodes": [{ "name": "idea" }, { "name": "Simple Work" }] });
+        node["labels"] = json!({ "nodes": [{ "name": "idea", "color": "fbca04" }, { "name": "Simple Work", "color": null }] });
         node["comments"] = json!({ "totalCount": 3 });
         let fake_github = FakeGithub::new(vec![node], vec![], 100);
         let issues = GithubReader::new(&fake_github, &ignore_log).read_issues(REPOSITORY, None).unwrap();
         let mut expected = issue(12);
         expected.assignees = vec!["jeromeetienne".into(), "eric".into()];
         expected.labels = vec!["idea".into(), "Simple Work".into()];
+        expected.label_colors = [("idea".to_string(), "fbca04".to_string())].into();
         expected.comment_count = 3;
         assert_eq!(issues, [expected]);
     }

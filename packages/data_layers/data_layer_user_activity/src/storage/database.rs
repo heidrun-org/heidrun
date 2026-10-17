@@ -7,10 +7,14 @@
 
 use crate::model::schemas::record_to_checked_value;
 use crate::model::types::{QueryRow, UserActivityRecord};
+use crate::model::utc_time::to_utc_text;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
+
+/// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
+const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// The SQLite file of the user activity data layer.
 pub struct UserActivityDatabase {
@@ -63,6 +67,9 @@ impl UserActivityDatabase {
         }
         let connection = Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|error| format!("The database file {} cannot be opened: {error}", database_path.display()))?;
+        connection
+            .busy_timeout(READ_WAITING_TIME)
+            .map_err(|error| format!("The waiting time of the database file cannot be set: {error}"))?;
         Ok(UserActivityDatabase { database_path: database_path.to_path_buf(), is_read_only: true, connection })
     }
 
@@ -136,6 +143,52 @@ impl UserActivityDatabase {
                 .map(Some)
                 .map_err(|error| format!("The row {workspace_folder} {started_at} is not a user activity record: {error}")),
         }
+    }
+
+    /// True when the table `table` exists in the SQLite file. The file is shared by the packages of the data layer, so it can exist
+    /// before the package wrote its own table.
+    ///
+    /// # Errors
+    /// An error when the tables of the file cannot be listed.
+    pub fn has_table(&self, table: &str) -> Result<bool, String> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1", params![table], |row| {
+                row.get::<_, i64>(0)
+            })
+            .map(|count| count > 0)
+            .map_err(|error| format!("The tables of the file cannot be listed: {error}"))
+    }
+
+    /// Reads the records whose active period overlaps the time range from `since` to `until`, the oldest first. A record
+    /// overlaps when it ended after `since` and started before `until`. Both times are texts in the format ISO 8601 with an
+    /// offset or in UTC, and the method turns them into UTC. The index on `endedAt` answers the range.
+    ///
+    /// # Errors
+    /// An error when a time is not a time with an offset, or when a row is not a user activity record.
+    pub fn find_records_overlapping(&self, since: &str, until: &str) -> Result<Vec<UserActivityRecord>, String> {
+        let since = to_utc_text(since)?;
+        let until = to_utc_text(until)?;
+        if self.has_table("user_activity_records")? == false {
+            return Ok(Vec::new());
+        }
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT data FROM user_activity_records WHERE endedAt > ?1 AND startedAt < ?2 ORDER BY startedAt",
+            )
+            .map_err(|error| format!("The records cannot be read: {error}"))?;
+        let rows = statement
+            .query_map(params![since, until], |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The records cannot be read: {error}"))?;
+        let mut records = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The records cannot be read: {error}"))?;
+            records.push(
+                serde_json::from_str::<UserActivityRecord>(&data)
+                    .map_err(|error| format!("A row is not a user activity record: {error}"))?,
+            );
+        }
+        Ok(records)
     }
 
     /// Runs one SQL statement and gives its rows. The SQLite functions on JSON work on the column `data`, for example
@@ -251,6 +304,35 @@ mod tests {
             .unwrap();
         let plan: Vec<String> = rows.iter().map(|row| row["detail"].as_str().unwrap().to_string()).collect();
         assert!(plan.iter().any(|detail| detail.contains("user_activity_records_ended_at")), "{plan:?}");
+    }
+
+    #[test]
+    fn finds_the_records_that_overlap_a_time_range_in_the_order_of_their_start() {
+        let (_, mut database) = new_database("overlap");
+        database.upsert_records(&[record(9), record(3), record(5)]).unwrap();
+        let found = database.find_records_overlapping(&time(4, 0), &time(10, 0)).unwrap();
+        assert_eq!(found, vec![record(5), record(9)]);
+        // A record that ends exactly at the start of the range, or starts exactly at its end, does not overlap it.
+        assert_eq!(database.find_records_overlapping(&time(3, 11), &time(5, 0)).unwrap(), Vec::<UserActivityRecord>::new());
+        assert_eq!(database.find_records_overlapping(&time(3, 10), &time(5, 0)).unwrap(), vec![record(3)]);
+    }
+
+    #[test]
+    fn finds_the_records_of_a_range_written_with_a_time_zone_offset() {
+        let (_, mut database) = new_database("overlap_offset");
+        database.upsert_records(&[record(5)]).unwrap();
+        // 07:00 at +02:00 is 05:00 in UTC.
+        let found = database.find_records_overlapping("2026-10-14T07:00:00.000+02:00", "2026-10-14T07:30:00.000+02:00").unwrap();
+        assert_eq!(found, vec![record(5)]);
+    }
+
+    #[test]
+    fn refuses_a_range_that_is_not_a_time_and_never_puts_the_text_in_the_statement() {
+        let (_, database) = new_database("overlap_wrong_time");
+        let error = database.find_records_overlapping("yesterday", &time(10, 0)).unwrap_err();
+        assert!(error.contains("yesterday"));
+        let injection = "2026-10-14T00:00:00Z' OR '1'='1";
+        assert!(database.find_records_overlapping(injection, &time(10, 0)).is_err());
     }
 
     #[test]

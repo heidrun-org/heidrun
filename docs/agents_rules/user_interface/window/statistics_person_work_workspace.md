@@ -31,7 +31,7 @@ This file is a part of the rules of the tab "Work of one person". The words are 
 ## Where the list comes from
 
 - The list is `openWorkspaces` in `packages/apps/web_frontend/src/stores/user_activity.ts`: each workspace of Heidrun with its folder, found by `workspaceCwd`. The tab starts with `selectedWorkspaceId` of the same file.
-- The sums of the Git history come from the pure function `PersonWork.merge` (`lib/person_work.ts`). The command `person_work_in_range` takes one folder, and the tab calls it once for each folder. The command `ai_cost_in_range` takes the list of the chosen folders, and the data layer adds them up.
+- The sums of the Git history come from the pure function `PersonWork.merge` (`lib/person_work.ts`). The command `person_work_synchronize` takes one folder, and the tab calls it once for each folder, then calls `person_work_in_range` with the repository that it gave. The command `ai_cost_in_range` takes the list of the chosen folders, and the data layer adds them up.
 
 ## Tests
 

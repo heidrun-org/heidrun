@@ -117,10 +117,14 @@ function chooseNoWorkspace(): void {
   chosenFolders.value = [];
 }
 
-/** Reads the records of the longest time range through the data layer, and lists the workspaces that they hold. */
+/**
+ * Copies the new lines of the file of the records into the SQLite file of the data layer, then reads the records of the longest
+ * time range from the SQLite file, and lists the workspaces that they hold.
+ */
 async function load(): Promise<void> {
   const now = Date.now();
   try {
+    await invoke("user_activity_synchronize");
     const loaded = await invoke<UserActivityRecord[]>("user_activity_records_in_range", {
       since: UserActivity.formatTime(UserActivitySlots.earliestSlotStartedAt(now)),
       until: UserActivity.formatTime(now),

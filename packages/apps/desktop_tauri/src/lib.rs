@@ -1,6 +1,4 @@
-mod ai_cost;
-mod chats;
-mod chats_files;
+mod app_data;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
@@ -14,18 +12,19 @@ mod legacy;
 mod herdr;
 mod macros;
 mod mobile;
-mod model_prices;
-mod person_work;
+mod past_chats;
 mod project;
 mod pty;
 mod required_programs;
 mod skills;
+mod statistics;
 mod status_item;
 mod status_item_icon;
 mod status_item_picture;
 mod topic_clusters;
 mod usage;
 mod user_activity;
+mod worktree_actions;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
 #[cfg(test)]
@@ -354,20 +353,25 @@ pub fn run() {
             claude::claude_commands,
             claude::claude_agents,
             claude::claude_session_agents,
-            chats::chats_list,
-            chats_files::chats_files_exist,
-            chats_files::chats_worktrees_exist,
-            chats_files::chats_worktrees_branches,
-            chats_files::chats_worktree_open_in_vscode,
+            past_chats::chats::chats_synchronize,
+            past_chats::chats::chats_list,
+            past_chats::chats_files::chats_files_exist,
+            past_chats::chats_files::chats_worktrees_exist,
+            past_chats::chats_files::chats_worktrees_branches,
+            past_chats::chat_references::chat_references_synchronize,
+            past_chats::chat_references::chat_references_find,
+            worktree_actions::chats_worktree_open_in_vscode,
             history::history_append,
             history::history_read,
             history::history_export,
             user_activity::user_activity_append,
             user_activity::user_activity_read,
-            user_activity::user_activity_records_in_range,
-            person_work::person_work_in_range,
-            ai_cost::ai_cost_in_range,
-            ai_cost::ai_cost_synchronize,
+            statistics::user_activity_records::user_activity_synchronize,
+            statistics::user_activity_records::user_activity_records_in_range,
+            statistics::person_work::person_work_synchronize,
+            statistics::person_work::person_work_in_range,
+            statistics::ai_cost::ai_cost_synchronize,
+            statistics::ai_cost::ai_cost_in_range,
             files::files_list,
             files::folder_children,
             files::files_resolve,
