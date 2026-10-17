@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import SettingsOptionHelp from "./SettingsOptionHelp.vue";
+import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { timeOptions } from "../../lib/format";
 import { LANGUAGES, locale, t } from "../../i18n/index";
@@ -29,6 +30,13 @@ const TIME_FORMAT_HELP_BLOCKS = [
 const WORKING_DAYS_HELP_BLOCKS = [
   { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.workingDays.what" },
   { titleKey: "settingsHelp.howTitle", textKey: "settingsGeneral.workingDaysHelp" },
+] as const;
+
+/** The blocks of the information card of the goat sound, in the order of the card. */
+const GOAT_SOUND_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.goatSound.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.goatSound.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.goatSound.off" },
 ] as const;
 
 const dayNames = computed(() =>
@@ -103,6 +111,13 @@ const timeExample = computed(() => {
           {{ d.name }}
         </label>
       </div>
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("settingsGeneral.soundTitle") }}</h4>
+      <SettingsSwitchRow v-model="settings.goatSound" :label="t('settingsGeneral.goatSound')" data-option="goatSound">
+        <SettingsOptionHelp title-key="settingsGeneral.goatSound" :blocks="GOAT_SOUND_HELP_BLOCKS" />
+      </SettingsSwitchRow>
     </div>
   </div>
 </template>

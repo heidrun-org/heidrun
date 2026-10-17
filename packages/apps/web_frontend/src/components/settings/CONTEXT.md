@@ -6,7 +6,7 @@ The content of each section of the Settings window. The Settings window itself i
 ## Key Exports & Entry Points
 - `SettingsSwitchRow.vue`: one Bootstrap switch with its label, bound with `v-model`. The slot after the label holds the circled question mark. Every boolean setting uses it.
 - `SettingsOptionHelp.vue`: the circled question mark of an option and its information card (`../InformationCard.vue`, placement "bottom"). The properties are the key of the name of the option and the blocks, each one a key of a title and a key of a text. The texts are in the locale file `settingsHelp.json`.
-- `SettingsGeneralSection.vue`: the language and the time format (button groups of radio inputs), and the working days (button group of checkbox inputs).
+- `SettingsGeneralSection.vue`: the language, the time format, the working days, and the switch `goatSound` (read by `../../lib/goat_sounds.ts`).
 - `SettingsTerminalSection.vue`: the font, the font size that zooms the whole window, and the mouse behaviour (`mouseMode`).
 - `SettingsAgentsSection.vue`: the section "Coding agents". One switch per coding agent of `../../lib/agents.ts`, saved in `ownedAgents` (the whole row is the label of its switch), the default command of a new tab (`newTabCommand`), and the switch `keepAgentsRunningAfterQuit`.
 - `SettingsConfirmationsSection.vue`: the headings "Ask before closing" (workspace, tab, pane) and "Ask before deleting" (saved search).

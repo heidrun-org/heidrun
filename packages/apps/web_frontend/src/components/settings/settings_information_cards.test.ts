@@ -55,7 +55,7 @@ class SettingsInformationCardsTestHelper {
 		{
 			name: 'General',
 			component: SettingsGeneralSection,
-			optionList: ['language', 'timeFormat', 'workingDays'],
+			optionList: ['language', 'timeFormat', 'workingDays', 'goatSound'],
 		},
 		{
 			name: 'Terminal',
