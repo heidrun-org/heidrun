@@ -9,6 +9,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `mobile_server/`: a Rust library that serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name of the tunnel and the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
 - `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. The first commands are the macros: list, add, update, and delete. See its own CONTEXT.md.
+- `local_ai_embeddings/`: a Rust library and command line tool for computing text embeddings locally on the CPU or a supported accelerator. See its own CONTEXT.md.
 
 ## Rules
 - A package that produces the application goes in `packages/apps`, never here.
