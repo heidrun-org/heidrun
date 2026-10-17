@@ -1,5 +1,5 @@
 [package]
-name = "raw_coding_agent_cli"
+name = "coding_agent_cli"
 version = "0.2.7"
 description = "Sends one prompt to a coding agent command line tool (codex, claude, or agy) and returns the answer"
 license = "MIT"
@@ -7,11 +7,11 @@ edition = "2021"
 publish = false
 
 [lib]
-name = "raw_coding_agent_cli"
+name = "coding_agent_cli"
 path = "src/lib.rs"
 
 [[bin]]
-name = "raw_coding_agent_cli"
+name = "coding_agent_cli"
 path = "src/main.rs"
 
 [dependencies]

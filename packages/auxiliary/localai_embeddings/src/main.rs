@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use local_ai_embeddings::{
+use localai_embeddings::{
     cosine_similarity, Backend, ChunkingMode, DocumentEmbedding, EmbeddingConfig, EmbeddingEngine,
     ModelLoadTimings, DEFAULT_MODEL_ID,
 };
@@ -12,7 +12,7 @@ use std::time::Instant;
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "local_ai_embeddings",
+    name = "localai_embeddings",
     about = "Compute text embeddings locally"
 )]
 struct Arguments {

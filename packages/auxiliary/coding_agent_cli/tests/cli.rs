@@ -1,4 +1,4 @@
-//! Tests of the executable `raw_coding_agent_cli`, with fake `codex` and `claude` commands put at the start of the PATH.
+//! Tests of the executable `coding_agent_cli`, with fake `codex` and `claude` commands put at the start of the PATH.
 
 use std::io::Write;
 use std::path::PathBuf;
@@ -22,7 +22,7 @@ struct CliResult {
 impl FakeCommands {
     /// Makes a folder with one script for each pair `(command, script)`.
     fn new(name: &str, scripts: &[(&str, &str)]) -> Self {
-        let folder = std::env::temp_dir().join(format!("raw_coding_agent_cli_cli_{name}_{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("coding_agent_cli_cli_{name}_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
         for (command, script) in scripts {
@@ -49,7 +49,7 @@ impl FakeCommands {
 
     /// Runs the executable with `arguments`, writes `standard_input` on its standard input, and waits for it to exit.
     fn run(&self, arguments: &[&str], standard_input: &str) -> CliResult {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_raw_coding_agent_cli"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_coding_agent_cli"))
             .args(arguments)
             .env("PATH", format!("{}:/usr/bin:/bin", self.folder.display()))
             .stdin(Stdio::piped())
@@ -95,7 +95,7 @@ fn prints_the_help_text() {
         let result = fake.run(&[flag], "");
         assert_eq!(result.exit_code, Some(0));
         let help = result.stdout.split_whitespace().collect::<Vec<_>>().join(" ");
-        assert!(result.stdout.contains("Usage: raw_coding_agent_cli [options] [prompt]"), "{}", result.stdout);
+        assert!(result.stdout.contains("Usage: coding_agent_cli [options] [prompt]"), "{}", result.stdout);
         assert!(result.stdout.contains("-a, --agent <name>"));
         assert!(help.contains("(choices: \"codex\", \"claude\", \"agy\", default: \"codex\")"), "{help}");
         assert!(result.stdout.contains("-f, --prompt-file <path>"));

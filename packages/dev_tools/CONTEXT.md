@@ -15,8 +15,8 @@ The packages that are only tools for the developers of Heidrun. None of them is 
 ## Rules
 - A package that is only a tool for the developers of Heidrun goes in this folder.
 - No package in `packages/apps` and no package in `packages/auxiliary` imports a package from this folder.
-- A package in this folder may use a package from `packages/auxiliary`. Example: `change_log_generator` runs the executable of `raw_coding_agent_cli`.
+- A package in this folder may use a package from `packages/auxiliary`. Example: `change_log_generator` runs the executable of `coding_agent_cli`.
 
 ## Background
 - The three development tools moved here from `packages/auxiliary` in [issue #226](https://github.com/heidrun-org/heidrun/issues/226).
-- The package `raw_coding_agent_cli` stays in `packages/auxiliary` because the desktop application uses its library, and `change_log_generator` runs its executable.
+- The package `coding_agent_cli` stays in `packages/auxiliary` because the desktop application uses its library, and `change_log_generator` runs its executable.

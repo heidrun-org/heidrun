@@ -190,7 +190,11 @@ importers:
         specifier: ^2.1.0
         version: 2.2.12(typescript@5.9.3)
 
+  packages/auxiliary/coding_agent_cli: {}
+
   packages/auxiliary/heidrun_ctrl: {}
+
+  packages/auxiliary/localai_embeddings: {}
 
   packages/auxiliary/mobile_server: {}
 
@@ -211,8 +215,6 @@ importers:
       vitest:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
-
-  packages/auxiliary/raw_coding_agent_cli: {}
 
   packages/auxiliary/request_log: {}
 

@@ -6,7 +6,7 @@ import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
-import { withBackground } from "../lib/terminal_background";
+import { withCodexColors } from "../lib/terminal_colors";
 import { chatResumeCommand } from "../lib/chat_links";
 import type { PaneInfo } from "../lib/types";
 
@@ -79,8 +79,8 @@ export async function launchAgent(o: {
     } else {
       command = agentCommand(o.tool, o.agent, o.model);
     }
-    // Codex colours its input area from the background that Herdr reports: see terminal_background.ts.
-    if (o.tool === "codex") command = withBackground(command, getComputedStyle(document.documentElement).getPropertyValue("--bg"));
+    // Codex chooses its light or dark colours from the text colour and the background colour that Herdr reports: see terminal_colors.ts.
+    command = withCodexColors(command);
   } catch (e) {
     toast(String((e as Error).message ?? e));
     return "failed";

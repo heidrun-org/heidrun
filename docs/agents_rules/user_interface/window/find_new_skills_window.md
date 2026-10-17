@@ -1,11 +1,11 @@
 # User interface of Heidrun: Find new skills window
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: coding agent configuration](../../glossary/coding_agent_configuration.md), [GitHub and GitLab support](../../github_and_gitlab_support.md)
-- Related issue: [issue 289](https://github.com/heidrun-org/heidrun/issues/289), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609)
+- Related issue: [issue 289](https://github.com/heidrun-org/heidrun/issues/289), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 646](https://github.com/heidrun-org/heidrun/issues/646)
 
 This file gives the rules of the window "Find new skills", which the item "Find new skills" of the More menu opens. The code of the window is in `packages/apps/web_frontend/src/components/skills`, and its backend is in `packages/apps/desktop_tauri/src/skills`.
 
@@ -23,7 +23,7 @@ The window has four lines, from the top to the bottom. Each line has a title, a 
 
 ## The information cards
 
-- Each card uses the layout of [issue 608](https://github.com/heidrun-org/heidrun/issues/608): a title, then one block for each paragraph, with the placement "bottom".
+- Each card uses the layout of [issue 608](https://github.com/heidrun-org/heidrun/issues/608): a title, then one block for each paragraph, with the placement "bottom-center".
 - The texts of a card are in the files `settingsSkills.json` (English and French), under the keys `help_<line>_title`, `help_<line>_label`, `help_<line>_<block>_title`, and `help_<line>_<block>_text`. The blocks of each card are listed in `skills_help.ts`.
 - The key Escape closes an open card first, and the window only at the second key.
 - A new line of the window gets a circled question mark with a card, and a new input gets a visible label. The test `FindNewSkillsModal.test.ts` checks both.

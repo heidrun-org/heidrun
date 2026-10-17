@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 320](https://github.com/heidrun-org/heidrun/issues/320), [issue 645](https://github.com/heidrun-org/heidrun/issues/645)
+- Related issue: [issue 320](https://github.com/heidrun-org/heidrun/issues/320), [issue 645](https://github.com/heidrun-org/heidrun/issues/645), [issue 641](https://github.com/heidrun-org/heidrun/issues/641)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -14,7 +14,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The main colors of the window are the colors of VS Code, measured on a screenshot of VS Code in Dark Modern and in Light Modern ([issue #320](https://github.com/heidrun-org/heidrun/issues/320)). They are CSS variables in `packages/apps/web_frontend/src/styles.css`, one value for the dark theme and one value for the light theme.
 - `--shell` is the color of the top bar, of the sidebar icon bars, of the status bar, and of the window behind the sidebars and the viewport. It is #181818 in the dark theme and #f8f8f8 in the light theme.
 - `--side` is the color of the left sidebar, of the right sidebar, of the frame of the viewport, and of the tab bar. It has the same value as `--shell`, as in VS Code, so only the border line (`--line`) separates a sidebar icon bar from its sidebar.
-- `--bg` is the color of a pane, and the background of the terminal in a pane has the same value: #1f1f1f in the dark theme and #ffffff in the light theme. A change of `--bg` changes the background of the terminal themes in `TerminalView.vue` too, because Codex reads `--bg` when it starts.
+- `--bg` is the color of a pane, and the background of the terminal in a pane has the same value: #1f1f1f in the dark theme and #ffffff in the light theme. The terminal themes are in `terminal_themes.ts`, and a test checks that their background is equal to `--bg`. Heidrun reports the background and the text color of the terminal theme in use to Codex when it starts Codex: the rule is in [panes.md](../workspaces_tabs_and_panes/panes.md).
 - `--text` is #cccccc in the dark theme and #3b3b3b in the light theme. `--muted` is #8f8f8f in the dark theme and #737373 in the light theme. `--line`, the color of the border lines, is #2b2b2b in the dark theme and #e5e5e5 in the light theme.
 - `--icon` is the color of the icons of the sidebar icon bars: #888888 in the dark theme and #5d5d5d in the light theme. The icon of the selected entry has the text color (`--text`).
 - `--pane-head-selected` is the background of the header of the selected pane: #1f3452 in the dark theme and #dbe7fb in the light theme. It is a light tint of the blue of the ring of the selected pane ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).

@@ -10,8 +10,11 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 // window changes its size, so that the card always stays inside the window.
 // The property "placement" chooses the side of the card: "start" (the default) puts it at the left of the part, "end"
 // puts it at the right of the part, for a part in a sidebar at the left edge of the window, and "bottom" puts it below
-// the part, with its arrow under the middle of the part, for a part that is not in a sidebar, for example the circled
-// question mark of a page of the Settings window.
+// the part, with its left edge at the left edge of the part and its arrow under the middle of the part, for a part that is
+// not in a sidebar, for example the usage wheel in the header of a pane. "bottom-center" puts the card below the part, with
+// the middle of the card under the middle of the part and the arrow under the middle of the part, for the circled question
+// mark of a page of the Settings window. When the centered card does not fit in the window, it moves sideways only as far
+// as it needs to, and the arrow still points to the middle of the part.
 // The first slot is the part. The slot "card" is the content of the card, which has no padding of its own: the content
 // decides its padding. The event "open" tells that the card just opened. The property "width" gives a narrower or wider
 // card than the default, for a card with only a few short rows, for example the usage wheel in the header of a pane.
@@ -26,8 +29,11 @@ const props = withDefaults(
   defineProps<{
     /** The name of the card, for the screen reader. */
     label: string;
-    /** The side of the part where the card opens: at the left of the part, at the right of the part, or below it. */
-    placement?: "start" | "end" | "bottom";
+    /**
+     * The place of the card: at the left of the part, at the right of the part, below the part with its left edge at the
+     * left edge of the part, or below the part with its middle under the middle of the part.
+     */
+    placement?: "start" | "end" | "bottom" | "bottom-center";
     /** The width of the card, as a CSS length. Without it, the card is 34rem wide. */
     width?: string;
     /** Reads what the card shows. The card opens when the returned promise is done. Without it, the card opens at once. */
@@ -75,9 +81,10 @@ function place() {
   }
   const part = root.value.getBoundingClientRect();
   const { height, width } = card.value.getBoundingClientRect();
-  if (props.placement === "bottom") {
+  if (props.placement === "bottom" || props.placement === "bottom-center") {
     const bottomTop = Math.max(GAP, Math.min(part.bottom + GAP, window.innerHeight - height - GAP));
-    const bottomLeft = Math.max(GAP, Math.min(part.left, window.innerWidth - width - GAP));
+    const wantedLeft = props.placement === "bottom-center" ? part.left + part.width / 2 - width / 2 : part.left;
+    const bottomLeft = Math.max(GAP, Math.min(wantedLeft, window.innerWidth - width - GAP));
     const arrowLeft = Math.max(GAP, part.left + part.width / 2 - bottomLeft - ARROW_HALF_WIDTH);
     cardStyle.value = {
       top: `${bottomTop}px`,
@@ -239,7 +246,7 @@ onBeforeUnmount(() => {
       v-if="isOpen"
       ref="card"
       class="popover popover-instant show position-fixed"
-      :class="`bs-popover-${props.placement}`"
+      :class="`bs-popover-${props.placement === 'bottom-center' ? 'bottom' : props.placement}`"
       role="group"
       :aria-label="props.label"
       :style="{ ...cardStyle, width: props.width }"

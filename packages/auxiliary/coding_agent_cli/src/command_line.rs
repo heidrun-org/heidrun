@@ -1,11 +1,11 @@
-//! The arguments of the command line `raw_coding_agent_cli`, and the prompt that they give.
+//! The arguments of the command line `coding_agent_cli`, and the prompt that they give.
 
 /// The agent that the command line runs when the option `--agent` is missing. The library has no default: the caller always
 /// names the coding agent.
 pub const DEFAULT_AGENT: &str = "codex";
 
 /// The text of the option `--help`.
-pub const HELP: &str = r#"Usage: raw_coding_agent_cli [options] [prompt]
+pub const HELP: &str = r#"Usage: coding_agent_cli [options] [prompt]
 
 Sends one prompt to a coding agent (codex, claude, or agy), waits for the answer,
 and prints the answer on the standard output.
@@ -30,10 +30,10 @@ Exit codes:
   1   An error happened. The message is on the standard error output.
 
 Examples:
-  $ raw_coding_agent_cli "Write one sentence that explains a change log."
-  $ raw_coding_agent_cli --agent claude "Write one sentence about Git."
-  $ raw_coding_agent_cli --prompt-file prompt.md
-  $ git log --oneline -20 | raw_coding_agent_cli "Summarize these commits:"
+  $ coding_agent_cli "Write one sentence that explains a change log."
+  $ coding_agent_cli --agent claude "Write one sentence about Git."
+  $ coding_agent_cli --prompt-file prompt.md
+  $ git log --oneline -20 | coding_agent_cli "Summarize these commits:"
 "#;
 
 /// What the arguments ask for.

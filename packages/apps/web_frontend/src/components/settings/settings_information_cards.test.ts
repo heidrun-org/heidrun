@@ -191,6 +191,28 @@ describe('the information cards of the Settings window (issue #608)', () => {
 					expect(wrapper.find('.popover').exists()).toBe(false);
 				}
 			});
+
+			it('centers each information card on its circled question mark (issue #646)', async () => {
+				const rectangleSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+					const isCard = this.classList.contains('popover');
+					return isCard
+						? ({ top: 0, left: 0, right: 400, bottom: 200, width: 400, height: 200, x: 0, y: 0, toJSON: () => ({}) } as DOMRect)
+						: ({ top: 100, left: 500, right: 520, bottom: 120, width: 20, height: 20, x: 500, y: 100, toJSON: () => ({}) } as DOMRect);
+				});
+				try {
+					const wrapper = await SettingsInformationCardsTestHelper.mountSection(sectionCase);
+					for (const mark of wrapper.findAll('.information-card-part')) {
+						await mark.trigger('click');
+						await flushPromises();
+						const card = wrapper.get('.popover');
+						expect(card.attributes('style')).toContain('left: 310px');
+						expect(card.get('.popover-arrow').attributes('style')).toContain('left: 192px');
+						await mark.trigger('click');
+					}
+				} finally {
+					rectangleSpy.mockRestore();
+				}
+			});
 		});
 	}
 });

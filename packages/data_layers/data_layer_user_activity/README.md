@@ -140,7 +140,7 @@ ORDER BY startedAt"
 
 ## Library
 
-The desktop application can use the library as a path dependency, as it does for `raw_coding_agent_cli`:
+The desktop application can use the library as a path dependency, as it does for `coding_agent_cli`:
 
 ```toml
 data_layer_user_activity = { path = "../../data_layers/data_layer_user_activity" }

@@ -17,7 +17,7 @@ pub(crate) const ECHO_SCRIPT: &str = "printf 'arguments:%s\\n' \"$*\"\nprintf 's
 impl FakeCommands {
     /// Makes a folder with one script for each pair `(command, script)`. A command without a script does not exist.
     pub(crate) fn new(name: &str, scripts: &[(&str, &str)]) -> Self {
-        let folder = std::env::temp_dir().join(format!("raw_coding_agent_cli_{name}_{}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("coding_agent_cli_{name}_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
         for (command, script) in scripts {

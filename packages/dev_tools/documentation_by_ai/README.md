@@ -43,7 +43,7 @@ Creating this package does not generate or build the website. The first real mod
 
 The wrapper never runs a judge, opens a browser or application, scores pages, retries, changes models, starts a second writing call or publishes. A build is a compiler operation, not an assessment that the instructions are correct. The writer is explicitly instructed not to run these extra stages either. Scope boundaries are model instructions within the checkout sandbox, not operating-system isolation to an individual file list.
 
-The wrapper uses Codex directly because the current shared Rust raw_coding_agent_cli does not expose per-call model and effort options. It does not import the obsolete experimental TypeScript version of that package.
+The wrapper uses Codex directly because the current shared Rust coding_agent_cli does not expose per-call model and effort options. It does not import the obsolete experimental TypeScript version of that package.
 
 ## Inputs and outputs
 
