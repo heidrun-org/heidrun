@@ -29,6 +29,14 @@
 
 ---
 
+## Blog posts
+
+Read the three-part series about developing software with Heidrun. These posts are drafts:
+
+1. [Three Features in Progress. Which One Needs Me?](docs/blog_posts/three-features.blog_post.md)
+2. [Why Did We Write This Code? Ask the Development History](docs/blog_posts/development-history.blog_post.md)
+3. [What Does a Day of Development With Coding Agents Actually Look Like?](docs/blog_posts/day-of-development.blog_post.md)
+
 ## What it does
 
 You run many coding agents. Each coding agent wants a decision, a permission, or a code review, and each one waits in a different terminal. Heidrun puts all of them in one window, and tells you which one needs you right now.
