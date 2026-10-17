@@ -381,6 +381,131 @@ describe("PersonWorkTab", () => {
     expect(layout.yaxis.dtick).toBe(1);
   });
 
+  it("has a radio button group of the metric of the Git history, with the commits and the pull requests chosen at first, for the source Git history only", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const group = radioGroup(wrapper, "statistics-person-metric");
+    expect(group.texts).toEqual(["Commits and pull requests", "Lines added and lines deleted"]);
+    expect(group.checked).toEqual([true, false]);
+    expect(group.classes.every((name) => name.includes("btn-check") && name.includes("btn-outline") && name.includes("theme-secondary"))).toBe(true);
+    expect(wrapper.find('[role="group"][aria-label="Metric of the Git history"]').exists()).toBe(true);
+    await chooseAiCost(wrapper);
+    expect(wrapper.find('input[name="statistics-person-metric"]').exists()).toBe(false);
+    await wrapper.get("#statistics-person-source-git_history").setValue(true);
+    expect(radioGroup(wrapper, "statistics-person-metric").checked).toEqual([true, false]);
+  });
+
+  it("draws one stacked bar for each day with the lines added below and the lines deleted above when the lines are chosen", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    const { traces, layout } = lastDrawing();
+    expect(layout.barmode).toBe("stack");
+    expect(layout.title.text).toBe("Jerome Etienne: lines added and lines deleted of each day");
+    expect(traces.map((trace) => trace.name)).toEqual(["Lines added", "Lines deleted"]);
+    expect(traces[0].x).toHaveLength(7);
+    expect(traces[0].y).toEqual([0, 0, 0, 10, 0, 0, 8]);
+    expect(traces[1].y).toEqual([0, 0, 0, 2, 0, 0, 4]);
+    expect(traces[0].marker.color).not.toBe(traces[1].marker.color);
+    expect(traces.every((trace) => trace.hoverinfo === "none")).toBe(true);
+    expect(layout.legend).toMatchObject({ orientation: "h", y: 1.1 });
+  });
+
+  it("gives the chart of the lines a title for the vertical axis and a description for a screen reader", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    const chart = wrapper.get('[role="img"]');
+    expect(chart.attributes("aria-label")).toBe("Bar chart of the lines added and of the lines deleted by the commits of one person, for each day");
+    expect(plotly.react.mock.calls[1][2].yaxis.title.text).toBe("Number of lines");
+  });
+
+  it("shows the lines added and the lines deleted of the day in the chart information card, with no total", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    await hoverDay(6);
+    const card = cardOf(wrapper);
+    expect(card?.title).not.toBe("");
+    expect(card?.total).toBeNull();
+    expect(card?.rows).toEqual([
+      ["Lines added", "8"],
+      ["Lines deleted", "4"],
+    ]);
+    expect(wrapper.findAll('[role="tooltip"] [data-field="row"] span[aria-hidden="true"]').map((dot) => dot.attributes("style"))).toEqual([
+      expect.stringContaining("var(--success-bg)"),
+      expect.stringContaining("var(--danger-bg)"),
+    ]);
+  });
+
+  it("leaves a color out of the chart information card of a day where it has no lines, and shows nothing for a day with no commit", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    await wrapper.get("#statistics-person").setValue("eric");
+    await waitForDrawings(3);
+    await hoverDay(6);
+    expect(cardOf(wrapper)?.rows).toEqual([["Lines added", "7"]]);
+    await hoverDay(0);
+    expect(cardOf(wrapper)?.rows).toEqual([]);
+  });
+
+  it("writes a number of lines with the separator of the language of the interface", async () => {
+    const wrapper = await mountPersonWorkTab({
+      ...sampleItems(),
+      commits: [{ authorName: "Eric", authorEmail: "eric@example.com", committedAt: daysAgo(0), insertions: 12345, deletions: 1000 }],
+      pullRequests: [],
+      issues: [],
+    });
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    await hoverDay(6);
+    expect(cardOf(wrapper)?.rows).toEqual([
+      ["Lines added", (12345).toLocaleString("en")],
+      ["Lines deleted", (1000).toLocaleString("en")],
+    ]);
+  });
+
+  it("does not read again, and keeps the totals, the person, and the time range, when the metric changes", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person").setValue("eric");
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await flushPromises();
+    expect((wrapper.get("#statistics-person").element as HTMLSelectElement).value).toBe("eric");
+    expect(radioGroup(wrapper, "statistics-person-period").checked).toEqual([false, true]);
+    expect(totalsOf(wrapper)).toEqual(["1", "0", "1", "7", "0"]);
+    expect(lastDrawing().layout.title.text).toBe("Eric: lines added and lines deleted of each day");
+    expect(lastDrawing().traces[0].x).toHaveLength(30);
+    expect(personWorkCalls()).toHaveLength(1);
+  });
+
+  it("draws the commits and the pull requests again when the commits and the pull requests are chosen again", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await waitForDrawings(2);
+    await wrapper.get("#statistics-person-metric-commits_and_pull_requests").setValue(true);
+    await waitForDrawings(3);
+    expect(lastDrawing().traces.map((trace) => trace.name)).toEqual(["Commits", "Pull requests"]);
+    expect(personWorkCalls()).toHaveLength(1);
+  });
+
+  it("keeps the metric when the source changes to the AI cost and back, and does not change the AI cost", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await chooseAiCost(wrapper);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+    await wrapper.get("#statistics-person-source-git_history").setValue(true);
+    expect(radioGroup(wrapper, "statistics-person-metric").checked).toEqual([false, true]);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Lines added"));
+  });
+
   it("shows a legend above the bars, and turns off the tooltip of Plotly.js", async () => {
     await mountPersonWorkTab();
     await waitForDrawings(1);

@@ -1,11 +1,11 @@
 # Glossary of Heidrun: work of one person
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User activity glossary](user_activity.md), [User interface of Heidrun: Statistics window, tab "Work of one person"](../user_interface/window/statistics_person_work.md)
-- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559)
+- Related issue: [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 622](https://github.com/heidrun-org/heidrun/issues/622)
 
 This document gives one short definition for each word of the statistic of the work of one person. The other words of Heidrun are in [index.md](index.md). The Statistics window is defined in [user_activity.md](user_activity.md).
 
@@ -13,7 +13,7 @@ This document gives one short definition for each word of the statistic of the w
 
 ### Work of one person tab
 
-The tab "Work of one person" of the Statistics window. It shows how much one person changed the repositories of the workspaces that the developer chooses, or what the coding agents cost, as a bar chart with one bar for each day. For several workspaces, it adds up their work. It has a radio button group for the source, a radio button group for the unit of the AI cost, a workspace selector, a person chooser, a radio button group for the time range, the totals, and the bar chart.
+The tab "Work of one person" of the Statistics window. It shows how much one person changed the repositories of the workspaces that the developer chooses, or what the coding agents cost, as a bar chart with one bar for each day. For several workspaces, it adds up their work. It has a radio button group for the source, a radio button group for the metric of the Git history, a radio button group for the unit of the AI cost, a workspace selector, a person chooser, a radio button group for the time range, the totals, and the bar chart.
 
 ### Source of the Work of one person tab
 
@@ -22,6 +22,10 @@ The kind of data that the bar chart shows, as the developer chooses it in a radi
 ### Git history
 
 The source of the Work of one person tab that counts the commits, the pull requests, the issues, and the lines added and deleted of one person.
+
+### Metric of the Git history
+
+The radio button group of the Git history that chooses what the bar chart counts: "Commits and pull requests", chosen at first, or "Lines added and lines deleted". It is shown for the source Git history only. It does not change the person, the time range, the workspaces, or the totals.
 
 ### AI cost
 
@@ -53,7 +57,7 @@ The time from midnight to the next midnight, in the time zone of the computer. A
 
 ### Totals
 
-The numbers under the person chooser, in the time range. For the Git history there are five: the number of commits, the number of pull requests that the person opened, the number of issues that the person opened, the number of lines added, and the number of lines deleted. The lines are the lines of the commits of the person, as Git counts them for each commit, and a binary file counts 0. The issues and the lines are numbers only. They are not in the bar chart. The AI cost has three totals: the cost of Claude Code, the cost of Codex, and the two together, in the unit of the AI cost.
+The numbers under the person chooser, in the time range. For the Git history there are five: the number of commits, the number of pull requests that the person opened, the number of issues that the person opened, the number of lines added, and the number of lines deleted. The lines are the lines of the commits of the person, as Git counts them for each commit, and a binary file counts 0. The issues are a number only. The lines are in the bar chart when the metric of the Git history is "Lines added and lines deleted". The AI cost has three totals: the cost of Claude Code, the cost of Codex, and the two together, in the unit of the AI cost.
 
 ### Average per day
 
@@ -61,4 +65,4 @@ The text under each total: the total divided by the number of days of the time r
 
 ### Bar chart of the work of one person
 
-The bar chart of the Work of one person tab. It has one bar for each day of the time range. Each bar has two colors, one on top of the other. For the Git history: the number of commits of the day, then the number of pull requests of the day. For the AI cost: the cost of Claude Code of the day, then the cost of Codex of the day, in the unit of the AI cost. It has a chart legend and a chart information card, as every chart of the Statistics window has ([statistics_charts.md](statistics_charts.md)).
+The bar chart of the Work of one person tab. It has one bar for each day of the time range. Each bar has two colors, one on top of the other. For the Git history, with the metric "Commits and pull requests": the number of commits of the day, then the number of pull requests of the day. With the metric "Lines added and lines deleted": the lines added of the day, then the lines deleted of the day. For the AI cost: the cost of Claude Code of the day, then the cost of Codex of the day, in the unit of the AI cost. It has a chart legend and a chart information card, as every chart of the Statistics window has ([statistics_charts.md](statistics_charts.md)).

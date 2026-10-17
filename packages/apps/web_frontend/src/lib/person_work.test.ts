@@ -154,6 +154,32 @@ describe("PersonWork.compute", () => {
 		expect([eric.insertionCount, eric.deletionCount]).toEqual([7, 0]);
 	});
 
+	it("adds the lines added and the lines deleted of the commits of the person in each day", () => {
+		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
+		expect(result.days.map((day) => [day.insertionCount, day.deletionCount])).toEqual([
+			[10, 2],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[8, 4],
+		]);
+		const eric = PersonWork.compute(sample, "eric", NOW, 7);
+		expect(eric.days.map((day) => [day.insertionCount, day.deletionCount])[6]).toEqual([7, 0]);
+	});
+
+	it("gives lines in the days that add up to the lines of the time range", () => {
+		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 30);
+		expect(result.days.reduce((sum, day) => sum + day.insertionCount, 0)).toBe(result.insertionCount);
+		expect(result.days.reduce((sum, day) => sum + day.deletionCount, 0)).toBe(result.deletionCount);
+	});
+
+	it("does not add the lines of a pull request, because only a commit has lines", () => {
+		const result = PersonWork.compute(items({ pullRequests: [opened("eric", at(14, 12))] }), "eric", NOW, 7);
+		expect(result.days.every((day) => day.insertionCount === 0 && day.deletionCount === 0)).toBe(true);
+	});
+
 	it("does not add the lines of a commit outside the time range, and adds them again for thirty days", () => {
 		const sevenDays = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
 		const thirtyDays = PersonWork.compute(sample, "jeromeetienne", NOW, 30);

@@ -67,6 +67,10 @@ export type PersonWorkDay = CalendarDay & {
 	commitCount: number;
 	/** The number of pull requests that the person opened in the day. */
 	pullRequestCount: number;
+	/** The number of lines that the commits of the person add in the day. */
+	insertionCount: number;
+	/** The number of lines that the commits of the person delete in the day. */
+	deletionCount: number;
 };
 
 /** The work of one person in a time range. */
@@ -196,6 +200,8 @@ export class PersonWork {
 			...day,
 			commitCount: 0,
 			pullRequestCount: 0,
+			insertionCount: 0,
+			deletionCount: 0,
 		}));
 		const result: PersonWorkResult = {
 			days,
@@ -212,6 +218,8 @@ export class PersonWork {
 			const index = CalendarDays.findIndex(days, commit.committedAt);
 			if (index !== -1) {
 				days[index].commitCount += 1;
+				days[index].insertionCount += commit.insertions;
+				days[index].deletionCount += commit.deletions;
 				result.commitCount += 1;
 				result.insertionCount += commit.insertions;
 				result.deletionCount += commit.deletions;

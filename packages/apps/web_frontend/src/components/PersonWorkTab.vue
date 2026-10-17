@@ -23,7 +23,9 @@ import { locale, t } from "../i18n/index";
 // The tab "Work of one person" of the Statistics window. Checkboxes in the shape of buttons choose the workspaces that the tab
 // reads: one workspace, several, or all. A radio button group chooses the source of the bar chart: the Git history (the
 // commits and the pull requests of one person, with the number of issues and the lines), or the AI cost (the chats of each
-// coding agent). For the AI cost, a second radio button group chooses the unit: US dollars or tokens. Each total has its
+// coding agent). For the Git history, a second radio button group chooses the metric of the bar chart: the commits and the
+// pull requests, or the lines added and the lines deleted. For the AI cost, a second radio button group chooses the unit: US
+// dollars or tokens. Each total has its
 // average per day under it. Each source reads the data of each folder once, for the longest time range, the first time that a
 // chosen workspace needs it, joins the data of the chosen workspaces, and cuts it again when the workspaces, the person, the
 // time range, or the unit changes.
@@ -40,6 +42,16 @@ const PERIOD_CHOICES = [
   { id: "thirty_days", labelKey: "statisticsModal.personWorkThirtyDays", titleKey: "statisticsModal.personWorkThirtyDaysTitle" },
 ] as const satisfies readonly { id: PersonWorkPeriodId; labelKey: string; titleKey: string }[];
 
+/** The choices of the radio button group of the metric of the Git history, from left to right. */
+const METRIC_CHOICES = [
+  {
+    id: "commits_and_pull_requests",
+    labelKey: "statisticsModal.personWorkMetricCommitsAndPullRequests",
+    titleKey: "statisticsModal.personWorkMetricCommitsAndPullRequestsTitle",
+  },
+  { id: "lines", labelKey: "statisticsModal.personWorkMetricLines", titleKey: "statisticsModal.personWorkMetricLinesTitle" },
+] as const satisfies readonly { id: MetricId; labelKey: string; titleKey: string }[];
+
 /** The choices of the radio button group of the unit of the AI cost, from left to right. */
 const UNIT_CHOICES = [
   { id: "dollars", labelKey: "statisticsModal.personWorkUnitDollars", titleKey: "statisticsModal.personWorkUnitDollarsTitle" },
@@ -54,6 +66,9 @@ const AI_COST_COLOR_TOKENS: Record<AiCostAgentId, string> = {
 
 /** The source of the bar chart: the Git history, or the AI cost. */
 type SourceId = "git_history" | "ai_cost";
+
+/** The metric of the bar chart of the Git history: the commits and the pull requests, or the lines added and deleted. */
+type MetricId = "commits_and_pull_requests" | "lines";
 
 /** The unit of the AI cost: US dollars, or tokens. */
 type UnitId = "dollars" | "tokens";
@@ -86,6 +101,9 @@ const chosenFolders = computed(() => [
 
 /** The source of the bar chart. The tab starts with the Git history. */
 const sourceId = ref<SourceId>("git_history");
+
+/** The metric of the bar chart of the Git history. The tab starts with the commits and the pull requests. */
+const metricId = ref<MetricId>("commits_and_pull_requests");
 
 /** The unit of the AI cost. The tab starts with US dollars. */
 const unitId = ref<UnitId>("dollars");
@@ -267,8 +285,8 @@ const aiCostTotals = computed(() =>
   })),
 );
 
-/** The bar chart of the Git history, or `null` when there is no person. */
-const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
+/** The bar chart of the commits and of the pull requests of the Git history, or `null` when there is no person. */
+const commitsChart = computed<StackedBarChartContent | null>(() => {
   if (result.value === null || person.value === null) {
     return null;
   }
@@ -298,6 +316,41 @@ const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
     chartLabel: t("statisticsModal.personWorkChartLabel"),
   };
 });
+
+/** The bar chart of the lines added and of the lines deleted of the Git history, or `null` when there is no person. */
+const linesChart = computed<StackedBarChartContent | null>(() => {
+  if (result.value === null || person.value === null) {
+    return null;
+  }
+  const days = result.value.days;
+  return {
+    labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
+    series: [
+      {
+        name: t("statisticsModal.personWorkLinesAdded"),
+        colorToken: "--success-bg",
+        values: days.map((day) => day.insertionCount),
+        valueTexts: days.map((day) => countText(day.insertionCount)),
+      },
+      {
+        name: t("statisticsModal.personWorkLinesDeleted"),
+        colorToken: "--danger-bg",
+        values: days.map((day) => day.deletionCount),
+        valueTexts: days.map((day) => countText(day.deletionCount)),
+      },
+    ],
+    titles: days.map((day) => DayText.cardTitle(day.startedAt)),
+    totals: null,
+    title: t("statisticsModal.personWorkLinesChartTitle", { person: person.value.name }),
+    horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
+    verticalAxisTitle: t("statisticsModal.personWorkLinesVerticalAxis"),
+    verticalAxisUnit: "count",
+    chartLabel: t("statisticsModal.personWorkLinesChartLabel"),
+  };
+});
+
+/** The bar chart of the Git history that the developer chose with the metric, or `null` when there is no person. */
+const gitHistoryChart = computed(() => (metricId.value === "lines" ? linesChart.value : commitsChart.value));
 
 /** The bar chart of the AI cost or of the tokens, or `null` before the chats are read, or when no chat is in the time range. */
 const aiCostChart = computed<StackedBarChartContent | null>(() => {
@@ -406,6 +459,19 @@ watch(
               v-model="sourceId"
               type="radio"
               name="statistics-person-source"
+              autocomplete="off"
+              :value="choice.id"
+            />
+            {{ t(choice.labelKey) }}
+          </label>
+        </div>
+        <div v-if="sourceId === 'git_history'" class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkMetricLabel')">
+          <label v-for="choice in METRIC_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+            <input
+              :id="`statistics-person-metric-${choice.id}`"
+              v-model="metricId"
+              type="radio"
+              name="statistics-person-metric"
               autocomplete="off"
               :value="choice.id"
             />
