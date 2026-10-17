@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
+import SettingsOptionHelp from "./SettingsOptionHelp.vue";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { AGENTS, type AgentDefinition } from "../../lib/agents";
@@ -11,6 +12,22 @@ const COMMANDS = [
   { id: "terminal", labelKey: "settingsNewTab.terminalLabel", titleKey: "settingsNewTab.terminalTitle" },
   { id: "claude", labelKey: "settingsNewTab.claudeLabel", titleKey: "settingsNewTab.claudeTitle" },
   { id: "codex", labelKey: "settingsNewTab.codexLabel", titleKey: "settingsNewTab.codexTitle" },
+] as const;
+
+/** The blocks of the information card of a coding agent, in the order of the card. */
+const AGENT_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.agent.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.agent.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.agent.off" },
+] as const;
+
+/** The blocks of the information card of the default command of a new tab, in the order of the card. */
+const NEW_TAB_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.newTab.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsNewTab.help" },
+  { titleKey: "settingsNewTab.terminalLabel", textKey: "settingsNewTab.terminalTitle" },
+  { titleKey: "settingsNewTab.claudeLabel", textKey: "settingsNewTab.claudeTitle" },
+  { titleKey: "settingsNewTab.codexLabel", textKey: "settingsNewTab.codexTitle" },
 ] as const;
 
 function isOwned(agent: AgentDefinition): boolean {
@@ -39,17 +56,32 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
       <label
         v-for="agent in AGENTS"
         :key="agent.id"
-        class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
+        class="list-group-item list-group-item-action d-flex align-items-center gap-2"
+        data-option="agent"
       >
         <span class="fw-semibold">{{ agent.name }}</span>
+        <!-- The row is a label: a click in the question mark or in its card must not switch the agent. -->
+        <span class="me-auto" @click.capture.prevent>
+          <SettingsOptionHelp title-key="settingsHelp.agent.title" :params="{ name: agent.name }" :blocks="AGENT_HELP_BLOCKS" />
+        </span>
         <span class="switch">
-          <input type="checkbox" role="switch" :checked="isOwned(agent)" @change="toggleOwned(agent)" @keydown.enter="onEnter($event, agent)" />
+          <input
+            type="checkbox"
+            role="switch"
+            :aria-label="agent.name"
+            :checked="isOwned(agent)"
+            @change="toggleOwned(agent)"
+            @keydown.enter="onEnter($event, agent)"
+          />
         </span>
       </label>
     </div>
 
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsNewTab.commandTitle") }}</h4>
+    <div class="d-flex flex-column gap-2" data-option="newTabCommand">
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="form-label m-0">{{ t("settingsNewTab.commandTitle") }}</h4>
+        <SettingsOptionHelp title-key="settingsNewTab.commandTitle" :blocks="NEW_TAB_HELP_BLOCKS" />
+      </div>
       <div class="btn-group" role="group" :aria-label="t('settingsNewTab.commandTitle')">
         <label
           v-for="command in COMMANDS"
@@ -61,12 +93,11 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
           {{ t(command.labelKey) }}
         </label>
       </div>
-      <div class="form-text">{{ t("settingsNewTab.help") }}</div>
     </div>
 
     <div class="d-flex flex-column gap-2">
       <h4 class="form-label m-0">{{ t("settingsGeneral.quitTitle") }}</h4>
-      <SettingsSwitchRow v-model="settings.keepAgentsRunningAfterQuit" :label="t('settingsGeneral.keepAgentsRunning')">
+      <SettingsSwitchRow v-model="settings.keepAgentsRunningAfterQuit" :label="t('settingsGeneral.keepAgentsRunning')" data-option="keepAgentsRunning">
         <InformationCard :label="t('settingsGeneral.keepAgentsRunningHelpLabel')" placement="bottom">
           <span class="text-body-secondary" role="img" :aria-label="t('settingsGeneral.keepAgentsRunningHelpLabel')">
             <Icon name="question-circle" />

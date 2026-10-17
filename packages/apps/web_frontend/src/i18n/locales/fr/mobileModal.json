@@ -9,7 +9,6 @@
   "revokeTitle": "Les appareils déjà appairés devront rescanner le QR code",
   "revoke": "Révoquer les appareils appairés",
   "starting": "Ouverture du tunnel…",
-  "tunnelNote": "Quand tu l’actives, Heidrun ouvre un tunnel ngrok avec le programme ngrok. L’adresse du tunnel est la même à chaque fois. Quand tu le désactives, ou quand tu quittes Heidrun, le tunnel se ferme.",
   "ngrokNotInstalled": "Le programme ngrok n’est pas installé sur cet ordinateur. Sans lui, l’accès mobile est impossible. Installe-le avec la commande brew install ngrok. Puis crée un compte gratuit sur ngrok.com, et lance la commande ngrok config add-authtoken suivie de ton jeton.",
   "error.ngrokMissing": "Le programme ngrok n’est pas installé sur cet ordinateur, et Heidrun en a besoin pour ouvrir le tunnel. Installe-le avec la commande brew install ngrok. Puis crée un compte gratuit sur ngrok.com, et lance la commande ngrok config add-authtoken suivie de ton jeton. Heidrun réessaie toutes les quelques secondes.",
   "error.ngrokCannotStart": "Heidrun ne peut pas démarrer le programme ngrok.",
@@ -21,6 +20,5 @@
   "oldNgrokStopped": "L’ancien ngrok est arrêté. Heidrun rouvre le tunnel dans quelques secondes.",
   "oldNgrokNotFound": "Heidrun n’a pas démarré l’autre ngrok. Ferme-le à la main : il peut tourner dans un terminal, ou sur un autre ordinateur avec le même compte ngrok. Pour arrêter tous les ngrok de cet ordinateur, lance cette commande dans un terminal. Heidrun redémarre son propre ngrok dans quelques secondes :",
   "terminalTyping": "Autoriser la saisie dans les terminaux depuis le téléphone",
-  "terminalTypingNote": "Le téléphone montre toujours les terminaux, en lecture seule. Quand c’est activé, le téléphone te demande encore une confirmation avant de te laisser taper, à chaque ouverture d’un terminal, et chaque commande tapée passe par les garde-fous.",
   "error.cannotListen": "Heidrun ne peut pas écouter sur l’adresse locale. Un autre programme utilise peut-être le port. Heidrun réessaie dans quelques secondes."
 }
