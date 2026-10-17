@@ -5,11 +5,11 @@
 //! checks the answer. This file does only the two things that the web frontend cannot do: it reads and writes the file,
 //! and it runs `codex` or `claude` on this computer.
 //!
-//! The call is the function `ask` of the package `raw_coding_agent_cli`, which holds the rules of the two commands. The call
+//! The call is the function `ask` of the package `coding_agent_cli`, which holds the rules of the two commands. The call
 //! goes through the login shell, so the commands that the developer installed are found, and Heidrun never reads or stores
 //! the login.
 
-use raw_coding_agent_cli::{ask, AgentShell};
+use coding_agent_cli::{ask, AgentShell};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

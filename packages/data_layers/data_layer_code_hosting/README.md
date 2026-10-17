@@ -142,7 +142,7 @@ ORDER BY number"
 
 ## Library
 
-The desktop application uses the library as a path dependency, as it does for `raw_coding_agent_cli`:
+The desktop application uses the library as a path dependency, as it does for `coding_agent_cli`:
 
 ```toml
 data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }

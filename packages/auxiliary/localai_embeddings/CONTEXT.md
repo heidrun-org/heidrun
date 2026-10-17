@@ -1,13 +1,13 @@
-# Directory Context: `/packages/auxiliary/local_ai_embeddings`
+# Directory Context: `/packages/auxiliary/localai_embeddings`
 
 ## Purpose
 This package computes text embeddings locally. The Rust library can be used by Heidrun, and the command line tool supports direct text, standard input, file paths, document chunking, benchmarks, and verbose progress details.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the public Rust library interface for loading a model, embedding chunks and whole documents, and comparing embeddings.
-- `src/main.rs`: the `local_ai_embeddings` command line tool.
+- `src/main.rs`: the `localai_embeddings` command line tool.
 - `README.md`: installation and use.
-- Command to run this folder: `pnpm --filter local_ai_embeddings cli`
+- Command to run this folder: `pnpm --filter localai_embeddings cli`
 
 ## Rules
 - Model inference stays on the selected local backend and does not send input text to a hosted inference service.

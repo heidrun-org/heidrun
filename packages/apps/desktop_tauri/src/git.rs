@@ -4,7 +4,7 @@
 //! found (Homebrew paths) and use the accounts already connected on the Mac:
 //! the app never handles a token.
 
-use raw_coding_agent_cli::login_shell;
+use coding_agent_cli::login_shell;
 use serde::Serialize;
 use std::time::Duration;
 use tokio::process::Command;

@@ -1,9 +1,9 @@
-//! The command line `raw_coding_agent_cli`: sends one prompt to a coding agent and prints the answer.
+//! The command line `coding_agent_cli`: sends one prompt to a coding agent and prints the answer.
 
 mod command_line;
 
 use command_line::{parse, resolve_prompt, Parsed, HELP};
-use raw_coding_agent_cli::{ask, AgentShell};
+use coding_agent_cli::{ask, AgentShell};
 use std::io::{IsTerminal, Read};
 use std::process::ExitCode;
 

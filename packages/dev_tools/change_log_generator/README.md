@@ -57,7 +57,7 @@ const section = await GenerateChangeLog.run({
 });
 ```
 
-The method `GenerateChangeLog.run` writes the file `CHANGELOG.md` in the repository, and returns the new section. The coding agent runs through the executable of the package [`raw_coding_agent_cli`](../../auxiliary/raw_coding_agent_cli), which `cargo run` builds when needed. The method runs the executable only when `isAi` is true, so the mode without the option `--ai` needs no Rust tool.
+The method `GenerateChangeLog.run` writes the file `CHANGELOG.md` in the repository, and returns the new section. The coding agent runs through the executable of the package [`coding_agent_cli`](../../auxiliary/coding_agent_cli), which `cargo run` builds when needed. The method runs the executable only when `isAi` is true, so the mode without the option `--ai` needs no Rust tool.
 
 ## Commands
 
