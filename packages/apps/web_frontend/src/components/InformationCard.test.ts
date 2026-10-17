@@ -246,6 +246,66 @@ describe("InformationCard", () => {
   });
 });
 
+describe("InformationCard placement bottom-center (issue #646)", () => {
+  /** Opens a card of 300 by 200 pixels below a part of 20 pixels, whose left edge is at `partLeft`. */
+  async function openCenteredCard(partLeft: number) {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const isCard = this.classList.contains("popover");
+      return isCard
+        ? { top: 0, left: 0, right: 300, bottom: 200, width: 300, height: 200, x: 0, y: 0, toJSON: () => ({}) }
+        : { top: 100, left: partLeft, right: partLeft + 20, bottom: 120, width: 20, height: 20, x: partLeft, y: 100, toJSON: () => ({}) };
+    });
+    const wrapper = mount(InformationCard, {
+      attachTo: document.body,
+      props: { label: "Help", placement: "bottom-center" },
+      slots: { default: "<span>?</span>", card: "<p>Text</p>" },
+    });
+    await wrapper.trigger("click");
+    await wrapper.vm.$nextTick();
+    return wrapper;
+  }
+
+  it("puts the middle of the card under the middle of the part, with the arrow under the middle of the part", async () => {
+    const wrapper = await openCenteredCard(400);
+    const card = wrapper.get(".popover");
+    expect(card.classes()).toEqual(expect.arrayContaining(["bs-popover-bottom", "position-fixed"]));
+    expect(card.attributes("style")).toContain("top: 128px");
+    expect(card.attributes("style")).toContain("left: 260px");
+    expect(wrapper.get(".popover-arrow").attributes("style")).toContain("left: 142px");
+  });
+
+  it("keeps the card inside the window at the left edge, and the arrow under the middle of the part", async () => {
+    const wrapper = await openCenteredCard(40);
+    expect(wrapper.get(".popover").attributes("style")).toContain("left: 8px");
+    expect(wrapper.get(".popover-arrow").attributes("style")).toContain("left: 34px");
+  });
+
+  it("keeps the card inside the window at the right edge, and the arrow under the middle of the part", async () => {
+    const partLeft = window.innerWidth - 30;
+    const wrapper = await openCenteredCard(partLeft);
+    const cardLeft = window.innerWidth - 300 - 8;
+    expect(wrapper.get(".popover").attributes("style")).toContain(`left: ${cardLeft}px`);
+    expect(wrapper.get(".popover-arrow").attributes("style")).toContain(`left: ${partLeft + 10 - cardLeft - 8}px`);
+  });
+
+  it("keeps the left edge of the card at the left edge of the part when the placement is bottom", async () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const isCard = this.classList.contains("popover");
+      return isCard
+        ? { top: 0, left: 0, right: 300, bottom: 200, width: 300, height: 200, x: 0, y: 0, toJSON: () => ({}) }
+        : { top: 100, left: 400, right: 420, bottom: 120, width: 20, height: 20, x: 400, y: 100, toJSON: () => ({}) };
+    });
+    const wrapper = mount(InformationCard, {
+      attachTo: document.body,
+      props: { label: "Help", placement: "bottom" },
+      slots: { default: "<span>?</span>", card: "<p>Text</p>" },
+    });
+    await wrapper.trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".popover").attributes("style")).toContain("left: 400px");
+  });
+});
+
 describe("InformationCard width", () => {
   it("gives the card the width of the property width, and the usual width without it", async () => {
     const narrow = mount(InformationCard, {
