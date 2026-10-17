@@ -1,7 +1,7 @@
 # User interface of Heidrun: state of the window, splash screen, missing programs, and goat sounds
 
 - Created: 13 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -26,7 +26,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 ## Splash screen
 
 - At the start, Heidrun shows the splash screen for 3 seconds after the main window appears. A click on the splash screen closes it at once.
-- The splash screen has a sound button at its bottom right corner. A click on the sound button plays a goat bleat, and does not close the splash screen. See the section "Goat sounds".
+- The splash screen has a sound button at its bottom right corner. A click on the sound button plays a goat bleat when the setting "Enable goat sound" is on, and does not close the splash screen. See the section "Goat sounds".
 - The command line option `--no-splash-screen` starts Heidrun without the splash screen. The main window then appears at once, and shows the application.
 - A program that drives Heidrun, for example to take a screenshot, uses this option, so that it never waits for the splash screen to close. In development, run `pnpm dev -- -- --no-splash-screen`: the command `tauri dev` gives the arguments after its second `--` to the application, and the arguments after its first `--` to `cargo`. For the built application on macOS, run `open -a Heidrun --args --no-splash-screen` while Heidrun is not running.
 
@@ -47,4 +47,8 @@ Heidrun installs no program of another maker ([issue 546](https://github.com/hei
 - A bleat plays only after a click of the developer. No bleat plays by itself.
 - Three places play a bleat: the sound button of the About modal, the sound button of the splash screen, and the smiley at the end of the joke of the empty tab screen. A click on the smiley plays a bleat only when it starts the laugh again, so the laugh that starts by itself stays silent, and a click while the laugh is still running plays nothing.
 - The bleats play in turn: the first click plays the first bleat, the second click plays the second bleat, the third click plays the first bleat again. The three places share the same turn. A bleat that is still playing stops when the next bleat starts.
+- The setting "Enable goat sound" is a switch in the section General of the Settings window ([issue 620](https://github.com/heidrun-org/heidrun/issues/620)). It is off by default. A saved value that is missing, as in an installation that is older than the setting, or that is not true or false, means off. The application saves the setting with the other settings, so it stays the same after a restart.
+- When the setting is off, a click on the three places plays nothing, and the turn of the bleats does not move. The sound buttons and the smiley stay on the screen. When the setting is on, the three places play the bleats as the rules above say.
+- A change of the setting applies at once to every screen that is open, and plays no sound by itself. When the developer switches the setting off, a bleat that is playing stops at once.
+- The test of the setting is in the function `playNextGoatBleat` of [goat_sounds.ts](../../../../packages/apps/web_frontend/src/lib/goat_sounds.ts), so every place that plays a bleat follows the setting. A new place that plays a bleat calls this function, and never plays the sound files by itself.
 - The license of the sound is Creative Commons Attribution NonCommercial 3.0, so the About modal shows the credit to the author, with a link to the Freesound page.

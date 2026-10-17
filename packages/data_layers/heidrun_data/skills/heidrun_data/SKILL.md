@@ -9,7 +9,7 @@ description: Answer a question about the history of a repository from the data l
 
 | Source | What it holds | Tables |
 | --- | --- | --- |
-| `coding_agents` | The chat sessions that Claude Code and Codex saved for the repository, with their tokens, and what each one is linked to. The configuration of the coding agent: the memory files of Claude Code, the subagents, and the skills. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills` |
+| `coding_agents` | The chat sessions that Claude Code and Codex saved for the repository, with their tokens, and what each one is linked to. The configuration of the coding agent: the memory files of Claude Code, the subagents, and the skills. The tokens of each minute, with their estimated cost in US dollars, and the model prices. | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills`, `token_usage_minutes`, `token_usage_synchronizations`, `model_price_versions`, `model_prices`, and the views `latest_model_prices` and `token_usage_with_cost` |
 | `source_control` | Every commit of the Git repository, merges included. | `commits` |
 | `code_hosting` | Every issue and every pull request of the GitHub repository. | `issues`, `pull_requests` |
 | `user_activity` | The active periods of the developer in front of Heidrun, one per workspace. | `user_activity_records` |
@@ -67,6 +67,12 @@ Every table of a source has a few key columns and one column `data`, which holds
 - `commits`: keys `repository`, `hash`, `committedAt`. A commit has no link table, and stores no file name: `read commit` gives the files.
 - `issues` and `pull_requests`: keys `repository`, `number`, `updatedAt`. The text `Fixes #N` in the body of a pull request is the only link from a pull request to its issue.
 - `user_activity_records`: keys `workspaceFolder`, `startedAt`, `endedAt`. It joins no other table.
+- `token_usage_minutes`: columns `repository`, `chatSessionId`, `model`, `minuteAt`, `codingAgent`, `folder`, `freshInputTokens`, `cachedInputTokens`, `cacheWriteInputTokens`, and `outputTokens`. One row for each chat session, model, and minute where tokens were used. See "Tokens and estimated cost".
+- `token_usage_synchronizations`: columns `repository`, `folder`, `synchronizedAt`, `readUpTo`, and `mode`. One row for each workspace: when its token usage was read the last time.
+- `model_price_versions`: columns `version`, `retrievedAt`, `checkedAt`, `source`, `unit`, `contentHash`, and `modelCount`. One row for each version of the price list.
+- `model_prices`: columns `version`, `model`, `provider`, `freshInputUsdPerMillion`, `cachedInputUsdPerMillion`, `cacheWriteInputUsdPerMillion`, and `outputUsdPerMillion`. The prices of the models in each version, in US dollars for one million tokens. It joins `model_price_versions` on `version`.
+- `latest_model_prices`: a view of `model_prices` with the latest version only. It has the same columns as `model_prices`.
+- `token_usage_with_cost`: a view of `token_usage_minutes` with columns `repository`, `folder`, `chatSessionId`, `codingAgent`, `minuteAt`, `model`, `freshInputTokens`, `cachedInputTokens`, `cacheWriteInputTokens`, `outputTokens`, `priceVersion`, `priceModel`, and `costUsd`. See "Tokens and estimated cost".
 
 Every date is in UTC, written as text, so two dates compare as text. The column `repository` is `owner/name`, for example `heidrun-org/heidrun`.
 
@@ -74,6 +80,65 @@ What the tables do not hold:
 
 - The tables can hold several repositories, and the same issue number can exist in two of them. Put `repository = 'owner/name'` in the `WHERE` clause of every query.
 - `chat_sessions` holds only the chat sessions that started in the root folder of the repository. A chat session that started in a worktree is not in the table, and an issue fix is made in a worktree, so the chat session of the work is often missing. `read chat_session <id>` reads the files of the root folder, of the worktrees, and of the sub-folders, but only if you already know the id. When a query finds no chat session, say "no chat session found". Do not guess one.
+- `token_usage_minutes` is wider than `chat_sessions`: it also holds the chat sessions that started in a worktree or in a sub-folder, and a chat session without a title. Its column `folder` says where the chat session started. A `chatSessionId` of this table can therefore be missing from `chat_sessions`: join with `LEFT JOIN`.
+
+## Tokens and estimated cost
+
+The tokens are stored for each minute, and the cost is calculated by the view `token_usage_with_cost`. A question about tokens or dollars needs no chat session file: it is a query, or the command `usage`.
+
+- **A minute is the minute of the record** that reports the tokens of a request, in UTC. The tokens are not measured while the model writes them: a request that lasts three minutes puts all its tokens in one minute. A record without a date has `minuteAt` equal to the empty text: its tokens are in the total of the chat session, and in no time range. A request without a known model has `model` equal to the empty text.
+- **The workspace is the column `folder`**: the folder where the chat session started. A workspace owns the rows whose `folder` is its folder or a folder below it, such as a worktree. Write that as `(folder = '/Users/me/app' OR (folder >= '/Users/me/app/' AND folder < '/Users/me/app0'))`, which uses the index. A chat session counts once, so two workspaces that overlap never count a row twice if you put both tests in one `WHERE` with `OR`.
+- **Always limit the time range with `minuteAt`**, as text: `minuteAt >= '2026-10-01' AND minuteAt < '2026-11-01'`. The index `token_usage_minutes_by_minute` serves `repository` and `minuteAt`.
+- **The cost is an estimate.** It is the tokens of each kind multiplied by the public price of the model, from the price list of LiteLLM, in US dollars for one million tokens. It is not an invoice, and not the payment of a subscription. The four kinds of tokens have four prices; a price that the list does not give for the cache is the input price. A model name that ends with a date (`-20251001`) uses the price of the name without the date.
+- **An unknown price is an unknown cost, never zero.** `costUsd` is null when the model has no price, and `sum(costUsd)` skips the nulls. So a sum is complete only when `count(*) = count(costUsd)`. Always select `count(*) - count(costUsd) AS unpricedRows` next to the sum, and say that the total is partial when it is not 0.
+- **One price version in a result.** The view uses the latest version for every row, old rows included: a past day is priced with today's prices. `priceVersion` tells which version. The versions stay in `model_price_versions` with their `source`, `retrievedAt`, `checkedAt`, `unit`, and `contentHash`. `update coding_agents` fetches the price list when the latest version is a day old; `--refresh-prices` forces it, and `--price-list <address or file>` replaces the source.
+- **Days in SQL are UTC days** if you cut `minuteAt` as text with `substr(minuteAt, 1, 10)`. A local day needs the time zone: use the command `usage --by day --time-zone Europe/Paris`, which cuts the days with the rules of the time zone, daylight saving time included.
+
+The daily tokens and the known cost of a workspace in UTC, with the rows that have no price:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT substr(minuteAt, 1, 10) AS day,
+       sum(freshInputTokens + cachedInputTokens + cacheWriteInputTokens + outputTokens) AS tokens,
+       sum(costUsd) AS knownCostUsd,
+       count(*) - count(costUsd) AS unpricedRows
+FROM token_usage_with_cost
+WHERE repository = 'heidrun-org/heidrun'
+  AND (folder = '/Users/me/app' OR (folder >= '/Users/me/app/' AND folder < '/Users/me/app0'))
+  AND minuteAt >= '2026-10-01' AND minuteAt < '2026-11-01'
+GROUP BY day ORDER BY day"
+```
+
+The chat sessions ranked by their estimated total cost:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT chatSessionId, round(sum(costUsd), 2) AS knownCostUsd, count(*) - count(costUsd) AS unpricedRows
+FROM token_usage_with_cost
+WHERE repository = 'heidrun-org/heidrun' AND minuteAt >= '2026-10-01'
+GROUP BY chatSessionId ORDER BY knownCostUsd DESC LIMIT 10"
+```
+
+The chat sessions that cost more than 50 dollars, with their title when they have one:
+
+```bash
+heidrun_data query --format jsonl "
+SELECT u.chatSessionId, round(sum(u.costUsd), 2) AS knownCostUsd, json_extract(c.data, '$.title') AS title
+FROM token_usage_with_cost AS u
+LEFT JOIN chat_sessions AS c ON c.repository = u.repository AND c.id = u.chatSessionId
+WHERE u.repository = 'heidrun-org/heidrun' AND u.minuteAt >= '2026-10-01'
+GROUP BY u.chatSessionId HAVING sum(costUsd) > 50 ORDER BY knownCostUsd DESC"
+```
+
+The command `usage` gives the same numbers without SQL, one row per period, with `isCostComplete` and `unpricedTokens` in every row. It reads the SQLite file only and fails when the token usage was never read, so run `heidrun_data initialize coding_agents` once before the first question:
+
+```bash
+heidrun_data usage --by day --since 2026-09-14 --until 2026-10-14 --time-zone Europe/Paris --format jsonl
+heidrun_data usage --by hour --since 2026-10-14 --format jsonl
+heidrun_data usage --by-chat --since 2026-10-01 --format jsonl
+```
+
+`sources` shows the number of rows of each table, and `SELECT * FROM token_usage_synchronizations` tells when the token usage of each workspace was read the last time (`synchronizedAt`). If that date is old, run `heidrun_data update coding_agents`.
 
 ## The command `read`
 
@@ -182,6 +247,7 @@ Dates are text, so `date('now', '-10 day')` can replace the fixed date. Then `he
 The folder `references` holds the documents that this skill rests on. Read a document only when the question needs it.
 
 - [references/repeated_pattern.md](references/repeated_pattern.md): how to find the patterns that the developer repeats in the chat sessions. Why the tables cannot give them and the chat session files can, the method in three steps (extract, normalize and group, propose), the counts found on the repository of Heidrun on 16 October 2026, and the limits of the method.
+- [references/token_usage_and_cost.md](references/token_usage_and_cost.md): the tables of the tokens and of the prices, the rules of the minute, of the workspace, and of the days of a time zone, examples for a real repository, and the measured timings.
 
 ## Rules
 

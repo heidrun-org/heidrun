@@ -10,9 +10,12 @@ Gives a coding agent the data of the four data layers of Heidrun, in one SQLite 
   code_hosting     the issues and the pull requests of GitHub (tables issues, pull_requests)
   coding_agents    the chat sessions of Claude Code and Codex (table chat_sessions and
                    the link tables chat_session_folders, chat_session_issues,
-                   chat_session_pull_requests, chat_session_files), and the
+                   chat_session_pull_requests, chat_session_files), the
                    configuration of the coding agent (tables memory_files,
-                   subagents, skills)
+                   subagents, skills), the tokens of each minute (table
+                   token_usage_minutes, with the view token_usage_with_cost for
+                   the estimated cost), and the model prices (tables
+                   model_price_versions, model_prices)
   user_activity    the active periods of the developer        (table user_activity_records)
 
 Commands:
@@ -26,6 +29,9 @@ Commands:
                              column "data". With a table, print that JSON schema.
   query <sql>                Run one read-only SQL statement on the SQLite file. The
                              column "data" holds JSON: use json_extract(data, '$.field').
+  usage                      Print the tokens and the estimated cost in US dollars of a
+                             workspace in a time range, by minute, hour, or day. It
+                             reads the SQLite file only.
   read <kind> <key>          Print the content of one thing from its source: a
                              chat_session, a commit, an issue, or a pull_request.
 
@@ -60,7 +66,64 @@ Examples:
   $ heidrun_data schema --format jsonl
   $ heidrun_data schema chat_sessions
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
+  $ heidrun_data usage --by day --since 2026-09-14 --format jsonl
   $ heidrun_data read issue 500 --format jsonl
+"#;
+
+/// The text of `heidrun_data usage --help`.
+pub const USAGE_HELP: &str = r#"Usage: heidrun_data usage [options]
+
+Prints the tokens and the estimated cost of a workspace in a time range, one row per
+period. It reads the SQLite file only and never a chat session file, so it is fast. The
+tokens come from the table token_usage_minutes, which "update coding_agents" and
+"initialize coding_agents" fill, and the cost comes from the view token_usage_with_cost.
+When the token usage of the repository was never read, the command fails and says so.
+
+A workspace is a folder: a chat session counts when it started in this folder or in a
+folder below it, such as a worktree or a sub-folder, and it counts once.
+
+A minute is the minute of the record that reports the tokens of a request. It is not a
+measure of the generation of the tokens. The minutes and the hours are in UTC. A day is a
+calendar day of the time zone, so it lasts 23 or 25 hours when the clock changes.
+
+The cost is an estimate at the public price of each model (the price list of LiteLLM,
+US dollars for one million tokens), at the latest version of the prices. It is not an
+invoice, and not the payment of a subscription. A model without a known price has no
+cost: "costUsd" is then null, or only the part of the models that have a price, and
+"isCostComplete" is false. "unpricedTokens" counts the tokens without a known cost.
+
+The rows: "periodStart" (UTC), "day" (by day only), "chatSessionId" (--by-chat only),
+"freshInputTokens", "cachedInputTokens", "cacheWriteInputTokens", "outputTokens",
+"totalTokens", "costUsd", "unpricedTokens", and "isCostComplete".
+
+Options:
+  --folder <path>            The folder of the workspace.
+                             (default: the root of the Git repository of the current
+                             folder)
+  --repository <owner/name>  The repository.
+                             (default: the remote "origin" of the folder)
+  --since <date>             The start of the time range: a date YYYY-MM-DD, the start
+                             of that day in the time zone, or a time in ISO 8601 with
+                             its zone, such as 2026-10-14T08:30:00Z.
+                             (default: 30 days before the end)
+  --until <date>             The end of the time range, not included. The same forms.
+                             (default: now)
+  --by <name>                minute, hour, or day. (default: day)
+  --time-zone <name>         The time zone that cuts the days and reads the dates, in
+                             the IANA names such as Europe/Paris, or UTC.
+                             (default: the time zone of the computer)
+  --by-chat                  One row per chat session and per period.
+  --database <path>          The SQLite file.
+                             (default: "~/.config/heidrun/data_layer.sqlite")
+  --format <name>            jsonl, json, or table.
+  --json                     The same as --format json.
+  --verbose                  Print when the token usage was read the last time.
+  -h, --help                 Print this help.
+
+Examples:
+  $ heidrun_data usage --by day --since 2026-09-14 --until 2026-10-14 --format jsonl
+  $ heidrun_data usage --by hour --since 2026-10-14 --time-zone UTC --format table
+  $ heidrun_data usage --by-chat --by day --since 2026-10-01 --format jsonl
 "#;
 
 /// The text of `heidrun_data read --help`.
@@ -203,7 +266,12 @@ The sources:
   code_hosting               Needs the command gh, signed in.
   coding_agents              Reads the folders of Claude Code, of Codex, and
                              "~/.agents", and the folders ".claude" and ".agents"
-                             of the repository.
+                             of the repository. It writes the tokens of each minute
+                             of the chat sessions that started in the repository or
+                             below it, and then refreshes the model prices when the
+                             latest version was checked a day ago or more. A price
+                             list that cannot be fetched is a warning: the latest
+                             known prices stay in use.
   user_activity              Reads the file of the user activity records.
 
 Options:
@@ -218,6 +286,11 @@ Options:
   --file <path>              The file of the user activity records. For user_activity.
                              (default: "user_activity.jsonl" in the folder of the
                              variable HEIDRUN_DIR, or else in "~/.config/heidrun")
+  --price-list <address>     The web address, or the path of the file, of the price
+                             list in the format of LiteLLM. For coding_agents.
+                             (default: the public price list of LiteLLM)
+  --refresh-prices           Fetch the price list even when the latest version was
+                             checked less than a day ago. For coding_agents.
   --format <name>            jsonl, json, or table.
   --json                     The same as --format json.
   --verbose                  Print the progress of each source on the standard error
@@ -286,6 +359,29 @@ pub enum Parsed {
     Query(QueryRequest),
     /// Print the content of one thing from its source.
     Read(ReadRequest),
+    /// Print the tokens and the estimated cost of a workspace in a time range.
+    Usage(UsageCommand),
+}
+
+/// The request to print the tokens and the estimated cost of a workspace.
+#[derive(Debug, PartialEq)]
+pub struct UsageCommand {
+    /// The options of every command.
+    pub common: CommonOptions,
+    /// The repository in the format `owner/name`, or `None` for the remote `origin` of the folder.
+    pub repository: Option<String>,
+    /// The folder of the workspace, or `None` for the root of the Git repository of the current folder.
+    pub folder: Option<String>,
+    /// The start of the time range, or `None` for 30 days before its end.
+    pub since: Option<String>,
+    /// The end of the time range, or `None` for now.
+    pub until: Option<String>,
+    /// The name of the grouping: `minute`, `hour`, or `day`.
+    pub by: String,
+    /// The name of the time zone, or `None` for the time zone of the computer.
+    pub time_zone: Option<String>,
+    /// True for one row per chat session and per period.
+    pub is_by_chat: bool,
 }
 
 /// The kind of the thing that `read` prints.
@@ -347,6 +443,10 @@ pub struct SynchronizationRequest {
     pub folder: Option<String>,
     /// The file of the user activity records, or `None` for the default file.
     pub file: Option<String>,
+    /// The web address, or the path of the file, of the price list, or `None` for the public price list.
+    pub price_list: Option<String>,
+    /// True to fetch the price list even when the latest version of the prices is fresh.
+    pub is_price_refresh_forced: bool,
 }
 
 /// The request to run one read-only SQL statement.
@@ -406,6 +506,13 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     let mut limit = None;
     let mut is_full = false;
     let mut has_diff = true;
+    let mut since = None;
+    let mut until = None;
+    let mut by = None;
+    let mut time_zone = None;
+    let mut is_by_chat = false;
+    let mut price_list = None;
+    let mut is_price_refresh_forced = false;
     let mut is_help = false;
     let mut positionals: Vec<String> = Vec::new();
     let mut options_ended = false;
@@ -440,6 +547,13 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--repository" => repository = Some(value_of("--repository", inline, &mut rest)?),
             "--folder" => folder = Some(value_of("--folder", inline, &mut rest)?),
             "--file" => file = Some(value_of("--file", inline, &mut rest)?),
+            "--since" => since = Some(value_of("--since", inline, &mut rest)?),
+            "--until" => until = Some(value_of("--until", inline, &mut rest)?),
+            "--by" => by = Some(value_of("--by", inline, &mut rest)?),
+            "--time-zone" => time_zone = Some(value_of("--time-zone", inline, &mut rest)?),
+            "--by-chat" => is_by_chat = true,
+            "--price-list" => price_list = Some(value_of("--price-list", inline, &mut rest)?),
+            "--refresh-prices" => is_price_refresh_forced = true,
             "--full" => is_full = true,
             "--no-diff" => has_diff = false,
             "--limit" => {
@@ -455,15 +569,15 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if is_help {
             return Ok(Parsed::Help(HELP));
         }
-        return Err("A command is needed: sources, update, initialize, schema, query, or read. Run with --help.".to_string());
+        return Err("A command is needed: sources, update, initialize, schema, query, usage, or read. Run with --help.".to_string());
     };
     let mode = match command.as_str() {
         "update" => Some(SynchronizationMode::Update),
         "initialize" => Some(SynchronizationMode::Initialize),
-        "query" | "sources" | "schema" | "read" => None,
+        "query" | "sources" | "schema" | "read" | "usage" => None,
         _ if is_help => return Ok(Parsed::Help(HELP)),
         _ => {
-            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, query, or read."));
+            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, query, usage, or read."));
         }
     };
     if is_help {
@@ -472,6 +586,7 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "sources" => SOURCES_HELP,
             "schema" => SCHEMA_HELP,
             "read" => READ_HELP,
+            "usage" => USAGE_HELP,
             _ => SYNCHRONIZATION_HELP,
         }));
     }
@@ -482,6 +597,40 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if !has_diff {
             return Err(format!("The option --no-diff is for the command read only, and not for {command}."));
         }
+    }
+    let usage_options = [
+        ("--since", since.is_some()),
+        ("--until", until.is_some()),
+        ("--by", by.is_some()),
+        ("--time-zone", time_zone.is_some()),
+        ("--by-chat", is_by_chat),
+    ];
+    if command != "usage" {
+        if let Some((option, _)) = usage_options.iter().find(|(_, is_given)| *is_given) {
+            return Err(format!("The option {option} is for the command usage only, and not for {command}."));
+        }
+    }
+    let price_options = [("--price-list", price_list.is_some()), ("--refresh-prices", is_price_refresh_forced)];
+    if !matches!(command.as_str(), "update" | "initialize") {
+        if let Some((option, _)) = price_options.iter().find(|(_, is_given)| *is_given) {
+            return Err(format!("The option {option} is for update and initialize, and not for {command}."));
+        }
+    }
+    if command == "usage" {
+        if limit.is_some() || file.is_some() || is_full || !has_diff {
+            return Err("The command usage takes none of the options --limit, --file, --full, and --no-diff.".to_string());
+        }
+        if common.format == Some(Format::Sql) {
+            return Err("The format sql is for the command schema only, and not for usage.".to_string());
+        }
+        if let Some(extra) = positionals.next() {
+            return Err(format!("The command usage takes no argument, and got {extra}."));
+        }
+        let by = by.unwrap_or_else(|| "day".to_string());
+        if !["minute", "hour", "day"].contains(&by.as_str()) {
+            return Err(format!("The option --by needs minute, hour, or day, and got {by}."));
+        }
+        return Ok(Parsed::Usage(UsageCommand { common, repository, folder, since, until, by, time_zone, is_by_chat }));
     }
     if command == "read" {
         if limit.is_some() || file.is_some() {
@@ -536,7 +685,16 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             sources.push(source);
         }
         let sources = if sources.is_empty() { Source::ALL.to_vec() } else { Source::in_fixed_order(&sources) };
-        return Ok(Parsed::Synchronize(SynchronizationRequest { mode, sources, common, repository, folder, file }));
+        return Ok(Parsed::Synchronize(SynchronizationRequest {
+            mode,
+            sources,
+            common,
+            repository,
+            folder,
+            file,
+            price_list,
+            is_price_refresh_forced,
+        }));
     }
     if let Some((option, _)) = synchronization_options.iter().find(|(_, is_given)| *is_given) {
         return Err(format!("The option {option} is for update and initialize, and not for {command}."));
@@ -590,6 +748,8 @@ mod tests {
                 repository: None,
                 folder: None,
                 file: None,
+                price_list: None,
+                is_price_refresh_forced: false,
             }))
         );
     }
@@ -619,8 +779,50 @@ mod tests {
                 repository: Some("owner/name".into()),
                 folder: Some("/a/folder".into()),
                 file: Some("a.jsonl".into()),
+                price_list: None,
+                is_price_refresh_forced: false,
             }))
         );
+    }
+
+    #[test]
+    fn reads_the_options_of_the_prices_for_update_and_initialize_only() {
+        let Ok(Parsed::Synchronize(request)) =
+            parse(&arguments(&["update", "coding_agents", "--price-list=prices.json", "--refresh-prices"]))
+        else {
+            panic!("update was not read");
+        };
+        assert_eq!((request.price_list.as_deref(), request.is_price_refresh_forced), (Some("prices.json"), true));
+        assert!(parse(&arguments(&["query", "SELECT 1", "--refresh-prices"])).unwrap_err().contains("--refresh-prices"));
+        assert!(parse(&arguments(&["usage", "--price-list", "a"])).unwrap_err().contains("--price-list"));
+    }
+
+    #[test]
+    fn reads_usage_with_its_range_its_grouping_and_its_time_zone() {
+        assert_eq!(
+            parse(&arguments(&[
+                "usage", "--since", "2026-09-14", "--until=2026-10-14", "--by", "hour", "--time-zone", "Europe/Paris", "--by-chat",
+                "--folder", "/a", "--repository", "o/n", "--format", "jsonl",
+            ])),
+            Ok(Parsed::Usage(UsageCommand {
+                common: CommonOptions { database: None, format: Some(Format::Jsonl), verbose: false },
+                repository: Some("o/n".into()),
+                folder: Some("/a".into()),
+                since: Some("2026-09-14".into()),
+                until: Some("2026-10-14".into()),
+                by: "hour".into(),
+                time_zone: Some("Europe/Paris".into()),
+                is_by_chat: true,
+            }))
+        );
+        let Ok(Parsed::Usage(default)) = parse(&arguments(&["usage"])) else { panic!("usage was not read") };
+        assert_eq!((default.by.as_str(), default.since, default.is_by_chat), ("day", None, false));
+        assert_eq!(parse(&arguments(&["usage", "--help"])), Ok(Parsed::Help(USAGE_HELP)));
+        assert!(parse(&arguments(&["usage", "--by", "week"])).unwrap_err().contains("minute, hour, or day"));
+        assert!(parse(&arguments(&["usage", "now"])).unwrap_err().contains("takes no argument"));
+        assert!(parse(&arguments(&["usage", "--limit", "3"])).unwrap_err().contains("--limit"));
+        assert!(parse(&arguments(&["query", "SELECT 1", "--since", "2026-10-01"])).unwrap_err().contains("--since"));
+        assert!(parse(&arguments(&["update", "--by", "day"])).unwrap_err().contains("--by"));
     }
 
     #[test]

@@ -11,16 +11,17 @@ This file is a part of the rules of the tab "Work of one person". It holds what 
 
 ## What counts
 
-- A commit counts for its author, on the day of its commit date. A merge commit does not count, because it brings in commits that count already.
-- A pull request and an issue count for the login of their author, on the day of their creation date. An item whose author account is deleted counts for nobody.
+- A commit counts for its author, in the slot that holds its commit date. A merge commit does not count, because it brings in commits that count already.
+- A pull request and an issue count for the login of their author, in the slot that holds their creation date. An item whose author account is deleted counts for nobody.
 - Two spellings of one person are one person ([glossary/person_work.md](../../glossary/person_work.md)). The person chooser shows the name that the person writes the most often in the commits, or else the login.
 - A person that has a different login and a different name on GitHub and in Git is two people. A later step can add a table that links them.
 
 ## The metric of the bar chart
 
-- A radio button group chooses the metric: "Commits and pull requests", chosen at first, or "Lines added and lines deleted". The choice changes the bar chart only. It does not change the person, the time range, the workspaces, or the totals, and it reads nothing again.
-- With the metric "Lines added and lines deleted", the bar of a day has the lines added by the commits of the person on this day below, and the lines deleted above. The lines count for the commits that count, and not for the pull requests. A binary file counts 0. The lines of the bars of the time range add up to the fourth and the fifth totals.
-- The class `PersonWork` gives `insertionCount` and `deletionCount` for each day, with the same loop that gives the totals. The chart information card writes each number with the separator of the language of the interface.
+- A radio button group chooses the metric: "Commits and pull requests", chosen at first, or "Lines added and lines deleted". The choice changes the bar chart only. It does not change the person, the time range, the slot length, the workspaces, or the totals, and it reads nothing again. A change of the source keeps the metric.
+- With the metric "Commits and pull requests", the bar of a slot has the number of commits below, in the color `--primary-bg`, and the number of pull requests above, in the color `--success-bg`.
+- With the metric "Lines added and lines deleted", the bar of a slot has the lines added by the commits of the person in this slot below, in the color `--success-bg`, and the lines deleted above, in the color `--danger-bg`. The lines count for the commits that count, and not for the pull requests. A binary file counts 0. The lines of all the bars add up to the fourth and the fifth totals.
+- The class `PersonWork` gives `insertionCount` and `deletionCount` for each slot, with the same loop that gives the totals. The chart information card writes each number with the separator of the language of the interface.
 
 ## Where the data comes from
 
@@ -28,5 +29,5 @@ This file is a part of the rules of the tab "Work of one person". It holds what 
 - The first read of a repository reads every pull request and every issue from GitHub, which takes about 20 seconds for this repository. The next reads copy only the items that changed, and take about 5 seconds.
 - When GitHub cannot be read, for example without a network, the tab still draws the commits and the pull requests and issues that an earlier read wrote in the SQLite file. It shows a Bootstrap alert (`alert theme-warning`) that says that they can be out of date.
 - The command takes the lock `lock_database` of `packages/data_layers/heidrun_data/src/database_lock.rs` while it writes the SQLite file. The command `user_activity_records_in_range` and the command line `heidrun_data update` take the same lock, because the SQLite file has no waiting time and two writes at the same time fail.
-- The calculation is the pure class `PersonWork` in `packages/apps/web_frontend/src/lib/person_work.ts`. It has no clock: the caller gives the current time. It makes its days with the class `CalendarDays` (`lib/calendar_days.ts`), which the source "AI cost" uses too, so the two sources have the same days. The tab is `PersonWorkTab.vue` and the chart is `StackedBarChart.vue`, in the folder `components`.
+- The calculation is the pure class `PersonWork` in `packages/apps/web_frontend/src/lib/person_work.ts`. It has no clock: the caller gives the current time. It makes its slots with the class `CalendarSlots` (`lib/calendar_slots.ts`), which cuts the days of `CalendarDays` and which the source "AI cost" uses too, so the two sources have the same slots ([statistics_person_work_slots.md](statistics_person_work_slots.md)). The tab is `PersonWorkTab.vue` and the chart is `StackedBarChart.vue`, in the folder `components`.
 - The source "AI cost" is in [statistics_ai_cost.md](statistics_ai_cost.md).

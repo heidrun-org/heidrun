@@ -1,8 +1,8 @@
-import { CalendarDays, type CalendarDay } from "./calendar_days";
+import { CalendarSlots, SLOT_HOURS_OF_A_DAY, type CalendarSlot } from "./calendar_slots";
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	PersonWork — finds the people of a repository, and counts the work of one person for each day
+//	PersonWork — finds the people of a repository, and counts the work of one person for each slot
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -59,24 +59,37 @@ export type PersonWorkPerson = {
 };
 
 /** The choices of the length of the time range. */
-export type PersonWorkPeriodId = "seven_days" | "thirty_days";
+export type PersonWorkPeriodId = "three_days" | "seven_days" | "fourteen_days" | "thirty_days";
 
-/** One day of the chart. */
-export type PersonWorkDay = CalendarDay & {
-	/** The number of commits of the person in the day. */
+/** The choices of the length of a slot, in hours: 1 hour, 6 hours, or 1 day. */
+export type PersonWorkSlotHours = 1 | 6 | 24;
+
+/** What a choice of the time range offers: its length, and the lengths of slot that go with it. */
+export type PersonWorkPeriod = {
+	/** The number of days of the time range, today included. */
+	dayCount: number;
+	/** The lengths of slot that the time range offers, from the shortest to the longest. */
+	slotHoursChoices: PersonWorkSlotHours[];
+	/** The length of slot that the tab starts with, and that a time range goes back to when it does not offer the length in use. */
+	defaultSlotHours: PersonWorkSlotHours;
+};
+
+/** One slot of the chart: a bar. */
+export type PersonWorkSlot = CalendarSlot & {
+	/** The number of commits of the person in the slot. */
 	commitCount: number;
-	/** The number of pull requests that the person opened in the day. */
+	/** The number of pull requests that the person opened in the slot. */
 	pullRequestCount: number;
-	/** The number of lines that the commits of the person add in the day. */
+	/** The number of lines that the commits of the person add in the slot. */
 	insertionCount: number;
-	/** The number of lines that the commits of the person delete in the day. */
+	/** The number of lines that the commits of the person delete in the slot. */
 	deletionCount: number;
 };
 
 /** The work of one person in a time range. */
 export type PersonWorkResult = {
-	/** The days of the time range, the oldest first. The last day is today. */
-	days: PersonWorkDay[];
+	/** The slots of the time range, the oldest first. The last slot ends at the end of today. */
+	slots: PersonWorkSlot[];
 	/** The number of commits of the person in the time range. */
 	commitCount: number;
 	/** The number of pull requests that the person opened in the time range. */
@@ -95,10 +108,14 @@ export type PersonWorkResult = {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/** The number of days of each choice of the time range. The last day is today. */
-export const PERSON_WORK_PERIODS: Record<PersonWorkPeriodId, { dayCount: number }> = {
-	seven_days: { dayCount: 7 },
-	thirty_days: { dayCount: 30 },
+/**
+ * The number of days of each choice of the time range, with its slot lengths. The last day is today.
+ */
+export const PERSON_WORK_PERIODS: Record<PersonWorkPeriodId, PersonWorkPeriod> = {
+	three_days: { dayCount: 3, slotHoursChoices: [1, 6, 24], defaultSlotHours: 24 },
+	seven_days: { dayCount: 7, slotHoursChoices: [1, 6, 24], defaultSlotHours: 24 },
+	fourteen_days: { dayCount: 14, slotHoursChoices: [1, 6, 24], defaultSlotHours: 24 },
+	thirty_days: { dayCount: 30, slotHoursChoices: [1, 6, 24], defaultSlotHours: 24 },
 };
 
 /** The longest time range, in days: the command reads this many days at once. */
@@ -115,7 +132,7 @@ const NO_REPLY_EMAIL = /^(?:\d+\+)?([^@+]+)@users\.noreply\.github\.com$/i;
 
 /**
  * The calculation of the tab "Work of one person" of the Statistics window. It has no clock: the caller gives the current
- * time. The days follow the time zone of the computer.
+ * time. The days and the slots follow the time zone of the computer.
  *
  * A commit knows its author by a name and an email, and a pull request or an issue knows its author by a login. The same
  * person is found by the name or the login written in lower case, with no space, no hyphen, and no accent: the name "Jérôme
@@ -187,24 +204,31 @@ export class PersonWork {
 	}
 
 	/**
-	 * Counts the work of one person for each day of a time range, and in the whole time range.
+	 * Counts the work of one person for each slot of a time range, and in the whole time range.
 	 *
 	 * @param items - The three kinds of items.
 	 * @param personId - The identifier of the person, from `findPersons`.
 	 * @param now - The current time, in milliseconds since 1 January 1970.
 	 * @param dayCount - The number of days of the time range, today included.
-	 * @returns The days, and the totals. An item outside the time range is not counted.
+	 * @param slotHours - The length of a slot in hours: 1, 6, or 24 (one day).
+	 * @returns The slots, and the totals. An item outside the time range is not counted.
 	 */
-	static compute(items: PersonWorkItems, personId: string, now: number, dayCount: number): PersonWorkResult {
-		const days: PersonWorkDay[] = CalendarDays.build(now, dayCount).map((day) => ({
-			...day,
+	static compute(
+		items: PersonWorkItems,
+		personId: string,
+		now: number,
+		dayCount: number,
+		slotHours: number = SLOT_HOURS_OF_A_DAY,
+	): PersonWorkResult {
+		const slots: PersonWorkSlot[] = CalendarSlots.build(now, dayCount, slotHours).map((slot) => ({
+			...slot,
 			commitCount: 0,
 			pullRequestCount: 0,
 			insertionCount: 0,
 			deletionCount: 0,
 		}));
 		const result: PersonWorkResult = {
-			days,
+			slots,
 			commitCount: 0,
 			pullRequestCount: 0,
 			issueCount: 0,
@@ -215,11 +239,11 @@ export class PersonWork {
 			if (PersonWork._idOfCommit(commit) !== personId) {
 				continue;
 			}
-			const index = CalendarDays.findIndex(days, commit.committedAt);
+			const index = CalendarSlots.findIndex(slots, commit.committedAt);
 			if (index !== -1) {
-				days[index].commitCount += 1;
-				days[index].insertionCount += commit.insertions;
-				days[index].deletionCount += commit.deletions;
+				slots[index].commitCount += 1;
+				slots[index].insertionCount += commit.insertions;
+				slots[index].deletionCount += commit.deletions;
 				result.commitCount += 1;
 				result.insertionCount += commit.insertions;
 				result.deletionCount += commit.deletions;
@@ -229,9 +253,9 @@ export class PersonWork {
 			if (pullRequest.author === null || PersonWork._idOfLogin(pullRequest.author) !== personId) {
 				continue;
 			}
-			const index = CalendarDays.findIndex(days, pullRequest.createdAt);
+			const index = CalendarSlots.findIndex(slots, pullRequest.createdAt);
 			if (index !== -1) {
-				days[index].pullRequestCount += 1;
+				slots[index].pullRequestCount += 1;
 				result.pullRequestCount += 1;
 			}
 		}
@@ -239,7 +263,7 @@ export class PersonWork {
 			if (issue.author === null || PersonWork._idOfLogin(issue.author) !== personId) {
 				continue;
 			}
-			if (CalendarDays.findIndex(days, issue.createdAt) !== -1) {
+			if (CalendarSlots.findIndex(slots, issue.createdAt) !== -1) {
 				result.issueCount += 1;
 			}
 		}

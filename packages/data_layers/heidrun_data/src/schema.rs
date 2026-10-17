@@ -6,7 +6,7 @@
 //! the libraries, which hold them with `include_str!`. So this package copies no column and no field.
 
 use crate::output::QueryRow;
-use crate::sources::{all_tables, find_table, Source, Table};
+use crate::sources::{all_tables, find_table, Source, Table, TableKind};
 use rusqlite::Connection;
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -53,7 +53,7 @@ impl TableShape {
             .collect()
     }
 
-    /// The shape as one row: `table`, `source`, `columns`, `primaryKey`, `dataSchema`, and `joins`.
+    /// The shape as one row: `table`, `source`, `kind`, `columns`, `primaryKey`, `dataSchema`, and `joins`.
     pub fn to_row(&self) -> QueryRow {
         let columns: Vec<Value> = self
             .columns
@@ -70,6 +70,7 @@ impl TableShape {
         let row = json!({
             "table": self.table.name,
             "source": self.source.name(),
+            "kind": self.table.kind.name(),
             "columns": columns,
             "primaryKey": self.primary_key,
             "dataSchema": self.table.data_schema.map(|schema| schema.file_name),
@@ -86,6 +87,7 @@ impl TableShape {
         let mut row = QueryRow::new();
         row.insert("table".to_string(), Value::from(self.table.name));
         row.insert("source".to_string(), Value::from(self.source.name()));
+        row.insert("kind".to_string(), Value::from(self.table.kind.name()));
         let columns: Vec<&str> = self.columns.iter().map(|column| column.name.as_str()).collect();
         row.insert("columns".to_string(), Value::from(columns.join(", ")));
         row.insert("primaryKey".to_string(), Value::from(self.primary_key.join(", ")));
@@ -115,10 +117,14 @@ pub fn data_schema_text(table_name: &str) -> Result<&'static str, String> {
         let names: Vec<&str> = all_tables().iter().map(|(_, table)| table.name).collect();
         return Err(format!("The table {table_name} is not known. The tables: {}.", names.join(", ")));
     };
-    match table.data_schema {
-        Some(schema) => Ok(schema.text),
-        None => Err(format!(
+    match (table.data_schema, table.kind) {
+        (Some(schema), _) => Ok(schema.text),
+        (None, TableKind::Links) => Err(format!(
             "The table {table_name} is a link table and has no column data. Run \"heidrun_data schema\" to see its columns."
+        )),
+        (None, kind) => Err(format!(
+            "The {} {table_name} has plain columns and no column data. Run \"heidrun_data schema\" to see its columns.",
+            if kind == TableKind::View { "view" } else { "table" }
         )),
     }
 }
@@ -143,6 +149,7 @@ fn read_catalog_at(path: &Path) -> Result<Vec<TableShape>, String> {
     drop(data_layer_code_hosting::CodeHostingDatabase::open(path)?);
     drop(data_layer_coding_agents::ChatSessionsDatabase::open(path)?);
     drop(data_layer_coding_agents::ConfigurationDatabase::open(path)?);
+    drop(data_layer_coding_agents::TokenUsageDatabase::open(path)?);
     drop(data_layer_user_activity::UserActivityDatabase::open(path)?);
     let connection = Connection::open(path).map_err(|error| format!("The schema cannot be read: {error}"))?;
     all_tables().into_iter().map(|(source, table)| read_table_shape(&connection, source, table)).collect()
@@ -152,7 +159,7 @@ fn read_catalog_at(path: &Path) -> Result<Vec<TableShape>, String> {
 fn read_table_shape(connection: &Connection, source: Source, table: &'static Table) -> Result<TableShape, String> {
     let error_of = |error: rusqlite::Error| format!("The table {} cannot be read: {error}", table.name);
     let create_statement: String = connection
-        .query_row("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?1", [table.name], |row| row.get(0))
+        .query_row("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?1", [table.name], |row| row.get(0))
         .map_err(error_of)?;
     let mut statement =
         connection.prepare(&format!("PRAGMA table_info({})", table.name)).map_err(error_of)?;
@@ -200,7 +207,7 @@ mod tests {
     #[test]
     fn reads_every_table_of_the_four_sources_with_its_columns_and_its_key() {
         let catalog = read_catalog().unwrap();
-        assert_eq!(catalog.len(), 12);
+        assert_eq!(catalog.len(), 18);
         let commits = &catalog[0];
         assert_eq!(commits.table.name, "commits");
         let names: Vec<&str> = commits.columns.iter().map(|column| column.name.as_str()).collect();

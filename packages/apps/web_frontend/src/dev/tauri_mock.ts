@@ -85,8 +85,16 @@ export class TauriMock {
 				return TauriMockFixture.buildUserActivityRecords(Date.parse((payload as { until: string }).until));
 			case 'person_work_in_range':
 				return TauriMockFixture.buildPersonWorkItems(Date.parse((payload as { until: string }).until));
+			case 'ai_cost_synchronize':
+				return TauriMockFixture.buildAiCostSynchronization(
+					(payload as { folders: string[] }).folders,
+					(payload as { isImportAllowed: boolean }).isImportAllowed,
+				);
 			case 'ai_cost_in_range':
-				return TauriMockFixture.buildAiCostItems(Date.parse((payload as { until: string }).until));
+				return TauriMockFixture.buildAiCostAnswer(
+					(payload as { folders: string[] }).folders,
+					Date.parse((payload as { until: string }).until),
+				);
 			case 'project_refs':
 				return {
 					root: '/Users/demo/webwork/heidrun',

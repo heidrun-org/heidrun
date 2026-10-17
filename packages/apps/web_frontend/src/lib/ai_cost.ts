@@ -1,8 +1,8 @@
-import { CalendarDays, type CalendarDay } from "./calendar_days";
+import { CalendarSlots, SLOT_HOURS_OF_A_DAY, type CalendarSlot } from "./calendar_slots";
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	AiCost — counts the estimated cost and the tokens of the chats of the coding agents for each day
+//	AiCost — counts the estimated cost and the tokens of the coding agents for each slot, from the stored token usage
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -15,32 +15,55 @@ import { CalendarDays, type CalendarDay } from "./calendar_days";
 /** The identifier of a coding agent whose chats have a cost: Claude Code or Codex. */
 export type AiCostAgentId = "claude" | "codex";
 
-/** The cost and the tokens of one chat in one hour, as the command `ai_cost_in_range` gives them. */
-export type AiCostHour = {
-	/** The start of the hour, an ISO 8601 text in UTC. */
-	at: string;
-	/** The estimated cost in US dollars of the tokens of the chat in this hour, or `null` when a model of the chat has no
-	 * known price. */
-	costUsd: number | null;
-	/** The tokens of the chat in this hour: the input tokens and the output tokens, for every model. A chat with no known
-	 * price has its tokens. */
-	tokens: number;
+/** What the data layer knows about the token usage of one workspace, as the commands `ai_cost_synchronize` and `ai_cost_in_range` give it. */
+export type AiCostWorkspace = {
+	/** The root of the Git repository of the workspace. */
+	folder: string;
+	/** The repository in the format `owner/name`, or `null` when it cannot be found. */
+	repository: string | null;
+	/** When the token usage of the workspace was read the last time, an ISO 8601 text, or `null` when the history of the
+	 * workspace was never imported. */
+	synchronizedAt: string | null;
+	/** The message of the error when the workspace cannot be read, or `null`. */
+	error: string | null;
 };
 
-/** One chat, as the command `ai_cost_in_range` gives it. */
-export type AiCostChat = {
-	/** The identifier of the chat for its coding agent. Two workspaces that list the same chat give the same identifier. */
-	id: string;
+/** What the command `ai_cost_synchronize` gives. */
+export type AiCostSynchronization = {
+	/** The state of each workspace after the synchronization. */
+	workspaces: AiCostWorkspace[];
+	/** The message of the error when the prices of the models could not be refreshed, or `null`. The latest known prices stay
+	 * in use. */
+	priceWarning: string | null;
+};
+
+/** The tokens and the cost of one coding agent in one hour, as the command `ai_cost_in_range` gives them. */
+export type AiCostHourRow = {
+	/** The start of the hour, an ISO 8601 text in UTC. An hour is a slot of one hour of a day of the time zone of the computer: it
+	 * starts at the start of the day plus a whole number of hours, and it never crosses midnight. */
+	startedAt: string;
+	/** The date of the day that holds the hour, `YYYY-MM-DD`. */
+	day: string;
 	/** The identifier of the coding agent: `claude` or `codex`. */
 	codingAgent: string;
-	/** The hours where the chat used tokens, the oldest first. */
-	hours: AiCostHour[];
+	/** The tokens of the hour: the input tokens and the output tokens, for every model. */
+	tokens: number;
+	/** The estimated cost in US dollars of the tokens that have a known price, or `null` when no token of the hour has one. */
+	costUsd: number | null;
+	/** The tokens of the hour whose model has no known price. They are in `tokens` and not in `costUsd`. */
+	unpricedTokens: number;
 };
 
 /** What the command `ai_cost_in_range` gives. */
-export type AiCostItems = {
-	/** The chats that used tokens. */
-	chats: AiCostChat[];
+export type AiCostAnswer = {
+	/** The state of each workspace. A workspace that was never imported gives no day. */
+	workspaces: AiCostWorkspace[];
+	/** The tokens and the cost of each coding agent in each hour that had tokens, the oldest hour first. */
+	hours: AiCostHourRow[];
+	/** The number of the version of the prices that the costs use, or `null` when no price is stored. */
+	priceVersion: number | null;
+	/** When the price list was checked the last time, an ISO 8601 text, or `null` when no price is stored. */
+	pricesCheckedAt: string | null;
 };
 
 /** The cost of each coding agent, in US dollars. */
@@ -49,18 +72,18 @@ export type AiCostByAgent = Record<AiCostAgentId, number>;
 /** The number of tokens of each coding agent. */
 export type AiTokensByAgent = Record<AiCostAgentId, number>;
 
-/** One day of the chart. */
-export type AiCostDay = CalendarDay & {
-	/** The cost of the tokens that the chats used in the day, for each coding agent. */
+/** One slot of the chart: a bar. */
+export type AiCostSlot = CalendarSlot & {
+	/** The cost of the tokens that the coding agents used in the slot, for each coding agent. */
 	costByAgent: AiCostByAgent;
-	/** The tokens that the chats used in the day, for each coding agent. */
+	/** The tokens that the coding agents used in the slot, for each coding agent. */
 	tokensByAgent: AiTokensByAgent;
 };
 
 /** The AI cost in a time range. */
 export type AiCostResult = {
-	/** The days of the time range, the oldest first. The last day is today. */
-	days: AiCostDay[];
+	/** The slots of the time range, the oldest first. The last slot ends at the end of today. */
+	slots: AiCostSlot[];
 	/** The cost in the whole time range, for each coding agent. */
 	totalByAgent: AiCostByAgent;
 	/** The cost of the two coding agents in the whole time range. */
@@ -69,10 +92,9 @@ export type AiCostResult = {
 	totalTokensByAgent: AiTokensByAgent;
 	/** The tokens of the two coding agents in the whole time range. */
 	totalTokens: number;
-	/** The number of chats that used tokens in the time range, with or without a known price. */
-	chatCount: number;
-	/** The number of chats that used tokens in the time range and have no known price, and count as zero. */
-	chatWithoutPriceCount: number;
+	/** The tokens in the whole time range whose model has no known price. The cost does not count them, so it is a part of the
+	 * whole cost when this number is not zero. */
+	unpricedTokens: number;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,82 +113,86 @@ export const AI_COST_AGENT_IDS: readonly AiCostAgentId[] = ["claude", "codex"];
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The calculation of the AI cost of the tab "Work of one person" of the Statistics window. It has no clock: the caller
- * gives the current time. The cost and the tokens of a chat come in hours, and each hour counts on the day that holds its
- * start, in the time zone of the computer, so a chat that lasts several days is in several days.
+ * The calculation of the AI cost of the tab "Work of one person" of the Statistics window. It has no clock: the caller gives
+ * the current time. The data layer cuts its hours in the time zone of the computer, and a slot is a whole number of hours of
+ * the same days, so this class only adds each row to the slot that holds its start: a day that lasts 23 or 25 hours is one
+ * slot of one day here too.
  */
 export class AiCost {
 	/**
-	 * Joins the chats of several workspaces into one list. A chat that two workspaces list counts once.
+	 * Gives the name of the time zone of the computer, which the data layer needs to cut the days.
 	 *
-	 * @param itemsOfWorkspaces - What the command `ai_cost_in_range` gave for each workspace.
-	 * @returns The chats of all the workspaces, each chat once, in the order of the workspaces.
+	 * @returns The name of the time zone in the IANA database, for example `Europe/Paris`.
 	 */
-	static merge(itemsOfWorkspaces: AiCostItems[]): AiCostItems {
-		const knownKeys = new Set<string>();
-		const chats: AiCostChat[] = [];
-		for (const items of itemsOfWorkspaces) {
-			for (const chat of items.chats) {
-				const key = `${chat.codingAgent}|${chat.id}`;
-				if (knownKeys.has(key) === false) {
-					knownKeys.add(key);
-					chats.push(chat);
-				}
-			}
-		}
-		return { chats };
+	static timeZone(): string {
+		return Intl.DateTimeFormat().resolvedOptions().timeZone;
 	}
 
 	/**
-	 * Counts the cost and the tokens of the chats for each day of a time range, and in the whole time range.
+	 * Finds the workspaces whose history was never imported.
 	 *
-	 * @param items - The chats.
+	 * @param workspaces - The state of each workspace.
+	 * @returns The workspaces that have no date of synchronization and no error.
+	 */
+	static findNotImported(workspaces: AiCostWorkspace[]): AiCostWorkspace[] {
+		return workspaces.filter((workspace) => workspace.synchronizedAt === null && workspace.error === null);
+	}
+
+	/**
+	 * Finds the oldest date of synchronization of the workspaces that were imported. It tells how fresh the token usage is:
+	 * every imported workspace is at least this fresh.
+	 *
+	 * @param workspaces - The state of each workspace.
+	 * @returns An ISO 8601 text, or `null` when no workspace was imported.
+	 */
+	static findOldestSynchronizedAt(workspaces: AiCostWorkspace[]): string | null {
+		const dates = workspaces.flatMap((workspace) => (workspace.synchronizedAt === null ? [] : [workspace.synchronizedAt]));
+		if (dates.length === 0) {
+			return null;
+		}
+		return dates.reduce((oldest, date) => (Date.parse(date) < Date.parse(oldest) ? date : oldest));
+	}
+
+	/**
+	 * Counts the cost and the tokens of the coding agents for each slot of a time range, and in the whole time range.
+	 *
+	 * @param answer - What the command `ai_cost_in_range` gave.
 	 * @param now - The current time, in milliseconds since 1 January 1970.
 	 * @param dayCount - The number of days of the time range, today included.
-	 * @returns The days and the totals. A chat outside the time range, and a chat of another coding agent, are not counted.
-	 * A chat with no known price has its tokens and no cost.
+	 * @param slotHours - The length of a slot in hours: 1, 6, or 24 (one day).
+	 * @returns The slots and the totals. A row outside the time range, and a row of another coding agent, are not counted. The
+	 * tokens that have no known price are in the tokens and not in the cost.
 	 */
-	static compute(items: AiCostItems, now: number, dayCount: number): AiCostResult {
-		const days: AiCostDay[] = CalendarDays.build(now, dayCount).map((day) => ({
-			...day,
+	static compute(answer: AiCostAnswer, now: number, dayCount: number, slotHours: number = SLOT_HOURS_OF_A_DAY): AiCostResult {
+		const slots: AiCostSlot[] = CalendarSlots.build(now, dayCount, slotHours).map((slot) => ({
+			...slot,
 			costByAgent: AiCost._zeroByAgent(),
 			tokensByAgent: AiCost._zeroByAgent(),
 		}));
 		const result: AiCostResult = {
-			days,
+			slots,
 			totalByAgent: AiCost._zeroByAgent(),
 			totalCost: 0,
 			totalTokensByAgent: AiCost._zeroByAgent(),
 			totalTokens: 0,
-			chatCount: 0,
-			chatWithoutPriceCount: 0,
+			unpricedTokens: 0,
 		};
-		for (const chat of items.chats) {
-			const agentId = AI_COST_AGENT_IDS.find((candidate) => candidate === chat.codingAgent);
-			if (agentId === undefined) {
+		for (const row of answer.hours) {
+			const agentId = AI_COST_AGENT_IDS.find((candidate) => candidate === row.codingAgent);
+			const index = CalendarSlots.findIndex(slots, row.startedAt);
+			if (agentId === undefined || index === -1) {
 				continue;
 			}
-			let isInRange = false;
-			let isWithoutPrice = false;
-			for (const hour of chat.hours) {
-				const index = CalendarDays.findIndex(days, hour.at);
-				if (index === -1) {
-					continue;
-				}
-				isInRange = true;
-				days[index].tokensByAgent[agentId] += hour.tokens;
-				result.totalTokensByAgent[agentId] += hour.tokens;
-				result.totalTokens += hour.tokens;
-				if (hour.costUsd === null) {
-					isWithoutPrice = true;
-					continue;
-				}
-				days[index].costByAgent[agentId] += hour.costUsd;
-				result.totalByAgent[agentId] += hour.costUsd;
-				result.totalCost += hour.costUsd;
+			slots[index].tokensByAgent[agentId] += row.tokens;
+			result.totalTokensByAgent[agentId] += row.tokens;
+			result.totalTokens += row.tokens;
+			result.unpricedTokens += row.unpricedTokens;
+			if (row.costUsd === null) {
+				continue;
 			}
-			result.chatCount += isInRange ? 1 : 0;
-			result.chatWithoutPriceCount += isWithoutPrice ? 1 : 0;
+			slots[index].costByAgent[agentId] += row.costUsd;
+			result.totalByAgent[agentId] += row.costUsd;
+			result.totalCost += row.costUsd;
 		}
 		return result;
 	}

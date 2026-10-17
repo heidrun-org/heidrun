@@ -7,7 +7,7 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn(async () => null) }));
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	SettingsGeneralSectionTest — the section General holds the language, the time format, and the working days
+//	SettingsGeneralSectionTest — the section General holds the language, the time format, the working days, and the goat sound
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -69,5 +69,49 @@ describe('working days', () => {
 		await checkbox.setValue(false);
 		expect(settings.workingDays).toEqual([3]);
 		expect((checkbox.element as HTMLInputElement).checked).toBe(true);
+	});
+});
+
+describe('goat sound', () => {
+	beforeEach(() => {
+		settings.language = 'en';
+		settings.goatSound = false;
+	});
+
+	it('shows the heading Sound, and a Bootstrap switch labelled "Enable goat sound" that is off by default', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		expect(wrapper.findAll('h4').map((heading) => heading.text())).toContain('Sound');
+		const switchInput = wrapper.get('input[type=checkbox][role=switch]');
+		expect(wrapper.get(`label[for="${switchInput.attributes('id')}"]`).text()).toBe('Enable goat sound');
+		expect((switchInput.element as HTMLInputElement).checked).toBe(false);
+	});
+
+	it('puts the switch after the working days', () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const headings = wrapper.findAll('h4').map((heading) => heading.text());
+		expect(headings).toEqual(['Language', 'Time format', 'Working days', 'Sound']);
+	});
+
+	it('saves the setting when the switch changes, in both directions', async () => {
+		const wrapper = mount(SettingsGeneralSection);
+		const switchInput = wrapper.get('input[type=checkbox][role=switch]');
+		await switchInput.setValue(true);
+		expect(settings.goatSound).toBe(true);
+		await switchInput.setValue(false);
+		expect(settings.goatSound).toBe(false);
+	});
+
+	it('shows the switch as on when the setting is on', () => {
+		settings.goatSound = true;
+		const wrapper = mount(SettingsGeneralSection);
+		expect((wrapper.get('input[type=checkbox][role=switch]').element as HTMLInputElement).checked).toBe(true);
+	});
+
+	it('shows the label of the switch in French when the language is French', () => {
+		settings.language = 'fr';
+		const wrapper = mount(SettingsGeneralSection);
+		const switchInput = wrapper.get('input[type=checkbox][role=switch]');
+		expect(wrapper.get(`label[for="${switchInput.attributes('id')}"]`).text()).toBe('Activer le son de la chèvre');
+		expect(wrapper.findAll('h4').map((heading) => heading.text())).toContain('Son');
 	});
 });

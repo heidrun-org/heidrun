@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, watch, ref } from "vue";
 import Icon from "../Icon.vue";
+import SettingsOptionHelp from "./SettingsOptionHelp.vue";
 import { builtInGuardLines, DEFAULT_GUARDS, projectGuardList, type GuardId } from "../../lib/guards";
 import { GUARD_ACTIONS, GUARD_MATCH_TYPES, guardIdText, isBuiltInGuardEnabled } from "../../lib/guards_edit";
 import type { GuardAction } from "../../lib/project_config";
@@ -34,6 +35,19 @@ type GuardRow = {
   isOn: boolean;
   isFocused: boolean;
 };
+
+/** The blocks of the information card of the guards of the project, in the order of the card. */
+const PROJECT_GUARDS_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.projectGuards.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsHelp.projectGuards.how" },
+] as const;
+
+/** The blocks of the information card of a hardcoded guard, in the order of the card. */
+const BUILT_IN_GUARDS_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.builtInGuards.what" },
+  { titleKey: "settingsHelp.readTitle", textKey: "settingsHelp.builtInGuards.read" },
+  { titleKey: "settingsHelp.switchTitle", textKey: "settingsHelp.builtInGuards.switch" },
+] as const;
 
 const rootElement = ref<HTMLElement>();
 const workspaceId = computed(() => session.selectedWorkspaceId ?? null);
@@ -151,7 +165,10 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <div class="d-flex align-items-center gap-2">
-        <p class="m-0 text-body-secondary text-break me-auto" data-field="project-line">{{ t("settingsGuards.projectLine", { root: currentProject.root }) }}</p>
+        <div class="d-flex align-items-center gap-2 me-auto" data-option="projectGuards">
+          <p class="m-0 text-body-secondary text-break" data-field="project-line">{{ t("settingsGuards.projectLine", { root: currentProject.root }) }}</p>
+          <SettingsOptionHelp title-key="settingsHelp.projectGuards.title" :blocks="PROJECT_GUARDS_HELP_BLOCKS" />
+        </div>
         <button type="button" class="btn" :disabled="isEditable === false" :title="t('settingsGuards.addTitle')" data-field="add-guard" @click="openNewGuardWindow()">
           <Icon name="plus-lg" /> {{ t("settingsGuards.add") }}
         </button>
@@ -167,6 +184,7 @@ onBeforeUnmount(() => {
           :class="{ 'theme-warning': row.isFocused }"
           :data-guard="row.idText"
           :data-kind="row.isProjectGuard ? 'project' : 'builtin'"
+          :data-option="row.isProjectGuard ? undefined : 'builtInGuard'"
           :data-focused="row.isFocused ? 'true' : undefined"
         >
           <div class="d-flex align-items-center gap-2">
@@ -175,6 +193,11 @@ onBeforeUnmount(() => {
               <span class="badge" :class="row.action === 'block' ? 'theme-danger' : 'theme-warning'" data-field="action">{{ t(actionLabelKey(row.action)) }}</span>
               <span v-if="row.isProjectGuard === false" class="badge theme-secondary" data-field="hardcoded">{{ t("settingsGuards.hardcoded") }}</span>
             </div>
+            <SettingsOptionHelp
+              v-if="row.isProjectGuard === false"
+              title-key="settingsHelp.builtInGuards.title"
+              :blocks="BUILT_IN_GUARDS_HELP_BLOCKS"
+            />
             <div class="d-flex align-items-center gap-1">
               <template v-if="row.isProjectGuard">
                 <button

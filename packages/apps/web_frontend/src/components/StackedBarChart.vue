@@ -17,15 +17,17 @@ import type { StackedBarSeries, StackedBarUnit } from "../lib/stacked_bar_chart"
 import { locale } from "../i18n/index";
 import { resolvedTheme } from "../stores/theme";
 
-// A bar chart with one bar for each label, and in each bar one color for each series, one on top of the other. The tab "Work
-// of one person" uses it for the commits and the pull requests of each day, and for the AI cost or the tokens of each day.
+// A bar chart with one bar for each slot, and in each bar one color for each series, one on top of the other. The tab "Work
+// of one person" uses it for the commits and the pull requests of each slot, and for the AI cost or the tokens of each slot.
+// A slot is a day, or a part of a day, so two bars can have the same text: the bars sit on numbers, and the axis shows the
+// text of the bars that have one. A bar with no text keeps its place and shows nothing under it.
 // Like every chart of the Statistics window, it has a legend above the bars, and a chart information card that opens beside
 // the bar under the pointer. Plotly.js is loaded only when the window opens, so the other windows do not pay for its size.
 // Issue: https://github.com/heidrun-org/heidrun/issues/498
 
 const props = defineProps<{
-  /** The text under each bar, the same number as the values of each series. */
-  labels: string[];
+  /** The text under each bar, or `null` for a bar with no text. It has the same number of items as the values of each series. */
+  labels: Array<string | null>;
   /** The colors of the bars, from the bottom of a bar to its top. */
   series: StackedBarSeries[];
   /** The first line of the chart information card of each bar, in the order of the bars. */
@@ -121,12 +123,13 @@ function draw(): void {
   const textColor = ChartTheme.readColor("--fg-body", element);
   const lineColor = ChartTheme.readColor("--border-color", element);
   const highestBar = Math.max(1, ...props.labels.map((_, index) => props.series.reduce((sum, one) => sum + one.values[index], 0)));
+  const labelledBars = props.labels.flatMap((text, index) => (text === null ? [] : [{ index, text }]));
   const tokenUnit = props.verticalAxisUnit === "tokens" ? tokenUnitFor(highestBar) : null;
   const unitSize = tokenUnit === null ? 1 : tokenUnit.size;
   const data: Data[] = props.series.map((one) => ({
     type: "bar",
     name: one.name,
-    x: props.labels,
+    x: props.labels.map((_, index) => index),
     y: one.values.map((value) => value / unitSize),
     hoverinfo: "none",
     marker: { color: ChartTheme.readColor(one.colorToken, element) },
@@ -142,10 +145,14 @@ function draw(): void {
     bargap: CHART_BAR_GAP,
     legend: { ...CHART_LEGEND },
     xaxis: {
-      type: "category",
+      type: "linear",
       title: { text: props.horizontalAxisTitle },
       automargin: true,
       fixedrange: true,
+      range: [-0.5, props.labels.length - 0.5],
+      tickmode: "array",
+      tickvals: labelledBars.map((label) => label.index),
+      ticktext: labelledBars.map((label) => label.text),
       linecolor: lineColor,
       gridcolor: lineColor,
     },

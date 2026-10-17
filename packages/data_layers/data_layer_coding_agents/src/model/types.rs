@@ -5,13 +5,32 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 /// The coding agent that wrote a chat session.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CodingAgent {
     /// Claude Code.
     ClaudeCode,
     /// Codex.
     Codex,
+}
+
+impl CodingAgent {
+    /// The name of the coding agent in the SQLite file and in the JSON schemas: `CLAUDE_CODE` or `CODEX`.
+    pub fn text(self) -> &'static str {
+        match self {
+            CodingAgent::ClaudeCode => "CLAUDE_CODE",
+            CodingAgent::Codex => "CODEX",
+        }
+    }
+
+    /// The coding agent of a name written by `text`, or `None` for another text.
+    pub fn from_text(text: &str) -> Option<CodingAgent> {
+        match text {
+            "CLAUDE_CODE" => Some(CodingAgent::ClaudeCode),
+            "CODEX" => Some(CodingAgent::Codex),
+            _ => None,
+        }
+    }
 }
 
 /// The tokens that one chat session used with one model.

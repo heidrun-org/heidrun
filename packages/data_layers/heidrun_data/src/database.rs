@@ -3,7 +3,7 @@
 //! The file is never written and never created here. Only the four data layer packages create and write their tables.
 
 use crate::output::QueryRow;
-use crate::sources::Source;
+use crate::sources::{Source, TableKind};
 use rusqlite::types::ValueRef;
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde_json::{json, Value};
@@ -64,7 +64,7 @@ impl SourceSummary {
     fn empty(source: Source) -> SourceSummary {
         SourceSummary {
             source,
-            tables: source.tables().iter().map(|table| (table.name.to_string(), 0)).collect(),
+            tables: source.tables().iter().filter(|table| table.kind != TableKind::View).map(|table| (table.name.to_string(), 0)).collect(),
             last_updated_at: None,
         }
     }
@@ -128,7 +128,7 @@ impl HeidrunDatabase {
     /// The summary of one source.
     fn summarize(&self, source: Source) -> Result<SourceSummary, String> {
         let mut summary = SourceSummary::empty(source);
-        for (index, table) in source.tables().iter().enumerate() {
+        for (index, table) in source.tables().iter().filter(|table| table.kind != TableKind::View).enumerate() {
             let date_column = table.date_column;
             let table = table.name;
             if !self.has_table(table)? {
@@ -234,7 +234,7 @@ mod tests {
         assert_eq!(summaries[0].last_updated_at.as_deref(), Some("2026-10-03T10:00:00Z"));
         assert_eq!(summaries[1].tables, vec![("issues".to_string(), 1), ("pull_requests".to_string(), 0)]);
         assert_eq!(summaries[1].last_updated_at.as_deref(), Some("2026-10-02T10:00:00Z"));
-        assert_eq!(summaries[2].tables.len(), 8);
+        assert_eq!(summaries[2].tables.len(), 12);
         assert_eq!(summaries[2].last_updated_at, None);
     }
 

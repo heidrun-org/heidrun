@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import SettingsOptionHelp from "./SettingsOptionHelp.vue";
+import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { timeOptions } from "../../lib/format";
 import { LANGUAGES, locale, t } from "../../i18n/index";
@@ -11,6 +13,31 @@ const TIME_FORMATS = [
 ] as const;
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/** The blocks of the information card of the language, in the order of the card. */
+const LANGUAGE_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.language.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsHelp.language.how" },
+] as const;
+
+/** The blocks of the information card of the time format, in the order of the card. */
+const TIME_FORMAT_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.timeFormat.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsGeneral.timeHelp" },
+] as const;
+
+/** The blocks of the information card of the working days, in the order of the card. */
+const WORKING_DAYS_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.workingDays.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsGeneral.workingDaysHelp" },
+] as const;
+
+/** The blocks of the information card of the goat sound, in the order of the card. */
+const GOAT_SOUND_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.goatSound.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.goatSound.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.goatSound.off" },
+] as const;
 
 const dayNames = computed(() =>
   WEEK_ORDER.map((day) => ({
@@ -41,8 +68,11 @@ const timeExample = computed(() => {
 
 <template>
   <div class="d-flex flex-column gap-3">
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.languageTitle") }}</h4>
+    <div class="d-flex flex-column gap-2" data-option="language">
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="form-label m-0">{{ t("settingsGeneral.languageTitle") }}</h4>
+        <SettingsOptionHelp title-key="settingsGeneral.languageTitle" :blocks="LANGUAGE_HELP_BLOCKS" />
+      </div>
       <div class="btn-group" role="group" :aria-label="t('languageMenu.menuLabel')">
         <label
           v-for="o in LANGUAGES"
@@ -56,8 +86,11 @@ const timeExample = computed(() => {
       </div>
     </div>
 
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.timeFormatTitle") }}</h4>
+    <div class="d-flex flex-column gap-2" data-option="timeFormat">
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="form-label m-0">{{ t("settingsGeneral.timeFormatTitle") }}</h4>
+        <SettingsOptionHelp title-key="settingsGeneral.timeFormatTitle" :blocks="TIME_FORMAT_HELP_BLOCKS" />
+      </div>
       <div class="btn-group" role="group" :aria-label="t('settingsGeneral.timeFormatLabel')">
         <label v-for="f in TIME_FORMATS" :key="f.id" class="btn-check btn-outline theme-secondary">
           <input v-model="settings.timeFormat" type="radio" name="time-format" autocomplete="off" :value="f.id" />
@@ -65,18 +98,26 @@ const timeExample = computed(() => {
         </label>
       </div>
       <div class="form-text">{{ timeExample }}</div>
-      <div class="form-text">{{ t("settingsGeneral.timeHelp") }}</div>
     </div>
 
-    <div class="d-flex flex-column gap-2">
-      <h4 class="form-label m-0">{{ t("settingsGeneral.workingDaysTitle") }}</h4>
+    <div class="d-flex flex-column gap-2" data-option="workingDays">
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="form-label m-0">{{ t("settingsGeneral.workingDaysTitle") }}</h4>
+        <SettingsOptionHelp title-key="settingsGeneral.workingDaysTitle" :blocks="WORKING_DAYS_HELP_BLOCKS" />
+      </div>
       <div class="btn-group" role="group" :aria-label="t('settingsGeneral.workingDaysLabel')">
         <label v-for="d in dayNames" :key="d.day" class="btn-check btn-outline theme-secondary">
           <input type="checkbox" autocomplete="off" :checked="settings.workingDays.includes(d.day)" @change="toggleDay(d.day, $event)" />
           {{ d.name }}
         </label>
       </div>
-      <div class="form-text">{{ t("settingsGeneral.workingDaysHelp") }}</div>
+    </div>
+
+    <div class="d-flex flex-column gap-2">
+      <h4 class="form-label m-0">{{ t("settingsGeneral.soundTitle") }}</h4>
+      <SettingsSwitchRow v-model="settings.goatSound" :label="t('settingsGeneral.goatSound')" data-option="goatSound">
+        <SettingsOptionHelp title-key="settingsGeneral.goatSound" :blocks="GOAT_SOUND_HELP_BLOCKS" />
+      </SettingsSwitchRow>
     </div>
   </div>
 </template>

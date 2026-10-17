@@ -183,6 +183,35 @@ describe("saved searches of the Code hosting sidebar section", () => {
   });
 });
 
+describe("goat sound", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(savedText: string) {
+    localStorage.setItem("heidrun.settings", savedText);
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("is off by default", () => {
+    expect(settings.goatSound).toBe(false);
+  });
+
+  it("is off for an existing installation whose saved settings have no goat sound option", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ language: "fr", workingDays: [1, 2, 3] }));
+    expect(reloaded.language).toBe("fr");
+    expect(reloaded.goatSound).toBe(false);
+  });
+
+  it("is on after a restart when it was saved on", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ goatSound: true }));
+    expect(reloaded.goatSound).toBe(true);
+  });
+
+  it("is off when the saved value is not true or false", async () => {
+    const reloaded = await settingsFrom(JSON.stringify({ goatSound: "yes" }));
+    expect(reloaded.goatSound).toBe(false);
+  });
+});
+
 describe("time format", () => {
   it("follows the language by default", () => {
     expect(settings.timeFormat).toBe("auto");
@@ -410,6 +439,7 @@ const SAVED_OPTIONS: [string, unknown, unknown][] = [
   ["gitFetchMinutes", 5, 0],
   ["dynamicTopicExtraction", "keyword", "languageModel"],
   ["clusteredDynamicTopics", false, true],
+  ["goatSound", false, true],
   ["chatsSortKey", "last_updated", "files_written"],
   ["chatsOrder", "descending", "ascending"],
 ];

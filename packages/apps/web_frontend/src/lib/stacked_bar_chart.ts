@@ -21,8 +21,8 @@ export type StackedBarUnit = "count" | "dollars" | "tokens";
 
 /** Everything that the component `StackedBarChart.vue` needs to draw one chart. */
 export type StackedBarChartContent = {
-	/** The text under each bar, the same number as the values of each series. */
-	labels: string[];
+	/** The text under each bar, or `null` for a bar with no text. It has the same number of items as the values of each series. */
+	labels: Array<string | null>;
 	/** The colors of the bars, from the bottom of a bar to its top. */
 	series: StackedBarSeries[];
 	/** The first line of the chart information card of each bar, in the order of the bars, for example the day. */
