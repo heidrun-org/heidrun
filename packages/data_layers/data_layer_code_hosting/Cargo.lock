@@ -114,6 +114,7 @@ dependencies = [
  "chrono",
  "dirs",
  "jsonschema",
+ "request_log",
  "rusqlite",
  "serde",
  "serde_json",
@@ -625,6 +626,16 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "request_log"
+version = "0.2.7"
+dependencies = [
+ "dirs",
+ "libc",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "rsqlite-vfs"

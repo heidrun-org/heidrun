@@ -11,6 +11,8 @@
 //! The check of the remote is local and offline: it reads the objects of the repository with `git cat-file`.
 
 use crate::git::git_runner::{GitCommandRunner, GitRunner};
+use crate::REQUEST_PACKAGE;
+use request_log::{record_value, RequestKind, RequestSpec, Summary};
 use serde::Serialize;
 use std::collections::HashSet;
 use std::path::{Component, Path};
@@ -38,6 +40,14 @@ pub struct WorktreeBranch {
 /// For each path below `root`, tells whether the file exists on the disk and on the default branch of the remote. A path that
 /// is not below the root (absolute, with `..`, empty) does not exist. The answer keeps the order and the paths of the caller.
 pub fn find_file_existence(root: &Path, paths: &[String]) -> Vec<FileExistence> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_file_existence", RequestKind::Collection)
+        .parameter("root", root.display().to_string())
+        .parameter("pathCount", paths.len());
+    record_value(spec, || find_file_existence_inside(root, paths), |found| Summary::count(found.len()))
+}
+
+/// The work of `find_file_existence`, between the start event and the completion event of its request.
+fn find_file_existence_inside(root: &Path, paths: &[String]) -> Vec<FileExistence> {
     let runner = GitCommandRunner::new(root).with_literal_pathspecs();
     let reference = find_default_branch_reference(&runner);
     let safe_paths: Vec<&str> = paths.iter().map(String::as_str).filter(|path| is_safe(path)).collect();
@@ -58,6 +68,13 @@ pub fn find_file_existence(root: &Path, paths: &[String]) -> Vec<FileExistence> 
 /// The folders among `folders` that exist on the disk. A folder that is not an absolute path does not exist. The answer keeps
 /// the order of the caller.
 pub fn find_existing_folders(folders: &[String]) -> Vec<String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_existing_folders", RequestKind::Collection)
+        .parameter("folderCount", folders.len());
+    record_value(spec, || find_existing_folders_inside(folders), |found| Summary::count(found.len()))
+}
+
+/// The work of `find_existing_folders`, between the start event and the completion event of its request.
+fn find_existing_folders_inside(folders: &[String]) -> Vec<String> {
     folders
         .iter()
         .filter(|folder| Path::new(folder.as_str()).is_absolute() && Path::new(folder.as_str()).is_dir())
@@ -68,6 +85,13 @@ pub fn find_existing_folders(folders: &[String]) -> Vec<String> {
 /// For each folder among `folders` that exists, the current branch of the worktree. A folder that does not exist is left out,
 /// so the caller knows that the worktree was removed. The answer keeps the order of the caller.
 pub fn find_worktree_branches(folders: &[String]) -> Vec<WorktreeBranch> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_worktree_branches", RequestKind::Collection)
+        .parameter("folderCount", folders.len());
+    record_value(spec, || find_worktree_branches_inside(folders), |found| Summary::count(found.len()))
+}
+
+/// The work of `find_worktree_branches`, between the start event and the completion event of its request.
+fn find_worktree_branches_inside(folders: &[String]) -> Vec<WorktreeBranch> {
     find_existing_folders(folders)
         .into_iter()
         .map(|folder| {
@@ -291,5 +315,27 @@ mod tests {
         let gone: String = root.join("gone").to_string_lossy().to_string();
         let found = find_worktree_branches(&[gone, one.clone()]);
         assert_eq!(found, vec![WorktreeBranch { folder: one, branch: Some("one-branch".to_string()) }]);
+    }
+
+    #[test]
+    fn the_checks_of_the_working_copy_are_requests_that_record_counts_and_never_the_paths() {
+        let repository = repository("working_copy_events");
+        let (_, events) = request_log::testing::capture(|| {
+            find_file_existence(&repository.folder, &paths(&["a.txt", "missing.txt"]));
+            find_worktree_branches(&[repository.folder.to_string_lossy().to_string()]);
+        });
+        assert_eq!(
+            request_log::testing::tree(&events),
+            vec![
+                "source_control.find_file_existence",
+                "source_control.find_worktree_branches",
+                "  source_control.find_existing_folders",
+            ]
+        );
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].parameters["pathCount"], 2);
+        assert!(starts[0].parameters.get("paths").is_none());
+        assert_eq!(starts[0].kind, request_log::RequestKind::Collection);
+        assert_eq!(request_log::testing::completion_of(&events, &starts[0].request_id).unwrap().result_count, Some(2));
     }
 }

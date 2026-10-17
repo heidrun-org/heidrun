@@ -40,6 +40,9 @@ pub use synchronization::{describe_since, run as synchronize};
 
 use std::path::PathBuf;
 
+/// The name of this package in the log of the requests of the data layer, without the prefix `data_layer_`.
+pub(crate) const REQUEST_PACKAGE: &str = "code_hosting";
+
 /// The path of the SQLite file when nobody gives another path: `~/.config/heidrun/data_layer.sqlite`.
 pub fn default_database_path() -> PathBuf {
     dirs::home_dir().unwrap_or_default().join(".config").join("heidrun").join("data_layer.sqlite")

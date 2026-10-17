@@ -9,6 +9,8 @@ use crate::github::graphql_runner::{GhGraphqlRunner, GraphqlRunner};
 use crate::model::types::{CodeHostingTable, SynchronizationMode, SynchronizationReport};
 use crate::storage::database::CodeHostingDatabase;
 use crate::synchronization::run;
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 use std::path::Path;
 
 /// Copies the issues and the pull requests of `repository` that changed since the last read into the SQLite file at
@@ -30,6 +32,24 @@ pub fn refresh_code_hosting(database_path: &Path, repository: &str) -> Result<Sy
 /// # Errors
 /// The same as `refresh_code_hosting`.
 pub fn refresh_code_hosting_with_runner(
+    runner: &dyn GraphqlRunner,
+    database_path: &Path,
+    repository: &str,
+) -> Result<SynchronizationReport, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_code_hosting", RequestKind::Synchronization)
+        .parameter("repository", repository)
+        .database(database_path);
+    record(spec, || refresh_code_hosting_inside(runner, database_path, repository), |report| {
+        Summary::count(report.issue_count + report.pull_request_count)
+            .detail("mode", report.mode.name())
+            .detail("issueCount", report.issue_count)
+            .detail("pullRequestCount", report.pull_request_count)
+    })
+}
+
+/// The work of `refresh_code_hosting_with_runner`, between the start event and the completion event of its request. It chooses
+/// the mode: update, or initialize when a row has no label colors.
+fn refresh_code_hosting_inside(
     runner: &dyn GraphqlRunner,
     database_path: &Path,
     repository: &str,
@@ -61,6 +81,23 @@ mod tests {
         let database_path = temp_folder("refresh_copy").join("data_layer.sqlite");
         let report = refresh_code_hosting_with_runner(&fake_github(), &database_path, REPOSITORY).unwrap();
         assert_eq!((report.mode, report.issue_count, report.pull_request_count), (SynchronizationMode::Update, 2, 1));
+    }
+
+    #[test]
+    fn a_refresh_is_one_request_that_holds_the_synchronization_and_tells_its_mode_when_it_ends() {
+        let database_path = temp_folder("refresh_events").join("data_layer.sqlite");
+        let (_, events) = request_log::testing::capture(|| {
+            refresh_code_hosting_with_runner(&fake_github(), &database_path, REPOSITORY).unwrap()
+        });
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "code_hosting.refresh_code_hosting");
+        assert!(tree.contains(&"  code_hosting.synchronize".to_string()), "{tree:?}");
+        assert!(tree.contains(&"  code_hosting.count_rows_without_label_colors".to_string()), "{tree:?}");
+        let starts = request_log::testing::starts(&events);
+        assert!(starts[0].parameters.get("mode").is_none(), "The mode is chosen while the request runs");
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.details["mode"], "update");
+        assert_eq!(complete.result_count, Some(3));
     }
 
     #[test]

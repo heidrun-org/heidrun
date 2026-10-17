@@ -19,6 +19,8 @@ use crate::storage::database::ChatSessionsDatabase;
 use crate::storage::model_price_database::ModelPriceDatabase;
 use crate::storage::token_usage_database::TokenUsageDatabase;
 use crate::synchronization::run_token_usage;
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicI64, Ordering};
@@ -50,11 +52,29 @@ static LAST_PRICE_TRY_AT: AtomicI64 = AtomicI64::new(0);
 /// # Errors
 /// An error when the SQLite file cannot be opened or written.
 pub fn refresh_chat_sessions(database_path: &Path, root: &str) -> Result<SynchronizationReport, String> {
-    let claude_projects = claude_dir().join("projects");
-    let codex_home = codex_home();
-    with_shared_scan_cache(database_path, |cache| {
-        refresh_chat_sessions_with(database_path, root, &claude_projects, &codex_home, cache)
-    })
+    refresh_chat_sessions_in(database_path, root, &claude_dir().join("projects"), &codex_home())
+}
+
+/// Like `refresh_chat_sessions`, with the folders of the coding agents given. It is the request of the log: it holds the
+/// opening and the saving of the cache of the scans, and the work of `refresh_chat_sessions_with`.
+pub(crate) fn refresh_chat_sessions_in(
+    database_path: &Path,
+    root: &str,
+    claude_projects: &Path,
+    codex_home: &Path,
+) -> Result<SynchronizationReport, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_chat_sessions", RequestKind::Synchronization)
+        .parameter("root", root)
+        .database(database_path);
+    record(
+        spec,
+        || {
+            with_shared_scan_cache(database_path, |cache| {
+                refresh_chat_sessions_with(database_path, root, claude_projects, codex_home, cache)
+            })
+        },
+        |report| Summary::count(report.chat_session_count).detail("mode", report.mode.name()),
+    )
 }
 
 /// Like `refresh_chat_sessions`, with the folders of the coding agents and the cache of the scans given. The tests give a fake
@@ -94,10 +114,46 @@ pub fn refresh_ai_cost(
     is_import_allowed: bool,
     now: i64,
 ) -> Result<AiCostSynchronization, String> {
-    let claude_projects = claude_dir().join("projects");
-    let codex_home = codex_home();
+    refresh_ai_cost_in(database_path, roots, is_import_allowed, now, &claude_dir().join("projects"), &codex_home())
+}
+
+/// Like `refresh_ai_cost`, with the folders of the coding agents given. It is the request of the log: it holds the token usage of
+/// each workspace and the refresh of the prices.
+pub(crate) fn refresh_ai_cost_in(
+    database_path: &Path,
+    roots: &[String],
+    is_import_allowed: bool,
+    now: i64,
+    claude_projects: &Path,
+    codex_home: &Path,
+) -> Result<AiCostSynchronization, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_ai_cost", RequestKind::Synchronization)
+        .parameter("roots", roots)
+        .choice("isImportAllowed", is_import_allowed)
+        .parameter("now", now)
+        .database(database_path);
+    record(
+        spec,
+        || refresh_ai_cost_inside(database_path, roots, is_import_allowed, now, claude_projects, codex_home),
+        |answer| {
+            Summary::count(answer.workspaces.len())
+                .detail("workspaceErrorCount", answer.workspaces.iter().filter(|workspace| workspace.error.is_some()).count())
+                .detail("hasPriceWarning", answer.price_warning.is_some())
+        },
+    )
+}
+
+/// The work of `refresh_ai_cost_in`, between the start event and the completion event of its request.
+fn refresh_ai_cost_inside(
+    database_path: &Path,
+    roots: &[String],
+    is_import_allowed: bool,
+    now: i64,
+    claude_projects: &Path,
+    codex_home: &Path,
+) -> Result<AiCostSynchronization, String> {
     let workspaces = with_shared_scan_cache(database_path, |cache| {
-        refresh_workspaces_with(database_path, roots, is_import_allowed, &claude_projects, &codex_home, cache, now)
+        refresh_workspaces_with(database_path, roots, is_import_allowed, claude_projects, codex_home, cache, now)
     })?;
     let public_source = price_list_source_of(PRICE_LIST_ADDRESS);
     let price_warning = refresh_model_prices_when_due(database_path, public_source.as_ref(), now).err();
@@ -181,6 +237,31 @@ pub fn refresh_model_prices(
     is_forced: bool,
     now: i64,
 ) -> Result<PriceRefresh, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_model_prices", RequestKind::Synchronization)
+        .choice("isForced", is_forced)
+        .parameter("now", now)
+        .database(database_path);
+    record(spec, || refresh_model_prices_inside(database_path, source, is_forced, now), |refresh| {
+        Summary::count(1).detail("result", price_refresh_name(refresh))
+    })
+}
+
+/// The name of what a refresh of the prices did, as the log writes it.
+fn price_refresh_name(refresh: &PriceRefresh) -> &'static str {
+    match refresh {
+        PriceRefresh::Fresh { .. } => "fresh",
+        PriceRefresh::Unchanged { .. } => "unchanged",
+        PriceRefresh::NewVersion { .. } => "new_version",
+    }
+}
+
+/// The work of `refresh_model_prices`, between the start event and the completion event of its request.
+fn refresh_model_prices_inside(
+    database_path: &Path,
+    source: &dyn PriceListSource,
+    is_forced: bool,
+    now: i64,
+) -> Result<PriceRefresh, String> {
     let result = ModelPriceDatabase::open(database_path)?.refresh(source, now, is_forced)?;
     let _ = std::fs::remove_file(database_path.with_file_name(OLD_PRICES_FILE));
     Ok(result)
@@ -192,6 +273,20 @@ pub fn refresh_model_prices(
 /// # Errors
 /// The same as `refresh_model_prices`.
 pub fn refresh_model_prices_when_due(
+    database_path: &Path,
+    source: &dyn PriceListSource,
+    now: i64,
+) -> Result<Option<PriceRefresh>, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_model_prices_when_due", RequestKind::Synchronization)
+        .parameter("now", now)
+        .database(database_path);
+    record(spec, || refresh_model_prices_when_due_inside(database_path, source, now), |refresh| {
+        Summary::count(usize::from(refresh.is_some()))
+    })
+}
+
+/// The work of `refresh_model_prices_when_due`, between the start event and the completion event of its request.
+fn refresh_model_prices_when_due_inside(
     database_path: &Path,
     source: &dyn PriceListSource,
     now: i64,
@@ -305,6 +400,50 @@ mod tests {
         assert!(first > 0);
         assert!(directory.join(CACHE_FILE_NAME).exists());
         assert_eq!(scan_count(&database_path), first, "the second refresh opened no file again");
+    }
+
+    #[test]
+    fn a_refresh_of_the_chat_sessions_is_one_request_that_holds_the_cache_the_reads_and_the_writes() {
+        let (directory, database_path) = fixture("refresh_events");
+        let (report, events) =
+            request_log::testing::capture(|| refresh_chat_sessions_in(&database_path, "/work/app", &directory.join("projects"), &directory).unwrap());
+        assert_eq!(report.chat_session_count, 3);
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.refresh_chat_sessions");
+        for nested in ["find_last_updated_at_in_folder", "read_chat_session_files", "delete_chat_sessions_not_in"] {
+            assert!(tree.contains(&format!("  coding_agents.{nested}")), "{nested} is missing in {tree:?}");
+        }
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].kind, request_log::RequestKind::Synchronization);
+        assert_eq!(starts[0].parameters["root"], "/work/app");
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!((complete.result_count, complete.details["mode"].as_str()), (Some(3), Some("initialize")));
+    }
+
+    #[test]
+    fn a_refresh_of_the_prices_records_what_it_did_and_the_check_when_due_records_that_it_did_nothing() {
+        let directory = temp_folder("refresh_prices_events");
+        let database_path = directory.join("data_layer.sqlite");
+        let list_path = directory.join("list.json");
+        std::fs::write(&list_path, PRICE_LIST).unwrap();
+        let source = FilePriceListSource::new(list_path);
+        let (_, events) =
+            request_log::testing::capture(|| refresh_model_prices(&database_path, &source, false, 1_791_979_200_000).unwrap());
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.refresh_model_prices");
+        assert!(tree.contains(&"  coding_agents.refresh_prices".to_string()), "{tree:?}");
+        let starts = request_log::testing::starts(&events);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.details["result"], "new_version");
+        let now = 1_791_979_200_000;
+        let (first, first_events) = request_log::testing::capture(|| refresh_model_prices_when_due(&database_path, &source, now).unwrap());
+        let (second, second_events) = request_log::testing::capture(|| refresh_model_prices_when_due(&database_path, &source, now).unwrap());
+        assert_eq!((first.is_some(), second.is_some()), (true, false));
+        let first_starts = request_log::testing::starts(&first_events);
+        let second_starts = request_log::testing::starts(&second_events);
+        assert_eq!(request_log::testing::completion_of(&first_events, &first_starts[0].request_id).unwrap().result_count, Some(1));
+        assert_eq!(request_log::testing::completion_of(&second_events, &second_starts[0].request_id).unwrap().result_count, Some(0));
+        assert_eq!(request_log::testing::tree(&second_events), vec!["coding_agents.refresh_model_prices_when_due"]);
     }
 
     #[test]

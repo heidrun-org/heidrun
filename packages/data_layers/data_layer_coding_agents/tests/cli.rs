@@ -66,6 +66,7 @@ impl Fixture {
     fn run(&self, arguments: &[&str]) -> CliResult {
         let output = Command::new(env!("CARGO_BIN_EXE_data_layer_coding_agents"))
             .args(arguments)
+            .env("HEIDRUN_REQUEST_LOG_FILE", "off")
             .env("CLAUDE_CONFIG_DIR", self.folder.join("claude"))
             .env("CODEX_HOME", self.folder.join("codex"))
             .env("HOME", self.folder.join("home"))

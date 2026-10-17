@@ -8,6 +8,8 @@ use crate::model::types::{SynchronizationMode, SynchronizationReport};
 use crate::storage::database::UserActivityDatabase;
 use crate::synchronization::run;
 use crate::user_activity_file::user_activity_file_reader::UserActivityFileReader;
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 use std::path::Path;
 
 /// Copies the records of the file at `file_path` that are new into the SQLite file at `database_path`, with the mode update.
@@ -16,6 +18,17 @@ use std::path::Path;
 /// # Errors
 /// An error when the file of the records exists and cannot be read, or when the SQLite file cannot be opened or written.
 pub fn refresh_user_activity(database_path: &Path, file_path: &Path) -> Result<SynchronizationReport, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_user_activity", RequestKind::Synchronization)
+        .choice("mode", SynchronizationMode::Update.name())
+        .parameter("file", file_path.display().to_string())
+        .database(database_path);
+    record(spec, || refresh_user_activity_inside(database_path, file_path), |report| {
+        Summary::count(report.record_count).detail("alreadyReadRecordCount", report.already_read_record_count)
+    })
+}
+
+/// The work of `refresh_user_activity`, between the start event and the completion event of its request.
+fn refresh_user_activity_inside(database_path: &Path, file_path: &Path) -> Result<SynchronizationReport, String> {
     let mut database = UserActivityDatabase::open(database_path)?;
     run(SynchronizationMode::Update, &UserActivityFileReader::new(file_path), &mut database, &|_| {})
 }
@@ -42,6 +55,21 @@ mod tests {
         refresh_user_activity(&database_path, &file_path).unwrap();
         let report = refresh_user_activity(&database_path, &file_path).unwrap();
         assert_eq!((report.record_count, report.already_read_record_count), (0, 1));
+    }
+
+    #[test]
+    fn a_refresh_is_one_request_that_holds_the_synchronization_and_its_writes() {
+        let file_path = write_file("refresh_events", &[line_with_offset(&record(1), 2), line_with_offset(&record(2), 2)]);
+        let database_path = temp_folder("refresh_events_database").join("data_layer.sqlite");
+        let (_, events) = request_log::testing::capture(|| refresh_user_activity(&database_path, &file_path).unwrap());
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "user_activity.refresh_user_activity");
+        assert!(tree.contains(&"  user_activity.synchronize".to_string()), "{tree:?}");
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].parameters["mode"], "update");
+        assert_eq!(starts[0].kind, request_log::RequestKind::Synchronization);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.result_count, Some(2));
     }
 
     #[test]

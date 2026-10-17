@@ -152,3 +152,7 @@ pnpm --filter data_layer_coding_agents test
 ```
 
 The command runs `cargo test`. The tests of the executable use fake folders of the two coding agents, given by the variables `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, and a real Git repository with a fake remote `origin`, so they need no network and no account.
+
+## Request log
+
+Every public operation of this package writes a start line and an end line in the request log of the data layer, with the library [request_log](../../auxiliary/request_log/README.md): the package `coding_agents`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested requests. The command `heidrun_data requests summary` shows the usage patterns and the durations, and `heidrun_data requests replay` runs a recorded request again. The log never changes a result and never holds a secret. The description is in [data_layer_request_log.md](../../../docs/statistics/data_layer_request_log.md).

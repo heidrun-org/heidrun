@@ -9,6 +9,8 @@ use data_layer_coding_agents::{
 };
 use serde_json::{json, Value};
 use std::path::Path;
+use crate::REQUEST_PACKAGE;
+use request_log::{record_value, RequestKind, RequestSpec, Summary};
 
 /// The tools that always write the file that their input names.
 const WRITE_TOOLS: [&str; 5] = ["Write", "Edit", "MultiEdit", "NotebookEdit", "apply_patch"];
@@ -69,6 +71,16 @@ impl FileChange {
 /// tool call of `Write`, `Edit`, `MultiEdit`, `NotebookEdit`, or `apply_patch` whose input names the path counts. A command
 /// of the shell counts when it names the path and shows a sign of a write, such as `>` or `sed -i`.
 pub fn read_file_history(path: &str, root: &Path, claude_projects_folder: &Path, codex_home: &Path) -> Vec<FileChange> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_file_history", RequestKind::Collection)
+        .parameter("path", path)
+        .parameter("root", root.display().to_string());
+    record_value(spec, || read_file_history_inside(path, root, claude_projects_folder, codex_home), |changes| {
+        Summary::count(changes.len())
+    })
+}
+
+/// The work of `read_file_history`, between the start event and the completion event of its request.
+fn read_file_history_inside(path: &str, root: &Path, claude_projects_folder: &Path, codex_home: &Path) -> Vec<FileChange> {
     let folder = root.display().to_string();
     let mut cache = ScanCache::in_memory();
     let claude_files = find_claude_session_files(&mut cache, claude_projects_folder, &folder, FolderScope::WithFoldersBelow);

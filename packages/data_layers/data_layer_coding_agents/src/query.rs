@@ -12,10 +12,13 @@ use crate::model::token_usage_types::{UsageGrouping, UsageQuery, UsageRow};
 use crate::model::types::{ChatSession, ChatSessionRelations, CodingAgent};
 use crate::pricing::price_table::PriceTable;
 use crate::refresh::distinct;
+use crate::request_parameters::{sort_key_name, sort_order_name};
 use crate::storage::database::ChatSessionsDatabase;
 use crate::storage::model_price_database::ModelPriceDatabase;
 use crate::storage::token_usage_database::TokenUsageDatabase;
 use crate::storage::usage_grouping::{parse_range_bound, summarize_periods};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::path::Path;
 
@@ -37,6 +40,19 @@ const CODEX: &str = "codex";
 /// # Errors
 /// An error when the SQLite file cannot be read.
 pub fn find_chat_list(database_path: &Path, root: &str, limit: usize, sorting: Sorting) -> Result<ChatList, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_chat_list", RequestKind::Query)
+        .parameter("root", root)
+        .parameter("limit", limit)
+        .choice("sortKey", sort_key_name(sorting.key))
+        .choice("sortOrder", sort_order_name(sorting.order))
+        .database(database_path);
+    record(spec, || find_chat_list_inside(database_path, root, limit, sorting), |list| {
+        Summary::count(list.claude.chats.len() + list.codex.chats.len())
+    })
+}
+
+/// The work of `find_chat_list`, between the start event and the completion event of its request.
+fn find_chat_list_inside(database_path: &Path, root: &str, limit: usize, sorting: Sorting) -> Result<ChatList, String> {
     let root = root.trim_end_matches('/').to_string();
     let mut list = ChatList { root: root.clone(), ..ChatList::default() };
     if !database_path.exists() {
@@ -64,6 +80,25 @@ pub fn find_chat_list(database_path: &Path, root: &str, limit: usize, sorting: S
 /// # Errors
 /// An error when the time zone is not known, or when the SQLite file cannot be read.
 pub fn find_ai_cost(
+    database_path: &Path,
+    roots: &[String],
+    since: i64,
+    until: i64,
+    time_zone: &str,
+) -> Result<AiCostAnswer, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_ai_cost", RequestKind::Query)
+        .parameter("roots", roots)
+        .parameter("since", since)
+        .parameter("until", until)
+        .parameter("timeZone", time_zone)
+        .database(database_path);
+    record(spec, || find_ai_cost_inside(database_path, roots, since, until, time_zone), |answer| {
+        Summary::count(answer.hours.len()).detail("workspaceCount", answer.workspaces.len())
+    })
+}
+
+/// The work of `find_ai_cost`, between the start event and the completion event of its request.
+fn find_ai_cost_inside(
     database_path: &Path,
     roots: &[String],
     since: i64,
@@ -345,6 +380,43 @@ mod tests {
         let found = find_chat_list(&database_path, ROOT, 4, Sorting::default()).unwrap();
         assert_eq!(titles(&found.claude), vec!["Chat 4", "Chat 3", "Chat 2", "Chat 1"]);
         assert!(!found.claude.has_more);
+    }
+
+    #[test]
+    fn a_find_of_the_chat_list_is_one_request_with_its_sorting_and_its_count_and_holds_the_reads() {
+        let directory = temp_folder("query_events_chats");
+        write_chat(&directory, "first", &[user_line("2026-10-11T10:00:00.000Z", "Hello")], 1000);
+        let database_path = stored(&directory);
+        let sorting = Sorting { key: SortKey::Messages, order: SortOrder::Ascending };
+        let (list, events) = request_log::testing::capture(|| find_chat_list(&database_path, ROOT, 50, sorting).unwrap());
+        assert_eq!(list.claude.chats.len(), 1);
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.find_chat_list");
+        for nested in ["has_chat_sessions_table", "find_chat_sessions_in_folder", "find_relations_in_folder"] {
+            assert!(tree.contains(&format!("  coding_agents.{nested}")), "{nested} is missing in {tree:?}");
+        }
+        let starts = request_log::testing::starts(&events);
+        assert_eq!((starts[0].parameters["limit"].as_u64(), starts[0].parameters["sortKey"].as_str()), (Some(50), Some("messages")));
+        assert_eq!(request_log::testing::completion_of(&events, &starts[0].request_id).unwrap().result_count, Some(1));
+    }
+
+    #[test]
+    fn a_find_of_the_ai_cost_records_the_roots_and_the_range_and_a_failure_has_a_category_only() {
+        let database_path = temp_folder("query_events_cost").join("data_layer.sqlite");
+        let roots = vec![ROOT.to_string()];
+        let (answer, events) = request_log::testing::capture(|| find_ai_cost(&database_path, &roots, 0, 1000, "UTC").unwrap());
+        assert_eq!(answer.workspaces.len(), 1);
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].package, "coding_agents");
+        assert_eq!(starts[0].operation, "find_ai_cost");
+        assert_eq!(starts[0].parameters["roots"], serde_json::json!([ROOT]));
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.details["workspaceCount"], 1);
+        let (_, events) = request_log::testing::capture(|| find_ai_cost(&database_path, &roots, 0, 1000, "Nowhere/Land").unwrap_err());
+        let starts = request_log::testing::starts(&events);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+        assert!(complete.error_category.is_some());
     }
 
     #[test]

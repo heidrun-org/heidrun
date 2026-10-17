@@ -26,10 +26,11 @@ A Rust library and a command line tool that read every commit of a Git repositor
 - `query` and `SourceControlDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it.
 - The desktop application calls only the functions `refresh_*` and `find_*` of this package, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) says. The test of the package `data_layer_boundary_checker` fails otherwise.
 - The folder `src/model/` imports from no other folder of `src/`. The folders `src/git/` and `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` and `src/refresh.rs` use both.
-- The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
+- The library calls are blocking. The package imports only `request_log` from the other packages of the repository, and it knows nothing about Tauri. Every public operation records its request with `request_log::record`, a new operation does the same in the same change, and its test reads the events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
 - The name of the repository comes from the address of the remote `origin`, for GitHub and for GitLab alike.
 - The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one.
 
 ## Background
 - The package comes from [issue #462](https://github.com/heidrun-org/heidrun/issues/462). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452).
 - The Statistics window uses the package in `packages/apps/desktop_tauri/src/statistics/person_work.rs` ([issue #482](https://github.com/heidrun-org/heidrun/issues/482)), and the Past chats sidebar section in `past_chats/chats_files.rs` ([issue #617](https://github.com/heidrun-org/heidrun/issues/617)).
+- The request log of [issue #618](https://github.com/heidrun-org/heidrun/issues/618) records each public operation of this package: see [request_log](../../auxiliary/request_log/CONTEXT.md).

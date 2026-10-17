@@ -10,6 +10,8 @@ use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, 
 use chrono::{DateTime, SecondsFormat, Utc};
 use std::collections::HashSet;
 use std::path::Path;
+use crate::REQUEST_PACKAGE;
+use request_log::{record_value, RequestKind, RequestSpec, Summary};
 
 /// The most characters of the title of a stored chat session. A longer title ends with an ellipsis.
 const TITLE_LENGTH: usize = 160;
@@ -43,6 +45,26 @@ pub fn read_chat_sessions(
 /// whose file changed before `modified_since` (milliseconds since 1970) is not read. A chat session without a title and
 /// without a message is left out, and so is a review chat of Codex. `log` receives one line of progress for each coding agent.
 pub fn read_chat_session_files(
+    cache: &mut ScanCache,
+    claude_projects: &Path,
+    codex_home: &Path,
+    folder: &str,
+    modified_since: Option<i64>,
+    log: &dyn Fn(&str),
+) -> ChatSessionRead {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_chat_session_files", RequestKind::Collection)
+        .parameter("folder", folder)
+        .parameter("modifiedSince", modified_since)
+        .state("scanCacheEntries", cache.scan_count());
+    record_value(
+        spec,
+        || read_chat_session_files_inside(cache, claude_projects, codex_home, folder, modified_since, log),
+        |read| Summary::count(read.records.len()),
+    )
+}
+
+/// The work of `read_chat_session_files`, between the start event and the completion event of its request.
+fn read_chat_session_files_inside(
     cache: &mut ScanCache,
     claude_projects: &Path,
     codex_home: &Path,

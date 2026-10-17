@@ -26,6 +26,7 @@ mod pricing;
 mod query;
 mod refresh;
 mod repository_finder;
+mod request_parameters;
 mod storage;
 mod synchronization;
 #[cfg(test)]
@@ -73,6 +74,7 @@ pub use refresh::{
     refresh_public_model_prices_when_due,
 };
 pub use repository_finder::{find_main_root, find_repository, find_repository_key, find_root, parse_repository};
+pub use request_parameters::{sorting_from_parameters, usage_query_from_parameters};
 pub use storage::configuration_database::ConfigurationDatabase;
 pub use storage::database::ChatSessionsDatabase;
 pub use storage::minute_text::{minute_text, parse_time_text, time_text};
@@ -91,6 +93,9 @@ pub use synchronization::{
 };
 
 use std::path::PathBuf;
+
+/// The name of this package in the log of the requests of the data layer, without the prefix `data_layer_`.
+pub(crate) const REQUEST_PACKAGE: &str = "coding_agents";
 
 /// A function that ignores the lines of progress.
 pub fn ignore_log(_message: &str) {}

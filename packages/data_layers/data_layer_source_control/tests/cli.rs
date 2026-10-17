@@ -66,6 +66,7 @@ impl Fixture {
     fn run_in(&self, directory: &Path, arguments: &[&str]) -> CliResult {
         let output = Command::new(env!("CARGO_BIN_EXE_data_layer_source_control"))
             .args(arguments)
+            .env("HEIDRUN_REQUEST_LOG_FILE", "off")
             .env("GIT_CONFIG_GLOBAL", "/dev/null")
             .env("GIT_CONFIG_NOSYSTEM", "1")
             .current_dir(directory)

@@ -247,6 +247,7 @@ fn quit_now(app: AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     environment_file::load();
+    request_log::set_default_caller("heidrun");
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_clipboard_manager::init())
