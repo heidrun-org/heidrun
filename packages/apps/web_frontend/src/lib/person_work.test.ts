@@ -156,6 +156,32 @@ describe("PersonWork.compute", () => {
 		expect([eric.insertionCount, eric.deletionCount]).toEqual([7, 0]);
 	});
 
+	it("adds the lines added and the lines deleted of the commits of the person in each slot", () => {
+		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
+		expect(result.slots.map((slot) => [slot.insertionCount, slot.deletionCount])).toEqual([
+			[10, 2],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[8, 4],
+		]);
+		const eric = PersonWork.compute(sample, "eric", NOW, 7);
+		expect(eric.slots.map((slot) => [slot.insertionCount, slot.deletionCount])[6]).toEqual([7, 0]);
+	});
+
+	it("gives lines in the slots that add up to the lines of the time range", () => {
+		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 30);
+		expect(result.slots.reduce((sum, slot) => sum + slot.insertionCount, 0)).toBe(result.insertionCount);
+		expect(result.slots.reduce((sum, slot) => sum + slot.deletionCount, 0)).toBe(result.deletionCount);
+	});
+
+	it("does not add the lines of a pull request, because only a commit has lines", () => {
+		const result = PersonWork.compute(items({ pullRequests: [opened("eric", at(14, 12))] }), "eric", NOW, 7);
+		expect(result.slots.every((slot) => slot.insertionCount === 0 && slot.deletionCount === 0)).toBe(true);
+	});
+
 	it("does not add the lines of a commit outside the time range, and adds them again for thirty days", () => {
 		const sevenDays = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
 		const thirtyDays = PersonWork.compute(sample, "jeromeetienne", NOW, 30);
@@ -220,6 +246,17 @@ describe("PersonWork.compute, the slot length", () => {
 		expect(PersonWork.compute(sample, "eric", NOW, 7, 6).slots).toHaveLength(28);
 		expect(PersonWork.compute(sample, "eric", NOW, 7, 1).slots).toHaveLength(168);
 		expect(PersonWork.compute(sample, "eric", NOW, 7, 24).slots).toHaveLength(7);
+	});
+
+	it("adds the lines of the commits of the person in each slot of 6 hours, and the slots add up to the totals", () => {
+		const result = PersonWork.compute(sample, "eric", NOW, 7, 6);
+		expect(result.slots.slice(24).map((slot) => [slot.insertionCount, slot.deletionCount])).toEqual([
+			[1, 0],
+			[6, 0],
+			[8, 0],
+			[0, 0],
+		]);
+		expect(result.slots.reduce((sum, slot) => sum + slot.insertionCount, 0)).toBe(result.insertionCount);
 	});
 
 	it("counts the commits and the pull requests of the person in each slot of 6 hours", () => {

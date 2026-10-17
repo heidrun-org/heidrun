@@ -80,6 +80,10 @@ export type PersonWorkSlot = CalendarSlot & {
 	commitCount: number;
 	/** The number of pull requests that the person opened in the slot. */
 	pullRequestCount: number;
+	/** The number of lines that the commits of the person add in the slot. */
+	insertionCount: number;
+	/** The number of lines that the commits of the person delete in the slot. */
+	deletionCount: number;
 };
 
 /** The work of one person in a time range. */
@@ -220,6 +224,8 @@ export class PersonWork {
 			...slot,
 			commitCount: 0,
 			pullRequestCount: 0,
+			insertionCount: 0,
+			deletionCount: 0,
 		}));
 		const result: PersonWorkResult = {
 			slots,
@@ -236,6 +242,8 @@ export class PersonWork {
 			const index = CalendarSlots.findIndex(slots, commit.committedAt);
 			if (index !== -1) {
 				slots[index].commitCount += 1;
+				slots[index].insertionCount += commit.insertions;
+				slots[index].deletionCount += commit.deletions;
 				result.commitCount += 1;
 				result.insertionCount += commit.insertions;
 				result.deletionCount += commit.deletions;
