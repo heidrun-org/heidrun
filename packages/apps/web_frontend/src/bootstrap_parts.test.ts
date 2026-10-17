@@ -114,6 +114,7 @@ describe('bootstrap_parts.scss', () => {
 			'.m-0',
 			'.ms-1',
 			'.ms-3',
+			'.ms-auto',
 			'.me-2',
 			'.me-auto',
 			'.my-auto',

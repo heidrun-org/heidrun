@@ -6,10 +6,17 @@
 
 use crate::model::schemas::{issue_to_checked_value, pull_request_to_checked_value};
 use crate::model::types::{CodeHostingTable, Issue, PullRequest, QueryRow};
+use crate::model::utc_time::to_whole_second_text;
 use rusqlite::types::ValueRef;
-use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
+use rusqlite::{params, params_from_iter, Connection, OpenFlags, OptionalExtension};
+use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
+
+/// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
+const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// The SQLite file of the code hosting data layer.
 pub struct CodeHostingDatabase {
@@ -64,6 +71,9 @@ impl CodeHostingDatabase {
         }
         let connection = Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|error| format!("The database file {} cannot be opened: {error}", database_path.display()))?;
+        connection
+            .busy_timeout(READ_WAITING_TIME)
+            .map_err(|error| format!("The waiting time of the database file cannot be set: {error}"))?;
         Ok(CodeHostingDatabase { database_path: database_path.to_path_buf(), is_read_only: true, connection })
     }
 
@@ -78,6 +88,15 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when one issue does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_issues(&mut self, repository: &str, issues: &[Issue]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_issues", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("issueCount", issues.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_issues_inside(repository, issues), |_| Summary::count(issues.len()))
+    }
+
+    /// The work of `upsert_issues`, between the start event and the completion event of its request.
+    fn upsert_issues_inside(&mut self, repository: &str, issues: &[Issue]) -> Result<(), String> {
         let mut rows = Vec::with_capacity(issues.len());
         for issue in issues {
             let value = issue_to_checked_value(issue)?;
@@ -92,6 +111,15 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when one pull request does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_pull_requests(&mut self, repository: &str, pull_requests: &[PullRequest]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_pull_requests", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("pullRequestCount", pull_requests.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_pull_requests_inside(repository, pull_requests), |_| Summary::count(pull_requests.len()))
+    }
+
+    /// The work of `upsert_pull_requests`, between the start event and the completion event of its request.
+    fn upsert_pull_requests_inside(&mut self, repository: &str, pull_requests: &[PullRequest]) -> Result<(), String> {
         let mut rows = Vec::with_capacity(pull_requests.len());
         for pull_request in pull_requests {
             let value = pull_request_to_checked_value(pull_request)?;
@@ -104,6 +132,15 @@ impl CodeHostingDatabase {
     ///
     /// Returns `None` when the table has no row for the repository.
     pub fn find_last_updated_at(&self, table: CodeHostingTable, repository: &str) -> Result<Option<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_last_updated_at", RequestKind::Query)
+            .choice("table", table.name())
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.find_last_updated_at_inside(table, repository), |date| Summary::count(usize::from(date.is_some())))
+    }
+
+    /// The work of `find_last_updated_at`, between the start event and the completion event of its request.
+    fn find_last_updated_at_inside(&self, table: CodeHostingTable, repository: &str) -> Result<Option<String>, String> {
         self.connection
             .query_row(
                 &format!("SELECT MAX(updatedAt) FROM {} WHERE repository = ?1", table.name()),
@@ -115,6 +152,15 @@ impl CodeHostingDatabase {
 
     /// Counts the rows of a table for a repository.
     pub fn count_rows(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows", RequestKind::Query)
+            .choice("table", table.name())
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.count_rows_inside(table, repository), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_rows`, between the start event and the completion event of its request.
+    fn count_rows_inside(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row(
                 &format!("SELECT COUNT(*) FROM {} WHERE repository = ?1", table.name()),
@@ -126,6 +172,15 @@ impl CodeHostingDatabase {
 
     /// Reads one issue. Returns `None` when the table has no such row.
     pub fn find_issue(&self, repository: &str, number: i64) -> Result<Option<Issue>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issue", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("number", number)
+            .database(&self.database_path);
+        record(spec, || self.find_issue_inside(repository, number), |issue| Summary::count(usize::from(issue.is_some())))
+    }
+
+    /// The work of `find_issue`, between the start event and the completion event of its request.
+    fn find_issue_inside(&self, repository: &str, number: i64) -> Result<Option<Issue>, String> {
         match self.find_data(CodeHostingTable::Issues, repository, number)? {
             None => Ok(None),
             Some(data) => serde_json::from_str(&data)
@@ -136,12 +191,138 @@ impl CodeHostingDatabase {
 
     /// Reads one pull request. Returns `None` when the table has no such row.
     pub fn find_pull_request(&self, repository: &str, number: i64) -> Result<Option<PullRequest>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_request", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("number", number)
+            .database(&self.database_path);
+        record(spec, || self.find_pull_request_inside(repository, number), |pull_request| {
+            Summary::count(usize::from(pull_request.is_some()))
+        })
+    }
+
+    /// The work of `find_pull_request`, between the start event and the completion event of its request.
+    fn find_pull_request_inside(&self, repository: &str, number: i64) -> Result<Option<PullRequest>, String> {
         match self.find_data(CodeHostingTable::PullRequests, repository, number)? {
             None => Ok(None),
             Some(data) => serde_json::from_str(&data)
                 .map(Some)
                 .map_err(|error| format!("The row of the pull request {number} is not a pull request: {error}")),
         }
+    }
+
+    /// True when the table `table` exists in the SQLite file. The file is shared by the packages of the data layer, so it can exist
+    /// before the package wrote its own table.
+    ///
+    /// # Errors
+    /// An error when the tables of the file cannot be listed.
+    pub fn has_table(&self, table: &str) -> Result<bool, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "has_table", RequestKind::Query)
+            .choice("table", table)
+            .database(&self.database_path);
+        record(spec, || self.has_table_inside(table), |is_found| Summary::count(usize::from(*is_found)))
+    }
+
+    /// The work of `has_table`, between the start event and the completion event of its request.
+    fn has_table_inside(&self, table: &str) -> Result<bool, String> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1", params![table], |row| {
+                row.get::<_, i64>(0)
+            })
+            .map(|count| count > 0)
+            .map_err(|error| format!("The tables of the file cannot be listed: {error}"))
+    }
+
+    /// Reads the issues of a repository that were opened in the time range from `since` (included) to `until` (excluded),
+    /// the oldest first. Both times are texts in the format ISO 8601 with an offset or in UTC.
+    ///
+    /// # Errors
+    /// An error when a time is not a time with an offset, or when a row is not an issue.
+    pub fn find_issues_opened_between(&self, repository: &str, since: &str, until: &str) -> Result<Vec<Issue>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_opened_between", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("since", since)
+            .parameter("until", until)
+            .database(&self.database_path);
+        record(spec, || self.find_items_opened_between(CodeHostingTable::Issues, repository, since, until), |issues| {
+            Summary::count(issues.len())
+        })
+    }
+
+    /// Reads the pull requests of a repository that were opened in the time range from `since` (included) to `until`
+    /// (excluded), the oldest first. Both times are texts in the format ISO 8601 with an offset or in UTC.
+    ///
+    /// # Errors
+    /// An error when a time is not a time with an offset, or when a row is not a pull request.
+    pub fn find_pull_requests_opened_between(
+        &self,
+        repository: &str,
+        since: &str,
+        until: &str,
+    ) -> Result<Vec<PullRequest>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_opened_between", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("since", since)
+            .parameter("until", until)
+            .database(&self.database_path);
+        record(spec, || self.find_items_opened_between(CodeHostingTable::PullRequests, repository, since, until), |found| {
+            Summary::count(found.len())
+        })
+    }
+
+    /// Reads the issues of a repository whose numbers are in `numbers`, in the order of their numbers. A number that has no
+    /// row gives no issue.
+    ///
+    /// # Errors
+    /// An error when a row is not an issue.
+    pub fn find_issues_by_numbers(&self, repository: &str, numbers: &[i64]) -> Result<Vec<Issue>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_by_numbers", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("numberCount", numbers.len())
+            .database(&self.database_path);
+        record(spec, || self.find_items_by_numbers(CodeHostingTable::Issues, repository, numbers), |issues| {
+            Summary::count(issues.len())
+        })
+    }
+
+    /// Reads the pull requests of a repository whose numbers are in `numbers`, in the order of their numbers. A number that has
+    /// no row gives no pull request.
+    ///
+    /// # Errors
+    /// An error when a row is not a pull request.
+    pub fn find_pull_requests_by_numbers(&self, repository: &str, numbers: &[i64]) -> Result<Vec<PullRequest>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_by_numbers", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("numberCount", numbers.len())
+            .database(&self.database_path);
+        record(spec, || self.find_items_by_numbers(CodeHostingTable::PullRequests, repository, numbers), |found| {
+            Summary::count(found.len())
+        })
+    }
+
+    /// Counts the rows of a table for a repository that have no field `labelColors`. An earlier version of the package wrote
+    /// these rows, and a new read of the repository gives them their colors.
+    pub fn count_rows_without_label_colors(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows_without_label_colors", RequestKind::Query)
+            .choice("table", table.name())
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.count_rows_without_label_colors_inside(table, repository), |count| {
+            Summary::count(*count as usize)
+        })
+    }
+
+    /// The work of `count_rows_without_label_colors`, between the start event and the completion event of its request.
+    fn count_rows_without_label_colors_inside(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
+        self.connection
+            .query_row(
+                &format!(
+                    "SELECT COUNT(*) FROM {} WHERE repository = ?1 AND json_type(data, '$.labelColors') IS NULL",
+                    table.name()
+                ),
+                params![repository],
+                |row| row.get::<_, i64>(0),
+            )
+            .map_err(|error| format!("The rows without label colors cannot be counted: {error}"))
     }
 
     /// Runs one SQL statement and gives its rows. The SQLite functions on JSON work on the column `data`, for example
@@ -151,6 +332,12 @@ impl CodeHostingDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `query`, between the start event and the completion event of its request.
+    fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());
         }
@@ -167,6 +354,76 @@ impl CodeHostingDatabase {
             query_rows.push(query_row);
         }
         Ok(query_rows)
+    }
+
+    /// Reads the items of a table that were opened in a time range, the oldest first.
+    fn find_items_opened_between<T: DeserializeOwned>(
+        &self,
+        table: CodeHostingTable,
+        repository: &str,
+        since: &str,
+        until: &str,
+    ) -> Result<Vec<T>, String> {
+        let since = to_whole_second_text(since)?;
+        let until = to_whole_second_text(until)?;
+        if self.has_table(table.name())? == false {
+            return Ok(Vec::new());
+        }
+        let mut statement = self
+            .connection
+            .prepare(&format!(
+                "SELECT data FROM {} WHERE repository = ?1 AND json_extract(data, '$.createdAt') >= ?2
+                 AND json_extract(data, '$.createdAt') < ?3 ORDER BY json_extract(data, '$.createdAt'), number",
+                table.name()
+            ))
+            .map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+        let rows = statement
+            .query_map(params![repository, since, until], |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+        let mut items = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+            items.push(
+                serde_json::from_str::<T>(&data)
+                    .map_err(|error| format!("A row of {} is not what the table holds: {error}", table.name()))?,
+            );
+        }
+        Ok(items)
+    }
+
+    /// Reads the items of a table whose numbers are in `numbers`, in the order of their numbers.
+    fn find_items_by_numbers<T: DeserializeOwned>(
+        &self,
+        table: CodeHostingTable,
+        repository: &str,
+        numbers: &[i64],
+    ) -> Result<Vec<T>, String> {
+        if numbers.is_empty() || self.has_table(table.name())? == false {
+            return Ok(Vec::new());
+        }
+        let marks = vec!["?"; numbers.len()].join(", ");
+        let mut statement = self
+            .connection
+            .prepare(&format!(
+                "SELECT data FROM {} WHERE repository = ? AND number IN ({marks}) ORDER BY number",
+                table.name()
+            ))
+            .map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+        let values: Vec<rusqlite::types::Value> = std::iter::once(rusqlite::types::Value::Text(repository.to_string()))
+            .chain(numbers.iter().map(|number| rusqlite::types::Value::Integer(*number)))
+            .collect();
+        let rows = statement
+            .query_map(params_from_iter(values), |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+        let mut items = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The items of {} cannot be read: {error}", table.name()))?;
+            items.push(
+                serde_json::from_str::<T>(&data)
+                    .map_err(|error| format!("A row of {} is not what the table holds: {error}", table.name()))?,
+            );
+        }
+        Ok(items)
     }
 
     /// Writes rows in one transaction. A row is the number, the date of the last change, and the JSON text.
@@ -246,6 +503,59 @@ mod tests {
         assert_eq!(database.count_rows(CodeHostingTable::PullRequests, REPOSITORY), Ok(0));
         assert_eq!(database.find_last_updated_at(CodeHostingTable::Issues, REPOSITORY), Ok(None));
         assert_eq!(database.find_last_updated_at(CodeHostingTable::PullRequests, REPOSITORY), Ok(None));
+    }
+
+    /// An issue opened on the day `day`.
+    fn issue_opened_on(number: i64, day: u32) -> Issue {
+        Issue { created_at: date(day), ..issue(number) }
+    }
+
+    #[test]
+    fn finds_the_issues_and_the_pull_requests_opened_in_a_time_range_in_the_order_of_their_creation() {
+        let (_, mut database) = new_database("opened_between");
+        database.upsert_issues(REPOSITORY, &[issue_opened_on(3, 6), issue_opened_on(1, 2), issue_opened_on(2, 9)]).unwrap();
+        database
+            .upsert_pull_requests(REPOSITORY, &[PullRequest { created_at: date(4), ..pull_request(10) }])
+            .unwrap();
+        let issues = database.find_issues_opened_between(REPOSITORY, &date(2), &date(9)).unwrap();
+        assert_eq!(issues.iter().map(|issue| issue.number).collect::<Vec<_>>(), vec![1, 3]);
+        let pull_requests = database.find_pull_requests_opened_between(REPOSITORY, &date(1), &date(28)).unwrap();
+        assert_eq!(pull_requests.iter().map(|pull_request| pull_request.number).collect::<Vec<_>>(), vec![10]);
+        assert!(database.find_issues_opened_between("other-org/other", &date(1), &date(28)).unwrap().is_empty());
+    }
+
+    #[test]
+    fn reads_a_range_written_with_an_offset_and_refuses_a_text_that_is_not_a_time() {
+        let (_, mut database) = new_database("opened_between_offset");
+        database.upsert_issues(REPOSITORY, &[issue_opened_on(1, 2)]).unwrap();
+        // The issue was opened on the day 2 at 10:00:00 in UTC, which is 12:00:00 at +02:00.
+        assert_eq!(database.find_issues_opened_between(REPOSITORY, "2026-10-02T12:00:00+02:00", &date(3)).unwrap().len(), 1);
+        assert_eq!(database.find_issues_opened_between(REPOSITORY, "2026-10-02T12:00:00.500+02:00", &date(3)).unwrap().len(), 0);
+        assert!(database.find_issues_opened_between(REPOSITORY, "' OR '1'='1", &date(3)).is_err());
+    }
+
+    #[test]
+    fn finds_the_items_by_their_numbers_in_the_order_of_the_numbers() {
+        let (_, mut database) = new_database("by_numbers");
+        database.upsert_issues(REPOSITORY, &[issue(5), issue(2), issue(9)]).unwrap();
+        database.upsert_pull_requests(REPOSITORY, &[pull_request(7), pull_request(3)]).unwrap();
+        let issues = database.find_issues_by_numbers(REPOSITORY, &[9, 2, 100]).unwrap();
+        assert_eq!(issues.iter().map(|issue| issue.number).collect::<Vec<_>>(), vec![2, 9]);
+        let pull_requests = database.find_pull_requests_by_numbers(REPOSITORY, &[7, 3]).unwrap();
+        assert_eq!(pull_requests.iter().map(|pull_request| pull_request.number).collect::<Vec<_>>(), vec![3, 7]);
+        assert!(database.find_issues_by_numbers(REPOSITORY, &[]).unwrap().is_empty());
+    }
+
+    #[test]
+    fn counts_the_rows_that_an_earlier_version_wrote_without_label_colors() {
+        let (path, mut database) = new_database("without_colors");
+        database.upsert_issues(REPOSITORY, &[issue(1), issue(2)]).unwrap();
+        assert_eq!(database.count_rows_without_label_colors(CodeHostingTable::Issues, REPOSITORY), Ok(0));
+        let connection = Connection::open(&path).unwrap();
+        connection
+            .execute("UPDATE issues SET data = json_remove(data, '$.labelColors') WHERE number = 2", [])
+            .unwrap();
+        assert_eq!(database.count_rows_without_label_colors(CodeHostingTable::Issues, REPOSITORY), Ok(1));
     }
 
     #[test]

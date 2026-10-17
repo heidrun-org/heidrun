@@ -4,7 +4,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "id", "codingAgent", "title", "firstRecordAt", "lastRecordAt", "updatedAt", "userMessageCount", "tokens"
+    "id", "codingAgent", "title", "firstRecordAt", "lastRecordAt", "updatedAt", "userMessageCount", "tokens", "folder",
+    "firstMessages"
   ],
   "properties": {
     "id": { "type": "string", "minLength": 1, "description": "The name of the chat session file of Claude Code, or the identifier of the chat session of Codex." },
@@ -14,6 +15,12 @@
     "lastRecordAt": { "type": ["string", "null"], "format": "date-time", "description": "The date of the last record that has a date." },
     "updatedAt": { "type": "string", "format": "date-time", "description": "The date of the last change of the chat session file." },
     "userMessageCount": { "type": "integer", "minimum": 0, "description": "The number of messages that the developer typed." },
+    "folder": { "type": "string", "description": "The root folder of the workspace whose chat session list holds the chat session: the folder where the coding agent started it." },
+    "firstMessages": {
+      "type": "array",
+      "description": "The text of the first messages that the developer typed, at most three of them, each one on one line.",
+      "items": { "type": "string" }
+    },
     "tokens": {
       "type": "array",
       "description": "The tokens of the chat session, for each model. A request without a known model has the model name empty.",

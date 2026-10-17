@@ -351,16 +351,27 @@ describe("UserActivityTab: the workspaces", () => {
     recordOf(OPEN_FOLDER, 10 * 60_000, 60_000),
   ];
 
-  it("has a Bootstrap checkbox button for All workspaces and for each workspace, all of them chosen at first", async () => {
+  it("has a radio button group with All and None, then a group with a checkbox button for each workspace, all chosen at first", async () => {
     const { wrapper } = await mountUserActivityTab(records());
+    const every = buttonsOf(wrapper, "All or none of the workspaces");
+    expect(every.map((button) => [button.text, button.isChecked])).toEqual([
+      ["All", true],
+      ["None", false],
+    ]);
+    for (const button of every) {
+      expect(button.input.attributes("type")).toBe("radio");
+      expect(button.input.attributes("name")).toBe("statistics-workspace-every");
+    }
     const buttons = buttonsOf(wrapper, "Workspaces");
     expect(buttons.map((button) => [button.text, button.isChecked])).toEqual([
-      ["All workspaces", true],
       ["Heidrun app", true],
       ["old_experiment", true],
     ]);
     for (const button of buttons) {
       expect(button.input.attributes("type")).toBe("checkbox");
+    }
+    for (const label of ["All or none of the workspaces", "Workspaces"]) {
+      expect(wrapper.get(`[role="group"][aria-label="${label}"]`).classes()).toEqual(expect.arrayContaining(["btn-group", "btn-group-sm"]));
     }
     expect(wrapper.get("label[title*='/work/old_experiment']").text()).toBe("old_experiment");
   });
@@ -372,34 +383,36 @@ describe("UserActivityTab: the workspaces", () => {
     await wrapper.get("#statistics-workspace-1").setValue(false);
     await waitForDrawings(2);
     expect(sumOfBars()).toBeCloseTo(4, 5);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([false, true, false]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, false]);
     await wrapper.get("#statistics-workspace-1").setValue(true);
     await wrapper.get("#statistics-workspace-0").setValue(false);
     await waitForDrawings(4);
     expect(sumOfBars()).toBeCloseTo(2, 5);
   });
 
-  it("shows no workspace when All workspaces is unchosen, and every workspace again when it is chosen", async () => {
+  it("shows no workspace when None is chosen, and every workspace again when All is chosen", async () => {
     const { wrapper } = await mountUserActivityTab(records());
     await waitForDrawings(1);
-    await wrapper.get("#statistics-workspace-all").setValue(false);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([false, false, false]);
+    await wrapper.get("#statistics-workspace-none").setValue(true);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([false, false]);
+    expect(buttonsOf(wrapper, "All or none of the workspaces").map((button) => button.isChecked)).toEqual([false, true]);
     expect(wrapper.text()).toContain("No workspace is chosen");
     expect(plotly.purge).toHaveBeenCalled();
     await wrapper.get("#statistics-workspace-all").setValue(true);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, true, true]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, true]);
+    expect(buttonsOf(wrapper, "All or none of the workspaces").map((button) => button.isChecked)).toEqual([true, false]);
     expect(wrapper.text()).not.toContain("No workspace is chosen");
     await waitForDrawings(2);
     expect(sumOfBars()).toBeCloseTo(6, 5);
   });
 
-  it("chooses every workspace again when All workspaces is clicked while a workspace is hidden", async () => {
+  it("chooses every workspace again when All is clicked while a workspace is hidden, and shows neither All nor None as chosen before", async () => {
     const { wrapper } = await mountUserActivityTab(records());
     await waitForDrawings(1);
     await wrapper.get("#statistics-workspace-1").setValue(false);
-    expect(buttonsOf(wrapper, "Workspaces")[0].isChecked).toBe(false);
+    expect(buttonsOf(wrapper, "All or none of the workspaces").map((button) => button.isChecked)).toEqual([false, false]);
     await wrapper.get("#statistics-workspace-all").setValue(true);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, true, true]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, true]);
   });
 
   it("keeps the choice of the workspaces when the time range and the slot length change", async () => {
@@ -408,7 +421,7 @@ describe("UserActivityTab: the workspaces", () => {
     await wrapper.get("#statistics-workspace-1").setValue(false);
     await wrapper.get("#statistics-range-week").setValue(true);
     await chooseSlotLength(wrapper, "six_hours", 4);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([false, true, false]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.isChecked)).toEqual([true, false]);
     expect(sumOfBars()).toBeCloseTo(4 / 60, 5);
   });
 
@@ -423,12 +436,12 @@ describe("UserActivityTab: the workspaces", () => {
 
   it("lists the workspace of the running active period even when it has no record", async () => {
     const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)], 30_000);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["All workspaces", "Heidrun app", "old_experiment"]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["Heidrun app", "old_experiment"]);
   });
 
   it("does not list the selected workspace when it has no record and no active period runs", async () => {
     const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)]);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["All workspaces", "old_experiment"]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["old_experiment"]);
   });
 
   it("has no button of workspace when there is no record and no running active period, and it still draws the chart", async () => {

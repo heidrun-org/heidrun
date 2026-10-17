@@ -71,6 +71,15 @@ pub struct ChatSession {
     pub user_message_count: u32,
     /// The tokens of the chat session for each model, sorted by the name of the model.
     pub tokens: Vec<ModelTokens>,
+    /// The root folder of the workspace whose chat session list holds this chat session: the folder where the coding agent
+    /// started it. A chat session file that two folders hold belongs to the folder of its newest file. It is an empty text in a
+    /// row that an earlier version of the package wrote.
+    #[serde(default)]
+    pub folder: String,
+    /// The text of the first messages that the developer typed, at most three of them, each one on one line. It is empty in a
+    /// row that an earlier version of the package wrote.
+    #[serde(default)]
+    pub first_messages: Vec<String>,
 }
 
 /// What one chat session is linked to. The database stores each list in its own link table, one row for each value, and the

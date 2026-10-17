@@ -176,3 +176,7 @@ Run these commands from the root of the repository.
 pnpm --silent data_layer:code_hosting --help      # show the help
 pnpm --filter data_layer_code_hosting test        # run the Rust tests (cargo test)
 ```
+
+## Request log
+
+Every public operation of this package writes a start line and an end line in the request log of the data layer, with the library [request_log](../../auxiliary/request_log/README.md): the package `code_hosting`, the operation, the parameters that decide the workload, the duration, and the outcome. A synchronization, its collection, its writes, and its lock appear as nested requests. The command `heidrun_data requests summary` shows the usage patterns and the durations, and `heidrun_data requests replay` runs a recorded request again. The log never changes a result and never holds a secret. The description is in [data_layer_request_log.md](../../../docs/statistics/data_layer_request_log.md).

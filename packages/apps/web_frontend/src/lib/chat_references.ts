@@ -145,3 +145,24 @@ export function referenceLabelStyle(color: string | null): Record<string, string
 export function referenceDay(createdAt: number | null): string {
   return createdAt === null ? "" : dayText(new Date(createdAt), new Date());
 }
+
+/**
+ * The time of a date in the text that a forge gives.
+ * @param text - the date, an ISO 8601 text, or nothing
+ * @returns the time in milliseconds since 1970, or null when there is no valid date
+ */
+export function chatReferenceTimeOf(text: string | undefined | null): number | null {
+  return text === undefined || text === null ? null : Date.parse(text) || null;
+}
+
+/**
+ * The address of the picture of a person on GitHub. GitHub gives the picture of a person at `https://github.com/<login>.png`.
+ * @param login - the login of the person, or nothing
+ * @returns the address, or null when there is no login or the login is not a login of a person (for example "app/name")
+ */
+export function githubAvatarUrl(login: string | undefined): string | null {
+  if (login === undefined || /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(login) === false) {
+    return null;
+  }
+  return `https://github.com/${login}.png?size=48`;
+}

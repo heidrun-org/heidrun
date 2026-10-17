@@ -22,4 +22,8 @@ serde_json = { version = "1", features = ["preserve_order"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
 # Checks a commit against its JSON schema
 jsonschema = { version = "0.58", default-features = false }
+# Turns a time with a time zone offset into a time in UTC
+chrono = { version = "0.4", default-features = false, features = ["std"] }
 dirs = "6"
+# Records the start and the end of each public operation in the log of the requests of the data layer
+request_log = { path = "../../auxiliary/request_log" }

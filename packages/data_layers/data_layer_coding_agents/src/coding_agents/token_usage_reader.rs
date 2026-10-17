@@ -27,6 +27,8 @@ use crate::model::token_usage_types::{ChatTokenUsage, MinuteTokens};
 use crate::model::types::CodingAgent;
 use std::collections::HashMap;
 use std::path::Path;
+use crate::REQUEST_PACKAGE;
+use request_log::{record_value, RequestKind, RequestSpec, Summary};
 
 /// Where the chat session files are, and the cache of their scans.
 pub struct TokenUsageFiles<'a> {
@@ -42,6 +44,20 @@ pub struct TokenUsageFiles<'a> {
 /// whose files all changed before `modified_since` (milliseconds since 1970) is not read. `log` receives one line of progress
 /// for each coding agent.
 pub fn read_token_usage(
+    files: &mut TokenUsageFiles,
+    folder: &str,
+    modified_since: Option<i64>,
+    log: &dyn Fn(&str),
+) -> Vec<ChatTokenUsage> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_token_usage", RequestKind::Collection)
+        .parameter("folder", folder)
+        .parameter("modifiedSince", modified_since)
+        .state("scanCacheEntries", files.cache.scan_count());
+    record_value(spec, || read_token_usage_inside(files, folder, modified_since, log), |usages| Summary::count(usages.len()))
+}
+
+/// The work of `read_token_usage`, between the start event and the completion event of its request.
+fn read_token_usage_inside(
     files: &mut TokenUsageFiles,
     folder: &str,
     modified_since: Option<i64>,

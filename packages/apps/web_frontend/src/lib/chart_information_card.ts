@@ -69,8 +69,9 @@ export const CHART_MARGIN = {
 export const CHART_BAR_GAP = 0.15;
 
 /**
- * The legend of every chart: one line above the plotting area, with the name of each color. A click on the legend does
- * nothing, because the choices of the window decide which series the chart shows.
+ * The legend of every chart: one line above the plotting area, with the name of each color. Plotly.js does nothing by
+ * itself on a click on the legend, because the choices of the window decide which series the chart shows. A chart can
+ * still read the event `plotly_legendclick`, as `StackedBarChart.vue` does to filter its colors.
  */
 export const CHART_LEGEND: Partial<Legend> = {
 	orientation: "h",

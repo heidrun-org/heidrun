@@ -14,7 +14,18 @@ use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, 
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension, Transaction};
 use serde_json::Value;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
+
+/// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
+const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// The statement that creates the index of the folder: the list of the chat sessions of a workspace reads the rows of one
+/// folder, whatever the repository key of the rows is.
+const FOLDER_INDEX_STATEMENT: &str = "CREATE INDEX IF NOT EXISTS chat_sessions_folder
+    ON chat_sessions (json_extract(data, '$.folder'))";
 
 /// The SQLite file of the chat sessions data layer.
 pub struct ChatSessionsDatabase {
@@ -44,6 +55,9 @@ impl ChatSessionsDatabase {
                 .execute_batch(&create_table_statement(table))
                 .map_err(|error| format!("The table {} cannot be created: {error}", table.name()))?;
         }
+        connection
+            .execute_batch(FOLDER_INDEX_STATEMENT)
+            .map_err(|error| format!("The index of the folders cannot be created: {error}"))?;
         Ok(ChatSessionsDatabase { database_path: database_path.to_path_buf(), is_read_only: false, connection })
     }
 
@@ -60,6 +74,9 @@ impl ChatSessionsDatabase {
         }
         let connection = Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|error| format!("The database file {} cannot be opened: {error}", database_path.display()))?;
+        connection
+            .busy_timeout(READ_WAITING_TIME)
+            .map_err(|error| format!("The waiting time of the database file cannot be set: {error}"))?;
         Ok(ChatSessionsDatabase { database_path: database_path.to_path_buf(), is_read_only: true, connection })
     }
 
@@ -75,6 +92,15 @@ impl ChatSessionsDatabase {
     /// # Errors
     /// An error when one chat session does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_chat_sessions(&mut self, repository: &str, records: &[ChatSessionRecord]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_chat_sessions", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("chatSessionCount", records.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_chat_sessions_inside(repository, records), |_| Summary::count(records.len()))
+    }
+
+    /// The work of `upsert_chat_sessions`, between the start event and the completion event of its request.
+    fn upsert_chat_sessions_inside(&mut self, repository: &str, records: &[ChatSessionRecord]) -> Result<(), String> {
         if self.is_read_only {
             return Err("A write needs a database that is not open read only.".to_string());
         }
@@ -95,6 +121,14 @@ impl ChatSessionsDatabase {
     ///
     /// Returns `None` when the table has no row for the repository.
     pub fn find_last_updated_at(&self, repository: &str) -> Result<Option<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_last_updated_at", RequestKind::Query)
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.find_last_updated_at_inside(repository), |date| Summary::count(usize::from(date.is_some())))
+    }
+
+    /// The work of `find_last_updated_at`, between the start event and the completion event of its request.
+    fn find_last_updated_at_inside(&self, repository: &str) -> Result<Option<String>, String> {
         self.connection
             .query_row(
                 "SELECT MAX(updatedAt) FROM chat_sessions WHERE repository = ?1",
@@ -104,8 +138,199 @@ impl ChatSessionsDatabase {
             .map_err(|error| format!("The last date of change cannot be read: {error}"))
     }
 
+    /// Finds the date of the last read of one folder: the largest value of the column `updatedAt` among the chat sessions of the
+    /// repository whose folder is `folder`. Returns `None` when the folder has no chat session in the table.
+    pub fn find_last_updated_at_in_folder(&self, repository: &str, folder: &str) -> Result<Option<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_last_updated_at_in_folder", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("folder", folder)
+            .database(&self.database_path);
+        record(spec, || self.find_last_updated_at_in_folder_inside(repository, folder), |date| {
+            Summary::count(usize::from(date.is_some()))
+        })
+    }
+
+    /// The work of `find_last_updated_at_in_folder`, between the start event and the completion event of its request.
+    fn find_last_updated_at_in_folder_inside(&self, repository: &str, folder: &str) -> Result<Option<String>, String> {
+        self.connection
+            .query_row(
+                "SELECT MAX(updatedAt) FROM chat_sessions WHERE repository = ?1 AND json_extract(data, '$.folder') = ?2",
+                params![repository, folder],
+                |row| row.get::<_, Option<String>>(0),
+            )
+            .map_err(|error| format!("The last date of change of the folder cannot be read: {error}"))
+    }
+
+    /// True when the file holds the table `chat_sessions`. A file that another data layer created has none until the first
+    /// refresh of the chat sessions.
+    pub fn has_chat_sessions_table(&self) -> Result<bool, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "has_chat_sessions_table", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.has_chat_sessions_table_inside(), |is_found| Summary::count(usize::from(*is_found)))
+    }
+
+    /// The work of `has_chat_sessions_table`, between the start event and the completion event of its request.
+    fn has_chat_sessions_table_inside(&self) -> Result<bool, String> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'chat_sessions'", [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .map(|count| count > 0)
+            .map_err(|error| format!("The tables of the file cannot be listed: {error}"))
+    }
+
+    /// Reads the chat sessions whose folder is `folder`, sorted by identifier. The repository key of the rows does not matter: a
+    /// folder is one workspace, and the refresh of the workspace deletes the rows that an earlier key left.
+    ///
+    /// # Errors
+    /// An error when a row is not a chat session.
+    pub fn find_chat_sessions_in_folder(&self, folder: &str) -> Result<Vec<ChatSession>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_chat_sessions_in_folder", RequestKind::Query)
+            .parameter("folder", folder)
+            .database(&self.database_path);
+        record(spec, || self.find_chat_sessions_in_folder_inside(folder), |sessions| Summary::count(sessions.len()))
+    }
+
+    /// The work of `find_chat_sessions_in_folder`, between the start event and the completion event of its request.
+    fn find_chat_sessions_in_folder_inside(&self, folder: &str) -> Result<Vec<ChatSession>, String> {
+        let mut statement = self
+            .connection
+            .prepare("SELECT data FROM chat_sessions WHERE json_extract(data, '$.folder') = ?1 ORDER BY id")
+            .map_err(|error| format!("The chat sessions of the folder cannot be read: {error}"))?;
+        let rows = statement
+            .query_map(params![folder], |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The chat sessions of the folder cannot be read: {error}"))?;
+        let mut chat_sessions = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The chat sessions of the folder cannot be read: {error}"))?;
+            chat_sessions.push(
+                serde_json::from_str::<ChatSession>(&data)
+                    .map_err(|error| format!("A row of chat_sessions is not a chat session: {error}"))?,
+            );
+        }
+        Ok(chat_sessions)
+    }
+
+    /// Reads the relations of every chat session whose folder is `folder`, from the four link tables, with the identifier of the
+    /// chat session as the key. A chat session without a relation has no entry.
+    pub fn find_relations_in_folder(&self, folder: &str) -> Result<HashMap<String, ChatSessionRelations>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_relations_in_folder", RequestKind::Query)
+            .parameter("folder", folder)
+            .database(&self.database_path);
+        record(spec, || self.find_relations_in_folder_inside(folder), |relations| Summary::count(relations.len()))
+    }
+
+    /// The work of `find_relations_in_folder`, between the start event and the completion event of its request.
+    fn find_relations_in_folder_inside(&self, folder: &str) -> Result<HashMap<String, ChatSessionRelations>, String> {
+        let mut relations: HashMap<String, ChatSessionRelations> = HashMap::new();
+        for table in ChatSessionTable::LINKS {
+            let column = table.value_column().ok_or("The table chat_sessions is not a link table.")?;
+            let mut statement = self
+                .connection
+                .prepare(&format!(
+                    "SELECT link.chatSessionId, link.{column} FROM {} link
+                     JOIN chat_sessions session ON session.repository = link.repository AND session.id = link.chatSessionId
+                     WHERE json_extract(session.data, '$.folder') = ?1
+                     ORDER BY link.chatSessionId, link.{column}",
+                    table.name()
+                ))
+                .map_err(|error| format!("The links of the folder cannot be read: {error}"))?;
+            let mut rows = statement
+                .query(params![folder])
+                .map_err(|error| format!("The links of the folder cannot be read: {error}"))?;
+            while let Some(row) = rows.next().map_err(|error| format!("The links of the folder cannot be read: {error}"))? {
+                let read_error = |error: rusqlite::Error| format!("The links of the folder cannot be read: {error}");
+                let id: String = row.get(0).map_err(read_error)?;
+                let entry = relations.entry(id).or_default();
+                match table {
+                    ChatSessionTable::Folders => entry.folders.push(row.get(1).map_err(read_error)?),
+                    ChatSessionTable::Issues => entry.issues.push(row.get(1).map_err(read_error)?),
+                    ChatSessionTable::PullRequests => entry.pull_requests.push(row.get(1).map_err(read_error)?),
+                    ChatSessionTable::FilesWritten => entry.files_written.push(row.get(1).map_err(read_error)?),
+                    ChatSessionTable::ChatSessions => {}
+                }
+            }
+        }
+        Ok(relations)
+    }
+
+    /// Deletes the chat sessions whose folder is `folder` and that are not the chat sessions `kept_ids` of the repository, with
+    /// their link rows. A row that an earlier repository key of the folder left is deleted too. Returns the number of chat
+    /// sessions deleted.
+    ///
+    /// # Errors
+    /// An error when the file is open read only, or when a row cannot be deleted.
+    pub fn delete_chat_sessions_not_in(
+        &mut self,
+        repository: &str,
+        folder: &str,
+        kept_ids: &HashSet<String>,
+    ) -> Result<usize, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "delete_chat_sessions_not_in", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("folder", folder)
+            .parameter("keptCount", kept_ids.len())
+            .database(&self.database_path);
+        record(spec, || self.delete_chat_sessions_not_in_inside(repository, folder, kept_ids), |count| {
+            Summary::count(*count)
+        })
+    }
+
+    /// The work of `delete_chat_sessions_not_in`, between the start event and the completion event of its request.
+    fn delete_chat_sessions_not_in_inside(
+        &mut self,
+        repository: &str,
+        folder: &str,
+        kept_ids: &HashSet<String>,
+    ) -> Result<usize, String> {
+        if self.is_read_only {
+            return Err("A write needs a database that is not open read only.".to_string());
+        }
+        let stored: Vec<(String, String)> = {
+            let mut statement = self
+                .connection
+                .prepare("SELECT repository, id FROM chat_sessions WHERE json_extract(data, '$.folder') = ?1")
+                .map_err(|error| format!("The chat sessions of the folder cannot be listed: {error}"))?;
+            let rows = statement
+                .query_map(params![folder], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)))
+                .map_err(|error| format!("The chat sessions of the folder cannot be listed: {error}"))?;
+            rows.collect::<rusqlite::Result<Vec<(String, String)>>>()
+                .map_err(|error| format!("The chat sessions of the folder cannot be listed: {error}"))?
+        };
+        let removed: Vec<&(String, String)> =
+            stored.iter().filter(|(stored_repository, id)| stored_repository != repository || !kept_ids.contains(id)).collect();
+        if removed.is_empty() {
+            return Ok(0);
+        }
+        let transaction =
+            self.connection.transaction().map_err(|error| format!("The transaction cannot start: {error}"))?;
+        for (stored_repository, id) in &removed {
+            for table in ChatSessionTable::LINKS {
+                transaction
+                    .execute(
+                        &format!("DELETE FROM {} WHERE repository = ?1 AND chatSessionId = ?2", table.name()),
+                        params![stored_repository, id],
+                    )
+                    .map_err(|error| format!("The links of the chat session {id} cannot be deleted: {error}"))?;
+            }
+            transaction
+                .execute("DELETE FROM chat_sessions WHERE repository = ?1 AND id = ?2", params![stored_repository, id])
+                .map_err(|error| format!("The chat session {id} cannot be deleted: {error}"))?;
+        }
+        transaction.commit().map_err(|error| format!("The transaction cannot end: {error}"))?;
+        Ok(removed.len())
+    }
+
     /// Counts the rows of a table for a repository.
     pub fn count_rows(&self, table: ChatSessionTable, repository: &str) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows", RequestKind::Query)
+            .choice("table", table.name())
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.count_rows_inside(table, repository), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_rows`, between the start event and the completion event of its request.
+    fn count_rows_inside(&self, table: ChatSessionTable, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row(
                 &format!("SELECT COUNT(*) FROM {} WHERE repository = ?1", table.name()),
@@ -117,6 +342,15 @@ impl ChatSessionsDatabase {
 
     /// Reads one chat session. Returns `None` when the table has no such row.
     pub fn find_chat_session(&self, repository: &str, id: &str) -> Result<Option<ChatSession>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_chat_session", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("id", id)
+            .database(&self.database_path);
+        record(spec, || self.find_chat_session_inside(repository, id), |found| Summary::count(usize::from(found.is_some())))
+    }
+
+    /// The work of `find_chat_session`, between the start event and the completion event of its request.
+    fn find_chat_session_inside(&self, repository: &str, id: &str) -> Result<Option<ChatSession>, String> {
         let data = self
             .connection
             .query_row(
@@ -136,6 +370,17 @@ impl ChatSessionsDatabase {
 
     /// Reads the relations of one chat session from the four link tables, each list sorted by value.
     pub fn find_relations(&self, repository: &str, id: &str) -> Result<ChatSessionRelations, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_relations", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("id", id)
+            .database(&self.database_path);
+        record(spec, || self.find_relations_inside(repository, id), |relations| {
+            Summary::count(relations.folders.len() + relations.issues.len() + relations.pull_requests.len())
+        })
+    }
+
+    /// The work of `find_relations`, between the start event and the completion event of its request.
+    fn find_relations_inside(&self, repository: &str, id: &str) -> Result<ChatSessionRelations, String> {
         Ok(ChatSessionRelations {
             folders: self.find_link_texts(ChatSessionTable::Folders, repository, id)?,
             issues: self.find_link_numbers(ChatSessionTable::Issues, repository, id)?,
@@ -151,6 +396,12 @@ impl ChatSessionsDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `query`, between the start event and the completion event of its request.
+    fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());
         }
@@ -386,6 +637,116 @@ mod tests {
         database.upsert_chat_sessions(REPOSITORY, &records).unwrap();
         assert_eq!(database.find_last_updated_at(REPOSITORY), Ok(Some(date(9))));
         assert_eq!(database.find_last_updated_at("other/repository"), Ok(None));
+    }
+
+    /// A record of the chat session `id` that belongs to the folder `folder`.
+    fn record_in(id: &str, folder: &str, updated_day: u32) -> ChatSessionRecord {
+        let mut record = chat_session_record(id);
+        record.chat_session.folder = folder.to_string();
+        record.chat_session.updated_at = date(updated_day);
+        record
+    }
+
+    #[test]
+    fn reads_the_chat_sessions_and_the_relations_of_one_folder_only() {
+        let (_, mut database) = new_database("folder_read");
+        let mut other = record_in("other", "/work/other", 3);
+        other.relations.issues = vec![1];
+        database
+            .upsert_chat_sessions(REPOSITORY, &[record_in("b", "/work/app", 2), record_in("a", "/work/app", 4), other])
+            .unwrap();
+        let sessions = database.find_chat_sessions_in_folder("/work/app").unwrap();
+        assert_eq!(sessions.iter().map(|session| session.id.as_str()).collect::<Vec<_>>(), vec!["a", "b"]);
+        let relations = database.find_relations_in_folder("/work/app").unwrap();
+        assert_eq!(relations.len(), 2);
+        assert_eq!(relations["a"].issues, vec![250, 251]);
+        assert_eq!(relations["a"].files_written, vec!["/work/app/a.ts", "/work/app/b.ts"]);
+        assert!(database.find_chat_sessions_in_folder("/work/nothing").unwrap().is_empty());
+    }
+
+    #[test]
+    fn finds_the_date_of_the_last_read_of_each_folder() {
+        let (_, mut database) = new_database("folder_date");
+        database
+            .upsert_chat_sessions(REPOSITORY, &[record_in("a", "/work/app", 4), record_in("b", "/work/app", 2), record_in("c", "/work/doc", 9)])
+            .unwrap();
+        assert_eq!(database.find_last_updated_at_in_folder(REPOSITORY, "/work/app"), Ok(Some(date(4))));
+        assert_eq!(database.find_last_updated_at_in_folder(REPOSITORY, "/work/doc"), Ok(Some(date(9))));
+        assert_eq!(database.find_last_updated_at_in_folder(REPOSITORY, "/work/none"), Ok(None));
+    }
+
+    #[test]
+    fn deletes_the_chat_sessions_of_a_folder_that_are_not_kept_with_their_links_and_touches_nothing_else() {
+        let (_, mut database) = new_database("folder_delete");
+        database
+            .upsert_chat_sessions(
+                REPOSITORY,
+                &[record_in("keep", "/work/app", 2), record_in("gone", "/work/app", 3), record_in("elsewhere", "/work/doc", 3)],
+            )
+            .unwrap();
+        let kept: HashSet<String> = ["keep".to_string()].into();
+        assert_eq!(database.delete_chat_sessions_not_in(REPOSITORY, "/work/app", &kept), Ok(1));
+        assert_eq!(database.find_chat_session(REPOSITORY, "gone"), Ok(None));
+        assert!(database.find_chat_session(REPOSITORY, "keep").unwrap().is_some());
+        assert!(database.find_chat_session(REPOSITORY, "elsewhere").unwrap().is_some());
+        assert_eq!(database.find_relations(REPOSITORY, "gone"), Ok(ChatSessionRelations::default()));
+        assert_eq!(database.count_rows(ChatSessionTable::Issues, REPOSITORY), Ok(4));
+        assert_eq!(database.delete_chat_sessions_not_in(REPOSITORY, "/work/app", &kept), Ok(0));
+    }
+
+    #[test]
+    fn deletes_the_rows_that_an_earlier_repository_key_of_the_folder_left() {
+        let (_, mut database) = new_database("folder_old_key");
+        database.upsert_chat_sessions("old-owner/old-name", &[record_in("a", "/work/app", 2)]).unwrap();
+        database.upsert_chat_sessions(REPOSITORY, &[record_in("a", "/work/app", 2)]).unwrap();
+        assert_eq!(database.find_chat_sessions_in_folder("/work/app").unwrap().len(), 2);
+        let kept: HashSet<String> = ["a".to_string()].into();
+        assert_eq!(database.delete_chat_sessions_not_in(REPOSITORY, "/work/app", &kept), Ok(1));
+        assert_eq!(database.find_chat_sessions_in_folder("/work/app").unwrap().len(), 1);
+        assert_eq!(database.count_rows(ChatSessionTable::ChatSessions, "old-owner/old-name"), Ok(0));
+        assert_eq!(database.count_rows(ChatSessionTable::Issues, "old-owner/old-name"), Ok(0));
+    }
+
+    #[test]
+    fn reads_a_row_that_an_earlier_version_wrote_without_a_folder_and_without_first_messages() {
+        let (path, database) = new_database("old_row");
+        Connection::open(&path)
+            .unwrap()
+            .execute(
+                "INSERT INTO chat_sessions (repository, id, updatedAt, data) VALUES (?1, 'old', ?2, ?3)",
+                params![
+                    REPOSITORY,
+                    date(2),
+                    r#"{"id":"old","codingAgent":"CODEX","title":"Old","firstRecordAt":null,"lastRecordAt":null,"updatedAt":"2026-10-02T10:00:00Z","userMessageCount":0,"tokens":[]}"#
+                ],
+            )
+            .unwrap();
+        let session = database.find_chat_session(REPOSITORY, "old").unwrap().unwrap();
+        assert_eq!((session.folder.as_str(), session.first_messages.len()), ("", 0));
+        assert!(database.find_chat_sessions_in_folder("/work/app").unwrap().is_empty());
+        assert_eq!(database.has_chat_sessions_table(), Ok(true));
+    }
+
+    #[test]
+    fn tells_that_a_file_of_another_data_layer_has_no_table_of_chat_sessions() {
+        let folder = temp_folder("no_table");
+        let path = folder.join("other.sqlite");
+        Connection::open(&path).unwrap().execute_batch("CREATE TABLE other (a TEXT)").unwrap();
+        assert_eq!(ChatSessionsDatabase::open_read_only(&path).unwrap().has_chat_sessions_table(), Ok(false));
+    }
+
+    #[test]
+    fn uses_the_index_of_the_folder_to_read_the_chat_sessions_of_a_folder() {
+        let (path, _) = new_database("folder_index");
+        let connection = Connection::open(&path).unwrap();
+        let mut statement = connection
+            .prepare(
+                "EXPLAIN QUERY PLAN SELECT data FROM chat_sessions WHERE json_extract(data, '$.folder') = 'b'",
+            )
+            .unwrap();
+        let plan: Vec<String> =
+            statement.query_map([], |row| row.get::<_, String>(3)).unwrap().map(|detail| detail.unwrap()).collect();
+        assert!(plan.iter().any(|detail| detail.contains("chat_sessions_folder")), "{plan:?}");
     }
 
     #[test]

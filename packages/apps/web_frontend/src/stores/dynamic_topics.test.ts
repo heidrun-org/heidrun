@@ -26,23 +26,42 @@ function chat(id: string, parts: { title?: string; lastAt?: number; issues?: num
   };
 }
 
-/** The calls of the Tauri command `forge_cli_cached`, which is the only command that the keyword method uses. */
+/** The calls of the Tauri command `chat_references_find`, which reads the stored title of an issue. */
 function forgeCalls() {
-  return vi.mocked(invoke).mock.calls.filter(([command]) => command === "forge_cli_cached");
+  return vi.mocked(invoke).mock.calls.filter(([command]) => command === "chat_references_find");
 }
 
-/** Makes the command `forge_cli_cached` answer the title of each issue from `titles`, and fail for another issue. */
+/** The numbers of the issues that the calls of `chat_references_find` asked for, in the order of the calls. */
+function askedIssueNumbers() {
+  return forgeCalls().map((call) => String((call[1] as { issues: number[] }).issues[0]));
+}
+
+/**
+ * Makes the Tauri commands of the stored issues answer: `chat_references_synchronize` gives the repository, and
+ * `chat_references_find` gives the title of each issue from `titles`, and no row for another issue.
+ */
 function forgeAnswers(titles: Record<number, string>) {
   vi.mocked(invoke).mockImplementation(async (command, args) => {
-    if (command !== "forge_cli_cached") {
+    if (command === "chat_references_synchronize") {
+      return { repository: "owner/name", codeHostingError: null };
+    }
+    if (command !== "chat_references_find") {
       return undefined;
     }
-    const forgeArgs = (args as { args: string[] }).args;
-    const title = titles[Number(forgeArgs[2])];
-    if (title === undefined) {
-      throw new Error("not found");
-    }
-    return JSON.stringify({ title, state: "OPEN", body: "", labels: [], author: { login: "me" }, createdAt: "2026-10-11T10:00:00Z" });
+    const numbers = (args as { issues: number[] }).issues;
+    const issues = numbers
+      .filter((number) => titles[number] !== undefined)
+      .map((number) => ({
+        number,
+        title: titles[number],
+        body: "",
+        state: "OPEN",
+        author: "me",
+        labels: [],
+        labelColors: {},
+        createdAt: "2026-10-11T10:00:00Z",
+      }));
+    return { issues, pullRequests: [] };
   });
 }
 
@@ -71,15 +90,15 @@ describe("prepareKeywordTopics", () => {
     });
   });
 
-  it("reads the title of each issue on the forge with the Tauri command forge_cli_cached, and makes the entry again with the titles", async () => {
+  it("reads the stored title of each issue with the Tauri command chat_references_find, and makes the entry again with the titles", async () => {
     forgeAnswers({ 260: "Add dynamic topics" });
     const store = await startRun();
     await store.prepareKeywordTopics([chat("a", { title: "Sidebar", issues: [260] })], CONTEXT);
     expect(forgeCalls()).toHaveLength(1);
-    expect(invoke).toHaveBeenCalledWith("forge_cli_cached", {
-      cwd: "/work/app",
-      tool: "gh",
-      args: ["issue", "view", "260", "--json", "title,state,body,labels,author,createdAt"],
+    expect(invoke).toHaveBeenCalledWith("chat_references_find", {
+      repository: "owner/name",
+      issues: [260],
+      pullRequests: [],
     });
     expect(store.keywordEntries.a).toEqual({
       lastAt: 100,
@@ -142,7 +161,7 @@ describe("prepareKeywordTopics", () => {
     forgeAnswers({ 3: "Three", 4: "Four", 5: "Five" });
     const store = await startRun();
     await store.prepareKeywordTopics([chat("a", { issues: [1, 2, 3, 4, 5] })], CONTEXT);
-    expect(forgeCalls().map((call) => (call[1] as { args: string[] }).args[2]).sort()).toEqual(["3", "4", "5"]);
+    expect(askedIssueNumbers().sort()).toEqual(["3", "4", "5"]);
   });
 
   it("makes no entry and reads nothing on the forge while the option Dynamic topics is off", async () => {

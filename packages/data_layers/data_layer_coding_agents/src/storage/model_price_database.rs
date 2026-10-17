@@ -18,6 +18,8 @@ use crate::storage::token_usage_schema::create_all;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 
 /// How long a version of the prices stays fresh after a check, in milliseconds: one day.
 pub const PRICE_FRESH_MILLISECONDS: i64 = 24 * 60 * 60 * 1000;
@@ -67,8 +69,24 @@ impl ModelPriceDatabase {
         &self.database_path
     }
 
-    /// The latest version of the prices, or `None` when the file holds no price.
+    /// The latest version of the prices, or `None` when the file holds no price. The file is shared by the packages of the data
+    /// layer, so it can exist before the package wrote its price tables: it then holds no price.
     pub fn find_latest_version(&self) -> Result<Option<PriceVersion>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_latest_price_version", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.find_latest_version_inside(), |found| Summary::count(usize::from(found.is_some())))
+    }
+
+    /// The work of `find_latest_version`, between the start event and the completion event of its request.
+    fn find_latest_version_inside(&self) -> Result<Option<PriceVersion>, String> {
+        let has_versions_table = self
+            .connection
+            .query_row("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'model_price_versions'", [], |_| Ok(()))
+            .optional()
+            .map_err(|error| format!("The tables of the database cannot be read: {error}"))?
+            .is_some();
+        if has_versions_table == false {
+            return Ok(None);
+        }
         self.connection
             .query_row(
                 "SELECT version, retrievedAt, checkedAt, source, unit, contentHash, modelCount
@@ -92,6 +110,12 @@ impl ModelPriceDatabase {
 
     /// The prices of the latest version. The table has no price and no version when the file holds no price.
     pub fn load_latest_table(&self) -> Result<PriceTable, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "load_latest_price_table", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.load_latest_table_inside(), |_| Summary::none())
+    }
+
+    /// The work of `load_latest_table`, between the start event and the completion event of its request.
+    fn load_latest_table_inside(&self) -> Result<PriceTable, String> {
         let Some(version) = self.find_latest_version()? else { return Ok(PriceTable::default()) };
         let mut statement = self
             .connection
@@ -132,6 +156,15 @@ impl ModelPriceDatabase {
     /// An error when the file is open read only, when the source does not answer, when the text is not a price list, or when
     /// the file cannot be written. The prices that the file holds are not changed in these cases.
     pub fn refresh(&mut self, source: &dyn PriceListSource, now: i64, is_forced: bool) -> Result<PriceRefresh, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_prices", RequestKind::Synchronization)
+            .choice("isForced", is_forced)
+            .parameter("now", now)
+            .database(&self.database_path);
+        record(spec, || self.refresh_inside(source, now, is_forced), |_| Summary::none())
+    }
+
+    /// The work of `refresh`, between the start event and the completion event of its request.
+    fn refresh_inside(&mut self, source: &dyn PriceListSource, now: i64, is_forced: bool) -> Result<PriceRefresh, String> {
         if self.is_read_only {
             return Err("A refresh of the prices needs a database that is not open read only.".to_string());
         }

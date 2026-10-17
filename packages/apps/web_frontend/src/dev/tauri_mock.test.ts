@@ -99,6 +99,18 @@ describe('TauriMock', () => {
 		).rejects.toThrow();
 	});
 
+	it('answers the stored references with the rows of an issue and of a pull request, and with no row for the issue 123', async () => {
+		TauriMock.install();
+		expect(await invoke('chat_references_synchronize', { folder: '/x' })).toEqual({ repository: 'heidrun-org/heidrun', codeHostingError: null });
+		const rows = await invoke<{ issues: { number: number; labelColors: Record<string, string> }[]; pullRequests: { headRefName: string }[] }>(
+			'chat_references_find',
+			{ repository: 'heidrun-org/heidrun', issues: [250, 123], pullRequests: [230] },
+		);
+		expect(rows.issues.map((issue) => issue.number)).toEqual([250]);
+		expect(rows.issues[0].labelColors['Simple Work']).toBe('2ea043');
+		expect(rows.pullRequests[0].headRefName).toEqual(expect.any(String));
+	});
+
 	it('answers the cached forge command with the list of the open issues and the list of the open pull requests', async () => {
 		TauriMock.install();
 		const issues = JSON.parse(

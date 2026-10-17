@@ -7,10 +7,16 @@
 
 use crate::model::schemas::record_to_checked_value;
 use crate::model::types::{QueryRow, UserActivityRecord};
+use crate::model::utc_time::to_utc_text;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
+
+/// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
+const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
 
 /// The SQLite file of the user activity data layer.
 pub struct UserActivityDatabase {
@@ -63,6 +69,9 @@ impl UserActivityDatabase {
         }
         let connection = Connection::open_with_flags(database_path, OpenFlags::SQLITE_OPEN_READ_ONLY)
             .map_err(|error| format!("The database file {} cannot be opened: {error}", database_path.display()))?;
+        connection
+            .busy_timeout(READ_WAITING_TIME)
+            .map_err(|error| format!("The waiting time of the database file cannot be set: {error}"))?;
         Ok(UserActivityDatabase { database_path: database_path.to_path_buf(), is_read_only: true, connection })
     }
 
@@ -78,6 +87,14 @@ impl UserActivityDatabase {
     /// # Errors
     /// An error when one record does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_records(&mut self, records: &[UserActivityRecord]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_records", RequestKind::Write)
+            .parameter("recordCount", records.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_records_inside(records), |_| Summary::count(records.len()))
+    }
+
+    /// The work of `upsert_records`, between the start event and the completion event of its request.
+    fn upsert_records_inside(&mut self, records: &[UserActivityRecord]) -> Result<(), String> {
         if self.is_read_only {
             return Err("A write needs a database that is not open read only.".to_string());
         }
@@ -107,6 +124,12 @@ impl UserActivityDatabase {
 
     /// The largest `endedAt` of the table, in UTC, or `None` when the table has no row.
     pub fn find_latest_ended_at(&self) -> Result<Option<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_latest_ended_at", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.find_latest_ended_at_inside(), |date| Summary::count(usize::from(date.is_some())))
+    }
+
+    /// The work of `find_latest_ended_at`, between the start event and the completion event of its request.
+    fn find_latest_ended_at_inside(&self) -> Result<Option<String>, String> {
         self.connection
             .query_row("SELECT MAX(endedAt) FROM user_activity_records", [], |row| row.get::<_, Option<String>>(0))
             .map_err(|error| format!("The latest end cannot be read: {error}"))
@@ -114,6 +137,12 @@ impl UserActivityDatabase {
 
     /// Counts the rows of the table.
     pub fn count_records(&self) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_records", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.count_records_inside(), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_records`, between the start event and the completion event of its request.
+    fn count_records_inside(&self) -> Result<i64, String> {
         self.connection
             .query_row("SELECT COUNT(*) FROM user_activity_records", [], |row| row.get::<_, i64>(0))
             .map_err(|error| format!("The rows cannot be counted: {error}"))
@@ -121,6 +150,15 @@ impl UserActivityDatabase {
 
     /// Reads one record. Returns `None` when the table has no such row.
     pub fn find_record(&self, workspace_folder: &str, started_at: &str) -> Result<Option<UserActivityRecord>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_record", RequestKind::Query)
+            .parameter("workspaceFolder", workspace_folder)
+            .parameter("startedAt", started_at)
+            .database(&self.database_path);
+        record(spec, || self.find_record_inside(workspace_folder, started_at), |found| Summary::count(usize::from(found.is_some())))
+    }
+
+    /// The work of `find_record`, between the start event and the completion event of its request.
+    fn find_record_inside(&self, workspace_folder: &str, started_at: &str) -> Result<Option<UserActivityRecord>, String> {
         let data = self
             .connection
             .query_row(
@@ -138,6 +176,69 @@ impl UserActivityDatabase {
         }
     }
 
+    /// True when the table `table` exists in the SQLite file. The file is shared by the packages of the data layer, so it can exist
+    /// before the package wrote its own table.
+    ///
+    /// # Errors
+    /// An error when the tables of the file cannot be listed.
+    pub fn has_table(&self, table: &str) -> Result<bool, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "has_table", RequestKind::Query)
+            .choice("table", table)
+            .database(&self.database_path);
+        record(spec, || self.has_table_inside(table), |is_found| Summary::count(usize::from(*is_found)))
+    }
+
+    /// The work of `has_table`, between the start event and the completion event of its request.
+    fn has_table_inside(&self, table: &str) -> Result<bool, String> {
+        self.connection
+            .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1", params![table], |row| {
+                row.get::<_, i64>(0)
+            })
+            .map(|count| count > 0)
+            .map_err(|error| format!("The tables of the file cannot be listed: {error}"))
+    }
+
+    /// Reads the records whose active period overlaps the time range from `since` to `until`, the oldest first. A record
+    /// overlaps when it ended after `since` and started before `until`. Both times are texts in the format ISO 8601 with an
+    /// offset or in UTC, and the method turns them into UTC. The index on `endedAt` answers the range.
+    ///
+    /// # Errors
+    /// An error when a time is not a time with an offset, or when a row is not a user activity record.
+    pub fn find_records_overlapping(&self, since: &str, until: &str) -> Result<Vec<UserActivityRecord>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_records_overlapping", RequestKind::Query)
+            .parameter("since", since)
+            .parameter("until", until)
+            .database(&self.database_path);
+        record(spec, || self.find_records_overlapping_inside(since, until), |records| Summary::count(records.len()))
+    }
+
+    /// The work of `find_records_overlapping`, between the start event and the completion event of its request.
+    fn find_records_overlapping_inside(&self, since: &str, until: &str) -> Result<Vec<UserActivityRecord>, String> {
+        let since = to_utc_text(since)?;
+        let until = to_utc_text(until)?;
+        if self.has_table("user_activity_records")? == false {
+            return Ok(Vec::new());
+        }
+        let mut statement = self
+            .connection
+            .prepare(
+                "SELECT data FROM user_activity_records WHERE endedAt > ?1 AND startedAt < ?2 ORDER BY startedAt",
+            )
+            .map_err(|error| format!("The records cannot be read: {error}"))?;
+        let rows = statement
+            .query_map(params![since, until], |row| row.get::<_, String>(0))
+            .map_err(|error| format!("The records cannot be read: {error}"))?;
+        let mut records = Vec::new();
+        for row in rows {
+            let data = row.map_err(|error| format!("The records cannot be read: {error}"))?;
+            records.push(
+                serde_json::from_str::<UserActivityRecord>(&data)
+                    .map_err(|error| format!("A row is not a user activity record: {error}"))?,
+            );
+        }
+        Ok(records)
+    }
+
     /// Runs one SQL statement and gives its rows. The SQLite functions on JSON work on the column `data`, for example
     /// `json_extract(data, '$.endReason')`. A value that is a blob becomes the text `<blob, N bytes>`.
     ///
@@ -145,6 +246,12 @@ impl UserActivityDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `query`, between the start event and the completion event of its request.
+    fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());
         }
@@ -251,6 +358,35 @@ mod tests {
             .unwrap();
         let plan: Vec<String> = rows.iter().map(|row| row["detail"].as_str().unwrap().to_string()).collect();
         assert!(plan.iter().any(|detail| detail.contains("user_activity_records_ended_at")), "{plan:?}");
+    }
+
+    #[test]
+    fn finds_the_records_that_overlap_a_time_range_in_the_order_of_their_start() {
+        let (_, mut database) = new_database("overlap");
+        database.upsert_records(&[record(9), record(3), record(5)]).unwrap();
+        let found = database.find_records_overlapping(&time(4, 0), &time(10, 0)).unwrap();
+        assert_eq!(found, vec![record(5), record(9)]);
+        // A record that ends exactly at the start of the range, or starts exactly at its end, does not overlap it.
+        assert_eq!(database.find_records_overlapping(&time(3, 11), &time(5, 0)).unwrap(), Vec::<UserActivityRecord>::new());
+        assert_eq!(database.find_records_overlapping(&time(3, 10), &time(5, 0)).unwrap(), vec![record(3)]);
+    }
+
+    #[test]
+    fn finds_the_records_of_a_range_written_with_a_time_zone_offset() {
+        let (_, mut database) = new_database("overlap_offset");
+        database.upsert_records(&[record(5)]).unwrap();
+        // 07:00 at +02:00 is 05:00 in UTC.
+        let found = database.find_records_overlapping("2026-10-14T07:00:00.000+02:00", "2026-10-14T07:30:00.000+02:00").unwrap();
+        assert_eq!(found, vec![record(5)]);
+    }
+
+    #[test]
+    fn refuses_a_range_that_is_not_a_time_and_never_puts_the_text_in_the_statement() {
+        let (_, database) = new_database("overlap_wrong_time");
+        let error = database.find_records_overlapping("yesterday", &time(10, 0)).unwrap_err();
+        assert!(error.contains("yesterday"));
+        let injection = "2026-10-14T00:00:00Z' OR '1'='1";
+        assert!(database.find_records_overlapping(injection, &time(10, 0)).is_err());
     }
 
     #[test]

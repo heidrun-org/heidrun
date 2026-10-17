@@ -40,6 +40,27 @@ function answerOf(claude: Chat[], codex: Chat[] = [], hasMore: { claude?: boolea
   };
 }
 
+/**
+ * The answers of the Tauri command `chats_list`: the answers given once first, then the answer that repeats. The Tauri command
+ * `chats_synchronize` answers at once.
+ */
+const listing = { repeated: undefined as unknown, once: [] as unknown[] };
+
+/** Every call to a Tauri command since the start of the test, in order, by command name. */
+function commandNames(): string[] {
+  return vi.mocked(invoke).mock.calls.map((call) => call[0]);
+}
+
+/** Every later call to `chats_list` answers `answer`. */
+function listAlways(answer: unknown) {
+  listing.repeated = answer;
+}
+
+/** The next call to `chats_list` answers `answer`, then the calls go on with the answer that repeats. */
+function listOnce(answer: unknown) {
+  listing.once.push(answer);
+}
+
 /** Stops the test until the answer of a Tauri command is given by hand. */
 function answerByHand<T>() {
   let answer: (value: T) => void = () => {};
@@ -51,6 +72,14 @@ function answerByHand<T>() {
 
 beforeEach(() => {
   vi.mocked(invoke).mockReset();
+  listing.repeated = undefined;
+  listing.once = [];
+  vi.mocked(invoke).mockImplementation(async (command: string) => {
+    if (command === "chats_synchronize") {
+      return { root: "/work/app", chat_session_count: 0 };
+    }
+    return listing.once.length > 0 ? listing.once.shift() : listing.repeated;
+  });
   chats.folder = null;
   chats.claude = [];
   chats.codex = [];
@@ -65,9 +94,11 @@ beforeEach(() => {
 });
 
 describe("loadChats", () => {
-  it("asks the Tauri command chats_list for the folder, and keeps the conversations of each coding agent", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [chat("b", "Second")]));
+  it("reads the stored conversations, then synchronizes, then reads again, and keeps the conversations of each coding agent", async () => {
+    listAlways(answerOf([chat("a", "First")], [chat("b", "Second")]));
     await loadChats("/work/app");
+    expect(commandNames()).toEqual(["chats_list", "chats_synchronize", "chats_list"]);
+    expect(invoke).toHaveBeenCalledWith("chats_synchronize", { folder: "/work/app" });
     expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "descending" });
     expect(chats.folder).toBe("/work/app");
     expect(chats.claude).toEqual([chat("a", "First")]);
@@ -86,10 +117,11 @@ describe("loadChats", () => {
   });
 
   it("empties the lists at once when the folder changes, so that no conversation of another workspace shows", async () => {
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")]));
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     const second = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(second.promise);
+    listAlways(answerOf([chat("c", "Third")]));
+    listOnce(second.promise);
     const loading = loadChats("/work/website");
     expect(chats.claude).toEqual([]);
     expect(chats.isLoading).toBe(true);
@@ -98,24 +130,48 @@ describe("loadChats", () => {
     expect(chats.claude).toEqual([chat("c", "Third")]);
   });
 
-  it("keeps the lists on the screen while it reads the same folder again", async () => {
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")]));
+  it("keeps the lists on the screen while it synchronizes and reads the same folder again, and reads only once after the synchronization", async () => {
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
+    vi.mocked(invoke).mockClear();
     const again = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(again.promise);
+    listOnce(again.promise);
     const loading = loadChats("/work/app");
     expect(chats.claude).toEqual([chat("a", "First")]);
     expect(chats.isLoading).toBe(false);
     again.answer(answerOf([chat("a", "First"), chat("d", "Fourth")]));
     await loading;
     expect(chats.claude.length).toBe(2);
+    expect(commandNames()).toEqual(["chats_synchronize", "chats_list"]);
+  });
+
+  it("shows the stored conversations when the synchronization fails, and keeps the reason", async () => {
+    listAlways(answerOf([chat("a", "First")]));
+    vi.mocked(invoke).mockImplementation(async (command: string) => {
+      if (command === "chats_synchronize") {
+        throw new Error("the SQLite file is locked");
+      }
+      return answerOf([chat("a", "First")]);
+    });
+    await loadChats("/work/app");
+    expect(chats.claude).toEqual([chat("a", "First")]);
+    expect(chats.error).toBe("the SQLite file is locked");
+    expect(chats.isLoading).toBe(false);
+  });
+
+  it("starts one synchronization when two refreshes of the same folder overlap", async () => {
+    listAlways(answerOf([chat("a", "First")]));
+    await loadChats("/work/app");
+    vi.mocked(invoke).mockClear();
+    await Promise.all([loadChats("/work/app"), loadChats("/work/app")]);
+    expect(commandNames().filter((name) => name === "chats_synchronize")).toHaveLength(1);
   });
 
   it("drops the answer for a folder that is no longer the current one", async () => {
     const slow = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(slow.promise);
+    listOnce(slow.promise);
     const loadingOld = loadChats("/work/app");
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("c", "New workspace")]));
+    listAlways(answerOf([chat("c", "New workspace")]));
     await loadChats("/work/website");
     slow.answer(answerOf([chat("a", "Old workspace")]));
     await loadingOld;
@@ -138,11 +194,12 @@ describe("the number of chats", () => {
   });
 
   it("asks for the next number of chats after a click on Show more, and keeps the lists on the screen meanwhile", async () => {
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")], [], { claude: true }));
+    listAlways(answerOf([chat("a", "First")], [], { claude: true }));
     await loadChats("/work/app");
     expect(canShowMoreChats.value).toBe(true);
+    vi.mocked(invoke).mockClear();
     const more = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(more.promise);
+    listOnce(more.promise);
     const showing = showMoreChats();
     expect(chats.isShowingMore).toBe(true);
     expect(chats.claude).toEqual([chat("a", "First")]);
@@ -152,10 +209,11 @@ describe("the number of chats", () => {
     expect(chats.claude.length).toBe(2);
     expect(chats.isShowingMore).toBe(false);
     expect(canShowMoreChats.value).toBe(false);
+    expect(commandNames()).toEqual(["chats_list"]);
   });
 
   it("keeps the raised number of chats when it reads the same folder again, and goes back to 5 for another folder", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [], { claude: true }));
+    listAlways(answerOf([chat("a", "First")], [], { claude: true }));
     await loadChats("/work/app");
     await showMoreChats();
     await loadChats("/work/app");
@@ -165,7 +223,7 @@ describe("the number of chats", () => {
   });
 
   it("offers Show more only for the selected coding agent that has more chats", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [chat("b", "Second")], { codex: true }));
+    listAlways(answerOf([chat("a", "First")], [chat("b", "Second")], { codex: true }));
     await loadChats("/work/app");
     chats.agent = "claude";
     expect(canShowMoreChats.value).toBe(false);
@@ -179,7 +237,7 @@ describe("the number of chats", () => {
 
   it("cuts the lists to the lower number of chats at once, and tells that the coding agent has more chats", async () => {
     const claude = ["a", "b", "c", "d", "e", "f", "g"].map((id) => chat(id, id));
-    vi.mocked(invoke).mockResolvedValue(answerOf(claude));
+    listAlways(answerOf(claude));
     await loadChats("/work/app");
     chats.limit = 10;
     expect(canShowLessChats.value).toBe(true);
@@ -196,7 +254,7 @@ describe("the number of chats", () => {
   });
 
   it("does not offer Show less when the list shows no more chats than the lower number allows", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First"), chat("b", "Second")]));
+    listAlways(answerOf([chat("a", "First"), chat("b", "Second")]));
     await loadChats("/work/app");
     chats.limit = 20;
     expect(canShowLessChats.value).toBe(false);
@@ -204,12 +262,13 @@ describe("the number of chats", () => {
 
   it("drops an answer that was asked before a click on Show less, so the chats that were cut do not come back", async () => {
     const claude = ["a", "b", "c", "d", "e", "f", "g"].map((id) => chat(id, id));
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf(claude));
+    listAlways(answerOf(claude));
     await loadChats("/work/app");
     chats.limit = 10;
     const slow = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(slow.promise);
+    listOnce(slow.promise);
     const reading = loadChats("/work/app");
+    await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith("chats_list", expect.objectContaining({ limit: 10 })));
     showLessChats();
     slow.answer(answerOf(claude));
     await reading;
@@ -217,7 +276,7 @@ describe("the number of chats", () => {
   });
 
   it("does not ask twice when Show more is clicked twice at once", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [], { claude: true }));
+    listAlways(answerOf([chat("a", "First")], [], { claude: true }));
     await loadChats("/work/app");
     vi.mocked(invoke).mockClear();
     await Promise.all([showMoreChats(), showMoreChats()]);
@@ -281,7 +340,7 @@ describe("the sort of the chats", () => {
   it("asks the Tauri command chats_list for the saved sort key and the saved order", async () => {
     settings.chatsSortKey = "messages";
     settings.chatsOrder = "ascending";
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")]));
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     expect(invoke).toHaveBeenCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "messages", order: "ascending" });
   });
@@ -292,31 +351,33 @@ describe("the sort of the chats", () => {
   });
 
   it("saves the sort key, and reads the chats again in the new order with the same number of chats", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")], [], { claude: true }));
+    listAlways(answerOf([chat("a", "First")], [], { claude: true }));
     await loadChats("/work/app");
     await showMoreChats();
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("b", "Second")]));
+    listAlways(answerOf([chat("b", "Second")]));
     await chooseChatSortKey("issues");
     expect(settings.chatsSortKey).toBe("issues");
     expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 10, sortKey: "issues", order: "descending" });
     expect(chats.claude).toEqual([chat("b", "Second")]);
   });
 
-  it("saves the order, and reads the chats again from the other end", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")]));
+  it("saves the order, and reads the stored chats again from the other end without a synchronization", async () => {
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("z", "Last")]));
+    vi.mocked(invoke).mockClear();
+    listAlways(answerOf([chat("z", "Last")]));
     await chooseChatSortOrder("ascending");
+    expect(commandNames()).toEqual(["chats_list"]);
     expect(settings.chatsOrder).toBe("ascending");
     expect(invoke).toHaveBeenLastCalledWith("chats_list", { folder: "/work/app", limit: 5, sortKey: "last_updated", order: "ascending" });
     expect(chats.claude).toEqual([chat("z", "Last")]);
   });
 
   it("keeps the list on the screen while the new order waits for its answer", async () => {
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")]));
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     const waiting = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(waiting.promise);
+    listOnce(waiting.promise);
     const sorting = chooseChatSortOrder("ascending");
     expect(chats.claude).toEqual([chat("a", "First")]);
     waiting.answer(answerOf([chat("b", "Second")]));
@@ -325,12 +386,12 @@ describe("the sort of the chats", () => {
   });
 
   it("drops the answer of an earlier sort when the developer chose another sort meanwhile", async () => {
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("a", "First")]));
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     const slow = answerByHand<unknown>();
-    vi.mocked(invoke).mockReturnValueOnce(slow.promise);
+    listOnce(slow.promise);
     const first = chooseChatSortKey("messages");
-    vi.mocked(invoke).mockResolvedValueOnce(answerOf([chat("c", "Third")]));
+    listOnce(answerOf([chat("c", "Third")]));
     await chooseChatSortKey("issues");
     expect(chats.claude).toEqual([chat("c", "Third")]);
     slow.answer(answerOf([chat("b", "Second")]));
@@ -339,7 +400,7 @@ describe("the sort of the chats", () => {
   });
 
   it("keeps the sort key and the order when the developer selects another workspace", async () => {
-    vi.mocked(invoke).mockResolvedValue(answerOf([chat("a", "First")]));
+    listAlways(answerOf([chat("a", "First")]));
     await loadChats("/work/app");
     await chooseChatSortKey("files_written");
     await loadChats("/work/website");

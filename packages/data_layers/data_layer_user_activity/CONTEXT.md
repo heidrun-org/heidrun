@@ -10,6 +10,7 @@ A Rust library and a command line tool that read the user activity records of th
 - `src/storage/`: the SQLite file, and the text form of the rows of a query — see its own CONTEXT.md.
 - `src/model/`: the data types, the JSON schema check, and the conversion of a time to UTC — see its own CONTEXT.md.
 - `src/synchronization.rs`: the two modes, `initialize` and `update`.
+- `src/refresh.rs` and `src/query.rs`: `refresh_user_activity` copies the new records of the file. `find_user_activity_records` reads the stored records whose active period overlaps a time range, from the SQLite file only.
 - `schemas/`: the file `user_activity_record.schema.json`. It is the only place that says which fields the database stores.
 - `tests/`: the tests of the executable, with a fake file of records. The tests of the library sit at the end of each source file.
 - Command to run this folder: `pnpm --silent data_layer:user_activity --help`
@@ -24,10 +25,12 @@ A Rust library and a command line tool that read the user activity records of th
 - The default SQLite file is `~/.config/heidrun/data_layer.sqlite`, shared with the other data layer packages, and `HEIDRUN_DIR` does not change it. The package creates and writes only its own table with `CREATE ... IF NOT EXISTS`. The option `--database` changes the path.
 - `query` only works on a database that is open read only, so a query never changes the file and never creates it. The option `--verbose` sends progress lines to a log function, and only `src/main.rs` prints them.
 - The folder `src/model/` imports from no other folder of `src/`. The folders `src/user_activity_file/` and `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses them together.
-- The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
+- The library calls are blocking. The package imports only `request_log` from the other packages of the repository, and it knows nothing about Tauri. Every public operation records its request with `request_log::record`, a new operation does the same in the same change, and its test reads the events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
 - The structure copies `data_layer_source_control`. The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`.
+- The desktop application calls only the functions `refresh_*` and `find_*` of this package, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) says. The test of the package `data_layer_boundary_checker` fails otherwise.
 
 ## Background
 - The package comes from [issue #474](https://github.com/heidrun-org/heidrun/issues/474). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452). The records are described in [the rules of the User activity sidebar section](../../../docs/agents_rules/user_interface/sidebars/user_activity.md).
 - A record holds the folder of the workspace, not the name of the repository, and a temporary worktree folder can be deleted. So the package stores `workspaceFolder` only.
 - The package does not read the active period that runs now, and it cannot see a record that is lost when the application quits through the menu.
+- The request log of [issue #618](https://github.com/heidrun-org/heidrun/issues/618) records each public operation of this package: see [request_log](../../auxiliary/request_log/CONTEXT.md).

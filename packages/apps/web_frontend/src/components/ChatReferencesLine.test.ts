@@ -14,12 +14,49 @@ enableAutoUnmount(afterEach);
 
 const BASE = "https://github.com/heidrun-org/heidrun";
 
-/** What `gh` prints for the issue or the pull request of a call, by number. */
+/** What the SQLite file holds for the issue or the pull request of a call, by number. The rows come from what `gh` printed. */
 const ANSWERS: Record<string, object | "fail"> = {
   "31": { title: "Save the options", state: "OPEN", body: "## Goal\nKeep the **options**.", labels: [{ name: "Simple Work", color: "2ea043" }], author: { login: "jerome" }, createdAt: "2026-10-11T09:30:00Z" },
   "33": "fail",
   "230": { title: "Move the sidebar", state: "MERGED", body: "Now on the right.", labels: [], author: { login: "jerome" }, createdAt: "2026-10-11T09:30:00Z", headRefName: "move-it", baseRefName: "dev_jerome" },
 };
+
+/** The stored row of an issue or of a pull request, as a list of one row, or an empty list when the SQLite file has no such row. */
+function storedRowOf(number: number): object[] {
+  const answer = ANSWERS[String(number)];
+  if (answer === undefined || answer === "fail") {
+    return [];
+  }
+  const given = answer as {
+    title: string;
+    state: string;
+    body: string;
+    labels: { name: string; color: string }[];
+    author: { login: string };
+    createdAt: string;
+    headRefName?: string;
+    baseRefName?: string;
+  };
+  return [
+    {
+      number,
+      title: given.title,
+      state: given.state,
+      body: given.body,
+      author: given.author.login,
+      labels: given.labels.map((label) => label.name),
+      labelColors: Object.fromEntries(given.labels.map((label) => [label.name, label.color])),
+      createdAt: given.createdAt,
+      headRefName: given.headRefName,
+      baseRefName: given.baseRefName,
+    },
+  ];
+}
+
+/** The calls of the Tauri command `chat_references_find`, which reads the stored rows. */
+function findCalls(): unknown[][] {
+  return vi.mocked(invoke).mock.calls.filter((call) => call[0] === "chat_references_find");
+}
 
 function mountLine(props: Partial<InstanceType<typeof ChatReferencesLine>["$props"]> = {}) {
   return mount(ChatReferencesLine, {
@@ -46,7 +83,14 @@ beforeEach(() => {
   vi.mocked(openUrl).mockClear();
   issueView.open = false;
   vi.mocked(invoke).mockReset();
-  vi.mocked(invoke).mockImplementation(async (_command, payload) => {
+  vi.mocked(invoke).mockImplementation(async (command, payload) => {
+    if (command === "chat_references_synchronize") {
+      return { repository: "heidrun-org/heidrun", codeHostingError: null };
+    }
+    if (command === "chat_references_find") {
+      const asked = payload as { issues: number[]; pullRequests: number[] };
+      return { issues: asked.issues.flatMap(storedRowOf), pullRequests: asked.pullRequests.flatMap(storedRowOf) };
+    }
     const number = (payload as { args: string[] }).args[2] ?? "";
     const answer = ANSWERS[number];
     if (answer === undefined || answer === "fail") {
@@ -83,15 +127,15 @@ describe("ChatReferencesLine", () => {
     ]);
   });
 
-  it("reads the forge each time the card opens, a call for each row, with the cached command", async () => {
+  it("reads the stored rows each time the card opens, a call for each row, and never runs gh", async () => {
     const wrapper = mountLine();
     await openCard(wrapper);
-    expect(invoke).toHaveBeenCalledTimes(3);
-    expect(invoke).toHaveBeenCalledWith("forge_cli_cached", expect.objectContaining({ cwd: "/work/app", tool: "gh" }));
+    expect(findCalls()).toHaveLength(3);
+    expect(vi.mocked(invoke).mock.calls.some((call) => call[0] === "forge_cli_cached")).toBe(false);
     await wrapper.trigger("keydown", { key: "Escape" });
     await wrapper.trigger("click");
     await flushPromises();
-    expect(invoke).toHaveBeenCalledTimes(6);
+    expect(findCalls()).toHaveLength(6);
   });
 
   it("shows the title of each row with its name and its state, and the name alone when the forge did not answer", async () => {
