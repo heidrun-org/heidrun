@@ -1,11 +1,11 @@
 # User interface of Heidrun: colors and scroll bars
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 320](https://github.com/heidrun-org/heidrun/issues/320)
+- Related issue: [issue 320](https://github.com/heidrun-org/heidrun/issues/320), [issue 645](https://github.com/heidrun-org/heidrun/issues/645)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -26,4 +26,5 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - Every scroll bar of the application has the same look as the scroll bar of VS Code, in the dark theme and in the light theme: 8 pixels wide, no track, no background, and a rounded thumb. The thumb has the color `--scrollbar-thumb`, a gray at 40 percent (`rgba(121, 121, 121, 0.4)` in the dark theme, `rgba(100, 100, 100, 0.4)` in the light theme). It has the color `--scrollbar-thumb-hover`, `rgba(100, 100, 100, 0.7)`, while the pointer is over the thumb.
 - The look is one global rule in `packages/apps/web_frontend/src/styles.css`, made with the `::-webkit-scrollbar` pseudo-elements on every element. A component never writes a rule for its own scroll bar.
 - Nothing sets the CSS properties `scrollbar-width` or `scrollbar-color` to a value other than `none`: in Chrome, these two properties replace the pseudo-elements, so the scroll bar would lose the look. The value `none`, which hides a scroll bar, is allowed.
+- The window has no scroll bar of its own, so it has no free strip at its right edge: the root element has `scrollbar-gutter: auto`, set in `packages/apps/web_frontend/src/styles.css`. Bootstrap sets `scrollbar-gutter: stable` on the root element, which would keep a black strip of 8 pixels (the width of a scroll bar) at the right edge of the window. Nothing sets `scrollbar-gutter` to another value than `auto` ([issue #645](https://github.com/heidrun-org/heidrun/issues/645)).
 
