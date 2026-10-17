@@ -13,10 +13,9 @@
 //! date, and only the first `limit` conversations are opened. Every other sort key needs what each file holds, so every file
 //! of the folder is opened, then the conversations are sorted and cut to `limit`.
 
-use crate::model_prices::PriceTable;
 use data_layer_coding_agents::{
-    feed_codex_line, find_claude_session_files, find_codex_session_files, read_codex_titles,
-    title_of_scan, ChatMeta, FolderScope, ScanCache, SessionFile, TokenScan, TokensByHour, TokensByModel, CACHE_FILE_NAME,
+    feed_codex_line, find_claude_session_files, find_codex_session_files, model_tokens_of, read_codex_titles,
+    title_of_scan, ChatMeta, FolderScope, PriceTable, ScanCache, SessionFile, TokenScan, TokensByModel, CACHE_FILE_NAME,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashSet};
@@ -42,9 +41,6 @@ pub struct Chat {
     /// The tokens that the conversation used, for each model. The front end gets `usage`, not this.
     #[serde(skip)]
     pub tokens: TokensByModel,
-    /// The tokens that the conversation used, for each hour and each model. The statistic of the AI cost reads it.
-    #[serde(skip)]
-    pub token_hours: TokensByHour,
     /// The tokens and the cost of the conversation, or `None` when the conversation used no token.
     pub usage: Option<ChatUsage>,
 }
@@ -164,26 +160,35 @@ pub async fn chats_list(folder: String, limit: usize, sort_key: SortKey, order: 
 /// the AI cost also counts the ones that started in a worktree or in a sub-folder (`FolderScope::WithFoldersBelow`).
 pub(crate) fn list(folder: &str, limit: usize, sorting: Sorting, scope: FolderScope) -> Chats {
     let root = crate::project::find_root(Path::new(folder)).display().to_string();
+    let chats = with_scan_cache(|cache| {
+        list_in(
+            cache,
+            &crate::claude::claude_dir().join("projects"),
+            &crate::usage::codex_home(),
+            &root,
+            scope,
+            limit,
+            sorting,
+        )
+    });
+    apply_prices(chats, &crate::model_prices::current())
+}
+
+/// Runs `action` with the cache of the scans of the application, opened on the first call, and saves the cache on the disk
+/// when `action` ends. Two calls never run at the same time.
+pub(crate) fn with_scan_cache<Result>(action: impl FnOnce(&mut ScanCache) -> Result) -> Result {
     let mut guard = CACHE.lock().unwrap_or_else(|e| e.into_inner());
     let cache = guard.get_or_insert_with(|| ScanCache::open(cache_path()));
-    let chats = list_in(
-        cache,
-        &crate::claude::claude_dir().join("projects"),
-        &crate::usage::codex_home(),
-        &root,
-        scope,
-        limit,
-        sorting,
-    );
+    let result = action(cache);
     cache.save();
-    apply_prices(chats, &crate::model_prices::current())
+    result
 }
 
 /// Gives each conversation the cost of its tokens at the prices of `table`.
 fn apply_prices(mut chats: Chats, table: &PriceTable) -> Chats {
     for chat in chats.claude.chats.iter_mut().chain(chats.codex.chats.iter_mut()) {
         if let Some(usage) = chat.usage.as_mut() {
-            usage.cost_usd = table.cost(&chat.tokens);
+            usage.cost_usd = table.cost(&model_tokens_of(&chat.tokens));
         }
     }
     chats
@@ -271,7 +276,6 @@ fn chat_of(
         return None;
     }
     let tokens = token_scan.totals();
-    let token_hours = token_scan.by_hour();
     Some(Chat {
         id: file.id.clone(),
         title,
@@ -279,7 +283,6 @@ fn chat_of(
         meta,
         usage: ChatUsage::of(&tokens),
         tokens,
-        token_hours,
     })
 }
 
@@ -919,12 +922,12 @@ mod tests {
     }
 
     fn price_table() -> PriceTable {
-        PriceTable::parse(
+        let listed = data_layer_coding_agents::parse_price_list(
             r#"{"claude-opus-5":{"litellm_provider":"anthropic","input_cost_per_token":5e-06,"output_cost_per_token":2.5e-05,
                 "cache_read_input_token_cost":5e-07,"cache_creation_input_token_cost":6.25e-06}}"#,
-            0,
         )
-        .unwrap()
+        .unwrap();
+        PriceTable { version: None, prices: listed.into_iter().map(|price| (price.model, price.price)).collect() }
     }
 
     fn answer_line(id: &str, model: &str, output: u64) -> String {
@@ -970,30 +973,6 @@ mod tests {
         assert_eq!(json["usage"]["input_tokens"], 5_000);
         assert_eq!(json["usage"]["cost_usd"], Value::Null);
         assert!(json.get("tokens").is_none());
-        assert!(json.get("token_hours").is_none());
-        let _ = std::fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn gives_the_tokens_of_a_chat_for_each_hour_of_its_requests() {
-        let dir = scratch("usage-hours");
-        let answer_at = |timestamp: &str, id: &str, output: u64| {
-            answer_line(id, "claude-opus-5", output).replacen(r#"{"type":"assistant","#, &format!(r#"{{"type":"assistant","timestamp":"{timestamp}","#), 1)
-        };
-        let lines = [
-            user_line("2026-10-11T10:00:00.000Z", "hello"),
-            answer_at("2026-10-11T10:10:00.000Z", "msg_1", 100),
-            answer_at("2026-10-11T10:50:00.000Z", "msg_2", 100),
-            answer_at("2026-10-13T08:05:00.000Z", "msg_3", 300),
-        ];
-        write_chat(&dir, "Three days", &lines, 100);
-        let found = claude(&mut ScanCache::in_memory(), &dir, 5);
-        let hours = &found.chats[0].token_hours;
-        // 1 hour is 3 600 000 milliseconds: 2026-10-11 10:00 UTC is the hour 497 698, and 2026-10-13 08:00 UTC is 497 744.
-        assert_eq!(hours.keys().copied().collect::<Vec<_>>(), vec![497_698, 497_744]);
-        assert_eq!(hours[&497_698]["claude-opus-5"].output, 200);
-        assert_eq!(hours[&497_744]["claude-opus-5"].output, 300);
-        assert_eq!(found.chats[0].tokens["claude-opus-5"].output, 500);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -1047,8 +1026,6 @@ mod tests {
         assert_eq!(found.chats.len(), 1);
         assert_eq!(found.chats[0].usage.as_ref().map(|usage| usage.output_tokens), Some(5 + 70 + 200));
         assert_eq!(found.chats[0].meta.user_messages, 1);
-        let by_hour: Vec<u64> = found.chats[0].token_hours.values().map(|models| models["claude-opus-5"].output).collect();
-        assert_eq!(by_hour, vec![5 + 200, 70]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

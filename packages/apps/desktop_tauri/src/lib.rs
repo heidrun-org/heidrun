@@ -367,6 +367,7 @@ pub fn run() {
             user_activity::user_activity_records_in_range,
             person_work::person_work_in_range,
             ai_cost::ai_cost_in_range,
+            ai_cost::ai_cost_synchronize,
             files::files_list,
             files::folder_children,
             files::files_resolve,

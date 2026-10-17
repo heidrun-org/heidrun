@@ -1,11 +1,11 @@
 # The four data layers
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained description of the four data layers
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: chats](../agents_rules/glossary/chats.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464), [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 569](https://github.com/heidrun-org/heidrun/issues/569)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 452](https://github.com/heidrun-org/heidrun/issues/452), [issue 464](https://github.com/heidrun-org/heidrun/issues/464), [issue 564](https://github.com/heidrun-org/heidrun/issues/564), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 616](https://github.com/heidrun-org/heidrun/issues/616)
 
 This file says what we mean by a data layer, and describes the four data layers of Heidrun. The two files [user_activity_statistics.md](user_activity_statistics.md) and [work_of_one_person_statistics.md](work_of_one_person_statistics.md) describe the statistics that read them.
 
@@ -21,7 +21,7 @@ The statistics read the facts from the SQLite file. They do not ask GitHub, Git,
 | --- | --- | --- | --- |
 | [`data_layer_source_control`](../../packages/data_layers/data_layer_source_control/README.md) | Source control (Git) | Every commit of a Git repository, merges included, with the command `git log`. | `commits` |
 | [`data_layer_code_hosting`](../../packages/data_layers/data_layer_code_hosting/README.md) | Code hosting (GitHub) | Every issue and every pull request of a GitHub repository, with the command `gh api graphql`. | `issues`, `pull_requests` |
-| [`data_layer_coding_agents`](../../packages/data_layers/data_layer_coding_agents/README.md) | Coding agents | The chat session files that Claude Code and Codex save on this computer for the repository, and the coding agent configuration: the memory files, the subagents, and the skills ([issue 569](https://github.com/heidrun-org/heidrun/issues/569)). | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills` |
+| [`data_layer_coding_agents`](../../packages/data_layers/data_layer_coding_agents/README.md) | Coding agents | The chat session files that Claude Code and Codex save on this computer for the repository, and the coding agent configuration: the memory files, the subagents, and the skills ([issue 569](https://github.com/heidrun-org/heidrun/issues/569)). | `chat_sessions`, `chat_session_folders`, `chat_session_issues`, `chat_session_pull_requests`, `chat_session_files`, `memory_files`, `subagents`, `skills`, and for the tokens `token_usage_minutes`, `token_usage_synchronizations`, `model_price_versions`, `model_prices`, with the views `latest_model_prices` and `token_usage_with_cost` ([token_usage_and_cost.md](token_usage_and_cost.md)) |
 | [`data_layer_user_activity`](../../packages/data_layers/data_layer_user_activity/README.md) | User activity | The file `~/.config/heidrun/user_activity.jsonl`, which the web frontend writes. | `user_activity_records` |
 
 The mode `update` of each data layer reads only what is new:
@@ -30,7 +30,7 @@ The mode `update` of each data layer reads only what is new:
 | --- | --- | --- |
 | `data_layer_source_control` | `repository`, `hash` | The commits whose hash is not in the table. |
 | `data_layer_code_hosting` | `repository`, `number` | The items that changed after the largest `updatedAt` of the table. |
-| `data_layer_coding_agents` | `repository`, `id` | The chat session files that changed at the largest `updatedAt` or later. Every memory file, subagent, and skill, each time. |
+| `data_layer_coding_agents` | `repository`, `id` | The chat session files that changed at the largest `updatedAt` or later. Every memory file, subagent, and skill, each time. The token usage of the chat sessions that changed since the last read of the workspace; the rows of a chat session are replaced in one transaction. |
 | `data_layer_user_activity` | `workspaceFolder`, `startedAt` | The records whose `endedAt` is later than the largest `endedAt` of the table. |
 
 ## The SQLite file
@@ -57,10 +57,10 @@ The mode `update` of each data layer reads only what is new:
 | --- | --- | --- |
 | Statistics window, tab "User activity" | `data_layer_user_activity` | Yes. See [user_activity_statistics.md](user_activity_statistics.md). |
 | Statistics window, tab "Work of one person", source "Git history" | `data_layer_source_control`, `data_layer_code_hosting` | Yes. See [work_of_one_person_statistics.md](work_of_one_person_statistics.md). |
-| Statistics window, tab "Work of one person", source "AI cost" | `data_layer_coding_agents` | No. It uses the library to read the chat session files, with the scan cache `~/.config/heidrun/chats_cache.json`. |
+| Statistics window, tab "Work of one person", source "AI cost" | `data_layer_coding_agents` | Yes. It reads the stored token usage and updates it with the library and the scan cache `~/.config/heidrun/chats_cache.json`. See [token_usage_and_cost.md](token_usage_and_cost.md). |
 | Past chats sidebar section | `data_layer_coding_agents` | No. It uses the same library and the same scan cache. |
 
-The desktop application never opens the eight tables of `data_layer_coding_agents`. Only the command line tool fills them.
+The desktop application opens the tables of the token usage and of the prices of `data_layer_coding_agents`, and it fills them with the library. It never opens the other tables of this package: the Past chats sidebar section reads the chat session files, and not the tables.
 
 The program refreshes a data layer when a statistic needs it: each command runs the mode `update` first, then reads. No timer refreshes the SQLite file.
 
@@ -70,5 +70,5 @@ The program refreshes a data layer when a statistic needs it: each command runs 
 - The package `data_layer_chat_sessions` became `data_layer_coding_agents`, and the source `chat_sessions` of `heidrun_data` became `coding_agents`, when the package began to read the coding agent configuration too ([issue 569](https://github.com/heidrun-org/heidrun/issues/569)). [Issue 452](https://github.com/heidrun-org/heidrun/issues/452) calls this source "Chat sessions".
 - Two meanings of the word "source": a data layer reads a source of information, and the tab "Work of one person" has a source, "Git history" or "AI cost". These are two different things.
 - The master issue [issue 464](https://github.com/heidrun-org/heidrun/issues/464) says that no issue exists yet for the source "User activity". [Issue 474](https://github.com/heidrun-org/heidrun/issues/474) is merged.
-- `data_layer_coding_agents` stores no relation to people, because no signal in a chat session tells that it mentions a person. It reads the chat sessions of the root of the repository only, and not those of its worktrees.
+- `data_layer_coding_agents` stores no relation to people, because no signal in a chat session tells that it mentions a person. The tables of the chat sessions hold the chat sessions of the root of the repository only. The tokens hold the chat sessions of the root and of the folders below it, such as a worktree.
 - The space of the statistics, with the cost in time or in money and the human or the AI, is in [issue 451](https://github.com/heidrun-org/heidrun/issues/451). The definition of a segment is not decided yet.

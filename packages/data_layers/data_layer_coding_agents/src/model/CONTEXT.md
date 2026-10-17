@@ -6,6 +6,8 @@ Holds the facts that the package stores, and the JSON schema check that guards t
 ## Key Exports & Entry Points
 - `types.rs`: `ChatSession`, `ChatSessionRelations`, `ChatSessionRecord`, `ModelTokens`, `CodingAgent`, `ChatSessionTable`, `SynchronizationMode`, `SynchronizationReport`, and `QueryRow`.
 - `configuration_types.rs`: `ConfigurationKind`, `ConfigurationScope`, `ConfigurationItem`, `ConfigurationRead`, and `ConfigurationWriteCount`, the shapes of the coding agent configuration.
+- `token_usage_types.rs`: `ChatTokenUsage`, `MinuteTokens`, `TokenUsageReport`, `TokenUsageSynchronization`, `TokenUsageWriteCount`, `UsageGrouping`, `UsageQuery`, `UsageRow`, `UsageTotals`, `UNDATED_MINUTE`, and `MINUTE_MILLISECONDS`.
+- `price_types.rs`: `ModelPrice`, `ListedModelPrice`, `PriceVersion`, `PriceRefresh`, and `PRICE_UNIT`.
 - `schemas.rs`: `validate_chat_session_value`, `validate_configuration_value`, `configuration_schema`, and the checked conversions that `src/storage/` calls.
 - Command to test this folder: `pnpm --filter data_layer_coding_agents test`
 

@@ -1,6 +1,6 @@
 import type { Chat, ChatAgent, ChatMeta, ChatSortKey, ChatSortOrder, ChatUsage } from '../stores/chats';
 import type { AgentInfo, AgentStatus, PaneInfo, PaneLayoutSnapshot, SessionSnapshot } from '../lib/types';
-import type { AiCostChat, AiCostItems } from '../lib/ai_cost';
+import type { AiCostAnswer, AiCostHourRow, AiCostSynchronization, AiCostWorkspace } from '../lib/ai_cost';
 import type { PersonWorkItems } from '../lib/person_work';
 import type { UserActivityRecord } from '../lib/user_activity';
 
@@ -385,43 +385,101 @@ export class TauriMockFixture {
 		return result;
 	}
 
+	/** The folders whose fake history the Tauri command `ai_cost_synchronize` imported. */
+	private static readonly _importedAiCostFolders = new Set<string>();
+
 	/**
-	 * The answer of the Tauri command `ai_cost_in_range`: the fake chats of the last 30 days, each with the cost and the tokens
-	 * of each hour where it used tokens. An hour that costs one dollar used 400,000 tokens, and an hour with no known price used
-	 * 200,000 tokens. Claude Code has two chats on each day: one that costs 1 to 5 dollars in two hours, and one that
-	 * costs a few cents. Every fourth day, a longer chat of Claude Code goes on after midnight and costs money on the next day
-	 * too. Codex has one chat every other day that costs under 2 dollars. One chat of Codex has no known price.
-	 * - issue #482
-	 *
-	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
-	 * @returns The fake chats, the oldest first.
+	 * Forgets the imported folders, so that the next read of the AI cost finds every workspace not imported, as a new
+	 * installation does.
 	 */
-	static buildAiCostItems(until: number): AiCostItems {
-		const hourMs = 3600 * 1000;
-		const dayMs = 24 * hourMs;
-		const hour = (dayEnd: number, hoursBefore: number, costUsd: number | null) => ({
-			at: new Date(dayEnd - hoursBefore * hourMs).toISOString(),
-			costUsd,
-			tokens: Math.round((costUsd ?? 0.5) * 400_000),
-		});
-		const result: AiCostItems = { chats: [] };
-		const addChat = (codingAgent: string, hours: AiCostChat['hours']) => {
-			result.chats.push({ id: `fake-chat-${result.chats.length + 1}`, codingAgent, hours });
-		};
-		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
-			const dayEnd = until - daysBefore * dayMs;
-			const cost = 1 + ((daysBefore * 7 + 3) % 5);
-			addChat('claude', [hour(dayEnd, 10, cost * 0.6), hour(dayEnd, 9, cost * 0.4)]);
-			addChat('claude', [hour(dayEnd, 4, 0.02 + (daysBefore % 4) * 0.01)]);
-			if (daysBefore % 4 === 2) {
-				addChat('claude', [hour(dayEnd, 2, 1.5), hour(dayEnd, 1, 1), hour(dayEnd + dayMs, 22, 2)]);
-			}
-			if (daysBefore % 2 === 1) {
-				const costUsd = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
-				addChat('codex', [hour(dayEnd, 6, costUsd)]);
+	static resetAiCostImports(): void {
+		TauriMockFixture._importedAiCostFolders.clear();
+	}
+
+	/**
+	 * The state of the workspaces for the AI cost: a folder is imported after `ai_cost_synchronize` imported it.
+	 *
+	 * @param folders - The folders that the caller asked for.
+	 * @returns One state for each folder.
+	 */
+	private static _buildAiCostWorkspaces(folders: string[]): AiCostWorkspace[] {
+		return folders.map((folder) => ({
+			folder,
+			repository: 'heidrun-org/heidrun',
+			synchronizedAt: TauriMockFixture._importedAiCostFolders.has(folder) ? new Date().toISOString() : null,
+			error: null,
+		}));
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_synchronize`. A folder that was not imported is imported only when the caller
+	 * allows it.
+	 *
+	 * @param folders - The folders of the workspaces.
+	 * @param isImportAllowed - True when the developer pressed the button "Import the history".
+	 * @returns The state of each workspace, and no warning about the prices.
+	 */
+	static buildAiCostSynchronization(folders: string[], isImportAllowed: boolean): AiCostSynchronization {
+		if (isImportAllowed === true) {
+			for (const folder of folders) {
+				TauriMockFixture._importedAiCostFolders.add(folder);
 			}
 		}
-		return result;
+		return { workspaces: TauriMockFixture._buildAiCostWorkspaces(folders), priceWarning: null };
+	}
+
+	/**
+	 * The answer of the Tauri command `ai_cost_in_range`: the fake tokens and costs of the last 30 days, one row for each coding
+	 * agent and each hour that had tokens. A dollar of cost is 400,000 tokens. The rows exist only when at least one asked folder
+	 * is imported. Claude Code costs 1 to 5 dollars each day, with a few cents more from a small chat, and every fourth day a
+	 * longer chat goes on after midnight and costs money on the next day too. Codex costs under 2 dollars every other day. One
+	 * day of Codex has no known price. The cost of a day is spread over the hours of work of the day, so the sum of the hours of a
+	 * day is the cost of that day.
+	 * - issue #482
+	 * - issue #616
+	 *
+	 * @param folders - The folders of the workspaces.
+	 * @param until - The end of the time range, in milliseconds since 1 January 1970: the next midnight.
+	 * @returns The state of the workspaces and the rows, the oldest first.
+	 */
+	static buildAiCostAnswer(folders: string[], until: number): AiCostAnswer {
+		const workspaces = TauriMockFixture._buildAiCostWorkspaces(folders);
+		const answer: AiCostAnswer = { workspaces, hours: [], priceVersion: 1, pricesCheckedAt: new Date().toISOString() };
+		if (workspaces.every((workspace) => workspace.synchronizedAt === null)) {
+			return answer;
+		}
+		const end = new Date(until);
+		const workHours: Record<string, number[]> = { claude: [9, 10, 11, 13, 14, 15, 16, 17], codex: [11, 12, 16] };
+		const rows = (daysBefore: number, codingAgent: string, costUsd: number | null): AiCostHourRow[] => {
+			const dayStart = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (daysBefore + 1));
+			const dayTokens = Math.round((costUsd ?? 0.5) * 400_000);
+			const day = `${dayStart.getFullYear()}-${String(dayStart.getMonth() + 1).padStart(2, '0')}-${String(dayStart.getDate()).padStart(2, '0')}`;
+			const hours = workHours[codingAgent];
+			const weights = hours.map((_, index) => 1 + ((daysBefore + index * 3) % 4));
+			const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+			let tokensGiven = 0;
+			return hours.map((hour, index) => {
+				const tokens = index === hours.length - 1 ? dayTokens - tokensGiven : Math.floor((dayTokens * weights[index]) / totalWeight);
+				tokensGiven += tokens;
+				return {
+					startedAt: new Date(dayStart.getFullYear(), dayStart.getMonth(), dayStart.getDate(), hour).toISOString(),
+					day,
+					codingAgent,
+					tokens,
+					costUsd: costUsd === null ? null : (costUsd * tokens) / dayTokens,
+					unpricedTokens: costUsd === null ? tokens : 0,
+				};
+			});
+		};
+		for (let daysBefore = 29; daysBefore >= 0; daysBefore -= 1) {
+			const longChatYesterday = (daysBefore + 1) % 4 === 2 ? 2 : 0;
+			const longChatToday = daysBefore % 4 === 2 ? 2.5 : 0;
+			const claudeCost = 1 + ((daysBefore * 7 + 3) % 5) + 0.02 + (daysBefore % 4) * 0.01 + longChatToday + longChatYesterday;
+			const codexCost = daysBefore === 7 ? null : 0.3 + (daysBefore % 5) * 0.3;
+			const dayRows = [...rows(daysBefore, 'claude', claudeCost), ...(daysBefore % 2 === 1 ? rows(daysBefore, 'codex', codexCost) : [])];
+			answer.hours.push(...dayRows.sort((first, second) => first.startedAt.localeCompare(second.startedAt)));
+		}
+		return answer;
 	}
 
 	/**

@@ -2,13 +2,18 @@
 //! `CLAUDE_CONFIG_DIR` and `CODEX_HOME`, a fake home folder given by the variable `HOME` for the folder `~/.agents`, and a
 //! real Git repository with the remote `origin` `fake-owner/fake-name`.
 
-use data_layer_coding_agents::{ChatSessionTable, ChatSessionsDatabase, ConfigurationDatabase, ConfigurationKind};
+use data_layer_coding_agents::{
+    ChatSessionTable, ChatSessionsDatabase, ConfigurationDatabase, ConfigurationKind, ModelPriceDatabase, TokenUsageDatabase,
+};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, SystemTime};
 
 /// A message of the developer, in a chat session file of Claude Code.
 const TYPED: &str = r#"{"type":"user","cwd":"FOLDER","timestamp":"2026-10-11T10:00:00.000Z","message":{"role":"user","content":"Fix the issue 250"}}"#;
+
+/// An answer of Claude Code with its tokens, in the minute 2026-10-11 10:00 UTC.
+const ANSWER: &str = r#"{"type":"assistant","cwd":"FOLDER","timestamp":"2026-10-11T10:00:05.000Z","message":{"id":"msg_1","model":"claude-opus-5","role":"assistant","content":[{"type":"text","text":"Done"}],"usage":{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":300,"output_tokens":5}}}"#;
 
 /// A folder with a Git repository, a fake folder of Claude Code, a fake folder of Codex, and the path of a database file.
 struct Fixture {
@@ -49,8 +54,11 @@ impl Fixture {
         }
         let typed = TYPED.replace("FOLDER", &repository.display().to_string());
         let project = folder.join("claude").join("projects").join(claude_folder_name(&repository.display().to_string()));
+        let price_list = r#"{"claude-opus-5": {"litellm_provider": "anthropic", "input_cost_per_token": 5e-06, "output_cost_per_token": 2.5e-05, "cache_read_input_token_cost": 5e-07, "cache_creation_input_token_cost": 6.25e-06}}"#;
+        std::fs::write(folder.join("prices.json"), price_list).unwrap();
+        let answer = ANSWER.replace("FOLDER", &repository.display().to_string());
         write_file(&project.join("older.jsonl"), &format!("{typed}\n"), 1000);
-        write_file(&project.join("newer.jsonl"), &format!("{typed}\n"), 500);
+        write_file(&project.join("newer.jsonl"), &format!("{typed}\n{answer}\n"), 500);
         Fixture { database_path: folder.join("data_layer.sqlite"), repository, folder }
     }
 
@@ -77,6 +85,8 @@ impl Fixture {
             self.repository.display().to_string(),
             "--database".to_string(),
             self.database_path.display().to_string(),
+            "--price-list".to_string(),
+            self.folder.join("prices.json").display().to_string(),
         ]
     }
 
@@ -112,19 +122,63 @@ fn prints_the_help_and_exits_with_the_code_0() {
 }
 
 #[test]
-fn initialize_writes_every_chat_session_and_prints_a_report_of_three_lines() {
+fn initialize_writes_every_chat_session_and_prints_a_report_of_five_lines() {
     let fixture = Fixture::new("initialize");
     let result = fixture.run_with_options("initialize", &[]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     let lines: Vec<&str> = result.stdout.lines().collect();
-    assert_eq!(lines.len(), 3, "{}", result.stdout);
+    assert_eq!(lines.len(), 5, "{}", result.stdout);
     assert!(lines[0].starts_with("fake-owner/fake-name -> ") && lines[0].ends_with("(initialize)"), "{}", lines[0]);
     assert_eq!(lines[1], "chat sessions: 2 written, read since the beginning");
+    assert_eq!(
+        lines[3],
+        "token usage: 2 chat sessions read since the beginning, rows inserted 1, updated 0, deleted 0, unchanged 0"
+    );
+    assert!(lines[4].starts_with("model prices: version 1 written, 1 models, from "), "{}", lines[4]);
     let database = ChatSessionsDatabase::open_read_only(&fixture.database_path).unwrap();
     assert_eq!(database.count_rows(ChatSessionTable::ChatSessions, "fake-owner/fake-name"), Ok(2));
     let relations = database.find_relations("fake-owner/fake-name", "newer").unwrap();
     assert_eq!(relations.issues, vec![250]);
     assert_eq!(relations.folders, vec![fixture.repository.display().to_string()]);
+    let usage = TokenUsageDatabase::open_read_only(&fixture.database_path).unwrap();
+    assert_eq!(usage.count_rows("fake-owner/fake-name"), Ok(1));
+    let prices = ModelPriceDatabase::open_read_only(&fixture.database_path).unwrap();
+    assert_eq!(prices.load_latest_table().unwrap().prices.len(), 1);
+}
+
+#[test]
+fn the_cost_view_prices_the_tokens_of_the_minute_and_a_second_run_changes_nothing() {
+    let fixture = Fixture::new("cost");
+    assert_eq!(fixture.run_with_options("initialize", &[]).exit_code, Some(0));
+    let again = fixture.run_with_options("update", &["--refresh-prices"]);
+    assert_eq!(again.exit_code, Some(0), "{}", again.stderr);
+    assert!(again.stdout.contains("rows inserted 0, updated 0, deleted 0, unchanged 1"), "{}", again.stdout);
+    assert!(again.stdout.contains("model prices: version 1 is still the price list of "), "{}", again.stdout);
+    let query = fixture.run(&[
+        "query",
+        "--database",
+        &fixture.database_path.display().to_string(),
+        "--json",
+        "SELECT minuteAt, model, freshInputTokens, costUsd FROM token_usage_with_cost",
+    ]);
+    assert_eq!(query.exit_code, Some(0), "{}", query.stderr);
+    let rows: serde_json::Value = serde_json::from_str(&query.stdout).unwrap();
+    assert_eq!(rows[0]["minuteAt"], "2026-10-11T10:00:00.000Z");
+    assert_eq!(rows[0]["model"], "claude-opus-5");
+    // (10 × 5 + 300 × 0.5 + 20 × 6.25 + 5 × 25) = 450, divided by 1 000 000
+    let cost = rows[0]["costUsd"].as_f64().unwrap();
+    assert!((cost - 0.00045).abs() < 1e-12, "{cost}");
+}
+
+#[test]
+fn a_price_list_that_cannot_be_read_is_a_warning_and_the_prices_stay_in_use() {
+    let fixture = Fixture::new("price_warning");
+    assert_eq!(fixture.run_with_options("initialize", &[]).exit_code, Some(0));
+    std::fs::remove_file(fixture.folder.join("prices.json")).unwrap();
+    let result = fixture.run_with_options("update", &["--refresh-prices"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert!(result.stderr.contains("Warning: the model prices are not refreshed"), "{}", result.stderr);
+    assert!(result.stdout.contains("model prices: not refreshed"), "{}", result.stdout);
 }
 
 #[test]

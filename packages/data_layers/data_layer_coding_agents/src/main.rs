@@ -5,8 +5,9 @@ mod command_line;
 use command_line::{parse, Parsed, QueryRequest, SynchronizationRequest, HELP};
 use data_layer_coding_agents::{
     agents_home, claude_dir, codex_home, default_database_path, describe_since, find_main_root, find_repository, find_root, ignore_log,
-    synchronize, synchronize_configuration, to_json, to_table, ChatSessionsDatabase, ConfigurationDatabase,
-    ConfigurationFolders,
+    price_list_source_of, synchronize, synchronize_configuration, synchronize_token_usage, to_json, to_table, ChatSessionsDatabase,
+    ConfigurationDatabase, ConfigurationFolders, ModelPriceDatabase, PriceRefresh, ScanCache, TokenUsageDatabase, TokenUsageFiles,
+    PRICE_LIST_ADDRESS,
 };
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -56,6 +57,7 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<(), String> {
     )?;
     println!("{} -> {} ({})", report.repository, database_path.display(), report.mode.name());
     println!("chat sessions: {} written, read {}", report.chat_session_count, describe_since(report.since.as_deref()));
+    let root_text = root.display().to_string();
     let folders = ConfigurationFolders {
         main_root: find_main_root(&root),
         root,
@@ -70,7 +72,46 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<(), String> {
         .map(|count| format!("{} {} written, {} removed", count.kind.table_name(), count.written_count, count.removed_count))
         .collect();
     println!("configuration: {}", parts.join(", "));
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_millis() as i64)
+        .unwrap_or_default();
+    let mut usage_database = TokenUsageDatabase::open(&database_path)?;
+    let claude_projects = claude_dir().join("projects");
+    let codex = codex_home();
+    let mut cache = ScanCache::in_memory();
+    let mut files = TokenUsageFiles { cache: &mut cache, claude_projects: &claude_projects, codex_home: &codex };
+    let usage = synchronize_token_usage(request.mode, &repository, &root_text, &mut files, &mut usage_database, now, log)?;
+    println!(
+        "token usage: {} chat sessions read since {}, rows inserted {}, updated {}, deleted {}, unchanged {}",
+        usage.chat_count,
+        describe_since(usage.since.as_deref()).trim_start_matches("since "),
+        usage.row_count.inserted_count,
+        usage.row_count.updated_count,
+        usage.row_count.deleted_count,
+        usage.row_count.unchanged_count
+    );
+    println!("model prices: {}", refresh_prices(request, &database_path, now));
     Ok(())
+}
+
+/// Fetches the price list when the latest version is a day old or when the request forces it, and says what happened in one
+/// sentence. A price list that cannot be fetched is a warning on the standard error output: the latest known prices stay in use.
+fn refresh_prices(request: &SynchronizationRequest, database_path: &Path, now: i64) -> String {
+    let source = price_list_source_of(request.price_list.as_deref().unwrap_or(PRICE_LIST_ADDRESS));
+    let result = ModelPriceDatabase::open(database_path)
+        .and_then(|mut database| database.refresh(source.as_ref(), now, request.is_price_refresh_forced));
+    match result {
+        Ok(PriceRefresh::NewVersion { version, model_count }) => {
+            format!("version {version} written, {model_count} models, from {}", source.address())
+        }
+        Ok(PriceRefresh::Unchanged { version }) => format!("version {version} is still the price list of {}", source.address()),
+        Ok(PriceRefresh::Fresh { version }) => format!("version {version} was checked less than a day ago"),
+        Err(message) => {
+            eprintln!("Warning: the model prices are not refreshed, and the latest known prices stay in use: {message}");
+            "not refreshed".to_string()
+        }
+    }
 }
 
 /// Runs one read-only SQL statement, and prints the rows on the standard output.

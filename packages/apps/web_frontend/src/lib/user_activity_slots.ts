@@ -157,7 +157,18 @@ export class UserActivitySlots {
 	 */
 	static labelStepInMinutes(rangeId: UserActivityRangeId, slotLengthId?: UserActivitySlotLengthId): number {
 		const { lengthInMinutes } = USER_ACTIVITY_RANGES[rangeId];
-		const slotInMinutes = lengthInMinutes / UserActivitySlots.slotCount(rangeId, slotLengthId);
+		return UserActivitySlots.labelStepFor(lengthInMinutes, lengthInMinutes / UserActivitySlots.slotCount(rangeId, slotLengthId));
+	}
+
+	/**
+	 * The time between two labels of the horizontal axis for any time range and any slot length: the shortest step that is a
+	 * whole number of slots, and that gives no more than thirteen labels. See `labelStepInMinutes` for the meaning of a step.
+	 *
+	 * @param lengthInMinutes - The length of the time range, in minutes.
+	 * @param slotInMinutes - The length of a slot, in minutes.
+	 * @returns The time between two labels, in minutes.
+	 */
+	static labelStepFor(lengthInMinutes: number, slotInMinutes: number): number {
 		for (const step of LABEL_STEPS_IN_MINUTES) {
 			if (step % slotInMinutes === 0 && lengthInMinutes / step <= MAX_LABEL_COUNT) {
 				return step;

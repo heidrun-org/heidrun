@@ -1,20 +1,20 @@
 # Work of one person statistics
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained description of the statistic of the tab "Work of one person"
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun: work of one person](../agents_rules/glossary/person_work.md), [Tab "Work of one person"](../agents_rules/user_interface/window/statistics_person_work.md), [Source "AI cost"](../agents_rules/user_interface/window/statistics_ai_cost.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
-- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 558](https://github.com/heidrun-org/heidrun/issues/558)
+- Related rules: [Glossary of Heidrun: work of one person](../agents_rules/glossary/person_work.md), [Tab "Work of one person"](../agents_rules/user_interface/window/statistics_person_work.md), [Slot length](../agents_rules/user_interface/window/statistics_person_work_slots.md), [Source "AI cost"](../agents_rules/user_interface/window/statistics_ai_cost.md), [Rule for GitHub and GitLab support](../agents_rules/github_and_gitlab_support.md)
+- Related issue: [issue 489](https://github.com/heidrun-org/heidrun/issues/489), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 558](https://github.com/heidrun-org/heidrun/issues/558), [issue 616](https://github.com/heidrun-org/heidrun/issues/616)
 
 This file describes the statistic of the tab "Work of one person" of the Statistics window, and the data layers that it reads. The words are defined in the [glossary of the work of one person](../agents_rules/glossary/person_work.md). The rules of the tab are in [statistics_person_work.md](../agents_rules/user_interface/window/statistics_person_work.md). The data layers are explained in [the_four_data_layers.md](the_four_data_layers.md).
 
 ## What the statistic shows
 
-One bar chart with one bar for each day of the last 7 days or of the last 30 days. The developer chooses one of two sources:
+One bar chart of the last 3, 7, 14, or 30 days, with one bar for each slot. A slot is 1 hour, 6 hours, or 1 day, as the developer chooses with the slot length ([statistics_person_work_slots.md](../agents_rules/user_interface/window/statistics_person_work_slots.md)). The developer chooses one of two sources:
 
-- Git history: for one person, the commits and the pull requests of each day, and the number of issues of the time range.
-- AI cost: for each coding agent, the estimated cost in US dollars of each day. It is not about one person.
+- Git history: for one person, the commits and the pull requests of each slot, and the number of issues of the time range.
+- AI cost: for each coding agent, the estimated cost in US dollars, or the tokens, of each slot. It is not about one person.
 
 The chart has a legend that names each color. A card beside the bar under the pointer, with an arrow that points to the bar, gives the day, the total of the AI cost, and the value of each color.
 
@@ -51,20 +51,17 @@ The first read of a repository reads every pull request and every issue from Git
 
 ## Source "AI cost"
 
-### The data layer that it uses
+### The data layer that it reads
 
-The source "AI cost" uses `data_layer_coding_agents` as a library. It does not read the SQLite file, and it does not write it, so it takes no lock. The tables `chat_sessions` and the four link tables are not read.
-
-The reason: the cost needs the tokens of each hour and each model, and the table `chat_sessions` stores the tokens of each model only. The tokens of each hour are in the scan cache `~/.config/heidrun/chats_cache.json`, which the scan cache of the library holds. `data_layer_coding_agents` stores no cost, because the cost depends on a price list that changes.
+The source "AI cost" reads the stored token usage of `data_layer_coding_agents`: the table `token_usage_minutes` and the view `token_usage_with_cost`. The tables, the minute, the workspace, the prices, the days, and the measurements are in [token_usage_and_cost.md](token_usage_and_cost.md). The tab does not open a chat session file when it draws the chart.
 
 ### The way of the data
 
-1. The developer chooses the source "AI cost" for the first time. The tab calls the command `ai_cost_in_range` once, with the folder of the selected workspace and the same 30 days as the Git history.
-2. The command lists the chats of Claude Code and of Codex of the folder and of the folders below it, with the same function as the Past chats sidebar section, but with the scope `FolderScope::WithFoldersBelow`. The library finds the chat session files, including the files `.jsonl.zst` of Codex and the files of the subagents and of the workflows of Claude Code, and reads them. It keeps the tokens of each hour in the scan cache.
-3. The command keeps the chats that used tokens. For each hour of a chat that overlaps the time range, it computes the cost of the tokens of that hour at the public prices of their models (`model_prices.rs`).
-4. The tab puts each hour on the day that holds its start, in the time zone of the computer. The pure class `AiCost` does the calculation.
+1. The developer chooses the source "AI cost". The tab calls the command `ai_cost_synchronize` with the folders of the chosen workspaces. The command takes the lock of the SQLite file, refreshes the prices when the latest version is one day old, and runs the mode `update` of the token usage for each workspace that was imported before. A workspace that was never imported is left alone, because its import opens every chat session file. The developer imports it with the button "Import the history".
+2. The tab calls the command `ai_cost_in_range` with the same folders, the 30 days that end now, and the time zone of the computer. The command only reads the SQLite file. It gives the state of each workspace and one row for each hour and coding agent: the tokens, the cost, and the tokens with no known price.
+3. The tab puts each row in its slot, and adds the cost and the tokens. The pure class `AiCost` does the calculation.
 
-A chat that uses a model with no known price has no cost in every hour. A line of text under the chart says how many such chats exist in the time range.
+The tab runs these two steps again each time that the source or the chosen workspaces change. A change of the slot length runs nothing again: the rows are hours, and the tab adds them into the new slots. It shows the date of the last update, the version of the prices, the warning of the prices, and the cost that is not complete ([statistics_ai_cost.md](../agents_rules/user_interface/window/statistics_ai_cost.md)).
 
 ## Where the code is
 
@@ -72,15 +69,15 @@ A chat that uses a model with no known price has no cost in every hour. A line o
 | --- | --- |
 | The data layers | `packages/data_layers/data_layer_source_control`, `data_layer_code_hosting`, and `data_layer_coding_agents` |
 | The command `person_work_in_range` | `packages/apps/desktop_tauri/src/person_work.rs` |
-| The command `ai_cost_in_range` | `packages/apps/desktop_tauri/src/ai_cost.rs` |
+| The commands `ai_cost_synchronize` and `ai_cost_in_range` | `packages/apps/desktop_tauri/src/ai_cost.rs` |
 | The lock of the SQLite file | `packages/data_layers/heidrun_data/src/database_lock.rs` |
 | The tab and the chart | `packages/apps/web_frontend/src/components/PersonWorkTab.vue` and `StackedBarChart.vue` |
-| The calculations | `packages/apps/web_frontend/src/lib/person_work.ts`, `ai_cost.ts`, and `calendar_days.ts` |
+| The calculations | `packages/apps/web_frontend/src/lib/person_work.ts`, `ai_cost.ts`, `calendar_days.ts`, `calendar_slots.ts`, and `slot_text.ts` |
 
 The tests are listed in [statistics_person_work.md](../agents_rules/user_interface/window/statistics_person_work.md) and in [statistics_ai_cost.md](../agents_rules/user_interface/window/statistics_ai_cost.md), in the sections "Tests".
 
 ## Open points
 
-- The source "AI cost" does not use the SQLite file. A later issue can decide whether the tokens of each hour move into the data layer.
+- The history of a workspace is imported when the developer asks for it. A later issue can decide whether a background import is wanted.
 - A person with a different login on GitHub and a different name in Git is two people. A later step can add a table that links them.
 - GitHub only: `data_layer_code_hosting` reads GitHub, so the pull requests and the issues of a repository on GitLab are not read. The rule of GitHub and GitLab support requires the same support for GitLab.

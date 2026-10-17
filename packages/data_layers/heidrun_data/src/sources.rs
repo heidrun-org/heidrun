@@ -34,16 +34,43 @@ pub struct Join {
     pub columns: &'static [(&'static str, &'static str)],
 }
 
-/// One table of a source.
+/// The kind of a table of a source.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TableKind {
+    /// A table of documents: the columns `repository`, a key, a date, and `data`, which holds the JSON of the document.
+    Documents,
+    /// A link table: the values of one relation of a document, one row for each value. It has no date and no column `data`.
+    Links,
+    /// A table of plain facts: its columns are the facts, and it has no column `data`.
+    Facts,
+    /// A view: rows that SQLite calculates from tables when a query asks for them. A view is read only and has no row count.
+    View,
+}
+
+impl TableKind {
+    /// The name of the kind in the output of the command `schema`.
+    pub fn name(self) -> &'static str {
+        match self {
+            TableKind::Documents => "documents",
+            TableKind::Links => "links",
+            TableKind::Facts => "facts",
+            TableKind::View => "view",
+        }
+    }
+}
+
+/// One table or view of a source.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Table {
     /// The name of the table in the SQLite file.
     pub name: &'static str,
-    /// The column of the date that the mode update uses, or `None` for a link table, which has no date.
+    /// The kind of the table.
+    pub kind: TableKind,
+    /// The column of the date that the mode update uses, or `None` for a table that has no such date.
     pub date_column: Option<&'static str>,
-    /// The JSON schema of the column `data`, or `None` for a link table, which has no column `data`.
+    /// The JSON schema of the column `data`, or `None` for a table that has no column `data`.
     pub data_schema: Option<DataSchema>,
-    /// The tables that a link table joins. Empty for a table that is not a link table.
+    /// The tables that this table joins. Empty for a table of documents.
     pub joins: &'static [Join],
 }
 
@@ -53,6 +80,7 @@ const CHAT_SESSION_JOIN: Join = Join { table: "chat_sessions", columns: &[("repo
 /// The tables of source control.
 const SOURCE_CONTROL_TABLES: &[Table] = &[Table {
     name: "commits",
+    kind: TableKind::Documents,
     date_column: Some("committedAt"),
     data_schema: Some(DataSchema { file_name: "commit.schema.json", text: data_layer_source_control::COMMIT_SCHEMA }),
     joins: &[],
@@ -62,12 +90,14 @@ const SOURCE_CONTROL_TABLES: &[Table] = &[Table {
 const CODE_HOSTING_TABLES: &[Table] = &[
     Table {
         name: "issues",
+        kind: TableKind::Documents,
         date_column: Some("updatedAt"),
         data_schema: Some(DataSchema { file_name: "issue.schema.json", text: data_layer_code_hosting::ISSUE_SCHEMA }),
         joins: &[],
     },
     Table {
         name: "pull_requests",
+        kind: TableKind::Documents,
         date_column: Some("updatedAt"),
         data_schema: Some(DataSchema {
             file_name: "pull_request.schema.json",
@@ -79,13 +109,20 @@ const CODE_HOSTING_TABLES: &[Table] = &[
 
 /// The table of one kind of the configuration of the coding agent.
 const fn configuration_table(name: &'static str, file_name: &'static str, text: &'static str) -> Table {
-    Table { name, date_column: Some("updatedAt"), data_schema: Some(DataSchema { file_name, text }), joins: &[] }
+    Table {
+        name,
+        kind: TableKind::Documents,
+        date_column: Some("updatedAt"),
+        data_schema: Some(DataSchema { file_name, text }),
+        joins: &[],
+    }
 }
 
 /// The tables of the coding agents: the chat sessions, their link tables, and the configuration of the coding agent.
 const CODING_AGENTS_TABLES: &[Table] = &[
     Table {
         name: "chat_sessions",
+        kind: TableKind::Documents,
         date_column: Some("updatedAt"),
         data_schema: Some(DataSchema {
             file_name: "chat_session.schema.json",
@@ -93,15 +130,17 @@ const CODING_AGENTS_TABLES: &[Table] = &[
         }),
         joins: &[],
     },
-    Table { name: "chat_session_folders", date_column: None, data_schema: None, joins: &[CHAT_SESSION_JOIN] },
+    Table { name: "chat_session_folders", kind: TableKind::Links, date_column: None, data_schema: None, joins: &[CHAT_SESSION_JOIN] },
     Table {
         name: "chat_session_issues",
+        kind: TableKind::Links,
         date_column: None,
         data_schema: None,
         joins: &[CHAT_SESSION_JOIN, Join { table: "issues", columns: &[("repository", "repository"), ("issueNumber", "number")] }],
     },
     Table {
         name: "chat_session_pull_requests",
+        kind: TableKind::Links,
         date_column: None,
         data_schema: None,
         joins: &[
@@ -109,15 +148,52 @@ const CODING_AGENTS_TABLES: &[Table] = &[
             Join { table: "pull_requests", columns: &[("repository", "repository"), ("pullRequestNumber", "number")] },
         ],
     },
-    Table { name: "chat_session_files", date_column: None, data_schema: None, joins: &[CHAT_SESSION_JOIN] },
+    Table { name: "chat_session_files", kind: TableKind::Links, date_column: None, data_schema: None, joins: &[CHAT_SESSION_JOIN] },
     configuration_table("memory_files", "memory_file.schema.json", data_layer_coding_agents::MEMORY_FILE_SCHEMA),
     configuration_table("subagents", "subagent.schema.json", data_layer_coding_agents::SUBAGENT_SCHEMA),
     configuration_table("skills", "skill.schema.json", data_layer_coding_agents::SKILL_SCHEMA),
+    Table {
+        name: "token_usage_minutes",
+        kind: TableKind::Facts,
+        date_column: None,
+        data_schema: None,
+        joins: &[CHAT_SESSION_JOIN],
+    },
+    Table {
+        name: "token_usage_synchronizations",
+        kind: TableKind::Facts,
+        date_column: Some("synchronizedAt"),
+        data_schema: None,
+        joins: &[],
+    },
+    Table {
+        name: "model_price_versions",
+        kind: TableKind::Facts,
+        date_column: Some("checkedAt"),
+        data_schema: None,
+        joins: &[],
+    },
+    Table {
+        name: "model_prices",
+        kind: TableKind::Facts,
+        date_column: None,
+        data_schema: None,
+        joins: &[Join { table: "model_price_versions", columns: &[("version", "version")] }],
+    },
+    Table { name: "latest_model_prices", kind: TableKind::View, date_column: None, data_schema: None, joins: &[] },
+    Table {
+        name: "token_usage_with_cost",
+        kind: TableKind::View,
+        date_column: None,
+        data_schema: None,
+        joins: &[CHAT_SESSION_JOIN],
+    },
 ];
 
 /// The tables of the user activity.
 const USER_ACTIVITY_TABLES: &[Table] = &[Table {
     name: "user_activity_records",
+    kind: TableKind::Documents,
     date_column: Some("endedAt"),
     data_schema: Some(DataSchema {
         file_name: "user_activity_record.schema.json",
@@ -194,8 +270,15 @@ mod tests {
     #[test]
     fn gives_a_json_schema_to_every_table_that_is_not_a_link_table() {
         for (_, table) in all_tables() {
-            assert_eq!(table.data_schema.is_some(), table.joins.is_empty(), "{}", table.name);
-            assert_eq!(table.date_column.is_some(), table.joins.is_empty(), "{}", table.name);
+            match table.kind {
+                TableKind::Documents => {
+                    assert!(table.data_schema.is_some() && table.date_column.is_some() && table.joins.is_empty(), "{}", table.name);
+                }
+                TableKind::Links => {
+                    assert!(table.data_schema.is_none() && table.date_column.is_none() && !table.joins.is_empty(), "{}", table.name);
+                }
+                TableKind::Facts | TableKind::View => assert!(table.data_schema.is_none(), "{}", table.name),
+            }
         }
         assert_eq!(find_table("issues").map(|(source, _)| source), Some(Source::CodeHosting));
         assert_eq!(find_table("issue"), None);

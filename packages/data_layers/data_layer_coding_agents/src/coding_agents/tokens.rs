@@ -12,22 +12,20 @@
 //!   conversation starts with the total of the first one, so the total of the last record is not the usage of this
 //!   conversation: the usage of each request is added instead, when the total changed.
 //!
-//! The tokens are kept for each model, because each model has its own price (`model_prices`), and for each hour of the
-//! request, because a conversation can last several days and the cost of each day is wanted. The hour is the date of the
-//! record, in UTC, cut at the hour. A record without a date goes in the hour `UNDATED_HOUR`.
+//! The tokens are kept for each model, because each model has its own price (`model_prices`), and for each minute of the
+//! request, because a conversation can last several days and the usage of each minute, hour, or day is wanted. The minute
+//! is the date of the record, in UTC, cut at the minute: the tokens of a request belong to the minute of the record that
+//! reports them, and the scan does not measure the generation of the tokens one by one. A record without a date goes in the
+//! minute `UNDATED_MINUTE`.
 
+use crate::model::token_usage_types::{MINUTE_MILLISECONDS, UNDATED_MINUTE};
+use crate::model::types::ModelTokens;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 
 /// The name that a request without a known model has in `TokensByModel`.
 pub const UNKNOWN_MODEL: &str = "";
-
-/// The hour that a request whose record has no date has in `TokensByHour`. A real hour is never negative.
-pub const UNDATED_HOUR: i64 = -1;
-
-/// The number of milliseconds in one hour.
-const HOUR_MILLISECONDS: i64 = 3_600_000;
 
 /// The model that Claude Code writes for the answers that it makes itself, with no request. Its usage is always zero.
 const SYNTHETIC_MODEL: &str = "<synthetic>";
@@ -48,10 +46,24 @@ pub struct TokenCounts {
 /// The tokens of a conversation, for each model. A request without a known model is under `UNKNOWN_MODEL`.
 pub type TokensByModel = BTreeMap<String, TokenCounts>;
 
-/// The tokens of a conversation, for each hour, then for each model. The key of an hour is the number of whole hours since
-/// 1 January 1970 00:00 UTC, so the hour that starts at 1 January 1970 01:00 UTC is 1. A request whose record has no date
-/// is under `UNDATED_HOUR`.
-pub type TokensByHour = BTreeMap<i64, TokensByModel>;
+/// The tokens of a conversation, for each minute, then for each model. The key of a minute is the number of whole minutes
+/// since 1 January 1970 00:00 UTC, so the minute that starts at 1 January 1970 00:01 UTC is 1. A request whose record has no
+/// date is under `UNDATED_MINUTE`.
+pub type TokensByMinute = BTreeMap<i64, TokensByModel>;
+
+/// The tokens of each model in the stored shape `ModelTokens`, sorted by the name of the model.
+pub fn model_tokens_of(totals: &TokensByModel) -> Vec<ModelTokens> {
+    totals
+        .iter()
+        .map(|(model, counts)| ModelTokens {
+            model: model.clone(),
+            fresh_input: counts.fresh_input,
+            cached_input: counts.cached_input,
+            cache_write_input: counts.cache_write_input,
+            output: counts.output,
+        })
+        .collect()
+}
 
 impl TokenCounts {
     /// Adds the tokens of `other` to these tokens.
@@ -87,16 +99,16 @@ struct ClaudeAnswer {
     /// The hash of `message.id`.
     id: u32,
     model: String,
-    /// The hour of the first line of the answer.
-    hour: i64,
+    /// The minute of the first line of the answer.
+    minute: i64,
     tokens: TokenCounts,
 }
 
 /// What the scan of one file knows about the tokens, and the state that lets the next scan of the same file continue.
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq)]
 pub struct TokenScan {
-    /// The tokens of the answers that are finished, for each hour and each model.
-    finished: TokensByHour,
+    /// The tokens of the answers that are finished, for each minute and each model.
+    finished: TokensByMinute,
     /// The answer of Claude Code that the last lines belong to. It is not in `finished` yet: its next line can still raise it.
     answer: Option<ClaudeAnswer>,
     /// The hashes of the identifiers of the finished answers of Claude Code, so that a copy of an answer far away is skipped.
@@ -112,33 +124,39 @@ impl TokenScan {
     /// The tokens of the conversation so far, for each model. A model that used no token is left out.
     pub fn totals(&self) -> TokensByModel {
         let mut totals = TokensByModel::new();
-        for (model, tokens) in self.by_hour().into_values().flatten() {
-            totals.entry(model).or_default().add(&tokens);
+        for models in self.finished.values() {
+            for (model, tokens) in models {
+                totals.entry(model.clone()).or_default().add(tokens);
+            }
         }
+        if let Some(answer) = &self.answer {
+            totals.entry(answer.model.clone()).or_default().add(&answer.tokens);
+        }
+        totals.retain(|_, tokens| !tokens.is_empty());
         totals
     }
 
-    /// The tokens of the conversation so far, for each hour and each model. A model that used no token in an hour is left
-    /// out, and an hour without a token is left out.
-    pub fn by_hour(&self) -> TokensByHour {
-        let mut hours = self.finished.clone();
+    /// The tokens of the conversation so far, for each minute and each model. A model that used no token in a minute is left
+    /// out, and a minute without a token is left out.
+    pub fn by_minute(&self) -> TokensByMinute {
+        let mut minutes = self.finished.clone();
         if let Some(answer) = &self.answer {
-            hours.entry(answer.hour).or_default().entry(answer.model.clone()).or_default().add(&answer.tokens);
+            minutes.entry(answer.minute).or_default().entry(answer.model.clone()).or_default().add(&answer.tokens);
         }
-        for models in hours.values_mut() {
+        for models in minutes.values_mut() {
             models.retain(|_, tokens| !tokens.is_empty());
         }
-        hours.retain(|_, models| !models.is_empty());
-        hours
+        minutes.retain(|_, models| !models.is_empty());
+        minutes
     }
 
-    /// Adds the tokens of `other`, for each hour and each model, to the finished tokens of this scan. The tokens of a
+    /// Adds the tokens of `other`, for each minute and each model, to the finished tokens of this scan. The tokens of a
     /// subagent or of a workflow of Claude Code count for the chat that started it. The state that lets this scan continue
     /// does not change, so use it on a copy that is not kept.
     pub fn add_tokens_of(&mut self, other: &TokenScan) {
-        for (hour, models) in other.by_hour() {
+        for (minute, models) in other.by_minute() {
             for (model, counts) in models {
-                self.finished.entry(hour).or_default().entry(model).or_default().add(&counts);
+                self.finished.entry(minute).or_default().entry(model).or_default().add(&counts);
             }
         }
     }
@@ -166,7 +184,7 @@ impl TokenScan {
             return;
         }
         self.finish_answer();
-        self.answer = Some(ClaudeAnswer { id, model: model.to_string(), hour: hour_of(record), tokens });
+        self.answer = Some(ClaudeAnswer { id, model: model.to_string(), minute: minute_of(record), tokens });
     }
 
     /// Reads one record of Codex: the record `turn_context` gives the model, and the record `token_count` gives the tokens of
@@ -180,7 +198,7 @@ impl TokenScan {
                 }
             }
             Some("event_msg") if payload.get("type").and_then(Value::as_str) == Some("token_count") => {
-                self.note_codex_token_count(payload, hour_of(record));
+                self.note_codex_token_count(payload, minute_of(record));
             }
             _ => {}
         }
@@ -189,14 +207,14 @@ impl TokenScan {
     /// Moves the answer of Claude Code that was being read to the finished answers.
     fn finish_answer(&mut self) {
         if let Some(answer) = self.answer.take() {
-            self.finished.entry(answer.hour).or_default().entry(answer.model).or_default().add(&answer.tokens);
+            self.finished.entry(answer.minute).or_default().entry(answer.model).or_default().add(&answer.tokens);
             self.seen.insert(answer.id);
         }
     }
 
     /// Adds the last request of a record `token_count`, unless the total did not change: Codex writes the same record twice
     /// when a turn ends without a new request. A record without `info` only gives the limits of the account.
-    fn note_codex_token_count(&mut self, payload: &Value, hour: i64) {
+    fn note_codex_token_count(&mut self, payload: &Value, minute: i64) {
         let Some(info) = payload.get("info") else { return };
         let (Some(total), Some(last)) = (info.get("total_token_usage"), info.get("last_token_usage")) else { return };
         let Some(total) = total.get("total_tokens").and_then(Value::as_u64) else { return };
@@ -213,17 +231,17 @@ impl TokenScan {
             cache_write_input,
             output: number(last, "output_tokens"),
         };
-        self.finished.entry(hour).or_default().entry(self.codex_model.clone()).or_default().add(&tokens);
+        self.finished.entry(minute).or_default().entry(self.codex_model.clone()).or_default().add(&tokens);
     }
 }
 
-/// The hour of a record, from its field `timestamp`, or `UNDATED_HOUR` when the record has no date that can be read.
-fn hour_of(record: &Value) -> i64 {
+/// The minute of a record, from its field `timestamp`, or `UNDATED_MINUTE` when the record has no date that can be read.
+fn minute_of(record: &Value) -> i64 {
     record
         .get("timestamp")
         .and_then(Value::as_str)
         .and_then(|text| chrono::DateTime::parse_from_rfc3339(text).ok())
-        .map_or(UNDATED_HOUR, |date| date.timestamp_millis().div_euclid(HOUR_MILLISECONDS))
+        .map_or(UNDATED_MINUTE, |date| date.timestamp_millis().div_euclid(MINUTE_MILLISECONDS))
 }
 
 /// The unsigned number of the field `name` of `value`, or zero.
@@ -357,60 +375,70 @@ mod tests {
         assert_eq!(scan.totals()["claude-opus-5"], counts(2, 3, 4, 10));
     }
 
-    /// The hour that starts at 2026-10-14 10:00 UTC.
-    const HOUR_10: i64 = 497_770;
+    /// The minute that starts at 2026-10-14 10:00 UTC.
+    const MINUTE_10_00: i64 = 29_866_200;
 
     #[test]
-    fn keeps_the_tokens_of_claude_in_the_hour_of_the_first_line_of_each_answer() {
+    fn keeps_the_tokens_of_claude_in_the_minute_of_the_first_line_of_each_answer() {
         let mut scan = TokenScan::default();
         scan.note_claude_answer(&at("2026-10-14T10:59:59.000Z", answer("msg_1", "claude-opus-5", 1, 2, 3, 4)));
         scan.note_claude_answer(&at("2026-10-14T11:00:01.000Z", answer("msg_1", "claude-opus-5", 1, 2, 3, 9)));
         scan.note_claude_answer(&at("2026-10-14T11:00:02.000Z", answer("msg_2", "claude-haiku-5-5", 10, 0, 0, 20)));
-        let hours = scan.by_hour();
-        assert_eq!(hours.keys().copied().collect::<Vec<_>>(), vec![HOUR_10, HOUR_10 + 1]);
-        assert_eq!(hours[&HOUR_10]["claude-opus-5"], counts(1, 2, 3, 9));
-        assert_eq!(hours[&(HOUR_10 + 1)]["claude-haiku-5-5"], counts(10, 0, 0, 20));
+        let minutes = scan.by_minute();
+        assert_eq!(minutes.keys().copied().collect::<Vec<_>>(), vec![MINUTE_10_00 + 59, MINUTE_10_00 + 60]);
+        assert_eq!(minutes[&(MINUTE_10_00 + 59)]["claude-opus-5"], counts(1, 2, 3, 9));
+        assert_eq!(minutes[&(MINUTE_10_00 + 60)]["claude-haiku-5-5"], counts(10, 0, 0, 20));
         assert_eq!(scan.totals()["claude-opus-5"], counts(1, 2, 3, 9));
     }
 
     #[test]
-    fn keeps_the_tokens_of_codex_in_the_hour_of_each_record_token_count() {
+    fn keeps_the_tokens_of_codex_in_the_minute_of_each_record_token_count() {
         let mut scan = TokenScan::default();
         scan.note_codex_record(&at("2026-10-14T09:59:00.000Z", turn("gpt-6-sol")));
-        scan.note_codex_record(&at("2026-10-14T10:05:00.000Z", token_count(1_100, 1_000, 600, 100)));
+        scan.note_codex_record(&at("2026-10-14T10:05:30.000Z", token_count(1_100, 1_000, 600, 100)));
         scan.note_codex_record(&at("2026-10-14T12:30:00.000Z", token_count(2_300, 1_000, 900, 200)));
-        let hours = scan.by_hour();
-        assert_eq!(hours.keys().copied().collect::<Vec<_>>(), vec![HOUR_10, HOUR_10 + 2]);
-        assert_eq!(hours[&HOUR_10]["gpt-6-sol"], counts(400, 600, 0, 100));
-        assert_eq!(hours[&(HOUR_10 + 2)]["gpt-6-sol"], counts(100, 900, 0, 200));
+        let minutes = scan.by_minute();
+        assert_eq!(minutes.keys().copied().collect::<Vec<_>>(), vec![MINUTE_10_00 + 5, MINUTE_10_00 + 150]);
+        assert_eq!(minutes[&(MINUTE_10_00 + 5)]["gpt-6-sol"], counts(400, 600, 0, 100));
+        assert_eq!(minutes[&(MINUTE_10_00 + 150)]["gpt-6-sol"], counts(100, 900, 0, 200));
     }
 
     #[test]
-    fn puts_a_record_without_a_date_in_the_undated_hour() {
+    fn puts_two_requests_of_the_same_minute_in_the_same_minute() {
+        let mut scan = TokenScan::default();
+        scan.note_claude_answer(&at("2026-10-14T10:05:01.000Z", answer("msg_1", "claude-opus-5", 1, 0, 0, 2)));
+        scan.note_claude_answer(&at("2026-10-14T10:05:59.000Z", answer("msg_2", "claude-opus-5", 3, 0, 0, 4)));
+        let minutes = scan.by_minute();
+        assert_eq!(minutes.len(), 1);
+        assert_eq!(minutes[&(MINUTE_10_00 + 5)]["claude-opus-5"], counts(4, 0, 0, 6));
+    }
+
+    #[test]
+    fn puts_a_record_without_a_date_in_the_undated_minute() {
         let mut scan = TokenScan::default();
         scan.note_claude_answer(&answer("msg_1", "claude-opus-5", 1, 0, 0, 2));
         scan.note_claude_answer(&at("not a date", answer("msg_2", "claude-opus-5", 3, 0, 0, 4)));
-        assert_eq!(scan.by_hour().keys().copied().collect::<Vec<_>>(), vec![UNDATED_HOUR]);
+        assert_eq!(scan.by_minute().keys().copied().collect::<Vec<_>>(), vec![UNDATED_MINUTE]);
         assert_eq!(scan.totals()["claude-opus-5"], counts(4, 0, 0, 6));
     }
 
     #[test]
-    fn counts_a_date_before_1970_in_an_hour_that_is_not_the_undated_hour() {
-        assert_eq!(hour_of(&json!({"timestamp": "1970-01-01T00:30:00.000Z"})), 0);
-        assert_eq!(hour_of(&json!({"timestamp": "1969-12-31T23:30:00.000Z"})), -1);
+    fn counts_a_date_before_1970_in_a_minute_that_is_not_the_undated_minute() {
+        assert_eq!(minute_of(&json!({"timestamp": "1970-01-01T00:00:30.000Z"})), 0);
+        assert_eq!(minute_of(&json!({"timestamp": "1969-12-31T23:59:30.000Z"})), -1);
     }
 
     #[test]
-    fn keeps_the_hours_through_the_cache() {
+    fn keeps_the_minutes_through_the_cache() {
         let mut scan = TokenScan::default();
         scan.note_claude_answer(&at("2026-10-14T10:00:00.000Z", answer("msg_1", "claude-opus-5", 1, 2, 3, 4)));
         scan.note_claude_answer(&answer("msg_2", "claude-opus-5", 1, 1, 1, 1));
         let scan: TokenScan = serde_json::from_str(&serde_json::to_string(&scan).unwrap()).unwrap();
-        assert_eq!(scan.by_hour().keys().copied().collect::<Vec<_>>(), vec![UNDATED_HOUR, HOUR_10]);
+        assert_eq!(scan.by_minute().keys().copied().collect::<Vec<_>>(), vec![UNDATED_MINUTE, MINUTE_10_00]);
     }
 
     #[test]
-    fn adds_the_tokens_of_another_scan_for_each_hour_and_each_model_without_changing_its_own_state() {
+    fn adds_the_tokens_of_another_scan_for_each_minute_and_each_model_without_changing_its_own_state() {
         let mut scan = TokenScan::default();
         scan.note_claude_answer(&answer("msg_1", "claude-opus-5", 10, 0, 0, 5));
         let mut other = TokenScan::default();

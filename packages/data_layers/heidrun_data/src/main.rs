@@ -1,13 +1,14 @@
-//! The command line `heidrun_data`: the commands sources, update, initialize, schema, query, and read.
+//! The command line `heidrun_data`: the commands sources, update, initialize, schema, query, usage, and read.
 
 mod command_line;
 
 use command_line::{
     find_format, parse, CommonOptions, Parsed, QueryRequest, ReadKind, ReadRequest, SchemaRequest, SynchronizationRequest,
+    UsageCommand,
 };
 use heidrun_data::{
-    add_limit, data_schema_text, default_database_path, format_error, read_catalog, synchronize, write_rows, Format,
-    HeidrunDatabase, QueryRow, SynchronizationOptions,
+    add_limit, data_schema_text, default_database_path, format_error, read_catalog, read_usage, synchronize, write_rows,
+    Format, HeidrunDatabase, QueryRow, SynchronizationOptions, UsageRequest,
 };
 use heidrun_data::{
     read_chat_session, read_code_hosting, read_commit, read_file_history, read_pull_request_diff, CodeHostingKind,
@@ -71,6 +72,8 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
         claude_dir: data_layer_coding_agents::claude_dir(),
         codex_home: data_layer_coding_agents::codex_home(),
         agents_home: data_layer_coding_agents::agents_home(),
+        price_list: request.price_list.clone(),
+        is_price_refresh_forced: request.is_price_refresh_forced,
     };
     let print_progress = |message: &str| eprintln!("{message}");
     let ignore_progress = |_: &str| {};
@@ -102,6 +105,43 @@ fn run_synchronization(request: &SynchronizationRequest) -> Result<bool, String>
         _ => print_rows(&rows, format),
     }
     Ok(is_success)
+}
+
+/// Prints the tokens and the estimated cost of a workspace in a time range.
+fn run_usage(command: &UsageCommand) -> Result<(), String> {
+    let format = format_of(&command.common);
+    let folder = match &command.folder {
+        Some(_) => folder_of(&command.folder)?,
+        None => data_layer_coding_agents::find_root(&folder_of(&None)?),
+    };
+    let repository = match &command.repository {
+        Some(repository) => repository.clone(),
+        None => data_layer_coding_agents::find_repository(&folder)?,
+    };
+    let request = UsageRequest {
+        database_path: database_path(&command.common)?,
+        repository,
+        folder: folder.display().to_string(),
+        since: command.since.clone(),
+        until: command.until.clone(),
+        grouping: command.by.clone(),
+        time_zone: command.time_zone.clone(),
+        is_by_chat: command.is_by_chat,
+        now: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_millis() as i64)
+            .unwrap_or_default(),
+    };
+    if command.common.verbose {
+        eprintln!("database: {}", request.database_path.display());
+        eprintln!("workspace: {} of {}", request.folder, request.repository);
+    }
+    let answer = read_usage(&request)?;
+    if command.common.verbose {
+        eprintln!("token usage read at: {}", answer.synchronized_at);
+    }
+    print_rows(&answer.to_rows(), format);
+    Ok(())
 }
 
 /// Prints the shape of every table, or the JSON schema of one table.
@@ -257,6 +297,7 @@ fn run(parsed: Parsed) -> Result<bool, String> {
         Parsed::Synchronize(request) => run_synchronization(&request),
         Parsed::Schema(request) => run_schema(&request).map(|()| true),
         Parsed::Query(request) => run_query(&request).map(|()| true),
+        Parsed::Usage(command) => run_usage(&command).map(|()| true),
         Parsed::Read(request) => run_read(&request).map(|()| true),
     }
 }
