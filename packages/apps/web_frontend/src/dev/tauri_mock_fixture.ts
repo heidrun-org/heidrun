@@ -193,6 +193,49 @@ export class TauriMockFixture {
 		});
 	}
 
+	/**
+	 * The answer of the Tauri command `chat_references_find`: the stored rows of the issues and of the pull requests whose
+	 * numbers are asked. The number 123 has no row, so the card shows that GitHub does not know it.
+	 *
+	 * @param issueNumbers - The numbers of the issues.
+	 * @param pullRequestNumbers - The numbers of the pull requests.
+	 * @returns The rows, in the shape that the data layer stores them.
+	 */
+	static buildStoredReferences(issueNumbers: number[], pullRequestNumbers: number[]): { issues: unknown[]; pullRequests: unknown[] } {
+		const rowOf = (number: number, kind: 'issue' | 'pr'): unknown[] => {
+			if (number === 123) {
+				return [];
+			}
+			const answer = JSON.parse(TauriMockFixture.buildForgeAnswer([kind, 'view', String(number)])) as {
+				title: string;
+				state: string;
+				body: string;
+				labels: { name: string; color: string }[];
+				author: { login: string };
+				createdAt: string;
+				headRefName?: string;
+				baseRefName?: string;
+			};
+			return [
+				{
+					number,
+					title: answer.title,
+					state: answer.state,
+					body: answer.body,
+					author: answer.author.login,
+					labels: answer.labels.map((label) => label.name),
+					labelColors: Object.fromEntries(answer.labels.map((label) => [label.name, label.color])),
+					createdAt: answer.createdAt,
+					...(kind === 'pr' ? { headRefName: answer.headRefName, baseRefName: answer.baseRefName } : {}),
+				},
+			];
+		};
+		return {
+			issues: issueNumbers.flatMap((number) => rowOf(number, 'issue')),
+			pullRequests: pullRequestNumbers.flatMap((number) => rowOf(number, 'pr')),
+		};
+	}
+
 	/** The translation table of the clustered dynamic topics that the mock keeps, as the file on the disk does. */
 	private static _topicClusterRows: Record<string, string> = {};
 

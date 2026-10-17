@@ -30,6 +30,7 @@ pub fn issue(number: i64) -> Issue {
         author: Some("jeromeetienne".into()),
         assignees: vec![],
         labels: vec!["enhancement".into()],
+        label_colors: [("enhancement".to_string(), "a2eeef".to_string())].into(),
         created_at: date(1),
         updated_at: date(2),
         closed_at: Some(date(2)),
@@ -48,6 +49,7 @@ pub fn pull_request(number: i64) -> PullRequest {
         author: Some("jeromeetienne".into()),
         merged_by: Some("jeromeetienne".into()),
         labels: vec![],
+        label_colors: Default::default(),
         base_ref_name: "dev_jerome".into(),
         head_ref_name: "a-branch-1".into(),
         merge_commit: Some("5065bbeb7a356b9e76c1e47e0b1c19876642f604".into()),
@@ -75,7 +77,7 @@ pub fn issue_node(number: i64, updated_at: &str) -> Value {
         "closedAt": date(2),
         "author": { "login": "jeromeetienne" },
         "assignees": { "nodes": [] },
-        "labels": { "nodes": [{ "name": "enhancement" }] },
+        "labels": { "nodes": [{ "name": "enhancement", "color": "a2eeef" }] },
         "comments": { "totalCount": 1 },
     })
 }

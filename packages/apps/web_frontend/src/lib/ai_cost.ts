@@ -129,6 +129,22 @@ export class AiCost {
 	}
 
 	/**
+	 * Adds the error of each workspace that the synchronization found to the answer of the read. The read opens only the SQLite file,
+	 * so it cannot know that a workspace has no remote `origin`: the synchronization is the call that finds this out.
+	 *
+	 * @param answer - What the command `ai_cost_in_range` gave.
+	 * @param synchronization - What the command `ai_cost_synchronize` gave just before.
+	 * @returns The answer, with the error of the synchronization in each workspace that failed.
+	 */
+	static mergeSynchronizationErrors(answer: AiCostAnswer, synchronization: AiCostSynchronization): AiCostAnswer {
+		const workspaces = answer.workspaces.map((workspace) => {
+			const synchronized = synchronization.workspaces.find((candidate) => candidate.folder === workspace.folder);
+			return { ...workspace, error: workspace.error ?? synchronized?.error ?? null };
+		});
+		return { ...answer, workspaces };
+	}
+
+	/**
 	 * Finds the workspaces whose history was never imported.
 	 *
 	 * @param workspaces - The state of each workspace.

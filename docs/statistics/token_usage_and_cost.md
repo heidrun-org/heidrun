@@ -164,7 +164,7 @@ Run a SQL example with `pnpm --silent data_layer:heidrun_data query --format tab
 The source "AI cost" of the tab "Work of one person" reads these tables ([statistics_ai_cost.md](../agents_rules/user_interface/window/statistics_ai_cost.md)).
 
 - It never opens a chat session file by itself. The first import of a workspace opens every chat session file of the workspace once, and it only starts when the developer clicks the button "Import the history". Until then the tab says that the history is not imported, and the chart does not hold the workspace.
-- A workspace that was imported is brought up to date with the mode `update` each time that the tab reads it, with the scan cache of the application. This opens only the files that changed.
+- A workspace that was imported is brought up to date each time that the tab reads it: the command `ai_cost_synchronize` calls the function `refresh_ai_cost`, with the scan cache next to the SQLite file. This opens only the files that changed.
 - The tab shows the date of the last update ("Token usage updated on {time}.") and the version of the prices ("Prices: version {version}, checked on {time}."). It shows a warning when the prices could not be refreshed, and a message when the cost is not complete.
 - One call of the application takes all the chosen folders together, so the data layer counts a chat session once.
 
@@ -204,7 +204,7 @@ The totals are not the same as those of the old path for two reasons. The old pa
 | The reading of the chat session files | `packages/data_layers/data_layer_coding_agents/src/coding_agents/token_usage_reader.rs` |
 | The prices | `packages/data_layers/data_layer_coding_agents/src/pricing/` and `src/storage/model_price_database.rs` |
 | The command `usage` | `packages/data_layers/heidrun_data/src/usage.rs` |
-| The commands of the application | `packages/apps/desktop_tauri/src/ai_cost.rs` and `model_prices.rs` |
+| The commands of the application | `packages/apps/desktop_tauri/src/statistics/ai_cost.rs`, and `past_chats/chats.rs` for the refresh of the prices in the background |
 | The tab | `packages/apps/web_frontend/src/components/PersonWorkTab.vue` and `lib/ai_cost.ts` |
 
 ## Open points

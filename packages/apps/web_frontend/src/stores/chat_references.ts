@@ -1,9 +1,15 @@
-// What the forge says about the issues and the pull requests that a chat mentions: the title, the state, the description,
-// the labels, the person who opened it, the date, and the branches. It is read with `gh` or `glab` through the Tauri
-// command `forge_cli_cached`, which keeps each answer on the disk for ten minutes.
+// What the code hosting service says about the issues and the pull requests that a chat mentions: the title, the state, the
+// description, the labels, the person who opened it, the date, and the branches.
+//
+// On GitHub the details come from the SQLite file of the data layer. The Tauri command `chat_references_synchronize` copies
+// the issues and the pull requests of the repository into the file, and the Tauri command `chat_references_find` reads the
+// stored rows. A synchronization is kept for ten minutes. On GitLab the details are still read live by
+// `forge_reference_details.ts`, because the package `data_layer_code_hosting` reads GitHub only (issue 455); this is the only
+// exception that docs/agents_rules/data_layer_access.md allows for the Past chats sidebar section.
 import { invoke } from "@tauri-apps/api/core";
-import type { ChatReference } from "../lib/chat_references";
+import { chatReferenceTimeOf, githubAvatarUrl, type ChatReference } from "../lib/chat_references";
 import type { Forge } from "../lib/refs";
+import { loadForgeReferenceDetails } from "./forge_reference_details";
 
 /** A label of an issue or of a pull request. */
 export type ChatReferenceLabel = {
@@ -35,9 +41,93 @@ export type ChatReferenceDetails = {
   baseBranch: string | null;
 };
 
+/** What the Tauri command `chat_references_synchronize` answers. */
+type ChatReferencesSynchronization = {
+  /** The repository, in the format `owner/name`. */
+  repository: string;
+  /** The reason why GitHub could not be read, or null. The stored rows are then the ones that an earlier read wrote. */
+  codeHostingError: string | null;
+};
+
+/** An issue as the SQLite file stores it. */
+type StoredIssue = {
+  title: string;
+  body: string;
+  state: string;
+  author: string | null;
+  labels: string[];
+  labelColors: Record<string, string>;
+  createdAt: string;
+};
+
+/** An issue or a pull request as the SQLite file stores it. Only a pull request has the two branches. */
+type StoredReference = StoredIssue & {
+  number: number;
+  headRefName?: string;
+  baseRefName?: string;
+};
+
+/** What the Tauri command `chat_references_find` answers. */
+type StoredReferences = {
+  issues: StoredReference[];
+  pullRequests: StoredReference[];
+};
+
+/** How long a synchronization of a folder is kept, in milliseconds. */
+const SYNCHRONIZATION_LIFETIME = 10 * 60 * 1000;
+
+/** How old a synchronization must be before a missing issue or pull request makes a new one, in milliseconds. */
+const MISSING_ROW_RETRY_AGE = 60 * 1000;
+
+/** The synchronizations that run or ran, by folder. A failed synchronization is forgotten, so the next call tries again. */
+const synchronizations = new Map<
+  string,
+  { startedAt: number; promise: Promise<ChatReferencesSynchronization | null> }
+>();
+
+/**
+ * Copies the issues and the pull requests of the GitHub repository of a folder into the SQLite file, once for ten minutes.
+ * @param folder - the folder of the workspace
+ * @param isForced - true to synchronize again even when a synchronization is kept
+ * @returns the repository, or null when the synchronization failed (for example, the folder has no remote)
+ */
+function synchronizeChatReferences(
+  folder: string,
+  isForced: boolean,
+): { startedAt: number; promise: Promise<ChatReferencesSynchronization | null> } {
+  const known = synchronizations.get(folder);
+  if (known !== undefined && isForced === false && Date.now() - known.startedAt < SYNCHRONIZATION_LIFETIME) {
+    return known;
+  }
+  const startedAt = Date.now();
+  const entry = {
+    startedAt,
+    promise: invoke<ChatReferencesSynchronization>("chat_references_synchronize", { folder })
+      .catch(() => null)
+      .then((result) => {
+        const synchronization = typeof result?.repository === "string" ? result : null;
+        if (synchronization === null && synchronizations.get(folder)?.startedAt === startedAt) {
+          synchronizations.delete(folder);
+        }
+        return synchronization;
+      }),
+  };
+  synchronizations.set(folder, entry);
+  return entry;
+}
+
+/**
+ * Starts the synchronization of the GitHub repository of a folder in the background, so the first card of an issue or of a
+ * pull request opens without waiting for it.
+ * @param folder - the folder of the workspace
+ */
+export function prepareChatReferences(folder: string): void {
+  void synchronizeChatReferences(folder, false).promise;
+}
+
 /**
  * The details of an issue or of a pull request.
- * @param folder - the folder of the workspace, where `gh` or `glab` runs
+ * @param folder - the folder of the workspace, where the repository is
  * @param forge - the forge of the repository
  * @param reference - the issue or the pull request
  * @returns the details, or null when the forge does not answer
@@ -48,83 +138,49 @@ export async function loadChatReferenceDetails(
   reference: ChatReference,
 ): Promise<ChatReferenceDetails | null> {
   try {
-    return forge === "github" ? await readGithub(folder, reference) : await readGitlab(folder, reference);
+    return forge === "github" ? await readGithub(folder, reference) : await loadForgeReferenceDetails(folder, forge, reference);
   } catch {
     return null;
   }
 }
 
-/** The time of a date in the text that a forge gives, in milliseconds since 1970, or null. */
-function timeOf(text: string | undefined | null): number | null {
-  return text === undefined || text === null ? null : Date.parse(text) || null;
-}
-
-/**
- * The address of the picture of a person on GitHub. `gh` gives the login only, and GitHub gives the picture of a person
- * at `https://github.com/<login>.png`.
- * @param login - the login of the person, or nothing
- * @returns the address, or null when there is no login or the login is not a login of a person (for example "app/name")
- */
-function githubAvatarUrl(login: string | undefined): string | null {
-  if (login === undefined || /^[A-Za-z0-9][A-Za-z0-9-]*$/.test(login) === false) {
+/** The details of an issue or of a pull request of GitHub, read from the SQLite file. */
+async function readGithub(folder: string, reference: ChatReference): Promise<ChatReferenceDetails | null> {
+  let synchronization = synchronizeChatReferences(folder, false);
+  let repository = (await synchronization.promise)?.repository;
+  if (repository === undefined) {
     return null;
   }
-  return `https://github.com/${login}.png?size=48`;
+  let details = await findGithubDetails(repository, reference);
+  if (details === null && Date.now() - synchronization.startedAt > MISSING_ROW_RETRY_AGE) {
+    synchronization = synchronizeChatReferences(folder, true);
+    repository = (await synchronization.promise)?.repository;
+    details = repository === undefined ? null : await findGithubDetails(repository, reference);
+  }
+  return details;
 }
 
-/** The details of an issue or of a pull request, read with `gh`. */
-async function readGithub(folder: string, reference: ChatReference): Promise<ChatReferenceDetails> {
+/** The stored row of an issue or of a pull request of GitHub, as details, or null when the SQLite file has no such row. */
+async function findGithubDetails(repository: string, reference: ChatReference): Promise<ChatReferenceDetails | null> {
   const isIssue = reference.kind === "issue";
-  const fields = isIssue
-    ? "title,state,body,labels,author,createdAt"
-    : "title,state,body,labels,author,createdAt,headRefName,baseRefName";
-  const args = [isIssue ? "issue" : "pr", "view", String(reference.number), "--json", fields];
-  const answer = JSON.parse(await invoke<string>("forge_cli_cached", { cwd: folder, tool: "gh", args })) as {
-    title: string;
-    state: string;
-    body?: string;
-    labels?: { name: string; color?: string }[];
-    author?: { login?: string };
-    createdAt?: string;
-    headRefName?: string;
-    baseRefName?: string;
-  };
+  const rows = await invoke<StoredReferences>("chat_references_find", {
+    repository,
+    issues: isIssue ? [reference.number] : [],
+    pullRequests: isIssue ? [] : [reference.number],
+  });
+  const row = isIssue ? rows.issues[0] : rows.pullRequests[0];
+  if (row === undefined) {
+    return null;
+  }
   return {
-    title: answer.title,
-    rawState: answer.state.toLowerCase(),
-    body: answer.body ?? "",
-    labels: (answer.labels ?? []).map((label) => ({ name: label.name, color: label.color ?? null })),
-    author: answer.author?.login ?? null,
-    authorAvatarUrl: githubAvatarUrl(answer.author?.login),
-    createdAt: timeOf(answer.createdAt),
-    headBranch: answer.headRefName ?? null,
-    baseBranch: answer.baseRefName ?? null,
-  };
-}
-
-/** The details of an issue or of a merge request, read with `glab`. */
-async function readGitlab(folder: string, reference: ChatReference): Promise<ChatReferenceDetails> {
-  const kind = reference.kind === "issue" ? "issues" : "merge_requests";
-  const args = ["api", `projects/:fullpath/${kind}/${reference.number}`];
-  const answer = JSON.parse(await invoke<string>("forge_cli_cached", { cwd: folder, tool: "glab", args })) as {
-    title: string;
-    state: string;
-    description?: string | null;
-    labels?: string[];
-    author?: { username?: string; avatar_url?: string };
-    created_at?: string;
-    source_branch?: string;
-    target_branch?: string;
-  };
-  return {
-    title: answer.title,
-    rawState: answer.state === "opened" ? "open" : answer.state,
-    body: answer.description ?? "",
-    labels: (answer.labels ?? []).map((name) => ({ name, color: null })),
-    author: answer.author?.username ?? null,
-    authorAvatarUrl: /^https?:\/\//.test(answer.author?.avatar_url ?? "") ? (answer.author?.avatar_url ?? null) : null,
-    createdAt: timeOf(answer.created_at),
-    headBranch: answer.source_branch ?? null,
-    baseBranch: answer.target_branch ?? null,
+    title: row.title,
+    rawState: row.state.toLowerCase(),
+    body: row.body,
+    labels: row.labels.map((name) => ({ name, color: row.labelColors[name] ?? null })),
+    author: row.author,
+    authorAvatarUrl: githubAvatarUrl(row.author ?? undefined),
+    createdAt: chatReferenceTimeOf(row.createdAt),
+    headBranch: row.headRefName ?? null,
+    baseBranch: row.baseRefName ?? null,
   };
 }

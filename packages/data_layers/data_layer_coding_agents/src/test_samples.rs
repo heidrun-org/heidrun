@@ -91,6 +91,8 @@ pub fn chat_session(id: &str) -> ChatSession {
             cache_write_input: 20,
             output: 5,
         }],
+        folder: "/work/app".into(),
+        first_messages: vec!["Fix the issue 250".into()],
     }
 }
 

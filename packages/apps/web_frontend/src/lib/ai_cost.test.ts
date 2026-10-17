@@ -214,6 +214,29 @@ describe("AiCost.compute, the tokens that have no known price", () => {
 	});
 });
 
+describe("AiCost.mergeSynchronizationErrors", () => {
+	it("adds the error of the synchronization to the workspace of the same folder, and keeps the other workspaces as they are", () => {
+		const answer = { ...answerOf([]), workspaces: [workspace("/work/a", null), workspace("/work/b", "2026-10-14T09:00:00.000Z")] };
+		const merged = AiCost.mergeSynchronizationErrors(answer, {
+			workspaces: [workspace("/work/a", null, "no remote origin"), workspace("/work/b", "2026-10-14T09:00:00.000Z")],
+			priceWarning: null,
+		});
+		expect(merged.workspaces.map((item) => item.error)).toEqual(["no remote origin", null]);
+		expect(AiCost.findNotImported(merged.workspaces)).toEqual([]);
+	});
+
+	it("keeps the error that the read gave, and changes nothing else of the answer", () => {
+		const answer = { ...answerOf([row(14, "claude", 1, 10)]), workspaces: [workspace("/work/a", null, "read error")] };
+		const merged = AiCost.mergeSynchronizationErrors(answer, {
+			workspaces: [workspace("/work/a", null, "synchronization error")],
+			priceWarning: null,
+		});
+		expect(merged.workspaces[0].error).toBe("read error");
+		expect(merged.hours).toEqual(answer.hours);
+		expect(merged.priceVersion).toBe(1);
+	});
+});
+
 describe("AiCost.findNotImported", () => {
 	it("gives the workspaces that have no date of synchronization and no error", () => {
 		const workspaces = [

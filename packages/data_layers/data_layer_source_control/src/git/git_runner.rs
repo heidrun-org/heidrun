@@ -18,24 +18,38 @@ pub trait GitRunner {
 pub struct GitCommandRunner {
     /// The folder where the command `git` runs. It is the folder of the repository, or a folder inside it.
     folder: PathBuf,
+    /// True when `git` reads every path of a command as a literal path, never as a pattern.
+    is_literal_pathspecs: bool,
 }
 
 impl GitCommandRunner {
     /// Creates a runner for the repository of `folder`.
     pub fn new(folder: &Path) -> Self {
-        GitCommandRunner { folder: folder.to_path_buf() }
+        GitCommandRunner { folder: folder.to_path_buf(), is_literal_pathspecs: false }
+    }
+
+    /// Makes `git` read every path of a command as a literal path, never as a pattern, so a path with a star or a bracket
+    /// names one file only.
+    pub fn with_literal_pathspecs(mut self) -> Self {
+        self.is_literal_pathspecs = true;
+        self
     }
 }
 
 impl GitRunner for GitCommandRunner {
     fn run(&self, arguments: &[&str], standard_input: Option<&str>) -> Result<String, String> {
         let command_text = format!("git {}", arguments.join(" "));
-        let mut child = Command::new("git")
+        let mut command = Command::new("git");
+        command
             .arg("-C")
             .arg(&self.folder)
             .args(arguments)
             // The option --date=format-local writes the dates in the time zone of the process. UTC makes the dates the same everywhere.
-            .env("TZ", "UTC")
+            .env("TZ", "UTC");
+        if self.is_literal_pathspecs {
+            command.env("GIT_LITERAL_PATHSPECS", "1");
+        }
+        let mut child = command
             .stdin(if standard_input.is_some() { Stdio::piped() } else { Stdio::null() })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
