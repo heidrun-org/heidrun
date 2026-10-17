@@ -45,7 +45,7 @@ const REBUILD_HELP_BLOCKS = [
     <div class="d-flex flex-column gap-2" data-option="dynamicTopicExtraction">
       <div class="d-flex align-items-center gap-2">
         <h4 class="form-label m-0">{{ t("settingsDynamicTopics.extractionTitle") }}</h4>
-        <InformationCard :label="t('settingsDynamicTopics.extractionHelpLabel')" placement="bottom">
+        <InformationCard :label="t('settingsDynamicTopics.extractionHelpLabel')" placement="bottom-center">
           <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.extractionHelpLabel')">
             <Icon name="question-circle" />
           </span>
@@ -81,7 +81,7 @@ const REBUILD_HELP_BLOCKS = [
     <div class="d-flex flex-column gap-2">
       <h4 class="form-label m-0">{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
       <SettingsSwitchRow v-model="settings.clusteredDynamicTopics" :label="t('settingsDynamicTopics.clusteredLabel')" data-option="clusteredDynamicTopics">
-        <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
+        <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom-center">
           <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.clusteredHelpLabel')">
             <Icon name="question-circle" />
           </span>

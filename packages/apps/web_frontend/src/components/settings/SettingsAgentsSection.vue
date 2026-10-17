@@ -98,7 +98,7 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
     <div class="d-flex flex-column gap-2">
       <h4 class="form-label m-0">{{ t("settingsGeneral.quitTitle") }}</h4>
       <SettingsSwitchRow v-model="settings.keepAgentsRunningAfterQuit" :label="t('settingsGeneral.keepAgentsRunning')" data-option="keepAgentsRunning">
-        <InformationCard :label="t('settingsGeneral.keepAgentsRunningHelpLabel')" placement="bottom">
+        <InformationCard :label="t('settingsGeneral.keepAgentsRunningHelpLabel')" placement="bottom-center">
           <span class="text-body-secondary" role="img" :aria-label="t('settingsGeneral.keepAgentsRunningHelpLabel')">
             <Icon name="question-circle" />
           </span>

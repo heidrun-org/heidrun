@@ -15,7 +15,7 @@ defineProps<{
 </script>
 
 <template>
-  <InformationCard :label="t(`settingsSkills.help_${topic}_label`)" placement="bottom">
+  <InformationCard :label="t(`settingsSkills.help_${topic}_label`)" placement="bottom-center">
     <span class="text-body-secondary" role="img" :aria-label="t(`settingsSkills.help_${topic}_label`)">
       <Icon name="question-circle" />
     </span>
