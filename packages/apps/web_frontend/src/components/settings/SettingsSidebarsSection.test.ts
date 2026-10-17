@@ -10,6 +10,14 @@ beforeEach(() => {
   settings.gitFetchMinutes = 5;
 });
 
+/** Opens the information card whose circled question mark is named `label`, and returns the text of the card. */
+async function openCardText(wrapper: ReturnType<typeof mount>, label: string): Promise<string> {
+  const mark = wrapper.findAll(".information-card-part").find((part) => part.get('[role="img"]').attributes("aria-label") === label);
+  expect(mark, label).toBeDefined();
+  await mark!.trigger("click");
+  return wrapper.get(".popover").text();
+}
+
 /** Finds the button group that has the given label. */
 function getGroup(wrapper: ReturnType<typeof mount>, label: string) {
   return wrapper.get(`.btn-group[aria-label="${label}"]`);
@@ -81,10 +89,11 @@ describe("SettingsSidebarsSection, the heading Past chats, the delay between two
     expect(settings.chatsRefreshSeconds).toBe(5);
   });
 
-  it("tells in a help paragraph what the delay does", () => {
+  it("tells in an information card what the delay does, and shows no help paragraph", async () => {
     const wrapper = mount(SettingsSidebarsSection);
-    const help = wrapper.findAll(".form-text").map((line) => line.text());
-    expect(help.some((text) => text.includes("reads the files of the chats again after this delay"))).toBe(true);
+    expect(wrapper.findAll(".form-text")).toHaveLength(0);
+    const text = await openCardText(wrapper, "About the option “Read the chats again every”");
+    expect(text).toContain("reads the files of the chats again after this delay");
   });
 });
 
@@ -92,7 +101,7 @@ describe("SettingsSidebarsSection, the heading Source control, the fetch in the 
   it("shows the name of the option, then a Bootstrap button group of five radio inputs", () => {
     const wrapper = mount(SettingsSidebarsSection);
     const group = getGroup(wrapper, "Fetch the remote repository in the background");
-    expect(group.element.previousElementSibling?.textContent).toBe("Fetch the remote repository in the background");
+    expect(group.element.previousElementSibling?.firstElementChild?.textContent).toBe("Fetch the remote repository in the background");
     expect(group.findAll("label").map((label) => label.text())).toEqual(["Off", "1 minute", "5 minutes", "10 minutes", "30 minutes"]);
     for (const label of group.findAll("label")) {
       expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
@@ -120,9 +129,9 @@ describe("SettingsSidebarsSection, the heading Source control, the fetch in the 
     expect(settings.gitFetchMinutes).toBe(0);
   });
 
-  it("explains in one line that the counts of the Git branch section stay true, and that a failed fetch shows nothing", () => {
+  it("explains in an information card that the counts of the Git branch section stay true, and that a failed fetch shows nothing", async () => {
     const wrapper = mount(SettingsSidebarsSection);
-    const help = wrapper.findAll(".form-text").map((line) => line.text()).find((text) => text.includes("git fetch"));
+    const help = await openCardText(wrapper, "About the option “Fetch the remote repository in the background”");
     expect(help).toContain("the two counts of the Git branch section of the status bar stay true");
     expect(help).toContain("A fetch that fails shows nothing");
   });

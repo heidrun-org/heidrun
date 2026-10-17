@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
+import SettingsOptionHelp from "./SettingsOptionHelp.vue";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { languageModelStatus } from "../../stores/language_model_topics";
 import { settings } from "../../stores/settings";
@@ -19,13 +20,29 @@ const CLUSTERED_HELP_BLOCKS = [
   { titleKey: "settingsDynamicTopics.clusteredSentTitle", textKey: "settingsDynamicTopics.clusteredSentHelp" },
   { titleKey: "settingsDynamicTopics.clusteredOffTitle", textKey: "settingsDynamicTopics.clusteredOffHelp" },
 ] as const;
+
+/** The blocks of the information card of the option "Enable dynamic topics", in the order of the card. */
+const ENABLE_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.dynamicTopics.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.dynamicTopics.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.dynamicTopics.off" },
+] as const;
+
+/** The blocks of the information card of the button "Rebuild the clusters", in the order of the card. */
+const REBUILD_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.rebuildClusters.what" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsHelp.rebuildClusters.how" },
+  { titleKey: "settingsDynamicTopics.clusteredSentTitle", textKey: "settingsDynamicTopics.clusteredSentHelp" },
+] as const;
 </script>
 
 <template>
   <div class="d-flex flex-column gap-3">
-    <SettingsSwitchRow v-model="settings.dynamicTopics" :label="t('settingsDynamicTopics.enableLabel')" />
+    <SettingsSwitchRow v-model="settings.dynamicTopics" :label="t('settingsDynamicTopics.enableLabel')" data-option="dynamicTopics">
+      <SettingsOptionHelp title-key="settingsDynamicTopics.enableLabel" :blocks="ENABLE_HELP_BLOCKS" />
+    </SettingsSwitchRow>
 
-    <div class="d-flex flex-column gap-2">
+    <div class="d-flex flex-column gap-2" data-option="dynamicTopicExtraction">
       <div class="d-flex align-items-center gap-2">
         <h4 class="form-label m-0">{{ t("settingsDynamicTopics.extractionTitle") }}</h4>
         <InformationCard :label="t('settingsDynamicTopics.extractionHelpLabel')" placement="bottom">
@@ -63,7 +80,7 @@ const CLUSTERED_HELP_BLOCKS = [
 
     <div class="d-flex flex-column gap-2">
       <h4 class="form-label m-0">{{ t("settingsDynamicTopics.clusteredTitle") }}</h4>
-      <SettingsSwitchRow v-model="settings.clusteredDynamicTopics" :label="t('settingsDynamicTopics.clusteredLabel')">
+      <SettingsSwitchRow v-model="settings.clusteredDynamicTopics" :label="t('settingsDynamicTopics.clusteredLabel')" data-option="clusteredDynamicTopics">
         <InformationCard :label="t('settingsDynamicTopics.clusteredHelpLabel')" placement="bottom">
           <span class="text-body-secondary" role="img" :aria-label="t('settingsDynamicTopics.clusteredHelpLabel')">
             <Icon name="question-circle" />
@@ -82,17 +99,20 @@ const CLUSTERED_HELP_BLOCKS = [
           </template>
         </InformationCard>
       </SettingsSwitchRow>
-      <button
-        type="button"
-        class="btn align-self-start"
-        :class="{ 'opacity-50': settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning }"
-        :title="t('settingsDynamicTopics.rebuildTitle')"
-        :disabled="settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning"
-        @click="rebuildTopicClusters()"
-      >
-        <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-sm" aria-hidden="true"></span>
-        {{ t("settingsDynamicTopics.rebuildLabel") }}
-      </button>
+      <div class="d-flex align-items-center gap-2" data-option="rebuildClusters">
+        <button
+          type="button"
+          class="btn"
+          :class="{ 'opacity-50': settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning }"
+          :title="t('settingsDynamicTopics.rebuildTitle')"
+          :disabled="settings.clusteredDynamicTopics === false || topicClusterStatus.isRunning"
+          @click="rebuildTopicClusters()"
+        >
+          <span v-if="topicClusterStatus.isRunning" class="spinner-border spinner-sm" aria-hidden="true"></span>
+          {{ t("settingsDynamicTopics.rebuildLabel") }}
+        </button>
+        <SettingsOptionHelp title-key="settingsDynamicTopics.rebuildLabel" :blocks="REBUILD_HELP_BLOCKS" />
+      </div>
       <div v-if="settings.clusteredDynamicTopics && topicClusterStatus.error !== null" class="form-text" role="status">
         {{ t(`settingsDynamicTopics.error.${topicClusterStatus.error}`) }}
       </div>

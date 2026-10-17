@@ -25,16 +25,20 @@ describe("SettingsTerminalSection, the mouse behaviour that moved here from the 
     }
   });
 
-  it("saves the mode that is chosen, and shows the help of that mode", async () => {
+  it("saves the mode that is chosen, and describes both modes in an information card", async () => {
     const { wrapper, settings } = await mountSection();
     const radios = wrapper.get(".btn-group").findAll("input[type=radio]");
     const firstMode = settings.mouseMode;
     expect((radios[firstMode === "select" ? 0 : 1].element as HTMLInputElement).checked).toBe(true);
     await radios[1].setValue(true);
     expect(settings.mouseMode).toBe("app");
-    expect(wrapper.findAll(".form-text").map((line) => line.text()).join(" ")).toContain("The wheel and the clicks go to Herdr");
     await radios[0].setValue(true);
     expect(settings.mouseMode).toBe("select");
-    expect(wrapper.findAll(".form-text").map((line) => line.text()).join(" ")).toContain("Drag selects");
+    expect(wrapper.findAll(".form-text").map((line) => line.text()).join(" ")).not.toContain("Herdr");
+    const mark = wrapper.findAll(".information-card-part").find((part) => part.get('[role="img"]').attributes("aria-label") === "About the option “Mouse behaviour”")!;
+    await mark.trigger("click");
+    const cardText = wrapper.get(".popover").text();
+    expect(cardText).toContain("The wheel and the clicks go to Herdr");
+    expect(cardText).toContain("Drag the mouse to select text");
   });
 });
