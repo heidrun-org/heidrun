@@ -1,11 +1,11 @@
 # User interface of Heidrun: workspace
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Tabs](tabs.md)
-- Related issue: [issue 379](https://github.com/heidrun-org/heidrun/issues/379)
+- Related issue: [issue 379](https://github.com/heidrun-org/heidrun/issues/379), [issue 619](https://github.com/heidrun-org/heidrun/issues/619)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -23,4 +23,5 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The Needs you sidebar section shows the same list of workspaces, in the same order, with the same selection and the same drag and drop, but without the rename and the close ([needs_you_workspaces.md](../sidebars/needs_you_workspaces.md)).
 - Two other ways to switch workspace: the command search with ⌘K, and the shortcut Option+Command+Up arrow or Option+Command+Down arrow.
 - Heidrun saves the identifier of the selected workspace each time that the selection changes, in the option `selectedWorkspaceId` of the store `settings.ts`. At the next start, Heidrun selects this workspace again, with its last tab and its last pane. When this workspace does not exist any more, Heidrun selects the workspace that Herdr has focused, or the first workspace.
+- **No timer reads the snapshot of Herdr** (the workspaces, the tabs, the panes, and the statuses of the agents). The store `session.ts` reads it once at the start, after each event that Herdr pushes (`herdr://event`), after each connection (`herdr://connected`), after each loss of events (`herdr://resync`), and after each action of the developer in Heidrun. Each read gives the page a new list of workspaces, so everything that watches this list by identity runs again. A timer would do this every few seconds for nothing, and the chart of the Statistics window would blink ([issue 616](https://github.com/heidrun-org/heidrun/issues/616)). A timer is not needed as a safety net: Herdr pushes an event for each change of the snapshot that was measured on 17 October 2026 (the creation, the rename, the move, and the close of a workspace, a tab, or a pane, the statuses of the agents, the tokens, and the folder of a pane), and the read after `herdr://connected` and `herdr://resync` covers a lost event. The rename of a pane is the one change with no event: Heidrun reads the snapshot after its own rename, as after every action. The test `session_no_herdr_poll.test.ts` fails when a timer that reads the snapshot comes back. The usage of Codex is the one exception: Codex writes it outside Heidrun, no event announces it, so the page reads it every 10 seconds.
 
