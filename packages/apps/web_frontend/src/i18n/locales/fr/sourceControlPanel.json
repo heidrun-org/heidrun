@@ -37,8 +37,6 @@
   "discardManyQuestion_one": "Annuler les modifications de {count} fichier ? Elles ne pourront pas revenir.",
   "discardManyQuestion_other": "Annuler les modifications de {count} fichiers ? Elles ne pourront pas revenir.",
   "discardConfirm": "Annuler les modifications",
-  "stageAllQuestion": "Aucune modification indexée. Indexer toutes les modifications et en faire un commit ?",
-  "stageAllConfirm": "Indexer et faire le commit",
   "emptyMessage": "Écris d’abord un message de commit.",
   "nothingToCommit": "Rien à committer.",
   "stashed": "Les modifications sont mises de côté.",

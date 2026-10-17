@@ -154,10 +154,10 @@ function chooseMore(id: string) {
         />
       </header>
 
-      <div class="message position-relative">
+      <div class="message d-flex align-items-start gap-1">
         <textarea
           v-model="message"
-          class="form-control"
+          class="form-control flex-fill"
           rows="1"
           :placeholder="placeholder"
           :aria-label="t('sourceControlPanel.messageLabel')"
@@ -165,7 +165,7 @@ function chooseMore(id: string) {
         ></textarea>
         <button
           type="button"
-          class="btn btn-sm icon-button write-message position-absolute"
+          class="btn btn-sm icon-button write-message"
           :aria-label="t('sourceControlPanel.writeMessage')"
           :title="t('sourceControlPanel.writeMessage')"
           :disabled="sourceControl.isWritingMessage"
@@ -177,7 +177,7 @@ function chooseMore(id: string) {
       </div>
 
       <div class="btn-group d-flex" role="group" :aria-label="t('sourceControlPanel.commit')">
-        <button type="button" class="btn btn-primary flex-fill" :disabled="sourceControl.isBusy" @click="commit('commit')">
+        <button type="button" class="btn btn-primary flex-fill justify-content-center" :disabled="sourceControl.isBusy" @click="commit('commit')">
           <Icon name="check2" /> {{ t("sourceControlPanel.commit") }}
         </button>
         <SourceControlMenu
@@ -192,18 +192,17 @@ function chooseMore(id: string) {
 
       <div class="groups">
         <template v-for="group in (['staged', 'changes'] as const)" :key="group">
-          <section v-if="group === 'changes' || groups.staged.length > 0" class="group">
-            <div class="group-header d-flex align-items-center">
+          <section class="group">
+            <div class="group-header d-flex align-items-center" @click="toggleGroup(group)">
               <button
                 type="button"
                 class="group-toggle d-flex align-items-center gap-2 me-auto"
                 :aria-expanded="sourceControl.folded[group] === false"
-                @click="toggleGroup(group)"
               >
                 <Icon :name="sourceControl.folded[group] ? 'chevron-right' : 'chevron-down'" />
                 {{ t(`sourceControlPanel.group.${group}`) }}
               </button>
-              <span class="hover-actions">
+              <span class="hover-actions" @click.stop>
                 <button
                   type="button"
                   class="btn btn-sm icon-button"
@@ -252,7 +251,7 @@ function chooseMore(id: string) {
                   class="btn btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.unstageAll')"
                   :title="t('sourceControlPanel.unstageAll')"
-                  :disabled="sourceControl.isBusy"
+                  :disabled="sourceControl.isBusy || groups.staged.length === 0"
                   @click="unstageFiles(paths('staged'))"
                 >
                   <Icon name="dash-lg" />
@@ -333,8 +332,8 @@ function chooseMore(id: string) {
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .source-control :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
 .source-control :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
-.message textarea { resize: vertical; padding-right: 32px; min-height: 34px; }
-.write-message { top: 4px; right: 4px; }
+.message textarea { resize: vertical; min-height: 34px; }
+.source-control :deep(.write-message) { flex: 0 0 auto; height: 34px; }
 /* The commit button is blue, as in VS Code: the rule .btn of styles.css makes every other button transparent. */
 .btn-group :deep(.btn-primary) {
   --btn-color: #fff; --btn-bg: #2c63a8; --btn-border-color: #2c63a8;
@@ -344,7 +343,7 @@ function chooseMore(id: string) {
 }
 .btn-group :deep(.commit-arrow) { flex: 0 0 auto; border-left-color: rgba(255, 255, 255, 0.4); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -8px; }
-.group-header { height: 26px; padding: 0 8px; border-radius: 5px; }
+.group-header { height: 26px; padding: 0 8px; border-radius: 5px; cursor: pointer; }
 .group-header:hover { background: var(--hover-soft); }
 .group-toggle, .file-main { border: none; background: none; padding: 0; color: var(--text); font-size: var(--font-size); text-align: left; min-width: 0; }
 .group-toggle { font-weight: 600; }

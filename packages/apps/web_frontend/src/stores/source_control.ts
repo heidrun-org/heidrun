@@ -127,8 +127,9 @@ export async function syncRepository(action: SyncAction): Promise<void> {
 }
 
 /**
- * Makes a commit with the message of the selected workspace. When no file is staged, the user is asked whether to
- * stage every change and commit it, as VS Code asks. The message box is emptied after the commit.
+ * Makes a commit with the message of the selected workspace. When no file is staged, it stages every change first,
+ * with no question. The message box is emptied after the commit.
+ * - issue #613
  */
 export async function commit(mode: CommitMode): Promise<void> {
   const workspaceId = session.selectedWorkspaceId;
@@ -148,10 +149,6 @@ export async function commit(mode: CommitMode): Promise<void> {
   if (mode !== "amend" && groups.staged.length === 0) {
     if (groups.changes.length === 0) {
       toast(t("sourceControlPanel.nothingToCommit"));
-      return;
-    }
-    const isConfirmed = await askConfirm(t("sourceControlPanel.stageAllQuestion"), t("sourceControlPanel.stageAllConfirm"));
-    if (isConfirmed === false) {
       return;
     }
     const stageResult = await runOnRoot("git_stage", (root) => ({ root, paths: groups.changes.map((file) => file.path) }));
