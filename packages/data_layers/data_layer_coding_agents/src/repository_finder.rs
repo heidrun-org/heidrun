@@ -63,6 +63,13 @@ pub fn find_repository(root: &Path) -> Result<String, String> {
     })
 }
 
+/// The key under which the chat sessions of the workspace at `root` are stored: the repository in the format `owner/name`, or
+/// the root folder itself when the repository has no remote `origin`. A folder always starts with a slash, so the two never
+/// look alike.
+pub fn find_repository_key(root: &Path) -> String {
+    find_repository(root).unwrap_or_else(|_| root.display().to_string())
+}
+
 /// The owner and the name of a repository, from the address of a remote: `https://github.com/owner/name.git`,
 /// `git@github.com:owner/name.git`, or `ssh://git@host/owner/name`. It is the last two parts of the address, without the
 /// ending `.git`. `None` when the address has fewer than two parts.

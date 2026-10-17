@@ -167,6 +167,31 @@ impl TokenUsageDatabase {
             .map_err(|error| format!("The synchronization cannot be read: {error}"))
     }
 
+    /// The last synchronization of the workspace whose folder is `folder`, whatever its repository is, or `None` when its token
+    /// usage was never read. When two repositories read the same folder, the newest synchronization is the answer.
+    pub fn find_latest_synchronization_of_folder(&self, folder: &str) -> Result<Option<TokenUsageSynchronization>, String> {
+        if !self.has_table(SYNCHRONIZATIONS_TABLE)? {
+            return Ok(None);
+        }
+        self.connection
+            .query_row(
+                "SELECT repository, folder, synchronizedAt, readUpTo, mode FROM token_usage_synchronizations
+                 WHERE folder = ?1 ORDER BY synchronizedAt DESC, repository LIMIT 1",
+                params![folder],
+                |row| {
+                    Ok(TokenUsageSynchronization {
+                        repository: row.get(0)?,
+                        folder: row.get(1)?,
+                        synchronized_at: row.get(2)?,
+                        read_up_to: row.get(3)?,
+                        mode: row.get(4)?,
+                    })
+                },
+            )
+            .optional()
+            .map_err(|error| format!("The synchronization of the folder cannot be read: {error}"))
+    }
+
     /// The last synchronization of each workspace of a repository, the newest first. Empty when the token usage of the
     /// repository was never read, and when the file was made before the tables of the token usage existed.
     pub fn find_synchronizations(&self, repository: &str) -> Result<Vec<TokenUsageSynchronization>, String> {
@@ -625,6 +650,20 @@ mod tests {
         assert_eq!(by_chat.iter().map(|row| row.chat_session_id.clone().unwrap()).collect::<Vec<_>>(), ["a", "b"]);
         let added = database.find_usage(&query(&[], UsageGrouping::Day { time_zone: "UTC".to_string() }, false)).unwrap();
         assert_eq!((added.len(), added[0].output, added[0].chat_session_id.clone()), (1, 3, None));
+    }
+
+    #[test]
+    fn finds_the_newest_synchronization_of_a_folder_whatever_its_repository_is() {
+        let (_, mut database) = new_database("folder_synchronization");
+        let mut older = synchronization();
+        older.synchronized_at = "2026-10-10T10:00:00.000Z".to_string();
+        let mut newer = synchronization();
+        newer.synchronized_at = "2026-10-12T10:00:00.000Z".to_string();
+        database.write_token_usage("old-owner/old-name", &[], &older).unwrap();
+        database.write_token_usage("new-owner/new-name", &[], &newer).unwrap();
+        let found = database.find_latest_synchronization_of_folder(&older.folder).unwrap().unwrap();
+        assert_eq!((found.repository.as_str(), found.synchronized_at.as_str()), ("new-owner/new-name", "2026-10-12T10:00:00.000Z"));
+        assert_eq!(database.find_latest_synchronization_of_folder("/work/none"), Ok(None));
     }
 
     #[test]

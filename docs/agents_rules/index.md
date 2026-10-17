@@ -1,15 +1,16 @@
 # Agent rules index
 
 - Created: 13 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 610](https://github.com/heidrun-org/heidrun/issues/610)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 617](https://github.com/heidrun-org/heidrun/issues/617)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
 - [glossary/](glossary/index.md): the glossary, split by topic: the definition of each word that the project uses for a part of the application, and the official name "coding agent".
 - [github_and_gitlab_support.md](github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, and the matching `gh` and `glab` commands.
+- [data_layer_access.md](data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the data layer, the table of the commands, the exceptions, the check, and the audit of the bypasses.
 - [issue_fix_implementation.md](issue_fix_implementation.md): the rules of the part Issue Fix Implementation: the two kinds of added request, the comment on the issue, the new issue, and the description of the pull request.
 - [user_interface/](user_interface/index.md): the rules of the user interface, split by topic.

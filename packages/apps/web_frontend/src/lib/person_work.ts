@@ -34,7 +34,17 @@ export type PersonWorkOpenedItem = {
 	createdAt: string;
 };
 
-/** What the command `person_work_in_range` gives: the three kinds of items of the repository in a time range. */
+/** What the command `person_work_synchronize` gives. */
+export type PersonWorkSynchronization = {
+	/** The repository, in the format `owner/name`. The tab gives it to the command `person_work_in_range`. */
+	repository: string;
+	/** The message of the error when GitHub could not be read, or `null`. The pull requests and the issues are then the ones that
+	 * an earlier read stored. */
+	codeHostingError: string | null;
+};
+
+/** What the tab keeps for a folder: the three kinds of items of the repository in a time range, and the error of GitHub. The
+ * command `person_work_in_range` gives the items, and the command `person_work_synchronize` gives the error. */
 export type PersonWorkItems = {
 	/** The repository, in the format `owner/name`. */
 	repository: string;

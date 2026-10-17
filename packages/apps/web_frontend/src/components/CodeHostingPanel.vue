@@ -21,11 +21,8 @@ import { referenceLabelStyle, type ChatReference } from "../lib/chat_references"
 import { toggleLabelInSearch } from "../lib/code_hosting_search";
 import type { Forge } from "../lib/refs";
 import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
-import {
-  loadChatReferenceDetails,
-  type ChatReferenceDetails as Details,
-  type ChatReferenceLabel,
-} from "../stores/chat_references";
+import type { ChatReferenceDetails as Details, ChatReferenceLabel } from "../stores/chat_references";
+import { loadForgeReferenceDetails } from "../stores/forge_reference_details";
 import { currentGit } from "../stores/git";
 import { state } from "../stores/session";
 import { settings } from "../stores/settings";
@@ -251,7 +248,7 @@ async function readDetails(row: Row) {
   if (folder === undefined) {
     return;
   }
-  const answer = await loadChatReferenceDetails(folder, forge.value, row.reference);
+  const answer = await loadForgeReferenceDetails(folder, forge.value, row.reference);
   answers.value = { ...answers.value, [row.key]: answer };
 }
 </script>

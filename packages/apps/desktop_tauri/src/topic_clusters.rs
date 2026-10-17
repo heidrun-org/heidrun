@@ -42,12 +42,12 @@ pub struct CodingAgentAnswer {
 
 /// The file of the translation table.
 fn table_path() -> PathBuf {
-    crate::chats::data_dir().join(TABLE_FILE)
+    crate::app_data::data_dir().join(TABLE_FILE)
 }
 
 /// The folder where the coding agent runs.
 fn agent_folder() -> PathBuf {
-    crate::chats::data_dir().join("topic_clusters_agent")
+    crate::app_data::data_dir().join("topic_clusters_agent")
 }
 
 /// Reads the rows of the file `path`. A missing file, a file that is not valid, and a file with another version give no

@@ -17,6 +17,11 @@
     "author": { "type": ["string", "null"], "description": "Login of the author. Null when the account is deleted." },
     "mergedBy": { "type": ["string", "null"], "description": "Login. Null when not merged." },
     "labels": { "type": "array", "items": { "type": "string" }, "description": "Names." },
+    "labelColors": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[0-9a-fA-F]{6}$" },
+      "description": "The color of each label, as six hexadecimal digits without #, by the name of the label. Optional: a row written by an earlier version has none."
+    },
     "baseRefName": { "type": "string" },
     "headRefName": { "type": "string" },
     "mergeCommit": { "type": ["string", "null"], "description": "Commit identifier. Null when not merged." },
