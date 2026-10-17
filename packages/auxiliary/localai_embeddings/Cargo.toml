@@ -1,5 +1,5 @@
 [package]
-name = "local_ai_embeddings"
+name = "localai_embeddings"
 version = "0.2.7"
 description = "Computes local text embeddings with a Rust library and command line tool"
 license = "MIT"
@@ -7,11 +7,11 @@ edition = "2021"
 publish = false
 
 [lib]
-name = "local_ai_embeddings"
+name = "localai_embeddings"
 path = "src/lib.rs"
 
 [[bin]]
-name = "local_ai_embeddings"
+name = "localai_embeddings"
 path = "src/main.rs"
 
 [features]

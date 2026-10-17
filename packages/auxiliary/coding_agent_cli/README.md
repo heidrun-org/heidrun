@@ -1,6 +1,6 @@
-# raw_coding_agent_cli
+# coding_agent_cli
 
-A Rust library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex`, `claude`, or `agy`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
+A Rust library and a command line tool for [Heidrun](../../../README.md). Both send one prompt to a coding agent command line tool (`codex`, `claude`, or `agy`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `coding_agent_cli` is the name of the package and the name of the executable.
 
 ## What it contains
 
@@ -8,7 +8,7 @@ A Rust library and a command line tool for [Heidrun](../../../README.md). Both s
 - `src/ask.rs`: the function `ask`, which sends one prompt to a coding agent.
 - `src/run_tool.rs`: the function `run_tool`, which runs a tool with arguments and gives what it printed, for example the list of the models of a coding agent.
 - `src/agent_shell.rs`: the type `AgentShell`, the shell that starts a tool.
-- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `raw_coding_agent_cli`.
+- `src/main.rs` and `src/command_line.rs`: the command line. It is the executable `coding_agent_cli`.
 - `tests/`: the tests of the executable. They use fake `codex` and `claude` commands.
 
 ## Command line
@@ -16,14 +16,14 @@ A Rust library and a command line tool for [Heidrun](../../../README.md). Both s
 Run the command from the root of the repository. The option `--silent` of `pnpm` removes the lines that `pnpm` prints before the answer. The first run builds the executable, which takes some time. The command runs in the folder of the package, so give a prompt file with an absolute path.
 
 ```sh
-pnpm --silent --filter raw_coding_agent_cli cli "Write one sentence that explains a change log."
-pnpm --silent --filter raw_coding_agent_cli cli --agent claude "Write one sentence about Git."
-pnpm --silent --filter raw_coding_agent_cli cli --prompt-file /path/to/prompt.md
-git log --oneline -20 | pnpm --silent --filter raw_coding_agent_cli cli "Summarize these commits:"
+pnpm --silent --filter coding_agent_cli cli "Write one sentence that explains a change log."
+pnpm --silent --filter coding_agent_cli cli --agent claude "Write one sentence about Git."
+pnpm --silent --filter coding_agent_cli cli --prompt-file /path/to/prompt.md
+git log --oneline -20 | pnpm --silent --filter coding_agent_cli cli "Summarize these commits:"
 ```
 
 ```text
-Usage: raw_coding_agent_cli [options] [prompt]
+Usage: coding_agent_cli [options] [prompt]
 
 Sends one prompt to a coding agent (codex, claude, or agy), waits for the answer,
 and prints the answer on the standard output.
@@ -57,7 +57,7 @@ Exit codes:
 The package `desktop_tauri` uses the library with a path dependency in its file `Cargo.toml`.
 
 ```rust
-use raw_coding_agent_cli::{ask, AgentShell};
+use coding_agent_cli::{ask, AgentShell};
 
 let answer = ask(&AgentShell::login(), Some("codex"), "Write one sentence that explains a change log.", None, None).await?;
 println!("{}", answer.text);
@@ -94,5 +94,5 @@ The function `run_tool` runs a tool with arguments and gives its standard output
 Run this command from the root of the repository.
 
 ```sh
-pnpm --filter raw_coding_agent_cli test   # run the Rust tests with cargo test
+pnpm --filter coding_agent_cli test   # run the Rust tests with cargo test
 ```

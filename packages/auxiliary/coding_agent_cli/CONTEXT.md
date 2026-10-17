@@ -1,14 +1,14 @@
-# Directory Context: `/packages/auxiliary/raw_coding_agent_cli`
+# Directory Context: `/packages/auxiliary/coding_agent_cli`
 
 ## Purpose
-A Rust library and a command line tool that send one prompt to a coding agent command line tool (`codex`, `claude`, or `agy`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `raw_coding_agent_cli` is the name of the package and the name of the executable.
+A Rust library and a command line tool that send one prompt to a coding agent command line tool (`codex`, `claude`, or `agy`), wait for the answer, and return the answer as text. The desktop application uses the library, and the change log generator runs the command line tool. The name `coding_agent_cli` is the name of the package and the name of the executable.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public interface of the library. It exports `ask`, `run_tool`, `AgentShell`, `login_shell`, `coding_agent_names`, `Answer`, `CODING_AGENTS`, `DEFAULT_CODING_AGENTS`, and `NO_CODING_AGENT`.
-- `src/main.rs`: the command line, and the executable `raw_coding_agent_cli`. The module `src/command_line.rs` reads its arguments.
+- `src/main.rs`: the command line, and the executable `coding_agent_cli`. The module `src/command_line.rs` reads its arguments.
 - `tests/`: the tests of the executable, with fake `codex`, `claude`, and `agy` commands put at the start of the PATH. The tests of the library sit at the end of each source file.
-- Command to run this folder: `pnpm --silent --filter raw_coding_agent_cli cli --help`
-- Command to test this folder: `pnpm --filter raw_coding_agent_cli test`
+- Command to run this folder: `pnpm --silent --filter coding_agent_cli cli --help`
+- Command to test this folder: `pnpm --filter coding_agent_cli test`
 
 ## Rules
 - `claude` runs as `claude -p`, `codex` runs as `codex exec --skip-git-repo-check -`, and `agy` runs as `agy -p <prompt>`. These arguments are written only in `src/ask.rs`.

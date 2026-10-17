@@ -636,6 +636,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "coding_agent_cli"
+version = "0.2.7"
+dependencies = [
+ "tokio",
+]
+
+[[package]]
 name = "combine"
 version = "4.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1930,6 +1937,7 @@ version = "0.2.7"
 dependencies = [
  "base64 0.22.1",
  "chrono",
+ "coding_agent_cli",
  "data_layer_code_hosting",
  "data_layer_coding_agents",
  "data_layer_source_control",
@@ -1940,7 +1948,6 @@ dependencies = [
  "heidrun_data",
  "mobile_server",
  "portable-pty",
- "raw_coding_agent_cli",
  "request_log",
  "reqwest 0.12.28",
  "serde",
@@ -3791,13 +3798,6 @@ name = "raw-window-handle"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
-
-[[package]]
-name = "raw_coding_agent_cli"
-version = "0.2.7"
-dependencies = [
- "tokio",
-]
 
 [[package]]
 name = "redox_syscall"

@@ -1,6 +1,6 @@
 # Local AI embeddings
 
-`local_ai_embeddings` computes embeddings on your computer with a Rust library and command line tool. It accepts ordinary text or source code as text. Input text stays on your computer. This version handles text only; code is accepted as text, but the default model was trained for natural language rather than code search.
+`localai_embeddings` computes embeddings on your computer with a Rust library and command line tool. It accepts ordinary text or source code as text. Input text stays on your computer. This version handles text only; code is accepted as text, but the default model was trained for natural language rather than code search.
 
 ## Requirements
 
@@ -15,9 +15,9 @@ The default model is `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v
 From the repository root, pass text, a file, or a pipe:
 
 ```bash
-pnpm --filter local_ai_embeddings cli --text "Bonjour, ceci est un exemple."
-pnpm --filter local_ai_embeddings cli --file README.md
-cat ./notes.txt | pnpm --filter local_ai_embeddings cli
+pnpm --filter localai_embeddings cli --text "Bonjour, ceci est un exemple."
+pnpm --filter localai_embeddings cli --file README.md
+cat ./notes.txt | pnpm --filter localai_embeddings cli
 ```
 
 The package command runs inside the package folder: `--file README.md` reads this package's README. Use an absolute path for a file elsewhere. With no text, file, or pipe, the command prompts for pasted text and waits for Control-D.
@@ -29,13 +29,13 @@ The JSON output contains `model`, `backend`, `dimensions`, and `documents`. Each
 The `pnpm` command uses an optimized release build. The first invocation compiles the program; later invocations reuse the compiled program. Add `--verbose` to show input reading, timings for each model-loading stage, and embedding timings on standard error:
 
 ```bash
-pnpm --filter local_ai_embeddings cli --verbose --file README.md --output /private/tmp/local-ai-embeddings.json
+pnpm --filter localai_embeddings cli --verbose --file README.md --output /private/tmp/localai-embeddings.json
 ```
 
 Compare the global vectors of exactly two inputs:
 
 ```bash
-pnpm --filter local_ai_embeddings cli --compare \
+pnpm --filter localai_embeddings cli --compare \
   --text "The cat sleeps on the chair." \
   --text "A cat is resting on a seat."
 ```
@@ -51,7 +51,7 @@ Markdown uses headings, paragraphs, and fenced blocks; ordinary text uses paragr
 Overlap defaults to **zero**. Request a maximum repeated tail of the previous chunk with:
 
 ```bash
-pnpm --filter local_ai_embeddings cli --file README.md --overlap-tokens 16
+pnpm --filter localai_embeddings cli --file README.md --overlap-tokens 16
 ```
 
 Overlap reserves space inside each chunk's token limit and can be smaller than requested near structural boundaries. Every chunk receives a normalized vector. The global vector is a normalized mean of the chunk vectors, weighted by content token count. The global vector is an approximation for document comparison; chunk vectors retain more local detail. Overlapped text contributes to more than one chunk and therefore also influences the mean more than once.
@@ -65,7 +65,7 @@ By default, model loading uses cached files immediately without checking Hugging
 Use `--check-model-updates` to ask Hugging Face to check the current model files and download newer versions when available:
 
 ```bash
-pnpm --filter local_ai_embeddings cli --check-model-updates --verbose --file README.md
+pnpm --filter localai_embeddings cli --check-model-updates --verbose --file README.md
 ```
 
 Rust callers select the same behavior with `EmbeddingConfig::check_model_updates`, which defaults to `false`.
@@ -79,8 +79,8 @@ The default backend is `cpu`. The CPU worker count is selected automatically by 
 `--backend metal` requires a macOS build with the `metal` feature. `--backend cuda` requires the `cuda` feature and a compatible NVIDIA GPU. Run these commands from the repository root:
 
 ```bash
-pnpm --filter local_ai_embeddings exec cargo run --release --features metal -- --backend metal --file README.md
-pnpm --filter local_ai_embeddings exec cargo run --release --features cuda -- --backend cuda --file README.md
+pnpm --filter localai_embeddings exec cargo run --release --features metal -- --backend metal --file README.md
+pnpm --filter localai_embeddings exec cargo run --release --features cuda -- --backend cuda --file README.md
 ```
 
 The native command reports that `wasm` requires a separate browser build. An unavailable backend produces an error rather than silently selecting another backend.
@@ -95,13 +95,13 @@ Run separate examples from the repository root:
 
 ```bash
 # Basic English text.
-pnpm --filter local_ai_embeddings cli --benchmark 5 --text "The cat sleeps on the chair."
+pnpm --filter localai_embeddings cli --benchmark 5 --text "The cat sleeps on the chair."
 
 # Normal English text.
-pnpm --filter local_ai_embeddings cli --benchmark 5 --text "Local embedding models turn English sentences into numerical vectors. Related sentences should have similar vectors even when they use different words. This lets an application search documents by meaning, compare notes, or group related messages. The computation stays on this computer after the model files have been downloaded."
+pnpm --filter localai_embeddings cli --benchmark 5 --text "Local embedding models turn English sentences into numerical vectors. Related sentences should have similar vectors even when they use different words. This lets an application search documents by meaning, compare notes, or group related messages. The computation stays on this computer after the model files have been downloaded."
 
 # Rust source, using a file already in the package.
-pnpm --filter local_ai_embeddings cli --benchmark 3 --file src/lib.rs
+pnpm --filter localai_embeddings cli --benchmark 3 --file src/lib.rs
 ```
 
 CPU measurements on 17 October 2026, with 8 automatic workers and the commands above:
@@ -127,7 +127,7 @@ benchmark_inputs=(
 ### CPU with automatic worker count
 
 ```bash
-pnpm --filter local_ai_embeddings cli --backend cpu --benchmark 3 "${benchmark_inputs[@]}"
+pnpm --filter localai_embeddings cli --backend cpu --benchmark 3 "${benchmark_inputs[@]}"
 ```
 
 Measured on 17 October 2026: the automatic selection used 8 workers. The three inputs contained 17,653 bytes and produced 53 chunks (5,414 chunk tokens) per round. Three measured rounds took 9.76 seconds: **16.28 chunk embeddings/second**, **1,663 chunk tokens/second**, and **5,424 source bytes/second**.
@@ -135,7 +135,7 @@ Measured on 17 October 2026: the automatic selection used 8 workers. The three i
 ### CPU with ten workers
 
 ```bash
-pnpm --filter local_ai_embeddings cli --backend cpu --threads 10 --benchmark 3 "${benchmark_inputs[@]}"
+pnpm --filter localai_embeddings cli --backend cpu --threads 10 --benchmark 3 "${benchmark_inputs[@]}"
 ```
 
 With the same inputs and ten workers, three measured rounds took 10.43 seconds: **15.25 chunk embeddings/second**, **1,558 chunk tokens/second**, and **5,079 source bytes/second**. Ten workers were slightly slower on this workload.
@@ -145,7 +145,7 @@ These are measurements on the development machine, not performance guarantees. B
 For the same workload on the Apple GPU:
 
 ```bash
-pnpm --filter local_ai_embeddings exec cargo run --release --features metal -- --backend metal --benchmark 3 "${benchmark_inputs[@]}"
+pnpm --filter localai_embeddings exec cargo run --release --features metal -- --backend metal --benchmark 3 "${benchmark_inputs[@]}"
 ```
 
 The same workload on Metal took 3.99 seconds for three measured rounds: **39.87 chunk embeddings/second**, **4,073 chunk tokens/second**, and **13,281 source bytes/second**, approximately 2.45 times the automatic CPU throughput. The GPU measurement ran with access to the actual Metal device.
