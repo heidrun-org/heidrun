@@ -174,6 +174,9 @@
 *::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent; }
 *::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 4px; }
 *::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-thumb-hover); }
+/* Bootstrap gives the root element a stable scroll bar gutter, which keeps a free strip of the width of a scroll bar (8 pixels) at the right
+   edge of the window. The window never has a scroll bar (body has hidden overflow), so the strip would show as a black bar (issue #645). */
+:root { scrollbar-gutter: auto; }
 html, body, #app { height: 100%; margin: 0; }
 body {
   background: var(--bg);
