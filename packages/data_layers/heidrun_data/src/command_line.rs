@@ -41,7 +41,8 @@ Commands:
 
 Options of every command:
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --format <name>            The format of the output: jsonl, json, or table, and
                              sql for the command schema.
                              (default: jsonl when the standard output is not a
@@ -119,7 +120,8 @@ Options:
                              (default: the time zone of the computer)
   --by-chat                  One row per chat session and per period.
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --format <name>            jsonl, json, or table.
   --json                     The same as --format json.
   --verbose                  Print when the token usage was read the last time.
@@ -210,7 +212,8 @@ and the file is not created.
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --format <name>            jsonl, json, or table. With table, one row per table.
   --json                     The same as --format json.
   --verbose                  Print the path of the SQLite file on the standard error
@@ -281,7 +284,8 @@ The sources:
 
 Options:
   --database <path>          The SQLite file. It is created when it does not exist.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --repository <owner/name>  The name of the repository. For source_control,
                              code_hosting, and coding_agents.
                              (default: the remote "origin" of the folder)
@@ -325,7 +329,8 @@ Options:
   --limit <count>            The limit added to a statement that has none. 0 adds no
                              limit. (default: 1000)
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --format <name>            jsonl, json, or table.
   --json                     The same as --format json.
   --verbose                  Print the path of the SQLite file and the statement that

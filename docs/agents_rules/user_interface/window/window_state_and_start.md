@@ -8,6 +8,11 @@
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
+## Installed and development applications
+
+- `pnpm dev` launches Heidrun Development with a separate application identifier, visible window title, settings, window state, data folder, and Herdr session. `pnpm build:development` builds the same development identity as a standalone application, including an optimised build. The commands and resource boundaries are in [application_installations.md](../../../architecture/application_installations.md).
+- Development startup never runs the installed data or Claude Code legacy migrations, never refreshes the globally installed Claude Code status-line script, and cannot replace that script through the status-line controls.
+
 ## Position and size of the window
 
 - When Heidrun quits, it saves the position and the size of the window, and whether the window was maximized or full screen. The window-state plugin of Tauri does this work, and keeps the file `.window-state.json` in the configuration folder of the application.

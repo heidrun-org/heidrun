@@ -1,7 +1,7 @@
 # Architecture of Heidrun
 
 - Created: 11 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained overview for people
 - Related framing: [Project instructions](../../AGENTS.md)
 
@@ -13,3 +13,5 @@ This folder describes how Heidrun is built. Each document in this folder explain
 - [guards.md](guards.md): the built-in guards that stop a dangerous command, and the key `guards` of the file `.heidrun/config.json`.
 - [guards.md](guards.md): the built-in guards that stop a dangerous command, and the key `guards` of the file `.heidrun/config.json`.
 - [status_dot.md](status_dot.md): the status dot, its four statuses and colors, and how the status of a pane gives the status of a tab, of a workspace, and of the application.
+
+- [application_installations.md](application_installations.md): installed Heidrun, Heidrun Development, their separate resources, and the commands for using both.

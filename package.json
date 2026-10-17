@@ -5,7 +5,7 @@
   "version": "0.2.7",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter desktop_tauri tauri dev",
+    "dev": "pnpm --filter mobile_website build && pnpm --filter desktop_tauri tauri dev --config tauri.development.conf.json",
     "build": "pnpm --filter desktop_tauri tauri build",
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",
@@ -26,7 +26,8 @@
     "experiment:parallax_dino_runner": "pnpm --filter parallax_dino_runner dev",
     "experiment:parallax_dino_runner:commits": "pnpm --filter parallax_dino_runner commits:build",
     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts",
-    "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build"
+    "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build",
+    "build:development": "pnpm --filter desktop_tauri tauri build --config tauri.development.conf.json --bundles app"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

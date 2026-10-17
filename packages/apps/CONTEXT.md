@@ -8,6 +8,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 - `web_frontend/`: the user interface, written with Vue 3 and TypeScript. The window of `desktop_tauri` displays it. See its own README.md.
 
 ## Rules
+- `desktop_tauri/src/application_profile.rs` selects installed or development resources from the compiled application identifier before the application starts workers.
 - A package that only supports the application, such as a website or a library for the scripts, goes in `packages/auxiliary`, never here.
 - A package that is only a tool for the developers of Heidrun goes in `packages/dev_tools`, never here.
 - The package `desktop_tauri` builds the package `web_frontend` through the relative path `../web_frontend/dist`, so both packages stay in this folder.

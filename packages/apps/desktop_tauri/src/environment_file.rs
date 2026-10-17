@@ -1,15 +1,15 @@
-//! The file `.env` of the developer: its variables go into the environment of the application, in a development build
+//! The file `.env` of the developer: its variables go into the environment of the application, in Heidrun Development
 //! only. The file `.env.example` at the root of the repository lists and explains every variable.
 
 use std::path::PathBuf;
 
 /// Loads the file `.env` of the current folder, or of the nearest parent folder, into the environment. A variable that
-/// is already set keeps its value, so a variable of the shell wins over the file. Loads nothing in a release build,
+/// is already set keeps its value, so a variable of the shell wins over the file. Loads nothing for the installed application,
 /// because the application of a user must never read a file of the folder that started it.
 ///
 /// Returns the path of the loaded file, or `None` when nothing was loaded.
-pub fn load() -> Option<PathBuf> {
-    if cfg!(debug_assertions) == false {
+pub fn load(is_development: bool) -> Option<PathBuf> {
+    if is_development == false {
         return None;
     }
     let loaded = keep_loaded_path(dotenvy::dotenv());

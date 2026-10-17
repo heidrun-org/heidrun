@@ -1,4 +1,5 @@
 mod app_data;
+mod application_profile;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
@@ -246,7 +247,8 @@ fn quit_now(app: AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    environment_file::load();
+    let context = tauri::generate_context!();
+    application_profile::initialize(&context.config().identifier);
     request_log::set_default_caller("heidrun");
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
@@ -259,8 +261,10 @@ pub fn run() {
         .manage(mobile::MobileState::default())
         .manage(status_item::StatusItemState::default())
         .setup(|app| {
-            legacy::migrate_config_dir();
-            claude::migrate_legacy();
+            if application_profile::is_development() == false {
+                legacy::migrate_config_dir();
+                claude::migrate_legacy();
+            }
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());
@@ -406,7 +410,7 @@ pub fn run() {
             skills::install::skills_install_local_folder,
             skills::agent_folders::skills_link_agent,
         ])
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("error while running Heidrun")
         .run(|app, event| {
             // ⌘Q with unsaved files: the app stays and shows them.

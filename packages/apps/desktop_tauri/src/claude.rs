@@ -16,7 +16,7 @@ pub(crate) fn claude_dir() -> PathBuf {
 }
 
 fn desk_dir() -> PathBuf {
-    dirs::home_dir().unwrap_or_default().join(".config").join("heidrun")
+    crate::app_data::data_dir()
 }
 
 fn settings_path() -> PathBuf {
@@ -71,7 +71,9 @@ fn current_command(m: &Map<String, Value>) -> Option<String> {
 }
 
 fn is_ours(cmd: &str) -> bool {
-    cmd.contains("heidrun/claude-statusline.sh") || cmd.contains("Heidrun/scripts/claude-statusline.sh")
+    cmd == script_path().to_string_lossy()
+        || (crate::application_profile::is_development() == false
+            && (cmd.contains("heidrun/claude-statusline.sh") || cmd.contains("Heidrun/scripts/claude-statusline.sh")))
 }
 
 /// Moves what the former name "Herdr Desk" left in the Claude Code settings: the backup file, and the
@@ -106,7 +108,8 @@ pub fn claude_statusline_state() -> Result<StatuslineState, String> {
     let m = read_settings()?;
     let installed = current_command(&m).map(|c| is_ours(&c)).unwrap_or(false);
     // Keep the installed copy in step with this version of the app.
-    if installed && std::fs::read_to_string(script_path()).ok().as_deref() != Some(SCRIPT) {
+    if installed && crate::application_profile::is_development() == false
+        && std::fs::read_to_string(script_path()).ok().as_deref() != Some(SCRIPT) {
         let _ = std::fs::write(script_path(), SCRIPT);
         #[cfg(unix)]
         {
@@ -125,6 +128,7 @@ pub fn claude_statusline_state() -> Result<StatuslineState, String> {
 
 #[tauri::command]
 pub fn claude_statusline_install() -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     let mut m = read_settings()?;
     std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
 
@@ -189,6 +193,7 @@ pub fn claude_set_rc_startup(enabled: bool) -> Result<Option<bool>, String> {
 /// Hides (or shows again) the status line row in Claude Code; reporting continues.
 #[tauri::command]
 pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     std::fs::create_dir_all(desk_dir()).map_err(|e| e.to_string())?;
     if hidden {
         std::fs::write(hidden_path(), "1\n").map_err(|e| e.to_string())?;
@@ -201,6 +206,7 @@ pub fn claude_statusline_set_hidden(hidden: bool) -> Result<StatuslineState, Str
 /// Puts the user's own status line back (or removes ours if there was none).
 #[tauri::command]
 pub fn claude_statusline_uninstall() -> Result<StatuslineState, String> {
+    crate::application_profile::require_installed_integration()?;
     let mut m = read_settings()?;
     let chained = std::fs::read_to_string(next_path()).ok().map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
     match chained {

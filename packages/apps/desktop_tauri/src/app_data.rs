@@ -6,8 +6,9 @@ use std::sync::Mutex;
 /// The folder of the data of Heidrun: `HEIDRUN_DIR`, else `~/.config/heidrun`.
 pub(crate) fn data_dir() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
+        .ok().filter(|value| value.is_empty() == false)
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
+        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
 }
 
 /// The file where the web page appends the records of the activity of the user: `user_activity.jsonl` in the folder of the data

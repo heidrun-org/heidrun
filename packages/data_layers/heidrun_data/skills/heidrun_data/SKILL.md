@@ -5,7 +5,7 @@ description: Answer a question about the history of a repository from the data l
 
 # heidrun_data
 
-`heidrun_data` is one command line that reads the four data layers of Heidrun. The four data layers write the facts of four sources in one SQLite file, `~/.config/heidrun/data_layer.sqlite`:
+`heidrun_data` is one command line that reads the four data layers of Heidrun. The four data layers write the facts of four sources in one SQLite file, `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty:
 
 | Source | What it holds | Tables |
 | --- | --- | --- |

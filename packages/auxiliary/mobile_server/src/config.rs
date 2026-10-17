@@ -19,8 +19,9 @@ pub struct MobileConfig {
 /// The folder of the configuration of Heidrun: the variable `HEIDRUN_DIR`, or `~/.config/heidrun`.
 pub(crate) fn config_folder() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
+        .ok().filter(|value| value.is_empty() == false)
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
+        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
 }
 
 fn config_path() -> PathBuf {
@@ -39,10 +40,15 @@ pub fn save_config(config: &MobileConfig) -> Result<(), String> {
 
 fn load_from(path: &Path) -> MobileConfig {
     let mut config: MobileConfig = std::fs::read_to_string(path).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
-    if config.port == 0 {
-        config.port = DEFAULT_PORT;
-    }
+    config.port = selected_port(config.port, std::env::var("HEIDRUN_MOBILE_PORT").ok().as_deref());
     config
+}
+
+fn selected_port(saved: u16, custom: Option<&str>) -> u16 {
+    if saved != 0 {
+        return saved;
+    }
+    custom.and_then(|value| value.parse::<u16>().ok()).filter(|port| *port != 0).unwrap_or(DEFAULT_PORT)
 }
 
 fn save_to(path: &Path, config: &MobileConfig) -> Result<(), String> {
@@ -92,6 +98,15 @@ mod tests {
 
     fn temporary_path(name: &str) -> PathBuf {
         std::env::temp_dir().join(format!("mobile_server_config_{}_{name}", std::process::id())).join("mobile.json")
+    }
+
+    #[test]
+    fn a_saved_mobile_port_wins_over_the_development_default() {
+        assert_eq!(selected_port(5000, Some("47824")), 5000);
+        assert_eq!(selected_port(0, Some("47824")), 47824);
+        for invalid in [None, Some(""), Some("0"), Some("65536"), Some("wrong")] {
+            assert_eq!(selected_port(0, invalid), DEFAULT_PORT);
+        }
     }
 
     #[test]

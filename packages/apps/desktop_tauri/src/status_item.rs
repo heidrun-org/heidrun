@@ -328,10 +328,15 @@ fn handle_menu_event(app: &AppHandle, menu_id: &str) {
 /// Creates the status item in the menu bar and starts the timer that moves the picture.
 pub fn create(app: &AppHandle) -> tauri::Result<()> {
     let state = app.state::<StatusItemState>();
-    let payload = state.lock().clone();
+    let mut payload = state.lock().clone();
+    if crate::application_profile::is_development() {
+        payload.open_label = "Open Heidrun Development".into();
+        *state.lock() = payload.clone();
+    }
     TrayIconBuilder::with_id(STATUS_ITEM_ID)
         .icon(draw(&payload, state.is_icon_faded(), 0.0))
         .icon_as_template(false)
+        .tooltip(crate::application_profile::name())
         .menu(&build_menu(app, &payload)?)
         .on_menu_event(|app, event| handle_menu_event(app, event.id().as_ref()))
         .build(app)?;
@@ -358,6 +363,10 @@ pub fn status_item_update(
 ) -> Result<(), String> {
     if state.is_demo {
         return Ok(());
+    }
+    let mut payload = payload;
+    if crate::application_profile::is_development() {
+        payload.open_label = "Open Heidrun Development".into();
     }
     let menu = build_menu(&app, &payload).map_err(|error| error.to_string())?;
     *state.lock() = payload;
