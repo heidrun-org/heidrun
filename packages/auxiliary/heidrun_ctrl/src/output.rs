@@ -72,7 +72,7 @@ fn macro_json(listed: &ListedMacro) -> Value {
 }
 
 /// A JSON value on several lines, with a new line at the end.
-fn to_json_text(value: &Value) -> String {
+pub(crate) fn to_json_text(value: &Value) -> String {
     let mut text = serde_json::to_string_pretty(value).unwrap_or_default();
     text.push('\n');
     text
@@ -93,7 +93,7 @@ fn list_markdown(listed: &[ListedMacro], places: &MacroPlaces, only: Option<Macr
             MacroKind::HardCoded => text.push_str("Written in the source code of Heidrun. They cannot be changed.\n\n"),
             MacroKind::Personal => text.push_str(&format!("File: `{}`\n\n", places.personal_file.display())),
             MacroKind::Project => {
-                text.push_str(&format!("File: `{}`\n\n", crate::project_macros::project_config_path(&places.project_root).display()));
+                text.push_str(&format!("File: `{}`\n\n", crate::project_config_file::project_config_path(&places.project_root).display()));
             }
         }
         if of_kind(kind).next().is_none() {
@@ -123,7 +123,7 @@ fn macro_block(listed: &ListedMacro, level: usize, has_file: bool) -> String {
 }
 
 /// The number of backquotes in the longest run of backquotes of a text.
-fn longest_run_of_backquotes(text: &str) -> usize {
+pub(crate) fn longest_run_of_backquotes(text: &str) -> usize {
     let mut longest = 0;
     let mut current = 0;
     for character in text.chars() {
