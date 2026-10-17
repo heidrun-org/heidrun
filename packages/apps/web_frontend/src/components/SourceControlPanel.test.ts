@@ -9,7 +9,7 @@ vi.mock("../stores/source_control", async (importOriginal) => {
 
 import SourceControlPanel from "./SourceControlPanel.vue";
 import { git, type GitStatus } from "../stores/git";
-import { commit, discardFiles, stageFiles, unstageFiles } from "../stores/source_control";
+import { commit, discardFiles, sourceControl, stageFiles, unstageFiles } from "../stores/source_control";
 import { state } from "../stores/session";
 
 function makeStatus(): GitStatus {
@@ -42,6 +42,8 @@ describe("SourceControlPanel", () => {
   afterEach(() => {
     state.selectedWorkspaceId = null;
     git.status = {};
+    sourceControl.folded.staged = false;
+    sourceControl.folded.changes = false;
     vi.clearAllMocks();
   });
 
@@ -50,6 +52,21 @@ describe("SourceControlPanel", () => {
     expect(wrapper.get(".title").text()).toBe("Source Control");
     expect(wrapper.get("textarea").attributes("placeholder")).toBe('Message (⌘Enter to commit on "dev_jerome")');
     expect(wrapper.get(".btn-primary").text()).toBe("Commit");
+  });
+
+  it("puts the sparkle button beside the message box, outside of it, and not on top of it", () => {
+    const message = mountPanel().get(".message");
+    const textarea = message.get("textarea");
+    const sparkle = message.get('button[aria-label="Write the commit message with a coding agent"]');
+    expect(textarea.element.contains(sparkle.element)).toBe(false);
+    expect(textarea.element.nextElementSibling).toBe(sparkle.element);
+    expect(message.classes()).toContain("d-flex");
+    expect(sparkle.classes()).not.toContain("position-absolute");
+  });
+
+  it("centers the label of the commit button", () => {
+    const commitButton = mountPanel().get(".btn-primary");
+    expect(commitButton.classes()).toContain("justify-content-center");
   });
 
   it("shows the groups Staged Changes and Changes with the number of files", () => {
@@ -70,11 +87,23 @@ describe("SourceControlPanel", () => {
     expect(files[1].attributes("title")).toBe("/work/heidrun/CHANGELOG.md • Modified");
   });
 
-  it("does not show the group Staged Changes when no file is staged", () => {
+  it("shows the group Staged Changes above Changes with 0 files when no file is staged", () => {
     state.selectedWorkspaceId = "w1";
     git.status = { w1: { ...makeStatus(), files: [{ path: "CHANGELOG.md", status: ".M" }] } };
     const headers = mount(SourceControlPanel).findAll(".group-header");
-    expect(headers.map((header) => header.text())).not.toContain("Staged Changes");
+    expect(headers).toHaveLength(2);
+    expect(headers[0].text()).toContain("Staged Changes");
+    expect(headers[0].get(".count").text()).toBe("0");
+    expect(headers[1].text()).toContain("Changes");
+    expect(headers[1].get(".count").text()).toBe("1");
+  });
+
+  it("shows the two groups with 0 files when nothing changed", () => {
+    state.selectedWorkspaceId = "w1";
+    git.status = { w1: { ...makeStatus(), files: [] } };
+    const headers = mount(SourceControlPanel).findAll(".group-header");
+    expect(headers.map((header) => header.get(".count").text())).toEqual(["0", "0"]);
+    expect(headers[0].get('button[aria-label="Unstage all the changes"]').attributes("disabled")).toBeDefined();
   });
 
   it("stages, discards, and unstages a file with the buttons of its line", async () => {
@@ -103,5 +132,25 @@ describe("SourceControlPanel", () => {
     await wrapper.findAll(".group-toggle")[1].trigger("click");
     expect(wrapper.findAll(".file")).toHaveLength(1);
     await wrapper.findAll(".group-toggle")[1].trigger("click");
+    expect(wrapper.findAll(".file")).toHaveLength(2);
+  });
+
+  it("folds and unfolds a group after a click anywhere on its header line, even a group with 0 files", async () => {
+    const wrapper = mountPanel();
+    await wrapper.findAll(".group-header")[1].trigger("click");
+    expect(wrapper.findAll(".file")).toHaveLength(1);
+    await wrapper.findAll(".group-header")[1].get(".count").trigger("click");
+    expect(wrapper.findAll(".file")).toHaveLength(2);
+    git.status = { w1: { ...makeStatus(), files: [] } };
+    await wrapper.vm.$nextTick();
+    await wrapper.findAll(".group-header")[0].trigger("click");
+    expect(sourceControl.folded.staged).toBe(true);
+  });
+
+  it("does not fold a group after a click on a button of its header line", async () => {
+    const wrapper = mountPanel();
+    await wrapper.findAll(".group-header")[1].get('button[aria-label="Stage all the changes"]').trigger("click");
+    expect(stageFiles).toHaveBeenCalledWith(["CHANGELOG.md"]);
+    expect(sourceControl.folded.changes).toBe(false);
   });
 });

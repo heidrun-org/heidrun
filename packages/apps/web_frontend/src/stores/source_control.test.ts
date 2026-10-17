@@ -133,13 +133,28 @@ describe("Git actions", () => {
     expect(sourceControl.messages.w1).toBe("");
   });
 
-  it("asks to stage every change when nothing is staged, then commits", async () => {
-    git.status = { w1: makeStatus([{ status: ".M", path: "README.md" }]) };
+  it("stages every change with no question when nothing is staged, then commits", async () => {
+    git.status = {
+      w1: makeStatus([
+        { status: ".M", path: "README.md" },
+        { status: "??", path: "NEW.md" },
+      ]),
+    };
     sourceControl.messages.w1 = "Add a line";
-    const committing = commit("commit");
-    await answerWhenAsked(true);
-    await committing;
-    expect(calls.map((call) => call.command)).toEqual(["git_stage", "git_commit"]);
+    await commit("commit");
+    expect(confirmDialog.open).toBe(false);
+    expect(calls).toEqual([
+      { command: "git_stage", args: { root: "/work/heidrun", paths: ["README.md", "NEW.md"] } },
+      { command: "git_commit", args: { root: "/work/heidrun", message: "Add a line", amend: false } },
+    ]);
+    expect(sourceControl.messages.w1).toBe("");
+  });
+
+  it("does not stage anything and does not commit when nothing changed", async () => {
+    git.status = { w1: makeStatus([]) };
+    sourceControl.messages.w1 = "Add a line";
+    await commit("commit");
+    expect(calls).toEqual([]);
   });
 
   it("does not commit without a message", async () => {
