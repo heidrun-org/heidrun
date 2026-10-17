@@ -22,6 +22,8 @@ use crate::storage::configuration_database::ConfigurationDatabase;
 use crate::storage::database::ChatSessionsDatabase;
 use crate::storage::token_usage_database::TokenUsageDatabase;
 use std::path::Path;
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 
 /// Reads the chat sessions of a folder, and writes them in the database. `log` receives one line of progress for the date
 /// where the read starts, for each coding agent, and for the write.
@@ -29,6 +31,28 @@ use std::path::Path;
 /// # Errors
 /// An error when the database cannot be read or written, or when a chat session does not follow its JSON schema.
 pub fn run(
+    mode: SynchronizationMode,
+    repository: &str,
+    folder: &str,
+    claude_projects: &Path,
+    codex_home: &Path,
+    database: &mut ChatSessionsDatabase,
+    log: &dyn Fn(&str),
+) -> Result<SynchronizationReport, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize", RequestKind::Synchronization)
+        .choice("mode", mode.name())
+        .parameter("repository", repository)
+        .parameter("folder", folder)
+        .parameter("claudeProjects", claude_projects.display().to_string())
+        .parameter("codexHome", codex_home.display().to_string())
+        .database(database.database_path());
+    record(spec, || run_inside(mode, repository, folder, claude_projects, codex_home, database, log), |report| {
+        Summary::count(report.chat_session_count)
+    })
+}
+
+/// The work of `run`, between the start event and the completion event of its request.
+fn run_inside(
     mode: SynchronizationMode,
     repository: &str,
     folder: &str,
@@ -67,6 +91,23 @@ pub fn run_configuration(
     database: &mut ConfigurationDatabase,
     log: &dyn Fn(&str),
 ) -> Result<Vec<ConfigurationWriteCount>, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize_configuration", RequestKind::Synchronization)
+        .parameter("repository", repository)
+        .parameter("root", folders.root.display().to_string())
+        .database(database.database_path());
+    record(spec, || run_configuration_inside(repository, folders, database, log), |counts| {
+        Summary::count(counts.iter().map(|count| count.written_count).sum())
+            .detail("removedCount", counts.iter().map(|count| count.removed_count).sum::<usize>())
+    })
+}
+
+/// The work of `run_configuration`, between the start event and the completion event of its request.
+fn run_configuration_inside(
+    repository: &str,
+    folders: &ConfigurationFolders,
+    database: &mut ConfigurationDatabase,
+    log: &dyn Fn(&str),
+) -> Result<Vec<ConfigurationWriteCount>, String> {
     let milliseconds = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|duration| duration.as_millis() as i64)
@@ -98,6 +139,32 @@ pub fn run_configuration(
 /// # Errors
 /// An error when the database cannot be read or written.
 pub fn run_token_usage(
+    mode: SynchronizationMode,
+    repository: &str,
+    folder: &str,
+    files: &mut TokenUsageFiles,
+    database: &mut TokenUsageDatabase,
+    now: i64,
+    log: &dyn Fn(&str),
+) -> Result<TokenUsageReport, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize_token_usage", RequestKind::Synchronization)
+        .choice("mode", mode.name())
+        .parameter("repository", repository)
+        .parameter("folder", folder)
+        .parameter("now", now)
+        .state("scanCacheEntries", files.cache.scan_count())
+        .database(database.database_path());
+    record(spec, || run_token_usage_inside(mode, repository, folder, files, database, now, log), |report| {
+        Summary::count(report.chat_count)
+            .detail("rowsInserted", report.row_count.inserted_count)
+            .detail("rowsUpdated", report.row_count.updated_count)
+            .detail("rowsDeleted", report.row_count.deleted_count)
+            .detail("rowsUnchanged", report.row_count.unchanged_count)
+    })
+}
+
+/// The work of `run_token_usage`, between the start event and the completion event of its request.
+fn run_token_usage_inside(
     mode: SynchronizationMode,
     repository: &str,
     folder: &str,
@@ -334,5 +401,64 @@ mod tests {
     fn writes_in_words_the_date_where_a_read_starts() {
         assert_eq!(describe_since(None), "since the beginning");
         assert_eq!(describe_since(Some("2026-10-11T10:00:00.000Z")), "since 2026-10-11T10:00:00.000Z");
+    }
+
+    #[test]
+    fn a_chat_session_synchronization_records_one_request_with_the_collection_and_the_write_inside_it() {
+        let (directory, mut database) = fixture("request_log");
+        let (report, events) = request_log::testing::capture(|| synchronize(SynchronizationMode::Initialize, &directory, &mut database));
+        assert_eq!(report.chat_session_count, 3);
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.synchronize");
+        for inside in [
+            "  coding_agents.read_chat_sessions",
+            "    coding_agents.find_claude_session_files",
+            "    coding_agents.find_codex_session_files",
+            "  coding_agents.upsert_chat_sessions",
+        ] {
+            assert!(tree.contains(&inside.to_string()), "{inside} is not in {tree:?}");
+        }
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].parameters["mode"], "initialize");
+        assert_eq!(starts[0].parameters["folder"], "/work/app");
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.result_count, Some(3));
+    }
+
+    #[test]
+    fn a_token_usage_synchronization_records_the_read_the_write_and_the_rows_that_the_write_changed() {
+        let (directory, mut database) = usage_fixture("request_log_usage");
+        let (report, events) =
+            request_log::testing::capture(|| synchronize_usage(SynchronizationMode::Initialize, &directory, &mut database));
+        assert_eq!(report.chat_count, 2);
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.synchronize_token_usage");
+        assert!(tree.contains(&"  coding_agents.read_token_usage".to_string()), "{tree:?}");
+        assert!(tree.contains(&"  coding_agents.write_token_usage".to_string()), "{tree:?}");
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].state["scanCacheEntries"], 0);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.result_count, Some(2));
+        assert_eq!(complete.details["rowsInserted"], 2);
+        assert_eq!(complete.details["rowsUnchanged"], 0);
+    }
+
+    #[test]
+    fn a_configuration_synchronization_records_the_read_and_one_write_for_each_kind() {
+        let directory = temp_folder("request_log_configuration");
+        let folders = ConfigurationFolders {
+            root: directory.join("root"),
+            main_root: directory.join("root"),
+            claude_dir: directory.join("claude"),
+            codex_home: directory.join("codex"),
+            agents_home: directory.join("agents"),
+        };
+        write_file(&folders.root.join(".claude/skills/a/SKILL.md"), "---\nname: a\n---\n", 10);
+        let mut database = ConfigurationDatabase::open(&directory.join("data_layer.sqlite")).unwrap();
+        let (_, events) = request_log::testing::capture(|| run_configuration(REPOSITORY, &folders, &mut database, &ignore_log).unwrap());
+        let tree = request_log::testing::tree(&events);
+        assert_eq!(tree[0], "coding_agents.synchronize_configuration");
+        assert_eq!(tree[1], "  coding_agents.read_configuration");
+        assert_eq!(tree.iter().filter(|line| line.as_str() == "  coding_agents.write_configuration").count(), 3);
     }
 }

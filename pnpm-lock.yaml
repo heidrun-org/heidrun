@@ -214,6 +214,8 @@ importers:
 
   packages/auxiliary/raw_coding_agent_cli: {}
 
+  packages/auxiliary/request_log: {}
+
   packages/auxiliary/website_public:
     devDependencies:
       '@vitejs/plugin-vue':

@@ -855,6 +855,7 @@ version = "0.2.7"
 dependencies = [
  "dirs 6.0.0",
  "jsonschema",
+ "request_log",
  "rusqlite",
  "serde",
  "serde_json",
@@ -869,6 +870,7 @@ dependencies = [
  "dirs 6.0.0",
  "iana-time-zone",
  "jsonschema",
+ "request_log",
  "rusqlite",
  "serde",
  "serde_json",
@@ -882,6 +884,7 @@ version = "0.2.7"
 dependencies = [
  "dirs 6.0.0",
  "jsonschema",
+ "request_log",
  "rusqlite",
  "serde",
  "serde_json",
@@ -894,6 +897,7 @@ dependencies = [
  "chrono",
  "dirs 6.0.0",
  "jsonschema",
+ "request_log",
  "rusqlite",
  "serde",
  "serde_json",
@@ -1935,6 +1939,7 @@ dependencies = [
  "mobile_server",
  "portable-pty",
  "raw_coding_agent_cli",
+ "request_log",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
@@ -1968,6 +1973,7 @@ dependencies = [
  "data_layer_source_control",
  "data_layer_user_activity",
  "dirs 6.0.0",
+ "request_log",
  "rusqlite",
  "serde_json",
 ]
@@ -3875,6 +3881,16 @@ name = "regex-syntax"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "request_log"
+version = "0.2.7"
+dependencies = [
+ "dirs 6.0.0",
+ "libc",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "reqwest"

@@ -11,6 +11,8 @@ use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 
 /// The SQLite file of the source control data layer.
 pub struct SourceControlDatabase {
@@ -76,6 +78,15 @@ impl SourceControlDatabase {
     /// # Errors
     /// An error when one commit does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_commits(&mut self, repository: &str, commits: &[Commit]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_commits", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("commitCount", commits.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_commits_inside(repository, commits), |_| Summary::count(commits.len()))
+    }
+
+    /// The work of `upsert_commits`, between the start event and the completion event of its request.
+    fn upsert_commits_inside(&mut self, repository: &str, commits: &[Commit]) -> Result<(), String> {
         if self.is_read_only {
             return Err("A write needs a database that is not open read only.".to_string());
         }
@@ -104,6 +115,14 @@ impl SourceControlDatabase {
 
     /// Lists the hashes of the commits that the table holds for a repository.
     pub fn find_known_hashes(&self, repository: &str) -> Result<HashSet<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_known_hashes", RequestKind::Query)
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.find_known_hashes_inside(repository), |hashes| Summary::count(hashes.len()))
+    }
+
+    /// The work of `find_known_hashes`, between the start event and the completion event of its request.
+    fn find_known_hashes_inside(&self, repository: &str) -> Result<HashSet<String>, String> {
         let mut statement = self
             .connection
             .prepare("SELECT hash FROM commits WHERE repository = ?1")
@@ -118,6 +137,14 @@ impl SourceControlDatabase {
 
     /// Counts the rows of the table for a repository.
     pub fn count_commits(&self, repository: &str) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_commits", RequestKind::Query)
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.count_commits_inside(repository), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_commits`, between the start event and the completion event of its request.
+    fn count_commits_inside(&self, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row("SELECT COUNT(*) FROM commits WHERE repository = ?1", params![repository], |row| {
                 row.get::<_, i64>(0)
@@ -127,6 +154,15 @@ impl SourceControlDatabase {
 
     /// Reads one commit. Returns `None` when the table has no such row.
     pub fn find_commit(&self, repository: &str, hash: &str) -> Result<Option<Commit>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_commit", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("hash", hash)
+            .database(&self.database_path);
+        record(spec, || self.find_commit_inside(repository, hash), |commit| Summary::count(usize::from(commit.is_some())))
+    }
+
+    /// The work of `find_commit`, between the start event and the completion event of its request.
+    fn find_commit_inside(&self, repository: &str, hash: &str) -> Result<Option<Commit>, String> {
         let data = self
             .connection
             .query_row(
@@ -151,6 +187,12 @@ impl SourceControlDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `query`, between the start event and the completion event of its request.
+    fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());
         }
@@ -356,5 +398,53 @@ mod tests {
         assert_eq!(database.count_commits(REPOSITORY), Ok(0));
         let read_only_database = SourceControlDatabase::open_read_only(&path).unwrap();
         assert_eq!(read_only_database.query("SELECT count(*) AS count FROM issues").unwrap()[0]["count"], 0);
+    }
+
+    #[test]
+    fn a_query_records_its_statement_its_row_count_and_the_size_of_the_file() {
+        let (path, mut database) = new_database("request_log_query");
+        database.upsert_commits(REPOSITORY, &[commit(1)]).unwrap();
+        drop(database);
+        let database = SourceControlDatabase::open_read_only(&path).unwrap();
+        let (rows, events) = request_log::testing::capture(|| {
+            database.query("SELECT hash FROM commits WHERE repository = 'heidrun-org/heidrun' LIMIT 10").unwrap()
+        });
+        assert_eq!(rows.len(), 1);
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts.len(), 1);
+        assert_eq!((starts[0].package.as_str(), starts[0].operation.as_str()), ("source_control", "query"));
+        assert_eq!(starts[0].kind, request_log::RequestKind::Query);
+        assert_eq!(starts[0].pattern, "SELECT hash FROM commits WHERE repository = ? LIMIT ?");
+        assert!(starts[0].state["databaseBytes"].as_u64().unwrap() > 0);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.result_count, Some(1));
+    }
+
+    #[test]
+    fn a_wrong_statement_records_a_failure_and_gives_back_the_same_error() {
+        let (path, database) = new_database("request_log_wrong_query");
+        drop(database);
+        let database = SourceControlDatabase::open_read_only(&path).unwrap();
+        let expected = database.query("SELEC nothing").unwrap_err();
+        let (error, events) = request_log::testing::capture(|| database.query("SELEC nothing").unwrap_err());
+        assert_eq!(error, expected);
+        let starts = request_log::testing::starts(&events);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+        assert_eq!(complete.error_category.as_deref(), Some(request_log::ErrorCategory::DATABASE_ERROR));
+    }
+
+    #[test]
+    fn a_write_and_a_lookup_are_recorded_with_their_kinds() {
+        let (_, mut database) = new_database("request_log_write");
+        let (_, events) = request_log::testing::capture(|| {
+            database.upsert_commits(REPOSITORY, &[commit(1)]).unwrap();
+            database.find_commit(REPOSITORY, &hash(1)).unwrap();
+        });
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts[0].kind, request_log::RequestKind::Write);
+        assert_eq!(starts[0].operation, "upsert_commits");
+        assert_eq!(starts[1].kind, request_log::RequestKind::Query);
+        assert_eq!(starts[1].parameters["hash"], hash(1));
     }
 }

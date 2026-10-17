@@ -1,0 +1,9 @@
+{
+  "name": "request_log",
+  "private": true,
+  "license": "MIT",
+  "version": "0.2.7",
+  "scripts": {
+    "test": "cargo test"
+  }
+}

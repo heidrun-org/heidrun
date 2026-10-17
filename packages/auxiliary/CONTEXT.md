@@ -8,6 +8,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `website_public/`: the public website and documentation, built with VitePress. See its own CONTEXT.md.
 - `mobile_server/`: a Rust library that serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name of the tunnel and the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
+- `request_log/`: a Rust library that writes the log of the requests that the data layer receives, reads it, and measures its cost. The four data layer packages, `heidrun_data`, and `desktop_tauri` import it. See its own CONTEXT.md.
 - `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. The first commands are the macros: list, add, update, and delete. See its own CONTEXT.md.
 
 ## Rules
@@ -23,3 +24,4 @@ The packages that are useful for the application Heidrun, but are not the applic
 - The three data layer packages left this folder for `packages/data_layers` in [issue #470](https://github.com/heidrun-org/heidrun/issues/470).
 - `heidrun_ctrl` came with [issue #602](https://github.com/heidrun-org/heidrun/issues/602). `desktop_tauri` imports it, so the format of the macro files has one place.
 - `mobile_server` and `mobile_website` came with [issue #524](https://github.com/heidrun-org/heidrun/issues/524), and the rule about the imports of `packages/apps` changed with it. The rule was already false: `desktop_tauri` imports `raw_coding_agent_cli`.
+- `request_log` came with [issue #618](https://github.com/heidrun-org/heidrun/issues/618). It is the one package of this folder that the data layer packages import, so the log has one format, one nesting, and one rotation.

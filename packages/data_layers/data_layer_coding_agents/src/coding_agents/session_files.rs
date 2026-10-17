@@ -23,6 +23,8 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use crate::REQUEST_PACKAGE;
+use request_log::{record_value, RequestKind, RequestSpec, Summary};
 
 /// The length of the identifier of a chat session of Codex, at the end of the name of its file.
 const CODEX_ID_LENGTH: usize = 36;
@@ -93,6 +95,20 @@ pub fn find_claude_session_files(
     folder: &str,
     scope: FolderScope,
 ) -> Vec<SessionFile> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_claude_session_files", RequestKind::Collection)
+        .parameter("folder", folder)
+        .choice("scope", format!("{scope:?}"))
+        .state("scanCacheEntries", cache.scan_count());
+    record_value(spec, || find_claude_session_files_inside(cache, projects, folder, scope), |files| Summary::count(files.len()))
+}
+
+/// The work of `find_claude_session_files`, between the start event and the completion event of its request.
+fn find_claude_session_files_inside(
+    cache: &mut ScanCache,
+    projects: &Path,
+    folder: &str,
+    scope: FolderScope,
+) -> Vec<SessionFile> {
     let mut files = Vec::new();
     for directory in claude_directories(cache, projects, folder, scope) {
         let mut present = HashSet::new();
@@ -130,6 +146,15 @@ pub fn find_claude_agent_files(cache: &mut ScanCache, main: &Path) -> Vec<Sessio
 /// compressed files are in. A chat session that is in the two forms is listed once, with its file that is not compressed.
 /// The cache forgets the files that do not exist any more.
 pub fn find_codex_session_files(cache: &mut ScanCache, home: &Path, folder: &str, scope: FolderScope) -> Vec<SessionFile> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_codex_session_files", RequestKind::Collection)
+        .parameter("folder", folder)
+        .choice("scope", format!("{scope:?}"))
+        .state("scanCacheEntries", cache.scan_count());
+    record_value(spec, || find_codex_session_files_inside(cache, home, folder, scope), |files| Summary::count(files.len()))
+}
+
+/// The work of `find_codex_session_files`, between the start event and the completion event of its request.
+fn find_codex_session_files_inside(cache: &mut ScanCache, home: &Path, folder: &str, scope: FolderScope) -> Vec<SessionFile> {
     let mut rollouts = Vec::new();
     collect_rollouts(&home.join("sessions"), 0, &mut rollouts);
     let present: HashSet<String> = rollouts.iter().map(|path| path.display().to_string()).collect();

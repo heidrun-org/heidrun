@@ -22,16 +22,16 @@ A Rust library and a command line tool that read every commit of a Git repositor
 - The package keeps no other state, and no extra table. A row is never deleted: a commit that no branch reaches any more, for example after a rebase, stays in the table.
 - Only `src/git/git_runner.rs` runs the command `git`. The tests use a real Git repository with a fixed author, a fixed date, and no configuration file of the developer, and a fake runner for the errors.
 - The dates are in UTC. The runner sets the time zone of the command `git` to UTC, and the reader asks for the format `format-local`.
-- The line counts of a merge compare it with its first parent. The package stores facts only: no text of a change, no path of a file, no name of a branch, and no name of a tag, because a branch and a tag move.
-- The default SQLite file is `~/.config/heidrun/data_layer.sqlite`, the same file as the other data layer packages. Each package creates and writes only its own tables with `CREATE TABLE IF NOT EXISTS`, and never changes a table of another package. The option `--database` changes it.
+- The line counts of a merge compare it with its first parent. The package stores facts only: no text of a change, no path of a file, no name of a branch or of a tag.
+- The default SQLite file is `~/.config/heidrun/data_layer.sqlite`, shared with the other data layer packages. Each package creates and writes only its own tables, and the option `--database` changes the file.
 - `query` and `SourceControlDatabase::query` only work on a database that is open read only, so a query never changes the file and never creates it. `src/storage/query_formatter.rs` only turns rows into text.
-- The option `--verbose` prints the progress on the standard error output. The code sends the progress lines to a log function and never prints them itself, except `src/main.rs`.
+- The option `--verbose` prints the progress on the standard error output, and only `src/main.rs` prints.
 - The folder `src/model/` imports from no other folder of `src/`. The folder `src/git/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/git/` and `src/storage/` together.
-- The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
+- The library calls are blocking. The package imports only `request_log` from the other packages of the repository, and it knows nothing about Tauri. Every public operation records its request with `request_log::record`, a new operation does the same in the same change, and its test reads the events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
 - The name of the repository comes from the address of the remote `origin`, for GitHub and for GitLab alike. The option `--repository` replaces it.
-- The structure copies `data_layer_code_hosting`. The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
+- The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one.
 
 ## Background
 - The package comes from [issue #462](https://github.com/heidrun-org/heidrun/issues/462). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452).
-- The package gave the same counts as Git for the 755 commits and the 225 merges of this repository, and the same line counts as `git diff --numstat` for 72 commits that were checked.
-- The Statistics window uses the package in `packages/apps/desktop_tauri/src/person_work.rs` ([issue #482](https://github.com/heidrun-org/heidrun/issues/482)). The other features of the desktop application still run `git` themselves in `git.rs` and `git_source_control.rs`.
+- The Statistics window uses the package in `packages/apps/desktop_tauri/src/person_work.rs` ([issue #482](https://github.com/heidrun-org/heidrun/issues/482)).
+- The request log of [issue #618](https://github.com/heidrun-org/heidrun/issues/618) records each public operation of this package: see [request_log](../../auxiliary/request_log/CONTEXT.md).

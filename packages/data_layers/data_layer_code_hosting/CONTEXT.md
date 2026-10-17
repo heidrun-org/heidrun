@@ -26,7 +26,7 @@ A Rust library and a command line tool that read every issue and every pull requ
 - The default SQLite file is `~/.config/heidrun/data_layer.sqlite`. The option `--database` changes it.
 - The option `--verbose` prints the progress on the standard error output. The code sends the progress lines to a log function and never prints them itself, except `src/main.rs`.
 - The folder `src/model/` imports from no other folder of `src/`. The folder `src/github/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/github/` and `src/storage/` together.
-- The library calls are blocking. The package imports nothing from another package of the repository, and it knows nothing about Tauri.
+- The library calls are blocking. The package imports only `request_log` from the other packages of the repository, and it knows nothing about Tauri. Every public operation records its request with `request_log::record`, a new operation does the same in the same change, and its test reads the events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
 - The file `.cargo/config.toml` puts the compiled files in the Cargo target folder of `desktop_tauri`, so the folder that `pnpm worktree:create` clones is the only one. Cargo reads this file only when it runs inside this folder.
 
 ## Background
@@ -34,3 +34,4 @@ A Rust library and a command line tool that read every issue and every pull requ
 - The package was first written in TypeScript, and then rewritten in Rust, because the application cannot run TypeScript. Both versions wrote the same bytes in the database for all the 255 issues and the 199 pull requests of this repository.
 - The field `closingIssuesReferences` of GitHub is empty for every pull request here, because the pull requests merge into `dev_jerome` and not into `main`. The link from a pull request to its issue is the text `Fixes #N` in the `body`.
 - The support for GitLab is not written yet.
+- The request log of [issue #618](https://github.com/heidrun-org/heidrun/issues/618) records each public operation of this package: see [request_log](../../auxiliary/request_log/CONTEXT.md).

@@ -32,6 +32,8 @@ data_layer_source_control = { path = "../../data_layers/data_layer_source_contro
 data_layer_code_hosting = { path = "../../data_layers/data_layer_code_hosting" }
 # The one lock of the SQLite file of the data layer, which the command line heidrun_data takes too
 heidrun_data = { path = "../../data_layers/heidrun_data" }
+# The log of the requests that the data layer packages receive: the application gives its name as the caller
+request_log = { path = "../../auxiliary/request_log" }
 # The format of the macro files, which the command line heidrun_ctrl changes too: the hard-coded macros and the personal macros
 heidrun_ctrl = { path = "../../auxiliary/heidrun_ctrl" }
 portable-pty = "0.9"

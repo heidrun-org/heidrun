@@ -57,7 +57,7 @@ impl Fixture {
     /// Runs the executable with `arguments`, with the variable `HEIDRUN_DIR` set to `heidrun_dir` when it is given.
     fn run_with_environment(&self, arguments: &[&str], heidrun_dir: Option<&Path>) -> CliResult {
         let mut command = Command::new(env!("CARGO_BIN_EXE_data_layer_user_activity"));
-        command.args(arguments).env_remove("HEIDRUN_DIR").current_dir(&self.folder);
+        command.args(arguments).env_remove("HEIDRUN_DIR").env("HEIDRUN_REQUEST_LOG_FILE", "off").current_dir(&self.folder);
         if let Some(heidrun_dir) = heidrun_dir {
             command.env("HEIDRUN_DIR", heidrun_dir);
         }

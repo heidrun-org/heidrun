@@ -23,6 +23,9 @@ use crate::storage::usage_grouping::{group_minutes, MinuteUsage};
 use rusqlite::{params, params_from_iter, Connection, OpenFlags, OptionalExtension, Transaction};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::request_parameters::usage_query_spec;
 
 /// The tokens of each minute in the SQLite file.
 pub struct TokenUsageDatabase {
@@ -116,6 +119,27 @@ impl TokenUsageDatabase {
         usages: &[ChatTokenUsage],
         synchronization: &TokenUsageSynchronization,
     ) -> Result<TokenUsageWriteCount, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "write_token_usage", RequestKind::Write)
+            .parameter("repository", repository)
+            .parameter("folder", synchronization.folder.clone())
+            .parameter("chatCount", usages.len())
+            .database(&self.database_path);
+        record(spec, || self.write_token_usage_inside(repository, usages, synchronization), |count| {
+            Summary::count(count.written_count())
+                .detail("rowsInserted", count.inserted_count)
+                .detail("rowsUpdated", count.updated_count)
+                .detail("rowsDeleted", count.deleted_count)
+                .detail("rowsUnchanged", count.unchanged_count)
+        })
+    }
+
+    /// The work of `write_token_usage`, between the start event and the completion event of its request.
+    fn write_token_usage_inside(
+        &mut self,
+        repository: &str,
+        usages: &[ChatTokenUsage],
+        synchronization: &TokenUsageSynchronization,
+    ) -> Result<TokenUsageWriteCount, String> {
         if self.is_read_only {
             return Err("A write needs a database that is not open read only.".to_string());
         }
@@ -148,6 +172,15 @@ impl TokenUsageDatabase {
 
     /// The last synchronization of a workspace, or `None` when its token usage was never read.
     pub fn find_synchronization(&self, repository: &str, folder: &str) -> Result<Option<TokenUsageSynchronization>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_synchronization", RequestKind::Query)
+            .parameter("repository", repository)
+            .parameter("folder", folder)
+            .database(&self.database_path);
+        record(spec, || self.find_synchronization_inside(repository, folder), |found| Summary::count(usize::from(found.is_some())))
+    }
+
+    /// The work of `find_synchronization`, between the start event and the completion event of its request.
+    fn find_synchronization_inside(&self, repository: &str, folder: &str) -> Result<Option<TokenUsageSynchronization>, String> {
         self.connection
             .query_row(
                 "SELECT repository, folder, synchronizedAt, readUpTo, mode FROM token_usage_synchronizations
@@ -170,6 +203,14 @@ impl TokenUsageDatabase {
     /// The last synchronization of each workspace of a repository, the newest first. Empty when the token usage of the
     /// repository was never read, and when the file was made before the tables of the token usage existed.
     pub fn find_synchronizations(&self, repository: &str) -> Result<Vec<TokenUsageSynchronization>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_synchronizations", RequestKind::Query)
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.find_synchronizations_inside(repository), |found| Summary::count(found.len()))
+    }
+
+    /// The work of `find_synchronizations`, between the start event and the completion event of its request.
+    fn find_synchronizations_inside(&self, repository: &str) -> Result<Vec<TokenUsageSynchronization>, String> {
         if !self.has_table(SYNCHRONIZATIONS_TABLE)? {
             return Ok(Vec::new());
         }
@@ -205,6 +246,14 @@ impl TokenUsageDatabase {
 
     /// The number of rows of the table `token_usage_minutes` for a repository.
     pub fn count_rows(&self, repository: &str) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows", RequestKind::Query)
+            .parameter("repository", repository)
+            .database(&self.database_path);
+        record(spec, || self.count_rows_inside(repository), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_rows`, between the start event and the completion event of its request.
+    fn count_rows_inside(&self, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row("SELECT COUNT(*) FROM token_usage_minutes WHERE repository = ?1", params![repository], |row| {
                 row.get::<_, i64>(0)
@@ -218,6 +267,12 @@ impl TokenUsageDatabase {
     /// # Errors
     /// An error when the query holds a time zone that is not known, or when the rows cannot be read.
     pub fn find_usage(&self, query: &UsageQuery) -> Result<Vec<UsageRow>, String> {
+        let spec = usage_query_spec("find_usage", query, &self.database_path);
+        record(spec, || self.find_usage_inside(query), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `find_usage`, between the start event and the completion event of its request.
+    fn find_usage_inside(&self, query: &UsageQuery) -> Result<Vec<UsageRow>, String> {
         let (statement_text, parameters) = usage_statement(query)?;
         let mut statement =
             self.connection.prepare(&statement_text).map_err(|error| format!("The token usage cannot be read: {error}"))?;
@@ -260,6 +315,12 @@ impl TokenUsageDatabase {
     /// # Errors
     /// An error when the plan cannot be read.
     pub fn explain_usage_query(&self, query: &UsageQuery) -> Result<Vec<String>, String> {
+        let spec = usage_query_spec("explain_usage_query", query, &self.database_path);
+        record(spec, || self.explain_usage_query_inside(query), |lines| Summary::count(lines.len()))
+    }
+
+    /// The work of `explain_usage_query`, between the start event and the completion event of its request.
+    fn explain_usage_query_inside(&self, query: &UsageQuery) -> Result<Vec<String>, String> {
         let (statement_text, parameters) = usage_statement(query)?;
         let mut statement = self
             .connection
@@ -678,5 +739,43 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM sqlite_master WHERE name = 'token_usage_minutes'", [], |row| row.get(0))
             .unwrap();
         assert_eq!(tables, 1);
+    }
+
+    #[test]
+    fn a_usage_query_records_the_workload_that_decides_its_cost_and_the_result_count() {
+        let (_, mut database) = new_database("usage_request_log");
+        database
+            .write_token_usage(REPOSITORY, &[usage("a", FOLDER, vec![tokens(MINUTE_10_00, "claude-opus-5", 7)])], &synchronization())
+            .unwrap();
+        let usage_query = query(&[FOLDER], UsageGrouping::Hour, true);
+        let (rows, events) = request_log::testing::capture(|| database.find_usage(&usage_query).unwrap());
+        assert_eq!(rows.len(), 1);
+        let starts = request_log::testing::starts(&events);
+        assert_eq!(starts.len(), 1);
+        assert_eq!((starts[0].package.as_str(), starts[0].operation.as_str()), ("coding_agents", "find_usage"));
+        assert_eq!(starts[0].parameters["repository"], REPOSITORY);
+        assert_eq!(starts[0].parameters["folders"], serde_json::json!([FOLDER]));
+        assert_eq!(starts[0].parameters["since"], usage_query.since);
+        assert_eq!(starts[0].parameters["until"], usage_query.until);
+        assert_eq!(starts[0].pattern, "grouping=hour | isByChat=true");
+        assert_eq!(request_log::testing::completion_of(&events, &starts[0].request_id).unwrap().result_count, Some(1));
+    }
+
+    #[test]
+    fn a_usage_query_that_fails_records_the_failure_and_gives_back_the_error() {
+        let (path, database) = new_database("usage_request_log_failure");
+        drop(database);
+        let database = TokenUsageDatabase::open_read_only(&path).unwrap();
+        let broken = rusqlite::Connection::open(&path).unwrap();
+        broken.execute_batch("DROP VIEW IF EXISTS token_usage_with_cost; DROP TABLE token_usage_minutes;").unwrap();
+        drop(broken);
+        let usage_query = query(&[], UsageGrouping::Minute, false);
+        let expected = database.find_usage(&usage_query).unwrap_err();
+        let (error, events) = request_log::testing::capture(|| database.find_usage(&usage_query).unwrap_err());
+        assert_eq!(error, expected);
+        let starts = request_log::testing::starts(&events);
+        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+        assert_eq!(complete.result_count, None);
     }
 }

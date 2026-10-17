@@ -11,6 +11,8 @@ use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 
 /// The SQLite file of the user activity data layer.
 pub struct UserActivityDatabase {
@@ -78,6 +80,14 @@ impl UserActivityDatabase {
     /// # Errors
     /// An error when one record does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_records(&mut self, records: &[UserActivityRecord]) -> Result<(), String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_records", RequestKind::Write)
+            .parameter("recordCount", records.len())
+            .database(&self.database_path);
+        record(spec, || self.upsert_records_inside(records), |_| Summary::count(records.len()))
+    }
+
+    /// The work of `upsert_records`, between the start event and the completion event of its request.
+    fn upsert_records_inside(&mut self, records: &[UserActivityRecord]) -> Result<(), String> {
         if self.is_read_only {
             return Err("A write needs a database that is not open read only.".to_string());
         }
@@ -107,6 +117,12 @@ impl UserActivityDatabase {
 
     /// The largest `endedAt` of the table, in UTC, or `None` when the table has no row.
     pub fn find_latest_ended_at(&self) -> Result<Option<String>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_latest_ended_at", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.find_latest_ended_at_inside(), |date| Summary::count(usize::from(date.is_some())))
+    }
+
+    /// The work of `find_latest_ended_at`, between the start event and the completion event of its request.
+    fn find_latest_ended_at_inside(&self) -> Result<Option<String>, String> {
         self.connection
             .query_row("SELECT MAX(endedAt) FROM user_activity_records", [], |row| row.get::<_, Option<String>>(0))
             .map_err(|error| format!("The latest end cannot be read: {error}"))
@@ -114,6 +130,12 @@ impl UserActivityDatabase {
 
     /// Counts the rows of the table.
     pub fn count_records(&self) -> Result<i64, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_records", RequestKind::Query).database(&self.database_path);
+        record(spec, || self.count_records_inside(), |count| Summary::count(*count as usize))
+    }
+
+    /// The work of `count_records`, between the start event and the completion event of its request.
+    fn count_records_inside(&self) -> Result<i64, String> {
         self.connection
             .query_row("SELECT COUNT(*) FROM user_activity_records", [], |row| row.get::<_, i64>(0))
             .map_err(|error| format!("The rows cannot be counted: {error}"))
@@ -121,6 +143,15 @@ impl UserActivityDatabase {
 
     /// Reads one record. Returns `None` when the table has no such row.
     pub fn find_record(&self, workspace_folder: &str, started_at: &str) -> Result<Option<UserActivityRecord>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_record", RequestKind::Query)
+            .parameter("workspaceFolder", workspace_folder)
+            .parameter("startedAt", started_at)
+            .database(&self.database_path);
+        record(spec, || self.find_record_inside(workspace_folder, started_at), |found| Summary::count(usize::from(found.is_some())))
+    }
+
+    /// The work of `find_record`, between the start event and the completion event of its request.
+    fn find_record_inside(&self, workspace_folder: &str, started_at: &str) -> Result<Option<UserActivityRecord>, String> {
         let data = self
             .connection
             .query_row(
@@ -145,6 +176,12 @@ impl UserActivityDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
+        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
+    }
+
+    /// The work of `query`, between the start event and the completion event of its request.
+    fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());
         }

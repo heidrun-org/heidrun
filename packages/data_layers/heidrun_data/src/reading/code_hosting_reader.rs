@@ -7,6 +7,8 @@ use crate::output::QueryRow;
 use data_layer_code_hosting::GraphqlRunner;
 use serde_json::{json, Value};
 use std::process::Command;
+use crate::REQUEST_PACKAGE;
+use request_log::{record, RequestKind, RequestSpec, Summary};
 
 /// The query of one issue with one page of its comments.
 const ISSUE_QUERY: &str = r#"
@@ -178,6 +180,20 @@ pub fn read_code_hosting(
     repository: &str,
     number: u64,
 ) -> Result<Vec<Entry>, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_code_hosting", RequestKind::Collection)
+        .choice("kind", format!("{kind:?}"))
+        .parameter("repository", repository)
+        .parameter("number", number);
+    record(spec, || read_code_hosting_inside(runner, kind, repository, number), |entries| Summary::count(entries.len()))
+}
+
+/// The work of `read_code_hosting`, between the start event and the completion event of its request.
+fn read_code_hosting_inside(
+    runner: &dyn GraphqlRunner,
+    kind: CodeHostingKind,
+    repository: &str,
+    number: u64,
+) -> Result<Vec<Entry>, String> {
     let (owner, name) = repository
         .split_once('/')
         .ok_or_else(|| format!("The repository {repository} is not in the format owner/name."))?;
@@ -328,6 +344,14 @@ fn next_cursor(connection: Option<&Value>) -> Option<String> {
 /// # Errors
 /// An error when the command `gh` does not start or fails.
 pub fn read_pull_request_diff(repository: &str, number: u64) -> Result<Entry, String> {
+    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_pull_request_diff", RequestKind::Collection)
+        .parameter("repository", repository)
+        .parameter("number", number);
+    record(spec, || read_pull_request_diff_inside(repository, number), |_| Summary::count(1))
+}
+
+/// The work of `read_pull_request_diff`, between the start event and the completion event of its request.
+fn read_pull_request_diff_inside(repository: &str, number: u64) -> Result<Entry, String> {
     let output = Command::new("gh")
         .args(["pr", "diff", &number.to_string(), "--repo", repository, "--color", "never"])
         .output()
