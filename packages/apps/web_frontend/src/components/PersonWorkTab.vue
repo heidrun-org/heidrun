@@ -2,12 +2,21 @@
 import { computed, reactive, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import StackedBarChart from "./StackedBarChart.vue";
-import { AI_COST_AGENT_IDS, AiCost, type AiCostAgentId, type AiCostByAgent, type AiCostItems, type AiTokensByAgent } from "../lib/ai_cost";
+import {
+  AI_COST_AGENT_IDS,
+  AiCost,
+  type AiCostAgentId,
+  type AiCostAnswer,
+  type AiCostByAgent,
+  type AiCostSynchronization,
+  type AiTokensByAgent,
+} from "../lib/ai_cost";
 import { AveragePerDay } from "../lib/average_per_day";
 import { CalendarDays } from "../lib/calendar_days";
+import { SLOT_HOURS_OF_A_DAY } from "../lib/calendar_slots";
 import { costText, tokenCountText } from "../lib/chat_usage";
 import { findCodingAgent } from "../lib/coding_agents";
-import { DayText } from "../lib/day_text";
+import { SlotText } from "../lib/slot_text";
 import { UserActivity } from "../lib/user_activity";
 import {
   PERSON_WORK_LONGEST_DAY_COUNT,
@@ -15,6 +24,7 @@ import {
   PersonWork,
   type PersonWorkItems,
   type PersonWorkPeriodId,
+  type PersonWorkSlotHours,
 } from "../lib/person_work";
 import type { StackedBarChartContent } from "../lib/stacked_bar_chart";
 import { openWorkspaces, selectedWorkspaceId } from "../stores/user_activity";
@@ -24,9 +34,13 @@ import { locale, t } from "../i18n/index";
 // reads: one workspace, several, or all. A radio button group chooses the source of the bar chart: the Git history (the
 // commits and the pull requests of one person, with the number of issues and the lines), or the AI cost (the chats of each
 // coding agent). For the AI cost, a second radio button group chooses the unit: US dollars or tokens. Each total has its
-// average per day under it. Each source reads the data of each folder once, for the longest time range, the first time that a
-// chosen workspace needs it, joins the data of the chosen workspaces, and cuts it again when the workspaces, the person, the
-// time range, or the unit changes.
+// average per day under it. A third radio button group chooses the slot length (1 hour, 6 hours, or 1 day), which cuts each
+// day into the bars of the chart. The Git history reads the data of each folder once, for the longest time range, the first time that
+// a chosen workspace needs it, joins the data of the chosen workspaces, and cuts it again when the workspaces, the person, the
+// time range, the slot length, or the unit changes. The AI cost reads the token usage that the data layer stored, for the chosen workspaces
+// together, so that a chat that two workspaces list counts once. It updates the stored token usage first, which opens only the
+// chat files that changed. It imports the whole history of a workspace, which opens every chat file, only when the developer
+// presses the button "Import the history".
 
 /** The choices of the radio button group of the source, from left to right. */
 const SOURCE_CHOICES = [
@@ -36,7 +50,9 @@ const SOURCE_CHOICES = [
 
 /** The choices of the radio button group of the time range, from left to right. */
 const PERIOD_CHOICES = [
+  { id: "three_days", labelKey: "statisticsModal.personWorkThreeDays", titleKey: "statisticsModal.personWorkThreeDaysTitle" },
   { id: "seven_days", labelKey: "statisticsModal.personWorkSevenDays", titleKey: "statisticsModal.personWorkSevenDaysTitle" },
+  { id: "fourteen_days", labelKey: "statisticsModal.personWorkFourteenDays", titleKey: "statisticsModal.personWorkFourteenDaysTitle" },
   { id: "thirty_days", labelKey: "statisticsModal.personWorkThirtyDays", titleKey: "statisticsModal.personWorkThirtyDaysTitle" },
 ] as const satisfies readonly { id: PersonWorkPeriodId; labelKey: string; titleKey: string }[];
 
@@ -54,6 +70,13 @@ const AI_COST_COLOR_TOKENS: Record<AiCostAgentId, string> = {
 
 /** The source of the bar chart: the Git history, or the AI cost. */
 type SourceId = "git_history" | "ai_cost";
+
+/** What the read of the AI cost gave: nothing yet, it is working, it gave the token usage, or it failed. */
+type AiCostRead =
+  | { state: "idle" }
+  | { state: "working"; isImport: boolean }
+  | { state: "done"; answer: AiCostAnswer; readAt: number; priceWarning: string | null }
+  | { state: "failed"; error: string };
 
 /** The unit of the AI cost: US dollars, or tokens. */
 type UnitId = "dollars" | "tokens";
@@ -84,6 +107,12 @@ const chosenFolders = computed(() => [
   ...new Set(openWorkspaces.value.filter((workspace) => chosenWorkspaceIds.value.includes(workspace.workspaceId)).map((workspace) => workspace.folder)),
 ]);
 
+/**
+ * The chosen folders as one text. Heidrun makes the list of the open workspaces again every few seconds, so `chosenFolders` is
+ * a new array each time, with the same folders. A watch on the array would read again each time, and the chart would blink.
+ */
+const chosenFoldersKey = computed(() => chosenFolders.value.join("\n"));
+
 /** The source of the bar chart. The tab starts with the Git history. */
 const sourceId = ref<SourceId>("git_history");
 
@@ -93,11 +122,20 @@ const unitId = ref<UnitId>("dollars");
 /** The time range of the chart. The tab starts with the last seven days. */
 const periodId = ref<PersonWorkPeriodId>("seven_days");
 
+/** The length of a slot in hours: one bar of the chart. The tab starts with one day. */
+const slotHours = ref<PersonWorkSlotHours>(PERSON_WORK_PERIODS.seven_days.defaultSlotHours);
+
+/** The slot lengths that the time range offers, from the shortest to the longest. */
+const slotHoursChoices = computed(() => PERSON_WORK_PERIODS[periodId.value].slotHoursChoices);
+
 /** What the command `person_work_in_range` gave for each folder that the tab asked for. The tab keeps it while the window is open. */
 const gitHistoryReads = reactive<Record<string, FolderRead<PersonWorkItems>>>({});
 
-/** What the command `ai_cost_in_range` gave for each folder that the tab asked for. The tab keeps it while the window is open. */
-const aiCostReads = reactive<Record<string, FolderRead<AiCostItems>>>({});
+/** What the AI cost gave for the chosen folders together. */
+const aiCostRead = ref<AiCostRead>({ state: "idle" });
+
+/** The number of the last read of the AI cost. A read that is not the last one is out of date, and its answer is dropped. */
+let aiCostReadNumber = 0;
 
 /** The identifier of the person of the chart, or `null` before the people are known. */
 const personId = ref<string | null>(null);
@@ -139,12 +177,6 @@ const gitHistoryJoined = computed(() => {
   return joined === null ? null : { items: PersonWork.merge(joined.itemsOfFolders), readAt: joined.readAt };
 });
 
-/** The chats of the chosen workspaces, joined, or `null` when no chosen folder was read. */
-const aiCostJoined = computed(() => {
-  const joined = joinedReads(aiCostReads);
-  return joined === null ? null : { items: AiCost.merge(joined.itemsOfFolders), readAt: joined.readAt };
-});
-
 /** The commits, the pull requests, and the issues of the chosen workspaces, or `null` when no chosen folder was read. */
 const items = computed(() => gitHistoryJoined.value?.items ?? null);
 
@@ -154,20 +186,54 @@ const readAt = computed(() => gitHistoryJoined.value?.readAt ?? 0);
 /** The errors of the Git history of the chosen workspaces. Empty when every read worked. */
 const errorText = computed(() => errorTextOf(gitHistoryReads));
 
-/** The chats of the chosen workspaces, or `null` when no chosen folder was read. */
-const aiCostItems = computed(() => aiCostJoined.value?.items ?? null);
+/** The token usage of the chosen workspaces, or `null` before it is read. */
+const aiCostAnswer = computed(() => (aiCostRead.value.state === "done" ? aiCostRead.value.answer : null));
 
 /** The time of the last read of the AI cost, in milliseconds since 1 January 1970. The days of the chart follow it. */
-const aiCostReadAt = computed(() => aiCostJoined.value?.readAt ?? 0);
+const aiCostReadAt = computed(() => (aiCostRead.value.state === "done" ? aiCostRead.value.readAt : 0));
 
-/** The errors of the AI cost of the chosen workspaces. Empty when every read worked. */
-const aiCostErrorText = computed(() => errorTextOf(aiCostReads));
+/** The message of the error when the AI cost could not be read, or an empty text. */
+const aiCostErrorText = computed(() => (aiCostRead.value.state === "failed" ? aiCostRead.value.error : ""));
+
+/** The message of the error when the prices of the models could not be refreshed, or `null`. */
+const aiCostPriceWarning = computed(() => (aiCostRead.value.state === "done" ? aiCostRead.value.priceWarning : null));
 
 /** True while a chosen workspace gives its commits, its pull requests, and its issues. */
 const isGitHistoryReading = computed(() => isReading(gitHistoryReads));
 
-/** True while a chosen workspace gives its chats. */
-const isAiCostReading = computed(() => isReading(aiCostReads));
+/** True while the token usage is updated or imported, and read. */
+const isAiCostReading = computed(() => aiCostRead.value.state === "working");
+
+/** True while the whole history of a workspace is imported, which can take a few minutes. */
+const isAiCostImporting = computed(() => aiCostRead.value.state === "working" && aiCostRead.value.isImport);
+
+/** True when at least one chosen workspace has its history imported: the totals mean something only then. */
+const hasImportedWorkspace = computed(
+  () => aiCostAnswer.value !== null && aiCostAnswer.value.workspaces.some((workspace) => workspace.synchronizedAt !== null),
+);
+
+/** The chosen workspaces whose history was never imported. */
+const notImportedWorkspaces = computed(() => (aiCostAnswer.value === null ? [] : AiCost.findNotImported(aiCostAnswer.value.workspaces)));
+
+/** The chosen workspaces that cannot be read, each with its error. */
+const failedWorkspaces = computed(() => (aiCostAnswer.value === null ? [] : aiCostAnswer.value.workspaces.filter((workspace) => workspace.error !== null)));
+
+/** The date when the oldest of the imported workspaces was updated, written for the interface, or an empty text. */
+const synchronizedAtText = computed(() => {
+  const oldest = aiCostAnswer.value === null ? null : AiCost.findOldestSynchronizedAt(aiCostAnswer.value.workspaces);
+  return oldest === null ? "" : dateTimeText(oldest);
+});
+
+/** The date when the price list was checked, written for the interface, or an empty text when no price is stored. */
+const pricesCheckedAtText = computed(() => {
+  const checkedAt = aiCostAnswer.value?.pricesCheckedAt ?? null;
+  return checkedAt === null ? "" : dateTimeText(checkedAt);
+});
+
+/** Writes a date and a time, an ISO 8601 text, as the language of the interface writes them. */
+function dateTimeText(isoText: string): string {
+  return new Date(isoText).toLocaleString(locale.value, { dateStyle: "medium", timeStyle: "short" });
+}
 
 /**
  * Writes a cost in US dollars. A cost of exactly zero is "$0.00": the text "Less than $0.01" of `costText` is for a small
@@ -204,7 +270,7 @@ const result = computed(() => {
   if (items.value === null || person.value === null) {
     return null;
   }
-  return PersonWork.compute(items.value, person.value.id, readAt.value, dayCount.value);
+  return PersonWork.compute(items.value, person.value.id, readAt.value, dayCount.value, slotHours.value);
 });
 
 /** Writes a number of items or of lines as the language of the interface writes a number. */
@@ -233,12 +299,12 @@ const totals = computed(() =>
   })),
 );
 
-/** The days and the totals of the AI cost in the time range, or `null` before the chats are read. */
+/** The days and the totals of the AI cost in the time range, or `null` before the token usage is read. */
 const aiCostResult = computed(() => {
-  if (aiCostItems.value === null) {
+  if (aiCostAnswer.value === null) {
     return null;
   }
-  return AiCost.compute(aiCostItems.value, aiCostReadAt.value, dayCount.value);
+  return AiCost.compute(aiCostAnswer.value, aiCostReadAt.value, dayCount.value, slotHours.value);
 });
 
 /** The amount of a coding agent on a day, or in the whole time range, in the unit that the developer chose. */
@@ -267,62 +333,69 @@ const aiCostTotals = computed(() =>
   })),
 );
 
+/** The title of the horizontal axis: "Day" for a slot of one day, else "Start of the slot". */
+function horizontalAxisTitle(): string {
+  return t(slotHours.value === SLOT_HOURS_OF_A_DAY ? "statisticsModal.dayAxis" : "statisticsModal.slotStartAxis");
+}
+
 /** The bar chart of the Git history, or `null` when there is no person. */
 const gitHistoryChart = computed<StackedBarChartContent | null>(() => {
   if (result.value === null || person.value === null) {
     return null;
   }
-  const days = result.value.days;
+  const slots = result.value.slots;
+  const slotLength = SlotText.length(slotHours.value);
   return {
-    labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
+    labels: SlotText.labels(slots, dayCount.value, slotHours.value),
     series: [
       {
         name: t("statisticsModal.personWorkCommitsTrace"),
         colorToken: "--primary-bg",
-        values: days.map((day) => day.commitCount),
-        valueTexts: days.map((day) => String(day.commitCount)),
+        values: slots.map((slot) => slot.commitCount),
+        valueTexts: slots.map((slot) => String(slot.commitCount)),
       },
       {
         name: t("statisticsModal.personWorkPullRequestsTrace"),
         colorToken: "--success-bg",
-        values: days.map((day) => day.pullRequestCount),
-        valueTexts: days.map((day) => String(day.pullRequestCount)),
+        values: slots.map((slot) => slot.pullRequestCount),
+        valueTexts: slots.map((slot) => String(slot.pullRequestCount)),
       },
     ],
-    titles: days.map((day) => DayText.cardTitle(day.startedAt)),
+    titles: slots.map((slot) => SlotText.cardTitle(slot, slotHours.value)),
     totals: null,
-    title: t("statisticsModal.personWorkChartTitle", { person: person.value.name }),
-    horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
+    title: t("statisticsModal.personWorkChartTitle", { person: person.value.name, slotLength }),
+    horizontalAxisTitle: horizontalAxisTitle(),
     verticalAxisTitle: t("statisticsModal.personWorkVerticalAxis"),
     verticalAxisUnit: "count",
-    chartLabel: t("statisticsModal.personWorkChartLabel"),
+    chartLabel: t("statisticsModal.personWorkChartLabel", { slotLength }),
   };
 });
 
-/** The bar chart of the AI cost or of the tokens, or `null` before the chats are read, or when no chat is in the time range. */
+/** The bar chart of the AI cost or of the tokens, or `null` before the token usage is read, or when no token is in the time range. */
 const aiCostChart = computed<StackedBarChartContent | null>(() => {
-  if (aiCostResult.value === null || aiCostResult.value.chatCount === 0) {
+  if (aiCostResult.value === null || aiCostResult.value.totalTokens === 0) {
     return null;
   }
-  const days = aiCostResult.value.days;
+  const slots = aiCostResult.value.slots;
   const isTokens = unitId.value === "tokens";
+  const slotLength = SlotText.length(slotHours.value);
   return {
-    labels: days.map((day) => DayText.axis(day.startedAt, days.length)),
+    labels: SlotText.labels(slots, dayCount.value, slotHours.value),
     series: AI_COST_AGENT_IDS.map((agentId) => ({
       name: findCodingAgent(agentId)?.label ?? agentId,
       colorToken: AI_COST_COLOR_TOKENS[agentId],
-      values: days.map((day) => agentAmount(day.costByAgent, day.tokensByAgent, agentId)),
-      valueTexts: days.map((day) => amountText(agentAmount(day.costByAgent, day.tokensByAgent, agentId))),
+      values: slots.map((slot) => agentAmount(slot.costByAgent, slot.tokensByAgent, agentId)),
+      valueTexts: slots.map((slot) => amountText(agentAmount(slot.costByAgent, slot.tokensByAgent, agentId))),
     })),
-    titles: days.map((day) => DayText.cardTitle(day.startedAt)),
-    totals: days.map((day) =>
-      amountText(AI_COST_AGENT_IDS.reduce((sum, agentId) => sum + agentAmount(day.costByAgent, day.tokensByAgent, agentId), 0)),
+    titles: slots.map((slot) => SlotText.cardTitle(slot, slotHours.value)),
+    totals: slots.map((slot) =>
+      amountText(AI_COST_AGENT_IDS.reduce((sum, agentId) => sum + agentAmount(slot.costByAgent, slot.tokensByAgent, agentId), 0)),
     ),
-    title: t(isTokens ? "statisticsModal.personWorkAiTokensChartTitle" : "statisticsModal.personWorkAiCostChartTitle"),
-    horizontalAxisTitle: t("statisticsModal.personWorkHorizontalAxis"),
+    title: t(isTokens ? "statisticsModal.personWorkAiTokensChartTitle" : "statisticsModal.personWorkAiCostChartTitle", { slotLength }),
+    horizontalAxisTitle: horizontalAxisTitle(),
     verticalAxisTitle: t(isTokens ? "statisticsModal.personWorkAiTokensVerticalAxis" : "statisticsModal.personWorkAiCostVerticalAxis"),
     verticalAxisUnit: isTokens ? "tokens" : "dollars",
-    chartLabel: t(isTokens ? "statisticsModal.personWorkAiTokensChartLabel" : "statisticsModal.personWorkAiCostChartLabel"),
+    chartLabel: t(isTokens ? "statisticsModal.personWorkAiTokensChartLabel" : "statisticsModal.personWorkAiCostChartLabel", { slotLength }),
   };
 });
 
@@ -338,21 +411,45 @@ function longestRange(now: number): { since: string; until: string } {
  * Reads the data of one folder through the data layer, and keeps the answer, or the error, for the folder. A read that is
  * already asked for, or done, is not asked for again.
  *
- * @param command - The Tauri command: `person_work_in_range` or `ai_cost_in_range`.
- * @param reads - The reads of the source, by folder.
  * @param folderToRead - The folder of a chosen workspace.
  */
-async function readFolder<Items>(command: string, reads: Record<string, FolderRead<Items>>, folderToRead: string): Promise<void> {
-  if (reads[folderToRead] !== undefined) {
+async function readGitHistory(folderToRead: string): Promise<void> {
+  if (gitHistoryReads[folderToRead] !== undefined) {
     return;
   }
-  reads[folderToRead] = { state: "reading" };
+  gitHistoryReads[folderToRead] = { state: "reading" };
   const now = Date.now();
   try {
-    const items = await invoke<Items>(command, { folder: folderToRead, ...longestRange(now) });
-    reads[folderToRead] = { state: "done", items, readAt: now };
+    const items = await invoke<PersonWorkItems>("person_work_in_range", { folder: folderToRead, ...longestRange(now) });
+    gitHistoryReads[folderToRead] = { state: "done", items, readAt: now };
   } catch (error) {
-    reads[folderToRead] = { state: "failed", error: String(error) };
+    gitHistoryReads[folderToRead] = { state: "failed", error: String(error) };
+  }
+}
+
+/**
+ * Updates the stored token usage of the chosen workspaces, then reads it. The update opens only the chat files that changed
+ * since the last read of a workspace. A workspace whose history was never imported is imported only when `isImportAllowed` is
+ * true, because the import opens every chat file of the workspace. An answer of a read that is not the last one is dropped.
+ *
+ * @param isImportAllowed - True when the developer pressed the button "Import the history".
+ */
+async function readAiCost(isImportAllowed: boolean): Promise<void> {
+  aiCostReadNumber += 1;
+  const readNumber = aiCostReadNumber;
+  aiCostRead.value = { state: "working", isImport: isImportAllowed };
+  const folders = chosenFolders.value;
+  try {
+    const synchronization = await invoke<AiCostSynchronization>("ai_cost_synchronize", { folders, isImportAllowed });
+    const now = Date.now();
+    const answer = await invoke<AiCostAnswer>("ai_cost_in_range", { folders, ...longestRange(now), timeZone: AiCost.timeZone() });
+    if (readNumber === aiCostReadNumber) {
+      aiCostRead.value = { state: "done", answer, readAt: now, priceWarning: synchronization.priceWarning };
+    }
+  } catch (error) {
+    if (readNumber === aiCostReadNumber) {
+      aiCostRead.value = { state: "failed", error: String(error) };
+    }
   }
 }
 
@@ -360,6 +457,15 @@ async function readFolder<Items>(command: string, reads: Record<string, FolderRe
 watch(persons, (list) => {
   if (list.some((candidate) => candidate.id === personId.value) === false) {
     personId.value = list[0]?.id ?? null;
+  }
+});
+
+// A time range that does not offer the slot length in use goes back to the slot length that it starts with. A slot length that
+// the new time range offers stays.
+watch(periodId, (newPeriodId) => {
+  const period = PERSON_WORK_PERIODS[newPeriodId];
+  if (period.slotHoursChoices.includes(slotHours.value) === false) {
+    slotHours.value = period.defaultSlotHours;
   }
 });
 
@@ -377,17 +483,19 @@ function toggleEveryWorkspace(): void {
   chosenWorkspaceIds.value = isEveryWorkspaceChosen.value === true ? [] : openWorkspaces.value.map((workspace) => workspace.workspaceId);
 }
 
-// A source reads its data only when it is shown, and only for the chosen folders that it did not read yet. The window does not
-// read the chats before the developer asks for the AI cost.
+// A source reads its data only when it is shown. The Git history reads only the chosen folders that it did not read yet. The AI
+// cost updates and reads the token usage of the chosen folders each time the source or the folders change. The window does not
+// touch the chat files before the developer asks for the AI cost, and it never imports a whole history by itself.
 watch(
-  [chosenFolders, sourceId],
-  ([folders, source]) => {
-    for (const folder of folders) {
-      if (source === "git_history") {
-        void readFolder("person_work_in_range", gitHistoryReads, folder);
-      } else {
-        void readFolder("ai_cost_in_range", aiCostReads, folder);
+  [chosenFoldersKey, sourceId],
+  ([, source]) => {
+    const folders = chosenFolders.value;
+    if (source === "git_history") {
+      for (const folder of folders) {
+        void readGitHistory(folder);
       }
+    } else if (folders.length > 0) {
+      void readAiCost(false);
     }
   },
   { immediate: true },
@@ -443,6 +551,27 @@ watch(
             />
             {{ t(choice.labelKey) }}
           </label>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="form-text">{{ t("statisticsModal.slotLabel") }}</span>
+          <div class="btn-group" role="group" :aria-label="t('statisticsModal.slotLabel')">
+            <label
+              v-for="hours in slotHoursChoices"
+              :key="hours"
+              class="btn-check btn-outline theme-secondary"
+              :title="t('statisticsModal.slotTitle', { slotLength: SlotText.length(hours) })"
+            >
+              <input
+                :id="`statistics-person-slot-${hours}`"
+                v-model="slotHours"
+                type="radio"
+                name="statistics-person-slot"
+                autocomplete="off"
+                :value="hours"
+              />
+              {{ SlotText.length(hours) }}
+            </label>
+          </div>
         </div>
       </div>
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -504,9 +633,30 @@ watch(
         <div v-if="aiCostErrorText !== ''" class="alert theme-danger" role="alert">
           {{ t("statisticsModal.personWorkAiCostLoadError", { error: aiCostErrorText }) }}
         </div>
-        <span v-if="isAiCostReading" class="form-text" role="status"><span class="spinner-border spinner-sm me-2" aria-hidden="true"></span>{{ t("statisticsModal.personWorkAiCostLoading") }}</span>
+        <span v-if="isAiCostReading" class="form-text" role="status">
+          <span class="spinner-border spinner-sm me-2" aria-hidden="true"></span
+          >{{ t(isAiCostImporting ? "statisticsModal.personWorkAiCostImporting" : "statisticsModal.personWorkAiCostLoading") }}
+        </span>
         <template v-else-if="aiCostResult !== null">
-          <div class="d-flex flex-wrap gap-3 mb-3">
+          <div v-if="aiCostPriceWarning !== null" class="alert theme-warning" role="alert" data-note="price-warning">
+            {{ t("statisticsModal.personWorkAiCostPriceWarning", { error: aiCostPriceWarning }) }}
+          </div>
+          <div v-for="workspace in failedWorkspaces" :key="workspace.folder" class="alert theme-danger" role="alert" data-note="workspace-error">
+            {{ t("statisticsModal.personWorkAiCostWorkspaceError", { folder: workspace.folder, error: workspace.error ?? "" }) }}
+          </div>
+          <div v-if="notImportedWorkspaces.length > 0" class="d-flex flex-wrap align-items-center gap-3 mb-3" data-note="not-imported">
+            <span class="form-text">{{ t("statisticsModal.personWorkAiCostNotImported", { count: notImportedWorkspaces.length }) }}</span>
+            <button
+              id="statistics-person-import"
+              type="button"
+              class="btn theme-primary"
+              :title="t('statisticsModal.personWorkAiCostImportTitle')"
+              @click="readAiCost(true)"
+            >
+              {{ t("statisticsModal.personWorkAiCostImport") }}
+            </button>
+          </div>
+          <div v-if="hasImportedWorkspace" class="d-flex flex-wrap gap-3 mb-3">
             <div v-for="total in aiCostTotals" :key="total.id" :data-total="total.id" class="d-flex flex-column">
               <div class="d-flex align-items-center gap-2">
                 <span class="fs-4 fw-semibold">{{ total.valueText }}</span>
@@ -515,12 +665,20 @@ watch(
               <span class="form-text" data-per-day>{{ total.perDayText }}</span>
             </div>
           </div>
-          <span v-if="aiCostResult.chatCount === 0" class="form-text">{{ t("statisticsModal.personWorkAiCostNone") }}</span>
+          <span v-if="hasImportedWorkspace && aiCostResult.totalTokens === 0" class="form-text">{{ t("statisticsModal.personWorkAiCostNone") }}</span>
           <div v-if="aiCostChart !== null" style="flex: 1 1 0; min-height: 240px">
             <StackedBarChart v-bind="aiCostChart" />
           </div>
-          <span v-if="unitId === 'dollars' && aiCostResult.chatWithoutPriceCount > 0" class="form-text" data-note="without-price">
-            {{ t("statisticsModal.personWorkAiCostWithoutPrice", { count: aiCostResult.chatWithoutPriceCount }) }}
+          <span v-if="unitId === 'dollars' && aiCostResult.unpricedTokens > 0" class="form-text" data-note="partial-cost">
+            {{ t("statisticsModal.personWorkAiCostPartial", { tokens: tokensText(aiCostResult.unpricedTokens) }) }}
+          </span>
+          <span v-if="synchronizedAtText !== ''" class="form-text" data-note="freshness">
+            {{ t("statisticsModal.personWorkAiCostFreshness", { time: synchronizedAtText }) }}
+            {{
+              aiCostAnswer !== null && aiCostAnswer.priceVersion !== null
+                ? t("statisticsModal.personWorkAiCostPrices", { version: aiCostAnswer.priceVersion, time: pricesCheckedAtText })
+                : t("statisticsModal.personWorkAiCostNoPrices")
+            }}
           </span>
         </template>
       </template>

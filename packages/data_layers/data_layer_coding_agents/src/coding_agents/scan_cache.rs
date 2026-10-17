@@ -19,7 +19,7 @@ const CLAUDE_FOLDER_LINES: usize = 200;
 pub const CACHE_FILE_NAME: &str = "chats_cache.json";
 
 /// The version of the content of the cache. A cache with another version is thrown away and made again.
-const CACHE_VERSION: u32 = 6;
+const CACHE_VERSION: u32 = 7;
 
 /// The result of the scan of one file, valid while the size and the modification date of the file stay the same.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -110,9 +110,16 @@ impl ScanCache {
     /// started: their answers count for this chat session, and nothing else of their files does. The scan of each of their
     /// files is kept in the cache like the scan of `file`.
     pub fn scan_claude(&mut self, file: &SessionFile) -> Scan {
+        let agent_files = find_claude_agent_files(self, &file.path);
+        self.scan_claude_with(file, &agent_files)
+    }
+
+    /// The same as `scan_claude`, for a caller that already listed the files of the subagents and of the workflows of `file`
+    /// with `find_claude_agent_files`.
+    pub fn scan_claude_with(&mut self, file: &SessionFile, agent_files: &[SessionFile]) -> Scan {
         let mut scan = self.scan(file, feed_claude_line);
-        for agent_file in find_claude_agent_files(self, &file.path) {
-            let agent_scan = self.scan(&agent_file, feed_claude_tokens_line);
+        for agent_file in agent_files {
+            let agent_scan = self.scan(agent_file, feed_claude_tokens_line);
             scan.tokens.add_tokens_of(&agent_scan.tokens);
         }
         scan

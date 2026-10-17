@@ -1,7 +1,7 @@
 # User interface of Heidrun: Statistics window, tab "Work of one person", totals
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Source "AI cost"](statistics_ai_cost.md)
@@ -37,4 +37,4 @@ This file is a part of the rules of the tab "Work of one person". The words are 
 
 - `lib/person_work.test.ts` tests the sums of the lines added and deleted, with a commit outside the time range. The Rust tests of the module `person_work` test the two numbers of each commit.
 - `lib/average_per_day.test.ts` tests the division, a time range with no day, the number of decimal digits, and the separator of each language.
-- `components/PersonWorkTab.test.ts` tests the lines, and the average per day of each total, for 7 days and for 30 days, for the source "Git history" and for the source "AI cost", in US dollars and in tokens.
+- `components/PersonWorkTab.test.ts` tests the lines, and the average per day of each total, for 3, 7, 14, and 30 days, for the source "Git history" and for the source "AI cost", in US dollars and in tokens.

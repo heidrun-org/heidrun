@@ -27,3 +27,9 @@ dirs = "6"
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 # Codex compresses the files of its old chat sessions with zstd, in files that end with `.jsonl.zst`
 zstd = "0.14"
+# The time zones of the IANA database, for the usage of each day of a time zone, with the changes of the clock
+chrono-tz = "0.10"
+# The name of the time zone of the computer
+iana-time-zone = "0.1"
+# Fetches the public price list of the models, with a blocking call
+ureq = { version = "3", default-features = false, features = ["rustls"] }

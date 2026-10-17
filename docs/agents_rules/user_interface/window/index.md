@@ -1,11 +1,11 @@
 # Window rules index
 
 - Created: 13 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 609](https://github.com/heidrun-org/heidrun/issues/609)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -19,6 +19,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
 - [statistics_person_work.md](statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the unit, the person chooser, the time range, the totals, the bar chart of each day, and its tests.
 - [statistics_person_work_workspace.md](statistics_person_work_workspace.md): the workspace selector of the tab "Work of one person": the buttons with a checkbox, the first choice, the sums of several workspaces, what a change reads, and its tests.
+- [statistics_person_work_slots.md](statistics_person_work_slots.md): the slot length of the tab "Work of one person": the buttons of each time range, the slots (hours, days of 23 and 25 hours), the labels and the titles of the bar chart, and its tests.
 - [statistics_git_history.md](statistics_git_history.md): the source "Git history" of the tab "Work of one person": what counts, and where its data comes from.
 - [statistics_ai_cost.md](statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the unit (US dollars or tokens), the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
 - [statistics_totals.md](statistics_totals.md): the lines added and deleted, and the average per day under each total, of the tab "Work of one person": what they are, how the value is written, where the calculation is, and the tests.

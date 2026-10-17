@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { clearMocks } from '@tauri-apps/api/mocks';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { AiCostItems } from '../lib/ai_cost';
+import type { AiCostAnswer, AiCostSynchronization } from '../lib/ai_cost';
 import type { PersonWorkItems } from '../lib/person_work';
 import type { SessionSnapshot } from '../lib/types';
 import { TauriMock } from './tauri_mock';
@@ -315,25 +315,36 @@ describe('TauriMock work of one person', () => {
 		}
 	});
 
-	it('answers the Tauri command ai_cost_in_range with the fake chats of Claude Code and of Codex in the last 30 days', async () => {
+	it('answers the Tauri command ai_cost_in_range with no hour until the history is imported by ai_cost_synchronize', async () => {
 		TauriMock.install();
+		TauriMockFixture.resetAiCostImports();
 		const until = new Date(2026, 9, 15).getTime();
-		const items = await invoke<AiCostItems>('ai_cost_in_range', {
-			folder: '/Users/demo/webwork/heidrun',
+		const parameters = {
+			folders: ['/Users/demo/webwork/heidrun'],
 			since: new Date(until - 30 * 86_400_000).toISOString(),
 			until: new Date(until).toISOString(),
-		});
-		expect(new Set(items.chats.map((chat) => chat.codingAgent))).toEqual(new Set(['claude', 'codex']));
-		expect(items.chats.filter((chat) => chat.hours.every((hour) => hour.costUsd === null))).toHaveLength(1);
-		expect(items.chats.length).toBeGreaterThan(60);
-		const longChats = items.chats.filter((chat) => {
-			const days = new Set(chat.hours.map((hour) => new Date(hour.at).toDateString()));
-			return days.size > 1;
-		});
-		expect(longChats.length).toBeGreaterThan(3);
-		for (const hour of items.chats.flatMap((chat) => chat.hours)) {
-			expect(Date.parse(hour.at)).toBeLessThan(until);
-			expect(Date.parse(hour.at)).toBeGreaterThanOrEqual(until - 30 * 86_400_000);
+			timeZone: 'Europe/Paris',
+		};
+		const before = await invoke<AiCostAnswer>('ai_cost_in_range', parameters);
+		expect(before.hours).toEqual([]);
+		expect(before.workspaces[0].synchronizedAt).toBeNull();
+		const notImported = await invoke<AiCostSynchronization>('ai_cost_synchronize', { folders: parameters.folders, isImportAllowed: false });
+		expect(notImported.workspaces[0].synchronizedAt).toBeNull();
+		const imported = await invoke<AiCostSynchronization>('ai_cost_synchronize', { folders: parameters.folders, isImportAllowed: true });
+		expect(imported.workspaces[0].synchronizedAt).not.toBeNull();
+		expect(imported.priceWarning).toBeNull();
+		const answer = await invoke<AiCostAnswer>('ai_cost_in_range', parameters);
+		expect(new Set(answer.hours.map((hour) => hour.codingAgent))).toEqual(new Set(['claude', 'codex']));
+		expect(new Set(answer.hours.filter((hour) => hour.costUsd === null).map((hour) => hour.day)).size).toBe(1);
+		expect(answer.hours.length).toBeGreaterThan(200);
+		expect(answer.priceVersion).toBe(1);
+		for (const hour of answer.hours) {
+			expect(Date.parse(hour.startedAt)).toBeLessThan(until);
+			expect(Date.parse(hour.startedAt)).toBeGreaterThanOrEqual(until - 31 * 86_400_000);
+			expect(hour.unpricedTokens).toBe(hour.costUsd === null ? hour.tokens : 0);
+			expect(new Date(hour.startedAt).getMinutes()).toBe(0);
 		}
+		const times = answer.hours.map((hour) => Date.parse(hour.startedAt));
+		expect(times).toEqual([...times].sort((first, second) => first - second));
 	});
 });

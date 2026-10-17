@@ -2,10 +2,11 @@
 
 use crate::coding_agents::scan::{feed_codex_line, shorten, Scan};
 use crate::coding_agents::scan_cache::ScanCache;
+use crate::coding_agents::tokens::model_tokens_of;
 use crate::coding_agents::session_files::{
     find_claude_session_files, find_codex_session_files, read_codex_titles, title_of_scan, FolderScope, SessionFile,
 };
-use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent, ModelTokens};
+use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, CodingAgent};
 use chrono::{DateTime, SecondsFormat, Utc};
 use std::path::Path;
 
@@ -68,18 +69,7 @@ fn record_of(coding_agent: CodingAgent, file: &SessionFile, scan: &Scan, title: 
     if title.is_empty() {
         return None;
     }
-    let tokens = scan
-        .tokens
-        .totals()
-        .into_iter()
-        .map(|(model, counts)| ModelTokens {
-            model,
-            fresh_input: counts.fresh_input,
-            cached_input: counts.cached_input,
-            cache_write_input: counts.cache_write_input,
-            output: counts.output,
-        })
-        .collect();
+    let tokens = model_tokens_of(&scan.tokens.totals());
     let meta = &scan.meta;
     let chat_session = ChatSession {
         id: file.id.clone(),
@@ -103,6 +93,7 @@ fn record_of(coding_agent: CodingAgent, file: &SessionFile, scan: &Scan, title: 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::model::types::ModelTokens;
     use crate::coding_agents::session_files::claude_folder_name;
     use crate::test_samples::{
         claude_answer_line, claude_user_line, codex_compressed_file, codex_file, codex_message, ignore_log, temp_folder,

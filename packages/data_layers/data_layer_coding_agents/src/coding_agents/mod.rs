@@ -7,4 +7,5 @@ pub mod scan;
 pub mod scan_cache;
 pub mod session_files;
 pub mod session_reader;
+pub mod token_usage_reader;
 pub mod tokens;

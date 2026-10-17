@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+	PERSON_WORK_LONGEST_DAY_COUNT,
+	PERSON_WORK_PERIODS,
 	PersonWork,
 	type PersonWorkCommit,
 	type PersonWorkItems,
@@ -119,17 +121,17 @@ describe("PersonWork.compute", () => {
 		issues: [opened("jeromeetienne", at(13, 11)), opened("jeromeetienne", at(2, 11)), opened("eric", at(13, 11))],
 	});
 
-	it("gives one day for each day of the time range, the last day being today", () => {
+	it("gives one slot of one day for each day of the time range by default, the last slot being today", () => {
 		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
-		expect(result.days).toHaveLength(7);
-		expect(result.days[0].startedAt).toBe(new Date(2026, 9, 8).getTime());
-		expect(result.days[6].startedAt).toBe(new Date(2026, 9, 14).getTime());
-		expect(result.days[6].endedAt).toBe(new Date(2026, 9, 15).getTime());
+		expect(result.slots).toHaveLength(7);
+		expect(result.slots[0].startedAt).toBe(new Date(2026, 9, 8).getTime());
+		expect(result.slots[6].startedAt).toBe(new Date(2026, 9, 14).getTime());
+		expect(result.slots[6].endedAt).toBe(new Date(2026, 9, 15).getTime());
 	});
 
-	it("counts the commits and the pull requests of the person in each day", () => {
+	it("counts the commits and the pull requests of the person in each slot", () => {
 		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 7);
-		expect(result.days.map((day) => [day.commitCount, day.pullRequestCount])).toEqual([
+		expect(result.slots.map((slot) => [slot.commitCount, slot.pullRequestCount])).toEqual([
 			[1, 0],
 			[0, 0],
 			[0, 1],
@@ -177,19 +179,19 @@ describe("PersonWork.compute", () => {
 		});
 		const result = PersonWork.compute(edges, "eric", NOW, 7);
 		expect(result.commitCount).toBe(2);
-		expect(result.days[0].commitCount).toBe(1);
-		expect(result.days[6].commitCount).toBe(1);
+		expect(result.slots[0].commitCount).toBe(1);
+		expect(result.slots[6].commitCount).toBe(1);
 	});
 
 	it("gives thirty days for the longest time range, and counts the older items in it", () => {
 		const result = PersonWork.compute(sample, "jeromeetienne", NOW, 30);
-		expect(result.days).toHaveLength(30);
+		expect(result.slots).toHaveLength(30);
 		expect(result.commitCount).toBe(4);
 		expect(result.pullRequestCount).toBe(2);
 		expect(result.issueCount).toBe(2);
 	});
 
-	it("gives days with no count for a person with no item, and ignores a time that is not a time", () => {
+	it("gives slots with no count for a person with no item, and ignores a time that is not a time", () => {
 		const result = PersonWork.compute(
 			items({ commits: [commit("Eric", "e@example.com", "yesterday")] }),
 			"eric",
@@ -197,7 +199,63 @@ describe("PersonWork.compute", () => {
 			7,
 		);
 		expect(result.commitCount).toBe(0);
-		expect(result.days.every((day) => day.commitCount === 0 && day.pullRequestCount === 0)).toBe(true);
+		expect(result.slots.every((slot) => slot.commitCount === 0 && slot.pullRequestCount === 0)).toBe(true);
+	});
+});
+
+describe("PersonWork.compute, the slot length", () => {
+	const sample = items({
+		commits: [
+			commit("Eric", "e@example.com", at(14, 5), 1, 0),
+			commit("Eric", "e@example.com", at(14, 6), 2, 0),
+			commit("Eric", "e@example.com", at(14, 11), 4, 0),
+			commit("Eric", "e@example.com", at(14, 12), 8, 0),
+			commit("Eric", "e@example.com", at(13, 0), 16, 0),
+		],
+		pullRequests: [opened("eric", at(14, 13)), opened("eric", at(14, 14)), opened("eric", at(13, 23))],
+		issues: [opened("eric", at(14, 7))],
+	});
+
+	it("gives four slots for each day with a slot of 6 hours, and 24 slots for each day with a slot of 1 hour", () => {
+		expect(PersonWork.compute(sample, "eric", NOW, 7, 6).slots).toHaveLength(28);
+		expect(PersonWork.compute(sample, "eric", NOW, 7, 1).slots).toHaveLength(168);
+		expect(PersonWork.compute(sample, "eric", NOW, 7, 24).slots).toHaveLength(7);
+	});
+
+	it("counts the commits and the pull requests of the person in each slot of 6 hours", () => {
+		const today = PersonWork.compute(sample, "eric", NOW, 7, 6).slots.slice(24);
+		expect(today.map((slot) => [slot.commitCount, slot.pullRequestCount])).toEqual([
+			[1, 0],
+			[2, 0],
+			[1, 2],
+			[0, 0],
+		]);
+		const yesterday = PersonWork.compute(sample, "eric", NOW, 7, 6).slots.slice(20, 24);
+		expect(yesterday.map((slot) => [slot.commitCount, slot.pullRequestCount])).toEqual([
+			[1, 0],
+			[0, 0],
+			[0, 0],
+			[0, 1],
+		]);
+	});
+
+	it("counts a commit in the slot of 1 hour of its hour", () => {
+		const slots = PersonWork.compute(sample, "eric", NOW, 7, 1).slots;
+		const today = 6 * 24;
+		expect(slots[today + 5].commitCount).toBe(1);
+		expect(slots[today + 6].commitCount).toBe(1);
+		expect(slots[today + 13].pullRequestCount).toBe(1);
+		expect(slots[today + 8].commitCount).toBe(0);
+	});
+
+	it("gives the same totals for every slot length", () => {
+		const totals = [1, 6, 24].map((slotHours) => {
+			const result = PersonWork.compute(sample, "eric", NOW, 7, slotHours);
+			return [result.commitCount, result.pullRequestCount, result.issueCount, result.insertionCount, result.deletionCount];
+		});
+		expect(totals[0]).toEqual([5, 3, 1, 31, 0]);
+		expect(totals[1]).toEqual(totals[0]);
+		expect(totals[2]).toEqual(totals[0]);
 	});
 });
 
@@ -239,5 +297,20 @@ describe("PersonWork.merge", () => {
 
 	it("gives empty items when there is no workspace", () => {
 		expect(PersonWork.merge([])).toEqual({ repository: "", commits: [], pullRequests: [], issues: [], codeHostingError: null });
+	});
+});
+
+describe("PERSON_WORK_PERIODS", () => {
+	it("has the choices of 3, 7, 14, and 30 days, from the shortest to the longest, each with the slot lengths 1 hour, 6 hours, and 1 day", () => {
+		expect(Object.keys(PERSON_WORK_PERIODS)).toEqual(["three_days", "seven_days", "fourteen_days", "thirty_days"]);
+		expect(Object.values(PERSON_WORK_PERIODS).map((period) => period.dayCount)).toEqual([3, 7, 14, 30]);
+		for (const period of Object.values(PERSON_WORK_PERIODS)) {
+			expect(period.slotHoursChoices).toEqual([1, 6, 24]);
+			expect(period.defaultSlotHours).toBe(24);
+		}
+	});
+
+	it("reads as many days as the longest choice", () => {
+		expect(PERSON_WORK_LONGEST_DAY_COUNT).toBe(Math.max(...Object.values(PERSON_WORK_PERIODS).map((period) => period.dayCount)));
 	});
 });

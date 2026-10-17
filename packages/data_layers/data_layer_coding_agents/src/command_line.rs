@@ -16,6 +16,13 @@ file, subagent, or skill: "memory_files", "subagents", and "skills". The column 
 is the absolute path, so it joins the column "path" of "chat_session_files". A row
 whose file is gone stays, with the date of the removal in "removedAt".
 
+The tokens have one table, "token_usage_minutes": one row for each chat session, model,
+and minute (in UTC) where tokens were used, for the chat sessions that started in the
+repository or below it. The view "token_usage_with_cost" adds the estimated cost in US
+dollars of each row, at the prices of the latest version of the price list of LiteLLM,
+stored in "model_price_versions" and "model_prices". A model without a known price has
+a null cost, never zero. A second run changes only the rows whose tokens changed.
+
 Commands:
   initialize                 Read every chat session since the beginning.
   update                     Read only the chat sessions whose file changed since
@@ -36,6 +43,14 @@ Options:
   --repository <owner/name>  The name of the repository, for the column "repository".
                              For initialize and update.
                              (default: the remote "origin" of the repository)
+  --price-list <address>     The web address, or the path of the file, of the price
+                             list in the format of LiteLLM. For initialize and update.
+                             (default: the public price list of LiteLLM)
+  --refresh-prices           Fetch the price list even when the latest version was
+                             checked less than a day ago. By default it is fetched
+                             when the latest version is a day old. A price list that
+                             cannot be fetched is a warning, and the latest known
+                             prices stay in use. For initialize and update.
   --verbose                  Print the progress on the standard error output. For
                              initialize and update.
   --json                     Print the rows as a JSON list, and not as a text table.
@@ -82,6 +97,10 @@ pub struct SynchronizationRequest {
     pub repository: Option<String>,
     /// True when the command prints its progress on the standard error output.
     pub verbose: bool,
+    /// The web address, or the path of the file, of the price list, or `None` for the public price list.
+    pub price_list: Option<String>,
+    /// True to fetch the price list even when the latest version of the prices is fresh.
+    pub is_price_refresh_forced: bool,
 }
 
 /// The request to run one read-only SQL statement.
@@ -114,6 +133,8 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     let mut repository = None;
     let mut verbose = false;
     let mut json = false;
+    let mut price_list = None;
+    let mut is_price_refresh_forced = false;
     let mut positionals: Vec<String> = Vec::new();
     let mut options_ended = false;
     let mut rest = arguments.iter();
@@ -134,6 +155,8 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             "--repository" => repository = Some(value_of("--repository", inline, &mut rest)?),
             "--verbose" => verbose = true,
             "--json" => json = true,
+            "--price-list" => price_list = Some(value_of("--price-list", inline, &mut rest)?),
+            "--refresh-prices" => is_price_refresh_forced = true,
             _ => return Err(format!("The option {name} is not known. Run with --help.")),
         }
     }
@@ -153,12 +176,20 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             if let Some(extra) = positionals.next() {
                 return Err(format!("The command {command} takes no argument, and got {extra}."));
             }
-            Ok(Parsed::Synchronize(SynchronizationRequest { mode, database, folder, repository, verbose }))
+            Ok(Parsed::Synchronize(SynchronizationRequest {
+                mode,
+                database,
+                folder,
+                repository,
+                verbose,
+                price_list,
+                is_price_refresh_forced,
+            }))
         }
         None => {
-            if folder.is_some() || repository.is_some() || verbose {
+            if folder.is_some() || repository.is_some() || verbose || price_list.is_some() || is_price_refresh_forced {
                 return Err(
-                    "The options --folder, --repository, and --verbose are for initialize and update, and not for query."
+                    "The options --folder, --repository, --verbose, --price-list, and --refresh-prices are for initialize and update, and not for query."
                         .to_string(),
                 );
             }
@@ -190,6 +221,8 @@ mod tests {
                 folder: Some("/work".into()),
                 repository: Some("owner/name".into()),
                 verbose: true,
+                price_list: None,
+                is_price_refresh_forced: false,
             }))
         );
         assert_eq!(
@@ -200,8 +233,21 @@ mod tests {
                 folder: None,
                 repository: None,
                 verbose: false,
+                price_list: None,
+                is_price_refresh_forced: false,
             }))
         );
+    }
+
+    #[test]
+    fn reads_the_options_of_the_prices_for_initialize_and_update_only() {
+        let Ok(Parsed::Synchronize(request)) = parse(&arguments(&["update", "--price-list=prices.json", "--refresh-prices"]))
+        else {
+            panic!("update was not read");
+        };
+        assert_eq!((request.price_list.as_deref(), request.is_price_refresh_forced), (Some("prices.json"), true));
+        assert!(parse(&arguments(&["query", "--refresh-prices", "SELECT 1"])).unwrap_err().contains("--refresh-prices"));
+        assert!(parse(&arguments(&["query", "--price-list", "a", "SELECT 1"])).unwrap_err().contains("--price-list"));
     }
 
     #[test]

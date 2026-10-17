@@ -1,7 +1,7 @@
 //! `heidrun_data`: one command line that gives a coding agent the data of the four data layers of Heidrun. It calls the
 //! libraries of the four data layer packages, and never their executables.
 //!
-//! The library has eight parts:
+//! The library has nine parts:
 //! - `Source` names the four sources, their tables, and the fixed order in which they are read.
 //! - `synchronize` runs the mode initialize or update of each source that is asked for. A source that fails does not stop
 //!   the others.
@@ -14,6 +14,8 @@
 //!   computer. The desktop application and `synchronize` take it before each write.
 //! - `HeidrunDatabase` is the SQLite file, open read only. It runs one query, and counts the rows of each source.
 //! - `add_limit` adds a `LIMIT` to a statement that has none.
+//! - `read_usage` gives the tokens and the estimated cost of a workspace in a time range, by minute, by hour, or by day, from
+//!   the SQLite file only.
 //! - `Format` and `write_rows` write rows as JSON lines, as a JSON list, or as a text table.
 //!
 //! The calls are blocking.
@@ -26,6 +28,7 @@ mod reading;
 mod schema;
 mod sources;
 mod synchronization;
+mod usage;
 
 pub use database::{HeidrunDatabase, SourceSummary};
 pub use database_lock::{lock_database, lock_file_path, DatabaseLock};
@@ -36,8 +39,9 @@ pub use reading::code_hosting_reader::{read_code_hosting, read_pull_request_diff
 pub use reading::commit_reader::{read_commit, ChangedFile, CommitContent};
 pub use reading::file_history_reader::{read_file_history, FileChange, WRITE_SIGNS};
 pub use schema::{data_schema_text, read_catalog, Column, TableShape};
-pub use sources::{all_tables, find_table, DataSchema, Join, Source, Table};
+pub use sources::{all_tables, find_table, DataSchema, Join, Source, Table, TableKind};
 pub use synchronization::{synchronize, SourceReport, SynchronizationMode, SynchronizationOptions};
+pub use usage::{read_usage, UsageAnswer, UsageRequest};
 
 use std::path::PathBuf;
 

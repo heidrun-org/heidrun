@@ -19,6 +19,7 @@
 
 mod coding_agents;
 mod model;
+mod pricing;
 mod repository_finder;
 mod storage;
 mod synchronization;
@@ -34,9 +35,15 @@ pub use coding_agents::session_files::{
     read_codex_titles, title_of_scan, FolderScope, SessionFile,
 };
 pub use coding_agents::session_reader::{format_date, parse_date, read_chat_sessions};
-pub use coding_agents::tokens::{TokenCounts, TokenScan, TokensByHour, TokensByModel, UNDATED_HOUR, UNKNOWN_MODEL};
+pub use coding_agents::token_usage_reader::{minutes_of, read_token_usage, TokenUsageFiles};
+pub use coding_agents::tokens::{model_tokens_of, TokenCounts, TokenScan, TokensByMinute, TokensByModel, UNKNOWN_MODEL};
 pub use model::configuration_types::{
     ConfigurationItem, ConfigurationKind, ConfigurationRead, ConfigurationScope, ConfigurationWriteCount,
+};
+pub use model::price_types::{ListedModelPrice, ModelPrice, PriceRefresh, PriceVersion, PRICE_TOKEN_COUNT, PRICE_UNIT};
+pub use model::token_usage_types::{
+    ChatTokenUsage, MinuteTokens, TokenUsageReport, TokenUsageSynchronization, TokenUsageWriteCount, UsageGrouping, UsageQuery,
+    UsageRow, UsageTotals, MINUTE_MILLISECONDS, UNDATED_MINUTE,
 };
 pub use model::schemas::{
     configuration_schema, validate_chat_session_value, validate_configuration_value, CHAT_SESSION_SCHEMA, MEMORY_FILE_SCHEMA,
@@ -46,11 +53,28 @@ pub use model::types::{
     ChatSession, ChatSessionRecord, ChatSessionRelations, ChatSessionTable, CodingAgent, ModelTokens, QueryRow,
     SynchronizationMode, SynchronizationReport,
 };
+pub use pricing::price_list_parser::{content_hash, parse_price_list, PRICE_LIST_ADDRESS};
+pub use pricing::price_list_source::{
+    price_list_source_of, FilePriceListSource, PriceListSource, WebPriceListSource,
+};
+pub use pricing::price_table::{without_date, PriceTable};
 pub use repository_finder::{find_main_root, find_repository, find_root, parse_repository};
 pub use storage::configuration_database::ConfigurationDatabase;
 pub use storage::database::ChatSessionsDatabase;
+pub use storage::minute_text::{minute_text, parse_time_text, time_text};
+pub use storage::model_price_database::{ModelPriceDatabase, PRICE_FRESH_MILLISECONDS};
+pub use storage::token_usage_database::TokenUsageDatabase;
+pub use storage::token_usage_schema::{
+    COST_VIEW, LATEST_PRICES_VIEW, MINUTES_TABLE, MINUTE_INDEX, PRICES_TABLE, PRICE_VERSIONS_TABLE,
+    SYNCHRONIZATIONS_TABLE, UNDATED_MINUTE_TEXT,
+};
+pub use storage::usage_grouping::{
+    find_time_zone, group_minutes, local_time_zone_name, parse_range_bound, summarize_periods, MinuteUsage, PeriodUsage,
+};
 pub use storage::query_formatter::{to_json, to_table, NO_ROW_TEXT};
-pub use synchronization::{describe_since, run as synchronize, run_configuration as synchronize_configuration};
+pub use synchronization::{
+    describe_since, run as synchronize, run_configuration as synchronize_configuration, run_token_usage as synchronize_token_usage,
+};
 
 use std::path::PathBuf;
 

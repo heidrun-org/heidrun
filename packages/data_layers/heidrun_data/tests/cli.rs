@@ -25,6 +25,17 @@ esac
 /// A message of the developer, in a chat session file of Claude Code.
 const TYPED: &str = r#"{"type":"user","cwd":"FOLDER","timestamp":"2026-10-11T10:00:00.000Z","message":{"role":"user","content":"Fix the issue 1"}}"#;
 
+/// An answer of the coding agent in a chat session file of Claude Code: 10 fresh input tokens, 300 cached input tokens, 20
+/// tokens written to the cache, and 5 output tokens, on 11 October 2026 at 10:00:05 UTC.
+const ANSWER: &str = r#"{"type":"assistant","cwd":"FOLDER","timestamp":"2026-10-11T10:00:05.000Z","message":{"id":"msg_1","model":"claude-opus-5","role":"assistant","content":[{"type":"text","text":"Done"}],"usage":{"input_tokens":10,"cache_creation_input_tokens":20,"cache_read_input_tokens":300,"output_tokens":5}}}"#;
+
+/// The fake price list: the public prices of one model, in US dollars for one token.
+const FAKE_PRICE_LIST: &str = r#"{"claude-opus-5": {"litellm_provider": "anthropic", "input_cost_per_token": 5e-06,
+    "output_cost_per_token": 2.5e-05, "cache_read_input_token_cost": 5e-07, "cache_creation_input_token_cost": 6.25e-06}}"#;
+
+/// The cost in US dollars of `ANSWER` at the prices of `FAKE_PRICE_LIST`: (10 × 5 + 300 × 0.5 + 20 × 6.25 + 5 × 25) / 1 000 000.
+const ANSWER_COST: f64 = 0.00045;
+
 /// A date in October 2026, in the format ISO 8601.
 fn date(day: u32) -> String {
     format!("2026-10-{day:02}T10:00:00Z")
@@ -184,7 +195,9 @@ impl Fixture {
         let project = folder.join("claude").join("projects").join(claude_folder_name(&repository.display().to_string()));
         std::fs::create_dir_all(&project).unwrap();
         let typed = TYPED.replace("FOLDER", &repository.display().to_string());
-        std::fs::write(project.join("a-chat-session.jsonl"), format!("{typed}\n")).unwrap();
+        let answer = ANSWER.replace("FOLDER", &repository.display().to_string());
+        std::fs::write(project.join("a-chat-session.jsonl"), format!("{typed}\n{answer}\n")).unwrap();
+        std::fs::write(folder.join("prices.json"), FAKE_PRICE_LIST).unwrap();
         std::fs::create_dir_all(project.join("memory")).unwrap();
         let memory_text = "---\nname: merge-only\ndescription: Never rebase\nmetadata:\n  type: feedback\n  originSessionId: a-chat-session\n---\n";
         std::fs::write(project.join("memory").join("merge-only.md"), memory_text).unwrap();
@@ -251,7 +264,8 @@ impl Fixture {
     /// Runs `update` with the file of the user activity records of the fixture, and more arguments.
     fn update(&self, more: &[&str]) -> CliResult {
         let file = self.user_activity_file.display().to_string();
-        let mut arguments = vec!["update", "--file", file.as_str()];
+        let prices = self.folder.join("prices.json").display().to_string();
+        let mut arguments = vec!["update", "--file", file.as_str(), "--price-list", prices.as_str()];
         arguments.extend_from_slice(more);
         self.run(&arguments)
     }
@@ -294,7 +308,10 @@ fn update_with_no_source_writes_the_tables_of_the_four_sources_in_one_run() {
                 "source": "coding_agents",
                 "mode": "update",
                 "repository": "fake-owner/fake-name",
-                "writtenRows": { "chat_sessions": 1, "memory_files": 1, "subagents": 0, "skills": 1 },
+                "writtenRows": {
+                    "chat_sessions": 1, "memory_files": 1, "subagents": 0, "skills": 1,
+                    "token_usage_minutes": 1, "model_price_versions": 1, "model_prices": 1,
+                },
             }),
             json!({ "source": "user_activity", "mode": "update", "repository": null, "writtenRows": { "user_activity_records": 2 } }),
         ]
@@ -392,7 +409,7 @@ fn sources_prints_the_tables_the_rows_and_the_last_date_of_each_source() {
     assert_eq!(lines[3]["lastUpdatedAt"], json!("2026-10-14T11:10:05.000Z"));
     let result = fixture.run(&["sources", "--format", "table"]);
     assert!(result.stdout.starts_with("source "), "{}", result.stdout);
-    assert!(result.stdout.ends_with("row count: 12\n"), "{}", result.stdout);
+    assert!(result.stdout.ends_with("row count: 16\n"), "{}", result.stdout);
 }
 
 #[test]
@@ -503,9 +520,20 @@ fn schema_with_no_table_prints_every_table_of_the_file_with_no_database_file() {
             "memory_files",
             "subagents",
             "skills",
+            "token_usage_minutes",
+            "token_usage_synchronizations",
+            "model_price_versions",
+            "model_prices",
+            "latest_model_prices",
+            "token_usage_with_cost",
             "user_activity_records",
         ]
     );
+    let kinds: Vec<&str> = lines.iter().map(|line| line["kind"].as_str().unwrap()).collect();
+    assert_eq!(kinds.iter().filter(|kind| **kind == "view").count(), 2);
+    assert_eq!(lines[0]["kind"], json!("documents"));
+    assert_eq!(lines[4]["kind"], json!("links"));
+    assert_eq!(lines[11]["kind"], json!("facts"));
     assert_eq!(lines[0]["primaryKey"], json!(["repository", "hash"]));
     assert_eq!(lines[0]["dataSchema"], json!("commit.schema.json"));
     assert_eq!(lines[5]["joins"][1]["table"], json!("issues"));
@@ -541,7 +569,9 @@ fn schema_with_the_format_sql_prints_the_create_table_statements() {
     let result = fixture.run(&["schema", "--format", "sql"]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
     assert!(result.stdout.starts_with("CREATE TABLE commits (\n    repository TEXT NOT NULL,"), "{}", result.stdout);
-    assert_eq!(result.stdout.matches("CREATE TABLE").count(), 12);
+    assert_eq!(result.stdout.matches("CREATE TABLE").count(), 16);
+    assert_eq!(result.stdout.matches("CREATE VIEW").count(), 2);
+    assert!(result.stdout.contains("token_usage_with_cost"), "{}", result.stdout);
 }
 
 #[test]
@@ -549,7 +579,13 @@ fn read_chat_session_prints_the_records_of_a_chat_session_of_claude_code() {
     let fixture = Fixture::new("read_claude");
     let result = fixture.run(&["read", "chat_session", "a-chat-session", "--format", "jsonl"]);
     assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
-    assert_eq!(result.json_lines(), vec![json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1", "isError": null })]);
+    assert_eq!(
+        result.json_lines(),
+        vec![
+            json!({ "at": "2026-10-11T10:00:00.000Z", "role": "developer", "text": "Fix the issue 1", "isError": null }),
+            json!({ "at": "2026-10-11T10:00:05.000Z", "role": "coding_agent", "text": "Done", "isError": null }),
+        ]
+    );
     assert!(!fixture.database_path.exists());
 }
 
@@ -689,6 +725,119 @@ fn update_waits_while_another_program_holds_the_lock_of_the_sqlite_file() {
     assert_eq!(fixture.query("SELECT count(*) AS count FROM user_activity_records"), vec![json!({ "count": 2 })]);
 }
 
+#[test]
+fn update_writes_the_tokens_of_each_minute_and_a_second_update_changes_no_row() {
+    let fixture = Fixture::new("usage_update");
+    let result = fixture.update(&["coding_agents", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(result.stderr, "");
+    let rows = fixture.query(
+        "SELECT chatSessionId, model, minuteAt, codingAgent, freshInputTokens, cachedInputTokens, cacheWriteInputTokens,
+                outputTokens, priceVersion, round(costUsd, 8) AS costUsd
+         FROM token_usage_with_cost",
+    );
+    assert_eq!(
+        rows,
+        vec![json!({
+            "chatSessionId": "a-chat-session", "model": "claude-opus-5", "minuteAt": "2026-10-11T10:00:00.000Z",
+            "codingAgent": "CLAUDE_CODE", "freshInputTokens": 10, "cachedInputTokens": 300, "cacheWriteInputTokens": 20,
+            "outputTokens": 5, "priceVersion": 1, "costUsd": ANSWER_COST,
+        })]
+    );
+    let result = fixture.update(&["coding_agents", "--format", "jsonl"]);
+    assert_eq!(result.json_lines()[0]["writtenRows"]["token_usage_minutes"], json!(0));
+    assert_eq!(result.json_lines()[0]["writtenRows"]["model_price_versions"], json!(0));
+    assert_eq!(fixture.query("SELECT count(*) AS count FROM token_usage_minutes"), vec![json!({ "count": 1 })]);
+    assert_eq!(fixture.query("SELECT count(*) AS count FROM model_price_versions"), vec![json!({ "count": 1 })]);
+}
+
+#[test]
+fn usage_prints_the_same_totals_by_minute_by_hour_and_by_day() {
+    let fixture = Fixture::new("usage_groupings");
+    fixture.update(&["coding_agents", "--format", "jsonl"]);
+    let mut totals = Vec::new();
+    for by in ["minute", "hour", "day"] {
+        let result = fixture.run(&["usage", "--by", by, "--since", "2026-10-01", "--until", "2026-10-31", "--time-zone", "Europe/Paris", "--format", "jsonl"]);
+        assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+        let lines = result.json_lines();
+        assert_eq!(lines.len(), 1, "{by}");
+        totals.push((lines[0]["totalTokens"].clone(), lines[0]["costUsd"].clone()));
+        assert_eq!(lines[0]["isCostComplete"], json!(true));
+        assert_eq!(lines[0]["unpricedTokens"], json!(0));
+        if by == "day" {
+            assert_eq!(lines[0]["day"], json!("2026-10-11"));
+            assert_eq!(lines[0]["periodStart"], json!("2026-10-10T22:00:00.000Z"));
+        }
+    }
+    assert!(totals.iter().all(|total| total == &totals[0]), "{totals:?}");
+    assert_eq!(totals[0].0, json!(335));
+    assert!((totals[0].1.as_f64().unwrap() - ANSWER_COST).abs() < 1e-12);
+}
+
+#[test]
+fn usage_gives_one_row_per_chat_session_and_cuts_the_time_range_at_the_dates() {
+    let fixture = Fixture::new("usage_range");
+    fixture.update(&["coding_agents", "--format", "jsonl"]);
+    let result = fixture.run(&["usage", "--by-chat", "--by", "day", "--time-zone", "UTC", "--since", "2026-10-11", "--until", "2026-10-12", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    assert_eq!(result.json_lines()[0]["chatSessionId"], json!("a-chat-session"));
+    for (since, until) in [("2026-10-12", "2026-10-13"), ("2026-10-01", "2026-10-11")] {
+        let result = fixture.run(&["usage", "--time-zone", "UTC", "--since", since, "--until", until, "--format", "jsonl"]);
+        assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+        assert_eq!(result.json_lines().len(), 0, "{since} {until}");
+    }
+    let result = fixture.run(&["usage", "--since", "2026-10-12", "--until", "2026-10-11", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(result.stderr.contains("must be before"), "{}", result.stderr);
+}
+
+#[test]
+fn usage_before_any_update_fails_without_reading_a_chat_session_file_and_creates_no_file() {
+    let fixture = Fixture::new("usage_never_read");
+    let result = fixture.run(&["usage", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(result.stderr.contains("does not exist"), "{}", result.stderr);
+    assert!(!fixture.database_path.exists());
+    fixture.update(&["source_control", "--format", "jsonl"]);
+    let result = fixture.run(&["usage", "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(1));
+    assert!(result.stderr.contains("never read") && result.stderr.contains("initialize coding_agents"), "{}", result.stderr);
+}
+
+#[test]
+fn a_model_without_a_price_has_a_null_cost_and_usage_says_that_the_cost_is_not_complete() {
+    let fixture = Fixture::new("usage_unpriced");
+    let project = fixture.folder.join("claude").join("projects").join(claude_folder_name(&fixture.repository.display().to_string()));
+    let other = ANSWER.replace("FOLDER", &fixture.repository.display().to_string()).replace("claude-opus-5", "claude-unknown-9");
+    std::fs::write(project.join("another-chat-session.jsonl"), format!("{other}\n")).unwrap();
+    fixture.update(&["coding_agents", "--format", "jsonl"]);
+    let rows = fixture.query("SELECT model, costUsd FROM token_usage_with_cost ORDER BY model");
+    assert_eq!(rows[0], json!({ "model": "claude-opus-5", "costUsd": ANSWER_COST }));
+    assert_eq!(rows[1], json!({ "model": "claude-unknown-9", "costUsd": null }));
+    let result = fixture.run(&["usage", "--by", "day", "--since", "2026-10-01", "--until", "2026-10-31", "--time-zone", "UTC", "--format", "jsonl"]);
+    let line = &result.json_lines()[0];
+    assert_eq!(line["isCostComplete"], json!(false));
+    assert_eq!(line["unpricedTokens"], json!(335));
+    assert!((line["costUsd"].as_f64().unwrap() - ANSWER_COST).abs() < 1e-12);
+}
+
+#[test]
+fn a_price_list_that_cannot_be_read_gives_a_warning_and_the_tokens_are_still_written() {
+    let fixture = Fixture::new("usage_price_warning");
+    let file = fixture.user_activity_file.display().to_string();
+    let missing = fixture.folder.join("missing_prices.json").display().to_string();
+    let result = fixture.run(&["update", "coding_agents", "--file", &file, "--price-list", &missing, "--format", "jsonl"]);
+    assert_eq!(result.exit_code, Some(0), "{}", result.stderr);
+    let line = &result.json_lines()[0];
+    assert_eq!(line["writtenRows"]["token_usage_minutes"], json!(1));
+    assert!(line["warnings"][0].as_str().unwrap().contains("not refreshed"), "{line}");
+    let rows = fixture.query("SELECT costUsd FROM token_usage_with_cost");
+    assert_eq!(rows, vec![json!({ "costUsd": null })]);
+    let result = fixture.update(&["coding_agents", "--format", "jsonl"]);
+    assert!(result.json_lines()[0].get("warnings").is_none());
+    assert_eq!(fixture.query("SELECT round(costUsd, 8) AS costUsd FROM token_usage_with_cost"), vec![json!({ "costUsd": ANSWER_COST })]);
+}
+
 /// The text of the `SKILL.md` of the package, in the folder `skills/heidrun_data`.
 fn skill_text() -> String {
     let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun_data").join("SKILL.md");
@@ -698,7 +847,7 @@ fn skill_text() -> String {
 /// The help of the program and of each command, in one text.
 fn all_help_text(fixture: &Fixture) -> String {
     let mut text = String::new();
-    for arguments in [vec!["--help"], vec!["sources", "-h"], vec!["update", "-h"], vec!["schema", "-h"], vec!["query", "-h"], vec!["read", "-h"]] {
+    for arguments in [vec!["--help"], vec!["sources", "-h"], vec!["update", "-h"], vec!["schema", "-h"], vec!["query", "-h"], vec!["usage", "-h"], vec!["read", "-h"]] {
         text.push_str(&fixture.run_with_input(&arguments, "").stdout);
     }
     text
@@ -721,7 +870,7 @@ fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does
             if command.is_empty() || command.starts_with('-') {
                 continue;
             }
-            assert!(["sources", "update", "initialize", "schema", "query", "read"].contains(&command.as_str()), "{command}: {line}");
+            assert!(["sources", "update", "initialize", "schema", "query", "usage", "read"].contains(&command.as_str()), "{command}: {line}");
         }
         for word in words(line).into_iter().filter(|word| word.starts_with("--") && word.trim_matches('-').len() > 0) {
             assert!(help_words.contains(&word), "The help has no option {word}");
@@ -762,16 +911,19 @@ fn the_example_queries_of_the_skill_run_on_the_fixtures_and_give_at_least_one_ro
         let Some(start) = block.find("heidrun_data query --format jsonl \"") else { continue };
         let sql = &block[start + "heidrun_data query --format jsonl \"".len()..];
         let sql = &sql[..sql.rfind('"').unwrap()];
-        if sql.contains('<') || sql.contains("...") {
+        let has_placeholder = sql.split('<').skip(1).any(|rest| rest.starts_with(|c: char| c.is_ascii_alphabetic()));
+        if has_placeholder || sql.contains("...") {
             continue;
         }
         let sql = sql
             .replace("heidrun-org/heidrun", "fake-owner/fake-name")
             .replace("issueNumber = 500", "issueNumber = 1")
-            .replace("'2026-10-01'", "'2026-10-01T00:00:00Z'");
+            .replace("'2026-10-01'", "'2026-10-01T00:00:00Z'")
+            .replace("/Users/me/app", &fixture.repository.display().to_string())
+            .replace("sum(costUsd) > 50", "sum(costUsd) > 0.0001");
         let rows = fixture.query(&sql);
         assert!(!rows.is_empty(), "No row for: {sql}");
         ran += 1;
     }
-    assert_eq!(ran, 4);
+    assert_eq!(ran, 7);
 }
