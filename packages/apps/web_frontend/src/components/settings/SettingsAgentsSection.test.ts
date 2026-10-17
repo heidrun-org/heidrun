@@ -132,7 +132,7 @@ describe("SettingsAgentsSection, the settings that moved here from other section
 
   it("explains the switch Keep agents running after quit in an information card that opens from a circled question mark, and does not switch when the question mark is clicked", async () => {
     const { wrapper, settings } = await mountSection();
-    const mark = wrapper.get(".information-card-part");
+    const mark = wrapper.findAll(".information-card-part").find((part) => part.get('[role="img"]').attributes("aria-label") === "What does this setting do?")!;
     expect(mark.get('[role="img"]').attributes("aria-label")).toBe("What does this setting do?");
     expect(wrapper.find(".popover").exists()).toBe(false);
     await mark.trigger("click");

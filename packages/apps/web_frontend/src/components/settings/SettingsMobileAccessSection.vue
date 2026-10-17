@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import SettingsOptionHelp from "./SettingsOptionHelp.vue";
 import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { mobile, mobileStatus, revokeMobile, setMobile, stopLeftoverNgrok } from "../../stores/mobile";
 import AbbreviatedTime from "../AbbreviatedTime.vue";
@@ -16,6 +17,20 @@ const errorText = computed(() => (st.value?.error ? t(`mobileModal.error.${st.va
 const isNgrokInstalled = ref(true);
 const isNgrokReminderVisible = computed(() => isNgrokInstalled.value === false && st.value?.error?.kind !== "ngrokMissing");
 const isOpeningTheTunnel = computed(() => st.value?.enabled === true && st.value.running === false && st.value.error === null);
+
+/** The blocks of the information card of the option "Turn on mobile access", in the order of the card. */
+const MOBILE_ACCESS_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.mobileAccess.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.mobileAccess.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.mobileAccess.off" },
+] as const;
+
+/** The blocks of the information card of the option "Allow typing in terminals from the phone", in the order of the card. */
+const MOBILE_TYPING_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.mobileTyping.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.mobileTyping.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.mobileTyping.off" },
+] as const;
 
 // The tunnel needs a few seconds to open: ask for the status every second until it is open.
 let timer = 0;
@@ -71,12 +86,13 @@ async function openPairingLink(link: string) {
   <div class="d-flex flex-column gap-3">
     <p class="m-0">{{ t("mobileModal.lead") }}</p>
 
-    <SettingsSwitchRow :model-value="st?.enabled === true" :is-disabled="mobile.busy" :label="t('mobileModal.enable')" @update:model-value="setMobile($event)" />
+    <SettingsSwitchRow :model-value="st?.enabled === true" :is-disabled="mobile.busy" :label="t('mobileModal.enable')" data-option="mobileAccess" @update:model-value="setMobile($event)">
+      <SettingsOptionHelp title-key="mobileModal.enable" :blocks="MOBILE_ACCESS_HELP_BLOCKS" />
+    </SettingsSwitchRow>
 
-    <div class="d-flex flex-column gap-1">
-      <SettingsSwitchRow v-model="settings.mobileTerminalTyping" :label="t('mobileModal.terminalTyping')" />
-      <p class="m-0 form-text">{{ t("mobileModal.terminalTypingNote") }}</p>
-    </div>
+    <SettingsSwitchRow v-model="settings.mobileTerminalTyping" :label="t('mobileModal.terminalTyping')" data-option="mobileTerminalTyping">
+      <SettingsOptionHelp title-key="mobileModal.terminalTyping" :blocks="MOBILE_TYPING_HELP_BLOCKS" />
+    </SettingsSwitchRow>
     <div v-if="isNgrokReminderVisible" class="alert theme-warning ngrok-reminder" role="alert">{{ t("mobileModal.ngrokNotInstalled") }}</div>
 
     <div v-if="st?.error" class="alert theme-danger" role="alert">
@@ -112,9 +128,6 @@ async function openPairingLink(link: string) {
     </template>
     <template v-else-if="isOpeningTheTunnel">
       <p class="m-0 form-text">{{ t("mobileModal.starting") }}</p>
-    </template>
-    <template v-else-if="!st?.enabled">
-      <p class="m-0 form-text">{{ t("mobileModal.tunnelNote") }}</p>
     </template>
   </div>
 </template>

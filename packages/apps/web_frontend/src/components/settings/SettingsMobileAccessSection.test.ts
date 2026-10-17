@@ -61,12 +61,15 @@ afterEach(() => {
 });
 
 describe("SettingsMobileAccessSection, with the access off", () => {
-  it("shows the switch, the note about the ngrok tunnel, and no QR code", async () => {
+  it("shows the switch, an information card about the ngrok tunnel, and no QR code", async () => {
     const wrapper = await mountSection(OFF);
     const switchInput = wrapper.get('input[role="switch"]');
     expect(wrapper.get(`label[for="${switchInput.attributes("id")}"]`).text()).toBe("Turn on mobile access");
     expect((switchInput.element as HTMLInputElement).checked).toBe(false);
-    expect(wrapper.text()).toContain("opens an ngrok tunnel with the program ngrok");
+    expect(wrapper.text()).not.toContain("opens an ngrok tunnel with the program ngrok");
+    const mark = wrapper.findAll(".information-card-part").find((part) => part.get('[role="img"]').attributes("aria-label") === "About the option “Turn on mobile access”")!;
+    await mark.trigger("click");
+    expect(wrapper.get(".popover").text()).toContain("Heidrun opens a tunnel with the program ngrok");
     expect(wrapper.find(".qr").exists()).toBe(false);
   });
 

@@ -13,19 +13,12 @@
   "reset": "Réinitialiser",
   "powerlineBefore": "Police à installer sur le Mac (",
   "powerlineAfter": " ou la version Nerd Font). Sans elle, l’app prend Inconsolata, sans les symboles Powerline.",
-  "keyIncrease": "agrandir",
-  "keyDecrease": "réduire",
-  "keyDefault": "par défaut",
   "mouse": "Souris",
   "mouseLabel": "Comportement de la souris",
   "mouseSelectTitle": "La souris sélectionne du texte dans le terminal",
   "mouseSelect": "Sélectionner du texte",
   "mouseAppTitle": "La souris est envoyée à l’application du terminal",
   "mouseApp": "Souris pour l’app",
-  "mouseSelectHelpBefore": "Glisser sélectionne, ",
-  "mouseSelectHelpAfter": " copie. La molette et les clics ne vont plus à Herdr.",
-  "mouseAppHelpBefore": "Molette et clics vont à Herdr et aux agents. ",
-  "mouseAppHelpAfter": " + glisser pour sélectionner.",
   "finished": "Éléments terminés",
   "finishedLabel": "Masquer les éléments terminés après",
   "finishedTitle": "Masquer les travaux terminés après ce délai",
@@ -37,6 +30,6 @@
   "notifyQuota": "Quota Claude au-delà de 80 % puis 95 %",
   "notifyEvening": "Résumé de la journée à",
   "quietHours": "Heures calmes",
-  "quietHoursHelp": "Pendant les heures calmes, aucune notification n’est envoyée. Laisse vide pour désactiver.",
-  "showStatusItem": "Afficher l’élément d’état dans la barre de menus de macOS"
+  "showStatusItem": "Afficher l’élément d’état dans la barre de menus de macOS",
+  "fontSizeTitle": "Taille de la police"
 }

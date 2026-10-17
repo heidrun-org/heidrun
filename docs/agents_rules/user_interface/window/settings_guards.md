@@ -1,11 +1,11 @@
 # User interface of Heidrun: the Guards section of the Settings window
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: guards](../../glossary/guards.md), [Guards](../../../architecture/guards.md)
-- Related issue: [issue 589](https://github.com/heidrun-org/heidrun/issues/589), [issue 596](https://github.com/heidrun-org/heidrun/issues/596)
+- Related issue: [issue 589](https://github.com/heidrun-org/heidrun/issues/589), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/guards.md](../../glossary/guards.md). The built-in guards, the key `guards` of the file `.heidrun/config.json`, and the order of the checks are in [guards.md](../../../architecture/guards.md).
 
@@ -16,6 +16,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - The section reads the file `.heidrun/config.json` again each time it opens, because the developer may have changed the file by hand.
 - When the file is not valid, the section shows the error, and every button that changes the file and every switch is disabled. A change would write a file that Heidrun cannot read.
 - One Bootstrap list group shows every guard in the same way: the project guards first, in the order of the file, then the built-in guards, in the order of the table of [guards.md](../../../architecture/guards.md). A row has the name in a medium weight, a badge with the action ("Ask to confirm" in the theme `theme-warning`, "Forbid" in the theme `theme-danger`), the description with each part between two backquotes in a monospace font, and one line of text for each line of the guard: the type, then the text in a monospace font. A built-in guard has the same row, with one more badge, "Hardcoded" in the theme `theme-secondary`, and its line is its regular expression (`re.source`). The test `lib/guards_document.test.ts` fails when the description of a built-in guard (key `guards.what.*`) and the third column of the table differ.
+- The Guards section follows [settings_information_cards.md](settings_information_cards.md). The line of the project has a circled question mark with an information card about the project guards, and each built-in guard has one, just before its button with an eye, with an information card about the built-in guards.
 - A project guard has a button to edit it and a button to remove it. A built-in guard has a button to read it, and a Bootstrap switch. A switch that is on means that the guard is active. A switch that is off adds the key of the guard to the list `disabled`, and the row is dimmed. A built-in guard has no button to edit and no button to remove.
 - When the project has no guard of its own, the section shows the plain sentence "This project has no guard of its own yet." The sentence never looks like a field.
 - The button "Add a guard" is on the line of the project. It opens the guard window.
