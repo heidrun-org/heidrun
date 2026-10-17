@@ -12,7 +12,6 @@
   "workingDaysLabel": "Working days of the week",
   "soundTitle": "Sound",
   "goatSound": "Enable goat sound",
-  "goatSoundHelp": "On: a click on the sound button of the About window, on the sound button of the splash screen, or on the smiley of the empty tab screen plays a goat bleat. Off: these clicks stay silent.",
   "askBeforeClosingTitle": "Ask before closing",
   "confirmWorkspaceClose": "Ask before closing a workspace",
   "confirmTabClose": "Ask before closing a tab",

@@ -12,7 +12,6 @@
   "workingDaysLabel": "Jours de travail de la semaine",
   "soundTitle": "Son",
   "goatSound": "Activer le son de la chèvre",
-  "goatSoundHelp": "Activé : un clic sur le bouton de son de la fenêtre À propos, sur le bouton de son de l’écran de démarrage, ou sur le smiley de l’écran d’un onglet vide fait bêler la chèvre. Désactivé : ces clics restent silencieux.",
   "askBeforeClosingTitle": "Demander avant de fermer",
   "confirmWorkspaceClose": "Demander avant de fermer un espace de travail",
   "confirmTabClose": "Demander avant de fermer un onglet",

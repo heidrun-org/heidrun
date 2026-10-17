@@ -262,4 +262,6 @@ onBeforeUnmount(() => {
 /* The spinning wheel is near the right end of the part, with space around it, and does not move what the part holds. */
 .information-card-busy { position: absolute; top: 50%; right: 12px; width: 16px; height: 16px; margin-top: -8px; border-width: 2px; border-radius: 50%; color: var(--muted); background-color: var(--bg-2); box-shadow: 0 0 0 5px var(--bg-2); }
 .information-card-part:hover, .information-card-part.is-open { background-color: var(--bg-2); }
+/* A row of a list group gets a stacking level of its own on hover, so the card inside it stays below the controls after the row. An open card lifts its row above them (issue #608). */
+:global(.list-group-item:has(.information-card-part.is-open)) { z-index: 3; }
 </style>
