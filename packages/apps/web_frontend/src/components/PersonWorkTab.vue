@@ -124,8 +124,9 @@ const chosenFolders = computed(() => [
 ]);
 
 /**
- * The chosen folders as one text. Heidrun makes the list of the open workspaces again every few seconds, so `chosenFolders` is
- * a new array each time, with the same folders. A watch on the array would read again each time, and the chart would blink.
+ * The chosen folders as one text. Heidrun makes the list of the open workspaces again after each change that Herdr reports, so
+ * `chosenFolders` is a new array each time, with the same folders. A watch on the array would read again each time, and the
+ * chart would blink.
  */
 const chosenFoldersKey = computed(() => chosenFolders.value.join("\n"));
 
