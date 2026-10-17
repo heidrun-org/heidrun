@@ -90,7 +90,7 @@ impl UserActivityFileReader {
 /// The path of the file of the user activity records. The folder `heidrun_dir`, which is the value of the variable
 /// `HEIDRUN_DIR`, replaces the folder `~/.config/heidrun` when it is given. The web frontend writes the same path.
 pub fn user_activity_file_path(heidrun_dir: Option<&str>, home_folder: &Path) -> PathBuf {
-    match heidrun_dir {
+    match heidrun_dir.filter(|value| value.is_empty() == false) {
         Some(folder) => PathBuf::from(folder),
         None => home_folder.join(".config").join("heidrun"),
     }

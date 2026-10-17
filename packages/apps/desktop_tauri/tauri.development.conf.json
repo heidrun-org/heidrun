@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Heidrun Development",
+  "identifier": "dev.edefiez.herdrdesk.development",
+  "build": {
+    "devUrl": "http://localhost:1640",
+    "beforeDevCommand": "pnpm --filter web_frontend dev --port 1640"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Heidrun Development",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 980,
+        "minHeight": 600,
+        "titleBarStyle": "Visible",
+        "hiddenTitle": false,
+        "backgroundColor": "#0B0C0E",
+        "visible": false,
+        "dragDropEnabled": true
+      }
+    ]
+  }
+}

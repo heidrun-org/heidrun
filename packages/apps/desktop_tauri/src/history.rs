@@ -12,8 +12,9 @@ static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 fn path() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
+        .ok().filter(|value| value.is_empty() == false)
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
+        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
         .join("history.jsonl")
 }
 

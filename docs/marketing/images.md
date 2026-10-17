@@ -1,7 +1,7 @@
 # The images of Heidrun
 
 - Created: 13 October 2026
-- Last updated: 15 October 2026
+- Last updated: 17 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md) and [Marketing of Heidrun](README.md)
 - Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337) and [issue 509](https://github.com/heidrun-org/heidrun/issues/509)
@@ -32,5 +32,5 @@ The screenshots of the homepage are in `packages/auxiliary/website_public/docs/p
 Rules:
 
 - Never capture the QR code of the Mobile access section of the Settings window: it holds the pairing key.
-- A debug bundle and the installed Heidrun have the same bundle identifier, so they share their settings. Put back each setting that you change for a screenshot, for example the theme.
+- Use `pnpm build:development` for a separate Heidrun Development application when taking screenshots. Heidrun Development has its own application identifier and settings. A plain debug build without the development configuration still uses the installed identity and shares installed settings; restore every setting changed in that build. See [installed and development applications](../architecture/application_installations.md).
 - A section without a real capture shows its text alone. Never put a generated image in its place.

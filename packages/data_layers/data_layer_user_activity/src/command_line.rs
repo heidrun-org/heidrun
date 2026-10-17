@@ -23,7 +23,8 @@ Commands:
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --file <path>              The file of the user activity records. For initialize
                              and update.
                              (default: "user_activity.jsonl" in the folder of the

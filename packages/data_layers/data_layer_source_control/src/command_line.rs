@@ -21,7 +21,8 @@ Commands:
 
 Options:
   --database <path>          The SQLite file.
-                             (default: "~/.config/heidrun/data_layer.sqlite")
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --repository <owner/name>  The name of the repository in the database. For
                              initialize and update.
                              (default: the address of the remote "origin")

@@ -17,6 +17,7 @@ The mobile server of Heidrun Mobile. It serves the mobile website on the loopbac
 - Command to test this folder: `pnpm --filter mobile_server test`. The command builds `mobile_website` first. The tests `live_...` use a real tunnel or the real phones, so they run only by hand: `cargo test live_ -- --ignored --nocapture`.
 
 ## Rules
+- A new mobile configuration uses `HEIDRUN_MOBILE_PORT` when the variable holds a valid port; an existing saved port takes precedence.
 - This package imports nothing from Tauri and nothing from another package. The only thing that it reads from another package is the folder `dist` of `mobile_website`, at build time.
 - The server listens only on `127.0.0.1`, never on `0.0.0.0`, and no variable changes this.
 - Only the host name of the tunnel passes, and the header Origin must be `https://` followed by it. Every other name, the loopback address included, is refused even with the right key, and so is every request before the tunnel has an address.

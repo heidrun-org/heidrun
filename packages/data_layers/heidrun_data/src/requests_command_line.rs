@@ -77,7 +77,9 @@ Replay:
   - A synchronization writes, so it needs --isolated-database, a file that does not exist yet. It never writes the
     SQLite file of Heidrun. Without --allow-network, the source code_hosting is skipped, and no price list is fetched.
 
-  --database <path>          The SQLite file that the queries read. (default: "~/.config/heidrun/data_layer.sqlite")
+  --database <path>          The SQLite file that the queries read.
+                             (default: "data_layer.sqlite" in HEIDRUN_DIR, or
+                             "~/.config/heidrun/data_layer.sqlite")
   --repeat <count>           How many times each query runs. (default: 1) A synchronization runs once.
   --isolated-database <path> The new file that a synchronization writes.
   --start-from <path>        A snapshot that is copied to the isolated file first, so that the mode update of a

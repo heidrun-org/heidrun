@@ -9,8 +9,9 @@ const PERSONAL_MACROS_FILE: &str = "macros.json";
 /// The folder of the data of Heidrun: the variable `HEIDRUN_DIR`, else `~/.config/heidrun`.
 pub fn data_folder() -> PathBuf {
     std::env::var("HEIDRUN_DIR")
+        .ok().filter(|value| value.is_empty() == false)
         .map(PathBuf::from)
-        .unwrap_or_else(|_| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
+        .unwrap_or_else(|| dirs::home_dir().unwrap_or_default().join(".config").join("heidrun"))
 }
 
 /// The file of the personal macros.
