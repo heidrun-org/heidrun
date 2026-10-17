@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Source "AI cost"](statistics_ai_cost.md)
-- Related issue: [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 622](https://github.com/heidrun-org/heidrun/issues/622)
+- Related issue: [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 629](https://github.com/heidrun-org/heidrun/issues/629)
 
 This file is a part of the rules of the tab "Work of one person". The words are defined in [glossary/person_work.md](../../glossary/person_work.md). The layout of the tab, and the list of the totals, are in [statistics_person_work.md](statistics_person_work.md).
 
@@ -13,7 +13,7 @@ This file is a part of the rules of the tab "Work of one person". The words are 
 
 - The source "Git history" shows the lines added and the lines deleted of the person in the time range, as its fourth and fifth totals.
 - The lines are the sums of the fields `insertions` and `deletions` of the commits of the person that count ([statistics_git_history.md](statistics_git_history.md)), and not of the pull requests. A binary file counts 0.
-- The bar chart shows the lines of each day when the developer chooses the metric "Lines added and lines deleted" ([statistics_git_history.md](statistics_git_history.md)).
+- The bar chart shows the lines of each day when the developer chooses the metric "Lines added and deleted" ([statistics_git_history.md](statistics_git_history.md)).
 - The command `person_work_in_range` gives the two numbers of each commit. The package `data_layer_source_control` already keeps them.
 
 ## The average per day

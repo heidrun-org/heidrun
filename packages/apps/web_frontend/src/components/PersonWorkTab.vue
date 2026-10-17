@@ -117,6 +117,9 @@ const isEveryWorkspaceChosen = computed(
   () => openWorkspaces.value.length > 0 && openWorkspaces.value.every((workspace) => chosenWorkspaceIds.value.includes(workspace.workspaceId)),
 );
 
+/** True when no workspace is chosen. */
+const isNoWorkspaceChosen = computed(() => chosenWorkspaceIds.value.length === 0);
+
 /** The folders of the chosen workspaces, each folder once, in the order of the list of workspaces. */
 const chosenFolders = computed(() => [
   ...new Set(openWorkspaces.value.filter((workspace) => chosenWorkspaceIds.value.includes(workspace.workspaceId)).map((workspace) => workspace.folder)),
@@ -364,15 +367,18 @@ const commitsChart = computed<StackedBarChartContent | null>(() => {
   const slots = result.value.slots;
   const slotLength = SlotText.length(slotHours.value);
   return {
+    memoryKey: "git_history_commits_and_pull_requests",
     labels: SlotText.labels(slots, dayCount.value, slotHours.value),
     series: [
       {
+        id: "commits",
         name: t("statisticsModal.personWorkCommitsTrace"),
         colorToken: "--primary-bg",
         values: slots.map((slot) => slot.commitCount),
         valueTexts: slots.map((slot) => String(slot.commitCount)),
       },
       {
+        id: "pull_requests",
         name: t("statisticsModal.personWorkPullRequestsTrace"),
         colorToken: "--success-bg",
         values: slots.map((slot) => slot.pullRequestCount),
@@ -397,15 +403,18 @@ const linesChart = computed<StackedBarChartContent | null>(() => {
   const slots = result.value.slots;
   const slotLength = SlotText.length(slotHours.value);
   return {
+    memoryKey: "git_history_lines",
     labels: SlotText.labels(slots, dayCount.value, slotHours.value),
     series: [
       {
+        id: "lines_added",
         name: t("statisticsModal.personWorkLinesAdded"),
         colorToken: "--success-bg",
         values: slots.map((slot) => slot.insertionCount),
         valueTexts: slots.map((slot) => countText(slot.insertionCount)),
       },
       {
+        id: "lines_deleted",
         name: t("statisticsModal.personWorkLinesDeleted"),
         colorToken: "--danger-bg",
         values: slots.map((slot) => slot.deletionCount),
@@ -434,8 +443,10 @@ const aiCostChart = computed<StackedBarChartContent | null>(() => {
   const isTokens = unitId.value === "tokens";
   const slotLength = SlotText.length(slotHours.value);
   return {
+    memoryKey: "ai_cost",
     labels: SlotText.labels(slots, dayCount.value, slotHours.value),
     series: AI_COST_AGENT_IDS.map((agentId) => ({
+      id: agentId,
       name: findCodingAgent(agentId)?.label ?? agentId,
       colorToken: AI_COST_COLOR_TOKENS[agentId],
       values: slots.map((slot) => agentAmount(slot.costByAgent, slot.tokensByAgent, agentId)),
@@ -532,9 +543,14 @@ watch(openWorkspaces, (list) => {
   chosenWorkspaceIds.value = stillOpen.length > 0 ? stillOpen : firstWorkspaceIds();
 });
 
-/** Chooses every workspace when one is not chosen, and no workspace when every one is chosen. */
-function toggleEveryWorkspace(): void {
-  chosenWorkspaceIds.value = isEveryWorkspaceChosen.value === true ? [] : openWorkspaces.value.map((workspace) => workspace.workspaceId);
+/** Chooses every open workspace. */
+function chooseEveryWorkspace(): void {
+  chosenWorkspaceIds.value = openWorkspaces.value.map((workspace) => workspace.workspaceId);
+}
+
+/** Chooses no workspace. */
+function chooseNoWorkspace(): void {
+  chosenWorkspaceIds.value = [];
 }
 
 // A source reads its data only when it is shown. The Git history reads only the chosen folders that it did not read yet. The AI
@@ -560,115 +576,149 @@ watch(
   <div class="d-flex flex-column" style="height: 100%">
     <span v-if="openWorkspaces.length === 0" class="form-text">{{ t("statisticsModal.personWorkNoWorkspace") }}</span>
     <template v-else>
-      <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-        <div class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkSourceLabel')">
-          <label v-for="choice in SOURCE_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
-            <input
-              :id="`statistics-person-source-${choice.id}`"
-              v-model="sourceId"
-              type="radio"
-              name="statistics-person-source"
-              autocomplete="off"
-              :value="choice.id"
-            />
-            {{ t(choice.labelKey) }}
-          </label>
-        </div>
-        <div v-if="sourceId === 'git_history'" class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkMetricLabel')">
-          <label v-for="choice in METRIC_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
-            <input
-              :id="`statistics-person-metric-${choice.id}`"
-              v-model="metricId"
-              type="radio"
-              name="statistics-person-metric"
-              autocomplete="off"
-              :value="choice.id"
-            />
-            {{ t(choice.labelKey) }}
-          </label>
-        </div>
-        <div v-if="sourceId === 'ai_cost'" class="btn-group" role="group" :aria-label="t('statisticsModal.personWorkUnitLabel')">
-          <label v-for="choice in UNIT_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
-            <input
-              :id="`statistics-person-unit-${choice.id}`"
-              v-model="unitId"
-              type="radio"
-              name="statistics-person-unit"
-              autocomplete="off"
-              :value="choice.id"
-            />
-            {{ t(choice.labelKey) }}
-          </label>
-        </div>
-        <label v-if="sourceId === 'git_history' && persons.length > 0" class="d-flex align-items-center gap-2" for="statistics-person">
-          <span>{{ t("statisticsModal.personWorkPersonLabel") }}</span>
-          <select id="statistics-person" v-model="personId" class="form-control w-auto">
-            <option v-for="candidate in persons" :key="candidate.id" :value="candidate.id">{{ candidate.name }}</option>
-          </select>
-        </label>
-        <div class="btn-group" role="group" :aria-label="t('statisticsModal.rangeLabel')">
-          <label v-for="choice in PERIOD_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
-            <input
-              :id="`statistics-person-period-${choice.id}`"
-              v-model="periodId"
-              type="radio"
-              name="statistics-person-period"
-              autocomplete="off"
-              :value="choice.id"
-            />
-            {{ t(choice.labelKey) }}
-          </label>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="form-text">{{ t("statisticsModal.slotLabel") }}</span>
-          <div class="btn-group" role="group" :aria-label="t('statisticsModal.slotLabel')">
-            <label
-              v-for="hours in slotHoursChoices"
-              :key="hours"
-              class="btn-check btn-outline theme-secondary"
-              :title="t('statisticsModal.slotTitle', { slotLength: SlotText.length(hours) })"
-            >
-              <input
-                :id="`statistics-person-slot-${hours}`"
-                v-model="slotHours"
-                type="radio"
-                name="statistics-person-slot"
-                autocomplete="off"
-                :value="hours"
-              />
-              {{ SlotText.length(hours) }}
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+        <div class="d-flex flex-column align-items-start gap-2">
+          <div class="d-flex flex-wrap align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-text">{{ t("statisticsModal.personWorkSourceLabel") }}</span>
+              <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkSourceLabel')">
+                <label v-for="choice in SOURCE_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                  <input
+                    :id="`statistics-person-source-${choice.id}`"
+                    v-model="sourceId"
+                    type="radio"
+                    name="statistics-person-source"
+                    autocomplete="off"
+                    :value="choice.id"
+                  />
+                  {{ t(choice.labelKey) }}
+                </label>
+              </div>
+            </div>
+            <label v-if="sourceId === 'git_history' && persons.length > 0" class="d-flex align-items-center gap-2" for="statistics-person">
+              <span class="form-text">{{ t("statisticsModal.personWorkPersonLabel") }}</span>
+              <select id="statistics-person" v-model="personId" class="form-control form-control-sm w-auto">
+                <option v-for="candidate in persons" :key="candidate.id" :value="candidate.id">{{ candidate.name }}</option>
+              </select>
             </label>
           </div>
+          <div v-if="sourceId === 'git_history'" class="d-flex align-items-center gap-2">
+            <span class="form-text">{{ t("statisticsModal.personWorkMetricLabel") }}</span>
+            <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkMetricLabel')">
+              <label v-for="choice in METRIC_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                <input
+                  :id="`statistics-person-metric-${choice.id}`"
+                  v-model="metricId"
+                  type="radio"
+                  name="statistics-person-metric"
+                  autocomplete="off"
+                  :value="choice.id"
+                />
+                {{ t(choice.labelKey) }}
+              </label>
+            </div>
+          </div>
+          <div v-if="sourceId === 'ai_cost'" class="d-flex align-items-center gap-2">
+            <span class="form-text">{{ t("statisticsModal.personWorkUnitLabel") }}</span>
+            <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkUnitLabel')">
+              <label v-for="choice in UNIT_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                <input
+                  :id="`statistics-person-unit-${choice.id}`"
+                  v-model="unitId"
+                  type="radio"
+                  name="statistics-person-unit"
+                  autocomplete="off"
+                  :value="choice.id"
+                />
+                {{ t(choice.labelKey) }}
+              </label>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
-        <div class="d-flex flex-wrap gap-2" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
-          <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesAllTitle')">
-            <input
-              id="statistics-person-workspace-all"
-              type="checkbox"
-              autocomplete="off"
-              :checked="isEveryWorkspaceChosen"
-              @change="toggleEveryWorkspace"
-            />
-            {{ t("statisticsModal.workspacesAll") }}
-          </label>
-          <label
-            v-for="workspace in openWorkspaces"
-            :key="workspace.workspaceId"
-            class="btn-check btn-outline theme-secondary"
-            :title="t('statisticsModal.personWorkWorkspaceTitle', { folder: workspace.folder })"
-          >
-            <input
-              :id="`statistics-person-workspace-${workspace.workspaceId}`"
-              v-model="chosenWorkspaceIds"
-              type="checkbox"
-              autocomplete="off"
-              :value="workspace.workspaceId"
-            />
-            {{ workspace.label }}
-          </label>
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex flex-wrap align-items-center gap-3 ms-auto">
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-text">{{ t("statisticsModal.slotLabel") }}</span>
+              <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.slotLabel')">
+                <label
+                  v-for="hours in slotHoursChoices"
+                  :key="hours"
+                  class="btn-check btn-outline theme-secondary"
+                  :title="t('statisticsModal.slotTitle', { slotLength: SlotText.length(hours) })"
+                >
+                  <input
+                    :id="`statistics-person-slot-${hours}`"
+                    v-model="slotHours"
+                    type="radio"
+                    name="statistics-person-slot"
+                    autocomplete="off"
+                    :value="hours"
+                  />
+                  {{ SlotText.length(hours) }}
+                </label>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-text">{{ t("statisticsModal.rangeLabel") }}</span>
+              <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.rangeLabel')">
+                <label v-for="choice in PERIOD_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                  <input
+                    :id="`statistics-person-period-${choice.id}`"
+                    v-model="periodId"
+                    type="radio"
+                    name="statistics-person-period"
+                    autocomplete="off"
+                    :value="choice.id"
+                  />
+                  {{ t(choice.labelKey) }}
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
+            <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
+            <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkWorkspacesEveryLabel')">
+              <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesAllTitle')">
+                <input
+                  id="statistics-person-workspace-all"
+                  type="radio"
+                  name="statistics-person-workspace-every"
+                  autocomplete="off"
+                  :checked="isEveryWorkspaceChosen"
+                  @change="chooseEveryWorkspace"
+                />
+                {{ t("statisticsModal.personWorkWorkspacesAllButton") }}
+              </label>
+              <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesNoneTitle')">
+                <input
+                  id="statistics-person-workspace-none"
+                  type="radio"
+                  name="statistics-person-workspace-every"
+                  autocomplete="off"
+                  :checked="isNoWorkspaceChosen"
+                  @change="chooseNoWorkspace"
+                />
+                {{ t("statisticsModal.personWorkWorkspacesNoneButton") }}
+              </label>
+            </div>
+            <div class="btn-group btn-group-sm flex-wrap" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
+              <label
+                v-for="workspace in openWorkspaces"
+                :key="workspace.workspaceId"
+                class="btn-check btn-outline theme-secondary"
+                :title="t('statisticsModal.personWorkWorkspaceTitle', { folder: workspace.folder })"
+              >
+                <input
+                  :id="`statistics-person-workspace-${workspace.workspaceId}`"
+                  v-model="chosenWorkspaceIds"
+                  type="checkbox"
+                  autocomplete="off"
+                  :value="workspace.workspaceId"
+                />
+                {{ workspace.label }}
+              </label>
+            </div>
+          </div>
         </div>
       </div>
       <span v-if="chosenFolders.length === 0" class="form-text">{{ t("statisticsModal.personWorkWorkspacesNone") }}</span>

@@ -43,11 +43,11 @@ async function openWorkspacesAre(workspaces: TestWorkspace[], selectedId: string
 }
 
 /** The functions that the chart registered for the events of Plotly.js, by the name of the event. */
-const plotlyHandlers: Record<string, (event: unknown) => void> = {};
+const plotlyHandlers: Record<string, (event: unknown) => unknown> = {};
 
 /** What one call to `Plotly.react` drew: the two bar traces, and the layout. */
 type Drawing = {
-  traces: Array<{ name: string; x: number[]; y: number[]; hoverinfo: string; marker: { color: string } }>;
+  traces: Array<{ name: string; x: number[]; y: number[]; hoverinfo: string; visible?: boolean | string; marker: { color: string } }>;
   layout: {
     barmode: string;
     title: { text: string };
@@ -371,7 +371,7 @@ describe("PersonWorkTab", () => {
   it("has a Bootstrap radio button group of the time range, with Last 7 days chosen at first", async () => {
     const wrapper = await mountPersonWorkTab();
     const group = radioGroup(wrapper, "statistics-person-period");
-    expect(group.texts).toEqual(["Last 3 days", "Last 7 days", "Last 14 days", "Last 30 days"]);
+    expect(group.texts).toEqual(["3 days", "7 days", "14 days", "30 days"]);
     expect(group.checked).toEqual([false, true, false, false]);
     expect(group.classes.every((name) => name.includes("btn-check") && name.includes("btn-outline") && name.includes("theme-secondary"))).toBe(true);
   });
@@ -454,7 +454,7 @@ describe("PersonWorkTab", () => {
   it("has a radio button group of the metric of the Git history, with the commits and the pull requests chosen at first, for the source Git history only", async () => {
     const wrapper = await mountPersonWorkTab();
     const group = radioGroup(wrapper, "statistics-person-metric");
-    expect(group.texts).toEqual(["Commits and pull requests", "Lines added and lines deleted"]);
+    expect(group.texts).toEqual(["Commits and pull requests", "Lines added and deleted"]);
     expect(group.checked).toEqual([true, false]);
     expect(group.classes.every((name) => name.includes("btn-check") && name.includes("btn-outline") && name.includes("theme-secondary"))).toBe(true);
     expect(wrapper.find('[role="group"][aria-label="Metric of the Git history"]').exists()).toBe(true);
@@ -462,6 +462,69 @@ describe("PersonWorkTab", () => {
     expect(wrapper.find('input[name="statistics-person-metric"]').exists()).toBe(false);
     await wrapper.get("#statistics-person-source-git_history").setValue(true);
     expect(radioGroup(wrapper, "statistics-person-metric").checked).toEqual([true, false]);
+  });
+
+  it("shows a visible label before every input, for both sources", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const visibleLabelsOf = (): string[] => {
+      const groups = wrapper.findAll('[role="group"][aria-label]');
+      return groups.map((group) => {
+        let label = group.element.previousElementSibling;
+        while (label !== null && label.classList.contains("form-text") === false) {
+          label = label.previousElementSibling;
+        }
+        expect(label).not.toBeNull();
+        return label?.textContent?.trim() ?? "";
+      });
+    };
+    expect(visibleLabelsOf()).toEqual(["Source of the chart", "Metric of the Git history", "Slot length", "Time range", "Workspaces", "Workspaces"]);
+    expect(wrapper.get("label[for='statistics-person'] > .form-text").text()).toBe("Person");
+    await chooseAiCost(wrapper);
+    expect(visibleLabelsOf()).toEqual(["Source of the chart", "Unit of the AI cost", "Slot length", "Time range", "Workspaces", "Workspaces"]);
+  });
+
+  it("puts the slot length and the time range on the first line of the right column, the workspaces on the second line, and keeps the other inputs on the left", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const group = (label: string, index = 0) => wrapper.findAll(`[role="group"][aria-label="${label}"]`)[index].element;
+    const rightColumn = group("Time range").closest(".flex-column");
+    expect(rightColumn).not.toBeNull();
+    expect(rightColumn?.contains(group("Slot length"))).toBe(true);
+    expect(rightColumn?.contains(group("All or none of the workspaces"))).toBe(true);
+    expect(rightColumn?.contains(group("Workspaces"))).toBe(true);
+    expect(rightColumn?.contains(group("Source of the chart"))).toBe(false);
+    expect(rightColumn?.contains(group("Metric of the Git history"))).toBe(false);
+    expect(rightColumn?.contains(wrapper.get("#statistics-person").element)).toBe(false);
+    const lines = [...(rightColumn?.children ?? [])].map((line) =>
+      [...line.querySelectorAll(".form-text")].map((label) => label.textContent?.trim()),
+    );
+    expect(lines).toEqual([["Slot length", "Time range"], ["Workspaces"]]);
+    for (const line of rightColumn?.children ?? []) {
+      expect(line.classList.contains("ms-auto")).toBe(true);
+    }
+  });
+
+  it("puts the source and the person chooser on the first line of the left column, and the metric or the unit on the second line", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const linesOf = (): (string | undefined)[][] => {
+      const leftColumn = wrapper.get('[role="group"][aria-label="Source of the chart"]').element.closest(".align-items-start");
+      expect(leftColumn?.className).toContain("flex-column");
+      return [...(leftColumn?.children ?? [])].map((line) =>
+        [...line.querySelectorAll(".form-text")].map((label) => label.textContent?.trim()),
+      );
+    };
+    expect(linesOf()).toEqual([["Source of the chart", "Person"], ["Metric of the Git history"]]);
+    await chooseAiCost(wrapper);
+    expect(linesOf()).toEqual([["Source of the chart"], ["Unit of the AI cost"]]);
+  });
+
+  it("makes every button group and the person chooser small", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const groups = wrapper.findAll('[role="group"][aria-label]');
+    expect(groups).toHaveLength(6);
+    expect(groups.every((group) => group.classes().includes("btn-group") && group.classes().includes("btn-group-sm"))).toBe(true);
+    expect(wrapper.get("#statistics-person").classes()).toContain("form-control-sm");
+    await chooseAiCost(wrapper);
+    expect(wrapper.findAll('[role="group"][aria-label]').every((group) => group.classes().includes("btn-group-sm"))).toBe(true);
   });
 
   it("draws one stacked bar for each slot with the lines added below and the lines deleted above when the lines are chosen", async () => {
@@ -599,7 +662,7 @@ describe("PersonWorkTab", () => {
     await waitForDrawings(1);
     const { layout } = lastDrawing();
     expect(layout.legend).toMatchObject({ orientation: "h", y: 1.1 });
-    expect(Object.keys(plotlyHandlers).sort()).toEqual(["plotly_hover", "plotly_unhover"]);
+    expect(Object.keys(plotlyHandlers).sort()).toEqual(["plotly_hover", "plotly_legendclick", "plotly_unhover"]);
   });
 
   it("shows no chart information card until the pointer is over a bar", async () => {
@@ -633,6 +696,125 @@ describe("PersonWorkTab", () => {
     plotlyHandlers.plotly_unhover({});
     await flushPromises();
     expect(cardOf(wrapper)).toBeNull();
+  });
+
+  it("shows only the commits when Commits is clicked in the legend, only the pull requests when Pull requests is clicked, and every color when the same name is clicked twice", async () => {
+    await mountPersonWorkTab();
+    await waitForDrawings(1);
+    const visibleAfterClick = async (curveNumber: number, drawingCount: number) => {
+      expect(plotlyHandlers.plotly_legendclick({ curveNumber })).toBe(false);
+      await waitForDrawings(drawingCount);
+      return lastDrawing().traces.map((trace) => trace.visible);
+    };
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, true]);
+    expect(await visibleAfterClick(0, 2)).toEqual([true, "legendonly"]);
+    expect(await visibleAfterClick(1, 3)).toEqual(["legendonly", true]);
+    expect(await visibleAfterClick(1, 4)).toEqual([true, true]);
+  });
+
+  it("shows only the row of the color that the legend kept in the chart information card", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    plotlyHandlers.plotly_legendclick({ curveNumber: 0 });
+    await waitForDrawings(2);
+    await hoverDay(6);
+    expect(cardOf(wrapper)?.rows).toEqual([["Commits", "2"]]);
+    plotlyHandlers.plotly_legendclick({ curveNumber: 1 });
+    await waitForDrawings(3);
+    await hoverDay(6);
+    expect(cardOf(wrapper)?.rows).toEqual([["Pull requests", "1"]]);
+  });
+
+  it("keeps the filter of the legend when the time range changes, and shows the filter of each metric on its own", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await waitForDrawings(1);
+    plotlyHandlers.plotly_legendclick({ curveNumber: 0 });
+    await waitForDrawings(2);
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    await waitForDrawings(3);
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, "legendonly"]);
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Lines added"));
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, true]);
+    await wrapper.get("#statistics-person-metric-commits_and_pull_requests").setValue(true);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Commits"));
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, "legendonly"]);
+  });
+
+  describe("the memory of the filter of the legend", () => {
+    /** Puts what a previous run of Heidrun saved for the legend filters into the settings, before the tab is built. */
+    async function rememberFilters(filters: Record<string, string>): Promise<void> {
+      const { settings } = await import("../stores/settings");
+      settings.statisticsLegendFilters = filters;
+    }
+
+    /** The legend filters that the settings hold now. */
+    async function rememberedFilters(): Promise<Record<string, string>> {
+      const { settings } = await import("../stores/settings");
+      return { ...settings.statisticsLegendFilters };
+    }
+
+    it("saves the color of the click in the settings, and removes it with a second click on the same name", async () => {
+      await mountPersonWorkTab();
+      await waitForDrawings(1);
+      expect(await rememberedFilters()).toEqual({});
+      plotlyHandlers.plotly_legendclick({ curveNumber: 1 });
+      await waitForDrawings(2);
+      expect(await rememberedFilters()).toEqual({ git_history_commits_and_pull_requests: "pull_requests" });
+      await vi.waitFor(() => expect(localStorage.getItem("heidrun.settings")).toContain('"pull_requests"'));
+      plotlyHandlers.plotly_legendclick({ curveNumber: 1 });
+      await waitForDrawings(3);
+      expect(await rememberedFilters()).toEqual({});
+    });
+
+    it("draws the chart of the commits and of the pull requests with the saved filter", async () => {
+      await rememberFilters({ git_history_commits_and_pull_requests: "pull_requests" });
+      await mountPersonWorkTab();
+      await waitForDrawings(1);
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual(["legendonly", true]);
+    });
+
+    it("draws the chart of the lines with its own saved filter, and the other chart with no filter", async () => {
+      const wrapper = await mountPersonWorkTab();
+      await waitForDrawings(1);
+      await rememberFilters({ git_history_lines: "lines_deleted" });
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, true]);
+      await wrapper.get("#statistics-person-metric-lines").setValue(true);
+      await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Lines added"));
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual(["legendonly", true]);
+    });
+
+    it("draws the chart of the AI cost with the saved filter, in dollars and in tokens", async () => {
+      await rememberFilters({ ai_cost: "codex" });
+      const wrapper = await mountPersonWorkTab();
+      await chooseAiCost(wrapper);
+      await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual(["legendonly", true]);
+      const drawingCount = plotly.react.mock.calls.length;
+      await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+      await waitForDrawings(drawingCount + 1);
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual(["legendonly", true]);
+    });
+
+    it("shows every color when the saved color is not in the chart, and keeps the saved color", async () => {
+      await rememberFilters({ git_history_commits_and_pull_requests: "no_such_color" });
+      await mountPersonWorkTab();
+      await waitForDrawings(1);
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, true]);
+      expect(await rememberedFilters()).toEqual({ git_history_commits_and_pull_requests: "no_such_color" });
+    });
+
+    it("keeps the saved filter when the language changes the names of the colors", async () => {
+      await rememberFilters({ git_history_lines: "lines_added" });
+      const wrapper = await mountPersonWorkTab();
+      await wrapper.get("#statistics-person-metric-lines").setValue(true);
+      await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Lines added"));
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, "legendonly"]);
+      const { settings } = await import("../stores/settings");
+      settings.language = "fr";
+      await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Lignes ajoutées"));
+      expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, "legendonly"]);
+    });
   });
 
   it("draws thirty bars and counts the older issues when Last 30 days is chosen", async () => {
@@ -760,6 +942,29 @@ describe("PersonWorkTab", () => {
     expect(cardOf(wrapper)?.rows).toEqual([]);
   });
 
+  it("shows only one coding agent, with no total in the chart information card, when its name is clicked in the legend", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    await vi.waitFor(() => expect(lastDrawing().traces[0].name).toBe("Claude Code"));
+    const drawingCount = plotly.react.mock.calls.length;
+    plotlyHandlers.plotly_legendclick({ curveNumber: 1 });
+    await waitForDrawings(drawingCount + 1);
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual(["legendonly", true]);
+    await hoverDay(4);
+    expect(cardOf(wrapper)?.total).toBeNull();
+    expect(cardOf(wrapper)?.rows).toEqual([["Codex", "$0.50"]]);
+    plotlyHandlers.plotly_legendclick({ curveNumber: 0 });
+    await waitForDrawings(drawingCount + 2);
+    expect(lastDrawing().traces.map((trace) => trace.visible)).toEqual([true, "legendonly"]);
+    await hoverDay(5);
+    expect(cardOf(wrapper)?.total).toBeNull();
+    expect(cardOf(wrapper)?.rows).toEqual([["Claude Code", "$2.50"]]);
+    plotlyHandlers.plotly_legendclick({ curveNumber: 0 });
+    await waitForDrawings(drawingCount + 3);
+    await hoverDay(5);
+    expect(cardOf(wrapper)?.total).toBe("$2.50");
+  });
+
   it("draws thirty bars and counts the older chats when Last 30 days is chosen with the source AI cost", async () => {
     const wrapper = await mountPersonWorkTab();
     await chooseAiCost(wrapper);
@@ -884,19 +1089,37 @@ describe("PersonWorkTab", () => {
     expect(totalsOf(wrapper)).toEqual(["3", "1", "1", "18", "6"]);
   });
 
-  it("chooses every workspace with the button All workspaces, and none when every workspace is chosen", async () => {
+  it("has one radio button group with the buttons All and None, that choose every workspace or no workspace", async () => {
     const wrapper = await mountPersonWorkTab();
     answerByFolder({ "/work/mobile": { gitHistory: mobileItems(), aiCost: mobileAiCostAnswer() } });
     const all = wrapper.get("#statistics-person-workspace-all");
-    expect(all.element.closest("label")?.textContent?.trim()).toBe("All workspaces");
-    expect((all.element as HTMLInputElement).checked).toBe(false);
+    const none = wrapper.get("#statistics-person-workspace-none");
+    const isChecked = (input: typeof all): boolean => (input.element as HTMLInputElement).checked;
+    expect(all.attributes("type")).toBe("radio");
+    expect(none.attributes("type")).toBe("radio");
+    expect(none.attributes("name")).toBe(all.attributes("name"));
+    expect(all.element.closest('[role="group"]')).toBe(none.element.closest('[role="group"]'));
+    expect(all.element.closest("label")?.textContent?.trim()).toBe("All");
+    expect(none.element.closest("label")?.textContent?.trim()).toBe("None");
+    expect([isChecked(all), isChecked(none)]).toEqual([false, false]);
     await all.setValue(true);
     await flushPromises();
     expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun", "mobile"]);
-    expect((all.element as HTMLInputElement).checked).toBe(true);
-    await all.setValue(false);
+    expect([isChecked(all), isChecked(none)]).toEqual([true, false]);
+    await none.setValue(true);
     await flushPromises();
     expect(chosenWorkspaceNames(wrapper)).toEqual([]);
+    expect([isChecked(all), isChecked(none)]).toEqual([false, true]);
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    expect([isChecked(all), isChecked(none)]).toEqual([false, false]);
+  });
+
+  it("puts the workspaces in a second button group, after the buttons All and None", async () => {
+    const wrapper = await mountPersonWorkTab();
+    const group = wrapper.get('[role="group"][aria-label="Workspaces"]');
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["heidrun", "mobile"]);
+    expect(group.find("#statistics-person-workspace-all").exists()).toBe(false);
+    expect(group.find("#statistics-person-workspace-none").exists()).toBe(false);
   });
 
   it("tells that no workspace is chosen, and shows no total and no chart, when every workspace is dropped", async () => {

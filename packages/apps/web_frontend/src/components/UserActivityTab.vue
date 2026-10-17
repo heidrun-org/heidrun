@@ -69,6 +69,9 @@ const isEveryWorkspaceChosen = computed(
   () => workspaceChoices.value.length > 0 && workspaceChoices.value.every((choice) => chosenFolders.value.includes(choice.folder)),
 );
 
+/** True when the histogram shows no workspace. */
+const isNoWorkspaceChosen = computed(() => chosenFolders.value.length === 0);
+
 /** The slots of the histogram, or `null` while the records are read. */
 const slots = computed<UserActivitySlot[] | null>(() => {
   if (records.value === null) {
@@ -104,9 +107,14 @@ watch(rangeId, (newRangeId) => {
   slotLengthId.value = USER_ACTIVITY_RANGES[newRangeId].defaultSlotLengthId;
 });
 
-/** Chooses every workspace when one is hidden, and no workspace when every one is shown. */
-function toggleEveryWorkspace(): void {
-  chosenFolders.value = isEveryWorkspaceChosen.value === true ? [] : workspaceChoices.value.map((choice) => choice.folder);
+/** Chooses every workspace. */
+function chooseEveryWorkspace(): void {
+  chosenFolders.value = workspaceChoices.value.map((choice) => choice.folder);
+}
+
+/** Chooses no workspace. */
+function chooseNoWorkspace(): void {
+  chosenFolders.value = [];
 }
 
 /** Reads the records of the longest time range through the data layer, and lists the workspaces that they hold. */
@@ -175,17 +183,31 @@ onMounted(load);
     </div>
     <div v-if="workspaceChoices.length > 0" class="d-flex flex-wrap align-items-center gap-2 mb-3">
       <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
-      <div class="d-flex flex-wrap gap-2" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
+      <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.workspacesEveryLabel')">
         <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.workspacesAllTitle')">
           <input
             id="statistics-workspace-all"
-            type="checkbox"
+            type="radio"
+            name="statistics-workspace-every"
             autocomplete="off"
             :checked="isEveryWorkspaceChosen"
-            @change="toggleEveryWorkspace"
+            @change="chooseEveryWorkspace"
           />
-          {{ t("statisticsModal.workspacesAll") }}
+          {{ t("statisticsModal.workspacesAllButton") }}
         </label>
+        <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.workspacesNoneTitle')">
+          <input
+            id="statistics-workspace-none"
+            type="radio"
+            name="statistics-workspace-every"
+            autocomplete="off"
+            :checked="isNoWorkspaceChosen"
+            @change="chooseNoWorkspace"
+          />
+          {{ t("statisticsModal.workspacesNoneButton") }}
+        </label>
+      </div>
+      <div class="btn-group btn-group-sm flex-wrap" role="group" :aria-label="t('statisticsModal.workspacesLabel')">
         <label
           v-for="(choice, index) in workspaceChoices"
           :key="choice.folder"

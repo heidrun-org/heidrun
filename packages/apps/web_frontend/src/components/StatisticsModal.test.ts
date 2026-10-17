@@ -144,10 +144,26 @@ describe("StatisticsModal", () => {
     }
   });
 
+  it("takes the whole screen: a Bootstrap full screen dialog, with no margin, no border, and the whole height", async () => {
+    const { wrapper } = await mountStatisticsModal([]);
+    const dialog = wrapper.get("dialog");
+    expect(dialog.classes()).toContain("dialog-fullscreen");
+    expect(dialog.classes()).not.toContain("dialog-xl");
+    expect(dialog.attributes("style")).toContain("height: 100vh");
+    expect(dialog.attributes("style")).not.toContain("--dialog-width");
+  });
+
+  it("does not close when the pointer is pressed outside the dialog, because the dialog has no outside", async () => {
+    const { wrapper, statisticsModal } = await mountStatisticsModal([]);
+    await wrapper.get(".overlay").trigger("mousedown");
+    expect(statisticsModal.open).toBe(true);
+  });
+
   it("has a thin title bar: the title at the left, then at the right the two tab buttons and a small close button", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const header = wrapper.get(".dialog-header");
     expect(header.attributes("style")).toContain("--dialog-header-padding");
+    expect(header.attributes("style")).toContain("0.375rem 84px");
     const children = Array.from(header.element.children);
     expect(children[0].classList.contains("dialog-title")).toBe(true);
     expect(children[0].classList.contains("me-auto")).toBe(true);
@@ -157,29 +173,31 @@ describe("StatisticsModal", () => {
     expect(children[2].classList.contains("fs-4")).toBe(false);
   });
 
-  it("shows an HTML tooltip under each tab button when the pointer is over it, and hides it when the pointer leaves", async () => {
+  it("shows a card with the look of an information card under each tab button when the pointer stays over it, and hides it when the pointer leaves", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     const tabs = wrapper.get('[role="tablist"]').findAll('[role="tab"]');
-    const tooltip = () => document.body.querySelector(".tooltip");
-    expect(tooltip()).toBeNull();
+    const card = () => document.body.querySelector(".popover");
+    const blocksOf = () => Array.from(card()?.querySelectorAll("[data-help-block]") ?? []).map((block) => block.querySelector(".fw-medium")?.textContent);
+    expect(card()).toBeNull();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     await tabs[0].trigger("pointerenter");
     await vi.advanceTimersByTimeAsync(100);
-    expect(tooltip()).toBeNull();
+    expect(card()).toBeNull();
     await vi.advanceTimersByTimeAsync(1400);
     await flushPromises();
-    expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("User activity");
-    expect(tooltip()?.querySelectorAll(".tooltip-inner li").length).toBeGreaterThan(0);
-    expect(tabs[0].attributes("aria-describedby")).toBe(tooltip()?.getAttribute("id"));
+    expect(card()?.querySelector(".list-group-item")?.textContent?.trim()).toBe("User activity");
+    expect(blocksOf()).toEqual(["What it is", "How it works"]);
+    expect(card()?.querySelector(".tooltip")).toBeNull();
+    expect(tabs[0].attributes("aria-describedby")).toBe(card()?.getAttribute("id"));
     await tabs[0].trigger("pointerleave");
-    expect(tooltip()).toBeNull();
+    expect(card()).toBeNull();
     expect(tabs[0].attributes("aria-describedby")).toBeUndefined();
     await tabs[1].trigger("pointerenter");
     await vi.advanceTimersByTimeAsync(1600);
     await flushPromises();
     vi.useRealTimers();
-    expect(tooltip()?.querySelector(".tooltip-inner strong")?.textContent).toBe("Work of one person");
-    expect(tooltip()?.querySelector(".tooltip-inner")?.textContent).toContain("AI cost");
+    expect(card()?.querySelector(".list-group-item")?.textContent?.trim()).toBe("Work of one person");
+    expect(blocksOf()).toEqual(["What it is", "Git history", "AI cost"]);
   });
 
   it("reads the work of the people only when the tab Work of one person is shown, and only once while the window stays open", async () => {

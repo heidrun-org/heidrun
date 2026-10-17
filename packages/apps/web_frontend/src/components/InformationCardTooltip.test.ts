@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { enableAutoUnmount, flushPromises, mount, type VueWrapper } from "@vue/test-utils";
-import HtmlTooltip from "./HtmlTooltip.vue";
+import InformationCardTooltip from "./InformationCardTooltip.vue";
 
 enableAutoUnmount(afterEach);
 
@@ -25,17 +25,23 @@ async function waitForDelay(milliseconds = OPEN_DELAY): Promise<void> {
 /** The template of a button that owns a tooltip: the button receives the properties of the trigger with `v-bind`. */
 const BUTTON_SLOT = `<template #default="{ triggerProps }"><button v-bind="triggerProps">Part</button></template>`;
 
-/** Mounts a tooltip around a button, with the text of the tooltip written in HTML. */
-function mountTooltip(html = "<p><strong>Title</strong></p><ul><li>First</li><li>Second</li></ul>") {
-  return mount(HtmlTooltip, { attachTo: document.body, props: { html }, slots: { default: BUTTON_SLOT } });
+/** The blocks of a card: a title and a text for each one. */
+const BLOCKS = [
+  { title: "What it is", text: "First text" },
+  { title: "How it works", text: "Second text" },
+];
+
+/** Mounts a card around a button, with a heading and two blocks. */
+function mountTooltip(title = "Heading", blocks = BLOCKS) {
+  return mount(InformationCardTooltip, { attachTo: document.body, props: { title, blocks }, slots: { default: BUTTON_SLOT } });
 }
 
 /** Mounts a tooltip inside a host element, so that a test can see what the tooltip puts around the button, and beside it. */
 function mountTooltipInHost() {
   return mount(
     {
-      components: { HtmlTooltip },
-      template: `<div id="host"><HtmlTooltip html="<p>Text</p>" v-slot="{ triggerProps }"><button v-bind="triggerProps">Part</button></HtmlTooltip></div>`,
+      components: { InformationCardTooltip },
+      template: `<div id="host"><InformationCardTooltip title="Heading" :blocks="[]" v-slot="{ triggerProps }"><button v-bind="triggerProps">Part</button></InformationCardTooltip></div>`,
     },
     { attachTo: document.body },
   );
@@ -43,7 +49,7 @@ function mountTooltipInHost() {
 
 /** The tooltip in the page. The tooltip is a child of the element `body`, so a wrapper never holds it. */
 function tooltipElement(): HTMLElement | null {
-  return document.body.querySelector<HTMLElement>(".tooltip");
+  return document.body.querySelector<HTMLElement>(".popover");
 }
 
 /** The button of the tooltip. */
@@ -51,7 +57,7 @@ function buttonOf(wrapper: VueWrapper) {
   return wrapper.get("button");
 }
 
-describe("HtmlTooltip", () => {
+describe("InformationCardTooltip", () => {
   it("draws no element of its own around the button, and shows no tooltip at the start", () => {
     const wrapper = mountTooltipInHost();
     const host = wrapper.get("#host").element;
@@ -61,19 +67,22 @@ describe("HtmlTooltip", () => {
     expect(buttonOf(wrapper).attributes("aria-describedby")).toBeUndefined();
   });
 
-  it("opens a Bootstrap tooltip below the button when the pointer enters the button, and writes its text as HTML", async () => {
+  it("opens a Bootstrap popover below the button when the pointer enters the button, with the layout of an information card", async () => {
     const wrapper = mountTooltip();
     await buttonOf(wrapper).trigger("pointerenter");
     await waitForDelay();
     const tooltip = tooltipElement();
     expect(tooltip).not.toBeNull();
-    expect(Array.from(tooltip?.classList ?? [])).toEqual(expect.arrayContaining(["tooltip", "bs-tooltip-bottom", "show"]));
+    expect(Array.from(tooltip?.classList ?? [])).toEqual(expect.arrayContaining(["popover", "bs-popover-bottom", "show"]));
     expect(tooltip?.getAttribute("role")).toBe("tooltip");
-    expect(tooltip?.querySelector(".tooltip-arrow")).not.toBeNull();
-    expect(tooltip?.querySelector(".tooltip-inner strong")?.textContent).toBe("Title");
-    expect(Array.from(tooltip?.querySelectorAll(".tooltip-inner li") ?? []).map((item) => item.textContent)).toEqual([
-      "First",
-      "Second",
+    expect(tooltip?.querySelector(".popover-arrow")).not.toBeNull();
+    const items = Array.from(tooltip?.querySelectorAll(".list-group.list-group-flush > .list-group-item") ?? []);
+    expect(items).toHaveLength(3);
+    expect(items[0].textContent?.trim()).toBe("Heading");
+    expect(items[0].querySelector(".bi-question-circle")).not.toBeNull();
+    expect(items.slice(1).map((item) => [item.querySelector(".fw-medium")?.textContent, item.querySelector(".text-body-secondary")?.textContent])).toEqual([
+      ["What it is", "First text"],
+      ["How it works", "Second text"],
     ]);
   });
 
@@ -82,7 +91,7 @@ describe("HtmlTooltip", () => {
     await buttonOf(wrapper).trigger("pointerenter");
     await waitForDelay();
     expect(tooltipElement()?.parentElement).toBe(document.body);
-    expect(wrapper.get("#host").element.querySelector(".tooltip")).toBeNull();
+    expect(wrapper.get("#host").element.querySelector(".popover")).toBeNull();
     expect(Array.from(wrapper.get("#host").element.children).map((child) => child.tagName)).toEqual(["BUTTON"]);
   });
 
@@ -166,22 +175,22 @@ describe("HtmlTooltip", () => {
     expect(tooltipElement()).toBeNull();
   });
 
-  it("removes a script and an event handler from the HTML before it shows the HTML", async () => {
-    const wrapper = mountTooltip(`<p onclick="alert(1)">Safe</p><script>alert(2)</script><img src="x" onerror="alert(3)">`);
+  it("writes a title and a text as text, never as markup", async () => {
+    const wrapper = mountTooltip("<b>Heading</b>", [{ title: "<i>Title</i>", text: `<img src="x" onerror="alert(1)">Text` }]);
     await buttonOf(wrapper).trigger("pointerenter");
     await waitForDelay();
-    const inner = tooltipElement()?.querySelector(".tooltip-inner");
-    expect(inner?.textContent).toBe("Safe");
-    expect(inner?.querySelector("script")).toBeNull();
-    expect(inner?.innerHTML).not.toContain("onclick");
-    expect(inner?.innerHTML).not.toContain("onerror");
+    const tooltip = tooltipElement();
+    expect(tooltip?.querySelector("b")).toBeNull();
+    expect(Array.from(tooltip?.querySelectorAll("i") ?? []).every((element) => element.classList.contains("bi"))).toBe(true);
+    expect(tooltip?.querySelector("img")).toBeNull();
+    expect(tooltip?.textContent).toContain("<b>Heading</b>");
   });
 
   it("gives a different identifier to each tooltip of the same application", async () => {
     const parent = mount(
       {
-        components: { HtmlTooltip },
-        template: `<div><HtmlTooltip html="<p>One</p>" v-slot="{ triggerProps }"><button v-bind="triggerProps">A</button></HtmlTooltip><HtmlTooltip html="<p>Two</p>" v-slot="{ triggerProps }"><button v-bind="triggerProps">B</button></HtmlTooltip></div>`,
+        components: { InformationCardTooltip },
+        template: `<div><InformationCardTooltip title="One" :blocks="[]" v-slot="{ triggerProps }"><button v-bind="triggerProps">A</button></InformationCardTooltip><InformationCardTooltip title="Two" :blocks="[]" v-slot="{ triggerProps }"><button v-bind="triggerProps">B</button></InformationCardTooltip></div>`,
       },
       { attachTo: document.body },
     );
@@ -189,7 +198,7 @@ describe("HtmlTooltip", () => {
     await buttons[0].trigger("pointerenter");
     await buttons[1].trigger("pointerenter");
     await waitForDelay();
-    const identifiers = Array.from(document.body.querySelectorAll(".tooltip")).map((tooltip) => tooltip.getAttribute("id"));
+    const identifiers = Array.from(document.body.querySelectorAll(".popover")).map((tooltip) => tooltip.getAttribute("id"));
     expect(identifiers).toHaveLength(2);
     expect(identifiers[0]).not.toBe(identifiers[1]);
   });

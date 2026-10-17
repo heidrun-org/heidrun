@@ -230,6 +230,11 @@ const defaults = {
   notesShowAll: false,
   /** Sidebar section Code hosting: the saved searches of each list, in the order of their buttons. */
   codeHostingSavedSearches: { issues: [], requests: [] } as SavedSearches,
+  /**
+   * Window Statistics, bar charts of the tab "Work of one person": the color that the legend filter keeps, for each chart. The
+   * name of a chart points to the identifier of the only color that the chart shows. A chart with no name shows every color.
+   */
+  statisticsLegendFilters: {} as Record<string, string>,
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -306,6 +311,21 @@ function keepSavedSearchLists(value: unknown): SavedSearches {
   };
 }
 
+/**
+ * Keeps the legend filters that are a text for a chart that has a name, and drops the others.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the legend filters that can be used
+ */
+function keepLegendFilters(value: unknown): Record<string, string> {
+  const kept: Record<string, string> = {};
+  for (const [chartName, colorId] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof colorId === "string" && colorId !== "") {
+      kept[chartName] = colorId;
+    }
+  }
+  return kept;
+}
+
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
 const RENAMED_SETTINGS: Record<string, string> = {
   dockedPanes: "pinnedPanes",
@@ -375,6 +395,7 @@ function load(): typeof defaults {
     }
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
     saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
+    saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
     return saved;
   } catch {
     return { ...defaults };
