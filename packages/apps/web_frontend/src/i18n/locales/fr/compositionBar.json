@@ -1,0 +1,19 @@
+{
+  "label": "Barre de composition",
+  "thumbnailAlt": "Aperçu de {name}",
+  "open": "Ouvrir {name} en grand",
+  "remove": "Retirer {name}",
+  "add": "Ajouter des images",
+  "addTitle": "Choisir des fichiers image à ajouter",
+  "textLabel": "Texte à envoyer avec les images",
+  "textPlaceholder": "Écris une question, ou appuie sur Entrée pour coller les images",
+  "count_one": "{count} image",
+  "count_other": "{count} images",
+  "close": "Fermer",
+  "closeTitle": "Retirer toutes les images et le texte, et fermer la barre de composition",
+  "send": "Envoyer",
+  "sendTitle": "Coller les images dans ce panneau, puis écrire le texte et appuyer sur Entrée",
+  "pasteFailed": "L’image n’a pas pu être collée",
+  "noTerminal": "Ce panneau n’a pas de terminal pour recevoir les images",
+  "pickFailed": "Les images n’ont pas pu être ajoutées"
+}

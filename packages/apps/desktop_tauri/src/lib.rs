@@ -9,6 +9,7 @@ mod forge_cache;
 mod git;
 mod git_source_control;
 mod history;
+mod image_preview;
 mod legacy;
 mod login_shell_path;
 mod herdr;
@@ -321,6 +322,7 @@ pub fn run() {
             pty::pty_resize,
             pty::pty_kill,
             clipboard::clipboard_set_image,
+            image_preview::image_preview,
             usage::codex_usage,
             project::project_load,
             project::project_package_scripts,

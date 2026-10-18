@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import TerminalView from "./TerminalView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
 import MacroMenu from "./MacroMenu.vue";
 import UsageWheel from "./UsageWheel.vue";
+import CompositionBar from "./CompositionBar.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
 import { onSplitPaneClick } from "../stores/newPane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
+import { compositionBar } from "../stores/composition_bar";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
@@ -39,6 +41,11 @@ function onDown() {
     pinnedPaneState.focus = null;
   }
 }
+const paneElement = ref<HTMLElement | null>(null);
+// After the composition bar sends its images and its text, the keyboard goes back to the terminal, so that the developer can speak or type, then send.
+function focusTerminal() {
+  paneElement.value?.querySelector<HTMLTextAreaElement>("textarea.xterm-helper-textarea")?.focus();
+}
 const status = computed(() => (props.pane.agent ? props.pane.agent_status : "process"));
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
@@ -56,6 +63,7 @@ const subtitle = computed(() => {
 
 <template>
   <section
+    ref="paneElement"
     class="pane"
     :class="[status, { selected, 'several-panes': hasSeveralPanes, 'in-column-of-pinned-panes': isInColumnOfPinnedPanes }]"
     @mousedown="onDown"
@@ -135,6 +143,7 @@ const subtitle = computed(() => {
       :focused="selected"
       @pin="(text) => pinText(text, pane)"
     />
+    <CompositionBar v-if="selected && compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
   </section>
 </template>
 

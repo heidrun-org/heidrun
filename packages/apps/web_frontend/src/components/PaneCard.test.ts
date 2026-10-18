@@ -200,6 +200,36 @@ describe("PaneCard", () => {
   });
 });
 
+describe("PaneCard composition bar", () => {
+  async function selectPaneWithBar(selectedPaneId: string, isOpen: boolean) {
+    const { state } = await import("../stores/session");
+    const { compositionBar } = await import("../stores/composition_bar");
+    state.selectedPaneId = selectedPaneId;
+    compositionBar.isOpen = isOpen;
+    compositionBar.paths = isOpen ? ["/shots/a.png"] : [];
+  }
+
+  it("shows the composition bar under the terminal of the selected pane when it is open", async () => {
+    await selectPaneWithBar("w1:p1", true);
+    const wrapper = await mountPaneCard();
+    const children = [...wrapper.get("section").element.children];
+    expect(wrapper.find(".composition-bar").exists()).toBe(true);
+    expect(children[children.length - 1].classList.contains("composition-bar")).toBe(true);
+  });
+
+  it("shows no composition bar when it is closed", async () => {
+    await selectPaneWithBar("w1:p1", false);
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find(".composition-bar").exists()).toBe(false);
+  });
+
+  it("shows no composition bar in a pane that is not the selected pane", async () => {
+    await selectPaneWithBar("w1:other", true);
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find(".composition-bar").exists()).toBe(false);
+  });
+});
+
 describe("PaneCard usage wheel", () => {
   const WITH_CONTEXT = { agent: "claude", tokens: { hd_ctx: 7, hd_ctx_size: 200_000 } };
 

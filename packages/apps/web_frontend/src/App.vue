@@ -24,6 +24,8 @@ import SearchModal from "./components/SearchModal.vue";
 import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
+import ImageViewer from "./components/ImageViewer.vue";
+import { compositionBar } from "./stores/composition_bar";
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { goBackInPaneFocusHistory, goForwardInPaneFocusHistory } from "./stores/pane_focus_history";
@@ -49,7 +51,7 @@ import {
 } from "./stores/session";
 import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
 import { guardWindow } from "./stores/guard_window";
-import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
+import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomLauncherModal } from "./stores/newCustomLauncher";
 import { savedSearchModal } from "./stores/saved_search_modal";
@@ -288,16 +290,10 @@ onMounted(async () => {
   startMobile();
   loadClaudeLink();
   startRemoteWatch();
-  unlistenDrop = await getCurrentWebview().onDragDropEvent(async (event) => {
+  unlistenDrop = await getCurrentWebview().onDragDropEvent((event) => {
     if (event.payload.type !== "drop") return;
-    const result = await ImageDrop.handleDrop(
-      event.payload.paths,
-      event.payload.position.x / zoomFactor(),
-      event.payload.position.y / zoomFactor(),
-    );
-    if (result === "no_terminal_under_drop") toast(t("app.dropNoTerminalUnderDrop"), "error");
-    else if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
-    else if (result === "failed") toast(t("app.dropFailed"), "error");
+    const result = ImageDrop.handleDrop(event.payload.paths);
+    if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
   });
 });
 onBeforeUnmount(() => {
@@ -361,6 +357,7 @@ onBeforeUnmount(() => {
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
+    <ImageViewer v-if="compositionBar.viewerIndex !== null" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
     <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />

@@ -721,7 +721,7 @@ watch(
   (f) => f && term?.focus(),
 );
 onMounted(() => {
-  if (el.value) ImageDrop.register(el.value, writeToPty);
+  ImageDrop.register(props.paneId, writeToPty);
 });
 
 // Global search: once this pane is shown, select the found text if it is in the
@@ -890,7 +890,7 @@ onBeforeUnmount(() => {
   el.value?.removeEventListener("mousedown", onDown, true);
   el.value?.removeEventListener("mouseup", onUp, true);
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
-  if (el.value) ImageDrop.unregister(el.value);
+  ImageDrop.unregister(props.paneId);
   observer?.disconnect();
   refit?.cancel();
   refitHold?.cancel();
