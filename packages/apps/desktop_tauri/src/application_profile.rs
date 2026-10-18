@@ -175,6 +175,14 @@ mod tests {
         assert_eq!(development["app"]["windows"][0]["hiddenTitle"], false);
         assert_eq!(development["app"]["windows"][0]["titleBarStyle"], "Visible");
     }
+
+    #[test]
+    fn the_installed_application_identifier_names_heidrun_and_not_a_person_or_an_old_project() {
+        let installed: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        assert_eq!(installed["identifier"], "dev.heidrun-org.heidrun");
+        assert_ne!(installed["identifier"], DEVELOPMENT_IDENTIFIER);
+    }
+
     #[test]
     fn development_startup_isolates_inherited_daily_work_environment() {
         let folder = std::env::temp_dir().join(format!("hd-profile-{}", std::process::id()));
