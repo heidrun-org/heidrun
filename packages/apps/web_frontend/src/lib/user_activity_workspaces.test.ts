@@ -8,35 +8,38 @@ function record(workspaceFolder: string): { workspaceFolder: string } {
 }
 
 describe("UserActivityWorkspaces.choices", () => {
-	it("gives one choice for each folder of the records, even when a folder has many records", () => {
-		const records = [record("/work/alpha"), record("/work/beta"), record("/work/alpha")];
-		expect(UserActivityWorkspaces.choices(records, null, [])).toEqual([
-			{ folder: "/work/alpha", name: "alpha" },
-			{ folder: "/work/beta", name: "beta" },
-		]);
-	});
-
-	it("gives the label of a workspace that is open, and the last part of the folder of a workspace that is closed", () => {
-		const records = [record("/work/alpha"), record("/work/beta")];
-		const openWorkspaces = [{ folder: "/work/alpha", label: "Alpha app" }];
-		expect(UserActivityWorkspaces.choices(records, null, openWorkspaces)).toEqual([
+	it("lists open workspaces even when they have no activity record", () => {
+		expect(UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha", label: "Alpha app" },
+			{ folder: "/work/beta", label: "Beta app" },
+		])).toEqual([
 			{ folder: "/work/alpha", name: "Alpha app" },
-			{ folder: "/work/beta", name: "beta" },
+			{ folder: "/work/beta", name: "Beta app" },
 		]);
 	});
 
-	it("adds the workspace of the running period, even when it has no record", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha")], "/work/gamma", []);
-		expect(choices.map((choice) => choice.folder)).toEqual(["/work/alpha", "/work/gamma"]);
+	it("does not include historical records in the workspace choices", () => {
+		const historicalRecords = [record("/work/closed")];
+		const choices = UserActivityWorkspaces.choices([{ folder: "/work/open", label: "Open app" }]);
+		expect(choices).toEqual([{ folder: "/work/open", name: "Open app" }]);
+		expect(choices.some((choice) => choice.folder === historicalRecords[0].workspaceFolder)).toBe(false);
 	});
 
-	it("does not add the workspace of the running period twice", () => {
-		expect(UserActivityWorkspaces.choices([record("/work/alpha")], "/work/alpha", [])).toHaveLength(1);
+	it("keeps one choice for each open folder", () => {
+		const choices = UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha", label: "Alpha" },
+			{ folder: "/work/alpha", label: "Alpha duplicate" },
+		]);
+		expect(choices).toEqual([{ folder: "/work/alpha", name: "Alpha" }]);
 	});
 
 	it("writes the folder after the name when two workspaces have the same name", () => {
-		const records = [record("/one/app"), record("/two/app"), record("/work/beta")];
-		expect(UserActivityWorkspaces.choices(records, null, [])).toEqual([
+		const openWorkspaces = [
+			{ folder: "/one/app", label: "app" },
+			{ folder: "/two/app", label: "app" },
+			{ folder: "/work/beta", label: "beta" },
+		];
+		expect(UserActivityWorkspaces.choices(openWorkspaces)).toEqual([
 			{ folder: "/one/app", name: "app (/one/app)" },
 			{ folder: "/two/app", name: "app (/two/app)" },
 			{ folder: "/work/beta", name: "beta" },
@@ -44,16 +47,19 @@ describe("UserActivityWorkspaces.choices", () => {
 	});
 
 	it("reads the last part of a folder with a slash at the end or with backslashes", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha/"), record("C:\\work\\beta")], null, []);
+		const choices = UserActivityWorkspaces.choices([
+			{ folder: "/work/alpha/", label: "" },
+			{ folder: "C:\\work\\beta", label: "" },
+		]);
 		expect(choices.map((choice) => choice.name)).toEqual(["alpha", "beta"]);
 	});
 
-	it("gives no choice when there is no record and no running period", () => {
-		expect(UserActivityWorkspaces.choices([], null, [])).toEqual([]);
+	it("gives no choice when no workspace is open", () => {
+		expect(UserActivityWorkspaces.choices([])).toEqual([]);
 	});
 
 	it("ignores a workspace that is open with an empty label", () => {
-		const choices = UserActivityWorkspaces.choices([record("/work/alpha")], null, [{ folder: "/work/alpha", label: "" }]);
+		const choices = UserActivityWorkspaces.choices([{ folder: "/work/alpha", label: "" }]);
 		expect(choices[0].name).toBe("alpha");
 	});
 });

@@ -16,9 +16,7 @@ import {
   type UserActivityWorkspaceChoice,
   type UserActivityWorkspaceSlots,
 } from "../lib/user_activity_workspaces";
-import { workspaceCwd } from "../stores/project";
-import { workspaces } from "../stores/session";
-import { activePeriodStartedAt, selectedWorkspaceFolder } from "../stores/user_activity";
+import { activePeriodStartedAt, openWorkspaces, selectedWorkspaceFolder } from "../stores/user_activity";
 import { t } from "../i18n/index";
 
 // The tab "User activity" of the Statistics window: the histogram of the user activity time, and three choices. Each bar
@@ -57,10 +55,32 @@ const runningPeriodFolder = ref<string | null>(null);
 const runningPeriodStartedAt = ref<number | null>(null);
 
 /** The workspaces that the developer can choose. */
-const workspaceChoices = ref<UserActivityWorkspaceChoice[]>([]);
+const workspaceChoices = computed<UserActivityWorkspaceChoice[]>(() =>
+  UserActivityWorkspaces.choices(openWorkspaces.value.map((workspace) => ({
+    folder: workspace.folder,
+    label: workspace.label,
+  }))),
+);
 
 /** The folders of the workspaces that the histogram shows. All the workspaces at first. */
 const chosenFolders = ref<string[]>([]);
+
+watch(workspaceChoices, (choices, previousChoices) => {
+  if (previousChoices === undefined || previousChoices.length === 0) {
+    chosenFolders.value = choices.map((choice) => choice.folder);
+    return;
+  }
+  if (chosenFolders.value.length === 0) {
+    return;
+  }
+  const wasEveryWorkspaceChosen = previousChoices.every((choice) => chosenFolders.value.includes(choice.folder));
+  const stillOpen = chosenFolders.value.filter((folder) => choices.some((choice) => choice.folder === folder));
+  if (wasEveryWorkspaceChosen === true) {
+    chosenFolders.value = choices.map((choice) => choice.folder);
+    return;
+  }
+  chosenFolders.value = stillOpen.length > 0 ? stillOpen : choices.slice(0, 1).map((choice) => choice.folder);
+}, { immediate: true });
 
 const errorText = ref("");
 
@@ -119,7 +139,7 @@ function chooseNoWorkspace(): void {
 
 /**
  * Copies the new lines of the file of the records into the SQLite file of the data layer, then reads the records of the longest
- * time range from the SQLite file, and lists the workspaces that they hold.
+ * time range from the SQLite file.
  */
 async function load(): Promise<void> {
   const now = Date.now();
@@ -131,12 +151,6 @@ async function load(): Promise<void> {
     });
     runningPeriodStartedAt.value = activePeriodStartedAt.value;
     runningPeriodFolder.value = activePeriodStartedAt.value === null ? null : selectedWorkspaceFolder.value;
-    const openWorkspaces = workspaces.value.map((workspace) => ({
-      folder: workspaceCwd(workspace.workspace_id),
-      label: workspace.label,
-    }));
-    workspaceChoices.value = UserActivityWorkspaces.choices(loaded, runningPeriodFolder.value, openWorkspaces);
-    chosenFolders.value = workspaceChoices.value.map((choice) => choice.folder);
     readAt.value = now;
     records.value = loaded;
   } catch (error) {
