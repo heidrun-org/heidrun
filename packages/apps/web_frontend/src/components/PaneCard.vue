@@ -14,6 +14,7 @@ import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
 import { compositionBar } from "../stores/composition_bar";
+import { ImageDrop } from "../lib/image_drop";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import type { AgentInfo } from "../lib/types";
@@ -85,6 +86,18 @@ const subtitle = computed(() => {
       <span class="spacer"></span>
       <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
+        <button
+          v-if="selected"
+          class="tool"
+          :class="{ on: compositionBar.isOpen }"
+          :aria-pressed="compositionBar.isOpen"
+          :aria-label="t('paneCard.compositionBar')"
+          :title="t('paneCard.compositionBarTitle')"
+          @mousedown.stop
+          @click="ImageDrop.toggleBar()"
+        >
+          <Icon name="input-cursor-text" />
+        </button>
         <MacroMenu :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
           <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>

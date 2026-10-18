@@ -230,6 +230,76 @@ describe("PaneCard composition bar", () => {
   });
 });
 
+describe("PaneCard composition bar toggle button", () => {
+  async function selectPane(selectedPaneId: string, isOpen: boolean, isVoiceInputOn = false) {
+    const { state } = await import("../stores/session");
+    const { settings } = await import("../stores/settings");
+    const { compositionBar } = await import("../stores/composition_bar");
+    state.selectedPaneId = selectedPaneId;
+    settings.voiceInput = isVoiceInputOn;
+    compositionBar.isOpen = isOpen;
+    compositionBar.paths = [];
+    compositionBar.text = "";
+  }
+
+  it("shows the toggle button in the header of the selected pane, with the icon of a text input", async () => {
+    await selectPane("w1:p1", false);
+    const wrapper = await mountPaneCard();
+    const button = wrapper.find(".head .tools button[aria-label='Composition bar']");
+    expect(button.exists()).toBe(true);
+    expect(button.find(".bi-input-cursor-text").exists()).toBe(true);
+  });
+
+  it("shows no toggle button in a pane that is not the selected pane", async () => {
+    await selectPane("w1:other", false);
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find("button[aria-label='Composition bar']").exists()).toBe(false);
+  });
+
+  it("is pressed and highlighted while the composition bar is open, and not pressed while it is closed", async () => {
+    await selectPane("w1:p1", false);
+    const wrapper = await mountPaneCard();
+    const button = wrapper.get("button[aria-label='Composition bar']");
+    expect(button.attributes("aria-pressed")).toBe("false");
+    expect(button.classes()).not.toContain("on");
+    const { compositionBar } = await import("../stores/composition_bar");
+    compositionBar.isOpen = true;
+    await nextTick();
+    expect(button.attributes("aria-pressed")).toBe("true");
+    expect(button.classes()).toContain("on");
+  });
+
+  it("opens the composition bar with one click, and closes it with the next click", async () => {
+    await selectPane("w1:p1", false);
+    const { compositionBar } = await import("../stores/composition_bar");
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find(".composition-bar").exists()).toBe(false);
+    await wrapper.get("button[aria-label='Composition bar']").trigger("click");
+    expect(compositionBar.isOpen).toBe(true);
+    expect(wrapper.find(".composition-bar").exists()).toBe(true);
+    await wrapper.get("button[aria-label='Composition bar']").trigger("click");
+    expect(compositionBar.isOpen).toBe(false);
+    expect(wrapper.find(".composition-bar").exists()).toBe(false);
+  });
+
+  it("is there whether the voice input is on or off, and the header has no push-to-talk button", async () => {
+    for (const isVoiceInputOn of [false, true]) {
+      await selectPane("w1:p1", false, isVoiceInputOn);
+      const wrapper = await mountPaneCard();
+      expect(wrapper.find("button[aria-label='Composition bar']").exists()).toBe(true);
+      expect(wrapper.find("button[aria-label='Push to talk']").exists()).toBe(false);
+      wrapper.unmount();
+    }
+  });
+
+  it("shows the push-to-talk button in the composition bar when the voice input is on", async () => {
+    await selectPane("w1:p1", true, true);
+    const wrapper = await mountPaneCard();
+    expect(wrapper.find(".composition-bar button[aria-label='Push to talk']").exists()).toBe(true);
+    expect(wrapper.find(".head button[aria-label='Push to talk']").exists()).toBe(false);
+  });
+});
+
 describe("PaneCard usage wheel", () => {
   const WITH_CONTEXT = { agent: "claude", tokens: { hd_ctx: 7, hd_ctx_size: 200_000 } };
 

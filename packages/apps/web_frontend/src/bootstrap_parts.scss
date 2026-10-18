@@ -43,6 +43,7 @@ $application-utilities: (
       start: flex-start,
       center: center,
       between: space-between,
+      end: flex-end,
     ),
   ),
   "border": (
@@ -101,6 +102,7 @@ $application-utilities: (
     values: (
       start: flex-start,
       center: center,
+      end: flex-end,
     ),
   ),
   "align-self": (
@@ -188,6 +190,14 @@ $application-utilities: (
     class: ps,
     values: (
       3: 1rem,
+    ),
+  ),
+  "padding-end": (
+    important: true,
+    property: padding-right,
+    class: pe,
+    values: (
+      2: 0.5rem,
     ),
   ),
   "padding-top": (

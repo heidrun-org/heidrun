@@ -100,6 +100,31 @@ describe("ImageDrop.remove and ImageDrop.close", () => {
 	});
 });
 
+describe("ImageDrop.toggleBar", () => {
+	it("opens the composition bar when it is closed, with no image and no text", () => {
+		ImageDrop.toggleBar();
+		expect(compositionBar.isOpen).toBe(true);
+		expect(compositionBar.paths).toEqual([]);
+		expect(compositionBar.text).toBe("");
+	});
+
+	it("closes the composition bar when it is open, and removes every image and the text", () => {
+		ImageDrop.handleDrop(["/a.png"]);
+		compositionBar.text = "hello";
+		ImageDrop.toggleBar();
+		expect(compositionBar.isOpen).toBe(false);
+		expect(compositionBar.paths).toEqual([]);
+		expect(compositionBar.text).toBe("");
+	});
+
+	it("opens the composition bar again at the next call", () => {
+		ImageDrop.toggleBar();
+		ImageDrop.toggleBar();
+		ImageDrop.toggleBar();
+		expect(compositionBar.isOpen).toBe(true);
+	});
+});
+
 describe("ImageDrop big view", () => {
 	it("opens on the image that was clicked", () => {
 		ImageDrop.handleDrop(["/a.png", "/b.png", "/c.png"]);

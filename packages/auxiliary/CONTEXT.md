@@ -9,6 +9,7 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `mobile_server/`: a Rust library that serves the mobile website on the loopback address behind an ngrok tunnel, checks the host name of the tunnel and the pairing key, and hands each call of the phone to the desktop application. See its own CONTEXT.md.
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
 - `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. The two groups of commands are the macros and the launchers: list, add, update, and delete. See its own CONTEXT.md.
+- `voice_input/`: a Rust library that records the microphone, downloads a Whisper model, and changes the speech into text on the computer. `desktop_tauri` imports it. See its own CONTEXT.md.
 - `localai_embeddings/`: a Rust library and command line tool for computing text embeddings locally on the CPU or a supported accelerator. See its own CONTEXT.md.
 
 ## Rules
@@ -25,3 +26,4 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `heidrun_ctrl` came with [issue #602](https://github.com/heidrun-org/heidrun/issues/602). `desktop_tauri` imports it, so the format of the macro files has one place.
 - `mobile_server` and `mobile_website` came with [issue #524](https://github.com/heidrun-org/heidrun/issues/524), and the rule about the imports of `packages/apps` changed with it. The rule was already false: `desktop_tauri` imports `coding_agent_cli`.
 - `data_layer_operation_log` left this folder for `packages/data_layers` in [issue #664](https://github.com/heidrun-org/heidrun/issues/664), because it serves only the data layer packages.
+- `voice_input` came with [issue #662](https://github.com/heidrun-org/heidrun/issues/662). The audio stays in memory, and only the download of a model file uses the network.

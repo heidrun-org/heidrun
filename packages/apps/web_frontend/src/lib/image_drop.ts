@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { VoiceInput } from "./voice_input";
 import { compositionBar } from "../stores/composition_bar";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -124,14 +125,30 @@ export class ImageDrop {
 		}
 	}
 
-	/** Removes every image and the text, closes the big view, and closes the composition bar. */
+	/**
+	 * Removes every image and the text, closes the big view, and closes the composition bar. A recording of the voice input that
+	 * runs is thrown away.
+	 */
 	static close(): void {
+		void VoiceInput.cancel();
 		compositionBar.isOpen = false;
 		compositionBar.paths = [];
 		compositionBar.text = "";
 		compositionBar.thumbnails = {};
 		compositionBar.previews = {};
 		compositionBar.viewerIndex = null;
+	}
+
+	/**
+	 * Opens the composition bar when it is closed. When it is open, closes it as `close` does: every image and the text go. The
+	 * toggle button in the header of the focused pane calls this.
+	 */
+	static toggleBar(): void {
+		if (compositionBar.isOpen === true) {
+			ImageDrop.close();
+			return;
+		}
+		compositionBar.isOpen = true;
 	}
 
 	/**

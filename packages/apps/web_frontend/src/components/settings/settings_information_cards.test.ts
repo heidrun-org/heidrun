@@ -10,6 +10,7 @@ import SettingsMobileAccessSection from './SettingsMobileAccessSection.vue';
 import SettingsNotificationsSection from './SettingsNotificationsSection.vue';
 import SettingsSidebarsSection from './SettingsSidebarsSection.vue';
 import SettingsTerminalSection from './SettingsTerminalSection.vue';
+import SettingsVoiceInputSection from './SettingsVoiceInputSection.vue';
 import { DEFAULT_GUARDS } from '../../lib/guards';
 import { parseProjectConfig } from '../../lib/project_config';
 import { project } from '../../stores/project';
@@ -48,7 +49,7 @@ class SettingsInformationCardsTestHelper {
 	static readonly WORKSPACE_ID = 'w1';
 
 	/**
-	 * The nine sections of the Settings window, with their options. A new option goes in this list, and the test then
+	 * The ten sections of the Settings window, with their options. A new option goes in this list, and the test then
 	 * fails until the option has an information card.
 	 */
 	static readonly SECTION_LIST: SectionCase[] = [
@@ -96,6 +97,11 @@ class SettingsInformationCardsTestHelper {
 			name: 'Mobile access',
 			component: SettingsMobileAccessSection,
 			optionList: ['mobileAccess', 'mobileTerminalTyping'],
+		},
+		{
+			name: 'Voice input',
+			component: SettingsVoiceInputSection,
+			optionList: ['voiceInput', 'voiceInputLanguage', 'voiceInputModel'],
 		},
 	];
 

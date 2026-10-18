@@ -11,6 +11,7 @@ import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
 import SettingsSidebarsSection from "./settings/SettingsSidebarsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
+import SettingsVoiceInputSection from "./settings/SettingsVoiceInputSection.vue";
 import { guardWindow } from "../stores/guard_window";
 import { settingsModal, type SettingsSection } from "../stores/settings";
 import { t } from "../i18n/index";
@@ -25,6 +26,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "sidebars", icon: "layout-sidebar-inset-reverse", labelKey: "settingsModal.sidebars" },
   { id: "dynamicTopics", icon: "tags", labelKey: "settingsModal.dynamicTopics" },
   { id: "mobileAccess", icon: "phone", labelKey: "settingsModal.mobileAccess" },
+  { id: "voiceInput", icon: "mic", labelKey: "settingsModal.voiceInput" },
 ];
 
 function close() {
@@ -82,6 +84,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <SettingsSidebarsSection v-else-if="settingsModal.section === 'sidebars'" />
           <SettingsDynamicTopicsSection v-else-if="settingsModal.section === 'dynamicTopics'" />
           <SettingsMobileAccessSection v-else-if="settingsModal.section === 'mobileAccess'" />
+          <SettingsVoiceInputSection v-else-if="settingsModal.section === 'voiceInput'" />
         </section>
       </div>
     </dialog>

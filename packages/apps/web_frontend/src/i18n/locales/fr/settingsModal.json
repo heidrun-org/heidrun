@@ -11,5 +11,6 @@
   "notifications": "Notifications",
   "sidebars": "Barres latérales",
   "dynamicTopics": "Sujets dynamiques",
-  "mobileAccess": "Accès mobile"
+  "mobileAccess": "Accès mobile",
+  "voiceInput": "Saisie vocale"
 }

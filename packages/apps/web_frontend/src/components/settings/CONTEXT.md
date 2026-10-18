@@ -15,6 +15,7 @@ The content of each section of the Settings window. The Settings window itself i
 - `SettingsSidebarsSection.vue`: one heading for each sidebar section: "Needs you" (`showWorkspacesInNeedsYou`, `finishedTtl`), "Past chats" (`chatsRefreshSeconds`), and "Source control" (`gitFetchMinutes`).
 - `SettingsDynamicTopicsSection.vue`: the switch `dynamicTopics`, the extraction method (`dynamicTopicExtraction`), the switch `clusteredDynamicTopics`, and the button "Rebuild the clusters".
 - `SettingsMobileAccessSection.vue`: the mobile access switch, the switch `mobileTerminalTyping`, the QR code, and the paired devices.
+- `SettingsVoiceInputSection.vue`: the switch `voiceInput`, the language `voiceInputLanguage`, and the Whisper model `voiceInputModel` with the state of its download (`../../lib/voice_input.ts`).
 
 ## Rules
 - A section component shows the content only. The title, the sidebar and the close button belong to `SettingsModal.vue`.
@@ -25,6 +26,6 @@ The content of each section of the Settings window. The Settings window itself i
 - The circled question mark of a row that is a `label` is inside a `span` with `@click.capture.prevent`, so that a click on it does not switch the row.
 
 ## Background
-- The Settings window is rebuilt with Bootstrap in [issue 412](https://github.com/heidrun-org/heidrun/issues/412). The eight sections come from [issue 556](https://github.com/heidrun-org/heidrun/issues/556), and the section "Guards" is the ninth, in [issue 596](https://github.com/heidrun-org/heidrun/issues/596).
+- The Settings window is rebuilt with Bootstrap in [issue 412](https://github.com/heidrun-org/heidrun/issues/412). The eight sections come from [issue 556](https://github.com/heidrun-org/heidrun/issues/556), and the section "Guards" is the ninth, in [issue 596](https://github.com/heidrun-org/heidrun/issues/596). The section "Voice input" is the tenth, in [issue 662](https://github.com/heidrun-org/heidrun/issues/662).
 - The first information cards are in [issue 266](https://github.com/heidrun-org/heidrun/issues/266), and every option has one since [issue 608](https://github.com/heidrun-org/heidrun/issues/608).
 - Git fetch in the background [432](https://github.com/heidrun-org/heidrun/issues/432). Dynamic topics [260](https://github.com/heidrun-org/heidrun/issues/260) and [422](https://github.com/heidrun-org/heidrun/issues/422).

@@ -27,6 +27,7 @@ mod status_item_picture;
 mod topic_clusters;
 mod usage;
 mod user_activity;
+mod voice_commands;
 mod worktree_actions;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
@@ -262,12 +263,14 @@ pub fn run() {
         .manage(pty::PtyState::default())
         .manage(herdr::StatusWatcher::default())
         .manage(mobile::MobileState::default())
+        .manage(voice_commands::VoiceState::default())
         .manage(status_item::StatusItemState::default())
         .setup(|app| {
             if application_profile::is_development() == false {
                 legacy::migrate_config_dir();
                 claude::migrate_legacy();
             }
+            voice_commands::open_whisper_log();
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());
@@ -323,6 +326,11 @@ pub fn run() {
             pty::pty_kill,
             clipboard::clipboard_set_image,
             image_preview::image_preview,
+            voice_commands::voice_options,
+            voice_commands::voice_download_model,
+            voice_commands::voice_start_recording,
+            voice_commands::voice_cancel_recording,
+            voice_commands::voice_stop_recording,
             usage::codex_usage,
             project::project_load,
             project::project_package_scripts,

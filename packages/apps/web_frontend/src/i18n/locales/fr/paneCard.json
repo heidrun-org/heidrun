@@ -2,6 +2,8 @@
   "renameLabel": "Nouveau nom du panneau (vide pour revenir au nom automatique)",
   "nameTitle": "{name} · Double-clic pour renommer",
   "goToTab": "Aller à son onglet",
+  "compositionBar": "Barre de composition",
+  "compositionBarTitle": "Afficher ou masquer la barre de composition. La masquer retire toutes les images et le texte. Échap la masque aussi.",
   "mosaicTitle": "Mosaïque : ce que fait chaque agent de cette session (main, sous-agents)",
   "mosaic": "Mosaïque des agents de la session",
   "unpin": "Désépingler le panneau",

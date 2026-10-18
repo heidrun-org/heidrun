@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Abbreviated times](abbreviated_times.md), [Guards section](settings_guards.md)
-- Related issue: [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 266](https://github.com/heidrun-org/heidrun/issues/266), [issue 556](https://github.com/heidrun-org/heidrun/issues/556), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 629](https://github.com/heidrun-org/heidrun/issues/629), [issue 646](https://github.com/heidrun-org/heidrun/issues/646)
+- Related issue: [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 266](https://github.com/heidrun-org/heidrun/issues/266), [issue 556](https://github.com/heidrun-org/heidrun/issues/556), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 629](https://github.com/heidrun-org/heidrun/issues/629), [issue 646](https://github.com/heidrun-org/heidrun/issues/646), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
 
 This file is a part of the rules of the user interface of Heidrun. It gives the rule of the help text of the Settings window.
 
@@ -32,7 +32,7 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 
 ## The test
 
-- The test `components/settings/settings_information_cards.test.ts` mounts the nine sections. In each section, every option has the attribute `data-option` with the name of its option, and the test fails when:
+- The test `components/settings/settings_information_cards.test.ts` mounts the ten sections. In each section, every option has the attribute `data-option` with the name of its option, and the test fails when:
   - the list of the options of a section is not the expected list. A new option goes in this list.
   - an option has no circled question mark.
   - an input, a select, or a text area is outside an option.

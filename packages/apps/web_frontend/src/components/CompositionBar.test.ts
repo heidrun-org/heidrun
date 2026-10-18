@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 
 const invokeMock = vi.fn();
@@ -21,7 +21,10 @@ vi.mock("../stores/session", async (importOriginal) => {
 
 import CompositionBar from "./CompositionBar.vue";
 import { ImageDrop } from "../lib/image_drop";
+import { LONG_PRESS_MILLISECONDS, VoiceInput } from "../lib/voice_input";
 import { compositionBar } from "../stores/composition_bar";
+import { settings } from "../stores/settings";
+import { LEVEL_COUNT, voiceInput } from "../stores/voice_input";
 
 beforeEach(() => {
 	invokeMock.mockReset();
@@ -37,18 +40,23 @@ function mountBar() {
 	return mount(CompositionBar, { props: { paneId: "pane-1" }, attachTo: document.body });
 }
 
-/** Finds the button whose text starts with `text`. */
-function findButton(wrapper: ReturnType<typeof mountBar>, text: string) {
-	return wrapper.findAll("button").find((button) => button.text().startsWith(text));
+/** Finds a button of the bar by its label for the screen readers. */
+function findButton(wrapper: ReturnType<typeof mountBar>, label: string) {
+	return wrapper.find(`button[aria-label="${label}"]`);
+}
+
+/** The line of the plus button, the text input, the push-to-talk button, and the button Send. */
+function mainRow(wrapper: ReturnType<typeof mountBar>): HTMLElement {
+	return findButton(wrapper, "Add images").element.parentElement as HTMLElement;
 }
 
 describe("CompositionBar", () => {
-	it("shows one picture for each image, with a count", async () => {
+	it("shows one picture for each image, with no text that counts them", async () => {
 		ImageDrop.handleDrop(["/shots/a.png", "/shots/b.png"]);
 		const wrapper = mountBar();
 		await vi.waitFor(() => expect(wrapper.findAll("img").length).toBe(2));
 		expect(wrapper.findAll("figure").length).toBe(2);
-		expect(wrapper.text()).toContain("2 images");
+		expect(wrapper.text()).not.toContain("images");
 		expect(wrapper.find("img").attributes("alt")).toBe("Preview of a.png");
 		wrapper.unmount();
 	});
@@ -56,17 +64,56 @@ describe("CompositionBar", () => {
 	it("has a plus button and a text input, with a label on the input", () => {
 		ImageDrop.handleDrop(["/shots/a.png"]);
 		const wrapper = mountBar();
-		expect(wrapper.find("button.add").attributes("aria-label")).toBe("Add images");
+		expect(findButton(wrapper, "Add images").exists()).toBe(true);
 		expect(wrapper.find("textarea.text").attributes("aria-label")).toBe("Text to send with the images");
 		wrapper.unmount();
 	});
 
-	it("puts the plus button first, before the pictures", () => {
+	it("puts the pictures alone on a line above, and the plus button on the line of the text input", () => {
 		ImageDrop.handleDrop(["/shots/a.png", "/shots/b.png"]);
 		const wrapper = mountBar();
 		const children = [...wrapper.get(".thumbs").element.children];
-		expect(children[0].classList.contains("add")).toBe(true);
-		expect(children.slice(1).every((child) => child.tagName === "FIGURE")).toBe(true);
+		expect(children.length).toBe(2);
+		expect(children.every((child) => child.tagName === "FIGURE")).toBe(true);
+		expect(mainRow(wrapper).contains(wrapper.get("textarea.text").element)).toBe(true);
+		expect(mainRow(wrapper).children[0]).toBe(findButton(wrapper, "Add images").element);
+		wrapper.unmount();
+	});
+
+	it("has one line only when there is no image, and the plus button stays first on its line", async () => {
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		expect(wrapper.find(".thumbs").exists()).toBe(true);
+		const rowWithImage = mainRow(wrapper);
+		await wrapper.find("button.remove").trigger("click");
+		expect(wrapper.find(".thumbs").exists()).toBe(false);
+		expect(mainRow(wrapper)).toBe(rowWithImage);
+		expect(mainRow(wrapper).children[0]).toBe(findButton(wrapper, "Add images").element);
+		wrapper.unmount();
+	});
+
+	it("draws the buttons of the main line with no border, so that only the icon shows", () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		const buttons = [...mainRow(wrapper).querySelectorAll(":scope > button")];
+		expect(buttons.length).toBe(3);
+		expect(buttons.every((button) => button.classList.contains("border-0"))).toBe(true);
+		expect(mainRow(wrapper).classList.contains("gap-1")).toBe(true);
+		wrapper.unmount();
+	});
+
+	it("has the icon button Send, with a label and a title that names the key, and no button Close", () => {
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		const sendButton = findButton(wrapper, "Send");
+		expect(sendButton.text()).toBe("");
+		expect(sendButton.attributes("title")).toContain("Enter");
+		expect(sendButton.find(".bi-send").exists()).toBe(true);
+		const children = [...mainRow(wrapper).children];
+		expect(children[children.length - 1]).toBe(sendButton.element);
+		expect(findButton(wrapper, "Close").exists()).toBe(false);
+		expect(wrapper.find(".bi-trash").exists()).toBe(false);
 		wrapper.unmount();
 	});
 
@@ -74,7 +121,7 @@ describe("CompositionBar", () => {
 		ImageDrop.handleDrop(["/shots/a.png"]);
 		openDialogMock.mockResolvedValue(["/shots/b.png"]);
 		const wrapper = mountBar();
-		await wrapper.find("button.add").trigger("click");
+		await findButton(wrapper, "Add images").trigger("click");
 		await vi.waitFor(() => expect(compositionBar.paths).toEqual(["/shots/a.png", "/shots/b.png"]));
 		wrapper.unmount();
 	});
@@ -98,21 +145,13 @@ describe("CompositionBar", () => {
 		wrapper.unmount();
 	});
 
-	it("closes and empties everything with the button Close", async () => {
+	it("closes and empties everything with the key Escape", async () => {
 		ImageDrop.handleDrop(["/shots/a.png"]);
 		compositionBar.text = "hello";
 		const wrapper = mountBar();
-		await findButton(wrapper, "Close")?.trigger("click");
+		await wrapper.find("textarea.text").trigger("keydown", { key: "Escape" });
 		expect(compositionBar.paths).toEqual([]);
 		expect(compositionBar.text).toBe("");
-		expect(compositionBar.isOpen).toBe(false);
-		wrapper.unmount();
-	});
-
-	it("closes with the key Escape", async () => {
-		ImageDrop.handleDrop(["/shots/a.png"]);
-		const wrapper = mountBar();
-		await wrapper.find("textarea.text").trigger("keydown", { key: "Escape" });
 		expect(compositionBar.isOpen).toBe(false);
 		wrapper.unmount();
 	});
@@ -129,7 +168,7 @@ describe("CompositionBar", () => {
 		ImageDrop.register("pane-1", writer);
 		ImageDrop.handleDrop(["/shots/a.png"]);
 		const wrapper = mountBar();
-		await findButton(wrapper, "Send")?.trigger("click");
+		await findButton(wrapper, "Send").trigger("click");
 		await vi.waitFor(() => expect(wrapper.emitted("sent")).toHaveLength(1));
 		expect(invokeMock).toHaveBeenCalledWith("clipboard_set_image", { path: "/shots/a.png" });
 		expect(writer).toHaveBeenCalledWith("\x16");
@@ -192,7 +231,7 @@ describe("CompositionBar", () => {
 		const wrapper = mountBar();
 		invokeMock.mockReset();
 		invokeMock.mockRejectedValue("boom");
-		await findButton(wrapper, "Send")?.trigger("click");
+		await findButton(wrapper, "Send").trigger("click");
 		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalled());
 		expect(wrapper.emitted("sent")).toBeUndefined();
 		expect(insertTextMock).not.toHaveBeenCalled();
@@ -201,5 +240,252 @@ describe("CompositionBar", () => {
 		expect(compositionBar.isOpen).toBe(true);
 		ImageDrop.unregister("pane-1");
 		wrapper.unmount();
+	});
+});
+
+describe("CompositionBar voice input (issue 662)", () => {
+	beforeEach(() => {
+		settings.voiceInput = false;
+		settings.voiceInputModel = "base";
+		voiceInput.options = {
+			models: [{ id: "base", sizeBytes: 147_951_465, isEnglishOnly: false, isDownloaded: true }],
+			languages: ["en"],
+			defaultModelId: "base",
+		};
+		voiceInput.state = "idle";
+		voiceInput.isLatched = false;
+		voiceInput.levels = [];
+		voiceInput.error = null;
+		compositionBar.text = "";
+		vi.useFakeTimers({ toFake: ["Date"] });
+	});
+
+	afterEach(async () => {
+		await VoiceInput.cancel();
+		vi.useRealTimers();
+	});
+
+	it("shows no push-to-talk button when the voice input is off", () => {
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		expect(wrapper.find(".push-to-talk").exists()).toBe(false);
+		wrapper.unmount();
+	});
+
+	it("shows the push-to-talk button between the text input and the button Send when the voice input is on", () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		const children = [...mainRow(wrapper).children];
+		expect(children.map((child) => child.tagName)).toEqual(["BUTTON", "DIV", "BUTTON", "BUTTON"]);
+		expect(children[0]).toBe(findButton(wrapper, "Add images").element);
+		expect(children[1].contains(wrapper.get("textarea.text").element)).toBe(true);
+		expect(children[2].classList.contains("push-to-talk")).toBe(true);
+		expect(children[3]).toBe(findButton(wrapper, "Send").element);
+		wrapper.unmount();
+	});
+
+	it("writes the spoken text in the text input", async () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Run the tests again." : undefined));
+		await wrapper.get(".push-to-talk").trigger("pointerdown", { button: 0 });
+		await vi.waitFor(() => expect(voiceInput.state).toBe("recording"));
+		vi.setSystemTime(Date.now() + LONG_PRESS_MILLISECONDS + 100);
+		window.dispatchEvent(new Event("pointerup"));
+		await vi.waitFor(() => expect((wrapper.get("textarea.text").element as HTMLTextAreaElement).value).toBe("Run the tests again."));
+		expect(insertTextMock).not.toHaveBeenCalled();
+		expect(compositionBar.isOpen).toBe(true);
+		wrapper.unmount();
+	});
+
+	it("shows the level bars and a listening text while the microphone is open, and nothing otherwise", async () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		const placeholder = () => wrapper.get("textarea.text").attributes("placeholder");
+		expect(wrapper.find(".voice-level").exists()).toBe(false);
+		voiceInput.state = "recording";
+		voiceInput.levels = [0, 0.5, 1];
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".voice-level").exists()).toBe(true);
+		expect(wrapper.findAll(".voice-level .bar").length).toBe(LEVEL_COUNT);
+		expect(placeholder()).toBe("Listening…");
+		const field = wrapper.get("textarea.text").element.parentElement as HTMLElement;
+		expect([...field.children].map((child) => child.tagName)).toEqual(["TEXTAREA", "DIV"]);
+		expect(field.querySelector(".voice-level")).not.toBeNull();
+		voiceInput.state = "transcribing";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".voice-level").exists()).toBe(false);
+		expect(placeholder()).toBe("Changing the speech into text…");
+		voiceInput.state = "idle";
+		await wrapper.vm.$nextTick();
+		expect(placeholder()).toBe("Type a question, or press Enter to paste the images");
+		wrapper.unmount();
+	});
+
+	it("shows the time since the recording started, as minutes and seconds", async () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		expect(wrapper.find(".elapsed").exists()).toBe(false);
+		voiceInput.startedAt = Date.now() - 67_000;
+		voiceInput.state = "recording";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get(".elapsed").text()).toBe("1:07");
+		voiceInput.startedAt = Date.now() - 7_000;
+		voiceInput.state = "idle";
+		await wrapper.vm.$nextTick();
+		voiceInput.state = "recording";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get(".elapsed").text()).toBe("0:07");
+		voiceInput.state = "idle";
+		wrapper.unmount();
+	});
+
+	it("marks the field while it listens, so that the text keeps clear of the level bars", async () => {
+		settings.voiceInput = true;
+		const wrapper = mountBar();
+		expect(wrapper.get(".field").classes()).not.toContain("is-listening");
+		voiceInput.state = "recording";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get(".field").classes()).toContain("is-listening");
+		voiceInput.state = "idle";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get(".field").classes()).not.toContain("is-listening");
+		wrapper.unmount();
+	});
+
+	describe("with a recording that runs", () => {
+		/** The commands that the web page sent to the desktop application, in order. */
+		function commandNames(): string[] {
+			return invokeMock.mock.calls.map((call) => call[0] as string);
+		}
+
+		/** Starts a recording with a click on the push-to-talk button, then lets it be kept by the click. */
+		async function startKeptRecording(wrapper: ReturnType<typeof mountBar>) {
+			await wrapper.get(".push-to-talk").trigger("pointerdown", { button: 0 });
+			await vi.waitFor(() => expect(voiceInput.state).toBe("recording"));
+			window.dispatchEvent(new Event("pointerup"));
+			await vi.waitFor(() => expect(voiceInput.isLatched).toBe(true));
+		}
+
+		it("stops the recording, writes the speech, and sends the images and the whole text with the button Send", async () => {
+			settings.voiceInput = true;
+			const writer = vi.fn().mockResolvedValue(undefined);
+			ImageDrop.register("pane-1", writer);
+			ImageDrop.handleDrop(["/shots/a.png"]);
+			compositionBar.text = "Please";
+			invokeMock.mockImplementation(async (name: string) => {
+				if (name === "voice_stop_recording") {
+					return "run the tests";
+				}
+				return name === "voice_start_recording" ? undefined : "data:image/png;base64,AAAA";
+			});
+			const wrapper = mountBar();
+			await startKeptRecording(wrapper);
+			await findButton(wrapper, "Send").trigger("click");
+			await vi.waitFor(() => expect(wrapper.emitted("sent")).toHaveLength(1), { timeout: 3000 });
+			const names = commandNames();
+			expect(names.indexOf("voice_stop_recording")).toBeGreaterThan(names.indexOf("voice_start_recording"));
+			expect(names.indexOf("clipboard_set_image")).toBeGreaterThan(names.indexOf("voice_stop_recording"));
+			expect(insertTextMock).toHaveBeenCalledWith("pane-1", "Please run the tests", true);
+			expect(voiceInput.state).toBe("idle");
+			ImageDrop.unregister("pane-1");
+			wrapper.unmount();
+		});
+
+		it("does the same with the key Enter in the text input", async () => {
+			settings.voiceInput = true;
+			const writer = vi.fn().mockResolvedValue(undefined);
+			ImageDrop.register("pane-1", writer);
+			ImageDrop.handleDrop(["/shots/a.png"]);
+			invokeMock.mockImplementation(async (name: string) => {
+				if (name === "voice_stop_recording") {
+					return "spoken";
+				}
+				return name === "voice_start_recording" ? undefined : "data:image/png;base64,AAAA";
+			});
+			const wrapper = mountBar();
+			await startKeptRecording(wrapper);
+			await wrapper.find("textarea.text").trigger("keydown", { key: "Enter" });
+			await vi.waitFor(() => expect(wrapper.emitted("sent")).toHaveLength(1), { timeout: 3000 });
+			expect(insertTextMock).toHaveBeenCalledWith("pane-1", "spoken", true);
+			ImageDrop.unregister("pane-1");
+			wrapper.unmount();
+		});
+
+		it("sends nothing and stays open when the speech cannot change into text, so that the error shows", async () => {
+			settings.voiceInput = true;
+			const writer = vi.fn().mockResolvedValue(undefined);
+			ImageDrop.register("pane-1", writer);
+			ImageDrop.handleDrop(["/shots/a.png"]);
+			invokeMock.mockImplementation(async (name: string) => {
+				if (name === "voice_stop_recording") {
+					throw "no_signal";
+				}
+				return name === "voice_start_recording" ? undefined : "data:image/png;base64,AAAA";
+			});
+			const wrapper = mountBar();
+			await startKeptRecording(wrapper);
+			await findButton(wrapper, "Send").trigger("click");
+			await vi.waitFor(() => expect(voiceInput.error).toBe("no_signal"));
+			expect(wrapper.emitted("sent")).toBeUndefined();
+			expect(writer).not.toHaveBeenCalled();
+			expect(insertTextMock).not.toHaveBeenCalled();
+			expect(compositionBar.isOpen).toBe(true);
+			expect(compositionBar.paths).toEqual(["/shots/a.png"]);
+			await vi.waitFor(() => expect(findButton(wrapper, "Send").attributes("disabled")).toBeUndefined());
+			ImageDrop.unregister("pane-1");
+			wrapper.unmount();
+		});
+
+		it("throws away the recording with the key Escape, and sends nothing", async () => {
+			settings.voiceInput = true;
+			ImageDrop.handleDrop(["/shots/a.png"]);
+			invokeMock.mockImplementation(async (name: string) => (name === "voice_start_recording" ? undefined : "data:image/png;base64,AAAA"));
+			const wrapper = mountBar();
+			await startKeptRecording(wrapper);
+			await wrapper.find("textarea.text").trigger("keydown", { key: "Escape" });
+			await vi.waitFor(() => expect(commandNames()).toContain("voice_cancel_recording"));
+			expect(commandNames()).not.toContain("voice_stop_recording");
+			expect(voiceInput.state).toBe("idle");
+			expect(compositionBar.isOpen).toBe(false);
+			expect(insertTextMock).not.toHaveBeenCalled();
+			wrapper.unmount();
+		});
+	});
+
+	it("shows no level bars when the voice input is off", async () => {
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		voiceInput.state = "recording";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".voice-level").exists()).toBe(false);
+		voiceInput.state = "idle";
+		wrapper.unmount();
+	});
+
+	it("shows a text under the text input when macOS refuses the microphone", async () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		voiceInput.error = "microphone_denied";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get("[role=alert]").text()).toContain("System Settings, Privacy & Security, Microphone");
+		wrapper.unmount();
+	});
+
+	it("shows the general text for an error without a text of its own, and no text without an error", async () => {
+		settings.voiceInput = true;
+		ImageDrop.handleDrop(["/shots/a.png"]);
+		const wrapper = mountBar();
+		expect(wrapper.find("[role=alert]").exists()).toBe(false);
+		voiceInput.error = "transcription_failed";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.get("[role=alert]").text()).toBe("The voice input failed. Press the button again.");
+		wrapper.unmount();
+		expect(voiceInput.error).toBeNull();
 	});
 });

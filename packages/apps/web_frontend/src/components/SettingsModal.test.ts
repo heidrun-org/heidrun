@@ -22,21 +22,21 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the nine sections in the sidebar, by topic (issues #556 and #596), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
+  it("lists the ten sections in the sidebar, by topic (issues #556, #596, and #662), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access"]);
+    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access", "Voice input"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
     await links[3].trigger("click");
     expect(wrapper.get("h3").text()).toBe("Confirmations");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false]);
     expect(links[3].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
     wrapper.unmount();

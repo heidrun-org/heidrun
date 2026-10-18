@@ -75,5 +75,12 @@
   "mobileAccess.off": "Heidrun opens no tunnel, and no phone can connect. The tunnel also closes when you quit Heidrun.",
   "mobileTyping.what": "The phone always shows the terminals, to read only. This option lets you type in a terminal from the phone.",
   "mobileTyping.on": "The phone still asks you before it lets you type, each time you open a terminal. Every command you type passes the guards.",
-  "mobileTyping.off": "The phone cannot type in a terminal."
+  "mobileTyping.off": "The phone cannot type in a terminal.",
+  "voiceInput.what": "The voice input lets you hold a button, speak, and release the button. A short click on the button also works: it starts to listen, and a second click stops. Heidrun changes your speech into text with a Whisper model, on this computer, and writes the text in the composition bar. You read the text, edit it, and send it.",
+  "voiceInput.on": "Heidrun shows the push-to-talk button in the composition bar, between the text input and the button Send. Open the composition bar with the button in the header of the focused pane. The microphone opens only while you hold the button, or between two clicks. Level bars show your voice while it listens. macOS asks for the permission the first time. The sound stays in the memory of this computer: Heidrun never saves it and never sends it.",
+  "voiceInput.off": "Heidrun shows no push-to-talk button, downloads no model, and never opens the microphone.",
+  "voiceInputLanguage.what": "The language that you speak.",
+  "voiceInputLanguage.how": "“Detect the language” lets Whisper find the language of each recording. A fixed language is faster and more exact. A model whose name ends with .en understands only English, and ignores this choice.",
+  "voiceInputModel.what": "The Whisper model is the file that changes speech into text. A larger model is more exact and slower, and its file is larger.",
+  "voiceInputModel.how": "Heidrun downloads the file from Hugging Face when you choose a model that is not on this computer, and writes it in the folder models of the Heidrun folder. Only this download uses the network: the speech never leaves this computer."
 }
