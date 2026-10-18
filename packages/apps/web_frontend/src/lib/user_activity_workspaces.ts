@@ -77,29 +77,27 @@ export const USER_ACTIVITY_WORKSPACE_COLOR_TOKENS: readonly string[] = [
 
 export class UserActivityWorkspaces {
 	/**
-	 * Lists the workspaces that the developer can choose: every folder of a record, and the folder of the workspace that
-	 * runs an active period now. A workspace that is open takes its label. A workspace that is closed, for example one
-	 * whose worktree was removed, takes the last part of its folder. When two workspaces have the same name, the folder
-	 * follows the name in parentheses, so that the developer can tell them apart.
+	 * Lists the workspaces that are open now. Each workspace takes its label, or the last part of its folder when its label
+	 * is empty. When two workspaces have the same name, the folder follows the name in parentheses, so that the developer
+	 * can tell them apart.
 	 *
-	 * @param records - The active periods that ended. Only the folder of each record is read.
-	 * @param runningPeriodFolder - The folder of the workspace that runs an active period now, or `null` when none runs.
 	 * @param openWorkspaces - The workspaces that are open now.
 	 * @returns The choices, sorted by name.
 	 */
 	static choices(
-		records: readonly { workspaceFolder: string }[],
-		runningPeriodFolder: string | null,
 		openWorkspaces: readonly UserActivityOpenWorkspace[],
 	): UserActivityWorkspaceChoice[] {
-		const folders = new Set<string>(records.map((record) => record.workspaceFolder));
-		if (runningPeriodFolder !== null) {
-			folders.add(runningPeriodFolder);
+		const namesByFolder = new Map<string, string>();
+		for (const workspace of openWorkspaces) {
+			if (workspace.folder === null || namesByFolder.has(workspace.folder) === true) {
+				continue;
+			}
+			namesByFolder.set(
+				workspace.folder,
+				workspace.label === "" ? UserActivityWorkspaces._lastPartOf(workspace.folder) : workspace.label,
+			);
 		}
-		const named = [...folders].map((folder) => {
-			const openWorkspace = openWorkspaces.find((candidate) => candidate.folder === folder && candidate.label !== "");
-			return { folder, name: openWorkspace?.label ?? UserActivityWorkspaces._lastPartOf(folder) };
-		});
+		const named = Array.from(namesByFolder, ([folder, name]) => ({ folder, name }));
 		const choices = named.map((choice) => {
 			const isShared = named.some((other) => other.folder !== choice.folder && other.name === choice.name);
 			return { folder: choice.folder, name: isShared === true ? `${choice.name} (${choice.folder})` : choice.name };

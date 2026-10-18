@@ -46,6 +46,10 @@ const HOUR_MS = 3_600_000;
 /** The folder of the workspace that is open, and the folder of a workspace that is closed. */
 const OPEN_FOLDER = "/work/heidrun";
 const CLOSED_FOLDER = "/work/old_experiment";
+const OPEN_WORKSPACES = [
+  { workspace_id: "w1", number: 1, label: "Heidrun app", worktree: { path: OPEN_FOLDER } },
+  { workspace_id: "w2", number: 2, label: "old_experiment", worktree: { path: CLOSED_FOLDER } },
+];
 
 /** Waits until the chart has called Plotly.js this number of times: the chart loads Plotly.js after it mounts. */
 async function waitForDrawings(drawingCount: number): Promise<void> {
@@ -113,8 +117,13 @@ const resizeCallbacks: Array<() => void> = [];
  *
  * @param records - The records that the data layer gives, or the error that it gives.
  * @param runningPeriodStartedAgoMs - How long ago the active period that runs now started, or `null` when no period runs.
+ * @param openWorkspaceList - The workspaces that Heidrun currently has open.
  */
-async function mountUserActivityTab(records: unknown[] | Error | Promise<never>, runningPeriodStartedAgoMs: number | null = null) {
+async function mountUserActivityTab(
+  records: unknown[] | Error | Promise<never>,
+  runningPeriodStartedAgoMs: number | null = null,
+  openWorkspaceList = OPEN_WORKSPACES,
+) {
   invoke.mockReset();
   if (records instanceof Error) {
     invoke.mockRejectedValue(records);
@@ -125,7 +134,7 @@ async function mountUserActivityTab(records: unknown[] | Error | Promise<never>,
   }
   const { state } = await import("../stores/session");
   state.snapshot = {
-    workspaces: [{ workspace_id: "w1", number: 1, label: "Heidrun app", worktree: { path: OPEN_FOLDER } }],
+    workspaces: openWorkspaceList,
     tabs: [],
     panes: [],
     agents: [],
@@ -434,21 +443,30 @@ describe("UserActivityTab: the workspaces", () => {
     expect(sumOfBars()).toBeCloseTo(2, 5);
   });
 
-  it("lists the workspace of the running active period even when it has no record", async () => {
-    const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)], 30_000);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["Heidrun app", "old_experiment"]);
+  it("lists an open workspace even when it has no record", async () => {
+    const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)], 30_000, [OPEN_WORKSPACES[0]]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["Heidrun app"]);
   });
 
-  it("does not list the selected workspace when it has no record and no active period runs", async () => {
-    const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)]);
-    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["old_experiment"]);
+  it("does not list a workspace that has activity records but is closed", async () => {
+    const { wrapper } = await mountUserActivityTab([recordOf(CLOSED_FOLDER, 20 * 60_000, 2 * 60_000)], null, [OPEN_WORKSPACES[0]]);
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["Heidrun app"]);
+    await waitForDrawings(1);
+    expect(sumOfBars()).toBe(0);
   });
 
-  it("has no button of workspace when there is no record and no running active period, and it still draws the chart", async () => {
-    const { wrapper } = await mountUserActivityTab([]);
+  it("updates its workspace choices when the open workspace list changes", async () => {
+    const { wrapper } = await mountUserActivityTab([], null, []);
     await waitForDrawings(1);
     expect(wrapper.find('[role="group"][aria-label="Workspaces"]').exists()).toBe(false);
     expect(lastDrawing().data.x).toHaveLength(24);
+    const { state } = await import("../stores/session");
+    state.snapshot = {
+      ...state.snapshot!,
+      workspaces: [OPEN_WORKSPACES[0]],
+    } as never;
+    await flushPromises();
+    expect(buttonsOf(wrapper, "Workspaces").map((button) => button.text)).toEqual(["Heidrun app"]);
   });
 
   it("shows an error message when the records cannot be read", async () => {

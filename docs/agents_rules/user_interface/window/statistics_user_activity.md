@@ -1,11 +1,11 @@
 # User interface of Heidrun: Statistics window, tab "User activity"
 
 - Created: 15 October 2026
-- Last updated: 17 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [Statistics window](statistics_window.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md), [Stacked bars](statistics_user_activity_stacked_bars.md)
-- Related issue: [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 552](https://github.com/heidrun-org/heidrun/issues/552), [issue 629](https://github.com/heidrun-org/heidrun/issues/629)
+- Related issue: [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 552](https://github.com/heidrun-org/heidrun/issues/552), [issue 629](https://github.com/heidrun-org/heidrun/issues/629), [issue 680](https://github.com/heidrun-org/heidrun/issues/680)
 
 This file is a part of the rules of the Statistics window. The words are defined in [glossary/user_activity.md](../../glossary/user_activity.md). The tab has no person, because the user activity is the activity of the person in front of the computer.
 
@@ -19,8 +19,8 @@ This file is a part of the rules of the Statistics window. The words are defined
   - Last month: 6 hours, 1 day (chosen).
 - Each change of the time range goes back to the slot length that this time range starts with. A change of the slot length never changes the time range.
 - The workspaces: after the label "Workspaces", two groups of small Bootstrap buttons (`btn-group btn-group-sm`, with `btn-check btn-outline theme-secondary` labels), the same as the workspace selector of the tab "Work of one person" ([statistics_person_work_workspace.md](statistics_person_work_workspace.md)). The first group is a radio button group with two buttons, "All" and "None". "All" checks every workspace, and "None" unchecks them all. "All" is shown as chosen when every workspace is checked, and "None" when no workspace is checked; when only some are checked, neither is shown as chosen. The second group has one checkbox button for each workspace, sorted by name, all checked when the window opens, and a click on one shows or hides this workspace. The second group wraps on a narrow window. The button of a workspace starts with a small dot of its color ([statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md)).
-- A workspace is listed when it has a user activity record in the longest time range, or when it runs the active period now. The button of an open workspace has the label of the workspace in the left sidebar. The button of a workspace that is closed, for example a removed worktree, has the last part of its folder. When two workspaces have the same name, the folder follows the name in parentheses. The title of each button is the folder of the workspace.
-- When there is no record and no active period, the tab shows no button of workspace. When the developer unchecks every workspace, the tab shows the text "No workspace is chosen…" in place of the histogram.
+- The workspace choices show only workspaces currently open in Heidrun, including workspaces with no user activity record in the longest time range. A button has the label of the workspace in the left sidebar. When two workspaces have the same name, the folder follows the name in parentheses. The title of each button is the folder of the workspace. Opening or closing a workspace updates the choices and the histogram while the Statistics window stays open.
+- A workspace that has activity records but is closed is not listed, and its records do not contribute to the histogram. When no workspace is open, the tab shows no workspace button and still shows the histogram. When the developer unchecks every workspace, the tab shows the text "No workspace is chosen…" in place of the histogram.
 - The choice of the workspaces stays when the time range or the slot length changes.
 
 ## The histogram of the user activity time
@@ -44,5 +44,5 @@ This file is a part of the rules of the Statistics window. The words are defined
 ## Tests
 
 - `lib/user_activity_slots.test.ts` tests the slots of each time range and each slot length: no record, one active period inside one slot, one active period that crosses the limit between two slots, one active period that starts before the time range, the active period that runs now, the same total for every slot length, and the step and the place of the labels. The test of the last day, of the last week, and of the last month uses the clock of the computer, so run it with another time zone to check the limits, for example `TZ=Asia/Kolkata`.
-- `lib/user_activity_workspaces.test.ts` tests the list of the workspaces, their names, and the filter of the records.
-- `components/UserActivityTab.test.ts` tests the three choices, the default slot length of each time range, the workspace buttons, and the running active period, with a replacement for Plotly.js, because jsdom cannot draw an SVG chart. `components/StatisticsModal.test.ts` tests the tab list and the default histogram.
+- `lib/user_activity_workspaces.test.ts` tests the list of open workspaces, their names, and the filter of the records.
+- `components/UserActivityTab.test.ts` tests the three choices, the default slot length of each time range, the workspace buttons, changes to the open workspace list, the running active period, and the exclusion of closed workspaces with activity records, with a replacement for Plotly.js, because jsdom cannot draw an SVG chart. `components/StatisticsModal.test.ts` tests the tab list and the default histogram.
