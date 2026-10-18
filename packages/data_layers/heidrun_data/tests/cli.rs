@@ -853,9 +853,9 @@ fn a_price_list_that_cannot_be_read_gives_a_warning_and_the_tokens_are_still_wri
     assert_eq!(fixture.query("SELECT round(costUsd, 8) AS costUsd FROM token_usage_with_cost"), vec![json!({ "costUsd": ANSWER_COST })]);
 }
 
-/// The text of the `SKILL.md` of the package, in the folder `skills/heidrun_data`.
+/// The text of the `SKILL.md` of the package, in the folder `skills/heidrun-data`.
 fn skill_text() -> String {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun_data").join("SKILL.md");
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun-data").join("SKILL.md");
     std::fs::read_to_string(path).unwrap()
 }
 
