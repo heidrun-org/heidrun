@@ -32,6 +32,7 @@ beforeEach(() => {
 	openDialogMock.mockReset();
 	insertTextMock.mockReset();
 	insertTextMock.mockResolvedValue(undefined);
+	settings.voiceInput = false;
 	ImageDrop.close();
 });
 
@@ -45,7 +46,7 @@ function findButton(wrapper: ReturnType<typeof mountBar>, label: string) {
 	return wrapper.find(`button[aria-label="${label}"]`);
 }
 
-/** The line of the plus button, the text input, the push-to-talk button, and the button Send. */
+/** The line of the plus button, the text input, the button Send, and the push-to-talk button. */
 function mainRow(wrapper: ReturnType<typeof mountBar>): HTMLElement {
 	return findButton(wrapper, "Add images").element.parentElement as HTMLElement;
 }
@@ -163,7 +164,7 @@ describe("CompositionBar", () => {
 		wrapper.unmount();
 	});
 
-	it("pastes the images with the button Send, closes, and says that it sent, with no text written", async () => {
+	it("pastes the images with the button Send, stays open, and says that it sent, with no text written", async () => {
 		const writer = vi.fn().mockResolvedValue(undefined);
 		ImageDrop.register("pane-1", writer);
 		ImageDrop.handleDrop(["/shots/a.png"]);
@@ -174,7 +175,27 @@ describe("CompositionBar", () => {
 		expect(writer).toHaveBeenCalledWith("\x16");
 		expect(insertTextMock).not.toHaveBeenCalled();
 		expect(compositionBar.paths).toEqual([]);
-		expect(compositionBar.isOpen).toBe(false);
+		expect(compositionBar.isOpen).toBe(true);
+		ImageDrop.unregister("pane-1");
+		wrapper.unmount();
+	});
+
+	it("stays open after a send, with an empty text input, and sends a second message", async () => {
+		ImageDrop.register("pane-1", vi.fn().mockResolvedValue(undefined));
+		compositionBar.isOpen = true;
+		const wrapper = mountBar();
+		await wrapper.find("textarea.text").setValue("first");
+		await wrapper.find("textarea.text").trigger("keydown", { key: "Enter" });
+		await vi.waitFor(() => expect(wrapper.emitted("sent")).toHaveLength(1));
+		expect(compositionBar.isOpen).toBe(true);
+		expect(compositionBar.text).toBe("");
+		expect(wrapper.find("textarea.text").exists()).toBe(true);
+		await wrapper.find("textarea.text").setValue("second");
+		await wrapper.find("textarea.text").trigger("keydown", { key: "Enter" });
+		await vi.waitFor(() => expect(wrapper.emitted("sent")).toHaveLength(2));
+		expect(insertTextMock).toHaveBeenNthCalledWith(1, "pane-1", "first", true);
+		expect(insertTextMock).toHaveBeenNthCalledWith(2, "pane-1", "second", true);
+		expect(compositionBar.isOpen).toBe(true);
 		ImageDrop.unregister("pane-1");
 		wrapper.unmount();
 	});
@@ -192,6 +213,7 @@ describe("CompositionBar", () => {
 		expect(insertTextMock).toHaveBeenCalledWith("pane-1", "what is wrong here?", true);
 		expect(wrapper.emitted("sent")).toHaveLength(1);
 		expect(compositionBar.text).toBe("");
+		expect(compositionBar.isOpen).toBe(true);
 		vi.useRealTimers();
 		ImageDrop.unregister("pane-1");
 		wrapper.unmount();
@@ -272,7 +294,7 @@ describe("CompositionBar voice input (issue 662)", () => {
 		wrapper.unmount();
 	});
 
-	it("shows the push-to-talk button between the text input and the button Send when the voice input is on", () => {
+	it("shows the push-to-talk button after the button Send, at the right end, when the voice input is on", () => {
 		settings.voiceInput = true;
 		ImageDrop.handleDrop(["/shots/a.png"]);
 		const wrapper = mountBar();
@@ -280,8 +302,8 @@ describe("CompositionBar voice input (issue 662)", () => {
 		expect(children.map((child) => child.tagName)).toEqual(["BUTTON", "DIV", "BUTTON", "BUTTON"]);
 		expect(children[0]).toBe(findButton(wrapper, "Add images").element);
 		expect(children[1].contains(wrapper.get("textarea.text").element)).toBe(true);
-		expect(children[2].classList.contains("push-to-talk")).toBe(true);
-		expect(children[3]).toBe(findButton(wrapper, "Send").element);
+		expect(children[2]).toBe(findButton(wrapper, "Send").element);
+		expect(children[3].classList.contains("push-to-talk")).toBe(true);
 		wrapper.unmount();
 	});
 
