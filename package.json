@@ -5,7 +5,7 @@
   "version": "0.2.7",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter mobile_website build && pnpm --filter desktop_tauri tauri dev --config tauri.development.conf.json",
+    "dev": "sh scripts/build_command_line_tools.sh && pnpm --filter mobile_website build && pnpm --filter desktop_tauri tauri dev --config tauri.development.conf.json",
     "build": "pnpm --filter desktop_tauri tauri build",
     "dev:web": "pnpm --filter web_frontend dev",
     "build:web": "pnpm --filter web_frontend build",

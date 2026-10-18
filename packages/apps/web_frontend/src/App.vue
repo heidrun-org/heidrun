@@ -90,6 +90,7 @@ import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
 import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
+import { loadAntigravityLink } from "./stores/antigravity";
 import { t } from "./i18n/index";
 import { ResizerWidth } from "./lib/resizer_width";
 import type { PaneOuterEdge } from "./lib/pane_separators";
@@ -289,6 +290,7 @@ onMounted(async () => {
   loadHistory();
   startMobile();
   loadClaudeLink();
+  loadAntigravityLink();
   startRemoteWatch();
   unlistenDrop = await getCurrentWebview().onDragDropEvent((event) => {
     if (event.payload.type !== "drop") return;

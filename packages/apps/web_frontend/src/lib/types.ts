@@ -132,10 +132,10 @@ export interface ContextUsage {
 
 /** Quota block in the status bar. */
 export interface QuotaBlock {
-  provider: "claude" | "codex";
+  provider: "claude" | "codex" | "antigravity";
   label: string;
-  /** `id` names the window in the code, `name` is the text shown (translated). */
-  windows: { id: "session" | "week"; name: string; percent: number; resetsAt?: number }[];
+  /** `id` distinguishes windows from one account, `name` is the text shown, and `period` sets their time behaviour. */
+  windows: { id: string; name: string; percent: number; resetsAt?: number; period?: "session" | "week"; windowMinutes?: number }[];
   cost?: number;
   updatedAt?: number;
 }

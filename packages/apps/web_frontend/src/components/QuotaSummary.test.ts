@@ -43,6 +43,25 @@ describe("QuotaSummary", () => {
     expect(wrapper.get(".popover").text()).not.toContain("Plan");
   });
 
+  it("shows Antigravity quota buckets and their reset details in the same information card", async () => {
+    const reset = Date.now() / 1000 + 6 * 24 * 60 * 60;
+    const quota: QuotaBlock = {
+      provider: "antigravity",
+      label: "Antigravity",
+      windows: [
+        { id: "antigravity:gemini-weekly", name: "Gemini weekly limit", percent: 13, resetsAt: reset, period: "week", windowMinutes: 10080 },
+        { id: "antigravity:3p-weekly", name: "Third-party models weekly limit", percent: 0, resetsAt: reset, period: "week", windowMinutes: 10080 },
+      ],
+    };
+    const wrapper = mount(QuotaSummary, { props: { quota } });
+    await wrapper.trigger("click");
+    expect(wrapper.get(".label").text()).toBe("Antigravity");
+    expect(wrapper.findAll('[data-field="window"]')).toHaveLength(2);
+    expect(wrapper.get(".popover").text()).toContain("Gemini weekly limit");
+    expect(wrapper.get(".popover").text()).toContain("Third-party models weekly limit");
+    expect(wrapper.get(".popover").text()).toContain("Resets at");
+  });
+
   it("opens the popover with a click on the item, and closes it with the next click", async () => {
     const wrapper = mount(QuotaSummary, { props: { quota: claude } });
     expect(wrapper.find(".popover").exists()).toBe(false);

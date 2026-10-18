@@ -2,6 +2,8 @@
   "tabNumber": "onglet {number}",
   "window.session": "Limite de 5 heures",
   "window.week": "Limite hebdomadaire",
+  "antigravity.geminiWeekly": "Limite hebdomadaire Gemini",
+  "antigravity.thirdPartyWeekly": "Limite hebdomadaire des modèles tiers",
   "notify.question": "{name} te pose une question",
   "notify.done": "{name} a terminé",
   "notify.blocked": "{name} attend une décision",

@@ -8,6 +8,7 @@ import { resolveMacroVariables } from "./macros";
 import { t } from "../i18n/index";
 import { withCodexColors } from "../lib/terminal_colors";
 import { chatResumeCommand } from "../lib/chat_links";
+import { shellQuote } from "../lib/launcher_agent_command";
 import type { PaneInfo } from "../lib/types";
 
 export interface AgentDef {
@@ -27,10 +28,20 @@ export function listAgents(cwd: string | null): Promise<AgentDef[]> {
 const SAFE = /^[A-Za-z0-9._\-[\]]+$/;
 const q = (v: string) => `'${v}'`;
 
-export function agentCommand(tool: "claude" | "codex", agent: string | null, model: string | null): string {
+export function agentCommand(
+  tool: "claude" | "codex" | "agy",
+  agent: string | null,
+  model: string | null,
+  prompt = "",
+): string {
   if (agent && !SAFE.test(agent)) throw new Error(t("agentsStore.invalidAgentName", { name: agent }));
   if (model && !SAFE.test(model)) throw new Error(t("agentsStore.invalidModel", { name: model }));
   if (tool === "codex") return ["codex", model ? `-m ${q(model)}` : ""].filter(Boolean).join(" ");
+  if (tool === "agy") {
+    return ["agy", model ? `--model ${q(model)}` : "", prompt.trim() ? `-i ${shellQuote(prompt.trim())}` : ""]
+      .filter(Boolean)
+      .join(" ");
+  }
   return ["claude", agent ? `--agent ${q(agent)}` : "", model ? `--model ${q(model)}` : ""].filter(Boolean).join(" ");
 }
 
@@ -58,7 +69,7 @@ async function whenReady(paneId: string): Promise<"ready" | "closed" | "timeout"
 export async function launchAgent(o: {
   workspaceId: string;
   cwd: string | null;
-  tool: "claude" | "codex";
+  tool: "claude" | "codex" | "agy";
   agent: string | null;
   model: string | null;
   label: string;
@@ -71,13 +82,16 @@ export async function launchAgent(o: {
   let command: string;
   try {
     if (o.resumeId !== undefined && o.resumeId !== null) {
+      if (o.tool === "agy") {
+        throw new Error(t("agentsStore.invalidSessionId", { name: o.resumeId }));
+      }
       const resumeCommand = chatResumeCommand(o.tool, o.resumeId);
       if (resumeCommand === null) {
         throw new Error(t("agentsStore.invalidSessionId", { name: o.resumeId }));
       }
       command = resumeCommand;
     } else {
-      command = agentCommand(o.tool, o.agent, o.model);
+      command = agentCommand(o.tool, o.agent, o.model, o.prompt);
     }
     // Codex chooses its light or dark colours from the text colour and the background colour that Herdr reports: see terminal_colors.ts.
     command = withCodexColors(command);
@@ -110,7 +124,7 @@ export async function launchAgent(o: {
     return "failed";
   }
   const text = o.prompt.trim();
-  if (!text) return "ok";
+  if (!text || o.tool === "agy") return "ok";
   const ready = await whenReady(pane.pane_id);
   if (ready === "closed") {
     toast(t("agentsStore.tabClosedBeforeReady"));

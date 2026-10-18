@@ -119,7 +119,7 @@ describe("SettingsModal: frame (issue #412)", () => {
 });
 
 describe("SettingsModal: command of a new tab, in the section Coding agents (issues #328 and #556)", () => {
-  it("shows the three commands as a Bootstrap button group of radio inputs, in the secondary color, with Terminal chosen by default", async () => {
+  it("shows only Terminal when every coding agent is switched off", async () => {
     const wrapper = await mountSettings();
     const { settingsModal } = await import("../stores/settings");
     settingsModal.section = "agents";
@@ -128,28 +128,45 @@ describe("SettingsModal: command of a new tab, in the section Coding agents (iss
     const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
     expect(group.attributes("role")).toBe("group");
     const labels = group.findAll("label");
-    expect(labels.map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+    expect(labels.map((label) => label.text())).toEqual(["Terminal"]);
     for (const label of labels) {
       expect(label.classes()).toEqual(expect.arrayContaining(["btn-check", "btn-outline", "theme-secondary"]));
     }
     const radios = group.findAll("input[type=radio]");
-    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true, false, false]);
+    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([true]);
     wrapper.unmount();
   });
 
   it.each([
-    [1, "claude"],
-    [2, "codex"],
-    [0, "terminal"],
-  ] as const)("saves the command of the radio input %i as %s", async (index, command) => {
-    const wrapper = await mountSettings();
+    ["claude", "Claude Code"],
+    ["codex", "Codex"],
+    ["agy", "Antigravity"],
+  ] as const)("shows Terminal and %s when that coding agent is switched on", async (agent, label) => {
     const { settings, settingsModal } = await import("../stores/settings");
+    settings.ownedAgents = [agent === "agy" ? "antigravity" : agent];
+    const wrapper = await mountSettings();
+    settingsModal.section = "agents";
+    await flushPromises();
+    expect(wrapper.get('.btn-group[aria-label="Default command of a new tab"]').findAll("label").map((item) => item.text())).toEqual(["Terminal", label]);
+    wrapper.unmount();
+  });
+
+  it.each([
+    ["claude", "claude"],
+    ["codex", "codex"],
+    ["terminal", "terminal"],
+    ["agy", "agy"],
+  ] as const)("saves the command %s", async (agent, command) => {
+    const { settings, settingsModal } = await import("../stores/settings");
+    settings.ownedAgents = agent === "terminal" ? [] : [agent === "agy" ? "antigravity" : agent];
+    const wrapper = await mountSettings();
     settingsModal.section = "agents";
     await flushPromises();
     const radios = wrapper.get('.btn-group[aria-label="Default command of a new tab"]').findAll("input[type=radio]");
-    await radios[index].setValue(true);
+    const radio = radios.find((item) => (item.element as HTMLInputElement).value === command)!;
+    await radio.setValue(true);
     expect(settings.newTabCommand).toBe(command);
-    expect(radios.map((radio) => (radio.element as HTMLInputElement).checked)).toEqual([0, 1, 2].map((position) => position === index));
+    expect(radios.find((item) => (item.element as HTMLInputElement).checked)?.element).toBe(radio.element);
     wrapper.unmount();
   });
 });
