@@ -1,0 +1,7 @@
+{
+  "name": "coding_agent_plugin",
+  "private": true,
+  "license": "MIT",
+  "version": "0.0.0",
+  "type": "module"
+}
