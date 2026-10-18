@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
 const COMMANDS: [&str; 2] = ["heidrun_ctrl", "heidrun_data"];
-const SKILLS: [&str; 2] = ["heidrun_ctrl", "heidrun_data"];
+const SKILLS: [&str; 2] = ["heidrun-ctrl", "heidrun_data"];
 
 /// Makes the included command lines available to the coding agents and installs the included skills once per version.
 pub(crate) fn install(app: &AppHandle) {

@@ -1,6 +1,27 @@
 # heidrun_ctrl
 
-`heidrun_ctrl` is the command line that controls the Heidrun application. A coding agent reads its [SKILL.md](skills/heidrun_ctrl/SKILL.md) and uses the commands, in the same way as the developer uses the window.
+`heidrun_ctrl` is the command line that controls the Heidrun application. A coding agent reads its [SKILL.md](skills/heidrun-ctrl/SKILL.md) and uses the commands, in the same way as the developer uses the window. The [Agent Plugin](plugin.json) packages the current macro and launcher commands for use in other repositories.
+
+## Install the Agent Plugin
+
+The repository's [Agent Plugin catalog](../../../.agents/plugins/marketplace.json) points to this package. In Codex, add the Heidrun repository as a marketplace, then install the Agent Plugin:
+
+```bash
+codex plugin marketplace add heidrun-org/heidrun --ref dev_jerome
+codex plugin add heidrun-control@heidrun
+```
+
+The skill requires the `heidrun_ctrl` command. The installed Heidrun application places the command in `~/.local/bin` when it starts. Make sure that folder is on the shell path before using the skill.
+
+To install only the skill through the skills CLI, use its direct GitHub folder address. The [repository skill copy](../../../.agents/skills/heidrun-ctrl/SKILL.md) lets the skills CLI find the skill from the repository root and must stay in sync with the package skill. The direct address selects the package source on the `dev_jerome` branch:
+
+```bash
+npx skills add https://github.com/heidrun-org/heidrun/tree/dev_jerome/packages/auxiliary/heidrun_ctrl/skills/heidrun-ctrl
+```
+
+The skills.sh listing is based on installs made through the skills CLI. Its public listing may appear after people install the skill; the direct address works without waiting for a listing.
+
+## Commands
 
 There are two groups of commands, `macros` and `launchers`, and each group has the four commands list, add, update, and delete.
 

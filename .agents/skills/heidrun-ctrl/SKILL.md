@@ -1,6 +1,7 @@
 ---
-name: heidrun_ctrl
+name: heidrun-ctrl
 description: Control the Heidrun application from the command line heidrun_ctrl. Use it to list, add, update, or delete the macros of the developer, the reusable texts that Heidrun writes into a pane, the hard-coded macros of Heidrun included, and to list, add, update, or delete the launchers of a project, the command lines that Heidrun runs in their own tab. A running Heidrun shows each change in its window within about one second.
+compatibility: macOS with Heidrun installed and heidrun_ctrl available on the shell path.
 ---
 
 # heidrun_ctrl
@@ -11,6 +12,8 @@ description: Control the Heidrun application from the command line heidrun_ctrl.
 - A launcher is one item of the Launchers sidebar section: a command line that Heidrun runs in its own tab when the developer clicks its button "Run". The commands create, read, change, and remove launchers. They do not run a launcher. A launcher is not a macro.
 
 `heidrun_ctrl` changes files. It does not need the Heidrun window to be open, and a running Heidrun watches the files, so its window shows each change within about one second.
+
+Before using a command, check that `heidrun_ctrl --help` works. The installed Heidrun application places `heidrun_ctrl` in `~/.local/bin` when the application starts. If the command is not found, ask the developer to install Heidrun and make `~/.local/bin` available on the shell path.
 
 ## The macros
 
