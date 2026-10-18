@@ -13,10 +13,27 @@ A Rust library and one command line tool for [Heidrun](../../../README.md). It g
 - `src/usage.rs`: the command `usage`: the tokens and the estimated cost of a workspace in a time range, by minute, hour, or day, read from the SQLite file only.
 - `src/database_lock.rs`: the one lock of the SQLite file, which the desktop application takes too.
 - `src/reading/`: the command `read`: a chat session, a commit, an issue, or a pull request.
-- `skills/heidrun_data/`: the skill for a coding agent, [SKILL.md](skills/heidrun_data/SKILL.md), with its folder `references`. The files of `references` are links to their place in the folder `docs` of the repository, so copy the skill with `cp -RL skills/heidrun_data <destination>` to install it outside the repository: the option `-L` copies the files in place of the links.
+- `plugin.json` and `skills/heidrun-data/`: the Agent Plugin manifest and the portable skill for a coding agent. The skill includes its reference documents.
 - `src/query_limit.rs`: the `LIMIT` added to a query that has none.
 - `src/output.rs`: the three output formats, and the errors.
 - `tests/`: the tests of the executable.
+
+## Install the Agent Plugin
+
+The repository's [Agent Plugin catalog](../../../.agents/plugins/marketplace.json) points to this package. In Codex, add the Heidrun repository as a marketplace, then install the Agent Plugin:
+
+```bash
+codex plugin marketplace add heidrun-org/heidrun --ref dev_jerome
+codex plugin add heidrun-data@heidrun
+```
+
+To install only the skill with the skills CLI, use the direct package address:
+
+```bash
+npx skills add https://github.com/heidrun-org/heidrun/tree/dev_jerome/packages/data_layers/heidrun_data/skills/heidrun-data
+```
+
+The [repository skill copy](../../../.agents/skills/heidrun-data/SKILL.md) lets the skills CLI find the skill from the repository root and stays in sync with the package skill. Installing the skill does not install the `heidrun_data` command. Install the Heidrun application; it places `heidrun_data` in `~/.local/bin` when it starts. When working in the Heidrun repository, run the command through `pnpm --silent data_layer:heidrun_data` instead.
 
 ## Command line
 
@@ -51,7 +68,7 @@ pnpm --silent data_layer:heidrun_data --help
 | `--price-list <address>` | `update`, `initialize` | The web address, or the path of a file, of the price list of the models, for `coding_agents`. The default is the public price list of LiteLLM. |
 | `--refresh-prices` | `update`, `initialize` | Fetches the price list even when the latest version was checked less than a day ago. |
 
-The prices are fetched when the latest version is one day old. A price list that cannot be fetched is a warning on the standard error output, and not an error: the latest known prices stay in use, and the exit code stays 0. The rules of the token usage and of the cost are in [token_usage_and_cost.md](../../../docs/statistics/token_usage_and_cost.md).
+The prices are fetched when the latest version is one day old. A price list that cannot be fetched is a warning on the standard error output, and not an error: the latest known prices stay in use, and the exit code stays 0. The rules of the token usage and of the cost are in [token_usage_and_cost.md](skills/heidrun-data/references/token_usage_and_cost.md).
 
 A source that fails does not stop the others: the command prints one error for each, and exits with the code 1. `update` and `initialize` take the lock of the SQLite file, so they wait for the desktop application. The lock is `lock_database`, and it uses the file `data_layer.sqlite.lock` next to the SQLite file. The `read` of an issue or of a pull request needs the command `gh`, and GitLab is not supported yet, as in `data_layer_code_hosting`.
 

@@ -42,7 +42,7 @@ describe("the plus button of the tab bar (issue #328)", () => {
     expect(newAgent.open).toBe(false);
   });
 
-  it.each(["claude", "codex"] as const)("starts a free agent %s with the default model and no starting prompt", async (command) => {
+  it.each(["claude", "codex", "agy"] as const)("starts a free agent %s with the default model and no starting prompt", async (command) => {
     const { settings } = await import("./settings");
     settings.newTabCommand = command;
     const { onNewPaneClick } = await import("./newPane");
@@ -72,7 +72,7 @@ describe("the plus button of the tab bar (issue #328)", () => {
     expect(newTerminal).not.toHaveBeenCalled();
   });
 
-  it.each(["claude", "codex"] as const)("starts a terminal with the key Shift when the default command is %s (issue #465)", async (command) => {
+  it.each(["claude", "codex", "agy"] as const)("starts a terminal with the key Shift when the default command is %s (issue #465)", async (command) => {
     const { settings } = await import("./settings");
     settings.newTabCommand = command;
     const { onNewPaneClick } = await import("./newPane");
@@ -176,7 +176,7 @@ describe("the entry New workspace (issue #379)", () => {
     expect(launchAgent).not.toHaveBeenCalled();
   });
 
-  it.each(["claude", "codex"] as const)(
+  it.each(["claude", "codex", "agy"] as const)(
     "starts a free agent %s in the first pane of the new workspace, and creates no other tab",
     async (command) => {
       const { settings } = await import("./settings");

@@ -7,7 +7,7 @@ import type { PaneInfo } from "../lib/types";
 const KEY = "heidrun.newPane";
 
 export type NewPaneValues = {
-  tool: "terminal" | "claude" | "codex";
+  tool: "terminal" | "claude" | "codex" | "agy";
   agent: string | null;
   model: string;
   label: string;

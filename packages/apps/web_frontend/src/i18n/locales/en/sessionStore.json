@@ -2,6 +2,8 @@
   "tabNumber": "tab {number}",
   "window.session": "5-hour limit",
   "window.week": "Weekly limit",
+  "antigravity.geminiWeekly": "Gemini weekly limit",
+  "antigravity.thirdPartyWeekly": "Third-party models weekly limit",
   "notify.question": "{name} is asking you a question",
   "notify.done": "{name} has finished",
   "notify.blocked": "{name} is waiting for a decision",

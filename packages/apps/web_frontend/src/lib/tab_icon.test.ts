@@ -12,9 +12,11 @@ describe("tabIconName", () => {
     expect(tabIconName([makePane("p1"), makePane("p2")], null)).toBe("terminal");
   });
 
-  it("gives the Claude icon to a pane that runs Claude Code, and the OpenAI icon to a pane that runs Codex", () => {
+  it("gives each coding agent its icon", () => {
     expect(tabIconName([makePane("p1", { agent: "claude" })], null)).toBe("claude");
     expect(tabIconName([makePane("p1", { agent: "codex" })], null)).toBe("openai");
+    expect(tabIconName([makePane("p1", { agent: "agy" })], null)).toBe("google");
+    expect(tabIconName([makePane("p1", { agent: "antigravity" })], null)).toBe("google");
   });
 
   it("gives the terminal icon to an agent that Heidrun does not know", () => {

@@ -81,11 +81,12 @@ export function gaugeLevel(percent: number): "ok" | "warn" | "crit" {
   return "ok";
 }
 
-/** "Claude", "Codex"… : the kind of agent, whatever the pane is called. */
+/** The kind of coding agent, whatever the pane is called. */
 export function agentKind(p: Pick<PaneInfo, "agent" | "display_agent">): string {
   const a = (p.agent ?? "").toLowerCase();
   if (a.includes("claude")) return "Claude";
   if (a.includes("codex")) return "Codex";
+  if (a.includes("agy") || a.includes("antigravity")) return "Antigravity";
   return p.display_agent || p.agent || "Terminal";
 }
 
@@ -123,7 +124,7 @@ export function codexWindows(codex: Pick<CodexUsage, "primary" | "secondary">, n
 
 /** The window the ring of a quota shows: the week when there is one, else the first window. */
 export function quotaRingWindow(windows: QuotaBlock["windows"]): QuotaBlock["windows"][number] | undefined {
-  return windows.find((w) => w.id === "week") ?? windows[0];
+  return windows.find((w) => w.period === "week" || w.id === "week") ?? windows[0];
 }
 
 /** Length of each quota window, in seconds. */
@@ -211,8 +212,10 @@ export function quotaPace(
   workingDays: readonly number[] = ALL_DAYS,
 ): QuotaPace | null {
   if (window.resetsAt === undefined || window.resetsAt <= nowSeconds) return null;
-  const start = window.resetsAt - WINDOW_SECONDS[window.id];
-  const days = window.id === "week" && workingDays.length > 0 ? workingDays : ALL_DAYS;
+  const period = window.period ?? (window.id === "week" ? "week" : "session");
+  const lengthSeconds = window.windowMinutes == null ? WINDOW_SECONDS[period] : window.windowMinutes * 60;
+  const start = window.resetsAt - lengthSeconds;
+  const days = period === "week" && workingDays.length > 0 ? workingDays : ALL_DAYS;
   const total = workingSeconds(start, window.resetsAt, days);
   const elapsed = workingSeconds(start, nowSeconds, days);
   if (total === 0) return null;

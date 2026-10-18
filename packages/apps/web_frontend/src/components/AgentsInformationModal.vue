@@ -68,11 +68,12 @@ function runLabel(a: (typeof state.activity)[number]): string {
 // Account quotas are shared by all agents of a provider: shown for every provider in use, and for every provider whose quota is known
 // (the status bar shows it), even when no pane runs an agent of that provider now.
 const providers = computed(() => {
-  const list: ("claude" | "codex")[] = [];
+  const list: ("claude" | "codex" | "antigravity")[] = [];
   const kinds = allPanes.value.map((x) => x.agent ?? "");
-  const hasQuota = (provider: "claude" | "codex") => quotas.value.some((block) => block.provider === provider);
+  const hasQuota = (provider: "claude" | "codex" | "antigravity") => quotas.value.some((block) => block.provider === provider);
   if (settings.quotaMonitoring && settings.ownedAgents.includes("claude") && (kinds.some((k) => k.includes("claude")) || hasQuota("claude"))) list.push("claude");
   if (settings.quotaMonitoring && settings.ownedAgents.includes("codex") && (kinds.some((k) => k.includes("codex")) || hasQuota("codex"))) list.push("codex");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("antigravity") && (kinds.some((k) => k.includes("antigravity")) || hasQuota("antigravity"))) list.push("antigravity");
   return list;
 });
 

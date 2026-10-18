@@ -555,11 +555,28 @@ describe("the default command of a new tab (issue #328)", () => {
     expect(restarted.settings.newTabCommand).toBe("terminal");
   });
 
-  it.each(["terminal", "claude", "codex"] as const)("keeps the saved command %s after a restart", async (command) => {
-    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command }));
+  it.each([
+    { command: "terminal", ownedAgents: [] },
+    { command: "claude", ownedAgents: ["claude"] },
+    { command: "codex", ownedAgents: ["codex"] },
+    { command: "agy", ownedAgents: ["antigravity"] },
+  ] as const)("keeps the enabled saved command $command after a restart", async ({ command, ownedAgents }) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command, ownedAgents }));
     vi.resetModules();
     const restarted = await import("./settings");
     expect(restarted.settings.newTabCommand).toBe(command);
+  });
+
+  it.each([
+    ["claude", "claude"],
+    ["codex", "codex"],
+    ["agy", "antigravity"],
+  ] as const)("uses Terminal when the saved command %s has a switched-off coding agent", async (command, agentId) => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ newTabCommand: command, ownedAgents: [] }));
+    vi.resetModules();
+    const disabled = await import("./settings");
+    expect(disabled.settings.newTabCommand).toBe("terminal");
+    expect(disabled.settings.ownedAgents).not.toContain(agentId);
   });
 });
 

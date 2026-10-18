@@ -11,7 +11,7 @@ const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.va
 const agents = ref<AgentDef[]>([]);
 const loading = ref(true);
 const previous = loadNewPaneValues();
-const tool = ref<"terminal" | "claude" | "codex">(previous?.tool ?? "claude");
+const tool = ref<"terminal" | "claude" | "codex" | "agy">(previous?.tool ?? "claude");
 const agent = ref<string | null>(previous?.agent ?? null);
 const model = ref(previous?.model ?? "");
 const label = ref(previous?.label ?? "");
@@ -22,15 +22,15 @@ const first = ref<HTMLElement>();
 
 const chosen = computed(() => agents.value.find((a) => a.name === agent.value) ?? null);
 const allMacros = computed(() => [...projectMacros.value, ...macros.personal, ...hardCodedMacros.value]);
-// The models that the tools list now: the same list as the window Create a custom launcher. This window offers only Claude Code and Codex.
-for (const toolId of ["claude", "codex"]) {
+// The models that the tools list now: the same list as the window Create a custom launcher.
+for (const toolId of ["claude", "codex", "agy"]) {
   void loadCodingAgentModels(toolId);
 }
 const suggestedModels = computed(() => modelsOf(tool.value));
 const command = computed(() => {
   if (tool.value === "terminal") return "";
   try {
-    return agentCommand(tool.value, tool.value === "claude" ? agent.value : null, model.value.trim() || null);
+    return agentCommand(tool.value, tool.value === "claude" ? agent.value : null, model.value.trim() || null, text.value);
   } catch (e) {
     return String((e as Error).message);
   }
@@ -111,6 +111,7 @@ function onKey(e: KeyboardEvent) {
         <button :title="t('newAgentModal.useTerminal')" :class="{ on: tool === 'terminal' }" @click="tool = 'terminal'">{{ t("newAgentModal.terminal") }}</button>
         <button :title="t('newAgentModal.useClaude')" ref="first" :class="{ on: tool === 'claude' }" @click="tool = 'claude'">Claude Code</button>
         <button :title="t('newAgentModal.useCodex')" :class="{ on: tool === 'codex' }" @click="tool = 'codex'">Codex</button>
+        <button :title="t('newAgentModal.useAntigravity')" :class="{ on: tool === 'agy' }" @click="tool = 'agy'">Antigravity</button>
       </div>
 
       <template v-if="tool === 'claude'">
@@ -142,7 +143,8 @@ function onKey(e: KeyboardEvent) {
 
       <label v-if="tool !== 'terminal'" class="block">
         <span class="field-label row-label">
-          {{ t("newAgentModal.prompt") }} <span class="muted">{{ t("newAgentModal.promptHint") }}</span>
+          {{ t("newAgentModal.prompt") }}
+          <span class="muted">{{ t(tool === "agy" ? "newAgentModal.promptHintAntigravity" : "newAgentModal.promptHint") }}</span>
           <select v-if="allMacros.length" class="macro-select" :aria-label="t('newAgentModal.macroLabel')" @change="useMacro">
             <option value="">{{ t("newAgentModal.macro") }}</option>
             <option v-for="macro in allMacros" :key="macro.id" :value="macro.id">{{ macro.label }}</option>

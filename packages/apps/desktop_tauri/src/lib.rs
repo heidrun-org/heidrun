@@ -1,5 +1,6 @@
 mod app_data;
 mod application_profile;
+mod antigravity;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
@@ -375,6 +376,9 @@ pub fn run() {
             claude::claude_statusline_install,
             claude::claude_statusline_uninstall,
             claude::claude_statusline_set_hidden,
+            antigravity::antigravity_statusline_state,
+            antigravity::antigravity_statusline_install,
+            antigravity::antigravity_statusline_uninstall,
             claude::claude_rc_startup,
             claude::claude_set_rc_startup,
             claude::claude_commands,

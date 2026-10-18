@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 
@@ -20,16 +21,21 @@ afterEach(() => {
 });
 
 describe("SettingsAgentsSection", () => {
-	it("lists each coding agent, one Bootstrap list group row for each", async () => {
+  it("starts with quota monitoring enabled", async () => {
+    const { settings } = await mountSection();
+    expect(settings.quotaMonitoring).toBe(true);
+  });
+
+  it("lists every coding agent, one Bootstrap list group row for each", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.find(".list-group").exists()).toBe(true);
-		expect(wrapper.findAll(".list-group-item").map((row) => row.text())).toEqual(["Claude Code", "Codex", "Antigravity"]);
+    expect(wrapper.findAll(".list-group-item").map((row) => row.text())).toEqual(["Claude Code", "Codex", "Antigravity"]);
   });
 
   it("starts with every agent switched off", async () => {
     const { wrapper, settings } = await mountSection();
     expect(settings.ownedAgents).toEqual([]);
-		expect(wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false, false]);
+    expect(wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false, false]);
   });
 
   it("draws each switch with the Bootstrap class switch", async () => {
@@ -52,8 +58,8 @@ describe("SettingsAgentsSection", () => {
   it("makes the whole row of an agent the label of its switch", async () => {
     const { wrapper } = await mountSection();
     const rows = wrapper.findAll(".list-group-item");
-		expect(rows.map((row) => row.element.tagName)).toEqual(["LABEL", "LABEL", "LABEL"]);
-		expect(rows.map((row) => row.find("input[role=switch]").exists())).toEqual([true, true, true]);
+    expect(rows.map((row) => row.element.tagName)).toEqual(["LABEL", "LABEL", "LABEL"]);
+    expect(rows.map((row) => row.find("input[role=switch]").exists())).toEqual([true, true, true]);
     expect(rows[0].classes()).toContain("list-group-item-action");
   });
 
@@ -101,27 +107,72 @@ describe("SettingsAgentsSection", () => {
     vi.resetModules();
     const second = await mountSection();
     expect(second.settings.ownedAgents).toEqual(["claude"]);
-		expect(second.wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false, false]);
+    expect(second.wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false, false]);
   });
 });
 
 describe("SettingsAgentsSection, the settings that moved here from other sections (issue #556)", () => {
-  it("starts with quota monitoring enabled", async () => {
-    const { settings } = await mountSection();
-    expect(settings.quotaMonitoring).toBe(true);
-  });
-
   it("holds, after the list of coding agents, the heading Default command of a new tab, then the heading Quit", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.findAll("h4").map((heading) => heading.text())).toEqual(["Default command of a new tab", "Quit"]);
   });
 
-  it("shows the three commands of a new tab, and saves the one that is chosen", async () => {
+  it("places Antigravity quota tracking in Settings and explains that the development app cannot change the shared status line", async () => {
+    const { wrapper } = await mountSection();
+    const option = wrapper.get('[data-option="antigravityQuotaTracking"]');
+    expect(option.find('input[role="switch"]').exists()).toBe(true);
+    const mark = option.get(".information-card-part");
+    await mark.trigger("click");
+    expect(wrapper.get(".popover").text()).toContain("Heidrun Development cannot change the shared Antigravity status line");
+  });
+
+  it("shows only Terminal when all coding agents are switched off", async () => {
     const { wrapper, settings } = await mountSection();
     const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal"]);
+    expect(settings.newTabCommand).toBe("terminal");
+  });
+
+  it("shows only the enabled coding agents as new-tab commands and saves the selected command", async () => {
+    const { wrapper, settings } = await mountSection();
+    const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
+
+    await wrapper.findAll("input[role=switch]")[0].setValue(true);
+    await wrapper.findAll("input[role=switch]")[1].setValue(true);
+    await nextTick();
     expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex"]);
+
     await group.findAll("input[type=radio]")[2].setValue(true);
     expect(settings.newTabCommand).toBe("codex");
+  });
+
+  it("shows enabled coding agent commands and resets the choice when the selected agent is switched off", async () => {
+    const { wrapper, settings } = await mountSection();
+    const group = wrapper.get('.btn-group[aria-label="Default command of a new tab"]');
+
+    await wrapper.findAll("input[role=switch]")[0].setValue(true);
+    await wrapper.findAll("input[role=switch]")[1].setValue(true);
+    await wrapper.findAll("input[role=switch]")[2].setValue(true);
+    await nextTick();
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal", "Claude Code", "Codex", "Antigravity"]);
+
+    await group.findAll("input[type=radio]")[1].setValue(true);
+    await wrapper.findAll("input[role=switch]")[0].setValue(false);
+    await nextTick();
+    expect(settings.newTabCommand).toBe("terminal");
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal", "Codex", "Antigravity"]);
+
+    await group.findAll("input[type=radio]")[1].setValue(true);
+    await wrapper.findAll("input[role=switch]")[1].setValue(false);
+    await nextTick();
+    expect(settings.newTabCommand).toBe("terminal");
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal", "Antigravity"]);
+
+    await group.findAll("input[type=radio]")[1].setValue(true);
+    await wrapper.findAll("input[role=switch]")[2].setValue(false);
+    await nextTick();
+    expect(settings.newTabCommand).toBe("terminal");
+    expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal"]);
   });
 
   it("shows the switch Keep agents running after quit as a Bootstrap switch, switched off by default, linked to its setting", async () => {
