@@ -64,6 +64,17 @@ describe('WorktreeCreate', () => {
 			expect(Fs.readFileSync(sourceFilePath, 'utf8')).toBe('compiled dependency');
 		});
 
+		it.skipIf(process.platform !== 'darwin')('clones the bundled command line resources required by Tauri', () => {
+			const mainCheckoutPath = TestRepository.createWithBuiltTarget();
+			const result = WorktreeCreate.run({
+				workingDirectory: mainCheckoutPath,
+				name: 'with-bundled-commands',
+			});
+			const bundledCommandsPath = TargetPaths.bundledCommandsPath(result.worktreePath);
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_ctrl'), 'utf8')).toBe('heidrun_ctrl');
+			expect(Fs.readFileSync(Path.join(bundledCommandsPath, 'heidrun_data'), 'utf8')).toBe('heidrun_data');
+		});
+
 		it('installs the packages: the new worktree has a folder node_modules', () => {
 			const mainCheckoutPath = TestRepository.create();
 			const result = WorktreeCreate.run({

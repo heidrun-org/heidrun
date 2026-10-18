@@ -66,13 +66,15 @@ export class TestRepository {
 	}
 
 	/**
-	 * Creates a repository whose main checkout holds a debug build folder with two files, one of them in a subfolder.
+	 * Creates a repository whose main checkout holds a debug build and bundled command line files.
 	 * @returns The absolute path of the new main checkout.
 	 */
 	static createWithBuiltTarget(): string {
 		const repositoryPath = TestRepository.create();
 		TestRepository.writeTargetFile(repositoryPath, 'debug/heidrun', 'compiled application');
 		TestRepository.writeTargetFile(repositoryPath, 'debug/deps/libserde.rlib', 'compiled dependency');
+		TestRepository.writeTargetFile(repositoryPath, 'release/bundled_commands/heidrun_ctrl', 'heidrun_ctrl');
+		TestRepository.writeTargetFile(repositoryPath, 'release/bundled_commands/heidrun_data', 'heidrun_data');
 		return repositoryPath;
 	}
 
