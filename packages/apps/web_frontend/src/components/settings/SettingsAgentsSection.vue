@@ -46,6 +46,13 @@ const AGENT_HELP_BLOCKS = [
   { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.agent.off" },
 ] as const;
 
+/** The blocks of the information card of quota monitoring, in the order of the card. */
+const QUOTA_MONITORING_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.quotaMonitoring.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.quotaMonitoring.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.quotaMonitoring.off" },
+] as const;
+
 const ANTIGRAVITY_TRACKING_HELP_BLOCKS = [
   { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.antigravityTracking.what" },
   { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.antigravityTracking.on" },
@@ -86,6 +93,7 @@ function toggleOwned(agent: AgentDefinition) {
   const others = settings.ownedAgents.filter((id) => id !== agent.id);
   const wasOwned = isOwned(agent);
   settings.ownedAgents = wasOwned ? others : [...others, agent.id];
+  settings.ownedAgentsConfigured = true;
   const command = COMMANDS.find((candidate) => candidate.agentId === agent.id);
   if (wasOwned && command !== undefined && settings.newTabCommand === command.id) {
     settings.newTabCommand = "terminal";
@@ -129,6 +137,10 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
         </span>
       </label>
     </div>
+
+    <SettingsSwitchRow v-model="settings.quotaMonitoring" :label="t('settingsAgents.quotaMonitoring')" data-option="quotaMonitoring">
+      <SettingsOptionHelp title-key="settingsAgents.quotaMonitoring" :blocks="QUOTA_MONITORING_HELP_BLOCKS" />
+    </SettingsSwitchRow>
 
     <div class="d-flex flex-column gap-2" data-option="antigravityQuotaTracking">
       <SettingsSwitchRow

@@ -1,10 +1,10 @@
 # Glossary of Heidrun index
 
 - Created: 14 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 694](https://github.com/heidrun-org/heidrun/issues/694)
 
 This file lists the files of this folder, for agents and tools.
 
@@ -15,7 +15,7 @@ This file lists the files of this folder, for agents and tools.
 - [coding_agent_configuration.md](coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item.
 - [dynamic_topics.md](dynamic_topics.md): the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar.
 - [code_hosting.md](code_hosting.md): the search line, the search field, and the saved search of the Code hosting sidebar section.
-- [status_bar.md](status_bar.md): the status bar, the status bar section, the information card, the information card tooltip, and the Workspace status bar section.
+- [status_bar.md](status_bar.md): the status bar, the status bar section, the unspecified Claude quota, the information card, the information card tooltip, and the Workspace status bar section.
 - [pane_focus_history.md](pane_focus_history.md): the top bar, the pane focus history, the Back button, and the Forward button.
 - [user_activity.md](user_activity.md): the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot.
 - [statistics_charts.md](statistics_charts.md): the chart legend and the chart information card of the charts of the Statistics window.

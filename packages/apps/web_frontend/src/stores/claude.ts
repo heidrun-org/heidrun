@@ -35,11 +35,11 @@ export async function loadClaudeLink() {
   }
 }
 
-export async function enableClaudeLink() {
+export async function enableClaudeLink(showSuccess = true) {
   claudeLink.busy = true;
   try {
     apply(await invoke<StatuslineState>("claude_statusline_install"));
-    toast(t("claudeStore.trackingEnabled"));
+    if (showSuccess) toast(t("claudeStore.trackingEnabled"));
   } catch (e) {
     toast(String(e));
   } finally {
@@ -148,11 +148,11 @@ export function startRemoteWatch() {
   rcTimer = window.setInterval(pollRc, 8000);
 }
 
-export async function disableClaudeLink() {
+export async function disableClaudeLink(showSuccess = true) {
   claudeLink.busy = true;
   try {
     apply(await invoke<StatuslineState>("claude_statusline_uninstall"));
-    toast(t("claudeStore.trackingDisabled"));
+    if (showSuccess) toast(t("claudeStore.trackingDisabled"));
   } catch (e) {
     toast(String(e));
   } finally {

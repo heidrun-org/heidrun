@@ -72,7 +72,7 @@ describe("StatusBar", () => {
   it("shows no quota when no coding agent is switched on", async () => {
     const { wrapper } = await mountStatusBar();
     expect(wrapper.findAll(".quota")).toHaveLength(0);
-    expect(wrapper.text()).not.toContain("waiting for data");
+    expect(wrapper.find(".quota-unspecified").exists()).toBe(false);
   });
 
   it("shows the quota of Codex only when Codex is switched on", async () => {
@@ -90,6 +90,38 @@ describe("StatusBar", () => {
     settings.ownedAgents = ["claude"];
     await nextTick();
     expect(wrapper.find("[data-provider=codex]").exists()).toBe(false);
+  });
+
+  it("hides quota data when quota monitoring is switched off", async () => {
+    const { wrapper, settings } = await mountStatusBar();
+    settings.ownedAgents = ["claude", "codex"];
+    await nextTick();
+    expect(wrapper.findAll(".quota")).toHaveLength(1);
+    settings.quotaMonitoring = false;
+    await nextTick();
+    expect(wrapper.findAll(".quota")).toHaveLength(0);
+    expect(wrapper.find(".quota-unspecified").exists()).toBe(false);
+  });
+
+  it("labels the Claude quota as unspecified until Claude quota data exists", async () => {
+    const { wrapper, settings } = await mountStatusBar();
+    settings.ownedAgents = ["claude"];
+    await nextTick();
+    expect(wrapper.findAll(".quota")).toHaveLength(0);
+    expect(wrapper.get(".quota-unspecified").text()).toBe("Claude quota: unspecified");
+    expect(wrapper.get(".quota-unspecified").attributes("title")).toContain("This does not mean your usage is zero");
+  });
+
+  it("shows Claude using the same quota section as Codex when Claude quota data exists", async () => {
+    localStorage.setItem("heidrun.claude-windows", JSON.stringify({ q5h: { percent: 32, at: Date.now() / 1000 } }));
+    const { wrapper, settings } = await mountStatusBar();
+    settings.ownedAgents = ["claude", "codex"];
+    await nextTick();
+    expect(wrapper.findAll(".quota").map((quota) => quota.attributes("data-provider"))).toEqual(["claude", "codex"]);
+    expect(wrapper.find(".quota-unspecified").exists()).toBe(false);
+    const claudeQuota = wrapper.get("[data-provider=claude]");
+    expect(claudeQuota.find(".ring").exists()).toBe(true);
+    expect(claudeQuota.find(".percent").text()).toBe("32%");
   });
 
   it("shows no tracking message when an enabled coding agent has no quota data", async () => {

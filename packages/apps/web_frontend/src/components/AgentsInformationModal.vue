@@ -71,9 +71,9 @@ const providers = computed(() => {
   const list: ("claude" | "codex" | "antigravity")[] = [];
   const kinds = allPanes.value.map((x) => x.agent ?? "");
   const hasQuota = (provider: "claude" | "codex" | "antigravity") => quotas.value.some((block) => block.provider === provider);
-  if (kinds.some((k) => k.includes("claude")) || hasQuota("claude")) list.push("claude");
-  if (kinds.some((k) => k.includes("codex")) || hasQuota("codex")) list.push("codex");
-  if (kinds.some((k) => k.includes("antigravity")) || hasQuota("antigravity")) list.push("antigravity");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("claude") && (kinds.some((k) => k.includes("claude")) || hasQuota("claude"))) list.push("claude");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("codex") && (kinds.some((k) => k.includes("codex")) || hasQuota("codex"))) list.push("codex");
+  if (settings.quotaMonitoring && settings.ownedAgents.includes("antigravity") && (kinds.some((k) => k.includes("antigravity")) || hasQuota("antigravity"))) list.push("antigravity");
   return list;
 });
 

@@ -21,6 +21,11 @@ afterEach(() => {
 });
 
 describe("SettingsAgentsSection", () => {
+  it("starts with quota monitoring enabled", async () => {
+    const { settings } = await mountSection();
+    expect(settings.quotaMonitoring).toBe(true);
+  });
+
   it("lists every coding agent, one Bootstrap list group row for each", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.find(".list-group").exists()).toBe(true);

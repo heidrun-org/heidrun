@@ -17,7 +17,7 @@ import { project } from '../../stores/project';
 import { settings } from '../../stores/settings';
 import { state } from '../../stores/session';
 
-const mocks = vi.hoisted(() => ({ invoke: vi.fn() }));
+const mocks = vi.hoisted(() => ({ invoke: vi.fn(async (_name: string): Promise<unknown> => []) }));
 vi.mock('@tauri-apps/api/core', () => ({ invoke: mocks.invoke }));
 vi.mock('@tauri-apps/api/webview', () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 vi.mock('@tauri-apps/plugin-opener', () => ({ openUrl: vi.fn(async () => {}) }));
@@ -66,7 +66,7 @@ class SettingsInformationCardsTestHelper {
 		{
 			name: 'Coding agents',
 			component: SettingsAgentsSection,
-			optionList: ['agent', 'agent', 'agent', 'antigravityQuotaTracking', 'newTabCommand', 'keepAgentsRunning'],
+			optionList: ['agent', 'agent', 'agent', 'quotaMonitoring', 'antigravityQuotaTracking', 'newTabCommand', 'keepAgentsRunning'],
 		},
 		{
 			name: 'Confirmations',

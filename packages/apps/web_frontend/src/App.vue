@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import TopBar from "./components/TopBar.vue";
 import Sidebar from "./components/Sidebar.vue";
 import PaneGrid from "./components/PaneGrid.vue";
@@ -89,7 +89,7 @@ import { statisticsModal } from "./stores/statistics_modal";
 import SplashScreen from "./components/SplashScreen.vue";
 import { files, openFiles } from "./stores/files";
 import { startMobile } from "./stores/mobile";
-import { loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
+import { claudeLink, disableClaudeLink, enableClaudeLink, loadClaudeLink, remote, startRemoteWatch } from "./stores/claude";
 import { loadAntigravityLink } from "./stores/antigravity";
 import { t } from "./i18n/index";
 import { ResizerWidth } from "./lib/resizer_width";
@@ -98,6 +98,22 @@ import type { PaneOuterEdge } from "./lib/pane_separators";
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
 const onResize = () => (winW.value = window.innerWidth);
+
+// Claude Code reports quota data through its status line. Keep that integration in step with Settings.
+let lastQuotaMonitoringRequest: boolean | undefined;
+watch(
+  () => [settings.quotaMonitoring && settings.ownedAgents.includes("claude"), claudeLink.loaded, claudeLink.installed, claudeLink.busy] as const,
+  ([enabled, loaded, installed, busy]) => {
+    if (!loaded || busy || lastQuotaMonitoringRequest === enabled) return;
+    if (enabled === installed) {
+      lastQuotaMonitoringRequest = enabled;
+      return;
+    }
+    lastQuotaMonitoringRequest = enabled;
+    if (enabled) void enableClaudeLink(false);
+    else void disableClaudeLink(false);
+  },
+);
 // A sidebar collapsed to the sidebar icon bar takes the width of the sidebar icon bar.
 const leftTakenWidth = computed(() => (settings.leftCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.leftWidth));
 const rightTakenWidth = computed(() => (settings.rightCollapsed ? COLLAPSED_SIDEBAR_WIDTH : settings.rightWidth));

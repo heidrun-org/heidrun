@@ -1,11 +1,11 @@
 # User interface of Heidrun: status bar
 
 - Created: 13 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 688](https://github.com/heidrun-org/heidrun/issues/688)
+- Related issue: [issue 290](https://github.com/heidrun-org/heidrun/issues/290), [issue 293](https://github.com/heidrun-org/heidrun/issues/293), [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 311](https://github.com/heidrun-org/heidrun/issues/311), [issue 324](https://github.com/heidrun-org/heidrun/issues/324), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 694](https://github.com/heidrun-org/heidrun/issues/694)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -15,6 +15,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - Each status bar section shows one piece of information, for example the selected workspace, the usage of Claude, Codex, or Antigravity, the Git branch, and the connection to Herdr. The number of agents that are blocked, working, or done is not in the status bar: the top right corner of the window already shows it.
 - A click on a status bar section opens its information card above the section.
 - Each status bar section looks like a button of the status bar of Visual Studio Code: while the mouse pointer is over it, and while its information card is open, it has a rounded background (6 pixels radius), white at 12 percent strength in the dark theme and black at 12 percent strength in the light theme. The background leaves 6 pixels of the status bar above and below it. The three components of the status bar sections share the class `status-section` of the file `styles.css` ([issue #324](https://github.com/heidrun-org/heidrun/issues/324)).
+- Quota data appears in the status bar only when quota monitoring is on in the section "Coding agents" of the Settings window and its coding agent is on. When Claude is on but no Claude quota report has arrived, the status bar says "Claude quota: unspecified"; this means the quota is unknown, not zero. The status bar never offers to turn quota monitoring on; the setting controls the Claude Code status line integration too ([issue #694](https://github.com/heidrun-org/heidrun/issues/694)).
 - The rings of the usage of Claude, Codex, and Antigravity have the same track as the usage wheel in the header of a pane: the part of the ring that is not filled is drawn in the faint color (`--faint`), so that the whole ring shows against the status bar in the dark theme and in the light theme ([issue 475](https://github.com/heidrun-org/heidrun/issues/475)).
 - The information card of the usage of Claude, Codex, and Antigravity, and the information card of the Workspace status bar section are 408 pixels wide, which is 20 percent more than the 340 pixels of the other information cards of the status bar ([issue #290](https://github.com/heidrun-org/heidrun/issues/290), [issue #303](https://github.com/heidrun-org/heidrun/issues/303)).
 

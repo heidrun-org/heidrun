@@ -329,6 +329,7 @@ pub fn run() {
             herdr_paths,
             herdr_server_start,
             required_programs::required_programs_status,
+            required_programs::coding_agents_available,
             pty::pty_spawn,
             pty::pty_write,
             pty::pty_resize,
