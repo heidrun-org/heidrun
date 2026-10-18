@@ -30,6 +30,13 @@ const NEW_TAB_HELP_BLOCKS = [
   { titleKey: "settingsNewTab.codexLabel", textKey: "settingsNewTab.codexTitle" },
 ] as const;
 
+/** The blocks of the information card of quota monitoring, in the order of the card. */
+const QUOTA_MONITORING_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.quotaMonitoring.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.quotaMonitoring.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.quotaMonitoring.off" },
+] as const;
+
 function isOwned(agent: AgentDefinition): boolean {
   return settings.ownedAgents.includes(agent.id);
 }
@@ -37,6 +44,7 @@ function isOwned(agent: AgentDefinition): boolean {
 function toggleOwned(agent: AgentDefinition) {
   const others = settings.ownedAgents.filter((id) => id !== agent.id);
   settings.ownedAgents = isOwned(agent) ? others : [...others, agent.id];
+  settings.ownedAgentsConfigured = true;
 }
 
 /** The key Enter switches the focused switch, as the key Space does. Holding the key down switches only once. */
@@ -76,6 +84,10 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
         </span>
       </label>
     </div>
+
+    <SettingsSwitchRow v-model="settings.quotaMonitoring" :label="t('settingsAgents.quotaMonitoring')" data-option="quotaMonitoring">
+      <SettingsOptionHelp title-key="settingsAgents.quotaMonitoring" :blocks="QUOTA_MONITORING_HELP_BLOCKS" />
+    </SettingsSwitchRow>
 
     <div class="d-flex flex-column gap-2" data-option="newTabCommand">
       <div class="d-flex align-items-center gap-2">

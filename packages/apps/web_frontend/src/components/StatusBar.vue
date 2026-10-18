@@ -2,16 +2,19 @@
 import { computed } from "vue";
 import { quotas, state } from "../stores/session";
 import { settings } from "../stores/settings";
-import { claudeLink, enableClaudeLink } from "../stores/claude";
 import GitStatusSummary from "./GitStatusSummary.vue";
 import QuotaSummary from "./QuotaSummary.vue";
 import WorkspaceStatusSummary from "./WorkspaceStatusSummary.vue";
 import { t } from "../i18n/index";
 
-// Only the coding agents switched on in the section Agents of the Settings window show their quota.
-const ownedQuotas = computed(() => quotas.value.filter((q) => settings.ownedAgents.includes(q.provider)));
-const isClaudeOwned = computed(() => settings.ownedAgents.includes("claude"));
-const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.value.some((q) => q.provider === "claude"));
+// Quotas show only when quota monitoring and the matching coding agent are on in Settings.
+const ownedQuotas = computed(() => settings.quotaMonitoring ? quotas.value.filter((q) => settings.ownedAgents.includes(q.provider)) : []);
+const isClaudeQuotaUnspecified = computed(
+  () =>
+    settings.quotaMonitoring &&
+    settings.ownedAgents.includes('claude') &&
+    ownedQuotas.value.some((quota) => quota.provider === 'claude') === false,
+);
 </script>
 
 <template>
@@ -22,16 +25,13 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
       <span v-if="index > 0" class="sep"></span>
       <QuotaSummary :quota="q" />
     </template>
-    <button :title="t('statusBar.enableTrackingTitle')"
-      v-if="isClaudeQuotaMissing && claudeLink.loaded && !claudeLink.installed"
-      class="link"
-      :disabled="claudeLink.busy"
-      @click="enableClaudeLink"
-    >
-      {{ t("statusBar.enableTracking") }}
-    </button>
-    <span v-else-if="isClaudeQuotaMissing" class="muted">{{ t("statusBar.waitingForData") }}</span>
-    <span v-if="ownedQuotas.length > 0 || isClaudeOwned" class="sep"></span>
+    <span v-if="isClaudeQuotaUnspecified && ownedQuotas.length > 0" class="sep"></span>
+    <span
+      v-if="isClaudeQuotaUnspecified"
+      class="quota-unspecified"
+      :title="t('statusBar.claudeQuotaUnspecifiedTitle')"
+    >{{ t("statusBar.claudeQuotaUnspecified") }}</span>
+    <span v-if="ownedQuotas.length > 0 || isClaudeQuotaUnspecified" class="sep"></span>
     <GitStatusSummary />
     <span class="grow"></span>
     <span class="machine" :title="state.error || t('statusBar.connectedTitle')">
@@ -47,14 +47,12 @@ const isClaudeQuotaMissing = computed(() => isClaudeOwned.value && !ownedQuotas.
   background: var(--shell); font-size: var(--font-size); color: var(--muted-2);
   white-space: nowrap; position: relative;
 }
-.muted { color: var(--muted); }
 .sep { width: 1px; height: 14px; background: var(--line-strong); }
+.quota-unspecified { color: var(--muted); }
 /* The workspace section has more room than the other sections: 6 more pixels on each side of the line after it. */
 .workspace-sep { margin: 0 6px; }
 .grow { flex: 1; }
 .machine { display: flex; align-items: center; gap: 8px; color: var(--muted); }
 .working-static { background: var(--working); }
 .offline { background: var(--fail); }
-.link { border: none; background: none; padding: 0; color: var(--done); font-size: var(--font-size); }
-.link:hover { text-decoration: underline; }
 </style>

@@ -20,16 +20,16 @@ afterEach(() => {
 });
 
 describe("SettingsAgentsSection", () => {
-  it("lists Claude Code and Codex, one Bootstrap list group row for each", async () => {
+	it("lists each coding agent, one Bootstrap list group row for each", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.find(".list-group").exists()).toBe(true);
-    expect(wrapper.findAll(".list-group-item").map((row) => row.text())).toEqual(["Claude Code", "Codex"]);
+		expect(wrapper.findAll(".list-group-item").map((row) => row.text())).toEqual(["Claude Code", "Codex", "Antigravity"]);
   });
 
   it("starts with every agent switched off", async () => {
     const { wrapper, settings } = await mountSection();
     expect(settings.ownedAgents).toEqual([]);
-    expect(wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false]);
+		expect(wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([false, false, false]);
   });
 
   it("draws each switch with the Bootstrap class switch", async () => {
@@ -52,8 +52,8 @@ describe("SettingsAgentsSection", () => {
   it("makes the whole row of an agent the label of its switch", async () => {
     const { wrapper } = await mountSection();
     const rows = wrapper.findAll(".list-group-item");
-    expect(rows.map((row) => row.element.tagName)).toEqual(["LABEL", "LABEL"]);
-    expect(rows.map((row) => row.find("input[role=switch]").exists())).toEqual([true, true]);
+		expect(rows.map((row) => row.element.tagName)).toEqual(["LABEL", "LABEL", "LABEL"]);
+		expect(rows.map((row) => row.find("input[role=switch]").exists())).toEqual([true, true, true]);
     expect(rows[0].classes()).toContain("list-group-item-action");
   });
 
@@ -101,11 +101,16 @@ describe("SettingsAgentsSection", () => {
     vi.resetModules();
     const second = await mountSection();
     expect(second.settings.ownedAgents).toEqual(["claude"]);
-    expect(second.wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false]);
+		expect(second.wrapper.findAll(".list-group input[role=switch]").map((node) => (node.element as HTMLInputElement).checked)).toEqual([true, false, false]);
   });
 });
 
 describe("SettingsAgentsSection, the settings that moved here from other sections (issue #556)", () => {
+  it("starts with quota monitoring enabled", async () => {
+    const { settings } = await mountSection();
+    expect(settings.quotaMonitoring).toBe(true);
+  });
+
   it("holds, after the list of coding agents, the heading Default command of a new tab, then the heading Quit", async () => {
     const { wrapper } = await mountSection();
     expect(wrapper.findAll("h4").map((heading) => heading.text())).toEqual(["Default command of a new tab", "Quit"]);

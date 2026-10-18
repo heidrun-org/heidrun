@@ -28,6 +28,44 @@ pub struct RequiredProgramsStatus {
     pub ngrok: ProgramStatus,
 }
 
+/// The coding agents whose command line tools can be found by the login shell.
+#[tauri::command]
+pub async fn coding_agents_available() -> Vec<String> {
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
+    let command = concat!(
+        "for coding_agent in claude codex agy; do ",
+        "command -v \"$coding_agent\" >/dev/null 2>&1 && ",
+        "printf '%s\\n' \"$coding_agent\"; ",
+        "done"
+    );
+    let output = tokio::process::Command::new(shell)
+        .arg("-lc")
+        .arg(command)
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .await;
+    let Ok(output) = output else {
+        return Vec::new();
+    };
+    if output.status.success() == false {
+        return Vec::new();
+    }
+    coding_agent_ids_from_commands(&String::from_utf8_lossy(&output.stdout))
+}
+
+fn coding_agent_ids_from_commands(commands: &str) -> Vec<String> {
+    commands
+        .lines()
+        .filter_map(|command| match command {
+            "claude" => Some("claude".to_string()),
+            "codex" => Some("codex".to_string()),
+            "agy" => Some("antigravity".to_string()),
+            _ => None,
+        })
+        .collect()
+}
+
 /// Tells which programs are installed. Herdr is searched like `herdr::herdr_bin` does, then on the `PATH` of the login
 /// shell, because Heidrun starts the Herdr server through the login shell. ngrok is searched like the mobile server does.
 #[tauri::command]
@@ -106,6 +144,19 @@ mod tests {
         let _ = std::fs::remove_dir_all(&folder);
         std::fs::create_dir_all(&folder).unwrap();
         folder
+    }
+
+    #[test]
+    fn maps_only_the_supported_coding_agent_commands_to_settings_ids() {
+        assert_eq!(
+            coding_agent_ids_from_commands("claude\ncodex\nagy\nother\n"),
+            ["claude", "codex", "antigravity"]
+        );
+    }
+
+    #[test]
+    fn gives_no_coding_agents_when_no_supported_command_is_available() {
+        assert!(coding_agent_ids_from_commands("other\n").is_empty());
     }
 
     #[tokio::test]

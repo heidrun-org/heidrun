@@ -2,6 +2,7 @@ import { reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
+import { AGENTS } from "../lib/agents";
 
 export interface FontOption {
   id: string;
@@ -203,6 +204,10 @@ const defaults = {
   columnOfPinnedPanesWidth: 560,
   /** The coding agents (ids of `lib/agents.ts`) that the user has a valid subscription or access for. */
   ownedAgents: [] as string[],
+  /** Whether the coding agents were checked once or the developer has chosen them. */
+  ownedAgentsConfigured: false,
+  /** Settings window, section Coding agents: show account quota data and collect Claude Code quota data. */
+  quotaMonitoring: true,
   /** Window Find new skills: where a skill is installed, "workspace" (the folder of the workspace) or "user". */
   skillsLevel: "workspace" as "workspace" | "user",
   /** The window of a SKILL.md file shows the rendered Markdown (true) or the highlighted source (false). */
@@ -412,6 +417,23 @@ function load(): typeof defaults {
 }
 
 export const settings = reactive(load());
+
+if (settings.ownedAgentsConfigured === false && settings.ownedAgents.length === 0) {
+  void invoke<string[]>("coding_agents_available")
+    .then((availableAgentIds) => {
+      if (
+        Array.isArray(availableAgentIds) === false ||
+        settings.ownedAgentsConfigured === true ||
+        settings.ownedAgents.length > 0
+      ) {
+        return;
+      }
+      const availableAgents = new Set(availableAgentIds);
+      settings.ownedAgents = AGENTS.filter((agent) => availableAgents.has(agent.id)).map((agent) => agent.id);
+      settings.ownedAgentsConfigured = true;
+    })
+    .catch(() => {});
+}
 
 watch(
   () => ({ ...settings }),
