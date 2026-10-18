@@ -19,7 +19,7 @@ use std::sync::{Arc, OnceLock};
 /// The name of the caller that a program sets for itself, used when the environment gives none.
 static DEFAULT_CALLER: OnceLock<String> = OnceLock::new();
 
-/// The log of the program, made from the environment at the first request.
+/// The log of the program, made from the environment at the first operation.
 static PROGRAM_LOGGER: OnceLock<Arc<Logger>> = OnceLock::new();
 
 thread_local! {
@@ -31,9 +31,9 @@ thread_local! {
 pub struct Logger {
     /// The configuration of the log.
     settings: LogSettings,
-    /// The number of requests that started and did not end yet, in this program.
+    /// The number of operations that started and did not end yet, in this program.
     in_flight: AtomicU32,
-    /// The number of requests that started in this program, which makes the identifiers different.
+    /// The number of operations that started in this program, which makes the identifiers different.
     sequence: AtomicU64,
     /// The number of events that could not be written and that no later event reported yet.
     dropped: AtomicU64,
@@ -50,7 +50,7 @@ impl Logger {
         &self.settings
     }
 
-    /// False when the log is off. A request on a log that is off writes nothing and costs almost nothing.
+    /// False when the log is off. An operation on a log that is off writes nothing and costs almost nothing.
     pub fn is_enabled(&self) -> bool {
         self.settings.file.is_some()
     }
@@ -75,18 +75,18 @@ impl Logger {
         self.dropped.load(Ordering::Relaxed)
     }
 
-    /// The identifier of a new request: the time of the start, the process, and the number of the request, in hexadecimal.
-    pub fn next_request_id(&self, started_at_milliseconds: i64) -> String {
+    /// The identifier of a new operation: the time of the start, the process, and the number of the operation, in hexadecimal.
+    pub fn next_operation_id(&self, started_at_milliseconds: i64) -> String {
         let sequence = self.sequence.fetch_add(1, Ordering::Relaxed);
         format!("{:x}-{:x}-{:x}", started_at_milliseconds, std::process::id(), sequence)
     }
 
-    /// Counts a request that starts, and gives the number of requests that were already running.
+    /// Counts an operation that starts, and gives the number of operations that were already running.
     pub fn enter(&self) -> u32 {
         self.in_flight.fetch_add(1, Ordering::Relaxed)
     }
 
-    /// Counts a request that ends.
+    /// Counts an operation that ends.
     pub fn leave(&self) {
         self.in_flight.fetch_sub(1, Ordering::Relaxed);
     }
@@ -140,12 +140,12 @@ impl Logger {
 }
 
 /// Sets the name of the caller for this program, for example `heidrun`. The environment variable
-/// `HEIDRUN_REQUEST_LOG_CALLER` is stronger. The first call counts, a later one changes nothing.
+/// `HEIDRUN_OPERATION_LOG_CALLER` is stronger. The first call counts, a later one changes nothing.
 pub fn set_default_caller(name: &str) {
     let _ = DEFAULT_CALLER.set(name.to_string());
 }
 
-/// The log that a request uses now: the log of the thread when a test or a measure set one, else the log of the program.
+/// The log that an operation uses now: the log of the thread when a test or a measure set one, else the log of the program.
 pub fn current_logger() -> Arc<Logger> {
     let on_thread = THREAD_LOGGER.with(|logger| logger.borrow().clone());
     match on_thread {
@@ -172,31 +172,31 @@ pub fn with_logger<T>(logger: Arc<Logger>, run: impl FnOnce() -> T) -> T {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::event::{empty_object, RequestKind, StartEvent, FORMAT_VERSION, ORIGIN_APPLICATION};
+    use crate::event::{empty_object, OperationKind, StartEvent, FORMAT_VERSION, ORIGIN_APPLICATION};
 
     fn temp_file(name: &str) -> std::path::PathBuf {
-        let folder = std::env::temp_dir().join(format!("request-log-logger-{}-{name}", std::process::id()));
+        let folder = std::env::temp_dir().join(format!("operation-log-logger-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
-        folder.join("data_layer_requests.jsonl")
+        folder.join("data_layer_operations.jsonl")
     }
 
-    fn sample_event(request_id: &str) -> Event {
+    fn sample_event(operation_id: &str) -> Event {
         Event::Start(StartEvent {
             v: FORMAT_VERSION,
-            request_id: request_id.to_string(),
-            parent_request_id: None,
+            operation_id: operation_id.to_string(),
+            parent_operation_id: None,
             caller: "test".to_string(),
             origin: ORIGIN_APPLICATION.to_string(),
             replay_of: None,
             package: "source_control".to_string(),
-            operation: "query".to_string(),
-            kind: RequestKind::Query,
+            operation_name: "query".to_string(),
+            kind: OperationKind::Query,
             parameters: empty_object(),
             pattern: String::new(),
             started_at: "2026-10-17T12:34:56.789Z".to_string(),
             process_id: 1,
             software_version: "0.2.7".to_string(),
-            concurrent_requests: 0,
+            concurrent_operations: 0,
             state: empty_object(),
             dropped_events: None,
         })
@@ -281,9 +281,9 @@ mod tests {
     }
 
     #[test]
-    fn the_identifiers_of_two_requests_differ() {
+    fn the_identifiers_of_two_operations_differ() {
         let logger = Logger::new(LogSettings::off());
-        assert_ne!(logger.next_request_id(1), logger.next_request_id(1));
+        assert_ne!(logger.next_operation_id(1), logger.next_operation_id(1));
     }
 
     #[test]

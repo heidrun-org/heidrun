@@ -1,7 +1,7 @@
 # Glossary of Heidrun index
 
 - Created: 14 October 2026
-- Last updated: 17 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618)
@@ -24,4 +24,4 @@ This file lists the files of this folder, for agents and tools.
 - [person_work.md](person_work.md): the Work of one person tab, its source, the Git history, the AI cost, the person, the person chooser, the time range of the Work of one person tab, the day, the totals, the average per day, and the bar chart of the work of one person.
 - [issue_fix_workflow.md](issue_fix_workflow.md): the Issue Fix Workflow, the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, the Issue Fix Completion, the added request, the related added request, and the unrelated added request.
 - [macros.md](macros.md): the macro, the hard-coded macro, the personal macro, the personal macro file, the project macro, and the command line heidrun_ctrl.
-- [data_layer_request_log.md](data_layer_request_log.md): the request, the request log, the start event and the completion event, the caller, the kind, the workload, the nested request, the pattern, the unfinished request, the replay, the snapshot, and the isolated database.
+- [data_layer_operation_log.md](data_layer_operation_log.md): the operation, the operation log, the start event and the completion event, the caller, the kind, the workload, the nested operation, the pattern, the unfinished operation, the replay, the snapshot, and the isolated database.

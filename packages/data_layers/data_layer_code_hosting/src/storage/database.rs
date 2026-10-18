@@ -12,8 +12,8 @@ use rusqlite::{params, params_from_iter, Connection, OpenFlags, OptionalExtensio
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// How long a read waits when another program ends a write of the file. A write holds the file for a moment only.
 const READ_WAITING_TIME: std::time::Duration = std::time::Duration::from_secs(5);
@@ -88,14 +88,14 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when one issue does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_issues(&mut self, repository: &str, issues: &[Issue]) -> Result<(), String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_issues", RequestKind::Write)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "upsert_issues", OperationKind::Write)
             .parameter("repository", repository)
             .parameter("issueCount", issues.len())
             .database(&self.database_path);
         record(spec, || self.upsert_issues_inside(repository, issues), |_| Summary::count(issues.len()))
     }
 
-    /// The work of `upsert_issues`, between the start event and the completion event of its request.
+    /// The work of `upsert_issues`, between the start event and the completion event of its operation.
     fn upsert_issues_inside(&mut self, repository: &str, issues: &[Issue]) -> Result<(), String> {
         let mut rows = Vec::with_capacity(issues.len());
         for issue in issues {
@@ -111,14 +111,14 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when one pull request does not follow the JSON schema, or when the file is open read only.
     pub fn upsert_pull_requests(&mut self, repository: &str, pull_requests: &[PullRequest]) -> Result<(), String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "upsert_pull_requests", RequestKind::Write)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "upsert_pull_requests", OperationKind::Write)
             .parameter("repository", repository)
             .parameter("pullRequestCount", pull_requests.len())
             .database(&self.database_path);
         record(spec, || self.upsert_pull_requests_inside(repository, pull_requests), |_| Summary::count(pull_requests.len()))
     }
 
-    /// The work of `upsert_pull_requests`, between the start event and the completion event of its request.
+    /// The work of `upsert_pull_requests`, between the start event and the completion event of its operation.
     fn upsert_pull_requests_inside(&mut self, repository: &str, pull_requests: &[PullRequest]) -> Result<(), String> {
         let mut rows = Vec::with_capacity(pull_requests.len());
         for pull_request in pull_requests {
@@ -132,14 +132,14 @@ impl CodeHostingDatabase {
     ///
     /// Returns `None` when the table has no row for the repository.
     pub fn find_last_updated_at(&self, table: CodeHostingTable, repository: &str) -> Result<Option<String>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_last_updated_at", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_last_updated_at", OperationKind::Query)
             .choice("table", table.name())
             .parameter("repository", repository)
             .database(&self.database_path);
         record(spec, || self.find_last_updated_at_inside(table, repository), |date| Summary::count(usize::from(date.is_some())))
     }
 
-    /// The work of `find_last_updated_at`, between the start event and the completion event of its request.
+    /// The work of `find_last_updated_at`, between the start event and the completion event of its operation.
     fn find_last_updated_at_inside(&self, table: CodeHostingTable, repository: &str) -> Result<Option<String>, String> {
         self.connection
             .query_row(
@@ -152,14 +152,14 @@ impl CodeHostingDatabase {
 
     /// Counts the rows of a table for a repository.
     pub fn count_rows(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "count_rows", OperationKind::Query)
             .choice("table", table.name())
             .parameter("repository", repository)
             .database(&self.database_path);
         record(spec, || self.count_rows_inside(table, repository), |count| Summary::count(*count as usize))
     }
 
-    /// The work of `count_rows`, between the start event and the completion event of its request.
+    /// The work of `count_rows`, between the start event and the completion event of its operation.
     fn count_rows_inside(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row(
@@ -172,14 +172,14 @@ impl CodeHostingDatabase {
 
     /// Reads one issue. Returns `None` when the table has no such row.
     pub fn find_issue(&self, repository: &str, number: i64) -> Result<Option<Issue>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issue", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_issue", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("number", number)
             .database(&self.database_path);
         record(spec, || self.find_issue_inside(repository, number), |issue| Summary::count(usize::from(issue.is_some())))
     }
 
-    /// The work of `find_issue`, between the start event and the completion event of its request.
+    /// The work of `find_issue`, between the start event and the completion event of its operation.
     fn find_issue_inside(&self, repository: &str, number: i64) -> Result<Option<Issue>, String> {
         match self.find_data(CodeHostingTable::Issues, repository, number)? {
             None => Ok(None),
@@ -191,7 +191,7 @@ impl CodeHostingDatabase {
 
     /// Reads one pull request. Returns `None` when the table has no such row.
     pub fn find_pull_request(&self, repository: &str, number: i64) -> Result<Option<PullRequest>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_request", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_pull_request", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("number", number)
             .database(&self.database_path);
@@ -200,7 +200,7 @@ impl CodeHostingDatabase {
         })
     }
 
-    /// The work of `find_pull_request`, between the start event and the completion event of its request.
+    /// The work of `find_pull_request`, between the start event and the completion event of its operation.
     fn find_pull_request_inside(&self, repository: &str, number: i64) -> Result<Option<PullRequest>, String> {
         match self.find_data(CodeHostingTable::PullRequests, repository, number)? {
             None => Ok(None),
@@ -216,13 +216,13 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when the tables of the file cannot be listed.
     pub fn has_table(&self, table: &str) -> Result<bool, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "has_table", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "has_table", OperationKind::Query)
             .choice("table", table)
             .database(&self.database_path);
         record(spec, || self.has_table_inside(table), |is_found| Summary::count(usize::from(*is_found)))
     }
 
-    /// The work of `has_table`, between the start event and the completion event of its request.
+    /// The work of `has_table`, between the start event and the completion event of its operation.
     fn has_table_inside(&self, table: &str) -> Result<bool, String> {
         self.connection
             .query_row("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?1", params![table], |row| {
@@ -238,7 +238,7 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when a time is not a time with an offset, or when a row is not an issue.
     pub fn find_issues_opened_between(&self, repository: &str, since: &str, until: &str) -> Result<Vec<Issue>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_opened_between", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_issues_opened_between", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("since", since)
             .parameter("until", until)
@@ -259,7 +259,7 @@ impl CodeHostingDatabase {
         since: &str,
         until: &str,
     ) -> Result<Vec<PullRequest>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_opened_between", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_pull_requests_opened_between", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("since", since)
             .parameter("until", until)
@@ -275,7 +275,7 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when a row is not an issue.
     pub fn find_issues_by_numbers(&self, repository: &str, numbers: &[i64]) -> Result<Vec<Issue>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_by_numbers", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_issues_by_numbers", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("numberCount", numbers.len())
             .database(&self.database_path);
@@ -290,7 +290,7 @@ impl CodeHostingDatabase {
     /// # Errors
     /// An error when a row is not a pull request.
     pub fn find_pull_requests_by_numbers(&self, repository: &str, numbers: &[i64]) -> Result<Vec<PullRequest>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_by_numbers", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_pull_requests_by_numbers", OperationKind::Query)
             .parameter("repository", repository)
             .parameter("numberCount", numbers.len())
             .database(&self.database_path);
@@ -302,7 +302,7 @@ impl CodeHostingDatabase {
     /// Counts the rows of a table for a repository that have no field `labelColors`. An earlier version of the package wrote
     /// these rows, and a new read of the repository gives them their colors.
     pub fn count_rows_without_label_colors(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_rows_without_label_colors", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "count_rows_without_label_colors", OperationKind::Query)
             .choice("table", table.name())
             .parameter("repository", repository)
             .database(&self.database_path);
@@ -311,7 +311,7 @@ impl CodeHostingDatabase {
         })
     }
 
-    /// The work of `count_rows_without_label_colors`, between the start event and the completion event of its request.
+    /// The work of `count_rows_without_label_colors`, between the start event and the completion event of its operation.
     fn count_rows_without_label_colors_inside(&self, table: CodeHostingTable, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row(
@@ -332,11 +332,11 @@ impl CodeHostingDatabase {
     /// An error when the file is not open read only, or when the statement is wrong. A statement that writes is wrong,
     /// because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "query", OperationKind::Query).sql(sql).database(&self.database_path);
         record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
     }
 
-    /// The work of `query`, between the start event and the completion event of its request.
+    /// The work of `query`, between the start event and the completion event of its operation.
     fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         if !self.is_read_only {
             return Err("A query needs a database that is open read only.".to_string());

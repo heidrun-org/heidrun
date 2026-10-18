@@ -3,16 +3,16 @@
 use std::path::{Path, PathBuf};
 
 /// The environment variable that holds the path of the log file. The value `off` turns the log off.
-pub const LOG_FILE_VARIABLE: &str = "HEIDRUN_REQUEST_LOG_FILE";
+pub const LOG_FILE_VARIABLE: &str = "HEIDRUN_OPERATION_LOG_FILE";
 
 /// The environment variable that holds the name of the caller, for a program that wants another name than its own.
-pub const CALLER_VARIABLE: &str = "HEIDRUN_REQUEST_LOG_CALLER";
+pub const CALLER_VARIABLE: &str = "HEIDRUN_OPERATION_LOG_CALLER";
 
-/// The value of the variable `HEIDRUN_REQUEST_LOG_FILE` that turns the log off.
+/// The value of the variable `HEIDRUN_OPERATION_LOG_FILE` that turns the log off.
 pub const OFF_VALUE: &str = "off";
 
 /// The name of the log file in the folder of the data of Heidrun.
-pub const LOG_FILE_NAME: &str = "data_layer_requests.jsonl";
+pub const LOG_FILE_NAME: &str = "data_layer_operations.jsonl";
 
 /// The size at which the log file is replaced by a new one, in bytes: 8 MiB. The old file stays, so the log never holds more
 /// than twice this size.
@@ -30,8 +30,8 @@ pub struct LogSettings {
 }
 
 impl LogSettings {
-    /// The configuration of the environment: the variable `HEIDRUN_REQUEST_LOG_FILE` gives the file, or else the file
-    /// `data_layer_requests.jsonl` in the folder of the data of Heidrun, and the variable `HEIDRUN_REQUEST_LOG_CALLER` gives
+    /// The configuration of the environment: the variable `HEIDRUN_OPERATION_LOG_FILE` gives the file, or else the file
+    /// `data_layer_operations.jsonl` in the folder of the data of Heidrun, and the variable `HEIDRUN_OPERATION_LOG_CALLER` gives
     /// the caller. A test program of Cargo writes no log unless the variable gives a file, so the tests of the packages never
     /// fill the log of the developer.
     pub fn from_environment() -> Self {

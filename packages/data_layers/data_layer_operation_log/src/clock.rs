@@ -1,6 +1,6 @@
 //! The wall-clock time as text, in UTC, with the format `2026-10-17T12:34:56.789Z`.
 //!
-//! The package writes the time as text, so that a person and a SQL statement can read it. The duration of a request never
+//! The package writes the time as text, so that a person and a SQL statement can read it. The duration of an operation never
 //! uses this clock: it uses the monotonic clock of the program.
 
 use std::time::{SystemTime, UNIX_EPOCH};

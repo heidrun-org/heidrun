@@ -3,6 +3,16 @@
 version = 4
 
 [[package]]
+name = "data_layer_operation_log"
+version = "0.2.7"
+dependencies = [
+ "dirs",
+ "libc",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -110,16 +120,6 @@ checksum = "60dc65c0ff1a7ae1294b0c67b9f14baf70b644404010370171787bfac1038fc0"
 dependencies = [
  "libredox",
  "thiserror",
-]
-
-[[package]]
-name = "request_log"
-version = "0.2.7"
-dependencies = [
- "dirs",
- "libc",
- "serde",
- "serde_json",
 ]
 
 [[package]]

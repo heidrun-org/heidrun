@@ -8,8 +8,8 @@ use crate::git::git_runner::GitCommandRunner;
 use crate::model::types::{SynchronizationMode, SynchronizationReport};
 use crate::storage::database::SourceControlDatabase;
 use crate::synchronization::run;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 use std::path::Path;
 
 /// Copies the commits of the Git repository of `folder` that the SQLite file at `database_path` does not hold yet, with the
@@ -23,7 +23,7 @@ pub fn refresh_source_control(
     folder: &Path,
     repository: &str,
 ) -> Result<SynchronizationReport, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "refresh_source_control", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "refresh_source_control", OperationKind::Synchronization)
         .choice("mode", SynchronizationMode::Update.name())
         .parameter("repository", repository)
         .parameter("folder", folder.display().to_string())
@@ -33,7 +33,7 @@ pub fn refresh_source_control(
     })
 }
 
-/// The work of `refresh_source_control`, between the start event and the completion event of its request.
+/// The work of `refresh_source_control`, between the start event and the completion event of its operation.
 fn refresh_source_control_inside(
     database_path: &Path,
     folder: &Path,
@@ -64,20 +64,20 @@ mod tests {
     }
 
     #[test]
-    fn a_refresh_is_one_request_that_holds_the_synchronization_with_its_collection_and_writes() {
+    fn a_refresh_is_one_operation_that_holds_the_synchronization_with_its_collection_and_writes() {
         let (repository, _) = TestRepository::with_four_commits("refresh_events");
         let database_path = temp_folder("refresh_events_database").join("data_layer.sqlite");
-        let (_, events) = request_log::testing::capture(|| {
+        let (_, events) = data_layer_operation_log::testing::capture(|| {
             refresh_source_control(&database_path, &repository.folder, "heidrun-org/heidrun").unwrap()
         });
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "source_control.refresh_source_control");
         assert_eq!(tree[1], "  source_control.synchronize");
         assert!(tree.contains(&"    source_control.read_commits".to_string()), "{tree:?}");
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].parameters["mode"], "update");
         assert_eq!(starts[0].parameters["repository"], "heidrun-org/heidrun");
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(4));
     }
 

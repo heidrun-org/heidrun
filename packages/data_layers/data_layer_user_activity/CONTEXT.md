@@ -25,7 +25,7 @@ The User activity source of Heidrun: reads `user_activity.jsonl` into the SQLite
 - The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty, shared with the other data layer packages. The package creates and writes only its own table with `CREATE ... IF NOT EXISTS`. The option `--database` changes the path.
 - `query` only works on a database that is open read only, so a query never changes the file and never creates it. The option `--verbose` sends progress lines to a log function, and only `src/main.rs` prints them.
 - The folder `src/model/` imports from no other folder of `src/`. The folders `src/user_activity_file/` and `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses them together.
-- Calls are blocking; the package imports only `request_log` from other repository packages and knows nothing about Tauri. Every public operation records its request and tests its events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
+- Calls are blocking; the package imports only `data_layer_operation_log` from other repository packages and knows nothing about Tauri. Every public function records its operation and tests its events ([rule](../../../docs/agents_rules/data_layer_operation_log.md)).
 - `.cargo/config.toml` selects the target folder of `desktop_tauri`, cloned by `pnpm worktree:create`; Cargo reads this configuration only from inside the package.
 - Desktop callers use only `refresh_*` and `find_*`, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) requires; `data_layer_boundary_checker` enforces the boundary.
 
@@ -33,4 +33,4 @@ The User activity source of Heidrun: reads `user_activity.jsonl` into the SQLite
 - The package comes from [issue #474](https://github.com/heidrun-org/heidrun/issues/474). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452). The records are described in [the rules of the User activity sidebar section](../../../docs/agents_rules/user_interface/sidebars/user_activity.md).
 - A record holds the folder of the workspace, not the name of the repository, and a temporary worktree folder can be deleted. So the package stores `workspaceFolder` only.
 - The package does not read the active period that runs now, and it cannot see a record that is lost when the application quits through the menu.
-- Request logging follows [request_log](../../auxiliary/request_log/CONTEXT.md).
+- Operation logging follows [data_layer_operation_log](../data_layer_operation_log/CONTEXT.md).

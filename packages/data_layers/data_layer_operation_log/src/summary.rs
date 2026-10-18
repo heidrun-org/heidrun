@@ -1,53 +1,53 @@
-//! The usage patterns in the log: how often each caller asks for each operation, with which values, and how long it takes.
+//! The usage patterns in the log: how often each caller calls each public function, with which values, and how long it takes.
 //!
-//! A summary counts the requests that a caller made for its own need. It leaves out a nested request, because the request
+//! A summary counts the operations that a caller made for its own need. It leaves out a nested operation, because the operation
 //! that holds it already counts, and it leaves out a replay, because a performance exercise is not usage. A person can ask
 //! for both.
 
 use crate::clock::parse_utc_text;
-use crate::event::{RequestKind, ORIGIN_REPLAY};
-use crate::reading::{PairedRequest, RequestState};
+use crate::event::{OperationKind, ORIGIN_REPLAY};
+use crate::reading::{PairedOperation, OperationState};
 use serde_json::{Map, Value};
 use std::collections::BTreeSet;
 
-/// The parameters that change at each request without changing the workload, so two requests that differ only by them are
-/// the same request.
+/// The parameters that change at each operation without changing the workload, so two operations that differ only by them are
+/// the same operation.
 const VOLATILE_PARAMETERS: [&str; 1] = ["now"];
 
 /// The most distinct values of the field `repository` that a group keeps.
 const MAX_LISTED_REPOSITORIES: usize = 10;
 
-/// Which requests a summary counts.
+/// Which operations a summary counts.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Filter {
-    /// Only the requests of this caller.
+    /// Only the operations of this caller.
     pub caller: Option<String>,
-    /// Only the requests of this package.
+    /// Only the operations of this package.
     pub package: Option<String>,
-    /// Only the requests of this operation.
-    pub operation: Option<String>,
-    /// Only the requests that started at this time or later, in milliseconds since 1 January 1970 UTC.
+    /// Only the operations with this operation name.
+    pub operation_name: Option<String>,
+    /// Only the operations that started at this time or later, in milliseconds since 1 January 1970 UTC.
     pub since_milliseconds: Option<i64>,
-    /// Only the requests that started before this time, in milliseconds since 1 January 1970 UTC.
+    /// Only the operations that started before this time, in milliseconds since 1 January 1970 UTC.
     pub until_milliseconds: Option<i64>,
-    /// Only the requests that took at least this long, in microseconds. A request that did not end is left out.
+    /// Only the operations that took at least this long, in microseconds. An operation that did not end is left out.
     pub minimum_microseconds: Option<u64>,
-    /// Only the requests in this state.
-    pub state: Option<RequestState>,
-    /// Only the requests that have no completion event, running or interrupted.
+    /// Only the operations in this state.
+    pub state: Option<OperationState>,
+    /// Only the operations that have no completion event, running or interrupted.
     pub only_unfinished: bool,
-    /// Count the nested requests too.
+    /// Count the nested operations too.
     pub include_nested: bool,
-    /// Count the requests of a replay too.
+    /// Count the operations of a replay too.
     pub include_replays: bool,
-    /// Only the requests of a replay.
+    /// Only the operations of a replay.
     pub only_replays: bool,
 }
 
 impl Filter {
-    /// True when the request passes the filter.
-    pub fn accepts(&self, request: &PairedRequest) -> bool {
-        let start = &request.start;
+    /// True when the operation passes the filter.
+    pub fn accepts(&self, operation: &PairedOperation) -> bool {
+        let start = &operation.start;
         let is_replay = start.origin == ORIGIN_REPLAY;
         if self.only_replays && is_replay == false {
             return false;
@@ -55,7 +55,7 @@ impl Filter {
         if self.only_replays == false && self.include_replays == false && is_replay {
             return false;
         }
-        if self.include_nested == false && start.parent_request_id.is_some() {
+        if self.include_nested == false && start.parent_operation_id.is_some() {
             return false;
         }
         if self.caller.as_ref().is_some_and(|caller| *caller != start.caller) {
@@ -64,13 +64,13 @@ impl Filter {
         if self.package.as_ref().is_some_and(|package| *package != start.package) {
             return false;
         }
-        if self.operation.as_ref().is_some_and(|operation| *operation != start.operation) {
+        if self.operation_name.as_ref().is_some_and(|operation_name| *operation_name != start.operation_name) {
             return false;
         }
-        if self.state.is_some_and(|state| state != request.state) {
+        if self.state.is_some_and(|state| state != operation.state) {
             return false;
         }
-        if self.only_unfinished && request.state.is_unfinished() == false {
+        if self.only_unfinished && operation.state.is_unfinished() == false {
             return false;
         }
         let started = parse_utc_text(&start.started_at);
@@ -85,7 +85,7 @@ impl Filter {
             }
         }
         if let Some(minimum) = self.minimum_microseconds {
-            if request.duration_microseconds().is_none_or(|duration| duration < minimum) {
+            if operation.duration_microseconds().is_none_or(|duration| duration < minimum) {
                 return false;
             }
         }
@@ -93,27 +93,27 @@ impl Filter {
     }
 }
 
-/// The requests that pass a filter.
-pub fn filter_requests<'a>(requests: &'a [PairedRequest], filter: &Filter) -> Vec<&'a PairedRequest> {
-    requests.iter().filter(|request| filter.accepts(request)).collect()
+/// The operations that pass a filter.
+pub fn filter_operations<'a>(operations: &'a [PairedOperation], filter: &Filter) -> Vec<&'a PairedOperation> {
+    operations.iter().filter(|operation| filter.accepts(operation)).collect()
 }
 
-/// What the requests of a group have in common.
+/// What the operations of a group have in common.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GroupBy {
-    /// The caller, the package, and the operation.
-    Operation,
+    /// The caller, the package, and the operation name.
+    OperationName,
     /// The same, and the pattern: the same statement or the same choices, with other values.
     Pattern,
-    /// The same, and the same parameters: the requests that asked exactly the same thing.
+    /// The same, and the same parameters: the operations that asked exactly the same thing.
     Parameters,
 }
 
 impl GroupBy {
-    /// The group by of its name: `operation`, `pattern`, or `parameters`.
+    /// The group by of its name: `operation-name`, `pattern`, or `parameters`.
     pub fn from_name(name: &str) -> Option<GroupBy> {
         match name {
-            "operation" => Some(GroupBy::Operation),
+            "operation-name" => Some(GroupBy::OperationName),
             "pattern" => Some(GroupBy::Pattern),
             "parameters" => Some(GroupBy::Parameters),
             _ => None,
@@ -121,16 +121,16 @@ impl GroupBy {
     }
 }
 
-/// The words for what a request does with the data, which tell an initial import from an incremental synchronization. A
+/// The words for what an operation does with the data, which tell an initial import from an incremental synchronization. A
 /// synchronization that chooses its mode while it runs has no `mode` parameter, and its completion event says the mode in the
 /// detail `mode`.
-pub fn workload_of(request: &PairedRequest) -> &'static str {
-    match request.start.kind {
-        RequestKind::Query => "stored_data_query",
-        RequestKind::Collection => "collection",
-        RequestKind::Write => "database_write",
-        RequestKind::Lock => "lock_wait",
-        RequestKind::Synchronization => match synchronization_mode_of(request) {
+pub fn workload_of(operation: &PairedOperation) -> &'static str {
+    match operation.start.kind {
+        OperationKind::Query => "stored_data_query",
+        OperationKind::Collection => "collection",
+        OperationKind::Write => "database_write",
+        OperationKind::Lock => "lock_wait",
+        OperationKind::Synchronization => match synchronization_mode_of(operation) {
             Some("initialize") => "initial_import",
             Some("update") => "incremental_synchronization",
             _ => "synchronization",
@@ -139,16 +139,16 @@ pub fn workload_of(request: &PairedRequest) -> &'static str {
 }
 
 /// The mode of a synchronization: its parameter `mode`, or else the detail `mode` of its completion event.
-fn synchronization_mode_of(request: &PairedRequest) -> Option<&str> {
-    request
+fn synchronization_mode_of(operation: &PairedOperation) -> Option<&str> {
+    operation
         .start
         .parameters
         .get("mode")
         .and_then(Value::as_str)
-        .or_else(|| request.complete.as_ref().and_then(|complete| complete.details.get("mode")).and_then(Value::as_str))
+        .or_else(|| operation.complete.as_ref().and_then(|complete| complete.details.get("mode")).and_then(Value::as_str))
 }
 
-/// The durations of the requests that ended, with the numbers that describe how they spread.
+/// The durations of the operations that ended, with the numbers that describe how they spread.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct DurationStatistics {
     /// The number of durations.
@@ -201,38 +201,38 @@ fn percentile(sorted: &[u64], percent: usize) -> u64 {
     sorted[rank - 1]
 }
 
-/// The requests that have the same caller, package, operation, and, by the group by, the same pattern or parameters.
+/// The operations that have the same caller, package, operation name, and, by the group by, the same pattern or parameters.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Group {
-    /// The program that made the requests.
+    /// The program that made the operations.
     pub caller: String,
-    /// The package that received the requests.
+    /// The package that received the operations.
     pub package: String,
-    /// The operation.
-    pub operation: String,
-    /// What the requests do with the data: `stored_data_query`, `initial_import`, and the other words of `workload_of`.
+    /// The operation name.
+    pub operation_name: String,
+    /// What the operations do with the data: `stored_data_query`, `initial_import`, and the other words of `workload_of`.
     pub workload: &'static str,
-    /// The pattern of the requests, for the group by `pattern` and `parameters`.
+    /// The pattern of the operations, for the group by `pattern` and `parameters`.
     pub pattern: Option<String>,
-    /// The parameters of the requests, for the group by `parameters`.
+    /// The parameters of the operations, for the group by `parameters`.
     pub parameters: Option<Value>,
-    /// The number of requests.
+    /// The number of operations.
     pub count: usize,
-    /// The number of requests that ended with success.
+    /// The number of operations that ended with success.
     pub succeeded: usize,
-    /// The number of requests that ended with a failure.
+    /// The number of operations that ended with a failure.
     pub failed: usize,
-    /// The number of requests that have no completion event and whose process lives.
+    /// The number of operations that have no completion event and whose process lives.
     pub running: usize,
-    /// The number of requests that have no completion event and whose process is gone.
+    /// The number of operations that have no completion event and whose process is gone.
     pub interrupted: usize,
-    /// The durations of the requests that ended.
+    /// The durations of the operations that ended.
     pub durations: DurationStatistics,
-    /// The start of the first request.
+    /// The start of the first operation.
     pub first_started_at: String,
-    /// The start of the last request.
+    /// The start of the last operation.
     pub last_started_at: String,
-    /// The distinct repositories of the requests, at most ten.
+    /// The distinct repositories of the operations, at most ten.
     pub repositories: Vec<String>,
 }
 
@@ -243,7 +243,7 @@ impl Group {
         let mut row = Map::new();
         row.insert("caller".to_string(), Value::from(self.caller.clone()));
         row.insert("package".to_string(), Value::from(self.package.clone()));
-        row.insert("operation".to_string(), Value::from(self.operation.clone()));
+        row.insert("operationName".to_string(), Value::from(self.operation_name.clone()));
         row.insert("workload".to_string(), Value::from(self.workload));
         if let Some(pattern) = &self.pattern {
             row.insert("pattern".to_string(), Value::from(pattern.clone()));
@@ -270,9 +270,9 @@ impl Group {
     }
 }
 
-/// The parameters of a request without the values that change at each request, as one text with a fixed order of fields.
-fn stable_parameters(request: &PairedRequest) -> Value {
-    match &request.start.parameters {
+/// The parameters of an operation without the values that change at each operation, as one text with a fixed order of fields.
+fn stable_parameters(operation: &PairedOperation) -> Value {
+    match &operation.start.parameters {
         Value::Object(fields) => {
             let sorted: std::collections::BTreeMap<&String, &Value> =
                 fields.iter().filter(|(name, _)| VOLATILE_PARAMETERS.contains(&name.as_str()) == false).collect();
@@ -282,24 +282,24 @@ fn stable_parameters(request: &PairedRequest) -> Value {
     }
 }
 
-/// Groups the requests, and counts and times each group. The groups come with the largest total time first.
-pub fn summarize(requests: &[&PairedRequest], group_by: GroupBy) -> Vec<Group> {
-    let mut groups: Vec<(Vec<String>, Vec<&PairedRequest>)> = Vec::new();
+/// Groups the operations, and counts and times each group. The groups come with the largest total time first.
+pub fn summarize(operations: &[&PairedOperation], group_by: GroupBy) -> Vec<Group> {
+    let mut groups: Vec<(Vec<String>, Vec<&PairedOperation>)> = Vec::new();
     let mut positions: std::collections::HashMap<Vec<String>, usize> = std::collections::HashMap::new();
-    for request in requests {
-        let start = &request.start;
-        let mut key = vec![start.caller.clone(), start.package.clone(), start.operation.clone(), workload_of(request).to_string()];
-        if group_by != GroupBy::Operation {
+    for operation in operations {
+        let start = &operation.start;
+        let mut key = vec![start.caller.clone(), start.package.clone(), start.operation_name.clone(), workload_of(operation).to_string()];
+        if group_by != GroupBy::OperationName {
             key.push(start.pattern.clone());
         }
         if group_by == GroupBy::Parameters {
-            key.push(stable_parameters(request).to_string());
+            key.push(stable_parameters(operation).to_string());
         }
         match positions.get(&key) {
-            Some(position) => groups[*position].1.push(request),
+            Some(position) => groups[*position].1.push(operation),
             None => {
                 positions.insert(key.clone(), groups.len());
-                groups.push((key, vec![request]));
+                groups.push((key, vec![operation]));
             }
         }
     }
@@ -313,34 +313,34 @@ pub fn summarize(requests: &[&PairedRequest], group_by: GroupBy) -> Vec<Group> {
             .total_microseconds
             .cmp(&left.durations.total_microseconds)
             .then(right.count.cmp(&left.count))
-            .then(left.operation.cmp(&right.operation))
+            .then(left.operation_name.cmp(&right.operation_name))
     });
     result
 }
 
-/// The group of requests that have the same key.
-fn group_of(members: &[&PairedRequest], group_by: GroupBy) -> Group {
+/// The group of operations that have the same key.
+fn group_of(members: &[&PairedOperation], group_by: GroupBy) -> Group {
     let first = members[0];
-    let durations: Vec<u64> = members.iter().filter_map(|request| request.duration_microseconds()).collect();
-    let count_state = |state: RequestState| members.iter().filter(|request| request.state == state).count();
+    let durations: Vec<u64> = members.iter().filter_map(|operation| operation.duration_microseconds()).collect();
+    let count_state = |state: OperationState| members.iter().filter(|operation| operation.state == state).count();
     let repositories: BTreeSet<String> = members
         .iter()
-        .filter_map(|request| request.start.parameters.get("repository").and_then(Value::as_str).map(str::to_string))
+        .filter_map(|operation| operation.start.parameters.get("repository").and_then(Value::as_str).map(str::to_string))
         .collect();
-    let mut started: Vec<&str> = members.iter().map(|request| request.start.started_at.as_str()).collect();
+    let mut started: Vec<&str> = members.iter().map(|operation| operation.start.started_at.as_str()).collect();
     started.sort_unstable();
     Group {
         caller: first.start.caller.clone(),
         package: first.start.package.clone(),
-        operation: first.start.operation.clone(),
+        operation_name: first.start.operation_name.clone(),
         workload: workload_of(first),
-        pattern: if group_by == GroupBy::Operation { None } else { Some(first.start.pattern.clone()) },
+        pattern: if group_by == GroupBy::OperationName { None } else { Some(first.start.pattern.clone()) },
         parameters: if group_by == GroupBy::Parameters { Some(stable_parameters(first)) } else { None },
         count: members.len(),
-        succeeded: count_state(RequestState::Succeeded),
-        failed: count_state(RequestState::Failed),
-        running: count_state(RequestState::Running),
-        interrupted: count_state(RequestState::Interrupted),
+        succeeded: count_state(OperationState::Succeeded),
+        failed: count_state(OperationState::Failed),
+        running: count_state(OperationState::Running),
+        interrupted: count_state(OperationState::Interrupted),
         durations: DurationStatistics::of(&durations),
         first_started_at: started[0].to_string(),
         last_started_at: started[started.len() - 1].to_string(),
@@ -348,7 +348,7 @@ fn group_of(members: &[&PairedRequest], group_by: GroupBy) -> Group {
     }
 }
 
-/// The groups of the group by `parameters` that hold two requests or more: the requests that asked the same thing again.
+/// The groups of the group by `parameters` that hold two operations or more: the operations that asked the same thing again.
 pub fn repeated(groups: Vec<Group>) -> Vec<Group> {
     groups.into_iter().filter(|group| group.count >= 2).collect()
 }
@@ -358,38 +358,38 @@ mod tests {
     use super::*;
     use crate::event::{empty_object, CompleteEvent, Outcome, StartEvent, FORMAT_VERSION, ORIGIN_APPLICATION};
 
-    fn request(
+    fn operation(
         caller: &str,
-        operation: &str,
-        kind: RequestKind,
+        operation_name: &str,
+        kind: OperationKind,
         parameters: Value,
         pattern: &str,
         microseconds: Option<u64>,
-    ) -> PairedRequest {
+    ) -> PairedOperation {
         let start = StartEvent {
             v: FORMAT_VERSION,
-            request_id: format!("{caller}-{operation}-{}", microseconds.unwrap_or(0)),
-            parent_request_id: None,
+            operation_id: format!("{caller}-{operation_name}-{}", microseconds.unwrap_or(0)),
+            parent_operation_id: None,
             caller: caller.to_string(),
             origin: ORIGIN_APPLICATION.to_string(),
             replay_of: None,
             package: "coding_agents".to_string(),
-            operation: operation.to_string(),
+            operation_name: operation_name.to_string(),
             kind,
             parameters,
             pattern: pattern.to_string(),
             started_at: "2026-10-17T12:00:00.000Z".to_string(),
             process_id: 1,
             software_version: "0.2.7".to_string(),
-            concurrent_requests: 0,
+            concurrent_operations: 0,
             state: empty_object(),
             dropped_events: None,
         };
         let complete = microseconds.map(|duration| CompleteEvent {
             v: FORMAT_VERSION,
-            request_id: start.request_id.clone(),
+            operation_id: start.operation_id.clone(),
             package: start.package.clone(),
-            operation: start.operation.clone(),
+            operation_name: start.operation_name.clone(),
             ended_at: "2026-10-17T12:00:01.000Z".to_string(),
             duration_microseconds: duration,
             outcome: Outcome::Success,
@@ -398,8 +398,8 @@ mod tests {
             details: empty_object(),
             dropped_events: None,
         });
-        let state = if complete.is_some() { RequestState::Succeeded } else { RequestState::Interrupted };
-        PairedRequest { start, complete, state }
+        let state = if complete.is_some() { OperationState::Succeeded } else { OperationState::Interrupted };
+        PairedOperation { start, complete, state }
     }
 
     #[test]
@@ -419,14 +419,14 @@ mod tests {
     }
 
     #[test]
-    fn a_group_by_operation_counts_the_requests_of_one_caller_and_operation() {
-        let requests = vec![
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=hour", Some(1000)),
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({ "repository": "c/d" }), "grouping=day", Some(3000)),
-            request("heidrun_data", "find_usage", RequestKind::Query, serde_json::json!({}), "", Some(500)),
+    fn a_group_by_operation_counts_the_operations_of_one_caller_and_operation() {
+        let operations = vec![
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=hour", Some(1000)),
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "c/d" }), "grouping=day", Some(3000)),
+            operation("heidrun_data", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(500)),
         ];
-        let references: Vec<&PairedRequest> = requests.iter().collect();
-        let groups = summarize(&references, GroupBy::Operation);
+        let references: Vec<&PairedOperation> = operations.iter().collect();
+        let groups = summarize(&references, GroupBy::OperationName);
         assert_eq!(groups.len(), 2);
         assert_eq!((groups[0].caller.as_str(), groups[0].count), ("heidrun", 2));
         assert_eq!(groups[0].durations.total_microseconds, 4000);
@@ -436,12 +436,12 @@ mod tests {
 
     #[test]
     fn a_group_by_pattern_separates_the_choices() {
-        let requests = vec![
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=hour", Some(1000)),
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({ "repository": "c/d" }), "grouping=hour", Some(2000)),
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=day", Some(5000)),
+        let operations = vec![
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=hour", Some(1000)),
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "c/d" }), "grouping=hour", Some(2000)),
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b" }), "grouping=day", Some(5000)),
         ];
-        let references: Vec<&PairedRequest> = requests.iter().collect();
+        let references: Vec<&PairedOperation> = operations.iter().collect();
         let groups = summarize(&references, GroupBy::Pattern);
         assert_eq!(groups.len(), 2);
         assert_eq!(groups[0].pattern.as_deref(), Some("grouping=day"));
@@ -450,13 +450,13 @@ mod tests {
     }
 
     #[test]
-    fn a_group_by_parameters_finds_the_requests_that_asked_exactly_the_same_thing() {
-        let requests = vec![
-            request("heidrun", "read_usage", RequestKind::Query, serde_json::json!({ "repository": "a/b", "now": 1 }), "", Some(1000)),
-            request("heidrun", "read_usage", RequestKind::Query, serde_json::json!({ "repository": "a/b", "now": 2 }), "", Some(1200)),
-            request("heidrun", "read_usage", RequestKind::Query, serde_json::json!({ "repository": "c/d", "now": 3 }), "", Some(900)),
+    fn a_group_by_parameters_finds_the_operations_that_asked_exactly_the_same_thing() {
+        let operations = vec![
+            operation("heidrun", "read_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b", "now": 1 }), "", Some(1000)),
+            operation("heidrun", "read_usage", OperationKind::Query, serde_json::json!({ "repository": "a/b", "now": 2 }), "", Some(1200)),
+            operation("heidrun", "read_usage", OperationKind::Query, serde_json::json!({ "repository": "c/d", "now": 3 }), "", Some(900)),
         ];
-        let references: Vec<&PairedRequest> = requests.iter().collect();
+        let references: Vec<&PairedOperation> = operations.iter().collect();
         let groups = repeated(summarize(&references, GroupBy::Parameters));
         assert_eq!(groups.len(), 1);
         assert_eq!(groups[0].count, 2);
@@ -465,13 +465,13 @@ mod tests {
 
     #[test]
     fn a_synchronization_is_an_initial_import_or_an_incremental_synchronization_by_its_mode() {
-        let initialize = request("heidrun", "synchronize", RequestKind::Synchronization, serde_json::json!({ "mode": "initialize" }), "", Some(1));
-        let update = request("heidrun", "synchronize", RequestKind::Synchronization, serde_json::json!({ "mode": "update" }), "", Some(2));
-        let collection = request("heidrun", "read_chat_sessions", RequestKind::Collection, serde_json::json!({}), "", Some(3));
-        let query = request("heidrun", "query", RequestKind::Query, serde_json::json!({}), "", Some(4));
+        let initialize = operation("heidrun", "synchronize", OperationKind::Synchronization, serde_json::json!({ "mode": "initialize" }), "", Some(1));
+        let update = operation("heidrun", "synchronize", OperationKind::Synchronization, serde_json::json!({ "mode": "update" }), "", Some(2));
+        let collection = operation("heidrun", "read_chat_sessions", OperationKind::Collection, serde_json::json!({}), "", Some(3));
+        let query = operation("heidrun", "query", OperationKind::Query, serde_json::json!({}), "", Some(4));
         assert_eq!(workload_of(&initialize), "initial_import");
         assert_eq!(workload_of(&update), "incremental_synchronization");
-        let refresh = request("heidrun", "refresh_prices", RequestKind::Synchronization, serde_json::json!({}), "", Some(5));
+        let refresh = operation("heidrun", "refresh_prices", OperationKind::Synchronization, serde_json::json!({}), "", Some(5));
         assert_eq!(workload_of(&refresh), "synchronization", "Without a mode, a synchronization is neither of the two");
         assert_eq!(workload_of(&collection), "collection");
         assert_eq!(workload_of(&query), "stored_data_query");
@@ -479,7 +479,7 @@ mod tests {
 
     #[test]
     fn a_synchronization_that_chooses_its_mode_while_it_runs_is_told_by_the_mode_in_its_completion_event() {
-        let mut refresh = request("desktop", "refresh_code_hosting", RequestKind::Synchronization, serde_json::json!({}), "", Some(6));
+        let mut refresh = operation("desktop", "refresh_code_hosting", OperationKind::Synchronization, serde_json::json!({}), "", Some(6));
         refresh.complete.as_mut().unwrap().details = serde_json::json!({ "mode": "initialize" });
         assert_eq!(workload_of(&refresh), "initial_import");
         refresh.complete.as_mut().unwrap().details = serde_json::json!({ "mode": "update" });
@@ -487,50 +487,50 @@ mod tests {
     }
 
     #[test]
-    fn a_request_that_did_not_end_is_counted_and_has_no_duration() {
-        let requests = vec![
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({}), "", Some(1000)),
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({}), "", None),
+    fn a_operation_that_did_not_end_is_counted_and_has_no_duration() {
+        let operations = vec![
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(1000)),
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({}), "", None),
         ];
-        let references: Vec<&PairedRequest> = requests.iter().collect();
-        let groups = summarize(&references, GroupBy::Operation);
+        let references: Vec<&PairedOperation> = operations.iter().collect();
+        let groups = summarize(&references, GroupBy::OperationName);
         assert_eq!((groups[0].count, groups[0].succeeded, groups[0].interrupted), (2, 1, 1));
         assert_eq!(groups[0].durations.count, 1);
     }
 
     #[test]
-    fn a_summary_leaves_out_the_nested_requests_and_the_replays_unless_a_person_asks() {
-        let mut nested = request("heidrun", "read_chat_sessions", RequestKind::Collection, serde_json::json!({}), "", Some(1));
-        nested.start.parent_request_id = Some("parent".to_string());
-        let mut replay = request("heidrun_data", "query", RequestKind::Query, serde_json::json!({}), "", Some(2));
+    fn a_summary_leaves_out_the_nested_operations_and_the_replays_unless_a_person_asks() {
+        let mut nested = operation("heidrun", "read_chat_sessions", OperationKind::Collection, serde_json::json!({}), "", Some(1));
+        nested.start.parent_operation_id = Some("parent".to_string());
+        let mut replay = operation("heidrun_data", "query", OperationKind::Query, serde_json::json!({}), "", Some(2));
         replay.start.origin = ORIGIN_REPLAY.to_string();
-        let own = request("heidrun", "query", RequestKind::Query, serde_json::json!({}), "", Some(3));
-        let requests = vec![nested, replay, own];
-        assert_eq!(filter_requests(&requests, &Filter::default()).len(), 1);
-        assert_eq!(filter_requests(&requests, &Filter { include_nested: true, ..Filter::default() }).len(), 2);
-        assert_eq!(filter_requests(&requests, &Filter { include_replays: true, ..Filter::default() }).len(), 2);
-        assert_eq!(filter_requests(&requests, &Filter { only_replays: true, ..Filter::default() }).len(), 1);
-        assert_eq!(filter_requests(&requests, &Filter { only_unfinished: true, ..Filter::default() }).len(), 0);
+        let own = operation("heidrun", "query", OperationKind::Query, serde_json::json!({}), "", Some(3));
+        let operations = vec![nested, replay, own];
+        assert_eq!(filter_operations(&operations, &Filter::default()).len(), 1);
+        assert_eq!(filter_operations(&operations, &Filter { include_nested: true, ..Filter::default() }).len(), 2);
+        assert_eq!(filter_operations(&operations, &Filter { include_replays: true, ..Filter::default() }).len(), 2);
+        assert_eq!(filter_operations(&operations, &Filter { only_replays: true, ..Filter::default() }).len(), 1);
+        assert_eq!(filter_operations(&operations, &Filter { only_unfinished: true, ..Filter::default() }).len(), 0);
     }
 
     #[test]
-    fn a_filter_keeps_the_slow_requests_of_one_operation() {
-        let requests = vec![
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({}), "", Some(1000)),
-            request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({}), "", Some(9000)),
-            request("heidrun", "query", RequestKind::Query, serde_json::json!({}), "", Some(9000)),
+    fn a_filter_keeps_the_slow_operations_of_one_operation() {
+        let operations = vec![
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(1000)),
+            operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(9000)),
+            operation("heidrun", "query", OperationKind::Query, serde_json::json!({}), "", Some(9000)),
         ];
-        let filter = Filter { operation: Some("find_usage".to_string()), minimum_microseconds: Some(5000), ..Filter::default() };
-        let kept = filter_requests(&requests, &filter);
+        let filter = Filter { operation_name: Some("find_usage".to_string()), minimum_microseconds: Some(5000), ..Filter::default() };
+        let kept = filter_operations(&operations, &filter);
         assert_eq!(kept.len(), 1);
         assert_eq!(kept[0].duration_microseconds(), Some(9000));
     }
 
     #[test]
     fn the_row_of_a_group_has_the_durations_in_milliseconds() {
-        let requests = vec![request("heidrun", "find_usage", RequestKind::Query, serde_json::json!({}), "", Some(1500))];
-        let references: Vec<&PairedRequest> = requests.iter().collect();
-        let row = summarize(&references, GroupBy::Operation)[0].to_row();
+        let operations = vec![operation("heidrun", "find_usage", OperationKind::Query, serde_json::json!({}), "", Some(1500))];
+        let references: Vec<&PairedOperation> = operations.iter().collect();
+        let row = summarize(&references, GroupBy::OperationName)[0].to_row();
         assert_eq!(row["totalMilliseconds"], 1.5);
         assert_eq!(row["count"], 1);
         assert_eq!(row["workload"], "stored_data_query");

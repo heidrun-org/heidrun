@@ -1,7 +1,7 @@
-//! The command line `heidrun_data`: the commands sources, update, initialize, schema, query, usage, read, and requests.
+//! The command line `heidrun_data`: the commands sources, update, initialize, schema, query, usage, read, and operations.
 
 mod command_line;
-mod requests_command_line;
+mod operations_command_line;
 
 use command_line::{
     find_format, parse, CommonOptions, Parsed, QueryRequest, ReadKind, ReadRequest, SchemaRequest, SynchronizationRequest,
@@ -15,10 +15,10 @@ use heidrun_data::{
     read_chat_session, read_code_hosting, read_commit, read_file_history, read_pull_request_diff, CodeHostingKind,
 };
 use heidrun_data::{
-    info_row, list_rows, make_snapshot, overhead_rows, parse_time_bound, read_requests, replay_refusal, replay_request,
+    info_row, list_rows, make_snapshot, overhead_rows, parse_time_bound, read_operations, replay_refusal, replay_operation,
     replay_row, summary_rows, ReplayOptions, DEFAULT_LIST_LIMIT,
 };
-use requests_command_line::{RequestsAction, RequestsCommand, DEFAULT_REPLAY_LIMIT};
+use operations_command_line::{OperationsAction, OperationsCommand, DEFAULT_REPLAY_LIMIT};
 use std::io::{IsTerminal, Read};
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -292,25 +292,25 @@ fn run_read(request: &ReadRequest) -> Result<(), String> {
     Ok(())
 }
 
-/// The log file of the requests: the option `--log-file`, else the file of the variable `HEIDRUN_REQUEST_LOG_FILE`, else the
+/// The log file of the operations: the option `--log-file`, else the file of the variable `HEIDRUN_OPERATION_LOG_FILE`, else the
 /// file in the folder of the data of Heidrun. The value `off` of the variable turns the writing off, and the reading still
 /// uses the default file.
-fn log_file_of(command: &RequestsCommand) -> Result<PathBuf, String> {
-    let from_environment = request_log::LogSettings::from_environment().file;
-    absolute_path(&command.log_file, || Ok(from_environment.unwrap_or_else(request_log::default_log_file)))
+fn log_file_of(command: &OperationsCommand) -> Result<PathBuf, String> {
+    let from_environment = data_layer_operation_log::LogSettings::from_environment().file;
+    absolute_path(&command.log_file, || Ok(from_environment.unwrap_or_else(data_layer_operation_log::default_log_file)))
 }
 
-/// Which requests the options of the command select.
-fn request_filter_of(command: &RequestsCommand) -> Result<request_log::Filter, String> {
+/// Which operations the options of the command select.
+fn operation_filter_of(command: &OperationsCommand) -> Result<data_layer_operation_log::Filter, String> {
     let bound = |text: &Option<String>| text.as_deref().map(parse_time_bound).transpose();
-    Ok(request_log::Filter {
+    Ok(data_layer_operation_log::Filter {
         caller: command.caller.clone(),
         package: command.package.clone(),
-        operation: command.operation.clone(),
+        operation_name: command.operation_name.clone(),
         since_milliseconds: bound(&command.since)?,
         until_milliseconds: bound(&command.until)?,
         minimum_microseconds: command.minimum_milliseconds.map(|milliseconds| milliseconds.saturating_mul(1000)),
-        state: command.state.as_deref().and_then(request_log::RequestState::from_name),
+        state: command.state.as_deref().and_then(data_layer_operation_log::OperationState::from_name),
         only_unfinished: command.is_unfinished,
         include_nested: command.has_nested,
         include_replays: command.has_replays,
@@ -318,35 +318,35 @@ fn request_filter_of(command: &RequestsCommand) -> Result<request_log::Filter, S
     })
 }
 
-/// Runs one action of the command `requests`.
-fn run_requests(command: &RequestsCommand) -> Result<(), String> {
+/// Runs one action of the command `operations`.
+fn run_operations(command: &OperationsCommand) -> Result<(), String> {
     let format = format_of(&command.common);
     match command.action {
-        RequestsAction::Info => {
+        OperationsAction::Info => {
             let log_file = log_file_of(command)?;
             print_rows(&[info_row(&log_file)?], format);
         }
-        RequestsAction::Summary => {
-            let reading = read_requests(&log_file_of(command)?)?;
-            let by = command.by.as_deref().and_then(request_log::GroupBy::from_name).unwrap_or(request_log::GroupBy::Operation);
-            print_rows(&summary_rows(&reading, &request_filter_of(command)?, by, command.is_repeated), format);
+        OperationsAction::Summary => {
+            let reading = read_operations(&log_file_of(command)?)?;
+            let by = command.by.as_deref().and_then(data_layer_operation_log::GroupBy::from_name).unwrap_or(data_layer_operation_log::GroupBy::OperationName);
+            print_rows(&summary_rows(&reading, &operation_filter_of(command)?, by, command.is_repeated), format);
         }
-        RequestsAction::List => {
-            let reading = read_requests(&log_file_of(command)?)?;
+        OperationsAction::List => {
+            let reading = read_operations(&log_file_of(command)?)?;
             let rows = match &command.id {
                 Some(id) => {
-                    let request = reading.requests.iter().find(|request| request.start.request_id == *id);
-                    vec![heidrun_data::request_row(request.ok_or_else(|| format!("The request {id} is not in the log."))?)]
+                    let operation = reading.operations.iter().find(|operation| operation.start.operation_id == *id);
+                    vec![heidrun_data::operation_row(operation.ok_or_else(|| format!("The operation {id} is not in the log."))?)]
                 }
                 None => {
                     let limit = command.limit.unwrap_or(DEFAULT_LIST_LIMIT);
-                    list_rows(&reading, &request_filter_of(command)?, Some(limit), command.is_slowest_first)
+                    list_rows(&reading, &operation_filter_of(command)?, Some(limit), command.is_slowest_first)
                 }
             };
             print_rows(&rows, format);
         }
-        RequestsAction::Replay => run_replay(command, format)?,
-        RequestsAction::Snapshot => {
+        OperationsAction::Replay => run_replay(command, format)?,
+        OperationsAction::Snapshot => {
             let to = absolute_path(&command.to, || Err("The option --to is needed.".to_string()))?;
             let bytes = make_snapshot(&database_path(&command.common)?, &to)?;
             let mut row = QueryRow::new();
@@ -354,31 +354,31 @@ fn run_requests(command: &RequestsCommand) -> Result<(), String> {
             row.insert("bytes".to_string(), bytes.into());
             print_rows(&[row], format);
         }
-        RequestsAction::Overhead => print_rows(&overhead_rows(command.iterations)?, format),
+        OperationsAction::Overhead => print_rows(&overhead_rows(command.iterations)?, format),
     }
     Ok(())
 }
 
-/// Runs recorded requests again, and prints the original time next to the time of each run. A request that cannot be
-/// replayed is named on the standard error output and skipped, unless it is the one request that `--id` names.
-fn run_replay(command: &RequestsCommand, format: Format) -> Result<(), String> {
-    let reading = read_requests(&log_file_of(command)?)?;
-    let selected: Vec<&request_log::PairedRequest> = match &command.id {
+/// Runs recorded operations again, and prints the original time next to the time of each run. An operation that cannot be
+/// replayed is named on the standard error output and skipped, unless it is the one operation that `--id` names.
+fn run_replay(command: &OperationsCommand, format: Format) -> Result<(), String> {
+    let reading = read_operations(&log_file_of(command)?)?;
+    let selected: Vec<&data_layer_operation_log::PairedOperation> = match &command.id {
         Some(id) => {
-            let request = reading.requests.iter().find(|request| request.start.request_id == *id);
-            vec![request.ok_or_else(|| format!("The request {id} is not in the log."))?]
+            let operation = reading.operations.iter().find(|operation| operation.start.operation_id == *id);
+            vec![operation.ok_or_else(|| format!("The operation {id} is not in the log."))?]
         }
         None => {
-            let mut requests = request_log::filter_requests(&reading.requests, &request_filter_of(command)?);
-            requests.retain(|request| replay_refusal(request).is_none());
+            let mut operations = data_layer_operation_log::filter_operations(&reading.operations, &operation_filter_of(command)?);
+            operations.retain(|operation| replay_refusal(operation).is_none());
             if command.is_slowest_first {
-                requests.sort_by_key(|request| std::cmp::Reverse(request.duration_microseconds().unwrap_or(0)));
+                operations.sort_by_key(|operation| std::cmp::Reverse(operation.duration_microseconds().unwrap_or(0)));
             }
-            requests.into_iter().take(command.limit.unwrap_or(DEFAULT_REPLAY_LIMIT)).collect()
+            operations.into_iter().take(command.limit.unwrap_or(DEFAULT_REPLAY_LIMIT)).collect()
         }
     };
     if selected.is_empty() {
-        return Err("No recorded request can be replayed with these options.".to_string());
+        return Err("No recorded operation can be replayed with these options.".to_string());
     }
     let options = ReplayOptions {
         database_path: database_path(&command.common)?,
@@ -392,18 +392,18 @@ fn run_replay(command: &RequestsCommand, format: Format) -> Result<(), String> {
     let mut rows = Vec::new();
     let mut has_replayed_synchronization = false;
     for original in selected {
-        let is_synchronization = original.start.kind == request_log::RequestKind::Synchronization;
+        let is_synchronization = original.start.kind == data_layer_operation_log::OperationKind::Synchronization;
         if is_synchronization && has_replayed_synchronization {
-            eprintln!("{}: skipped. A replay runs one synchronization. Use --id for another.", original.start.request_id);
+            eprintln!("{}: skipped. A replay runs one synchronization. Use --id for another.", original.start.operation_id);
             continue;
         }
-        match replay_request(original, &options, command.repeat) {
+        match replay_operation(original, &options, command.repeat) {
             Ok(runs) => {
                 has_replayed_synchronization |= is_synchronization;
                 rows.extend(runs.iter().map(|run| replay_row(original, run)));
             }
             Err(message) if command.id.is_some() => return Err(message),
-            Err(message) => eprintln!("{}: skipped. {message}", original.start.request_id),
+            Err(message) => eprintln!("{}: skipped. {message}", original.start.operation_id),
         }
     }
     print_rows(&rows, format);
@@ -418,12 +418,12 @@ fn run(parsed: Parsed) -> Result<bool, String> {
             Ok(true)
         }
         Parsed::Sources(common) => run_sources(&common).map(|()| true),
-        Parsed::Synchronize(request) => run_synchronization(&request),
-        Parsed::Schema(request) => run_schema(&request).map(|()| true),
-        Parsed::Query(request) => run_query(&request).map(|()| true),
+        Parsed::Synchronize(operation) => run_synchronization(&operation),
+        Parsed::Schema(operation) => run_schema(&operation).map(|()| true),
+        Parsed::Query(operation) => run_query(&operation).map(|()| true),
         Parsed::Usage(command) => run_usage(&command).map(|()| true),
-        Parsed::Read(request) => run_read(&request).map(|()| true),
-        Parsed::Requests(command) => run_requests(&command).map(|()| true),
+        Parsed::Read(operation) => run_read(&operation).map(|()| true),
+        Parsed::Operations(command) => run_operations(&command).map(|()| true),
     }
 }
 

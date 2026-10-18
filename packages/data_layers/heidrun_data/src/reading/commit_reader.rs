@@ -4,8 +4,8 @@
 use crate::output::QueryRow;
 use data_layer_source_control::GitRunner;
 use serde_json::{json, Value};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// One file changed by a commit.
 #[derive(Debug, Clone, PartialEq)]
@@ -94,13 +94,13 @@ impl CommitContent {
 /// # Errors
 /// An error when `git` fails, for example when the hash is not a commit of the repository.
 pub fn read_commit(runner: &dyn GitRunner, hash: &str, has_diff: bool) -> Result<CommitContent, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_commit", RequestKind::Collection)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "read_commit", OperationKind::Collection)
         .parameter("hash", hash)
         .choice("hasDiff", has_diff);
     record(spec, || read_commit_inside(runner, hash, has_diff), |commit| Summary::count(commit.files.len()))
 }
 
-/// The work of `read_commit`, between the start event and the completion event of its request.
+/// The work of `read_commit`, between the start event and the completion event of its operation.
 fn read_commit_inside(runner: &dyn GitRunner, hash: &str, has_diff: bool) -> Result<CommitContent, String> {
     if hash.starts_with('-') {
         return Err(format!("The hash {hash} is not a hash."));

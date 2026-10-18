@@ -1,20 +1,20 @@
-//! The parameters of the requests of this package in the log of the requests of the data layer, written and read back here, so
+//! The parameters of the operations of this package in the log of the operations of the data layer, written and read back here, so
 //! the format has one place.
 //!
-//! The command `heidrun_data requests replay` reads the parameters of a recorded `find_usage` and runs it again with
+//! The command `heidrun_data operations replay` reads the parameters of a recorded `find_usage` and runs it again with
 //! `usage_query_from_parameters`.
 
 use crate::model::chat_list_types::{SortKey, SortOrder, Sorting};
 use crate::model::token_usage_types::{UsageGrouping, UsageQuery};
-use crate::REQUEST_PACKAGE;
-use request_log::{RequestKind, RequestSpec};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{OperationKind, OperationSpec};
 use serde_json::Value;
 use std::path::Path;
 
-/// The description of a request about the token usage of a workspace in a time range. The choices are the grouping and the
-/// split by chat session, so a summary counts together the requests that differ by the repository or the dates.
-pub(crate) fn usage_query_spec(operation: &'static str, query: &UsageQuery, database: &Path) -> RequestSpec {
-    let mut spec = RequestSpec::new(REQUEST_PACKAGE, operation, RequestKind::Query)
+/// The description of an operation about the token usage of a workspace in a time range. The choices are the grouping and the
+/// split by chat session, so a summary counts together the operations that differ by the repository or the dates.
+pub(crate) fn usage_query_spec(operation_name: &'static str, query: &UsageQuery, database: &Path) -> OperationSpec {
+    let mut spec = OperationSpec::new(OPERATION_PACKAGE, operation_name, OperationKind::Query)
         .parameter("repository", query.repository.clone())
         .parameter("folders", query.folders.clone())
         .parameter("since", query.since)
@@ -108,7 +108,7 @@ pub fn usage_query_from_parameters(parameters: &Value) -> Result<UsageQuery, Str
 #[cfg(test)]
 mod tests {
     use super::*;
-    use request_log::testing::{capture, starts};
+    use data_layer_operation_log::testing::{capture, starts};
 
     fn query(grouping: UsageGrouping) -> UsageQuery {
         UsageQuery {
@@ -123,7 +123,7 @@ mod tests {
 
     fn recorded_parameters(query: &UsageQuery) -> Value {
         let (_, events) = capture(|| {
-            request_log::record_value(usage_query_spec("find_usage", query, Path::new("/none")), || (), |_| request_log::Summary::none())
+            data_layer_operation_log::record_value(usage_query_spec("find_usage", query, Path::new("/none")), || (), |_| data_layer_operation_log::Summary::none())
         });
         starts(&events)[0].parameters.clone()
     }
@@ -157,7 +157,7 @@ mod tests {
     fn the_pattern_has_the_choices_and_no_repository_and_no_date() {
         let (_, events) = capture(|| {
             let slot = query(UsageGrouping::Slot { hours: 6, time_zone: "Europe/Paris".to_string() });
-            request_log::record_value(usage_query_spec("find_usage", &slot, Path::new("/none")), || (), |_| request_log::Summary::none())
+            data_layer_operation_log::record_value(usage_query_spec("find_usage", &slot, Path::new("/none")), || (), |_| data_layer_operation_log::Summary::none())
         });
         assert_eq!(starts(&events)[0].pattern, "grouping=slot | isByChat=true | slotHours=6");
     }

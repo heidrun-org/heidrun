@@ -4,8 +4,8 @@
 use crate::model::types::{Issue, PullRequest};
 use crate::model::utc_time::to_whole_second_text;
 use crate::storage::database::CodeHostingDatabase;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 use std::path::Path;
 
 /// The issues of `repository` opened in the time range from `since` (included) to `until` (excluded), read from the SQLite file
@@ -20,7 +20,7 @@ pub fn find_issues_opened_between(
     since: &str,
     until: &str,
 ) -> Result<Vec<Issue>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_opened_between", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "find_issues_opened_between", OperationKind::Query)
         .parameter("repository", repository)
         .parameter("since", since)
         .parameter("until", until)
@@ -43,7 +43,7 @@ pub fn find_pull_requests_opened_between(
     since: &str,
     until: &str,
 ) -> Result<Vec<PullRequest>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_opened_between", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "find_pull_requests_opened_between", OperationKind::Query)
         .parameter("repository", repository)
         .parameter("since", since)
         .parameter("until", until)
@@ -60,7 +60,7 @@ pub fn find_pull_requests_opened_between(
 /// # Errors
 /// An error when the SQLite file cannot be read.
 pub fn find_issues_by_numbers(database_path: &Path, repository: &str, numbers: &[i64]) -> Result<Vec<Issue>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_issues_by_numbers", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "find_issues_by_numbers", OperationKind::Query)
         .parameter("repository", repository)
         .parameter("numberCount", numbers.len())
         .database(database_path);
@@ -82,7 +82,7 @@ pub fn find_pull_requests_by_numbers(
     repository: &str,
     numbers: &[i64],
 ) -> Result<Vec<PullRequest>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_pull_requests_by_numbers", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "find_pull_requests_by_numbers", OperationKind::Query)
         .parameter("repository", repository)
         .parameter("numberCount", numbers.len())
         .database(database_path);
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn a_find_is_one_request_with_the_range_and_the_count_and_a_failure_has_a_category_only() {
+    fn a_find_is_one_operation_with_the_range_and_the_count_and_a_failure_has_a_category_only() {
         let database_path = temp_folder("query_events").join("data_layer.sqlite");
         let github = FakeGithub::new(
             vec![issue_node(1, &date(2)), issue_node(2, &date(3))],
@@ -149,25 +149,25 @@ mod tests {
             100,
         );
         refresh_code_hosting_with_runner(&github, &database_path, REPOSITORY).unwrap();
-        let (_, events) = request_log::testing::capture(|| {
+        let (_, events) = data_layer_operation_log::testing::capture(|| {
             find_issues_opened_between(&database_path, REPOSITORY, &date(1), &date(9)).unwrap();
             find_pull_requests_by_numbers(&database_path, REPOSITORY, &[5, 6, 7]).unwrap();
         });
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "code_hosting.find_issues_opened_between");
         assert!(tree.contains(&"code_hosting.find_pull_requests_by_numbers".to_string()), "{tree:?}");
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].parameters["repository"], REPOSITORY);
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(2));
-        let by_numbers = starts.iter().find(|start| start.operation == "find_pull_requests_by_numbers").unwrap();
+        let by_numbers = starts.iter().find(|start| start.operation_name == "find_pull_requests_by_numbers").unwrap();
         assert_eq!(by_numbers.parameters["numberCount"], 3);
-        let (_, events) = request_log::testing::capture(|| {
+        let (_, events) = data_layer_operation_log::testing::capture(|| {
             find_pull_requests_opened_between(&database_path, REPOSITORY, "yesterday", &date(9)).unwrap_err()
         });
-        let starts = request_log::testing::starts(&events);
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
-        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.outcome, data_layer_operation_log::Outcome::Failure);
         assert!(complete.error_category.is_some());
     }
 

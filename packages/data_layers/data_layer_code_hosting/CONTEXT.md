@@ -27,7 +27,7 @@ The Code hosting source of Heidrun: reads GitHub issues and pull requests into S
 - The default SQLite file is `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty. The option `--database` changes it.
 - `--verbose` sends progress through a log function; only `src/main.rs` prints it.
 - The folder `src/model/` imports from no other folder of `src/`. The folder `src/github/` and the folder `src/storage/` import from `src/model/` only, and never from each other. Only `src/synchronization.rs` uses `src/github/` and `src/storage/` together.
-- Calls are blocking; the package imports only `request_log` from other repository packages and knows nothing about Tauri. Every public operation records its request and tests its events ([rule](../../../docs/agents_rules/data_layer_request_log.md)).
+- Calls are blocking; the package imports only `data_layer_operation_log` from other repository packages and knows nothing about Tauri. Every public function records its operation and tests its events ([rule](../../../docs/agents_rules/data_layer_operation_log.md)).
 - `.cargo/config.toml` selects the target folder of `desktop_tauri`, cloned by `pnpm worktree:create`; Cargo reads this configuration only from inside the package.
 - Desktop callers use only `refresh_*` and `find_*`, as [data_layer_access.md](../../../docs/agents_rules/data_layer_access.md) requires; `data_layer_boundary_checker` enforces the boundary.
 
@@ -35,4 +35,4 @@ The Code hosting source of Heidrun: reads GitHub issues and pull requests into S
 - The package comes from [issue #455](https://github.com/heidrun-org/heidrun/issues/455). The data layer as a whole is [issue #452](https://github.com/heidrun-org/heidrun/issues/452).
 - The field `closingIssuesReferences` of GitHub is empty for every pull request here, because the pull requests merge into `dev_jerome` and not into `main`. The link from a pull request to its issue is the text `Fixes #N` in the `body`.
 - The support for GitLab is not written yet.
-- Request logging follows [request_log](../../auxiliary/request_log/CONTEXT.md).
+- Operation logging follows [data_layer_operation_log](../data_layer_operation_log/CONTEXT.md).

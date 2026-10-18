@@ -1,7 +1,7 @@
 # Installed Heidrun and Heidrun Development
 
 - Created: 17 October 2026
-- Last updated: 17 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained installation and development guide
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Window startup](../agents_rules/user_interface/window/window_state_and_start.md), [Data layer access](../agents_rules/data_layer_access.md)
@@ -20,7 +20,7 @@ Use installed Heidrun for daily work, and Heidrun Development to test source cha
 | New mobile access configuration | Off, default port 47823 | Off, default port 47824 |
 | Source changes | Applied through an explicit build and installation | Frontend reload or application restart |
 
-The data folder contains personal macros, history, user activity, caches, the translation table of dynamic topics, the database of the four data layers, request logs, and mobile configuration and pairing records. Existing installed data stays at the existing location. Development does not copy, move, or migrate installed data.
+The data folder contains personal macros, history, user activity, caches, the translation table of dynamic topics, the database of the four data layers, operation logs, and mobile configuration and pairing records. Existing installed data stays at the existing location. Development does not copy, move, or migrate installed data.
 
 ## Run both applications
 
@@ -50,7 +50,7 @@ This retains the installed Heidrun identity and builds the normal application an
 
 ## Deliberate overrides and command line tools
 
-Heidrun Development ignores inherited `HEIDRUN_DIR`, `HERDR_SESSION`, `HERDR_SOCKET_PATH`, Herdr pane context, and `HEIDRUN_REQUEST_LOG_FILE`. A development command commonly starts inside a daily-work pane, so those inherited values must not choose daily-work resources.
+Heidrun Development ignores inherited `HEIDRUN_DIR`, `HERDR_SESSION`, `HERDR_SOCKET_PATH`, Herdr pane context, and `HEIDRUN_OPERATION_LOG_FILE`. A development command commonly starts inside a daily-work pane, so those inherited values must not choose daily-work resources.
 
 To choose a development test folder or an externally managed development session, use:
 
@@ -68,11 +68,11 @@ The command line tools use `HEIDRUN_DIR` to select the intended application data
 ```sh
 # Installed data with the default locations
 pnpm --silent heidrun_ctrl macros list
-pnpm --silent data_layer:heidrun_data requests info
+pnpm --silent data_layer:heidrun_data operations info
 
 # Development data with the default locations
 HEIDRUN_DIR="$HOME/.config/heidrun-development" pnpm --silent heidrun_ctrl macros list
-HEIDRUN_DIR="$HOME/.config/heidrun-development" pnpm --silent data_layer:heidrun_data requests info
+HEIDRUN_DIR="$HOME/.config/heidrun-development" pnpm --silent data_layer:heidrun_data operations info
 ```
 
 For a custom development folder, give the same absolute folder to `HEIDRUN_DIR` when running a command line tool. The four data layer database defaults also follow this folder. An explicit `--database` still selects another database.

@@ -34,9 +34,9 @@ Commands:
                              reads the SQLite file only.
   read <kind> <key>          Print the content of one thing from its source: a
                              chat_session, a commit, an issue, or a pull_request.
-  requests <action>          Read the log of the requests that the data layer receives:
+  operations <action>        Read the log of the operations that the data layer receives:
                              the usage patterns, the durations, the failures, and the
-                             requests that never ended. Run recorded requests again
+                             operations that never ended. Run recorded operations again
                              and measure what the log costs.
 
 Options of every command:
@@ -73,7 +73,7 @@ Examples:
   $ heidrun_data query --format jsonl "SELECT json_extract(data, '$.subject') AS subject FROM commits ORDER BY committedAt DESC LIMIT 5"
   $ heidrun_data usage --by day --since 2026-09-14 --format jsonl
   $ heidrun_data read issue 500 --format jsonl
-  $ heidrun_data requests summary --format jsonl
+  $ heidrun_data operations summary --format jsonl
 "#;
 
 /// The text of `heidrun_data usage --help`.
@@ -371,8 +371,8 @@ pub enum Parsed {
     Read(ReadRequest),
     /// Print the tokens and the estimated cost of a workspace in a time range.
     Usage(UsageCommand),
-    /// Read the log of the requests of the data layer, run recorded requests again, or measure the cost of the log.
-    Requests(crate::requests_command_line::RequestsCommand),
+    /// Read the log of the operations of the data layer, run recorded operations again, or measure the cost of the log.
+    Operations(crate::operations_command_line::OperationsCommand),
 }
 
 /// The request to print the tokens and the estimated cost of a workspace.
@@ -511,8 +511,8 @@ pub fn find_format(arguments: &[String]) -> Option<Format> {
 /// An unknown command, source, option, or format, an option without a value, an option that the command does not accept,
 /// a missing command, or a wrong number of arguments.
 pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
-    if arguments.first().map(String::as_str) == Some("requests") {
-        return crate::requests_command_line::parse(&arguments[1..]);
+    if arguments.first().map(String::as_str) == Some("operations") {
+        return crate::operations_command_line::parse(&arguments[1..]);
     }
     let mut common = CommonOptions::default();
     let mut repository = None;
@@ -584,7 +584,7 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         if is_help {
             return Ok(Parsed::Help(HELP));
         }
-        return Err("A command is needed: sources, update, initialize, schema, query, usage, read, or requests. Run with --help.".to_string());
+        return Err("A command is needed: sources, update, initialize, schema, query, usage, read, or operations. Run with --help.".to_string());
     };
     let mode = match command.as_str() {
         "update" => Some(SynchronizationMode::Update),
@@ -592,7 +592,7 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         "query" | "sources" | "schema" | "read" | "usage" => None,
         _ if is_help => return Ok(Parsed::Help(HELP)),
         _ => {
-            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, query, usage, read, or requests."));
+            return Err(format!("The command {command} is not known: use sources, update, initialize, schema, query, usage, read, or operations."));
         }
     };
     if is_help {

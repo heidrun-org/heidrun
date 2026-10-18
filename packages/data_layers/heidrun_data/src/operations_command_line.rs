@@ -1,74 +1,74 @@
-//! The arguments of the command `heidrun_data requests`, and the text of its help.
+//! The arguments of the command `heidrun_data operations`, and the text of its help.
 //!
-//! The command has its own options, so its arguments are read here and not in `command_line.rs`. The word `requests` must be
+//! The command has its own options, so its arguments are read here and not in `command_line.rs`. The word `operations` must be
 //! the first argument.
 
 use crate::command_line::{CommonOptions, Parsed};
 use heidrun_data::Format;
 
-/// The text of `heidrun_data requests --help`.
-pub const REQUESTS_HELP: &str = r#"Usage: heidrun_data requests <action> [options]
+/// The text of `heidrun_data operations --help`.
+pub const OPERATIONS_HELP: &str = r#"Usage: heidrun_data operations <action> [options]
 
-Reads the log of the requests that the data layer receives. Every public operation of the four data layer packages and of
-heidrun_data writes two lines in the log: one when the request starts, one when it ends. The log tells who asked
-(caller), what (package and operation), with which parameters, how long it took, and how it ended. A request that
-never ended stays visible as running or interrupted.
+Reads the log of the operations that the data layer receives. Every call of a public function of the four data layer
+packages and of heidrun_data is an operation, and writes two lines in the log: one when the operation starts, one when it
+ends. The log tells who asked (caller), what (package and operation name), with which parameters, how long it took, and
+how it ended. An operation that never ended stays visible as running or interrupted.
 
 Actions:
-  info                       Print where the log file is, its size, the version of its format, and how many requests,
-                             failed requests, unfinished requests, and damaged lines it holds.
-  summary                    Print the usage patterns: one row for each group of requests, with the count, the
-                             failures, the unfinished requests, the total time, the mean, the median, the 90th, 95th,
+  info                       Print where the log file is, its size, the version of its format, and how many operations,
+                             failed operations, unfinished operations, and damaged lines it holds.
+  summary                    Print the usage patterns: one row for each group of operations, with the count, the
+                             failures, the unfinished operations, the total time, the mean, the median, the 90th, 95th,
                              and 99th percentile, and the longest time, in milliseconds. The largest total time comes
                              first. The column "workload" tells stored_data_query, collection, initial_import,
                              incremental_synchronization, synchronization, database_write, or lock_wait.
-  list                       Print the requests one by one, with their parameters, so that they can be exported.
-  replay                     Run recorded requests again through the data layer, and print the original time and the
+  list                       Print the operations one by one, with their parameters, so that they can be exported.
+  replay                     Run recorded operations again through the data layer, and print the original time and the
                              replay time of each. See "Replay" below.
   snapshot                   Copy the SQLite file in a consistent file, for the replay of queries.
-  overhead                   Measure what the log costs: the time that one request adds, and the bytes that it writes.
+  overhead                   Measure what the log costs: the time that one operation adds, and the bytes that it writes.
 
-The requests that run inside another request (the SQL statement inside a synchronization, the lock) are nested requests.
-A nested request is not counted as a request of its own, unless --nested is given. The requests of a replay are left out
+The operations that run inside another operation (the SQL statement inside a synchronization, the lock) are nested operations.
+A nested operation is not counted as an operation of its own, unless --nested is given. The operations of a replay are left out
 unless --replays or --only-replays is given.
 
 Options for info, summary, list, and replay:
-  --log-file <path>          The log file. (default: the value of HEIDRUN_REQUEST_LOG_FILE, else
-                             "~/.config/heidrun/data_layer_requests.jsonl"). The old file "<path>.1" is read too.
+  --log-file <path>          The log file. (default: the value of HEIDRUN_OPERATION_LOG_FILE, else
+                             "~/.config/heidrun/data_layer_operations.jsonl"). The old file "<path>.1" is read too.
 
-Options for summary, list, and replay (which requests):
-  --caller <name>            Only the requests of this caller, for example heidrun or heidrun_data.
-  --package <name>           Only the requests of this package: source_control, code_hosting, coding_agents,
+Options for summary, list, and replay (which operations):
+  --caller <name>            Only the operations of this caller, for example heidrun or heidrun_data.
+  --package <name>           Only the operations of this package: source_control, code_hosting, coding_agents,
                              user_activity, or heidrun_data.
-  --operation <name>         Only the requests of this operation, for example query, synchronize, or find_usage.
-  --since <time>             Only the requests that started at this time or later. A date 2026-10-17 or a time
+  --operation-name <name>    Only the operations with this operation name, for example query, synchronize, or find_usage.
+  --since <time>             Only the operations that started at this time or later. A date 2026-10-17 or a time
                              2026-10-17T12:30:00Z, in UTC.
-  --until <time>             Only the requests that started before this time.
-  --minimum-milliseconds <n> Only the requests that took at least n milliseconds.
-  --state <name>             Only the requests that succeeded, failed, running, or interrupted.
-  --unfinished               Only the requests that never ended: running or interrupted.
-  --nested                   Count the nested requests too.
-  --replays                  Count the requests of a replay too.
-  --only-replays             Count only the requests of a replay.
+  --until <time>             Only the operations that started before this time.
+  --minimum-milliseconds <n> Only the operations that took at least n milliseconds.
+  --state <name>             Only the operations that succeeded, failed, running, or interrupted.
+  --unfinished               Only the operations that never ended: running or interrupted.
+  --nested                   Count the nested operations too.
+  --replays                  Count the operations of a replay too.
+  --only-replays             Count only the operations of a replay.
 
 Options for summary:
-  --by <name>                How the requests are grouped: operation (the default), pattern (the SQL statement without
-                             its values, with the choices of the request), or parameters (the exact parameters).
-  --repeated                 Keep the groups of two requests or more, to find the same request asked again and again.
+  --by <name>                How the operations are grouped: operation-name (the default), pattern (the SQL statement
+                             without its values, with the choices of the operation), or parameters (the exact parameters).
+  --repeated                 Keep the groups of two operations or more, to find the same call made again and again.
 
 Options for list and replay:
-  --id <request id>          Only this request.
-  --limit <count>            The most requests that are printed. (default for list: 100, for replay: 10)
+  --id <operation id>        Only this operation.
+  --limit <count>            The most operations that are printed. (default for list: 100, for replay: 10)
 
 Options for list:
-  --slowest                  The longest requests first.
+  --slowest                  The longest operations first.
 
 Replay:
-  A replay runs a recorded request again through the interface of the package that received it, and prints the original
-  time next to the replay time. The replayed requests are written in the log with the origin "replay" and the identifier
-  of the original request, so they never change the picture of the real usage. A replay times a request on the data of
+  A replay runs a recorded operation again through the interface of the package that received it, and prints the original
+  time next to the replay time. The replayed operations are written in the log with the origin "replay" and the identifier
+  of the original operation, so they never change the picture of the real usage. A replay times an operation on the data of
   today, so the numbers of rows can differ from the original. A replay cannot run an operation that runs inside another
-  one: replay the request that holds it. A statement that the log cut or cleaned of a secret is not replayed. A replay
+  one: replay the operation that holds it. A statement that the log cut or cleaned of a secret is not replayed. A replay
   runs a query, a find call (find_commits, find_user_activity_records, find_issues_opened_between,
   find_pull_requests_opened_between, find_chat_list, find_ai_cost), a synchronization, and a refresh call
   (refresh_source_control, refresh_user_activity, refresh_code_hosting, refresh_chat_sessions) of the desktop application.
@@ -86,7 +86,7 @@ Replay:
                              replay does an incremental synchronization.
   --folder <path>            The folder that source control, code hosting, and coding agents read.
                              (default: the current folder)
-  --use-recorded-paths       Read the folders of the original request instead of the folder of --folder and the
+  --use-recorded-paths       Read the folders of the original operation instead of the folder of --folder and the
                              default folders of the coding agents.
   --allow-network            Let a synchronization use the network.
 
@@ -94,7 +94,7 @@ Options for snapshot:
   --to <path>                The new file. It must not exist.
 
 Options for overhead:
-  --iterations <count>       How many requests each of the two runs makes. (default: 2000)
+  --iterations <count>       How many operations each of the two runs makes. (default: 2000)
 
 Options of every action:
   --format <name>            jsonl, json, or table.
@@ -103,37 +103,37 @@ Options of every action:
   -h, --help                 Print this help.
 
 Environment:
-  HEIDRUN_REQUEST_LOG_FILE   The log file of every program. The value "off" turns the log off.
-  HEIDRUN_REQUEST_LOG_CALLER The name of the caller that the log writes. (default: the name of the program)
+  HEIDRUN_OPERATION_LOG_FILE   The log file of every program. The value "off" turns the log off.
+  HEIDRUN_OPERATION_LOG_CALLER The name of the caller that the log writes. (default: the name of the program)
 
 Examples:
-  $ heidrun_data requests info
-  $ heidrun_data requests summary --format jsonl
-  $ heidrun_data requests summary --by pattern --repeated --since 2026-10-01 --format jsonl
-  $ heidrun_data requests summary --unfinished --nested --format jsonl
-  $ heidrun_data requests list --slowest --limit 20 --format jsonl
-  $ heidrun_data requests snapshot --to /tmp/snapshot.sqlite
-  $ heidrun_data requests replay --id r-1792240496789-1 --database /tmp/snapshot.sqlite --repeat 5
-  $ heidrun_data requests replay --operation synchronize --isolated-database /tmp/isolated.sqlite --format jsonl
-  $ heidrun_data requests overhead --format jsonl
+  $ heidrun_data operations info
+  $ heidrun_data operations summary --format jsonl
+  $ heidrun_data operations summary --by pattern --repeated --since 2026-10-01 --format jsonl
+  $ heidrun_data operations summary --unfinished --nested --format jsonl
+  $ heidrun_data operations list --slowest --limit 20 --format jsonl
+  $ heidrun_data operations snapshot --to /tmp/snapshot.sqlite
+  $ heidrun_data operations replay --id r-1792240496789-1 --database /tmp/snapshot.sqlite --repeat 5
+  $ heidrun_data operations replay --operation-name synchronize --isolated-database /tmp/isolated.sqlite --format jsonl
+  $ heidrun_data operations overhead --format jsonl
 "#;
 
-/// The size of the list that `requests replay` runs when the option `--limit` is not given.
+/// The size of the list that `operations replay` runs when the option `--limit` is not given.
 pub const DEFAULT_REPLAY_LIMIT: usize = 10;
 
-/// The number of requests of each run of `requests overhead` when the option `--iterations` is not given.
+/// The number of operations of each run of `operations overhead` when the option `--iterations` is not given.
 pub const DEFAULT_OVERHEAD_ITERATIONS: usize = 2000;
 
-/// The action of the command `requests`.
+/// The action of the command `operations`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RequestsAction {
+pub enum OperationsAction {
     /// Print the facts of the log file.
     Info,
     /// Print the usage patterns.
     Summary,
-    /// Print the requests one by one.
+    /// Print the operations one by one.
     List,
-    /// Run recorded requests again.
+    /// Run recorded operations again.
     Replay,
     /// Copy the SQLite file in a consistent file.
     Snapshot,
@@ -141,46 +141,46 @@ pub enum RequestsAction {
     Overhead,
 }
 
-/// The command `heidrun_data requests`.
+/// The command `heidrun_data operations`.
 #[derive(Debug, PartialEq)]
-pub struct RequestsCommand {
+pub struct OperationsCommand {
     /// The options of every command.
     pub common: CommonOptions,
     /// The action.
-    pub action: RequestsAction,
+    pub action: OperationsAction,
     /// The path of the log file, or `None` for the file of the environment.
     pub log_file: Option<String>,
-    /// Only the requests of this caller.
+    /// Only the operations of this caller.
     pub caller: Option<String>,
-    /// Only the requests of this package.
+    /// Only the operations of this package.
     pub package: Option<String>,
-    /// Only the requests of this operation.
-    pub operation: Option<String>,
+    /// Only the operations of this operation.
+    pub operation_name: Option<String>,
     /// The start of the time range, as written.
     pub since: Option<String>,
     /// The end of the time range, as written.
     pub until: Option<String>,
-    /// Only the requests that took at least this long, in milliseconds.
+    /// Only the operations that took at least this long, in milliseconds.
     pub minimum_milliseconds: Option<u64>,
     /// The name of the state, as written.
     pub state: Option<String>,
-    /// True to keep only the requests that never ended.
+    /// True to keep only the operations that never ended.
     pub is_unfinished: bool,
-    /// True to count the nested requests.
+    /// True to count the nested operations.
     pub has_nested: bool,
-    /// True to count the requests of a replay too.
+    /// True to count the operations of a replay too.
     pub has_replays: bool,
-    /// True to count only the requests of a replay.
+    /// True to count only the operations of a replay.
     pub has_only_replays: bool,
     /// The name of the grouping of the summary, or `None` for `operation`.
     pub by: Option<String>,
-    /// True to keep the groups of two requests or more.
+    /// True to keep the groups of two operations or more.
     pub is_repeated: bool,
-    /// The identifier of the one request.
+    /// The identifier of the one operation.
     pub id: Option<String>,
-    /// The most requests that are printed.
+    /// The most operations that are printed.
     pub limit: Option<usize>,
-    /// True to print the longest requests first.
+    /// True to print the longest operations first.
     pub is_slowest_first: bool,
     /// How many times each query of a replay runs.
     pub repeat: usize,
@@ -190,13 +190,13 @@ pub struct RequestsCommand {
     pub start_from: Option<String>,
     /// The folder that the sources read.
     pub folder: Option<String>,
-    /// True to read the folders of the original request.
+    /// True to read the folders of the original operation.
     pub is_recorded_path_used: bool,
     /// True to let a synchronization use the network.
     pub is_network_allowed: bool,
     /// The new file of a snapshot.
     pub to: Option<String>,
-    /// The number of requests of each run of the measure of the cost of the log.
+    /// The number of operations of each run of the measure of the cost of the log.
     pub iterations: usize,
 }
 
@@ -213,18 +213,18 @@ fn number_of(name: &str, text: String) -> Result<u64, String> {
     text.parse::<u64>().map_err(|_| format!("The option {name} needs a whole number, and got {text}."))
 }
 
-/// Reads the arguments that follow the word `requests`.
+/// Reads the arguments that follow the word `operations`.
 ///
 /// # Errors
 /// An unknown action or option, an option without a value, an option that the action does not accept, or a missing action.
 pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
-    let mut command = RequestsCommand {
+    let mut command = OperationsCommand {
         common: CommonOptions::default(),
-        action: RequestsAction::Info,
+        action: OperationsAction::Info,
         log_file: None,
         caller: None,
         package: None,
-        operation: None,
+        operation_name: None,
         since: None,
         until: None,
         minimum_milliseconds: None,
@@ -289,9 +289,9 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
                 note("--package");
                 command.package = Some(value_of("--package", inline, &mut rest)?);
             }
-            "--operation" => {
-                note("--operation");
-                command.operation = Some(value_of("--operation", inline, &mut rest)?);
+            "--operation-name" => {
+                note("--operation-name");
+                command.operation_name = Some(value_of("--operation-name", inline, &mut rest)?);
             }
             "--since" => {
                 note("--since");
@@ -383,68 +383,68 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
                     return Err("The option --iterations needs a number that is 1 or more.".to_string());
                 }
             }
-            _ => return Err(format!("The option {name} is not known. Run \"heidrun_data requests --help\".")),
+            _ => return Err(format!("The option {name} is not known. Run \"heidrun_data operations --help\".")),
         }
     }
     if is_help {
-        return Ok(Parsed::Help(REQUESTS_HELP));
+        return Ok(Parsed::Help(OPERATIONS_HELP));
     }
     let mut positionals = positionals.into_iter();
     let Some(action) = positionals.next() else {
-        return Err("An action is needed: info, summary, list, replay, snapshot, or overhead. Run \"heidrun_data requests --help\".".to_string());
+        return Err("An action is needed: info, summary, list, replay, snapshot, or overhead. Run \"heidrun_data operations --help\".".to_string());
     };
     command.action = match action.as_str() {
-        "info" => RequestsAction::Info,
-        "summary" => RequestsAction::Summary,
-        "list" => RequestsAction::List,
-        "replay" => RequestsAction::Replay,
-        "snapshot" => RequestsAction::Snapshot,
-        "overhead" => RequestsAction::Overhead,
+        "info" => OperationsAction::Info,
+        "summary" => OperationsAction::Summary,
+        "list" => OperationsAction::List,
+        "replay" => OperationsAction::Replay,
+        "snapshot" => OperationsAction::Snapshot,
+        "overhead" => OperationsAction::Overhead,
         _ => return Err(format!("The action {action} is not known: use info, summary, list, replay, snapshot, or overhead.")),
     };
     if let Some(extra) = positionals.next() {
-        return Err(format!("The argument {extra} is not needed. The command requests takes one action."));
+        return Err(format!("The argument {extra} is not needed. The command operations takes one action."));
     }
     check_options(&command, &given)?;
-    Ok(Parsed::Requests(command))
+    Ok(Parsed::Operations(command))
 }
 
 /// The options that each action accepts, besides the options of every action.
-fn accepted_options(action: RequestsAction) -> &'static [&'static str] {
+fn accepted_options(action: OperationsAction) -> &'static [&'static str] {
     const SUMMARY: &[&str] = &[
-        "--caller", "--package", "--operation", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
+        "--caller", "--package", "--operation-name", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
         "--nested", "--replays", "--only-replays", "--by", "--repeated",
     ];
     const LIST: &[&str] = &[
-        "--caller", "--package", "--operation", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
+        "--caller", "--package", "--operation-name", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
         "--nested", "--replays", "--only-replays", "--id", "--limit", "--slowest",
     ];
     const REPLAY: &[&str] = &[
-        "--caller", "--package", "--operation", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
+        "--caller", "--package", "--operation-name", "--since", "--until", "--minimum-milliseconds", "--state", "--unfinished",
         "--nested", "--replays", "--only-replays", "--id", "--limit", "--repeat", "--isolated-database", "--start-from",
         "--folder", "--use-recorded-paths", "--allow-network", "--slowest",
     ];
     const SNAPSHOT: &[&str] = &["--to"];
     const OVERHEAD: &[&str] = &["--iterations"];
     match action {
-        RequestsAction::Info => &[],
-        RequestsAction::Summary => SUMMARY,
-        RequestsAction::List => LIST,
-        RequestsAction::Replay => REPLAY,
-        RequestsAction::Snapshot => SNAPSHOT,
-        RequestsAction::Overhead => OVERHEAD,
+        OperationsAction::Info => &[],
+        OperationsAction::Summary => SUMMARY,
+        OperationsAction::List => LIST,
+        OperationsAction::Replay => REPLAY,
+        OperationsAction::Snapshot => SNAPSHOT,
+        OperationsAction::Overhead => OVERHEAD,
     }
 }
 
 /// Refuses an option that the action does not use, and the options that the action needs and that are missing.
-fn check_options(command: &RequestsCommand, given: &[&'static str]) -> Result<(), String> {
+fn check_options(command: &OperationsCommand, given: &[&'static str]) -> Result<(), String> {
     let accepted = accepted_options(command.action);
     for option in given {
         if accepted.contains(option) == false {
-            return Err(format!("The option {option} is not for this action. Run \"heidrun_data requests --help\"."));
+            return Err(format!("The option {option} is not for this action. Run \"heidrun_data operations --help\"."));
         }
     }
-    if command.action == RequestsAction::Snapshot && command.to.is_none() {
+    if command.action == OperationsAction::Snapshot && command.to.is_none() {
         return Err("The action snapshot needs the option --to with the path of the new file.".to_string());
     }
     if command.has_replays && command.has_only_replays {
@@ -454,12 +454,12 @@ fn check_options(command: &RequestsCommand, given: &[&'static str]) -> Result<()
         return Err("The options --unfinished and --state cannot be used together.".to_string());
     }
     if let Some(by) = &command.by {
-        if request_log::GroupBy::from_name(by).is_none() {
-            return Err(format!("The grouping {by} is not known: use operation, pattern, or parameters."));
+        if data_layer_operation_log::GroupBy::from_name(by).is_none() {
+            return Err(format!("The grouping {by} is not known: use operation-name, pattern, or parameters."));
         }
     }
     if let Some(state) = &command.state {
-        if request_log::RequestState::from_name(state).is_none() {
+        if data_layer_operation_log::OperationState::from_name(state).is_none() {
             return Err(format!("The state {state} is not known: use succeeded, failed, running, or interrupted."));
         }
     }
@@ -474,16 +474,16 @@ mod tests {
         text.split_whitespace().map(str::to_string).collect()
     }
 
-    fn parsed(text: &str) -> RequestsCommand {
+    fn parsed(text: &str) -> OperationsCommand {
         match parse(&arguments(text)).unwrap() {
-            Parsed::Requests(command) => command,
+            Parsed::Operations(command) => command,
             other => panic!("{other:?}"),
         }
     }
 
     #[test]
     fn each_action_is_read() {
-        assert_eq!(parsed("info").action, RequestsAction::Info);
+        assert_eq!(parsed("info").action, OperationsAction::Info);
         assert_eq!(parsed("summary --by pattern --repeated").by.as_deref(), Some("pattern"));
         assert_eq!(parsed("list --slowest --limit 5").limit, Some(5));
         assert_eq!(parsed("replay --id r-1 --repeat 3").repeat, 3);
@@ -494,8 +494,8 @@ mod tests {
 
     #[test]
     fn the_help_is_given_for_the_flag_and_a_missing_action_is_an_error() {
-        assert_eq!(parse(&arguments("--help")), Ok(Parsed::Help(REQUESTS_HELP)));
-        assert_eq!(parse(&arguments("summary -h")), Ok(Parsed::Help(REQUESTS_HELP)));
+        assert_eq!(parse(&arguments("--help")), Ok(Parsed::Help(OPERATIONS_HELP)));
+        assert_eq!(parse(&arguments("summary -h")), Ok(Parsed::Help(OPERATIONS_HELP)));
         assert!(parse(&[]).unwrap_err().contains("An action is needed"));
         assert!(parse(&arguments("delete")).unwrap_err().contains("not known"));
         assert!(parse(&arguments("info summary")).unwrap_err().contains("takes one action"));
@@ -511,7 +511,7 @@ mod tests {
 
     #[test]
     fn a_wrong_value_is_refused() {
-        assert!(parse(&arguments("summary --by color")).unwrap_err().contains("operation, pattern, or parameters"));
+        assert!(parse(&arguments("summary --by color")).unwrap_err().contains("operation-name, pattern, or parameters"));
         assert!(parse(&arguments("list --state sleeping")).unwrap_err().contains("not known"));
         assert!(parse(&arguments("list --limit many")).unwrap_err().contains("whole number"));
         assert!(parse(&arguments("replay --repeat 0")).unwrap_err().contains("1 or more"));
