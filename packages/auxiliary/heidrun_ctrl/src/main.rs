@@ -1,27 +1,35 @@
-//! The command line `heidrun_ctrl`: the commands macros list, macros add, macros update, and macros delete.
+//! The command line `heidrun_ctrl`: the commands list, add, update, and delete of the group `macros` and of the group
+//! `launchers`.
 
 mod command_line;
 
 use command_line::{find_format, parse, CommonOptions, Parsed, TextInput, HELP};
 use heidrun_ctrl::{
-    add_macro, changed_text, delete_macro, deleted_text, error_text, find_project_root, list_macros, list_text,
-    personal_macros_path, update_macro, Format, MacroChanges, MacroPlaces, NewMacro,
+    add_launcher, add_macro, changed_text, delete_launcher, delete_macro, deleted_text, error_text, find_project_root,
+    launcher_changed_text, launcher_deleted_text, launcher_list_text, list_launchers, list_macros, list_text,
+    personal_macros_path, update_launcher, update_macro, Format, LauncherChanges, MacroChanges, MacroPlaces, NewLauncher,
+    NewMacro,
 };
 use std::io::Read;
 use std::process::ExitCode;
 
-/// The two files that the orders read and change: the file of the personal macros, and the file of the project that holds
-/// the folder of the options, or else the current folder.
-fn places_of(common: &CommonOptions) -> Result<MacroPlaces, String> {
+/// The root of the project that holds the folder of the options, or else the current folder.
+fn project_root_of(common: &CommonOptions) -> Result<std::path::PathBuf, String> {
     let folder = match &common.folder {
         Some(folder) => std::path::PathBuf::from(folder),
         None => std::env::current_dir().map_err(|error| format!("The current folder cannot be read: {error}"))?,
     };
     let absolute = std::path::absolute(&folder).map_err(|error| format!("The path {} cannot be made absolute: {error}", folder.display()))?;
-    Ok(MacroPlaces { personal_file: personal_macros_path(), project_root: find_project_root(&absolute) })
+    Ok(find_project_root(&absolute))
 }
 
-/// The text of a macro: the argument, or the standard input with one new line at its end removed.
+/// The two files that the orders on the macros read and change: the file of the personal macros, and the file of the
+/// project.
+fn places_of(common: &CommonOptions) -> Result<MacroPlaces, String> {
+    Ok(MacroPlaces { personal_file: personal_macros_path(), project_root: project_root_of(common)? })
+}
+
+/// A text: the argument, or the standard input with one new line at its end removed.
 fn text_of(input: TextInput) -> Result<String, String> {
     match input {
         TextInput::Given(text) => Ok(text),
@@ -61,6 +69,25 @@ fn run(arguments: &[String]) -> Result<String, String> {
         Parsed::Delete { common, id, kind } => {
             let places = places_of(&common)?;
             Ok(deleted_text(&delete_macro(&places, &id, kind)?, common.format))
+        }
+        Parsed::LauncherList { common } => {
+            let root = project_root_of(&common)?;
+            Ok(launcher_list_text(&list_launchers(&root)?, &root, common.format))
+        }
+        Parsed::LauncherAdd { common, id, label, command, description, cwd } => {
+            let root = project_root_of(&common)?;
+            let new = NewLauncher { id, label, command: text_of(command)?, description, cwd };
+            Ok(launcher_changed_text("Added", &add_launcher(&root, new)?, &root, common.format))
+        }
+        Parsed::LauncherUpdate { common, id, label, command, description, cwd } => {
+            let root = project_root_of(&common)?;
+            let command = command.map(text_of).transpose()?;
+            let updated = update_launcher(&root, &id, LauncherChanges { label, command, description, cwd })?;
+            Ok(launcher_changed_text("Updated", &updated, &root, common.format))
+        }
+        Parsed::LauncherDelete { common, id } => {
+            let root = project_root_of(&common)?;
+            Ok(launcher_deleted_text(&delete_launcher(&root, &id)?, common.format))
         }
     }
 }

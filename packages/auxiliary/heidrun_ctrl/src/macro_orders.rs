@@ -1,11 +1,11 @@
 //! The four orders on the macros: list, add, update, and delete.
 
 use crate::hard_coded_macros::hard_coded_macros;
+use crate::ids::unused_id;
 use crate::macro_types::{ListedMacro, Macro, MacroKind};
 use crate::personal_macros::{read_personal_macros, write_personal_macros};
-use crate::project_macros::{
-    change_project_macros, entry_id, entry_of_macro, label_from_text, project_config_path, read_project_macros,
-};
+use crate::project_config_file::project_config_path;
+use crate::project_macros::{change_project_macros, entry_id, entry_of_macro, label_from_text, read_project_macros};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
@@ -90,7 +90,7 @@ pub fn add_macro(places: &MacroPlaces, kind: MacroKind, new: NewMacro) -> Result
         Some(id) if taken.contains(&id) => return Err(format!("A macro with the id {id} already exists.")),
         Some(id) if id.trim().is_empty() => return Err("The id of a macro cannot be empty.".to_string()),
         Some(id) => id,
-        None => unused_id(&label, &taken),
+        None => unused_id(&slug(&label), 3, &taken),
     };
     let content = Macro { id, label, description: new.description.unwrap_or_default().trim().to_string(), text: new.text };
     match kind {
@@ -226,25 +226,6 @@ fn merged_entry(entry: Value, updated: &Macro) -> Value {
     fields.insert("description".to_string(), json!(updated.description));
     fields.insert("text".to_string(), json!(updated.text));
     Value::Object(fields)
-}
-
-/// An id that no macro has: the title in lower case, with the signs between words turned into a dash, then a dash and three
-/// characters that change with the time. It is the same shape as the id that the window makes.
-fn unused_id(label: &str, taken: &[String]) -> String {
-    let base = slug(label);
-    let mut seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|time| time.as_nanos()).unwrap_or(0)
-        ^ u128::from(std::process::id());
-    loop {
-        let mut suffix = String::new();
-        for _ in 0..3 {
-            suffix.push(char::from_digit((seed % 36) as u32, 36).unwrap_or('x'));
-            seed = seed / 36 + 7919;
-        }
-        let id = format!("{base}-{suffix}");
-        if !taken.contains(&id) {
-            return id;
-        }
-    }
 }
 
 /// The title in lower case, with the accents removed, and each run of signs that are not letters or digits turned into one

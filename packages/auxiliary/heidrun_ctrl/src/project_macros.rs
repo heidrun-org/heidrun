@@ -1,43 +1,18 @@
 //! The project macros: the key `prompts` of the file `.heidrun/config.json` of a project.
 //!
-//! The key keeps the old name of the feature, because other people already have the file. The format of the file is
-//! checked by the Zod schema of the web frontend (`packages/apps/web_frontend/src/lib/project_config.ts`). This file reads
-//! and changes only the key `prompts`, and keeps every other key as it is.
+//! The key keeps the old name of the feature, because other people already have the file. This file reads and changes only
+//! the key `prompts`, and keeps every other key as it is. The file as a whole is in `project_config_file.rs`.
 
 use crate::macro_types::Macro;
-use crate::personal_macros::write_file_aside;
-use serde_json::{json, Map, Value};
-use std::path::{Path, PathBuf};
-
-/// The folder of the project configuration, at the root of a project.
-const CONFIG_FOLDER: &str = ".heidrun";
-
-/// The file of the project configuration, in the folder `.heidrun`.
-const CONFIG_FILE: &str = "config.json";
+use crate::project_config_file::{new_config, project_config_path, read_config, write_config};
+use serde_json::{json, Value};
+use std::path::Path;
 
 /// The key of the list of macros. It keeps the old name of the feature.
 const MACROS_KEY: &str = "prompts";
 
 /// The number of characters of the text that become the title of a macro that has no title.
 pub const LABEL_FROM_TEXT_LENGTH: usize = 40;
-
-/// The root of the project that holds `folder`: the nearest folder, from `folder` up, that has a folder `.heidrun` or a
-/// folder `.git`, else `folder` itself. It is the same search as the window makes.
-pub fn find_project_root(folder: &Path) -> PathBuf {
-    let mut candidate = Some(folder);
-    while let Some(current) = candidate {
-        if current.join(CONFIG_FOLDER).is_dir() || current.join(".git").exists() {
-            return current.to_path_buf();
-        }
-        candidate = current.parent();
-    }
-    folder.to_path_buf()
-}
-
-/// The file `.heidrun/config.json` of the project at `root`.
-pub fn project_config_path(root: &Path) -> PathBuf {
-    root.join(CONFIG_FOLDER).join(CONFIG_FILE)
-}
 
 /// The first characters of a text, the title of a macro that has none.
 pub fn label_from_text(text: &str) -> String {
@@ -47,20 +22,6 @@ pub fn label_from_text(text: &str) -> String {
 /// The id of the macro at `index` in the key `prompts` when the entry has no id: the same id that the window gives.
 fn fallback_id(index: usize) -> String {
     format!("projet-{index}")
-}
-
-/// Reads the whole file `.heidrun/config.json` as a JSON object. A missing file gives `None`.
-fn read_config(path: &Path) -> Result<Option<Map<String, Value>>, String> {
-    let text = match std::fs::read_to_string(path) {
-        Ok(text) => text,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(format!("The file {} cannot be read: {error}", path.display())),
-    };
-    match serde_json::from_str::<Value>(&text) {
-        Ok(Value::Object(config)) => Ok(Some(config)),
-        Ok(_) => Err(format!("The file {} is not a JSON object.", path.display())),
-        Err(error) => Err(format!("The file {} is not valid JSON: {error}", path.display())),
-    }
 }
 
 /// The macro that an entry of the key `prompts` holds. An entry without an id gets the id `projet-<index>`, and an entry
@@ -97,8 +58,7 @@ pub fn read_project_macros(root: &Path) -> Result<Vec<Macro>, String> {
 }
 
 /// Changes the key `prompts` of the file `.heidrun/config.json` of the project at `root` with `change`, and keeps every
-/// other key and every other field of a macro as it is. A project that has no file gets a new file with the version 1 and
-/// no launcher.
+/// other key and every other field of a macro as it is. A project that has no file gets a new file.
 ///
 /// `change` receives the entries of the key `prompts` and returns the new entries.
 ///
@@ -109,21 +69,14 @@ pub fn change_project_macros(
     change: impl FnOnce(Vec<Value>) -> Result<Vec<Value>, String>,
 ) -> Result<(), String> {
     let path = project_config_path(root);
-    let mut config = read_config(&path)?.unwrap_or_else(|| {
-        let mut config = Map::new();
-        config.insert("version".to_string(), json!(1));
-        config.insert("launchers".to_string(), json!([]));
-        config
-    });
+    let mut config = read_config(&path)?.unwrap_or_else(new_config);
     let entries = match config.get(MACROS_KEY) {
         None => Vec::new(),
         Some(Value::Array(entries)) => entries.clone(),
         Some(_) => return Err(format!("The file {} is not valid: the key {MACROS_KEY} is not a list.", path.display())),
     };
     config.insert(MACROS_KEY.to_string(), Value::Array(change(entries)?));
-    let mut text = serde_json::to_string_pretty(&Value::Object(config)).map_err(|error| error.to_string())?;
-    text.push('\n');
-    write_file_aside(&path, &text)
+    write_config(&path, config)
 }
 
 /// The id that the entry at `index` has: its own id, or else `projet-<index>`.
@@ -139,6 +92,7 @@ pub fn entry_of_macro(content: &Macro) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     /// A new empty project folder for one test.
     fn test_project(name: &str) -> PathBuf {
@@ -209,13 +163,5 @@ mod tests {
         std::fs::write(project_config_path(&root), "{ not json").unwrap();
         assert!(change_project_macros(&root, Ok).unwrap_err().contains("is not valid JSON"));
         assert_eq!(std::fs::read_to_string(project_config_path(&root)).unwrap(), "{ not json");
-    }
-
-    #[test]
-    fn the_root_is_the_nearest_folder_with_a_folder_heidrun_or_git() {
-        let root = test_project("root");
-        let deeper = root.join("a").join("b");
-        std::fs::create_dir_all(&deeper).unwrap();
-        assert_eq!(find_project_root(&deeper), root);
     }
 }

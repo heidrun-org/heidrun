@@ -1,11 +1,11 @@
 # Glossary of Heidrun: macros
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md)
-- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602)
+- Related issue: [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 649](https://github.com/heidrun-org/heidrun/issues/649)
 
 This document gives one short definition for each word of the macros, and of the command line that controls them. The other words of Heidrun are in [index.md](index.md).
 
@@ -35,7 +35,7 @@ A macro that the developer made, and that is kept in the key `prompts` of the fi
 
 ### heidrun_ctrl
 
-The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. Its first group of commands is `macros`: list, add, update, and delete. It changes files, and a running Heidrun shows each change in its window within about one second.
+The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. It has two groups of commands, `macros` and `launchers`, and each group has the four commands list, add, update, and delete. It changes files, and a running Heidrun shows each change in its window within about one second.
 
 ## Rules
 

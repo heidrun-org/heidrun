@@ -5,7 +5,7 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) })
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 
-/** The text of the file .heidrun/config.json that the fake backend gives, and how many times the project was loaded. */
+/** The text of the file .heidrun/config.json that the fake backend gives, and how many times the project was loaded. The fake project has the configuration of that text, when the text is a configuration of the version 1. */
 const backend = { configText: "{}", loads: 0 };
 
 async function loadStores() {
@@ -17,7 +17,9 @@ async function loadStores() {
     }
     if (command === "project_load") {
       backend.loads++;
-      return { root: "/project", config_path: "/project/.heidrun/config.json", config: { version: 1, launchers: [] }, detected: [] };
+      const file = JSON.parse(backend.configText) as { version?: number };
+      const config = file.version === 1 ? file : { version: 1, launchers: [] };
+      return { root: "/project", config_path: "/project/.heidrun/config.json", config, detected: [] };
     }
     throw new Error(`unexpected command ${command}`);
   }) as never);
@@ -51,6 +53,34 @@ describe("reloadProjectWhenFileChanged", () => {
     backend.configText = '{"version":1,"launchers":[],"prompts":[{"text":"New"}]}';
     await store.reloadProjectWhenFileChanged();
     expect(backend.loads).toBe(1);
+  });
+
+  it("shows an added, a changed, and a deleted launcher, as the command line heidrun_ctrl makes them", async () => {
+    const store = await loadStores();
+    const commands = () => store.project.byWorkspace.w1?.config.launchers.map((launcher) => `${launcher.id}: ${launcher.command}`);
+    const fileWith = (...commands: string[]) =>
+      JSON.stringify({ version: 1, launchers: commands.map((command) => ({ id: "run-x7q2", label: "Run", command })) });
+    backend.configText = fileWith();
+    await store.reloadProjectWhenFileChanged();
+    expect(commands()).toEqual([]);
+    backend.configText = fileWith("pnpm test");
+    await store.reloadProjectWhenFileChanged();
+    expect(commands()).toEqual(["run-x7q2: pnpm test"]);
+    backend.configText = fileWith("pnpm run test:unit");
+    await store.reloadProjectWhenFileChanged();
+    expect(commands()).toEqual(["run-x7q2: pnpm run test:unit"]);
+    backend.configText = fileWith();
+    await store.reloadProjectWhenFileChanged();
+    expect(commands()).toEqual([]);
+    expect(backend.loads).toBe(3);
+  });
+
+  it("reads a launcher under the old key actions, as the command line heidrun_ctrl reads it", async () => {
+    const store = await loadStores();
+    await store.reloadProjectWhenFileChanged();
+    backend.configText = JSON.stringify({ version: 1, actions: [{ id: "a", label: "A", command: "ls" }] });
+    await store.reloadProjectWhenFileChanged();
+    expect(store.project.byWorkspace.w1?.config.launchers[0]?.id).toBe("a");
   });
 
   it("loads nothing when the file did not change", async () => {

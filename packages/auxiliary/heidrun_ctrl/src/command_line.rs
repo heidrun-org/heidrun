@@ -3,16 +3,23 @@
 use heidrun_ctrl::{Format, MacroKind};
 
 /// The text of `heidrun_ctrl --help`.
-pub const HELP: &str = r#"Usage: heidrun_ctrl macros <command> [options]
+pub const HELP: &str = r#"Usage: heidrun_ctrl <group> <command> [options]
 
-Controls the Heidrun application. The first part is the macros: a macro is a reusable
-text that the developer writes into a pane. There are three kinds of macro:
+Controls the Heidrun application. There are two groups of commands: macros and launchers.
+
+The macros: a macro is a reusable text that the developer writes into a pane. There are
+three kinds of macro:
   hard_coded   Written in the source code of Heidrun. It is listed, and it cannot be
                added, changed, or deleted.
   personal     Made by the developer, and kept in the file "macros.json" of the folder
                of the variable HEIDRUN_DIR, or else of "~/.config/heidrun".
   project      Made by the developer, and kept in the key "prompts" of the file
                ".heidrun/config.json" of the project.
+
+The launchers: a launcher is one item of the Launchers sidebar section, a command line
+that Heidrun runs in its own tab when the developer clicks its button "Run". The
+launchers are kept in the key "launchers" of the file ".heidrun/config.json" of the
+project. A launcher is not a macro, and the command line never runs a launcher.
 
 The command line changes files. The Heidrun application watches the files, so a running
 Heidrun shows each change in its window within about one second, and a change works
@@ -23,33 +30,56 @@ Commands:
   macros add                  Add a macro.
   macros update <id>          Change the title, the description, or the text of a macro.
   macros delete <id>          Delete a macro.
+  launchers list              List the launchers of the project.
+  launchers add               Add a launcher.
+  launchers update <id>       Change the name, the command line, the description, or the
+                              folder of a launcher.
+  launchers delete <id>       Delete a launcher.
 
 Options:
-  --kind <name>               hard_coded, personal, or project. For list, only the
-                              macros of that kind. For add, the kind to add:
+  --kind <name>               Macros only. hard_coded, personal, or project. For list,
+                              only the macros of that kind. For add, the kind to add:
                               personal or project. (default: personal) For update and
                               delete, the kind to search, when the id exists in two
                               kinds.
-  --id <id>                   For add, the id of the macro. (default: made from the
-                              title, then a dash and three characters)
-  --label <text>              For add and update, the title of the macro. An empty
-                              title becomes the first 40 characters of the text.
-  --description <text>        For add and update, the line shown under the title.
-  --text <text>               For add and update, the text of the macro. With "-", the
-                              text is read from the standard input, and one new line
-                              at its end is removed. It cannot be empty.
-  --folder <path>             A folder of the project, for the project macros.
-                              (default: the current folder)
+  --id <id>                   For add, the id of the macro or of the launcher. (default:
+                              made from the title or the name, then a dash and three
+                              characters for a macro, four for a launcher)
+  --label <text>              For add and update, the title of the macro or the name of
+                              the launcher. An empty title becomes the first 40
+                              characters of the text of the macro. An empty name becomes
+                              the first 20 characters of the command line of the
+                              launcher.
+  --description <text>        For add and update, the line shown under the title of a
+                              macro, or the description of a launcher. An empty
+                              description of a launcher removes it.
+  --text <text>               Macros only. For add and update, the text of the macro.
+                              With "-", the text is read from the standard input, and
+                              one new line at its end is removed. It cannot be empty.
+  --command <text>            Launchers only. For add and update, the command line of
+                              the launcher. With "-", the command line is read from the
+                              standard input, and one new line at its end is removed. It
+                              cannot be empty. A launcher of the kind Coding agent
+                              refuses it on update, because its command line is made
+                              from its field "agent".
+  --cwd <path>                Launchers only. For add and update, the folder where the
+                              command line runs, relative to the root of the project.
+                              An empty folder removes it.
+  --folder <path>             A folder of the project, for the project macros and for the
+                              launchers. (default: the current folder)
   --format <name>             markdown or json. (default: markdown)
   --json                      The same as --format json.
   -h, --help                  Print this help.
 
 Output:
   markdown   Text for a person, or for a renderer: pipe it to glow to get colors.
-  json       One JSON value: a list of macros for list, and one macro for add and
-             update. A macro has the fields "id", "label", "description", "text",
-             "kind", and "file" (null for a hard-coded macro). An error is one JSON
-             object on one line on the standard error output, with the field "error".
+  json       One JSON value: a list for list, and one item for add and update. A macro
+             has the fields "id", "label", "description", "text", "kind", and "file"
+             (null for a hard-coded macro). A launcher has the fields "id", "label",
+             "command", "description", "cwd", and "agent" (null for a field that the
+             launcher does not have). A delete gives the object {"deleted": <item>}. An
+             error is one JSON object on one line on the standard error output, with
+             the field "error".
 
 Exit codes:
   0   The command worked.
@@ -63,9 +93,14 @@ Examples:
   $ heidrun_ctrl macros update run-the-tests-x7q --text "Run the tests, then the linter."
   $ heidrun_ctrl macros delete run-the-tests-x7q
   $ heidrun_ctrl macros list | glow
+  $ heidrun_ctrl launchers list --format json
+  $ heidrun_ctrl launchers add --label "Run the tests" --command "pnpm test"
+  $ printf 'cd web\npnpm test' | heidrun_ctrl launchers add --label "Web tests" --command -
+  $ heidrun_ctrl launchers update run-the-tests-x7q2 --command "pnpm run test:unit" --cwd web
+  $ heidrun_ctrl launchers delete run-the-tests-x7q2
 "#;
 
-/// Where the text of a macro comes from.
+/// Where a text comes from: the text of a macro, or the command line of a launcher.
 #[derive(Debug, PartialEq, Clone)]
 pub enum TextInput {
     /// The text is in the argument.
@@ -134,6 +169,48 @@ pub enum Parsed {
         /// The kind to search, or `None` to search every kind.
         kind: Option<MacroKind>,
     },
+    /// List the launchers.
+    LauncherList {
+        /// The options of every order.
+        common: CommonOptions,
+    },
+    /// Add a launcher.
+    LauncherAdd {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id, or `None` to make one.
+        id: Option<String>,
+        /// The name.
+        label: Option<String>,
+        /// The command line.
+        command: TextInput,
+        /// The description.
+        description: Option<String>,
+        /// The folder, relative to the root of the project.
+        cwd: Option<String>,
+    },
+    /// Change a launcher.
+    LauncherUpdate {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id of the launcher.
+        id: String,
+        /// The new name.
+        label: Option<String>,
+        /// The new command line.
+        command: Option<TextInput>,
+        /// The new description.
+        description: Option<String>,
+        /// The new folder.
+        cwd: Option<String>,
+    },
+    /// Delete a launcher.
+    LauncherDelete {
+        /// The options of every order.
+        common: CommonOptions,
+        /// The id of the launcher.
+        id: String,
+    },
 }
 
 /// The options that the arguments hold, before the order is known.
@@ -146,6 +223,8 @@ struct RawOptions {
     label: Option<String>,
     description: Option<String>,
     text: Option<TextInput>,
+    command: Option<TextInput>,
+    cwd: Option<String>,
     /// The names of the options that were given, to refuse the ones an order does not accept.
     given: Vec<&'static str>,
 }
@@ -175,6 +254,15 @@ fn value_of<'a>(name: &str, inline: Option<String>, rest: &mut impl Iterator<Ite
     }
 }
 
+/// The source of a text: the standard input for the value "-", else the value itself.
+fn text_input_of(value: String) -> TextInput {
+    if value == "-" {
+        TextInput::StandardInput
+    } else {
+        TextInput::Given(value)
+    }
+}
+
 /// The kind that a name gives, or an error that lists the three names.
 fn kind_of(name: &str) -> Result<MacroKind, String> {
     MacroKind::from_name(name).ok_or_else(|| format!("The kind {name} is not known: use hard_coded, personal, or project."))
@@ -183,8 +271,8 @@ fn kind_of(name: &str) -> Result<MacroKind, String> {
 /// Reads the arguments of the command line, without the name of the program.
 ///
 /// # Errors
-/// An unknown command, kind, option, or format, an option without a value, an option that the command does not accept, a
-/// missing id or text, or a wrong number of arguments.
+/// An unknown group, command, kind, option, or format, an option without a value, an option that the command does not
+/// accept, a missing id, text, or command line, or a wrong number of arguments.
 pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
     let mut options = RawOptions::default();
     let mut positionals: Vec<String> = Vec::new();
@@ -233,9 +321,16 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
                 options.given.push("--description");
             }
             "--text" => {
-                let value = value_of(&name, inline, &mut rest)?;
-                options.text = Some(if value == "-" { TextInput::StandardInput } else { TextInput::Given(value) });
+                options.text = Some(text_input_of(value_of(&name, inline, &mut rest)?));
                 options.given.push("--text");
+            }
+            "--command" => {
+                options.command = Some(text_input_of(value_of(&name, inline, &mut rest)?));
+                options.given.push("--command");
+            }
+            "--cwd" => {
+                options.cwd = Some(value_of(&name, inline, &mut rest)?);
+                options.given.push("--cwd");
             }
             _ => return Err(format!("The option {name} is not known. Run `heidrun_ctrl --help`.")),
         }
@@ -244,33 +339,53 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         return Ok(Parsed::Help);
     }
     let Some(group) = positionals.first() else {
-        return Err("A command is needed: macros. Run `heidrun_ctrl --help`.".to_string());
+        return Err("A command is needed: macros or launchers. Run `heidrun_ctrl --help`.".to_string());
     };
-    if group != "macros" {
-        return Err(format!("The command {group} is not known: use macros. Run `heidrun_ctrl --help`."));
-    }
     let Some(command) = positionals.get(1) else {
-        return Err("The command macros needs one of list, add, update, or delete. Run `heidrun_ctrl --help`.".to_string());
+        return match group.as_str() {
+            "macros" | "launchers" => {
+                Err(format!("The command {group} needs one of list, add, update, or delete. Run `heidrun_ctrl --help`."))
+            }
+            _ => Err(format!("The command {group} is not known: use macros or launchers. Run `heidrun_ctrl --help`.")),
+        };
     };
-    let accepted: &[&str] = match command.as_str() {
+    match group.as_str() {
+        "macros" => parse_macros(command, options, &positionals),
+        "launchers" => parse_launchers(command, options, &positionals),
+        _ => Err(format!("The command {group} is not known: use macros or launchers. Run `heidrun_ctrl --help`.")),
+    }
+}
+
+/// Refuses an option that the command does not accept, and a wrong number of positional arguments: the group, the command,
+/// and for `update` and `delete` the id.
+fn check_arguments(group: &str, command: &str, accepted: &[&str], options: &RawOptions, positionals: &[String]) -> Result<(), String> {
+    if let Some(refused) = options.given.iter().find(|name| !accepted.contains(name)) {
+        return Err(format!("The command {group} {command} does not accept the option {refused}."));
+    }
+    let wanted_positionals = if command == "update" || command == "delete" { 3 } else { 2 };
+    if positionals.len() != wanted_positionals {
+        return Err(match wanted_positionals {
+            3 if positionals.len() < 3 => {
+                format!("The command {group} {command} needs the id of a {}.", group.trim_end_matches('s'))
+            }
+            _ => format!("The command {group} {command} has too many arguments: {}.", positionals[wanted_positionals..].join(" ")),
+        });
+    }
+    Ok(())
+}
+
+/// Reads the command of the group `macros`.
+fn parse_macros(command: &str, options: RawOptions, positionals: &[String]) -> Result<Parsed, String> {
+    let accepted: &[&str] = match command {
         "list" => &["--json", "--format", "--folder", "--kind"],
         "add" => &["--json", "--format", "--folder", "--kind", "--id", "--label", "--description", "--text"],
         "update" => &["--json", "--format", "--folder", "--kind", "--label", "--description", "--text"],
         "delete" => &["--json", "--format", "--folder", "--kind"],
         other => return Err(format!("The command macros {other} is not known: use list, add, update, or delete.")),
     };
-    if let Some(refused) = options.given.iter().find(|name| !accepted.contains(name)) {
-        return Err(format!("The command macros {command} does not accept the option {refused}."));
-    }
-    let wanted_positionals = if command == "update" || command == "delete" { 3 } else { 2 };
-    if positionals.len() != wanted_positionals {
-        return Err(match wanted_positionals {
-            3 if positionals.len() < 3 => format!("The command macros {command} needs the id of a macro."),
-            _ => format!("The command macros {command} has too many arguments: {}.", positionals[wanted_positionals..].join(" ")),
-        });
-    }
+    check_arguments("macros", command, accepted, &options, positionals)?;
     let common = CommonOptions { format: options.format.unwrap_or_default(), folder: options.folder.clone() };
-    match command.as_str() {
+    match command {
         "list" => Ok(Parsed::List { common, kind: options.kind }),
         "add" => Ok(Parsed::Add {
             common,
@@ -289,6 +404,39 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             text: options.text,
         }),
         _ => Ok(Parsed::Delete { common, id: positionals[2].clone(), kind: options.kind }),
+    }
+}
+
+/// Reads the command of the group `launchers`.
+fn parse_launchers(command: &str, options: RawOptions, positionals: &[String]) -> Result<Parsed, String> {
+    let accepted: &[&str] = match command {
+        "list" => &["--json", "--format", "--folder"],
+        "add" => &["--json", "--format", "--folder", "--id", "--label", "--command", "--description", "--cwd"],
+        "update" => &["--json", "--format", "--folder", "--label", "--command", "--description", "--cwd"],
+        "delete" => &["--json", "--format", "--folder"],
+        other => return Err(format!("The command launchers {other} is not known: use list, add, update, or delete.")),
+    };
+    check_arguments("launchers", command, accepted, &options, positionals)?;
+    let common = CommonOptions { format: options.format.unwrap_or_default(), folder: options.folder.clone() };
+    match command {
+        "list" => Ok(Parsed::LauncherList { common }),
+        "add" => Ok(Parsed::LauncherAdd {
+            common,
+            id: options.id,
+            label: options.label,
+            command: options.command.ok_or_else(|| "The command launchers add needs the option --command.".to_string())?,
+            description: options.description,
+            cwd: options.cwd,
+        }),
+        "update" => Ok(Parsed::LauncherUpdate {
+            common,
+            id: positionals[2].clone(),
+            label: options.label,
+            command: options.command,
+            description: options.description,
+            cwd: options.cwd,
+        }),
+        _ => Ok(Parsed::LauncherDelete { common, id: positionals[2].clone() }),
     }
 }
 
@@ -356,13 +504,69 @@ mod tests {
 
     #[test]
     fn an_unknown_command_kind_format_or_option_is_an_error_that_says_the_choices() {
-        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros"));
+        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros or launchers"));
         assert!(parse(&arguments(&["macros", "run"])).unwrap_err().contains("list, add, update, or delete"));
         assert!(parse(&arguments(&["macros", "list", "--kind", "x"])).unwrap_err().contains("hard_coded, personal, or project"));
         assert!(parse(&arguments(&["macros", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
         assert!(parse(&arguments(&["macros", "list", "--color"])).unwrap_err().contains("--color"));
         assert!(parse(&arguments(&["macros", "list", "--kind"])).unwrap_err().contains("needs a value"));
         assert!(parse(&arguments(&[])).unwrap_err().contains("A command is needed"));
+    }
+
+    #[test]
+    fn a_launcher_list_has_the_format_markdown_by_default_and_no_kind() {
+        assert_eq!(
+            parse(&arguments(&["launchers", "list"])),
+            Ok(Parsed::LauncherList { common: CommonOptions { format: Format::Markdown, folder: None } })
+        );
+        assert!(parse(&arguments(&["launchers", "list", "--kind", "project"])).unwrap_err().contains("does not accept the option --kind"));
+    }
+
+    #[test]
+    fn a_launcher_add_needs_a_command_line_and_takes_the_other_fields() {
+        let parsed = parse(&arguments(&[
+            "launchers", "add", "--id", "a", "--label", "A", "--command", "pnpm test", "--description", "D", "--cwd=web", "--json",
+        ]))
+        .unwrap();
+        assert_eq!(
+            parsed,
+            Parsed::LauncherAdd {
+                common: CommonOptions { format: Format::Json, folder: None },
+                id: Some("a".into()),
+                label: Some("A".into()),
+                command: TextInput::Given("pnpm test".into()),
+                description: Some("D".into()),
+                cwd: Some("web".into()),
+            }
+        );
+        assert_eq!(parse(&arguments(&["launchers", "add", "--label", "A"])), Err("The command launchers add needs the option --command.".to_string()));
+        let from_input = parse(&arguments(&["launchers", "add", "--command", "-"])).unwrap();
+        assert!(matches!(from_input, Parsed::LauncherAdd { command: TextInput::StandardInput, .. }));
+    }
+
+    #[test]
+    fn a_launcher_update_and_delete_need_one_id() {
+        let update = parse(&arguments(&["launchers", "update", "a", "--command", "ls", "--cwd", ""])).unwrap();
+        assert!(matches!(update, Parsed::LauncherUpdate { ref id, command: Some(TextInput::Given(_)), cwd: Some(ref cwd), .. } if id == "a" && cwd.is_empty()));
+        assert!(matches!(parse(&arguments(&["launchers", "delete", "a"])), Ok(Parsed::LauncherDelete { ref id, .. }) if id == "a"));
+        assert_eq!(parse(&arguments(&["launchers", "delete"])), Err("The command launchers delete needs the id of a launcher.".to_string()));
+        assert!(parse(&arguments(&["launchers", "update", "a", "b"])).unwrap_err().contains("too many arguments: b"));
+    }
+
+    #[test]
+    fn the_options_of_the_other_group_are_refused() {
+        assert!(parse(&arguments(&["launchers", "add", "--text", "x"])).unwrap_err().contains("does not accept the option --text"));
+        assert!(parse(&arguments(&["launchers", "update", "a", "--id", "b"])).unwrap_err().contains("--id"));
+        assert!(parse(&arguments(&["macros", "add", "--command", "x", "--text", "y"])).unwrap_err().contains("does not accept the option --command"));
+        assert!(parse(&arguments(&["macros", "list", "--cwd", "web"])).unwrap_err().contains("--cwd"));
+    }
+
+    #[test]
+    fn an_unknown_launcher_command_is_an_error_that_says_the_choices() {
+        assert!(parse(&arguments(&["launchers", "run"])).unwrap_err().contains("list, add, update, or delete"));
+        assert!(parse(&arguments(&["launchers"])).unwrap_err().contains("needs one of list, add, update, or delete"));
+        assert!(parse(&arguments(&["panes", "list"])).unwrap_err().contains("use macros or launchers"));
+        assert!(parse(&arguments(&["launchers", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
     }
 
     #[test]
