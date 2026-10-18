@@ -432,9 +432,9 @@ fn the_markdown_of_a_launcher_has_its_name_its_id_and_its_command_line_in_a_code
 
 // ---- The SKILL.md ---------------------------------------------------------------------------------------------------
 
-/// The text of the `SKILL.md` of the package, in the folder `skills/heidrun_ctrl`.
+/// The text of the `SKILL.md` of the package, in the folder `skills/heidrun-ctrl`.
 fn skill_text() -> String {
-    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun_ctrl").join("SKILL.md");
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("skills").join("heidrun-ctrl").join("SKILL.md");
     std::fs::read_to_string(path).unwrap()
 }
 
