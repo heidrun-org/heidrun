@@ -88,6 +88,9 @@ mod tests {
     /// The variables that the tests read and the application does not.
     const READ_BY_TESTS_ONLY: [&str; 1] = ["HOME"];
 
+    /// The variables of the system that the application reads and changes, and that a developer never sets in `.env`.
+    const SYSTEM_VARIABLES: [&str; 1] = ["PATH"];
+
     /// The path of the file `.env.example`, at the root of the repository.
     fn example_path() -> PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../.env.example")
@@ -159,7 +162,7 @@ mod tests {
             }
             read.extend(read_variable_names(&std::fs::read_to_string(&file).unwrap()));
         }
-        for name in READ_BY_TESTS_ONLY {
+        for name in READ_BY_TESTS_ONLY.into_iter().chain(SYSTEM_VARIABLES) {
             read.remove(name);
         }
         let listed = example_variable_names(&std::fs::read_to_string(example_path()).unwrap());
