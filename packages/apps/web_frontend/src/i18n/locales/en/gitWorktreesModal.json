@@ -1,0 +1,20 @@
+{
+  "title": "Open workspace from the selected repo's worktrees",
+  "close": "Close",
+  "loading": "Reading the current Git worktrees…",
+  "tryAgain": "Try again",
+  "empty": "This repository has no available Git worktrees.",
+  "detached": "No branch (detached head)",
+  "alreadyOpen": "Already open: {name}",
+  "sortBy": "Sort by",
+  "updated": "Last commit",
+  "created": "Created",
+  "name": "Name",
+  "oldestFirst": "Show oldest first",
+  "newestFirst": "Show newest first",
+  "azFirst": "Sort A to Z",
+  "zaFirst": "Sort Z to A",
+  "copyFolder": "Copy folder path",
+  "folderCopied": "Folder path copied",
+  "refresh": "Refresh"
+}

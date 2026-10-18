@@ -349,6 +349,7 @@ pub fn run() {
             macros::macros_personal_read,
             macros::macros_personal_write,
             git::git_status,
+            git::git_worktrees,
             git::forge_cli,
             forge_cache::forge_cli_cached,
             topic_clusters::topic_clusters_read,

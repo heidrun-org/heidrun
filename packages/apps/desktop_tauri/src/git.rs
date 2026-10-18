@@ -31,6 +31,26 @@ pub struct GitStatus {
     pub remote: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct GitWorktree {
+    pub folder: String,
+    pub branch: Option<String>,
+    pub created_at: Option<i64>,
+    pub last_commit_at: Option<i64>,
+}
+
+async fn worktree_details(folder: String, branch: Option<String>) -> GitWorktree {
+    let created_at = std::fs::metadata(&folder)
+        .and_then(|metadata| metadata.created())
+        .ok()
+        .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|duration| duration.as_secs() as i64);
+    let last_commit_at = git(&folder, &["log", "-1", "--format=%ct"])
+        .await
+        .and_then(|time| time.trim().parse().ok());
+    GitWorktree { folder, branch, created_at, last_commit_at }
+}
+
 async fn git(cwd: &str, args: &[&str]) -> Option<String> {
     let out = tokio::time::timeout(
         Duration::from_secs(8),
@@ -131,6 +151,53 @@ pub async fn git_status(cwd: String) -> Option<GitStatus> {
     }
     st.remote = git(&root, &["config", "--get", "remote.origin.url"]).await.map(|s| s.trim().to_string());
     Some(st)
+}
+
+/// Lists the current worktrees of a known repository and omits folders that no longer exist.
+#[tauri::command]
+pub async fn git_worktrees(root: String) -> Result<Vec<GitWorktree>, String> {
+    known_root(&root)?;
+    let output = tokio::time::timeout(
+        Duration::from_secs(8),
+        Command::new("git")
+            .arg("-C")
+            .arg(&root)
+            .args(["worktree", "list", "--porcelain", "-z"])
+            .kill_on_drop(true)
+            .output(),
+    )
+    .await
+    .map_err(|_| "Git worktree listing timed out.".to_string())?
+    .map_err(|error| format!("Git worktree listing failed: {error}"))?;
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+    }
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let mut found = Vec::new();
+    let mut folder: Option<String> = None;
+    let mut branch = None;
+    for field in text.split('\0') {
+        if let Some(path) = field.strip_prefix("worktree ") {
+            if let Some(previous) = folder.take() {
+                if std::path::Path::new(&previous).is_dir() {
+                    found.push(worktree_details(previous, branch.take()).await);
+                }
+            }
+            folder = Some(path.to_string());
+            branch = None;
+        } else if let Some(name) = field.strip_prefix("branch refs/heads/") {
+            branch = Some(name.to_string());
+        } else if field == "detached" {
+            branch = None;
+        }
+    }
+    if let Some(folder) = folder {
+        if std::path::Path::new(&folder).is_dir() {
+            found.push(worktree_details(folder, branch).await);
+        }
+    }
+    Ok(found)
 }
 
 /// A path inside the repository, as git prints it (relative, no "..").
