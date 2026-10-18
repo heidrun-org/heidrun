@@ -24,7 +24,7 @@ defineProps<{
     </div>
     <div v-for="block in blocks" :key="block.title + block.text" class="list-group-item" data-help-block>
       <div class="fw-medium">{{ block.title }}</div>
-      <div class="text-body-secondary">{{ block.text }}</div>
+      <div class="text-body-secondary text-break">{{ block.text }}</div>
     </div>
   </div>
 </template>

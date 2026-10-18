@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId } from "vue";
 import InformationCardContent from "./InformationCardContent.vue";
 
-// A card below an element, with the look of an information card (a heading with the circled question mark, then blocks with
+// A card beside or below an element, with the look of an information card (a heading with the circled question mark, then blocks with
 // a title and a text), that opens like a tooltip. The component draws no element of its own around the element. The slot
 // gives `triggerProps`, and the element that owns the card receives them with `v-bind`: the four event handlers, and the
 // attribute `aria-describedby` while the card is open. The card opens after a short delay, as the tooltip of the HTML
@@ -19,6 +19,8 @@ const props = defineProps<{
   title: string;
   /** The blocks of the card, in order. Each block has a title and a text. */
   blocks: readonly { title: string; text: string }[];
+  /** Where the card opens. A side card prefers the right and flips to the left when there is more room there. */
+  placement?: "bottom" | "side";
 }>();
 
 /** The time that the pointer or the keyboard focus must stay on the element before the card opens, in milliseconds. */
@@ -49,23 +51,41 @@ const isPlaced = ref(false);
 
 const cardStyle = ref<Record<string, string>>({});
 const arrowStyle = ref<Record<string, string>>({});
+const sidePlacement = ref<"start" | "end">("end");
+const popoverPlacementClass = computed(() =>
+  props.placement === "side" ? `bs-popover-${sidePlacement.value}` : "bs-popover-bottom",
+);
 
-/** Puts the card below the element, in the middle of it, and inside the window, with its arrow under the element. */
+/** Places the card below or beside the element, and keeps it inside the window. */
 function place() {
   if (trigger.value === null || card.value === null) {
     return;
   }
   const part = trigger.value.getBoundingClientRect();
   const { height, width } = card.value.getBoundingClientRect();
-  const arrowHalfWidth = arrow.value === null ? 0 : arrow.value.getBoundingClientRect().width / 2;
-  const left = Math.max(GAP, Math.min(part.left + part.width / 2 - width / 2, window.innerWidth - width - GAP));
-  const top = Math.max(GAP, Math.min(part.bottom + GAP, window.innerHeight - height - GAP));
+  let left: number;
+  let top: number;
+  if (props.placement === "side") {
+    const rightSpace = window.innerWidth - part.right - GAP;
+    const leftSpace = part.left - GAP;
+    const openOnRight = rightSpace >= width || rightSpace >= leftSpace;
+    sidePlacement.value = openOnRight === true ? "end" : "start";
+    left = openOnRight === true ? part.right + GAP : part.left - width - GAP;
+    top = part.bottom - height;
+    arrowStyle.value = { bottom: "12px" };
+  } else {
+    const arrowHalfWidth = arrow.value === null ? 0 : arrow.value.getBoundingClientRect().width / 2;
+    left = part.left + part.width / 2 - width / 2;
+    top = part.bottom + GAP;
+    arrowStyle.value = { left: `${Math.max(0, part.left + part.width / 2 - left - arrowHalfWidth)}px` };
+  }
+  left = Math.max(GAP, Math.min(left, window.innerWidth - width - GAP));
+  top = Math.max(GAP, Math.min(top, window.innerHeight - height - GAP));
   cardStyle.value = {
     top: `${top}px`,
     left: `${left}px`,
     "--popover-max-width": `min(${MAX_WIDTH}, ${Math.max(0, window.innerWidth - 2 * GAP)}px)`,
   };
-  arrowStyle.value = { left: `${Math.max(0, part.left + part.width / 2 - left - arrowHalfWidth)}px` };
   isPlaced.value = true;
 }
 
@@ -126,7 +146,8 @@ onBeforeUnmount(() => {
       v-if="isOpen"
       :id="cardId"
       ref="card"
-      class="popover popover-instant bs-popover-bottom show position-fixed"
+      class="popover popover-instant show position-fixed"
+      :class="[popoverPlacementClass, { 'side-placement': props.placement === 'side' }]"
       role="tooltip"
       :style="{ ...cardStyle, visibility: isPlaced ? 'visible' : 'hidden' }"
     >
@@ -140,5 +161,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .popover { --popover-body-padding-x: 0; --popover-body-padding-y: 0; width: 26rem; pointer-events: none; }
+.popover.side-placement > .popover-arrow { top: auto; bottom: 12px; }
 .popover-body { overflow: hidden; border-radius: var(--popover-inner-border-radius); }
 </style>
