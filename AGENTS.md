@@ -38,12 +38,11 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
   - [statistics_charts.md](docs/agents_rules/glossary/statistics_charts.md): the definition of the chart legend and of the chart information card, which every chart of the Statistics window has. Read it when you add or change a chart of the Statistics window.
   - [macros.md](docs/agents_rules/glossary/macros.md): the definition of each word of the macros: the macro, the hard-coded macro, the personal macro, the personal macro file, the project macro, and the command line `heidrun_ctrl`. Read it when you change the macros or the command line `heidrun_ctrl`.
   - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot. Read it when you change the detection of the activity of the developer, its sidebar section, or the Statistics window.
-  - [issue_fix_workflow.md](docs/agents_rules/glossary/issue_fix_workflow.md): the definition of each word of the Issue Fix Workflow: the Issue Fix Workflow, the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, the Issue Fix Completion, the added request, the related added request, and the unrelated added request. Read it when you change the section "Issue Fix Workflow" of this file.
+  - [issue_fix_workflow.md](docs/agents_rules/glossary/issue_fix_workflow.md): the definition of each word of the Issue Fix Workflow: the Issue Fix Workflow, the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, the Issue Fix Completion, the added request, the related added request, and the unrelated added request. Read it when you change the skill [issue_fix_workflow](.agents/skills/issue_fix_workflow/SKILL.md) or the section "Issue Fix Workflow" of this file.
   - [voice_input.md](docs/agents_rules/glossary/voice_input.md): the definition of each word of the voice input: the voice input, the push-to-talk button, the level bars, the Whisper model, and the Voice input section of the Settings window. Read it when you change the voice input or the package `voice_input`.
   - [data_layer_operation_log.md](docs/agents_rules/glossary/data_layer_operation_log.md): the definition of each word of the operation log of the data layer: the operation, the operation log, the start event and the completion event, the caller, the kind, the workload, the nested operation, the pattern, the unfinished operation, the replay, the snapshot, and the isolated database. Read it when you change the operation log or the command `heidrun_data operations`.
 - [docs/agents_rules/data_layer_operation_log.md](docs/agents_rules/data_layer_operation_log.md): the rule that every public function of the four data layer packages and of `heidrun_data` is recorded in the operation log with the package `data_layer_operation_log`, what the log never does (change a result, hide an error, hold a secret), the measure, and the replay. Read this file each time that you add or change an operation of a data layer package or of `heidrun_data`.
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
-- [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md): the rules of the part Issue Fix Implementation: the two kinds of added request, the comment on the issue, the new issue, and the description of the pull request. Read this file each time that the developer asks for more work that the issue does not describe.
 - [docs/agents_rules/data_layer_access.md](docs/agents_rules/data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers`, with the table of the synchronize commands and the read commands, the exceptions, the audit of the bypasses, and the check of the package `data_layer_boundary_checker`. Read this file each time that you change the Past chats sidebar section, the Statistics window, or a package of the data layer, and never read a chat session file, start `git`, `gh`, or `glab`, make a network request, or run SQL for this data in the desktop application or in the web page.
 
 The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
@@ -149,60 +148,25 @@ Every folder in the folder `docs`, at every depth, has two files that describe t
 
 ## Issue Fix Workflow
 
-Every issue fix in this repository has four parts: the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, then the Issue Fix Completion. In the Issue Fix Setup, you prepare the work. In the Issue Fix Implementation, you make the change. In the Issue Fix Review, the developer tests the change. Each time that the developer asks for a change in the Issue Fix Review, the work goes back to the Issue Fix Implementation. Example of an issue fix: remove the folder `docs/issues`. Every issue fix is made in a temporary worktree, always, and never in the main checkout.
+Every issue fix in this repository follows the skill [issue_fix_workflow](.agents/skills/issue_fix_workflow/SKILL.md). Read the skill before you start an issue fix, each time that the developer asks to fix an issue ([issue 656](https://github.com/heidrun-org/heidrun/issues/656)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Issue Fix Workflow values" below.
 
-The Issue Fix Setup starts when the developer asks you to fix an issue, for example "fix the issue 35". The developer gives the number of the issue. If the developer does not give the number, ask for it. Creating the GitHub issue is not a step of the Issue Fix Workflow. See the section "GitHub and GitLab" for how to create an issue.
+### Issue Fix Workflow values
 
-### Issue Fix Setup
-
-1. Read the issue.
-2. Rename the chat according to its content.
-   - The identifier of this chat is in the environment variable `CLAUDE_CODE_HOST_SESSION_ID`. Read it with `echo $CLAUDE_CODE_HOST_SESSION_ID`, then give it as `session_id` to the tool `mcp__ccd_session_mgmt__set_session_title`.
-   - Never search for this chat in the list of sessions: this chat is often missing from the list. Never tell the developer that the rename is not possible before you read the variable.
-   - For Codex, or when the variable is empty, skip this step and say so in one line.
-3. Create a temporary worktree for the fix. Always create it. Never make the change in the main checkout, and never create only a temporary branch without a worktree. Name the temporary branch after the fix and the issue number, for example `remove-docs-issues-35`.
-   - To create the temporary worktree, run `pnpm worktree:create <name>` at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command `pnpm worktree:create` also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
-   - Work only in the folder of the temporary worktree, `.claude/worktrees/<name>`. Read, edit, write, build, test, and run every file there, and never in the main checkout.
-
-### Issue Fix Implementation
-
-The Issue Fix Implementation starts when the Issue Fix Setup is done. It starts again each time that the developer asks for a change in the Issue Fix Review ([issue 610](https://github.com/heidrun-org/heidrun/issues/610)).
-
-1. Make the change in the temporary worktree. Every commit message mentions the issue number.
-2. When the developer asks for more work that the issue does not describe, this work is an added request. Follow [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md). In short:
-   - A related added request stays in the same issue and in the same temporary worktree. When the work is done, add one comment to the issue that lists what the developer asked, what changed, and which files changed.
-   - An unrelated added request becomes a new issue, with its own temporary worktree. Ask the developer before you create the new issue.
-3. When the change is done, start the Issue Fix Review.
-
-### Issue Fix Review
-
-The Issue Fix Review starts when the Issue Fix Implementation is done. Without it, the developer cannot run the application, cannot observe the result, and cannot validate the change ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)). The Issue Fix Review has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)). Never put the two messages in one message.
-
-The first message asks the developer to review. Always do these steps, in this order:
-
-1. Tell the developer to look at the result.
-2. Give the command line that launches the application in the temporary worktree, in its own `bash` code block:
-   ```bash
-   cd <path of the temporary worktree> && pnpm dev
-   ```
-3. Say in one or two short lines what to look at, so that the developer can validate the change.
-4. Stop. The first message has no question and no button, and it says nothing about the pull request (on GitLab, the merge request) or about the merge. Write the command line in the closing text of the message, never before a question box, so that the developer always sees it.
-
-The developer runs the application, then says that the result is reviewed. The second message comes only after that. It asks one question: whether the result is good. It does not ask about the pull request or about the merge.
-
-- Each time that the developer asks for a change, go back to the Issue Fix Implementation. Then give the command line again, and start again with the first message.
-- Never start the Issue Fix Completion (the last commit, the pull request, the merge, and the closing of the issue) before the developer says that the result is good.
-
-### Issue Fix Completion
-
-The Issue Fix Completion starts when the developer says that the result of the Issue Fix Review is good.
-
-1. Make the last commit. It uses `fixes #<issue number>` in its message.
-2. Create a pull request (on GitLab, a merge request) from the temporary branch. Its description lists each added request, as [docs/agents_rules/issue_fix_implementation.md](docs/agents_rules/issue_fix_implementation.md) says.
-3. Merge the pull request (on GitLab, the merge request) into the personal development branch of the developer, for example `dev_jerome` or `dev_eric`.
-4. Delete the temporary branch, locally and on the remote repository. Remove the temporary worktree.
-5. Close the issue.
-6. Rename the chat according to its content.
+- Target branch: the personal development branch of the developer, as the section "Project memory" says: `dev_jerome` for Jérôme, and `dev_eric` for Eric.
+- Worktree creation command: `pnpm worktree:create <name>`, run at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
+- Worktree folder: `.claude/worktrees/<name>`, inside the main checkout.
+- Launch command: `cd <path of the temporary worktree> && pnpm dev`.
+- Issue tracker commands: this repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab, as [github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) says.
+  - Read an issue: `gh issue view <number> --comments`. On GitLab: `glab issue view <number> --comments`.
+  - Comment on an issue: `gh issue comment <number> --body "<comment>"`. On GitLab: `glab issue note <number> --message "<comment>"`.
+  - Create an issue: see the section "GitHub and GitLab".
+  - Create a pull request: `gh pr create`. On GitLab, create a merge request: `glab mr create`.
+  - Merge a pull request: `gh pr merge`. On GitLab, merge the merge request: `glab mr merge`. The section "Project memory" says which branches are never deleted.
+  - Close an issue: `gh issue close <number>`. On GitLab: `glab issue close <number>`.
+  - The text of an issue and of a comment follows the section "GitHub and GitLab", part "Writing the text of an issue".
+- Chat rename: available in Claude Code only. The identifier of this chat is in the environment variable `CLAUDE_CODE_HOST_SESSION_ID`. Read it with `echo $CLAUDE_CODE_HOST_SESSION_ID`, then give it as `session_id` to the tool `mcp__ccd_session_mgmt__set_session_title`. Never search for this chat in the list of sessions: this chat is often missing from the list. For Codex, or when the variable is empty, the rename is not available.
+- Background: the Issue Fix Review exists because the developer cannot validate a change without the application ([issue 500](https://github.com/heidrun-org/heidrun/issues/500)), it has two separate messages ([issue 526](https://github.com/heidrun-org/heidrun/issues/526)), and the Issue Fix Implementation starts again after each change request ([issue 610](https://github.com/heidrun-org/heidrun/issues/610)).
 
 ## Bug Triage Workflow
 
@@ -275,7 +239,7 @@ The file `.env.example` at the root of the repository lists and explains every e
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
 - `pnpm --filter install_script_tests test` runs the Vitest tests of the package `packages/dev_tools/install_script_tests`: the script `scripts/install.sh`, run with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, in a temporary folder in place of `/Applications`. It checks the copy, the eject, the deletion of the temporary folder, and the message of each stop. The test files sit in the folder `tests`.
-- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it. The test files sit in the folder `tests`.
+- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it, and the skill `issue_fix_workflow` (it names no detail of this repository, it names every value, it has the four parts, its link in the folder `.claude/skills` works, and the section "Issue Fix Workflow values" of this file gives every value). The test files sit in the folder `tests`.
 - `pnpm --filter data_layer_boundary_checker test` runs the Vitest tests of the package `packages/dev_tools/data_layer_boundary_checker`: the check that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers` (the Rust files of the folders `past_chats` and `statistics` of the desktop application, the files outside these folders that name a package of the data layer, the manifest `Cargo.toml`, and the web page files of the two parts), run on the real repository, and the bypass tests that add each kind of forbidden code to a copy of the files and prove that the check fails. The test files sit in the folder `tests`.
 - `pnpm --filter multi_layer_graph test` runs the Vitest tests of the package `packages/experiments/multi_layer_graph`: the reading of a temporary SQLite file with the tables of the data layer packages, the finding of `#N` and `Fixes #N` in a text, the building of the multi-layer graph, the command line, and the degree, the neighbors, the search, and the markup of the panels of the page. The test files sit in the folder `tests`.
 - `pnpm --filter parallax_dino_runner test` runs the Vitest tests of the package `packages/experiments/parallax_dino_runner`: the lane change and the jump of the dinosaur, the touch between the dinosaur and the things, the shots and the size change of the rocks, the ammunition and the crates, the size and the lane of the thing of each commit, the generator of the commits and the crates, the end of a run at the newest commit, the file `commits.json` and the fake commits, the script that reads the Git history of a real Git repository in a temporary folder and gives the lanes, the static build with relative addresses and no network address, the speed and the score, the parallax layers, the random numbers with a seed, the world of the game with its commands and its runs, and the shape of the pixel pictures. The test files sit in the folder `tests`.

@@ -4,7 +4,7 @@
 - Last updated: 18 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../AGENTS.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 617](https://github.com/heidrun-org/heidrun/issues/617), [issue 618](https://github.com/heidrun-org/heidrun/issues/618)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 617](https://github.com/heidrun-org/heidrun/issues/617), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 656](https://github.com/heidrun-org/heidrun/issues/656)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -13,5 +13,4 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [data_layer_operation_log.md](data_layer_operation_log.md): the rule that every public function of a data layer package and of `heidrun_data` is recorded in the operation log, what the log never does, the measure, and the replay.
 - [github_and_gitlab_support.md](github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, and the matching `gh` and `glab` commands.
 - [data_layer_access.md](data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the data layer, the table of the commands, the exceptions, the check, and the audit of the bypasses.
-- [issue_fix_implementation.md](issue_fix_implementation.md): the rules of the part Issue Fix Implementation: the two kinds of added request, the comment on the issue, the new issue, and the description of the pull request.
 - [user_interface/](user_interface/index.md): the rules of the user interface, split by topic.

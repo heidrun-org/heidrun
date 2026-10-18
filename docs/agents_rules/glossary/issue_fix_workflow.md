@@ -1,11 +1,11 @@
 # Glossary of Heidrun: the Issue Fix Workflow
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](index.md), [Rule: the Issue Fix Implementation and the added requests](../issue_fix_implementation.md)
-- Related issue: [issue 610](https://github.com/heidrun-org/heidrun/issues/610)
+- Related rules: [Glossary of Heidrun](index.md), [Skill: the Issue Fix Workflow](../../../.agents/skills/issue_fix_workflow/SKILL.md)
+- Related issue: [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 656](https://github.com/heidrun-org/heidrun/issues/656)
 
 This document gives one short definition for each word of the Issue Fix Workflow. The other words of Heidrun are in [index.md](index.md).
 
@@ -13,7 +13,7 @@ This document gives one short definition for each word of the Issue Fix Workflow
 
 ### Issue Fix Workflow
 
-The way that every issue fix is made in this repository, in the section "Issue Fix Workflow" of `AGENTS.md`. It has four parts: the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, and the Issue Fix Completion.
+The way that every issue fix is made in this repository, in the skill `issue_fix_workflow`, with the values of this repository in the section "Issue Fix Workflow values" of `AGENTS.md`. It has four parts: the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, and the Issue Fix Completion.
 
 ### Issue Fix Setup
 
