@@ -75,5 +75,12 @@
   "mobileAccess.off": "Heidrun n’ouvre aucun tunnel, et aucun téléphone ne peut se connecter. Le tunnel se ferme aussi quand tu quittes Heidrun.",
   "mobileTyping.what": "Le téléphone montre toujours les terminaux, en lecture seule. Cette option permet de taper dans un terminal depuis le téléphone.",
   "mobileTyping.on": "Le téléphone te demande encore la permission avant de te laisser taper, à chaque ouverture d’un terminal. Chaque commande que tu tapes passe par les garde-fous.",
-  "mobileTyping.off": "Le téléphone ne peut pas taper dans un terminal."
+  "mobileTyping.off": "Le téléphone ne peut pas taper dans un terminal.",
+  "voiceInput.what": "La saisie vocale vous permet de maintenir un bouton, de parler, puis de relâcher le bouton. Un clic court sur le bouton marche aussi : il commence à écouter, et un deuxième clic arrête. Heidrun transforme votre parole en texte avec un modèle Whisper, sur cet ordinateur, et écrit le texte dans la barre de composition. Vous relisez le texte, vous le modifiez, puis vous l’envoyez.",
+  "voiceInput.on": "Heidrun affiche le bouton « appuyer pour parler » dans la barre de composition, entre le champ de texte et le bouton Envoyer. Ouvrez la barre de composition avec le bouton de l’en-tête du volet sélectionné. Le microphone ne s’ouvre que tant que vous maintenez le bouton, ou entre deux clics. Des barres de niveau montrent votre voix pendant l’écoute. macOS demande l’autorisation la première fois. Le son reste dans la mémoire de cet ordinateur : Heidrun ne l’enregistre jamais et ne l’envoie jamais.",
+  "voiceInput.off": "Heidrun n’affiche aucun bouton « appuyer pour parler », ne télécharge aucun modèle et n’ouvre jamais le microphone.",
+  "voiceInputLanguage.what": "La langue que vous parlez.",
+  "voiceInputLanguage.how": "« Détecter la langue » laisse Whisper trouver la langue de chaque enregistrement. Une langue fixe est plus rapide et plus exacte. Un modèle dont le nom finit par .en comprend seulement l’anglais, et ignore ce choix.",
+  "voiceInputModel.what": "Le modèle Whisper est le fichier qui transforme la parole en texte. Un modèle plus grand est plus exact et plus lent, et son fichier est plus gros.",
+  "voiceInputModel.how": "Heidrun télécharge le fichier depuis Hugging Face quand vous choisissez un modèle qui n’est pas sur cet ordinateur, et l’écrit dans le dossier models du dossier de Heidrun. Seul ce téléchargement utilise le réseau : la parole ne quitte jamais cet ordinateur."
 }

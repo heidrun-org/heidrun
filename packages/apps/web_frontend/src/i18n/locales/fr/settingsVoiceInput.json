@@ -1,0 +1,17 @@
+{
+  "enableLabel": "Activer la saisie vocale",
+  "languageTitle": "Langue de la parole",
+  "languageAutomatic": "Détecter la langue",
+  "modelTitle": "Modèle Whisper",
+  "model": "{name} ({size})",
+  "modelEnglishOnly": "{name} ({size}, anglais seulement)",
+  "sizeMegabytes": "{value} Mo",
+  "sizeGigabytes": "{value} Go",
+  "modelDownloaded": "Le modèle est sur cet ordinateur.",
+  "modelMissing": "Le modèle n’est pas sur cet ordinateur.",
+  "download": "Télécharger le modèle",
+  "downloading": "Téléchargement du modèle… {percent} %",
+  "downloadingLabel": "Téléchargement du modèle",
+  "downloadFailed": "Le téléchargement a échoué. Vérifiez le réseau.",
+  "tryAgain": "Réessayer"
+}

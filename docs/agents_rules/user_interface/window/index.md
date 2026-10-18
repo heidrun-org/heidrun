@@ -1,11 +1,11 @@
 # Window rules index
 
 - Created: 13 October 2026
-- Last updated: 17 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -28,6 +28,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [settings_guards.md](settings_guards.md): the Guards section of the Settings window, the guard window, and the button "Change this guard" of the confirmation window.
 - [settings_information_cards.md](settings_information_cards.md): the rule that every option of the Settings window has a circled question mark and an information card, the layout of the card, the component `SettingsOptionHelp.vue`, the rows of a list, and the tests.
 - [find_new_skills_window.md](find_new_skills_window.md): the window "Find new skills": its four lines, the three sources (skills.sh, Local folder, Code hosting), the information cards, and the rows of the result.
+- [settings_voice_input.md](settings_voice_input.md): the Voice input section of the Settings window, the download of a Whisper model, the push-to-talk button, the microphone permission, and the tests.
 - [status_bar.md](status_bar.md): the status bar and the menu of the status item.
 - [status_bar_git.md](status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
 - [window_state_and_start.md](window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, the notice of the missing programs Herdr and ngrok, and the goat sounds.

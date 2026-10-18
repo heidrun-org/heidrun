@@ -36,6 +36,8 @@ heidrun_data = { path = "../../data_layers/heidrun_data" }
 data_layer_operation_log = { path = "../../data_layers/data_layer_operation_log" }
 # The format of the macro files, which the command line heidrun_ctrl changes too: the hard-coded macros and the personal macros
 heidrun_ctrl = { path = "../../auxiliary/heidrun_ctrl" }
+# The voice input: it records the microphone, downloads a Whisper model, and changes the speech into text on the computer
+voice_input = { path = "../../auxiliary/voice_input" }
 portable-pty = "0.9"
 base64 = "0.22"
 dirs = "6"
@@ -65,4 +67,14 @@ opt-level = 3
 opt-level = 3
 
 [profile.dev.package.serde_json]
+opt-level = 3
+
+# The C++ engine of Whisper runs at full speed in a development build too: a debug build of it is about 30 times slower
+[profile.dev.package.whisper-rs-sys]
+opt-level = 3
+
+[profile.dev.package.whisper-rs]
+opt-level = 3
+
+[profile.dev.package.voice_input]
 opt-level = 3

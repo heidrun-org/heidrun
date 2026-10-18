@@ -11,5 +11,6 @@
   "notifications": "Notifications",
   "sidebars": "Sidebars",
   "dynamicTopics": "Dynamic topics",
-  "mobileAccess": "Mobile access"
+  "mobileAccess": "Mobile access",
+  "voiceInput": "Voice input"
 }

@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -63,7 +63,7 @@ The small circle in the header of a pane that shows how much of the context wind
 
 ### Composition bar
 
-The area under the terminal of the focused pane that opens after the developer drops image files on the window. It holds a plus button that adds images, one small picture for each image, a text input, and the buttons "Close" and "Send". The button "Send" pastes the images in the focused pane, then writes the text. It is closed the rest of the time.
+The area under the terminal of the focused pane that opens after the developer drops image files on the window, or clicks the toggle button of the header of the pane. It holds a plus button that adds images, one small picture for each image, a text input, a push-to-talk button when the voice input is on ([voice_input.md](voice_input.md)), and a button "Send". The button "Send" pastes the images in the focused pane, then writes the text. It is closed the rest of the time.
 
 ### Big view
 

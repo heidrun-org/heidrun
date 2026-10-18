@@ -2,6 +2,8 @@
   "renameLabel": "New pane name (empty to go back to the automatic name)",
   "nameTitle": "{name} · Double-click to rename",
   "goToTab": "Go to its tab",
+  "compositionBar": "Composition bar",
+  "compositionBarTitle": "Show or hide the composition bar. Hiding it removes every image and the text. Escape hides it too.",
   "mosaicTitle": "Mosaic: what each agent of this session does (main, subagents)",
   "mosaic": "Mosaic of the session agents",
   "unpin": "Unpin the pane",

@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "./Icon.vue";
+import PushToTalkButton from "./PushToTalkButton.vue";
+import VoiceLevel from "./VoiceLevel.vue";
 import { ImageDrop, PASTE_DELAY_MS } from "../lib/image_drop";
+import { VoiceInput } from "../lib/voice_input";
 import { compositionBar } from "../stores/composition_bar";
 import { insertText, toast } from "../stores/session";
-import { t } from "../i18n/index";
+import { settings } from "../stores/settings";
+import { voiceInput } from "../stores/voice_input";
+import { hasText, t } from "../i18n/index";
 
 // The composition bar under the focused pane: the images and the text wait here until the developer sends them to the pane.
 // Issue: https://github.com/heidrun-org/heidrun/issues/637
@@ -24,6 +29,54 @@ function focusTextInput() {
   void nextTick(() => textInput.value?.focus());
 }
 onMounted(focusTextInput);
+onBeforeUnmount(() => {
+  voiceInput.error = null;
+  if (elapsedTimerId !== null) {
+    clearInterval(elapsedTimerId);
+    elapsedTimerId = null;
+  }
+});
+
+/** The text of the last error of the voice input: a text for its category, else the general text. */
+function voiceErrorText(category: string): string {
+  const key = `voiceInput.error.${category}`;
+  return hasText(key) ? t(key) : t("voiceInput.error.other");
+}
+
+/** The seconds since the recording started. */
+const elapsedSeconds = ref(0);
+let elapsedTimerId: ReturnType<typeof setInterval> | null = null;
+function updateElapsedSeconds() {
+  elapsedSeconds.value = Math.max(0, Math.floor((Date.now() - voiceInput.startedAt) / 1000));
+}
+/** The elapsed time as minutes and seconds, for example 0:07. */
+const elapsedText = computed(() => `${Math.floor(elapsedSeconds.value / 60)}:${String(elapsedSeconds.value % 60).padStart(2, "0")}`);
+
+/** The microphone is open: the level bars show the voice. */
+const isListening = computed(
+  () => settings.voiceInput && (voiceInput.state === "starting" || voiceInput.state === "recording"),
+);
+/** The text of the text input while it is empty: it tells what the voice input does now, else it asks for the text. */
+const textPlaceholder = computed(() => {
+  if (settings.voiceInput && voiceInput.state === "transcribing") {
+    return t("voiceInput.titleTranscribing");
+  }
+  return isListening.value ? t("voiceInput.listening") : t("compositionBar.textPlaceholder");
+});
+watch(
+  isListening,
+  (listening) => {
+    if (elapsedTimerId !== null) {
+      clearInterval(elapsedTimerId);
+      elapsedTimerId = null;
+    }
+    if (listening) {
+      updateElapsedSeconds();
+      elapsedTimerId = setInterval(updateElapsedSeconds, 250);
+    }
+  },
+  { immediate: true },
+);
 watch(
   () => compositionBar.paths.length,
   (length, previousLength) => {
@@ -61,6 +114,10 @@ function resizeTextInput() {
   if (element === null) {
     return;
   }
+  if (compositionBar.text === "") {
+    element.style.height = "";
+    return;
+  }
   element.style.height = "auto";
   element.style.height = `${Math.min(element.scrollHeight, TEXT_MAX_HEIGHT_PX)}px`;
 }
@@ -82,6 +139,11 @@ async function send() {
     return;
   }
   isSending.value = true;
+  const isSettled = await VoiceInput.settle();
+  if (isSettled === false || compositionBar.isOpen === false) {
+    isSending.value = false;
+    return;
+  }
   const paths = compositionBar.paths.slice();
   const text = compositionBar.text.trim();
   const { pastedCount, result } = await ImageDrop.pasteInto(props.paneId, paths);
@@ -111,11 +173,8 @@ async function send() {
 </script>
 
 <template>
-  <div class="composition-bar d-flex flex-column gap-2" role="region" :aria-label="t('compositionBar.label')" @keydown.esc="ImageDrop.close()">
-    <div class="thumbs d-flex flex-wrap align-items-center gap-2">
-      <button class="btn add" :aria-label="t('compositionBar.add')" :title="t('compositionBar.addTitle')" @click="addImages">
-        <Icon name="plus-lg" />
-      </button>
+  <div class="composition-bar d-flex flex-column gap-3" role="region" :aria-label="t('compositionBar.label')" @keydown.esc="ImageDrop.close()">
+    <div v-if="compositionBar.paths.length > 0" class="thumbs d-flex flex-wrap align-items-center gap-2">
       <figure v-for="path in compositionBar.paths" :key="path" class="thumb" :title="path">
         <button class="open" :aria-label="t('compositionBar.open', { name: fileName(path) })" @click="ImageDrop.openViewer(path)">
           <img v-if="compositionBar.thumbnails[path]" :src="compositionBar.thumbnails[path]" :alt="t('compositionBar.thumbnailAlt', { name: fileName(path) })" />
@@ -126,38 +185,49 @@ async function send() {
         </button>
       </figure>
     </div>
-    <textarea
-      ref="textInput"
-      v-model="compositionBar.text"
-      class="form-control text"
-      rows="1"
-      :aria-label="t('compositionBar.textLabel')"
-      :placeholder="t('compositionBar.textPlaceholder')"
-      @keydown="onTextKeydown"
-    ></textarea>
-    <div class="d-flex align-items-center gap-2">
-      <span class="count">{{ t("compositionBar.count", { count: compositionBar.paths.length }) }}</span>
-      <span class="spacer"></span>
-      <button class="btn" :title="t('compositionBar.closeTitle')" @click="ImageDrop.close()">{{ t("compositionBar.close") }} <kbd>Esc</kbd></button>
-      <button class="btn send" :title="t('compositionBar.sendTitle')" :disabled="isSending" @click="send">
-        {{ t("compositionBar.send") }} <kbd>↵</kbd>
+    <div class="controls d-flex align-items-end gap-1">
+      <button class="btn icon-button border-0" :aria-label="t('compositionBar.add')" :title="t('compositionBar.addTitle')" @click="addImages">
+        <Icon name="plus-lg" />
+      </button>
+      <div class="field position-relative flex-fill" :class="{ 'is-listening': isListening }">
+        <textarea
+          ref="textInput"
+          v-model="compositionBar.text"
+          class="form-control text"
+          rows="1"
+          :aria-label="t('compositionBar.textLabel')"
+          :placeholder="textPlaceholder"
+          @keydown="onTextKeydown"
+        ></textarea>
+        <div v-if="isListening" class="listening position-absolute end-0 bottom-0 d-flex align-items-center justify-content-end gap-2 pe-2">
+          <VoiceLevel :levels="voiceInput.levels" />
+          <span class="elapsed">{{ elapsedText }}</span>
+        </div>
+      </div>
+      <PushToTalkButton v-if="settings.voiceInput" />
+      <button class="btn icon-button border-0 send" :aria-label="t('compositionBar.send')" :title="t('compositionBar.sendTitle')" :disabled="isSending" @click="send">
+        <Icon name="send" />
       </button>
     </div>
+    <div v-if="settings.voiceInput && voiceInput.error !== null" class="form-text text-danger m-0" role="alert">{{ voiceErrorText(voiceInput.error) }}</div>
   </div>
 </template>
 
 <style scoped>
-.composition-bar { flex: none; padding: 8px 12px; border-top: 1px solid var(--line); background: var(--raised); }
-.spacer { flex: 1; }
-.count { color: var(--muted); font-size: calc(var(--font-size) * 0.85); }
+.composition-bar { flex: none; padding: 14px 16px; border-top: 1px solid var(--line); background: var(--raised); }
 .thumb {
-  position: relative; display: flex; align-items: center; justify-content: center; width: 96px; height: 64px; margin: 0;
+  position: relative; display: flex; align-items: center; justify-content: center; width: 144px; height: 96px; margin: 0; font-size: calc(var(--font-size) * 2.4);
   border: 1px solid var(--line-modal); border-radius: 6px; background: var(--field); color: var(--muted); overflow: hidden;
 }
 .open { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; color: inherit; cursor: zoom-in; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
-.remove { position: absolute; top: 2px; right: 2px; height: 20px; padding: 0 4px; background: var(--raised); }
-.add { width: 64px; height: 64px; justify-content: center; background: var(--field); font-size: calc(var(--font-size) * 1.5); }
-.text { resize: none; max-height: 160px; overflow-y: auto; }
-.send { background: var(--field); }
+.remove { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; padding: 0; justify-content: center; font-size: calc(var(--font-size) * 1.1); background: var(--raised); }
+.field { min-width: 0; --listening-width: min(40%, 340px); }
+.text { --control-min-height: 46px; --control-padding-y: 7px; --control-font-size: calc(var(--font-size) * 1.2); resize: none; max-height: 160px; overflow-y: auto; }
+.field.is-listening .text { padding-right: calc(var(--listening-width) + 8px); }
+.controls { margin-inline: -8px; }
+.icon-button, .push-to-talk { flex: none; width: calc(23px + var(--font-size) * 0.65); height: 46px; padding: 0; justify-content: center; font-size: calc(var(--font-size) * 1.3); }
+.icon-button:hover, .push-to-talk:hover { --btn-hover-bg: rgba(var(--wash), 0.14); }
+.listening { width: var(--listening-width); height: 46px; pointer-events: none; color: var(--muted); }
+.elapsed { font-size: calc(var(--font-size) * 1.05); font-variant-numeric: tabular-nums; }
 </style>
