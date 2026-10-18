@@ -30,7 +30,15 @@ pub fn apply() {
         eprintln!("Heidrun: the PATH of the login shell {shell} cannot be read, so the usual folders are added.");
     }
     let current_path = std::env::var_os("PATH").unwrap_or_default();
-    std::env::set_var("PATH", merge(&current_path, login_shell_path.as_deref()));
+    let mut path = merge(&current_path, login_shell_path.as_deref());
+    if let Some(user_bin_folder) = crate::skills::bundled::user_bin_folder() {
+        let mut folders: Vec<PathBuf> = std::env::split_paths(&path).collect();
+        if folders.contains(&user_bin_folder) == false {
+            folders.push(user_bin_folder);
+            path = std::env::join_paths(folders).unwrap_or(path);
+        }
+    }
+    std::env::set_var("PATH", path);
 }
 
 /// Reads the `PATH` of the login shell `shell`. `None` when the shell does not start, fails, gives no `PATH`, or takes

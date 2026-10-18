@@ -23,6 +23,11 @@ describe('scripts/install.sh', () => {
 			const appPath = Path.join(runner.applicationsFolder, 'Heidrun.app');
 			expect(result.stdout).toContain(`Heidrun 1.2.3 is installed in ${appPath}.`);
 			expect(Fs.existsSync(Path.join(appPath, 'Contents', 'Info.plist'))).toBe(true);
+			for (const commandName of ['heidrun_ctrl', 'heidrun_data']) {
+				const commandLink = Path.join(runner.homeFolder, '.local', 'bin', commandName);
+				const commandPath = Path.join(appPath, 'Contents', 'Resources', 'binaries', commandName);
+				expect(Fs.readlinkSync(commandLink)).toBe(commandPath);
+			}
 		});
 
 		it('downloads the disk image of the latest release with curl -fL', () => {

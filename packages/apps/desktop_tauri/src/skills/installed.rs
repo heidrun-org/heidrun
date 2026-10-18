@@ -128,7 +128,7 @@ mod tests {
         assert_eq!(names, ["pdf", "release-notes"]);
         assert_eq!(skills[0].origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: None, folder_path: None }));
         assert_eq!(skills[0].description, "Read PDF files.");
-        assert_eq!(skills[0].agents, ["codex"]);
+        assert_eq!(skills[0].agents, ["codex", "antigravity"]);
         assert_eq!(skills[1].origin, None);
         assert_eq!(skills[1].level, "workspace");
         let _ = std::fs::remove_dir_all(&workspace);
@@ -144,7 +144,13 @@ mod tests {
         write_skill_folder(&claude_folder, "only-claude", "# Only Claude");
         let skills = list_level("workspace", cwd_of(&workspace).as_deref());
         let found: Vec<_> = skills.iter().map(|s| (s.name.as_str(), s.agents.clone())).collect();
-        assert_eq!(found, [("only-claude", vec!["claude".to_string()]), ("pdf", vec!["claude".to_string(), "codex".to_string()])]);
+        assert_eq!(
+            found,
+            [
+                ("only-claude", vec!["claude".to_string()]),
+                ("pdf", vec!["claude".to_string(), "codex".to_string(), "antigravity".to_string()]),
+            ]
+        );
         let pdf = skills.iter().find(|s| s.name == "pdf").unwrap();
         assert_eq!(pdf.path, real.display().to_string());
         let _ = std::fs::remove_dir_all(&workspace);

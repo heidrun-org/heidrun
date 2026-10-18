@@ -1,13 +1,14 @@
 # Directory Context: `/packages/apps/desktop_tauri/src/skills`
 
 ## Purpose
-The backend of the windows Installed skill and Find new skills: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. The file `mod.rs` describes the folders of each agent and the cache.
+The backend of the windows Installed skill and Find new skills: it finds, reads, installs, links, and deletes the skills (the folders with a `SKILL.md` file) that the coding agents read. It also installs the two skills shipped with Heidrun on the first launch of each version. The file `mod.rs` describes the folders of each agent and the cache.
 
 ## Key Exports & Entry Points
 - `installed.rs`: the commands `skills_list`, `skills_read`, and `skills_delete`.
 - `install.rs`: the commands `skills_preview` and `skills_install` (a skill of skills.sh), `skills_preview_folder` and `skills_install_folder` (the web address of a skill folder in a public GitHub or GitLab repository), and `skills_preview_local_folder` and `skills_install_local_folder` (a folder on this computer).
 - `search.rs`: the command `skills_search`, the search on skills.sh.
 - `agent_folders.rs`: the command `skills_link_agent`, and the skills folders and the links of each coding agent.
+- `bundled.rs`: installs the bundled skills and links the bundled command lines in `~/.local/bin`.
 - `github.rs`: the lookup of a skill in a GitHub repository, and of the files below a skill folder, with the rate limit of GitHub.
 - `gitlab.rs`: the same for a public GitLab project, with the REST API of `gitlab.com` and its paginated tree.
 - `local_folder.rs`: reads and copies a skill folder of this computer, and skips links, the folder `.git`, and files that are too large.
@@ -24,7 +25,7 @@ The backend of the windows Installed skill and Find new skills: it finds, reads,
 - A command name and an error code never change without a matching change in `stores/skills.ts` and in `skillsStore.json` of the frontend.
 - Each file keeps its own tests at its end. Helpers shared by several test modules go in `test_support.rs`.
 - Heidrun never replaces a real folder with a link.
-- The three installations (skills.sh, a web address, a local folder) share `plan_install`, `prepare_staging`, and `finish_install`, so they give the same folders, links, and origin file. Only the origin of a web address has `folder_url`, and only the origin of a local folder has `folder_path` and an empty `source`.
+- The four installations (skills.sh, a web address, a local folder, and a bundled Heidrun skill) share `plan_install`, `prepare_staging`, and `finish_install`, so they give the same folders, links, and origin file. Only the origin of a web address has `folder_url`, and only the origin of a local folder has `folder_path` and an empty `source`.
 - A local folder is copied, never linked, and nothing is sent over the network.
 - A GitLab test uses the fake server of `test_support.rs`, so no test needs the network.
 - The web address does not say where the branch ends, because a branch name can hold slashes: `list_folder_files` (GitHub) and `list_gitlab_folder_files` try the shortest branch first, and the text of `SKILL.md` is read with the whole address.

@@ -1,11 +1,11 @@
 # Glossary of Heidrun: coding agent configuration
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [Glossary of Heidrun: chats](chats.md)
-- Related issue: [issue 569](https://github.com/heidrun-org/heidrun/issues/569)
+- Related issue: [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 605](https://github.com/heidrun-org/heidrun/issues/605)
 
 This document gives one short definition for each word of the configuration of the coding agent, which the package `data_layer_coding_agents` reads. The other words of Heidrun are in [index.md](index.md).
 
@@ -25,7 +25,7 @@ One file of a folder `.claude/agents`, in the repository or in the folder of Cla
 
 ### Skill
 
-One folder with a file `SKILL.md`, which teaches a coding agent one task. A skill is in a folder `skills`: `.claude/skills` for Claude Code, `~/.codex/skills` for Codex, or `.agents/skills`, which several coding agents read. A skill of the repository has the scope `PROJECT`, and a skill of the home folder of the developer has the scope `USER`.
+One folder with a file `SKILL.md`, which teaches a coding agent one task. A skill is in a folder `skills`: `.claude/skills` for Claude Code, `.agents/skills` for Codex and workspace skills, or `~/.gemini/antigravity-cli/skills` for Antigravity CLI user skills. A skill of the repository has the scope `PROJECT`, and a skill of the home folder of the developer has the scope `USER`.
 
 ### Removed configuration item
 

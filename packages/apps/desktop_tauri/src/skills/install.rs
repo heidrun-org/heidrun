@@ -102,6 +102,21 @@ pub fn skills_install_local_folder(level: String, cwd: Option<String>, path: Str
     finish_install(&plan, origin, written)
 }
 
+/// Installs one skill that is included with Heidrun for every coding agent at the user level.
+pub(super) fn install_bundled_skill(source: &Path, skill_id: &str) -> Result<InstalledSkill, String> {
+    let agents = AGENTS.iter().map(|agent| agent.to_string()).collect();
+    let plan = plan_install("user".into(), None, skill_id, agents)?;
+    prepare_staging(&plan)?;
+    let written = copy_local_folder(source, &plan.staging, MAX_FILES, MAX_FILE_BYTES as u64);
+    let origin = SkillOrigin {
+        source: "heidrun-org/heidrun".into(),
+        skill_id: skill_id.into(),
+        folder_url: None,
+        folder_path: None,
+    };
+    finish_install(&plan, origin, written)
+}
+
 /// The text of the `SKILL.md` file of the skill folder of an address, on GitHub or on GitLab.
 async fn folder_text(client: &reqwest::Client, address: &FolderAddress) -> Result<String, String> {
     match address.host {
@@ -355,7 +370,7 @@ mod tests {
         let workspace = temp_folder("local-install-workspace");
         let installed = skills_install_local_folder("workspace".into(), cwd_of(&workspace), folder.display().to_string(), vec!["claude".into(), "codex".into()]).unwrap();
         assert_eq!(installed.name, "pdf");
-        assert_eq!(installed.agents, ["claude", "codex"]);
+        assert_eq!(installed.agents, ["claude", "codex", "antigravity"]);
         assert_eq!(
             installed.origin,
             Some(SkillOrigin { source: String::new(), skill_id: "pdf".into(), folder_url: None, folder_path: Some(folder.display().to_string()) })
@@ -413,7 +428,7 @@ mod tests {
         let installed = skills_install_folder("workspace".into(), cwd_of(&workspace), address.into(), vec!["claude".into(), "codex".into()]).await.unwrap();
         assert_eq!(installed.name, "pdf");
         assert_eq!(installed.origin, Some(SkillOrigin { source: "anthropics/skills".into(), skill_id: "pdf".into(), folder_url: Some(address.into()), folder_path: None }));
-        assert_eq!(installed.agents, ["claude", "codex"]);
+        assert_eq!(installed.agents, ["claude", "codex", "antigravity"]);
         let folder = workspace.join(".agents/skills/pdf");
         assert!(folder.join("SKILL.md").exists());
         assert!(folder.join("scripts").is_dir(), "the files below the folder are downloaded");
@@ -490,7 +505,7 @@ mod tests {
         assert!(link.join("SKILL.md").exists());
         let listed = skills_list(Some(cwd.clone()));
         let pdf = listed.iter().find(|s| s.name == "pdf" && s.level == "workspace").expect("pdf is listed");
-        assert_eq!(pdf.agents, ["claude", "codex"]);
+        assert_eq!(pdf.agents, ["claude", "codex", "antigravity"]);
         let again = skills_install("workspace".into(), Some(cwd), "anthropics/skills".into(), "pdf".into(), vec!["claude".into()]).await;
         assert!(again.unwrap_err().starts_with("skills_already_installed"));
         let _ = std::fs::remove_dir_all(&workspace);

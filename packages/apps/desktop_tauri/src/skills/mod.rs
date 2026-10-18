@@ -7,6 +7,7 @@
 //! |-------------|-------------------|--------------------------------------------------|
 //! | Claude Code | `.claude/skills/` | `skills/` of the Claude configuration folder     |
 //! | Codex       | `.agents/skills/` | `~/.agents/skills/`                              |
+//! | Antigravity | `.agents/skills/` | `~/.gemini/antigravity-cli/skills/`               |
 //!
 //! The real files of an installed skill are in the folder of Codex. For every other agent that the user switched on,
 //! Heidrun adds a link (a symbolic link) in the folder of that agent, so the files cannot become different from each
@@ -19,6 +20,7 @@
 
 
 pub(crate) mod agent_folders;
+pub(crate) mod bundled;
 mod cache;
 mod folder_address;
 mod github;
