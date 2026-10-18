@@ -10,6 +10,7 @@ mod git;
 mod git_source_control;
 mod history;
 mod legacy;
+mod login_shell_path;
 mod herdr;
 mod macros;
 mod mobile;
@@ -249,6 +250,7 @@ fn quit_now(app: AppHandle) {
 pub fn run() {
     let context = tauri::generate_context!();
     application_profile::initialize(&context.config().identifier);
+    login_shell_path::apply();
     request_log::set_default_caller("heidrun");
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
