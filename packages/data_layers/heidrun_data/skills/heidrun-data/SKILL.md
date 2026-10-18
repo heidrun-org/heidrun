@@ -1,9 +1,11 @@
 ---
-name: heidrun_data
+name: heidrun-data
 description: Answer a question about the history of a repository from the data layers of Heidrun, its past chats with Claude Code and Codex, the memory files, subagents, and skills of the coding agent, its commits, its issues, its pull requests, and the activity of the developer, with the command line heidrun_data. Use it for a post-mortem of a commit, of an issue, or of a pull request, to find what the developer typed or ran many times, or to find what failed many times in the past chats.
 ---
 
 # heidrun_data
+
+This skill uses the `heidrun_data` command line. Installing the skill does not install that command. To get the command, install the Heidrun application, which places `heidrun_data` in `~/.local/bin` when it starts, or run the command through the Heidrun repository's `pnpm --silent data_layer:heidrun_data` script.
 
 `heidrun_data` is one command line that reads the four data layers of Heidrun. The four data layers write the facts of four sources in one SQLite file, `data_layer.sqlite` in `HEIDRUN_DIR`, or `~/.config/heidrun/data_layer.sqlite` when the variable is unset or empty:
 
@@ -268,8 +270,8 @@ Dates are text, so `date('now', '-10 day')` can replace the fixed date. Then `he
 
 The folder `references` holds the documents that this skill rests on. Read a document only when the question needs it.
 
-- [references/repeated_pattern.md](references/repeated_pattern.md): how to find the patterns that the developer repeats in the chat sessions. Why the tables cannot give them and the chat session files can, the method in three steps (extract, normalize and group, propose), the counts found on the repository of Heidrun on 16 October 2026, and the limits of the method.
-- [references/token_usage_and_cost.md](references/token_usage_and_cost.md): the tables of the tokens and of the prices, the rules of the minute, of the workspace, and of the days of a time zone, examples for a real repository, and the measured timings.
+- [references/repeated_pattern.md](references/repeated_pattern.md): how to find repeated patterns in chat sessions, the method, examples, and limits.
+- [references/token_usage_and_cost.md](references/token_usage_and_cost.md): the token and price tables, rules for time and workspace calculations, examples, and measurements.
 
 ## Rules
 
