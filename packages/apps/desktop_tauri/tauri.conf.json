@@ -35,7 +35,7 @@
       "target/release/bundled_commands/heidrun_ctrl": "binaries/heidrun_ctrl",
       "target/release/bundled_commands/heidrun_data": "binaries/heidrun_data",
       "../../auxiliary/heidrun_ctrl/skills/heidrun-ctrl/": "bundled_skills/heidrun-ctrl/",
-      "../../data_layers/heidrun_data/skills/heidrun_data/": "bundled_skills/heidrun_data/"
+      "../../data_layers/heidrun_data/skills/heidrun-data/": "bundled_skills/heidrun-data/"
     },
     "category": "DeveloperTool",
     "icon": [

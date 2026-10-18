@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
 const COMMANDS: [&str; 2] = ["heidrun_ctrl", "heidrun_data"];
-const SKILLS: [&str; 2] = ["heidrun-ctrl", "heidrun_data"];
+const SKILLS: [&str; 2] = ["heidrun-ctrl", "heidrun-data"];
 
 /// Makes the included command lines available to the coding agents and installs the included skills once per version.
 pub(crate) fn install(app: &AppHandle) {
@@ -82,4 +82,45 @@ fn install_skills(resource_folder: &Path) -> Result<(), String> {
 /// Returns the user bin folder for adding it to the path of programs started by Heidrun.
 pub(crate) fn user_bin_folder() -> Option<PathBuf> {
     dirs::home_dir().map(|home_folder| home_folder.join(".local/bin"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::Value;
+
+    const DESTINATION_PREFIX: &str = "bundled_skills/";
+
+    /// The resource list of `tauri.conf.json`, kept only for the skills: the source folder and the destination name.
+    fn skill_resources() -> Vec<(String, String)> {
+        let config: Value = serde_json::from_str(include_str!("../../tauri.conf.json")).unwrap();
+        let resources = config["bundle"]["resources"].as_object().unwrap();
+        resources
+            .iter()
+            .filter_map(|(source, destination)| {
+                let destination = destination.as_str().unwrap();
+                let name = destination.strip_prefix(DESTINATION_PREFIX)?;
+                Some((source.clone(), name.trim_end_matches('/').to_string()))
+            })
+            .collect()
+    }
+
+    #[test]
+    fn every_skill_folder_of_the_resource_list_exists_and_has_a_skill_file() {
+        let resources = skill_resources();
+        assert_eq!(resources.len(), SKILLS.len());
+        for (source, _) in resources {
+            let skill_file = Path::new(env!("CARGO_MANIFEST_DIR")).join(&source).join("SKILL.md");
+            assert!(skill_file.is_file(), "the resource {source} has no SKILL.md: {}", skill_file.display());
+        }
+    }
+
+    #[test]
+    fn the_destination_names_of_the_resource_list_are_the_names_of_the_skills_that_are_installed() {
+        let mut destinations: Vec<String> = skill_resources().into_iter().map(|(_, name)| name).collect();
+        destinations.sort();
+        let mut names: Vec<String> = SKILLS.iter().map(|name| name.to_string()).collect();
+        names.sort();
+        assert_eq!(destinations, names);
+    }
 }
