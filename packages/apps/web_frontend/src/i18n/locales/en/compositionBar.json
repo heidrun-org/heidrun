@@ -1,0 +1,19 @@
+{
+  "label": "Composition bar",
+  "thumbnailAlt": "Preview of {name}",
+  "open": "Open {name} in a big view",
+  "remove": "Remove {name}",
+  "add": "Add images",
+  "addTitle": "Choose image files to add",
+  "textLabel": "Text to send with the images",
+  "textPlaceholder": "Type a question, or press Enter to paste the images",
+  "count_one": "{count} image",
+  "count_other": "{count} images",
+  "close": "Close",
+  "closeTitle": "Remove every image and the text, and close the composition bar",
+  "send": "Send",
+  "sendTitle": "Paste the images in this pane, then write the text and press Enter",
+  "pasteFailed": "The image could not be pasted",
+  "noTerminal": "This pane has no terminal to receive the images",
+  "pickFailed": "The images could not be added"
+}

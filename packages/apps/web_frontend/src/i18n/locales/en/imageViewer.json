@@ -1,0 +1,9 @@
+{
+  "label": "Big view of the images",
+  "previous": "Previous image",
+  "next": "Next image",
+  "close": "Close the big view",
+  "position": "{position} of {total}",
+  "loading": "Loading…",
+  "failed": "This image cannot be shown"
+}

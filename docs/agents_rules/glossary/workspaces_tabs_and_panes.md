@@ -1,11 +1,11 @@
 # Glossary of Heidrun: workspaces, tabs, and panes
 
 - Created: 14 October 2026
-- Last updated: 15 October 2026
+- Last updated: 18 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -61,10 +61,19 @@ The column at the right edge of the viewport. It holds the pinned panes, one abo
 
 The small circle in the header of a pane that shows how much of the context window the coding agent used. The circle fills like a ring, with the colors normal, warning, and critical. It has no word and no number beside it. A click on the usage wheel opens its information card, which gives the percent used, the number of tokens used, and the size of the context window.
 
+### Composition bar
+
+The area under the terminal of the focused pane that opens after the developer drops image files on the window. It holds a plus button that adds images, one small picture for each image, a text input, and the buttons "Close" and "Send". The button "Send" pastes the images in the focused pane, then writes the text. It is closed the rest of the time.
+
+### Big view
+
+The large picture of one image of the composition bar, with a button on each side to go to the previous image and to the next image. A click on a small picture of the composition bar opens it.
+
 ## Rules
 
 - The word "tab" means only a tab of Herdr, as defined above. An icon of a sidebar icon bar is not a tab.
 - The word "pane" means only a terminal inside a tab. A list of tabs is not a list of panes.
 - Write "coding agent" in full. Never write "agent" alone, "AI agent", or "AI coding agent" for Claude Code, Codex, or Antigravity.
 - Write "pinned pane" and "column of pinned panes". Do not write "docked pane", "side view", or "alongside".
+- Write "composition bar". Do not write "composition box", "image zone", "attachment bar", or "drop zone" for the area under the focused pane. Write "big view", not "lightbox" or "full screen view", for the large picture.
 - Write "usage wheel". Do not write "context bar", "gauge", or "ring" for the circle in the header of a pane.
