@@ -27,7 +27,8 @@
     "experiment:parallax_dino_runner:commits": "pnpm --filter parallax_dino_runner commits:build",
     "worktree:create": "tsx packages/dev_tools/worktree_tools/src/worktree_create_cli.ts",
     "docs:generate-and-build": "node --import tsx packages/dev_tools/documentation_by_ai/src/cli.ts generate-and-build",
-    "build:development": "pnpm --filter desktop_tauri tauri build --config tauri.development.conf.json --bundles app"
+    "build:development": "pnpm --filter desktop_tauri tauri build --config tauri.development.conf.json --bundles app",
+    "install:local": "pnpm tauri build --bundles app && sudo ditto \"packages/apps/desktop_tauri/target/release/bundle/macos/Heidrun.app\" \"/Applications/Heidrun.app\""
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
