@@ -2,14 +2,15 @@
 import { computed } from "vue";
 import { quotas } from "../stores/session";
 import { claudeLink, disableClaudeLink, enableClaudeLink, setClaudeLineHidden } from "../stores/claude";
+import { antigravityLink } from "../stores/antigravity";
 import { clockTime, gaugeLevel } from "../lib/format";
 import { t } from "../i18n/index";
 
 // Account limits of the agent's provider, shown next to the agent they constrain.
-const props = defineProps<{ provider: "claude" | "codex" }>();
+const props = defineProps<{ provider: "claude" | "codex" | "antigravity" }>();
 
 const block = computed(() => quotas.value.find((q) => q.provider === props.provider) ?? null);
-const title = computed(() => (props.provider === "claude" ? t("accountUsage.claudeAccount") : t("accountUsage.codexAccount")));
+const title = computed(() => t(`accountUsage.${props.provider}Account`));
 </script>
 
 <template>
@@ -31,6 +32,10 @@ const title = computed(() => (props.provider === "claude" ? t("accountUsage.clau
       </p>
       <button :title="t('accountUsage.enableTitle')" class="btn" :disabled="claudeLink.busy" @click="enableClaudeLink">{{ t("accountUsage.enable") }}</button>
     </template>
+    <template v-else-if="provider === 'antigravity' && antigravityLink.loaded && !antigravityLink.installed">
+      <p class="hint">{{ t("accountUsage.antigravityNotLinked") }}</p>
+    </template>
+    <p v-else-if="provider === 'antigravity'" class="hint">{{ t("accountUsage.waitingAntigravity") }}</p>
     <p v-else-if="provider === 'claude'" class="hint">{{ t("accountUsage.waitingClaude") }}</p>
     <p v-else class="hint">{{ t("accountUsage.waitingCodex") }}</p>
     <label v-if="provider === 'claude' && claudeLink.installed" class="check">

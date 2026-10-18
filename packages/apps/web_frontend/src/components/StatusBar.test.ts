@@ -25,7 +25,10 @@ async function mountStatusBar() {
   const wrapper = mount(StatusBar, {
     global: { stubs: { GitStatusSummary: true, WorkspaceStatusSummary: true } },
   });
-  return { wrapper, settings, claudeLink };
+  const { antigravityLink } = await import("../stores/antigravity");
+  antigravityLink.loaded = true;
+  antigravityLink.installed = true;
+  return { wrapper, settings, claudeLink, antigravityLink };
 }
 
 beforeEach(() => {
@@ -89,23 +92,30 @@ describe("StatusBar", () => {
     expect(wrapper.find("[data-provider=codex]").exists()).toBe(false);
   });
 
-  it("waits for the data of Claude only when Claude Code is switched on", async () => {
+  it("shows no tracking message when an enabled coding agent has no quota data", async () => {
     const { wrapper, settings } = await mountStatusBar();
     settings.ownedAgents = ["codex"];
     await nextTick();
-    expect(wrapper.find(".muted").exists()).toBe(false);
-    settings.ownedAgents = ["claude", "codex"];
-    await nextTick();
-    expect(wrapper.get(".muted").text()).toBe("Claude: waiting for data");
-  });
-
-  it("offers to enable the tracking of Claude only when Claude Code is switched on", async () => {
-    const { wrapper, settings, claudeLink } = await mountStatusBar();
-    claudeLink.installed = false;
+    settings.ownedAgents = ["antigravity"];
     await nextTick();
     expect(wrapper.find("button.link").exists()).toBe(false);
-    settings.ownedAgents = ["claude"];
+    expect(wrapper.find(".muted").exists()).toBe(false);
+    expect(wrapper.text()).not.toMatch(/tracking|waiting/i);
+  });
+
+  it("shows Antigravity quota in the same list as the other coding agents", async () => {
+    const { wrapper, settings } = await mountStatusBar();
+    const { state } = await import("../stores/session");
+    state.snapshot = {
+      version: "1", protocol: 1, workspaces: [], tabs: [], agents: [], layouts: [],
+      panes: [{
+        pane_id: "agy-pane", terminal_id: "terminal", workspace_id: "workspace", tab_id: "tab",
+        focused: true, agent_status: "idle", revision: 1, agent: "antigravity",
+        tokens: { hd_agy_ts: String(Math.floor(Date.now() / 1000)), hd_agy_count: "1", hd_agy_0_id: "gemini-weekly", hd_agy_0_remaining: "0.5" },
+      }],
+    };
+    settings.ownedAgents = ["antigravity"];
     await nextTick();
-    expect(wrapper.find("button.link").exists()).toBe(true);
+    expect(wrapper.findAll(".quota").map((quota) => quota.attributes("data-provider"))).toEqual(["antigravity"]);
   });
 });

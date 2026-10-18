@@ -335,13 +335,26 @@ const claudeWindows: Record<"q5h" | "q7d", WindowReading | undefined> = (() => {
   }
 })();
 
+interface AntigravityQuota {
+  at: number;
+  buckets: { id: string; percent: number; resetsAt?: number }[];
+}
+const ANTIGRAVITY_QUOTA_KEY = "heidrun.antigravity-quota";
+let antigravityQuota: AntigravityQuota | null = (() => {
+  try {
+    return JSON.parse(localStorage.getItem(ANTIGRAVITY_QUOTA_KEY) ?? "null");
+  } catch {
+    return null;
+  }
+})();
+
 const num = (v?: string) => (v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : undefined);
 
 // Session id seen with each pane's last reading: a new one (/clear, /resume) drops it.
 const lastSession = new Map<string, string>();
 
 export function contextFor(p: AgentInfo): ContextUsage | null {
-  const sid = p.tokens?.hd_sid;
+  const sid = p.tokens?.hd_sid ?? p.tokens?.hd_agy_sid;
   if (sid && lastSession.get(p.pane_id) !== sid) {
     lastSession.set(p.pane_id, sid);
     lastContext.delete(p.pane_id);
@@ -357,6 +370,11 @@ export function contextFor(p: AgentInfo): ContextUsage | null {
 
 function readContext(p: AgentInfo): ContextUsage | null {
   const t = p.tokens ?? {};
+  const antigravity = num(t.hd_agy_ctx);
+  if (antigravity != null) {
+    const size = num(t.hd_agy_ctx_size);
+    return { percent: antigravity, size, used: size ? Math.round((antigravity / 100) * size) : undefined };
+  }
   const claude = num(t.hd_ctx);
   if (claude != null) {
     const size = num(t.hd_ctx_size);
@@ -415,6 +433,48 @@ export const quotas = computed<QuotaBlock[]>(() => {
     blocks.push({ provider: "claude", label: "Claude", windows, cost: cost || undefined, updatedAt });
   }
 
+  // Antigravity sends all account buckets together. Keep the newest complete snapshot across its panes.
+  let newestAntigravityAt = antigravityQuota?.at ?? 0;
+  for (const p of allPanes.value) {
+    const t = p.tokens;
+    const at = num(t?.hd_agy_ts) ?? 0;
+    const count = Math.min(20, Math.max(0, Math.floor(num(t?.hd_agy_count) ?? 0)));
+    if (!t || at < newestAntigravityAt || count === 0) continue;
+    const buckets = [];
+    for (let index = 0; index < count; index += 1) {
+      const id = t[`hd_agy_${index}_id`];
+      const remaining = num(t[`hd_agy_${index}_remaining`]);
+      if (!id || remaining == null) continue;
+      const reset = t[`hd_agy_${index}_reset`];
+      const resetsAt = reset ? Date.parse(reset) / 1000 : undefined;
+      buckets.push({ id, percent: Math.max(0, Math.min(100, (1 - remaining) * 100)), resetsAt: Number.isFinite(resetsAt) ? resetsAt : undefined });
+    }
+    if (buckets.length) {
+      buckets.sort((left, right) => {
+        const priority = (id: string) => id === "gemini-weekly" ? 0 : id === "3p-weekly" ? 1 : 2;
+        return priority(left.id) - priority(right.id) || left.id.localeCompare(right.id);
+      });
+      newestAntigravityAt = at;
+      antigravityQuota = { at, buckets };
+      try {
+        localStorage.setItem(ANTIGRAVITY_QUOTA_KEY, JSON.stringify(antigravityQuota));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  if (antigravityQuota?.buckets.length) {
+    const windows = antigravityQuota.buckets.map((bucket) => ({
+      id: `antigravity:${bucket.id}`,
+      name: antigravityBucketName(bucket.id),
+      percent: bucket.resetsAt != null && bucket.resetsAt < Date.now() / 1000 ? 0 : bucket.percent,
+      resetsAt: bucket.resetsAt,
+      period: "week" as const,
+      windowMinutes: 10080,
+    }));
+    blocks.push({ provider: "antigravity", label: "Antigravity", windows, updatedAt: antigravityQuota.at });
+  }
+
   const c = state.codex;
   if (c?.primary || c?.secondary) {
     const windows = codexWindows(c, Date.now() / 1000);
@@ -422,6 +482,12 @@ export const quotas = computed<QuotaBlock[]>(() => {
   }
   return blocks;
 });
+
+function antigravityBucketName(id: string): string {
+  if (id === "gemini-weekly") return t("sessionStore.antigravity.geminiWeekly");
+  if (id === "3p-weekly") return t("sessionStore.antigravity.thirdPartyWeekly");
+  return `${id.replace(/[-_]/g, " ")} · ${t("sessionStore.window.week")}`;
+}
 
 // ---- Snapshot refresh -----------------------------------------------------
 

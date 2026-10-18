@@ -66,7 +66,7 @@ class SettingsInformationCardsTestHelper {
 		{
 			name: 'Coding agents',
 			component: SettingsAgentsSection,
-			optionList: ['agent', 'agent', 'newTabCommand', 'keepAgentsRunning'],
+			optionList: ['agent', 'agent', 'agent', 'antigravityQuotaTracking', 'newTabCommand', 'keepAgentsRunning'],
 		},
 		{
 			name: 'Confirmations',

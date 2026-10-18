@@ -123,8 +123,8 @@ const defaults = {
    * selected workspace, in minutes. 0 is off (issue #432).
    */
   gitFetchMinutes: 5,
-  /** Settings window, section New tab: the command that the pane of a new tab runs, "terminal" (a shell), "claude" (Claude Code), or "codex" (Codex). */
-  newTabCommand: "terminal" as "terminal" | "claude" | "codex",
+  /** Settings window, section New tab: the command that the pane of a new tab runs. */
+  newTabCommand: "terminal" as "terminal" | "claude" | "codex" | "agy",
   /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
   customLauncherKind: "commandLine" as "commandLine" | "codingAgent",
   /** Window Create a custom launcher: the identifier of the last coding agent. */
@@ -262,12 +262,18 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   chatsRefreshSeconds: [5, 10, 30, 60],
   dynamicTopicExtraction: ["keyword", "languageModel"],
   gitFetchMinutes: [0, 1, 5, 10, 30],
-  newTabCommand: ["terminal", "claude", "codex"],
+  newTabCommand: ["terminal", "claude", "codex", "agy"],
   customLauncherKind: ["commandLine", "codingAgent"],
   customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
 };
+
+const NEW_TAB_COMMAND_AGENT_IDS = {
+  claude: 'claude',
+  codex: 'codex',
+  agy: 'antigravity',
+} as const;
 
 /**
  * Keeps each saved value that has the type of its default value, and that is in the list of its allowed values when the
@@ -403,6 +409,10 @@ function load(): typeof defaults {
       stored.codeHostingSavedSearches = { issues: oldList, requests: structuredClone(oldList) };
     }
     const saved = dropCorruptedValues({ ...defaults, ...stored }) as typeof defaults;
+    const commandAgentId = saved.newTabCommand === 'terminal' ? null : NEW_TAB_COMMAND_AGENT_IDS[saved.newTabCommand];
+    if (commandAgentId !== null && saved.ownedAgents.includes(commandAgentId) === false) {
+      saved.newTabCommand = 'terminal';
+    }
     saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
     saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
     return saved;

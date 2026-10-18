@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, onMounted } from "vue";
 import Icon from "../Icon.vue";
 import InformationCard from "../InformationCard.vue";
 import SettingsOptionHelp from "./SettingsOptionHelp.vue";
@@ -6,12 +7,36 @@ import SettingsSwitchRow from "./SettingsSwitchRow.vue";
 import { settings } from "../../stores/settings";
 import { AGENTS, type AgentDefinition } from "../../lib/agents";
 import { t } from "../../i18n/index";
+import { antigravityLink, disableAntigravityLink, enableAntigravityLink, loadAntigravityLink } from "../../stores/antigravity";
 
-/** The three commands that the pane of a new tab can run, in the order of the buttons. */
+onMounted(loadAntigravityLink);
+
+/** The commands that the pane of a new tab can run, in the order of the buttons. */
 const COMMANDS = [
-  { id: "terminal", labelKey: "settingsNewTab.terminalLabel", titleKey: "settingsNewTab.terminalTitle" },
-  { id: "claude", labelKey: "settingsNewTab.claudeLabel", titleKey: "settingsNewTab.claudeTitle" },
-  { id: "codex", labelKey: "settingsNewTab.codexLabel", titleKey: "settingsNewTab.codexTitle" },
+  {
+    id: 'terminal',
+    agentId: null,
+    labelKey: 'settingsNewTab.terminalLabel',
+    titleKey: 'settingsNewTab.terminalTitle',
+  },
+  {
+    id: 'claude',
+    agentId: 'claude',
+    labelKey: 'settingsNewTab.claudeLabel',
+    titleKey: 'settingsNewTab.claudeTitle',
+  },
+  {
+    id: 'codex',
+    agentId: 'codex',
+    labelKey: 'settingsNewTab.codexLabel',
+    titleKey: 'settingsNewTab.codexTitle',
+  },
+  {
+    id: 'agy',
+    agentId: 'antigravity',
+    labelKey: 'settingsNewTab.antigravityLabel',
+    titleKey: 'settingsNewTab.antigravityTitle',
+  },
 ] as const;
 
 /** The blocks of the information card of a coding agent, in the order of the card. */
@@ -21,6 +46,13 @@ const AGENT_HELP_BLOCKS = [
   { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.agent.off" },
 ] as const;
 
+const ANTIGRAVITY_TRACKING_HELP_BLOCKS = [
+  { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.antigravityTracking.what" },
+  { titleKey: "settingsHelp.onTitle", textKey: "settingsHelp.antigravityTracking.on" },
+  { titleKey: "settingsHelp.offTitle", textKey: "settingsHelp.antigravityTracking.off" },
+  { titleKey: "settingsHelp.howTitle", textKey: "settingsHelp.antigravityTracking.development" },
+] as const;
+
 /** The blocks of the information card of the default command of a new tab, in the order of the card. */
 const NEW_TAB_HELP_BLOCKS = [
   { titleKey: "settingsHelp.whatTitle", textKey: "settingsHelp.newTab.what" },
@@ -28,7 +60,23 @@ const NEW_TAB_HELP_BLOCKS = [
   { titleKey: "settingsNewTab.terminalLabel", textKey: "settingsNewTab.terminalTitle" },
   { titleKey: "settingsNewTab.claudeLabel", textKey: "settingsNewTab.claudeTitle" },
   { titleKey: "settingsNewTab.codexLabel", textKey: "settingsNewTab.codexTitle" },
+  { titleKey: "settingsNewTab.antigravityLabel", textKey: "settingsNewTab.antigravityTitle" },
 ] as const;
+
+const availableCommands = computed(() =>
+  COMMANDS.filter((command) => command.agentId === null || settings.ownedAgents.includes(command.agentId)),
+);
+
+const antigravityTracking = computed({
+  get: () => antigravityLink.installed,
+  set: (enabled: boolean) => {
+    if (enabled) {
+      void enableAntigravityLink();
+    } else {
+      void disableAntigravityLink();
+    }
+  },
+});
 
 function isOwned(agent: AgentDefinition): boolean {
   return settings.ownedAgents.includes(agent.id);
@@ -36,7 +84,12 @@ function isOwned(agent: AgentDefinition): boolean {
 
 function toggleOwned(agent: AgentDefinition) {
   const others = settings.ownedAgents.filter((id) => id !== agent.id);
-  settings.ownedAgents = isOwned(agent) ? others : [...others, agent.id];
+  const wasOwned = isOwned(agent);
+  settings.ownedAgents = wasOwned ? others : [...others, agent.id];
+  const command = COMMANDS.find((candidate) => candidate.agentId === agent.id);
+  if (wasOwned && command !== undefined && settings.newTabCommand === command.id) {
+    settings.newTabCommand = "terminal";
+  }
 }
 
 /** The key Enter switches the focused switch, as the key Space does. Holding the key down switches only once. */
@@ -77,6 +130,16 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
       </label>
     </div>
 
+    <div class="d-flex flex-column gap-2" data-option="antigravityQuotaTracking">
+      <SettingsSwitchRow
+        v-model="antigravityTracking"
+        :label="t('antigravityStore.settingsLabel')"
+        :is-disabled="!antigravityLink.canChange || antigravityLink.busy"
+      >
+        <SettingsOptionHelp title-key="antigravityStore.settingsLabel" :blocks="ANTIGRAVITY_TRACKING_HELP_BLOCKS" />
+      </SettingsSwitchRow>
+    </div>
+
     <div class="d-flex flex-column gap-2" data-option="newTabCommand">
       <div class="d-flex align-items-center gap-2">
         <h4 class="form-label m-0">{{ t("settingsNewTab.commandTitle") }}</h4>
@@ -84,7 +147,7 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
       </div>
       <div class="btn-group" role="group" :aria-label="t('settingsNewTab.commandTitle')">
         <label
-          v-for="command in COMMANDS"
+          v-for="command in availableCommands"
           :key="command.id"
           class="btn-check btn-outline theme-secondary"
           :title="t(command.titleKey)"

@@ -6,5 +6,7 @@
   "claudeTitle": "The pane of a new tab runs Claude Code, with no specific role, with the default model, and with no starting prompt",
   "codexLabel": "Codex",
   "codexTitle": "The pane of a new tab runs Codex, with the default model and with no starting prompt",
+  "antigravityLabel": "Antigravity",
+  "antigravityTitle": "The pane of a new tab runs Antigravity, with the default model and with no starting prompt",
   "help": "A click on the plus button of the tab bar creates a new tab, and starts this command in its pane."
 }

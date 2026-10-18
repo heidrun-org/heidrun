@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../lib/api";
-import { launchAgent } from "./agents";
+import { agentCommand, launchAgent } from "./agents";
 import { selectPane } from "./session";
 import type { PaneInfo } from "../lib/types";
 
@@ -25,7 +25,7 @@ const DARK_COLORS = "printf '\\033]10;rgb:c9c9/cdcd/d1d1\\033\\\\\\033]11;rgb:1f
 const ROOT_PANE = { pane_id: "w2:p1", tab_id: "w2:t1", workspace_id: "w2" } as PaneInfo;
 
 /** Launches a free agent in the first pane of a new workspace, and waits for the pause before the command is typed. */
-async function launchInRootPane(tool: "claude" | "codex") {
+async function launchInRootPane(tool: "claude" | "codex" | "agy") {
   const launched = launchAgent({
     workspaceId: "w2",
     cwd: "/work/app",
@@ -65,6 +65,28 @@ describe("launchAgent with an existing pane (issue #379)", () => {
     expect(await launchInRootPane("codex")).toBe("ok");
     expect(api.newTab).not.toHaveBeenCalled();
     expect(api.run).toHaveBeenCalledWith("w2:p1", `${DARK_COLORS}codex`);
+  });
+
+  it("builds the Antigravity command with a safely quoted starting prompt", () => {
+    expect(agentCommand("agy", null, "gemini-3.8-flash-high", "Review Jerome's change")).toBe(
+      "agy --model 'gemini-3.8-flash-high' -i 'Review Jerome'\\''s change'",
+    );
+  });
+
+  it("starts Antigravity with its prompt in the command line", async () => {
+    const launched = launchAgent({
+      workspaceId: "w2",
+      cwd: "/work/app",
+      tool: "agy",
+      agent: null,
+      model: null,
+      label: "agy",
+      prompt: "Review this change",
+      existingPane: ROOT_PANE,
+    });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(await launched).toBe("ok");
+    expect(api.run).toHaveBeenCalledWith("w2:p1", "agy -i 'Review this change'");
   });
 
   it("still opens a new tab when no pane exists", async () => {

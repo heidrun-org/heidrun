@@ -114,8 +114,12 @@ fn validate_development_session(session: &str) -> Result<(), String> {
 
 /// Development can use the existing integration, but cannot replace the globally installed Claude Code script.
 pub fn require_installed_integration() -> Result<(), String> {
+    require_installed_integration_for("Claude Code")
+}
+
+pub fn require_installed_integration_for(coding_agent: &str) -> Result<(), String> {
     if is_development() {
-        return Err("Change the shared Claude Code status-line integration in installed Heidrun. Heidrun Development does not replace that integration.".into());
+        return Err(format!("Change the shared {coding_agent} status-line integration in installed Heidrun. Heidrun Development does not replace that integration."));
     }
     Ok(())
 }
