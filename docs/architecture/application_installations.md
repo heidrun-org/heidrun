@@ -1,7 +1,7 @@
 # Installed Heidrun and Heidrun Development
 
 - Created: 17 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained installation and development guide
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Window startup](../agents_rules/user_interface/window/window_state_and_start.md), [Data layer access](../agents_rules/data_layer_access.md)
@@ -11,7 +11,7 @@ Use installed Heidrun for daily work, and Heidrun Development to test source cha
 
 | Resource | Heidrun | Heidrun Development |
 | --- | --- | --- |
-| Application identifier | `dev.edefiez.herdrdesk` | `dev.heidrun-org.heidrun.development` |
+| Application identifier | `dev.heidrun-org.heidrun` | `dev.heidrun-org.heidrun.development` |
 | Application name | Heidrun | Heidrun Development |
 | Default application data | `~/.config/heidrun` | `~/.config/heidrun-development` |
 | Default Herdr session in the main checkout | `heidrun` | `heidrun_development` |
