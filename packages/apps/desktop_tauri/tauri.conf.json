@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "pnpm --filter mobile_website build && pnpm --filter web_frontend dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm --filter mobile_website build && pnpm --filter web_frontend build",
+    "beforeBuildCommand": "sh ../../../scripts/build_command_line_tools.sh && pnpm --filter mobile_website build && pnpm --filter web_frontend build",
     "frontendDist": "../web_frontend/dist"
   },
   "app": {
@@ -31,6 +31,12 @@
   "bundle": {
     "active": true,
     "targets": ["app", "dmg"],
+    "resources": {
+      "target/release/bundled_commands/heidrun_ctrl": "binaries/heidrun_ctrl",
+      "target/release/bundled_commands/heidrun_data": "binaries/heidrun_data",
+      "../../auxiliary/heidrun_ctrl/skills/heidrun_ctrl/": "bundled_skills/heidrun_ctrl/",
+      "../../data_layers/heidrun_data/skills/heidrun_data/": "bundled_skills/heidrun_data/"
+    },
     "category": "DeveloperTool",
     "icon": [
       "icons/32x32.png",

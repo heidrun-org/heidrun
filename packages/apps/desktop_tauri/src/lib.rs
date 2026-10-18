@@ -74,8 +74,13 @@ async fn herdr_server_start() -> Result<String, String> {
     }
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".into());
     let mut cmd = std::process::Command::new(shell);
+    let mut server_command = herdr::server_shell_command(&herdr::herdr_bin());
+    if let Some(user_bin_folder) = skills::bundled::user_bin_folder() {
+        cmd.env("HEIDRUN_USER_BIN", user_bin_folder);
+        server_command = format!("export PATH=\"$HEIDRUN_USER_BIN:$PATH\"; {server_command}");
+    }
     cmd.arg("-lc")
-        .arg(herdr::server_shell_command(&herdr::herdr_bin()))
+        .arg(server_command)
         .stdin(std::process::Stdio::null())
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null());
@@ -271,6 +276,9 @@ pub fn run() {
                 claude::migrate_legacy();
             }
             voice_commands::open_whisper_log();
+            if application_profile::is_development() == false {
+                skills::bundled::install(app.handle());
+            }
             app.set_menu(build_menu(app.handle())?)?;
             herdr::spawn_event_loop(app.handle().clone());
             mobile::start_if_enabled(app.handle());

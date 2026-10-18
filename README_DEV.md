@@ -22,6 +22,22 @@ The command `pnpm build` builds the web frontend, then the Rust backend, then pa
 
 To build only the web frontend, run `pnpm build:web`.
 
+## Install the current development version
+
+Quit Heidrun, then build the application from the current source:
+
+```bash
+pnpm build
+```
+
+Open the folder containing the built application:
+
+```bash
+open packages/apps/desktop_tauri/target/release/bundle/macos
+```
+
+Drag `Heidrun.app` into `/Applications` and choose "Replace" when Finder asks. Then open Heidrun from `/Applications`.
+
 ## Launch the application during development
 
 ```bash
