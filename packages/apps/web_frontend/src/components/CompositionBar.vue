@@ -167,7 +167,7 @@ async function send() {
     await insertText(props.paneId, text, true);
   }
   isSending.value = false;
-  ImageDrop.close();
+  compositionBar.text = "";
   emit("sent");
 }
 </script>
@@ -204,10 +204,10 @@ async function send() {
           <span class="elapsed">{{ elapsedText }}</span>
         </div>
       </div>
-      <PushToTalkButton v-if="settings.voiceInput" />
       <button class="btn icon-button border-0 send" :aria-label="t('compositionBar.send')" :title="t('compositionBar.sendTitle')" :disabled="isSending" @click="send">
         <Icon name="send" />
       </button>
+      <PushToTalkButton v-if="settings.voiceInput" />
     </div>
     <div v-if="settings.voiceInput && voiceInput.error !== null" class="form-text text-danger m-0" role="alert">{{ voiceErrorText(voiceInput.error) }}</div>
   </div>

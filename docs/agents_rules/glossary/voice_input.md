@@ -17,7 +17,7 @@ The feature that changes the speech of the developer into text. The developer ho
 
 ### Push-to-talk button
 
-The button that the developer uses to speak. A long press is push to talk: the developer holds it and releases it. A short press is a click: the recording goes on until the next press. It shows a microphone, and a stop icon while a click keeps the recording. It is in the composition bar, between the text input and the button "Send". It is not the microphone button of Heidrun Mobile, which uses the speech recognition of the browser of the phone.
+The button that the developer uses to speak. A long press is push to talk: the developer holds it and releases it. A short press is a click: the recording goes on until the next press. It shows a microphone, and a stop icon while a click keeps the recording. It is in the composition bar, after the button "Send", as the last control at the right end of the last line. It is not the microphone button of Heidrun Mobile, which uses the speech recognition of the browser of the phone.
 
 ### Level bars
 

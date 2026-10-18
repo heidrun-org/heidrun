@@ -63,7 +63,7 @@ The small circle in the header of a pane that shows how much of the context wind
 
 ### Composition bar
 
-The area under the terminal of the focused pane that opens after the developer drops image files on the window, or clicks the toggle button of the header of the pane. It holds a plus button that adds images, one small picture for each image, a text input, a push-to-talk button when the voice input is on ([voice_input.md](voice_input.md)), and a button "Send". The button "Send" pastes the images in the focused pane, then writes the text. It is closed the rest of the time.
+The area under the terminal of the focused pane that opens after the developer drops image files on the window, or clicks the toggle button of the header of the pane. It holds a plus button that adds images, one small picture for each image, a text input, a button "Send", and a push-to-talk button when the voice input is on ([voice_input.md](voice_input.md)). The button "Send" pastes the images in the focused pane, then writes the text. It stays open after a send. It is closed until a drop or a click on the toggle button opens it, and the toggle button hides it.
 
 ### Big view
 
