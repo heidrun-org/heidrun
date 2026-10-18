@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
-const DEVELOPMENT_IDENTIFIER: &str = "dev.edefiez.herdrdesk.development";
+const DEVELOPMENT_IDENTIFIER: &str = "dev.heidrun-org.heidrun.development";
 static IS_DEVELOPMENT: OnceLock<bool> = OnceLock::new();
 
 pub fn is_development() -> bool {

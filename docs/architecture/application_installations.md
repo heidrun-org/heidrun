@@ -11,7 +11,7 @@ Use installed Heidrun for daily work, and Heidrun Development to test source cha
 
 | Resource | Heidrun | Heidrun Development |
 | --- | --- | --- |
-| Application identifier | `dev.edefiez.herdrdesk` | `dev.edefiez.herdrdesk.development` |
+| Application identifier | `dev.edefiez.herdrdesk` | `dev.heidrun-org.heidrun.development` |
 | Application name | Heidrun | Heidrun Development |
 | Default application data | `~/.config/heidrun` | `~/.config/heidrun-development` |
 | Default Herdr session in the main checkout | `heidrun` | `heidrun_development` |
@@ -103,6 +103,6 @@ development socket: sessions/heidrun_640_development/herdr.sock
 
 This proves concurrent desktop use with an idle coding agent and active development terminal for that run. Automated tests cover development identity, safe data paths, inherited environment values, separate session selection, and agreement between all four database paths. Developer review should also exercise a working coding agent, changes to settings and personal macros, and quitting each application with both values of "Keep agents running after quit".
 
-The final optimised standalone bundle also reported `dev.edefiez.herdrdesk.development`, `~/.config/heidrun-development`, and `heidrun_codex_separate-development-640` while installed-session variables were inherited. With "Keep agents running after quit" on, the development test terminal continued printing after normal Quit. After restarting the application and turning the setting off, normal Quit removed only the development socket; the installed Codex process and terminal identifier stayed unchanged. The two saved window-state files were in separate application-identifier folders.
+The final optimised standalone bundle also reported Heidrun Development, `~/.config/heidrun-development`, and `heidrun_codex_separate-development-640` while installed-session variables were inherited. With "Keep agents running after quit" on, the development test terminal continued printing after normal Quit. After restarting the application and turning the setting off, normal Quit removed only the development socket; the installed Codex process and terminal identifier stayed unchanged. The two saved window-state files were in separate application-identifier folders.
 
 The final desktop suite passed 318 tests, with six intentionally skipped tests. The affected data layer, `heidrun_data`, macro, and mobile server suites passed, as did the data-access boundary checker and the agent-rules size checker. The live coding agent remained idle during these tests; a working coding agent and simultaneous public tunnels remain for developer review.
