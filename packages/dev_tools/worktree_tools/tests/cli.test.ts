@@ -68,9 +68,11 @@ describe('worktree_create_cli', () => {
 		const mainCheckoutPath = TestRepository.createWithBuiltTarget();
 		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['with-clone']);
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toContain('Cloned the folder target/debug');
+		expect(result.stdout).toContain('Cloned target/debug and target/release/bundled_commands');
 		const worktreePath = Path.join(mainCheckoutPath, '.claude', 'worktrees', 'with-clone');
 		expect(Fs.existsSync(Path.join(TargetPaths.debugPath(worktreePath), 'heidrun'))).toBe(true);
+		expect(Fs.existsSync(Path.join(TargetPaths.bundledCommandsPath(worktreePath), 'heidrun_ctrl'))).toBe(true);
+		expect(Fs.existsSync(Path.join(TargetPaths.bundledCommandsPath(worktreePath), 'heidrun_data'))).toBe(true);
 	});
 
 	it('installs the packages and says so', () => {
@@ -95,7 +97,7 @@ describe('worktree_create_cli', () => {
 		const mainCheckoutPath = TestRepository.create();
 		const result = CliRunner.run('worktree_create_cli.ts', mainCheckoutPath, ['no-build']);
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toContain('was not cloned');
+		expect(result.stdout).toContain('were not cloned');
 	});
 
 	it('prints an error and exits with code 1 when the name is not valid', () => {

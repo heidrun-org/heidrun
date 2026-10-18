@@ -17,6 +17,15 @@ export class TargetPaths {
 	/** The name of the folder, inside the Cargo target folder, that holds the debug build. */
 	static readonly debugFolderName = 'debug';
 
+	/** The name of the folder, inside the Cargo target folder, that holds release builds. */
+	static readonly releaseFolderName = 'release';
+
+	/** The name of the folder, inside the release folder, that holds the bundled command line tools. */
+	static readonly bundledCommandsFolderName = 'bundled_commands';
+
+	/** The command line tools that Tauri requires in the bundled command line tools folder. */
+	static readonly bundledCommandFileNames = ['heidrun_ctrl', 'heidrun_data'] as const;
+
 	/**
 	 * Gives the path of the Cargo target folder of a checkout.
 	 * @param checkoutPath The absolute path of the root of the main checkout or of a worktree.
@@ -33,5 +42,18 @@ export class TargetPaths {
 	 */
 	static debugPath(checkoutPath: string): string {
 		return Path.join(TargetPaths.targetPath(checkoutPath), TargetPaths.debugFolderName);
+	}
+
+	/**
+	 * Gives the path of the bundled command line tools required by Tauri.
+	 * @param checkoutPath The absolute path of the root of the main checkout or of a worktree.
+	 * @returns The absolute path of the bundled command line tools folder.
+	 */
+	static bundledCommandsPath(checkoutPath: string): string {
+		return Path.join(
+			TargetPaths.targetPath(checkoutPath),
+			TargetPaths.releaseFolderName,
+			TargetPaths.bundledCommandsFolderName,
+		);
 	}
 }
