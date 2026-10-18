@@ -8,8 +8,8 @@ use rusqlite::types::ValueRef;
 use rusqlite::{Connection, OpenFlags, OptionalExtension};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The SQLite file of the four data layers, open read only.
 pub struct HeidrunDatabase {
@@ -99,11 +99,11 @@ impl HeidrunDatabase {
     /// # Errors
     /// An error when the statement is wrong. A statement that writes is wrong, because the file is read only.
     pub fn query(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "query", RequestKind::Query).sql(sql).database(&self.database_path);
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "query", OperationKind::Query).sql(sql).database(&self.database_path);
         record(spec, || self.query_inside(sql), |rows| Summary::count(rows.len()))
     }
 
-    /// The work of `query`, between the start event and the completion event of its request.
+    /// The work of `query`, between the start event and the completion event of its operation.
     fn query_inside(&self, sql: &str) -> Result<Vec<QueryRow>, String> {
         let mut statement = self.connection.prepare(sql).map_err(|error| error.to_string())?;
         let column_names: Vec<String> = statement.column_names().iter().map(|name| name.to_string()).collect();
@@ -126,11 +126,11 @@ impl HeidrunDatabase {
     /// # Errors
     /// An error when the file exists and cannot be read.
     pub fn summarize_file(database_path: &Path) -> Result<Vec<SourceSummary>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "summarize_sources", RequestKind::Query).database(database_path);
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "summarize_sources", OperationKind::Query).database(database_path);
         record(spec, || HeidrunDatabase::summarize_file_inside(database_path), |summaries| Summary::count(summaries.len()))
     }
 
-    /// The work of `summarize_file`, between the start event and the completion event of its request.
+    /// The work of `summarize_file`, between the start event and the completion event of its operation.
     fn summarize_file_inside(database_path: &Path) -> Result<Vec<SourceSummary>, String> {
         if !database_path.exists() {
             return Ok(Source::ALL.into_iter().map(SourceSummary::empty).collect());

@@ -13,8 +13,8 @@ use crate::model::schemas::configuration_item_to_checked_value;
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The tables of the configuration of the coding agent in the SQLite file.
 pub struct ConfigurationDatabase {
@@ -62,7 +62,7 @@ impl ConfigurationDatabase {
         read: &ConfigurationRead,
         now: &str,
     ) -> Result<ConfigurationWriteCount, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "write_configuration", RequestKind::Write)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "write_configuration", OperationKind::Write)
             .parameter("repository", repository)
             .choice("kind", read.kind.table_name())
             .parameter("itemCount", read.items.len())
@@ -72,7 +72,7 @@ impl ConfigurationDatabase {
         })
     }
 
-    /// The work of `write_configuration`, between the start event and the completion event of its request.
+    /// The work of `write_configuration`, between the start event and the completion event of its operation.
     fn write_configuration_inside(
         &mut self,
         repository: &str,
@@ -107,14 +107,14 @@ impl ConfigurationDatabase {
 
     /// Counts the rows of the table of a kind for a repository, with the rows marked as removed.
     pub fn count_rows(&self, kind: ConfigurationKind, repository: &str) -> Result<i64, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "count_configuration_rows", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "count_configuration_rows", OperationKind::Query)
             .choice("kind", kind.table_name())
             .parameter("repository", repository)
             .database(&self.database_path);
         record(spec, || self.count_rows_inside(kind, repository), |count| Summary::count(*count as usize))
     }
 
-    /// The work of `count_rows`, between the start event and the completion event of its request.
+    /// The work of `count_rows`, between the start event and the completion event of its operation.
     fn count_rows_inside(&self, kind: ConfigurationKind, repository: &str) -> Result<i64, String> {
         self.connection
             .query_row(
@@ -127,7 +127,7 @@ impl ConfigurationDatabase {
 
     /// Reads one item. Returns `None` when the table has no such row.
     pub fn find_item(&self, kind: ConfigurationKind, repository: &str, id: &str) -> Result<Option<ConfigurationItem>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "find_configuration_item", RequestKind::Query)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "find_configuration_item", OperationKind::Query)
             .choice("kind", kind.table_name())
             .parameter("repository", repository)
             .parameter("id", id)
@@ -135,7 +135,7 @@ impl ConfigurationDatabase {
         record(spec, || self.find_item_inside(kind, repository, id), |found| Summary::count(usize::from(found.is_some())))
     }
 
-    /// The work of `find_item`, between the start event and the completion event of its request.
+    /// The work of `find_item`, between the start event and the completion event of its operation.
     fn find_item_inside(&self, kind: ConfigurationKind, repository: &str, id: &str) -> Result<Option<ConfigurationItem>, String> {
         let data = self
             .connection

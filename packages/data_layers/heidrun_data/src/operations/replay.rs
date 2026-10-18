@@ -1,25 +1,25 @@
-//! Runs a recorded request again through the interfaces of the data layer packages, to compare its duration with the
+//! Runs a recorded operation again through the interfaces of the data layer packages, to compare its duration with the
 //! duration that the log holds.
 //!
 //! The rules that keep a replay away from the real data:
 //! - A query (the SQL statements of the five packages, `read_usage`, `find_usage`, and the `find_*` calls of the desktop
 //!   application) opens the SQLite file read only, so a replay can never change it. The file should be a snapshot, which the
-//!   command `requests snapshot` makes.
+//!   command `operations snapshot` makes.
 //! - A synchronization and a `refresh_*` call of the desktop application write, so they need `--isolated-database`: a file that does not exist yet, and that is not the default
 //!   file of Heidrun. The folder of the file holds the lock of the replay, so the replay never waits for the desktop
 //!   application. With `--start-from`, the isolated file starts as a copy of a snapshot, so a replay of the mode update
 //!   measures an incremental synchronization.
-//! - A request that ran inside another request is refused, and the request that holds it is replayed instead.
+//! - An operation that ran inside another operation is refused, and the operation that holds it is replayed instead.
 //! - A synchronization uses the network only with `--allow-network`. Without the option, the source `code_hosting` is skipped
 //!   and the price list is a file that does not exist, which gives a warning and no network access.
-//! - Every request of a replay carries the origin `replay` and the identifier of the original request, so a summary of the real
+//! - Every operation of a replay carries the origin `replay` and the identifier of the original operation, so a summary of the real
 //!   usage leaves it out.
 
 use crate::database::HeidrunDatabase;
 use crate::sources::Source;
 use crate::synchronization::{synchronize, SynchronizationMode, SynchronizationOptions};
 use crate::usage::{read_usage, UsageRequest};
-use request_log::{replaying, PairedRequest, RequestKind, REDACTED};
+use data_layer_operation_log::{replaying, PairedOperation, OperationKind, REDACTED};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -35,11 +35,11 @@ pub struct ReplayOptions {
     pub start_from: Option<PathBuf>,
     /// The SQLite file that the desktop application writes. A synchronization never writes it.
     pub default_database_path: PathBuf,
-    /// The folder that source control, code hosting, and coding agents read, when the original request has no folder.
+    /// The folder that source control, code hosting, and coding agents read, when the original operation has no folder.
     pub folder: PathBuf,
     /// True to let a synchronization use the network.
     pub is_network_allowed: bool,
-    /// True to let a synchronization read the folders of the original request. False reads only the folder of the option
+    /// True to let a synchronization read the folders of the original operation. False reads only the folder of the option
     /// `--folder` and the default folders of the coding agents.
     pub is_recorded_path_used: bool,
 }
@@ -49,7 +49,7 @@ pub struct ReplayOptions {
 pub struct ReplayRun {
     /// The number of the run, from 1.
     pub run: usize,
-    /// The time between the start and the end of the replayed request, in microseconds, from the monotonic clock.
+    /// The time between the start and the end of the replayed operation, in microseconds, from the monotonic clock.
     pub microseconds: u64,
     /// The number of rows or items that the replay gave, when it counts them.
     pub result_count: Option<u64>,
@@ -73,56 +73,56 @@ const FIND_OPERATIONS: [&str; 6] = [
 const REFRESH_OPERATIONS: [&str; 4] =
     ["refresh_source_control", "refresh_user_activity", "refresh_code_hosting", "refresh_chat_sessions"];
 
-/// The reason why a request cannot be replayed alone, or `None` when it can. The check reads the parameters only.
-pub fn replay_refusal(request: &PairedRequest) -> Option<String> {
-    let start = &request.start;
-    if let Some(parent) = &start.parent_request_id {
+/// The reason why an operation cannot be replayed alone, or `None` when it can. The check reads the parameters only.
+pub fn replay_refusal(operation: &PairedOperation) -> Option<String> {
+    let start = &operation.start;
+    if let Some(parent) = &start.parent_operation_id {
         return Some(format!(
-            "The request ran inside the request {parent}, and has no parameters of its own to run alone. Replay the request that holds it."
+            "The operation ran inside the operation {parent}, and has no parameters of its own to run alone. Replay the operation that holds it."
         ));
     }
     let kind = start.kind;
-    let is_query_with_statement = start.operation == "query" && kind == RequestKind::Query;
+    let is_query_with_statement = start.operation_name == "query" && kind == OperationKind::Query;
     if is_query_with_statement {
         return statement_refusal(&start.parameters);
     }
-    let is_usage = start.operation == "read_usage" || start.operation == "find_usage";
-    let is_synchronization = start.operation == "synchronize" && kind == RequestKind::Synchronization;
-    let is_find = kind == RequestKind::Query && FIND_OPERATIONS.contains(&start.operation.as_str());
-    let is_refresh = kind == RequestKind::Synchronization && REFRESH_OPERATIONS.contains(&start.operation.as_str());
+    let is_usage = start.operation_name == "read_usage" || start.operation_name == "find_usage";
+    let is_synchronization = start.operation_name == "synchronize" && kind == OperationKind::Synchronization;
+    let is_find = kind == OperationKind::Query && FIND_OPERATIONS.contains(&start.operation_name.as_str());
+    let is_refresh = kind == OperationKind::Synchronization && REFRESH_OPERATIONS.contains(&start.operation_name.as_str());
     if is_usage || is_synchronization || is_find || is_refresh {
         return None;
     }
     Some(format!(
         "The operation {}.{} cannot be replayed: only a query, a usage query, a find call, a refresh call of the sources, and a synchronization run again.",
-        start.package, start.operation
+        start.package, start.operation_name
     ))
 }
 
-/// Runs the request again `repeat` times, and gives the time of each run.
+/// Runs the operation again `repeat` times, and gives the time of each run.
 ///
 /// # Errors
-/// An error when the request cannot be replayed, or when a rule of the isolation is broken. An error of the replayed
+/// An error when the operation cannot be replayed, or when a rule of the isolation is broken. An error of the replayed
 /// operation is not an error here: it is in the run.
-pub fn replay_request(request: &PairedRequest, options: &ReplayOptions, repeat: usize) -> Result<Vec<ReplayRun>, String> {
-    if let Some(refusal) = replay_refusal(request) {
+pub fn replay_operation(operation: &PairedOperation, options: &ReplayOptions, repeat: usize) -> Result<Vec<ReplayRun>, String> {
+    if let Some(refusal) = replay_refusal(operation) {
         return Err(refusal);
     }
-    let is_synchronization = request.start.kind == RequestKind::Synchronization;
+    let is_synchronization = operation.start.kind == OperationKind::Synchronization;
     if is_synchronization && repeat > 1 {
-        return Err("A synchronization runs once for each request: a second run would find the data already written.".to_string());
+        return Err("A synchronization runs once for each operation: a second run would find the data already written.".to_string());
     }
-    let prepared = if REFRESH_OPERATIONS.contains(&request.start.operation.as_str()) {
-        Prepared::Refresh(prepare_refresh(request, options)?)
+    let prepared = if REFRESH_OPERATIONS.contains(&operation.start.operation_name.as_str()) {
+        Prepared::Refresh(prepare_refresh(operation, options)?)
     } else if is_synchronization {
-        Prepared::Synchronization(prepare_synchronization(request, options)?)
+        Prepared::Synchronization(prepare_synchronization(operation, options)?)
     } else {
         Prepared::Nothing
     };
     let mut runs = Vec::new();
     for run in 1..=repeat.max(1) {
         let started = Instant::now();
-        let result = replaying(&request.start.request_id, || run_once(request, options, &prepared));
+        let result = replaying(&operation.start.operation_id, || run_once(operation, options, &prepared));
         let microseconds = u64::try_from(started.elapsed().as_micros()).unwrap_or(u64::MAX);
         let (result_count, error) = match result {
             Ok(count) => (count, None),
@@ -133,15 +133,15 @@ pub fn replay_request(request: &PairedRequest, options: &ReplayOptions, repeat: 
     Ok(runs)
 }
 
-/// One replay run as a row, with the original request next to it.
-pub fn replay_row(original: &PairedRequest, run: &ReplayRun) -> crate::output::QueryRow {
+/// One replay run as a row, with the original operation next to it.
+pub fn replay_row(original: &PairedOperation, run: &ReplayRun) -> crate::output::QueryRow {
     let original_milliseconds = original.duration_milliseconds();
     let replay_milliseconds = run.microseconds as f64 / 1000.0;
     let ratio = original_milliseconds.filter(|original| *original > 0.0).map(|original| replay_milliseconds / original);
     let row = json!({
-        "originalRequestId": original.start.request_id,
+        "originalOperationId": original.start.operation_id,
         "package": original.start.package,
-        "operation": original.start.operation,
+        "operationName": original.start.operation_name,
         "pattern": original.start.pattern,
         "run": run.run,
         "originalStartedAt": original.start.started_at,
@@ -163,7 +163,7 @@ pub fn replay_row(original: &PairedRequest, run: &ReplayRun) -> crate::output::Q
 struct PreparedSynchronization {
     /// The sources to read, in the fixed order.
     sources: Vec<Source>,
-    /// The mode of the original request.
+    /// The mode of the original operation.
     mode: SynchronizationMode,
     /// What the sources read, and the isolated file they write.
     options: SynchronizationOptions,
@@ -203,15 +203,15 @@ fn prepare_isolated_file(options: &ReplayOptions) -> Result<PathBuf, String> {
 }
 
 /// Checks the rules of the isolation, makes the isolated file, and builds the options of the synchronization.
-fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> Result<PreparedSynchronization, String> {
+fn prepare_synchronization(operation: &PairedOperation, options: &ReplayOptions) -> Result<PreparedSynchronization, String> {
     let isolated = prepare_isolated_file(options)?;
-    let start = &request.start;
+    let start = &operation.start;
     let parameters = &start.parameters;
     let text = |name: &str| parameters.get(name).and_then(Value::as_str).map(str::to_string);
     let mode = match text("mode").as_deref() {
         Some("initialize") => SynchronizationMode::Initialize,
         Some("update") => SynchronizationMode::Update,
-        _ => return Err("The request has no mode, so it cannot be replayed.".to_string()),
+        _ => return Err("The operation has no mode, so it cannot be replayed.".to_string()),
     };
     let recorded_or = |name: &str, default: PathBuf| match (options.is_recorded_path_used, text(name)) {
         (true, Some(recorded)) => PathBuf::from(recorded),
@@ -257,7 +257,7 @@ fn prepare_synchronization(request: &PairedRequest, options: &ReplayOptions) -> 
     Ok(PreparedSynchronization { sources, mode, options: synchronization_options })
 }
 
-/// A path parameter of the original request, when `--use-recorded-paths` is on, else the default.
+/// A path parameter of the original operation, when `--use-recorded-paths` is on, else the default.
 fn recorded_path(options: &ReplayOptions, parameters: &Value, name: &str, default: PathBuf) -> PathBuf {
     match (options.is_recorded_path_used, parameters.get(name).and_then(Value::as_str)) {
         (true, Some(recorded)) => PathBuf::from(recorded),
@@ -265,7 +265,7 @@ fn recorded_path(options: &ReplayOptions, parameters: &Value, name: &str, defaul
     }
 }
 
-/// A text parameter of the original request.
+/// A text parameter of the original operation.
 ///
 /// # Errors
 /// An error when the parameter is missing or is not a text.
@@ -275,27 +275,27 @@ fn required_text(parameters: &Value, name: &str) -> Result<String, String> {
 
 /// Checks the rules of the isolation for a `refresh_*` call, and makes the isolated file. The source `code_hosting` needs the
 /// option `--allow-network`.
-fn prepare_refresh(request: &PairedRequest, options: &ReplayOptions) -> Result<PathBuf, String> {
-    if request.start.operation == "refresh_code_hosting" && options.is_network_allowed == false {
+fn prepare_refresh(operation: &PairedOperation, options: &ReplayOptions) -> Result<PathBuf, String> {
+    if operation.start.operation_name == "refresh_code_hosting" && options.is_network_allowed == false {
         return Err("The source code_hosting needs the option --allow-network.".to_string());
     }
     prepare_isolated_file(options)
 }
 
-/// One run of the replayed operation, through the interface of the package that received the original request. Gives the
+/// One run of the replayed operation, through the interface of the package that received the original operation. Gives the
 /// number of rows or items, when the operation counts them.
-fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: &Prepared) -> Result<Option<u64>, String> {
-    let start = &request.start;
+fn run_once(operation: &PairedOperation, options: &ReplayOptions, prepared: &Prepared) -> Result<Option<u64>, String> {
+    let start = &operation.start;
     let parameters = &start.parameters;
-    match (start.package.as_str(), start.operation.as_str()) {
+    match (start.package.as_str(), start.operation_name.as_str()) {
         (_, "query") => {
-            let sql = parameters.get("sql").and_then(Value::as_str).ok_or("The request has no statement.")?;
+            let sql = parameters.get("sql").and_then(Value::as_str).ok_or("The operation has no statement.")?;
             let rows = query_rows(&start.package, sql, &options.database_path)?;
             Ok(Some(rows as u64))
         }
         ("heidrun_data", "read_usage") => {
             let text = |name: &str| parameters.get(name).and_then(Value::as_str).map(str::to_string);
-            let usage_request = UsageRequest {
+            let usage_operation = UsageRequest {
                 database_path: options.database_path.clone(),
                 repository: text("repository").ok_or("The parameter repository is missing.")?,
                 folder: text("folder").ok_or("The parameter folder is missing.")?,
@@ -306,19 +306,19 @@ fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: &Prepare
                 is_by_chat: parameters.get("isByChat").and_then(Value::as_bool).unwrap_or(false),
                 now: parameters.get("now").and_then(Value::as_i64).ok_or("The parameter now is missing.")?,
             };
-            read_usage(&usage_request).map(|answer| Some(answer.periods.len() as u64))
+            read_usage(&usage_operation).map(|answer| Some(answer.periods.len() as u64))
         }
         ("coding_agents", "find_usage") => {
             let query = data_layer_coding_agents::usage_query_from_parameters(parameters)?;
             let database = data_layer_coding_agents::TokenUsageDatabase::open_read_only(&options.database_path)?;
             database.find_usage(&query).map(|rows| Some(rows.len() as u64))
         }
-        (_, operation) if FIND_OPERATIONS.contains(&operation) => run_find(operation, parameters, &options.database_path),
-        (_, operation) if REFRESH_OPERATIONS.contains(&operation) => {
+        (_, operation_name) if FIND_OPERATIONS.contains(&operation_name) => run_find(operation_name, parameters, &options.database_path),
+        (_, operation_name) if REFRESH_OPERATIONS.contains(&operation_name) => {
             let Prepared::Refresh(isolated) = prepared else {
                 return Err("The refresh call was not prepared.".to_string());
             };
-            run_refresh(operation, parameters, options, isolated)
+            run_refresh(operation_name, parameters, options, isolated)
         }
         (_, "synchronize") => {
             let Prepared::Synchronization(prepared) = prepared else {
@@ -331,16 +331,16 @@ fn run_once(request: &PairedRequest, options: &ReplayOptions, prepared: &Prepare
                 None => Ok(Some(results.len() as u64)),
             }
         }
-        (package, operation) => Err(format!("The operation {package}.{operation} cannot be replayed.")),
+        (package, operation_name) => Err(format!("The operation {package}.{operation_name} cannot be replayed.")),
     }
 }
 
 /// Runs a `find_*` call of the desktop application again on the SQLite file at `database_path`, and counts the rows. Every
 /// `find_*` call opens the file read only.
-fn run_find(operation: &str, parameters: &Value, database_path: &Path) -> Result<Option<u64>, String> {
+fn run_find(operation_name: &str, parameters: &Value, database_path: &Path) -> Result<Option<u64>, String> {
     let text = |name: &str| required_text(parameters, name);
     let number = |name: &str| parameters.get(name).and_then(Value::as_i64).ok_or(format!("The parameter {name} is missing."));
-    let count = match operation {
+    let count = match operation_name {
         "find_commits" => data_layer_source_control::find_commits(
             database_path,
             &text("repository")?,
@@ -387,9 +387,9 @@ fn run_find(operation: &str, parameters: &Value, database_path: &Path) -> Result
 }
 
 /// Runs a `refresh_*` call of the desktop application again, into the isolated file, and counts what it copied. The folders
-/// of the original request are read only with `--use-recorded-paths`.
-fn run_refresh(operation: &str, parameters: &Value, options: &ReplayOptions, isolated: &Path) -> Result<Option<u64>, String> {
-    let count = match operation {
+/// of the original operation are read only with `--use-recorded-paths`.
+fn run_refresh(operation_name: &str, parameters: &Value, options: &ReplayOptions, isolated: &Path) -> Result<Option<u64>, String> {
+    let count = match operation_name {
         "refresh_source_control" => {
             let folder = recorded_path(options, parameters, "folder", options.folder.clone());
             data_layer_source_control::refresh_source_control(isolated, &folder, &required_text(parameters, "repository")?)?.commit_count
@@ -426,7 +426,7 @@ fn query_rows(package: &str, sql: &str, database_path: &Path) -> Result<usize, S
 fn statement_refusal(parameters: &Value) -> Option<String> {
     let sql = parameters.get("sql").and_then(Value::as_str);
     match sql {
-        None => Some("The request has no statement, so it cannot be replayed.".to_string()),
+        None => Some("The operation has no statement, so it cannot be replayed.".to_string()),
         Some(_) if parameters.get("sqlTruncated").and_then(Value::as_bool) == Some(true) => {
             Some("The log holds only the start of the statement, so it cannot run again.".to_string())
         }
@@ -459,12 +459,12 @@ pub fn make_snapshot(database_path: &Path, snapshot_path: &Path) -> Result<u64, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use request_log::{read_log, record, with_logger, LogSettings, Logger, RequestSpec, Summary};
+    use data_layer_operation_log::{read_log, record, with_logger, LogSettings, Logger, OperationSpec, Summary};
     use std::sync::Arc;
 
-    /// A folder with a SQLite file that the package `source_control` made, and the log file of the original requests.
+    /// A folder with a SQLite file that the package `source_control` made, and the log file of the original operations.
     fn folder_with_database(name: &str) -> (PathBuf, PathBuf) {
-        let folder = request_log::testing::new_temporary_folder(name);
+        let folder = data_layer_operation_log::testing::new_temporary_folder(name);
         std::fs::create_dir_all(&folder).unwrap();
         let database_path = folder.join("data_layer.sqlite");
         let connection = rusqlite::Connection::open(&database_path).unwrap();
@@ -474,15 +474,15 @@ mod tests {
         (folder, database_path)
     }
 
-    /// Records one request of the package `source_control` in a log, and reads it back as a paired request.
-    fn recorded_query(folder: &Path, sql: &str) -> PairedRequest {
-        let log_file = folder.join("data_layer_requests.jsonl");
+    /// Records one operation of the package `source_control` in a log, and reads it back as a paired operation.
+    fn recorded_query(folder: &Path, sql: &str) -> PairedOperation {
+        let log_file = folder.join("data_layer_operations.jsonl");
         let logger = Arc::new(Logger::new(LogSettings::for_file(&log_file)));
         with_logger(logger, || {
-            let spec = RequestSpec::new("source_control", "query", RequestKind::Query).sql(sql);
+            let spec = OperationSpec::new("source_control", "query", OperationKind::Query).sql(sql);
             let _ = record(spec, || Ok::<_, String>(vec![1, 2]), |rows| Summary::count(rows.len()));
         });
-        read_log(&log_file, request_log::now_milliseconds()).unwrap().requests.remove(0)
+        read_log(&log_file, data_layer_operation_log::now_milliseconds()).unwrap().operations.remove(0)
     }
 
     fn options(database_path: &Path) -> ReplayOptions {
@@ -498,18 +498,18 @@ mod tests {
     }
 
     #[test]
-    fn a_replayed_query_runs_the_statement_and_marks_its_requests_as_a_replay() {
+    fn a_replayed_query_runs_the_statement_and_marks_its_operations_as_a_replay() {
         let (folder, database_path) = folder_with_database("replay-query");
         let original = recorded_query(&folder, "select count(*) as n from commits");
         let (runs, events) =
-            request_log::testing::capture(|| replay_request(&original, &options(&database_path), 3).unwrap());
+            data_layer_operation_log::testing::capture(|| replay_operation(&original, &options(&database_path), 3).unwrap());
         assert_eq!(runs.len(), 3);
         assert_eq!(runs[0].result_count, Some(1));
         assert!(runs.iter().all(|run| run.error.is_none()));
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts.len(), 3);
-        assert!(starts.iter().all(|start| start.origin == request_log::ORIGIN_REPLAY));
-        assert!(starts.iter().all(|start| start.replay_of.as_deref() == Some(original.start.request_id.as_str())));
+        assert!(starts.iter().all(|start| start.origin == data_layer_operation_log::ORIGIN_REPLAY));
+        assert!(starts.iter().all(|start| start.replay_of.as_deref() == Some(original.start.operation_id.as_str())));
         assert_eq!(starts[0].package, "source_control");
     }
 
@@ -517,7 +517,7 @@ mod tests {
     fn a_replayed_query_is_read_only_so_a_statement_that_writes_fails_and_changes_nothing() {
         let (folder, database_path) = folder_with_database("replay-write");
         let original = recorded_query(&folder, "delete from commits");
-        let runs = replay_request(&original, &options(&database_path), 1).unwrap();
+        let runs = replay_operation(&original, &options(&database_path), 1).unwrap();
         assert!(runs[0].error.is_some());
         let connection = rusqlite::Connection::open(&database_path).unwrap();
         let count: i64 = connection.query_row("select count(*) from commits", [], |row| row.get(0)).unwrap();
@@ -534,15 +534,15 @@ mod tests {
     }
 
     #[test]
-    fn a_nested_request_and_an_operation_that_only_runs_inside_a_query_or_a_synchronization_are_refused() {
+    fn a_nested_operation_and_an_operation_that_only_runs_inside_a_query_or_a_synchronization_are_refused() {
         let (folder, _) = folder_with_database("replay-nested");
         let mut original = recorded_query(&folder, "select 1");
         assert_eq!(replay_refusal(&original), None);
-        original.start.parent_request_id = Some("r-1".to_string());
-        assert!(replay_refusal(&original).unwrap().contains("Replay the request that holds it"));
-        original.start.parent_request_id = None;
-        original.start.operation = "upsert_commits".to_string();
-        original.start.kind = RequestKind::Write;
+        original.start.parent_operation_id = Some("r-1".to_string());
+        assert!(replay_refusal(&original).unwrap().contains("Replay the operation that holds it"));
+        original.start.parent_operation_id = None;
+        original.start.operation_name = "upsert_commits".to_string();
+        original.start.kind = OperationKind::Write;
         assert!(replay_refusal(&original).unwrap().contains("only a query"));
     }
 
@@ -550,25 +550,25 @@ mod tests {
     fn a_synchronization_needs_a_new_isolated_file_that_is_not_a_file_of_heidrun() {
         let (folder, database_path) = folder_with_database("replay-isolation");
         let mut original = recorded_query(&folder, "select 1");
-        original.start.operation = "synchronize".to_string();
-        original.start.kind = RequestKind::Synchronization;
+        original.start.operation_name = "synchronize".to_string();
+        original.start.kind = OperationKind::Synchronization;
         original.start.parameters = json!({ "mode": "update", "repository": "a/b" });
-        let without_file = replay_request(&original, &options(&database_path), 1).unwrap_err();
+        let without_file = replay_operation(&original, &options(&database_path), 1).unwrap_err();
         assert!(without_file.contains("--isolated-database"));
         let mut same_file = options(&database_path);
         same_file.isolated_database = Some(database_path.clone());
-        assert!(replay_request(&original, &same_file, 1).unwrap_err().contains("Give another path"));
+        assert!(replay_operation(&original, &same_file, 1).unwrap_err().contains("Give another path"));
         let mut default_file = options(&database_path);
         default_file.isolated_database = Some(default_file.default_database_path.clone());
-        assert!(replay_request(&original, &default_file, 1).unwrap_err().contains("Give another path"));
+        assert!(replay_operation(&original, &default_file, 1).unwrap_err().contains("Give another path"));
         let mut existing_file = options(&database_path);
         let existing = folder.join("existing.sqlite");
         std::fs::write(&existing, "x").unwrap();
         existing_file.isolated_database = Some(existing);
-        assert!(replay_request(&original, &existing_file, 1).unwrap_err().contains("exists already"));
+        assert!(replay_operation(&original, &existing_file, 1).unwrap_err().contains("exists already"));
         let mut twice = options(&database_path);
         twice.isolated_database = Some(folder.join("new.sqlite"));
-        assert!(replay_request(&original, &twice, 2).unwrap_err().contains("runs once"));
+        assert!(replay_operation(&original, &twice, 2).unwrap_err().contains("runs once"));
     }
 
     #[test]
@@ -576,12 +576,12 @@ mod tests {
         let (folder, database_path) = folder_with_database("replay-network");
         let mut original = recorded_query(&folder, "select 1");
         original.start.package = "code_hosting".to_string();
-        original.start.operation = "synchronize".to_string();
-        original.start.kind = RequestKind::Synchronization;
+        original.start.operation_name = "synchronize".to_string();
+        original.start.kind = OperationKind::Synchronization;
         original.start.parameters = json!({ "mode": "update", "repository": "a/b" });
         let mut replay_options = options(&database_path);
         replay_options.isolated_database = Some(folder.join("isolated.sqlite"));
-        let error = replay_request(&original, &replay_options, 1).unwrap_err();
+        let error = replay_operation(&original, &replay_options, 1).unwrap_err();
         assert!(error.contains("--allow-network"));
         assert_eq!(replay_options.isolated_database.as_ref().unwrap().exists(), false);
     }
@@ -602,21 +602,21 @@ mod tests {
     fn a_row_has_the_original_and_the_replay_side_by_side() {
         let (folder, database_path) = folder_with_database("replay-row");
         let original = recorded_query(&folder, "select count(*) as n from commits");
-        let runs = replay_request(&original, &options(&database_path), 1).unwrap();
+        let runs = replay_operation(&original, &options(&database_path), 1).unwrap();
         let row = replay_row(&original, &runs[0]);
-        assert_eq!(row["originalRequestId"], original.start.request_id.as_str());
+        assert_eq!(row["originalOperationId"], original.start.operation_id.as_str());
         assert_eq!(row["originalResultCount"], 2);
         assert_eq!(row["replayResultCount"], 1);
         assert_eq!(row["outcome"], "success");
         assert!(row["replayMilliseconds"].as_f64().unwrap() >= 0.0);
     }
 
-    /// Runs `call` with a log in `folder`, and reads back the first request that it wrote.
-    fn recorded_call(folder: &Path, call: impl FnOnce()) -> PairedRequest {
-        let log_file = folder.join("data_layer_requests_call.jsonl");
+    /// Runs `call` with a log in `folder`, and reads back the first operation that it wrote.
+    fn recorded_call(folder: &Path, call: impl FnOnce()) -> PairedOperation {
+        let log_file = folder.join("data_layer_operations_call.jsonl");
         let logger = Arc::new(Logger::new(LogSettings::for_file(&log_file)));
         with_logger(logger, call);
-        read_log(&log_file, request_log::now_milliseconds()).unwrap().requests.remove(0)
+        read_log(&log_file, data_layer_operation_log::now_milliseconds()).unwrap().operations.remove(0)
     }
 
     /// A SQLite file that exists and holds no table of any package, so every `find_*` call gives an empty answer.
@@ -654,15 +654,15 @@ mod tests {
             }),
         ];
         for original in &originals {
-            assert_eq!(replay_refusal(original), None, "{}", original.start.operation);
+            assert_eq!(replay_refusal(original), None, "{}", original.start.operation_name);
             let (runs, events) =
-                request_log::testing::capture(|| replay_request(original, &options(&database_path), 2).unwrap());
-            assert!(runs.iter().all(|run| run.error.is_none() && run.result_count == Some(0)), "{} {runs:?}", original.start.operation);
-            let starts = request_log::testing::starts(&events);
-            let top: Vec<_> = starts.iter().filter(|start| start.parent_request_id.is_none()).collect();
-            assert_eq!(top.len(), 2, "{}", original.start.operation);
-            assert!(top.iter().all(|start| start.operation == original.start.operation));
-            assert!(starts.iter().all(|start| start.origin == request_log::ORIGIN_REPLAY));
+                data_layer_operation_log::testing::capture(|| replay_operation(original, &options(&database_path), 2).unwrap());
+            assert!(runs.iter().all(|run| run.error.is_none() && run.result_count == Some(0)), "{} {runs:?}", original.start.operation_name);
+            let starts = data_layer_operation_log::testing::starts(&events);
+            let top: Vec<_> = starts.iter().filter(|start| start.parent_operation_id.is_none()).collect();
+            assert_eq!(top.len(), 2, "{}", original.start.operation_name);
+            assert!(top.iter().all(|start| start.operation_name == original.start.operation_name));
+            assert!(starts.iter().all(|start| start.origin == data_layer_operation_log::ORIGIN_REPLAY));
         }
     }
 
@@ -673,25 +673,25 @@ mod tests {
         let original = recorded_call(&folder, || {
             data_layer_user_activity::refresh_user_activity(&folder.join("original.sqlite"), &records_file).unwrap();
         });
-        assert_eq!(original.start.operation, "refresh_user_activity");
+        assert_eq!(original.start.operation_name, "refresh_user_activity");
         assert_eq!(replay_refusal(&original), None);
-        let without_file = replay_request(&original, &options(&database_path), 1).unwrap_err();
+        let without_file = replay_operation(&original, &options(&database_path), 1).unwrap_err();
         assert!(without_file.contains("--isolated-database"));
         let mut replay_options = options(&database_path);
         replay_options.isolated_database = Some(folder.join("isolated.sqlite"));
         replay_options.is_recorded_path_used = true;
-        assert!(replay_request(&original, &replay_options, 2).unwrap_err().contains("runs once"));
-        let (runs, events) = request_log::testing::capture(|| replay_request(&original, &replay_options, 1).unwrap());
+        assert!(replay_operation(&original, &replay_options, 2).unwrap_err().contains("runs once"));
+        let (runs, events) = data_layer_operation_log::testing::capture(|| replay_operation(&original, &replay_options, 1).unwrap());
         assert!(runs[0].error.is_none(), "{runs:?}");
         assert!(folder.join("isolated.sqlite").exists());
-        assert!(request_log::testing::starts(&events).iter().all(|start| start.origin == request_log::ORIGIN_REPLAY));
-        assert!(replay_request(&original, &replay_options, 1).unwrap_err().contains("exists already"));
+        assert!(data_layer_operation_log::testing::starts(&events).iter().all(|start| start.origin == data_layer_operation_log::ORIGIN_REPLAY));
+        assert!(replay_operation(&original, &replay_options, 1).unwrap_err().contains("exists already"));
         let mut code_hosting = original.clone();
-        code_hosting.start.operation = "refresh_code_hosting".to_string();
+        code_hosting.start.operation_name = "refresh_code_hosting".to_string();
         code_hosting.start.package = "code_hosting".to_string();
         let mut other_file = options(&database_path);
         other_file.isolated_database = Some(folder.join("other.sqlite"));
-        assert!(replay_request(&code_hosting, &other_file, 1).unwrap_err().contains("--allow-network"));
+        assert!(replay_operation(&code_hosting, &other_file, 1).unwrap_err().contains("--allow-network"));
         assert!(!folder.join("other.sqlite").exists());
     }
 
@@ -699,10 +699,10 @@ mod tests {
     fn the_calls_that_use_the_network_for_prices_or_depend_on_the_state_of_the_process_are_refused() {
         let (folder, _) = folder_with_database("replay-refused-refresh");
         let mut original = recorded_query(&folder, "select 1");
-        original.start.kind = RequestKind::Synchronization;
-        for operation in ["refresh_ai_cost", "refresh_model_prices", "refresh_model_prices_when_due"] {
-            original.start.operation = operation.to_string();
-            assert!(replay_refusal(&original).unwrap().contains("cannot be replayed"), "{operation}");
+        original.start.kind = OperationKind::Synchronization;
+        for operation_name in ["refresh_ai_cost", "refresh_model_prices", "refresh_model_prices_when_due"] {
+            original.start.operation_name = operation_name.to_string();
+            assert!(replay_refusal(&original).unwrap().contains("cannot be replayed"), "{operation_name}");
         }
     }
 }

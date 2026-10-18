@@ -1,6 +1,6 @@
-//! A request in the log: `record` runs an operation of a package between a start event and a completion event.
+//! An operation in the log: `record` runs a public function of a package between a start event and a completion event.
 //!
-//! This is the one place where a package records a request. A package calls `record` in the public operation itself, so the
+//! This is the one place where a package records an operation. A package calls `record` in the public function itself, so the
 //! desktop application, the command line `heidrun_data`, and the own command line of the package all write the same events,
 //! and a new operation has no need of a timer in the caller.
 //!
@@ -12,7 +12,7 @@
 
 use crate::clock::{now_milliseconds, system_time_milliseconds, utc_text};
 use crate::event::{
-    empty_object, CompleteEvent, ErrorCategory, Event, Outcome, RequestKind, StartEvent, FORMAT_VERSION, ORIGIN_APPLICATION,
+    empty_object, CompleteEvent, ErrorCategory, Event, Outcome, OperationKind, StartEvent, FORMAT_VERSION, ORIGIN_APPLICATION,
     ORIGIN_REPLAY,
 };
 use crate::logger::{current_logger, Logger};
@@ -26,39 +26,39 @@ use std::sync::Arc;
 use std::time::Instant;
 
 thread_local! {
-    /// The identifiers of the requests that started on this thread and did not end, the newest last.
-    static OPEN_REQUESTS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
-    /// The identifier of the request that a replay runs again, while a replay runs on this thread.
-    static REPLAYED_REQUEST: RefCell<Option<String>> = const { RefCell::new(None) };
+    /// The identifiers of the operations that started on this thread and did not end, the newest last.
+    static OPEN_OPERATIONS: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+    /// The identifier of the operation that a replay runs again, while a replay runs on this thread.
+    static REPLAYED_OPERATION: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
-/// What a package says about a request when it starts.
+/// What a package says about an operation when it starts.
 #[derive(Debug, Clone)]
-pub struct RequestSpec {
+pub struct OperationSpec {
     /// The name of the package, without the prefix `data_layer_`.
     package: &'static str,
-    /// The stable name of the operation.
-    operation: &'static str,
+    /// The stable name of the public function that the operation calls.
+    operation_name: &'static str,
     /// What the operation does with the data.
-    kind: RequestKind,
+    kind: OperationKind,
     /// The values that decide the workload, in the order in which the package gave them.
     parameters: Map<String, Value>,
-    /// The choices that make the pattern of the request.
+    /// The choices that make the pattern of the operation.
     choices: Vec<String>,
-    /// The SQL statement of the request, when it has one.
+    /// The SQL statement of the operation, when it has one.
     sql: Option<String>,
-    /// The SQLite file that the request works on, when it has one.
+    /// The SQLite file that the operation works on, when it has one.
     database: Option<PathBuf>,
     /// What is known without cost about the data.
     state: Map<String, Value>,
 }
 
-impl RequestSpec {
-    /// The start of the description of a request.
-    pub fn new(package: &'static str, operation: &'static str, kind: RequestKind) -> Self {
-        RequestSpec {
+impl OperationSpec {
+    /// The start of the description of an operation.
+    pub fn new(package: &'static str, operation_name: &'static str, kind: OperationKind) -> Self {
+        OperationSpec {
             package,
-            operation,
+            operation_name,
             kind,
             parameters: Map::new(),
             choices: Vec::new(),
@@ -75,7 +75,7 @@ impl RequestSpec {
     }
 
     /// A value that decides the workload and that has only a few possible values, for example the grouping interval, the
-    /// sort order, or the mode. It is a parameter, and it is part of the pattern, so a summary counts together the requests
+    /// sort order, or the mode. It is a parameter, and it is part of the pattern, so a summary counts together the operations
     /// that have the same choices and other repositories or other dates.
     pub fn choice(mut self, name: &str, value: impl Into<Value>) -> Self {
         let value = value.into();
@@ -84,14 +84,14 @@ impl RequestSpec {
         self
     }
 
-    /// The SQL statement of the request. The parameter `sql` holds it, without secrets and cut when it is too long, and the
+    /// The SQL statement of the operation. The parameter `sql` holds it, without secrets and cut when it is too long, and the
     /// pattern holds it without its values.
     pub fn sql(mut self, sql: &str) -> Self {
         self.sql = Some(sql.to_string());
         self
     }
 
-    /// The SQLite file that the request works on. The parameter `databasePath` holds its path, and the state holds its size
+    /// The SQLite file that the operation works on. The parameter `databasePath` holds its path, and the state holds its size
     /// and the time of its last change.
     pub fn database(mut self, path: &Path) -> Self {
         self.database = Some(path.to_path_buf());
@@ -105,7 +105,7 @@ impl RequestSpec {
     }
 }
 
-/// What a package says about a request when it ends.
+/// What a package says about an operation when it ends.
 #[derive(Debug, Clone, Default)]
 pub struct Summary {
     /// The number of rows, items, or files that the operation returned or wrote.
@@ -132,88 +132,88 @@ impl Summary {
     }
 }
 
-/// A request that started and did not end. Ending it, or dropping it, writes the completion event.
-pub struct Request {
+/// An operation that started and did not end. Ending it, or dropping it, writes the completion event.
+pub struct Operation {
     /// The log that holds the events, or `None` when the log is off.
     logger: Option<Arc<Logger>>,
-    /// The identifier of the request.
-    request_id: String,
-    /// The package of the request.
+    /// The identifier of the operation.
+    operation_id: String,
+    /// The package of the operation.
     package: &'static str,
-    /// The operation of the request.
-    operation: &'static str,
+    /// The operation name.
+    operation_name: &'static str,
     /// The moment after the start event was written, from the monotonic clock.
     started: Instant,
     /// True once the completion event was written.
     is_done: bool,
 }
 
-impl Request {
+impl Operation {
     /// Writes the start event, and starts the monotonic clock. Nothing is written when the log is off.
-    pub fn start(spec: RequestSpec) -> Request {
+    pub fn start(spec: OperationSpec) -> Operation {
         let logger = current_logger();
         if logger.is_enabled() == false {
-            return Request {
+            return Operation {
                 logger: None,
-                request_id: String::new(),
+                operation_id: String::new(),
                 package: spec.package,
-                operation: spec.operation,
+                operation_name: spec.operation_name,
                 started: Instant::now(),
                 is_done: false,
             };
         }
         let started_at = now_milliseconds();
-        let parent_request_id = OPEN_REQUESTS.with(|open| open.borrow().last().cloned());
-        let replay_of = REPLAYED_REQUEST.with(|replayed| replayed.borrow().clone());
-        let request_id = logger.next_request_id(started_at);
-        let concurrent_requests = logger.enter();
+        let parent_operation_id = OPEN_OPERATIONS.with(|open| open.borrow().last().cloned());
+        let replay_of = REPLAYED_OPERATION.with(|replayed| replayed.borrow().clone());
+        let operation_id = logger.next_operation_id(started_at);
+        let concurrent_operations = logger.enter();
         let mut event = Event::Start(StartEvent {
             v: FORMAT_VERSION,
-            request_id: request_id.clone(),
-            parent_request_id,
+            operation_id: operation_id.clone(),
+            parent_operation_id,
             caller: logger.caller(),
             origin: if replay_of.is_some() { ORIGIN_REPLAY } else { ORIGIN_APPLICATION }.to_string(),
             replay_of,
             package: spec.package.to_string(),
-            operation: spec.operation.to_string(),
+            operation_name: spec.operation_name.to_string(),
             kind: spec.kind,
             parameters: parameters_of(&spec),
             pattern: pattern_of(&spec),
             started_at: utc_text(started_at),
             process_id: std::process::id(),
             software_version: env!("CARGO_PKG_VERSION").to_string(),
-            concurrent_requests,
+            concurrent_operations,
             state: state_of(&spec),
             dropped_events: None,
         });
         logger.write(&mut event);
-        OPEN_REQUESTS.with(|open| open.borrow_mut().push(request_id.clone()));
-        Request {
+        OPEN_OPERATIONS.with(|open| open.borrow_mut().push(operation_id.clone()));
+        Operation {
             logger: Some(logger),
-            request_id,
+            operation_id,
             package: spec.package,
-            operation: spec.operation,
+            operation_name: spec.operation_name,
             started: Instant::now(),
             is_done: false,
         }
     }
 
-    /// The identifier of the request, or an empty text when the log is off.
-    pub fn request_id(&self) -> &str {
-        &self.request_id
+    /// The identifier of the operation, or an empty text when the log is off.
+    pub fn operation_id(&self) -> &str {
+        &self.operation_id
     }
 
-    /// Ends the request with a result.
+    /// Ends the operation with a result.
     pub fn succeed(mut self, summary: Summary) {
         self.finish(Outcome::Success, None, summary);
     }
 
-    /// Ends the request with an error. Only the category of the error goes in the log, never its text.
+    /// Ends the operation with an error. Only the category of the error goes in the log, never its text.
     pub fn fail(self, message: &str) {
         self.fail_with(message, Summary::none());
     }
 
-    /// Ends the request with an error and a summary, for an operation that did part of its work before it failed, for example
+    /// Ends the operation with an error and a summary, for an operation that did part of its work before it failed, for example
     /// a synchronization of four sources where one source failed.
     pub fn fail_with(mut self, message: &str, summary: Summary) {
         self.finish(Outcome::Failure, Some(ErrorCategory::of_message(message)), summary);
@@ -229,13 +229,13 @@ impl Request {
         let Some(logger) = &self.logger else {
             return;
         };
-        OPEN_REQUESTS.with(|open| open.borrow_mut().retain(|id| *id != self.request_id));
+        OPEN_OPERATIONS.with(|open| open.borrow_mut().retain(|id| *id != self.operation_id));
         logger.leave();
         let mut event = Event::Complete(CompleteEvent {
             v: FORMAT_VERSION,
-            request_id: self.request_id.clone(),
+            operation_id: self.operation_id.clone(),
             package: self.package.to_string(),
-            operation: self.operation.to_string(),
+            operation_name: self.operation_name.to_string(),
             ended_at: utc_text(system_time_milliseconds(std::time::SystemTime::now())),
             duration_microseconds: elapsed.as_micros() as u64,
             outcome,
@@ -248,8 +248,8 @@ impl Request {
     }
 }
 
-impl Drop for Request {
-    /// A request that is dropped before it ends is written as a failure: `panic` when the thread is unwinding, else `dropped`.
+impl Drop for Operation {
+    /// An operation that is dropped before it ends is written as a failure: `panic` when the thread is unwinding, else `dropped`.
     fn drop(&mut self) {
         if self.is_done {
             return;
@@ -265,49 +265,49 @@ impl Drop for Request {
 /// The log never changes the result and never hides the original error: a failure of the log is counted and ignored, and a
 /// panic of the operation goes on after the completion event is written.
 pub fn record<T, E: Display>(
-    spec: RequestSpec,
+    spec: OperationSpec,
     run: impl FnOnce() -> Result<T, E>,
     summarize: impl FnOnce(&T) -> Summary,
 ) -> Result<T, E> {
-    let request = Request::start(spec);
+    let operation = Operation::start(spec);
     let result = run();
     match &result {
         Ok(value) => {
             let summary = catch_unwind(AssertUnwindSafe(|| summarize(value))).unwrap_or_default();
-            request.succeed(summary);
+            operation.succeed(summary);
         }
-        Err(error) => request.fail(&error.to_string()),
+        Err(error) => operation.fail(&error.to_string()),
     }
     result
 }
 
 /// Runs an operation that cannot fail between a start event and a completion event, and gives back what it gave.
-pub fn record_value<T>(spec: RequestSpec, run: impl FnOnce() -> T, summarize: impl FnOnce(&T) -> Summary) -> T {
-    let request = Request::start(spec);
+pub fn record_value<T>(spec: OperationSpec, run: impl FnOnce() -> T, summarize: impl FnOnce(&T) -> Summary) -> T {
+    let operation = Operation::start(spec);
     let value = run();
     let summary = catch_unwind(AssertUnwindSafe(|| summarize(&value))).unwrap_or_default();
-    request.succeed(summary);
+    operation.succeed(summary);
     value
 }
 
-/// Runs a closure so that every request that starts inside it, on this thread, has the origin `replay` and the field
-/// `replayOf` with the identifier of the request that is run again. A summary leaves these requests out by default.
-pub fn replaying<T>(replayed_request_id: &str, run: impl FnOnce() -> T) -> T {
+/// Runs a closure so that every operation that starts inside it, on this thread, has the origin `replay` and the field
+/// `replayOf` with the identifier of the operation that is run again. A summary leaves these operations out by default.
+pub fn replaying<T>(replayed_operation_id: &str, run: impl FnOnce() -> T) -> T {
     struct Restore(Option<String>);
     impl Drop for Restore {
         fn drop(&mut self) {
             let previous = self.0.take();
-            REPLAYED_REQUEST.with(|replayed| *replayed.borrow_mut() = previous);
+            REPLAYED_OPERATION.with(|replayed| *replayed.borrow_mut() = previous);
         }
     }
-    let previous = REPLAYED_REQUEST.with(|replayed| replayed.borrow_mut().replace(replayed_request_id.to_string()));
+    let previous = REPLAYED_OPERATION.with(|replayed| replayed.borrow_mut().replace(replayed_operation_id.to_string()));
     let _restore = Restore(previous);
     run()
 }
 
 /// The parameters of the start event: the parameters of the package, the SQL statement, and the path of the database, with
 /// every text without secrets.
-fn parameters_of(spec: &RequestSpec) -> Value {
+fn parameters_of(spec: &OperationSpec) -> Value {
     let mut parameters = spec.parameters.clone();
     if let Some(sql) = &spec.sql {
         let (text, is_truncated) = truncate_text(&redact_text(sql));
@@ -324,7 +324,7 @@ fn parameters_of(spec: &RequestSpec) -> Value {
 
 /// The pattern of the start event: the SQL statement without its values, then the choices. The statement has no value left
 /// to hide, so the pattern is not redacted.
-fn pattern_of(spec: &RequestSpec) -> String {
+fn pattern_of(spec: &OperationSpec) -> String {
     let mut parts = Vec::new();
     if let Some(sql) = &spec.sql {
         parts.push(truncate_text(&normalize_sql(sql)).0);
@@ -334,7 +334,7 @@ fn pattern_of(spec: &RequestSpec) -> String {
 }
 
 /// The state of the start event: the facts of the package, the size of the SQLite file, and the time of its last change.
-fn state_of(spec: &RequestSpec) -> Value {
+fn state_of(spec: &OperationSpec) -> Value {
     let mut state = spec.state.clone();
     if let Some(database) = &spec.database {
         match std::fs::metadata(database) {
@@ -357,12 +357,12 @@ mod tests {
     use super::*;
     use crate::testing::capture;
 
-    fn query_spec(sql: &str) -> RequestSpec {
-        RequestSpec::new("source_control", "query", RequestKind::Query).sql(sql)
+    fn query_spec(sql: &str) -> OperationSpec {
+        OperationSpec::new("source_control", "query", OperationKind::Query).sql(sql)
     }
 
     #[test]
-    fn a_request_writes_a_start_event_and_a_completion_event_with_the_same_identifier() {
+    fn a_operation_writes_a_start_event_and_a_completion_event_with_the_same_identifier() {
         let (result, events) = capture(|| {
             record(query_spec("select 1"), || Ok::<_, String>(vec![1, 2, 3]), |rows| Summary::count(rows.len()))
         });
@@ -371,11 +371,11 @@ mod tests {
         let (Event::Start(start), Event::Complete(complete)) = (&events[0], &events[1]) else {
             panic!("the events are {events:?}");
         };
-        assert_eq!(start.request_id, complete.request_id);
-        assert_eq!((start.package.as_str(), start.operation.as_str()), ("source_control", "query"));
-        assert_eq!(start.kind, RequestKind::Query);
+        assert_eq!(start.operation_id, complete.operation_id);
+        assert_eq!((start.package.as_str(), start.operation_name.as_str()), ("source_control", "query"));
+        assert_eq!(start.kind, OperationKind::Query);
         assert_eq!(start.origin, ORIGIN_APPLICATION);
-        assert_eq!(start.parent_request_id, None);
+        assert_eq!(start.parent_operation_id, None);
         assert_eq!(start.parameters["sql"], "select 1");
         assert_eq!(complete.outcome, Outcome::Success);
         assert_eq!(complete.result_count, Some(3));
@@ -400,10 +400,10 @@ mod tests {
     }
 
     #[test]
-    fn a_nested_request_names_its_parent_and_the_parent_has_none() {
+    fn a_nested_operation_names_its_parent_and_the_parent_has_none() {
         let (_, events) = capture(|| {
-            record(RequestSpec::new("heidrun_data", "synchronize", RequestKind::Synchronization), || {
-                record(RequestSpec::new("source_control", "synchronize", RequestKind::Synchronization), || Ok::<_, String>(()), |_| {
+            record(OperationSpec::new("heidrun_data", "synchronize", OperationKind::Synchronization), || {
+                record(OperationSpec::new("source_control", "synchronize", OperationKind::Synchronization), || Ok::<_, String>(()), |_| {
                     Summary::none()
                 })
             }, |_| Summary::none())
@@ -416,25 +416,25 @@ mod tests {
             })
             .collect();
         assert_eq!(starts.len(), 2);
-        assert_eq!(starts[0].parent_request_id, None);
-        assert_eq!(starts[1].parent_request_id.as_deref(), Some(starts[0].request_id.as_str()));
+        assert_eq!(starts[0].parent_operation_id, None);
+        assert_eq!(starts[1].parent_operation_id.as_deref(), Some(starts[0].operation_id.as_str()));
     }
 
     #[test]
-    fn a_request_after_a_nested_one_has_no_parent_again() {
+    fn a_operation_after_a_nested_one_has_no_parent_again() {
         let (_, events) = capture(|| {
             let _ = record(query_spec("select 1"), || Ok::<_, String>(()), |_| Summary::none());
             let _ = record(query_spec("select 2"), || Ok::<_, String>(()), |_| Summary::none());
         });
         for event in &events {
             if let Event::Start(start) = event {
-                assert_eq!(start.parent_request_id, None);
+                assert_eq!(start.parent_operation_id, None);
             }
         }
     }
 
     #[test]
-    fn two_requests_in_two_threads_have_different_identifiers_and_no_parent() {
+    fn two_operations_in_two_threads_have_different_identifiers_and_no_parent() {
         let (_, events) = capture(|| {
             let logger = current_logger();
             let handles: Vec<_> = (0..4)
@@ -451,18 +451,18 @@ mod tests {
                 handle.join().unwrap().unwrap();
             }
         });
-        let identifiers: std::collections::HashSet<&str> = events.iter().map(Event::request_id).collect();
+        let identifiers: std::collections::HashSet<&str> = events.iter().map(Event::operation_id).collect();
         assert_eq!(identifiers.len(), 4);
         assert_eq!(events.len(), 8);
         for event in &events {
             if let Event::Start(start) = event {
-                assert_eq!(start.parent_request_id, None);
+                assert_eq!(start.parent_operation_id, None);
             }
         }
     }
 
     #[test]
-    fn a_panic_ends_the_request_as_a_failure_and_goes_on() {
+    fn a_panic_ends_the_operation_as_a_failure_and_goes_on() {
         let (outcome, events) = capture(|| {
             catch_unwind(AssertUnwindSafe(|| {
                 let _ = record(query_spec("select 1"), || -> Result<(), String> { panic!("the operation panics") }, |_| Summary::none());
@@ -478,10 +478,10 @@ mod tests {
     }
 
     #[test]
-    fn a_request_that_is_dropped_is_a_failure_with_the_category_dropped() {
+    fn a_operation_that_is_dropped_is_a_failure_with_the_category_dropped() {
         let (_, events) = capture(|| {
-            let request = Request::start(query_spec("select 1"));
-            drop(request);
+            let operation = Operation::start(query_spec("select 1"));
+            drop(operation);
         });
         let Event::Complete(complete) = &events[1] else {
             panic!("the events are {events:?}");
@@ -490,7 +490,7 @@ mod tests {
     }
 
     #[test]
-    fn a_replay_marks_every_request_inside_it() {
+    fn a_replay_marks_every_operation_inside_it() {
         let (_, events) = capture(|| {
             let _ = replaying("original-1", || record(query_spec("select 1"), || Ok::<_, String>(()), |_| Summary::none()));
             let _ = record(query_spec("select 2"), || Ok::<_, String>(()), |_| Summary::none());
@@ -526,7 +526,7 @@ mod tests {
     #[test]
     fn a_choice_is_a_parameter_and_part_of_the_pattern() {
         let (_, events) = capture(|| {
-            let spec = RequestSpec::new("coding_agents", "find_usage", RequestKind::Query)
+            let spec = OperationSpec::new("coding_agents", "find_usage", OperationKind::Query)
                 .parameter("repository", "heidrun-org/heidrun")
                 .choice("grouping", "hour");
             let _ = record(spec, || Ok::<_, String>(()), |_| Summary::none());
@@ -550,7 +550,7 @@ mod tests {
 
     #[test]
     fn a_log_that_cannot_write_does_not_change_the_result() {
-        let blocker = std::env::temp_dir().join(format!("request-log-blocker-{}", std::process::id()));
+        let blocker = std::env::temp_dir().join(format!("operation-log-blocker-{}", std::process::id()));
         std::fs::write(&blocker, "x").unwrap();
         let logger = Arc::new(Logger::new(crate::settings::LogSettings::for_file(&blocker.join("inside").join("log.jsonl"))));
         let result = crate::logger::with_logger(logger.clone(), || {

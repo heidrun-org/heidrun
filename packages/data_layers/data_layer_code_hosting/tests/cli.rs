@@ -97,7 +97,7 @@ impl Fixture {
     fn run(&self, arguments: &[&str]) -> CliResult {
         let output = Command::new(env!("CARGO_BIN_EXE_data_layer_code_hosting"))
             .args(arguments)
-            .env("HEIDRUN_REQUEST_LOG_FILE", "off")
+            .env("HEIDRUN_OPERATION_LOG_FILE", "off")
             .env("PATH", format!("{}:/usr/bin:/bin", self.folder.join("bin").display()))
             .env("FAKE_GH_DIRECTORY", &self.folder)
             .current_dir(&self.folder)

@@ -3,8 +3,8 @@
 
 use crate::model::types::UserActivityRecord;
 use crate::storage::database::UserActivityDatabase;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 use std::path::Path;
 
 /// The records of the SQLite file at `database_path` whose active period overlaps the time range from `since` to `until`, the
@@ -14,14 +14,14 @@ use std::path::Path;
 /// # Errors
 /// An error when a time is not a time with an offset, or when the SQLite file cannot be read.
 pub fn find_user_activity_records(database_path: &Path, since: &str, until: &str) -> Result<Vec<UserActivityRecord>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "find_user_activity_records", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "find_user_activity_records", OperationKind::Query)
         .parameter("since", since)
         .parameter("until", until)
         .database(database_path);
     record(spec, || find_user_activity_records_inside(database_path, since, until), |records| Summary::count(records.len()))
 }
 
-/// The work of `find_user_activity_records`, between the start event and the completion event of its request.
+/// The work of `find_user_activity_records`, between the start event and the completion event of its operation.
 fn find_user_activity_records_inside(database_path: &Path, since: &str, until: &str) -> Result<Vec<UserActivityRecord>, String> {
     if !database_path.exists() {
         crate::model::utc_time::to_utc_text(since)?;
@@ -55,25 +55,25 @@ mod tests {
     }
 
     #[test]
-    fn a_find_is_one_request_with_the_range_and_the_count_and_a_failure_has_a_category_only() {
+    fn a_find_is_one_operation_with_the_range_and_the_count_and_a_failure_has_a_category_only() {
         let file_path = write_file("query_events", &[line_with_offset(&record(1), 2), line_with_offset(&record(5), 2)]);
         let database_path = temp_folder("query_events_database").join("data_layer.sqlite");
         refresh_user_activity(&database_path, &file_path).unwrap();
         let (found, events) =
-            request_log::testing::capture(|| find_user_activity_records(&database_path, &time(0, 0), &time(23, 0)).unwrap());
+            data_layer_operation_log::testing::capture(|| find_user_activity_records(&database_path, &time(0, 0), &time(23, 0)).unwrap());
         assert_eq!(found.len(), 2);
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "user_activity.find_user_activity_records");
         assert!(tree.contains(&"  user_activity.find_records_overlapping".to_string()), "{tree:?}");
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].parameters["since"], time(0, 0));
-        assert_eq!(starts[0].kind, request_log::RequestKind::Query);
-        assert_eq!(request_log::testing::completion_of(&events, &starts[0].request_id).unwrap().result_count, Some(2));
+        assert_eq!(starts[0].kind, data_layer_operation_log::OperationKind::Query);
+        assert_eq!(data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap().result_count, Some(2));
         let (error, events) =
-            request_log::testing::capture(|| find_user_activity_records(&database_path, "yesterday", &time(23, 0)).unwrap_err());
-        let starts = request_log::testing::starts(&events);
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
-        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+            data_layer_operation_log::testing::capture(|| find_user_activity_records(&database_path, "yesterday", &time(23, 0)).unwrap_err());
+        let starts = data_layer_operation_log::testing::starts(&events);
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.outcome, data_layer_operation_log::Outcome::Failure);
         assert!(error.contains("yesterday"));
         assert!(complete.error_category.is_some());
     }

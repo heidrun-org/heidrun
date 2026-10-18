@@ -8,8 +8,8 @@
 use crate::git::git_reader::GitReader;
 use crate::model::types::{SynchronizationMode, SynchronizationReport};
 use crate::storage::database::SourceControlDatabase;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 use std::collections::HashSet;
 
 /// Reads the commits of a repository, and writes them in the database. `log` receives one line of progress for the number of
@@ -25,7 +25,7 @@ pub fn run(
     reader: &GitReader,
     log: &dyn Fn(&str),
 ) -> Result<SynchronizationReport, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize", OperationKind::Synchronization)
         .choice("mode", mode.name())
         .parameter("repository", repository)
         .database(database.database_path());
@@ -34,7 +34,7 @@ pub fn run(
     })
 }
 
-/// The work of `run`, between the start event and the completion event of its request.
+/// The work of `run`, between the start event and the completion event of its operation.
 fn synchronize(
     mode: SynchronizationMode,
     repository: &str,
@@ -229,17 +229,17 @@ mod tests {
     }
 
     #[test]
-    fn a_synchronization_records_one_request_with_the_collection_and_the_write_inside_it() {
-        let (repository, _) = TestRepository::with_four_commits("request_log");
+    fn a_synchronization_records_one_operation_with_the_collection_and_the_write_inside_it() {
+        let (repository, _) = TestRepository::with_four_commits("data_layer_operation_log");
         let runner = GitCommandRunner::new(&repository.folder);
         let reader = GitReader::new(&runner, &ignore_log);
-        let mut database = new_database("request_log_database");
-        let (report, events) = request_log::testing::capture(|| {
+        let mut database = new_database("operation_log_database");
+        let (report, events) = data_layer_operation_log::testing::capture(|| {
             run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &reader, &ignore_log).unwrap()
         });
         assert_eq!(report.commit_count, 4);
         assert_eq!(
-            request_log::testing::tree(&events),
+            data_layer_operation_log::testing::tree(&events),
             vec![
                 "source_control.synchronize",
                 "  source_control.list_hashes",
@@ -247,50 +247,50 @@ mod tests {
                 "  source_control.upsert_commits",
             ]
         );
-        let starts = request_log::testing::starts(&events);
-        assert_eq!(starts[0].kind, request_log::RequestKind::Synchronization);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].kind, data_layer_operation_log::OperationKind::Synchronization);
         assert_eq!(starts[0].parameters["mode"], "initialize");
         assert_eq!(starts[0].parameters["repository"], REPOSITORY);
         assert_eq!(starts[0].pattern, "mode=initialize");
         for start in &starts {
-            let complete = request_log::testing::completion_of(&events, &start.request_id).unwrap();
-            assert_eq!(complete.outcome, request_log::Outcome::Success);
+            let complete = data_layer_operation_log::testing::completion_of(&events, &start.operation_id).unwrap();
+            assert_eq!(complete.outcome, data_layer_operation_log::Outcome::Success);
         }
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(4));
         assert_eq!(complete.details["knownCommitCount"], 0);
     }
 
     #[test]
-    fn the_mode_update_records_the_read_of_the_known_hashes_as_a_query_inside_the_request() {
-        let (repository, _) = TestRepository::with_four_commits("request_log_update");
+    fn the_mode_update_records_the_read_of_the_known_hashes_as_a_query_inside_the_operation() {
+        let (repository, _) = TestRepository::with_four_commits("operation_log_update");
         let runner = GitCommandRunner::new(&repository.folder);
         let reader = GitReader::new(&runner, &ignore_log);
-        let mut database = new_database("request_log_update_database");
+        let mut database = new_database("operation_log_update_database");
         run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &reader, &ignore_log).unwrap();
-        let (_, events) = request_log::testing::capture(|| {
+        let (_, events) = data_layer_operation_log::testing::capture(|| {
             run(SynchronizationMode::Update, REPOSITORY, &mut database, &reader, &ignore_log).unwrap()
         });
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "source_control.synchronize");
         assert!(tree.contains(&"  source_control.find_known_hashes".to_string()), "{tree:?}");
-        assert_eq!(request_log::testing::starts(&events)[0].parameters["mode"], "update");
+        assert_eq!(data_layer_operation_log::testing::starts(&events)[0].parameters["mode"], "update");
     }
 
     #[test]
     fn a_synchronization_that_fails_records_the_failure_and_gives_back_the_error() {
-        let (repository, _) = TestRepository::with_four_commits("request_log_failure");
+        let (repository, _) = TestRepository::with_four_commits("operation_log_failure");
         let runner = GitCommandRunner::new(&repository.folder.join("a_folder_that_does_not_exist"));
         let reader = GitReader::new(&runner, &ignore_log);
-        let mut database = new_database("request_log_failure_database");
-        let (result, events) = request_log::testing::capture(|| {
+        let mut database = new_database("operation_log_failure_database");
+        let (result, events) = data_layer_operation_log::testing::capture(|| {
             run(SynchronizationMode::Initialize, REPOSITORY, &mut database, &reader, &ignore_log)
         });
         let error = result.unwrap_err();
         assert!(error.is_empty() == false);
-        let starts = request_log::testing::starts(&events);
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
-        assert_eq!(complete.outcome, request_log::Outcome::Failure);
+        let starts = data_layer_operation_log::testing::starts(&events);
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
+        assert_eq!(complete.outcome, data_layer_operation_log::Outcome::Failure);
         assert!(complete.error_category.is_some());
         let line = serde_json::to_string(&events).unwrap_or_default();
         assert!(line.contains(&error) == false, "the text of the error is in the log");

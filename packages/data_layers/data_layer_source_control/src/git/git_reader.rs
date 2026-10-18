@@ -3,8 +3,8 @@
 
 use crate::git::git_runner::GitRunner;
 use crate::model::types::Commit;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The number of commits that one command `git log` reads.
 const BATCH_SIZE: usize = 500;
@@ -51,11 +51,11 @@ impl<'a> GitReader<'a> {
     /// # Errors
     /// An error when the command `git` fails, for example when the folder is not in a Git repository.
     pub fn list_hashes(&self) -> Result<Vec<String>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "list_hashes", RequestKind::Collection);
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "list_hashes", OperationKind::Collection);
         record(spec, || self.list_hashes_inside(), |hashes| Summary::count(hashes.len()))
     }
 
-    /// The work of `list_hashes`, between the start event and the completion event of its request.
+    /// The work of `list_hashes`, between the start event and the completion event of its operation.
     fn list_hashes_inside(&self) -> Result<Vec<String>, String> {
         let output = self.runner.run(&["rev-list", "--branches", "--remotes", "--tags"], None)?;
         let hashes: Vec<String> =
@@ -69,12 +69,12 @@ impl<'a> GitReader<'a> {
     /// # Errors
     /// An error when the command `git` fails, or when its answer does not hold one record for each hash.
     pub fn read_commits(&self, hashes: &[String]) -> Result<Vec<Commit>, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "read_commits", RequestKind::Collection)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "read_commits", OperationKind::Collection)
             .parameter("commitCount", hashes.len());
         record(spec, || self.read_commits_inside(hashes), |commits| Summary::count(commits.len()))
     }
 
-    /// The work of `read_commits`, between the start event and the completion event of its request.
+    /// The work of `read_commits`, between the start event and the completion event of its operation.
     fn read_commits_inside(&self, hashes: &[String]) -> Result<Vec<Commit>, String> {
         let mut commits = Vec::with_capacity(hashes.len());
         let batch_count = hashes.len().div_ceil(self.batch_size);

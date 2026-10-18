@@ -216,8 +216,6 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
 
-  packages/auxiliary/request_log: {}
-
   packages/auxiliary/website_public:
     devDependencies:
       '@vitejs/plugin-vue':
@@ -245,6 +243,8 @@ importers:
   packages/data_layers/data_layer_code_hosting: {}
 
   packages/data_layers/data_layer_coding_agents: {}
+
+  packages/data_layers/data_layer_operation_log: {}
 
   packages/data_layers/data_layer_source_control: {}
 

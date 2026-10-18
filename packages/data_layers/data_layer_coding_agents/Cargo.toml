@@ -33,5 +33,5 @@ chrono-tz = "0.10"
 iana-time-zone = "0.1"
 # Fetches the public price list of the models, with a blocking call
 ureq = { version = "3", default-features = false, features = ["rustls"] }
-# Records the start and the end of each public operation in the log of the requests of the data layer
-request_log = { path = "../../auxiliary/request_log" }
+# Records the start and the end of each public function in the log of the operations of the data layer
+data_layer_operation_log = { path = "../data_layer_operation_log" }

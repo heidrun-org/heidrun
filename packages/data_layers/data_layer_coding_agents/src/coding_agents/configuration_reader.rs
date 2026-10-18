@@ -17,8 +17,8 @@ use crate::model::types::CodingAgent;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::REQUEST_PACKAGE;
-use request_log::{record_value, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record_value, OperationKind, OperationSpec, Summary};
 
 /// The folders where the configuration of the coding agent is.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,14 +48,14 @@ struct ItemFolder {
 /// Reads the memory files, the subagents, and the skills of the repository, in the order of `ConfigurationKind::ALL`. A folder
 /// that does not exist gives no item.
 pub fn read_configuration(folders: &ConfigurationFolders) -> Vec<ConfigurationRead> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_configuration", RequestKind::Collection)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "read_configuration", OperationKind::Collection)
         .parameter("root", folders.root.display().to_string());
     record_value(spec, || read_configuration_inside(folders), |reads| {
         Summary::count(reads.iter().map(|read| read.items.len()).sum())
     })
 }
 
-/// The work of `read_configuration`, between the start event and the completion event of its request.
+/// The work of `read_configuration`, between the start event and the completion event of its operation.
 fn read_configuration_inside(folders: &ConfigurationFolders) -> Vec<ConfigurationRead> {
     ConfigurationKind::ALL
         .into_iter()

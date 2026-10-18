@@ -10,8 +10,8 @@ use crate::model::types::UserActivityRecord;
 use crate::model::utc_time::to_utc_text;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The name of the file of the user activity records.
 pub const USER_ACTIVITY_FILE_NAME: &str = "user_activity.jsonl";
@@ -51,14 +51,14 @@ impl UserActivityFileReader {
     /// An error when the file exists and cannot be read, for example when the path is a folder. A file that does not exist
     /// is not an error: the web frontend writes the file only when the first active period ends.
     pub fn read(&self, log: &dyn Fn(&str)) -> Result<UserActivityFileReading, String> {
-        let spec = RequestSpec::new(REQUEST_PACKAGE, "read_file", RequestKind::Collection)
+        let spec = OperationSpec::new(OPERATION_PACKAGE, "read_file", OperationKind::Collection)
             .parameter("file", self.file_path.display().to_string());
         record(spec, || self.read_inside(log), |reading| {
             Summary::count(reading.records.len()).detail("skippedLineCount", reading.skipped_line_count)
         })
     }
 
-    /// The work of `read`, between the start event and the completion event of its request.
+    /// The work of `read`, between the start event and the completion event of its operation.
     fn read_inside(&self, log: &dyn Fn(&str)) -> Result<UserActivityFileReading, String> {
         let bytes = match std::fs::read(&self.file_path) {
             Ok(bytes) => bytes,

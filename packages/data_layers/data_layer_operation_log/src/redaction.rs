@@ -1,6 +1,6 @@
 //! What the log never holds: a credential, an authentication token, and the text of a source.
 //!
-//! A package builds the parameters of a request from a short list of fields that it chooses, so the text of a conversation
+//! A package builds the parameters of an operation from a short list of fields that it chooses, so the text of a conversation
 //! never enters a parameter. This module is the second protection: every text goes through `redact_text` before it is
 //! written, and a field whose name says that it holds a secret is replaced as a whole.
 

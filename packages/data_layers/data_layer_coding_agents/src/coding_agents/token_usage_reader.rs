@@ -27,8 +27,8 @@ use crate::model::token_usage_types::{ChatTokenUsage, MinuteTokens};
 use crate::model::types::CodingAgent;
 use std::collections::HashMap;
 use std::path::Path;
-use crate::REQUEST_PACKAGE;
-use request_log::{record_value, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record_value, OperationKind, OperationSpec, Summary};
 
 /// Where the chat session files are, and the cache of their scans.
 pub struct TokenUsageFiles<'a> {
@@ -49,14 +49,14 @@ pub fn read_token_usage(
     modified_since: Option<i64>,
     log: &dyn Fn(&str),
 ) -> Vec<ChatTokenUsage> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_token_usage", RequestKind::Collection)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "read_token_usage", OperationKind::Collection)
         .parameter("folder", folder)
         .parameter("modifiedSince", modified_since)
         .state("scanCacheEntries", files.cache.scan_count());
     record_value(spec, || read_token_usage_inside(files, folder, modified_since, log), |usages| Summary::count(usages.len()))
 }
 
-/// The work of `read_token_usage`, between the start event and the completion event of its request.
+/// The work of `read_token_usage`, between the start event and the completion event of its operation.
 fn read_token_usage_inside(
     files: &mut TokenUsageFiles,
     folder: &str,

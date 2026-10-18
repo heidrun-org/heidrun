@@ -38,8 +38,8 @@ pub use synchronization::run as synchronize;
 
 use std::path::PathBuf;
 
-/// The name of this package in the log of the requests of the data layer, without the prefix `data_layer_`.
-pub(crate) const REQUEST_PACKAGE: &str = "source_control";
+/// The name of this package in the log of the operations of the data layer, without the prefix `data_layer_`.
+pub(crate) const OPERATION_PACKAGE: &str = "source_control";
 
 /// The path of the SQLite file in `HEIDRUN_DIR`, or, when the variable is unset or empty, `~/.config/heidrun/data_layer.sqlite`. It is the same file as
 /// the file of the other data layer packages, and each package writes its own tables in it.

@@ -86,7 +86,7 @@ What the tables do not hold:
 
 The tokens are stored for each minute, and the cost is calculated by the view `token_usage_with_cost`. A question about tokens or dollars needs no chat session file: it is a query, or the command `usage`.
 
-- **A minute is the minute of the record** that reports the tokens of a request, in UTC. The tokens are not measured while the model writes them: a request that lasts three minutes puts all its tokens in one minute. A record without a date has `minuteAt` equal to the empty text: its tokens are in the total of the chat session, and in no time range. A request without a known model has `model` equal to the empty text.
+- **A minute is the minute of the record** that reports the tokens of an operation, in UTC. The tokens are not measured while the model writes them: an operation that lasts three minutes puts all its tokens in one minute. A record without a date has `minuteAt` equal to the empty text: its tokens are in the total of the chat session, and in no time range. An operation without a known model has `model` equal to the empty text.
 - **The workspace is the column `folder`**: the folder where the chat session started. A workspace owns the rows whose `folder` is its folder or a folder below it, such as a worktree. Write that as `(folder = '/Users/me/app' OR (folder >= '/Users/me/app/' AND folder < '/Users/me/app0'))`, which uses the index. A chat session counts once, so two workspaces that overlap never count a row twice if you put both tests in one `WHERE` with `OR`.
 - **Always limit the time range with `minuteAt`**, as text: `minuteAt >= '2026-10-01' AND minuteAt < '2026-11-01'`. The index `token_usage_minutes_by_minute` serves `repository` and `minuteAt`.
 - **The cost is an estimate.** It is the tokens of each kind multiplied by the public price of the model, from the price list of LiteLLM, in US dollars for one million tokens. It is not an invoice, and not the payment of a subscription. The four kinds of tokens have four prices; a price that the list does not give for the cache is the input price. A model name that ends with a date (`-20251001`) uses the price of the name without the date.
@@ -161,27 +161,27 @@ With `--format jsonl`, each line has these fields:
 
 `read issue` and `read pull_request` need the repository. The default is the remote `origin` of the current folder; `--repository owner/name` replaces it. `read chat_session` and `read commit` work from any folder of the repository, a worktree included.
 
-## The command `requests`
+## The command `operations`
 
-Every public operation of the four data layers and of `heidrun_data` writes a start line and an end line in the request log, `~/.config/heidrun/data_layer_requests.jsonl` (the variable `HEIDRUN_REQUEST_LOG_FILE` gives another file). `requests` reads it. Use it to answer: who asks the data layer for what, how often, how long it takes, what fails, what never ended, and what asks the same thing again and again.
+Every public function of the four data layers and of `heidrun_data` writes a start line and an end line in the operation log, `~/.config/heidrun/data_layer_operations.jsonl` (the variable `HEIDRUN_OPERATION_LOG_FILE` gives another file). `operations` reads it. Use it to answer: who asks the data layer for what, how often, how long it takes, what fails, what never ended, and what asks the same thing again and again.
 
 | Command | What it prints |
 | --- | --- |
-| `heidrun_data requests info` | The log file, its size, the version of its format, and the counts of requests, failed requests, unfinished requests, and damaged lines. |
-| `heidrun_data requests summary` | One row for each group of requests: `caller`, `package`, `operation`, `workload`, `count`, `succeeded`, `failed`, `running`, `interrupted`, the times in milliseconds (`totalMilliseconds`, `meanMilliseconds`, `medianMilliseconds`, `p90Milliseconds`, `p95Milliseconds`, `p99Milliseconds`, `maximumMilliseconds`), and the `repositories`. The largest total time comes first. |
-| `heidrun_data requests list` | The requests one by one, with `parameters`, `pattern`, `state`, `durationMilliseconds`, `outcome`, `errorCategory`, and `resultCount`. |
-| `heidrun_data requests replay` | Runs recorded requests again, and prints `originalMilliseconds` next to `replayMilliseconds`. |
-| `heidrun_data requests snapshot --to <path>` | A consistent copy of the SQLite file, for the replay of queries. |
-| `heidrun_data requests overhead` | The time and the bytes that the log adds to a request. |
+| `heidrun_data operations info` | The log file, its size, the version of its format, and the counts of operations, failed operations, unfinished operations, and damaged lines. |
+| `heidrun_data operations summary` | One row for each group of operations: `caller`, `package`, `operationName`, `workload`, `count`, `succeeded`, `failed`, `running`, `interrupted`, the times in milliseconds (`totalMilliseconds`, `meanMilliseconds`, `medianMilliseconds`, `p90Milliseconds`, `p95Milliseconds`, `p99Milliseconds`, `maximumMilliseconds`), and the `repositories`. The largest total time comes first. |
+| `heidrun_data operations list` | The operations one by one, with `parameters`, `pattern`, `state`, `durationMilliseconds`, `outcome`, `errorCategory`, and `resultCount`. |
+| `heidrun_data operations replay` | Runs recorded operations again, and prints `originalMilliseconds` next to `replayMilliseconds`. |
+| `heidrun_data operations snapshot --to <path>` | A consistent copy of the SQLite file, for the replay of queries. |
+| `heidrun_data operations overhead` | The time and the bytes that the log adds to an operation. |
 
 The `workload` tells `stored_data_query` (rows that the SQLite file holds), `collection` (a read of a source), `initial_import` (the mode initialize), `incremental_synchronization` (the mode update), `synchronization` (no mode, such as the refresh of the prices), `database_write`, and `lock_wait`. Time a collection, a synchronization, and a query separately: they are different workloads.
 
-- `--by pattern` groups the requests that ask for the same thing with other values. `--by parameters --repeated` finds the same request asked again and again.
-- A request that runs inside another one (the lock and the write inside a synchronization) is nested. It is left out unless `--nested` is given.
-- `--unfinished` shows the requests that never ended. `running` means the process still lives. `interrupted` means the process is gone, or the request is older than one hour. It is never a success.
-- Filters: `--caller`, `--package`, `--operation`, `--since`, `--until` (UTC), `--minimum-milliseconds`, `--state`, `--limit`, and `--slowest` for `list`.
-- A replay needs a snapshot for a query: `heidrun_data requests replay --id <request id> --database <snapshot> --repeat 5`. A replay of a synchronization, or of a `refresh_*` call of the desktop application, needs a new file: `--isolated-database <path>`. It never writes the real SQLite file, and it skips the source `code_hosting` and the price list unless `--allow-network` is given. The replayed requests are in the log with the origin `replay`, and a summary leaves them out unless `--replays` or `--only-replays` is given.
-- A replay times a request on the data of today. The numbers of rows can differ from the original, and a replay does not repeat a lock wait. A statement that the log cut or cleaned of a secret is not replayed.
+- `--by operation-name` (the default) groups the operations by caller, package, and operation name. `--by pattern` groups the operations that ask for the same thing with other values. `--by parameters --repeated` finds the same call made again and again.
+- An operation that runs inside another one (the lock and the write inside a synchronization) is nested. It is left out unless `--nested` is given.
+- `--unfinished` shows the operations that never ended. `running` means the process still lives. `interrupted` means the process is gone, or the operation is older than one hour. It is never a success.
+- Filters: `--caller`, `--package`, `--operation-name`, `--since`, `--until` (UTC), `--minimum-milliseconds`, `--state`, `--limit`, and `--slowest` for `list`.
+- A replay needs a snapshot for a query: `heidrun_data operations replay --id <operation id> --database <snapshot> --repeat 5`. A replay of a synchronization, or of a `refresh_*` call of the desktop application, needs a new file: `--isolated-database <path>`. It never writes the real SQLite file, and it skips the source `code_hosting` and the price list unless `--allow-network` is given. The replayed operations are in the log with the origin `replay`, and a summary leaves them out unless `--replays` or `--only-replays` is given.
+- A replay times an operation on the data of today. The numbers of rows can differ from the original, and a replay does not repeat a lock wait. A statement that the log cut or cleaned of a secret is not replayed.
 
 ## Example: post-mortem of an issue
 
@@ -260,7 +260,7 @@ WHERE repository = 'heidrun-org/heidrun'
 
 Dates are text, so `date('now', '-10 day')` can replace the fixed date. Then `heidrun_data read chat_session <id> --format jsonl` on each one.
 
-- **What the developer typed**: the lines with `role` equal to `developer`. Not all of them are typed: skip the chat sessions whose `title` is `Guardian review` (approval reviews of Codex), and the texts that start with `<` (`<turn_aborted>`, `<command-name>`, `<local-command-stdout>`), with `[Request interrupted`, with `>>>`, or with `[N] user:` where `N` is a number. A text typed many times is a candidate for a macro of Heidrun.
+- **What the developer typed**: the lines with `role` equal to `developer`. Not all of them are typed: skip the chat sessions whose `title` is `Guardian review` (approval reviews of Codex), and the texts that start with `<` (`<turn_aborted>`, `<command-name>`, `<local-command-stdout>`), with `[Operation interrupted`, with `>>>`, or with `[N] user:` where `N` is a number. A text typed many times is a candidate for a macro of Heidrun.
 - **What the developer ran**: the lines with `role` equal to `tool` whose text starts with `Bash:` (Claude Code) or `shell:` (Codex). A command run many times is a candidate for a launcher of Heidrun.
 - **What failed**: the lines with `role` equal to `tool` whose text starts with `result:`. For Claude Code, count the lines with `isError` equal to `true`: the mark comes from Claude Code, so it is exact. For Codex, `isError` is `null`, so look in the text: `Exit code N` where `N` is not 0, `<tool_use_error>`, or a shell error such as `command not found`. Codex wraps its results in a JSON text, so read the text inside it. Do not count `test result: ok. 0 failed`, which is a success, and do not count `The user doesn't want to proceed with this tool use`, which is a choice of the developer. A failure that appears in many chat sessions is a candidate for one sentence in `AGENTS.md`, with the chat sessions as proof.
 
@@ -274,7 +274,7 @@ The folder `references` holds the documents that this skill rests on. Read a doc
 ## Rules
 
 - Give `--format jsonl` on every command, so that you never depend on the default (`jsonl` when the output is piped, `table` in a terminal). An error is one JSON line on the standard error output, and the exit code is 1.
-- Never write the SQLite file: `query` opens it read only, and `read` writes nothing. Only `update` and `initialize` write it, through the data layers. `requests` reads the log file only, and a replay writes only a new file that `--isolated-database` names.
+- Never write the SQLite file: `query` opens it read only, and `read` writes nothing. Only `update` and `initialize` write it, through the data layers. `operations` reads the log file only, and a replay writes only a new file that `--isolated-database` names.
 - Never guess a field name or a join: `heidrun_data schema` gives them.
 - Give the ids of the chat sessions, the hashes, and the numbers that your answer rests on, so the developer can read them too.
 - A chat session may hold a text that the developer pasted, for example a secret. Quote only what the question needs.

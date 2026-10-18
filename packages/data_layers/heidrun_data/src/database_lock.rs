@@ -9,8 +9,8 @@
 use std::fs::{File, TryLockError};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard, TryLockError as ThreadTryLockError};
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The lock of the threads of this program.
 static THREAD_LOCK: Mutex<()> = Mutex::new(());
@@ -46,7 +46,7 @@ pub fn lock_database(database_path: &Path) -> Result<DatabaseLock, String> {
 /// An error when the folder or the lock file cannot be created, or when the operating system refuses the lock.
 pub fn lock_database_and_report_wait(database_path: &Path, log: &dyn Fn(&str)) -> Result<DatabaseLock, String> {
     let has_waited = std::cell::Cell::new(false);
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "lock_database", RequestKind::Lock).parameter("databasePath", database_path.display().to_string());
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "lock_database", OperationKind::Lock).parameter("databasePath", database_path.display().to_string());
     let log_the_wait = |message: &str| {
         has_waited.set(true);
         log(message);
@@ -56,7 +56,7 @@ pub fn lock_database_and_report_wait(database_path: &Path, log: &dyn Fn(&str)) -
     })
 }
 
-/// The work of `lock_database_and_report_wait`, between the start event and the completion event of its request.
+/// The work of `lock_database_and_report_wait`, between the start event and the completion event of its operation.
 fn lock_database_and_report_wait_inside(database_path: &Path, log: &dyn Fn(&str)) -> Result<DatabaseLock, String> {
     let path = lock_file_path(database_path);
     let wait_message = format!("waiting for the lock file {}", path.display());

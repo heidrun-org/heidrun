@@ -10,8 +10,8 @@ use crate::model::types::{ChatSession, ChatSessionRecord, ChatSessionRelations, 
 use chrono::{DateTime, SecondsFormat, Utc};
 use std::collections::HashSet;
 use std::path::Path;
-use crate::REQUEST_PACKAGE;
-use request_log::{record_value, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record_value, OperationKind, OperationSpec, Summary};
 
 /// The most characters of the title of a stored chat session. A longer title ends with an ellipsis.
 const TITLE_LENGTH: usize = 160;
@@ -52,7 +52,7 @@ pub fn read_chat_session_files(
     modified_since: Option<i64>,
     log: &dyn Fn(&str),
 ) -> ChatSessionRead {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_chat_session_files", RequestKind::Collection)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "read_chat_session_files", OperationKind::Collection)
         .parameter("folder", folder)
         .parameter("modifiedSince", modified_since)
         .state("scanCacheEntries", cache.scan_count());
@@ -63,7 +63,7 @@ pub fn read_chat_session_files(
     )
 }
 
-/// The work of `read_chat_session_files`, between the start event and the completion event of its request.
+/// The work of `read_chat_session_files`, between the start event and the completion event of its operation.
 fn read_chat_session_files_inside(
     cache: &mut ScanCache,
     claude_projects: &Path,

@@ -142,8 +142,8 @@ struct Fixture {
     repository: PathBuf,
     database_path: PathBuf,
     user_activity_file: PathBuf,
-    /// The log file of the requests of the data layer, in the folder of the fixture, so no test writes the log of the developer.
-    request_log_file: PathBuf,
+    /// The log file of the operations of the data layer, in the folder of the fixture, so no test writes the log of the developer.
+    operation_log_file: PathBuf,
 }
 
 /// The result of one run of the executable.
@@ -211,7 +211,7 @@ impl Fixture {
         std::fs::write(&user_activity_file, format!("{}\n{}\n", user_activity_line(10), user_activity_line(11))).unwrap();
         Fixture {
             database_path: folder.join("data_layer.sqlite"),
-            request_log_file: folder.join("data_layer_requests.jsonl"),
+            operation_log_file: folder.join("data_layer_operations.jsonl"),
             repository,
             user_activity_file,
             folder,
@@ -236,14 +236,14 @@ impl Fixture {
 
     /// Runs the executable in the Git repository with the fake sources, and gives `input` on the standard input.
     fn run_with_input(&self, arguments: &[&str], input: &str) -> CliResult {
-        self.run_with_log_file(arguments, input, &self.request_log_file.display().to_string())
+        self.run_with_log_file(arguments, input, &self.operation_log_file.display().to_string())
     }
 
-    /// Runs the executable like `run_with_input`, with `log_file` as the value of the variable `HEIDRUN_REQUEST_LOG_FILE`.
+    /// Runs the executable like `run_with_input`, with `log_file` as the value of the variable `HEIDRUN_OPERATION_LOG_FILE`.
     fn run_with_log_file(&self, arguments: &[&str], input: &str, log_file: &str) -> CliResult {
         let mut child = Command::new(env!("CARGO_BIN_EXE_heidrun_data"))
             .args(arguments)
-            .env("HEIDRUN_REQUEST_LOG_FILE", log_file)
+            .env("HEIDRUN_OPERATION_LOG_FILE", log_file)
             .env("PATH", format!("{}:/usr/bin:/bin", self.folder.join("bin").display()))
             .env("FAKE_GH_DIRECTORY", &self.folder)
             .env("CLAUDE_CONFIG_DIR", self.folder.join("claude"))
@@ -727,7 +727,7 @@ fn update_waits_while_another_program_holds_the_lock_of_the_sqlite_file() {
     let database = fixture.database_path.display().to_string();
     let mut child = Command::new(env!("CARGO_BIN_EXE_heidrun_data"))
         .args(["update", "user_activity", "--file", &file, "--database", &database, "--format", "jsonl"])
-        .env("HEIDRUN_REQUEST_LOG_FILE", &fixture.request_log_file)
+        .env("HEIDRUN_OPERATION_LOG_FILE", &fixture.operation_log_file)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
@@ -862,7 +862,7 @@ fn skill_text() -> String {
 /// The help of the program and of each command, in one text.
 fn all_help_text(fixture: &Fixture) -> String {
     let mut text = String::new();
-    for arguments in [vec!["--help"], vec!["sources", "-h"], vec!["update", "-h"], vec!["schema", "-h"], vec!["query", "-h"], vec!["usage", "-h"], vec!["read", "-h"], vec!["requests", "-h"]] {
+    for arguments in [vec!["--help"], vec!["sources", "-h"], vec!["update", "-h"], vec!["schema", "-h"], vec!["query", "-h"], vec!["usage", "-h"], vec!["read", "-h"], vec!["operations", "-h"]] {
         text.push_str(&fixture.run_with_input(&arguments, "").stdout);
     }
     text
@@ -885,7 +885,7 @@ fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does
             if command.is_empty() || command.starts_with('-') {
                 continue;
             }
-            assert!(["sources", "update", "initialize", "schema", "query", "usage", "read", "requests"].contains(&command.as_str()), "{command}: {line}");
+            assert!(["sources", "update", "initialize", "schema", "query", "usage", "read", "operations"].contains(&command.as_str()), "{command}: {line}");
         }
         for word in words(line).into_iter().filter(|word| word.starts_with("--") && word.trim_matches('-').len() > 0) {
             assert!(help_words.contains(&word), "The help has no option {word}");
@@ -945,14 +945,14 @@ fn the_example_queries_of_the_skill_run_on_the_fixtures_and_give_at_least_one_ro
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	The log of the requests of the data layer
+//	The log of the operations of the data layer
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 impl Fixture {
-    /// Runs `requests` with the log file of the fixture, in the format jsonl, and gives its rows.
-    fn requests(&self, arguments: &[&str]) -> Vec<Value> {
-        let mut all_arguments = vec!["requests"];
+    /// Runs `operations` with the log file of the fixture, in the format jsonl, and gives its rows.
+    fn operations(&self, arguments: &[&str]) -> Vec<Value> {
+        let mut all_arguments = vec!["operations"];
         all_arguments.extend_from_slice(arguments);
         all_arguments.extend(["--format", "jsonl"]);
         let result = self.run_with_input(&all_arguments, "");
@@ -962,7 +962,7 @@ impl Fixture {
 
     /// The lines of the log file of the fixture, each read as a JSON object.
     fn log_events(&self) -> Vec<Value> {
-        std::fs::read_to_string(&self.request_log_file)
+        std::fs::read_to_string(&self.operation_log_file)
             .unwrap_or_default()
             .lines()
             .map(|line| serde_json::from_str(line).unwrap_or_else(|_| panic!("Not a JSON line: {line}")))
@@ -970,17 +970,17 @@ impl Fixture {
     }
 
     /// The row of a summary for one operation and one workload, or a panic when there is none.
-    fn group(rows: &[Value], operation: &str, workload: &str) -> Value {
+    fn group(rows: &[Value], operation_name: &str, workload: &str) -> Value {
         rows.iter()
-            .find(|row| row["operation"] == operation && row["workload"] == workload)
-            .unwrap_or_else(|| panic!("No group {operation} {workload} in {rows:?}"))
+            .find(|row| row["operationName"] == operation_name && row["workload"] == workload)
+            .unwrap_or_else(|| panic!("No group {operation_name} {workload} in {rows:?}"))
             .clone()
     }
 }
 
 #[test]
 fn the_summary_tells_an_initial_import_from_an_incremental_synchronization_and_a_stored_data_query() {
-    let fixture = Fixture::new("requests_summary");
+    let fixture = Fixture::new("operations_summary");
     assert_eq!(fixture.update(&["initialize", "--format", "jsonl"]).exit_code, Some(1), "update takes no mode word");
     let initialize = fixture.run(&["initialize", "user_activity", "--file", &fixture.user_activity_file.display().to_string(), "--format", "jsonl"]);
     assert_eq!(initialize.exit_code, Some(0), "{}", initialize.stderr);
@@ -988,7 +988,7 @@ fn the_summary_tells_an_initial_import_from_an_incremental_synchronization_and_a
     for _ in 0..3 {
         fixture.query("SELECT count(*) AS count FROM commits");
     }
-    let rows = fixture.requests(&["summary"]);
+    let rows = fixture.operations(&["summary"]);
     assert_eq!(Fixture::group(&rows, "synchronize", "initial_import")["count"], 1);
     assert_eq!(Fixture::group(&rows, "synchronize", "incremental_synchronization")["count"], 1);
     let queries = Fixture::group(&rows, "query", "stored_data_query");
@@ -997,31 +997,31 @@ fn the_summary_tells_an_initial_import_from_an_incremental_synchronization_and_a
     assert_eq!(queries["package"], "heidrun_data");
     assert_eq!(queries["failed"], 0);
     assert!(queries["p95Milliseconds"].as_f64().unwrap() >= queries["medianMilliseconds"].as_f64().unwrap());
-    assert!(rows.iter().all(|row| row["operation"] != "upsert_commits"), "A nested request is not a request of its own");
+    assert!(rows.iter().all(|row| row["operationName"] != "upsert_commits"), "A nested operation is not an operation of its own");
 }
 
 #[test]
-fn the_nested_requests_are_counted_only_when_the_option_nested_is_given() {
-    let fixture = Fixture::new("requests_nested");
+fn the_nested_operations_are_counted_only_when_the_option_nested_is_given() {
+    let fixture = Fixture::new("operations_nested");
     assert_eq!(fixture.update(&["source_control", "--format", "jsonl"]).exit_code, Some(0));
-    let top_level = fixture.requests(&["list"]);
-    let operations: Vec<&str> = top_level.iter().map(|row| row["operation"].as_str().unwrap()).collect();
+    let top_level = fixture.operations(&["list"]);
+    let operations: Vec<&str> = top_level.iter().map(|row| row["operationName"].as_str().unwrap()).collect();
     assert_eq!(operations, vec!["synchronize"]);
-    let all = fixture.requests(&["list", "--nested"]);
-    let nested: Vec<&Value> = all.iter().filter(|row| row["parentRequestId"].is_string()).collect();
-    assert!(nested.iter().any(|row| row["package"] == "source_control" && row["operation"] == "synchronize"));
+    let all = fixture.operations(&["list", "--nested"]);
+    let nested: Vec<&Value> = all.iter().filter(|row| row["parentOperationId"].is_string()).collect();
+    assert!(nested.iter().any(|row| row["package"] == "source_control" && row["operationName"] == "synchronize"));
     assert!(nested.iter().any(|row| row["kind"] == "lock"));
     assert!(nested.iter().any(|row| row["kind"] == "collection"));
     assert!(nested.iter().any(|row| row["kind"] == "write"));
     let top = &top_level[0];
-    assert!(top["parentRequestId"].is_null());
+    assert!(top["parentOperationId"].is_null());
     assert_eq!(top["kind"], "synchronization");
     assert_eq!(top["parameters"]["sources"], json!(["source_control"]));
 }
 
 #[test]
-fn a_repeated_request_is_found_by_its_parameters_and_a_failed_request_names_its_category_and_not_its_text() {
-    let fixture = Fixture::new("requests_repeated");
+fn a_repeated_operation_is_found_by_its_parameters_and_a_failed_operation_names_its_category_and_not_its_text() {
+    let fixture = Fixture::new("operations_repeated");
     fixture.update(&["--format", "jsonl"]);
     for _ in 0..2 {
         fixture.query("SELECT hash FROM commits WHERE hash = 'a'");
@@ -1029,68 +1029,68 @@ fn a_repeated_request_is_found_by_its_parameters_and_a_failed_request_names_its_
     fixture.query("SELECT hash FROM commits WHERE hash = 'b'");
     let failed = fixture.run(&["query", "--format", "jsonl", "SELECT nothing FROM nowhere"]);
     assert_eq!(failed.exit_code, Some(1));
-    let repeated = fixture.requests(&["summary", "--by", "parameters", "--repeated", "--operation", "query"]);
+    let repeated = fixture.operations(&["summary", "--by", "parameters", "--repeated", "--operation-name", "query"]);
     assert_eq!(repeated.len(), 1);
     assert_eq!(repeated[0]["count"], 2);
-    let patterns = fixture.requests(&["summary", "--by", "pattern", "--operation", "query"]);
+    let patterns = fixture.operations(&["summary", "--by", "pattern", "--operation-name", "query"]);
     let same_pattern = patterns.iter().find(|row| row["count"] == 3).expect("The two values share one pattern");
     assert!(same_pattern["pattern"].as_str().unwrap().contains("hash = ?"));
-    let failures = fixture.requests(&["list", "--state", "failed"]);
+    let failures = fixture.operations(&["list", "--state", "failed"]);
     assert_eq!(failures.len(), 1);
     assert_eq!(failures[0]["errorCategory"], "database_error");
-    let log_text = std::fs::read_to_string(&fixture.request_log_file).unwrap();
+    let log_text = std::fs::read_to_string(&fixture.operation_log_file).unwrap();
     assert!(!log_text.contains("no such table"), "The text of an error stays out of the log");
 }
 
 #[test]
 fn the_log_holds_no_secret_and_no_value_of_a_statement_in_its_pattern() {
-    let fixture = Fixture::new("requests_redaction");
+    let fixture = Fixture::new("operations_redaction");
     fixture.update(&["user_activity", "--format", "jsonl"]);
     let token = "ghp_0123456789abcdefghijklmnopqrstuvwxyz";
     fixture.query(&format!("SELECT '{token}' AS token, 'private words' AS text FROM user_activity_records"));
-    let log_text = std::fs::read_to_string(&fixture.request_log_file).unwrap();
+    let log_text = std::fs::read_to_string(&fixture.operation_log_file).unwrap();
     assert!(!log_text.contains(token));
     assert!(log_text.contains("[redacted]"));
-    let rows = fixture.requests(&["list", "--operation", "query"]);
+    let rows = fixture.operations(&["list", "--operation-name", "query"]);
     assert!(!rows[0]["pattern"].as_str().unwrap().contains("private words"));
 }
 
 #[test]
-fn a_request_that_never_ended_is_running_while_its_process_lives_and_interrupted_after_the_process_is_killed() {
-    let fixture = Fixture::new("requests_unfinished");
+fn a_operation_that_never_ended_is_running_while_its_process_lives_and_interrupted_after_the_process_is_killed() {
+    let fixture = Fixture::new("operations_unfinished");
     let guard = heidrun_data::lock_database(&fixture.database_path).unwrap();
     let file = fixture.user_activity_file.display().to_string();
     let database = fixture.database_path.display().to_string();
     let mut child = Command::new(env!("CARGO_BIN_EXE_heidrun_data"))
         .args(["update", "user_activity", "--file", &file, "--database", &database, "--format", "jsonl"])
-        .env("HEIDRUN_REQUEST_LOG_FILE", &fixture.request_log_file)
+        .env("HEIDRUN_OPERATION_LOG_FILE", &fixture.operation_log_file)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
         .unwrap();
     for _ in 0..100 {
-        if std::fs::read_to_string(&fixture.request_log_file).is_ok_and(|text| text.contains("\"operation\":\"lock_database\"")) {
+        if std::fs::read_to_string(&fixture.operation_log_file).is_ok_and(|text| text.contains("\"operationName\":\"lock_database\"")) {
             break;
         }
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
-    let running = fixture.requests(&["list", "--unfinished", "--nested"]);
-    assert!(running.iter().any(|row| row["operation"] == "synchronize" && row["state"] == "running"), "{running:?}");
+    let running = fixture.operations(&["list", "--unfinished", "--nested"]);
+    assert!(running.iter().any(|row| row["operationName"] == "synchronize" && row["state"] == "running"), "{running:?}");
     assert!(running.iter().any(|row| row["kind"] == "lock" && row["state"] == "running"), "{running:?}");
     assert!(running.iter().all(|row| row["durationMilliseconds"].is_null()));
     child.kill().unwrap();
     child.wait().unwrap();
     drop(guard);
-    let interrupted = fixture.requests(&["summary", "--unfinished"]);
+    let interrupted = fixture.operations(&["summary", "--unfinished"]);
     assert_eq!(Fixture::group(&interrupted, "synchronize", "incremental_synchronization")["interrupted"], 1);
-    let info = &fixture.requests(&["info"])[0];
+    let info = &fixture.operations(&["info"])[0];
     assert_eq!(info["unfinishedCount"], 2);
-    assert_eq!(info["formatVersion"], 1);
+    assert_eq!(info["formatVersion"], 2);
 }
 
 #[test]
 fn a_log_that_cannot_be_written_changes_neither_the_rows_nor_the_exit_code_nor_the_error() {
-    let fixture = Fixture::new("requests_log_failure");
+    let fixture = Fixture::new("operations_log_failure");
     fixture.update(&["--format", "jsonl"]);
     let blocker = fixture.folder.join("not_a_folder");
     std::fs::write(&blocker, "a file").unwrap();
@@ -1112,15 +1112,15 @@ fn a_log_that_cannot_be_written_changes_neither_the_rows_nor_the_exit_code_nor_t
 }
 
 #[test]
-fn programs_that_run_together_write_whole_lines_and_every_request_ends() {
-    let fixture = Fixture::new("requests_concurrent");
+fn programs_that_run_together_write_whole_lines_and_every_operation_ends() {
+    let fixture = Fixture::new("operations_concurrent");
     fixture.update(&["--format", "jsonl"]);
     let database = fixture.database_path.display().to_string();
     let children: Vec<_> = (0..6)
         .map(|_| {
             Command::new(env!("CARGO_BIN_EXE_heidrun_data"))
                 .args(["query", "--format", "jsonl", "--database", &database, "SELECT count(*) AS count FROM commits"])
-                .env("HEIDRUN_REQUEST_LOG_FILE", &fixture.request_log_file)
+                .env("HEIDRUN_OPERATION_LOG_FILE", &fixture.operation_log_file)
                 .stdout(Stdio::null())
                 .spawn()
                 .unwrap()
@@ -1130,62 +1130,62 @@ fn programs_that_run_together_write_whole_lines_and_every_request_ends() {
         assert!(child.wait().unwrap().success());
     }
     assert_eq!(fixture.log_events().len() % 2, 0);
-    let summary = fixture.requests(&["summary", "--operation", "query"]);
+    let summary = fixture.operations(&["summary", "--operation-name", "query"]);
     assert_eq!(summary[0]["count"], 6);
     assert_eq!(summary[0]["succeeded"], 6);
-    let info = &fixture.requests(&["info"])[0];
+    let info = &fixture.operations(&["info"])[0];
     assert_eq!(info["malformedLines"], 0);
     assert_eq!(info["unfinishedCount"], 0);
 }
 
 #[test]
 fn a_replayed_query_runs_on_a_snapshot_and_is_kept_out_of_the_summary_of_the_real_usage() {
-    let fixture = Fixture::new("requests_replay_query");
+    let fixture = Fixture::new("operations_replay_query");
     fixture.update(&["--format", "jsonl"]);
     fixture.query("SELECT count(*) AS count FROM commits");
-    let original = fixture.requests(&["list", "--operation", "query"]).remove(0);
-    let id = original["requestId"].as_str().unwrap().to_string();
+    let original = fixture.operations(&["list", "--operation-name", "query"]).remove(0);
+    let id = original["operationId"].as_str().unwrap().to_string();
     let snapshot = fixture.folder.join("snapshot.sqlite").display().to_string();
-    let made = fixture.run_with_input(&["requests", "snapshot", "--to", &snapshot, "--database", &fixture.database_path.display().to_string(), "--format", "jsonl"], "");
+    let made = fixture.run_with_input(&["operations", "snapshot", "--to", &snapshot, "--database", &fixture.database_path.display().to_string(), "--format", "jsonl"], "");
     assert_eq!(made.exit_code, Some(0), "{}", made.stderr);
-    let again = fixture.run_with_input(&["requests", "snapshot", "--to", &snapshot, "--database", &fixture.database_path.display().to_string()], "");
+    let again = fixture.run_with_input(&["operations", "snapshot", "--to", &snapshot, "--database", &fixture.database_path.display().to_string()], "");
     assert_eq!(again.exit_code, Some(1), "A snapshot is never written over");
-    let rows = fixture.requests(&["replay", "--id", &id, "--database", &snapshot, "--repeat", "3"]);
+    let rows = fixture.operations(&["replay", "--id", &id, "--database", &snapshot, "--repeat", "3"]);
     assert_eq!(rows.len(), 3);
     for (index, row) in rows.iter().enumerate() {
-        assert_eq!(row["originalRequestId"], id.as_str());
+        assert_eq!(row["originalOperationId"], id.as_str());
         assert_eq!(row["run"], index + 1);
         assert_eq!(row["outcome"], "success");
         assert_eq!(row["replayResultCount"], row["originalResultCount"]);
         assert!(row["originalMilliseconds"].is_number() && row["replayMilliseconds"].is_number());
     }
-    let real = fixture.requests(&["summary", "--operation", "query"]);
+    let real = fixture.operations(&["summary", "--operation-name", "query"]);
     assert_eq!(real[0]["count"], 1, "A replay is not real usage");
-    let replays = fixture.requests(&["list", "--only-replays"]);
+    let replays = fixture.operations(&["list", "--only-replays"]);
     assert_eq!(replays.len(), 3);
     assert!(replays.iter().all(|row| row["origin"] == "replay" && row["replayOf"] == id.as_str()));
-    let refused = fixture.run_with_input(&["requests", "replay", "--id", "r-0-0", "--format", "jsonl"], "");
+    let refused = fixture.run_with_input(&["operations", "replay", "--id", "r-0-0", "--format", "jsonl"], "");
     assert_eq!(refused.exit_code, Some(1));
     assert!(refused.stderr.contains("is not in the log"));
 }
 
 #[test]
 fn a_replayed_synchronization_writes_only_a_new_isolated_file_and_never_the_real_file() {
-    let fixture = Fixture::new("requests_replay_sync");
+    let fixture = Fixture::new("operations_replay_sync");
     assert_eq!(fixture.update(&["source_control", "user_activity", "--format", "jsonl"]).exit_code, Some(0));
     let real_before = std::fs::read(&fixture.database_path).unwrap();
-    let id = fixture.requests(&["list", "--operation", "synchronize"]).remove(0)["requestId"].as_str().unwrap().to_string();
-    let missing = fixture.run_with_input(&["requests", "replay", "--id", &id, "--format", "jsonl"], "");
+    let id = fixture.operations(&["list", "--operation-name", "synchronize"]).remove(0)["operationId"].as_str().unwrap().to_string();
+    let missing = fixture.run_with_input(&["operations", "replay", "--id", &id, "--format", "jsonl"], "");
     assert_eq!(missing.exit_code, Some(1));
     assert!(missing.stderr.contains("--isolated-database"));
     let real_path = fixture.database_path.display().to_string();
-    let same = fixture.run_with_input(&["requests", "replay", "--id", &id, "--isolated-database", &real_path, "--format", "jsonl"], "");
+    let same = fixture.run_with_input(&["operations", "replay", "--id", &id, "--isolated-database", &real_path, "--format", "jsonl"], "");
     assert_eq!(same.exit_code, Some(1));
     assert!(same.stderr.contains("exists already"));
     assert_eq!(std::fs::read(&fixture.database_path).unwrap(), real_before);
     let isolated = fixture.folder.join("isolated").join("replay.sqlite");
     let isolated_text = isolated.display().to_string();
-    let rows = fixture.requests(&["replay", "--id", &id, "--isolated-database", &isolated_text, "--use-recorded-paths"]);
+    let rows = fixture.operations(&["replay", "--id", &id, "--isolated-database", &isolated_text, "--use-recorded-paths"]);
     assert_eq!(rows.len(), 1);
     assert_eq!(rows[0]["outcome"], "success", "{rows:?}");
     assert!(rows[0]["originalMilliseconds"].is_number() && rows[0]["replayMilliseconds"].is_number());
@@ -1195,31 +1195,31 @@ fn a_replayed_synchronization_writes_only_a_new_isolated_file_and_never_the_real
     );
     assert_eq!(isolated_rows.json_lines(), vec![json!({ "count": 2 })]);
     assert_eq!(std::fs::read(&fixture.database_path).unwrap(), real_before, "The real file is not touched");
-    let again = fixture.run_with_input(&["requests", "replay", "--id", &id, "--isolated-database", &isolated_text, "--format", "jsonl"], "");
+    let again = fixture.run_with_input(&["operations", "replay", "--id", &id, "--isolated-database", &isolated_text, "--format", "jsonl"], "");
     assert_eq!(again.exit_code, Some(1));
-    let replayed = fixture.requests(&["list", "--only-replays", "--nested"]);
-    assert!(replayed.iter().any(|row| row["package"] == "heidrun_data" && row["operation"] == "synchronize"));
+    let replayed = fixture.operations(&["list", "--only-replays", "--nested"]);
+    assert!(replayed.iter().any(|row| row["package"] == "heidrun_data" && row["operationName"] == "synchronize"));
     assert!(replayed.iter().all(|row| row["origin"] == "replay"));
-    let real = fixture.requests(&["summary"]);
+    let real = fixture.operations(&["summary"]);
     assert_eq!(Fixture::group(&real, "synchronize", "incremental_synchronization")["count"], 1);
 }
 
 #[test]
 fn a_replay_refuses_an_operation_that_runs_inside_another_one_and_a_statement_with_a_secret() {
-    let fixture = Fixture::new("requests_replay_refusals");
+    let fixture = Fixture::new("operations_replay_refusals");
     fixture.update(&["user_activity", "--format", "jsonl"]);
     fixture.query("SELECT 'ghp_0123456789abcdefghijklmnopqrstuvwxyz' AS value FROM user_activity_records");
-    let nested = fixture.requests(&["list", "--nested", "--package", "user_activity", "--limit", "50"]);
-    let inner = nested.iter().find(|row| row["parentRequestId"].is_string()).expect("A nested request");
+    let nested = fixture.operations(&["list", "--nested", "--package", "user_activity", "--limit", "50"]);
+    let inner = nested.iter().find(|row| row["parentOperationId"].is_string()).expect("A nested operation");
     let result = fixture.run_with_input(
-        &["requests", "replay", "--id", inner["requestId"].as_str().unwrap(), "--database", &fixture.database_path.display().to_string()],
+        &["operations", "replay", "--id", inner["operationId"].as_str().unwrap(), "--database", &fixture.database_path.display().to_string()],
         "",
     );
     assert_eq!(result.exit_code, Some(1));
-    assert!(result.stderr.contains("Replay the request that holds it"), "{}", result.stderr);
-    let secret = fixture.requests(&["list", "--operation", "query"]).remove(0);
+    assert!(result.stderr.contains("Replay the operation that holds it"), "{}", result.stderr);
+    let secret = fixture.operations(&["list", "--operation-name", "query"]).remove(0);
     let result = fixture.run_with_input(
-        &["requests", "replay", "--id", secret["requestId"].as_str().unwrap(), "--database", &fixture.database_path.display().to_string()],
+        &["operations", "replay", "--id", secret["operationId"].as_str().unwrap(), "--database", &fixture.database_path.display().to_string()],
         "",
     );
     assert_eq!(result.exit_code, Some(1));
@@ -1228,8 +1228,8 @@ fn a_replay_refuses_an_operation_that_runs_inside_another_one_and_a_statement_wi
 
 #[test]
 fn the_overhead_is_measured_in_time_and_in_bytes_and_stays_under_the_limits_of_the_documentation() {
-    let fixture = Fixture::new("requests_overhead");
-    let mut rows = fixture.requests(&["overhead", "--iterations", "300"]);
+    let fixture = Fixture::new("operations_overhead");
+    let mut rows = fixture.operations(&["overhead", "--iterations", "300"]);
     assert_eq!(rows.len(), 3);
     assert_eq!(rows[0]["log"], "off");
     assert_eq!(rows[1]["log"], "on");
@@ -1238,30 +1238,30 @@ fn the_overhead_is_measured_in_time_and_in_bytes_and_stays_under_the_limits_of_t
         if rows[2]["meanMicroseconds"].as_f64().unwrap() < 1000.0 {
             break;
         }
-        rows = fixture.requests(&["overhead", "--iterations", "300"]);
+        rows = fixture.operations(&["overhead", "--iterations", "300"]);
     }
     assert!(rows[2]["meanMicroseconds"].as_f64().unwrap() < 1000.0, "{rows:?}");
-    assert!(rows[2]["bytesPerRequest"].as_f64().unwrap() < 2048.0, "{rows:?}");
-    assert!(!fixture.request_log_file.exists(), "The measure writes in a temporary file, and not in the log");
+    assert!(rows[2]["bytesPerOperation"].as_f64().unwrap() < 2048.0, "{rows:?}");
+    assert!(!fixture.operation_log_file.exists(), "The measure writes in a temporary file, and not in the log");
 }
 
 #[test]
-fn the_info_and_the_help_of_the_requests_command_describe_the_log_file_and_every_action() {
-    let fixture = Fixture::new("requests_info");
-    let before = fixture.requests(&["info"]);
-    assert_eq!(before[0]["requestCount"], 0);
-    assert_eq!(before[0]["logFile"], fixture.request_log_file.display().to_string().as_str());
+fn the_info_and_the_help_of_the_operations_command_describe_the_log_file_and_every_action() {
+    let fixture = Fixture::new("operations_info");
+    let before = fixture.operations(&["info"]);
+    assert_eq!(before[0]["operationCount"], 0);
+    assert_eq!(before[0]["logFile"], fixture.operation_log_file.display().to_string().as_str());
     fixture.update(&["user_activity", "--format", "jsonl"]);
-    let after = &fixture.requests(&["info"])[0];
-    assert_eq!(after["topLevelRequestCount"], 1);
-    assert!(after["requestCount"].as_u64().unwrap() > 1, "The nested requests are in the count of all requests");
+    let after = &fixture.operations(&["info"])[0];
+    assert_eq!(after["topLevelOperationCount"], 1);
+    assert!(after["operationCount"].as_u64().unwrap() > 1, "The nested operations are in the count of all operations");
     assert!(after["bytes"].as_u64().unwrap() > 0);
-    let help = fixture.run_with_input(&["requests", "--help"], "").stdout;
+    let help = fixture.run_with_input(&["operations", "--help"], "").stdout;
     for action in ["info", "summary", "list", "replay", "snapshot", "overhead"] {
         assert!(help.contains(&format!("  {action}  ")), "{action}");
     }
-    assert!(fixture.run_with_input(&["--help"], "").stdout.contains("requests <action>"));
-    let wrong = fixture.run_with_input(&["requests", "info", "--by", "pattern"], "");
+    assert!(fixture.run_with_input(&["--help"], "").stdout.contains("operations <action>"));
+    let wrong = fixture.run_with_input(&["operations", "info", "--by", "pattern"], "");
     assert_eq!(wrong.exit_code, Some(1));
     assert!(wrong.stderr.contains("not for this action"));
 }

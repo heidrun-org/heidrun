@@ -9,8 +9,8 @@
 use crate::model::types::{SynchronizationMode, SynchronizationReport, UserActivityRecord};
 use crate::storage::database::UserActivityDatabase;
 use crate::user_activity_file::user_activity_file_reader::UserActivityFileReader;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// Reads the records of the file, and writes them in the database. `log` receives the progress of the reading, one line for
 /// the number of records to write, and one line for the write.
@@ -23,7 +23,7 @@ pub fn run(
     database: &mut UserActivityDatabase,
     log: &dyn Fn(&str),
 ) -> Result<SynchronizationReport, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize", OperationKind::Synchronization)
         .choice("mode", mode.name())
         .parameter("file", reader.file_path().display().to_string())
         .database(database.database_path());
@@ -34,7 +34,7 @@ pub fn run(
     })
 }
 
-/// The work of `run`, between the start event and the completion event of its request.
+/// The work of `run`, between the start event and the completion event of its operation.
 fn run_inside(
     mode: SynchronizationMode,
     reader: &UserActivityFileReader,
@@ -317,42 +317,42 @@ mod tests {
     }
 
     #[test]
-    fn a_synchronization_records_one_request_with_the_read_of_the_file_and_the_write_inside_it() {
-        let file_path = file_of_three_records("request_log");
-        let mut database = new_database("request_log_database");
-        let (report, events) = request_log::testing::capture(|| {
+    fn a_synchronization_records_one_operation_with_the_read_of_the_file_and_the_write_inside_it() {
+        let file_path = file_of_three_records("data_layer_operation_log");
+        let mut database = new_database("operation_log_database");
+        let (report, events) = data_layer_operation_log::testing::capture(|| {
             synchronize(SynchronizationMode::Initialize, &file_path, &mut database)
         });
         assert_eq!(report.record_count, 3);
         assert_eq!(
-            request_log::testing::tree(&events),
+            data_layer_operation_log::testing::tree(&events),
             vec![
                 "user_activity.synchronize",
                 "  user_activity.read_file",
                 "  user_activity.upsert_records",
             ]
         );
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].parameters["mode"], "initialize");
         assert_eq!(starts[0].parameters["file"], file_path.display().to_string());
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(3));
         assert_eq!(complete.details["skippedLineCount"], 0);
     }
 
     #[test]
     fn a_query_is_recorded_with_its_statement_and_its_row_count() {
-        let file_path = file_of_three_records("request_log_query");
-        let path = temp_folder("request_log_query_database").join("data_layer.sqlite");
+        let file_path = file_of_three_records("operation_log_query");
+        let path = temp_folder("operation_log_query_database").join("data_layer.sqlite");
         let mut database = UserActivityDatabase::open(&path).unwrap();
         synchronize(SynchronizationMode::Initialize, &file_path, &mut database);
         drop(database);
         let database = UserActivityDatabase::open_read_only(&path).unwrap();
-        let (rows, events) = request_log::testing::capture(|| database.query("SELECT workspaceFolder FROM user_activity_records").unwrap());
+        let (rows, events) = data_layer_operation_log::testing::capture(|| database.query("SELECT workspaceFolder FROM user_activity_records").unwrap());
         assert_eq!(rows.len(), 3);
-        let starts = request_log::testing::starts(&events);
-        assert_eq!(starts[0].operation, "query");
+        let starts = data_layer_operation_log::testing::starts(&events);
+        assert_eq!(starts[0].operation_name, "query");
         assert_eq!(starts[0].parameters["sql"], "SELECT workspaceFolder FROM user_activity_records");
-        assert_eq!(request_log::testing::completion_of(&events, &starts[0].request_id).unwrap().result_count, Some(3));
+        assert_eq!(data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap().result_count, Some(3));
     }
 }

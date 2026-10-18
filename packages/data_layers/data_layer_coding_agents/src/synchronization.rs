@@ -22,8 +22,8 @@ use crate::storage::configuration_database::ConfigurationDatabase;
 use crate::storage::database::ChatSessionsDatabase;
 use crate::storage::token_usage_database::TokenUsageDatabase;
 use std::path::Path;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// Reads the chat sessions of a folder, and writes them in the database. `log` receives one line of progress for the date
 /// where the read starts, for each coding agent, and for the write.
@@ -39,7 +39,7 @@ pub fn run(
     database: &mut ChatSessionsDatabase,
     log: &dyn Fn(&str),
 ) -> Result<SynchronizationReport, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize", OperationKind::Synchronization)
         .choice("mode", mode.name())
         .parameter("repository", repository)
         .parameter("folder", folder)
@@ -51,7 +51,7 @@ pub fn run(
     })
 }
 
-/// The work of `run`, between the start event and the completion event of its request.
+/// The work of `run`, between the start event and the completion event of its operation.
 fn run_inside(
     mode: SynchronizationMode,
     repository: &str,
@@ -91,7 +91,7 @@ pub fn run_configuration(
     database: &mut ConfigurationDatabase,
     log: &dyn Fn(&str),
 ) -> Result<Vec<ConfigurationWriteCount>, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize_configuration", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize_configuration", OperationKind::Synchronization)
         .parameter("repository", repository)
         .parameter("root", folders.root.display().to_string())
         .database(database.database_path());
@@ -101,7 +101,7 @@ pub fn run_configuration(
     })
 }
 
-/// The work of `run_configuration`, between the start event and the completion event of its request.
+/// The work of `run_configuration`, between the start event and the completion event of its operation.
 fn run_configuration_inside(
     repository: &str,
     folders: &ConfigurationFolders,
@@ -147,7 +147,7 @@ pub fn run_token_usage(
     now: i64,
     log: &dyn Fn(&str),
 ) -> Result<TokenUsageReport, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "synchronize_token_usage", RequestKind::Synchronization)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "synchronize_token_usage", OperationKind::Synchronization)
         .choice("mode", mode.name())
         .parameter("repository", repository)
         .parameter("folder", folder)
@@ -163,7 +163,7 @@ pub fn run_token_usage(
     })
 }
 
-/// The work of `run_token_usage`, between the start event and the completion event of its request.
+/// The work of `run_token_usage`, between the start event and the completion event of its operation.
 fn run_token_usage_inside(
     mode: SynchronizationMode,
     repository: &str,
@@ -404,11 +404,11 @@ mod tests {
     }
 
     #[test]
-    fn a_chat_session_synchronization_records_one_request_with_the_collection_and_the_write_inside_it() {
-        let (directory, mut database) = fixture("request_log");
-        let (report, events) = request_log::testing::capture(|| synchronize(SynchronizationMode::Initialize, &directory, &mut database));
+    fn a_chat_session_synchronization_records_one_operation_with_the_collection_and_the_write_inside_it() {
+        let (directory, mut database) = fixture("data_layer_operation_log");
+        let (report, events) = data_layer_operation_log::testing::capture(|| synchronize(SynchronizationMode::Initialize, &directory, &mut database));
         assert_eq!(report.chat_session_count, 3);
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "coding_agents.synchronize");
         for inside in [
             "  coding_agents.read_chat_session_files",
@@ -418,26 +418,26 @@ mod tests {
         ] {
             assert!(tree.contains(&inside.to_string()), "{inside} is not in {tree:?}");
         }
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].parameters["mode"], "initialize");
         assert_eq!(starts[0].parameters["folder"], "/work/app");
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(3));
     }
 
     #[test]
     fn a_token_usage_synchronization_records_the_read_the_write_and_the_rows_that_the_write_changed() {
-        let (directory, mut database) = usage_fixture("request_log_usage");
+        let (directory, mut database) = usage_fixture("operation_log_usage");
         let (report, events) =
-            request_log::testing::capture(|| synchronize_usage(SynchronizationMode::Initialize, &directory, &mut database));
+            data_layer_operation_log::testing::capture(|| synchronize_usage(SynchronizationMode::Initialize, &directory, &mut database));
         assert_eq!(report.chat_count, 2);
-        let tree = request_log::testing::tree(&events);
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "coding_agents.synchronize_token_usage");
         assert!(tree.contains(&"  coding_agents.read_token_usage".to_string()), "{tree:?}");
         assert!(tree.contains(&"  coding_agents.write_token_usage".to_string()), "{tree:?}");
-        let starts = request_log::testing::starts(&events);
+        let starts = data_layer_operation_log::testing::starts(&events);
         assert_eq!(starts[0].state["scanCacheEntries"], 0);
-        let complete = request_log::testing::completion_of(&events, &starts[0].request_id).unwrap();
+        let complete = data_layer_operation_log::testing::completion_of(&events, &starts[0].operation_id).unwrap();
         assert_eq!(complete.result_count, Some(2));
         assert_eq!(complete.details["rowsInserted"], 2);
         assert_eq!(complete.details["rowsUnchanged"], 0);
@@ -445,7 +445,7 @@ mod tests {
 
     #[test]
     fn a_configuration_synchronization_records_the_read_and_one_write_for_each_kind() {
-        let directory = temp_folder("request_log_configuration");
+        let directory = temp_folder("operation_log_configuration");
         let folders = ConfigurationFolders {
             root: directory.join("root"),
             main_root: directory.join("root"),
@@ -455,8 +455,8 @@ mod tests {
         };
         write_file(&folders.root.join(".claude/skills/a/SKILL.md"), "---\nname: a\n---\n", 10);
         let mut database = ConfigurationDatabase::open(&directory.join("data_layer.sqlite")).unwrap();
-        let (_, events) = request_log::testing::capture(|| run_configuration(REPOSITORY, &folders, &mut database, &ignore_log).unwrap());
-        let tree = request_log::testing::tree(&events);
+        let (_, events) = data_layer_operation_log::testing::capture(|| run_configuration(REPOSITORY, &folders, &mut database, &ignore_log).unwrap());
+        let tree = data_layer_operation_log::testing::tree(&events);
         assert_eq!(tree[0], "coding_agents.synchronize_configuration");
         assert_eq!(tree[1], "  coding_agents.read_configuration");
         assert_eq!(tree.iter().filter(|line| line.as_str() == "  coding_agents.write_configuration").count(), 3);

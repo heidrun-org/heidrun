@@ -17,7 +17,7 @@ static CAPTURE_COUNT: AtomicU64 = AtomicU64::new(0);
 /// A new temporary folder, with a path that no other capture of this program uses.
 pub fn new_temporary_folder(name: &str) -> PathBuf {
     let number = CAPTURE_COUNT.fetch_add(1, Ordering::Relaxed);
-    let folder = std::env::temp_dir().join(format!("request-log-{}-{number}-{name}", std::process::id()));
+    let folder = std::env::temp_dir().join(format!("operation-log-{}-{number}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&folder);
     folder
 }
@@ -33,32 +33,32 @@ pub fn starts(events: &[Event]) -> Vec<&StartEvent> {
         .collect()
 }
 
-/// The completion event of a request, or `None` when the request did not end.
-pub fn completion_of<'a>(events: &'a [Event], request_id: &str) -> Option<&'a CompleteEvent> {
+/// The completion event of an operation, or `None` when the operation did not end.
+pub fn completion_of<'a>(events: &'a [Event], operation_id: &str) -> Option<&'a CompleteEvent> {
     events.iter().find_map(|event| match event {
-        Event::Complete(complete) if complete.request_id == request_id => Some(complete),
+        Event::Complete(complete) if complete.operation_id == operation_id => Some(complete),
         _ => None,
     })
 }
 
 /// The start events of a list of events as lines of the form `package.operation`, with two spaces of indentation for each
-/// level of nesting, so a test compares the whole tree of the requests in one assertion.
+/// level of nesting, so a test compares the whole tree of the operations in one assertion.
 pub fn tree(events: &[Event]) -> Vec<String> {
     let mut depths: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
     let mut lines = Vec::new();
     for start in starts(events) {
-        let depth = start.parent_request_id.as_deref().and_then(|parent| depths.get(parent)).map(|depth| depth + 1).unwrap_or(0);
-        depths.insert(&start.request_id, depth);
-        lines.push(format!("{}{}.{}", "  ".repeat(depth), start.package, start.operation));
+        let depth = start.parent_operation_id.as_deref().and_then(|parent| depths.get(parent)).map(|depth| depth + 1).unwrap_or(0);
+        depths.insert(&start.operation_id, depth);
+        lines.push(format!("{}{}.{}", "  ".repeat(depth), start.package, start.operation_name));
     }
     lines
 }
 
 /// Runs a closure with a log that writes in a temporary file, then gives the result of the closure and the events that the
-/// requests of the closure wrote, in the order in which they were written.
+/// operations of the closure wrote, in the order in which they were written.
 pub fn capture<T>(run: impl FnOnce() -> T) -> (T, Vec<Event>) {
     let folder = new_temporary_folder("capture");
-    let file = folder.join("data_layer_requests.jsonl");
+    let file = folder.join("data_layer_operations.jsonl");
     let logger = Arc::new(Logger::new(LogSettings::for_file(&file)));
     let result = with_logger(logger, run);
     let events = std::fs::read_to_string(&file)

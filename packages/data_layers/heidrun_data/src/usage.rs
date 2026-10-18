@@ -11,8 +11,8 @@ use data_layer_coding_agents::{
 };
 use serde_json::{json, Value};
 use std::path::PathBuf;
-use crate::REQUEST_PACKAGE;
-use request_log::{record, RequestKind, RequestSpec, Summary};
+use crate::OPERATION_PACKAGE;
+use data_layer_operation_log::{record, OperationKind, OperationSpec, Summary};
 
 /// The length of the default time range, in milliseconds: 30 days.
 const DEFAULT_RANGE_MILLISECONDS: i64 = 30 * 24 * 60 * 60 * 1000;
@@ -88,7 +88,7 @@ impl UsageAnswer {
 /// An error when the token usage of the repository was never read, when a date or the time zone is wrong, or when the file
 /// cannot be read.
 pub fn read_usage(request: &UsageRequest) -> Result<UsageAnswer, String> {
-    let spec = RequestSpec::new(REQUEST_PACKAGE, "read_usage", RequestKind::Query)
+    let spec = OperationSpec::new(OPERATION_PACKAGE, "read_usage", OperationKind::Query)
         .parameter("repository", request.repository.clone())
         .parameter("folder", request.folder.clone())
         .parameter("since", request.since.clone())
