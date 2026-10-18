@@ -202,6 +202,10 @@ The Issue Fix Completion starts when the developer says that the result of the I
 5. Close the issue.
 6. Rename the chat according to its content.
 
+## Bug Triage Workflow
+
+The Bug Triage Workflow keeps the list of open issues small. It has four steps: collect the open issues, classify each issue, report to the developer in the chat, and decide. A triage starts only when the developer asks for it in the chat. The coding agent closes an issue only when the developer names the number of the issue. The full steps are in the skill [bug_triage_workflow](.agents/skills/bug_triage_workflow/SKILL.md). Read the skill before you start a triage ([issue 655](https://github.com/heidrun-org/heidrun/issues/655)).
+
 ## GitHub and GitLab
 
 Every command for GitHub in this section has a matching command for GitLab, as [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) requires. This repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab.
