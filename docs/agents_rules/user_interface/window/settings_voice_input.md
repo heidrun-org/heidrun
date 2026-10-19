@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Information card of every option of the Settings window](settings_information_cards.md), [Composition bar](../workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 736](https://github.com/heidrun-org/heidrun/issues/736)
 
 This file is a part of the rules of the user interface of Heidrun. It gives the rules of the voice input and of the Voice input section of the Settings window. The words are defined in [voice_input.md](../../glossary/voice_input.md).
 
@@ -35,6 +35,7 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 ## The level bars
 
 - While the microphone is open, the composition bar shows the level bars inside the text input, at its right end, followed by the time since the recording started in minutes and seconds (for example 0:07). There are 40 thin vertical bars, one for each 50 milliseconds, so they show the last 2 seconds of the voice. The newest bar is on the right. A silent moment is a dot of 4 pixels, and a loud moment is a bar of up to 36 pixels. The bars and the time take the color of the muted text, and the bars have the label "Level of the voice" for the screen readers.
+- During transcription, keep the level bars and recording time visible. A small X button, 4 pixels to their left, cancels recording or transcription. Cancellation discards audio and late text or errors, preserves the draft and images, keeps the composition bar open, and permits another recording. Cancelling also cancels a Send that waits for transcription.
 - The bars never cover the text: the text input keeps free room at its right end, 40% of its width and at most 340 pixels. In a narrow composition bar, fewer bars show, and the oldest bars are cut.
 - The text input shows the placeholder "Listening…" while the microphone is open, and "Changing the speech into text…" while Whisper works.
 - The Rust package measures the level of the voice every 50 milliseconds, on a decibel scale from -60 to -10, and the command `voice_start_recording` sends it to the web page with the event `voice-input-level`. The web page keeps the last 40 levels in `voiceInput.levels` and clears them at each new recording.

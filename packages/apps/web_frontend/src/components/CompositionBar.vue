@@ -62,6 +62,10 @@ const isListening = computed(
 		VoiceInput.ownerPaneId() === props.paneId &&
 		(voiceInput.state === "starting" || voiceInput.state === "recording"),
 );
+/** Recording and transcription keep the same level bars and cancel button in the owning pane. */
+const isVoiceActive = computed(
+	() => settings.voiceInput && VoiceInput.ownerPaneId() === props.paneId && voiceInput.state !== 'idle',
+);
 /** The text of the text input while it is empty: it tells what the voice input does now, else it asks for the text. */
 const textPlaceholder = computed(() => {
   if (settings.voiceInput && VoiceInput.ownerPaneId() === props.paneId && voiceInput.state === "transcribing") {
@@ -208,7 +212,7 @@ async function send() {
       <button class="btn icon-button border-0" :aria-label="t('compositionBar.add')" :title="t('compositionBar.addTitle')" @click="addImages">
         <Icon name="plus-lg" />
       </button>
-      <div class="field position-relative flex-fill" :class="{ 'is-listening': isListening }">
+      <div class="field position-relative flex-fill" :class="{ 'is-listening': isVoiceActive }">
         <textarea
           ref="textInput"
           v-model="compositionBar.text"
@@ -218,9 +222,20 @@ async function send() {
           :placeholder="textPlaceholder"
           @keydown="onTextKeydown"
         ></textarea>
-        <div v-if="isListening" class="listening position-absolute end-0 bottom-0 d-flex align-items-center justify-content-end gap-2 pe-2">
+        <div v-if="isVoiceActive" class="listening position-absolute end-0 bottom-0 d-flex align-items-center justify-content-end gap-1 pe-2">
+          <button
+            type="button"
+            class="btn cancel-voice border-0"
+            :aria-label="t('voiceInput.cancel')"
+            :title="t('voiceInput.cancel')"
+            @pointerdown.stop.prevent="VoiceInput.cancel(props.paneId)"
+            @keydown.enter.stop
+            @click.stop="VoiceInput.cancel(props.paneId)"
+          >
+            <Icon name="x-lg" />
+          </button>
           <VoiceLevel :levels="voiceInput.levels" />
-          <span class="elapsed">{{ elapsedText }}</span>
+          <span class="elapsed ms-1">{{ elapsedText }}</span>
         </div>
       </div>
       <button class="btn icon-button border-0 send" :aria-label="t('compositionBar.send')" :title="t('compositionBar.sendTitle')" :disabled="isSending" @click="send">
@@ -254,5 +269,7 @@ async function send() {
 .icon-button, .push-to-talk { flex: none; width: calc(23px + var(--font-size) * 0.65); height: 46px; padding: 0; justify-content: center; font-size: calc(var(--font-size) * 1.3); }
 .icon-button:hover, .push-to-talk:hover { --btn-hover-bg: rgba(var(--wash), 0.14); }
 .listening { width: var(--listening-width); height: 46px; pointer-events: none; color: var(--muted); }
+.cancel-voice { flex: none; width: 24px; height: 30px; padding: 0; justify-content: center; pointer-events: auto; color: var(--muted); }
+.cancel-voice:hover { --btn-hover-bg: rgba(var(--wash), 0.14); }
 .elapsed { font-size: calc(var(--font-size) * 1.05); font-variant-numeric: tabular-nums; }
 </style>

@@ -21,7 +21,7 @@ The button that the developer uses to speak. A long press is push to talk: the d
 
 ### Level bars
 
-The row of thin vertical bars inside the text input of the composition bar, at its right end, that shows how loud the voice is while the microphone is open. The newest bar is on the right, and a silent moment is a dot. The time since the recording started is written after the bars.
+The row of thin vertical bars inside the text input of the composition bar, at its right end, that shows how loud the voice is while the microphone is open. The newest bar is on the right, and a silent moment is a dot. The elapsed recording time is written after the bars. The level bars stay visible during transcription. A small X button immediately to the left of the level bars cancels recording or transcription.
 
 ### Whisper model
 

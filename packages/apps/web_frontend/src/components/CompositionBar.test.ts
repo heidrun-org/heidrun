@@ -330,7 +330,7 @@ describe("CompositionBar voice input (issue 662)", () => {
 		wrapper.unmount();
 	});
 
-	it("shows the level bars and a listening text while the microphone is open, and nothing otherwise", async () => {
+	it("keeps the level bars during transcription and hides them when idle", async () => {
 		settings.voiceInput = true;
 		ImageDrop.handleDrop('pane-1', ["/shots/a.png"]);
 		const wrapper = mountBar();
@@ -347,7 +347,8 @@ describe("CompositionBar voice input (issue 662)", () => {
 		expect(field.querySelector(".voice-level")).not.toBeNull();
 		voiceInput.state = "transcribing";
 		await wrapper.vm.$nextTick();
-		expect(wrapper.find(".voice-level").exists()).toBe(false);
+		expect(wrapper.find(".voice-level").exists()).toBe(true);
+		expect(findButton(wrapper, 'Cancel voice input').exists()).toBe(true);
 		expect(placeholder()).toBe("Changing the speech into text…");
 		voiceInput.state = "idle";
 		await wrapper.vm.$nextTick();
@@ -517,5 +518,86 @@ describe("CompositionBar voice input (issue 662)", () => {
 		expect(wrapper.get("[role=alert]").text()).toBe("The voice input failed. Press the button again.");
 		wrapper.unmount();
 		expect(voiceInput.error).toBeNull();
+	});
+});
+
+
+describe('composition bar cancellation (issue 736)', () => {
+	it.each(['recording', 'transcribing'] as const)('cancels %s and preserves the draft and images', async (state) => {
+		settings.voiceInput = true;
+		voiceInput.ownerPaneId = 'pane-1';
+		voiceInput.state = state;
+		ImageDrop.handleDrop('pane-1', ['/shots/a.png']);
+		compositionBar.text = 'Keep this draft';
+		const wrapper = mountBar();
+		const cancelButton = findButton(wrapper, 'Cancel voice input');
+		expect(cancelButton.attributes('title')).toBe('Cancel voice input');
+		expect(cancelButton.find('.bi-x-lg').exists()).toBe(true);
+		expect(cancelButton.element.nextElementSibling).toBe(wrapper.get('.voice-level').element);
+		await cancelButton.trigger('pointerdown');
+		window.dispatchEvent(new Event('pointerup'));
+		await cancelButton.trigger('click');
+		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith('voice_cancel_recording'));
+		expect(invokeMock.mock.calls.filter((call) => call[0] === 'voice_cancel_recording')).toHaveLength(1);
+		expect(invokeMock.mock.calls.some((call) => call[0] === 'voice_stop_recording')).toBe(false);
+		expect(compositionBar.text).toBe('Keep this draft');
+		expect(compositionBar.paths).toEqual(['/shots/a.png']);
+		expect(compositionBar.isOpen).toBe(true);
+		expect(voiceInput.state).toBe('idle');
+		expect(wrapper.find('.voice-level').exists()).toBe(false);
+		expect(insertTextMock).not.toHaveBeenCalled();
+		wrapper.unmount();
+	});
+
+	it('cancels Send while transcription is pending and ignores its late text', async () => {
+		settings.voiceInput = true;
+		voiceInput.options = {
+			models: [{
+				id: 'base',
+				sizeBytes: 147_951_465,
+				isEnglishOnly: false,
+				isDownloaded: true,
+			}],
+			languages: ['en'],
+			defaultModelId: 'base',
+		};
+		voiceInput.state = 'idle';
+		let finishFn: (text: string) => void = () => {};
+		invokeMock.mockImplementation((name: string) => {
+			if (name === 'voice_stop_recording') {
+				return new Promise<string>((resolve) => {
+					finishFn = resolve;
+				});
+			}
+			return Promise.resolve('data:image/png;base64,AAAA');
+		});
+		ImageDrop.register('pane-1', vi.fn().mockResolvedValue(undefined));
+		ImageDrop.handleDrop('pane-1', ['/shots/a.png']);
+		compositionBar.text = 'Keep this draft';
+		const wrapper = mountBar();
+		await VoiceInput.press('pane-1');
+		await findButton(wrapper, 'Send').trigger('click');
+		expect(voiceInput.state).toBe('transcribing');
+		await findButton(wrapper, 'Cancel voice input').trigger('click');
+		await vi.waitFor(() => expect(findButton(wrapper, 'Send').attributes('disabled')).toBeUndefined());
+		finishFn('Discard these words');
+		await Promise.resolve();
+		await wrapper.vm.$nextTick();
+		expect(wrapper.emitted('sent')).toBeUndefined();
+		expect(insertTextMock).not.toHaveBeenCalled();
+		expect(compositionBar.text).toBe('Keep this draft');
+		expect(compositionBar.paths).toEqual(['/shots/a.png']);
+		ImageDrop.unregister('pane-1');
+		wrapper.unmount();
+	});
+
+	it('does not show the cancel button in another pane', () => {
+		settings.voiceInput = true;
+		voiceInput.ownerPaneId = 'pane-2';
+		voiceInput.state = 'transcribing';
+		const wrapper = mountBar();
+		expect(findButton(wrapper, 'Cancel voice input').exists()).toBe(false);
+		voiceInput.state = 'idle';
+		wrapper.unmount();
 	});
 });
