@@ -1658,3 +1658,201 @@ describe("PersonWorkTab", () => {
     });
   });
 });
+
+describe("PersonWorkTab: the memory of the choices (issue 707)", () => {
+  type Tab = Awaited<ReturnType<typeof mountPersonWorkTab>>;
+
+  /** The settings of the run, as the tab and the settings store share them. */
+  async function currentSettings() {
+    return (await import("../stores/settings")).settings;
+  }
+
+  /** The identifier of the checked button of a radio button group, or `null` when no button is checked. */
+  function checkedId(wrapper: Tab, name: string): string | null {
+    const input = wrapper.findAll(`input[name="${name}"]`).find((candidate) => (candidate.element as HTMLInputElement).checked);
+    return input === undefined ? null : input.attributes("id")?.replace(`${name}-`, "") ?? null;
+  }
+
+  /** The value of the person chooser, or `null` when the tab shows no person chooser. */
+  function personOf(wrapper: Tab): string | null {
+    const select = wrapper.find("#statistics-person");
+    return select.exists() ? (select.element as HTMLSelectElement).value : null;
+  }
+
+  /** Closes the Statistics window and opens it again: the tab is built again, and the settings store stays. */
+  async function reopen(wrapper: Tab): Promise<Tab> {
+    wrapper.unmount();
+    return mountPersonWorkTab();
+  }
+
+  /** Starts Heidrun again: every module is loaded again, and the settings are read from `localStorage`. */
+  async function restart(wrapper: Tab): Promise<Tab> {
+    await flushPromises();
+    wrapper.unmount();
+    vi.resetModules();
+    await openWorkspacesAre(WORKSPACES);
+    return mountPersonWorkTab();
+  }
+
+  it("starts with the Git history, the commits and the pull requests, US dollars, 7 days, 1 day, and the selected workspace when nothing is saved", async () => {
+    const wrapper = await mountPersonWorkTab();
+    expect(checkedId(wrapper, "statistics-person-source")).toBe("git_history");
+    expect(checkedId(wrapper, "statistics-person-metric")).toBe("commits_and_pull_requests");
+    expect(checkedId(wrapper, "statistics-person-period")).toBe("seven_days");
+    expect(checkedId(wrapper, "statistics-person-slot")).toBe("24");
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun"]);
+    await chooseAiCost(wrapper);
+    expect(checkedId(wrapper, "statistics-person-unit")).toBe("dollars");
+  });
+
+  it("saves each choice in the settings as soon as it changes", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await wrapper.get("#statistics-person").setValue("eric");
+    await wrapper.get("#statistics-person-period-fourteen_days").setValue(true);
+    await wrapper.get("#statistics-person-slot-6").setValue(true);
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    const settings = await currentSettings();
+    expect(settings.statisticsPersonWorkSource).toBe("ai_cost");
+    expect(settings.statisticsPersonWorkMetric).toBe("lines");
+    expect(settings.statisticsPersonWorkUnit).toBe("tokens");
+    expect(settings.statisticsPersonWorkPerson).toBe("eric");
+    expect(settings.statisticsPersonWorkRange).toBe("fourteen_days");
+    expect(settings.statisticsPersonWorkSlotHours).toBe(6);
+    expect(settings.statisticsPersonWorkWorkspaces).toEqual({ isSaved: true, workspaceIds: ["workspace-heidrun", "workspace-mobile"] });
+  });
+
+  it("starts with the saved choices when the window opens again, and keeps the choices that the source hides", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await wrapper.get("#statistics-person").setValue("eric");
+    await wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    await wrapper.get("#statistics-person-slot-1").setValue(true);
+    await chooseAiCost(wrapper);
+    await wrapper.get("#statistics-person-unit-tokens").setValue(true);
+    const reopened = await reopen(wrapper);
+    expect(checkedId(reopened, "statistics-person-source")).toBe("ai_cost");
+    expect(checkedId(reopened, "statistics-person-unit")).toBe("tokens");
+    expect(checkedId(reopened, "statistics-person-period")).toBe("thirty_days");
+    expect(checkedId(reopened, "statistics-person-slot")).toBe("1");
+    expect(personOf(reopened)).toBeNull();
+    await reopened.get("#statistics-person-source-git_history").setValue(true);
+    await flushPromises();
+    expect(checkedId(reopened, "statistics-person-metric")).toBe("lines");
+    expect(personOf(reopened)).toBe("eric");
+  });
+
+  it("reads the AI cost and not the Git history when the saved source is the AI cost", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseAiCost(wrapper);
+    const reopened = await reopen(wrapper);
+    expect(synchronizeCalls()).toHaveLength(1);
+    expect(personWorkCalls()).toHaveLength(0);
+    expect(aiCostTotalsOf(reopened)).toHaveLength(3);
+  });
+
+  it("keeps the choices after Heidrun starts again", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-metric-lines").setValue(true);
+    await wrapper.get("#statistics-person").setValue("eric");
+    await wrapper.get("#statistics-person-period-three_days").setValue(true);
+    await wrapper.get("#statistics-person-slot-6").setValue(true);
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    const restarted = await restart(wrapper);
+    expect(checkedId(restarted, "statistics-person-source")).toBe("git_history");
+    expect(checkedId(restarted, "statistics-person-metric")).toBe("lines");
+    expect(personOf(restarted)).toBe("eric");
+    expect(checkedId(restarted, "statistics-person-period")).toBe("three_days");
+    expect(checkedId(restarted, "statistics-person-slot")).toBe("6");
+    expect(chosenWorkspaceNames(restarted)).toEqual(["heidrun", "mobile"]);
+  });
+
+  it("starts with the chosen workspaces of the last time, and with no workspace when the developer chose none", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await chooseWorkspace(wrapper, "workspace-mobile", true);
+    await chooseWorkspace(wrapper, "workspace-heidrun", false);
+    const reopened = await reopen(wrapper);
+    expect(chosenWorkspaceNames(reopened)).toEqual(["mobile"]);
+    await reopened.get("#statistics-person-workspace-none").setValue(true);
+    await flushPromises();
+    const reopenedAgain = await reopen(reopened);
+    expect(chosenWorkspaceNames(reopenedAgain)).toEqual([]);
+    expect(radioGroup(reopenedAgain, "statistics-person-workspace-every").checked).toEqual([false, true]);
+    expect(reopenedAgain.text()).toContain("No workspace is chosen");
+  });
+
+  it("starts with the button All when the developer chose every workspace", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-workspace-all").setValue(true);
+    const reopened = await reopen(wrapper);
+    expect(chosenWorkspaceNames(reopened)).toEqual(["heidrun", "mobile"]);
+    expect(radioGroup(reopened, "statistics-person-workspace-every").checked).toEqual([true, false]);
+  });
+
+  it("starts with the selected workspace when no saved workspace is open any more", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({ statisticsPersonWorkWorkspaces: { isSaved: true, workspaceIds: ["workspace-closed"] } }),
+    );
+    const wrapper = await mountPersonWorkTab();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun"]);
+  });
+
+  it("does not save the workspace that the tab chooses by itself when a chosen workspace closes", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await wrapper.get("#statistics-person-workspace-all").setValue(true);
+    await openWorkspacesAre([WORKSPACES[0]]);
+    await flushPromises();
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun"]);
+    expect((await currentSettings()).statisticsPersonWorkWorkspaces).toEqual({
+      isSaved: true,
+      workspaceIds: ["workspace-heidrun", "workspace-mobile"],
+    });
+  });
+
+  it("keeps the saved person when the list of the people does not hold this person, and chooses the first person", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ statisticsPersonWorkPerson: "nobody@example.com" }));
+    const wrapper = await mountPersonWorkTab();
+    expect(personOf(wrapper)).not.toBe("nobody@example.com");
+    expect(personOf(wrapper)).not.toBeNull();
+    expect((await currentSettings()).statisticsPersonWorkPerson).toBe("nobody@example.com");
+  });
+
+  it("chooses the saved person as soon as a workspace read gives this person", async () => {
+    localStorage.setItem("heidrun.settings", JSON.stringify({ statisticsPersonWorkPerson: "eric" }));
+    const wrapper = await mountPersonWorkTab();
+    expect(personOf(wrapper)).toBe("eric");
+    expect(lastDrawing().layout.title.text).toContain("Eric");
+  });
+
+  it("starts with the default choices when the saved values are corrupted", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({
+        statisticsPersonWorkSource: "weather",
+        statisticsPersonWorkMetric: 3,
+        statisticsPersonWorkUnit: null,
+        statisticsPersonWorkRange: "century",
+        statisticsPersonWorkSlotHours: 5,
+        statisticsPersonWorkWorkspaces: ["workspace-mobile"],
+      }),
+    );
+    const wrapper = await mountPersonWorkTab();
+    expect(checkedId(wrapper, "statistics-person-source")).toBe("git_history");
+    expect(checkedId(wrapper, "statistics-person-metric")).toBe("commits_and_pull_requests");
+    expect(checkedId(wrapper, "statistics-person-period")).toBe("seven_days");
+    expect(checkedId(wrapper, "statistics-person-slot")).toBe("24");
+    expect(chosenWorkspaceNames(wrapper)).toEqual(["heidrun"]);
+  });
+
+  it("does not save anything when the window opens and the developer changes nothing", async () => {
+    const wrapper = await mountPersonWorkTab();
+    await flushPromises();
+    wrapper.unmount();
+    const saved = JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}");
+    expect(saved.statisticsPersonWorkPerson ?? "").toBe("");
+    expect(saved.statisticsPersonWorkWorkspaces?.isSaved ?? false).toBe(false);
+  });
+});

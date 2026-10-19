@@ -222,14 +222,16 @@ describe("UserActivityTab: the slot length", () => {
     const { wrapper } = await mountUserActivityTab([]);
     await waitForDrawings(1);
     expect(lastDrawing().data.x).toHaveLength(24);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 60]);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 5]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity in a slot of 1 hour");
     await chooseSlotLength(wrapper, "fifteen_minutes", 2);
     expect(lastDrawing().data.x).toHaveLength(96);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 15]);
-    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity");
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 5]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity in a slot of 15 minutes");
     await chooseSlotLength(wrapper, "thirty_minutes", 3);
     expect(lastDrawing().data.x).toHaveLength(48);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 30]);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 5]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity in a slot of 30 minutes");
   });
 
   it("draws one hundred sixty-eight bars of one hour and twenty-eight bars of six hours for the last week", async () => {
@@ -239,11 +241,12 @@ describe("UserActivityTab: the slot length", () => {
     await waitForDrawings(2);
     await chooseSlotLength(wrapper, "one_hour", 3);
     expect(lastDrawing().data.x).toHaveLength(168);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 60]);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 5]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Minutes of activity in a slot of 1 hour");
     await chooseSlotLength(wrapper, "six_hours", 4);
     expect(lastDrawing().data.x).toHaveLength(28);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 6]);
-    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity");
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 1]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity in a slot of 6 hours");
   });
 
   it("draws thirty bars of one day at first, and one hundred twenty bars of six hours, for the last month", async () => {
@@ -252,11 +255,13 @@ describe("UserActivityTab: the slot length", () => {
     await wrapper.get("#statistics-range-month").setValue(true);
     await waitForDrawings(2);
     expect(lastDrawing().data.x).toHaveLength(30);
-    expect(lastDrawing().layout.yaxis.autorange).toBe(true);
-    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity");
+    expect(lastDrawing().layout.yaxis.autorange).toBe(false);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 1]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity in a slot of 1 day");
     await chooseSlotLength(wrapper, "six_hours", 3);
     expect(lastDrawing().data.x).toHaveLength(120);
-    expect(lastDrawing().layout.yaxis.range).toEqual([0, 6]);
+    expect(lastDrawing().layout.yaxis.range).toEqual([0, 1]);
+    expect(lastDrawing().layout.yaxis.title.text).toBe("Hours of activity in a slot of 6 hours");
     await chooseSlotLength(wrapper, "one_day", 4);
     expect(lastDrawing().data.x).toHaveLength(30);
   });
@@ -706,5 +711,275 @@ describe("UserActivityTab: the stacked bars", () => {
     expect(leftColumn.attributes("style")).not.toContain("right:");
     expect(leftColumn.attributes("style")).toContain("top: 250px");
     boxSpy.mockRestore();
+  });
+});
+
+describe("UserActivityTab: the memory of the choices (issue 707)", () => {
+  /**
+   * The mock of the store `user_activity` at the top of this file is built once, and `vi.resetModules` does not build it again,
+   * so its list of the open workspaces stays tied to the session store of the first test. These tests change the open
+   * workspaces, so each test registers the mock again, and gets a new list of the open workspaces.
+   */
+  beforeEach(() => {
+    vi.doMock("../stores/user_activity", async (importOriginal) => {
+      const { ref } = await import("vue");
+      return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
+    });
+  });
+
+  /** The settings of the run, as the tab and the settings store share them. */
+  async function currentSettings() {
+    return (await import("../stores/settings")).settings;
+  }
+
+  /** The texts of the buttons that are checked in a group of toggle buttons. */
+  function checkedTexts(wrapper: VueWrapper, groupLabel: string): string[] {
+    return buttonsOf(wrapper, groupLabel).filter((button) => button.isChecked).map((button) => button.text);
+  }
+
+  /** Closes the Statistics window and opens it again: the tab is built again, and the settings store stays. */
+  async function reopen(wrapper: VueWrapper, openWorkspaceList = OPEN_WORKSPACES) {
+    wrapper.unmount();
+    plotly.react.mockClear();
+    return mountUserActivityTab([], null, openWorkspaceList);
+  }
+
+  /** Starts Heidrun again: every module is loaded again, and the settings are read from `localStorage`. */
+  async function restart(wrapper: VueWrapper, openWorkspaceList = OPEN_WORKSPACES) {
+    await flushPromises();
+    wrapper.unmount();
+    plotly.react.mockClear();
+    vi.resetModules();
+    return mountUserActivityTab([], null, openWorkspaceList);
+  }
+
+  it("starts with the last day, one hour, and every workspace when nothing is saved", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    expect(checkedTexts(wrapper, "Time range")).toEqual(["Last day"]);
+    expect(checkedTexts(wrapper, "Slot length")).toEqual(["1 hour"]);
+    expect(checkedTexts(wrapper, "Workspaces")).toEqual(["Heidrun app", "old_experiment"]);
+  });
+
+  it("saves the slot length as soon as it changes, and starts with it when the window opens again", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-slot-fifteen_minutes").setValue(true);
+    expect((await currentSettings()).statisticsUserActivitySlotLength).toBe("fifteen_minutes");
+    const { wrapper: reopened } = await reopen(wrapper);
+    expect(checkedTexts(reopened, "Time range")).toEqual(["Last day"]);
+    expect(checkedTexts(reopened, "Slot length")).toEqual(["15 minutes"]);
+    await waitForDrawings(1);
+    expect(lastDrawing().data.x).toHaveLength(96);
+  });
+
+  it("saves the time range and its slot length, and starts with both when the window opens again", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await wrapper.get("#statistics-slot-six_hours").setValue(true);
+    const { wrapper: reopened } = await reopen(wrapper);
+    expect(checkedTexts(reopened, "Time range")).toEqual(["Last week"]);
+    expect(checkedTexts(reopened, "Slot length")).toEqual(["6 hours"]);
+  });
+
+  it("saves the slot length that a new time range goes back to", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-slot-fifteen_minutes").setValue(true);
+    await wrapper.get("#statistics-range-month").setValue(true);
+    const settings = await currentSettings();
+    expect(settings.statisticsUserActivityRange).toBe("month");
+    expect(settings.statisticsUserActivitySlotLength).toBe("one_day");
+    const { wrapper: reopened } = await reopen(wrapper);
+    expect(checkedTexts(reopened, "Time range")).toEqual(["Last month"]);
+    expect(checkedTexts(reopened, "Slot length")).toEqual(["1 day"]);
+  });
+
+  it("keeps the choices after Heidrun starts again", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await wrapper.get("#statistics-slot-one_hour").setValue(true);
+    await wrapper.get("#statistics-workspace-1").setValue(false);
+    const { wrapper: restarted } = await restart(wrapper);
+    expect(checkedTexts(restarted, "Time range")).toEqual(["Last week"]);
+    expect(checkedTexts(restarted, "Slot length")).toEqual(["1 hour"]);
+    expect(checkedTexts(restarted, "Workspaces")).toEqual(["Heidrun app"]);
+  });
+
+  it("starts with the slot length that the saved time range starts with when it does not offer the saved slot length", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({ statisticsUserActivityRange: "month", statisticsUserActivitySlotLength: "fifteen_minutes" }),
+    );
+    const { wrapper } = await mountUserActivityTab([]);
+    expect(checkedTexts(wrapper, "Time range")).toEqual(["Last month"]);
+    expect(checkedTexts(wrapper, "Slot length")).toEqual(["1 day"]);
+  });
+
+  it("starts with the default choices when the saved values are corrupted", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({ statisticsUserActivityRange: "year", statisticsUserActivitySlotLength: 7, statisticsUserActivityWorkspaces: "all" }),
+    );
+    const { wrapper } = await mountUserActivityTab([]);
+    expect(checkedTexts(wrapper, "Time range")).toEqual(["Last day"]);
+    expect(checkedTexts(wrapper, "Slot length")).toEqual(["1 hour"]);
+    expect(checkedTexts(wrapper, "Workspaces")).toEqual(["Heidrun app", "old_experiment"]);
+  });
+
+  it("saves the chosen workspaces, and starts with them when the window opens again", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-workspace-1").setValue(false);
+    expect((await currentSettings()).statisticsUserActivityWorkspaces).toEqual({
+      isEveryWorkspaceChosen: false,
+      folders: [OPEN_FOLDER],
+    });
+    const { wrapper: reopened } = await reopen(wrapper);
+    expect(checkedTexts(reopened, "Workspaces")).toEqual(["Heidrun app"]);
+    expect(checkedTexts(reopened, "All or none of the workspaces")).toEqual([]);
+  });
+
+  it("saves the button None, and starts with no workspace chosen when the window opens again", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-workspace-none").setValue(true);
+    expect((await currentSettings()).statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: false, folders: [] });
+    const { wrapper: reopened } = await reopen(wrapper);
+    expect(checkedTexts(reopened, "Workspaces")).toEqual([]);
+    expect(checkedTexts(reopened, "All or none of the workspaces")).toEqual(["None"]);
+  });
+
+  it("saves the button All, and chooses a workspace that opens later", async () => {
+    const { wrapper } = await mountUserActivityTab([], null, [OPEN_WORKSPACES[0]]);
+    await wrapper.get("#statistics-workspace-0").setValue(false);
+    await wrapper.get("#statistics-workspace-all").setValue(true);
+    expect((await currentSettings()).statisticsUserActivityWorkspaces.isEveryWorkspaceChosen).toBe(true);
+    const { wrapper: reopened } = await reopen(wrapper, OPEN_WORKSPACES);
+    expect(checkedTexts(reopened, "Workspaces")).toEqual(["Heidrun app", "old_experiment"]);
+  });
+
+  it("chooses a workspace that opened after the choice when the choice was every workspace, even when the developer made it with the buttons of the workspaces", async () => {
+    const { wrapper } = await mountUserActivityTab([], null, [OPEN_WORKSPACES[0]]);
+    await wrapper.get("#statistics-workspace-none").setValue(true);
+    await wrapper.get("#statistics-workspace-0").setValue(true);
+    expect((await currentSettings()).statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [OPEN_FOLDER] });
+    const { wrapper: reopened } = await reopen(wrapper, OPEN_WORKSPACES);
+    expect(checkedTexts(reopened, "Workspaces")).toEqual(["Heidrun app", "old_experiment"]);
+  });
+
+  it("chooses every workspace when no saved workspace is open any more", async () => {
+    localStorage.setItem(
+      "heidrun.settings",
+      JSON.stringify({ statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: false, folders: ["/work/closed"] } }),
+    );
+    const { wrapper } = await mountUserActivityTab([]);
+    expect(checkedTexts(wrapper, "Workspaces")).toEqual(["Heidrun app", "old_experiment"]);
+  });
+
+  it("keeps the saved workspaces when a workspace closes and opens again while the window stays open", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await wrapper.get("#statistics-workspace-0").setValue(false);
+    const { state } = await import("../stores/session");
+    const snapshot = state.snapshot!;
+    state.snapshot = { ...snapshot, workspaces: [OPEN_WORKSPACES[1]] } as never;
+    await flushPromises();
+    state.snapshot = { ...snapshot, workspaces: OPEN_WORKSPACES } as never;
+    await flushPromises();
+    expect((await currentSettings()).statisticsUserActivityWorkspaces).toEqual({
+      isEveryWorkspaceChosen: false,
+      folders: [CLOSED_FOLDER],
+    });
+  });
+
+  it("does not save anything when the window opens and the developer changes nothing", async () => {
+    const { wrapper } = await mountUserActivityTab([]);
+    await flushPromises();
+    wrapper.unmount();
+    expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").statisticsUserActivityWorkspaces).toEqual({
+      isEveryWorkspaceChosen: true,
+      folders: [],
+    });
+  });
+});
+
+describe("UserActivityTab: the vertical axis (issue 683)", () => {
+  /**
+   * A record of an active period inside the hour slot that started `hoursBefore` hours before the current hour, so that no slot
+   * limit cuts it.
+   *
+   * @param workspaceFolder - The folder of the workspace of the record.
+   * @param offsetInMinutes - The start of the period, in minutes after the start of the hour slot.
+   * @param durationInMinutes - The length of the period, in minutes.
+   * @param hoursBefore - How many hours before the current hour the slot starts.
+   */
+  function recordInHourSlot(workspaceFolder: string, offsetInMinutes: number, durationInMinutes: number, hoursBefore = 2) {
+    const slotStartedAt = new Date();
+    slotStartedAt.setMinutes(0, 0, 0);
+    const startedAt = slotStartedAt.getTime() - hoursBefore * HOUR_MS + offsetInMinutes * 60_000;
+    return {
+      workspaceFolder,
+      startedAt: new Date(startedAt).toISOString(),
+      endedAt: new Date(startedAt + durationInMinutes * 60_000).toISOString(),
+    };
+  }
+
+  /** The top of the vertical axis of the last drawing, and its title. */
+  function axisOf() {
+    const { yaxis } = lastDrawing().layout;
+    return { range: yaxis.range, title: yaxis.title.text, autorange: yaxis.autorange };
+  }
+
+  it("fits the top of the axis to the highest bar: a short activity in a slot of one hour is readable", async () => {
+    const { wrapper } = await mountUserActivityTab([recordInHourSlot(OPEN_FOLDER, 10, 15)]);
+    await waitForDrawings(1);
+    expect(axisOf()).toEqual({ range: [0, 30], title: "Minutes of activity in a slot of 1 hour", autorange: false });
+    expect(sumOfBars()).toBeCloseTo(15, 5);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await waitForDrawings(2);
+    await chooseSlotLength(wrapper, "one_hour", 3);
+    expect(axisOf()).toEqual({ range: [0, 30], title: "Minutes of activity in a slot of 1 hour", autorange: false });
+    expect(sumOfBars()).toBeCloseTo(15, 5);
+  });
+
+  it("gives the same axis for the same slot length, however many times the slot length changes between 1 day and 1 hour", async () => {
+    const { wrapper } = await mountUserActivityTab([recordInHourSlot(OPEN_FOLDER, 10, 15)]);
+    await waitForDrawings(1);
+    await wrapper.get("#statistics-range-week").setValue(true);
+    await waitForDrawings(2);
+    expect(axisOf()).toEqual({ range: [0, 1], title: "Hours of activity in a slot of 1 day", autorange: false });
+    let drawingCount = 2;
+    for (let turn = 0; turn < 3; turn += 1) {
+      drawingCount += 1;
+      await chooseSlotLength(wrapper, "one_hour", drawingCount);
+      expect(axisOf()).toEqual({ range: [0, 30], title: "Minutes of activity in a slot of 1 hour", autorange: false });
+      drawingCount += 1;
+      await chooseSlotLength(wrapper, "one_day", drawingCount);
+      expect(axisOf()).toEqual({ range: [0, 1], title: "Hours of activity in a slot of 1 day", autorange: false });
+    }
+  });
+
+  it("never goes over the length of the slot", async () => {
+    await mountUserActivityTab([recordInHourSlot(OPEN_FOLDER, 0, 59)]);
+    await waitForDrawings(1);
+    expect(axisOf().range).toEqual([0, 60]);
+  });
+
+  it("fits the top to the stacked bar, which holds the time of every chosen workspace", async () => {
+    await mountUserActivityTab([recordInHourSlot(OPEN_FOLDER, 0, 20), recordInHourSlot(CLOSED_FOLDER, 25, 20)]);
+    await waitForDrawings(1);
+    expect(axisOf().range).toEqual([0, 60]);
+    expect(lastDrawing().traces).toHaveLength(2);
+  });
+
+  it("fits the top again when the developer hides the workspace that has the highest bar", async () => {
+    const { wrapper } = await mountUserActivityTab([recordInHourSlot(OPEN_FOLDER, 0, 40), recordInHourSlot(CLOSED_FOLDER, 45, 5)]);
+    await waitForDrawings(1);
+    expect(axisOf().range).toEqual([0, 60]);
+    await wrapper.get("#statistics-workspace-0").setValue(false);
+    await waitForDrawings(2);
+    expect(axisOf().range).toEqual([0, 10]);
+  });
+
+  it("draws a bar of height 0 and the lowest top when there is no activity", async () => {
+    await mountUserActivityTab([]);
+    await waitForDrawings(1);
+    expect(axisOf().range).toEqual([0, 5]);
+    expect(sumOfBars()).toBe(0);
   });
 });

@@ -1,11 +1,11 @@
 # User interface of Heidrun: Statistics window, tab "Work of one person", legend filter
 
 - Created: 17 October 2026
-- Last updated: 17 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: statistics charts](../../glossary/statistics_charts.md), [Tab "Work of one person"](statistics_person_work.md), [Statistics charts](statistics_charts.md), [Last state of each option](window_state_and_start.md)
-- Related issue: [issue 629](https://github.com/heidrun-org/heidrun/issues/629)
+- Related issue: [issue 629](https://github.com/heidrun-org/heidrun/issues/629), [issue 707](https://github.com/heidrun-org/heidrun/issues/707)
 
 This file is a part of the rules of the tab "Work of one person". The component is `components/StackedBarChart.vue`, and the tests are in `components/PersonWorkTab.test.ts` and `stores/settings.test.ts`.
 
@@ -20,4 +20,4 @@ This file is a part of the rules of the tab "Work of one person". The component 
 - The names of the charts are `git_history_commits_and_pull_requests`, `git_history_lines`, and `ai_cost`. The chart of the AI cost has one filter for both units, US dollars and tokens, because both units have the same colors.
 - The identifiers of the colors are `commits`, `pull_requests`, `lines_added`, `lines_deleted`, `claude`, and `codex`. The store keeps the identifier, and not the name of the color, so that a change of the language keeps the filter.
 - A saved identifier that the chart does not have shows every color, and the store keeps it. An entry that is not a text, and a value that is not an object, are dropped at the start.
-- The filter is the only thing that the tab "Work of one person" remembers. It does not remember the source, the metric, the unit, the workspaces, the person, the time range, or the slot length.
+- The filter is saved apart from the other selections of the tab, which [statistics_remembered_selections.md](statistics_remembered_selections.md) lists.

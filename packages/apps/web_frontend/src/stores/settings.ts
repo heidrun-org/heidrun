@@ -3,6 +3,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
 import { AGENTS } from "../lib/agents";
+import { PERSON_WORK_PERIODS, type PersonWorkPeriodId, type PersonWorkSlotHours } from "../lib/person_work";
+import {
+  USER_ACTIVITY_RANGE_IDS,
+  USER_ACTIVITY_RANGES,
+  USER_ACTIVITY_SLOT_LENGTHS,
+  type UserActivityRangeId,
+  type UserActivitySlotLengthId,
+} from "../lib/user_activity_slots";
 
 export interface FontOption {
   id: string;
@@ -61,6 +69,25 @@ export type SavedSearches = {
   issues: SavedSearch[];
   /** The saved searches of the list "Pull requests" or "Merge requests", in the order of their buttons. */
   requests: SavedSearch[];
+};
+
+/**
+ * The choice of the workspace selector of the tab "User activity" of the Statistics window (issue 707). The choice is saved by the
+ * folder of each workspace, because a folder is the same at every run of Heidrun.
+ */
+export type StatisticsUserActivityWorkspaces = {
+  /** True when every workspace was chosen: a workspace that opens later is then chosen too. `folders` is then not read. */
+  isEveryWorkspaceChosen: boolean;
+  /** The folders of the workspaces that were chosen. Empty with `isEveryWorkspaceChosen` false: no workspace was chosen. */
+  folders: string[];
+};
+
+/** The choice of the workspace selector of the tab "Work of one person" of the Statistics window (issue 707). */
+export type StatisticsPersonWorkWorkspaces = {
+  /** True once the developer has chosen the workspaces. False: the tab starts with the selected workspace alone. */
+  isSaved: boolean;
+  /** The identifiers of the workspaces that were chosen. Empty with `isSaved` true: no workspace was chosen. */
+  workspaceIds: string[];
 };
 
 const defaults = {
@@ -249,6 +276,29 @@ const defaults = {
    * name of a chart points to the identifier of the only color that the chart shows. A chart with no name shows every color.
    */
   statisticsLegendFilters: {} as Record<string, string>,
+  /** Window Statistics, tab "User activity": the time range of the histogram (issue 707). */
+  statisticsUserActivityRange: "day" as UserActivityRangeId,
+  /** Window Statistics, tab "User activity": the slot length of the histogram. It must be one of the slot lengths of the time range. */
+  statisticsUserActivitySlotLength: USER_ACTIVITY_RANGES.day.defaultSlotLengthId as UserActivitySlotLengthId,
+  /** Window Statistics, tab "User activity": the choice of the workspace selector. Every workspace at first. */
+  statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: true, folders: [] } as StatisticsUserActivityWorkspaces,
+  /** Window Statistics, tab "Work of one person": the source of the bar chart (issue 707). */
+  statisticsPersonWorkSource: "git_history" as "git_history" | "ai_cost",
+  /** Window Statistics, tab "Work of one person": the metric of the Git history. Kept while the source "AI cost" hides it. */
+  statisticsPersonWorkMetric: "commits_and_pull_requests" as "commits_and_pull_requests" | "lines",
+  /** Window Statistics, tab "Work of one person": the unit of the AI cost. Kept while the source "Git history" hides it. */
+  statisticsPersonWorkUnit: "dollars" as "dollars" | "tokens",
+  /**
+   * Window Statistics, tab "Work of one person": the identifier of the person that the developer chose in the person chooser.
+   * Kept while the source "AI cost" hides the chooser, and while the chosen workspaces do not list this person. Empty: none.
+   */
+  statisticsPersonWorkPerson: "",
+  /** Window Statistics, tab "Work of one person": the time range of the bar chart. */
+  statisticsPersonWorkRange: "seven_days" as PersonWorkPeriodId,
+  /** Window Statistics, tab "Work of one person": the slot length in hours. It must be one of the slot lengths of the time range. */
+  statisticsPersonWorkSlotHours: PERSON_WORK_PERIODS.seven_days.defaultSlotHours as PersonWorkSlotHours,
+  /** Window Statistics, tab "Work of one person": the choice of the workspace selector. The selected workspace alone at first. */
+  statisticsPersonWorkWorkspaces: { isSaved: false, workspaceIds: [] } as StatisticsPersonWorkWorkspaces,
   /** The identifier of the workspace that was selected at the last run: the next start selects it again. Empty: none. */
   selectedWorkspaceId: "",
 };
@@ -272,6 +322,13 @@ const ALLOWED_VALUES: Record<string, readonly unknown[]> = {
   customLauncherAgent: CUSTOM_LAUNCHER_CODING_AGENT_IDS,
   chatsSortKey: ["created_on", "last_updated", "messages", "issues", "pull_requests", "files_written"],
   chatsOrder: ["ascending", "descending"],
+  statisticsUserActivityRange: USER_ACTIVITY_RANGE_IDS,
+  statisticsUserActivitySlotLength: Object.keys(USER_ACTIVITY_SLOT_LENGTHS),
+  statisticsPersonWorkSource: ["git_history", "ai_cost"],
+  statisticsPersonWorkMetric: ["commits_and_pull_requests", "lines"],
+  statisticsPersonWorkUnit: ["dollars", "tokens"],
+  statisticsPersonWorkRange: Object.keys(PERSON_WORK_PERIODS),
+  statisticsPersonWorkSlotHours: [...new Set(Object.values(PERSON_WORK_PERIODS).flatMap((period) => period.slotHoursChoices))],
 };
 
 const NEW_TAB_COMMAND_AGENT_IDS = {
@@ -344,6 +401,44 @@ function keepLegendFilters(value: unknown): Record<string, string> {
     }
   }
   return kept;
+}
+
+/**
+ * Keeps the texts of a saved list, and drops the other entries and the empty texts.
+ * @param value - the saved value of the list, whatever it holds
+ * @returns the texts of the list
+ */
+function keepTexts(value: unknown): string[] {
+  if (Array.isArray(value) === false) {
+    return [];
+  }
+  return (value as unknown[]).filter((entry): entry is string => typeof entry === "string" && entry !== "");
+}
+
+/**
+ * Keeps the choice of the workspace selector of the tab "User activity" when it has the right shape.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the choice that can be used
+ */
+function keepUserActivityWorkspaces(value: unknown): StatisticsUserActivityWorkspaces {
+  const candidate = value as Partial<StatisticsUserActivityWorkspaces> | null;
+  return {
+    isEveryWorkspaceChosen: typeof candidate?.isEveryWorkspaceChosen === "boolean" ? candidate.isEveryWorkspaceChosen : true,
+    folders: keepTexts(candidate?.folders),
+  };
+}
+
+/**
+ * Keeps the choice of the workspace selector of the tab "Work of one person" when it has the right shape.
+ * @param value - the saved value of the option, whatever it holds
+ * @returns the choice that can be used
+ */
+function keepPersonWorkWorkspaces(value: unknown): StatisticsPersonWorkWorkspaces {
+  const candidate = value as Partial<StatisticsPersonWorkWorkspaces> | null;
+  return {
+    isSaved: candidate?.isSaved === true,
+    workspaceIds: keepTexts(candidate?.workspaceIds),
+  };
 }
 
 /** Settings that got a new name to follow the glossary: the old name in the saved value, then the new name. */
@@ -420,6 +515,8 @@ function load(): typeof defaults {
     }
     saved.codeHostingSavedSearches = keepSavedSearchLists(saved.codeHostingSavedSearches);
     saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
+    saved.statisticsUserActivityWorkspaces = keepUserActivityWorkspaces(saved.statisticsUserActivityWorkspaces);
+    saved.statisticsPersonWorkWorkspaces = keepPersonWorkWorkspaces(saved.statisticsPersonWorkWorkspaces);
     return saved;
   } catch {
     return { ...defaults };

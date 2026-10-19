@@ -16,6 +16,7 @@ import {
   type UserActivityWorkspaceChoice,
   type UserActivityWorkspaceSlots,
 } from "../lib/user_activity_workspaces";
+import { settings } from "../stores/settings";
 import { activePeriodStartedAt, openWorkspaces, selectedWorkspaceFolder } from "../stores/user_activity";
 import { t } from "../i18n/index";
 
@@ -24,7 +25,8 @@ import { t } from "../i18n/index";
 // time range is the last day, the last week, or the last month. The slot length depends on the time range, and it goes back
 // to the slot length that the time range starts with each time that the time range changes. The workspaces are all of them
 // at first, and the developer can hide any workspace. The records are read once, for the longest time range, when the
-// window opens. Each choice then cuts the same records again, so a choice never reads the data layer again.
+// window opens. Each choice then cuts the same records again, so a choice never reads the data layer again. Each choice is
+// saved in the settings as soon as it changes, and the tab starts with the saved choices (issue 707).
 
 /** The choices of the radio button group of the time range, from left to right. */
 const RANGE_CHOICES = [
@@ -33,11 +35,17 @@ const RANGE_CHOICES = [
   { id: "month", labelKey: "statisticsModal.rangeMonth", titleKey: "statisticsModal.rangeMonthTitle" },
 ] as const satisfies readonly { id: UserActivityRangeId; labelKey: string; titleKey: string }[];
 
-/** The time range of the histogram. The tab starts with the last day. */
-const rangeId = ref<UserActivityRangeId>("day");
+/** The time range of the histogram. The tab starts with the saved time range, or else with the last day. */
+const rangeId = ref<UserActivityRangeId>(settings.statisticsUserActivityRange);
 
-/** The slot length of the histogram. The tab starts with the slot length that the last day starts with. */
-const slotLengthId = ref<UserActivitySlotLengthId>(USER_ACTIVITY_RANGES.day.defaultSlotLengthId);
+/** Gives the slot length that the tab starts with: the saved slot length when the time range offers it, else the default one. */
+function firstSlotLengthId(): UserActivitySlotLengthId {
+  const range = USER_ACTIVITY_RANGES[rangeId.value];
+  return range.slotLengthIds.includes(settings.statisticsUserActivitySlotLength) ? settings.statisticsUserActivitySlotLength : range.defaultSlotLengthId;
+}
+
+/** The slot length of the histogram. The tab starts with the saved slot length, or else with the one that its time range starts with. */
+const slotLengthId = ref<UserActivitySlotLengthId>(firstSlotLengthId());
 
 /** The slot lengths that the developer can choose in the time range, from the shortest to the longest. */
 const slotLengthIds = computed(() => USER_ACTIVITY_RANGES[rangeId.value].slotLengthIds);
@@ -62,12 +70,45 @@ const workspaceChoices = computed<UserActivityWorkspaceChoice[]>(() =>
   }))),
 );
 
-/** The folders of the workspaces that the histogram shows. All the workspaces at first. */
+/** The folders of the workspaces that the histogram shows. */
 const chosenFolders = ref<string[]>([]);
+
+/**
+ * The folders of the workspaces that the histogram shows, for the buttons of the workspaces. A choice of the developer is
+ * saved in the settings. A change that the tab makes by itself, when a workspace opens or closes, is not saved, so a
+ * workspace that closes for a while does not lose its place in the saved choice.
+ */
+const chosenFoldersChoice = computed({
+  get: () => chosenFolders.value,
+  set: (folders: string[]) => {
+    chosenFolders.value = folders;
+    settings.statisticsUserActivityWorkspaces = {
+      isEveryWorkspaceChosen: workspaceChoices.value.length > 0 && workspaceChoices.value.every((choice) => folders.includes(choice.folder)),
+      folders: [...folders],
+    };
+  },
+});
+
+/**
+ * Gives the folders to choose when the workspaces appear: the saved choice when it still names an open workspace, else every
+ * workspace.
+ *
+ * @param choices - The workspaces that the developer can choose.
+ * @returns The folders of the workspaces to show.
+ */
+function firstChosenFolders(choices: UserActivityWorkspaceChoice[]): string[] {
+  const everyFolder = choices.map((choice) => choice.folder);
+  const saved = settings.statisticsUserActivityWorkspaces;
+  if (saved.isEveryWorkspaceChosen === true) {
+    return everyFolder;
+  }
+  const stillOpen = saved.folders.filter((folder) => everyFolder.includes(folder));
+  return saved.folders.length === 0 || stillOpen.length > 0 ? stillOpen : everyFolder;
+}
 
 watch(workspaceChoices, (choices, previousChoices) => {
   if (previousChoices === undefined || previousChoices.length === 0) {
-    chosenFolders.value = choices.map((choice) => choice.folder);
+    chosenFolders.value = firstChosenFolders(choices);
     return;
   }
   if (chosenFolders.value.length === 0) {
@@ -125,16 +166,21 @@ const workspaceSlots = computed<UserActivityWorkspaceSlots[]>(() => {
 
 watch(rangeId, (newRangeId) => {
   slotLengthId.value = USER_ACTIVITY_RANGES[newRangeId].defaultSlotLengthId;
+  settings.statisticsUserActivityRange = newRangeId;
+});
+
+watch(slotLengthId, (newSlotLengthId) => {
+  settings.statisticsUserActivitySlotLength = newSlotLengthId;
 });
 
 /** Chooses every workspace. */
 function chooseEveryWorkspace(): void {
-  chosenFolders.value = workspaceChoices.value.map((choice) => choice.folder);
+  chosenFoldersChoice.value = workspaceChoices.value.map((choice) => choice.folder);
 }
 
 /** Chooses no workspace. */
 function chooseNoWorkspace(): void {
-  chosenFolders.value = [];
+  chosenFoldersChoice.value = [];
 }
 
 /**
@@ -234,7 +280,7 @@ onMounted(load);
         >
           <input
             :id="`statistics-workspace-${index}`"
-            v-model="chosenFolders"
+            v-model="chosenFoldersChoice"
             type="checkbox"
             autocomplete="off"
             :value="choice.folder"

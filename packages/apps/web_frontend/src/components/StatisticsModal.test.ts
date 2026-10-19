@@ -244,35 +244,35 @@ describe("StatisticsModal", () => {
     expect(recordRangeCalls()).toHaveLength(1);
   });
 
-  it("draws one histogram at first, the last day: twenty-four bars, and a vertical axis from 0 to 60 minutes", async () => {
+  it("draws one histogram at first, the last day: twenty-four bars, and a vertical axis in minutes that fits the highest bar", async () => {
     await mountStatisticsModal([]);
     await waitForDrawings(1);
     const drawing = lastDrawing();
     expect(drawing.data.type).toBe("bar");
     expect(drawing.data.x).toHaveLength(24);
-    expect(drawing.layout.yaxis.range).toEqual([0, 60]);
+    expect(drawing.layout.yaxis.range).toEqual([0, 5]);
     expect(drawing.layout.yaxis.autorange).toBe(false);
     expect(plotly.react).toHaveBeenCalledTimes(1);
   });
 
-  it("draws the last week when Last week is chosen: seven bars, and a vertical axis in hours that follows the longest day", async () => {
+  it("draws the last week when Last week is chosen: seven bars, and a vertical axis in hours that fits the highest bar", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     await waitForDrawings(1);
     await chooseRange(wrapper, "week", 2);
     const drawing = lastDrawing();
     expect(drawing.data.x).toHaveLength(7);
-    expect(drawing.layout.yaxis.autorange).toBe(true);
-    expect(drawing.layout.yaxis.range).toBeUndefined();
+    expect(drawing.layout.yaxis.autorange).toBe(false);
+    expect(drawing.layout.yaxis.range).toEqual([0, 1]);
   });
 
-  it("draws the last month when Last month is chosen: thirty bars, and a vertical axis in hours that follows the longest day", async () => {
+  it("draws the last month when Last month is chosen: thirty bars, and a vertical axis in hours that fits the highest bar", async () => {
     const { wrapper } = await mountStatisticsModal([]);
     await waitForDrawings(1);
     await chooseRange(wrapper, "month", 2);
     const drawing = lastDrawing();
     expect(drawing.data.x).toHaveLength(30);
-    expect(drawing.layout.yaxis.autorange).toBe(true);
-    expect(drawing.layout.yaxis.range).toBeUndefined();
+    expect(drawing.layout.yaxis.autorange).toBe(false);
+    expect(drawing.layout.yaxis.range).toEqual([0, 1]);
   });
 
   it("gives the same period to the three time ranges, in minutes for the last day, and in hours for the last week and the last month", async () => {
@@ -335,5 +335,49 @@ describe("StatisticsModal", () => {
     statisticsModal.open = true;
     await wrapper.get("button[aria-label='Close (Escape)']").trigger("click");
     expect(statisticsModal.open).toBe(false);
+  });
+});
+
+describe("StatisticsModal: the memory of the selections (issue 707)", () => {
+  /** The texts of the buttons that are checked in a group of toggle buttons. */
+  function checkedTexts(root: Pick<VueWrapper, "get">, groupLabel: string): string[] {
+    return root
+      .get(`[role="group"][aria-label="${groupLabel}"]`)
+      .findAll("label.btn-check")
+      .filter((button) => (button.get("input").element as HTMLInputElement).checked)
+      .map((button) => button.text());
+  }
+
+  it("keeps the slot length of the tab User activity when the window is closed and opened again", async () => {
+    const first = await mountStatisticsModal([]);
+    await first.wrapper.get("#statistics-slot-fifteen_minutes").setValue(true);
+    first.wrapper.unmount();
+    plotly.react.mockClear();
+    const second = await mountStatisticsModal([]);
+    expect(checkedTexts(second.wrapper, "Slot length")).toEqual(["15 minutes"]);
+    await waitForDrawings(1);
+    expect(lastDrawing().data.x).toHaveLength(96);
+  });
+
+  it("keeps the selections of the tab Work of one person, and of the tab User activity apart, when the window is closed and opened again", async () => {
+    const noWork = { repository: "heidrun-org/heidrun", commits: [], pullRequests: [], issues: [], codeHostingError: null };
+    const first = await mountStatisticsModal([]);
+    invoke.mockImplementation(async (command: string) => (command === "person_work_in_range" ? noWork : []));
+    await first.wrapper.get("#statistics-range-week").setValue(true);
+    await first.wrapper.findAll('[role="tab"]')[1].trigger("click");
+    await flushPromises();
+    await first.wrapper.get("#statistics-person-period-thirty_days").setValue(true);
+    await first.wrapper.get("#statistics-person-slot-6").setValue(true);
+    first.wrapper.unmount();
+    const second = await mountStatisticsModal([]);
+    invoke.mockImplementation(async (command: string) => (command === "person_work_in_range" ? noWork : []));
+    await second.wrapper.findAll('[role="tab"]')[1].trigger("click");
+    await flushPromises();
+    const userActivityPane = second.wrapper.get("#statistics-tab-user_activity-pane");
+    const personWorkPane = second.wrapper.get("#statistics-tab-person_work-pane");
+    expect(checkedTexts(userActivityPane, "Time range")).toEqual(["Last week"]);
+    expect(checkedTexts(userActivityPane, "Slot length")).toEqual(["1 day"]);
+    expect(checkedTexts(personWorkPane, "Time range")).toEqual(["30 days"]);
+    expect(checkedTexts(personWorkPane, "Slot length")).toEqual(["6 hours"]);
   });
 });
