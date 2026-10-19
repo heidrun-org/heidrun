@@ -1,11 +1,11 @@
 # User interface of Heidrun: layout of the window
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323), [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 371](https://github.com/heidrun-org/heidrun/issues/371)
+- Related issue: [issue 303](https://github.com/heidrun-org/heidrun/issues/303), [issue 315](https://github.com/heidrun-org/heidrun/issues/315), [issue 323](https://github.com/heidrun-org/heidrun/issues/323), [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 371](https://github.com/heidrun-org/heidrun/issues/371), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This document says where each part of the window goes and how each part works. The words are defined in [glossary/index.md](../../glossary/index.md). The layout below is the layout of the window.
 
@@ -34,6 +34,7 @@ The other files of the folder `docs/agents_rules/user_interface` give the rules 
 - A part that the developer uses rarely does not take space all the time. A part that the developer uses often is always visible.
 - The top bar is 43 pixels high. The gap above the search box, the theme button, and the more button is 9 pixels, and the gap below them is also 9 pixels, down to the first tab of the tab bar and to the first button of each sidebar icon bar ([issue #315](https://github.com/heidrun-org/heidrun/issues/315)).
 - The top bar holds the Back button and the Forward button, in this order, just on the left of the search button. They are 30 pixels high, like the theme button. The rules of the two buttons are in [pane_focus_history.md](../workspaces_tabs_and_panes/pane_focus_history.md) ([issue #380](https://github.com/heidrun-org/heidrun/issues/380)).
+- Zen Mode is a temporary alternate layout. It hides the top bar, tab bar, sidebars, sidebar icon bars, and status bar so the visible pane fills the window content. Existing keyboard shortcuts still switch tabs and workspaces, search, and move through the pane focus history. The window stays in its current macOS virtual space.
 
 ## Text that must stay on one line
 

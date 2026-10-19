@@ -1,11 +1,11 @@
 # User interface of Heidrun: pane focus history
 
 - Created: 13 October 2026
-- Last updated: 14 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Glossary of Heidrun: pane focus history](../../glossary/pane_focus_history.md), [Panes](panes.md), [Layout of the window](../window/layout.md)
-- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380)
+- Related issue: [issue 380](https://github.com/heidrun-org/heidrun/issues/380), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md) and in [glossary/pane_focus_history.md](../../glossary/pane_focus_history.md).
 
@@ -28,6 +28,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - Each row of the list shows the name of the pane, with its workspace and its tab. A click on a row gives the focus to the pane of that entry, and closes the list. The list also closes on a click outside, and on the key Escape.
 - The click that ends a long press does not move in the history.
 - The keys ⌘[ and ⌘] do the same as a click on the Back button and on the Forward button, as in Chrome on macOS. Heidrun matches the characters "[" and "]", not the place of the keys, so a French keyboard works. The file explorer keeps the two keys for its editor.
+- These keyboard shortcuts also work in Zen Mode while the top bar and its Back and Forward buttons are hidden.
 - The history of Back and Forward is a navigation inside the panes, like "Go Back" and "Go Forward" in a code editor. It never closes, opens, moves, or changes a pane.
 
 ## Files

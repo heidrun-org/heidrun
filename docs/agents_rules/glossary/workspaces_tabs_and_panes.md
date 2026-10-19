@@ -1,11 +1,11 @@
 # Glossary of Heidrun: workspaces, tabs, and panes
 
 - Created: 14 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -72,6 +72,10 @@ The area under the terminal of the focused pane that opens after the developer d
 ### Big view
 
 The large picture of one image of the composition bar, with a button on each side to go to the previous image and to the next image. A click on a small picture of the composition bar opens it.
+
+### Zen Mode
+
+A temporary mode entered from the header of a pane. It shows only the pane whose header button was pressed, hides the surrounding interface, and keeps that pane's header visible.
 
 ## Rules
 

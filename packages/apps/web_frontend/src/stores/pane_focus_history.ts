@@ -6,6 +6,7 @@ import { allPanes, selectPane, state } from "./session";
 import { activePaneId, isPinned, pinnedPaneState } from "./pinned_panes";
 import { PaneFocusHistory } from "../lib/pane_focus_history";
 import { trailingDebounce } from "../lib/trailing_debounce";
+import { ZenMode } from "./zen_mode";
 
 /** A pane must keep the focus this long, in milliseconds, before the history records it. A quick pass is noise. */
 export const PANE_FOCUS_STAY_MS = 500;
@@ -50,6 +51,7 @@ function focusPane(paneId: string) {
   }
   if (isPinned(paneId)) {
     pinnedPaneState.focus = paneId;
+    ZenMode.focusPane(pane.pane_id, pane.tab_id);
     return;
   }
   selectPane(pane);

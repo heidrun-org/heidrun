@@ -13,6 +13,8 @@
   "splitRightTitle": "Split right with the default command of a new tab (⌘D, shift click: start a terminal)",
   "splitDown": "Split down",
   "splitDownTitle": "Split down with the default command of a new tab (⇧⌘D, shift click: start a terminal)",
+  "zenModeEnter": "Enter Zen Mode",
+  "zenModeExit": "Leave Zen Mode",
   "close": "Close the pane (⌘W)",
   "closeConfirm": "Close"
 }

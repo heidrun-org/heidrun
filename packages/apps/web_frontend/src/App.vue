@@ -94,6 +94,7 @@ import { loadAntigravityLink } from "./stores/antigravity";
 import { t } from "./i18n/index";
 import { ResizerWidth } from "./lib/resizer_width";
 import type { PaneOuterEdge } from "./lib/pane_separators";
+import { ZenMode } from "./stores/zen_mode";
 
 // The column of pinned panes never squeezes the panes of the selected tab below 420 px, whatever the window size.
 const winW = ref(window.innerWidth);
@@ -120,6 +121,7 @@ const rightTakenWidth = computed(() => (settings.rightCollapsed ? COLLAPSED_SIDE
 const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTakenWidth.value : 0));
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
+const isZenPanePinned = computed(() => allPinnedPanes.value.some((pane) => pane.pane_id === ZenMode.state.paneId));
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
 const LEFT_COLUMN = { min: 200, defaultWidth: 280 };
@@ -326,42 +328,51 @@ onBeforeUnmount(() => {
     <SplashScreen />
     <MissingProgramsModal />
     <AboutModal />
-    <TopBar />
-    <div class="body">
-      <Sidebar />
-      <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
-      <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
-      <div v-else class="sidebar-gap"></div>
-      <main class="center">
+    <TopBar v-if="ZenMode.state.isActive === false" />
+    <div class="body" :class="{ 'zen-mode': ZenMode.state.isActive }">
+      <template v-if="ZenMode.state.isActive === false">
+        <Sidebar />
+        <Resizer v-if="settings.leftCollapsed === false" v-model:width="settings.leftWidth" side="left" :min="LEFT_COLUMN.min" :default-width="LEFT_COLUMN.defaultWidth" :reserve="leftReserve" :highlighted="highlightedEdge === 'left'" />
+        <!-- A collapsed sidebar has no line to drag, but it keeps the gap that the line fills. -->
+        <div v-else class="sidebar-gap"></div>
+      </template>
+      <main class="center" :class="{ 'zen-mode': ZenMode.state.isActive }">
         <template v-if="state.snapshot">
-          <TabBar />
-          <div class="stage">
-            <PaneGrid :outer-edges="paneOuterEdges" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
-            <template v-if="allPinnedPanes.length">
-              <Resizer
-                :width="columnOfPinnedPanesShownWidth"
-                @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
-                side="right"
-                inside
-                :min="COLUMN_OF_PINNED_PANES.min"
-                :max="COLUMN_OF_PINNED_PANES.max"
-                :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
-                :reserve="columnOfPinnedPanesReserve"
-                :highlighted="highlightedEdge === 'right'"
-              />
-              <ColumnOfPinnedPanes :style="{ width: `${columnOfPinnedPanesShownWidth}px` }" />
-            </template>
+          <TabBar v-if="ZenMode.state.isActive === false" />
+          <div class="stage" :class="{ 'zen-mode': ZenMode.state.isActive, 'zen-mode-pinned-pane': isZenPanePinned }">
+            <PaneGrid :outer-edges="paneOuterEdges" :zen-pane-id="ZenMode.state.isActive ? ZenMode.state.paneId : null" @outer-start="onCornerStart" @outer-move="onCornerMove" @outer-highlight="highlightedEdge = $event" />
+            <Resizer
+              v-if="allPinnedPanes.length && ZenMode.state.isActive === false"
+              :width="columnOfPinnedPanesShownWidth"
+              @update:width="(v: number) => (settings.columnOfPinnedPanesWidth = v)"
+              side="right"
+              inside
+              :min="COLUMN_OF_PINNED_PANES.min"
+              :max="COLUMN_OF_PINNED_PANES.max"
+              :default-width="COLUMN_OF_PINNED_PANES.defaultWidth"
+              :reserve="columnOfPinnedPanesReserve"
+              :highlighted="highlightedEdge === 'right'"
+            />
+            <ColumnOfPinnedPanes
+              v-if="allPinnedPanes.length"
+              :class="{
+                'zen-mode': ZenMode.state.isActive && isZenPanePinned,
+                'zen-mode-hidden': ZenMode.state.isActive && isZenPanePinned === false,
+              }"
+              :zen-pane-id="ZenMode.state.isActive && isZenPanePinned ? ZenMode.state.paneId : null"
+              :style="{ width: ZenMode.state.isActive && isZenPanePinned ? '100%' : `${columnOfPinnedPanesShownWidth}px` }"
+            />
           </div>
         </template>
         <Offline v-else />
       </main>
-      <template v-if="state.snapshot">
+      <template v-if="state.snapshot && ZenMode.state.isActive === false">
         <Resizer v-if="settings.rightCollapsed === false" v-model:width="settings.rightWidth" side="right" :min="RIGHT_COLUMN.min" :default-width="RIGHT_COLUMN.defaultWidth" :reserve="rightReserve" :highlighted="highlightedEdge === 'right' && allPinnedPanes.length === 0" />
         <div v-else class="sidebar-gap"></div>
         <RightPanel />
       </template>
     </div>
-    <StatusBar />
+    <StatusBar v-if="ZenMode.state.isActive === false" />
     <CommandPalette v-if="state.paletteOpen" />
     <MacroEditor v-if="macroEditor.open" />
     <ThreeJsDemoModal v-if="threeJsDemoModal.open" />
@@ -408,10 +419,14 @@ onBeforeUnmount(() => {
   flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--pane-radius); background: var(--side);
 }
+.body.zen-mode { padding: 0; }
+.center.zen-mode { border: 0; border-radius: 0; background: var(--bg); }
 .sidebar-gap { width: var(--pane-gap); flex-shrink: 0; }
 /* The border of the panes goes 1 pixel past the frame on the left, on the right, and at the bottom: the frame clips it, so the
    border of the frame is the only line there. At the top, the border of the panes is the line under the tab bar. */
 .stage { flex: 1; min-height: 0; display: flex; margin: 0 -1px -1px; }
+.stage.zen-mode { position: relative; margin: 0; }
+.stage.zen-mode.zen-mode-pinned-pane > :first-child { display: none; }
 .stage > :first-child { flex: 1; min-width: 0; }
 .toast {
   position: fixed; right: 16px; bottom: 52px;

@@ -1,11 +1,11 @@
 # User interface of Heidrun: tabs
 
 - Created: 13 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 328](https://github.com/heidrun-org/heidrun/issues/328), [issue 424](https://github.com/heidrun-org/heidrun/issues/424), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 495](https://github.com/heidrun-org/heidrun/issues/495), [issue 556](https://github.com/heidrun-org/heidrun/issues/556), [issue 688](https://github.com/heidrun-org/heidrun/issues/688)
+- Related issue: [issue 328](https://github.com/heidrun-org/heidrun/issues/328), [issue 424](https://github.com/heidrun-org/heidrun/issues/424), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 495](https://github.com/heidrun-org/heidrun/issues/495), [issue 556](https://github.com/heidrun-org/heidrun/issues/556), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -18,8 +18,9 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - A workspace always has at least one tab. When the developer closes the last tab of a workspace, from the close button of the tab or from the command palette, the application does not close the tab, and shows the error notification "You cannot close the last tab of a workspace." The error notification appears at once, without the confirmation dialog of the setting "Ask before closing" ([issue 424](https://github.com/heidrun-org/heidrun/issues/424)).
 - The Settings window has the choice "Default command of a new tab" in its section "Coding agents", under the heading "Default command of a new tab": a Bootstrap 6 button group of radio inputs (`btn-group` with `btn-check btn-outline theme-secondary` labels), "Terminal", "Claude Code", "Codex", and "Antigravity" when Antigravity is switched on, and one line of help under them ([issue 328](https://github.com/heidrun-org/heidrun/issues/328), [issue 688](https://github.com/heidrun-org/heidrun/issues/688)).
 - The developer reorders the tabs by pressing a tab, moving the mouse, and releasing the button where the tab goes. The same holds for the list of workspaces and for the list of notes. The reorder uses the pointer events of the page, and never the drag and drop of the browser: the window of Heidrun receives the image files that the developer drops from Finder, so the native window takes every drag and drop, and the page gets no drag event of the browser. A press that moves less than 5 pixels is a click. The key Escape cancels the move.
-- A developer switches tab often, so the tabs are always visible.
+- In normal mode, a developer switches tab often, so the tabs are always visible.
 - A workspace has few tabs, twenty tabs is extremely rare. So each tab is large, with generous horizontal padding.
 - Each tab shows a small icon between its status dot and its name: the Claude icon, the OpenAI icon for Codex, the Google icon for Antigravity, or the terminal icon. A pane with an agent always beats a terminal. Among the panes with an agent, the pane that decides the color of the status dot gives the icon (blocked, then working, then done, then idle). When two panes have the same status, the selected pane wins, then the focused pane, then the first pane.
 - The shortcut Option+Command+Left arrow or Option+Command+Right arrow selects the previous or the next tab.
+- In Zen Mode, those shortcuts keep working while the tab bar stays hidden. Zen Mode remains active and shows the pane last focused in the selected tab. It remembers that pane separately for each tab during the current Zen Mode run.
 
