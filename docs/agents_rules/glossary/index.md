@@ -9,7 +9,7 @@
 This file lists the files of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [workspaces_tabs_and_panes.md](workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
+- [workspaces_tabs_and_panes.md](workspaces_tabs_and_panes.md): the workspace, the workspace folder, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
 - [sidebars.md](sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
 - [chats.md](chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
 - [coding_agent_configuration.md](coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item.

@@ -21,7 +21,11 @@ Workspace
 
 ### Workspace
 
-One project folder. In most cases, the folder is one repository. A workspace holds tabs.
+One project with a fixed workspace folder. In most cases, the workspace folder is one repository. A workspace holds tabs.
+
+### Workspace folder
+
+The folder chosen when a workspace is created. Every workspace has exactly one workspace folder. The workspace folder stays fixed for the lifetime of the workspace, even when a terminal or a coding agent changes its current working folder. Every new terminal and every new coding agent in the workspace starts in the workspace folder. The Workspace card shows the workspace folder, and the Git branch in the status bar belongs to the workspace folder. To use another folder, including a Git worktree, the developer opens a separate workspace for that folder.
 
 ### Git worktree
 
