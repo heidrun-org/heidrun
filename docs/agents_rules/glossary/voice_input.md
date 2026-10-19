@@ -1,11 +1,11 @@
 # Glossary of Heidrun: voice input
 
 - Created: 18 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: voice input](../user_interface/window/settings_voice_input.md), [User interface of Heidrun: composition bar](../user_interface/workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712)
 
 This document gives one short definition for each word of the voice input. The other words of Heidrun are in [index.md](index.md).
 
@@ -13,7 +13,7 @@ This document gives one short definition for each word of the voice input. The o
 
 ### Voice input
 
-The feature that changes the speech of the developer into text. The developer holds the push-to-talk button, speaks, and releases the button, or clicks the button to start and clicks it again to stop. Heidrun records the microphone only between these two moments, changes the speech into text on the computer with a Whisper model, and writes the text in the composition bar. The voice input is off at first.
+The feature that changes the speech of the developer into text. The developer holds the push-to-talk button, speaks, and releases the button, or clicks the button to start and clicks it again to stop. Heidrun records the microphone only between these two moments, changes the speech into text on the computer with a Whisper model, and writes the text in the composition bar whose push-to-talk button started the recording, even if focus changes. All panes share one recorder, so only one recording can run. The voice input is off at first.
 
 ### Push-to-talk button
 

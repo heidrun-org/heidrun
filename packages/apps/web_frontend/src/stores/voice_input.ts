@@ -25,8 +25,10 @@ export type VoiceOptions = {
 /** How many levels the level bars show. With one level every 50 milliseconds, the bars show the last two seconds. */
 export const LEVEL_COUNT = 40;
 
-/** The state of the voice input (issue 662). */
+/** The state of the single shared voice input recorder (issues 662 and 712). */
 export const voiceInput = reactive<{
+	/** The pane whose composition bar owns the current or most recent recording, or null before the first recording. */
+	ownerPaneId: string | null;
 	/** The options of the desktop application, or null before the first read. */
 	options: VoiceOptions | null;
 	/**
@@ -54,6 +56,7 @@ export const voiceInput = reactive<{
 		error: string | null;
 	};
 }>({
+	ownerPaneId: null,
 	options: null,
 	state: "idle",
 	isLatched: false,

@@ -25,7 +25,7 @@ import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
 import MosaicModal from "./components/MosaicModal.vue";
 import ImageViewer from "./components/ImageViewer.vue";
-import { compositionBar } from "./stores/composition_bar";
+import { CompositionBar, compositionBarsByPane } from './stores/composition_bar';
 import { mosaic } from "./stores/mosaic";
 import { activePaneId, allPinnedPanes } from "./stores/pinned_panes";
 import { goBackInPaneFocusHistory, goForwardInPaneFocusHistory } from "./stores/pane_focus_history";
@@ -122,6 +122,25 @@ const sides = computed(() => leftTakenWidth.value + (state.snapshot ? rightTaken
 const columnOfPinnedPanesShownWidth = computed(() => Math.max(240, Math.min(settings.columnOfPinnedPanesWidth, winW.value - sides.value - 420)));
 const columnOfPinnedPanesTakenWidth = computed(() => (allPinnedPanes.value.length ? columnOfPinnedPanesShownWidth.value : 0));
 const isZenPanePinned = computed(() => allPinnedPanes.value.some((pane) => pane.pane_id === ZenMode.state.paneId));
+const compositionViewerPaneId = computed(() => {
+  const paneId = Object.keys(compositionBarsByPane).find(
+    (candidatePaneId) => compositionBarsByPane[candidatePaneId]?.viewerIndex !== null,
+  );
+  return paneId ?? null;
+});
+
+watch(
+  () => allPanes.value.map((pane) => pane.pane_id),
+  (paneIds) => {
+    const existingPaneIds = new Set(paneIds);
+    for (const paneId of Object.keys(compositionBarsByPane)) {
+      if (existingPaneIds.has(paneId) === false) {
+        ImageDrop.close(paneId);
+        CompositionBar.removePane(paneId);
+      }
+    }
+  },
+);
 
 // The three columns that the user drags, and the width that the other columns take away from each of them.
 const LEFT_COLUMN = { min: 200, defaultWidth: 280 };
@@ -311,8 +330,14 @@ onMounted(async () => {
   loadAntigravityLink();
   startRemoteWatch();
   unlistenDrop = await getCurrentWebview().onDragDropEvent((event) => {
-    if (event.payload.type !== "drop") return;
-    const result = ImageDrop.handleDrop(event.payload.paths);
+    if (event.payload.type !== "drop") {
+      return;
+    }
+    const paneId = activePaneId();
+    if (paneId === null) {
+      return;
+    }
+    const result = ImageDrop.handleDrop(paneId, event.payload.paths);
     if (result === "not_an_image") toast(t("app.dropNotAnImage"), "error");
   });
 });
@@ -386,7 +411,7 @@ onBeforeUnmount(() => {
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />
-    <ImageViewer v-if="compositionBar.viewerIndex !== null" />
+    <ImageViewer v-if="compositionViewerPaneId !== null" :pane-id="compositionViewerPaneId" />
     <AgentsInformationModal v-if="agentsInformationModal.open" />
     <NewCustomLauncherModal v-if="newCustomLauncherModal.open" />
     <SavedSearchModal v-if="savedSearchModal.open" />

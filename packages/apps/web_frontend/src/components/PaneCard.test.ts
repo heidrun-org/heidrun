@@ -44,7 +44,7 @@ async function mountPaneCard(
       isInColumnOfPinnedPanes,
       ...extraProps,
       pane: {
-        pane_id: "w1:p1",
+        pane_id: 'w1:p1',
         terminal_id: "t1",
         workspace_id: "w1",
         tab_id: "w1:t1",
@@ -120,7 +120,7 @@ describe("PaneCard", () => {
 
   it("unpins the pane of the column of pinned panes when the pressed pin button is clicked", async () => {
     const { settings } = await import("../stores/settings");
-    settings.pinnedPanes = ["w1:p1"];
+    settings.pinnedPanes = ['w1:p1'];
     const wrapper = await mountPaneCard({}, true);
     await wrapper.get("button[aria-label='Unpin the pane']").trigger("click");
     expect(settings.pinnedPanes).toEqual([]);
@@ -129,7 +129,7 @@ describe("PaneCard", () => {
   it("is the selected pane in the column of pinned panes when it is the selected pane of the selected tab", async () => {
     const { state } = await import("../stores/session");
     const { pinnedPaneState } = await import("../stores/pinned_panes");
-    state.selectedPaneId = "w1:p1";
+    state.selectedPaneId = 'w1:p1';
     pinnedPaneState.focus = null;
     const wrapper = await mountPaneCard({}, true);
     expect(wrapper.get("section").classes()).toContain("selected");
@@ -138,7 +138,7 @@ describe("PaneCard", () => {
   it("is not the selected pane in the column of pinned panes when another pinned pane has the keyboard", async () => {
     const { state } = await import("../stores/session");
     const { pinnedPaneState } = await import("../stores/pinned_panes");
-    state.selectedPaneId = "w1:p1";
+    state.selectedPaneId = 'w1:p1';
     // The store gives the keyboard back to the grid when the selected pane changes: wait for that, then pin the focus.
     await nextTick();
     pinnedPaneState.focus = "w1:p2";
@@ -165,7 +165,7 @@ describe("PaneCard", () => {
 
   it("has no highlight when the viewport shows one pane", async () => {
     const { state } = await import("../stores/session");
-    state.snapshot = { panes: [{ pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" }] } as never;
+    state.snapshot = { panes: [{ pane_id: 'w1:p1', tab_id: "w1:t1", workspace_id: "w1" }] } as never;
     state.selectedTabId = "w1:t1";
     const wrapper = await mountPaneCard();
     expect(wrapper.get("section").classes()).not.toContain("several-panes");
@@ -175,7 +175,7 @@ describe("PaneCard", () => {
     const { state } = await import("../stores/session");
     state.snapshot = {
       panes: [
-        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: 'w1:p1', tab_id: "w1:t1", workspace_id: "w1" },
         { pane_id: "w1:p2", tab_id: "w1:t1", workspace_id: "w1" },
       ],
     } as never;
@@ -189,7 +189,7 @@ describe("PaneCard", () => {
     const { settings } = await import("../stores/settings");
     state.snapshot = {
       panes: [
-        { pane_id: "w1:p1", tab_id: "w1:t1", workspace_id: "w1" },
+        { pane_id: 'w1:p1', tab_id: "w1:t1", workspace_id: "w1" },
         { pane_id: "w1:p9", tab_id: "w1:t2", workspace_id: "w1" },
       ],
     } as never;
@@ -203,14 +203,15 @@ describe("PaneCard", () => {
 describe("PaneCard composition bar", () => {
   async function selectPaneWithBar(selectedPaneId: string, isOpen: boolean) {
     const { state } = await import("../stores/session");
-    const { compositionBar } = await import("../stores/composition_bar");
+    const { CompositionBar } = await import("../stores/composition_bar");
+    const compositionBar = CompositionBar.forPane('w1:p1');
     state.selectedPaneId = selectedPaneId;
     compositionBar.isOpen = isOpen;
     compositionBar.paths = isOpen ? ["/shots/a.png"] : [];
   }
 
   it("shows the composition bar under the terminal of the selected pane when it is open", async () => {
-    await selectPaneWithBar("w1:p1", true);
+    await selectPaneWithBar('w1:p1', true);
     const wrapper = await mountPaneCard();
     const children = [...wrapper.get("section").element.children];
     expect(wrapper.find(".composition-bar").exists()).toBe(true);
@@ -218,15 +219,15 @@ describe("PaneCard composition bar", () => {
   });
 
   it("shows no composition bar when it is closed", async () => {
-    await selectPaneWithBar("w1:p1", false);
+    await selectPaneWithBar('w1:p1', false);
     const wrapper = await mountPaneCard();
     expect(wrapper.find(".composition-bar").exists()).toBe(false);
   });
 
-  it("shows no composition bar in a pane that is not the selected pane", async () => {
-    await selectPaneWithBar("w1:other", true);
+  it("keeps its composition bar open when another pane is selected", async () => {
+    await selectPaneWithBar('w1:other', true);
     const wrapper = await mountPaneCard();
-    expect(wrapper.find(".composition-bar").exists()).toBe(false);
+    expect(wrapper.find(".composition-bar").exists()).toBe(true);
   });
 });
 
@@ -234,7 +235,8 @@ describe("PaneCard composition bar toggle button", () => {
   async function selectPane(selectedPaneId: string, isOpen: boolean, isVoiceInputOn = false) {
     const { state } = await import("../stores/session");
     const { settings } = await import("../stores/settings");
-    const { compositionBar } = await import("../stores/composition_bar");
+    const { CompositionBar } = await import("../stores/composition_bar");
+    const compositionBar = CompositionBar.forPane('w1:p1');
     state.selectedPaneId = selectedPaneId;
     settings.voiceInput = isVoiceInputOn;
     compositionBar.isOpen = isOpen;
@@ -243,26 +245,27 @@ describe("PaneCard composition bar toggle button", () => {
   }
 
   it("shows the toggle button in the header of the selected pane, with the icon of a text input", async () => {
-    await selectPane("w1:p1", false);
+    await selectPane('w1:p1', false);
     const wrapper = await mountPaneCard();
     const button = wrapper.find(".head .tools button[aria-label='Composition bar']");
     expect(button.exists()).toBe(true);
     expect(button.find(".bi-input-cursor-text").exists()).toBe(true);
   });
 
-  it("shows no toggle button in a pane that is not the selected pane", async () => {
-    await selectPane("w1:other", false);
+  it("shows the toggle button in a pane that is not the selected pane", async () => {
+    await selectPane('w1:other', false);
     const wrapper = await mountPaneCard();
-    expect(wrapper.find("button[aria-label='Composition bar']").exists()).toBe(false);
+    expect(wrapper.find("button[aria-label='Composition bar']").exists()).toBe(true);
   });
 
   it("is pressed and highlighted while the composition bar is open, and not pressed while it is closed", async () => {
-    await selectPane("w1:p1", false);
+    await selectPane('w1:p1', false);
     const wrapper = await mountPaneCard();
     const button = wrapper.get("button[aria-label='Composition bar']");
     expect(button.attributes("aria-pressed")).toBe("false");
     expect(button.classes()).not.toContain("on");
-    const { compositionBar } = await import("../stores/composition_bar");
+    const { CompositionBar } = await import("../stores/composition_bar");
+    const compositionBar = CompositionBar.forPane('w1:p1');
     compositionBar.isOpen = true;
     await nextTick();
     expect(button.attributes("aria-pressed")).toBe("true");
@@ -270,8 +273,9 @@ describe("PaneCard composition bar toggle button", () => {
   });
 
   it("opens the composition bar with one click, and closes it with the next click", async () => {
-    await selectPane("w1:p1", false);
-    const { compositionBar } = await import("../stores/composition_bar");
+    await selectPane('w1:p1', false);
+    const { CompositionBar } = await import("../stores/composition_bar");
+    const compositionBar = CompositionBar.forPane('w1:p1');
     const wrapper = await mountPaneCard();
     expect(wrapper.find(".composition-bar").exists()).toBe(false);
     await wrapper.get("button[aria-label='Composition bar']").trigger("click");
@@ -284,7 +288,7 @@ describe("PaneCard composition bar toggle button", () => {
 
   it("is there whether the voice input is on or off, and the header has no push-to-talk button", async () => {
     for (const isVoiceInputOn of [false, true]) {
-      await selectPane("w1:p1", false, isVoiceInputOn);
+      await selectPane('w1:p1', false, isVoiceInputOn);
       const wrapper = await mountPaneCard();
       expect(wrapper.find("button[aria-label='Composition bar']").exists()).toBe(true);
       expect(wrapper.find("button[aria-label='Push to talk']").exists()).toBe(false);
@@ -293,7 +297,7 @@ describe("PaneCard composition bar toggle button", () => {
   });
 
   it("shows the push-to-talk button in the composition bar when the voice input is on", async () => {
-    await selectPane("w1:p1", true, true);
+    await selectPane('w1:p1', true, true);
     const wrapper = await mountPaneCard();
     expect(wrapper.find(".composition-bar button[aria-label='Push to talk']").exists()).toBe(true);
     expect(wrapper.find(".head button[aria-label='Push to talk']").exists()).toBe(false);
@@ -348,7 +352,7 @@ describe("PaneCard close", () => {
     await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
     await flushPromises();
     expect(confirmDialog.open).toBe(false);
-    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
+    expect(api.closePane).toHaveBeenCalledWith('w1:p1');
   });
 
   it("asks for confirmation before it closes the pane, and does not close before the answer", async () => {
@@ -372,6 +376,6 @@ describe("PaneCard close", () => {
     await wrapper.get("button[aria-label='Close the pane (⌘W)']").trigger("click");
     answerConfirm(true);
     await flushPromises();
-    expect(api.closePane).toHaveBeenCalledWith("w1:p1");
+    expect(api.closePane).toHaveBeenCalledWith('w1:p1');
   });
 });

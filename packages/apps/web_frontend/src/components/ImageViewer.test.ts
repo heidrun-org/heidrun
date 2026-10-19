@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
 
-const invokeMock = vi.fn();
+const { invokeMock } = vi.hoisted(() => ({
+	invokeMock: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@tauri-apps/api/core", () => ({
 	invoke: (...args: unknown[]) => invokeMock(...args),
 }));
@@ -10,19 +12,21 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
 
 import ImageViewer from "./ImageViewer.vue";
 import { ImageDrop } from "../lib/image_drop";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
+
+const compositionBar = CompositionBarStore.forPane('pane-1');
 
 beforeEach(() => {
 	invokeMock.mockReset();
 	invokeMock.mockImplementation(async (_command: string, args: { path: string }) => `data:big-${args.path}`);
-	ImageDrop.close();
+	ImageDrop.close('pane-1');
 });
 
 /** Mounts the big view on the image at `path`, after the drop of three images. */
 function mountViewerOn(path: string) {
-	ImageDrop.handleDrop(["/shots/a.png", "/shots/b.png", "/shots/c.png"]);
-	ImageDrop.openViewer(path);
-	return mount(ImageViewer, { attachTo: document.body });
+	ImageDrop.handleDrop('pane-1', ["/shots/a.png", "/shots/b.png", "/shots/c.png"]);
+	ImageDrop.openViewer('pane-1', path);
+	return mount(ImageViewer, { props: { paneId: 'pane-1' }, attachTo: document.body });
 }
 
 /** Presses a key on the window, as the keyboard does. */
@@ -84,9 +88,9 @@ describe("ImageViewer", () => {
 	});
 
 	it("shows no arrow when there is one image", () => {
-		ImageDrop.handleDrop(["/shots/only.png"]);
-		ImageDrop.openViewer("/shots/only.png");
-		const wrapper = mount(ImageViewer, { attachTo: document.body });
+		ImageDrop.handleDrop('pane-1', ["/shots/only.png"]);
+		ImageDrop.openViewer('pane-1', "/shots/only.png");
+		const wrapper = mount(ImageViewer, { props: { paneId: 'pane-1' }, attachTo: document.body });
 		expect(wrapper.find("button.next").exists()).toBe(false);
 		expect(wrapper.find("button.previous").exists()).toBe(false);
 		wrapper.unmount();

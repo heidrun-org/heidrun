@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { VoiceInput } from "./voice_input";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar } from '../stores/composition_bar';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,15 +76,17 @@ export class ImageDrop {
 	 * Adds the image files of a drop to the composition bar, and opens the composition bar. A file that is not an image
 	 * is ignored. A file already in the composition bar is not added twice, which also ignores a drop that the window
 	 * delivers twice.
+	 * @param paneId The identifier of the pane that owns the composition bar.
 	 * @param paths Absolute paths of the dropped files.
 	 * @returns "added" when at least one image is new, "duplicate" when every image is already in the composition bar,
 	 * and "not_an_image" when no file is an image.
 	 */
-	static handleDrop(paths: string[]): ImageDropResult {
+	static handleDrop(paneId: string, paths: string[]): ImageDropResult {
 		const imagePaths = paths.filter((path) => ImageDrop.isImagePath(path));
 		if (imagePaths.length === 0) {
 			return "not_an_image";
 		}
+		const compositionBar = CompositionBar.forPane(paneId);
 		compositionBar.isOpen = true;
 		const newPaths = [...new Set(imagePaths)].filter((path) => compositionBar.paths.includes(path) === false);
 		if (newPaths.length === 0) {
@@ -96,9 +98,10 @@ export class ImageDrop {
 
 	/**
 	 * Opens the file picker of the system, then adds the chosen image files to the composition bar.
+	 * @param paneId The identifier of the pane that opened the file picker.
 	 * @returns What happened to the chosen files, or null when the developer closed the file picker with no choice.
 	 */
-	static async pickImages(): Promise<ImageDropResult | null> {
+	static async pickImages(paneId: string): Promise<ImageDropResult | null> {
 		const chosen = await openDialog({
 			multiple: true,
 			directory: false,
@@ -107,15 +110,18 @@ export class ImageDrop {
 		if (chosen === null || chosen.length === 0) {
 			return null;
 		}
-		return ImageDrop.handleDrop(chosen);
+		return ImageDrop.handleDrop(paneId, chosen);
 	}
 
 	/**
 	 * Removes one image from the composition bar. The big view follows: it moves to the next image, or closes when no
 	 * image is left.
+	 * @param paneId The identifier of the pane that owns the image.
 	 * @param path The path of the image.
+	 * @returns Nothing.
 	 */
-	static remove(path: string): void {
+	static remove(paneId: string, path: string): void {
+		const compositionBar = CompositionBar.forPane(paneId);
 		compositionBar.paths = compositionBar.paths.filter((imagePath) => imagePath !== path);
 		delete compositionBar.thumbnails[path];
 		delete compositionBar.previews[path];
@@ -126,11 +132,14 @@ export class ImageDrop {
 	}
 
 	/**
-	 * Removes every image and the text, closes the big view, and closes the composition bar. A recording of the voice input that
-	 * runs is thrown away.
+	 * Closes this pane's composition bar, removes its images and text, closes its big view, and throws away a running voice
+	 * input recording.
+	 * @param paneId The identifier of the pane whose composition bar closes.
+	 * @returns Nothing.
 	 */
-	static close(): void {
-		void VoiceInput.cancel();
+	static close(paneId: string): void {
+		void VoiceInput.cancel(paneId);
+		const compositionBar = CompositionBar.forPane(paneId);
 		compositionBar.isOpen = false;
 		compositionBar.paths = [];
 		compositionBar.text = "";
@@ -140,12 +149,14 @@ export class ImageDrop {
 	}
 
 	/**
-	 * Opens the composition bar when it is closed. When it is open, closes it as `close` does: every image and the text go. The
-	 * toggle button in the header of the focused pane calls this.
+	 * Toggles this pane's composition bar. Closing the composition bar removes every image and the text.
+	 * @param paneId The identifier of the pane whose header button was pressed.
+	 * @returns Nothing.
 	 */
-	static toggleBar(): void {
+	static toggleBar(paneId: string): void {
+		const compositionBar = CompositionBar.forPane(paneId);
 		if (compositionBar.isOpen === true) {
-			ImageDrop.close();
+			ImageDrop.close(paneId);
 			return;
 		}
 		compositionBar.isOpen = true;
@@ -153,18 +164,29 @@ export class ImageDrop {
 
 	/**
 	 * Opens the big view on one image of the composition bar.
+	 * @param paneId The identifier of the pane that owns the image.
 	 * @param path The path of the image.
+	 * @returns Nothing.
 	 */
-	static openViewer(path: string): void {
+	static openViewer(paneId: string, path: string): void {
+		for (const otherPaneId of Object.keys(CompositionBar.byPane)) {
+			if (otherPaneId !== paneId) {
+				CompositionBar.forPane(otherPaneId).viewerIndex = null;
+			}
+		}
+		const compositionBar = CompositionBar.forPane(paneId);
 		const index = compositionBar.paths.indexOf(path);
 		compositionBar.viewerIndex = index === -1 ? null : index;
 	}
 
 	/**
 	 * Moves the big view to the next or to the previous image. After the last image comes the first image.
+	 * @param paneId The identifier of the pane that owns the images.
 	 * @param step 1 for the next image, -1 for the previous image.
+	 * @returns Nothing.
 	 */
-	static moveViewer(step: 1 | -1): void {
+	static moveViewer(paneId: string, step: 1 | -1): void {
+		const compositionBar = CompositionBar.forPane(paneId);
 		const count = compositionBar.paths.length;
 		if (compositionBar.viewerIndex === null || count === 0) {
 			return;
@@ -172,29 +194,39 @@ export class ImageDrop {
 		compositionBar.viewerIndex = (compositionBar.viewerIndex + step + count) % count;
 	}
 
-	/** Closes the big view. */
-	static closeViewer(): void {
-		compositionBar.viewerIndex = null;
+	/**
+	 * Closes the big view.
+	 * @param paneId The identifier of the pane that owns the images.
+	 * @returns Nothing.
+	 */
+	static closeViewer(paneId: string): void {
+		CompositionBar.forPane(paneId).viewerIndex = null;
 	}
 
 	/**
 	 * Makes the small picture of one image of the composition bar, and keeps it there.
+	 * @param paneId The identifier of the pane that owns the image.
 	 * @param path The path of the image.
+	 * @returns Resolves after the picture is stored if the image remains in the pane's composition bar.
 	 */
-	static async loadThumbnail(path: string): Promise<void> {
+	static async loadThumbnail(paneId: string, path: string): Promise<void> {
 		const thumbnail = await ImageDrop.makePicture(path, THUMBNAIL_LONGEST_SIDE);
-		if (compositionBar.paths.includes(path) === true) {
+		const compositionBar = CompositionBar.byPane[paneId];
+		if (compositionBar !== undefined && compositionBar.paths.includes(path) === true) {
 			compositionBar.thumbnails[path] = thumbnail;
 		}
 	}
 
 	/**
 	 * Makes the large picture of one image of the composition bar for the big view, and keeps it there.
+	 * @param paneId The identifier of the pane that owns the image.
 	 * @param path The path of the image.
+	 * @returns Resolves after the picture is stored if the image remains in the pane's composition bar.
 	 */
-	static async loadPreview(path: string): Promise<void> {
+	static async loadPreview(paneId: string, path: string): Promise<void> {
 		const preview = await ImageDrop.makePicture(path, PREVIEW_LONGEST_SIDE);
-		if (compositionBar.paths.includes(path) === true) {
+		const compositionBar = CompositionBar.byPane[paneId];
+		if (compositionBar !== undefined && compositionBar.paths.includes(path) === true) {
 			compositionBar.previews[path] = preview;
 		}
 	}

@@ -5,6 +5,8 @@ import { VoiceInput } from "../lib/voice_input";
 import { voiceInput } from "../stores/voice_input";
 import { t } from "../i18n/index";
 
+const props = defineProps<{ paneId: string }>();
+
 // The push-to-talk button (issue 662). A long press is push to talk: the developer holds the button, speaks, and releases it.
 // A short press is a click: the recording goes on until the next click. Heidrun changes the speech into text and writes the
 // text in the composition bar. The window hears the pointer release, so a release outside of the button ends a long press too.
@@ -16,9 +18,13 @@ onMounted(() => {
   }
 });
 
-const isRecording = computed(() => voiceInput.state === "recording" || voiceInput.state === "starting");
-const isTranscribing = computed(() => voiceInput.state === "transcribing");
-const isLatched = computed(() => voiceInput.isLatched);
+const isRecording = computed(
+  () =>
+    VoiceInput.ownerPaneId() === props.paneId &&
+    (voiceInput.state === "recording" || voiceInput.state === "starting"),
+);
+const isTranscribing = computed(() => VoiceInput.ownerPaneId() === props.paneId && voiceInput.state === "transcribing");
+const isLatched = computed(() => VoiceInput.ownerPaneId() === props.paneId && voiceInput.isLatched);
 const isModelReady = computed(() => VoiceInput.isModelReady());
 const title = computed(() => {
   if (isTranscribing.value) {
@@ -37,20 +43,20 @@ function onPointerDown(event: PointerEvent): void {
   if (event.button !== 0) {
     return;
   }
-  void VoiceInput.press();
+  void VoiceInput.press(props.paneId);
 }
 
 // The keyboard presses the button with Space or Enter. The repeat of a key held down starts nothing.
 function onKeyDown(event: KeyboardEvent): void {
   if ((event.key === " " || event.key === "Enter") && event.repeat === false) {
     event.preventDefault();
-    void VoiceInput.press();
+    void VoiceInput.press(props.paneId);
   }
 }
 function onKeyUp(event: KeyboardEvent): void {
   if (event.key === " " || event.key === "Enter") {
     event.preventDefault();
-    void VoiceInput.release();
+    void VoiceInput.release(false, props.paneId);
   }
 }
 </script>

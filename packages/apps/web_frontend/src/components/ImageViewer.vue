@@ -2,21 +2,30 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Icon from "./Icon.vue";
 import { ImageDrop } from "../lib/image_drop";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar } from '../stores/composition_bar';
 import { t } from "../i18n/index";
 
-// The big view of the images of the composition bar: one large picture, with the buttons and the keys left and right.
-// Issue: https://github.com/heidrun-org/heidrun/issues/637
-const path = computed(() => (compositionBar.viewerIndex === null ? null : (compositionBar.paths[compositionBar.viewerIndex] ?? null)));
-const count = computed(() => compositionBar.paths.length);
+// The big view of images in one pane's composition bar, with the buttons and the keys left and right.
+// Issue: https://github.com/heidrun-org/heidrun/issues/712
+const props = defineProps<{ paneId: string }>();
+const compositionBar = computed(() => CompositionBar.forPane(props.paneId));
+const path = computed(() => {
+  if (compositionBar.value.viewerIndex === null) {
+    return null;
+  }
+  return compositionBar.value.paths[compositionBar.value.viewerIndex] ?? null;
+});
+const count = computed(() => compositionBar.value.paths.length);
 const picture = computed(() => {
   if (path.value === null) {
     return "";
   }
-  return compositionBar.previews[path.value] || compositionBar.thumbnails[path.value] || "";
+  return compositionBar.value.previews[path.value] || compositionBar.value.thumbnails[path.value] || "";
 });
-const isLoaded = computed(() => path.value !== null && path.value in compositionBar.previews);
-const isFailed = computed(() => path.value !== null && isLoaded.value && compositionBar.previews[path.value] === "");
+const isLoaded = computed(() => path.value !== null && path.value in compositionBar.value.previews);
+const isFailed = computed(
+  () => path.value !== null && isLoaded.value && compositionBar.value.previews[path.value] === "",
+);
 const fileName = computed(() => (path.value === null ? "" : path.value.slice(path.value.lastIndexOf("/") + 1)));
 const root = ref<HTMLElement | null>(null);
 
@@ -24,8 +33,8 @@ const root = ref<HTMLElement | null>(null);
 watch(
   path,
   (current) => {
-    if (current !== null && current in compositionBar.previews === false) {
-      void ImageDrop.loadPreview(current);
+    if (current !== null && current in compositionBar.value.previews === false) {
+      void ImageDrop.loadPreview(props.paneId, current);
     }
   },
   { immediate: true },
@@ -34,9 +43,9 @@ watch(
 // A key of the big view never reaches the terminal, the composition bar, or the shortcuts of the window.
 function onKey(event: KeyboardEvent) {
   const actions: Record<string, () => void> = {
-    ArrowLeft: () => ImageDrop.moveViewer(-1),
-    ArrowRight: () => ImageDrop.moveViewer(1),
-    Escape: () => ImageDrop.closeViewer(),
+    ArrowLeft: () => ImageDrop.moveViewer(props.paneId, -1),
+    ArrowRight: () => ImageDrop.moveViewer(props.paneId, 1),
+    Escape: () => ImageDrop.closeViewer(props.paneId),
   };
   const action = actions[event.key];
   if (action === undefined) {
@@ -54,14 +63,31 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </script>
 
 <template>
-  <div ref="root" class="overlay" tabindex="-1" role="dialog" :aria-label="t('imageViewer.label')" @mousedown.self="ImageDrop.closeViewer()">
-    <button class="close" :aria-label="t('imageViewer.close')" :title="t('imageViewer.close')" @click="ImageDrop.closeViewer()">
+  <div
+    ref="root"
+    class="overlay"
+    tabindex="-1"
+    role="dialog"
+    :aria-label="t('imageViewer.label')"
+    @mousedown.self="ImageDrop.closeViewer(props.paneId)"
+  >
+    <button
+      class="close"
+      :aria-label="t('imageViewer.close')"
+      :title="t('imageViewer.close')"
+      @click="ImageDrop.closeViewer(props.paneId)"
+    >
       <Icon name="x-lg" />
     </button>
-    <button v-if="count > 1" class="arrow previous" :aria-label="t('imageViewer.previous')" @click="ImageDrop.moveViewer(-1)">
+    <button
+      v-if="count > 1"
+      class="arrow previous"
+      :aria-label="t('imageViewer.previous')"
+      @click="ImageDrop.moveViewer(props.paneId, -1)"
+    >
       <Icon name="chevron-left" />
     </button>
-    <figure class="stage" @mousedown.self="ImageDrop.closeViewer()">
+    <figure class="stage" @mousedown.self="ImageDrop.closeViewer(props.paneId)">
       <img v-if="picture" :src="picture" :alt="fileName" />
       <p v-else-if="isFailed" class="message">{{ t("imageViewer.failed") }}</p>
       <p v-else class="message">{{ t("imageViewer.loading") }}</p>
@@ -70,7 +96,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <span class="position">{{ t("imageViewer.position", { position: (compositionBar.viewerIndex ?? 0) + 1, total: count }) }}</span>
       </figcaption>
     </figure>
-    <button v-if="count > 1" class="arrow next" :aria-label="t('imageViewer.next')" @click="ImageDrop.moveViewer(1)">
+    <button
+      v-if="count > 1"
+      class="arrow next"
+      :aria-label="t('imageViewer.next')"
+      @click="ImageDrop.moveViewer(props.paneId, 1)"
+    >
       <Icon name="chevron-right" />
     </button>
   </div>

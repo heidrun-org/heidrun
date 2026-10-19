@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar } from '../stores/composition_bar';
 import { settings } from "../stores/settings";
 import { LEVEL_COUNT, voiceInput, type VoiceModel, type VoiceOptions } from "../stores/voice_input";
 
@@ -42,6 +42,14 @@ export class VoiceInput {
 
 	/** What the developer did with the button before the microphone was open: nothing, a short press, or a long press. */
 	private static pendingRelease: "none" | "keep" | "stop" = "none";
+
+	/**
+	 * Returns the pane whose composition bar owns the current or most recent recording.
+	 * @returns The identifier of the pane, or null before a recording starts.
+	 */
+	static ownerPaneId(): string | null {
+		return voiceInput.ownerPaneId;
+	}
 
 	/**
 	 * Reads the options of the desktop application, and listens to the progress of the downloads. It reads a list of files
@@ -129,24 +137,34 @@ export class VoiceInput {
 	}
 
 	/**
-	 * The developer presses the push-to-talk button. With no recording, the composition bar opens and the microphone records.
+	 * The developer presses the push-to-talk button in a pane's composition bar. The microphone records for that pane.
 	 * With a recording that a click started, this press stops it and writes the text. Nothing happens when the option is off,
 	 * when the model is not on the disk, or while Whisper works.
+	 * @param paneId The identifier of the pane whose push-to-talk button was pressed.
+	 * @returns Resolves when the press has started or stopped a recording.
 	 */
-	static async press(): Promise<void> {
+	static async press(paneId: string): Promise<void> {
 		if (voiceInput.state === "recording" && voiceInput.isLatched === true) {
+			if (voiceInput.ownerPaneId !== paneId) {
+				return;
+			}
 			await VoiceInput.stopAndWrite();
 			return;
 		}
-		await VoiceInput.startRecording();
+		await VoiceInput.startRecording(paneId);
 	}
 
 	/**
 	 * The developer releases the push-to-talk button. After a long press, this is the end of the push to talk: the recording stops
 	 * and the text is written. After a short press, which is a click, the recording goes on until the next press.
 	 * @param isForced True when the window lost the keyboard: the recording then stops, whatever the length of the press.
+	 * @param paneId The identifier of the pane whose button was released, or undefined for a window release event.
+	 * @returns Resolves when the release has been handled.
 	 */
-	static async release(isForced = false): Promise<void> {
+	static async release(isForced = false, paneId?: string): Promise<void> {
+		if (paneId !== undefined && voiceInput.ownerPaneId !== paneId) {
+			return;
+		}
 		const isShort = isForced === false && Date.now() - VoiceInput.pressedAt < LONG_PRESS_MILLISECONDS;
 		if (voiceInput.state === "starting") {
 			VoiceInput.pendingRelease = isShort ? "keep" : "stop";
@@ -165,6 +183,7 @@ export class VoiceInput {
 	/**
 	 * Stops the recording and writes the text: Whisper changes the speech into text, and the text goes at the end of the text of
 	 * the composition bar. A recording with no speech adds nothing and shows no error.
+	 * @returns Resolves after the recording has stopped and the text has been written or an error has been saved.
 	 */
 	static async stopAndWrite(): Promise<void> {
 		if (voiceInput.state !== "recording") {
@@ -179,6 +198,7 @@ export class VoiceInput {
 				language: settings.voiceInputLanguage,
 			});
 			VoiceInput.appendToCompositionBar(text);
+			voiceInput.error = null;
 		} catch (error) {
 			voiceInput.error = String(error);
 		}
@@ -189,10 +209,14 @@ export class VoiceInput {
 	 * Makes sure that no recording runs and no speech waits to change into text. A recording that runs stops, Whisper changes the
 	 * speech into text, and the text goes in the composition bar. The button "Send" calls this first, so that the text of the speech
 	 * goes with the message.
+	 * @param paneId The identifier of the pane whose message is being sent.
 	 * @returns True when nothing was running, or when the recording ended well. False when the recording or the change into text
 	 * failed: the category of the error is in `voiceInput.error`.
 	 */
-	static async settle(): Promise<boolean> {
+	static async settle(paneId: string): Promise<boolean> {
+		if (voiceInput.ownerPaneId !== paneId) {
+			return true;
+		}
 		if (voiceInput.state === "idle") {
 			return true;
 		}
@@ -206,8 +230,15 @@ export class VoiceInput {
 		return voiceInput.error === null;
 	}
 
-	/** Throws away a recording that runs, for example when the developer turns the option off or closes the composition bar. */
-	static async cancel(): Promise<void> {
+	/**
+	 * Throws away a recording that runs, for example when the developer turns the option off or closes a composition bar.
+	 * @param paneId The identifier of the pane whose composition bar closed, or undefined to cancel any recording.
+	 * @returns Resolves when the recording has stopped.
+	 */
+	static async cancel(paneId?: string): Promise<void> {
+		if (paneId !== undefined && voiceInput.ownerPaneId !== paneId) {
+			return;
+		}
 		if (voiceInput.state !== "recording" && voiceInput.state !== "starting") {
 			return;
 		}
@@ -225,10 +256,16 @@ export class VoiceInput {
 	 * Writes a text at the end of the text of the composition bar, after one space when the bar already has a text. A bar that was
 	 * closed during the change keeps nothing: closing the bar removes the text.
 	 * @param text The text that Whisper gave. It can be empty.
+	 * @returns Nothing.
 	 */
 	static appendToCompositionBar(text: string): void {
 		const spoken = text.trim();
-		if (spoken === "" || compositionBar.isOpen === false) {
+		const paneId = voiceInput.ownerPaneId;
+		if (spoken === "" || paneId === null) {
+			return;
+		}
+		const compositionBar = CompositionBar.forPane(paneId);
+		if (compositionBar.isOpen === false) {
 			return;
 		}
 		const current = compositionBar.text;
@@ -239,11 +276,14 @@ export class VoiceInput {
 	/**
 	 * Opens the composition bar and the microphone. The recording ends at the release of a long press, or at the next press after
 	 * a short press.
+	 * @param paneId The identifier of the pane whose push-to-talk button started the recording.
+	 * @returns Resolves after the microphone starts or reports an error.
 	 */
-	private static async startRecording(): Promise<void> {
+	private static async startRecording(paneId: string): Promise<void> {
 		if (settings.voiceInput === false || voiceInput.state !== "idle") {
 			return;
 		}
+		voiceInput.ownerPaneId = paneId;
 		if (VoiceInput.isModelReady() === false) {
 			voiceInput.error = "model_missing";
 			return;
@@ -255,7 +295,7 @@ export class VoiceInput {
 		VoiceInput.pendingRelease = "none";
 		VoiceInput.pressedAt = Date.now();
 		voiceInput.startedAt = VoiceInput.pressedAt;
-		compositionBar.isOpen = true;
+		CompositionBar.forPane(paneId).isOpen = true;
 		VoiceInput.listenToRelease();
 		try {
 			await VoiceInput.listenToLevels();
@@ -264,6 +304,9 @@ export class VoiceInput {
 			VoiceInput.stopListeningToRelease();
 			voiceInput.error = String(error);
 			voiceInput.state = "idle";
+			return;
+		}
+		if (voiceInput.state !== "starting") {
 			return;
 		}
 		voiceInput.state = "recording";
@@ -287,6 +330,7 @@ export class VoiceInput {
 			}
 			voiceInput.levels = [...voiceInput.levels, event.payload].slice(-LEVEL_COUNT);
 		});
+
 	}
 
 	/**
