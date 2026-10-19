@@ -13,7 +13,7 @@ import { onSplitPaneClick } from "../stores/newPane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
 import { ImageDrop } from "../lib/image_drop";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
@@ -38,6 +38,7 @@ const selected = computed(() => {
 // grid draws, and the pinned panes of the column of pinned panes.
 const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
+const compositionBar = computed(() => CompositionBarStore.forPane(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
   if (props.isInColumnOfPinnedPanes) {
@@ -96,14 +97,13 @@ const subtitle = computed(() => {
       <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
         <button
-          v-if="selected"
           class="tool"
           :class="{ on: compositionBar.isOpen }"
           :aria-pressed="compositionBar.isOpen"
           :aria-label="t('paneCard.compositionBar')"
           :title="t('paneCard.compositionBarTitle')"
-          @mousedown.stop
-          @click="ImageDrop.toggleBar()"
+          @mousedown.stop="onDown"
+          @click="ImageDrop.toggleBar(pane.pane_id)"
         >
           <Icon name="input-cursor-text" />
         </button>
@@ -178,7 +178,7 @@ const subtitle = computed(() => {
       :focused="selected"
       @pin="(text) => pinText(text, pane)"
     />
-    <CompositionBar v-if="selected && compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
+    <CompositionBar v-if="compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
   </section>
 </template>
 

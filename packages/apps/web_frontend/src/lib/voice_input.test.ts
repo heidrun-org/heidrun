@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const invokeMock = vi.fn();
+const { invokeMock } = vi.hoisted(() => ({
+	invokeMock: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock("@tauri-apps/api/core", () => ({
 	invoke: (...args: unknown[]) => invokeMock(...args),
 }));
@@ -15,7 +17,7 @@ vi.mock("@tauri-apps/api/event", () => ({
 }));
 
 import { LONG_PRESS_MILLISECONDS, VoiceInput } from "./voice_input";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
 import { settings } from "../stores/settings";
 import { LEVEL_COUNT, voiceInput, type VoiceOptions } from "../stores/voice_input";
 
@@ -41,6 +43,8 @@ function passTime(milliseconds: number): void {
 	vi.setSystemTime(Date.now() + milliseconds);
 }
 
+const compositionBar = CompositionBarStore.forPane('pane-1');
+
 beforeEach(() => {
 	vi.useFakeTimers({ toFake: ["Date"] });
 	invokeMock.mockReset();
@@ -49,6 +53,7 @@ beforeEach(() => {
 	settings.voiceInputModel = "base";
 	settings.voiceInputLanguage = "auto";
 	voiceInput.options = makeOptions();
+	voiceInput.ownerPaneId = null;
 	voiceInput.state = "idle";
 	voiceInput.isLatched = false;
 	voiceInput.levels = [];
@@ -177,12 +182,12 @@ describe("VoiceInput.ensureChosenModel", () => {
 describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 	it("opens the composition bar, records while the button is held, and writes the text after the release", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Run the tests again." : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(voiceInput.state).toBe("recording");
 		expect(voiceInput.isLatched).toBe(false);
 		expect(compositionBar.isOpen).toBe(true);
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(commandNames()).toEqual(["voice_start_recording", "voice_stop_recording"]);
 		expect(invokeMock.mock.calls[1][1]).toEqual({ modelId: "base", language: "auto" });
 		expect(compositionBar.text).toBe("Run the tests again.");
@@ -193,15 +198,15 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 	it("gives the model and the language that the developer chose", async () => {
 		settings.voiceInputLanguage = "fr";
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(invokeMock.mock.calls[1][1]).toEqual({ modelId: "base", language: "fr" });
 	});
 
 	it("ends when the pointer is released anywhere in the window", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Hello" : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS + 100);
 		window.dispatchEvent(new Event("pointerup"));
 		await vi.waitFor(() => expect(compositionBar.text).toBe("Hello"));
@@ -218,10 +223,10 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 			}
 			return Promise.resolve("Quick words");
 		});
-		const starting = VoiceInput.press();
+		const starting = VoiceInput.press('pane-1');
 		expect(voiceInput.state).toBe("starting");
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		openMicrophone();
 		await starting;
 		expect(commandNames()).toEqual(["voice_start_recording", "voice_stop_recording"]);
@@ -232,17 +237,17 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 	it("adds the text after the text that the developer already wrote, with one space", async () => {
 		compositionBar.text = "Please";
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "  run the tests " : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(compositionBar.text).toBe("Please run the tests");
 	});
 
 	it("writes no error and no text for a recording with no speech", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(compositionBar.text).toBe("");
 		expect(voiceInput.error).toBeNull();
 		expect(voiceInput.state).toBe("idle");
@@ -255,9 +260,9 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 			}
 			return undefined;
 		});
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(voiceInput.error).toBe("no_signal");
 		expect(voiceInput.state).toBe("idle");
 	});
@@ -270,9 +275,9 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 			}
 			return undefined;
 		});
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(compositionBar.text).toBe("");
 	});
 });
@@ -280,13 +285,13 @@ describe("VoiceInput.press and VoiceInput.release: a long press", () => {
 describe("VoiceInput.press and VoiceInput.release: a click", () => {
 	it("keeps the recording after a short press, until the next press", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Keep going" : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS - 100);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(voiceInput.state).toBe("recording");
 		expect(voiceInput.isLatched).toBe(true);
 		expect(commandNames()).toEqual(["voice_start_recording"]);
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(commandNames()).toEqual(["voice_start_recording", "voice_stop_recording"]);
 		expect(compositionBar.text).toBe("Keep going");
 		expect(voiceInput.state).toBe("idle");
@@ -295,7 +300,7 @@ describe("VoiceInput.press and VoiceInput.release: a click", () => {
 
 	it("keeps the recording when the pointer is released at once anywhere in the window", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		window.dispatchEvent(new Event("pointerup"));
 		await vi.waitFor(() => expect(voiceInput.isLatched).toBe(true));
 		expect(voiceInput.state).toBe("recording");
@@ -303,8 +308,8 @@ describe("VoiceInput.press and VoiceInput.release: a click", () => {
 
 	it("ignores the release of the pointer and the loss of the keyboard while the recording is kept", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
-		await VoiceInput.release();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
 		window.dispatchEvent(new Event("pointerup"));
 		window.dispatchEvent(new Event("pointercancel"));
 		window.dispatchEvent(new Event("blur"));
@@ -315,7 +320,7 @@ describe("VoiceInput.press and VoiceInput.release: a click", () => {
 
 	it("stops a short press at once when the window loses the keyboard", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Hello" : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		window.dispatchEvent(new Event("blur"));
 		await vi.waitFor(() => expect(compositionBar.text).toBe("Hello"));
 		expect(voiceInput.isLatched).toBe(false);
@@ -331,20 +336,20 @@ describe("VoiceInput.press and VoiceInput.release: a click", () => {
 			}
 			return Promise.resolve("Later words");
 		});
-		const starting = VoiceInput.press();
-		await VoiceInput.release();
+		const starting = VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
 		openMicrophone();
 		await starting;
 		expect(voiceInput.state).toBe("recording");
 		expect(voiceInput.isLatched).toBe(true);
 		expect(commandNames()).toEqual(["voice_start_recording"]);
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(compositionBar.text).toBe("Later words");
 	});
 
 	it("does nothing with a press while Whisper changes the speech into text", async () => {
 		voiceInput.state = "transcribing";
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(invokeMock).not.toHaveBeenCalled();
 		expect(voiceInput.state).toBe("transcribing");
 	});
@@ -353,17 +358,17 @@ describe("VoiceInput.press and VoiceInput.release: a click", () => {
 describe("VoiceInput.press and VoiceInput.release: when nothing can record", () => {
 	it("keeps the category of the error when macOS refuses the microphone, and records nothing", async () => {
 		invokeMock.mockRejectedValue("microphone_denied");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(voiceInput.error).toBe("microphone_denied");
 		expect(voiceInput.state).toBe("idle");
 		expect(voiceInput.isLatched).toBe(false);
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(commandNames()).toEqual(["voice_start_recording"]);
 	});
 
 	it("does not open the microphone when the option is off", async () => {
 		settings.voiceInput = false;
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(invokeMock).not.toHaveBeenCalled();
 		expect(voiceInput.state).toBe("idle");
 		expect(compositionBar.isOpen).toBe(false);
@@ -371,7 +376,7 @@ describe("VoiceInput.press and VoiceInput.release: when nothing can record", () 
 
 	it("does not open the microphone when the model is not on the disk", async () => {
 		settings.voiceInputModel = "tiny";
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		expect(invokeMock).not.toHaveBeenCalled();
 		expect(voiceInput.error).toBe("model_missing");
 		expect(compositionBar.isOpen).toBe(false);
@@ -379,13 +384,13 @@ describe("VoiceInput.press and VoiceInput.release: when nothing can record", () 
 
 	it("starts one recording at a time", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.press('pane-1');
 		expect(commandNames()).toEqual(["voice_start_recording"]);
 	});
 
 	it("ignores a release when nothing records", async () => {
-		await VoiceInput.release();
+		await VoiceInput.release(false, 'pane-1');
 		expect(invokeMock).not.toHaveBeenCalled();
 	});
 });
@@ -398,21 +403,21 @@ describe("the level of the voice", () => {
 
 	it("listens once to the event of the level, and keeps the levels of the recording", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
-		await VoiceInput.release();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
 		sendLevel(0.2);
 		sendLevel(0.7);
 		expect(voiceInput.levels).toEqual([0.2, 0.7]);
-		await VoiceInput.press();
-		await VoiceInput.press();
-		await VoiceInput.release();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
 		const levelListens = listenMock.mock.calls.filter((call) => call[0] === "voice-input-level");
 		expect(levelListens.length).toBeLessThanOrEqual(1);
 	});
 
 	it("keeps only the last levels", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		for (let level = 0; level < LEVEL_COUNT + 10; level += 1) {
 			sendLevel(level / 100);
 		}
@@ -422,35 +427,35 @@ describe("the level of the voice", () => {
 
 	it("ignores a level that arrives when nothing records", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
-		await VoiceInput.release();
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
+		await VoiceInput.press('pane-1');
 		sendLevel(0.5);
 		expect(voiceInput.levels).toEqual([]);
 	});
 
 	it("starts a new recording with no level from the old recording", async () => {
 		invokeMock.mockResolvedValue("");
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		sendLevel(0.5);
 		passTime(LONG_PRESS_MILLISECONDS);
-		await VoiceInput.release();
-		await VoiceInput.press();
+		await VoiceInput.release(false, 'pane-1');
+		await VoiceInput.press('pane-1');
 		expect(voiceInput.levels).toEqual([]);
 	});
 });
 
 describe("VoiceInput.settle", () => {
 	it("returns at once when nothing records", async () => {
-		expect(await VoiceInput.settle()).toBe(true);
+		expect(await VoiceInput.settle('pane-1')).toBe(true);
 		expect(invokeMock).not.toHaveBeenCalled();
 	});
 
 	it("stops a recording of a long press, writes its text, and returns true", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Spoken words" : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		expect(await VoiceInput.settle()).toBe(true);
+		expect(await VoiceInput.settle('pane-1')).toBe(true);
 		expect(commandNames()).toEqual(["voice_start_recording", "voice_stop_recording"]);
 		expect(compositionBar.text).toBe("Spoken words");
 		expect(voiceInput.state).toBe("idle");
@@ -459,10 +464,10 @@ describe("VoiceInput.settle", () => {
 
 	it("stops a recording that a click keeps, writes its text, and returns true", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Kept words" : undefined));
-		await VoiceInput.press();
-		await VoiceInput.release();
+		await VoiceInput.press('pane-1');
+		await VoiceInput.release(false, 'pane-1');
 		expect(voiceInput.isLatched).toBe(true);
-		expect(await VoiceInput.settle()).toBe(true);
+		expect(await VoiceInput.settle('pane-1')).toBe(true);
 		expect(compositionBar.text).toBe("Kept words");
 		expect(voiceInput.state).toBe("idle");
 		expect(voiceInput.isLatched).toBe(false);
@@ -478,9 +483,9 @@ describe("VoiceInput.settle", () => {
 			}
 			return Promise.resolve("Late words");
 		});
-		const starting = VoiceInput.press();
+		const starting = VoiceInput.press('pane-1');
 		expect(voiceInput.state).toBe("starting");
-		const settling = VoiceInput.settle();
+		const settling = VoiceInput.settle('pane-1');
 		await vi.waitFor(() => expect(invokeMock).toHaveBeenCalledWith("voice_start_recording"));
 		openMicrophone();
 		expect(await settling).toBe(true);
@@ -500,12 +505,12 @@ describe("VoiceInput.settle", () => {
 			}
 			return Promise.resolve(undefined);
 		});
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		const releasing = VoiceInput.release();
+		const releasing = VoiceInput.release(false, 'pane-1');
 		expect(voiceInput.state).toBe("transcribing");
 		let isSettled = false;
-		const settling = VoiceInput.settle().then((result) => {
+		const settling = VoiceInput.settle('pane-1').then((result) => {
 			isSettled = result;
 		});
 		await Promise.resolve();
@@ -525,9 +530,9 @@ describe("VoiceInput.settle", () => {
 			}
 			return undefined;
 		});
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		expect(await VoiceInput.settle()).toBe(false);
+		expect(await VoiceInput.settle('pane-1')).toBe(false);
 		expect(voiceInput.error).toBe("no_signal");
 		expect(voiceInput.state).toBe("idle");
 	});
@@ -536,8 +541,8 @@ describe("VoiceInput.settle", () => {
 		invokeMock.mockImplementation((name: string) =>
 			name === "voice_start_recording" ? Promise.reject("microphone_denied") : Promise.resolve(undefined),
 		);
-		const starting = VoiceInput.press();
-		expect(await VoiceInput.settle()).toBe(false);
+		const starting = VoiceInput.press('pane-1');
+		expect(await VoiceInput.settle('pane-1')).toBe(false);
 		await starting;
 		expect(voiceInput.error).toBe("microphone_denied");
 		expect(voiceInput.state).toBe("idle");
@@ -545,10 +550,10 @@ describe("VoiceInput.settle", () => {
 
 	it("forgets the error of an earlier recording when a new recording ends well", async () => {
 		invokeMock.mockImplementation(async (name: string) => (name === "voice_stop_recording" ? "Fine" : undefined));
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		voiceInput.error = "no_signal";
 		passTime(LONG_PRESS_MILLISECONDS + 100);
-		expect(await VoiceInput.settle()).toBe(true);
+		expect(await VoiceInput.settle('pane-1')).toBe(true);
 		expect(voiceInput.error).toBeNull();
 	});
 });
@@ -556,7 +561,7 @@ describe("VoiceInput.settle", () => {
 describe("VoiceInput.cancel", () => {
 	it("throws away a recording that runs", async () => {
 		invokeMock.mockResolvedValue(undefined);
-		await VoiceInput.press();
+		await VoiceInput.press('pane-1');
 		await VoiceInput.cancel();
 		expect(commandNames()).toEqual(["voice_start_recording", "voice_cancel_recording"]);
 		expect(voiceInput.state).toBe("idle");

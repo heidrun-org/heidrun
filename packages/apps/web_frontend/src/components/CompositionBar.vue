@@ -5,16 +5,17 @@ import PushToTalkButton from "./PushToTalkButton.vue";
 import VoiceLevel from "./VoiceLevel.vue";
 import { ImageDrop, PASTE_DELAY_MS } from "../lib/image_drop";
 import { VoiceInput } from "../lib/voice_input";
-import { compositionBar } from "../stores/composition_bar";
+import { CompositionBar } from '../stores/composition_bar';
 import { insertText, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { voiceInput } from "../stores/voice_input";
 import { hasText, t } from "../i18n/index";
 
-// The composition bar under the focused pane: the images and the text wait here until the developer sends them to the pane.
-// Issue: https://github.com/heidrun-org/heidrun/issues/637
+// The composition bar under this pane: its images and text wait here until the developer sends them to this pane.
+// Issue: https://github.com/heidrun-org/heidrun/issues/712
 const props = defineProps<{ paneId: string }>();
 const emit = defineEmits<{ (event: "sent"): void }>();
+const compositionBar = CompositionBar.forPane(props.paneId);
 
 const textInput = ref<HTMLTextAreaElement | null>(null);
 const isSending = ref(false);
@@ -30,7 +31,9 @@ function focusTextInput() {
 }
 onMounted(focusTextInput);
 onBeforeUnmount(() => {
-  voiceInput.error = null;
+	if (VoiceInput.ownerPaneId() === props.paneId) {
+		voiceInput.error = null;
+	}
   if (elapsedTimerId !== null) {
     clearInterval(elapsedTimerId);
     elapsedTimerId = null;
@@ -54,11 +57,14 @@ const elapsedText = computed(() => `${Math.floor(elapsedSeconds.value / 60)}:${S
 
 /** The microphone is open: the level bars show the voice. */
 const isListening = computed(
-  () => settings.voiceInput && (voiceInput.state === "starting" || voiceInput.state === "recording"),
+	() =>
+		settings.voiceInput &&
+		VoiceInput.ownerPaneId() === props.paneId &&
+		(voiceInput.state === "starting" || voiceInput.state === "recording"),
 );
 /** The text of the text input while it is empty: it tells what the voice input does now, else it asks for the text. */
 const textPlaceholder = computed(() => {
-  if (settings.voiceInput && voiceInput.state === "transcribing") {
+  if (settings.voiceInput && VoiceInput.ownerPaneId() === props.paneId && voiceInput.state === "transcribing") {
     return t("voiceInput.titleTranscribing");
   }
   return isListening.value ? t("voiceInput.listening") : t("compositionBar.textPlaceholder");
@@ -91,7 +97,7 @@ watch(
     for (const path of paths) {
       if (path in compositionBar.thumbnails === false) {
         compositionBar.thumbnails[path] = "";
-        void ImageDrop.loadThumbnail(path);
+		void ImageDrop.loadThumbnail(props.paneId, path);
       }
     }
   },
@@ -100,7 +106,7 @@ watch(
 
 async function addImages() {
   try {
-    await ImageDrop.pickImages();
+    await ImageDrop.pickImages(props.paneId);
   } catch {
     toast(t("compositionBar.pickFailed"), "error");
   }
@@ -139,7 +145,7 @@ async function send() {
     return;
   }
   isSending.value = true;
-  const isSettled = await VoiceInput.settle();
+  const isSettled = await VoiceInput.settle(props.paneId);
   if (isSettled === false || compositionBar.isOpen === false) {
     isSending.value = false;
     return;
@@ -148,7 +154,7 @@ async function send() {
   const text = compositionBar.text.trim();
   const { pastedCount, result } = await ImageDrop.pasteInto(props.paneId, paths);
   for (const path of paths.slice(0, pastedCount)) {
-    ImageDrop.remove(path);
+    ImageDrop.remove(props.paneId, path);
   }
   if (result === "failed") {
     isSending.value = false;
@@ -173,14 +179,27 @@ async function send() {
 </script>
 
 <template>
-  <div class="composition-bar d-flex flex-column gap-3" role="region" :aria-label="t('compositionBar.label')" @keydown.esc="ImageDrop.close()">
+  <div
+    class="composition-bar d-flex flex-column gap-3"
+    role="region"
+    :aria-label="t('compositionBar.label')"
+    @keydown.esc="ImageDrop.close(props.paneId)"
+  >
     <div v-if="compositionBar.paths.length > 0" class="thumbs d-flex flex-wrap align-items-center gap-2">
       <figure v-for="path in compositionBar.paths" :key="path" class="thumb" :title="path">
-        <button class="open" :aria-label="t('compositionBar.open', { name: fileName(path) })" @click="ImageDrop.openViewer(path)">
+        <button
+          class="open"
+          :aria-label="t('compositionBar.open', { name: fileName(path) })"
+          @click="ImageDrop.openViewer(props.paneId, path)"
+        >
           <img v-if="compositionBar.thumbnails[path]" :src="compositionBar.thumbnails[path]" :alt="t('compositionBar.thumbnailAlt', { name: fileName(path) })" />
           <Icon v-else name="image" />
         </button>
-        <button class="btn remove" :aria-label="t('compositionBar.remove', { name: fileName(path) })" @click="ImageDrop.remove(path)">
+        <button
+          class="btn remove"
+          :aria-label="t('compositionBar.remove', { name: fileName(path) })"
+          @click="ImageDrop.remove(props.paneId, path)"
+        >
           <Icon name="x-lg" />
         </button>
       </figure>
@@ -207,9 +226,15 @@ async function send() {
       <button class="btn icon-button border-0 send" :aria-label="t('compositionBar.send')" :title="t('compositionBar.sendTitle')" :disabled="isSending" @click="send">
         <Icon name="send" />
       </button>
-      <PushToTalkButton v-if="settings.voiceInput" />
+      <PushToTalkButton v-if="settings.voiceInput" :pane-id="props.paneId" />
     </div>
-    <div v-if="settings.voiceInput && voiceInput.error !== null" class="form-text text-danger m-0" role="alert">{{ voiceErrorText(voiceInput.error) }}</div>
+    <div
+      v-if="settings.voiceInput && VoiceInput.ownerPaneId() === props.paneId && voiceInput.error !== null"
+      class="form-text text-danger m-0"
+      role="alert"
+    >
+      {{ voiceErrorText(voiceInput.error) }}
+    </div>
   </div>
 </template>
 
