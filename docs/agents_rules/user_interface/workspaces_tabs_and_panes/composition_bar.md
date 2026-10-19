@@ -1,11 +1,11 @@
 # User interface of Heidrun: composition bar
 
 - Created: 18 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [User interface of Heidrun: panes](panes.md), [User interface of Heidrun: voice input](../window/settings_voice_input.md)
-- Related issue: [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
+- Related issue: [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -13,6 +13,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 - A drop of image files on the window, on any part of the window, opens the composition bar and adds the images to it. A file that is not an image gets the message "This file is not an image". The same file is never added twice.
 - The composition bar sits under the terminal of the focused pane, inside the border of the pane. It exists only after a drop or after a click on the toggle button of the header of the pane, and until the developer hides it, so a pane that never received a drop has its whole height. The composition bar follows the focus: it is for the focused pane only.
+- Zen Mode keeps the composition bar inside the visible pane, under its terminal, with the same position and behavior.
 - When the composition bar has images, its first line holds one small picture for each image, and nothing else. With no image, this line does not exist, and the composition bar has one line. Each picture is 144 by 96 pixels, and shows a large image icon while its preview loads. Each picture has a round-cornered button of 30 pixels in its top right corner that removes it. Removing the last image keeps the composition bar open and removes the first line. The composition bar shows no text that counts the images.
 - The last line, which is the only line when there is no image, holds from left to right: the plus button, the text input, the button "Send", and the push-to-talk button (only when the voice input is on), which is the last control at the right. The plus button is on this line, so it never moves when an image is added or removed. It opens the file picker of the system, which accepts several image files.
 - The composition bar has air: 14 pixels of space above and below, 16 pixels at each side, 16 pixels between two lines, and 4 pixels between two controls of the last line. The last line is the exception at the sides: it starts and ends 8 pixels from the edge of the bar, half of the 16 pixels, so that the icon of the plus button lines up with the left edge of the pictures. The controls of the last line are 46 pixels high, and the text of the text input is 20% bigger than the other text of the window. The buttons of this line are icon buttons, 46 pixels high, with a width that leaves 6.3 pixels at each side of the icon, with no text, no border, and no background at rest: only the icon shows, and a background shows under the pointer: white at 14% strength in the dark theme, and black at 14% strength in the light theme, through the variable `--wash`. Each has a label for the screen readers, and the button "Send" has a title that names its key, Enter.

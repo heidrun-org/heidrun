@@ -17,6 +17,7 @@ import { compositionBar } from "../stores/composition_bar";
 import { ImageDrop } from "../lib/image_drop";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
+import { ZenMode } from "../stores/zen_mode";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
@@ -24,20 +25,25 @@ import { t } from "../i18n/index";
 const props = defineProps<{ pane: AgentInfo; isInColumnOfPinnedPanes?: boolean }>();
 
 // A pinned pane that is the selected pane of the selected tab has the keyboard until another pinned pane takes it.
-const selected = computed(() =>
-  props.isInColumnOfPinnedPanes
+const selected = computed(() => {
+  if (ZenMode.state.isActive) {
+    return ZenMode.state.paneId === props.pane.pane_id;
+  }
+  return props.isInColumnOfPinnedPanes
     ? pinnedPaneState.focus === props.pane.pane_id ||
-      (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
-    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus,
-);
+        (pinnedPaneState.focus === null && state.selectedPaneId === props.pane.pane_id)
+    : state.selectedPaneId === props.pane.pane_id && !pinnedPaneState.focus;
+});
 // The highlight of the selected pane shows only when the viewport shows several panes: the panes of the selected tab that the
 // grid draws, and the pinned panes of the column of pinned panes.
 const hasSeveralPanes = computed(() => gridPanes.value.length + allPinnedPanes.value.length > 1);
 const pinned = computed(() => isPinned(props.pane.pane_id));
 // A click in a pinned pane gives it the keyboard without leaving the current tab.
 function onDown() {
-  if (props.isInColumnOfPinnedPanes) pinnedPaneState.focus = props.pane.pane_id;
-  else {
+  if (props.isInColumnOfPinnedPanes) {
+    pinnedPaneState.focus = props.pane.pane_id;
+    ZenMode.focusPane(props.pane.pane_id, props.pane.tab_id);
+  } else {
     selectPane(props.pane);
     pinnedPaneState.focus = null;
   }
@@ -51,6 +57,9 @@ const status = computed(() => (props.pane.agent ? props.pane.agent_status : "pro
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
 const displayName = computed(() => paneName(props.pane));
+function closePaneFromHeader() {
+  closePane(props.pane.pane_id);
+}
 const subtitle = computed(() => {
   const p = props.pane;
   if (props.isInColumnOfPinnedPanes) return paneFullName(p);
@@ -137,14 +146,27 @@ const subtitle = computed(() => {
         <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
+        </template>
+        <button
+          v-if="selected"
+          class="tool"
+          :class="{ on: ZenMode.state.isActive }"
+          :aria-pressed="ZenMode.state.isActive"
+          :aria-label="ZenMode.state.isActive ? t('paneCard.zenModeExit') : t('paneCard.zenModeEnter')"
+          :title="ZenMode.state.isActive ? t('paneCard.zenModeExit') : t('paneCard.zenModeEnter')"
+          @mousedown.stop
+          @click="ZenMode.toggle(pane.pane_id, pane.tab_id)"
+        >
+          <Icon :name="ZenMode.state.isActive ? 'fullscreen-exit' : 'arrows-fullscreen'" />
+        </button>
         <ConfirmButton
+          v-if="isInColumnOfPinnedPanes !== true || ZenMode.state.isActive"
           icon="x-lg"
           :confirm-label="t('paneCard.closeConfirm')"
           :question="t('paneCard.close')"
           :is-confirm-required="settings.confirmPaneClose"
-          @confirm="closePane(pane.pane_id)"
+          @confirm="closePaneFromHeader"
         />
-        </template>
       </span>
     </header>
     <TerminalView

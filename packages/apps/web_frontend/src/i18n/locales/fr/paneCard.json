@@ -13,6 +13,8 @@
   "splitRightTitle": "Diviser à droite avec la commande par défaut d’un nouvel onglet (⌘D, clic avec majuscule : démarrer un terminal)",
   "splitDown": "Diviser en bas",
   "splitDownTitle": "Diviser en bas avec la commande par défaut d’un nouvel onglet (⇧⌘D, clic avec majuscule : démarrer un terminal)",
+  "zenModeEnter": "Activer le mode Zen",
+  "zenModeExit": "Quitter le mode Zen",
   "close": "Fermer le panneau (⌘W)",
   "closeConfirm": "Fermer"
 }

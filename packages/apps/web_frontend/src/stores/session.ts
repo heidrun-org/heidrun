@@ -7,6 +7,7 @@ import { settings } from "./settings";
 import { agentKind, codexWindows, paneName } from "../lib/format";
 import { findChoices, findQuestion, type ChoiceMenu } from "../lib/refs";
 import { allowCommand } from "./guards";
+import { ZenMode } from "./zen_mode";
 import { t } from "../i18n/index";
 import type {
   AgentInfo,
@@ -767,6 +768,7 @@ function applySnapshot(snap: SessionSnapshot) {
 }
 
 function fixSelection(snap: SessionSnapshot) {
+  ZenMode.exitIfPaneIsMissing(snap.panes.map((pane) => pane.pane_id));
   const ws = snap.workspaces;
   if (!ws.some((w) => w.workspace_id === state.selectedWorkspaceId)) {
     const savedId = settings.selectedWorkspaceId;
@@ -789,6 +791,7 @@ function fixSelection(snap: SessionSnapshot) {
     const layout = snap.layouts.find((l) => l.tab_id === state.selectedTabId);
     state.selectedPaneId = layout?.focused_pane_id ?? panes[0]?.pane_id ?? null;
   }
+  ZenMode.selectPaneForTab(state.selectedTabId, state.selectedPaneId);
 }
 
 // ---- Codex usage polling --------------------------------------------------
@@ -888,6 +891,7 @@ export function selectPane(p: PaneInfo) {
   state.selectedWorkspaceId = p.workspace_id;
   state.selectedTabId = p.tab_id;
   state.selectedPaneId = p.pane_id;
+  ZenMode.focusPane(p.pane_id, p.tab_id);
 }
 
 // ---- Actions --------------------------------------------------------------
@@ -983,6 +987,7 @@ export async function openFolderAsWorkspace(cwd: string, label: string): Promise
 }
 
 export function closePane(paneId: string) {
+  ZenMode.exitForPane(paneId);
   return guard(() => api.closePane(paneId));
 }
 
