@@ -70,6 +70,22 @@ const NEW_TAB_HELP_BLOCKS = [
   { titleKey: "settingsNewTab.antigravityLabel", textKey: "settingsNewTab.antigravityTitle" },
 ] as const;
 
+/** The information card explains the initial composition bar visibility of new coding agent panes. */
+const COMPOSITION_BAR_HELP_BLOCKS = [
+  {
+    titleKey: 'settingsHelp.whatTitle',
+    textKey: 'settingsHelp.compositionBarOnAgentStart.what',
+  },
+  {
+    titleKey: 'settingsHelp.onTitle',
+    textKey: 'settingsHelp.compositionBarOnAgentStart.on',
+  },
+  {
+    titleKey: 'settingsHelp.offTitle',
+    textKey: 'settingsHelp.compositionBarOnAgentStart.off',
+  },
+] as const;
+
 const availableCommands = computed(() =>
   COMMANDS.filter((command) => command.agentId === null || settings.ownedAgents.includes(command.agentId)),
 );
@@ -169,6 +185,17 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
         </label>
       </div>
     </div>
+
+    <SettingsSwitchRow
+      v-model="settings.isCompositionBarShownOnAgentStart"
+      :label="t('settingsAgents.compositionBarOnAgentStart')"
+      data-option="compositionBarOnAgentStart"
+    >
+      <SettingsOptionHelp
+        title-key="settingsAgents.compositionBarOnAgentStart"
+        :blocks="COMPOSITION_BAR_HELP_BLOCKS"
+      />
+    </SettingsSwitchRow>
 
     <div class="d-flex flex-column gap-2">
       <h4 class="form-label m-0">{{ t("settingsGeneral.quitTitle") }}</h4>

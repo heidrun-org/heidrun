@@ -1,4 +1,6 @@
 import { allowCommand } from './guards';
+import { CompositionBar } from './composition_bar';
+import { settings } from './settings';
 import { WorkspaceFolders } from './workspace_folders';
 // "Nouvel agent": a tab named after the agent, Claude (or Codex) launched in it,
 // and the starting consigne sent once the agent is ready.
@@ -81,6 +83,7 @@ export async function launchAgent(o: {
   /** A pane that already exists, for example the first pane of a new workspace: the command runs in it, and no new tab is created. */
   existingPane?: PaneInfo | null;
 }): Promise<"ok" | "failed" | "closed"> {
+	const isCompositionBarShown = settings.isCompositionBarShownOnAgentStart;
   let command: string;
   try {
     if (o.resumeId !== undefined && o.resumeId !== null) {
@@ -121,6 +124,7 @@ export async function launchAgent(o: {
     toast(t("agentsStore.tabNotCreated", { error: String(e) }));
     return "failed";
   }
+	CompositionBar.forPane(pane.pane_id).isOpen = isCompositionBarShown;
   await refresh();
   selectPane(pane);
   // Let the shell print its prompt before typing into it.

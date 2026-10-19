@@ -198,3 +198,29 @@ describe("SettingsAgentsSection, the settings that moved here from other section
     expect(settings.keepAgentsRunningAfterQuit).toBe(false);
   });
 });
+
+
+describe('composition bar setting (issue #726)', () => {
+	it('defaults to off and saves and restores both choices through the switch', async () => {
+		const first = await mountSection();
+		const switchInput = first.wrapper.get('[data-option="compositionBarOnAgentStart"] input[role="switch"]');
+		expect((switchInput.element as HTMLInputElement).checked).toBe(false);
+		expect(first.settings.isCompositionBarShownOnAgentStart).toBe(false);
+		await switchInput.setValue(true);
+		await nextTick();
+		expect(JSON.parse(localStorage.getItem('heidrun.settings') ?? '{}').isCompositionBarShownOnAgentStart).toBe(true);
+		first.wrapper.unmount();
+		vi.resetModules();
+		const second = await mountSection();
+		const restoredInput = second.wrapper.get('[data-option="compositionBarOnAgentStart"] input[role="switch"]');
+		expect((restoredInput.element as HTMLInputElement).checked).toBe(true);
+		expect(second.settings.isCompositionBarShownOnAgentStart).toBe(true);
+		await restoredInput.setValue(false);
+		await nextTick();
+		second.wrapper.unmount();
+		vi.resetModules();
+		const third = await mountSection();
+		expect(third.settings.isCompositionBarShownOnAgentStart).toBe(false);
+		third.wrapper.unmount();
+	});
+});

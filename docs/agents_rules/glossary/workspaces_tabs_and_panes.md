@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -71,7 +71,7 @@ The small circle in the header of a pane that shows how much of the context wind
 
 ### Composition bar
 
-The area under a pane's terminal that opens after the developer drops image files while that pane is focused, or clicks the toggle button in that pane's header. It holds a plus button that adds images, one small picture for each image, a text input, a button "Send", and a push-to-talk button when the voice input is on ([voice_input.md](voice_input.md)). The button "Send" pastes the images in its pane, then writes the text. Each pane keeps its own open state, images, and text when focus changes. It stays open after a send. It is closed until a drop or a click on the pane's toggle button opens it, and that button hides it.
+The area under a pane's terminal that opens after the developer drops image files while that pane is focused, or clicks the toggle button in that pane's header. It holds a plus button that adds images, one small picture for each image, a text input, a button "Send", and a push-to-talk button when the voice input is on ([voice_input.md](voice_input.md)). The button "Send" pastes the images in its pane, then writes the text. Each pane keeps its own open state, images, and text when focus changes. It stays open after a send. It starts closed unless the saved setting "Show the composition bar when starting a coding agent" opens it for a new pane that starts directly with a coding agent. A drop or a click on the pane's toggle button also opens it, and that button hides it.
 
 ### Big view
 

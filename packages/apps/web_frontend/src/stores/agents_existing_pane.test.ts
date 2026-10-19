@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../lib/api";
 import { agentCommand, launchAgent } from "./agents";
 import { selectPane } from "./session";
+import { CompositionBar } from './composition_bar';
+import { settings } from './settings';
 import type { PaneInfo } from "../lib/types";
 
 vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { require: () => '/work/app' } }));
@@ -44,6 +46,10 @@ async function launchInRootPane(tool: "claude" | "codex" | "agy") {
 
 beforeEach(() => {
   vi.useFakeTimers();
+	settings.isCompositionBarShownOnAgentStart = false;
+	for (const paneId of Object.keys(CompositionBar.byPane)) {
+		CompositionBar.removePane(paneId);
+	}
   vi.mocked(api.newTab).mockClear();
   vi.mocked(api.renameTab).mockClear();
   vi.mocked(api.run).mockClear();
@@ -107,4 +113,52 @@ describe("launchAgent with an existing pane (issue #379)", () => {
     expect(api.renameTab).not.toHaveBeenCalled();
     expect(api.run).toHaveBeenCalledWith("new-p1", "claude");
   });
+});
+
+
+describe('initial composition bar visibility (issue #726)', () => {
+	it.each(['claude', 'codex', 'agy'] as const)(
+		'keeps the composition bar hidden by default for %s',
+		async (tool) => {
+			expect(await launchInRootPane(tool)).toBe('ok');
+			expect(CompositionBar.forPane(ROOT_PANE.pane_id).isOpen).toBe(false);
+		},
+	);
+
+	it.each(['claude', 'codex', 'agy'] as const)(
+		'opens the composition bar for %s in a new workspace or split pane when enabled',
+		async (tool) => {
+			settings.isCompositionBarShownOnAgentStart = true;
+			expect(await launchInRootPane(tool)).toBe('ok');
+			const compositionBar = CompositionBar.forPane(ROOT_PANE.pane_id);
+			expect(compositionBar.isOpen).toBe(true);
+			compositionBar.isOpen = false;
+			settings.isCompositionBarShownOnAgentStart = false;
+			settings.isCompositionBarShownOnAgentStart = true;
+			expect(compositionBar.isOpen).toBe(false);
+		},
+	);
+
+	it('opens a new tab composition bar without changing other panes when enabled', async () => {
+		const existingBar = CompositionBar.forPane('existing-pane');
+		existingBar.text = 'Keep this draft';
+		settings.isCompositionBarShownOnAgentStart = true;
+		const launched = launchAgent({
+			workspaceId: 'w1',
+			cwd: '/work/app',
+			tool: 'claude',
+			agent: null,
+			model: null,
+			label: 'claude',
+			prompt: '',
+		});
+		await vi.advanceTimersByTimeAsync(1_000);
+		expect(await launched).toBe('ok');
+		const newBar = CompositionBar.forPane('new-p1');
+		expect(newBar.isOpen).toBe(true);
+		expect(existingBar.isOpen).toBe(false);
+		expect(existingBar.text).toBe('Keep this draft');
+		settings.isCompositionBarShownOnAgentStart = false;
+		expect(newBar.isOpen).toBe(true);
+	});
 });

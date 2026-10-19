@@ -153,6 +153,8 @@ const defaults = {
   gitFetchMinutes: 5,
   /** Settings window, section New tab: the command that the pane of a new tab runs. */
   newTabCommand: "terminal" as "terminal" | "claude" | "codex" | "agy",
+	/** Show the composition bar initially when a new pane starts directly with a coding agent. */
+	isCompositionBarShownOnAgentStart: false,
   /** Window Create a custom launcher: the last kind, "commandLine" or "codingAgent". */
   customLauncherKind: "commandLine" as "commandLine" | "codingAgent",
   /** Window Create a custom launcher: the identifier of the last coding agent. */
