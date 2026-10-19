@@ -89,5 +89,8 @@
   "voiceInputLanguage.what": "The language that you speak.",
   "voiceInputLanguage.how": "“Detect the language” lets Whisper find the language of each recording. A fixed language is faster and more exact. A model whose name ends with .en understands only English, and ignores this choice.",
   "voiceInputModel.what": "The Whisper model is the file that changes speech into text. A larger model is more exact and slower, and its file is larger.",
-  "voiceInputModel.how": "Heidrun downloads the file from Hugging Face when you choose a model that is not on this computer, and writes it in the folder models of the Heidrun folder. Only this download uses the network: the speech never leaves this computer."
+  "voiceInputModel.how": "Heidrun downloads the file from Hugging Face when you choose a model that is not on this computer, and writes it in the folder models of the Heidrun folder. Only this download uses the network: the speech never leaves this computer.",
+  "compositionBarOnAgentStart.what": "Choose the initial visibility of the composition bar when a new pane starts directly with a coding agent. The choice is saved across restarts. Existing panes keep their current visibility. You can still show or hide each composition bar with the button in the pane header.",
+  "compositionBarOnAgentStart.on": "New panes that start directly with a coding agent show the composition bar. Plain terminals keep the composition bar hidden.",
+  "compositionBarOnAgentStart.off": "New panes that start directly with a coding agent keep the composition bar hidden until you show the composition bar manually. Off is the default."
 }

@@ -1,4 +1,7 @@
 import { WorkspaceFolders } from './workspace_folders';
+import { CompositionBar } from './composition_bar';
+import { settings } from './settings';
+import { CODING_AGENTS } from '../lib/coding_agents';
 import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
@@ -219,6 +222,10 @@ export function launcherWillType(workspaceId: string, launcher: Launcher, rerun 
  * "checked": the caller already passed the command through the guards (the phone asks its own confirmation).
  */
 export async function runLauncher(workspaceId: string, launcher: Launcher, rerun = false, checked = false) {
+	const executable = launcher.command.trimStart().split(/\s/, 1)[0];
+	const isCodingAgent = launcher.agent !== undefined
+		|| CODING_AGENTS.some((codingAgent) => codingAgent.executable === executable);
+	const isCompositionBarShown = settings.isCompositionBarShownOnAgentStart && isCodingAgent;
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = launcherPane(workspaceId, launcher);
@@ -239,6 +246,7 @@ export async function runLauncher(workspaceId: string, launcher: Launcher, rerun
   }
   try {
     const pane = await api.newTab(workspaceId, cwd, launcher.label);
+		CompositionBar.forPane(pane.pane_id).isOpen = isCompositionBarShown;
     project.panes[`${workspaceId}:${launcher.id}`] = pane.pane_id;
     // Let the shell print its prompt before typing into it.
     await new Promise((r) => setTimeout(r, 350));
