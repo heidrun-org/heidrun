@@ -11,11 +11,16 @@ This folder holds the decision library and the command line tool.
 - `clef_decision_order.cpp`: the C name of the one llama.cpp function that Clef needs and that has a C++ name only.
 - `main.rs`: the command line tool, which reads a request from a file, from standard input, or from the short form, and writes JSON.
 
+- `benchmark.rs`: the command line subcommand `benchmark`, with short and long input cases, warmup, throughput, and peak process resident memory.
+
 ## Rules
+- The command line accepts `--backend cpu|gpu` as a visible alias for `--device cpu|gpu`, including the benchmark subcommand.
 - `decision.rs` follows `tools/server/server-decision.cpp` of llama.cpp v0.6.0 function by function, in the same order, so that a change of llama.cpp is easy to copy.
 - Only `llama.rs` calls the C functions of llama.cpp; the other files use its safe types.
 - The engine evaluates one prompt at a time: several prompts in one batch were not faster, and the recurrent layers of Qwen3.5 then change the last digits.
 - The package does not use the crate `llama-cpp-2`, because it hides the raw context that the extended batch needs.
+
+- Benchmark timers exclude model loading and warmup, measure the requested number of fully completed decisions and report total time, average seconds per decision, and decisions per second, and never replace the selected backend.
 
 ## Background
 - The decision code that `decision.rs` copies: [server-decision.cpp at v0.6.0](https://github.com/ggml-org/llama.cpp/blob/v0.6.0/tools/server/server-decision.cpp).

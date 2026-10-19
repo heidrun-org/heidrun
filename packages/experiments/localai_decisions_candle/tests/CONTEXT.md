@@ -6,6 +6,7 @@ This folder holds the Rust tests of the package, and the results of the Python p
 ## Key Exports & Entry Points
 - `python_reference.rs`: compares the token identifiers, the logits, the probabilities, and the chosen labels with the Python results.
 - `word_splitting.rs`: compares the words with the words of the Python word splitter. It needs no model.
+- `benchmark_command.rs`: benchmark discovery, help, decision-count, and device validation without loading weights.
 - `command_line.rs`: runs the compiled command line tool.
 - `limits_and_errors.rs`: the token limit, the empty task list, and the refused backend.
 - `fixtures/`: `examples.json` (texts and tasks), `python_reference.json` (the Python results), and `word_splits.json`.

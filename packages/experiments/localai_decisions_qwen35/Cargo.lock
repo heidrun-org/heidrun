@@ -1405,8 +1405,10 @@ dependencies = [
  "cc",
  "clap",
  "hf-hub",
+ "libc",
  "llama-cpp-sys-2",
  "minijinja",
+ "serde",
  "serde_json",
 ]
 
