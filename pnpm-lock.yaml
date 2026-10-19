@@ -346,6 +346,8 @@ importers:
 
   packages/experiments/localai_decisions_candle: {}
 
+  packages/experiments/localai_decisions_qwen35: {}
+
   packages/experiments/multi_layer_graph:
     dependencies:
       3d-force-graph:
