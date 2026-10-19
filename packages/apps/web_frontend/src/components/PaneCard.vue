@@ -148,7 +148,6 @@ const subtitle = computed(() => {
         </button>
         </template>
         <button
-          v-if="selected"
           class="tool"
           :class="{ on: ZenMode.state.isActive }"
           :aria-pressed="ZenMode.state.isActive"
