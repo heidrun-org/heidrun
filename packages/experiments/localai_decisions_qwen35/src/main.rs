@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::time::Instant;
 
 use anyhow::{bail, Context as _, Result};
-use clap::{Parser, ValueEnum};
+use clap::{Parser, Subcommand, ValueEnum};
 use localai_decisions_qwen35::{DecisionConfig, DecisionEngine, Device, DEFAULT_MODEL};
 use serde_json::{json, Map, Value};
 
@@ -13,8 +13,11 @@ use serde_json::{json, Map, Value};
 #[derive(Parser, Debug)]
 #[command(version, about)]
 struct Arguments {
+    #[command(subcommand)]
+    command: Option<Command>,
+
     /// A Hugging Face repository, with an optional quantization after a colon, or a local `.gguf` file.
-    #[arg(long, default_value = DEFAULT_MODEL)]
+    #[arg(long, global = true, default_value = DEFAULT_MODEL)]
     model: String,
 
     /// A JSON file with the request (`state` and `questions`). Without it and without --text, the request
@@ -35,27 +38,27 @@ struct Arguments {
     choices: Vec<String>,
 
     /// Where the model runs: `gpu` needs a build with the feature metal, cuda, or vulkan.
-    #[arg(long, value_enum, default_value_t = DeviceArgument::Cpu)]
+    #[arg(long, visible_alias = "backend", global = true, value_enum, default_value_t = DeviceArgument::Cpu)]
     device: DeviceArgument,
 
     /// The number of processor threads; by default, the number of performance cores, at most 8.
-    #[arg(long)]
+    #[arg(long, global = true)]
     threads: Option<i32>,
 
     /// The largest number of tokens of one evaluation; one prompt must fit in it.
-    #[arg(long, default_value_t = 2048)]
+    #[arg(long, global = true, default_value_t = 2048)]
     batch_size: u32,
 
     /// Ask Hugging Face for a newer model file, even when the cache has one.
-    #[arg(long)]
+    #[arg(long, global = true)]
     check_model_updates: bool,
 
     /// Write the response in this file instead of standard output.
-    #[arg(long)]
+    #[arg(long, global = true)]
     output: Option<PathBuf>,
 
     /// Print the logs of llama.cpp, the loading time, and the time of the decision on standard error.
-    #[arg(long)]
+    #[arg(long, global = true)]
     verbose: bool,
 }
 
@@ -63,6 +66,14 @@ struct Arguments {
 enum DeviceArgument {
     Cpu,
     Gpu,
+}
+
+mod benchmark;
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Measure warmed-up decisions per second on built-in short and long text cases.
+    Benchmark(benchmark::Arguments),
 }
 
 fn main() {
@@ -73,7 +84,24 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    let arguments = Arguments::parse();
+    let mut arguments = Arguments::parse();
+    if let Some(Command::Benchmark(benchmark)) = arguments.command.take() {
+        return benchmark::run(
+            benchmark,
+            DecisionConfig {
+                model: arguments.model.clone(),
+                device: match arguments.device {
+                    DeviceArgument::Cpu => Device::Cpu,
+                    DeviceArgument::Gpu => Device::Gpu,
+                },
+                threads: arguments.threads,
+                batch_size: arguments.batch_size,
+                check_model_updates: arguments.check_model_updates,
+                verbose: arguments.verbose,
+            },
+            arguments.output,
+        );
+    }
     let request = read_request(&arguments)?;
 
     let started = Instant::now();
@@ -105,7 +133,8 @@ fn run() -> Result<()> {
 
     let text = serde_json::to_string_pretty(&response)? + "\n";
     match &arguments.output {
-        Some(path) => std::fs::write(path, text).with_context(|| format!("Could not write {}", path.display()))?,
+        Some(path) => std::fs::write(path, text)
+            .with_context(|| format!("Could not write {}", path.display()))?,
         None => print!("{text}"),
     }
     Ok(())
@@ -115,7 +144,12 @@ fn read_request(arguments: &Arguments) -> Result<Value> {
     if let Some(text) = &arguments.text {
         let question = arguments.question.clone().unwrap_or_default();
         let mut criteria = Map::new();
-        for choice in arguments.choices.iter().map(|c| c.trim()).filter(|c| c.is_empty() == false) {
+        for choice in arguments
+            .choices
+            .iter()
+            .map(|c| c.trim())
+            .filter(|c| c.is_empty() == false)
+        {
             criteria.insert(choice.to_string(), Value::Null);
         }
         let question_value = if criteria.is_empty() {
@@ -139,10 +173,13 @@ fn read_request(arguments: &Arguments) -> Result<Value> {
     }
 
     let content = match &arguments.request {
-        Some(path) => std::fs::read_to_string(path).with_context(|| format!("Could not read {}", path.display()))?,
+        Some(path) => std::fs::read_to_string(path)
+            .with_context(|| format!("Could not read {}", path.display()))?,
         None => {
             let mut content = String::new();
-            std::io::stdin().read_to_string(&mut content).context("Could not read standard input")?;
+            std::io::stdin()
+                .read_to_string(&mut content)
+                .context("Could not read standard input")?;
             content
         }
     };

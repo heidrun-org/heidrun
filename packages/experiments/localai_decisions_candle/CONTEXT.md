@@ -9,6 +9,7 @@ This package runs the decision model GLiNER2.5-Decide on the computer with a Rus
 - `python_reference/`: the script that writes the Python results. See its own CONTEXT.md.
 - `README.md`: installation and use.
 - Command to run this folder: `pnpm --filter localai_decisions_candle cli --text "<text>" --labels <label>,<label>`
+- Command to measure speed: `pnpm --filter localai_decisions_candle cli benchmark`
 - Command to test this folder: `pnpm --filter localai_decisions_candle test`
 
 ## Rules

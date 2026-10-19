@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use localai_decisions_candle::{
     Backend, DecisionConfig, DecisionEngine, DecisionTask, TaskDecision, DEFAULT_MODEL_ID,
     DEFAULT_MULTI_LABEL_THRESHOLD,
@@ -17,14 +17,17 @@ const DEFAULT_TASK_NAME: &str = "decision";
     about = "Choose the label that matches a text, locally, with the decision model GLiNER2.5-Decide"
 )]
 struct Arguments {
+    #[command(subcommand)]
+    command: Option<Command>,
+
     /// Hugging Face identifier of a GLiNER2 decision model with the `span` architecture and a DeBERTa v2 encoder.
-    #[arg(long, default_value = DEFAULT_MODEL_ID)]
+    #[arg(long, global = true, default_value = DEFAULT_MODEL_ID)]
     model: String,
     /// Check Hugging Face for model updates and download newer files if available.
-    #[arg(long)]
+    #[arg(long, global = true)]
     check_model_updates: bool,
     /// Local inference backend.
-    #[arg(long, value_enum, default_value = "cpu")]
+    #[arg(long, global = true, value_enum, default_value = "cpu")]
     backend: Backend,
     /// Text to classify. Repeat for multiple texts.
     #[arg(long = "text", short = 't')]
@@ -54,7 +57,7 @@ struct Arguments {
     #[arg(long)]
     tasks_file: Option<PathBuf>,
     /// Save JSON output to a file instead of standard output.
-    #[arg(long)]
+    #[arg(long, global = true)]
     output: Option<PathBuf>,
     /// Print progress and timing details to standard error.
     #[arg(short, long)]
@@ -80,6 +83,14 @@ struct DecisionOutput<'a> {
     results: Vec<TextOutput<'a>>,
 }
 
+mod benchmark;
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Measure warmed-up decisions per second on built-in short and long text cases.
+    Benchmark(benchmark::Arguments),
+}
+
 fn main() {
     if let Err(error) = run() {
         eprintln!("Error: {error:#}");
@@ -88,7 +99,18 @@ fn main() {
 }
 
 fn run() -> Result<()> {
-    let arguments = Arguments::parse();
+    let mut arguments = Arguments::parse();
+    if let Some(Command::Benchmark(benchmark)) = arguments.command.take() {
+        return benchmark::run(
+            benchmark,
+            DecisionConfig {
+                model_id: arguments.model.clone(),
+                backend: arguments.backend,
+                check_model_updates: arguments.check_model_updates,
+            },
+            arguments.output,
+        );
+    }
     let tasks = read_tasks(&arguments)?;
     let inputs = read_inputs(&arguments)?;
 

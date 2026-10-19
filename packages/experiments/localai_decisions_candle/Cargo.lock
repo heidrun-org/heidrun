@@ -2196,6 +2196,7 @@ dependencies = [
  "candle-transformers",
  "clap",
  "hf-hub",
+ "libc",
  "regex",
  "serde",
  "serde_json",

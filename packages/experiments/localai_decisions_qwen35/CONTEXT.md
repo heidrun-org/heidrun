@@ -9,6 +9,7 @@ This package runs the decision models based on Qwen3.5 on the computer, with lla
 - `server_reference/`: the script that writes the answers of the server. See its own CONTEXT.md.
 - `README.md`: installation, use, the supported models, and the limits.
 - Command to run this folder: `pnpm --filter localai_decisions_qwen35 cli --text "<state>" --question "<question>" --choices <option>,<option>`
+- Command to measure speed: `pnpm --filter localai_decisions_qwen35 cli benchmark`
 - Command to test this folder: `pnpm --filter localai_decisions_qwen35 test`
 
 ## Rules

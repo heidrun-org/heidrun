@@ -86,14 +86,44 @@ println!("{}", response["answers"]["route"]["choice"]);
 
 ## GPU
 
-The default build runs on the processor only. A build option adds the GPU, and `--device gpu` selects it:
+The default build runs on the processor only. A build option adds the GPU, and `--backend gpu` selects it. The existing spelling `--device gpu` works too:
 
 ```bash
 cd packages/experiments/localai_decisions_qwen35
-GGML_METAL=ON cargo run --release --features metal -- --device gpu --text "I was charged twice." --question "Which team?" --choices billing,shipping
+GGML_METAL=ON cargo run --release --features metal -- --backend gpu --text "I was charged twice." --question "Which team?" --choices billing,shipping
 ```
 
 On macOS, llama.cpp builds Metal by default, so the file `.cargo/config.toml` sets `GGML_METAL=OFF` and the Metal build sets `GGML_METAL=ON`. The features `cuda` and `vulkan` select an NVIDIA graphics card or Vulkan in the same way; they were not tested. A GPU in a build without a GPU feature gives an error, and the tool never switches to another device by itself. Changing between the two builds compiles llama.cpp again; use another `CARGO_TARGET_DIR` to keep both.
+
+## Measure speed
+
+Run the reusable benchmark directly through this package's command line:
+
+```bash
+pnpm --filter localai_decisions_qwen35 cli benchmark
+```
+
+The command measures Choice, Noul (yes or no), and Score (ordered levels), each with a short text and a longer text. Each case completes five measured decisions by default. The model loads once, then each case completes a warmup before timing starts. Model loading and warmup are excluded from the speed measurement. Reading the returned probabilities completes GPU work before the timer starts.
+
+The table shows the input token count, total measured seconds, average seconds per decision, and decisions per second. Every requested decision finishes, even when one decision takes longer than five seconds. Average seconds per decision is total measured time divided by the number of completed decisions; decisions per second is the number of completed decisions divided by total measured time. The JSON also records the requested and completed counts. Qwen token counts include the prompts used for one question, while Candle token counts include the encoded text and labels, so token counts from the two models are not directly comparable.
+
+Useful options:
+
+```bash
+pnpm --filter localai_decisions_qwen35 cli benchmark --decisions 10
+pnpm --filter localai_decisions_qwen35 cli benchmark --output /tmp/localai_decisions_qwen35-speed.json
+pnpm --silent --filter localai_decisions_qwen35 cli benchmark --json
+```
+
+`--model` selects another model, as for normal decisions. The default backend is the processor. `--backend cpu|gpu` is an alias for `--device cpu|gpu`; both spellings work before or after `benchmark`, and for normal decisions. For Metal, run the following command from this package folder, using the same GPU build requirements as normal decisions:
+
+```bash
+GGML_METAL=ON cargo run --release --features metal -- benchmark --backend gpu
+```
+
+The selected backend is used for every case and is never silently replaced by another backend. The short text and long text are fixed in the package so later runs use the same inputs. No dataset download or separate benchmark package is needed.
+
+Peak process resident memory covers model loading, warmup, and measured inference. It is the operating system's high-water mark for this process, not a measurement of separate GPU allocations. MiB means 1,048,576 bytes. Unsupported operating systems omit the memory value. Speed and memory vary with hardware and other running programs.
 
 ## Speed
 
