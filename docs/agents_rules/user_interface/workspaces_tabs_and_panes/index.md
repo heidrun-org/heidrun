@@ -1,7 +1,7 @@
 # Workspaces, tabs, and panes rules index
 
 - Created: 13 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -12,6 +12,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [README.md](README.md): the overview of this folder, for people.
 - [composition_bar.md](composition_bar.md): the composition bar under the focused pane: the drop of images, the toggle button of the header, the plus button, the text input, the button "Send", the push-to-talk button, and the big view of the images.
 - [pane_focus_history.md](pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
+- [pane_headers.md](pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
 - [panes.md](panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
 - [tabs.md](tabs.md): the tabs.
 - [workspace.md](workspace.md): the workspace.

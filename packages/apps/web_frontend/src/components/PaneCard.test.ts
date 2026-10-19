@@ -72,6 +72,31 @@ describe("PaneCard", () => {
     expect(styleRule(".tools")).toContain("flex-shrink: 0");
   });
 
+	it('hides header buttons outside the pane while keeping their space in the header', () => {
+		const rule = styleRule('.tools');
+		expect(rule).toContain('opacity: 0;');
+		expect(rule).toContain('visibility: hidden;');
+		expect(rule).toContain('pointer-events: none;');
+		expect(rule).toContain('display: flex;');
+		expect(rule).not.toMatch(/display:\s*none/);
+	});
+
+	it('reveals header buttons over the entire pane without depending on pane focus', () => {
+		const rule = styleRule('.pane:hover .tools');
+		expect(rule).toContain('opacity: 1;');
+		expect(rule).toContain('visibility: visible;');
+		expect(rule).toContain('pointer-events: auto;');
+		expect(paneCardSource).not.toMatch(/[^{}]*\.selected[^{}]*\.tools\s*\{/);
+		expect(paneCardSource).not.toMatch(/[^{}]*:focus[^{}]*\.tools\s*\{/);
+	});
+
+	it('fades buttons in and out before hiding them from keyboard navigation', () => {
+		expect(styleRule('.tools')).toContain(
+			'transition: opacity 0.15s ease, visibility 0s linear 0.15s;',
+		);
+		expect(styleRule('.pane:hover .tools')).toContain('transition-delay: 0s;');
+	});
+
   it("shows the whole name in the tooltip of the name, with the way to rename it", async () => {
     const wrapper = await mountPaneCard();
     expect(wrapper.get(".name").text()).toBe(LONG_NAME);

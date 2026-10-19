@@ -227,8 +227,14 @@ const subtitle = computed(() => {
 /* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
    that come after it. Without this, the next pane hides the part of the card that goes over it. */
 .pane:has(.information-card-part.is-open) { z-index: 3; }
-.tools { flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px; opacity: 0.55; transition: opacity 0.15s; }
-.pane:hover .tools, .pane.selected .tools { opacity: 1; }
+.tools {
+  flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+}
+.pane:hover .tools {
+  opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
+}
 .tool {
   width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
