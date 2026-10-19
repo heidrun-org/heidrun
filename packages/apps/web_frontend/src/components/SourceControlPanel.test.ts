@@ -39,6 +39,16 @@ function mountPanel() {
 }
 
 describe("SourceControlPanel", () => {
+  it('uses Arrow 90deg left for both discard buttons and keeps the Refresh icon', () => {
+	const wrapper = mountPanel();
+	const discardAll = wrapper.get('button[aria-label="Discard all the changes"]');
+	const discard = wrapper.get('button[aria-label="Discard the changes"]');
+	const refresh = wrapper.get('button[aria-label="Refresh"]');
+	expect(discardAll.get('i').classes()).toContain('bi-arrow-90deg-left');
+	expect(discard.get('i').classes()).toContain('bi-arrow-90deg-left');
+	expect(refresh.get('i').classes()).toContain('bi-arrow-clockwise');
+  });
+
   afterEach(() => {
     state.selectedWorkspaceId = null;
     git.status = {};

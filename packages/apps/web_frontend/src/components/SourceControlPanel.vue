@@ -232,7 +232,7 @@ function chooseMore(id: string) {
                   :disabled="sourceControl.isBusy || groups.changes.length === 0"
                   @click="discardFiles(paths('changes'))"
                 >
-                  <Icon name="arrow-counterclockwise" />
+                  <Icon name="arrow-90deg-left" />
                 </button>
                 <button
                   v-if="group === 'changes'"
@@ -290,7 +290,7 @@ function chooseMore(id: string) {
                       :disabled="sourceControl.isBusy"
                       @click="discardFiles([file.path])"
                     >
-                      <Icon name="arrow-counterclockwise" />
+                      <Icon name="arrow-90deg-left" />
                     </button>
                     <button
                       type="button"
