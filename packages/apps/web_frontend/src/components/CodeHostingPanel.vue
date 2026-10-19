@@ -13,6 +13,7 @@
 // - issue #607
 import { computed, reactive, ref, watch } from "vue";
 import ChatReferenceDetails from "./ChatReferenceDetails.vue";
+import CodeHostingSearchHelp from "./CodeHostingSearchHelp.vue";
 import Icon from "./Icon.vue";
 import InformationCard from "./InformationCard.vue";
 import ScrollingLine from "./ScrollingLine.vue";
@@ -281,12 +282,19 @@ async function readDetails(row: Row) {
             <div class="group-header d-flex align-items-center" @click="toggleGroup(section.group)">
               <button
                 type="button"
-                class="group-toggle d-flex align-items-center gap-2 me-auto"
+                class="group-toggle d-flex align-items-center gap-2"
                 :aria-expanded="codeHosting.folded[section.group] === false"
               >
                 <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
                 {{ groupTitle(section.group) }}
               </button>
+              <CodeHostingSearchHelp
+                class="ms-1 me-auto"
+                :forge="forge"
+                :title="groupTitle(section.group)"
+                :is-requests="section.group === 'requests'"
+                @click.stop
+              />
               <span v-if="codeHosting.listStatus[section.group] === 'ready'" class="badge count">{{ section.rows.length }}</span>
             </div>
             <template v-if="codeHosting.folded[section.group] === false">

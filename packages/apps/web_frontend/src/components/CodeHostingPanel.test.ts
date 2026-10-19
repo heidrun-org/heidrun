@@ -4,7 +4,9 @@ import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { RefContext } from "../lib/refs";
 
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock('@tauri-apps/api/core', () => ({
+	invoke: vi.fn().mockResolvedValue([]),
+}));
 vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn() }));
 vi.mock("../lib/refs", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/refs")>();
@@ -218,7 +220,7 @@ describe("CodeHostingPanel on GitHub", () => {
   it("opens the web page of the item in the web browser from the button Open in GitHub of the information card", async () => {
     answerGithub();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[2].trigger("click");
+    await wrapper.findAll(".row-card")[2].trigger("click");
     await flushPromises();
     await wrapper.get(".popover button[aria-label='Open in GitHub']").trigger("click");
     expect(openUrl).toHaveBeenCalledWith("https://github.com/o/r/pull/371");
@@ -235,7 +237,7 @@ describe("CodeHostingPanel on GitHub", () => {
   it("does not open the web page after a click on the row, and opens an information card at the right of the row", async () => {
     answerGithub();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     expect(openUrl).not.toHaveBeenCalled();
     const card = wrapper.get(".popover");
@@ -246,7 +248,7 @@ describe("CodeHostingPanel on GitHub", () => {
   it("reads the details of the item from the forge when the card opens, and shows the repository, the date, the state, the description, the labels, and the author", async () => {
     answerGithub();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     const call = vi.mocked(invoke).mock.calls.find(([, payload]) => (payload as { args: string[] }).args[1] === "view");
     expect(call?.[0]).toBe("forge_cli_cached");
@@ -266,7 +268,7 @@ describe("CodeHostingPanel on GitHub", () => {
   it("shows in the card the repository line with the two buttons, then the whole title with its number, then the state", async () => {
     answerGithub();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     const card = wrapper.get(".popover");
     const line = card.get("[data-reference-repository-line]");
@@ -290,7 +292,7 @@ describe("CodeHostingPanel on GitHub", () => {
       );
     });
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     expect(wrapper.get(".popover [data-reference-title]").text()).toBe("A merge request !5");
   });
@@ -298,7 +300,7 @@ describe("CodeHostingPanel on GitHub", () => {
   it("reads a pull request with gh pr view when its card opens", async () => {
     answerGithub();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[2].trigger("click");
+    await wrapper.findAll(".row-card")[2].trigger("click");
     await flushPromises();
     const call = vi.mocked(invoke).mock.calls.find(([, payload]) => (payload as { args: string[] }).args[1] === "view");
     expect(call?.[1]).toMatchObject({ args: expect.arrayContaining(["pr", "view", "371"]) });
@@ -327,7 +329,7 @@ describe("CodeHostingPanel on GitHub", () => {
     answerGithub();
     const wrapper = await mountPanel();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await vi.advanceTimersByTimeAsync(0);
     const card = wrapper.get(".popover").text();
     expect(card).toContain("The lists are raw.");
@@ -342,7 +344,7 @@ describe("CodeHostingPanel on GitHub", () => {
     const control = answerDetailsLater();
     const wrapper = await mountPanel();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    const row = wrapper.findAll(".information-card-part")[0];
+    const row = wrapper.findAll(".row-card")[0];
     await row.trigger("click");
     await vi.advanceTimersByTimeAsync(299);
     expect(wrapper.find(".popover").exists()).toBe(false);
@@ -363,7 +365,7 @@ describe("CodeHostingPanel on GitHub", () => {
     const control = answerDetailsLater();
     const wrapper = await mountPanel();
     vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
-    const row = wrapper.findAll(".information-card-part")[0];
+    const row = wrapper.findAll(".row-card")[0];
     await row.trigger("click");
     await vi.advanceTimersByTimeAsync(300);
     await row.trigger("click");
@@ -461,7 +463,7 @@ describe("CodeHostingPanel on GitLab", () => {
     expect(wrapper.findAll(".item .number").map((number) => number.text())).toEqual(["#12", "!5"]);
     expect(wrapper.findAll(".item-lines").map((lines) => lines.findAll(".detail-line")[1].text())).toEqual(["bug", "fix-5 → main"]);
     expect(wrapper.get(".label-badge").attributes("style")).toContain("#d73a4a");
-    await wrapper.findAll(".information-card-part")[1].trigger("click");
+    await wrapper.findAll(".row-card")[1].trigger("click");
     await flushPromises();
     await wrapper.get(".popover button[aria-label='Open in GitLab']").trigger("click");
     expect(openUrl).toHaveBeenCalledWith("https://gitlab.com/t/a/-/merge_requests/5");
@@ -623,7 +625,7 @@ describe("CodeHostingPanel search lines", () => {
     }
   });
 
-  it("puts the buttons Search, Save this search, and Edit the saved search at the right of the field, on the same line", async () => {
+  it("puts Search, Save this search, and Edit the saved search beside each field", async () => {
     answerSearches();
     const wrapper = await mountPanel();
     for (const group of ["issues", "requests"] as const) {
@@ -634,7 +636,9 @@ describe("CodeHostingPanel search lines", () => {
         "Save this search",
         "Edit the saved search",
       ]);
-      expect(form.findAll("button i").map((icon) => icon.classes()[1])).toEqual(["bi-search", "bi-bookmark-plus", "bi-pencil"]);
+      expect(form.findAll("button i").map((icon) => icon.classes()[1])).toEqual([
+        "bi-search", "bi-bookmark-plus", "bi-pencil",
+      ]);
       expect(form.findAll("button").every((button) => button.text() === "")).toBe(true);
     }
   });
@@ -698,7 +702,7 @@ describe("CodeHostingPanel searches", () => {
   it("adds the label of the card to the search field of the list at a click, and runs the search of this list at once", async () => {
     answerLabelSearches();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     const label = wrapper.get(".popover [data-reference-label]");
     expect(label.text()).toBe("Design");
@@ -714,11 +718,11 @@ describe("CodeHostingPanel searches", () => {
   it("removes the label from the search field at the second click on it, and runs the search of this list at once", async () => {
     answerLabelSearches();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     await wrapper.get(".popover [data-reference-label]").trigger("click");
     await flushPromises();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     expect(wrapper.get(".popover [data-reference-label]").attributes("aria-pressed")).toBe("true");
     await wrapper.get(".popover [data-reference-label]").trigger("click");
@@ -731,7 +735,7 @@ describe("CodeHostingPanel searches", () => {
   it("keeps the other words of the search field when a label is added, and runs the whole search", async () => {
     answerLabelSearches();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     await groupOf(wrapper, "issues").get("form.search input").setValue("author:@me");
     await wrapper.get(".popover [data-reference-label]").trigger("click");
@@ -743,7 +747,7 @@ describe("CodeHostingPanel searches", () => {
   it("puts the label in the field of the list of the card only: the other list keeps its field and its search", async () => {
     answerLabelSearches();
     const wrapper = await mountPanel();
-    await wrapper.findAll(".information-card-part")[0].trigger("click");
+    await wrapper.findAll(".row-card")[0].trigger("click");
     await flushPromises();
     await wrapper.get(".popover [data-reference-label]").trigger("click");
     await flushPromises();
@@ -1009,4 +1013,69 @@ describe("CodeHostingPanel searches", () => {
     answer("[]");
     await flushPromises();
   });
+});
+
+
+describe('CodeHostingPanel search help', () => {
+	it.each(['github', 'gitlab'] as const)('explains %s searches without changing or running either search', async (forge) => {
+		answerSearches();
+		vi.mocked(refContext).mockResolvedValue(contextOf(forge));
+		if (forge === 'gitlab') {
+			vi.mocked(invoke).mockResolvedValue('[]');
+		}
+		const wrapper = await mountPanel();
+		await groupOf(wrapper, 'issues').get('input').setValue('label:bug');
+		await groupOf(wrapper, 'requests').get('input').setValue('author:@me');
+		const calls = vi.mocked(invoke).mock.calls.length;
+		const searchBefore = {
+			...codeHosting.search,
+		};
+		for (const group of ['issues', 'requests'] as const) {
+			const section = groupOf(wrapper, group);
+			const header = section.get('.group-header');
+			const button = header.get('[data-search-help]');
+			expect(section.find('form [data-search-help]').exists()).toBe(false);
+			expect(Array.from(header.element.children).map((element) => element.classList[0])).toEqual([
+				'group-toggle', 'information-card-part', 'badge',
+			]);
+			const title = group === 'issues' ? 'Issues' : forge === 'github' ? 'Pull requests' : 'Merge requests';
+			expect(button.attributes('aria-label')).toBe(`Search help for ${title}`);
+			expect(button.attributes('type')).toBe('button');
+			expect((button.element as HTMLButtonElement).tabIndex).toBe(0);
+			await button.trigger('click');
+			await flushPromises();
+			expect(codeHosting.folded[group]).toBe(false);
+			const card = section.get('.popover');
+			expect(card.attributes('aria-label')).toBe(`Search help for ${title}`);
+			expect(card.text()).toContain(`${forge === 'github' ? 'GitHub' : 'GitLab'} search — ${title}`);
+			expect(card.text()).toContain('Press Enter in the search field to search only ' + title);
+			expect(card.find('ul').exists()).toBe(false);
+			expect(card.text()).not.toContain('label:"simple-work"');
+			if (forge === 'github') {
+				const link = card.get('a');
+				const documentation = 'https://docs.github.com/en/issues/tracking-your-work-with-issues/'
+					+ 'using-issues/filtering-and-searching-issues-and-pull-requests';
+				expect(link.attributes('href')).toBe(documentation);
+				expect(link.text()).toBe('GitHub Docs');
+				await link.trigger('click');
+				expect(openUrl).toHaveBeenLastCalledWith(documentation);
+				expect(section.find('.popover').exists()).toBe(true);
+			} else {
+				expect(card.find('a').exists()).toBe(false);
+				expect(card.text()).toContain('The full GitHub search language does not work here.');
+				for (const expression of ['milestone:', 'no:label', 'no:assignee', 'no:milestone', 'OR', 'sort:']) {
+					expect(card.text()).toContain(expression);
+				}
+				expect(card.text().includes('review-requested:@me')).toBe(group === 'requests');
+			}
+			await button.trigger('keydown', {
+				key: 'Escape',
+			});
+			expect(section.find('.popover').exists()).toBe(false);
+		}
+		expect(fieldValue(wrapper, 'issues')).toBe('label:bug');
+		expect(fieldValue(wrapper, 'requests')).toBe('author:@me');
+		expect(codeHosting.search).toEqual(searchBefore);
+		expect(invoke).toHaveBeenCalledTimes(calls);
+	});
 });

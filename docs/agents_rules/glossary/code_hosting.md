@@ -1,7 +1,7 @@
 # Glossary of Heidrun: code hosting
 
 - Created: 13 October 2026
-- Last updated: 16 October 2026
+- Last updated: 20 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: code hosting](../user_interface/sidebars/code_hosting.md), [User interface of Heidrun: code hosting search](../user_interface/sidebars/code_hosting_search.md)
@@ -15,7 +15,7 @@ The line under the title of a list of the Code hosting sidebar section. It holds
 
 ### Search field
 
-The text field of a search line. The developer writes a search in the search language of GitHub, and presses the key Enter. The list of this search line then shows the items that match the search, and the other list does not change. An empty search shows all the open items of the list.
+The text field of a search line. The developer writes a search supported by the hosting service, and presses the key Enter. GitHub accepts its full search language; Heidrun translates a limited set of expressions for GitLab. The small circled question mark after the list title opens search help. The list of this search line then shows the items that match the search, and the other list does not change. An empty search shows all the open items of the list.
 
 ### Saved search
 
