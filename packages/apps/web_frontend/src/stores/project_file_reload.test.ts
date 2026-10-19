@@ -26,7 +26,7 @@ async function loadStores() {
   const projectStore = await import("./project");
   const sessionStore = await import("./session");
   sessionStore.state.snapshot = {
-    workspaces: [{ workspace_id: "w1", number: 1, worktree: { path: "/project" } }],
+    workspaces: [{ workspace_id: "w1", number: 1, workspace_folder: "/project" }],
     tabs: [],
     panes: [],
   } as never;

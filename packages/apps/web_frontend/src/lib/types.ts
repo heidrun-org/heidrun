@@ -12,7 +12,9 @@ export interface WorkspaceInfo {
   active_tab_id: string;
   agent_status: AgentStatus;
   tokens?: Record<string, string>;
-  worktree?: { branch?: string | null; path?: string | null } | null;
+  /** The saved absolute workspace folder; null requires explicit folder recovery. */
+  workspace_folder?: string | null;
+  worktree?: { branch?: string | null; checkout_path?: string | null } | null;
 }
 
 export interface TabInfo {

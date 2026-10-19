@@ -18,6 +18,7 @@ import { git, merging } from "./stores/git";
 import MergeModal from "./components/MergeModal.vue";
 import IssueModal from "./components/IssueModal.vue";
 import { issueView } from "./stores/issues";
+import WorkspaceFolderRecovery from './components/WorkspaceFolderRecovery.vue';
 import NewAgentModal from "./components/NewAgentModal.vue";
 import { newAgent } from "./stores/agents";
 import SearchModal from "./components/SearchModal.vue";
@@ -407,6 +408,7 @@ onBeforeUnmount(() => {
     <GitModal v-if="git.modal.open" />
     <MergeModal v-if="merging.open && merging.req" />
     <IssueModal v-if="issueView.open" />
+    <WorkspaceFolderRecovery />
     <NewAgentModal v-if="newAgent.open" />
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />

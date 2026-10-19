@@ -5,11 +5,16 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Tabs](tabs.md)
-- Related issue: [issue 379](https://github.com/heidrun-org/heidrun/issues/379), [issue 619](https://github.com/heidrun-org/heidrun/issues/619), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690)
+- Related issue: [issue 379](https://github.com/heidrun-org/heidrun/issues/379), [issue 619](https://github.com/heidrun-org/heidrun/issues/619), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 724](https://github.com/heidrun-org/heidrun/issues/724)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
 ## Workspace
+
+- The [workspace folder](../../glossary/workspaces_tabs_and_panes.md#workspace-folder) is saved separately from pane folders, by Herdr session and workspace identifier, and survives restarts. Workspace features use this folder or its repository.
+- New terminals, coding agents, resumed chats, and commands in new panes start in the workspace folder. Guard checks use the starting folder, or the actual folder for an existing pane. Launchers keep their configured starting folders.
+- Existing workspaces restore the saved folder or Herdr's `worktree.checkout_path`. Otherwise, a notice asks for the original folder once; no pane folder is adopted. New pane creation waits for this choice. Existing pane commands remain available.
+- Creation without a folder uses the absolute home folder. Folders outside Git follow the same rules.
 
 - One workspace is selected at a time.
 - The workspace status bar section is the first status bar section, at the left end of the status bar. It shows a status dot and the name of the selected workspace. A click on it opens its information card above the section. The information card does not open when the mouse moves over the section.

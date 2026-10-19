@@ -1,5 +1,6 @@
+import { WorkspaceFolders } from './workspace_folders';
 import { launchAgent } from "./agents";
-import { newTerminal, newWorkspace, selectedPane, selectedWorkspace, splitPane } from "./session";
+import { newTerminal, newWorkspace, selectedWorkspace, splitPane } from "./session";
 import { insertIntoFocusedPane } from "./input";
 import { settings } from "./settings";
 import type { PaneInfo } from "../lib/types";
@@ -59,7 +60,7 @@ export async function startNewPane(values: NewPaneValues, existingPane?: PaneInf
   const prompt = values.text;
   const res = await launchAgent({
     workspaceId: ws.workspace_id,
-    cwd: selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null,
+    cwd: WorkspaceFolders.get(ws.workspace_id),
     tool: values.tool,
     agent: values.tool === "claude" ? values.agent : null,
     model: values.model.trim() || null,

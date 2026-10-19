@@ -4,6 +4,7 @@ import { launchAgent } from "./agents";
 import { project, runLauncher } from "./project";
 import type { Launcher } from "../lib/project_config";
 
+vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { require: () => '/work/app' } }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),

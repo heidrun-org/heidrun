@@ -30,6 +30,7 @@ mod usage;
 mod user_activity;
 mod voice_commands;
 mod worktree_actions;
+mod workspace_folders;
 
 /// Tests that read or change the environment variable `HOME` take this lock, because the variable belongs to the whole process.
 #[cfg(test)]
@@ -324,6 +325,7 @@ pub fn run() {
             status_item::status_item_set_visible,
             status_item::status_item_set_user_active,
             herdr_request,
+            workspace_folders::workspace_folder_recover,
             herdr_cli,
             herdr_watch_panes,
             herdr_paths,

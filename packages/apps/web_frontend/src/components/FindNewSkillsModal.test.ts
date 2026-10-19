@@ -127,7 +127,7 @@ describe("FindNewSkillsModal", () => {
       ...session.state.snapshot,
       workspaces: [
         ...(session.state.snapshot?.workspaces ?? []),
-        { workspace_id: "w2", number: 2, label: "other", agent_status: "idle", worktree: { path: "/work/other" } },
+        { workspace_id: "w2", number: 2, label: "other", agent_status: "idle", workspace_folder: "/work/other" },
       ],
     } as typeof session.state.snapshot;
     invoke.mockClear();

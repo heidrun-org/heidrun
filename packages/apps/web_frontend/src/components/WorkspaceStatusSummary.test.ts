@@ -31,8 +31,8 @@ vi.mock("../lib/api", async (importOriginal) => {
 function makeSnapshot(panes: Record<string, unknown>[] = []): SessionSnapshot {
   return {
     workspaces: [
-      { workspace_id: "w1", number: 1, label: "heidrun", agent_status: "idle", tab_count: 2 },
-      { workspace_id: "w2", number: 2, label: "teamwright", agent_status: "idle", tab_count: 1 },
+      { workspace_id: "w1", workspace_folder: "/work/heidrun", number: 1, label: "heidrun", agent_status: "idle", tab_count: 2 },
+      { workspace_id: "w2", workspace_folder: "/work/teamwright", number: 2, label: "teamwright", agent_status: "idle", tab_count: 1 },
       { workspace_id: "w3", number: 3, label: "scratch", agent_status: "idle", tab_count: 1 },
     ],
     tabs: [],

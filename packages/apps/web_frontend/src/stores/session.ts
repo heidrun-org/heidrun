@@ -1,3 +1,4 @@
+import { WorkspaceFolders } from './workspace_folders';
 import { computed, reactive, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
@@ -924,8 +925,8 @@ function humanError(e: string): string {
 export function newTerminal() {
   const ws = selectedWorkspace.value;
   if (!ws) return;
-  const cwd = selectedPane.value?.cwd ?? null;
   return guard(async () => {
+    const cwd = WorkspaceFolders.require(ws.workspace_id);
     const pane = await api.newTab(ws.workspace_id, cwd);
     await refresh();
     if (pane) selectPane(pane);
@@ -946,7 +947,7 @@ export async function splitPane(direction: "right" | "down" = "right", paneId?: 
     return undefined;
   }
   return guard(async () => {
-    const pane = await api.split(p.pane_id, direction, p.cwd);
+    const pane = await api.split(p.pane_id, direction, WorkspaceFolders.require(p.workspace_id));
     await refresh();
     if (pane) selectPane(pane);
     return pane;
@@ -1145,11 +1146,17 @@ export async function runInNewPane(command: string, watch?: string) {
   const base = selectedPane.value;
   const ws = selectedWorkspace.value;
   if (!ws) return;
-  const w = whereOf(base?.pane_id);
-  if (!(await allowCommand(command, w.cwd, w.where || ws.label))) return;
+  const cwd = WorkspaceFolders.get(ws.workspace_id);
+  if (cwd === null) {
+    toast(t('workspaceFolderRecovery.required'));
+    return;
+  }
+  if ((await allowCommand(command, cwd, ws.label)) === false) {
+    return;
+  }
   rememberCommand(command);
   const pane = await guard(async () =>
-    base ? api.split(base.pane_id, "right", base.cwd) : api.newTab(ws.workspace_id, null),
+    base ? api.split(base.pane_id, "right", cwd) : api.newTab(ws.workspace_id, cwd),
   );
   if (!pane) return;
   // Give the new shell a moment to print its prompt before typing into it.

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { WorkspaceFolders } from '../stores/workspace_folders';
 import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
@@ -50,7 +51,7 @@ const directionLabel = computed(() => {
 const rows = computed(() => {
 	const result = worktrees.value.map((worktree) => ({
 		worktree,
-		workspace: workspaces.value.find((candidate) => candidate.worktree?.path === worktree.folder) ?? null,
+		workspace: workspaces.value.find((candidate) => WorkspaceFolders.get(candidate.workspace_id) === worktree.folder) ?? null,
 	}));
 	return result.sort((a, b) => {
 		const left = a.worktree[sortKey.value];

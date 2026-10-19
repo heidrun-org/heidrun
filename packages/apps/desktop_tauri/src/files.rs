@@ -63,12 +63,22 @@ fn acceptable_root(root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// The folders of the panes Herdr knows: the explorer only opens projects that a
-/// pane is working in, whatever the webview asks.
+/// The folders of live panes and the fixed folders of live workspaces.
 async fn pane_dirs() -> Vec<PathBuf> {
     let Ok(v) = crate::herdr::request("session.snapshot", serde_json::json!({})).await else { return vec![] };
+    snapshot_dirs(&v)
+}
+
+fn snapshot_dirs(v: &serde_json::Value) -> Vec<PathBuf> {
     let panes = v.get("snapshot").and_then(|s| s.get("panes")).and_then(|p| p.as_array()).cloned().unwrap_or_default();
     let mut out = Vec::new();
+    for workspace in v.pointer("/snapshot/workspaces").and_then(|value| value.as_array()).into_iter().flatten() {
+        if let Some(folder) = workspace.get("workspace_folder").and_then(|value| value.as_str()) {
+            if let Ok(folder) = std::fs::canonicalize(folder) {
+                out.push(folder);
+            }
+        }
+    }
     for p in panes {
         for key in ["foreground_cwd", "cwd"] {
             if let Some(d) = p.get(key).and_then(|x| x.as_str()).filter(|d| !d.is_empty()) {
@@ -902,5 +912,25 @@ mod helper_tests {
     fn refuses_a_path_inside_the_git_folder() {
         assert!(not_in_git_dir("x/.git").is_err());
         assert!(not_in_git_dir("x/.github/y").is_ok());
+    }
+}
+
+#[cfg(test)]
+mod workspace_folder_tests {
+    use super::*;
+
+    #[test]
+    fn fixed_workspace_folder_stays_accessible_when_every_pane_has_changed_folder() {
+        let root = std::fs::canonicalize(env!("CARGO_MANIFEST_DIR")).unwrap();
+        let other = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let snapshot = serde_json::json!({"snapshot": {
+            "workspaces": [{"workspace_folder": root}],
+            "panes": [{"cwd": other, "foreground_cwd": other}]
+        }});
+        assert!(snapshot_dirs(&snapshot).contains(&root));
+        assert!(snapshot_dirs(&snapshot).contains(&other));
+        assert!(acceptable_root(&root).is_ok());
+        assert!(acceptable_root(&dirs::home_dir().unwrap()).is_err());
+        assert!(acceptable_root(&dirs::home_dir().unwrap().join(".ssh")).is_err());
     }
 }

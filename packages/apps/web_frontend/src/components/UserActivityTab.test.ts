@@ -47,8 +47,8 @@ const HOUR_MS = 3_600_000;
 const OPEN_FOLDER = "/work/heidrun";
 const CLOSED_FOLDER = "/work/old_experiment";
 const OPEN_WORKSPACES = [
-  { workspace_id: "w1", number: 1, label: "Heidrun app", worktree: { path: OPEN_FOLDER } },
-  { workspace_id: "w2", number: 2, label: "old_experiment", worktree: { path: CLOSED_FOLDER } },
+  { workspace_id: "w1", number: 1, label: "Heidrun app", workspace_folder: OPEN_FOLDER },
+  { workspace_id: "w2", number: 2, label: "old_experiment", workspace_folder: CLOSED_FOLDER },
 ];
 
 /** Waits until the chart has called Plotly.js this number of times: the chart loads Plotly.js after it mounts. */

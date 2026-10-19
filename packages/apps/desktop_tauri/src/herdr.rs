@@ -229,6 +229,33 @@ async fn connect() -> Result<UnixStream, String> {
 
 /// One request on a fresh connection. Waits for the matching response line.
 pub async fn request(method: &str, params: Value) -> Result<Value, String> {
+    let mut params = params;
+    let folder = if method == "workspace.create" {
+        let folder = crate::workspace_folders::absolute_folder(params.get("cwd").and_then(Value::as_str))?;
+        params["cwd"] = json!(folder);
+        Some(folder)
+    } else {
+        None
+    };
+    let mut result = raw_request(method, params.clone()).await?;
+    if let Some(folder) = folder {
+        let workspace_id = result.pointer("/workspace/workspace_id").and_then(Value::as_str)
+            .ok_or("Workspace creation returned no identifier")?;
+        crate::workspace_folders::save(workspace_id, &folder)?;
+        result["workspace"]["workspace_folder"] = json!(folder);
+    }
+    if method == "session.snapshot" {
+        crate::workspace_folders::enrich(&mut result)?;
+    }
+    if method == "workspace.close" {
+        if let Some(workspace_id) = params.get("workspace_id").and_then(Value::as_str) {
+            crate::workspace_folders::forget(workspace_id)?;
+        }
+    }
+    Ok(result)
+}
+
+async fn raw_request(method: &str, params: Value) -> Result<Value, String> {
     let mut stream = connect().await?;
     let id = next_id();
     let mut line = serde_json::to_string(&json!({ "id": id, "method": method, "params": params }))

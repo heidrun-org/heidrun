@@ -775,6 +775,7 @@ export class TauriMockFixture {
 			workspaces: [
 				{
 					workspace_id: 'workspace_1',
+					workspace_folder: heidrunFolder,
 					number: 1,
 					label: 'heidrun',
 					focused: true,
@@ -784,11 +785,12 @@ export class TauriMockFixture {
 					agent_status: 'blocked',
 					worktree: {
 						branch: 'dev_jerome',
-						path: heidrunFolder,
+						checkout_path: heidrunFolder,
 					},
 				},
 				{
 					workspace_id: 'workspace_2',
+					workspace_folder: websiteFolder,
 					number: 2,
 					label: 'website',
 					focused: false,

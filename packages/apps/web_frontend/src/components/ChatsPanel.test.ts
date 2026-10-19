@@ -46,7 +46,7 @@ function snapshotWith(folder: string) {
     version: "test",
     protocol: 1,
     workspaces: [
-      { workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1", agent_status: "unknown", worktree: { path: folder } },
+      { workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1", agent_status: "unknown", workspace_folder: folder },
     ],
     tabs: [],
     panes: [],

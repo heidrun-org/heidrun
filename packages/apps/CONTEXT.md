@@ -13,5 +13,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 - A package that is only a tool for the developers of Heidrun goes in `packages/dev_tools`, never here.
 - The package `desktop_tauri` builds the package `web_frontend` through the relative path `../web_frontend/dist`, so both packages stay in this folder.
 
+- The desktop application saves fixed workspace folders by Herdr session and workspace identifier; the web frontend reads `workspace_folder` from enriched snapshots and never derives a workspace folder from a pane.
+
 ## Background
 - The folder `packages` was split into `apps` and `auxiliary` in [issue #120](https://github.com/heidrun-org/heidrun/issues/120).

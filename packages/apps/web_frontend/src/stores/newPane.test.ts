@@ -14,6 +14,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => []) }));
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 vi.mock("./agents", () => ({ launchAgent, newAgent }));
 vi.mock("./session", () => ({ newTerminal, newWorkspace, selectedPane, selectedWorkspace, splitPane }));
+vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { get: () => '/work/project' } }));
 vi.mock("./input", () => ({ insertIntoFocusedPane: vi.fn() }));
 
 /** A click on the plus button of the tab bar, with or without the key Shift. */
@@ -50,7 +51,7 @@ describe("the plus button of the tab bar (issue #328)", () => {
     await vi.waitFor(() => expect(launchAgent).toHaveBeenCalledTimes(1));
     expect(launchAgent).toHaveBeenCalledWith({
       workspaceId: "w1",
-      cwd: "/work/project/src",
+      cwd: "/work/project",
       tool: command,
       agent: null,
       model: null,
@@ -102,7 +103,7 @@ describe("the split controls of a pane (issue #465)", () => {
     expect(launchAgent).toHaveBeenCalledTimes(1);
     expect(launchAgent).toHaveBeenCalledWith({
       workspaceId: "w1",
-      cwd: "/work/project/src",
+      cwd: "/work/project",
       tool: "codex",
       agent: null,
       model: null,
