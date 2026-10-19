@@ -1,11 +1,11 @@
 # Window rules index
 
 - Created: 13 October 2026
-- Last updated: 18 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 662](https://github.com/heidrun-org/heidrun/issues/662)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 707](https://github.com/heidrun-org/heidrun/issues/707), [issue 683](https://github.com/heidrun-org/heidrun/issues/683)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -17,9 +17,11 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [statistics_charts.md](statistics_charts.md): the rules that every chart of the Statistics window follows: the chart legend, the chart information card with its arrow, the shared code, and the tests that a new chart adds.
 - [statistics_user_activity.md](statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
 - [statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
+- [statistics_user_activity_vertical_axis.md](statistics_user_activity_vertical_axis.md): the vertical axis of the histogram of the tab "User activity": the top that fits the highest bar, the units, the round tops, the title with the length of the slot, and its tests.
 - [statistics_person_work.md](statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the metric of the Git history, the unit, the person chooser, the time range, the totals, the bar chart of each day, and its tests.
 - [statistics_person_work_inputs.md](statistics_person_work_inputs.md): the inputs of the tab "Work of one person": the two columns, the labels, the small buttons, the source, the metric, the person chooser, the time range, and its tests.
 - [statistics_person_work_legend_filter.md](statistics_person_work_legend_filter.md): the filter of the chart legend of the tab "Work of one person": a click on a name, one filter for each chart, and the memory of the filter between two runs.
+- [statistics_remembered_selections.md](statistics_remembered_selections.md): the selections of the tabs "User activity" and "Work of one person" that Heidrun saves as soon as they change and restores when the window opens, the options that save them, and the selections that a source hides.
 - [statistics_person_work_workspace.md](statistics_person_work_workspace.md): the workspace selector of the tab "Work of one person": the buttons with a checkbox, the first choice, the sums of several workspaces, what a change reads, and its tests.
 - [statistics_person_work_slots.md](statistics_person_work_slots.md): the slot length of the tab "Work of one person": the buttons of each time range, the slots (hours, days of 23 and 25 hours), the labels and the titles of the bar chart, and its tests.
 - [statistics_git_history.md](statistics_git_history.md): the source "Git history" of the tab "Work of one person": what counts, and where its data comes from.

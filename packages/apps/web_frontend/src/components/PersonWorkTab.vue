@@ -28,6 +28,7 @@ import {
   type PersonWorkSlotHours,
 } from "../lib/person_work";
 import type { StackedBarChartContent } from "../lib/stacked_bar_chart";
+import { settings } from "../stores/settings";
 import { openWorkspaces, selectedWorkspaceId } from "../stores/user_activity";
 import { locale, t } from "../i18n/index";
 
@@ -43,7 +44,8 @@ import { locale, t } from "../i18n/index";
 // time range, the slot length, the metric, or the unit changes. The AI cost reads the token usage that the data layer stored, for the chosen workspaces
 // together, so that a chat that two workspaces list counts once. It updates the stored token usage first, which opens only the
 // chat files that changed. It imports the whole history of a workspace, which opens every chat file, only when the developer
-// presses the button "Import the history".
+// presses the button "Import the history". Each choice is saved in the settings as soon as the developer changes it, and the
+// tab starts with the saved choices (issue 707). A choice that the source hides stays saved.
 
 /** The choices of the radio button group of the source, from left to right. */
 const SOURCE_CHOICES = [
@@ -110,8 +112,33 @@ function firstWorkspaceIds(): string[] {
   return first === undefined ? [] : [first.workspaceId];
 }
 
-/** The identifiers of the workspaces that the developer chose. The selected workspace alone at first. */
-const chosenWorkspaceIds = ref<string[]>(firstWorkspaceIds());
+/**
+ * Gives the identifiers of the workspaces that the tab starts with: the saved choice when it still names an open workspace, else
+ * the selected workspace alone. A saved choice of no workspace stays empty.
+ */
+function savedWorkspaceIds(): string[] {
+  const saved = settings.statisticsPersonWorkWorkspaces;
+  if (saved.isSaved === false) {
+    return firstWorkspaceIds();
+  }
+  const stillOpen = saved.workspaceIds.filter((workspaceId) => openWorkspaces.value.some((workspace) => workspace.workspaceId === workspaceId));
+  return saved.workspaceIds.length === 0 || stillOpen.length > 0 ? stillOpen : firstWorkspaceIds();
+}
+
+/** The identifiers of the workspaces that the developer chose. The saved choice at first, else the selected workspace alone. */
+const chosenWorkspaceIds = ref<string[]>(savedWorkspaceIds());
+
+/**
+ * The identifiers of the chosen workspaces, for the buttons of the workspaces. A choice of the developer is saved in the settings.
+ * A change that the tab makes by itself, when a workspace closes, is not saved.
+ */
+const chosenWorkspaceIdsChoice = computed({
+  get: () => chosenWorkspaceIds.value,
+  set: (workspaceIds: string[]) => {
+    chosenWorkspaceIds.value = workspaceIds;
+    settings.statisticsPersonWorkWorkspaces = { isSaved: true, workspaceIds: [...workspaceIds] };
+  },
+});
 
 /** True when every open workspace is chosen. */
 const isEveryWorkspaceChosen = computed(
@@ -133,20 +160,46 @@ const chosenFolders = computed(() => [
  */
 const chosenFoldersKey = computed(() => chosenFolders.value.join("\n"));
 
-/** The source of the bar chart. The tab starts with the Git history. */
-const sourceId = ref<SourceId>("git_history");
+/** The source of the bar chart. The tab starts with the saved source, or else with the Git history. */
+const sourceId = ref<SourceId>(settings.statisticsPersonWorkSource);
 
-/** The metric of the bar chart of the Git history. The tab starts with the commits and the pull requests. */
-const metricId = ref<MetricId>("commits_and_pull_requests");
+/** The metric of the bar chart of the Git history. The tab starts with the saved metric, or else with the commits and the pull requests. */
+const metricId = ref<MetricId>(settings.statisticsPersonWorkMetric);
 
-/** The unit of the AI cost. The tab starts with US dollars. */
-const unitId = ref<UnitId>("dollars");
+/** The unit of the AI cost. The tab starts with the saved unit, or else with US dollars. */
+const unitId = ref<UnitId>(settings.statisticsPersonWorkUnit);
 
-/** The time range of the chart. The tab starts with the last seven days. */
-const periodId = ref<PersonWorkPeriodId>("seven_days");
+/** The time range of the chart. The tab starts with the saved time range, or else with the last seven days. */
+const periodId = ref<PersonWorkPeriodId>(settings.statisticsPersonWorkRange);
 
-/** The length of a slot in hours: one bar of the chart. The tab starts with one day. */
-const slotHours = ref<PersonWorkSlotHours>(PERSON_WORK_PERIODS.seven_days.defaultSlotHours);
+/** Gives the slot length that the tab starts with: the saved slot length when the time range offers it, else the default one. */
+function savedSlotHours(): PersonWorkSlotHours {
+  const period = PERSON_WORK_PERIODS[periodId.value];
+  return period.slotHoursChoices.includes(settings.statisticsPersonWorkSlotHours) ? settings.statisticsPersonWorkSlotHours : period.defaultSlotHours;
+}
+
+/** The length of a slot in hours: one bar of the chart. The tab starts with the saved slot length, or else with one day. */
+const slotHours = ref<PersonWorkSlotHours>(savedSlotHours());
+
+watch(sourceId, (newSourceId) => {
+  settings.statisticsPersonWorkSource = newSourceId;
+});
+
+watch(metricId, (newMetricId) => {
+  settings.statisticsPersonWorkMetric = newMetricId;
+});
+
+watch(unitId, (newUnitId) => {
+  settings.statisticsPersonWorkUnit = newUnitId;
+});
+
+watch(periodId, (newPeriodId) => {
+  settings.statisticsPersonWorkRange = newPeriodId;
+});
+
+watch(slotHours, (newSlotHours) => {
+  settings.statisticsPersonWorkSlotHours = newSlotHours;
+});
 
 /** The slot lengths that the time range offers, from the shortest to the longest. */
 const slotHoursChoices = computed(() => PERSON_WORK_PERIODS[periodId.value].slotHoursChoices);
@@ -160,8 +213,20 @@ const aiCostRead = ref<AiCostRead>({ state: "idle" });
 /** The number of the last read of the AI cost. A read that is not the last one is out of date, and its answer is dropped. */
 let aiCostReadNumber = 0;
 
-/** The identifier of the person of the chart, or `null` before the people are known. */
-const personId = ref<string | null>(null);
+/** The identifier of the person of the chart, or `null` before the people are known. The saved person at first. */
+const personId = ref<string | null>(settings.statisticsPersonWorkPerson === "" ? null : settings.statisticsPersonWorkPerson);
+
+/**
+ * The identifier of the person of the chart, for the person chooser. A choice of the developer is saved in the settings. A
+ * person that the tab takes by itself, because the saved person is not in the list, is not saved.
+ */
+const personChoice = computed({
+  get: () => personId.value,
+  set: (newPersonId: string | null) => {
+    personId.value = newPersonId;
+    settings.statisticsPersonWorkPerson = newPersonId ?? "";
+  },
+});
 
 /**
  * Gives the reads of the chosen folders. A folder that the tab did not ask for yet counts as a folder that it is reading,
@@ -533,8 +598,15 @@ async function readAiCost(isImportAllowed: boolean): Promise<void> {
   }
 }
 
-// The person with the most items is chosen when the people are known, and a person that the list does not hold cannot stay chosen.
+// The saved person is chosen when the list holds this person. Else the person with the most items is chosen when the people are
+// known, and a person that the list does not hold cannot stay chosen. The list can grow while the folders are read one by one, so
+// the saved person comes back as soon as the list holds this person.
 watch(persons, (list) => {
+  const savedPerson = list.find((candidate) => candidate.id === settings.statisticsPersonWorkPerson);
+  if (savedPerson !== undefined) {
+    personId.value = savedPerson.id;
+    return;
+  }
   if (list.some((candidate) => candidate.id === personId.value) === false) {
     personId.value = list[0]?.id ?? null;
   }
@@ -560,12 +632,12 @@ watch(openWorkspaces, (list) => {
 
 /** Chooses every open workspace. */
 function chooseEveryWorkspace(): void {
-  chosenWorkspaceIds.value = openWorkspaces.value.map((workspace) => workspace.workspaceId);
+  chosenWorkspaceIdsChoice.value = openWorkspaces.value.map((workspace) => workspace.workspaceId);
 }
 
 /** Chooses no workspace. */
 function chooseNoWorkspace(): void {
-  chosenWorkspaceIds.value = [];
+  chosenWorkspaceIdsChoice.value = [];
 }
 
 // A source reads its data only when it is shown. The Git history reads only the chosen folders that it did not read yet. The AI
@@ -612,7 +684,7 @@ watch(
             </div>
             <label v-if="sourceId === 'git_history' && persons.length > 0" class="d-flex align-items-center gap-2" for="statistics-person">
               <span class="form-text">{{ t("statisticsModal.personWorkPersonLabel") }}</span>
-              <select id="statistics-person" v-model="personId" class="form-control form-control-sm w-auto">
+              <select id="statistics-person" v-model="personChoice" class="form-control form-control-sm w-auto">
                 <option v-for="candidate in persons" :key="candidate.id" :value="candidate.id">{{ candidate.name }}</option>
               </select>
             </label>
@@ -725,7 +797,7 @@ watch(
               >
                 <input
                   :id="`statistics-person-workspace-${workspace.workspaceId}`"
-                  v-model="chosenWorkspaceIds"
+                  v-model="chosenWorkspaceIdsChoice"
                   type="checkbox"
                   autocomplete="off"
                   :value="workspace.workspaceId"

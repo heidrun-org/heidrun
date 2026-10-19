@@ -1,7 +1,7 @@
 # User interface of Heidrun: Statistics window, tab "Work of one person", source "AI cost"
 
 - Created: 15 October 2026
-- Last updated: 17 October 2026
+- Last updated: 19 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Chat summary](../sidebars/chats/chat_summary.md), [Workspace selector](statistics_person_work_workspace.md)
@@ -27,7 +27,7 @@ This file is a part of the rules of the tab "Work of one person". The layout of 
 
 ## The unit: US dollars or tokens
 
-- When the source "AI cost" is shown, a radio button group of the unit comes after the radio button group of the source. It has the same Bootstrap form, with two buttons that have a text and a title: "US dollars", chosen at first, and "Tokens". The source "Git history" does not show it. A click shows the other unit at once, from the data that the tab already read, so a change of the unit reads nothing. The tab never remembers the choice.
+- When the source "AI cost" is shown, a radio button group of the unit comes after the radio button group of the source. It has the same Bootstrap form, with two buttons that have a text and a title: "US dollars", chosen at first, and "Tokens". The source "Git history" does not show it. A click shows the other unit at once, from the data that the tab already read, so a change of the unit reads nothing. Heidrun remembers the choice.
 - The tokens of a day are the input tokens, with the ones read from the cache and written to it, and the output tokens, for every model: the numbers that the Past chats sidebar section shows ([chat_summary.md](../sidebars/chats/chat_summary.md)).
 - In tokens, a model with no known price counts with its tokens, because a token has no price. The line of text about the cost that is not complete is shown only in US dollars.
 - A number of tokens is written as the information card of a chat writes it: a number under one thousand as it is, else two decimal digits and KT (thousand), MT (million), BT (billion), or TT (trillion), for example "20.61 KT". A total of zero is "0".

@@ -663,3 +663,96 @@ describe("legend filters of the bar charts of the Statistics window", () => {
     expect((await settingsFrom({ statisticsLegendFilters: null })).statisticsLegendFilters).toEqual({});
   });
 });
+
+describe("selections of the tabs of the Statistics window (issue 707)", () => {
+  /** The settings, as a new run of Heidrun reads them from what `localStorage` holds. */
+  async function settingsFrom(saved: unknown) {
+    localStorage.setItem("heidrun.settings", JSON.stringify(saved));
+    vi.resetModules();
+    return (await import("./settings")).settings;
+  }
+
+  it("are the existing choices by default", async () => {
+    const reloaded = await settingsFrom({});
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsUserActivitySlotLength).toBe("one_hour");
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkMetric).toBe("commits_and_pull_requests");
+    expect(reloaded.statisticsPersonWorkUnit).toBe("dollars");
+    expect(reloaded.statisticsPersonWorkPerson).toBe("");
+    expect(reloaded.statisticsPersonWorkRange).toBe("seven_days");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
+  });
+
+  it("are read again when the application starts again", async () => {
+    const saved = {
+      statisticsUserActivityRange: "month",
+      statisticsUserActivitySlotLength: "six_hours",
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: false, folders: ["/work/heidrun"] },
+      statisticsPersonWorkSource: "ai_cost",
+      statisticsPersonWorkMetric: "lines",
+      statisticsPersonWorkUnit: "tokens",
+      statisticsPersonWorkPerson: "eric",
+      statisticsPersonWorkRange: "thirty_days",
+      statisticsPersonWorkSlotHours: 6,
+      statisticsPersonWorkWorkspaces: { isSaved: true, workspaceIds: ["workspace-1", "workspace-2"] },
+    };
+    expect({ ...(await settingsFrom(saved)) }).toMatchObject(saved);
+  });
+
+  it("go back to the existing choice when a saved value is not in the list of its values", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityRange: "year",
+      statisticsUserActivitySlotLength: "ten_seconds",
+      statisticsPersonWorkSource: "weather",
+      statisticsPersonWorkMetric: "words",
+      statisticsPersonWorkUnit: "euros",
+      statisticsPersonWorkRange: "century",
+      statisticsPersonWorkSlotHours: 5,
+    });
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsUserActivitySlotLength).toBe("one_hour");
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkMetric).toBe("commits_and_pull_requests");
+    expect(reloaded.statisticsPersonWorkUnit).toBe("dollars");
+    expect(reloaded.statisticsPersonWorkRange).toBe("seven_days");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+  });
+
+  it("go back to the existing choice when a saved value has the wrong type", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityRange: 3,
+      statisticsPersonWorkSource: null,
+      statisticsPersonWorkPerson: 12,
+      statisticsPersonWorkSlotHours: "6",
+      statisticsUserActivityWorkspaces: "all",
+      statisticsPersonWorkWorkspaces: ["workspace-1"],
+    });
+    expect(reloaded.statisticsUserActivityRange).toBe("day");
+    expect(reloaded.statisticsPersonWorkSource).toBe("git_history");
+    expect(reloaded.statisticsPersonWorkPerson).toBe("");
+    expect(reloaded.statisticsPersonWorkSlotHours).toBe(24);
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
+  });
+
+  it("keep the texts of a saved list of workspaces, and drop the other entries", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: false, folders: ["/work/heidrun", 4, null, "", ["x"]] },
+      statisticsPersonWorkWorkspaces: { isSaved: true, workspaceIds: ["workspace-1", 4, null, "", { a: 1 }] },
+    });
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: false, folders: ["/work/heidrun"] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: true, workspaceIds: ["workspace-1"] });
+  });
+
+  it("repair a choice of workspaces that lacks a field or holds a field of the wrong type", async () => {
+    const reloaded = await settingsFrom({
+      statisticsUserActivityWorkspaces: { isEveryWorkspaceChosen: "yes", folders: "/work/heidrun" },
+      statisticsPersonWorkWorkspaces: { isSaved: "yes" },
+    });
+    expect(reloaded.statisticsUserActivityWorkspaces).toEqual({ isEveryWorkspaceChosen: true, folders: [] });
+    expect(reloaded.statisticsPersonWorkWorkspaces).toEqual({ isSaved: false, workspaceIds: [] });
+  });
+});
