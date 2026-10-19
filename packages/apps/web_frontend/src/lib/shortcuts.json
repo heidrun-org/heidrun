@@ -49,7 +49,7 @@
       },
       {
         "keys": "⌘W ⌘W",
-        "actionKey": "action.closePane"
+        "actionKey": "action.closeTab"
       }
     ]
   },

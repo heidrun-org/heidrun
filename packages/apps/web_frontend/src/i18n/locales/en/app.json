@@ -1,5 +1,5 @@
 {
+  "pressAgainToClose": "Press ⌘W again to close this tab",
   "selectTextFirst": "Select some text in a terminal first",
-  "pressAgainToClose": "Press ⌘W again to close this pane",
   "dropNotAnImage": "This file is not an image"
 }
