@@ -572,3 +572,65 @@ describe("VoiceInput.cancel", () => {
 		expect(invokeMock).not.toHaveBeenCalled();
 	});
 });
+
+
+describe('voice input cancellation (issue 736)', () => {
+	it.each(['late words', 'failure'])('ignores a cancelled transcription result: %s', async (result) => {
+		let finishFn: (text: string) => void = () => {};
+		let failFn: (error: string) => void = () => {};
+		invokeMock.mockImplementation((name: string) => {
+			if (name === 'voice_stop_recording') {
+				return new Promise<string>((resolve, reject) => {
+					finishFn = resolve;
+					failFn = reject;
+				});
+			}
+			return Promise.resolve();
+		});
+		await VoiceInput.press('pane-1');
+		compositionBar.text = 'Keep the draft';
+		compositionBar.paths = ['/shots/a.png'];
+		const transcribing = VoiceInput.stopAndWrite();
+		const settling = VoiceInput.settle('pane-1');
+		await VoiceInput.cancel('pane-1');
+		expect(await settling).toBe(false);
+		await VoiceInput.press('pane-2');
+		if (result === 'failure') {
+			failFn('transcription_failed');
+		} else {
+			finishFn(result);
+		}
+		await transcribing;
+		expect(voiceInput.state).toBe('recording');
+		expect(voiceInput.ownerPaneId).toBe('pane-2');
+		expect(voiceInput.error).toBeNull();
+		expect(compositionBar.text).toBe('Keep the draft');
+		expect(compositionBar.paths).toEqual(['/shots/a.png']);
+		expect(compositionBar.isOpen).toBe(true);
+	});
+
+	it('waits for a pending microphone start before discarding it and starting another recording', async () => {
+		let openFn: () => void = () => {};
+		invokeMock.mockImplementationOnce(() => new Promise<void>((resolve) => {
+			openFn = resolve;
+		}));
+		const starting = VoiceInput.press('pane-1');
+		await vi.waitFor(() => expect(commandNames()).toContain('voice_start_recording'));
+		const cancelling = VoiceInput.cancel('pane-1');
+		const restarting = VoiceInput.press('pane-1');
+		expect(commandNames()).toEqual(['voice_start_recording']);
+		openFn();
+		await starting;
+		await cancelling;
+		await restarting;
+		expect(commandNames()).toEqual(['voice_start_recording', 'voice_cancel_recording', 'voice_start_recording']);
+		expect(voiceInput.state).toBe('recording');
+	});
+
+	it('does not cancel the operation owned by another pane', async () => {
+		await VoiceInput.press('pane-1');
+		await VoiceInput.cancel('pane-2');
+		expect(voiceInput.state).toBe('recording');
+		expect(commandNames()).toEqual(['voice_start_recording']);
+	});
+});

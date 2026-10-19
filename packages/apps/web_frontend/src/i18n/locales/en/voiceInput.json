@@ -4,6 +4,7 @@
   "titleRecording": "Listening… release the button to write the text",
   "titleLatched": "Listening… click the button again to write the text",
   "listening": "Listening…",
+  "cancel": "Cancel voice input",
   "levelLabel": "Level of the voice",
   "titleTranscribing": "Changing the speech into text…",
   "titleModelMissing": "The Whisper model is not on this computer. Open Settings, Voice input, to download it.",

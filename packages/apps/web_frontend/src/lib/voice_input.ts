@@ -31,6 +31,15 @@ type DownloadProgressPayload = {
 };
 
 export class VoiceInput {
+	/** Changes whenever a recording starts or is cancelled, so late results cannot affect another recording. */
+	private static operationId = 0;
+
+	/** The microphone command that must finish before a cancellation can discard its recorder. */
+	private static starting: Promise<void> | null = null;
+
+	/** The cancellation that must finish before another recording can open the microphone. */
+	private static cancelling: Promise<void> | null = null;
+
 	/** True after the web page began to listen to the events of the progress of a download. */
 	private static isListening = false;
 
@@ -189,6 +198,7 @@ export class VoiceInput {
 		if (voiceInput.state !== "recording") {
 			return;
 		}
+		const operationId = VoiceInput.operationId;
 		VoiceInput.stopListeningToRelease();
 		voiceInput.isLatched = false;
 		voiceInput.state = "transcribing";
@@ -197,9 +207,15 @@ export class VoiceInput {
 				modelId: settings.voiceInputModel,
 				language: settings.voiceInputLanguage,
 			});
+			if (operationId !== VoiceInput.operationId) {
+				return;
+			}
 			VoiceInput.appendToCompositionBar(text);
 			voiceInput.error = null;
 		} catch (error) {
+			if (operationId !== VoiceInput.operationId) {
+				return;
+			}
 			voiceInput.error = String(error);
 		}
 		voiceInput.state = "idle";
@@ -220,35 +236,41 @@ export class VoiceInput {
 		if (voiceInput.state === "idle") {
 			return true;
 		}
+		const operationId = VoiceInput.operationId;
 		voiceInput.error = null;
 		if (voiceInput.state === "starting") {
 			VoiceInput.pendingRelease = "stop";
 		} else if (voiceInput.state === "recording") {
-			await VoiceInput.stopAndWrite();
+			void VoiceInput.stopAndWrite();
 		}
 		await VoiceInput.waitForIdle();
-		return voiceInput.error === null;
+		return operationId === VoiceInput.operationId && voiceInput.error === null;
 	}
 
 	/**
-	 * Throws away a recording that runs, for example when the developer turns the option off or closes a composition bar.
-	 * @param paneId The identifier of the pane whose composition bar closed, or undefined to cancel any recording.
-	 * @returns Resolves when the recording has stopped.
+	 * Cancels recording or transcription without changing the draft. Late text and errors are discarded.
+	 * @param paneId The pane that owns the operation, or undefined to cancel any operation.
+	 * @returns Resolves after the microphone has been released for another recording.
 	 */
 	static async cancel(paneId?: string): Promise<void> {
 		if (paneId !== undefined && voiceInput.ownerPaneId !== paneId) {
 			return;
 		}
-		if (voiceInput.state !== "recording" && voiceInput.state !== "starting") {
+		if (voiceInput.state === 'idle') {
+			await VoiceInput.cancelling;
 			return;
 		}
+		VoiceInput.operationId += 1;
 		VoiceInput.stopListeningToRelease();
+		VoiceInput.pendingRelease = 'none';
 		voiceInput.isLatched = false;
-		voiceInput.state = "idle";
-		try {
-			await invoke("voice_cancel_recording");
-		} catch {
-			// There is nothing left to throw away.
+		voiceInput.error = null;
+		const cancelling = VoiceInput.discardRecording();
+		VoiceInput.cancelling = cancelling;
+		voiceInput.state = 'idle';
+		await cancelling;
+		if (VoiceInput.cancelling === cancelling) {
+			VoiceInput.cancelling = null;
 		}
 	}
 
@@ -280,6 +302,10 @@ export class VoiceInput {
 	 * @returns Resolves after the microphone starts or reports an error.
 	 */
 	private static async startRecording(paneId: string): Promise<void> {
+		if (VoiceInput.cancelling !== null) {
+			await VoiceInput.cancelling;
+			VoiceInput.cancelling = null;
+		}
 		if (settings.voiceInput === false || voiceInput.state !== "idle") {
 			return;
 		}
@@ -288,6 +314,7 @@ export class VoiceInput {
 			voiceInput.error = "model_missing";
 			return;
 		}
+		const operationId = ++VoiceInput.operationId;
 		voiceInput.error = null;
 		voiceInput.state = "starting";
 		voiceInput.isLatched = false;
@@ -299,14 +326,21 @@ export class VoiceInput {
 		VoiceInput.listenToRelease();
 		try {
 			await VoiceInput.listenToLevels();
-			await invoke("voice_start_recording");
+			if (operationId !== VoiceInput.operationId) {
+				return;
+			}
+			VoiceInput.starting = invoke<void>('voice_start_recording');
+			await VoiceInput.starting;
 		} catch (error) {
+			if (operationId !== VoiceInput.operationId) {
+				return;
+			}
 			VoiceInput.stopListeningToRelease();
 			voiceInput.error = String(error);
 			voiceInput.state = "idle";
 			return;
 		}
-		if (voiceInput.state !== "starting") {
+		if (operationId !== VoiceInput.operationId || voiceInput.state !== 'starting') {
 			return;
 		}
 		voiceInput.state = "recording";
@@ -315,6 +349,24 @@ export class VoiceInput {
 			await VoiceInput.stopAndWrite();
 		} else if (pendingRelease === "keep") {
 			VoiceInput.keepRecording();
+		}
+	}
+
+	/**
+	 * Waits for an opening microphone before discarding it. Starting another recording waits for this command.
+	 * @returns Resolves after the discard command, including when the microphone failed to open.
+	 */
+	private static async discardRecording(): Promise<void> {
+		try {
+			await VoiceInput.starting;
+		} catch {
+			// A microphone that failed to open has no audio to keep.
+		}
+		VoiceInput.starting = null;
+		try {
+			await invoke('voice_cancel_recording');
+		} catch {
+			// There is nothing left to throw away.
 		}
 	}
 
