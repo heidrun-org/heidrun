@@ -77,6 +77,7 @@ The rules of the user interface: where each part goes, and how each part works. 
 - The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
+  - [pane_headers.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
   - [composition_bar.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/composition_bar.md): the composition bar under the focused pane: the drop of images, the toggle button of the header, the plus button, the text input, the button "Send", the push-to-talk button, the paste in the focused pane, and the big view of the images.
   - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
