@@ -12,7 +12,7 @@
   "action.newTerminal": "New tab (default command of a new tab)",
   "action.newAgent": "New agent (Claude, Codex, project agents)",
   "action.splitPane": "Split the pane to the right / to the bottom",
-  "action.closePane": "Close the selected pane (twice, to avoid accidents)",
+  "action.closeTab": "Close the selected tab (twice, to avoid accidents)",
   "group.navigation": "Navigation",
   "action.previousNextTab": "Previous / next tab",
   "action.previousNextWorkspace": "Previous / next workspace",

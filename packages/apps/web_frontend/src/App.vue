@@ -39,7 +39,7 @@ import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
 import {
   allPanes,
-  closePane,
+  closeTab,
   cycleTab,
   cycleWorkspace,
   selectWorkspaceAt,
@@ -213,7 +213,9 @@ function onKey(e: KeyboardEvent) {
     } else if (e.metaKey) e.preventDefault();
     return;
   }
-  if (!e.metaKey || e.ctrlKey) return;
+  if (e.metaKey === false || e.ctrlKey === true) {
+    return;
+  }
   // The file explorer (and its editor: ⌘D, ⌘F…) owns the keyboard; only the zoom passes.
   if (files.open && !/^(Equal|Minus|NumpadAdd|NumpadSubtract|Digit0|Numpad0)$/.test(e.code)) return;
   const run = (fn: () => unknown) => {
@@ -281,17 +283,18 @@ function onKey(e: KeyboardEvent) {
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;
-      // Closing ends the process in the pane: ask for a second ⌘W within 2 s.
       return run(() => {
-        const id = activePaneId();
-        if (!id) return;
-        if (armedClose === id && Date.now() - armedAt < 2000) {
+        const tabId = state.selectedTabId;
+        if (tabId === null || e.repeat === true) {
+          return;
+        }
+        if (armedClose === tabId && Date.now() - armedAt < 2000) {
           armedClose = null;
-          closePane(id);
+          void closeTab(tabId);
         } else {
-          armedClose = id;
+          armedClose = tabId;
           armedAt = Date.now();
-          toast(t("app.pressAgainToClose"));
+          toast(t('app.pressAgainToClose'));
         }
       });
     case "KeyB":

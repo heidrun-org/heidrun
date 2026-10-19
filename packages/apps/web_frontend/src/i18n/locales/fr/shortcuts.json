@@ -12,7 +12,7 @@
   "action.newTerminal": "Nouvel onglet (commande par défaut d'un nouvel onglet)",
   "action.newAgent": "Nouvel agent (Claude, Codex, agents du projet)",
   "action.splitPane": "Diviser le panneau à droite / en bas",
-  "action.closePane": "Fermer le panneau choisi (deux fois, pour éviter les accidents)",
+  "action.closeTab": "Fermer l’onglet choisi (deux fois, pour éviter les accidents)",
   "group.navigation": "Navigation",
   "action.previousNextTab": "Onglet précédent / suivant",
   "action.previousNextWorkspace": "Workspace précédent / suivant",
