@@ -1,7 +1,8 @@
+import { WorkspaceFolders } from './workspace_folders';
 import { computed, reactive, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
-import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel, workspaces } from "./session";
+import { allPanes, refresh, selectPane, selectTab, state as session, toast, workspaceLabel } from "./session";
 import { allowCommand, forgetProjectGuards } from "./guards";
 import { t } from "../i18n/index";
 import { parseProjectConfig, type Launcher, type ProjectConfig, type ProjectGuard, type LauncherAgent } from "../lib/project_config";
@@ -42,13 +43,8 @@ export const project = reactive({
   /** Panes being restarted (ctrl+C then the command again). */
 });
 
-/** Folder of a workspace: its worktree path, else the cwd of one of its panes. */
-export function workspaceCwd(workspaceId: string): string | null {
-  const ws = workspaces.value.find((w) => w.workspace_id === workspaceId);
-  if (ws?.worktree?.path) return ws.worktree.path;
-  const pane = allPanes.value.find((p) => p.workspace_id === workspaceId && p.cwd);
-  return pane?.cwd ?? null;
-}
+/** The fixed workspace folder saved by the desktop application. */
+export const workspaceCwd = WorkspaceFolders.get;
 
 export async function loadProject(workspaceId: string) {
   const cwd = workspaceCwd(workspaceId);
@@ -226,9 +222,12 @@ export async function runLauncher(workspaceId: string, launcher: Launcher, rerun
   const p = project.byWorkspace[workspaceId];
   if (!p) return;
   const existing = launcherPane(workspaceId, launcher);
+  const cwd = existing
+    ? existing.foreground_cwd || existing.cwd || null
+    : launcher.cwd ? `${p.root.replace(/\/$/, "")}/${launcher.cwd}` : p.root;
   // A click that will type the command: through the guards first.
   const willType = launcherWillType(workspaceId, launcher, rerun);
-  if (willType && !checked && !(await allowCommand(launcher.command, p.root, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
+  if (willType && !checked && !(await allowCommand(launcher.command, cwd, `${workspaceLabel(workspaceId)} · ${launcher.label}`))) return;
   if (existing) {
     selectTab(existing.tab_id);
     selectPane(existing);
@@ -238,7 +237,6 @@ export async function runLauncher(workspaceId: string, launcher: Launcher, rerun
     }
     return;
   }
-  const cwd = launcher.cwd ? `${p.root.replace(/\/$/, "")}/${launcher.cwd}` : p.root;
   try {
     const pane = await api.newTab(workspaceId, cwd, launcher.label);
     project.panes[`${workspaceId}:${launcher.id}`] = pane.pane_id;
@@ -333,7 +331,8 @@ export function startProjects() {
   window.setInterval(() => void reloadProjectWhenFileChanged(), CONFIG_READ_INTERVAL);
   // Load the project file of the workspace in view (launchers, badge, palette).
   watch(
-    () => [session.selectedWorkspaceId, !!session.snapshot] as const,
+    () => [session.selectedWorkspaceId, session.selectedWorkspaceId === null
+      ? null : workspaceCwd(session.selectedWorkspaceId)] as const,
     ([id, ready]) => {
       if (id && ready && !project.byWorkspace[id]) loadProject(id);
     },

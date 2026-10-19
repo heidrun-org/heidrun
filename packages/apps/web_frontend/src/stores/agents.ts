@@ -1,3 +1,5 @@
+import { allowCommand } from './guards';
+import { WorkspaceFolders } from './workspace_folders';
 // "Nouvel agent": a tab named after the agent, Claude (or Codex) launched in it,
 // and the starting consigne sent once the agent is ready.
 import { reactive } from "vue";
@@ -101,13 +103,19 @@ export async function launchAgent(o: {
   }
   let pane: PaneInfo;
   try {
+    const cwd = o.existingPane === undefined || o.existingPane === null
+      ? WorkspaceFolders.require(o.workspaceId)
+      : o.existingPane.foreground_cwd || o.existingPane.cwd || null;
+    if ((await allowCommand(command, cwd, o.label)) === false) {
+      return 'failed';
+    }
     if (o.existingPane !== undefined && o.existingPane !== null) {
       pane = o.existingPane;
       if (o.label !== "") {
         await api.renameTab(pane.tab_id, o.label);
       }
     } else {
-      pane = await api.newTab(o.workspaceId, o.cwd, o.label || undefined);
+      pane = await api.newTab(o.workspaceId, cwd, o.label || undefined);
     }
   } catch (e) {
     toast(t("agentsStore.tabNotCreated", { error: String(e) }));

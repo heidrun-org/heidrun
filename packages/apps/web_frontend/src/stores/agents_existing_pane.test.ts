@@ -4,6 +4,8 @@ import { agentCommand, launchAgent } from "./agents";
 import { selectPane } from "./session";
 import type { PaneInfo } from "../lib/types";
 
+vi.mock('./workspace_folders', () => ({ WorkspaceFolders: { require: () => '/work/app' } }));
+vi.mock('./guards', () => ({ allowCommand: vi.fn(async () => true) }));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async () => undefined) }));
 vi.mock("../lib/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../lib/api")>()),

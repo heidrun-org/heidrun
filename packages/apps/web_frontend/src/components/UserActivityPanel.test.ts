@@ -16,7 +16,7 @@ function snapshot(): SessionSnapshot {
 	return {
 		version: "test",
 		protocol: 1,
-		workspaces: [{ workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1" }],
+		workspaces: [{ workspace_id: "w1", workspace_folder: "/work/heidrun", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1" }],
 		tabs: [],
 		panes: [{ pane_id: "p1", workspace_id: "w1", cwd: "/work/heidrun" }],
 		layouts: [],

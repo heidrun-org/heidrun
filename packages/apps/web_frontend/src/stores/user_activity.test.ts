@@ -18,8 +18,8 @@ function snapshot(): SessionSnapshot {
 		version: "test",
 		protocol: 1,
 		workspaces: [
-			{ workspace_id: "w1", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1" },
-			{ workspace_id: "w2", number: 2, label: "teamwright", focused: false, pane_count: 1, tab_count: 1, active_tab_id: "w2:t1" },
+			{ workspace_id: "w1", workspace_folder: "/work/heidrun", number: 1, label: "heidrun", focused: true, pane_count: 1, tab_count: 1, active_tab_id: "w1:t1" },
+			{ workspace_id: "w2", workspace_folder: "/work/teamwright", number: 2, label: "teamwright", focused: false, pane_count: 1, tab_count: 1, active_tab_id: "w2:t1" },
 		],
 		tabs: [],
 		panes: [

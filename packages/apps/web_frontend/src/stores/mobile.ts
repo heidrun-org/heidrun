@@ -21,7 +21,7 @@ import {
 } from "./session";
 import { guardHit } from "./guards";
 import { macros, macrosOfProjectConfig, resolveMacroVariables, type Macro } from "./macros";
-import { launcherStatus, launcherWillType, loadProject, project, runLauncher, stopLauncher, workspaceCwd } from "./project";
+import { launcherPane, launcherStatus, launcherWillType, loadProject, project, runLauncher, stopLauncher, workspaceCwd } from "./project";
 import { paneName, agentKind } from "../lib/format";
 import type { AgentInfo } from "../lib/types";
 import { settings } from "./settings";
@@ -190,7 +190,11 @@ async function launch(params: Params) {
   if (params.action !== "run") return { error: t("mobileStore.error.unknownAction") };
   // The same guards as a click on the desktop, but the phone asks the confirmation, not a window of the desktop.
   if (launcherWillType(workspaceId, launcher, true)) {
-    const hit = await guardHit(launcher.command, p.root);
+    const existing = launcherPane(workspaceId, launcher);
+    const cwd = existing
+      ? existing.foreground_cwd || existing.cwd || null
+      : launcher.cwd ? `${p.root.replace(/\/$/, '')}/${launcher.cwd}` : p.root;
+    const hit = await guardHit(launcher.command, cwd);
     if (hit?.level === "block") return { error: t("mobileStore.error.blockedByProject", { reason: hit.why }) };
     if (hit && (params.confirmed !== true || params.command !== launcher.command)) return { confirm: { command: launcher.command, why: hit.why } };
   }

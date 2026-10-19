@@ -4,7 +4,7 @@ import type { SessionSnapshot } from "../../lib/types";
 
 /** One selected workspace, with the folder `/work/heidrun`. */
 export const SNAPSHOT = {
-  workspaces: [{ workspace_id: "w1", number: 1, label: "heidrun", agent_status: "idle", worktree: { path: "/work/heidrun" } }],
+  workspaces: [{ workspace_id: "w1", number: 1, label: "heidrun", agent_status: "idle", workspace_folder: "/work/heidrun" }],
   panes: [],
   agents: [],
   tabs: [],

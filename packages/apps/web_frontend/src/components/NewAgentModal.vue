@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { WorkspaceFolders } from '../stores/workspace_folders';
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { agentCommand, listAgents, newAgent, type AgentDef } from "../stores/agents";
-import { selectedPane, selectedWorkspace, workspaceLabel } from "../stores/session";
+import { selectedWorkspace, workspaceLabel } from "../stores/session";
 import { hardCodedMacros, macros, projectMacros } from "../stores/macros";
 import { loadCodingAgentModels, modelsOf } from "../stores/coding_agent_models";
 import { forgetNewPaneValues, loadNewPaneValues, saveNewPaneValues, startNewPane } from "../stores/newPane";
 import { t } from "../i18n/index";
 
-const cwd = computed(() => selectedPane.value?.foreground_cwd || selectedPane.value?.cwd || null);
+const cwd = computed(() => selectedWorkspace.value === null
+  ? null
+  : WorkspaceFolders.get(selectedWorkspace.value.workspace_id));
 const agents = ref<AgentDef[]>([]);
 const loading = ref(true);
 const previous = loadNewPaneValues();
@@ -41,9 +44,17 @@ watch([agent, tool], () => {
   if (!labelTouched.value) label.value = (tool.value === "claude" && agent.value) || tool.value;
 }, { immediate: true });
 
-onMounted(async () => {
-  agents.value = await listAgents(cwd.value);
+watch(cwd, async (folder) => {
+  loading.value = true;
+  const availableAgents = await listAgents(folder);
+  if (cwd.value !== folder) {
+    return;
+  }
+  agents.value = availableAgents;
   loading.value = false;
+}, { immediate: true });
+
+onMounted(() => {
   nextTick(() => first.value?.focus());
 });
 
