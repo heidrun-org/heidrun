@@ -71,6 +71,25 @@ export class WorktreeGit {
 	}
 
 	/**
+	 * Checks out the recorded commits of every submodule, including nested submodules.
+	 * @param worktreePath The absolute path of the newly created worktree.
+	 * @returns Nothing.
+	 * @throws An error with the worktree path and the recovery command when initialization fails.
+	 */
+	static initializeSubmodules(worktreePath: string): void {
+		try {
+			WorktreeGit._git(worktreePath, ['submodule', 'update', '--init', '--recursive']);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			throw new Error(
+				`The worktree ${worktreePath} was created, but its submodules could not be initialized. `
+					+ 'Fix the cause, then run "git submodule update --init --recursive" and '
+					+ `"pnpm install --frozen-lockfile" in the worktree.\n${message}`,
+			);
+		}
+	}
+
+	/**
 	 * Runs one `git` command.
 	 * @param workingDirectory The folder to run the command in.
 	 * @param args The arguments of the `git` command.

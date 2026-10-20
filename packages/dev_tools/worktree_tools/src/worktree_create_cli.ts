@@ -26,7 +26,8 @@ export class WorktreeCreateCli {
 			.name('pnpm worktree:create')
 			.description(
 				'Creates a Git worktree in the folder .claude/worktrees of the main checkout, on a new branch with the '
-					+ 'same name. On macOS, it then clones the compiled files of the main checkout into the worktree, with '
+					+ 'same name. It initializes the submodules at their recorded commits. On macOS, it then clones '
+					+ 'the compiled files of the main checkout into the worktree, with '
 					+ 'copy-on-write clones. The first build in the worktree '
 					+ 'is then much faster and uses much less disk space. Build the main checkout before you create '
 					+ 'a worktree. At the end, it runs pnpm install --frozen-lockfile in the worktree, so the '
@@ -59,6 +60,7 @@ Examples:
 			process.stdout.write(
 				`Created the worktree ${result.worktreePath} on the new branch ${result.branchName}.\n`,
 			);
+			process.stdout.write('Initialized the submodules at their recorded commits.\n');
 			if (result.isTargetCloned === true) {
 				process.stdout.write(
 					'Cloned target/debug and target/release/bundled_commands from the main checkout into the worktree.\n',

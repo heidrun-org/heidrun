@@ -81,11 +81,13 @@ The script [`scripts/install.sh`](scripts/install.sh) downloads the disk image o
 You need [Herdr](https://herdr.dev) 0.9 or later, Rust stable, Node.js 20 or later, and [pnpm](https://pnpm.io).
 
 ```sh
-git clone git@github.com:heidrun-org/heidrun.git
+git clone --recurse-submodules git@github.com:heidrun-org/heidrun.git
 cd heidrun
 pnpm install
 pnpm dev
 ```
+
+After pulling changes, run `git submodule update --init --recursive` to check out the recorded submodule commits. The independent [coding agent skills repository](https://github.com/jeromeetienne/coding_agent_plugin) is included at [`submodules/coding_agent_plugin`](submodules/coding_agent_plugin).
 
 To build the application, run `pnpm build`, then drag `Heidrun.app` into `/Applications`.
 

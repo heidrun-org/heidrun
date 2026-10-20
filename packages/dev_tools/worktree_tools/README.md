@@ -21,7 +21,9 @@ pnpm worktree:create fix-thing-12                    # worktree on a new branch,
 pnpm worktree:create fix-thing-12 --base dev_jerome  # worktree on a new branch, from the branch dev_jerome
 ```
 
-The command creates the worktree `.claude/worktrees/<name>` of the main checkout, on a new branch with the same name. On macOS, it then clones the folders `packages/apps/desktop_tauri/target/debug` and `packages/apps/desktop_tauri/target/release/bundled_commands` of the main checkout into the worktree, with copy-on-write clones:
+The command creates the worktree `.claude/worktrees/<name>` of the main checkout, on a new branch with the same name. The command first runs `git submodule update --init --recursive` in the new worktree, so every submodule has the commit recorded by that worktree. When initialization fails, the worktree stays, the command exits with an error, and package installation does not start. Fix the cause, then run `git submodule update --init --recursive` and `pnpm install --frozen-lockfile` in the worktree.
+
+On macOS, it then clones the folders `packages/apps/desktop_tauri/target/debug` and `packages/apps/desktop_tauri/target/release/bundled_commands` of the main checkout into the worktree, with copy-on-write clones:
 
 ```sh
 cp -c -R -p <main checkout>/packages/apps/desktop_tauri/target/debug <worktree>/packages/apps/desktop_tauri/target/debug
