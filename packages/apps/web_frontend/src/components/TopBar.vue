@@ -2,7 +2,7 @@
 import MoreMenu from "./MoreMenu.vue";
 import PaneFocusHistoryButton from "./PaneFocusHistoryButton.vue";
 import ThemeMenu from "./ThemeMenu.vue";
-import { state } from "../stores/session";
+import { selectedWorkspace, state } from "../stores/session";
 import { t } from "../i18n/index";
 </script>
 
@@ -15,7 +15,11 @@ import { t } from "../i18n/index";
         <PaneFocusHistoryButton direction="forward" />
       </div>
       <button :title="t('topBar.searchTitle')" class="search" @click="state.paletteOpen = true">
-        <span>{{ t("topBar.searchPlaceholder") }}</span><kbd>⌘K</kbd>
+        <span v-if="selectedWorkspace !== null" class="workspace-name" :title="selectedWorkspace.label">
+          {{ selectedWorkspace.label }}
+        </span>
+        <span v-else>{{ t("topBar.searchPlaceholder") }}</span>
+        <kbd>⌘K</kbd>
       </button>
     </div>
     <div class="tools">
@@ -31,12 +35,15 @@ import { t } from "../i18n/index";
   padding: 9px 16px 4px 84px; background: var(--shell);
 }
 .search-wrap { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; min-width: 188px; }
+.workspace-name {
+  min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
 .history-buttons { display: flex; flex-shrink: 0; }
 .search {
   width: min(420px, 100%); height: 30px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field);
   color: var(--muted); font-size: var(--font-size); overflow: hidden; white-space: nowrap;
 }
-.search kbd { font-family: var(--mono); color: var(--faint); }
-.tools { display: flex; align-items: center; gap: 2px; }
+.search kbd { flex-shrink: 0; margin-left: 12px; font-family: var(--mono); color: var(--faint); }
+.tools { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
 </style>
