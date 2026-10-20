@@ -175,15 +175,15 @@ describe("SettingsAgentsSection, the settings that moved here from other section
     expect(group.findAll("label").map((label) => label.text())).toEqual(["Terminal"]);
   });
 
-  it("shows the switch Keep agents running after quit as a Bootstrap switch, switched off by default, linked to its setting", async () => {
+  it("shows the switch Keep agents running after quit as a Bootstrap switch, switched on by default, linked to its setting", async () => {
     const { wrapper, settings } = await mountSection();
     const label = wrapper.findAll("label").find((candidate) => candidate.text() === "Keep agents running after quit");
     expect(label).toBeDefined();
     const switchInput = wrapper.get(`input[id="${label!.attributes("for")}"]`);
     expect(switchInput.element.parentElement?.classList.contains("switch")).toBe(true);
-    expect((switchInput.element as HTMLInputElement).checked).toBe(false);
-    await switchInput.setValue(true);
-    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
+    expect((switchInput.element as HTMLInputElement).checked).toBe(true);
+    await switchInput.setValue(false);
+    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
   });
 
   it("explains the switch Keep agents running after quit in an information card that opens from a circled question mark, and does not switch when the question mark is clicked", async () => {
@@ -195,7 +195,7 @@ describe("SettingsAgentsSection, the settings that moved here from other section
     const card = wrapper.get(".popover");
     expect(card.classes()).toContain("bs-popover-bottom");
     expect(card.text()).toContain("Heidrun stops its Herdr session");
-    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
+    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
   });
 });
 

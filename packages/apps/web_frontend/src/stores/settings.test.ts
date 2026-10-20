@@ -72,27 +72,50 @@ describe("settings", () => {
 });
 
 describe("keep agents running after quit", () => {
-  it("is off by default, so quitting Heidrun stops its Herdr session", () => {
-    expect(settings.keepAgentsRunningAfterQuit).toBe(false);
+  it("is on by default, so quitting Heidrun keeps its Herdr session running", () => {
+    expect(settings.keepAgentsRunningAfterQuit).toBe(true);
   });
 
   it("is given to the Rust side at the start and at each change", async () => {
+    expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+      isKeeping: true,
+    });
     invoke.mockClear();
-    settings.keepAgentsRunningAfterQuit = true;
-    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: true }));
     settings.keepAgentsRunningAfterQuit = false;
     await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith("set_keep_agents_running", { isKeeping: false }));
+    settings.keepAgentsRunningAfterQuit = true;
+    await vi.waitFor(() => expect(invoke).toHaveBeenLastCalledWith('set_keep_agents_running', {
+      isKeeping: true,
+    }));
   });
 
-  it("is given to the Rust side when the application starts again with the setting on", async () => {
-    settings.keepAgentsRunningAfterQuit = true;
-    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem("heidrun.settings") ?? "{}").keepAgentsRunningAfterQuit).toBe(true));
-    invoke.mockClear();
-    vi.resetModules();
-    await import("./settings");
-    await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith("set_keep_agents_running", { isKeeping: true }));
-    settings.keepAgentsRunningAfterQuit = false;
-  });
+	it.each([true, false])('restores the saved choice %s and gives that choice to Rust at startup', async (isKeeping) => {
+		settings.keepAgentsRunningAfterQuit = isKeeping;
+		await vi.waitFor(() => expect(
+			JSON.parse(localStorage.getItem('heidrun.settings') ?? '{}').keepAgentsRunningAfterQuit,
+		).toBe(isKeeping));
+		invoke.mockClear();
+		vi.resetModules();
+		const reloaded = await import('./settings');
+		expect(reloaded.settings.keepAgentsRunningAfterQuit).toBe(isKeeping);
+		await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+			isKeeping,
+		}));
+	});
+
+	it('uses the on default when existing saved settings contain no choice for quitting', async () => {
+		localStorage.setItem('heidrun.settings', JSON.stringify({
+			fontSize: 18,
+		}));
+		invoke.mockClear();
+		vi.resetModules();
+		const reloaded = await import('./settings');
+		expect(reloaded.settings.fontSize).toBe(18);
+		expect(reloaded.settings.keepAgentsRunningAfterQuit).toBe(true);
+		await vi.waitFor(() => expect(invoke).toHaveBeenCalledWith('set_keep_agents_running', {
+			isKeeping: true,
+		}));
+	});
 });
 
 describe("ask before deleting a saved search", () => {
