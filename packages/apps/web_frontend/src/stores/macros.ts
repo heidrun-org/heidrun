@@ -310,7 +310,14 @@ export async function updateMacro(id: string, fromProject: boolean, label: strin
 }
 
 /** The window that edits the macros. */
-export const macroEditor = reactive({ open: false });
+export const macroEditor = reactive({
+	/** Whether the macro editor is visible. */
+	open: false,
+	/** The macro to edit, or null when creating a macro. */
+	selectedId: null as string | null,
+	/** Whether the selected macro belongs to the project. */
+	isFromProject: false,
+});
 
 export async function removeMacro(id: string, fromProject: boolean) {
   const ws = state.selectedWorkspaceId;
