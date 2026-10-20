@@ -18,5 +18,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 
 - The macro menu sets `macroEditor.selectedId` and `macroEditor.isFromProject` before opening the macro editor; a null selection creates a macro. See [the macro rules](../../docs/agents_rules/glossary/macros.md).
 
+- The file listing returns submodule folders separately from files and reads initialized submodules with their own ignore rules; the File explorer follows [the file rules](../../docs/agents_rules/user_interface/sidebars/files.md).
+
 ## Background
 - The folder `packages` was split into `apps` and `auxiliary` in [issue #120](https://github.com/heidrun-org/heidrun/issues/120).

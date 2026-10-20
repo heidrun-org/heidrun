@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The File explorer sidebar section of the left sidebar: the whole folder tree of the Git repository of the selected
-// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the large Git window. The only
+// workspace. A click on a folder folds or unfolds it. A click on a file opens it in the Files window. The only
 // changes that the section makes are a new empty file and a new empty folder. It has no button to rename, move,
 // delete, or edit a file. A right click on the row of a file or of a folder opens a context menu that copies the
 // absolute path or the relative path to the clipboard. The option "Ignored files" of the menu shows the files and the
@@ -50,7 +50,11 @@ function select(path: string | null, isFolder: boolean) {
   filesPanelSelections[workspaceId] = { path, isFolder };
 }
 
-const tree = computed(() => buildTree(files.list, filesPanelNewFolders[files.root] ?? [], files.ignored));
+const tree = computed(() => buildTree(
+  files.list,
+  [...(filesPanelNewFolders[files.root] ?? []), ...files.submodules],
+  files.ignored,
+));
 const rows = computed(() => visibleRows(tree.value, files.expanded, files.status, filesPanelIgnoredChildren));
 
 /** The width in pixels that each level of a folder adds at the left of a row, for each choice of the menu. */
@@ -380,6 +384,9 @@ onBeforeUnmount(closeFileMenu);
 /** The icon of a row: a folder that is closed or open, or the kind of the file. */
 function rowIcon(row: TreeRow): string {
   if (row.dir) {
+    if (files.submodules.includes(row.path)) {
+      return "file-submodule";
+    }
     return files.expanded.has(row.path) ? "folder2-open" : "folder2";
   }
   return fileIconName(row.name);
