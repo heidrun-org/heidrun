@@ -16,5 +16,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 
 - The desktop application saves fixed workspace folders by Herdr session and workspace identifier; the web frontend reads `workspace_folder` from enriched snapshots and never derives a workspace folder from a pane.
 
+- The macro menu sets `macroEditor.selectedId` and `macroEditor.isFromProject` before opening the macro editor; a null selection creates a macro. See [the macro rules](../../docs/agents_rules/glossary/macros.md).
+
 ## Background
 - The folder `packages` was split into `apps` and `auxiliary` in [issue #120](https://github.com/heidrun-org/heidrun/issues/120).

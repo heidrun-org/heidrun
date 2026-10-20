@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Icon from "./Icon.vue";
 import { computed, nextTick, onBeforeUnmount, ref } from "vue";
-import { insertText } from "../stores/session";
-import { hardCodedMacros, macroEditor, macros, projectMacros, resolveMacroVariables, type Macro } from "../stores/macros";
+import { askConfirm } from "../stores/confirm";
+import { insertText, toast } from "../stores/session";
+import { hardCodedMacros, macroEditor, macros, projectMacros, removeMacro, resolveMacroVariables, type Macro } from "../stores/macros";
 import { t } from "../i18n/index";
 
 const props = defineProps<{ paneId: string }>();
@@ -67,9 +68,24 @@ async function useMacro(macro: Macro, event: MouseEvent) {
   await insertText(props.paneId, text, event.shiftKey);
 }
 
-function edit() {
+function edit(macro: Macro | null, isFromProject = false) {
   close();
+  macroEditor.selectedId = macro?.id ?? null;
+  macroEditor.isFromProject = isFromProject;
   macroEditor.open = true;
+}
+
+async function remove(macro: Macro, isFromProject: boolean) {
+  close();
+  const isConfirmed = await askConfirm(t('macroMenu.deleteConfirm', { label: macro.label }), t('macroMenu.delete'));
+  if (isConfirmed === false) {
+    return;
+  }
+  try {
+    await removeMacro(macro.id, isFromProject);
+  } catch (error) {
+    toast(String(error));
+  }
 }
 
 onBeforeUnmount(close);
@@ -100,16 +116,26 @@ onBeforeUnmount(close);
       <template v-for="(group, index) in groups" :key="group.id">
         <div v-if="index > 0" class="menu-divider" role="separator"></div>
         <div v-if="hasSeveralGroups" class="menu-header">{{ group.title }}</div>
-        <button v-for="macro in group.items" :key="group.id + macro.id" type="button" class="menu-item text-wrap" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
-          <span class="d-flex flex-column gap-1 align-self-start">
-            <span class="fw-medium">{{ macro.label }}</span>
-            <small v-if="macro.description !== ''" class="text-body-secondary">{{ macro.description }}</small>
-          </span>
-        </button>
+        <div v-for="macro in group.items" :key="group.id + macro.id" class="d-flex align-items-center">
+          <button type="button" class="menu-item text-wrap text-break min-w-0 flex-grow-1" role="menuitem" :title="macro.text" @click="useMacro(macro, $event)">
+            <span class="d-flex flex-column gap-1 align-self-start">
+              <span class="fw-medium">{{ macro.label }}</span>
+              <small v-if="macro.description !== ''" class="text-body-secondary">{{ macro.description }}</small>
+            </span>
+          </button>
+          <template v-if="group.id !== 'hardCoded'">
+            <button type="button" class="btn btn-sm flex-shrink-0" role="menuitem" :aria-label="t('macroMenu.editMacro', { label: macro.label })" :title="t('macroMenu.edit')" @click.stop="edit(macro, group.id === 'project')">
+              <Icon name="pencil" />
+            </button>
+            <button type="button" class="btn btn-sm flex-shrink-0 text-danger-emphasis me-1" role="menuitem" :aria-label="t('macroMenu.deleteMacro', { label: macro.label })" :title="t('macroMenu.delete')" @click.stop="remove(macro, group.id === 'project')">
+              <Icon name="trash" />
+            </button>
+          </template>
+        </div>
       </template>
       <div class="menu-divider" role="separator"></div>
-      <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit">
-        <Icon name="pencil" /> {{ t("macroMenu.edit") }}
+      <button type="button" class="menu-item d-flex align-items-center gap-2 text-primary-emphasis" role="menuitem" @click="edit(null)">
+        <Icon name="plus-lg" /> {{ t("macroMenu.create") }}
       </button>
     </div>
   </Teleport>

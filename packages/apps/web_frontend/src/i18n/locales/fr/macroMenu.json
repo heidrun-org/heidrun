@@ -4,5 +4,10 @@
   "project": "Projet",
   "personal": "Mes macros",
   "edit": "Modifier",
-  "hardCoded": "Intégrées"
+  "hardCoded": "Intégrées",
+  "create": "Créer",
+  "delete": "Supprimer",
+  "editMacro": "Modifier {label}",
+  "deleteMacro": "Supprimer {label}",
+  "deleteConfirm": "Voulez-vous vraiment supprimer la macro « {label} » ?"
 }
