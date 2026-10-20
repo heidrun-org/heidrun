@@ -19,8 +19,6 @@ import MergeModal from "./components/MergeModal.vue";
 import IssueModal from "./components/IssueModal.vue";
 import { issueView } from "./stores/issues";
 import WorkspaceFolderRecovery from './components/WorkspaceFolderRecovery.vue';
-import NewAgentModal from "./components/NewAgentModal.vue";
-import { newAgent } from "./stores/agents";
 import SearchModal from "./components/SearchModal.vue";
 import ColumnOfPinnedPanes from "./components/ColumnOfPinnedPanes.vue";
 import ShortcutsModal from "./components/ShortcutsModal.vue";
@@ -39,6 +37,7 @@ import CommandPalette from "./components/CommandPalette.vue";
 import Offline from "./components/Offline.vue";
 import {
   allPanes,
+  newTerminal,
   closeTab,
   cycleTab,
   cycleWorkspace,
@@ -50,7 +49,7 @@ import {
   state,
   toast,
 } from "./stores/session";
-import { startDefaultNewTab, startDefaultSplit } from "./stores/newPane";
+import { NewPane } from "./stores/new_pane";
 import { guardWindow } from "./stores/guard_window";
 import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
@@ -277,9 +276,9 @@ function onKey(e: KeyboardEvent) {
     case "KeyK":
       return run(() => (state.paletteOpen = !state.paletteOpen));
     case "KeyT":
-      return run(() => (e.shiftKey ? (newAgent.open = true) : startDefaultNewTab()));
+      return run(() => (e.shiftKey ? newTerminal() : NewPane.startDefaultNewTab()));
     case "KeyD":
-      return run(() => startDefaultSplit(e.shiftKey ? "down" : "right"));
+      return run(() => NewPane.startDefaultSplit(e.shiftKey ? "down" : "right"));
     case "KeyW":
       // The file explorer uses ⌘W for its own tabs.
       if (files.open) return;
@@ -412,7 +411,6 @@ onBeforeUnmount(() => {
     <MergeModal v-if="merging.open && merging.req" />
     <IssueModal v-if="issueView.open" />
     <WorkspaceFolderRecovery />
-    <NewAgentModal v-if="newAgent.open" />
     <SearchModal v-if="search.open" />
     <ShortcutsModal v-if="state.shortcutsOpen" />
     <MosaicModal v-if="mosaic.paneId" />

@@ -384,7 +384,6 @@ pub fn run() {
             claude::claude_rc_startup,
             claude::claude_set_rc_startup,
             claude::claude_commands,
-            claude::claude_agents,
             claude::claude_session_agents,
             past_chats::chats::chats_synchronize,
             past_chats::chats::chats_list,

@@ -4,8 +4,6 @@ import { settings } from './settings';
 import { WorkspaceFolders } from './workspace_folders';
 // "Nouvel agent": a tab named after the agent, Claude (or Codex) launched in it,
 // and the starting consigne sent once the agent is ready.
-import { reactive } from "vue";
-import { invoke } from "@tauri-apps/api/core";
 import * as api from "../lib/api";
 import { allPanes, refresh, selectPane, sendPrompt, toast } from "./session";
 import { resolveMacroVariables } from "./macros";
@@ -14,19 +12,6 @@ import { withCodexColors } from "../lib/terminal_colors";
 import { chatResumeCommand } from "../lib/chat_links";
 import { shellQuote } from "../lib/launcher_agent_command";
 import type { PaneInfo } from "../lib/types";
-
-export interface AgentDef {
-  name: string;
-  description: string;
-  model: string | null;
-  source: "projet" | "perso";
-}
-
-export const newAgent = reactive({ open: false });
-
-export function listAgents(cwd: string | null): Promise<AgentDef[]> {
-  return invoke<AgentDef[]>("claude_agents", { cwd }).catch(() => []);
-}
 
 // Only plain names reach the shell command line, and quoted ("sonnet[1m]" is a glob for zsh).
 const SAFE = /^[A-Za-z0-9._\-[\]]+$/;

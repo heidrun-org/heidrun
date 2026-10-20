@@ -19,13 +19,12 @@ import {
   state,
   workspaceLabel,
 } from "../stores/session";
-import { startDefaultNewTab, startDefaultSplit } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { statusLabel, paneName } from "../lib/format";
 import { FONTS, openSettings, resetZoom, settings, zoom } from "../stores/settings";
 import { currentProject, runLauncher } from "../stores/project";
 import { hardCodedMacros, macros, projectMacros, resolveMacroVariables } from "../stores/macros";
 import { insertIntoFocusedPane } from "../stores/input";
-import { newAgent } from "../stores/agents";
 import { search } from "../stores/search";
 import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import { openFiles } from "../stores/files";
@@ -102,11 +101,10 @@ const items = computed<Item[]>(() => {
     }
   }
   const actions: Item[] = [
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newAgent"), hint: "⇧⌘T", run: () => (newAgent.open = true) },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => startDefaultNewTab() },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), run: () => newTerminal() },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => startDefaultSplit("right") },
-    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => startDefaultSplit("down") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTab"), hint: "⌘T", run: () => NewPane.startDefaultNewTab() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.newTerminal"), hint: "⇧⌘T", run: () => newTerminal() },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitRight"), hint: "⌘D", run: () => NewPane.startDefaultSplit("right") },
+    { section: t("commandPalette.section.terminals"), label: t("commandPalette.splitDown"), hint: "⇧⌘D", run: () => NewPane.startDefaultSplit("down") },
     ...(sel ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closePane", { pane: paneName(sel) }), hint: "⌘W ⌘W", run: () => closePane(sel.pane_id) }] : []),
     ...(state.selectedTabId ? [{ section: t("commandPalette.section.terminals"), label: t("commandPalette.closeTab"), run: () => closeTab(state.selectedTabId!) }] : []),
     ...(state.selectedWorkspaceId ? [{ section: t("commandPalette.section.rename"), label: t("commandPalette.renameWorkspace"), run: () => startRename("ws", state.selectedWorkspaceId!) }] : []),

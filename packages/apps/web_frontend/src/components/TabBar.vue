@@ -8,7 +8,7 @@ import { remote } from "../stores/claude";
 import { settings } from "../stores/settings";
 import { useReorder } from "../lib/reorder";
 import { tabIconName } from "../lib/tab_icon";
-import { onNewPaneClick } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { t } from "../i18n/index";
 
 const tabReorder = useReorder("x", (id, at) => moveTab(id, at));
@@ -86,7 +86,7 @@ function isRemoteControlled(tabId: string): boolean {
       class="btn border-0 justify-content-center add"
       :title="t('tabBar.newTabTitle')"
       :aria-label="t('tabBar.newTabTitle')"
-      @click="onNewPaneClick"
+      @click="NewPane.onNewPaneClick"
     ><Icon name="plus-lg" /></button>
   </div>
 </template>

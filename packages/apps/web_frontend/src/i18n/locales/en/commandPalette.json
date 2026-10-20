@@ -13,7 +13,6 @@
   "pin": "Pin the pane {pane}",
   "section.projectLaunchers": "Project launchers",
   "section.terminals": "Terminals",
-  "newAgent": "New agent (Claude, Codex, project agents)…",
   "newTerminal": "New terminal",
   "newTab": "New tab (default command)",
   "splitRight": "Split to the right",

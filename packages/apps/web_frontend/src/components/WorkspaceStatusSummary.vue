@@ -11,7 +11,7 @@ import ScrollingLine from "./ScrollingLine.vue";
 import { askConfirm } from "../stores/confirm";
 import { settings } from "../stores/settings";
 import { currentGit, git, workspaceCwd } from "../stores/git";
-import { openNewWorkspace } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import {
   allPanes,
   closeWorkspace,
@@ -241,7 +241,7 @@ async function createWorkspace(): Promise<void> {
     return;
   }
   const label = path.split("/").filter(Boolean).pop() ?? null;
-  await openNewWorkspace(path, label);
+  await NewPane.openNewWorkspace(path, label);
 }
 
 // The command search renames the workspace too: the field replaces the name, so the card must not stay open.
