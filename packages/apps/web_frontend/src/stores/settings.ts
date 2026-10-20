@@ -137,7 +137,7 @@ const defaults = {
   /** True when the notice of the missing programs already named the missing ngrok once: it does not name it again (issue 546). */
   ngrokMissingNoticeShown: false,
   /** Quitting Heidrun does not stop the Herdr session of Heidrun: the agents continue to run. Off: quitting stops it. */
-  keepAgentsRunningAfterQuit: false,
+  keepAgentsRunningAfterQuit: true,
   /** A click on the cross of a workspace in the information card of the Workspace status bar section opens the confirmation dialog "Close the workspace". Off: the workspace closes at once. */
   confirmWorkspaceClose: true,
   /** A click on the close button of a tab opens the confirmation dialog "Close the tab". Off: the tab closes at once. */
