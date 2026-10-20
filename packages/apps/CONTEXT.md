@@ -14,7 +14,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 - A package that is only a tool for the developers of Heidrun goes in `packages/dev_tools`, never here.
 - The package `desktop_tauri` builds the package `web_frontend` through the relative path `../web_frontend/dist`, so both packages stay in this folder.
 
-- The desktop application saves fixed workspace folders by Herdr session and workspace identifier; the web frontend reads `workspace_folder` from enriched snapshots and never derives a workspace folder from a pane.
+- The desktop application saves fixed workspace folders by Herdr session and workspace identifier; the web frontend reads `workspace_folder` from enriched snapshots and never derives a workspace folder from a pane. For a workspace opened by `heidrun_ctrl`, the creation token `heidrun_workspace_folder` supplies the original folder once; later token changes cannot move the saved folder.
 
 - The macro menu sets `macroEditor.selectedId` and `macroEditor.isFromProject` before opening the macro editor; a null selection creates a macro. See [the macro rules](../../docs/agents_rules/glossary/macros.md).
 

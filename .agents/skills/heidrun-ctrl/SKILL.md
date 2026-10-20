@@ -1,17 +1,17 @@
 ---
 name: heidrun-ctrl
-description: Control the Heidrun application from the command line heidrun_ctrl. Use it to list, add, update, or delete the macros of the developer, the reusable texts that Heidrun writes into a pane, the hard-coded macros of Heidrun included, and to list, add, update, or delete the launchers of a project, the command lines that Heidrun runs in their own tab. A running Heidrun shows each change in its window within about one second.
+description: Control the Heidrun application from the command line heidrun_ctrl. Use it to list, add, update, or delete the macros of the developer, the reusable texts that Heidrun writes into a pane, the hard-coded macros of Heidrun included, and to list, add, update, or delete the launchers of a project, the command lines that Heidrun runs in their own tab. Use the workspaces group to list, open, rename, focus, or close workspaces through Herdr. A running Heidrun shows each change in its window within about one second.
 compatibility: macOS with Heidrun installed and heidrun_ctrl available on the shell path.
 ---
 
 # heidrun_ctrl
 
-`heidrun_ctrl` is the command line that controls the Heidrun application. It has two groups of commands, `macros` and `launchers`, and each group has the four commands `list`, `add`, `update`, and `delete`.
+`heidrun_ctrl` is the command line that controls the Heidrun application. The groups `macros` and `launchers` have the commands `list`, `add`, `update`, and `delete`. The group `workspaces` has `list`, `open`, `rename`, `focus`, and `close`.
 
 - A macro is a reusable text that the developer writes into a pane with one click. The commands create, read, change, and remove macros. They do not write a macro into a pane.
 - A launcher is one item of the Launchers sidebar section: a command line that Heidrun runs in its own tab when the developer clicks its button "Run". The commands create, read, change, and remove launchers. They do not run a launcher. A launcher is not a macro.
 
-`heidrun_ctrl` changes files. It does not need the Heidrun window to be open, and a running Heidrun watches the files, so its window shows each change within about one second.
+The groups `macros` and `launchers` change files and work while Heidrun is closed. The group `workspaces` talks only to Herdr through the `herdr` executable. Start Heidrun first to see workspace changes in its window. No workspace command starts a server.
 
 Before using a command, check that `heidrun_ctrl --help` works. The installed Heidrun application places `heidrun_ctrl` in `~/.local/bin` when the application starts. If the command is not found, ask the developer to install Heidrun and make `~/.local/bin` available on the shell path.
 
@@ -82,12 +82,45 @@ The launchers of a project are the key `launchers` of the file `.heidrun/config.
 
 The command `launchers add` makes only a launcher with a command line, never a launcher of the kind Coding agent. The command `launchers update` keeps the field `agent` of a launcher of the kind Coding agent as it is, and refuses `--command` for it, because its command line is made from its `agent`: change its name, description, or folder, or ask the developer to change it in the window. A file written before the rename of "action" to "launcher" can hold the old key `actions`: the commands read it, and write the key `launchers` in its place.
 
+## The workspaces
+
+Choose the right session before changing a workspace. `--session` overrides the inherited connection. Without `--session`, the commands use `HERDR_SOCKET_PATH` or `HERDR_SESSION` when set, otherwise the installed session `heidrun`. Main-checkout development uses `heidrun_development`; a temporary worktree uses `heidrun_` followed by the cleaned worktree name (at most its last 32 characters). Session names and workspace ids belong together. An id from another session does not identify the same workspace.
+
+These commands require `herdr` on the shell path and a running Herdr session. They do not talk directly to Heidrun. Use the following examples with the session of the intended Heidrun window:
+
+1. **List workspaces and copy an id.** JSON output is an array of workspace objects with all fields supplied by Herdr, including `workspace_id`, `label`, `active_tab_id`, and optional `tokens`.
+   ```bash
+   heidrun_ctrl workspaces list --session <session> --json
+   ```
+2. **Open a workspace.** `--cwd` is required. Relative folders are resolved from the current folder; `~` and `~/` are accepted. The folder must exist. `--label` is optional and defaults to the folder name. The workspace is selected and starts with the shell that Herdr creates. The command does not start a coding agent. JSON output is the opened workspace, including its id.
+   ```bash
+   heidrun_ctrl workspaces open --session <session> --cwd <folder> --label Project --json
+   ```
+3. **Rename a workspace.** `--label` is required and cannot be empty.
+   ```bash
+   heidrun_ctrl workspaces rename <id> --session <session> --label Renamed --json
+   ```
+4. **Focus a workspace.** This selects the existing workspace in the running window, including when Herdr already considers that workspace focused.
+   ```bash
+   heidrun_ctrl workspaces focus <id> --session <session> --json
+   ```
+5. **Close a workspace.** Closing stops every process in the workspace. A workspace containing a coding agent is refused unless `--force` is supplied. Inspect the workspace before using `--force`. JSON output is an object with the field `closed`, containing the closed workspace.
+   ```bash
+   heidrun_ctrl workspaces close <id> --session <session> --json
+   ```
+
+`open` publishes the fixed creation folder in the Herdr token `heidrun_workspace_folder`. Running Heidrun saves that folder once. `open` and `focus` publish a distinct `heidrun_focus_request` token so the window receives a selection request even when Herdr's focus is unchanged. These tokens do not move a saved workspace folder. Keep Heidrun running when opening a workspace so the folder is saved before Herdr metadata expires. If opening succeeds but publishing metadata fails, the error names the workspace id; inspect `workspaces list` instead of opening another workspace.
+
+The format options are `--format markdown|json` and `--json`, as for the other groups. Workspace errors are always one JSON object on standard error with exit code 1. Success uses standard output and exit code 0. No `add` or `delete` command exists for workspaces.
+
 ## Errors
 
 A command that fails exits with the code 1, prints one JSON object on one line on the standard error output, with the field `error`, and changes no file. The errors that you can fix:
 
 - The macro is hard-coded: choose another macro, or add a personal macro with the text that you want.
 - No macro has the id: run `macros list` again and copy the id.
+- Herdr is not running: start the intended Heidrun window and check the session.
+- No workspace has the id: run `workspaces list` in the same session and copy the id.
 - No launcher has the id: run `launchers list` again and copy the id.
 - The text is empty: a macro always has a text. The command line is empty: a launcher always has a command line.
 - The launcher is of the kind Coding agent and `--command` is given: leave `--command` out.

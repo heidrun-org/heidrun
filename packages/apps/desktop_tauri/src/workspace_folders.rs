@@ -83,16 +83,20 @@ pub fn save(workspace_id: &str, folder: &str) -> Result<(), String> {
     save_at(&file_path(), &session_key(), workspace_id, folder)
 }
 
-/// Adds only saved folders or reliable worktree checkout metadata; pane folders are never recovery evidence.
+/// Restores saved folders, explicit creation metadata, or worktree checkout metadata; never pane folders.
 fn enrich_at(result: &mut Value, path: &Path, session: &str) -> Result<(), String> {
     let mut folders = read(path)?;
     let saved = folders.entry(session.to_string()).or_default();
     let mut changed = false;
     if let Some(workspaces) = result.pointer_mut("/snapshot/workspaces").and_then(Value::as_array_mut) {
+        let previous_count = saved.len();
+        saved.retain(|id, _| workspaces.iter().any(|workspace| workspace["workspace_id"].as_str() == Some(id.as_str())));
+        changed = saved.len() != previous_count;
         for workspace in workspaces {
             let Some(id) = workspace.get("workspace_id").and_then(Value::as_str).map(str::to_string) else { continue };
             if saved.contains_key(&id) == false {
-                if let Some(folder) = workspace.pointer("/worktree/checkout_path").and_then(Value::as_str) {
+                if let Some(folder) = workspace.pointer("/tokens/heidrun_workspace_folder").and_then(Value::as_str)
+                    .or_else(|| workspace.pointer("/worktree/checkout_path").and_then(Value::as_str)) {
                     if Path::new(folder).is_absolute() {
                         saved.insert(id.clone(), folder.to_string());
                         changed = true;
@@ -195,6 +199,36 @@ mod tests {
         assert_eq!(snapshot["snapshot"]["workspaces"][0]["workspace_folder"], "/checkout");
         assert!(snapshot["snapshot"]["workspaces"][1]["workspace_folder"].is_null());
         assert_eq!(read(&path).unwrap()["session"]["w1"], "/checkout");
+    }
+
+    #[test]
+    fn restores_explicit_creation_metadata_once_and_keeps_the_folder_fixed() {
+        let dir = TestFolder::new();
+        let path = dir.path().join("folders.json");
+        let mut snapshot = json!({"snapshot": {"workspaces": [
+            {"workspace_id": "w1", "tokens": {"heidrun_workspace_folder": "/original"}},
+            {"workspace_id": "w2", "tokens": {"heidrun_workspace_folder": "relative"}}]}});
+        enrich_at(&mut snapshot, &path, "session").unwrap();
+        assert_eq!(snapshot["snapshot"]["workspaces"][0]["workspace_folder"], "/original");
+        assert!(snapshot["snapshot"]["workspaces"][1]["workspace_folder"].is_null());
+        snapshot["snapshot"]["workspaces"][0]["tokens"]["heidrun_workspace_folder"] = json!("/changed");
+        enrich_at(&mut snapshot, &path, "session").unwrap();
+        assert_eq!(snapshot["snapshot"]["workspaces"][0]["workspace_folder"], "/original");
+        assert_eq!(read(&path).unwrap()["session"]["w1"], "/original");
+    }
+
+    #[test]
+    fn external_close_forgets_the_folder_before_a_workspace_id_can_be_reused() {
+        let dir = TestFolder::new();
+        let path = dir.path().join("folders.json");
+        save_at(&path, "session", "w1", "/old").unwrap();
+        let mut snapshot = json!({"snapshot": {"workspaces": []}});
+        enrich_at(&mut snapshot, &path, "session").unwrap();
+        assert!(read(&path).unwrap()["session"].is_empty());
+        snapshot["snapshot"]["workspaces"] = json!([
+            {"workspace_id": "w1", "tokens": {"heidrun_workspace_folder": "/new"}}]);
+        enrich_at(&mut snapshot, &path, "session").unwrap();
+        assert_eq!(snapshot["snapshot"]["workspaces"][0]["workspace_folder"], "/new");
     }
 
     #[test]
