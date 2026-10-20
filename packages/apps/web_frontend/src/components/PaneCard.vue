@@ -9,7 +9,7 @@ import UsageWheel from "./UsageWheel.vue";
 import CompositionBar from "./CompositionBar.vue";
 import { closePane, contextFor, finishRename, paneFullName, selectPane, startRename, state } from "../stores/session";
 import { allPinnedPanes, gridPanes, isPinned, pinnedPaneState, togglePinnedPane, unpinPane } from "../stores/pinned_panes";
-import { onSplitPaneClick } from "../stores/newPane";
+import { NewPane } from "../stores/new_pane";
 import { git } from "../stores/git";
 import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
@@ -140,10 +140,10 @@ const subtitle = computed(() => {
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'right', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'right', pane.pane_id)">
           <Icon name="layout-split" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="onSplitPaneClick($event, 'down', pane.pane_id)">
+        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
         </template>

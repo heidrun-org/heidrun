@@ -37,11 +37,11 @@
     "items": [
       {
         "keys": "⌘T",
-        "actionKey": "action.newTerminal"
+        "actionKey": "action.newTab"
       },
       {
         "keys": "⇧⌘T",
-        "actionKey": "action.newAgent"
+        "actionKey": "action.newTerminal"
       },
       {
         "keys": "⌘D / ⇧⌘D",
