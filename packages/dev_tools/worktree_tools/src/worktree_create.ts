@@ -15,8 +15,9 @@ import type { WorktreeCreateResult } from './worktree_tools_types.ts';
  * Creates a Git worktree in the folder `.claude/worktrees` of the main checkout. Then, on macOS, it clones the `debug`
  * folder and the bundled command line tools of the Cargo target folder of the main checkout into the worktree, with
  * copy-on-write clones. The first build in the worktree then compiles only the crates of Heidrun, and not every Rust
- * dependency again. At the end, it installs the packages of the worktree with `pnpm install --frozen-lockfile`, so the
- * worktree has a folder `node_modules` and `pnpm dev` runs at once.
+ * dependency again. Every submodule is initialized at its recorded commit before the compiled files are cloned.
+ * At the end, it installs the packages of the worktree with `pnpm install --frozen-lockfile`, so the worktree has a
+ * folder `node_modules` and `pnpm dev` runs at once.
  */
 export class WorktreeCreate {
 	/** The folder of the main checkout that holds the worktrees. */
@@ -30,14 +31,15 @@ export class WorktreeCreate {
 
 	/**
 	 * Creates the worktree on a new branch, clones the compiled Rust files into it when it is possible, then installs
-	 * its packages.
+	 * its packages. Submodule initialization happens before cloning and installation.
 	 * @param options.workingDirectory A folder inside the main checkout or inside a worktree.
 	 * @param options.name The name of the new branch, and the name of the folder of the worktree.
 	 * @param options.baseRef The commit, the branch, or the tag where the new branch starts. The default is the
 	 * current commit of the main checkout.
 	 * @returns The path of the worktree, and whether the clone happened.
 	 * @throws An error when the name is not a valid branch name, or when the worktree folder or the branch exists. Also
-	 * an error when the installation of the packages fails: the worktree then exists, without a folder `node_modules`.
+	 * an error when submodule initialization or the installation of the packages fails: the worktree then exists,
+	 * without a folder `node_modules`.
 	 */
 	static run(options: {
 		workingDirectory: string;
@@ -60,6 +62,7 @@ export class WorktreeCreate {
 			options.baseRef ?? WorktreeCreate.defaultBaseRef,
 		);
 
+		WorktreeGit.initializeSubmodules(worktreePath);
 		const skipReason = WorktreeCreate._cloneTarget(mainCheckoutPath, worktreePath);
 		WorktreeCreate._installPackages(worktreePath);
 		return {

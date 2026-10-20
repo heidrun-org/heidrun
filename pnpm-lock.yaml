@@ -342,8 +342,6 @@ importers:
         specifier: ^2.1.9
         version: 2.1.9(@types/node@26.6.5)(jsdom@25.0.1)(sass@1.105.1)
 
-  packages/experiments/coding_agent_plugin: {}
-
   packages/experiments/localai_decisions_candle: {}
 
   packages/experiments/localai_decisions_qwen35: {}

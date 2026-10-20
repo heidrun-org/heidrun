@@ -9,6 +9,26 @@ Keep your agents working. Know which one needs you.
 
 This file gives the rules for working on this repository. The file `README.md` describes the application itself.
 
+## Git submodules
+
+Clone Heidrun with its submodules:
+
+```sh
+git clone --recurse-submodules git@github.com:heidrun-org/heidrun.git
+```
+
+After a pull, or in an existing clone without initialized submodules, run this command from the checkout root:
+
+```sh
+git submodule update --init --recursive
+```
+
+- `submodules/coding_agent_plugin` contains the independent [coding agent skills repository](https://github.com/jeromeetienne/coding_agent_plugin) at the commit recorded by Heidrun.
+- Make shared skill changes in the independent repository. Heidrun's existing `.agents/skills` remain in place and are not synchronized automatically.
+- `pnpm worktree:create` initializes the submodules of the new worktree before installing packages.
+- To adopt a newer published skill version, check out the intended commit inside the submodule and commit the updated submodule reference in Heidrun. A normal submodule update restores the recorded commit; it does not follow the latest remote commit.
+- The submodule contains instructions and is outside the pnpm workspace. The application build, tests, and release scripts do not import the submodule.
+
 ## Project memory
 
 This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
@@ -158,7 +178,7 @@ The skill names no detail of this repository: it reads the values of this reposi
 ### Issue Fix Workflow values
 
 - Target branch: the personal development branch of the developer, as the section "Project memory" says: `dev_jerome` for Jérôme, and `dev_eric` for Eric.
-- Worktree creation command: `pnpm worktree:create <name>`, run at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
+- Worktree creation command: `pnpm worktree:create <name>`, run at the root of the main checkout, where `<name>` is the name of the temporary branch. Never create a worktree with `git worktree add`. The command also clones the compiled Rust files of the main checkout into the worktree, so the first build in the worktree is much faster and uses much less disk space. Build the main checkout before you create a worktree. The command initializes the submodules at their recorded commits with `git submodule update --init --recursive`. At the end, the command runs `pnpm install --frozen-lockfile` in the new worktree, so the worktree has a `node_modules` folder and `pnpm dev` runs at once. Do not run `pnpm install` by hand after the command. When the installation fails, the command prints the error and exits with a non-zero code, and the worktree stays.
 - Worktree folder: `.claude/worktrees/<name>`, inside the main checkout.
 - Launch command: `cd <path of the temporary worktree> && pnpm dev`.
 - Issue tracker commands: this repository is on GitHub, so use the `gh` command here. Use the `glab` command only for a repository on GitLab, as [github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md) says.
