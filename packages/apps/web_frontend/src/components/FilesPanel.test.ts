@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-const invokeMock = vi.hoisted(() => vi.fn());
+const invokeMock = vi.hoisted(() => vi.fn().mockResolvedValue(null));
 const copyMock = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("@tauri-apps/api/core", () => ({ invoke: invokeMock }));
 vi.mock("../lib/clipboard", () => ({ copy: copyMock }));
@@ -77,6 +77,7 @@ afterEach(() => {
   files.active = null;
   files.root = "";
   files.ignored = [];
+  files.submodules = [];
   files.expanded = new Set();
   for (const folder of Object.keys(filesPanelIgnoredChildren)) {
     delete filesPanelIgnoredChildren[folder];
@@ -91,6 +92,45 @@ afterEach(() => {
 });
 
 describe("FilesPanel", () => {
+
+	it('browses submodules, opens nested files, and refreshes while keeping folders unfolded', async () => {
+		let paths = ['modules/example/src/main.ts'];
+		invokeMock.mockImplementation(async (command: string) => {
+			if (command === 'files_list') {
+				return {
+					root: '/work/heidrun',
+					git: true,
+					files: paths,
+					submodules: ['modules/example', 'modules/empty'],
+					ignored: [],
+					status: {},
+					truncated: false,
+				};
+			}
+			return null;
+		});
+		const wrapper = await mountPanel();
+		await wrapper.get('[title="modules"]').trigger('click');
+		const submodule = wrapper.get('[title="modules/example"]');
+		expect(submodule.attributes('aria-expanded')).toBe('false');
+		expect(submodule.find('svg.bi-file-submodule').exists()).toBe(true);
+		expect(wrapper.get('[title="modules"]').find('.bi-folder2-open').exists()).toBe(true);
+		expect(wrapper.get('[title="modules/empty"]').attributes('aria-expanded')).toBe('false');
+		await submodule.trigger('click');
+		await wrapper.get('[title="modules/example/src"]').trigger('click');
+		await wrapper.get('[title="modules/example/src/main.ts"]').trigger('click');
+		expect(files.active).toBe('modules/example/src/main.ts');
+		expect(files.open).toBe(true);
+		paths = [...paths, 'modules/example/src/new.txt'];
+		await wrapper.get('[aria-label="Refresh"]').trigger('click');
+		await vi.waitFor(() => expect(wrapper.find('[title="modules/example/src/new.txt"]').exists()).toBe(true));
+		expect(wrapper.get('[title="modules/example"]').attributes('aria-expanded')).toBe('true');
+		await wrapper.get('[title="modules/example"]').trigger('click');
+		expect(wrapper.find('[title="modules/example/src"]').exists()).toBe(false);
+		expect(wrapper.get('[title="modules/example"]').find('svg.bi-file-submodule').exists()).toBe(true);
+		wrapper.unmount();
+	});
+
   it("shows the title and the folders first, then the files, and folds the folders at the start", async () => {
     const wrapper = await mountPanel();
     expect(wrapper.get(".title").text()).toBe("File explorer");

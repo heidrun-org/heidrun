@@ -12,6 +12,8 @@ interface FileList {
   files: string[];
   /** The entries of `files` that Git ignores, written as in `files`. Empty when the option to show them is off. */
   ignored: string[];
+  /** Submodule folders relative to the project root, without a trailing slash. */
+  submodules: string[];
   status: Record<string, string>;
   truncated: boolean;
 }
@@ -25,6 +27,8 @@ export const files = reactive({
   list: [] as string[],
   /** The entries of `list` that Git ignores: a folder ends with "/". Empty when the option to show them is off. */
   ignored: [] as string[],
+  /** Submodule folders, including submodules with no listed files. */
+  submodules: [] as string[],
   status: {} as Record<string, string>,
   truncated: false,
   /** Open tabs (relative paths) and the one shown. */
@@ -274,6 +278,7 @@ export async function loadFiles(cwd: string): Promise<boolean> {
       git: r.git,
       list: markRaw(r.files),
       ignored: markRaw(r.ignored ?? []),
+      submodules: markRaw(r.submodules ?? []),
       status: markRaw(r.status),
       truncated: r.truncated,
     });

@@ -23,6 +23,8 @@ pub struct FileList {
     /// The entries of `files` that Git ignores, written as in `files`. Empty when the option to show ignored files is
     /// off (issue #430).
     pub ignored: Vec<String>,
+    /// Submodule folders relative to the project root, without a trailing slash.
+    pub submodules: Vec<String>,
     /// path → git status letter (M, A, D, R, ?).
     pub status: HashMap<String, String>,
     pub truncated: bool,
@@ -156,6 +158,55 @@ async fn git_listed_files(root: &Path, show_ignored: bool) -> (Vec<String>, Vec<
     (files, ignored_entries)
 }
 
+/// Lists each initialized submodule with its own ignore rules. Gitlinks are folders, never files.
+async fn git_project_files(root: &Path, show_ignored: bool) -> (Vec<String>, Vec<String>, Vec<String>) {
+    let mut files = Vec::new();
+    let mut ignored = Vec::new();
+    let mut submodules = Vec::new();
+    let mut pending = vec![(root.to_path_buf(), String::new())];
+    while let Some((repository, prefix)) = pending.pop() {
+        let (listed, ignored_entries) = git_listed_files(&repository, show_ignored).await;
+        let index = run(&repository, &["ls-files", "--stage", "-z"]).await.unwrap_or_default();
+        let links: std::collections::HashSet<String> = split_z(&index)
+            .filter_map(|entry| {
+                let (metadata, path) = entry.split_once('\t')?;
+                metadata.starts_with("160000 ").then(|| path.to_string())
+            })
+            .collect();
+        for path in listed {
+            if links.contains(&path) {
+                continue;
+            }
+            files.push(format!("{prefix}{path}"));
+            if files.len() > MAX_FILES {
+                return (files, ignored, submodules);
+            }
+        }
+        ignored.extend(ignored_entries.into_iter().map(|path| format!("{prefix}{path}")));
+        for path in links {
+            // Refuse paths through symbolic links, outside the root, or inside Git's internal data.
+            if safe_rel(&path).is_err() || not_in_git_dir(&path).is_err() {
+                continue;
+            }
+            let folder = repository.join(&path);
+            let Ok(real) = std::fs::canonicalize(&folder) else { continue };
+            if real != folder || !real.starts_with(root) || !real.is_dir() {
+                continue;
+            }
+            let relative = format!("{prefix}{path}");
+            submodules.push(relative.clone());
+            // Without this check Git in an uninitialized submodule falls back to the parent repository.
+            if folder.join(".git").exists() {
+                pending.push((real, format!("{relative}/")));
+            }
+        }
+    }
+    files.sort();
+    files.dedup();
+    submodules.sort();
+    (files, ignored, submodules)
+}
+
 /// Files of the project containing `cwd`: the git repository (tracked and new files,
 /// .gitignore respected), or the folder itself when it is not a repository.
 #[tauri::command]
@@ -176,12 +227,12 @@ pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, 
         let root = dir.display().to_string();
         remember_root(&root);
         let truncated = files.len() >= MAX_FILES;
-        return Ok(FileList { root, git: false, files, ignored: Vec::new(), status: HashMap::new(), truncated });
+        return Ok(FileList { root, git: false, files, ignored: Vec::new(), submodules: Vec::new(), status: HashMap::new(), truncated });
     };
     let rootp = std::fs::canonicalize(&root).unwrap_or_else(|_| PathBuf::from(&root));
     acceptable_root(&rootp)?;
     used_by_a_pane(&rootp).await?;
-    let (mut files, ignored_entries) = git_listed_files(&rootp, ignored.unwrap_or(false)).await;
+    let (mut files, ignored_entries, submodules) = git_project_files(&rootp, ignored.unwrap_or(false)).await;
     let truncated = files.len() > MAX_FILES;
     files.truncate(MAX_FILES);
     let mut status = HashMap::new();
@@ -200,12 +251,12 @@ pub async fn files_list(cwd: String, ignored: Option<bool>) -> Result<FileList, 
         }
         status.insert(path.to_string(), letter.to_string());
         // A deleted file is still worth showing in the tree.
-        if letter == "D" && !files.iter().any(|f| f == path) {
+        if letter == "D" && !submodules.iter().any(|folder| folder == path) && !files.iter().any(|f| f == path) {
             files.push(path.to_string());
         }
     }
     remember_root(&root);
-    Ok(FileList { root, git: true, files, ignored: ignored_entries, status, truncated })
+    Ok(FileList { root, git: true, files, ignored: ignored_entries, submodules, status, truncated })
 }
 
 /// The names inside the folder `dir`, one level only: a folder ends with "/", a file does not. A symbolic link is
@@ -802,6 +853,49 @@ mod helper_tests {
             assert!(list.iter().all(|entry| entry.trim_end_matches('/') != ".git" && entry.starts_with(".git/") == false));
         }
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[tokio::test]
+    async fn submodules_list_nested_files_respect_ignores_refresh_and_open_files() {
+        let source = repository_with_ignored_files("hd-submodule-source");
+        let parent = repository_with_ignored_files("hd-submodule-parent");
+        let commit = std::process::Command::new("git").arg("-C").arg(&source)
+            .args(["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture"])
+            .status().unwrap();
+        assert!(commit.success());
+        let added = std::process::Command::new("git").arg("-C").arg(&parent)
+            .args(["-c", "protocol.file.allow=always", "submodule", "add", "-q"])
+            .arg(&source).arg("modules/example").status().unwrap();
+        assert!(added.success());
+        let module = parent.join("modules/example");
+        std::fs::write(module.join(".env"), "ignored").unwrap();
+        std::fs::create_dir_all(module.join(".heidrun/nested")).unwrap();
+        std::fs::write(module.join(".heidrun/nested/hidden.txt"), "hidden").unwrap();
+        let (files, ignored, submodules) = git_project_files(&parent, false).await;
+        assert_eq!(submodules, vec!["modules/example"]);
+        assert!(files.contains(&"modules/example/src/a.ts".to_string()));
+        assert!(!files.contains(&"modules/example".to_string()));
+        assert!(!files.contains(&"modules/example/.env".to_string()));
+        assert!(ignored.is_empty());
+        let root = parent.display().to_string();
+        remember_root(&root);
+        assert_eq!(file_read(root.clone(), "modules/example/src/a.ts".into()).unwrap().text, "x");
+        let (shown, ignored, _) = git_project_files(&parent, true).await;
+        assert!(shown.contains(&"modules/example/.env".to_string()));
+        assert!(ignored.contains(&"modules/example/.heidrun/".to_string()));
+        assert_eq!(folder_children(root, "modules/example/.heidrun/nested".into()).unwrap(), vec!["hidden.txt"]);
+        assert!(shown.iter().all(|path| !Path::new(path).components().any(|part| part.as_os_str() == ".git")));
+        std::fs::write(module.join("src/new.txt"), "new").unwrap();
+        let (refreshed, _, _) = git_project_files(&parent, false).await;
+        assert!(refreshed.contains(&"modules/example/src/new.txt".to_string()));
+        // An uninitialized submodule must not list the parent repository as its own contents.
+        std::fs::remove_dir_all(&module).unwrap();
+        std::fs::create_dir(&module).unwrap();
+        let (uninitialized, _, submodules) = git_project_files(&parent, false).await;
+        assert_eq!(submodules, vec!["modules/example"]);
+        assert!(uninitialized.iter().all(|path| !path.starts_with("modules/example/")));
+        let _ = std::fs::remove_dir_all(parent);
+        let _ = std::fs::remove_dir_all(source);
     }
 
     /// Issue #441: Git lists `.heidrun/` and `.heidrun/config.json` when the ignore rule names the file, and `.claude/` and
