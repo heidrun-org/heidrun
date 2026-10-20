@@ -35,7 +35,7 @@ A macro that the developer made, and that is kept in the key `prompts` of the fi
 
 ### heidrun_ctrl
 
-The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. It has two groups of commands, `macros` and `launchers`, and each group has the four commands list, add, update, and delete. It changes files, and a running Heidrun shows each change in its window within about one second.
+The command line that controls the Heidrun application, for a coding agent. Its `SKILL.md` teaches a coding agent the commands. The groups `macros` and `launchers` each have list, add, update, and delete and change watched files. The group `workspaces` has list, open, rename, focus, and close and talks to the running Herdr through its executable. A running Heidrun shows these changes in its window.
 
 ## Rules
 

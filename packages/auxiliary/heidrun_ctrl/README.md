@@ -1,6 +1,6 @@
 # heidrun_ctrl
 
-`heidrun_ctrl` is the command line that controls the Heidrun application. A coding agent reads its [SKILL.md](skills/heidrun-ctrl/SKILL.md) and uses the commands, in the same way as the developer uses the window. The [Agent Plugin](plugin.json) packages the current macro and launcher commands for use in other repositories.
+`heidrun_ctrl` is the command line that controls the Heidrun application. A coding agent reads its [SKILL.md](skills/heidrun-ctrl/SKILL.md) and uses the commands, in the same way as the developer uses the window. The [Agent Plugin](plugin.json) packages the current macro, launcher, and workspace commands for use in other repositories.
 
 ## Install the Agent Plugin
 
@@ -23,7 +23,7 @@ The skills.sh listing is based on installs made through the skills CLI. Its publ
 
 ## Commands
 
-There are two groups of commands, `macros` and `launchers`, and each group has the four commands list, add, update, and delete.
+The groups `macros` and `launchers` each have list, add, update, and delete. The group `workspaces` has list, open, rename, focus, and close.
 
 The group `macros`: a macro is a reusable text that the developer writes into a pane. The commands never write a macro into a pane.
 
@@ -43,13 +43,35 @@ pnpm --silent heidrun_ctrl launchers update <id> --command "pnpm run test:unit" 
 pnpm --silent heidrun_ctrl launchers delete <id>
 ```
 
+The group `workspaces` controls the workspaces of a running Herdr session. Keep the intended Heidrun window open. These examples run from the repository root and target installed Heidrun's session, `heidrun`:
+
+```bash
+pnpm --silent heidrun_ctrl workspaces list --session heidrun --json
+pnpm --silent heidrun_ctrl workspaces open --session heidrun --cwd "$PWD" --label "Workspace test" --json
+```
+
+Copy the `workspace_id` printed by `open`, assign that value below, then rename, select, and close that workspace:
+
+```bash
+workspace_id="paste-the-workspace-id-here"
+pnpm --silent heidrun_ctrl workspaces rename "$workspace_id" --session heidrun --label "Renamed workspace"
+pnpm --silent heidrun_ctrl workspaces focus "$workspace_id" --session heidrun
+pnpm --silent heidrun_ctrl workspaces close "$workspace_id" --session heidrun
+```
+
+Closing stops the workspace's processes. A workspace containing a coding agent requires `--force` to close. `open` requires an existing folder through `--cwd`; the optional `--label` defaults to the folder name. `rename` requires `--label`.
+
+Use `--session heidrun_development` for development in the main checkout. A temporary worktree has its own session: `heidrun_` followed by the cleaned worktree name, limited to its last 32 characters. An explicit `--session` overrides inherited connection variables. Without `--session`, the commands use `HERDR_SOCKET_PATH` or `HERDR_SESSION` when set, otherwise `heidrun`. They never start a Herdr server or talk directly to Heidrun. There are no workspace commands named `add` or `delete`.
+
 The output is Markdown, or JSON with `--format json`. For colors, send the Markdown to [glow](https://github.com/charmbracelet/glow): `pnpm --silent heidrun_ctrl macros list | glow`.
 
-The command line changes files, and the running Heidrun shows each change in its window within about one second:
+The macro and launcher commands change files that the running Heidrun watches:
 
 - The personal macros are in the file `macros.json` in the folder of the variable `HEIDRUN_DIR`, else in `~/.config/heidrun`.
 - The project macros are in the key `prompts` of the file `.heidrun/config.json` of the project.
 - The hard-coded macros are in the source code of Heidrun. They are listed, and they cannot be changed.
 - The launchers are in the key `launchers` of the file `.heidrun/config.json` of the project. A launcher of the kind Coding agent is listed and its field `agent` stays as it is, but the command line cannot add one.
+
+Workspace commands instead talk to Herdr through its executable. `open` publishes the original workspace folder for running Heidrun to save, and `focus` selects the requested workspace in the window. Keep Heidrun running when opening a workspace so the folder is saved before Herdr metadata expires. Workspace errors are always one JSON object on standard error with exit code 1.
 
 Run `pnpm --silent heidrun_ctrl --help` for every option. Run `pnpm --filter heidrun_ctrl test` to test the package. The rules of the package are in [CONTEXT.md](CONTEXT.md).

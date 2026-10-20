@@ -1,6 +1,8 @@
 //! `heidrun_ctrl`: the command line that controls the Heidrun application, for a coding agent.
 //!
-//! There are two groups of commands: the macros and the launchers. Each group has four orders: list, add, update, and
+//! This library shares the macro and launcher file operations with the desktop application.
+//! The binary also controls workspaces through Herdr; those operations stay outside this library.
+//! The macros and launchers each have four orders. The orders are list, add, update, and
 //! delete. The library holds what the command line and the desktop application share, so that the format of each file has
 //! one place: the hard-coded macros, the file of the personal macros, the keys `prompts` and `launchers` of the file
 //! `.heidrun/config.json`, the orders, and the output. The package knows nothing about Tauri.

@@ -76,6 +76,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [screens.md](docs/agents_rules/user_interface/heidrun_mobile/screens.md): the screens of the mobile website (the welcome page, the Dashboard, Needs you, Panes, the screen of one pane with the macro button and the microphone button, and Launchers), the screen of a plain terminal (read-only), and the guards of the phone.
 - The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
+  - [workspace_commands.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace_commands.md): the workspace commands, creation folders, focus events, and refreshes through Herdr.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
   - [pane_headers.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".

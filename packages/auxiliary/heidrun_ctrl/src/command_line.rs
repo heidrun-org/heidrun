@@ -5,7 +5,7 @@ use heidrun_ctrl::{Format, MacroKind};
 /// The text of `heidrun_ctrl --help`.
 pub const HELP: &str = r#"Usage: heidrun_ctrl <group> <command> [options]
 
-Controls the Heidrun application. There are two groups of commands: macros and launchers.
+Controls the Heidrun application. There are three groups of commands: macros, launchers, and workspaces.
 
 The macros: a macro is a reusable text that the developer writes into a pane. There are
 three kinds of macro:
@@ -21,9 +21,9 @@ that Heidrun runs in its own tab when the developer clicks its button "Run". The
 launchers are kept in the key "launchers" of the file ".heidrun/config.json" of the
 project. A launcher is not a macro, and the command line never runs a launcher.
 
-The command line changes files. The Heidrun application watches the files, so a running
-Heidrun shows each change in its window within about one second, and a change works
-when Heidrun is not running.
+Macros and launchers change files watched by Heidrun and work while Heidrun is closed.
+Workspaces talk to a running Herdr through its executable. Start Heidrun first to see
+workspace changes in the window. No workspace command starts a Herdr server.
 
 Commands:
   macros list                 List every macro, the hard-coded macros included.
@@ -35,8 +35,19 @@ Commands:
   launchers update <id>       Change the name, the command line, the description, or the
                               folder of a launcher.
   launchers delete <id>       Delete a launcher.
+  workspaces list             List the workspaces and their Herdr fields.
+  workspaces open             Open and select a workspace from --cwd.
+  workspaces rename <id>      Rename a workspace using --label.
+  workspaces focus <id>       Select an existing workspace in the window.
+  workspaces close <id>       Close a workspace, stopping its processes.
 
 Options:
+  --session <name>            Workspaces only. Choose the Herdr session. Without this
+                              option, use inherited HERDR_SOCKET_PATH or HERDR_SESSION,
+                              otherwise heidrun. Development in the main checkout uses
+                              heidrun_development; a worktree uses heidrun_<worktree>.
+  --force                     Workspaces close only. Allow closing a workspace that
+                              contains a coding agent. Closing stops its processes.
   --kind <name>               Macros only. hard_coded, personal, or project. For list,
                               only the macros of that kind. For add, the kind to add:
                               personal or project. (default: personal) For update and
@@ -45,7 +56,8 @@ Options:
   --id <id>                   For add, the id of the macro or of the launcher. (default:
                               made from the title or the name, then a dash and three
                               characters for a macro, four for a launcher)
-  --label <text>              For add and update, the title of the macro or the name of
+  --label <text>              For workspaces open, an optional name; for rename, required.
+                              For add and update, the title of the macro or the name of
                               the launcher. An empty title becomes the first 40
                               characters of the text of the macro. An empty name becomes
                               the first 20 characters of the command line of the
@@ -62,7 +74,8 @@ Options:
                               cannot be empty. A launcher of the kind Coding agent
                               refuses it on update, because its command line is made
                               from its field "agent".
-  --cwd <path>                Launchers only. For add and update, the folder where the
+  --cwd <path>                Required for workspaces open: the workspace folder.
+                              For launchers add and update, the folder where the
                               command line runs, relative to the root of the project.
                               An empty folder removes it.
   --folder <path>             A folder of the project, for the project macros and for the
@@ -77,7 +90,11 @@ Output:
              has the fields "id", "label", "description", "text", "kind", and "file"
              (null for a hard-coded macro). A launcher has the fields "id", "label",
              "command", "description", "cwd", and "agent" (null for a field that the
-             launcher does not have). A delete gives the object {"deleted": <item>}. An
+             launcher does not have). A delete gives the object {"deleted": <item>}. A
+             workspace list is an array of Herdr workspace objects. Open, rename,
+             and focus give one workspace object; close gives {"closed": <workspace>}.
+             Workspace fields include workspace_id, label, and tokens. A workspace
+             error is always JSON, including with Markdown output. Any other
              error is one JSON object on one line on the standard error output, with
              the field "error".
 
@@ -98,6 +115,11 @@ Examples:
   $ printf 'cd web\npnpm test' | heidrun_ctrl launchers add --label "Web tests" --command -
   $ heidrun_ctrl launchers update run-the-tests-x7q2 --command "pnpm run test:unit" --cwd web
   $ heidrun_ctrl launchers delete run-the-tests-x7q2
+  $ heidrun_ctrl workspaces list --session heidrun --json
+  $ heidrun_ctrl workspaces open --cwd /absolute/project --label Project --json
+  $ heidrun_ctrl workspaces rename w1 --label Renamed --json
+  $ heidrun_ctrl workspaces focus w1 --json
+  $ heidrun_ctrl workspaces close w1 --json
 "#;
 
 /// Where a text comes from: the text of a macro, or the command line of a launcher.
@@ -121,6 +143,8 @@ pub struct CommonOptions {
 /// What the arguments ask for.
 #[derive(Debug, PartialEq)]
 pub enum Parsed {
+    /// A command that talks to the running Herdr session.
+    Workspace { common: CommonOptions, session: Option<String>, command: WorkspaceCommand },
     /// Print the help.
     Help,
     /// List the macros.
@@ -213,9 +237,21 @@ pub enum Parsed {
     },
 }
 
+/// The workspace actions exposed by the executable.
+#[derive(Debug, PartialEq)]
+pub enum WorkspaceCommand {
+    List,
+    Open { cwd: String, label: Option<String> },
+    Rename { id: String, label: String },
+    Focus { id: String },
+    Close { id: String, force: bool },
+}
+
 /// The options that the arguments hold, before the order is known.
 #[derive(Default)]
 struct RawOptions {
+    session: Option<String>,
+    force: bool,
     format: Option<Format>,
     folder: Option<String>,
     kind: Option<MacroKind>,
@@ -227,6 +263,25 @@ struct RawOptions {
     cwd: Option<String>,
     /// The names of the options that were given, to refuse the ones an order does not accept.
     given: Vec<&'static str>,
+}
+
+/// Identifies the group even when options precede it, so workspace errors always use JSON.
+pub fn is_workspace_command(arguments: &[String]) -> bool {
+    let mut rest = arguments.iter();
+    while let Some(argument) = rest.next() {
+        if !argument.starts_with('-') {
+            return argument == "workspaces";
+        }
+        if !argument.contains('=')
+            && matches!(
+                argument.as_str(),
+                "--session" | "--format" | "--folder" | "--kind" | "--id" | "--label" | "--description" | "--text" | "--command" | "--cwd"
+            )
+        {
+            rest.next();
+        }
+    }
+    false
 }
 
 /// The format that the arguments ask for, read without the other checks, so that an error of the arguments is written in
@@ -295,9 +350,8 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
             }
             "--format" => {
                 let value = value_of(&name, inline, &mut rest)?;
-                options.format = Some(
-                    Format::from_name(&value).ok_or_else(|| format!("The format {value} is not known: use markdown or json."))?,
-                );
+                options.format =
+                    Some(Format::from_name(&value).ok_or_else(|| format!("The format {value} is not known: use markdown or json."))?);
                 options.given.push("--format");
             }
             "--folder" => {
@@ -328,6 +382,17 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
                 options.command = Some(text_input_of(value_of(&name, inline, &mut rest)?));
                 options.given.push("--command");
             }
+            "--session" => {
+                options.session = Some(value_of(&name, inline, &mut rest)?);
+                options.given.push("--session");
+            }
+            "--force" => {
+                if inline.is_some() {
+                    return Err("The option --force takes no value.".into());
+                }
+                options.force = true;
+                options.given.push("--force");
+            }
             "--cwd" => {
                 options.cwd = Some(value_of(&name, inline, &mut rest)?);
                 options.given.push("--cwd");
@@ -339,20 +404,24 @@ pub fn parse(arguments: &[String]) -> Result<Parsed, String> {
         return Ok(Parsed::Help);
     }
     let Some(group) = positionals.first() else {
-        return Err("A command is needed: macros or launchers. Run `heidrun_ctrl --help`.".to_string());
+        return Err("A command is needed: macros, launchers, or workspaces. Run `heidrun_ctrl --help`.".to_string());
     };
     let Some(command) = positionals.get(1) else {
         return match group.as_str() {
+            "workspaces" => {
+                Err("The command workspaces needs one of list, open, rename, focus, or close. Run `heidrun_ctrl --help`.".into())
+            }
             "macros" | "launchers" => {
                 Err(format!("The command {group} needs one of list, add, update, or delete. Run `heidrun_ctrl --help`."))
             }
-            _ => Err(format!("The command {group} is not known: use macros or launchers. Run `heidrun_ctrl --help`.")),
+            _ => Err(format!("The command {group} is not known: use macros, launchers, or workspaces. Run `heidrun_ctrl --help`.")),
         };
     };
     match group.as_str() {
         "macros" => parse_macros(command, options, &positionals),
         "launchers" => parse_launchers(command, options, &positionals),
-        _ => Err(format!("The command {group} is not known: use macros or launchers. Run `heidrun_ctrl --help`.")),
+        "workspaces" => parse_workspaces(command, options, &positionals),
+        _ => Err(format!("The command {group} is not known: use macros, launchers, or workspaces. Run `heidrun_ctrl --help`.")),
     }
 }
 
@@ -440,6 +509,57 @@ fn parse_launchers(command: &str, options: RawOptions, positionals: &[String]) -
     }
 }
 
+/// Reads workspace arguments without accepting the file options of other groups.
+fn parse_workspaces(command: &str, options: RawOptions, positionals: &[String]) -> Result<Parsed, String> {
+    let mut accepted = vec!["--json", "--format", "--session"];
+    match command {
+        "list" | "focus" => {}
+        "open" => accepted.extend(["--cwd", "--label"]),
+        "rename" => accepted.push("--label"),
+        "close" => accepted.push("--force"),
+        _ => return Err(format!("The command workspaces {command} is not known: use list, open, rename, focus, or close.")),
+    }
+    if let Some(option) = options.given.iter().find(|name| !accepted.contains(name)) {
+        return Err(format!("The command workspaces {command} does not accept the option {option}."));
+    }
+    let needs_id = matches!(command, "rename" | "focus" | "close");
+    let count = if needs_id { 3 } else { 2 };
+    if positionals.len() != count {
+        return Err(format!(
+            "The command workspaces {command} needs {}.",
+            if needs_id { "exactly one workspace id" } else { "no positional argument" }
+        ));
+    }
+    if options.session.as_ref().is_some_and(|session| session.trim().is_empty()) {
+        return Err("The option --session cannot be empty.".into());
+    }
+    let id = positionals.get(2).cloned().unwrap_or_default();
+    if needs_id && (id.is_empty() || id.starts_with('-')) {
+        return Err("The workspace id cannot be empty or start with a dash.".into());
+    }
+    let command = match command {
+        "list" => WorkspaceCommand::List,
+        "open" => WorkspaceCommand::Open {
+            cwd: options.cwd.filter(|cwd| !cwd.trim().is_empty()).ok_or("The command workspaces open needs --cwd with a folder.")?,
+            label: options.label,
+        },
+        "rename" => WorkspaceCommand::Rename {
+            id,
+            label: options
+                .label
+                .filter(|label| !label.trim().is_empty())
+                .ok_or("The command workspaces rename needs --label with a name.")?,
+        },
+        "focus" => WorkspaceCommand::Focus { id },
+        _ => WorkspaceCommand::Close { id, force: options.force },
+    };
+    Ok(Parsed::Workspace {
+        common: CommonOptions { format: options.format.unwrap_or_default(), folder: None },
+        session: options.session,
+        command,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -475,7 +595,10 @@ mod tests {
     fn an_add_is_personal_by_default_and_needs_a_text() {
         let parsed = parse(&arguments(&["macros", "add", "--text", "Hello"])).unwrap();
         assert!(matches!(parsed, Parsed::Add { kind: MacroKind::Personal, text: TextInput::Given(ref text), .. } if text == "Hello"));
-        assert_eq!(parse(&arguments(&["macros", "add", "--label", "A"])), Err("The command macros add needs the option --text.".to_string()));
+        assert_eq!(
+            parse(&arguments(&["macros", "add", "--label", "A"])),
+            Err("The command macros add needs the option --text.".to_string())
+        );
     }
 
     #[test]
@@ -504,7 +627,7 @@ mod tests {
 
     #[test]
     fn an_unknown_command_kind_format_or_option_is_an_error_that_says_the_choices() {
-        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros or launchers"));
+        assert!(parse(&arguments(&["panes"])).unwrap_err().contains("use macros, launchers, or workspaces"));
         assert!(parse(&arguments(&["macros", "run"])).unwrap_err().contains("list, add, update, or delete"));
         assert!(parse(&arguments(&["macros", "list", "--kind", "x"])).unwrap_err().contains("hard_coded, personal, or project"));
         assert!(parse(&arguments(&["macros", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
@@ -525,7 +648,18 @@ mod tests {
     #[test]
     fn a_launcher_add_needs_a_command_line_and_takes_the_other_fields() {
         let parsed = parse(&arguments(&[
-            "launchers", "add", "--id", "a", "--label", "A", "--command", "pnpm test", "--description", "D", "--cwd=web", "--json",
+            "launchers",
+            "add",
+            "--id",
+            "a",
+            "--label",
+            "A",
+            "--command",
+            "pnpm test",
+            "--description",
+            "D",
+            "--cwd=web",
+            "--json",
         ]))
         .unwrap();
         assert_eq!(
@@ -539,7 +673,10 @@ mod tests {
                 cwd: Some("web".into()),
             }
         );
-        assert_eq!(parse(&arguments(&["launchers", "add", "--label", "A"])), Err("The command launchers add needs the option --command.".to_string()));
+        assert_eq!(
+            parse(&arguments(&["launchers", "add", "--label", "A"])),
+            Err("The command launchers add needs the option --command.".to_string())
+        );
         let from_input = parse(&arguments(&["launchers", "add", "--command", "-"])).unwrap();
         assert!(matches!(from_input, Parsed::LauncherAdd { command: TextInput::StandardInput, .. }));
     }
@@ -547,9 +684,14 @@ mod tests {
     #[test]
     fn a_launcher_update_and_delete_need_one_id() {
         let update = parse(&arguments(&["launchers", "update", "a", "--command", "ls", "--cwd", ""])).unwrap();
-        assert!(matches!(update, Parsed::LauncherUpdate { ref id, command: Some(TextInput::Given(_)), cwd: Some(ref cwd), .. } if id == "a" && cwd.is_empty()));
+        assert!(
+            matches!(update, Parsed::LauncherUpdate { ref id, command: Some(TextInput::Given(_)), cwd: Some(ref cwd), .. } if id == "a" && cwd.is_empty())
+        );
         assert!(matches!(parse(&arguments(&["launchers", "delete", "a"])), Ok(Parsed::LauncherDelete { ref id, .. }) if id == "a"));
-        assert_eq!(parse(&arguments(&["launchers", "delete"])), Err("The command launchers delete needs the id of a launcher.".to_string()));
+        assert_eq!(
+            parse(&arguments(&["launchers", "delete"])),
+            Err("The command launchers delete needs the id of a launcher.".to_string())
+        );
         assert!(parse(&arguments(&["launchers", "update", "a", "b"])).unwrap_err().contains("too many arguments: b"));
     }
 
@@ -557,7 +699,9 @@ mod tests {
     fn the_options_of_the_other_group_are_refused() {
         assert!(parse(&arguments(&["launchers", "add", "--text", "x"])).unwrap_err().contains("does not accept the option --text"));
         assert!(parse(&arguments(&["launchers", "update", "a", "--id", "b"])).unwrap_err().contains("--id"));
-        assert!(parse(&arguments(&["macros", "add", "--command", "x", "--text", "y"])).unwrap_err().contains("does not accept the option --command"));
+        assert!(parse(&arguments(&["macros", "add", "--command", "x", "--text", "y"]))
+            .unwrap_err()
+            .contains("does not accept the option --command"));
         assert!(parse(&arguments(&["macros", "list", "--cwd", "web"])).unwrap_err().contains("--cwd"));
     }
 
@@ -565,7 +709,7 @@ mod tests {
     fn an_unknown_launcher_command_is_an_error_that_says_the_choices() {
         assert!(parse(&arguments(&["launchers", "run"])).unwrap_err().contains("list, add, update, or delete"));
         assert!(parse(&arguments(&["launchers"])).unwrap_err().contains("needs one of list, add, update, or delete"));
-        assert!(parse(&arguments(&["panes", "list"])).unwrap_err().contains("use macros or launchers"));
+        assert!(parse(&arguments(&["panes", "list"])).unwrap_err().contains("use macros, launchers, or workspaces"));
         assert!(parse(&arguments(&["launchers", "list", "--format", "table"])).unwrap_err().contains("markdown or json"));
     }
 

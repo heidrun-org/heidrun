@@ -1,14 +1,13 @@
-//! The command line `heidrun_ctrl`: the commands list, add, update, and delete of the group `macros` and of the group
-//! `launchers`.
+//! The command line for Heidrun macros, launchers, and workspaces.
 
 mod command_line;
+mod workspaces;
 
 use command_line::{find_format, parse, CommonOptions, Parsed, TextInput, HELP};
 use heidrun_ctrl::{
     add_launcher, add_macro, changed_text, delete_launcher, delete_macro, deleted_text, error_text, find_project_root,
-    launcher_changed_text, launcher_deleted_text, launcher_list_text, list_launchers, list_macros, list_text,
-    personal_macros_path, update_launcher, update_macro, Format, LauncherChanges, MacroChanges, MacroPlaces, NewLauncher,
-    NewMacro,
+    launcher_changed_text, launcher_deleted_text, launcher_list_text, list_launchers, list_macros, list_text, personal_macros_path,
+    update_launcher, update_macro, Format, LauncherChanges, MacroChanges, MacroPlaces, NewLauncher, NewMacro,
 };
 use std::io::Read;
 use std::process::ExitCode;
@@ -19,7 +18,8 @@ fn project_root_of(common: &CommonOptions) -> Result<std::path::PathBuf, String>
         Some(folder) => std::path::PathBuf::from(folder),
         None => std::env::current_dir().map_err(|error| format!("The current folder cannot be read: {error}"))?,
     };
-    let absolute = std::path::absolute(&folder).map_err(|error| format!("The path {} cannot be made absolute: {error}", folder.display()))?;
+    let absolute =
+        std::path::absolute(&folder).map_err(|error| format!("The path {} cannot be made absolute: {error}", folder.display()))?;
     Ok(find_project_root(&absolute))
 }
 
@@ -50,6 +50,7 @@ fn text_of(input: TextInput) -> Result<String, String> {
 fn run(arguments: &[String]) -> Result<String, String> {
     match parse(arguments)? {
         Parsed::Help => Ok(HELP.to_string()),
+        Parsed::Workspace { common, session, command } => workspaces::run(command, session.as_deref(), common.format),
         Parsed::List { common, kind } => {
             let places = places_of(&common)?;
             let listed: Vec<_> = list_macros(&places)?.into_iter().filter(|item| kind.is_none_or(|wanted| wanted == item.kind)).collect();
@@ -94,7 +95,8 @@ fn run(arguments: &[String]) -> Result<String, String> {
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
-    let format = find_format(&arguments).unwrap_or(Format::Markdown);
+    let format =
+        if command_line::is_workspace_command(&arguments) { Format::Json } else { find_format(&arguments).unwrap_or(Format::Markdown) };
     match run(&arguments) {
         Ok(text) => {
             print!("{text}");

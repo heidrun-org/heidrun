@@ -1,10 +1,11 @@
 # Directory Context: `/packages/auxiliary/heidrun_ctrl`
 
 ## Purpose
-A Rust library and the `heidrun_ctrl` command line for controlling Heidrun macros and launchers, plus an Agent Plugin that distributes its skill. Each command group supports list, add, update, and delete. The command line changes files that Heidrun watches; it never talks to the running application or runs a launcher.
+A Rust library and the `heidrun_ctrl` command line for controlling Heidrun macros, launchers, and workspaces, plus an Agent Plugin that distributes its skill. Macros and launchers support list, add, update, and delete through watched files. Workspaces support list, open, rename, focus, and close through the running Herdr executable; no command talks directly to Heidrun or runs a launcher.
 
 ## Key Exports & Entry Points
 - `src/lib.rs`: the only public library interface. It exports the macro and launcher types, storage functions, list/add/update/delete operations, and output formatting.
+- The binary-only workspace commands preserve all Herdr workspace fields, use explicit session selection or the inherited connection (otherwise `heidrun`), and never start a server. Close refuses a detected coding agent without `--force`.
 - `src/main.rs`: the `heidrun_ctrl` executable. `src/command_line.rs` parses arguments and holds the help text.
 - `plugin.json`: the Agent Plugin manifest. Its skill is in `skills/heidrun-ctrl/`, and a test compares its `SKILL.md` with the command help and runs its examples.
 - `tests/`: executable tests with temporary data and a temporary project. Library tests sit beside the source.
@@ -26,7 +27,11 @@ A Rust library and the `heidrun_ctrl` command line for controlling Heidrun macro
 - The Agent Plugin and the skill stay in this package. The skill name is `heidrun-ctrl`, while the command line keeps the name `heidrun_ctrl`.
 - The repository copy in `.agents/skills/heidrun-ctrl/` matches this package's skill so that a coding agent working in the Heidrun repository sees the same instructions.
 
+- Workspace creation publishes `heidrun_workspace_folder` for Heidrun to save once; open and focus publish a new `heidrun_focus_request` so repeated focus requests reach the window.
+
 ## Background
 - The package comes from [issue #602](https://github.com/heidrun-org/heidrun/issues/602). The group `launchers` comes from [issue #649](https://github.com/heidrun-org/heidrun/issues/649).
 - The `SKILL.md` follows the layout of [heidrun_data](../../data_layers/heidrun_data/CONTEXT.md), from [issue #564](https://github.com/heidrun-org/heidrun/issues/564).
 - The Agent Plugin comes from [issue #679](https://github.com/heidrun-org/heidrun/issues/679).
+
+- The workspace commands come from [issue #657](https://github.com/heidrun-org/heidrun/issues/657).

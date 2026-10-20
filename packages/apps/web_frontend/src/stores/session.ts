@@ -497,6 +497,8 @@ let refreshTimer: number | undefined;
 let inflight = false;
 let again = false;
 let lastPaneKey = "";
+let pendingWorkspaceFocusId: string | null = null;
+const workspaceFocusRequests = new Map<string, string>();
 
 export function scheduleRefresh(delay = 60) {
   window.clearTimeout(refreshTimer);
@@ -754,9 +756,23 @@ function applySnapshot(snap: SessionSnapshot) {
       endRun(r, now);
     }
   }
-
+	if (state.snapshot === null) {
+		for (const workspace of snap.workspaces) {
+			const request = workspace.tokens?.heidrun_focus_request;
+			if (request !== undefined) {
+				workspaceFocusRequests.set(workspace.workspace_id, request);
+			}
+		}
+	}
   state.snapshot = snap;
   fixSelection(snap);
+	if (pendingWorkspaceFocusId !== null
+		&& snap.workspaces.some((workspace) => workspace.workspace_id === pendingWorkspaceFocusId)) {
+		selectWorkspace(pendingWorkspaceFocusId);
+		pendingWorkspaceFocusId = null;
+	} else if (again === false) {
+		pendingWorkspaceFocusId = null;
+	}
 
   const ids = snap.panes.filter((p) => p.agent).map((p) => p.pane_id).sort();
   const key = ids.join(",");
@@ -1232,8 +1248,38 @@ export async function startHerdr() {
   }
 }
 
+/** The fields used from a workspace event published by Herdr. */
+type WorkspaceEvent = {
+	/** Herdr's wire event name, such as workspace_focused. */
+	event?: string;
+	/** The workspace identifier or updated workspace carried by the event. */
+	data?: {
+		/** The target of a direct focus event. */
+		workspace_id?: string;
+		/** The workspace after a metadata change. */
+		workspace?: WorkspaceInfo;
+	};
+};
+
 export async function start() {
-  await listen("herdr://event", () => scheduleRefresh());
+	await listen<WorkspaceEvent>('herdr://event', async (event) => {
+		const workspace = event.payload.data?.workspace;
+		const request = workspace?.tokens?.heidrun_focus_request;
+		let workspaceId = event.payload.event === 'workspace_focused'
+			? event.payload.data?.workspace_id : undefined;
+		if (event.payload.event === 'workspace_metadata_updated'
+			&& workspace !== undefined && request !== undefined
+			&& workspaceFocusRequests.get(workspace.workspace_id) !== request) {
+			workspaceFocusRequests.set(workspace.workspace_id, request);
+			workspaceId = workspace.workspace_id;
+		}
+		if (typeof workspaceId === 'string') {
+			pendingWorkspaceFocusId = workspaceId;
+			await refresh();
+			return;
+		}
+		scheduleRefresh();
+	});
   await listen("herdr://connected", () => refresh());
   await listen("herdr://resync", () => scheduleRefresh(150));
   await listen<string>("herdr://disconnected", (e) => {
