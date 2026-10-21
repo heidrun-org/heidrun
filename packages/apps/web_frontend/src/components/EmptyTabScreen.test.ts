@@ -134,6 +134,9 @@ describe("EmptyTabScreen", () => {
       /\.empty-tab-spark\s*{[^}]*animation:\s*empty-tab-firework\s+2s\s+ease-out\s+calc\(var\(--laugh-delay\)\s*\+\s*var\(--spark-delay\)\)/,
     );
     expect(source).toMatch(/@keyframes empty-tab-firework\s*{[^@]*translate\([^@]*rotate\(/);
+	const fireworkKeyframes = source.split('@keyframes empty-tab-firework')[1].split('@media')[0];
+	expect(fireworkKeyframes).not.toMatch(/scale\(/);
+	expect(source).not.toContain('--drift-scale');
     expect(source).toMatch(/--second-line-delay:\s*2s;/);
     expect(source).toMatch(/--second-line-fade-duration:\s*3s;/);
     expect(source).toMatch(/--laugh-delay:\s*calc\(var\(--second-line-delay\)\s*\+\s*var\(--second-line-fade-duration\)\);/);
