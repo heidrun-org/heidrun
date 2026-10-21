@@ -81,7 +81,7 @@ const subtitle = computed(() => {
   >
     <div v-if="status === 'working'" class="sweep" aria-hidden="true"><span></span></div>
     <header class="head">
-      <span class="dot" :class="[status, state.pulse[pane.pane_id] ? 'pulse' : '']"></span>
+      <span class="dot" :class="status"></span>
       <InlineRename
         v-if="state.renaming === `pane:${pane.pane_id}`"
         class="pane-rename"
@@ -203,10 +203,10 @@ const subtitle = computed(() => {
 .pane.blocked::after { border-color: var(--pane-ring-blocked); }
 .pane.selected::after { border-color: var(--pane-ring-selected); }
 .pane.blocked.selected::after { border-color: var(--pane-ring-blocked-selected); }
-.sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: #12302d; z-index: 1; }
+.sweep { position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden; background: var(--tint-working); z-index: 1; }
 .sweep span {
   position: absolute; top: 0; left: 0; width: 40%; height: 2px;
-  background: linear-gradient(90deg, rgba(63, 184, 175, 0), var(--working), rgba(63, 184, 175, 0));
+  background: linear-gradient(90deg, transparent, var(--working), transparent);
   animation: sweep 2.4s ease-in-out infinite;
 }
 .head {

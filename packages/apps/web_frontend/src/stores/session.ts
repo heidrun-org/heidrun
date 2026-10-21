@@ -104,8 +104,6 @@ export const state = reactive({
   codex: null as CodexUsage | null,
   paletteOpen: false,
   shortcutsOpen: false,
-  /** Panes that just turned blocked: they pulse once. */
-  pulse: {} as Record<string, number>,
   /** Status changes of all agents, most recent first. */
   activity: [] as ActivityEntry[],
   /** When each pane entered its current status (local clock). */
@@ -735,8 +733,6 @@ function applySnapshot(snap: SessionSnapshot) {
       continue;
     }
     if (after === "blocked") {
-      state.pulse[pane.pane_id] = now;
-      window.setTimeout(() => delete state.pulse[pane.pane_id], 1400);
       void notifyPhone();
       if (!document.hasFocus() || state.selectedPaneId !== pane.pane_id) {
         notify(t("sessionStore.notify.blocked", { name: paneName(view) }), ws);

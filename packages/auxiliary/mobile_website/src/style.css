@@ -7,11 +7,11 @@
   --text: #e8e6e1;
   --text-2: #b6b9bd;
   --muted: #8e949a;
-  --working: #3fb8af;
-  --blocked: #f0645f;
+  --working: #bf5af2;
+  --blocked: #eb4034;
   --question: #c29bf0;
-  --done: #6ea8fe;
-  --idle: #5a6066;
+  --done: #34c759;
+  --idle: #8f8f8f;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   color-scheme: dark;
 }
@@ -96,6 +96,7 @@ main {
 }
 
 .dot {
+  display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -103,9 +104,19 @@ main {
   background: var(--muted);
 }
 
-.dot-ok,
+.dot-ok {
+  background: var(--done);
+}
+
 .dot-working {
-  background: var(--working);
+  background: transparent;
+  border: 1.5px solid var(--working);
+  border-right-color: transparent;
+  animation: status-spin 0.8s linear infinite;
+}
+
+@keyframes status-spin {
+  to { transform: rotate(360deg); }
 }
 
 .dot-blocked {

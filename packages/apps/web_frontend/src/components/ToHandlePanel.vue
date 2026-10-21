@@ -9,11 +9,11 @@ import { isPinned, togglePinnedPane } from "../stores/pinned_panes";
 import type { AgentInfo } from "../lib/types";
 import { t } from "../i18n/index";
 
-/** The Bootstrap theme color of the card and of the badge of an agent: red when blocked, indigo for a question, blue when done. */
+/** The Bootstrap theme color of the card and badge: red when blocked, indigo for a question, green when done. */
 function themeClass(p: AgentInfo): string {
   if (p.agent_status === "blocked") return "theme-danger";
   if (state.questions[p.pane_id]) return "theme-accent";
-  return "theme-primary";
+  return 'theme-success';
 }
 
 /** The line under the name of the agent: its question, the reason it is blocked, or what it finished. */

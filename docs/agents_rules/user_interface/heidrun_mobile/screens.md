@@ -1,7 +1,7 @@
 # User interface of Heidrun Mobile: the screens
 
 - Created: 16 October 2026
-- Last updated: 16 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: Heidrun Mobile](../../glossary/heidrun_mobile.md)
@@ -11,7 +11,8 @@ This file gives the rules of each screen of the mobile website of Heidrun Mobile
 
 ## Every screen
 
-- Each screen of the bottom bar has a top bar with its title and a dot that shows the connection to the computer.
+- Each screen of the bottom bar has a top bar with its title and a dot that shows the connection to the computer. A connected computer has a static green dot.
+- Coding agent status indicators follow [the status dot architecture](../../../architecture/status_dot.md): Blocked is a static red dot, Working is a purple spinning ring, Finished is a static green dot, and Idle is a static gray dot.
 - The address of the page names the open screen after "#", so a reload and the buttons Back and Forward of the browser open the same screen.
 - A refresh never moves what the developer reads, and never removes the text of the field for a prompt while the developer types or while the microphone listens.
 - The texts are in English. A text says "coding agent", never "agent" alone.

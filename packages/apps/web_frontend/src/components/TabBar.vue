@@ -16,11 +16,6 @@ const tabReorder = useReorder("x", (id, at) => moveTab(id, at));
 /** The tab ids in the order of the tab bar. */
 const tabIds = computed(() => tabs.value.map((tab) => tab.tab_id));
 
-/** True when a pane of the tab has just turned blocked: the status dot of the tab pulses once. */
-function isPulsing(tabId: string): boolean {
-  return allPanes.value.some((pane) => pane.tab_id === tabId && state.pulse[pane.pane_id] !== undefined);
-}
-
 /** The icon of the tab: the icon of the agent in the pane that decides the status dot, or the terminal icon. */
 function iconOf(tabId: string): string {
   return tabIconName(allPanes.value.filter((pane) => pane.tab_id === tabId), state.selectedPaneId);
@@ -67,7 +62,7 @@ function isRemoteControlled(tabId: string): boolean {
             @click="selectTab(tab.tab_id)"
             @dblclick="startRename('tab', tab.tab_id)"
           >
-            <span class="dot" :class="[tab.agent_status === 'idle' ? '' : tab.agent_status, isPulsing(tab.tab_id) ? 'pulse' : '']"></span>
+            <span class="dot" :class="tab.agent_status === 'idle' ? '' : tab.agent_status"></span>
             <Icon :name="iconOf(tab.tab_id)" class="tab-icon" />
             <span class="tab-label">{{ tabLabel(tab.tab_id) }}</span>
             <span v-if="isRemoteControlled(tab.tab_id)" class="rc" :title="t('tabBar.remoteControlConnected')">{{ t("tabBar.remoteControlBadge") }}</span>

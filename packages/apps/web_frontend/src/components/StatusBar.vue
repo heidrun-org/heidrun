@@ -35,7 +35,7 @@ const isClaudeQuotaUnspecified = computed(
     <GitStatusSummary />
     <span class="grow"></span>
     <span class="machine" :title="state.error || t('statusBar.connectedTitle')">
-      <span class="dot" :class="state.connected ? 'working-static' : 'offline'"></span>
+      <span class="dot" :class="state.connected ? 'connection-ok' : 'offline'"></span>
       {{ t("statusBar.local") }} · {{ state.snapshot ? `Herdr ${state.snapshot.version}` : t("statusBar.offline") }}
     </span>
   </footer>
@@ -53,6 +53,6 @@ const isClaudeQuotaUnspecified = computed(
 .workspace-sep { margin: 0 6px; }
 .grow { flex: 1; }
 .machine { display: flex; align-items: center; gap: 8px; color: var(--muted); }
-.working-static { background: var(--working); }
+.connection-ok { background: var(--done); }
 .offline { background: var(--fail); }
 </style>
