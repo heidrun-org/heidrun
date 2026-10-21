@@ -1,6 +1,6 @@
 # Local AI decisions with Qwen3.5
 
-`localai_decisions_qwen35` runs the open decision models based on Qwen3.5 on your computer, with llama.cpp, a Rust library, and a command line tool. A decision model reads a text (the "state") and typed questions with their options. It returns a probability for each option, in one pass, and writes no text. The request and the response follow the System One API of TypeSafe, as the endpoint `/v1/systemone` of the server of llama.cpp. After the first download of the model file, the state and the questions never leave your computer.
+`localai_decisions_llamacpp` runs the open decision models based on Qwen3.5 on your computer, with llama.cpp, a Rust library, and a command line tool. A decision model reads a text (the "state") and typed questions with their options. It returns a probability for each option, in one pass, and writes no text. The request and the response follow the System One API of TypeSafe, as the endpoint `/v1/systemone` of the server of llama.cpp. After the first download of the model file, the state and the questions never leave your computer.
 
 For example, the state "Customer message: I was charged twice for my order last week and nobody has replied." with the question "Which team should handle this?" and the options `billing`, `shipping`, and `technical` gives `billing` with a probability of 0.79.
 
@@ -32,8 +32,8 @@ Only Kev-0.8B was run. The code of the other types is copied from the server of 
 The short form asks one question. With `--choices`, the question is a choice; without it, a yes or no question:
 
 ```bash
-pnpm --filter localai_decisions_qwen35 cli --text "I was charged twice for my order." --question "Which team should handle this?" --choices billing,shipping,technical
-pnpm --filter localai_decisions_qwen35 cli --text "I was charged twice for my order." --question "Is the customer angry?"
+pnpm --filter localai_decisions_llamacpp cli --text "I was charged twice for my order." --question "Which team should handle this?" --choices billing,shipping,technical
+pnpm --filter localai_decisions_llamacpp cli --text "I was charged twice for my order." --question "Is the customer angry?"
 ```
 
 A full request is a JSON file or comes from standard input:
@@ -50,8 +50,8 @@ A full request is a JSON file or comes from standard input:
 ```
 
 ```bash
-pnpm --filter localai_decisions_qwen35 cli --request request.json
-cat request.json | pnpm --filter localai_decisions_qwen35 cli
+pnpm --filter localai_decisions_llamacpp cli --request request.json
+cat request.json | pnpm --filter localai_decisions_llamacpp cli
 ```
 
 The package command runs inside the package folder, so a relative file path starts there. Use an absolute path for a file elsewhere.
@@ -71,7 +71,7 @@ Other options:
 ## Use the Rust library
 
 ```rust
-use localai_decisions_qwen35::{DecisionConfig, DecisionEngine};
+use localai_decisions_llamacpp::{DecisionConfig, DecisionEngine};
 use serde_json::json;
 
 let engine = DecisionEngine::load(DecisionConfig::default())?;
@@ -89,7 +89,7 @@ println!("{}", response["answers"]["route"]["choice"]);
 The default build runs on the processor only. A build option adds the GPU, and `--backend gpu` selects it. The existing spelling `--device gpu` works too:
 
 ```bash
-cd packages/experiments/localai_decisions_qwen35
+cd packages/experiments/localai_decisions_llamacpp
 GGML_METAL=ON cargo run --release --features metal -- --backend gpu --text "I was charged twice." --question "Which team?" --choices billing,shipping
 ```
 
@@ -100,7 +100,7 @@ On macOS, llama.cpp builds Metal by default, so the file `.cargo/config.toml` se
 Run the reusable benchmark directly through this package's command line:
 
 ```bash
-pnpm --filter localai_decisions_qwen35 cli benchmark
+pnpm --filter localai_decisions_llamacpp cli benchmark
 ```
 
 The command measures Choice, Noul (yes or no), and Score (ordered levels), each with a short text and a longer text. Each case completes five measured decisions by default. The model loads once, then each case completes a warmup before timing starts. Model loading and warmup are excluded from the speed measurement. Reading the returned probabilities completes GPU work before the timer starts.
@@ -110,9 +110,9 @@ The table shows the input token count, total measured seconds, average seconds p
 Useful options:
 
 ```bash
-pnpm --filter localai_decisions_qwen35 cli benchmark --decisions 10
-pnpm --filter localai_decisions_qwen35 cli benchmark --output /tmp/localai_decisions_qwen35-speed.json
-pnpm --silent --filter localai_decisions_qwen35 cli benchmark --json
+pnpm --filter localai_decisions_llamacpp cli benchmark --decisions 10
+pnpm --filter localai_decisions_llamacpp cli benchmark --output /tmp/localai_decisions_llamacpp-speed.json
+pnpm --silent --filter localai_decisions_llamacpp cli benchmark --json
 ```
 
 `--model` selects another model, as for normal decisions. The default backend is the processor. `--backend cpu|gpu` is an alias for `--device cpu|gpu`; both spellings work before or after `benchmark`, and for normal decisions. For Metal, run the following command from this package folder, using the same GPU build requirements as normal decisions:
@@ -156,7 +156,7 @@ The server of llama.cpp 0.7.0 (for example from Homebrew) gives answers that dif
 ## Tests
 
 ```bash
-pnpm --filter localai_decisions_qwen35 test
+pnpm --filter localai_decisions_llamacpp test
 ```
 
 The tests use a release build, because the model is too slow in a debug build. They need Kev-0.8B in the Hugging Face cache; the first run downloads it (0.81 GB). The command `pnpm test` at the root does not run these tests.

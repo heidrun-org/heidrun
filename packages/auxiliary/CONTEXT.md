@@ -10,7 +10,6 @@ The packages that are useful for the application Heidrun, but are not the applic
 - `mobile_website/`: the mobile website of Heidrun Mobile, which the mobile server serves. See its own CONTEXT.md.
 - `heidrun_ctrl/`: a Rust library and the command line that controls the Heidrun application for a coding agent, with its `SKILL.md`. It controls macros and launchers through files and workspaces through Herdr. See its own CONTEXT.md.
 - `voice_input/`: a Rust library that records the microphone, downloads a Whisper model, and changes the speech into text on the computer. `desktop_tauri` imports it. See its own CONTEXT.md.
-- `localai_embeddings/`: a Rust library and command line tool for computing text embeddings locally on the CPU or a supported accelerator. See its own CONTEXT.md.
 
 ## Rules
 - A package that produces the application goes in `packages/apps`, never here.

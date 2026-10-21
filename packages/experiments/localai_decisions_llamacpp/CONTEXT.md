@@ -1,4 +1,4 @@
-# Directory Context: `/packages/experiments/localai_decisions_qwen35`
+# Directory Context: `/packages/experiments/localai_decisions_llamacpp`
 
 ## Purpose
 This package runs the decision models based on Qwen3.5 on the computer, with llama.cpp, a Rust library, and a command line tool. A decision model reads a text (the state) and typed questions, and returns a probability for each option, as the System One API of the server of llama.cpp (`/v1/systemone`).
@@ -8,9 +8,9 @@ This package runs the decision models based on Qwen3.5 on the computer, with lla
 - `tests/`: the Rust tests, and the answers of the server of llama.cpp that they compare with. See its own CONTEXT.md.
 - `server_reference/`: the script that writes the answers of the server. See its own CONTEXT.md.
 - `README.md`: installation, use, the supported models, and the limits.
-- Command to run this folder: `pnpm --filter localai_decisions_qwen35 cli --text "<state>" --question "<question>" --choices <option>,<option>`
-- Command to measure speed: `pnpm --filter localai_decisions_qwen35 cli benchmark`
-- Command to test this folder: `pnpm --filter localai_decisions_qwen35 test`
+- Command to run this folder: `pnpm --filter localai_decisions_llamacpp cli --text "<state>" --question "<question>" --choices <option>,<option>`
+- Command to measure speed: `pnpm --filter localai_decisions_llamacpp cli benchmark`
+- Command to test this folder: `pnpm --filter localai_decisions_llamacpp test`
 
 ## Rules
 - The model runs on the computer and the package never sends the state or the questions to a hosted inference service.

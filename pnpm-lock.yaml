@@ -194,8 +194,6 @@ importers:
 
   packages/auxiliary/heidrun_ctrl: {}
 
-  packages/auxiliary/localai_embeddings: {}
-
   packages/auxiliary/mobile_server: {}
 
   packages/auxiliary/mobile_website:
@@ -344,7 +342,9 @@ importers:
 
   packages/experiments/localai_decisions_candle: {}
 
-  packages/experiments/localai_decisions_qwen35: {}
+  packages/experiments/localai_decisions_llamacpp: {}
+
+  packages/experiments/localai_embeddings: {}
 
   packages/experiments/multi_layer_graph:
     dependencies:
