@@ -1,11 +1,11 @@
 # User interface of Heidrun: panes
 
 - Created: 13 October 2026
-- Last updated: 19 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712)
+- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -42,6 +42,8 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
 - The Needs you sidebar section shows the title "Needs you" at its top, above the cards and above the message "No agent is blocked, no agent has finished, and no agent asks a question." The title has 12 pixels above it and 14 pixels at its left, the same space as the title of the Past chats sidebar section.
 - A click on a card shows the pane of the agent. A card also lets the developer answer a blocked agent, pin the pane, and hide the card.
 - The button of the Needs you sidebar section shows the number of cards. The number is red when an agent is blocked.
-- A hidden card comes back at the next change of the agent. A finished agent leaves the sidebar section after the delay that the settings give.
+- Hiding a Finished card, or selecting its pane, acknowledges that completion and changes the displayed pane status to Idle. The tab, workspace, and application indicators then follow the remaining pane statuses. The acknowledgement does not move Herdr focus.
+- A Finished pane also becomes Idle after the delay that the settings give (15 minutes by default), unless the delay is set to never. The delay starts again for each new completion. A later Working or Blocked status is never changed by an earlier completion or its delay.
+- Hiding a Blocked card only hides the card until the next status change; hiding the card does not answer the coding agent. A detected question remains until the developer answers or hides the question.
 - The list of all the workspaces sits at the bottom of the sidebar section, under the cards, when the option `showWorkspacesInNeedsYou` is on (the default). The rules are in [needs_you_workspaces.md](../sidebars/needs_you_workspaces.md) ([issue 417](https://github.com/heidrun-org/heidrun/issues/417)).
 

@@ -1,4 +1,5 @@
 import { WorkspaceFolders } from './workspace_folders';
+import { FinishedStatus } from '../lib/finished_status';
 import { computed, reactive, ref, watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
 import { homeDir } from "@tauri-apps/api/path";
@@ -85,6 +86,9 @@ export interface OutputWatch {
 }
 
 const DISMISSED_KEY = "heidrun.dismissed";
+
+/** The latest Herdr snapshot, before applying local completion acknowledgements. */
+let rawSnapshot: SessionSnapshot | null = null;
 
 function loadDismissed(): Record<string, string> {
   try {
@@ -194,15 +198,35 @@ export const tabPanes = computed(() => allPanes.value.filter((p) => p.tab_id ===
 
 export const selectedPane = computed(() => allPanes.value.find((p) => p.pane_id === state.selectedPaneId) ?? null);
 
-/** Agents waiting on the user, blocked first, then most recent first. */
+/**
+ * Identifies the exact status acknowledged by a card removal.
+ * @param p - The pane and its coding agent information.
+ * @returns The terminal, status, and lifecycle sequence key.
+ */
 export function attentionKey(p: AgentInfo): string {
-  return `${p.agent_status}:${p.state_change_seq ?? 0}`;
+  return FinishedStatus.key(p);
 }
 
+/**
+ * Hides the current card and changes an acknowledged Finished completion to Idle in Heidrun.
+ * @param p - The status represented by the card being removed.
+ * @returns Nothing.
+ */
 export function dismiss(p: AgentInfo) {
-  delete state.questions[p.pane_id];
-  state.dismissed[p.pane_id] = attentionKey(p);
-  saveDismissed();
+	const current = rawSnapshot?.panes.find((pane) => pane.pane_id === p.pane_id);
+	const agent = rawSnapshot?.agents.find((pane) => pane.pane_id === p.pane_id);
+	if (current !== undefined && attentionKey({
+		...current,
+		...agent,
+	}) !== attentionKey(p)) {
+		return;
+	}
+	delete state.questions[p.pane_id];
+	state.dismissed[p.pane_id] = attentionKey(p);
+	saveDismissed();
+	if (rawSnapshot !== null) {
+		state.snapshot = FinishedStatus.apply(rawSnapshot, state.dismissed);
+	}
 }
 
 function saveDismissed() {
@@ -229,10 +253,23 @@ const ttlMs = () => (settings.finishedTtl > 0 ? settings.finishedTtl * 60_000 : 
 function expired(p: AgentInfo): boolean {
   if (p.agent_status !== "done") return false;
   const since = state.since[p.pane_id];
-  return since != null && now.value - since > ttlMs();
+  return since != null && Date.now() - since >= ttlMs();
 }
 
 function pruneFinished() {
+	if (rawSnapshot !== null) {
+		const agents = new Map(rawSnapshot.agents.map((pane) => [pane.pane_id, pane]));
+		for (const pane of rawSnapshot.panes) {
+			const view = {
+				...pane,
+				...agents.get(pane.pane_id),
+			};
+			if (expired(view) && state.questions[pane.pane_id] === undefined
+				&& state.dismissed[pane.pane_id] !== attentionKey(view)) {
+				dismiss(view);
+			}
+		}
+	}
   const limit = ttlMs();
   if (limit === Infinity) return;
   const t = Date.now();
@@ -674,7 +711,15 @@ export async function answerChoice(paneId: string, n: number, checked = false, e
  * (« Veux-tu que je … ? ») is a decision to make, like a blocking prompt: it
  * shows in « À traiter » and gets its own notification.
  */
-async function checkQuestion(paneId: string, name: string, ws: string, notifyQuestion: boolean, notifyDone = false, pushToPhone = false) {
+async function checkQuestion(
+	paneId: string,
+	name: string,
+	ws: string,
+	notifyQuestion: boolean,
+	notifyDone = false,
+	pushToPhone = false,
+	expectedKey?: string,
+) {
   // Let the agent finish drawing its answer.
   await new Promise((r) => window.setTimeout(r, 700));
   let question: string | null = null;
@@ -689,6 +734,13 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
   }
   const pane = state.snapshot?.panes.find((p) => p.pane_id === paneId);
   if (!pane || pane.agent_status === "working" || pane.agent_status === "blocked") return;
+	const view = paneView(pane);
+	if (expectedKey !== undefined && attentionKey(view) !== expectedKey) {
+		return;
+	}
+	if (state.dismissed[paneId] === attentionKey(view)) {
+		return;
+	}
   if (question) {
     state.questions[paneId] = { text: question, at: Date.now() };
     // Shown again even if an earlier "terminé" card was closed.
@@ -703,17 +755,35 @@ async function checkQuestion(paneId: string, name: string, ws: string, notifyQue
 }
 
 function applySnapshot(snap: SessionSnapshot) {
-  const previous = new Map((state.snapshot?.panes ?? []).map((p) => [p.pane_id, p.agent_status]));
+  const previousAgents = new Map((rawSnapshot?.agents ?? []).map((pane) => [pane.pane_id, pane]));
+	const previous = new Map((rawSnapshot?.panes ?? []).map((pane) => [pane.pane_id, {
+		...pane,
+		...previousAgents.get(pane.pane_id),
+	}]));
   const agents = new Map(snap.agents.map((a) => [a.pane_id, a]));
   const now = Date.now();
+	let isDismissalChanged = false;
 
   for (const pane of snap.panes) {
-    const before = previous.get(pane.pane_id);
+    const earlier = previous.get(pane.pane_id);
+		const before = earlier?.agent_status;
     const after = pane.agent_status;
-    if (before === after) continue;
+		const view = {
+			...pane,
+			...agents.get(pane.pane_id),
+		};
+		const isNewCompletion = after === 'done' && earlier?.agent_status === 'done'
+			&& attentionKey(earlier) !== attentionKey(view);
+		if (before === after && isNewCompletion === false) {
+			continue;
+		}
+		if (state.dismissed[pane.pane_id] !== undefined
+			&& state.dismissed[pane.pane_id] !== attentionKey(view)) {
+			delete state.dismissed[pane.pane_id];
+			isDismissalChanged = true;
+		}
     state.since[pane.pane_id] = now;
     if (!pane.agent) continue;
-    const view = { ...pane, ...(agents.get(pane.pane_id) ?? {}) };
     const ws = snap.workspaces.find((w) => w.workspace_id === pane.workspace_id)?.label ?? "";
     const tab = snap.tabs.find((x) => x.tab_id === pane.tab_id);
     trackRun(pane.pane_id, before, after, now, {
@@ -724,12 +794,16 @@ function applySnapshot(snap: SessionSnapshot) {
       workspaceId: pane.workspace_id,
       cwd: pane.foreground_cwd || pane.cwd || null,
     });
-    if (after === "working" || after === "blocked") delete state.questions[pane.pane_id];
+		if (after === 'working' || after === 'blocked' || isNewCompletion) {
+			delete state.questions[pane.pane_id];
+		}
     if (after !== "blocked") delete state.choices[pane.pane_id];
     else readChoices(pane.pane_id);
-    if (before === undefined) {
-      // First sight: an agent already done may have ended on a question.
-      if (after === "done") checkQuestion(pane.pane_id, paneName(view), ws, false);
+    if (before === undefined || isNewCompletion) {
+      // A new completion may arrive without a snapshot of the intervening work.
+			if (after === 'done') {
+				checkQuestion(pane.pane_id, paneName(view), ws, false, false, false, attentionKey(view));
+			}
       continue;
     }
     if (after === "blocked") {
@@ -740,7 +814,9 @@ function applySnapshot(snap: SessionSnapshot) {
     } else if ((after === "done" || after === "idle") && (before === "working" || before === "blocked")) {
       // Finished: look at how the answer ends before notifying ("a terminé" or the question).
       const away = !document.hasFocus() || state.selectedPaneId !== pane.pane_id;
-      checkQuestion(pane.pane_id, paneName(view), ws, away, after === "done" && away, true);
+			checkQuestion(
+				pane.pane_id, paneName(view), ws, away, after === 'done' && away, true, attentionKey(view),
+			);
     }
   }
 
@@ -760,8 +836,13 @@ function applySnapshot(snap: SessionSnapshot) {
 			}
 		}
 	}
-  state.snapshot = snap;
+	rawSnapshot = snap;
+  state.snapshot = FinishedStatus.apply(snap, state.dismissed);
+	if (isDismissalChanged) {
+		saveDismissed();
+	}
   fixSelection(snap);
+	pruneFinished();
 	if (pendingWorkspaceFocusId !== null
 		&& snap.workspaces.some((workspace) => workspace.workspace_id === pendingWorkspaceFocusId)) {
 		selectWorkspace(pendingWorkspaceFocusId);
@@ -901,6 +982,10 @@ export function selectWorkspaceAt(index: number) {
 }
 
 export function selectPane(p: PaneInfo) {
+	const view = allPanes.value.find((pane) => pane.pane_id === p.pane_id);
+	if (view?.agent_status === 'done') {
+		dismiss(view);
+	}
   state.selectedWorkspaceId = p.workspace_id;
   state.selectedTabId = p.tab_id;
   state.selectedPaneId = p.pane_id;

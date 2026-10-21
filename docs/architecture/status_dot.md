@@ -73,7 +73,7 @@ A pane that runs a plain terminal follows the same state machine, so that every 
 
 ## The status of a tab
 
-The status of a tab comes from the statuses of the panes of the tab. Herdr computes it, and Heidrun shows it in the tab bar (`TabBar.vue`). The status with the highest priority wins, in this order:
+The status of a tab comes from the statuses of the panes of the tab. Heidrun starts from the status computed by Herdr, applies the completion acknowledgements described below, and shows the resulting status in the tab bar (`TabBar.vue`). The status with the highest priority wins, in this order:
 
 1. Blocked
 2. Working
@@ -87,7 +87,7 @@ The status of a tab comes from the statuses of the panes of the tab. Herdr compu
 
 ## The status of a workspace
 
-The status of a workspace comes from the statuses of the tabs of the workspace, with the same priority as for a tab. Herdr computes it. Heidrun shows it before the name of each workspace in the information card of the workspace status bar section (`dotClassesOf` in `WorkspaceStatusSummary.vue`).
+The status of a workspace comes from the statuses of the tabs of the workspace, with the same priority as for a tab. Heidrun applies the same completion acknowledgements to the status computed by Herdr. Heidrun shows the resulting status before the name of each workspace in the information card of the workspace status bar section (`dotClassesOf` in `WorkspaceStatusSummary.vue`).
 
 A workspace in which no pane runs a coding agent shows the hollow ring in the place of a color.
 
@@ -100,12 +100,19 @@ The application has one status dot, before the name of the selected workspace in
 
 A coding agent in another workspace counts for the first rule only when its card is in the Needs you sidebar section (`otherWorkspaceStatus` in `session.ts`). A Finished card leaves the section and its pane becomes Idle when the configured delay expires, or the developer acknowledges or removes the Finished card, whichever happens first. The delay defaults to 15 minutes. A coding agent that works in another workspace does not change the dot. Removing a Blocked card does not answer the coding agent's question or permission request, and does not make the pane Idle.
 
-## Implementation differences to verify
+## Completion acknowledgements in Heidrun
 
-The rules above describe the agreed behavior. Issue 739 implements the colors and shapes above in the desktop window and mobile website. The following status transition behavior remains separate from the visual change.
+The desktop session store retains the raw Herdr snapshot for lifecycle tracking and publishes a displayed snapshot through `FinishedStatus` in `packages/apps/web_frontend/src/lib/finished_status.ts`. Hiding a Finished card or selecting its pane records the terminal identifier and completion sequence in the saved dismissal record. The timer records the same acknowledgement when the configured delay expires. The timer checks every Finished pane, including a pane whose card is not visible. The interval is 30 seconds, so automatic expiry can appear up to 30 seconds after the chosen delay.
 
-- The timer in `packages/apps/web_frontend/src/stores/session.ts` currently hides expired Finished cards and removes old activity entries. The timer does not change the pane status received from Herdr. Removing a card with `dismiss` also hides the card without requesting a status change from Herdr. Live testing with controlled status reports in Heidrun Development and Herdr 0.9.3 confirmed that removing a Finished card leaves the pane, tab, and workspace Finished. Explicitly focusing the test coding agent through Herdr changes the status to Idle. Automatic expiry after the configured delay remains unverified.
-- Issue 739 concerns consistent status colors and appearance. The Finished-to-Idle rules record the expected behavior; [issue 767](https://github.com/heidrun-org/heidrun/issues/767) tracks the confirmed card removal failure and verification of the other transitions.
+An acknowledged completion becomes Idle in both the pane and coding agent records of the displayed snapshot. Heidrun recalculates the affected tab and workspace statuses from their remaining panes in the priority order above. The application indicator and the macOS status item read the same displayed pane statuses. Raw snapshots remain unchanged, so another snapshot cannot restore an acknowledged completion or create a false work run. New completion sequences start a new delay even when the snapshots miss the intervening Working status. A pending read of a coding agent's output cannot restore an acknowledged card.
+
+Hiding a Blocked card does not change the Blocked status. A detected question is retained during automatic expiry because the question still needs an answer; selecting or hiding that card acknowledges the result in Heidrun.
+
+### Remaining differences from Herdr and unverified behavior
+
+Herdr 0.9.3 exposes acknowledgement through explicit focus, but exposes no separate acknowledgement request. Live controlled status reports confirmed that `agent.focus` changed `done` to `idle` while also changing focus. Heidrun therefore records acknowledgements locally rather than moving Herdr focus on card removal or automatic expiry. A direct Herdr read can still report `done` after Heidrun displays Idle, until Herdr itself acknowledges the result. Other Herdr clients and Heidrun Mobile retain the Herdr status; this desktop change does not rewrite the lifecycle report or synchronize acknowledgements to those clients.
+
+The plain-terminal state machine above remains the agreed behavior. Controlled coding agent status reports do not independently verify how Herdr detects an ordinary shell command ending.
 
 ## The levels together
 
@@ -122,6 +129,6 @@ Pane        ◀── the state machine of the pane
 | Dot | Where it shows | How its status is chosen |
 | --- | --- | --- |
 | Pane | The header of the pane (`PaneCard.vue`) | The state machine of the pane. |
-| Tab | The tab bar (`TabBar.vue`) | Herdr, from the panes of the tab. |
-| Workspace | The list of workspaces in the information card (`WorkspaceStatusSummary.vue`) | Herdr, from the tabs of the workspace. |
+| Tab | The tab bar (`TabBar.vue`) | Herdr pane statuses, with Heidrun completion acknowledgements applied. |
+| Workspace | The list of workspaces in the information card (`WorkspaceStatusSummary.vue`) | The pane statuses, with Heidrun completion acknowledgements applied. |
 | Application | The workspace status bar section (`WorkspaceStatusSummary.vue`) | Heidrun, from the cards of the Needs you sidebar section, then from the selected workspace. |

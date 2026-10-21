@@ -20,5 +20,7 @@ The packages that produce the application Heidrun. Nothing else lives here.
 
 - The file listing returns submodule folders separately from files and reads initialized submodules with their own ignore rules; the File explorer follows [the file rules](../../docs/agents_rules/user_interface/sidebars/files.md).
 
+- The web frontend keeps raw Herdr snapshots for lifecycle tracking and applies completion-specific acknowledgements through `FinishedStatus` before publishing the displayed snapshot; pane, tab, workspace, and application indicators read that displayed snapshot.
+
 ## Background
 - The folder `packages` was split into `apps` and `auxiliary` in [issue #120](https://github.com/heidrun-org/heidrun/issues/120).
