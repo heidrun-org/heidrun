@@ -9,6 +9,48 @@ Keep your agents working. Know which one needs you.
 
 This file gives the rules for working on this repository. The file `README.md` describes the application itself.
 
+## Installed Heidrun and Heidrun Development
+
+Heidrun and Heidrun Development are separate applications with separate permissions. Plain "Heidrun" means the installed application that the developer uses. Always write "Heidrun Development" in full when referring to the application used for development testing.
+
+| Application | Purpose | macOS application identifier | Permission for Codex |
+| --- | --- | --- | --- |
+| Heidrun | The installed application used by the developer | `dev.heidrun-org.heidrun` | Revoked. Codex must not control this application. |
+| Heidrun Development | The application built from the checkout or temporary worktree being tested | `dev.heidrun-org.heidrun.development` | Only development testing authorized by the developer. |
+
+The identifiers are defined in [tauri.conf.json](packages/apps/desktop_tauri/tauri.conf.json) and [tauri.development.conf.json](packages/apps/desktop_tauri/tauri.development.conf.json). Development identity is independent of Rust optimization settings: an optimized development build is still Heidrun Development.
+
+### Before application interaction
+
+- Select Heidrun Development by its exact application identifier or by the full path of the development application built from the intended checkout or temporary worktree. Verify both the application identifier and the checkout or temporary worktree before the first interaction. Verify that the returned window belongs to Heidrun Development before sending input.
+- Never select the installed application by the name "Heidrun" or by the identifier `dev.heidrun-org.heidrun`. Never launch, focus, click, type in, close, capture the window of, or change the settings, workspaces, tabs, or panes of the installed application for development testing. Do not access the installed application to test whether permission has been revoked.
+- A terminal running Codex inside installed Heidrun does not give Codex permission to control installed Heidrun. A similar appearance, the current working folder, a previous approval, and permission for Heidrun Development do not change this restriction.
+- If the correct Heidrun Development application or its window cannot be identified, stop application interaction. Never fall back to installed Heidrun.
+
+### Command-line access to Herdr
+
+The same restriction applies to command-line tools and direct socket requests. Never control the installed application's Herdr session as a substitute for controlling Heidrun Development.
+
+- Before any Herdr command or socket request, verify the resolved session and socket against the intended development application. Do not send discovery commands to an inherited session just because Codex is running inside Herdr.
+- Installed Heidrun normally uses the session `heidrun`. Heidrun Development in the main checkout normally uses `heidrun_development`. Heidrun Development in a temporary worktree uses a separate session derived from the worktree name. The selection rules are in [herdr.rs](packages/apps/desktop_tauri/src/herdr.rs).
+- Check environment overrides, including `HERDR_SOCKET_PATH`, `HERDR_SESSION`, and `HEIDRUN_DEVELOPMENT_SESSION`. The development application clears inherited Herdr variables at startup in [application_profile.rs](packages/apps/desktop_tauri/src/application_profile.rs); a separate command started by Codex can still inherit the installed application's variables.
+- For a verified development session, clear inherited `HERDR_SOCKET_PATH` and `HERDR_SESSION` from the environment of the command and pass the verified session explicitly with `herdr --session <verified-development-session> ...`. For a direct socket request, use only the verified development socket. Stop when the resolved destination is installed Heidrun or is uncertain.
+
+### Codex Computer Use permission
+
+Repository instructions and saved Codex permissions are separate. Editing this file does not revoke a saved application approval. Keep an explicit denial for installed Heidrun in the user's Codex configuration:
+
+```toml
+[computer_use.macos.bundle_ids]
+"dev.heidrun-org.heidrun" = "deny"
+```
+
+Merge this entry into any existing table without replacing unrelated settings. Do not add an approval for Heidrun Development as a side effect of denying installed Heidrun. The exact application identifier makes the rule specific to installed Heidrun. See the [official Codex configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
+If Heidrun remains listed under Always-allowed apps in Codex's Computer Use settings, remove that saved approval separately. Verify the saved rule through Codex configuration, and report any unresolved saved-approval removal or need to reload an existing Codex session. Do not claim that a configuration read proves that an already-running Computer Use session has reloaded the rule. Computer Use permissions do not block shell commands, so the Herdr restrictions above still apply.
+
+This restriction follows [issue 769](https://github.com/heidrun-org/heidrun/issues/769).
+
 ## Git submodules
 
 Clone Heidrun with its submodules:
