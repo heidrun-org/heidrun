@@ -2,7 +2,7 @@ import { reactive } from 'vue';
 
 /** The state of the composition bar that belongs to one pane. */
 export type CompositionBarState = {
-	/** True while the composition bar is open in its pane. A drop of images opens the composition bar. */
+	/** True while the composition bar is open in its pane. Only an open composition bar receives a drop of images. */
 	isOpen: boolean;
 	/** Absolute paths of the image files, in the order in which they were added. */
 	paths: string[];

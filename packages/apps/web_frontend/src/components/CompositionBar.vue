@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import Icon from "./Icon.vue";
 import PushToTalkButton from "./PushToTalkButton.vue";
 import VoiceLevel from "./VoiceLevel.vue";
+import { DropTarget } from "../lib/drop_target";
 import { ImageDrop, PASTE_DELAY_MS } from "../lib/image_drop";
 import { VoiceInput } from "../lib/voice_input";
 import { CompositionBar } from '../stores/composition_bar';
@@ -184,9 +185,10 @@ async function send() {
 
 <template>
   <div
-    class="composition-bar d-flex flex-column gap-3"
+    class="composition-bar position-relative d-flex flex-column gap-3"
     role="region"
     :aria-label="t('compositionBar.label')"
+    :data-composition-bar-pane-id="props.paneId"
     @keydown.esc="ImageDrop.close(props.paneId)"
   >
     <div v-if="compositionBar.paths.length > 0" class="thumbs d-flex flex-wrap align-items-center gap-2">
@@ -250,11 +252,13 @@ async function send() {
     >
       {{ voiceErrorText(voiceInput.error) }}
     </div>
+    <div v-if="DropTarget.state.hoveredPaneId === props.paneId" class="drop-feedback"></div>
   </div>
 </template>
 
 <style scoped>
 .composition-bar { flex: none; padding: 14px 16px; border-top: 1px solid var(--line); background: var(--raised); }
+.drop-feedback { position: absolute; inset: 0; pointer-events: none; border: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .thumb {
   position: relative; display: flex; align-items: center; justify-content: center; width: 144px; height: 96px; margin: 0; font-size: calc(var(--font-size) * 2.4);
   border: 1px solid var(--line-modal); border-radius: 6px; background: var(--field); color: var(--muted); overflow: hidden;

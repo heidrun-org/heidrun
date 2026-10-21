@@ -23,6 +23,7 @@ vi.mock("../stores/session", async (importOriginal) => {
 
 import CompositionBar from "./CompositionBar.vue";
 import { ImageDrop } from "../lib/image_drop";
+import { DropTarget } from "../lib/drop_target";
 import { LONG_PRESS_MILLISECONDS, VoiceInput } from "../lib/voice_input";
 import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
 import { settings } from "../stores/settings";
@@ -56,6 +57,32 @@ function mainRow(wrapper: ReturnType<typeof mountBar>): HTMLElement {
 }
 
 describe("CompositionBar", () => {
+	it("carries the identifier of its pane, so that a drop of files on it finds the pane", () => {
+		const wrapper = mountBar();
+		const originalElementFromPoint = document.elementFromPoint;
+		document.elementFromPoint = () => wrapper.find("textarea.text").element;
+		expect(wrapper.attributes("data-composition-bar-pane-id")).toBe("pane-1");
+		expect(DropTarget.paneIdAt({ x: 5, y: 5 }, 1)).toBe("pane-1");
+		document.elementFromPoint = originalElementFromPoint;
+		wrapper.unmount();
+	});
+
+	it("shows that a drop goes to this composition bar only while its pane is the one under the drag", async () => {
+		const wrapper = mountBar();
+		expect(wrapper.find(".drop-feedback").exists()).toBe(false);
+		DropTarget.state.hoveredPaneId = "pane-2";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".drop-feedback").exists()).toBe(false);
+		DropTarget.state.hoveredPaneId = "pane-1";
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".drop-feedback").exists()).toBe(true);
+		expect(wrapper.find(".drop-feedback").text()).toBe("");
+		DropTarget.clearHover();
+		await wrapper.vm.$nextTick();
+		expect(wrapper.find(".drop-feedback").exists()).toBe(false);
+		wrapper.unmount();
+	});
+
 	it("shows one picture for each image, with no text that counts them", async () => {
 		ImageDrop.handleDrop('pane-1', ["/shots/a.png", "/shots/b.png"]);
 		const wrapper = mountBar();
