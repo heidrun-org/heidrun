@@ -28,6 +28,7 @@ import {
   visibleRows,
   type TreeRow,
 } from "../stores/files";
+import { FileViewPanes } from "../stores/file_view_panes";
 import { state, toast } from "../stores/session";
 import { settings } from "../stores/settings";
 import { fileIconName } from "../lib/chat_files";
@@ -305,7 +306,18 @@ function chooseRow(row: TreeRow) {
     toggleFolder(row);
     return;
   }
-  void openFiles(files.root, { path: row.path });
+  void openFileInPane(row.path);
+}
+
+/**
+ * Shows a file in a file view pane, read only. Without a selected pane to put it next to, the Files window opens the file.
+ * Issue: https://github.com/heidrun-org/heidrun/issues/714
+ */
+async function openFileInPane(path: string) {
+  if (await FileViewPanes.open(`${files.root}/${path}`)) {
+    return;
+  }
+  await openFiles(files.root, { path });
 }
 
 /** The context menu of a file row or a folder row: the relative path, and where the pointer was. Null when closed. */

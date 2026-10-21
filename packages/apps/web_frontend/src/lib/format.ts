@@ -1,6 +1,7 @@
 import type { AgentInfo, AgentStatus, CodexUsage, LimitWindow, PaneInfo, QuotaBlock } from "./types";
 import { locale, t } from "../i18n/index";
 import { settings } from "../stores/settings";
+import { FileViewLabel } from "./file_view_label";
 
 /** The text of an agent status, in the language in use. */
 export function statusLabel(status: AgentStatus): string {
@@ -30,7 +31,7 @@ export function paneDynamicName(p: PaneInfo | AgentInfo): string {
 }
 
 export function paneName(p: PaneInfo | AgentInfo): string {
-  return p.label || paneDynamicName(p);
+  return FileViewLabel.fileName(p.label) ?? (p.label || paneDynamicName(p));
 }
 
 export function isAgent(p: PaneInfo): boolean {

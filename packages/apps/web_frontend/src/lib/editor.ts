@@ -3,6 +3,7 @@ import { EditorView, keymap } from "@codemirror/view";
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { basicSetup } from "codemirror";
 import { indentWithTab } from "@codemirror/commands";
+import { openSearchPanel } from "@codemirror/search";
 import { HighlightStyle, StreamLanguage, syntaxHighlighting, type LanguageSupport, type StreamParser } from "@codemirror/language";
 import { tags as t } from "@lezer/highlight";
 
@@ -100,13 +101,24 @@ export interface Editor {
   setWrap(on: boolean): void;
   setDark(dark: boolean): void;
   focus(): void;
+  /** Opens the search panel of the editor, as the key ⌘F does. */
+  openSearch(): void;
   goToLine(line: number): void;
   destroy(): void;
 }
 
 export async function createEditor(
   parent: HTMLElement,
-  opts: { text: string; path: string; wrap: boolean; dark: boolean; onChange: (text: string) => void; onSave: () => void },
+  opts: {
+    text: string;
+    path: string;
+    wrap: boolean;
+    dark: boolean;
+    /** True: the text cannot change, and the search (⌘F) still works. */
+    readOnly?: boolean;
+    onChange: (text: string) => void;
+    onSave: () => void;
+  },
 ): Promise<Editor> {
   const wrap = new Compartment();
   const lang = new Compartment();
@@ -122,6 +134,7 @@ export async function createEditor(
           indentWithTab,
         ]),
         syntaxHighlighting(style),
+        EditorState.readOnly.of(opts.readOnly === true),
         colors.of(themeFor(opts.dark)),
         wrap.of(opts.wrap ? EditorView.lineWrapping : []),
         lang.of([]),
@@ -154,6 +167,10 @@ export async function createEditor(
     setWrap: (on) => view.dispatch({ effects: wrap.reconfigure(on ? EditorView.lineWrapping : []) }),
     setDark: (dark) => view.dispatch({ effects: colors.reconfigure(themeFor(dark)) }),
     focus: () => view.focus(),
+    openSearch: () => {
+      view.focus();
+      openSearchPanel(view);
+    },
     goToLine: (n) => {
       const line = view.state.doc.line(Math.min(Math.max(1, n), view.state.doc.lines));
       view.dispatch({ selection: { anchor: line.from }, effects: EditorView.scrollIntoView(line.from, { y: "center" }) });

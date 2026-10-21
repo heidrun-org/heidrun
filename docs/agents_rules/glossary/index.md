@@ -1,15 +1,15 @@
 # Glossary of Heidrun index
 
 - Created: 14 October 2026
-- Last updated: 19 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 694](https://github.com/heidrun-org/heidrun/issues/694)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 694](https://github.com/heidrun-org/heidrun/issues/694), [issue 714](https://github.com/heidrun-org/heidrun/issues/714)
 
 This file lists the files of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [workspaces_tabs_and_panes.md](workspaces_tabs_and_panes.md): the workspace, the workspace folder, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
+- [workspaces_tabs_and_panes.md](workspaces_tabs_and_panes.md): the workspace, the workspace folder, the tab, the pane, the file view pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
 - [sidebars.md](sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
 - [chats.md](chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
 - [coding_agent_configuration.md](coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item.

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import TerminalView from "./TerminalView.vue";
+import FileView from "./FileView.vue";
 import ConfirmButton from "./ConfirmButton.vue";
 import Icon from "./Icon.vue";
 import InlineRename from "./InlineRename.vue";
@@ -15,6 +16,7 @@ import { settings } from "../stores/settings";
 import { mosaic } from "../stores/mosaic";
 import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
 import { ImageDrop } from "../lib/image_drop";
+import { FileViewLabel } from "../lib/file_view_label";
 import { paneDynamicName, paneName, shortPath } from "../lib/format";
 import { pinText } from "../stores/notes";
 import { ZenMode } from "../stores/zen_mode";
@@ -58,11 +60,14 @@ const status = computed(() => (props.pane.agent ? props.pane.agent_status : "pro
 const ctx = computed(() => contextFor(props.pane));
 const shellFolder = computed(() => props.pane.foreground_cwd || props.pane.cwd || "");
 const displayName = computed(() => paneName(props.pane));
+// A file view pane shows a file, read only, in place of its terminal. The label of the pane holds the absolute path of the file.
+const fileViewPath = computed(() => FileViewLabel.parse(props.pane.label));
 function closePaneFromHeader() {
   closePane(props.pane.pane_id);
 }
 const subtitle = computed(() => {
   const p = props.pane;
+  if (fileViewPath.value !== null) return shortPath(fileViewPath.value);
   if (props.isInColumnOfPinnedPanes) return paneFullName(p);
   if (p.agent) return `${p.agent} · ${p.pane_id}`;
   const branch = git.branchByFolder[shellFolder.value];
@@ -91,12 +96,14 @@ const subtitle = computed(() => {
         @save="(v) => finishRename('pane', pane.pane_id, v)"
         @cancel="state.renaming = null"
       />
+      <span v-else-if="fileViewPath !== null" class="name" :title="fileViewPath">{{ displayName }}</span>
       <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
       <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
         <button
+          v-if="fileViewPath === null"
           class="btn icon small tool"
           :class="{ on: compositionBar.isOpen }"
           :aria-pressed="compositionBar.isOpen"
@@ -107,7 +114,7 @@ const subtitle = computed(() => {
         >
           <Icon name="input-cursor-text" />
         </button>
-        <MacroMenu :pane-id="pane.pane_id" />
+        <MacroMenu v-if="fileViewPath === null" :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
           <button class="btn icon small tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button
@@ -168,7 +175,9 @@ const subtitle = computed(() => {
         />
       </span>
     </header>
+    <FileView v-if="fileViewPath !== null" :pane="pane" />
     <TerminalView
+      v-else
       :key="pane.terminal_id"
       :terminal-id="pane.terminal_id"
       :pane-id="pane.pane_id"
@@ -177,7 +186,7 @@ const subtitle = computed(() => {
       :focused="selected"
       @pin="(text) => pinText(text, pane)"
     />
-    <CompositionBar v-if="compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
+    <CompositionBar v-if="fileViewPath === null && compositionBar.isOpen" :pane-id="pane.pane_id" @sent="focusTerminal" />
   </section>
 </template>
 
