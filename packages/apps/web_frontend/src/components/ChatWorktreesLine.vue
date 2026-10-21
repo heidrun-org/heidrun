@@ -203,8 +203,6 @@ watch(() => shown.value.listed.map((worktree) => worktree.folder).join("\n"), ch
 <style scoped>
 .worktree-names { min-width: 0; overflow-wrap: anywhere; }
 .worktrees-list { max-height: 50vh; overflow-y: auto; }
-.worktrees-list .btn { --btn-hover-bg: var(--bg-2); --btn-active-bg: var(--bg-2); }
-.worktrees-list .btn:disabled { opacity: 0.45; }
 .worktree-text { flex: 1 1 0; min-width: 0; }
 .detail { font-size: 0.85em; }
 </style>

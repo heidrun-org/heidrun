@@ -64,12 +64,12 @@ function close() {
 
 <style scoped>
 .overlay {
-  position: fixed; inset: 0; z-index: 65; background: rgba(0, 0, 0, 0.55);
+  position: fixed; inset: 0; z-index: 65; background: var(--overlay);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .window-box {
   width: min(520px, 100%); max-height: 100%; overflow-y: auto; padding: 22px; border-radius: 14px; background: var(--panel);
-  border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); user-select: text;
+  border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow); user-select: text;
 }
 h2, h3 { font-size: var(--font-size); font-weight: 600; }
 .command { display: block; background: var(--field); color: var(--text); user-select: all; word-break: break-all; }

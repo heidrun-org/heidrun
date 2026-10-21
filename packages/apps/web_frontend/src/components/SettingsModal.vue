@@ -5,6 +5,7 @@ import Icon from "./Icon.vue";
 import SettingsAgentsSection from "./settings/SettingsAgentsSection.vue";
 import SettingsConfirmationsSection from "./settings/SettingsConfirmationsSection.vue";
 import SettingsDynamicTopicsSection from "./settings/SettingsDynamicTopicsSection.vue";
+import SettingsDesignSection from './settings/settings_design_section.vue';
 import SettingsGeneralSection from "./settings/SettingsGeneralSection.vue";
 import SettingsGuardsSection from "./settings/SettingsGuardsSection.vue";
 import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.vue";
@@ -18,6 +19,7 @@ import { t } from "../i18n/index";
 
 const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
+  { id: "designReview", icon: "palette", labelKey: "settingsModal.designReview" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
   { id: "confirmations", icon: "shield-check", labelKey: "settingsModal.confirmations" },
@@ -64,7 +66,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             v-for="s in SECTIONS"
             :key="s.id"
             type="button"
-            class="nav-link justify-content-start"
+            class="navigation-action nav-link justify-content-start"
             :class="{ active: settingsModal.section === s.id }"
             :aria-current="settingsModal.section === s.id ? 'page' : undefined"
             @click="settingsModal.section = s.id"
@@ -76,6 +78,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <section class="flex-fill overflow-y-auto d-flex flex-column gap-3">
           <h3 class="m-0 fw-semibold">{{ t(SECTIONS.find((s) => s.id === settingsModal.section)?.labelKey ?? "settingsModal.title") }}</h3>
           <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
+          <SettingsDesignSection v-else-if="settingsModal.section === 'designReview'" />
           <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
           <SettingsConfirmationsSection v-else-if="settingsModal.section === 'confirmations'" />
@@ -92,5 +95,5 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); }
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--overlay); }
 </style>

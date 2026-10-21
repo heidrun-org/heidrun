@@ -406,16 +406,6 @@ const VIEWS = [
 .chat-topics .badge.is-selected { --badge-color: var(--bg-body); background-color: var(--fg-body); }
 .chat-actions .btn { height: 26px; --btn-padding-x: 8px; }
 .chat-summary { margin-top: 6px; gap: 4px; }
-.btn-check:has(input:checked) {
-  --btn-color: var(--text);
-  --btn-hover-color: var(--text);
-  --btn-active-color: var(--text);
-  --btn-hover-bg: var(--bg-2);
-  --btn-active-bg: var(--bg-2);
-}
-.btn-check:has(input:focus-visible) { outline: 2px solid var(--done); outline-offset: 1px; }
-.btn-check:has(input:disabled) { opacity: 0.45; }
 .chat-summary { margin-top: 2px; font-size: 0.85em; width: fit-content; max-width: 100%; }
-.btn:disabled:not([aria-busy="true"]) { opacity: 0.45; }
 .busy-spinner { --spinner-width: 0.75rem; --spinner-height: 0.75rem; --spinner-border-width: 0.15em; }
 </style>

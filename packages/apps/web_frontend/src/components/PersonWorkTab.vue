@@ -669,7 +669,7 @@ watch(
             <div class="d-flex align-items-center gap-2">
               <span class="form-text">{{ t("statisticsModal.personWorkSourceLabel") }}</span>
               <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkSourceLabel')">
-                <label v-for="choice in SOURCE_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                <label v-for="choice in SOURCE_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
                   <input
                     :id="`statistics-person-source-${choice.id}`"
                     v-model="sourceId"
@@ -692,7 +692,7 @@ watch(
           <div v-if="sourceId === 'git_history'" class="d-flex align-items-center gap-2">
             <span class="form-text">{{ t("statisticsModal.personWorkMetricLabel") }}</span>
             <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkMetricLabel')">
-              <label v-for="choice in METRIC_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+              <label v-for="choice in METRIC_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
                 <input
                   :id="`statistics-person-metric-${choice.id}`"
                   v-model="metricId"
@@ -708,7 +708,7 @@ watch(
           <div v-if="sourceId === 'ai_cost'" class="d-flex align-items-center gap-2">
             <span class="form-text">{{ t("statisticsModal.personWorkUnitLabel") }}</span>
             <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkUnitLabel')">
-              <label v-for="choice in UNIT_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+              <label v-for="choice in UNIT_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
                 <input
                   :id="`statistics-person-unit-${choice.id}`"
                   v-model="unitId"
@@ -730,7 +730,7 @@ watch(
                 <label
                   v-for="hours in slotHoursChoices"
                   :key="hours"
-                  class="btn-check btn-outline theme-secondary"
+                  class="btn btn-check btn-outline theme-secondary"
                   :title="t('statisticsModal.slotTitle', { slotLength: SlotText.length(hours) })"
                 >
                   <input
@@ -748,7 +748,7 @@ watch(
             <div class="d-flex align-items-center gap-2">
               <span class="form-text">{{ t("statisticsModal.rangeLabel") }}</span>
               <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.rangeLabel')">
-                <label v-for="choice in PERIOD_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+                <label v-for="choice in PERIOD_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
                   <input
                     :id="`statistics-person-period-${choice.id}`"
                     v-model="periodId"
@@ -765,7 +765,7 @@ watch(
           <div class="d-flex flex-wrap align-items-center gap-2 ms-auto">
             <span class="form-text">{{ t("statisticsModal.workspacesLabel") }}</span>
             <div class="btn-group btn-group-sm" role="group" :aria-label="t('statisticsModal.personWorkWorkspacesEveryLabel')">
-              <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesAllTitle')">
+              <label class="btn btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesAllTitle')">
                 <input
                   id="statistics-person-workspace-all"
                   type="radio"
@@ -776,7 +776,7 @@ watch(
                 />
                 {{ t("statisticsModal.personWorkWorkspacesAllButton") }}
               </label>
-              <label class="btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesNoneTitle')">
+              <label class="btn btn-check btn-outline theme-secondary" :title="t('statisticsModal.personWorkWorkspacesNoneTitle')">
                 <input
                   id="statistics-person-workspace-none"
                   type="radio"
@@ -792,7 +792,7 @@ watch(
               <label
                 v-for="workspace in openWorkspaces"
                 :key="workspace.workspaceId"
-                class="btn-check btn-outline theme-secondary"
+                class="btn btn-check btn-outline theme-secondary"
                 :title="t('statisticsModal.personWorkWorkspaceTitle', { folder: workspace.folder })"
               >
                 <input

@@ -134,7 +134,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, 0.55); }
-/* The application shows no pressed look on a button, so the chosen tab button gets the fill of a checked button of a radio group. */
-.btn-group > .btn.active { background-color: oklch(from var(--theme-bg) calc(l * 0.9) calc(c * 1.15) h); }
+.overlay { position: fixed; inset: 0; z-index: 59; background: var(--overlay); }
 </style>

@@ -171,12 +171,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.history-button {
-  --btn-padding-x: 0;
-  --btn-border-width: 0;
-  --btn-color: var(--muted);
-  --btn-hover-color: var(--text);
-  --btn-disabled-color: var(--faint);
-  width: 30px;
-}
+.history-button { width: 30px; }
 </style>

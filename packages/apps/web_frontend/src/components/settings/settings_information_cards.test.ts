@@ -1,6 +1,9 @@
+import Fs from 'node:fs';
+import Path from 'node:path';
 import { enableAutoUnmount, flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Component } from 'vue';
+import SettingsDesignSection from './settings_design_section.vue';
 import SettingsAgentsSection from './SettingsAgentsSection.vue';
 import SettingsConfirmationsSection from './SettingsConfirmationsSection.vue';
 import SettingsDynamicTopicsSection from './SettingsDynamicTopicsSection.vue';
@@ -57,6 +60,11 @@ class SettingsInformationCardsTestHelper {
 			name: 'General',
 			component: SettingsGeneralSection,
 			optionList: ['language', 'timeFormat', 'workingDays', 'goatSound'],
+		},
+		{
+			name: 'Color teams',
+			component: SettingsDesignSection,
+			optionList: ['colorTeam'],
 		},
 		{
 			name: 'Terminal',
@@ -222,3 +230,8 @@ describe('the information cards of the Settings window (issue #608)', () => {
 		});
 	}
 });
+
+// Vitest omits CSS imports by default; use the real stylesheet for the runtime palette.
+vi.mock('../../styles.css?raw', () => ({
+	default: Fs.readFileSync(Path.resolve(import.meta.dirname, '../../styles.css'), 'utf8'),
+}));

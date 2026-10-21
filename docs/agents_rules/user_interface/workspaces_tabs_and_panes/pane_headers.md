@@ -1,7 +1,7 @@
 # User interface of Heidrun: pane headers
 
 - Created: 19 October 2026
-- Last updated: 19 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Panes](panes.md)
@@ -17,7 +17,7 @@ This file gives the rules of the pane header, its buttons, and its usage wheel.
 
 ## Pane header colors and usage wheel
 
-- When the viewport shows several panes, the selected pane has a tinted header (`--pane-head-selected`), while other panes use muted names (`--muted`) and faint folders (`--faint`). A viewport with one pane has no selection highlight. The state ring is unchanged. A blocked pane keeps its red header and text. This works in both themes and in the grid and the column of pinned panes ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
+- When the viewport shows several panes, the selected pane has a tinted header (`--pane-head-selected`), while other panes use muted names and folders (`--muted`), using the readable secondary text color of the shared design rules. A viewport with one pane has no selection highlight. The state ring is unchanged. A blocked pane keeps its red header and text. This works in both themes and in the grid and the column of pinned panes ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
 
 - The header of a pane shows the context window of the coding agent as a usage wheel, and only as a usage wheel: no word "context", no bar, and no number beside it. The usage wheel is a circle of 22 pixels that fills like a ring, from the top, clockwise. It has the three colors of the usage bars: normal below 60 percent, warning from 60 to 80 percent, and critical above 80 percent. A pane whose coding agent has no known context window has no usage wheel ([issue 475](https://github.com/heidrun-org/heidrun/issues/475)).
 

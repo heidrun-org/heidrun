@@ -60,7 +60,7 @@ const MOUSE_HELP_BLOCKS = [
         <SettingsOptionHelp title-key="fontMenu.mouseLabel" :blocks="MOUSE_HELP_BLOCKS" />
       </div>
       <div class="btn-group" role="group" :aria-label="t('fontMenu.mouseLabel')">
-        <label v-for="mode in MOUSE_MODES" :key="mode.id" class="btn-check btn-outline theme-secondary" :title="t(mode.titleKey)">
+        <label v-for="mode in MOUSE_MODES" :key="mode.id" class="btn btn-check btn-outline theme-secondary" :title="t(mode.titleKey)">
           <input v-model="settings.mouseMode" type="radio" name="mouse-mode" autocomplete="off" :value="mode.id" />
           {{ t(mode.labelKey) }}
         </label>

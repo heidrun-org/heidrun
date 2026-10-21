@@ -177,7 +177,7 @@ function onEnter(event: KeyboardEvent, agent: AgentDefinition) {
         <label
           v-for="command in availableCommands"
           :key="command.id"
-          class="btn-check btn-outline theme-secondary"
+          class="btn btn-check btn-outline theme-secondary"
           :title="t(command.titleKey)"
         >
           <input v-model="settings.newTabCommand" type="radio" name="new-tab-command" autocomplete="off" :value="command.id" />

@@ -287,7 +287,7 @@ watch(isRenaming, (renaming) => {
     >
       <div class="popover-arrow position-absolute ms-3"></div>
       <div class="popover-body d-flex flex-column gap-2 overflow-y-auto" :style="{ maxHeight: '70vh' }">
-        <h2 class="workspace-card-title">{{ t("workspaceStatusSummary.workspaceTitle") }}</h2>
+        <h2 class="h6 mb-0 fw-semibold workspace-card-title">{{ t("workspaceStatusSummary.workspaceTitle") }}</h2>
         <div v-if="detailRows.length > 0" class="d-flex flex-column gap-2" data-field="details">
           <div v-for="row in detailRows" :key="row.field" class="detail-row d-flex justify-content-between gap-3">
             <span class="text-body-secondary flex-shrink-0">{{ row.name }}</span>
@@ -355,14 +355,14 @@ watch(isRenaming, (renaming) => {
               <span class="row-actions">
                 <button
                   type="button"
-                  class="row-button"
+                  class="btn icon small row-button"
                   :aria-label="t('workspaceStatusSummary.rename', { name: workspace.label })"
                   :title="t('workspaceStatusSummary.rename', { name: workspace.label })"
                   @click.stop="renameFromList(workspace.workspace_id)"
                 ><Icon name="pencil" /></button>
                 <button
                   type="button"
-                  class="row-button"
+                  class="btn icon small row-button"
                   :aria-label="t('workspaceStatusSummary.close', { name: workspace.label })"
                   :title="t('workspaceStatusSummary.close', { name: workspace.label })"
                   @click.stop="askClose(workspace)"
@@ -407,19 +407,16 @@ watch(isRenaming, (renaming) => {
   display: flex; align-items: center; gap: 8px; color: var(--text-2); font-weight: 600;
 }
 .workspace-rename { width: 180px; height: 26px; }
-.workspace-card-title { margin: 0; font-size: calc(var(--font-size) * 1.05); font-weight: 600; }
 .detail-row { min-width: 0; }
 .detail-value { min-width: 0; }
 .detail-value > [data-field="folder"] { min-width: 0; }
-.copy-detail-button { flex: 0 0 auto; padding: 1px 5px; line-height: 1.2; }
+.copy-detail-button { flex: 0 0 auto; }
 .workspace-status > .popover { cursor: default; }
 .workspace-status > .popover .btn:not(:disabled) { cursor: pointer; }
-.workspace-status > .popover .btn:disabled { cursor: default; pointer-events: none; color: var(--muted); opacity: 0.65; }
-.workspace-status > .popover .btn:disabled:hover { background: transparent; }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .workspace-main > .name { flex: 1; }
 .workspace-row { min-height: 32px; border-radius: 6px; }
-.workspace-main { flex: 1; min-width: 0; align-self: stretch; background: transparent; }
+.workspace-main { flex: 1; min-width: 0; align-self: stretch; }
 .workspace-branch {
   display: flex; align-items: center; gap: 4px; flex: 0 1 auto; min-width: 0; max-width: 50%; margin-left: auto;
   overflow: hidden; color: var(--muted); font-size: calc(var(--font-size) * 0.8); font-weight: 400; line-height: 1.2;
@@ -433,11 +430,7 @@ watch(isRenaming, (renaming) => {
 }
 .workspace-row.active .row-actions { background: var(--hover); }
 .workspace-row:hover .row-actions, .workspace-row:focus-within .row-actions { display: flex; }
-.row-button {
-  display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0; border: none;
-  border-radius: 6px; background: transparent; color: var(--muted); font-size: var(--font-size); line-height: 1;
-}
-.row-button:hover { background: var(--hover); color: var(--text); }
+.row-button { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; }
 .workspace-row.dragging { opacity: 0.4; }
 .workspace-row.drop-before::before, .workspace-row.drop-after::after {
   content: ""; position: absolute; left: 6px; right: 6px; height: 2px; border-radius: 1px; background: var(--done);

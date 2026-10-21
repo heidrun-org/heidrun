@@ -34,15 +34,15 @@ const hintParts = computed(() =>
 
 <style scoped>
 .overlay {
-  position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
+  position: fixed; inset: 0; z-index: 60; background: var(--overlay);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .window-box {
   width: min(620px, 100%); padding: 22px; border-radius: 14px; background: var(--panel);
-  border: 1px solid #5c2826; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--pane-ring-blocked); box-shadow: 0 24px 64px var(--shadow);
   display: flex; flex-direction: column; gap: 12px;
 }
-.eyebrow { color: var(--blocked); }
+.eyebrow { color: var(--blocked-text); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .why { margin: 0; color: var(--text-2); font-size: var(--font-size); }
 .description { margin: 0; color: var(--muted); font-size: var(--font-size); white-space: pre-wrap; }
@@ -53,6 +53,4 @@ h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
 .change-guard { margin-right: auto; }
-.btn.danger { background: #a83a36; border-color: transparent; color: #fff; font-weight: 600; }
-.btn.danger:hover { background: #c0433e; }
 </style>

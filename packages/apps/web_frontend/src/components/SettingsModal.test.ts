@@ -22,22 +22,22 @@ beforeEach(() => {
 });
 
 describe("SettingsModal: sections", () => {
-  it("lists the ten sections in the sidebar, by topic (issues #556, #596, and #662), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
+  it("lists the eleven sections in the sidebar, by topic (issues #556, #596, and #662), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access", "Voice input"]);
+    expect(entries).toEqual(["General", "Color teams", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access", "Voice input"]);
     wrapper.unmount();
   });
 
   it("marks the open section as the active link of the Bootstrap nav, and moves the mark when another link is clicked", async () => {
     const wrapper = await mountSettings();
     const links = wrapper.findAll("nav .nav-link");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false]);
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([true, false, false, false, false, false, false, false, false, false, false]);
     expect(links[0].attributes("aria-current")).toBe("page");
-    await links[3].trigger("click");
+    await links[4].trigger("click");
     expect(wrapper.get("h3").text()).toBe("Confirmations");
-    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, true, false, false, false, false, false, false]);
-    expect(links[3].attributes("aria-current")).toBe("page");
+    expect(links.map((link) => link.classes().includes("active"))).toEqual([false, false, false, false, true, false, false, false, false, false, false]);
+    expect(links[4].attributes("aria-current")).toBe("page");
     expect(links[0].attributes("aria-current")).toBeUndefined();
     wrapper.unmount();
   });
@@ -250,10 +250,43 @@ describe("SettingsModal: heading Needs you of the section Sidebars (issues #417 
   it("uses a different icon for the section Sidebars than for the section Notifications, because the bell is the icon of the Needs you sidebar section", async () => {
     const wrapper = await mountSettings();
     const icons = wrapper.findAll("nav .nav-link").map((entry) => entry.get("i").classes().find((name) => name.startsWith("bi-")));
-    const sidebarsIcon = icons[6];
-    const notificationsIcon = icons[5];
+    const sidebarsIcon = icons[7];
+    const notificationsIcon = icons[6];
     expect(sidebarsIcon).toBe("bi-layout-sidebar-inset-reverse");
     expect(notificationsIcon).toBe("bi-bell");
     wrapper.unmount();
+  });
+});
+
+describe('SettingsModal: Color teams', () => {
+  it('applies a named colour team throughout the application and remembers it after closing Settings', async () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener: () => {},
+    }));
+    const { settings, settingsModal } = await import('../stores/settings');
+    await import('../stores/theme');
+    const { ThemePalette } = await import('../design/theme_palette');
+    settings.theme = 'light';
+    settingsModal.section = 'designReview';
+    let wrapper = await mountSettings();
+    expect(wrapper.get('h3').text()).toBe('Color teams');
+    expect(wrapper.text()).toContain('Cool blue actions, links, and selections.');
+    const oceanTeam = wrapper.findAll('[data-option="colorTeam"] button').find((button) => button.text().includes('Ocean'));
+    expect(oceanTeam).toBeDefined();
+    await oceanTeam?.trigger('click');
+    expect(document.documentElement.style.getPropertyValue('--action-bg')).toBe('#145bb8');
+    expect(document.documentElement.style.getPropertyValue('--link')).toBe('#175caa');
+    expect(document.documentElement.style.getPropertyValue('--working')).toBe('');
+    wrapper.unmount();
+    settings.theme = 'dark';
+    await flushPromises();
+    wrapper = await mountSettings();
+    expect(ThemePalette.state.mode).toBe('dark');
+    expect(ThemePalette.selectedTeam.value).toBe('ocean');
+    expect(document.documentElement.style.getPropertyValue('--action-bg')).toBe('#2767c8');
+    expect(wrapper.findAll('[data-option="colorTeam"] button')[1].attributes('aria-pressed')).toBe('true');
+    wrapper.unmount();
+    vi.unstubAllGlobals();
   });
 });

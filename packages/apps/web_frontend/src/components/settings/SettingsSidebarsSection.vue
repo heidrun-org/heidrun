@@ -67,7 +67,7 @@ const GIT_FETCH_HELP_BLOCKS = [
           <SettingsOptionHelp title-key="fontMenu.finishedLabel" :blocks="FINISHED_HELP_BLOCKS" />
         </div>
         <div class="btn-group" role="group" :aria-label="t('fontMenu.finishedLabel')">
-          <label v-for="o in TTL_OPTIONS" :key="o.v" class="btn-check btn-outline theme-secondary" :title="t('fontMenu.finishedTitle')">
+          <label v-for="o in TTL_OPTIONS" :key="o.v" class="btn btn-check btn-outline theme-secondary" :title="t('fontMenu.finishedTitle')">
             <input v-model="settings.finishedTtl" type="radio" name="finished-ttl" autocomplete="off" :value="o.v" />
             {{ t(o.labelKey) }}
           </label>
@@ -83,7 +83,7 @@ const GIT_FETCH_HELP_BLOCKS = [
           <SettingsOptionHelp title-key="settingsPastChats.refreshLabel" :blocks="CHATS_REFRESH_HELP_BLOCKS" />
         </div>
         <div class="btn-group" role="group" :aria-label="t('settingsPastChats.refreshLabel')">
-          <label v-for="choice in REFRESH_CHOICES" :key="choice.seconds" class="btn-check btn-outline theme-secondary">
+          <label v-for="choice in REFRESH_CHOICES" :key="choice.seconds" class="btn btn-check btn-outline theme-secondary">
             <input v-model="settings.chatsRefreshSeconds" type="radio" name="chats-refresh-seconds" autocomplete="off" :value="choice.seconds" />
             {{ t(choice.labelKey) }}
           </label>
@@ -99,7 +99,7 @@ const GIT_FETCH_HELP_BLOCKS = [
           <SettingsOptionHelp title-key="settingsGeneral.gitFetchLabel" :blocks="GIT_FETCH_HELP_BLOCKS" />
         </div>
         <div class="btn-group" role="group" :aria-label="t('settingsGeneral.gitFetchLabel')">
-          <label v-for="choice in GIT_FETCH_CHOICES" :key="choice.minutes" class="btn-check btn-outline theme-secondary">
+          <label v-for="choice in GIT_FETCH_CHOICES" :key="choice.minutes" class="btn btn-check btn-outline theme-secondary">
             <input v-model="settings.gitFetchMinutes" type="radio" name="git-fetch-minutes" autocomplete="off" :value="choice.minutes" />
             {{ t(choice.labelKey) }}
           </label>

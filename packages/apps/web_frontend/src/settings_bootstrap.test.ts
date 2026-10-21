@@ -19,6 +19,7 @@ class SettingsBootstrapTestHelper {
 	 */
 	static readonly FILE_NAMES = [
 		'SettingsModal.vue',
+		'settings/settings_design_section.vue',
 		'settings/SettingsAgentsSection.vue',
 		'settings/SettingsConfirmationsSection.vue',
 		'settings/SettingsDynamicTopicsSection.vue',
@@ -125,13 +126,13 @@ describe('the Settings window (issue 412)', () => {
 		expect(checkedCount).toBeGreaterThanOrEqual(4);
 	});
 
-	it('gives every button a Bootstrap class: btn, btn-close, or nav-link', () => {
+	it('gives every button a Bootstrap class: btn, btn-close, nav-link, or list-group-item', () => {
 		let checkedCount = 0;
 		for (const fileName of SettingsBootstrapTestHelper.FILE_NAMES) {
 			const sourceText = SettingsBootstrapTestHelper.readComponent(fileName);
 			for (const tag of SettingsBootstrapTestHelper.listOpeningTags(sourceText, 'button')) {
 				checkedCount += 1;
-				expect({ fileName, tag, hasBootstrapClass: /class="[^"]*\b(btn|btn-close|nav-link)\b/.test(tag) }).toEqual({
+				expect({ fileName, tag, hasBootstrapClass: /class="[^"]*\b(btn|btn-close|nav-link|list-group-item)\b/.test(tag) }).toEqual({
 					fileName,
 					tag,
 					hasBootstrapClass: true,

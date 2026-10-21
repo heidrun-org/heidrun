@@ -330,7 +330,7 @@ describe("EmptyTabScreen", () => {
   });
   it("keeps the dark colors in the dark theme, and takes the background, the text, and the title colors of the light theme", () => {
     const source = Fs.readFileSync(Path.join(import.meta.dirname, "EmptyTabScreen.vue"), "utf8");
-    expect(source).toMatch(/\.empty-tab-screen\s*{[^}]*--screen-background:\s*#0b0c0e;[^}]*--joke-color:\s*#fff;/);
+    expect(source).toMatch(/\.empty-tab-screen\s*{[^}]*--screen-background:\s*var\(--illustration-bg\);[^}]*--joke-color:\s*var\(--illustration-text\);/);
     expect(source).toMatch(
       /:root\[data-theme="light"\]\s+\.empty-tab-screen\s*{[^}]*--screen-background:\s*var\(--bg\);[^}]*--title-color:\s*var\(--accent\);[^}]*--joke-color:\s*var\(--text\);/,
     );

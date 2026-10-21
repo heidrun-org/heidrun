@@ -942,8 +942,8 @@ onBeforeUnmount(() => {
       @mousedown.stop.prevent
     >
       <div class="chip-actions">
-        <button class="chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
-        <button v-if="chip.alt" class="chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
+        <button class="btn small chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
+        <button v-if="chip.alt" class="btn small chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
       </div>
       <div v-if="chip.detail" class="chip-detail" :title="chip.detail">{{ chip.detail }}</div>
     </div>
@@ -966,25 +966,20 @@ onBeforeUnmount(() => {
 .term { position: absolute; inset: 8px 4px 4px 12px; }
 .overlay {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 12px; background: rgba(11, 12, 14, 0.82); color: var(--text-2);
+  gap: 12px; background: var(--raised); color: var(--text-2);
 }
 .overlay p { margin: 0; }
 .actions { display: flex; gap: 8px; }
 :deep(.xterm) { height: 100%; }
 .sel-bar {
   position: absolute; right: 12px; bottom: 12px; z-index: 5; display: flex; gap: 6px; padding: 6px;
-  border-radius: 10px; background: var(--raised); border: 1px solid var(--line-modal); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  border-radius: 10px; background: var(--raised); border: 1px solid var(--line-modal); box-shadow: 0 10px 28px var(--shadow);
 }
 .sel-bar .btn { background: var(--field); }
 /* The padding is part of the hover zone, and reaches down to the hovered text. */
 .chips { position: absolute; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0 4px; }
 .chip-actions { height: 26px; display: flex; align-items: flex-start; gap: 4px; }
 .chip-detail { max-width: 352px; overflow: hidden; color: var(--text-2); font-size: calc(var(--font-size) * 0.7); line-height: 13px; text-overflow: ellipsis; white-space: nowrap; }
-.chip { height: 22px; padding: 0 9px; border-radius: 6px;
-  border: 1px solid var(--line-modal); background: var(--raised); color: var(--text); font-size: var(--font-size); font-weight: 500;
-  white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); cursor: pointer;
-  max-width: 360px; overflow: hidden; text-overflow: ellipsis;
-}
-.chip:hover { background: var(--sel); border-color: #3d6aa8; }
+.chip { white-space: nowrap; cursor: pointer; max-width: 360px; overflow: hidden; text-overflow: ellipsis; }
 :deep(.xterm-viewport) { background: transparent !important; }
 </style>

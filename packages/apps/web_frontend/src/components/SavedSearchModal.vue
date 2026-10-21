@@ -177,7 +177,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <h2>{{ t(isEdit ? "savedSearchModal.titleEdit" : "savedSearchModal.titleSave") }}</h2>
         <button
           type="button"
-          class="close"
+          class="btn icon close"
           :title="t('savedSearchModal.closeTitle')"
           :aria-label="t('savedSearchModal.closeLabel')"
           @click="closeSavedSearchModal()"
@@ -190,10 +190,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <div class="field-label">{{ t("savedSearchModal.list") }}</div>
         <div class="list-title" data-saved-search-list>{{ groupTitle }}</div>
         <label class="field-label" for="saved-search-name">{{ t("savedSearchModal.name") }}</label>
-        <input id="saved-search-name" ref="nameField" v-model="nameText" spellcheck="false" autocomplete="off" />
+        <input class="form-control" id="saved-search-name" ref="nameField" v-model="nameText" spellcheck="false" autocomplete="off" />
         <template v-if="isEdit">
           <label class="field-label" for="saved-search-query">{{ t("savedSearchModal.search") }}</label>
-          <input id="saved-search-query" v-model="queryText" class="mono" spellcheck="false" autocomplete="off" />
+          <input id="saved-search-query" v-model="queryText" class="form-control mono" spellcheck="false" autocomplete="off" />
         </template>
         <template v-else>
           <div class="field-label">{{ t("savedSearchModal.search") }}</div>
@@ -226,27 +226,21 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+.overlay { position: fixed; inset: 0; z-index: 57; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 h2 { flex: 1; margin: 0; font-size: var(--font-size); font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .content { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
 .field-label { color: var(--muted); font-size: calc(var(--font-size) * 0.85); }
 .list-title { font-weight: 600; }
-.content input {
-  height: 32px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line-strong); background: var(--bg);
-  outline: none; font-size: var(--font-size);
-}
+.content input { height: 32px; }
 .content input.mono { font-family: var(--mono); }
 .query { padding: 6px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); font-family: var(--mono); font-size: var(--font-size); overflow-wrap: anywhere; user-select: text; }
 .problem { color: var(--fail); font-size: calc(var(--font-size) * 0.85); }
 .hint { color: var(--muted); font-size: calc(var(--font-size) * 0.85); }
 .row { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; }
-.delete { margin-right: auto; color: var(--fail); }
-.btn:disabled { opacity: 0.5; cursor: default; }
+.delete { margin-right: auto; }
 </style>

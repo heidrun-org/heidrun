@@ -423,7 +423,7 @@ function letterClass(letter: string): string {
         <span class="title me-auto">{{ t("filesPanel.title") }}</span>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.newFile')"
           :title="t('filesPanel.newFile')"
           @click="startNaming('file')"
@@ -432,7 +432,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.newFolder')"
           :title="t('filesPanel.newFolder')"
           @click="startNaming('dir')"
@@ -441,7 +441,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.refresh')"
           :title="t('filesPanel.refresh')"
           :disabled="files.loading"
@@ -451,7 +451,7 @@ function letterClass(letter: string): string {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('filesPanel.collapseAll')"
           :title="t('filesPanel.collapseAll')"
           @click="collapseAll()"
@@ -490,7 +490,7 @@ function letterClass(letter: string): string {
           <li v-else-if="entry.type === 'row'">
             <button
               type="button"
-              class="row btn d-flex align-items-center text-start"
+              class="row list-action d-flex align-items-center text-start"
               :class="{ selected: entry.row.path === selection?.path, ignored: entry.row.isGitIgnored }"
               :title="entry.row.path"
               :aria-expanded="entry.row.dir ? files.expanded.has(entry.row.path) : undefined"
@@ -545,9 +545,9 @@ function letterClass(letter: string): string {
 .rows { list-style: none; margin: 0; padding: 0; }
 .row { width: 100%; height: var(--row-height); padding: 0 8px; border: none; border-radius: 5px; color: var(--text); font-size: var(--font-size); white-space: nowrap; }
 .row:hover { background: var(--files-row-hover); }
+.row.ignored { color: var(--muted); }
 /* The selected row is darker than a row under the pointer, and has a blue line, as the selected row of VS Code. */
 .row.selected { background: var(--line-strong); box-shadow: inset 0 0 0 1px var(--done); }
-.row.ignored { color: var(--muted); }
 /* One guide for each level: its line sits under the arrow of the folder of that level. */
 .guide { position: relative; flex: 0 0 var(--indent-width); align-self: stretch; }
 .guide::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; border-left: 1px solid var(--line); }
@@ -557,8 +557,8 @@ function letterClass(letter: string): string {
 .letter { width: 18px; flex-shrink: 0; text-align: center; font: 600 var(--font-size) var(--mono); }
 .letter.modified { color: var(--accent); }
 .letter.added { color: var(--ok); }
-.letter.deleted { color: var(--blocked); }
-.letter.renamed { color: var(--done); }
+.letter.deleted { color: var(--blocked-text); }
+.letter.renamed { color: var(--done-text); }
 .naming-row { height: var(--row-height); padding: 0 8px; }
 .naming-row .form-control { flex: 1 1 auto; min-width: 0; }
 .error { font-size: var(--font-size); color: var(--fail); }

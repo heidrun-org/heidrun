@@ -126,7 +126,7 @@ function chooseMore(id: string) {
         <span class="title me-auto">{{ t("sourceControlPanel.title") }}</span>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('sourceControlPanel.commit')"
           :title="t('sourceControlPanel.commit')"
           :disabled="sourceControl.isBusy"
@@ -136,7 +136,7 @@ function chooseMore(id: string) {
         </button>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('sourceControlPanel.refresh')"
           :title="t('sourceControlPanel.refresh')"
           :disabled="git.loading"
@@ -165,7 +165,7 @@ function chooseMore(id: string) {
         ></textarea>
         <button
           type="button"
-          class="btn btn-sm icon-button write-message"
+          class="btn icon btn-sm icon-button write-message"
           :aria-label="t('sourceControlPanel.writeMessage')"
           :title="t('sourceControlPanel.writeMessage')"
           :disabled="sourceControl.isWritingMessage"
@@ -196,7 +196,7 @@ function chooseMore(id: string) {
             <div class="group-header d-flex align-items-center" @click="toggleGroup(group)">
               <button
                 type="button"
-                class="group-toggle d-flex align-items-center gap-2 me-auto"
+                class="list-action group-toggle d-flex align-items-center gap-2 me-auto"
                 :aria-expanded="sourceControl.folded[group] === false"
               >
                 <Icon :name="sourceControl.folded[group] ? 'chevron-right' : 'chevron-down'" />
@@ -205,7 +205,7 @@ function chooseMore(id: string) {
               <span class="hover-actions" @click.stop>
                 <button
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.stash')"
                   :title="t('sourceControlPanel.stash')"
                   :disabled="sourceControl.isBusy || groups[group].length === 0"
@@ -215,7 +215,7 @@ function chooseMore(id: string) {
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.viewChanges')"
                   :title="t('sourceControlPanel.viewChanges')"
                   :disabled="groups[group].length === 0"
@@ -226,7 +226,7 @@ function chooseMore(id: string) {
                 <button
                   v-if="group === 'changes'"
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.discardAll')"
                   :title="t('sourceControlPanel.discardAll')"
                   :disabled="sourceControl.isBusy || groups.changes.length === 0"
@@ -237,7 +237,7 @@ function chooseMore(id: string) {
                 <button
                   v-if="group === 'changes'"
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.stageAll')"
                   :title="t('sourceControlPanel.stageAll')"
                   :disabled="sourceControl.isBusy || groups.changes.length === 0"
@@ -248,7 +248,7 @@ function chooseMore(id: string) {
                 <button
                   v-else
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   :aria-label="t('sourceControlPanel.unstageAll')"
                   :title="t('sourceControlPanel.unstageAll')"
                   :disabled="sourceControl.isBusy || groups.staged.length === 0"
@@ -266,7 +266,7 @@ function chooseMore(id: string) {
                 class="file d-flex align-items-center"
                 :title="fileTitle(file)"
               >
-                <button type="button" class="file-main d-flex align-items-center gap-2 me-auto" @click="openGitModal(file.path)">
+                <button type="button" class="list-action file-main d-flex align-items-center gap-2 me-auto" @click="openGitModal(file.path)">
                   <Icon :name="fileIconName(file.name)" />
                   <span class="name">{{ file.name }}</span>
                   <span v-if="file.folder !== ''" class="folder">{{ file.folder }}</span>
@@ -274,7 +274,7 @@ function chooseMore(id: string) {
                 <span class="hover-actions">
                   <button
                     type="button"
-                    class="btn btn-sm icon-button"
+                    class="btn icon btn-sm icon-button"
                     :aria-label="t('sourceControlPanel.openFile')"
                     :title="t('sourceControlPanel.openFile')"
                     @click="openFile(file)"
@@ -284,7 +284,7 @@ function chooseMore(id: string) {
                   <template v-if="group === 'changes'">
                     <button
                       type="button"
-                      class="btn btn-sm icon-button"
+                      class="btn icon btn-sm icon-button"
                       :aria-label="t('sourceControlPanel.discard')"
                       :title="t('sourceControlPanel.discard')"
                       :disabled="sourceControl.isBusy"
@@ -294,7 +294,7 @@ function chooseMore(id: string) {
                     </button>
                     <button
                       type="button"
-                      class="btn btn-sm icon-button"
+                      class="btn icon btn-sm icon-button"
                       :aria-label="t('sourceControlPanel.stage')"
                       :title="t('sourceControlPanel.stage')"
                       :disabled="sourceControl.isBusy"
@@ -306,7 +306,7 @@ function chooseMore(id: string) {
                   <button
                     v-else
                     type="button"
-                    class="btn btn-sm icon-button"
+                    class="btn icon btn-sm icon-button"
                     :aria-label="t('sourceControlPanel.unstage')"
                     :title="t('sourceControlPanel.unstage')"
                     :disabled="sourceControl.isBusy"
@@ -330,18 +330,10 @@ function chooseMore(id: string) {
 <style scoped>
 .source-control { flex: 1; min-height: 0; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.source-control :deep(.icon-button) { height: 22px; padding: 0 5px; color: var(--muted); border: none; }
-.source-control :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .message textarea { resize: vertical; min-height: 34px; }
 .source-control :deep(.write-message) { flex: 0 0 auto; height: 34px; }
-/* The commit button is blue, as in VS Code: the rule .btn of styles.css makes every other button transparent. */
-.btn-group :deep(.btn-primary) {
-  --btn-color: #fff; --btn-bg: #2c63a8; --btn-border-color: #2c63a8;
-  --btn-hover-color: #fff; --btn-hover-bg: #3672bd; --btn-hover-border-color: #3672bd;
-  --btn-active-color: #fff; --btn-active-bg: #3672bd; --btn-active-border-color: #3672bd;
-  --btn-disabled-color: #fff; --btn-disabled-bg: #2c63a8; --btn-disabled-border-color: #2c63a8;
-}
-.btn-group :deep(.commit-arrow) { flex: 0 0 auto; border-left-color: rgba(255, 255, 255, 0.4); }
+/* The commit action follows the shared primary button rules in styles.css. */
+.btn-group :deep(.commit-arrow) { flex: 0 0 auto; border-left-color: var(--solid-divider); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -8px; }
 .group-header { height: 26px; padding: 0 8px; border-radius: 5px; cursor: pointer; }
 .group-header:hover { background: var(--hover-soft); }
@@ -360,11 +352,11 @@ function chooseMore(id: string) {
 .letter { width: 18px; flex-shrink: 0; text-align: center; font: 600 var(--font-size) var(--mono); }
 .letter.modified { color: var(--accent); }
 .letter.added { color: var(--ok); }
-.letter.deleted { color: var(--blocked); }
-.letter.renamed { color: var(--done); }
+.letter.deleted { color: var(--blocked-text); }
+.letter.renamed { color: var(--done-text); }
 .muted { color: var(--muted); }
 .req { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; background: var(--field); }
-.req.mine { box-shadow: inset 0 0 0 1px #33506f; }
+.req.mine { box-shadow: inset 0 0 0 1px var(--pane-ring-selected); }
 .req-main { display: flex; flex-direction: column; gap: 4px; border: none; background: none; padding: 0; text-align: left; color: var(--text); }
 .req-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ref { color: var(--question); font-size: var(--font-size); }

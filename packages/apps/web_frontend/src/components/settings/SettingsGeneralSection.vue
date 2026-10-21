@@ -77,7 +77,7 @@ const timeExample = computed(() => {
         <label
           v-for="o in LANGUAGES"
           :key="o.id"
-          class="btn-check btn-outline theme-secondary"
+          class="btn btn-check btn-outline theme-secondary"
           :title="t('languageMenu.useLanguage', { language: o.label })"
         >
           <input v-model="settings.language" type="radio" name="language" autocomplete="off" :value="o.id" />
@@ -92,7 +92,7 @@ const timeExample = computed(() => {
         <SettingsOptionHelp title-key="settingsGeneral.timeFormatTitle" :blocks="TIME_FORMAT_HELP_BLOCKS" />
       </div>
       <div class="btn-group" role="group" :aria-label="t('settingsGeneral.timeFormatLabel')">
-        <label v-for="f in TIME_FORMATS" :key="f.id" class="btn-check btn-outline theme-secondary">
+        <label v-for="f in TIME_FORMATS" :key="f.id" class="btn btn-check btn-outline theme-secondary">
           <input v-model="settings.timeFormat" type="radio" name="time-format" autocomplete="off" :value="f.id" />
           {{ t(f.labelKey) }}
         </label>
@@ -106,7 +106,7 @@ const timeExample = computed(() => {
         <SettingsOptionHelp title-key="settingsGeneral.workingDaysTitle" :blocks="WORKING_DAYS_HELP_BLOCKS" />
       </div>
       <div class="btn-group" role="group" :aria-label="t('settingsGeneral.workingDaysLabel')">
-        <label v-for="d in dayNames" :key="d.day" class="btn-check btn-outline theme-secondary">
+        <label v-for="d in dayNames" :key="d.day" class="btn btn-check btn-outline theme-secondary">
           <input type="checkbox" autocomplete="off" :checked="settings.workingDays.includes(d.day)" @change="toggleDay(d.day, $event)" />
           {{ d.name }}
         </label>

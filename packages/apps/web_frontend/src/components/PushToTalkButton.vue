@@ -64,7 +64,7 @@ function onKeyUp(event: KeyboardEvent): void {
 <template>
   <button
     type="button"
-    :class="['btn push-to-talk border-0', { 'is-recording': isRecording, 'is-transcribing': isTranscribing }]"
+    :class="['btn icon lg push-to-talk border-0', { 'is-recording': isRecording, 'is-transcribing': isTranscribing }]"
     :aria-pressed="isRecording"
     :aria-label="t('voiceInput.label')"
     :title="title"
@@ -82,7 +82,7 @@ function onKeyUp(event: KeyboardEvent): void {
 
 <style scoped>
 /* While the microphone is open, the icon is red: the red of the theme, not the pale red of the Bootstrap emphasis text. */
-.btn.is-recording { --btn-color: var(--danger-bg); --btn-hover-color: var(--danger-bg); --btn-active-color: var(--danger-bg); }
+.btn.is-recording { --btn-color: var(--danger-fg); --btn-hover-color: var(--danger-fg); --btn-active-color: var(--danger-fg); }
 /* While Whisper changes the speech into text, the wheel is green, and the dimmed look of a disabled button does not fade it. */
-.btn.is-transcribing { --btn-color: var(--success-bg); --btn-disabled-color: var(--success-bg); --btn-disabled-opacity: 1; }
+.btn.is-transcribing { --btn-color: var(--success-fg); --btn-disabled-color: var(--success-fg); --btn-disabled-opacity: 1; }
 </style>

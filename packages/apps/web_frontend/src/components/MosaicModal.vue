@@ -141,27 +141,27 @@ function onKey(e: KeyboardEvent) {
           <h2>{{ pane ? paneFullName(pane) : "" }}</h2>
         </div>
         <div class="seg" role="radiogroup" :aria-label="t('mosaicModal.shownAgentsLabel')" @keydown.left.prevent="settings.mosaicActiveOnly = true" @keydown.right.prevent="settings.mosaicActiveOnly = false">
-          <button role="radio" :aria-checked="settings.mosaicActiveOnly" :class="{ on: settings.mosaicActiveOnly }" :title="t('mosaicModal.activeTitle')" @click="settings.mosaicActiveOnly = true">{{ t("mosaicModal.active") }} <span class="n">{{ workingCount }}</span></button>
-          <button role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" :title="t('mosaicModal.allTitle')" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.all") }} <span class="n">{{ tiles.length }}</span></button>
+          <button class="btn small" role="radio" :aria-checked="settings.mosaicActiveOnly" :class="{ on: settings.mosaicActiveOnly }" :title="t('mosaicModal.activeTitle')" @click="settings.mosaicActiveOnly = true">{{ t("mosaicModal.active") }} <span class="n">{{ workingCount }}</span></button>
+          <button class="btn small" role="radio" :aria-checked="!settings.mosaicActiveOnly" :class="{ on: !settings.mosaicActiveOnly }" :title="t('mosaicModal.allTitle')" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.all") }} <span class="n">{{ tiles.length }}</span></button>
         </div>
         <span class="hint">{{ t("mosaicModal.hint") }}</span>
-        <button :title="t('mosaicModal.closeTitle')" class="close" :aria-label="t('mosaicModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
+        <button :title="t('mosaicModal.closeTitle')" class="btn icon close" :aria-label="t('mosaicModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div v-if="!loaded" class="empty">{{ t("mosaicModal.loading") }}</div>
       <div v-else-if="error && !tiles.length" class="empty">{{ error }}</div>
       <div v-else class="grid">
-        <div v-if="!shownTiles.length" class="empty">{{ t("mosaicModal.noActive") }} <button :title="t('mosaicModal.showAllTitle')" class="link" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.showAll") }}</button></div>
+        <div v-if="!shownTiles.length" class="empty">{{ t("mosaicModal.noActive") }} <button :title="t('mosaicModal.showAllTitle')" class="btn text small link" @click="settings.mosaicActiveOnly = false">{{ t("mosaicModal.showAll") }}</button></div>
         <button
           v-for="tile in shownTiles"
           :key="tile.id"
-          class="tile"
+          class="list-action tile"
           :class="{ shown: isShown(tile), off: !listName(tile) }"
           :disabled="!listName(tile) || !!subagents.busy"
           :title="listName(tile) ? t('mosaicModal.showInTerminal', { name: listName(tile) ?? '' }) : t('mosaicModal.notInList')"
           @click="show(tile)"
         >
           <span class="t-head">
-            <span class="dot" :class="{ on: active(tile) }"></span>
+            <span class="selection-mark" :class="{ on: active(tile) }"></span>
             <span class="t-name">{{ title(tile) }}</span>
             <span v-if="isShown(tile)" class="tag">{{ t("mosaicModal.shown") }}</span>
             <span class="t-when"><AbbreviatedTime :milliseconds="tile.modified * 1000" /></span>
@@ -176,24 +176,20 @@ function onKey(e: KeyboardEvent) {
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.55); display: flex; padding: 28px; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
+.overlay { position: fixed; inset: 0; z-index: 58; background: var(--overlay); display: flex; padding: 28px; }
 .window-box {
   flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .eyebrow { color: var(--question); }
 h2 { margin: 2px 0 0; font-size: var(--font-size); font-weight: 600; }
 .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--bg); gap: 2px; margin-left: 8px; }
-.seg button { color: var(--muted); font-size: var(--font-size); padding: 3px 10px; border-radius: 6px; }
-.seg button.on { background: var(--hover); color: var(--text); }
 .seg .n { margin-left: 3px; font-size: var(--font-size); color: var(--muted); font-variant-numeric: tabular-nums; }
-.link { color: var(--accent); font-size: var(--font-size); cursor: pointer; }
+.link { cursor: pointer; }
 .grid > .empty { grid-column: 1 / -1; }
 .hint { margin-left: auto; font-size: var(--font-size); color: var(--muted); }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .empty { padding: 40px; text-align: center; color: var(--muted); font-size: var(--font-size); }
 .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); grid-auto-rows: minmax(240px, 1fr); gap: 10px; padding: 12px; overflow: auto; }
 .tile {
@@ -204,15 +200,15 @@ h2 { margin: 2px 0 0; font-size: var(--font-size); font-weight: 600; }
 .tile.shown { border-color: var(--question); }
 .tile.off { opacity: 0.75; cursor: default; }
 .t-head { display: flex; align-items: center; gap: 8px; font-size: var(--font-size); }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--idle); flex-shrink: 0; }
-.dot.on { background: var(--working); }
+.selection-mark { width: 7px; height: 7px; border-radius: 50%; background: var(--idle); flex-shrink: 0; }
+.selection-mark.on { background: var(--focus); }
 .t-name { font-weight: 600; }
 .tag { font-size: var(--font-size); padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--question) 18%, transparent); color: var(--question); }
 .t-when { margin-left: auto; font-size: var(--font-size); color: var(--muted); }
 .t-desc { font-size: var(--font-size); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lines { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; margin-top: 4px; line-height: 1.45; }
 .l { white-space: pre-wrap; word-break: break-word; color: var(--text-2); }
-.l.tool { color: var(--done); }
+.l.tool { color: var(--done-text); }
 .l.res { color: var(--muted); }
 .l.you { color: var(--accent); }
 </style>

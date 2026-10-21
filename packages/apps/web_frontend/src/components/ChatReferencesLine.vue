@@ -113,7 +113,7 @@ function toggle(key: string) {
         <template v-for="row in rows" :key="row.key">
           <button
             type="button"
-            class="list-group-item list-group-item-action d-flex align-items-center gap-3 text-start"
+            class="list-action list-group-item list-group-item-action d-flex align-items-center gap-3 text-start"
             data-reference
             :aria-expanded="expandedKey === row.key"
             @click="toggle(row.key)"

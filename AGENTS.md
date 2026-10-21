@@ -111,6 +111,8 @@ The rules of the user interface: where each part goes, and how each part works. 
 
 - The window, in the folder `docs/agents_rules/user_interface/window`:
   - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
+  - [shared_design_inventory.md](docs/agents_rules/user_interface/window/shared_design_inventory.md): the design inventory and justified exceptions for specialized content rendering.
+  - [shared_design.md](docs/agents_rules/user_interface/window/shared_design.md): the shared colors, button states, contrast requirements, status displays, explicit exceptions, and enforcement. Read it before changing an application color, button appearance, or status display.
   - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
   - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
   - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.

@@ -68,5 +68,4 @@ const GITHUB_SEARCH_DOCUMENTATION = 'https://docs.github.com/en/issues/tracking-
 </template>
 
 <style scoped>
-.search-help-button { font-size: 0.75em; line-height: 1; padding: 0 2px; border: none; }
 </style>

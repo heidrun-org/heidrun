@@ -96,7 +96,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <form class="window-box" role="dialog" :aria-label="t('importLaunchersModal.title')" @submit.prevent="importChosen">
       <header>
         <h2>{{ t("importLaunchersModal.title") }}</h2>
-        <button type="button" :title="t('importLaunchersModal.closeTitle')" class="close" :aria-label="t('importLaunchersModal.closeTitle')" @click="closeImportLaunchersModal()"><Icon name="x-lg" /></button>
+        <button type="button" :title="t('importLaunchersModal.closeTitle')" class="btn icon close" :aria-label="t('importLaunchersModal.closeTitle')" @click="closeImportLaunchersModal()"><Icon name="x-lg" /></button>
       </header>
 
       <div class="source d-flex align-items-center gap-2">
@@ -130,15 +130,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
 <style scoped>
 :where(button:not(.btn)) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+.overlay { position: fixed; inset: 0; z-index: 57; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 h2 { flex: 1; margin: 0; font-size: var(--font-size); font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .source { padding: 10px 16px; border-bottom: 1px solid var(--line); }
 .picked { min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .list { overflow-y: auto; min-height: 0; }
@@ -148,5 +146,4 @@ h2 { flex: 1; margin: 0; font-size: var(--font-size); font-weight: 600; }
 .command { min-width: 0; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
 .empty { margin: 0; padding: 16px; color: var(--muted); }
 footer { padding: 10px 16px; border-top: 1px solid var(--line); }
-.btn:disabled { opacity: 0.5; cursor: default; }
 </style>

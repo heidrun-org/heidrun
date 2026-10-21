@@ -37,7 +37,7 @@ onMounted(() =>
   <input
     ref="input"
     v-model="text"
-    class="rename"
+    class="form-control rename"
     :aria-label="props.label"
     spellcheck="false"
     autocomplete="off"
@@ -51,8 +51,5 @@ onMounted(() =>
 </template>
 
 <style scoped>
-.rename {
-  min-width: 80px; width: 100%; height: 26px; padding: 0 8px; border-radius: 6px;
-  border: 1px solid #3a5a80; background: var(--bg); color: var(--text); font: 500 var(--font-size) var(--sans); outline: none;
-}
+.rename { min-width: 80px; width: 100%; height: 26px; }
 </style>

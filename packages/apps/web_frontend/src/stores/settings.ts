@@ -599,6 +599,7 @@ export function resetZoom() {
 /** The sections of the Settings window. */
 export type SettingsSection =
   | "general"
+  | "designReview"
   | "terminal"
   | "agents"
   | "confirmations"

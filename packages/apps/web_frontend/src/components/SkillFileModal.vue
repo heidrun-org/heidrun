@@ -59,21 +59,21 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <span class="grow"></span>
         <div class="seg" role="radiogroup" :aria-label="t('settingsSkills.viewLabel')">
           <button
-            role="radio"
+ class="btn small"            role="radio"
             :title="t('settingsSkills.renderedTitle')"
             :aria-checked="settings.skillsViewRendered"
             :class="{ on: settings.skillsViewRendered }"
             @click="settings.skillsViewRendered = true"
           >{{ t("settingsSkills.rendered") }}</button>
           <button
-            role="radio"
+ class="btn small"            role="radio"
             :title="t('settingsSkills.sourceTitle')"
             :aria-checked="!settings.skillsViewRendered"
             :class="{ on: !settings.skillsViewRendered }"
             @click="settings.skillsViewRendered = false"
           >{{ t("settingsSkills.source") }}</button>
         </div>
-        <button class="close" :title="t('settingsSkills.closeTitle')" :aria-label="t('settingsSkills.closeLabel')" @click="closeSkillView"><Icon name="x-lg" /></button>
+        <button class="btn icon close" :title="t('settingsSkills.closeTitle')" :aria-label="t('settingsSkills.closeLabel')" @click="closeSkillView"><Icon name="x-lg" /></button>
       </header>
       <div class="body" :class="codeThemeClass">
         <div v-if="view.loading" class="empty">{{ t("settingsSkills.loading") }}</div>
@@ -100,21 +100,17 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-:where(button) { background: transparent; border: 0; color: inherit; font: inherit; }
-.overlay { position: fixed; inset: 0; z-index: 61; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; padding: 24px; }
+:where(button:not(.btn)) { background: transparent; border: 0; color: inherit; font: inherit; }
+.overlay { position: fixed; inset: 0; z-index: 61; background: var(--overlay); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .window-box {
   width: min(1100px, 100%); height: 100%; display: flex; flex-direction: column; overflow: hidden; border-radius: 14px;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); outline: none;
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow); outline: none;
 }
 .top { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); min-width: 0; }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; white-space: nowrap; }
 .origin { color: var(--muted); font-size: var(--font-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grow { flex: 1; }
 .seg { display: flex; padding: 3px; border-radius: 9px; background: var(--bg); gap: 3px; flex-shrink: 0; }
-.seg button { height: 26px; padding: 0 12px; border-radius: 7px; color: var(--muted); font-size: var(--font-size); font-weight: 500; }
-.seg button.on { background: var(--hover); color: var(--text); }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .body { flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
 .empty { padding: 24px; color: var(--muted); font-family: var(--sans); font-size: var(--font-size); }
 .front { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; max-width: 860px; margin: 24px auto 0; padding: 12px 16px; border-radius: 10px; background: var(--field); font: var(--font-size)/1.5 var(--sans); }
