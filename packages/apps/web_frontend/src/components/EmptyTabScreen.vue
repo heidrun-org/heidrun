@@ -117,7 +117,6 @@ function buildLaugh() {
         "--drift-x": `${(distance * Math.cos(angle)).toFixed(2)}em`,
         "--drift-y": `${(distance * Math.sin(angle)).toFixed(2)}em`,
         "--drift-rotation": `${(spinDirection * randomBetween(30, 200)).toFixed(0)}deg`,
-        "--drift-scale": randomBetween(0.9, 1.5).toFixed(2),
         "--spark-delay": `${randomBetween(0, BURST_MAXIMUM_DELAY).toFixed(2)}s`,
       },
     };
@@ -396,7 +395,7 @@ onBeforeUnmount(() => {
 @keyframes empty-tab-firework {
   0% {
     opacity: 0;
-    transform: translate(0, 0) rotate(0deg) scale(0.4);
+    transform: translate(0, 0) rotate(0deg);
   }
   15% {
     opacity: 1;
@@ -406,7 +405,7 @@ onBeforeUnmount(() => {
   }
   100% {
     opacity: 0;
-    transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--drift-rotation)) scale(var(--drift-scale));
+    transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--drift-rotation));
   }
 }
 @media (prefers-reduced-motion: reduce) {
