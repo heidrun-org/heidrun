@@ -263,7 +263,7 @@ async function readDetails(row: Row) {
         <span class="title me-auto">{{ t("codeHostingPanel.title") }}</span>
         <button
           type="button"
-          class="btn btn-sm icon-button"
+          class="btn icon btn-sm icon-button"
           :aria-label="t('codeHostingPanel.refresh')"
           :title="t('codeHostingPanel.refresh')"
           :disabled="isLoading"
@@ -282,7 +282,7 @@ async function readDetails(row: Row) {
             <div class="group-header d-flex align-items-center" @click="toggleGroup(section.group)">
               <button
                 type="button"
-                class="group-toggle d-flex align-items-center gap-2"
+                class="group-toggle list-action d-flex align-items-center gap-2"
                 :aria-expanded="codeHosting.folded[section.group] === false"
               >
                 <Icon :name="codeHosting.folded[section.group] ? 'chevron-right' : 'chevron-down'" />
@@ -311,7 +311,7 @@ async function readDetails(row: Row) {
                 />
                 <button
                   type="submit"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   data-run-search
                   :aria-label="t('codeHostingPanel.searchRun')"
                   :title="t('codeHostingPanel.searchRun')"
@@ -320,7 +320,7 @@ async function readDetails(row: Row) {
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   data-save-search
                   :aria-label="t('codeHostingPanel.saveSearch')"
                   :title="t('codeHostingPanel.saveSearch')"
@@ -331,7 +331,7 @@ async function readDetails(row: Row) {
                 </button>
                 <button
                   type="button"
-                  class="btn btn-sm icon-button"
+                  class="btn icon btn-sm icon-button"
                   data-edit-saved-search
                   :aria-label="t('codeHostingPanel.editSearch')"
                   :title="t('codeHostingPanel.editSearch')"
@@ -457,11 +457,9 @@ async function readDetails(row: Row) {
 .code-hosting :deep(.icon-button:hover:not(:disabled)) { background: var(--hover); color: var(--text); }
 .search .form-control { flex: 1 1 auto; min-width: 0; }
 /* A saved search is a small button with a round border: the one that runs now is filled. */
-.saved-button { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border: 1px solid var(--line); border-radius: 11px; color: var(--text-2); max-width: 100%; white-space: nowrap; }
+.saved-button { display: inline-flex; align-items: center; max-width: 100%; white-space: nowrap; }
 /* A name that does not fit ends with an ellipsis. A button cannot show one itself, so the name is in its own span. */
 .saved-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.saved-button:hover { background: var(--hover-soft); color: var(--text); }
-.saved-button.active { background: var(--hover); border-color: var(--line-strong); color: var(--text); }
 .groups { display: flex; flex-direction: column; gap: 4px; margin: 0 -16px; }
 /* A click anywhere on the header folds or unfolds the list: the button inside it gives the keyboard access. */
 .group-header { height: 26px; margin: 0 8px; padding: 0 8px; border-radius: 5px; cursor: pointer; }

@@ -216,7 +216,7 @@ describe('bootstrap_parts.scss', () => {
 
 	it('draws the focus ring of a field on its border, so that no dark border shows inside the ring', () => {
 		const cssText = BootstrapPartsTestHelper.compile();
-		expect(cssText).toMatch(/\.form-control:focus-visible,\n\.form-control:focus-within \{[^}]*outline: 2px solid var\(--done\);[^}]*outline-offset: -1px/);
+		expect(cssText).toMatch(/\.form-control:focus-visible,\n\.form-control:focus-within \{[^}]*outline: 2px solid var\(--focus\);[^}]*outline-offset: -1px/);
 	});
 
 	it('draws the text of a field with the variable --font-size, so that the font size setting reaches it', () => {
@@ -230,18 +230,11 @@ describe('bootstrap_parts.scss', () => {
 		expect(cssText).not.toContain('transition-property: var(--btn-transition-property)');
 	});
 
-	it('does not clash with the class names of the components of the application: those components use no Bootstrap class name for their own box', () => {
-		const componentFolder = Path.resolve(__dirname, 'components');
-		for (const [fileName, className] of [
-			['MoreMenu.vue', 'menu'],
-			['ThemeMenu.vue', 'menu'],
-		]) {
-			const filePath = fileName.startsWith('Settings') ? Path.join(componentFolder, 'settings', fileName) : Path.join(componentFolder, fileName);
-			const sourceText = Fs.readFileSync(filePath, 'utf8');
-			expect({ fileName, isClassUsed: new RegExp(`class="${className}[" ]`).test(sourceText) }).toEqual({
-				fileName,
-				isClassUsed: false,
-			});
+	it('uses Bootstrap menus and menu items for the application popup menus', () => {
+		for (const fileName of ['MoreMenu.vue', 'ThemeMenu.vue']) {
+			const source = Fs.readFileSync(Path.resolve(__dirname, 'components', fileName), 'utf8');
+			expect(source).toContain('class="menu show popup-menu"');
+			expect(source).toMatch(/class="menu-item [^"]*"/);
 		}
 	});
 

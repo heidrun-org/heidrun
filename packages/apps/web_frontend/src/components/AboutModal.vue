@@ -63,20 +63,20 @@ onUnmounted(() => unlisten?.());
 
 <style scoped>
 .overlay {
-  position: fixed; inset: 0; z-index: 70; background: rgba(0, 0, 0, 0.55);
+  position: fixed; inset: 0; z-index: 70; background: var(--overlay);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .window-box {
   width: min(460px, 100%); border-radius: 14px; background: var(--panel); overflow: hidden;
-  border: 1px solid var(--border, #2a2c31); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border, var(--line-modal)); box-shadow: 0 24px 64px var(--shadow);
 }
 .figure { position: relative; margin: 0; line-height: 0; }
 .image { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; }
 .legend {
   position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 16px 14px; line-height: 1.3;
-  text-align: center; font-size: 17px; font-weight: 600; color: #fff;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  text-align: center; font-size: 17px; font-weight: 600; color: var(--illustration-text);
+  background: linear-gradient(to top, var(--illustration-gradient), var(--illustration-fade));
+  text-shadow: 0 2px 8px var(--illustration-shadow);
 }
 .info { padding: 18px 22px 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }

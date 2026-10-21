@@ -220,7 +220,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
         <div class="title">
           <button
             type="button"
-            class="icon left-sidebar-enable-disable-button"
+            class="list-action icon left-sidebar-enable-disable-button"
             :title="settings.gitListHidden ? t('gitModal.showList') : t('gitModal.hideList')"
             @click="settings.gitListHidden = !settings.gitListHidden"
           >{{ settings.gitListHidden ? "⇥" : "⇤" }}</button>
@@ -228,11 +228,11 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           <span v-if="st" class="mono branch">{{ st.branch ?? t("gitModal.detached") }}</span>
           <span v-if="st?.ahead" class="chip warn">↑ {{ st.ahead }}</span>
           <span v-if="st?.behind" class="chip pending">↓ {{ st.behind }}</span>
-          <button :title="t('gitModal.openCiTitle')" v-if="fg?.ci" class="chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
+          <button :title="t('gitModal.openCiTitle')" v-if="fg?.ci" class="btn small chip" :class="fg.ci.level" @click="open(fg.ci.url)">{{ fg.ci.label }}</button>
         </div>
         <div class="tools">
           <div class="btn-group" role="group" :aria-label="t('gitModal.display')">
-            <label v-for="choice in viewChoices" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+            <label v-for="choice in viewChoices" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
               <input
                 type="radio"
                 name="git-window-view"
@@ -246,26 +246,26 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
             </label>
           </div>
           <div v-if="mode === 'preview'" class="btn-group" role="group" :aria-label="t('gitModal.previewWidth')">
-            <label v-for="choice in PREVIEW_WIDTH_CHOICES" :key="choice.id" class="btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
+            <label v-for="choice in PREVIEW_WIDTH_CHOICES" :key="choice.id" class="btn btn-check btn-outline theme-secondary" :title="t(choice.titleKey)">
               <input v-model="settings.mdWidth" type="radio" name="git-window-preview-width" autocomplete="off" :value="choice.id" />
               {{ t(choice.labelKey) }}
             </label>
           </div>
           <SettingsSwitchRow v-model="settings.codeWrap" :label="t('gitModal.wrap')" :title="t('gitModal.wrapTitle')" />
           <button :title="t('gitModal.refreshTitle')" class="btn" :disabled="git.loading" @click="refreshGit()">{{ git.loading ? "…" : t("gitModal.refresh") }}</button>
-          <button :title="t('gitModal.closeTitle')" class="close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
+          <button :title="t('gitModal.closeTitle')" class="btn icon close" :aria-label="t('gitModal.closeLabel')" @click="git.modal.open = false"><Icon name="x-lg" /></button>
         </div>
       </header>
 
       <div class="body">
         <aside v-show="!settings.gitListHidden" class="left" :style="{ width: `${settings.gitListWidth}px` }">
-          <input v-model="filter" class="filter" :placeholder="t('gitModal.filterPlaceholder')" spellcheck="false" />
+          <input v-model="filter" class="form-control filter" :placeholder="t('gitModal.filterPlaceholder')" spellcheck="false" />
           <div class="eyebrow">{{ t("gitModal.changes") }} <span class="count">{{ st ? st.changed + st.untracked : 0 }}</span></div>
           <div ref="listEl" class="files">
             <button
               v-for="f in files"
               :key="f.path"
-              class="file"
+              class="list-action file"
               :class="{ on: f.path === selected }"
               :title="f.path"
               @click="select(f.path)"
@@ -278,7 +278,7 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
           </div>
           <div v-if="fg && !fg.error && fg.requests.length" class="reqs">
             <div class="eyebrow">{{ t("gitModal.openRequests", { kind }) }} <span class="count">{{ fg.requests.length }}</span></div>
-            <button v-for="r in fg.requests" :key="r.ref" class="req" :class="{ mine: r.branch === st?.branch }" :title="r.title" @click="open(r.url)">
+            <button v-for="r in fg.requests" :key="r.ref" class="list-action req" :class="{ mine: r.branch === st?.branch }" :title="r.title" @click="open(r.url)">
               <span class="mono ref">{{ r.ref }}</span>
               <span class="chip sm" :class="r.level">{{ r.state }}</span>
               <span v-if="r.review" class="chip sm" :class="r.review.level" :title="r.review.label">{{ r.review.level === "ok" ? "✓" : r.review.level === "crit" ? "✗" : "…" }}</span>
@@ -405,42 +405,40 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.55); display: flex; align-items: center; justify-content: center; }
+.overlay { position: fixed; inset: 0; z-index: 50; background: var(--overlay); display: flex; align-items: center; justify-content: center; }
 .window-box {
   outline: none;
   width: 94vw; height: 90vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-modal); box-shadow: 0 24px 72px var(--shadow);
 }
 .top { flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .title { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
 .repo { color: var(--text); font-size: var(--font-size); font-weight: 600; }
 .branch { font-size: var(--font-size); color: var(--text-2); }
 .tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
-.close { width: 30px; height: 30px; border: none; border-radius: 8px; background: transparent; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .body { flex: 1; min-height: 0; display: flex; }
 .left { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px; border-right: 1px solid var(--line); min-height: 0; }
-.filter { height: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); outline: none; font-size: var(--font-size); }
+.filter { height: 32px; }
 .count { color: var(--muted); margin-left: 4px; }
 .files { flex: 1; min-height: 80px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
 .file { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding: 5px 8px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: var(--font-size); }
 .file:hover { background: var(--hover-soft); }
 .file.on { background: var(--hover); color: var(--text); }
 .st { width: 14px; flex-shrink: 0; font: 600 var(--font-size) var(--mono); text-align: center; }
-.st.mod { color: var(--accent); } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked); } .st.ren { color: var(--done); } .st.conf { color: var(--blocked); }
+.st.mod { color: var(--accent); } .st.add, .st.new { color: var(--ok); } .st.del { color: var(--blocked-text); } .st.ren { color: var(--done-text); } .st.conf { color: var(--blocked-text); }
 .name { flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dir { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-size); color: var(--muted); direction: rtl; text-align: left; }
 .reqs { max-height: 38%; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--line); padding-top: 10px; }
 .req { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 5px 6px; border: none; border-radius: 6px; background: transparent; color: var(--text-2); text-align: left; font-size: var(--font-size); }
 .req:hover { background: var(--hover-soft); }
-.req.mine { box-shadow: inset 0 0 0 1px #33506f; }
+.req.mine { box-shadow: inset 0 0 0 1px var(--pane-ring-selected); }
 .ref { color: var(--question); font-size: var(--font-size); flex-shrink: 0; }
 .req-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .viewer { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .bar { flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
 .path { flex: 1; min-width: 0; font-size: var(--font-size); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stats { margin-left: 10px; font-size: var(--font-size); }
-.plus { color: var(--ok); } .minus { color: var(--blocked); }
+.plus { color: var(--ok); } .minus { color: var(--blocked-text); }
 .code { flex: 1; min-height: 0; overflow: auto; font-family: var(--mono); line-height: 1.55; }
 /* Rendered Markdown: a reading column, GitHub-like. */
 .md { max-width: 860px; margin: 0 auto; padding: 28px 36px 60px; font: var(--font-size)/1.7 var(--sans);  color: var(--c-fg); user-select: text; }
@@ -457,10 +455,10 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .md :deep(ul), .md :deep(ol) { padding-left: 1.6em; }
 .md :deep(li) { margin: 0.2em 0; }
 .md :deep(li input[type="checkbox"]) { margin-right: 0.4em; accent-color: var(--done); }
-.md :deep(a) { color: #58a6ff; text-decoration: none; }
+.md :deep(a) { color: var(--link); text-decoration: none; }
 .md :deep(a:hover) { text-decoration: underline; }
 .md :deep(code) { font-family: var(--mono); font-size: 0.86em; padding: 0.15em 0.4em; border-radius: 5px; background: rgba(var(--wash), 0.08); }
-.md :deep(pre.md-code) { padding: 14px 16px; border-radius: 8px; background: rgba(0, 0, 0, 0.3); overflow: auto; font-size: 0.82em; line-height: 1.55; }
+.md :deep(pre.md-code) { padding: 14px 16px; border-radius: 8px; background: var(--code-block-bg); overflow: auto; font-size: 0.82em; line-height: 1.55; }
 .md :deep(pre.md-code code) { padding: 0; background: none; font-size: inherit; }
 .md :deep(blockquote) { padding: 0.2em 1em; border-left: 3px solid rgba(var(--wash), 0.2); color: var(--c-gutter); }
 .md :deep(table) { border-collapse: collapse; display: block; overflow-x: auto; font-size: 0.92em; }
@@ -480,14 +478,14 @@ const open = (url?: string | null) => url && openUrl(url).catch(() => {});
 .side { min-width: 0; overflow-x: auto; }
 .side .tbl { width: max-content; min-width: 100%; }
 .split-bar { align-self: stretch; cursor: col-resize; background: rgba(var(--wash), 0.06); }
-.split-bar:hover { background: rgba(110, 168, 254, 0.45); }
+.split-bar:hover { background: var(--resize-hover); }
 .tbl.fixed { table-layout: fixed; }
 .c-no { width: 52px; }
 .sepl { border-left: 1px solid rgba(var(--wash), 0.06); }
 tr.add > td, td.add { background: var(--c-add); }
 tr.del > td, td.del { background: var(--c-del); }
 tr.add .sign, td.add.no { color: var(--ok); }
-tr.del .sign, td.del.no { color: var(--blocked); }
+tr.del .sign, td.del.no { color: var(--blocked-text); }
 td.none { background: rgba(var(--wash), 0.02); }
 .hunk { background: var(--c-hunk); color: var(--c-hunk-fg); padding: 2px 10px !important; }
 .empty { padding: 24px; color: var(--c-gutter); font-family: var(--sans); font-size: var(--font-size); }
@@ -495,9 +493,6 @@ td.none { background: rgba(var(--wash), 0.02); }
 .foot { flex-shrink: 0; padding: 6px 12px; border-top: 1px solid var(--line); font-size: var(--font-size); }
 .muted { color: var(--muted); }
 .pad { padding: 8px; font-size: var(--font-size); }
-.chip { height: 22px; padding: 0 8px; border-radius: 11px; display: inline-flex; align-items: center; font-size: var(--font-size); font-weight: 600; background: var(--chip); color: var(--text-2); border: none; }
-.chip.sm { height: 18px; font-size: var(--font-size); padding: 0 7px; flex-shrink: 0; }
-.chip.ok { background: var(--tint-ok); color: var(--ok); } .chip.warn { background: var(--tint-warn); color: var(--accent); }
-.chip.crit { background: var(--tint-crit); color: var(--blocked); } .chip.pending { background: var(--tint-working); color: var(--working); }
-.chip.muted { color: var(--muted); }
+.chip { display: inline-flex; align-items: center; }
+.chip.sm { flex-shrink: 0; }
 </style>

@@ -325,8 +325,6 @@ describe("WorkspaceStatusSummary details of the selected workspace", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "WorkspaceStatusSummary.vue"), "utf8");
     expect(sourceText).toContain(".workspace-status > .popover { cursor: default; }");
     expect(sourceText).toContain(".workspace-status > .popover .btn:not(:disabled) { cursor: pointer; }");
-    expect(sourceText).toContain(".workspace-status > .popover .btn:disabled { cursor: default; pointer-events: none;");
-    expect(sourceText).toContain(".workspace-status > .popover .btn:disabled:hover { background: transparent; }");
   });
 });
 

@@ -94,7 +94,7 @@ onBeforeUnmount(close);
 <template>
   <button
     ref="button"
-    class="tool"
+    class="btn icon small tool"
     :class="{ on: open }"
     :aria-expanded="open"
     :aria-label="t('macroMenu.label')"
@@ -142,9 +142,5 @@ onBeforeUnmount(close);
 </template>
 
 <style scoped>
-.tool {
-  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.tool:hover, .tool.on { background: var(--hover); color: var(--text); }
+.tool { display: inline-flex; align-items: center; justify-content: center; }
 </style>

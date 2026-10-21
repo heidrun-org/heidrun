@@ -24,7 +24,7 @@ const SOURCE_LABELS = {
       <div class="keys">{{ t("settingsSkills.sourceHelp") }}</div>
     </div>
     <div class="btn-group sourceChoice" role="group" :aria-label="t('settingsSkills.sourceLabel')">
-      <label v-for="source in SKILL_SOURCES" :key="source" class="btn-check btn-outline theme-secondary">
+      <label v-for="source in SKILL_SOURCES" :key="source" class="btn btn-check btn-outline theme-secondary">
         <input
           type="radio"
           name="skills-source"

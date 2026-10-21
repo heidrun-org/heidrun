@@ -396,6 +396,7 @@ $application-utilities: (
 .form-control,
 select.form-control {
   --control-font-size: var(--font-size);
+  --control-border-color: var(--control-border);
   font-family: inherit;
   box-shadow: none;
 }
@@ -405,7 +406,7 @@ select.form-control {
 // shows the ring, so the ring has the same color and width whatever opens it.
 .form-control:focus-visible,
 .form-control:focus-within {
-  outline: 2px solid var(--done);
+  outline: 2px solid var(--focus);
   outline-offset: -1px;
 }
 

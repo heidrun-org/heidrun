@@ -107,7 +107,7 @@ function parts(line: string, s: number, e: number) {
   <div class="overlay" @mousedown.self="close" @keydown="onKey">
     <div class="window-box" role="dialog" :aria-label="t('searchModal.dialogLabel')">
       <div class="bar">
-        <input ref="input" v-model="q" class="q" :placeholder="t('searchModal.placeholder')" spellcheck="false" />
+        <input ref="input" v-model="q" class="form-control q" :placeholder="t('searchModal.placeholder')" spellcheck="false" />
         <label class="opt"><input v-model="here" type="checkbox" />{{ t("searchModal.thisWorkspace") }}</label>
         <label class="opt"><input v-model="agentsOnly" type="checkbox" />{{ t("searchModal.agentsOnly") }}</label>
         <label class="opt mono" :title="t('searchModal.regex')"><input v-model="regex" type="checkbox" />.*</label>
@@ -129,7 +129,7 @@ function parts(line: string, s: number, e: number) {
           <button :title="t('searchModal.openResult')"
             v-for="(h, j) in g.hits"
             :key="j"
-            class="hit mono"
+            class="list-action hit mono"
             :class="{ active: indexOf(g, j) === active }"
             @mouseenter="active = indexOf(g, j)"
             @click="open(indexOf(g, j))"
@@ -147,14 +147,14 @@ function parts(line: string, s: number, e: number) {
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; padding: 56px 24px 24px; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
+.overlay { position: fixed; inset: 0; z-index: 58; background: var(--shadow); display: flex; justify-content: center; padding: 56px 24px 24px; }
 .window-box {
   width: min(980px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 .bar { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
-.q { flex: 1; height: 36px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 12px; }
+.q { flex: 1; height: 36px; }
 .opt { display: flex; align-items: center; gap: 5px; font-size: var(--font-size); color: var(--text-2); white-space: nowrap; }
 .opt input { accent-color: var(--accent); }
 .status { padding: 6px 16px; font-size: var(--font-size); color: var(--muted); border-bottom: 1px solid var(--line); }

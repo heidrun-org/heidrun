@@ -180,7 +180,7 @@ describe("PaneCard", () => {
 
   it("dims the name and the folder in the header of a pane that is not selected and not blocked", () => {
     expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .name")).toContain("color: var(--muted)");
-    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .sub")).toContain("color: var(--faint)");
+    expect(styleRule(".pane.several-panes:not(.selected):not(.blocked) .sub")).toContain("color: var(--muted)");
   });
 
   it("never tints the header of a blocked pane, so that it keeps its red header", () => {

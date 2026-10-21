@@ -97,7 +97,7 @@ const subtitle = computed(() => {
       <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
         <button
-          class="tool"
+          class="btn icon small tool"
           :class="{ on: compositionBar.isOpen }"
           :aria-pressed="compositionBar.isOpen"
           :aria-label="t('paneCard.compositionBar')"
@@ -109,9 +109,9 @@ const subtitle = computed(() => {
         </button>
         <MacroMenu :pane-id="pane.pane_id" />
         <template v-if="isInColumnOfPinnedPanes">
-          <button class="tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
+          <button class="btn icon small tool" :title="t('paneCard.goToTab')" @mousedown.stop @click="selectPane(pane)"><Icon name="box-arrow-up-right" /></button>
           <button
-            class="tool on"
+            class="btn icon small tool on"
             aria-pressed="true"
             :aria-label="t('paneCard.unpin')"
             :title="t('paneCard.unpinTitle')"
@@ -124,14 +124,14 @@ const subtitle = computed(() => {
         <template v-else>
         <button
           v-if="(pane.agent ?? '').includes('claude')"
-          class="tool"
+          class="btn icon small tool"
           :title="t('paneCard.mosaicTitle')"
           :aria-label="t('paneCard.mosaic')"
           @mousedown.stop
           @click="mosaic.paneId = pane.pane_id"
         ><Icon name="grid-3x3-gap" /></button>
         <button
-          class="tool"
+          class="btn icon small tool"
           :class="{ on: pinned }"
           :aria-pressed="pinned"
           :title="pinned ? t('paneCard.unpin') : t('paneCard.pinTitle')"
@@ -140,15 +140,15 @@ const subtitle = computed(() => {
         >
           <Icon :name="pinned ? 'pin-fill' : 'pin'" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'right', pane.pane_id)">
+        <button class="btn icon small tool" :aria-label="t('paneCard.splitRight')" :title="t('paneCard.splitRightTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'right', pane.pane_id)">
           <Icon name="layout-split" />
         </button>
-        <button class="tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'down', pane.pane_id)">
+        <button class="btn icon small tool" :aria-label="t('paneCard.splitDown')" :title="t('paneCard.splitDownTitle')" @mousedown.stop @click="NewPane.onSplitPaneClick($event, 'down', pane.pane_id)">
           <Icon name="layout-split" class="rotated" />
         </button>
         </template>
         <button
-          class="tool"
+          class="btn icon small tool"
           :class="{ on: ZenMode.state.isActive }"
           :aria-pressed="ZenMode.state.isActive"
           :aria-label="ZenMode.state.isActive ? t('paneCard.zenModeExit') : t('paneCard.zenModeEnter')"
@@ -219,7 +219,7 @@ const subtitle = computed(() => {
 .pane.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 .pane.blocked .head { background: var(--tint-err); border-bottom-color: var(--pane-head-line-blocked); }
 .pane.several-panes:not(.selected):not(.blocked) .name { color: var(--muted); }
-.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--faint); }
+.pane.several-panes:not(.selected):not(.blocked) .sub { color: var(--muted); }
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -235,13 +235,7 @@ const subtitle = computed(() => {
 .pane:hover .tools {
   opacity: 1; visibility: visible; pointer-events: auto; transition-delay: 0s;
 }
-.tool {
-  width: 22px; height: 22px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.tool:hover { background: var(--hover); color: var(--text); }
-.tool.txt { font-size: var(--font-size); line-height: 1; }
-.tool.on { color: var(--accent); }
+.tool { display: inline-flex; align-items: center; justify-content: center; }
 .pane.in-column-of-pinned-panes .head { background: var(--bar); }
 .pane.in-column-of-pinned-panes.several-panes.selected:not(.blocked) .head { background: var(--pane-head-selected); }
 </style>

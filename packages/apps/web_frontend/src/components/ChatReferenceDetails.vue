@@ -213,10 +213,10 @@ async function openOnForge() {
 /* The whole title shows, on as many lines as it needs, and a very long word breaks. */
 .reference-title { overflow-wrap: anywhere; }
 /* The pill of the state has a strong color and white bold text, so that the text reads on the dark background. */
-.state { color: #ffffff; font-weight: 600; }
-.state-open { background-color: #238636; }
-.state-done { background-color: #8957e5; }
-.state-closed { background-color: #da3633; }
+.state { color: var(--on-solid); font-weight: 600; }
+.state-open { background-color: var(--reference-open); }
+.state-done { background-color: var(--reference-merged); }
+.state-closed { background-color: var(--reference-closed); }
 .state-other { background-color: var(--bg-2); color: var(--fg-body); font-weight: 400; }
 .separator { border-top: 1px solid var(--line); }
 .excerpt { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; white-space: pre-line; }
@@ -227,6 +227,4 @@ async function openOnForge() {
 .label-button { cursor: pointer; font-family: inherit; }
 .label-button:hover { filter: brightness(1.2); }
 .avatar { width: 1.25em; height: 1.25em; flex-shrink: 0; border-radius: 50%; object-fit: cover; }
-.btn { --btn-hover-bg: var(--bg-2); --btn-active-bg: var(--bg-2); }
-.btn:disabled { opacity: 0.45; }
 </style>

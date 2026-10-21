@@ -47,5 +47,4 @@ onBeforeUnmount(() => window.clearTimeout(searchTimer));
 <style scoped>
 .searchField { position: relative; display: flex; align-items: center; }
 .searchIcon { position: absolute; left: 10px; color: var(--muted); pointer-events: none; }
-.search { padding-left: 32px; }
 </style>

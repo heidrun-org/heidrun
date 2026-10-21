@@ -50,14 +50,14 @@ async function chooseFolder(): Promise<void> {
       <p>{{ t('workspaceFolderRecovery.explanation') }}</p>
       <p v-if="error !== ''" role="alert">{{ error }}</p>
     </div>
-    <button type="button" :disabled="isBusy" @click="chooseFolder">
+    <button class="btn primary" type="button" :disabled="isBusy" @click="chooseFolder">
       {{ t('workspaceFolderRecovery.choose') }}
     </button>
   </section>
 </template>
 
 <style scoped>
-.workspace-folder-recovery { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 80; width: min(650px, calc(100% - 48px)); padding: 18px 22px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 12px 36px rgba(0, 0, 0, .35); display: flex; align-items: center; gap: 20px; }
+.workspace-folder-recovery { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 80; width: min(650px, calc(100% - 48px)); padding: 18px 22px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--panel); color: var(--text); box-shadow: 0 12px 36px var(--shadow-soft); display: flex; align-items: center; gap: 20px; }
 p { margin: 6px 0 0; color: var(--muted); }
 button { flex: 0 0 auto; }
 </style>

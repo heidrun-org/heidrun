@@ -310,14 +310,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     <form class="window-box" role="dialog" :aria-label="t(isEditing ? 'newCustomLauncherModal.editDialogLabel' : 'newCustomLauncherModal.dialogLabel')" @submit.prevent="create">
       <header>
         <h2>{{ t(isEditing ? "newCustomLauncherModal.editTitle" : "newCustomLauncherModal.title") }}</h2>
-        <button type="button" :title="t('newCustomLauncherModal.closeTitle')" class="close" :aria-label="t('newCustomLauncherModal.closeLabel')" @click="closeNewCustomLauncherModal()"><Icon name="x-lg" /></button>
+        <button type="button" :title="t('newCustomLauncherModal.closeTitle')" class="btn icon close" :aria-label="t('newCustomLauncherModal.closeLabel')" @click="closeNewCustomLauncherModal()"><Icon name="x-lg" /></button>
       </header>
 
       <div class="content">
         <div>
           <div class="form-label">{{ t("newCustomLauncherModal.kind") }}</div>
           <div class="btn-group d-flex" role="group" :aria-label="t('newCustomLauncherModal.kind')">
-            <label v-for="choice in KINDS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
+            <label v-for="choice in KINDS" :key="choice.id" class="btn btn-check btn-outline theme-secondary choice justify-content-center">
               <input v-model="kind" type="radio" name="new-launcher-kind" autocomplete="off" :value="choice.id" />
               {{ t(choice.labelKey) }}
             </label>
@@ -395,7 +395,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <div>
             <div class="form-label">{{ t("newCustomLauncherModal.codingAgent") }}</div>
             <div class="btn-group d-flex" role="group" :aria-label="t('newCustomLauncherModal.codingAgent')">
-              <label v-for="choice in CUSTOM_LAUNCHER_CODING_AGENTS" :key="choice.id" class="btn-check btn-outline theme-secondary choice justify-content-center">
+              <label v-for="choice in CUSTOM_LAUNCHER_CODING_AGENTS" :key="choice.id" class="btn btn-check btn-outline theme-secondary choice justify-content-center">
                 <input v-model="agentName" type="radio" name="new-launcher-agent" autocomplete="off" :value="choice.id" />
                 <Icon :name="choice.icon" />
                 {{ choice.label }}
@@ -444,23 +444,19 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 57; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+.overlay { position: fixed; inset: 0; z-index: 57; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(520px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 h2 { flex: 1; margin: 0; font-size: var(--font-size); font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .content { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .form-label { margin-bottom: 4px; font-size: calc(var(--font-size) * 0.9); color: var(--muted); }
 textarea.mono { font-family: var(--mono); }
 .choice { flex: 1 1 0; min-width: 0; }
-.write-name { height: auto; }
 .field { flex: 1 1 0; min-width: 0; }
 .field .form-control { width: 100%; }
 .buttons { display: flex; justify-content: flex-end; gap: 6px; }
-.btn:disabled { opacity: 0.5; cursor: default; }
 .btn-group i { margin-right: 4px; }
 </style>

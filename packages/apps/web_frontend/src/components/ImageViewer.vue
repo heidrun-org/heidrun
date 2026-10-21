@@ -72,7 +72,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     @mousedown.self="ImageDrop.closeViewer(props.paneId)"
   >
     <button
-      class="close"
+      class="btn icon image-action close"
       :aria-label="t('imageViewer.close')"
       :title="t('imageViewer.close')"
       @click="ImageDrop.closeViewer(props.paneId)"
@@ -81,7 +81,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     </button>
     <button
       v-if="count > 1"
-      class="arrow previous"
+      class="btn icon lg image-action arrow previous"
       :aria-label="t('imageViewer.previous')"
       @click="ImageDrop.moveViewer(props.paneId, -1)"
     >
@@ -98,7 +98,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
     </figure>
     <button
       v-if="count > 1"
-      class="arrow next"
+      class="btn icon lg image-action arrow next"
       :aria-label="t('imageViewer.next')"
       @click="ImageDrop.moveViewer(props.paneId, 1)"
     >
@@ -108,17 +108,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 28px; background: rgba(0, 0, 0, 0.8); outline: none; }
+.overlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 28px; background: var(--overlay-heavy); outline: none; }
 .stage { flex: 1; min-width: 0; max-height: 100%; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
 .stage img { max-width: 100%; max-height: calc(100vh - 110px); object-fit: contain; border-radius: 6px; background: var(--field); }
 .message { color: var(--muted); }
 figcaption { display: flex; gap: 12px; color: var(--text-2); font-size: var(--font-size); }
 .position { color: var(--muted); font-variant-numeric: tabular-nums; }
-.arrow, .close {
-  display: flex; align-items: center; justify-content: center; border: 1px solid var(--line-modal); border-radius: 50%;
-  background: var(--raised); color: var(--text); cursor: pointer;
-}
-.arrow { flex: none; width: 44px; height: 44px; font-size: calc(var(--font-size) * 1.5); }
-.close { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; }
-.arrow:hover, .close:hover { background: var(--hover); }
+.arrow, .close { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.arrow { flex: none; }
+.close { position: absolute; top: 14px; right: 14px; }
 </style>

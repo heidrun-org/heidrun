@@ -461,8 +461,8 @@ onBeforeUnmount(() => {
   padding: 10px 16px; border-radius: 10px; background: var(--toast-bg); border: 1px solid var(--line-strong);
   color: var(--text); font-size: var(--font-size); box-shadow: 0 12px 32px var(--toast-shadow); z-index: 50;
 }
-.toast.error { background: #7f1d1d; border-color: #ef4444; color: #fff; font-weight: 600; }
-.toast-icon { margin-right: 8px; color: #fecaca; }
+.toast.error { background: var(--tint-err); border-color: var(--fail); color: var(--fail); font-weight: 600; }
+.toast-icon { margin-right: 8px; color: var(--text); }
 .toast-enter-active, .toast-leave-active { transition: opacity 0.2s, transform 0.2s; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(6px); }
 </style>

@@ -290,5 +290,5 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55); }
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--overlay); }
 </style>

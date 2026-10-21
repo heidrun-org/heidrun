@@ -112,7 +112,7 @@ async function onImageSettled(event: Event) {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: #0b0c0e;
+  background: var(--illustration-bg);
   cursor: pointer;
 }
 .splash-image {
@@ -128,37 +128,28 @@ async function onImageSettled(event: Event) {
   width: 100%;
   padding: 120px 24px 124px;
   text-align: center;
-  color: #fff;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0));
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  color: var(--illustration-text);
+  background: linear-gradient(to top, var(--illustration-caption), var(--illustration-fade));
+  text-shadow: 0 2px 12px var(--illustration-shadow);
 }
 .splash-title {
   margin: 0;
   font-size: 128px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #ffd76a;
+  color: var(--illustration-accent);
 }
 .splash-motto-arc {
   position: absolute;
   inset: 0;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(0 2px 6px var(--illustration-shadow));
 }
 .splash-motto {
   font-size: 52px;
   font-weight: 500;
-  fill: #fff;
+  fill: var(--illustration-text);
 }
-.splash .splash-sound-button {
-  position: absolute;
-  right: 24px;
-  bottom: 24px;
-  --btn-bg: rgba(0, 0, 0, 0.55);
-  --btn-color: #fff;
-  --btn-hover-color: #fff;
-  --btn-border-color: rgba(255, 255, 255, 0.5);
-  --btn-hover-border-color: rgba(255, 255, 255, 0.8);
-}
+.splash .splash-sound-button { position: absolute; right: 24px; bottom: 24px; }
 .splash-leave-active {
   transition: opacity 0.6s ease;
 }

@@ -130,7 +130,7 @@ function remove() {
           <h2 :title="t('noteModal.doubleClickToRename')" @dblclick="renaming = true">{{ note.title }}</h2>
           <div class="origin">{{ note.origin }} · <AbbreviatedTime :milliseconds="note.createdAt" /></div>
         </div>
-        <button class="x" :aria-label="t('noteModal.close')" :title="t('noteModal.closeTitle')" @click="close">
+        <button class="btn icon x" :aria-label="t('noteModal.close')" :title="t('noteModal.closeTitle')" @click="close">
           <Icon name="x-lg" />
         </button>
       </header>
@@ -138,7 +138,7 @@ function remove() {
       <div class="body">
         <template v-if="editing">
           <label class="sr" for="note-edit">{{ t("noteModal.noteText") }}</label>
-          <textarea id="note-edit" v-model="draft" class="mono" spellcheck="false" autofocus></textarea>
+          <textarea id="note-edit" v-model="draft" class="form-control mono" spellcheck="false" autofocus></textarea>
         </template>
         <pre v-else class="mono" @dblclick="startEdit">{{ note.text }}</pre>
       </div>
@@ -155,7 +155,7 @@ function remove() {
           <select
             v-if="agents.length"
             id="modal-send"
-            class="send"
+            class="form-control send"
             @change="(e) => { sendTo((e.target as HTMLSelectElement).value); (e.target as HTMLSelectElement).value = ''; }"
           >
             <option value="">{{ t("noteModal.sendToAgentChoice") }}</option>
@@ -172,13 +172,13 @@ function remove() {
 </template>
 
 <style scoped>
-.scrim { position: fixed; inset: 0; z-index: 45; background: rgba(5, 6, 7, 0.5); }
+.scrim { position: fixed; inset: 0; z-index: 45; background: var(--overlay); }
 .win {
   position: absolute; left: 20px; top: 20px;
   min-width: 360px; min-height: 240px; max-width: calc(100vw - 20px); max-height: calc(100vh - 20px);
   resize: both; overflow: hidden;
   display: flex; flex-direction: column; border-radius: 14px; border: 1px solid var(--line-modal);
-  background: var(--field); box-shadow: 0 28px 72px rgba(0, 0, 0, 0.6);
+  background: var(--field); box-shadow: 0 28px 72px var(--shadow);
 }
 .bar {
   display: flex; align-items: center; gap: 10px; padding: 14px 14px 12px 18px;
@@ -188,23 +188,16 @@ function remove() {
 .titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .origin { font-size: var(--font-size); color: var(--muted); }
-.x {
-  width: 28px; height: 28px; border: none; border-radius: 7px; background: transparent; color: var(--muted);
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.x:hover { background: var(--hover); color: var(--text); }
+.x { display: inline-flex; align-items: center; justify-content: center; }
 .body { flex: 1; min-height: 0; display: flex; padding: 14px 18px; }
 pre, textarea {
   flex: 1; margin: 0; padding: 14px 16px; border-radius: 9px; background: var(--bg); color: var(--text-2);
   font-size: var(--font-size); line-height: 1.55; white-space: pre-wrap; word-break: break-word; overflow: auto;
 }
 pre { user-select: text; cursor: text; }
-textarea { border: 1px solid #3a5a80; outline: none; resize: none; color: var(--text); }
+textarea { resize: none; }
 .foot { display: flex; align-items: center; gap: 8px; padding: 12px 18px 16px; }
-.send {
-  height: 30px; border-radius: 7px; border: 1px solid var(--line-strong); background: transparent;
-  color: var(--text-2); font-size: var(--font-size); padding: 0 8px;
-}
+.send { height: 30px; }
 .grow { flex: 1; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

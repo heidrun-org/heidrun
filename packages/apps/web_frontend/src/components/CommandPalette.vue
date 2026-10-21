@@ -189,7 +189,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
           id="palette-input"
           ref="input"
           v-model="query"
-          class="mono"
+          class="form-control mono"
           :placeholder="t('commandPalette.placeholder')"
           spellcheck="false"
           autocomplete="off"
@@ -204,7 +204,7 @@ onMounted(() => nextTick(() => input.value?.focus()));
           <button :title="t('commandPalette.runTitle')"
             v-for="{ item, i } in g.items"
             :key="i"
-            class="row"
+            class="list-action row"
             :class="{ active: i === index, mono: item.mono }"
             @mouseenter="index = i"
             @click="execute(item)"
@@ -219,15 +219,15 @@ onMounted(() => nextTick(() => input.value?.focus()));
 </template>
 
 <style scoped>
-.scrim { position: fixed; inset: 0; background: rgba(5, 6, 7, 0.55); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding-top: 120px; }
+.scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 40; display: flex; justify-content: center; align-items: flex-start; padding-top: 120px; }
 .palette {
   width: min(560px, calc(100% - 32px)); border-radius: 14px; border: 1px solid var(--line-modal); background: var(--field);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6); overflow: hidden;
+  box-shadow: 0 24px 64px var(--shadow); overflow: hidden;
 }
 .field { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; border-bottom: 1px solid var(--line-soft); }
-.prompt { color: var(--working); font-size: var(--font-size); }
-.field input { flex: 1; border: none; background: none; outline: none; font-size: var(--font-size); color: var(--text); }
-kbd { font: 400 var(--font-size) var(--mono); color: var(--faint); }
+.prompt { color: var(--working-text); font-size: var(--font-size); }
+.field input { flex: 1; }
+kbd { font: 400 var(--font-size) var(--mono); color: var(--muted); }
 .list { padding: 8px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .sec { padding: 10px 10px 4px; }
 .row {

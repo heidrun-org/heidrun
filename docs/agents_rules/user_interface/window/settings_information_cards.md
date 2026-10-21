@@ -1,7 +1,7 @@
 # User interface of Heidrun: the information card of every option of the Settings window
 
 - Created: 17 October 2026
-- Last updated: 18 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Abbreviated times](abbreviated_times.md), [Guards section](settings_guards.md)
@@ -32,7 +32,7 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 
 ## The test
 
-- The test `components/settings/settings_information_cards.test.ts` mounts the ten sections. In each section, every option has the attribute `data-option` with the name of its option, and the test fails when:
+- The test `components/settings/settings_information_cards.test.ts` mounts the eleven sections. In each section, every option has the attribute `data-option` with the name of its option, and the test fails when:
   - the list of the options of a section is not the expected list. A new option goes in this list.
   - an option has no circled question mark.
   - an input, a select, or a text area is outside an option.

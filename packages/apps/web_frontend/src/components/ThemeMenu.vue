@@ -26,14 +26,14 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <template>
   <div ref="root" class="wrap">
-    <button class="icon-btn" :class="{ on: open }" :aria-label="t('themeMenu.buttonLabel')" :title="t('themeMenu.buttonTitle')" @click="open = !open">
+    <button class="btn icon icon-btn" :class="{ on: open }" :aria-label="t('themeMenu.buttonLabel')" :title="t('themeMenu.buttonTitle')" @click="open = !open">
       <Icon :name="buttonIcon" />
     </button>
-    <div v-if="open" class="popup-menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
+    <div v-if="open" class="menu show popup-menu" role="menu" :aria-label="t('themeMenu.menuLabel')">
       <button
         v-for="o in THEME_OPTIONS"
         :key="o.id"
-        class="item"
+        class="menu-item item"
         role="menuitemradio"
         :title="t('themeMenu.useTheme', { theme: t(o.labelKey) })"
         :aria-checked="settings.theme === o.id"
@@ -49,21 +49,12 @@ onBeforeUnmount(() => document.removeEventListener("mousedown", onDocClick));
 
 <style scoped>
 .wrap { position: relative; }
-.icon-btn {
-  width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent;
-  color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0;
-}
-.icon-btn:hover { background: var(--hover); color: var(--text); }
-.icon-btn.on { color: var(--text-2); background: var(--field); }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; }
 .popup-menu {
   position: absolute; right: 0; top: 38px; min-width: 170px; z-index: 30; padding: 6px; border-radius: 12px;
-  border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line-modal); background: var(--field); box-shadow: 0 18px 48px var(--shadow-soft);
   display: flex; flex-direction: column; gap: 2px;
 }
-.item {
-  display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 10px; border: none; border-radius: 8px;
-  background: transparent; color: var(--text); font-size: var(--font-size); text-align: left;
-}
-.item:hover { background: var(--hover); }
+.item { display: flex; align-items: center; gap: 10px; height: 34px; text-align: left; }
 .label { flex: 1; }
 </style>

@@ -22,16 +22,14 @@ onMounted(() => nextTick(() => confirmButton.value?.focus()));
 
 <style scoped>
 .overlay {
-  position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.55);
+  position: fixed; inset: 0; z-index: 60; background: var(--overlay);
   display: flex; align-items: center; justify-content: center; padding: 24px;
 }
 .window-box {
   width: min(440px, 100%); padding: 22px; border-radius: 14px; background: var(--panel);
-  border: 1px solid #5c2826; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--pane-ring-blocked); box-shadow: 0 24px 64px var(--shadow);
   display: flex; flex-direction: column; gap: 16px;
 }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .row { display: flex; justify-content: flex-end; gap: 8px; }
-.btn.danger { background: #a83a36; border-color: transparent; color: #fff; font-weight: 600; }
-.btn.danger:hover { background: #c0433e; }
 </style>

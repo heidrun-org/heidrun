@@ -15,12 +15,12 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - `--shell` is the color of the top bar, of the sidebar icon bars, of the status bar, and of the window behind the sidebars and the viewport. It is #181818 in the dark theme and #f8f8f8 in the light theme.
 - `--side` is the color of the left sidebar, of the right sidebar, of the frame of the viewport, and of the tab bar. It has the same value as `--shell`, as in VS Code, so only the border line (`--line`) separates a sidebar icon bar from its sidebar.
 - `--bg` is the color of a pane, and the background of the terminal in a pane has the same value: #1f1f1f in the dark theme and #ffffff in the light theme. The terminal themes are in `terminal_themes.ts`, and a test checks that their background is equal to `--bg`. Heidrun reports the background and the text color of the terminal theme in use to Codex when it starts Codex: the rule is in [panes.md](../workspaces_tabs_and_panes/panes.md).
-- `--text` is #cccccc in the dark theme and #3b3b3b in the light theme. `--muted` is #8f8f8f in the dark theme and #737373 in the light theme. `--line`, the color of the border lines, is #2b2b2b in the dark theme and #e5e5e5 in the light theme.
+- `--text` is #cccccc in the dark theme and #3b3b3b in the light theme. `--muted` is #a0a0a0 in the dark theme and #656565 in the light theme, adjusted for readable secondary text. `--line`, the color of the border lines, is #2b2b2b in the dark theme and #e5e5e5 in the light theme.
 - `--icon` is the color of the icons of the sidebar icon bars: #888888 in the dark theme and #5d5d5d in the light theme. The icon of the selected entry has the text color (`--text`).
 - `--pane-head-selected` is the background of the header of the selected pane: #1f3452 in the dark theme and #dbe7fb in the light theme. It is a light tint of the blue of the ring of the selected pane ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
 - `--pane-head-line` is the line under the header of a pane: #2b2b2b in the dark theme and #e4e4df in the light theme. In both themes, its contrast ratio against `--bg` is at least 1.1, so the line shows in the dark theme as well as in the light theme ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
 - The status indicators follow [the status dot architecture](../../../architecture/status_dot.md): Blocked is a static red dot, Working is a purple spinning ring, Finished is a static green dot, and Idle is a static gray dot. The same shared status colors apply throughout the desktop window and mobile website, with darker shades in the light theme.
-- The hover colors, the accent color, and the other grays keep their own values.
+- [Shared design rules](shared_design.md) define colors by purpose, button states, contrast requirements, documented exceptions, and automated enforcement.
 
 ## Scroll bars
 

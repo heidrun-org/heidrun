@@ -68,7 +68,7 @@ const REBUILD_HELP_BLOCKS = [
         </InformationCard>
       </div>
       <div class="btn-group" role="group" :aria-label="t('settingsDynamicTopics.extractionLabel')">
-        <label v-for="method in EXTRACTIONS" :key="method.id" class="btn-check btn-outline theme-secondary" :title="t(method.titleKey)">
+        <label v-for="method in EXTRACTIONS" :key="method.id" class="btn btn-check btn-outline theme-secondary" :title="t(method.titleKey)">
           <input v-model="settings.dynamicTopicExtraction" type="radio" name="dynamic-topic-extraction" autocomplete="off" :value="method.id" />
           {{ t(method.labelKey) }}
         </label>

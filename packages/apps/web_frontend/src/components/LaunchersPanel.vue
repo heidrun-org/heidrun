@@ -63,10 +63,10 @@ function status(a: Launcher) {
     <template v-if="ws && p">
       <header class="d-flex align-items-center">
         <span class="title me-auto">{{ t("launchersPanel.title") }}</span>
-        <button type="button" class="btn btn-sm icon-button import" :aria-label="t('launchersPanel.importTitle')" :title="t('launchersPanel.importTitle')" @click="openImportLaunchersModal()">
+        <button type="button" class="btn icon btn-sm icon-button import" :aria-label="t('launchersPanel.importTitle')" :title="t('launchersPanel.importTitle')" @click="openImportLaunchersModal()">
           <Icon name="box-arrow-in-down" />
         </button>
-        <button type="button" class="btn btn-sm icon-button create" :aria-label="t('launchersPanel.createTitle')" :title="t('launchersPanel.createTitle')" @click="openNewCustomLauncherModal()">
+        <button type="button" class="btn icon btn-sm icon-button create" :aria-label="t('launchersPanel.createTitle')" :title="t('launchersPanel.createTitle')" @click="openNewCustomLauncherModal()">
           <Icon name="plus-lg" />
         </button>
       </header>
@@ -118,9 +118,9 @@ function status(a: Launcher) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word;
 }
 .bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.state { font-size: var(--font-size); color: var(--faint); white-space: nowrap; }
-.state.running { color: var(--working); }
-.state.finished { color: var(--done); }
+.state { font-size: var(--font-size); color: var(--muted); white-space: nowrap; }
+.state.running { color: var(--working-text); }
+.state.finished { color: var(--done-text); }
 .top :deep(.tool) {
   width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
   font-size: var(--font-size); display: inline-flex; align-items: center; justify-content: center; padding: 0;

@@ -157,7 +157,7 @@ onBeforeUnmount(() => {
           </select>
           <button
             type="button"
-            class="icon-button direction"
+            class="btn icon icon-button direction"
             :title="directionLabel"
             :aria-label="directionLabel"
             @click="ascending = !ascending"
@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
           </button>
           <button
             type="button"
-            class="icon-button refresh"
+            class="btn icon icon-button refresh"
             :title="t('gitWorktreesModal.refresh')"
             :aria-label="t('gitWorktreesModal.refresh')"
             :disabled="isLoading"
@@ -174,7 +174,7 @@ onBeforeUnmount(() => {
           >
             <Icon name="arrow-clockwise" />
           </button>
-          <button type="button" class="icon-button close" :title="t('gitWorktreesModal.close')" :aria-label="t('gitWorktreesModal.close')" @click="close">
+          <button type="button" class="btn icon icon-button close" :title="t('gitWorktreesModal.close')" :aria-label="t('gitWorktreesModal.close')" @click="close">
             <Icon name="x-lg" />
           </button>
         </div>
@@ -183,7 +183,7 @@ onBeforeUnmount(() => {
         <div v-if="isLoading && worktrees.length === 0" class="message" role="status">{{ t("gitWorktreesModal.loading") }}</div>
         <div v-else-if="error && worktrees.length === 0" class="message error" role="alert">
           <span>{{ error }}</span>
-          <button type="button" class="refresh" @click="refresh()">{{ t("gitWorktreesModal.tryAgain") }}</button>
+          <button type="button" class="list-action refresh" @click="refresh()">{{ t("gitWorktreesModal.tryAgain") }}</button>
         </div>
         <div v-else-if="rows.length === 0" class="message">{{ t("gitWorktreesModal.empty") }}</div>
         <div v-else class="worktree-list">
@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
           >
             <button
               type="button"
-              class="open-worktree"
+              class="list-action open-worktree"
               @click="openWorktree(row)"
             >
               <span class="worktree-text">
@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
             <div class="row-actions">
               <button
                 type="button"
-                class="icon-button row-action"
+                class="btn icon icon-button row-action"
                 :title="t(copiedFolder === row.worktree.folder ? 'gitWorktreesModal.folderCopied' : 'gitWorktreesModal.copyFolder')"
                 :aria-label="t(copiedFolder === row.worktree.folder ? 'gitWorktreesModal.folderCopied' : 'gitWorktreesModal.copyFolder')"
                 @click="copyFolder(row.worktree.folder)"
@@ -231,15 +231,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, 0.48); display: flex; align-items: center; justify-content: center; padding: 24px; }
-.window-box { width: min(900px, 100%); max-height: 84vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45); }
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--overlay); display: flex; align-items: center; justify-content: center; padding: 24px; }
+.window-box { width: min(900px, 100%); max-height: 84vh; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none; background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow-soft); }
 header { display: flex; align-items: center; gap: 20px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
 h2 { margin: 0; flex: 1; min-width: 0; font-size: calc(var(--font-size) * 1.15); font-weight: 600; }
 .header-tools { display: flex; align-items: center; gap: 8px; }
 .sort-label { color: var(--muted); font-size: calc(var(--font-size) * 0.9); }
 .sort-select { max-width: 150px; }
-.icon-button { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--muted); }
-.icon-button:hover, .icon-button:focus-visible { border-color: var(--line); background: var(--hover); color: var(--text); }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .icon-button:focus-visible, .open-worktree:focus-visible { outline: 2px solid var(--line-strong); outline-offset: 2px; }
 .content { min-height: 150px; overflow-y: auto; padding: 14px 20px; display: flex; flex-direction: column; gap: 12px; }
 .worktree-list { display: flex; flex-direction: column; }
@@ -255,11 +254,8 @@ h2 { margin: 0; flex: 1; min-width: 0; font-size: calc(var(--font-size) * 1.15);
 .dates { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 3px; color: var(--muted); font-size: calc(var(--font-size) * 0.9); font-weight: 400; }
 .open-label, .muted { color: var(--muted); }
 .row-actions { position: absolute; top: 4px; right: 4px; display: flex; align-items: center; }
-.row-action { width: 34px; height: 34px; padding: 8px; }
-.worktree-row .row-action:hover, .worktree-row .row-action:focus-visible { border-color: var(--line-strong); background: var(--panel); color: var(--text); box-shadow: 0 2px 5px rgba(0, 0, 0, 0.16); }
 .message { padding: 28px 8px; text-align: center; color: var(--muted); }
-.error { color: var(--danger, #dc3545); display: flex; flex-direction: column; gap: 8px; }
-.refresh { color: var(--text-2); }
-.icon-button:disabled { opacity: 0.5; cursor: default; }
+.error { color: var(--danger, var(--fail)); display: flex; flex-direction: column; gap: 8px; }
+.icon-button:disabled { cursor: default; }
 @media (max-width: 700px) { header { align-items: flex-start; flex-wrap: wrap; } .header-tools { width: 100%; } .sort-label { margin-left: auto; } .open-label { display: none; } }
 </style>

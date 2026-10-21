@@ -6,7 +6,7 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	ThemeColorsTest — the main colors of the window are the colors of VS Code in Dark Modern and in Light Modern
+//	ThemeColorsTest — the window retains the VS Code base palette with readable secondary text
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -60,13 +60,13 @@ describe('the theme colors', () => {
 		{ variableName: '--side', dark: '#181818', light: '#f8f8f8' },
 		{ variableName: '--bg', dark: '#1f1f1f', light: '#ffffff' },
 		{ variableName: '--text', dark: '#cccccc', light: '#3b3b3b' },
-		{ variableName: '--muted', dark: '#8f8f8f', light: '#737373' },
+		{ variableName: '--muted', dark: '#a0a0a0', light: '#656565' },
 		{ variableName: '--line', dark: '#2b2b2b', light: '#e5e5e5' },
 		{ variableName: '--icon', dark: '#888888', light: '#5d5d5d' },
 	];
 
 	for (const { variableName, dark, light } of colorTable) {
-		it(`give ${variableName} the value of VS Code in the dark theme and in the light theme`, () => {
+		it(`give ${variableName} its approved value in the dark theme and in the light theme`, () => {
 			const { darkText, lightText } = ThemeColorsTestHelper.readThemeTexts();
 			expect(ThemeColorsTestHelper.readValue(darkText, variableName)).toBe(dark);
 			expect(ThemeColorsTestHelper.readValue(lightText, variableName)).toBe(light);

@@ -55,7 +55,7 @@ function isRemoteControlled(tabId: string): boolean {
           @pointerdown="tabReorder.onPointerDown($event, tabIds)"
         >
           <button
-            class="tab-main d-flex align-items-center gap-2"
+            class="navigation-action tab-main d-flex align-items-center gap-2"
             role="tab"
             :aria-selected="tab.tab_id === state.selectedTabId"
             :title="t('tabBar.tabTitle', { name: tabLabel(tab.tab_id) })"
@@ -149,7 +149,7 @@ function isRemoteControlled(tabId: string): boolean {
 .nav-link .tab-rename { flex: 1; min-width: 0; width: auto; height: 24px; padding: 0 6px; }
 .rc {
   font: 600 var(--font-size) var(--mono); letter-spacing: 0.4px; padding: 1px 5px; border-radius: 4px;
-  background: var(--tint-working); color: var(--working);
+  background: var(--tint-working); color: var(--working-text);
 }
 /* As in Visual Studio Code, the close button of the selected tab is always visible, and the close button of another tab shows
    when the mouse is over it. The button keeps its place, so the tabs do not move. */
@@ -160,28 +160,6 @@ function isRemoteControlled(tabId: string): boolean {
 .nav-link:not(.active) .confirm { opacity: 0; }
 .nav-link:not(.active):hover .confirm, .nav-link:not(.active):focus-within .confirm { opacity: 1; }
 .nav-link .confirm:hover { background: var(--overlay-hover); color: var(--text); }
-.add {
-  --btn-padding-x: 0;
-  --btn-padding-y: 0;
-  --btn-font-size: var(--font-size);
-  --btn-font-weight: 400;
-  --btn-border-radius: 6px;
-  --btn-color: var(--muted);
-  --btn-hover-color: var(--text);
-  --btn-hover-bg: rgba(var(--wash), 0.08);
-  --btn-active-color: var(--text);
-  --btn-active-bg: rgba(var(--wash), 0.08);
-  --btn-disabled-color: var(--text);
-  --btn-disabled-bg: rgba(var(--wash), 0.08);
-  flex-shrink: 0; width: 34px; height: 34px; margin-bottom: 4px; line-height: 1;
-}
+.add { flex-shrink: 0; width: 34px; margin-bottom: 4px; }
 /* The application never had a pressed look or a focus background: only the mouse hover changes the colors. */
-.add:not(:hover) {
-  --btn-hover-color: var(--muted);
-  --btn-hover-bg: transparent;
-  --btn-active-color: var(--muted);
-  --btn-active-bg: transparent;
-  --btn-disabled-color: var(--muted);
-  --btn-disabled-bg: transparent;
-}
 </style>

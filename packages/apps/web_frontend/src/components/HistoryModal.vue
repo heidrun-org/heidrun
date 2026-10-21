@@ -173,28 +173,28 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
       <header>
         <h2>{{ t("historyModal.title") }}</h2>
         <div class="seg" role="radiogroup" :aria-label="t('historyModal.periodLabel')">
-          <button :title="t('historyModal.periodTitle')" v-for="[v, l] in PERIODS" :key="v" :class="{ on: period === v }" @click="period = v">{{ t(l) }}</button>
+          <button class="btn small" :title="t('historyModal.periodTitle')" v-for="[v, l] in PERIODS" :key="v" :class="{ on: period === v }" @click="period = v">{{ t(l) }}</button>
         </div>
-        <button :title="t('historyModal.closeTitle')" class="close" :aria-label="t('historyModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
+        <button :title="t('historyModal.closeTitle')" class="btn icon close" :aria-label="t('historyModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="filters">
-        <select v-model="ws" :aria-label="t('historyModal.workspace')">
+        <select class="form-control" v-model="ws" :aria-label="t('historyModal.workspace')">
           <option value="">{{ t("historyModal.allWorkspaces") }}</option>
           <option v-for="w in workspaces" :key="w" :value="w">{{ w }}</option>
         </select>
-        <select v-model="kind" :aria-label="t('historyModal.agent')">
+        <select class="form-control" v-model="kind" :aria-label="t('historyModal.agent')">
           <option value="">{{ t("historyModal.allAgents") }}</option>
           <option v-for="k in kinds" :key="k" :value="k">{{ k }}</option>
         </select>
-        <input v-model="q" :placeholder="t('historyModal.searchPlaceholder')" spellcheck="false" />
+        <input class="form-control" v-model="q" :placeholder="t('historyModal.searchPlaceholder')" spellcheck="false" />
         <button class="btn" :class="{ on: showCalib }" :title="t('historyModal.assumptionsTitle')" @click="showCalib = !showCalib">{{ t("historyModal.assumptions") }}</button>
         <button :title="t('historyModal.exportTitle')" class="btn" :disabled="!runs.length" @click="exportCsv">{{ t("historyModal.export") }}</button>
       </div>
 
       <div v-if="showCalib" class="calib">
-        <label>{{ t("historyModal.humanFactorBefore") }} <input v-model.number="settings.histHumanFactor" type="number" min="0.5" max="20" step="0.5" /> {{ t("historyModal.humanFactorAfter") }}</label>
-        <label>{{ t("historyModal.promptMinBefore") }} <input v-model.number="settings.histPromptMin" type="number" min="0" max="60" step="0.5" /> {{ t("historyModal.promptMinAfter") }}</label>
-        <label>{{ t("historyModal.decisionMinBefore") }} <input v-model.number="settings.histDecisionMin" type="number" min="0" max="30" step="0.5" /> {{ t("historyModal.decisionMinAfter") }}</label>
+        <label>{{ t("historyModal.humanFactorBefore") }} <input class="form-control" v-model.number="settings.histHumanFactor" type="number" min="0.5" max="20" step="0.5" /> {{ t("historyModal.humanFactorAfter") }}</label>
+        <label>{{ t("historyModal.promptMinBefore") }} <input class="form-control" v-model.number="settings.histPromptMin" type="number" min="0" max="60" step="0.5" /> {{ t("historyModal.promptMinAfter") }}</label>
+        <label>{{ t("historyModal.decisionMinBefore") }} <input class="form-control" v-model.number="settings.histDecisionMin" type="number" min="0" max="30" step="0.5" /> {{ t("historyModal.decisionMinAfter") }}</label>
         <span class="hint">{{ t("historyModal.assumptionsHint") }}</span>
       </div>
 
@@ -242,12 +242,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <aside class="side">
           <div class="side-head">
             <span class="seg small" role="radiogroup" :aria-label="t('historyModal.groupLabel')">
-              <button :title="t('historyModal.groupByWorkspaceTitle')" :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">{{ t("historyModal.groupByWorkspace") }}</button>
-              <button :title="t('historyModal.groupByFeatureTitle')" :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">{{ t("historyModal.groupByFeature") }}</button>
+              <button class="btn small" :title="t('historyModal.groupByWorkspaceTitle')" :class="{ on: groupBy === 'ws' }" @click="groupBy = 'ws'">{{ t("historyModal.groupByWorkspace") }}</button>
+              <button class="btn small" :title="t('historyModal.groupByFeatureTitle')" :class="{ on: groupBy === 'feature' }" @click="groupBy = 'feature'">{{ t("historyModal.groupByFeature") }}</button>
             </span>
           </div>
           <template v-if="groupBy === 'feature'">
-            <button v-for="f in features" :key="f.key" class="tot feat" :class="{ on: q === f.branch }" :title="t('historyModal.featureTitle', { ws: f.ws, branch: f.branch, count: f.n })" @click="pickFeature(f.branch)">
+            <button v-for="f in features" :key="f.key" class="list-action tot feat" :class="{ on: q === f.branch }" :title="t('historyModal.featureTitle', { ws: f.ws, branch: f.branch, count: f.n })" @click="pickFeature(f.branch)">
               <span class="t-name"><span v-if="f.ref" class="f-ref">{{ f.ref }}</span>{{ f.branch }}<span class="f-ws">{{ f.ws }}</span></span>
               <span class="mono t-ms">{{ hm(f.ms) }}</span>
               <span class="bar"><span :style="{ width: `${(f.ms / featMax) * 100}%` }"></span></span>
@@ -256,7 +256,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
             <p v-if="!features.length" class="hint">{{ t("historyModal.nothingInPeriod") }}</p>
           </template>
           <template v-else>
-          <button :title="t('historyModal.filterWorkspaceTitle')" v-for="row in totals.list" :key="row.name" class="tot" :class="{ on: ws === row.name }" @click="ws = ws === row.name ? '' : row.name">
+          <button :title="t('historyModal.filterWorkspaceTitle')" v-for="row in totals.list" :key="row.name" class="list-action tot" :class="{ on: ws === row.name }" @click="ws = ws === row.name ? '' : row.name">
             <span class="t-name">{{ row.name || "—" }}</span>
             <span class="mono t-ms">{{ hm(row.ms) }}</span>
             <span class="bar"><span :style="{ width: `${(row.ms / totals.max) * 100}%` }"></span></span>
@@ -289,12 +289,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 
           <div class="eyebrow sub-h budget-h">
             {{ t("historyModal.monthBudgets") }}
-            <button :title="t('historyModal.editBudgetsTitle')" class="link" @click="showBudgets = !showBudgets">{{ showBudgets ? t("historyModal.budgetsDone") : t("historyModal.budgetsEdit") }}</button>
+            <button :title="t('historyModal.editBudgetsTitle')" class="btn text small link" @click="showBudgets = !showBudgets">{{ showBudgets ? t("historyModal.budgetsDone") : t("historyModal.budgetsEdit") }}</button>
           </div>
           <div v-for="n in budgetNames.filter((x) => showBudgets || settings.budgets[x])" :key="n" class="budget" :class="budgetLevel(n)">
             <span class="t-name">{{ n }}</span>
             <template v-if="showBudgets">
-              <input :value="settings.budgets[n] ?? ''" placeholder="—" inputmode="decimal" @change="(e) => setBudget(n, (e.target as HTMLInputElement).value)" />
+              <input class="form-control" :value="settings.budgets[n] ?? ''" placeholder="—" inputmode="decimal" @change="(e) => setBudget(n, (e.target as HTMLInputElement).value)" />
               <span class="muted">{{ t("historyModal.perMonth") }}</span>
             </template>
             <template v-else>
@@ -309,7 +309,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
         <section class="list">
           <div v-if="!history.loaded" class="empty">{{ t("historyModal.loading") }}</div>
           <div v-else-if="!runs.length" class="empty">{{ t("historyModal.noRuns") }}</div>
-          <button v-for="r in runs" :key="r.id" class="run" :disabled="!alive(r)" :title="alive(r) ? t('historyModal.goToPane') : t('historyModal.paneClosed')" @click="go(r)">
+          <button v-for="r in runs" :key="r.id" class="list-action run" :disabled="!alive(r)" :title="alive(r) ? t('historyModal.goToPane') : t('historyModal.paneClosed')" @click="go(r)">
             <span class="r-top">
               <span class="mono r-when">{{ when(r) }}</span>
               <span class="mono r-dur">{{ hm(r.activeMs) }}</span>
@@ -331,24 +331,19 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
 :where(button:not(.btn)) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.55); display: flex; padding: 28px; }
+.overlay { position: fixed; inset: 0; z-index: 58; background: var(--overlay); display: flex; padding: 28px; }
 .window-box {
   flex: 1; min-width: 0; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; outline: none;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
 .seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
-.seg button { height: 28px; padding: 0 12px; font-size: var(--font-size); color: var(--text-2); }
-.seg button.on { background: var(--field); color: var(--text); font-weight: 600; }
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
 .filters { display: flex; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
-.filters select, .filters input { height: 30px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 9px; }
+.filters select, .filters input { height: 30px; }
 .filters input { flex: 1; }
 .calib { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--bg); font-size: var(--font-size); color: var(--text-2); }
-.calib input { width: 56px; height: 26px; margin: 0 4px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); text-align: right; padding: 0 6px; }
-.btn.on { border-color: var(--done); color: var(--text); }
+.calib input { width: 56px; height: 26px; margin: 0 4px; text-align: right; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .card { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); min-width: 0; }
 .card.accent { border-color: color-mix(in srgb, var(--done) 45%, var(--line)); }
@@ -374,9 +369,8 @@ button.tot:hover { background: var(--hover); }
 .chart { width: 100%; height: 44px; margin-top: 10px; }
 .side-head { margin-bottom: 4px; }
 .seg.small { margin-left: 0; }
-.seg.small button { height: 24px; padding: 0 9px; font-size: var(--font-size); }
 .feat .t-name { display: flex; align-items: baseline; gap: 6px; }
-.f-ref { font-size: var(--font-size); padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--done); flex-shrink: 0; }
+.f-ref { font-size: var(--font-size); padding: 0 5px; border-radius: 5px; background: var(--field); color: var(--done-text); flex-shrink: 0; }
 .f-ws { font-size: var(--font-size); color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
 .sub-h { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
 .chart.hours { height: 48px; margin-top: 6px; }
@@ -384,19 +378,19 @@ button.tot:hover { background: var(--hover); }
 .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin: 0 3px 0 8px; vertical-align: middle; }
 .sw.done { background: var(--done); margin-left: 0; } .sw.wait { background: var(--accent); }
 .budget-h { display: flex; justify-content: space-between; align-items: center; }
-.budget-h .link { font-size: var(--font-size); color: var(--done); text-transform: none; letter-spacing: 0; }
+.budget-h .link { text-transform: none; letter-spacing: 0; }
 .budget { display: grid; grid-template-columns: minmax(0, 1fr) 70px 96px; gap: 8px; align-items: center; padding: 4px 6px; font-size: var(--font-size); }
-.budget input { height: 24px; width: 70px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--field); color: var(--text); text-align: right; padding: 0 6px; }
+.budget input { height: 24px; width: 70px; text-align: right; }
 .budget.ok .bar span { background: var(--ok); }
 .budget.warn .bar span { background: var(--accent); } .budget.warn .t-cost { color: var(--accent); }
-.budget.crit .bar span { background: var(--blocked); } .budget.crit .t-cost { color: var(--blocked); }
+.budget.crit .bar span { background: var(--blocked); } .budget.crit .t-cost { color: var(--blocked-text); }
 .hint { margin: 0; font-size: var(--font-size); color: var(--muted); }
 .win { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .list { overflow: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
 .empty { padding: 40px; text-align: center; color: var(--muted); font-size: var(--font-size); }
 .run { display: flex; flex-direction: column; gap: 3px; padding: 8px 10px; border-radius: 8px; text-align: left; border-bottom: 1px solid var(--line); }
 .run:hover:not(:disabled) { background: var(--hover); }
-.r-live { font-size: var(--font-size); padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--working) 18%, transparent); color: var(--working); white-space: nowrap; }
+.r-live { font-size: var(--font-size); padding: 1px 6px; border-radius: 6px; background: color-mix(in srgb, var(--working) 18%, transparent); color: var(--working-text); white-space: nowrap; }
 .run:disabled { cursor: default; opacity: 0.85; }
 .r-top { display: flex; align-items: baseline; gap: 10px; font-size: var(--font-size); min-width: 0; }
 .r-when { color: var(--muted); font-size: var(--font-size); white-space: nowrap; }

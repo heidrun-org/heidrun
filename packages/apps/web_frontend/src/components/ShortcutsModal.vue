@@ -65,8 +65,8 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
     <div class="window-box" role="dialog" :aria-label="t('shortcutsModal.dialogLabel')">
       <header>
         <h2>{{ t("shortcutsModal.title") }}</h2>
-        <input ref="input" v-model="q" :placeholder="t('shortcutsModal.filterPlaceholder')" spellcheck="false" />
-        <button :title="t('shortcutsModal.closeTitle')" class="close" :aria-label="t('shortcutsModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
+        <input class="form-control" ref="input" v-model="q" :placeholder="t('shortcutsModal.filterPlaceholder')" spellcheck="false" />
+        <button :title="t('shortcutsModal.closeTitle')" class="btn icon close" :aria-label="t('shortcutsModal.closeLabel')" @click="close"><Icon name="x-lg" /></button>
       </header>
       <div class="cols">
         <section v-for="g in shown" :key="g.group" class="group">
@@ -90,20 +90,15 @@ function caps(keys: string): { t: string; sep: boolean; icon?: boolean }[] {
 
 <style scoped>
 /* No grey system background on buttons: each style below sets its own. */
-:where(button) { background: transparent; border: 0; }
-.overlay { position: fixed; inset: 0; z-index: 58; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; padding: 32px; }
+:where(button:not(.btn)) { background: transparent; border: 0; }
+.overlay { position: fixed; inset: 0; z-index: 58; background: var(--shadow); display: flex; align-items: center; justify-content: center; padding: 32px; }
 .window-box {
   width: min(1040px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  background: var(--panel); border: 1px solid var(--line-strong); box-shadow: 0 24px 64px var(--shadow);
 }
 header { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 h2 { margin: 0; font-size: var(--font-size); font-weight: 600; }
-header input {
-  flex: 1; max-width: 360px; margin-left: auto; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong);
-  background: var(--field); color: var(--text); font-size: var(--font-size); padding: 0 10px;
-}
-.close { width: 28px; height: 28px; border-radius: 7px; color: var(--muted); font-size: calc(var(--font-size) * 1.5); }
-.close:hover { background: var(--hover); color: var(--text); }
+header input { flex: 1; max-width: 360px; margin-left: auto; height: 32px; }
 .cols { overflow: auto; padding: 8px 18px 16px; columns: 2 420px; column-gap: 32px; }
 .group { break-inside: avoid; padding-top: 10px; }
 h3 { margin: 0 0 6px; font-size: var(--font-size); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent); }

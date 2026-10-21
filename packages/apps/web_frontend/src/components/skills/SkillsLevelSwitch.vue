@@ -14,11 +14,11 @@ import { t } from "../../i18n/index";
       <div class="keys">{{ t("settingsSkills.levelHelp") }}</div>
     </div>
     <div class="btn-group levelChoice" role="group" :aria-label="t('settingsSkills.levelLabel')">
-      <label class="btn-check btn-outline theme-secondary">
+      <label class="btn btn-check btn-outline theme-secondary">
         <input v-model="settings.skillsLevel" type="radio" name="skills-level" autocomplete="off" value="user" />
         {{ t("settingsSkills.levelUser") }}
       </label>
-      <label class="btn-check btn-outline theme-secondary">
+      <label class="btn btn-check btn-outline theme-secondary">
         <input v-model="settings.skillsLevel" type="radio" name="skills-level" autocomplete="off" value="workspace" />
         {{ t("settingsSkills.levelWorkspace") }}
       </label>
