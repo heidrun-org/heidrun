@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { watch } from "vue";
 import { listen } from "@tauri-apps/api/event";
+import { t } from '../i18n/index';
 import { CompositionBar } from '../stores/composition_bar';
+import { toast } from '../stores/session';
 import { settings } from "../stores/settings";
 import { LEVEL_COUNT, voiceInput, type VoiceModel, type VoiceOptions } from "../stores/voice_input";
 
@@ -148,15 +150,17 @@ export class VoiceInput {
 	/**
 	 * The developer presses the push-to-talk button in a pane's composition bar. The microphone records for that pane.
 	 * With a recording that a click started, this press stops it and writes the text. Nothing happens when the option is off,
-	 * when the model is not on the disk, or while Whisper works.
+	 * when the model is not on the disk, or while Whisper works in the same pane. A press in another pane while voice input
+	 * is active shows a notification and preserves the active operation.
 	 * @param paneId The identifier of the pane whose push-to-talk button was pressed.
 	 * @returns Resolves when the press has started or stopped a recording.
 	 */
 	static async press(paneId: string): Promise<void> {
+		if (voiceInput.state !== 'idle' && voiceInput.ownerPaneId !== paneId) {
+			toast(t('voiceInput.inUseInAnotherPane'));
+			return;
+		}
 		if (voiceInput.state === "recording" && voiceInput.isLatched === true) {
-			if (voiceInput.ownerPaneId !== paneId) {
-				return;
-			}
 			await VoiceInput.stopAndWrite();
 			return;
 		}
