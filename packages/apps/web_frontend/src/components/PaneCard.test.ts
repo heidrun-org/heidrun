@@ -9,6 +9,8 @@ vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }))
 vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom: vi.fn(async () => {}) }) }));
 // The terminal needs a real browser (xterm, the colour scheme query): the pane header is the subject of these tests.
 vi.mock("./TerminalView.vue", () => ({ default: { template: "<div></div>" } }));
+// The file view reads a file through the backend: the tests of the file view are in FileView.test.ts.
+vi.mock("./FileView.vue", () => ({ default: { template: '<div class="file-view-stub"></div>' } }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -402,5 +404,41 @@ describe("PaneCard close", () => {
     answerConfirm(true);
     await flushPromises();
     expect(api.closePane).toHaveBeenCalledWith('w1:p1');
+  });
+});
+
+describe("PaneCard file view pane (issue #714)", () => {
+  const FILE_LABEL = "Heidrun file view: /Users/someone/project/docs/README.md";
+
+  it("shows the file view in place of the terminal, and names the pane after the file", async () => {
+    const wrapper = await mountPaneCard({ label: FILE_LABEL });
+    expect(wrapper.find(".file-view-stub").exists()).toBe(true);
+    expect(wrapper.find(".name").text()).toBe("README.md");
+  });
+
+  it("shows the short path of the file in the header, and the absolute path in the title of the name", async () => {
+    const wrapper = await mountPaneCard({ label: FILE_LABEL });
+    expect(wrapper.find(".sub").text()).toBe("~/project/docs/README.md");
+    expect(wrapper.find(".name").attributes("title")).toBe("/Users/someone/project/docs/README.md");
+  });
+
+  it("does not start a rename when the name is double-clicked, because the label holds the file", async () => {
+    const wrapper = await mountPaneCard({ label: FILE_LABEL });
+    await wrapper.find(".name").trigger("dblclick");
+    const { state } = await import("../stores/session");
+    expect(state.renaming).toBeNull();
+  });
+
+  it("has no button for the composition bar, and keeps the close button", async () => {
+    const wrapper = await mountPaneCard({ label: FILE_LABEL });
+    expect(wrapper.find('[aria-pressed][aria-label="Composition bar"]').exists()).toBe(false);
+    expect(wrapper.find(".tools").exists()).toBe(true);
+    expect(wrapper.html()).toContain("Close the pane");
+  });
+
+  it("shows the terminal, and not the file view, for a pane whose label is only a name", async () => {
+    const wrapper = await mountPaneCard({ label: "build" });
+    expect(wrapper.find(".file-view-stub").exists()).toBe(false);
+    expect(wrapper.find(".name").text()).toBe("build");
   });
 });

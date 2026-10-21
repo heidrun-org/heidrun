@@ -86,7 +86,7 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 
 - The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
   - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
-  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
+  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the file view pane, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
   - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
   - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
   - [coding_agent_configuration.md](docs/agents_rules/glossary/coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item. Read it when you change the tables `memory_files`, `subagents`, or `skills` of the package `data_layer_coding_agents`.
@@ -142,6 +142,7 @@ The rules of the user interface: where each part goes, and how each part works. 
   - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
   - [workspace_commands.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace_commands.md): the workspace commands, creation folders, focus events, and refreshes through Herdr.
   - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
+  - [file_view_pane.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/file_view_pane.md): the file view pane, a pane that shows one file read only: how a click on a file of the File explorer sidebar section opens it, its header, its controls, and how Heidrun keeps it in Herdr.
   - [pane_headers.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
   - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
   - [composition_bar.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/composition_bar.md): the composition bar under the focused pane: the drop of images, the toggle button of the header, the plus button, the text input, the button "Send", the push-to-talk button, the paste in the focused pane, and the big view of the images.
