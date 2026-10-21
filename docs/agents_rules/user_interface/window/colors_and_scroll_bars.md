@@ -1,7 +1,7 @@
 # User interface of Heidrun: colors and scroll bars
 
 - Created: 13 October 2026
-- Last updated: 18 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -19,7 +19,8 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 - `--icon` is the color of the icons of the sidebar icon bars: #888888 in the dark theme and #5d5d5d in the light theme. The icon of the selected entry has the text color (`--text`).
 - `--pane-head-selected` is the background of the header of the selected pane: #1f3452 in the dark theme and #dbe7fb in the light theme. It is a light tint of the blue of the ring of the selected pane ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
 - `--pane-head-line` is the line under the header of a pane: #2b2b2b in the dark theme and #e4e4df in the light theme. In both themes, its contrast ratio against `--bg` is at least 1.1, so the line shows in the dark theme as well as in the light theme ([issue #345](https://github.com/heidrun-org/heidrun/issues/345)).
-- The hover colors, the accent color, the status colors, and the other grays keep their own values.
+- The status indicators follow [the status dot architecture](../../../architecture/status_dot.md): Blocked is a static red dot, Working is a purple spinning ring, Finished is a static green dot, and Idle is a static gray dot. The same shared status colors apply throughout the desktop window and mobile website, with darker shades in the light theme.
+- The hover colors, the accent color, and the other grays keep their own values.
 
 ## Scroll bars
 
