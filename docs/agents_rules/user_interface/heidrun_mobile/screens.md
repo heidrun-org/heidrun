@@ -11,7 +11,8 @@ This file gives the rules of each screen of the mobile website of Heidrun Mobile
 
 ## Every screen
 
-- Each screen of the bottom bar has a top bar with its title and a dot that shows the connection to the computer. A connected computer has a static green dot.
+- Each screen of the bottom bar has a top bar with the shared Heidrun goat branding icon before its title and a dot that shows the connection to the computer. A connected computer has a static green dot.
+- The branding icon is 24 by 24 pixels, keeps its square proportions, and takes the text color. It has the accessible name "Heidrun" and does not shrink when the title is long.
 - Coding agent status indicators follow [the status dot architecture](../../../architecture/status_dot.md): Blocked is a static red dot, Working is a purple spinning ring, Finished is a static green dot, and Idle is a static gray dot.
 - The address of the page names the open screen after "#", so a reload and the buttons Back and Forward of the browser open the same screen.
 - A refresh never moves what the developer reads, and never removes the text of the field for a prompt while the developer types or while the microphone listens.
