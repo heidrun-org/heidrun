@@ -5,6 +5,7 @@
   "titleLatched": "Listening… click the button again to write the text",
   "listening": "Listening…",
   "cancel": "Cancel voice input",
+  "inUseInAnotherPane": "Voice input is already in use in another pane. Wait for recording or transcription to finish.",
   "levelLabel": "Level of the voice",
   "titleTranscribing": "Changing the speech into text…",
   "titleModelMissing": "The Whisper model is not on this computer. Open Settings, Voice input, to download it.",

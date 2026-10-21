@@ -13,6 +13,7 @@ import PushToTalkButton from "./PushToTalkButton.vue";
 import { LONG_PRESS_MILLISECONDS, VoiceInput } from "../lib/voice_input";
 import { CompositionBar as CompositionBarStore } from '../stores/composition_bar';
 import { settings } from "../stores/settings";
+import { state } from '../stores/session';
 import { voiceInput } from "../stores/voice_input";
 
 /** Lets the time pass for the code that measures the length of a press, without any real waiting. */
@@ -42,6 +43,7 @@ beforeEach(() => {
 	voiceInput.isLatched = false;
 	voiceInput.levels = [];
 	voiceInput.error = null;
+	state.toast = '';
 	compositionBar.isOpen = true;
 	compositionBar.text = "";
 });
@@ -143,6 +145,11 @@ describe("PushToTalkButton", () => {
 			});
 			expect(invokeMock.mock.calls.filter((call) => call[0] === 'voice_start_recording')).toHaveLength(1);
 			expect(voiceInput.ownerPaneId).toBe('pane-1');
+			expect(state.toast).toBe(
+				'Voice input is already in use in another pane. Wait for recording or transcription to finish.',
+			);
+			expect(voiceInput.state).toBe('recording');
+			expect(voiceInput.isLatched).toBe(true);
 			await first.trigger('pointerdown', {
 				button: 0,
 			});
@@ -157,6 +164,91 @@ describe("PushToTalkButton", () => {
 			expect(voiceInput.ownerPaneId).toBe('pane-2');
 		} finally {
 			first.unmount();
+			second.unmount();
+		}
+	});
+
+	it.each(['starting', 'recording'] as const)(
+		'explains a blocked keyboard press while another pane is %s without changing the operation',
+		async (phase) => {
+			voiceInput.ownerPaneId = 'pane-1';
+			voiceInput.state = phase;
+			voiceInput.levels = [0.5];
+			const second = mount(PushToTalkButton, {
+				props: {
+					paneId: 'pane-2',
+				},
+			});
+			try {
+				await second.trigger('keydown', {
+					key: ' ',
+				});
+				await second.trigger('keyup', {
+					key: ' ',
+				});
+				expect(state.toast).toBe(
+					'Voice input is already in use in another pane. Wait for recording or transcription to finish.',
+				);
+				expect(voiceInput.state).toBe(phase);
+				expect(voiceInput.ownerPaneId).toBe('pane-1');
+				expect(voiceInput.isLatched).toBe(false);
+				expect(voiceInput.levels).toEqual([0.5]);
+				expect(voiceInput.error).toBeNull();
+				expect(invokeMock).not.toHaveBeenCalled();
+			} finally {
+				voiceInput.state = 'idle';
+				second.unmount();
+			}
+		},
+	);
+
+	it('explains a blocked press during transcription and keeps the text in the original composition bar', async () => {
+		let finishTranscription: (text: string) => void = () => {};
+		invokeMock.mockImplementation(async (name: string) => {
+			if (name === 'voice_stop_recording') {
+				return new Promise<string>((resolve) => {
+					finishTranscription = resolve;
+				});
+			}
+		});
+		const secondBar = CompositionBarStore.forPane('pane-2');
+		secondBar.isOpen = true;
+		secondBar.text = 'Second draft';
+		const second = mount(PushToTalkButton, {
+			props: {
+				paneId: 'pane-2',
+			},
+		});
+		try {
+			await VoiceInput.press('pane-1');
+			const transcribing = VoiceInput.stopAndWrite();
+			await second.trigger('pointerdown', {
+				button: 0,
+			});
+			expect(second.attributes('disabled')).toBeUndefined();
+			expect(state.toast).toBe(
+				'Voice input is already in use in another pane. Wait for recording or transcription to finish.',
+			);
+			expect(voiceInput.state).toBe('transcribing');
+			expect(voiceInput.ownerPaneId).toBe('pane-1');
+			expect(invokeMock.mock.calls.map((call) => call[0])).toEqual([
+				'voice_start_recording',
+				'voice_stop_recording',
+			]);
+			finishTranscription('Original words');
+			await transcribing;
+			expect(compositionBar.text).toBe('Original words');
+			expect(secondBar.text).toBe('Second draft');
+			expect(voiceInput.state).toBe('idle');
+			state.toast = '';
+			await second.trigger('keydown', {
+				key: 'Enter',
+			});
+			await vi.waitFor(() => expect(voiceInput.state).toBe('recording'));
+			expect(voiceInput.ownerPaneId).toBe('pane-2');
+			expect(state.toast).toBe('');
+		} finally {
+			finishTranscription('');
 			second.unmount();
 		}
 	});

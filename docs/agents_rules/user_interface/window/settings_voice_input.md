@@ -1,11 +1,11 @@
 # User interface of Heidrun: voice input
 
 - Created: 18 October 2026
-- Last updated: 19 October 2026
+- Last updated: 21 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Information card of every option of the Settings window](settings_information_cards.md), [Composition bar](../workspaces_tabs_and_panes/composition_bar.md)
-- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 736](https://github.com/heidrun-org/heidrun/issues/736)
+- Related issue: [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 736](https://github.com/heidrun-org/heidrun/issues/736), [issue 753](https://github.com/heidrun-org/heidrun/issues/753)
 
 This file is a part of the rules of the user interface of Heidrun. It gives the rules of the voice input and of the Voice input section of the Settings window. The words are defined in [voice_input.md](../../glossary/voice_input.md).
 
@@ -24,9 +24,9 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 
 ## The push-to-talk button
 
-- All panes share one recorder. The recording belongs to the pane whose push-to-talk button started it; another pane cannot start a second recording or stop the first recording.
+- All panes share one recorder. The recording belongs to the pane whose push-to-talk button started it; another pane cannot start a second recording or stop the first recording. A blocked press in another pane shows a translated notification to wait for recording or transcription.
 - With the switch on, the push-to-talk button is in the composition bar, after the button "Send", as the last control at the right end of the last line. The header of the pane has no push-to-talk button: the developer opens the composition bar with its toggle button, then uses the push-to-talk button.
-- The button has two ways to work, chosen by the length of the press. A long press, 0.3 second or more, is push to talk: the developer holds the button, speaks, and releases it. A release anywhere in the window, a loss of the keyboard by the window, and the release of the key Space or Enter on the button end the hold. A short press, less than 0.3 second, is a click: the recording goes on after the release, and the next press of the button stops it. While the microphone is open, the icon of the button is red (the color `--danger-bg` of the theme): a red microphone during a long press, and a red square after a click. In the composition bar the button has no border and no background at rest, like the other icon buttons of the line. While a click keeps the recording, its title tells to click again, and the release of the pointer and the loss of the keyboard by the window end nothing. A press that ends before the microphone is open follows the same rule. A press while Whisper works does nothing.
+- The button has two ways to work, chosen by the length of the press. A long press, 0.3 second or more, is push to talk: the developer holds the button, speaks, and releases it. A release anywhere in the window, a loss of the keyboard by the window, and the release of the key Space or Enter on the button end the hold. A short press, less than 0.3 second, is a click: the recording goes on after the release, and the next press of the button stops it. While the microphone is open, the icon of the button is red (the color `--danger-bg` of the theme): a red microphone during a long press, and a red square after a click. In the composition bar the button has no border and no background at rest, like the other icon buttons of the line. While a click keeps the recording, its title tells to click again, and the release of the pointer and the loss of the keyboard by the window end nothing. A press that ends before the microphone is open follows the same rule.
 - The button "Send" and the key Enter of the composition bar never leave a recording open: they stop it, wait for Whisper, add the text, and then send. The key Escape, and the toggle button of the header that hides the composition bar, throw a recording away. The rules of the sending are in [composition_bar.md](../workspaces_tabs_and_panes/composition_bar.md).
 - The text goes at the end of the text of the composition bar whose push-to-talk button started the recording, after one space, even if focus changes. Heidrun never sends it by itself: the developer reads it, edits it, and sends it.
 - A press with no speech, a recording shorter than 0.3 second, and a room with only noise give no text and no error. A recording is never longer than 300 seconds.
