@@ -2,7 +2,7 @@
 
 use std::sync::OnceLock;
 
-use localai_decisions_qwen35::{resolve_model_file, DecisionConfig, DecisionEngine, Device};
+use localai_decisions_llamacpp::{resolve_model_file, DecisionConfig, DecisionEngine, Device};
 use serde_json::{json, Value};
 
 fn engine() -> &'static DecisionEngine {
@@ -61,7 +61,7 @@ fn a_prompt_larger_than_the_batch_is_refused() {
 
 #[test]
 fn the_gpu_is_refused_by_a_processor_build() {
-    if localai_decisions_qwen35::llama::has_gpu_backend() {
+    if localai_decisions_llamacpp::llama::has_gpu_backend() {
         return;
     }
     let message = format!(

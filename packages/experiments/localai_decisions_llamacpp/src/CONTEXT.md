@@ -1,4 +1,4 @@
-# Directory Context: `/packages/experiments/localai_decisions_qwen35/src`
+# Directory Context: `/packages/experiments/localai_decisions_llamacpp/src`
 
 ## Purpose
 This folder holds the decision library and the command line tool.

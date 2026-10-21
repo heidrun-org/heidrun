@@ -2,7 +2,7 @@
 use std::process::Command;
 
 fn tool() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_localai_decisions_qwen35"))
+    Command::new(env!("CARGO_BIN_EXE_localai_decisions_llamacpp"))
 }
 
 #[test]

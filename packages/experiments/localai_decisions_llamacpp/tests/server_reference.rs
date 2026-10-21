@@ -1,7 +1,7 @@
 //! Compares the answers of the package with the answers of the server of llama.cpp v0.6.0 on the same
 //! requests, with Kev-0.8B. The server results are in tests/fixtures/server_reference.json.
 
-use localai_decisions_qwen35::{DecisionConfig, DecisionEngine};
+use localai_decisions_llamacpp::{DecisionConfig, DecisionEngine};
 use serde_json::Value;
 
 /// The package and the server run the same llama.cpp code on the processor, so the results are equal on

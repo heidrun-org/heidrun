@@ -6,7 +6,7 @@ use std::time::Instant;
 
 use anyhow::{bail, Context as _, Result};
 use clap::{Parser, Subcommand, ValueEnum};
-use localai_decisions_qwen35::{DecisionConfig, DecisionEngine, Device, DEFAULT_MODEL};
+use localai_decisions_llamacpp::{DecisionConfig, DecisionEngine, Device, DEFAULT_MODEL};
 use serde_json::{json, Map, Value};
 
 /// Answers the questions of a request with a decision model based on Qwen3.5, on this computer.

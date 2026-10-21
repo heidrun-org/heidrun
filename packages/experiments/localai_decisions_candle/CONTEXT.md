@@ -21,4 +21,4 @@ This package runs the decision model GLiNER2.5-Decide on the computer with a Rus
 
 ## Background
 - The package comes from [issue #717](https://github.com/heidrun-org/heidrun/issues/717).
-- The package follows the libraries and the layout of `packages/auxiliary/localai_embeddings`, from [issue #631](https://github.com/heidrun-org/heidrun/issues/631).
+- The package follows the libraries and the layout of `packages/experiments/localai_embeddings`, from [issue #631](https://github.com/heidrun-org/heidrun/issues/631).

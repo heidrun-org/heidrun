@@ -1,7 +1,7 @@
 //! Speed measurements owned by the Qwen3.5 command line tool.
 use anyhow::{Context, Result};
 use clap::Args;
-use localai_decisions_qwen35::{DecisionConfig, DecisionEngine, Device};
+use localai_decisions_llamacpp::{DecisionConfig, DecisionEngine, Device};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
@@ -77,7 +77,7 @@ pub(crate) fn run(
         });
     }
     write_report(&Report {
-        package: "localai_decisions_qwen35", model: config.model.clone(), backend,
+        package: "localai_decisions_llamacpp", model: config.model.clone(), backend,
         decisions_per_case: arguments.decisions, model_load_seconds, cases: results,
         peak_process_resident_bytes: peak_memory(),
         memory_scope: "Process resident-memory high-water mark over model loading, warmup and inference; separate GPU allocations are not measured",

@@ -1,4 +1,4 @@
-# Directory Context: `/packages/experiments/localai_decisions_qwen35/server_reference`
+# Directory Context: `/packages/experiments/localai_decisions_llamacpp/server_reference`
 
 ## Purpose
 This folder holds the Python script that sends the requests of `tests/fixtures/requests.json` to the server of llama.cpp and writes the answers that the Rust tests compare with.

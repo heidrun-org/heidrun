@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 use serde_json::Value;
 
 fn tool() -> Command {
-    Command::new(env!("CARGO_BIN_EXE_localai_decisions_qwen35"))
+    Command::new(env!("CARGO_BIN_EXE_localai_decisions_llamacpp"))
 }
 
 fn json_output(output: std::process::Output) -> Value {
@@ -35,7 +35,7 @@ fn the_short_form_without_choices_asks_a_yes_or_no_question() {
 #[test]
 fn a_request_comes_from_a_file_or_from_standard_input() {
     let request = r#"{"state": "The screen stays black.", "questions": {"q": {"type": "choice", "instructions": "Area?", "criteria": {"hardware": null, "billing": null}}}}"#;
-    let path = std::env::temp_dir().join(format!("localai_decisions_qwen35_request_{}.json", std::process::id()));
+    let path = std::env::temp_dir().join(format!("localai_decisions_llamacpp_request_{}.json", std::process::id()));
     std::fs::write(&path, request).unwrap();
     let from_file = json_output(tool().arg("--request").arg(&path).output().unwrap());
     std::fs::remove_file(&path).unwrap();
