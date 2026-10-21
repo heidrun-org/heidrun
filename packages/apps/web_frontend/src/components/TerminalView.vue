@@ -28,6 +28,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { copy, osc52Provider } from "../lib/clipboard";
+import { TerminalSelection } from "../lib/terminal_selection";
 import { trailingDebounce, type TrailingDebounce } from "../lib/trailing_debounce";
 import { createRefitHold, type RefitHold } from "../lib/refit_hold";
 import { decideAfterStop, retryDelayMs } from "../lib/terminal_attach_retry";
@@ -57,6 +58,7 @@ const props = defineProps<{
 const emit = defineEmits<{ pin: [text: string] }>();
 
 const hasSelection = ref(false);
+const terminalSelection = new TerminalSelection();
 
 const el = ref<HTMLDivElement>();
 const exited = ref(false);
@@ -363,8 +365,9 @@ onMounted(async () => {
   // Codex and zsh read as "newline" (what Option+Enter sends in Terminal/iTerm).
   term.attachCustomKeyEventHandler((e) => {
     if (e.type === "keydown" && e.metaKey && !e.ctrlKey && e.code === "KeyC" && term?.hasSelection()) {
-      copy(term.getSelection());
-      term.clearSelection();
+      e.preventDefault();
+      e.stopPropagation();
+      void copySelection();
       return false;
     }
     if ((e.key === "Enter" || e.code === "NumpadEnter") && (e.shiftKey || e.altKey) && !e.metaKey && !e.ctrlKey) {
@@ -388,6 +391,7 @@ onMounted(async () => {
   unlisten.push(
     await listen<{ id: string; data: string }>("pty://data", (e) => {
       if (e.payload.id !== id) return;
+      terminalSelection.invalidate();
       const bytes = decode(e.payload.data);
       // Keep the start of the output, to recognize an attach refused by Herdr.
       if (Date.now() - spawnedAt < 4000 && lastOutput.length < 600) lastOutput += textDecoder.decode(bytes, { stream: true });
@@ -412,7 +416,10 @@ onMounted(async () => {
   );
 
   term.onWriteParsed(scheduleRefs);
-  term.onResize(scheduleRefs);
+  term.onResize(() => {
+    terminalSelection.invalidate();
+    scheduleRefs();
+  });
   term.onData((data) => invoke("pty_write", { id, data }).catch(() => {}));
 
   // Mouse wheel. In "select" mode xterm no longer reports the mouse, so it would turn
@@ -420,6 +427,7 @@ onMounted(async () => {
   // events to Herdr, which scrolls the pane's history as it does in its own UI.
   // ⌥ + wheel does the opposite: ↑/↓ keys, to walk through previous commands.
   el.value!.addEventListener("wheel", onWheel, { capture: true, passive: false });
+  el.value!.addEventListener("copy", onCopy, true);
   el.value!.addEventListener("mousedown", onDown, true);
   el.value!.addEventListener("mouseup", onUp, true);
 
@@ -847,6 +855,7 @@ function onWheel(e: WheelEvent) {
   const lines = Math.trunc(wheelRest);
   if (!lines) return;
   wheelRest -= lines;
+  terminalSelection.invalidate();
   const up = lines < 0;
   const count = Math.min(Math.abs(lines), 10);
   let seq = "";
@@ -870,10 +879,26 @@ function onWheel(e: WheelEvent) {
   invoke("pty_write", { id, data: seq }).catch(() => {});
 }
 
-function copySelection() {
-  if (!term) return;
-  copy(term.getSelection());
-  term.clearSelection();
+async function copySelection() {
+  if (term === null || term.hasSelection() === false) {
+    return;
+  }
+  try {
+    const text = await terminalSelection.read(term, props.paneId);
+    await copy(text);
+    term.clearSelection();
+  } catch {
+    toast(t("terminalView.copyFailed"));
+  }
+}
+
+function onCopy(event: ClipboardEvent) {
+  if (term === null || term.hasSelection() === false) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  void copySelection();
 }
 
 function pinSelection() {
@@ -887,6 +912,7 @@ onBeforeUnmount(() => {
   window.clearTimeout(chipTimer);
   for (const y of [...rows.keys()]) clearRow(y);
   el.value?.removeEventListener("wheel", onWheel, { capture: true });
+  el.value?.removeEventListener("copy", onCopy, true);
   el.value?.removeEventListener("mousedown", onDown, true);
   el.value?.removeEventListener("mouseup", onUp, true);
   if (selectionReaders.get(props.paneId)) selectionReaders.delete(props.paneId);
