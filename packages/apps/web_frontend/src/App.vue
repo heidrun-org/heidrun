@@ -51,13 +51,14 @@ import {
 } from "./stores/session";
 import { NewPane } from "./stores/new_pane";
 import { guardWindow } from "./stores/guard_window";
-import { resetZoom, settings, settingsModal, zoom } from "./stores/settings";
+import { resetZoom, settings, settingsModal, zoom, zoomFactor } from "./stores/settings";
 import { agentsInformationModal } from "./stores/agentsInformation";
 import { newCustomLauncherModal } from "./stores/newCustomLauncher";
 import { savedSearchModal } from "./stores/saved_search_modal";
 import { findNewSkillsModal, installedSkillModal, skills } from "./stores/skills";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { ImageDrop } from "./lib/image_drop";
+import { DropTarget } from "./lib/drop_target";
 import Icon from "./components/Icon.vue";
 import { notes, pinText, selectionReaders } from "./stores/notes";
 import { startProjects } from "./stores/project";
@@ -333,10 +334,18 @@ onMounted(async () => {
   loadAntigravityLink();
   startRemoteWatch();
   unlistenDrop = await getCurrentWebview().onDragDropEvent((event) => {
+    if (event.payload.type === "enter") {
+      void DropTarget.measureTopInset(zoomFactor());
+    }
+    if (event.payload.type === "enter" || event.payload.type === "over") {
+      DropTarget.hover(event.payload.position, zoomFactor());
+      return;
+    }
+    DropTarget.clearHover();
     if (event.payload.type !== "drop") {
       return;
     }
-    const paneId = activePaneId();
+    const paneId = DropTarget.paneIdAt(event.payload.position, zoomFactor());
     if (paneId === null) {
       return;
     }
