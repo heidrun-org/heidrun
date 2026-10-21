@@ -5,6 +5,7 @@ import Path from "node:path";
 import type { SessionSnapshot } from "../lib/types";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { answerConfirm, confirmDialog } from "../stores/confirm";
 import { settings } from "../stores/settings";
 
@@ -12,6 +13,7 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: vi.fn(async () => () => {}) })
 vi.mock("@tauri-apps/api/path", () => ({ homeDir: vi.fn(async () => "/home") }));
 vi.mock("@tauri-apps/plugin-dialog", () => ({ open: vi.fn() }));
 vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({ writeText: vi.fn(async () => {}) }));
+vi.mock("@tauri-apps/plugin-opener", () => ({ openUrl: vi.fn(async () => {}) }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -294,6 +296,45 @@ describe("WorkspaceStatusSummary details of the selected workspace", () => {
     expect(wrapper.get("[data-field=branch]").text()).toBe("dev_jerome");
     expect(wrapper.get("[data-field=tabs]").text()).toBe("2");
     expect(wrapper.get("[data-field=agents]").text()).toBe("2");
+  });
+
+  it("shows the repository as a link, after the Git branch, that opens in the web browser", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = {
+      w1: { root: "/work/heidrun", branch: "dev_jerome", remote: "git@github.com:heidrun-org/heidrun.git" } as never,
+    };
+    await wrapper.get(".workspace-status").trigger("click");
+
+    const fields = wrapper.findAll(".detail-row [data-field]").map((element) => element.attributes("data-field"));
+    expect(fields).toEqual(["folder", "branch", "repository", "tabs", "agents"]);
+    const link = wrapper.get("a[data-field=repository]");
+    expect(link.text()).toBe("https://github.com/heidrun-org/heidrun");
+    expect(link.attributes("href")).toBe("https://github.com/heidrun-org/heidrun");
+    expect(wrapper.find('[aria-label="Copy repository"]').exists()).toBe(false);
+
+    const clickEvent = new MouseEvent("click", { bubbles: true, cancelable: true });
+    link.element.dispatchEvent(clickEvent);
+    await flushPromises();
+    expect(clickEvent.defaultPrevented).toBe(true);
+    expect(openUrl).toHaveBeenCalledWith("https://github.com/heidrun-org/heidrun");
+    expect(wrapper.find(".popover").exists()).toBe(true);
+  });
+
+  it("shows the address of a repository on GitLab from a remote with a port", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = {
+      w1: { root: "/work/heidrun", branch: "main", remote: "ssh://git@gitlab.example.com:2222/team/app.git" } as never,
+    };
+    await wrapper.get(".workspace-status").trigger("click");
+    expect(wrapper.get("a[data-field=repository]").attributes("href")).toBe("https://gitlab.example.com/team/app");
+  });
+
+  it("says that the workspace has no repository, without a link, when it has no Git remote", async () => {
+    const { wrapper, git } = await mountSection();
+    git.status = { w1: { root: "/work/heidrun", branch: "dev_jerome", remote: null } as never };
+    await wrapper.get(".workspace-status").trigger("click");
+    expect(wrapper.get("[data-field=repository]").text()).toBe("No repository");
+    expect(wrapper.find("a[data-field=repository]").exists()).toBe(false);
   });
 
   it("says that the workspace has no folder and no Git branch when Herdr does not know them", async () => {

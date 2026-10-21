@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { homeDir } from "@tauri-apps/api/path";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import Icon from "./Icon.vue";
 import GitWorktreesModal from "./GitWorktreesModal.vue";
 import InformationCardTooltip from "./InformationCardTooltip.vue";
@@ -26,6 +27,7 @@ import {
   workspaceLabel,
   workspaces,
 } from "../stores/session";
+import { webOfRemote } from "../lib/refs";
 import { useReorder } from "../lib/reorder";
 import { startScrolling, stopScrolling } from "../lib/scroll_on_hover";
 import { useStatusCard } from "../lib/status_card";
@@ -147,11 +149,13 @@ const detailRows = computed(() => {
     return [];
   }
   const agentCount = allPanes.value.filter((pane) => pane.workspace_id === workspace.workspace_id && pane.agent).length;
+  const repositoryAddress = webOfRemote(currentGit.value?.remote ?? null)?.base ?? null;
   return [
     {
       field: "folder",
       name: t("workspaceStatusSummary.folder"),
       value: workspaceCwd(workspace.workspace_id) ?? t("workspaceStatusSummary.noFolder"),
+      href: null,
       copyValue: workspaceCwd(workspace.workspace_id),
       copyLabel: t("workspaceStatusSummary.copyFolder"),
     },
@@ -159,13 +163,31 @@ const detailRows = computed(() => {
       field: "branch",
       name: t("workspaceStatusSummary.branch"),
       value: currentGit.value?.branch ?? t("workspaceStatusSummary.noBranch"),
+      href: null,
       copyValue: currentGit.value?.branch ?? null,
       copyLabel: t("workspaceStatusSummary.copyBranch"),
     },
-    { field: "tabs", name: t("workspaceStatusSummary.tabs"), value: workspace.tab_count, copyValue: null, copyLabel: null },
-    { field: "agents", name: t("workspaceStatusSummary.agents"), value: agentCount, copyValue: null, copyLabel: null },
+    {
+      field: "repository",
+      name: t("workspaceStatusSummary.repository"),
+      value: repositoryAddress ?? t("workspaceStatusSummary.noRepository"),
+      href: repositoryAddress,
+      copyValue: null,
+      copyLabel: null,
+    },
+    { field: "tabs", name: t("workspaceStatusSummary.tabs"), value: workspace.tab_count, href: null, copyValue: null, copyLabel: null },
+    { field: "agents", name: t("workspaceStatusSummary.agents"), value: agentCount, href: null, copyValue: null, copyLabel: null },
   ];
 });
+
+/**
+ * Opens the web page of the repository in the web browser.
+ *
+ * @param address - The web address of the repository.
+ */
+async function openRepository(address: string): Promise<void> {
+  await openUrl(address).catch(() => {});
+}
 
 /** Copies a workspace detail and briefly confirms the successful copy.
  * @param field - The detail field being copied.
@@ -292,7 +314,14 @@ watch(isRenaming, (renaming) => {
           <div v-for="row in detailRows" :key="row.field" class="detail-row d-flex justify-content-between gap-3">
             <span class="text-body-secondary flex-shrink-0">{{ row.name }}</span>
             <div class="detail-value d-flex align-items-center gap-1">
-              <ScrollingLine v-if="row.field === 'folder'" class="text-end" :data-field="row.field">{{ row.value }}</ScrollingLine>
+              <a
+                v-if="row.href !== null"
+                class="text-end text-break"
+                :href="row.href"
+                :data-field="row.field"
+                @click.prevent="openRepository(row.href)"
+              >{{ row.value }}</a>
+              <ScrollingLine v-else-if="row.field === 'folder'" class="text-end" :data-field="row.field">{{ row.value }}</ScrollingLine>
               <span v-else class="text-end text-break" :data-field="row.field">{{ row.value }}</span>
               <button
                 v-if="row.copyValue !== null && row.copyLabel !== null"

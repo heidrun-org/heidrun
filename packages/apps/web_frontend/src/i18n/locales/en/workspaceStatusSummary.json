@@ -15,10 +15,12 @@
   "otherDone": "An agent in another workspace has finished",
   "folder": "Folder",
   "branch": "Git branch",
+  "repository": "Repository",
   "tabs": "Tabs",
   "agents": "Agents",
   "noFolder": "No folder",
   "noBranch": "No Git branch",
+  "noRepository": "No repository",
   "copyFolder": "Copy folder path",
   "copyBranch": "Copy Git branch",
   "copied": "Copied"

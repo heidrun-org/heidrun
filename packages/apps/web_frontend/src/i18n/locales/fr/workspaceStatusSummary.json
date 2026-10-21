@@ -15,10 +15,12 @@
   "otherDone": "Un agent d’un autre workspace a terminé",
   "folder": "Dossier",
   "branch": "Branche Git",
+  "repository": "Dépôt",
   "tabs": "Onglets",
   "agents": "Agents",
   "noFolder": "Aucun dossier",
   "noBranch": "Aucune branche Git",
+  "noRepository": "Aucun dépôt",
   "copyFolder": "Copier le chemin du dossier",
   "copyBranch": "Copier la branche Git",
   "copied": "Copié"
