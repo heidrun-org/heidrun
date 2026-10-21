@@ -58,6 +58,8 @@ export interface PaneInfo {
 export interface AgentInfo extends PaneInfo {
   name?: string | null;
   state_change_seq?: number;
+  /** The Herdr completion sequence, unchanged when that completion is acknowledged. */
+  completion_seq?: number;
   interactive_ready?: boolean;
 }
 
