@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767)
+- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -26,6 +26,16 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
 - The panes of the selected tab that are not pinned fill the width that the column leaves. A tab whose panes are all pinned shows the same picture as an empty tab.
 - The header of a pinned pane in the column shows the pressed pin button, as in the panes of the selected tab. A click on the pressed pin button unpins the pane.
 - A pinned pane does not change when the developer selects another tab or another workspace. Only the panes of the selected tab change.
+
+## Copying selected terminal text
+
+- Command+C and the Copy button read the selected cells through Herdr's `pane.selection.read` operation. Visual wraps
+  are joined, and intentional line breaks stay. Copying does not infer line boundaries from the length of a line.
+- The selection belongs to the current viewport, including when Herdr has scrolled into older output. The displayed
+  selected rows must match Herdr's visible rows, and Herdr validates the content revision before returning the text.
+- When output, scrolling, resizing, or the selection changes during copying, or Herdr cannot read the selection,
+  copying shows a message asking the developer to select the text again and retry. The selection stays available.
+- The tests are in `terminal_selection.test.ts`.
 
 ## Colors of Codex
 
