@@ -10,6 +10,7 @@ const iconNames: IconName[] = [
 	'gear',
 	'chevron-left',
 	'grid',
+	'heidrun-goat-only',
 	'lightning-charge',
 	'play',
 	'send-fill',
@@ -18,7 +19,27 @@ const iconNames: IconName[] = [
 ];
 
 describe('Icons', () => {
-	it('draws each icon as the SVG of Bootstrap Icons, with the size asked, hidden from screen readers', () => {
+
+	it.each([
+		['dashboard', 'Dashboard'],
+		['needs-you', 'Needs you'],
+		['panes', 'Panes'],
+		['launchers', 'Launchers'],
+	])('shows the Heidrun branding icon before the title on %s', async (screen, title) => {
+		await AppHarness.start(Fixtures.computer(), true, `#/${screen}`);
+		const header = document.querySelector('header');
+		const branding = header?.firstElementChild;
+		expect(branding?.getAttribute('aria-label')).toBe('Heidrun');
+		expect(branding?.getAttribute('role')).toBe('img');
+		const icon = branding?.querySelector('svg.bi-heidrun-goat-only');
+		expect(icon?.getAttribute('width')).toBe('24');
+		expect(icon?.getAttribute('height')).toBe('24');
+		expect(icon?.getAttribute('viewBox')).toBe('0 0 16 16');
+		expect(branding?.nextElementSibling?.textContent).toBe(title);
+		expect(header?.querySelector('[aria-label="Connected"]')).not.toBeNull();
+	});
+
+	it('draws each icon with the size asked, the surrounding text color, and hidden from screen readers', () => {
 		for (const name of iconNames) {
 			const iconHtmlContent = Icon.render(name, 22);
 			expect(iconHtmlContent.startsWith('<svg'), name).toBe(true);

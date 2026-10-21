@@ -55,6 +55,13 @@ button {
   border-bottom: 1px solid var(--line);
 }
 
+.branding-icon {
+  display: flex;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
 .top h1 {
   margin: 0;
   font-size: 17px;
