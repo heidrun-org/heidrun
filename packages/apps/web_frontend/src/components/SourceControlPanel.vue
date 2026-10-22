@@ -145,8 +145,8 @@ function chooseMore(id: string) {
           <Icon name="arrow-clockwise" />
         </button>
         <SourceControlMenu
-          button-class="btn btn-sm icon-button"
-          icon="three-dots"
+          button-class="btn icon btn-sm icon-button"
+          icon="three-dots-vertical"
           :label="t('sourceControlPanel.moreActions')"
           :items="moreItems"
           :is-disabled="sourceControl.isBusy"

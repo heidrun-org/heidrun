@@ -62,9 +62,9 @@ class SettingsInformationCardsTestHelper {
 			optionList: ['language', 'timeFormat', 'workingDays', 'goatSound'],
 		},
 		{
-			name: 'Color teams',
+			name: 'Color themes',
 			component: SettingsDesignSection,
-			optionList: ['colorTeam'],
+			optionList: ['colorTheme'],
 		},
 		{
 			name: 'Terminal',

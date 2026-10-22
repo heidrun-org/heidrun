@@ -80,4 +80,9 @@ describe('the shared styles in the complete application (issue 749)', () => {
 		);
 		expect(violations).toEqual([]);
 	});
+
+	it('gives a selected list row the text color of the main action, because the rule of plain buttons has no layer', () => {
+		const styles = Fs.readFileSync(Path.resolve(__dirname, '../styles.css'), 'utf8');
+		expect(styles).toMatch(/\n\.list-group-item\.active \{ color: var\(--list-group-active-color\); \}\n/);
+	});
 });

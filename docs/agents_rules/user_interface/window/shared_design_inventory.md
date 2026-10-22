@@ -1,7 +1,7 @@
 # User interface of Heidrun: design inventory and exceptions
 
 - Created: 21 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained shared design rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Shared design rules](shared_design.md), [Status dot](../../../architecture/status_dot.md)
@@ -13,7 +13,7 @@ The inventory covered the desktop stylesheet, every Vue style block, local style
 
 The following exceptions have different constraints and cannot silently become application control styles:
 
-- `packages/apps/web_frontend/src/design/theme_palette.ts` contains the named colour team values. It applies those centralized values through the shared purpose variables; the contrast checks exercise each team's action, link, and keyboard focus colours in both appearances.
+- `packages/apps/web_frontend/src/design/theme_palette.ts` contains the named color theme values. It applies those centralized values through the shared purpose variables; the contrast checks exercise each color theme's action, link, and keyboard focus colours in both appearances.
 - The `.code` and `.code.github-light` blocks in `styles.css` define syntax and diff content palettes selected independently of the application theme. Their variables are local to code content, never application buttons or coding agent statuses.
 - `lib/terminal_themes.ts` holds the terminal's standard and bright color slots. The terminal renderer requires resolved color strings rather than CSS variables. Existing tests require its background to match `--bg`.
 - `lib/refs.ts` and the light reference palette in `components/TerminalView.vue` pass resolved colors to terminal decorations. The terminal renderer requires resolved strings. These colors identify reference types, never application actions or coding agent statuses.
@@ -25,6 +25,6 @@ The following exceptions have different constraints and cannot silently become a
 - Heidrun Mobile and the native macOS status item have their own rendering implementations. The existing status tests enforce their shared status colors and rotating Working appearance where applicable.
 
 
-## Color teams in Settings
+## Color themes in Settings
 
-Settings has a Color teams section. It lists Amber, Ocean, Forest, Violet, and Rose, each with a short description. Clicking a name immediately applies that named set of shared colours throughout the application and saves the choice on the current device. Each team works with the existing light or dark appearance. There are no sample controls or individual colour editors in Settings. The standalone development page remains available for reviewing shared controls. The existing status dot colours and animation remain unchanged.
+Settings has a Color themes section. It lists Amber, Ocean, Forest, Violet, and Rose, each with a short description. Clicking a name immediately applies that named set of shared colours throughout the application and saves the choice on the current device. Each color theme works with the existing light or dark appearance. The row of the selected color theme uses the main action colors: its name and its description have the color `--action-text` on `--action-bg`, a ratio of at least 4.5:1 in every color theme and in both appearances (measured in a browser in [issue 788](https://github.com/heidrun-org/heidrun/issues/788)). The rule `.list-group-item.active` in `styles.css` has no layer, because the rule `button:where(:not(.btn))` has none and would give the row the text color of its parent. There are no sample controls or individual colour editors in Settings. The standalone development page remains available for reviewing shared controls. The existing status dot colours and animation remain unchanged.

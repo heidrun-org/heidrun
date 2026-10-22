@@ -25,7 +25,7 @@ describe("SettingsModal: sections", () => {
   it("lists the eleven sections in the sidebar, by topic (issues #556, #596, and #662), and without the old sections New tab, Mouse, Finished items, Needs you, and Past chats", async () => {
     const wrapper = await mountSettings();
     const entries = wrapper.findAll("nav .nav-link").map((entry) => entry.text());
-    expect(entries).toEqual(["General", "Color teams", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access", "Voice input"]);
+    expect(entries).toEqual(["General", "Color themes", "Terminal", "Coding agents", "Confirmations", "Guards", "Notifications", "Sidebars", "Dynamic topics", "Mobile access", "Voice input"]);
     wrapper.unmount();
   });
 
@@ -258,8 +258,8 @@ describe("SettingsModal: heading Needs you of the section Sidebars (issues #417 
   });
 });
 
-describe('SettingsModal: Color teams', () => {
-  it('applies a named colour team throughout the application and remembers it after closing Settings', async () => {
+describe('SettingsModal: Color themes', () => {
+  it('applies a named color theme throughout the application and remembers it after closing Settings', async () => {
     vi.stubGlobal('matchMedia', () => ({
       matches: false,
       addEventListener: () => {},
@@ -270,11 +270,11 @@ describe('SettingsModal: Color teams', () => {
     settings.theme = 'light';
     settingsModal.section = 'designReview';
     let wrapper = await mountSettings();
-    expect(wrapper.get('h3').text()).toBe('Color teams');
+    expect(wrapper.get('h3').text()).toBe('Color themes');
     expect(wrapper.text()).toContain('Cool blue actions, links, and selections.');
-    const oceanTeam = wrapper.findAll('[data-option="colorTeam"] button').find((button) => button.text().includes('Ocean'));
-    expect(oceanTeam).toBeDefined();
-    await oceanTeam?.trigger('click');
+    const oceanTheme = wrapper.findAll('[data-option="colorTheme"] button').find((button) => button.text().includes('Ocean'));
+    expect(oceanTheme).toBeDefined();
+    await oceanTheme?.trigger('click');
     expect(document.documentElement.style.getPropertyValue('--action-bg')).toBe('#145bb8');
     expect(document.documentElement.style.getPropertyValue('--link')).toBe('#175caa');
     expect(document.documentElement.style.getPropertyValue('--working')).toBe('');
@@ -283,10 +283,23 @@ describe('SettingsModal: Color teams', () => {
     await flushPromises();
     wrapper = await mountSettings();
     expect(ThemePalette.state.mode).toBe('dark');
-    expect(ThemePalette.selectedTeam.value).toBe('ocean');
+    expect(ThemePalette.selectedTheme.value).toBe('ocean');
     expect(document.documentElement.style.getPropertyValue('--action-bg')).toBe('#2767c8');
-    expect(wrapper.findAll('[data-option="colorTeam"] button')[1].attributes('aria-pressed')).toBe('true');
+    expect(wrapper.findAll('[data-option="colorTheme"] button')[1].attributes('aria-pressed')).toBe('true');
     wrapper.unmount();
     vi.unstubAllGlobals();
+  });
+
+  it('shows the description of the selected color theme in the text color of the main action', async () => {
+    const { settingsModal } = await import('../stores/settings');
+    settingsModal.section = 'designReview';
+    const wrapper = await mountSettings();
+    const rowList = wrapper.findAll('[data-option="colorTheme"] .list-group-item');
+    expect(rowList.filter((row) => row.classes().includes('active'))).toHaveLength(1);
+    for (const row of rowList) {
+      const isSelected = row.classes().includes('active');
+      expect(row.findAll('span')[1].classes().includes('text-body-secondary')).toBe(isSelected === false);
+    }
+    wrapper.unmount();
   });
 });

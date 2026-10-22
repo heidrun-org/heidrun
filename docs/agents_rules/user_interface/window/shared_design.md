@@ -1,7 +1,7 @@
 # User interface of Heidrun: shared design rules
 
 - Created: 21 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained shared design rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Colors and scroll bars](colors_and_scroll_bars.md), [Status dot](../../../architecture/status_dot.md)
@@ -38,7 +38,7 @@ The normal tests calculate these ratios from the actual stylesheet using relativ
 
 ## Buttons
 
-Use a secondary `.btn` for ordinary actions, `.btn.primary` for the main action, and `.btn.danger` for deletion or another destructive action. The label says the action: for example, “Add item” or “Delete item”. Color alone never identifies a destructive action. The label stays visible when an icon is present. A button that contains only an icon has an accessible name and a title.
+Use a secondary `.btn` for ordinary actions, `.btn.primary` for the main action, and `.btn.danger` for deletion or another destructive action. The label says the action: for example, “Add item” or “Delete item”. Color alone never identifies a destructive action. The label stays visible when an icon is present. A button that contains only an icon has an accessible name and a title, and uses `.btn.icon`: it has no border and no background at rest, and its background shows only under the pointer or with the keyboard focus.
 
 The normal height is 30 pixels, with 12 pixels of horizontal padding, a 7 pixel corner radius, and a 6 pixel gap between icon and text. `.small` is 24 pixels high with 8 pixels of horizontal padding; `.lg` is 40 pixels high with a 10 pixel corner radius. The icon precedes the text. Related actions use a button group or an 8–12 pixel layout gap. Local layout may change width, alignment, and available space; local layout cannot replace a variant's colors or interaction states.
 

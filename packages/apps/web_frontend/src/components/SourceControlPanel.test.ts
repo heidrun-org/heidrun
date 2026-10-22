@@ -49,6 +49,12 @@ describe("SourceControlPanel", () => {
 	expect(refresh.get('i').classes()).toContain('bi-arrow-clockwise');
   });
 
+  it("shows the More actions menu as three vertical dots on an icon button with no border", () => {
+    const menuButton = mountPanel().get('button[aria-label="More actions"]');
+    expect(menuButton.classes()).toEqual(expect.arrayContaining(["btn", "icon"]));
+    expect(menuButton.get("i").classes()).toContain("bi-three-dots-vertical");
+  });
+
   afterEach(() => {
     state.selectedWorkspaceId = null;
     git.status = {};

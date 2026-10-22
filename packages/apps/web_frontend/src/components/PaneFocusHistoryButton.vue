@@ -134,7 +134,7 @@ onBeforeUnmount(() => {
   <button
     ref="button"
     type="button"
-    class="btn history-button justify-content-center"
+    class="btn icon history-button"
     :data-direction="direction"
     :aria-label="t(isBack ? 'paneFocusHistoryButton.backLabel' : 'paneFocusHistoryButton.forwardLabel')"
     :title="t(isBack ? 'paneFocusHistoryButton.backTitle' : 'paneFocusHistoryButton.forwardTitle')"
