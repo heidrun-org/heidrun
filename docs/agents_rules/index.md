@@ -9,9 +9,9 @@
 This file lists the files and the subfolders of this folder, for agents and tools.
 
 - [README.md](README.md): the overview of this folder, for people.
-- [glossary/](glossary/index.md): the glossary, split by topic: the definition of each word that the project uses for a part of the application, and the official name "coding agent".
-- [data_layer_operation_log.md](data_layer_operation_log.md): the rule that every public function of a data layer package and of `heidrun_data` is recorded in the operation log, what the log never does, the measure, and the replay.
-- [github_and_gitlab_support.md](github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, and the matching `gh` and `glab` commands.
-- [data_layer_access.md](data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the data layer, the table of the commands, the exceptions, the check, and the audit of the bypasses.
-- [user_interface/](user_interface/index.md): the rules of the user interface, split by topic.
-- [web_styling/](web_styling/index.md): the rules of the appearance of the web page: colors, buttons and their states, hover, contrast, icons, spacing, scroll bars, and the allowed utility classes, with the test of each rule.
+- [glossary/](glossary/index.md): the glossary, split by topic: the definition of each word that the project uses for a part of the application, and the official name "coding agent". Read the files that match the part that you change, before you change the code.
+- [data_layer_operation_log.md](data_layer_operation_log.md): the rule that every public function of a data layer package and of `heidrun_data` is recorded in the operation log, what the log never does, the measure, and the replay. Read it each time that you add or change an operation of a data layer package or of `heidrun_data`.
+- [github_and_gitlab_support.md](github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, and the matching `gh` and `glab` commands. Read it each time that you add or change a support for GitHub, or a `gh` command in a document.
+- [data_layer_access.md](data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the data layer, the table of the commands, the exceptions, the check, and the audit of the bypasses. Read it each time that you change the Past chats sidebar section, the Statistics window, or a package of the data layer.
+- [user_interface/](user_interface/index.md): the rules of the user interface, split by topic. Each file starts with the part that it covers, and the appearance of each part is in the folder `web_styling`.
+- [web_styling/](web_styling/index.md): the rules of the appearance of the web page: colors, buttons and their states, hover, contrast, icons, spacing, scroll bars, and the allowed utility classes, with the test of each rule. Read it before a change to the colors, the buttons, the hover, the spacing, or the icons of the web page.

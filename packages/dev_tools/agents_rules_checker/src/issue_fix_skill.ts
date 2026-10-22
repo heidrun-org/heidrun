@@ -1,3 +1,5 @@
+import { SkillValues } from './skill_values.ts';
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 //	IssueFixSkill — checks that the skill `issue_fix_workflow` stays general and that `AGENTS.md` gives its values
@@ -61,16 +63,7 @@ export class IssueFixSkill {
 	 * @returns The names of the missing values. All the names when the section does not exist.
 	 */
 	static findMissingValues(agentsText: string): string[] {
-		const headingIndex = agentsText.indexOf(IssueFixSkill.valuesHeading);
-		if (headingIndex === -1) {
-			return [...IssueFixSkill.valueNames];
-		}
-		const afterHeadingText = agentsText.slice(headingIndex + IssueFixSkill.valuesHeading.length);
-		const nextHeadingIndex = afterHeadingText.search(/\n#{1,6} /);
-		const sectionText = nextHeadingIndex === -1 ? afterHeadingText : afterHeadingText.slice(0, nextHeadingIndex);
-		return IssueFixSkill.valueNames.filter((valueName) => {
-			return sectionText.includes(`\n- ${valueName}:`) === false;
-		});
+		return SkillValues.findMissingValues(agentsText, IssueFixSkill.valuesHeading, IssueFixSkill.valueNames);
 	}
 
 	/**
@@ -79,8 +72,6 @@ export class IssueFixSkill {
 	 * @returns The names of the values that the skill does not name.
 	 */
 	static findValuesNotNamedBySkill(skillText: string): string[] {
-		return IssueFixSkill.valueNames.filter((valueName) => {
-			return skillText.includes(`"${valueName}"`) === false;
-		});
+		return SkillValues.findValuesNotNamedBySkill(skillText, IssueFixSkill.valueNames);
 	}
 }
