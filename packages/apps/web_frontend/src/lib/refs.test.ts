@@ -256,22 +256,22 @@ describe("findShellBlock", () => {
   const screen = (lines: string[]) => (i: number) => lines[i] ?? null;
 
   it("reads a one-line command", () => {
-    const block = findShellBlock(screen(["! docker ps"]), 0, 80);
+    const block = findShellBlock(screen(["! docker ps"]), 0, 80, true);
     expect(block).toMatchObject({ first: 0, last: 0, command: "docker ps" });
   });
 
   it("joins a command continued with a backslash", () => {
-    const block = findShellBlock(screen(["! docker run \\", "  --rm alpine"]), 1, 80);
+    const block = findShellBlock(screen(["! docker run \\", "  --rm alpine"]), 1, 80, true);
     expect(block?.command).toBe("docker run --rm alpine");
     expect(block?.last).toBe(1);
   });
 
   it("returns null away from the command", () => {
-    expect(findShellBlock(screen(["hello"]), 0, 80)).toBeNull();
+    expect(findShellBlock(screen(["hello"]), 0, 80, true)).toBeNull();
   });
 
   it("does not take a double exclamation mark", () => {
-    expect(findShellBlock(screen(["!!important thing"]), 0, 80)).toBeNull();
+    expect(findShellBlock(screen(["!!important thing"]), 0, 80, true)).toBeNull();
   });
 });
 
