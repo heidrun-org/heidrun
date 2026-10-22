@@ -290,3 +290,123 @@ describe("NeedsYouWorkspaces look", () => {
     expect(templateText).not.toMatch(/class="[^"]*\b(px|pb|pt|ms|me)-(auto|[0-9])/);
   });
 });
+
+describe("NeedsYouWorkspaces height (issue #807)", () => {
+  /** Mounts the list in a Needs you sidebar section of 900 pixels, with a list of `height` pixels, because jsdom has no layout. */
+  async function mountInSection(height = 200) {
+    const mounted = await mountList();
+    const element = mounted.wrapper.get(".needs-you-workspaces").element as HTMLElement;
+    const section = document.createElement("div");
+    element.parentElement!.insertBefore(section, element);
+    section.appendChild(element);
+    section.getBoundingClientRect = () => ({ top: 0, bottom: 900, height: 900, left: 0, right: 300, width: 300, x: 0, y: 0 }) as DOMRect;
+    element.getBoundingClientRect = () => ({ top: 900 - height, bottom: 900, height, left: 0, right: 300, width: 300, x: 0, y: 900 - height }) as DOMRect;
+    const { settings } = await import("../stores/settings");
+    settings.needsYouWorkspacesHeight = 0;
+    await mounted.wrapper.vm.$nextTick();
+    return { ...mounted, settings, resizer: mounted.wrapper.get(".workspaces-resizer") };
+  }
+
+  it("has a line to drag above the title, with the title of the other lines to drag", async () => {
+    const { wrapper, resizer } = await mountInSection();
+    expect(resizer.attributes("role")).toBe("separator");
+    expect(resizer.attributes("aria-orientation")).toBe("horizontal");
+    expect(resizer.attributes("tabindex")).toBe("0");
+    expect(resizer.attributes("title")).toBe("Drag to resize · double-click to go back to the default size");
+    const children = Array.from(wrapper.get(".needs-you-workspaces").element.children).map((child) => child.className.split(" ")[0]);
+    expect(children.slice(0, 2)).toEqual(["workspaces-resizer", "title"]);
+  });
+
+  it("keeps the default height until the developer drags the line", async () => {
+    const { wrapper, settings } = await mountInSection();
+    expect(settings.needsYouWorkspacesHeight).toBe(0);
+    expect(wrapper.get(".needs-you-workspaces").attributes("style") ?? "").not.toContain("height");
+  });
+
+  it("makes the list taller when the line is dragged up, and smaller when it is dragged down", async () => {
+    const { wrapper, settings, resizer } = await mountInSection(200);
+    await resizer.trigger("pointerdown", { clientY: 700, pointerId: 1 });
+    await resizer.trigger("pointermove", { clientY: 600, pointerId: 1 });
+    expect(wrapper.get(".needs-you-workspaces").attributes("style")).toContain("height: 300px");
+    await resizer.trigger("pointermove", { clientY: 750, pointerId: 1 });
+    expect(wrapper.get(".needs-you-workspaces").attributes("style")).toContain("height: 150px");
+    // The setting is saved once, when the drag ends, and not on each move.
+    expect(settings.needsYouWorkspacesHeight).toBe(0);
+    await resizer.trigger("pointerup", { pointerId: 1 });
+    expect(settings.needsYouWorkspacesHeight).toBe(150);
+    await resizer.trigger("pointermove", { clientY: 100, pointerId: 1 });
+    expect(settings.needsYouWorkspacesHeight).toBe(150);
+  });
+
+  it("never makes the list smaller than the title and one row, nor taller than the section minus 80 pixels for the cards", async () => {
+    const { settings, resizer } = await mountInSection(200);
+    await resizer.trigger("pointerdown", { clientY: 700, pointerId: 1 });
+    await resizer.trigger("pointermove", { clientY: 899, pointerId: 1 });
+    await resizer.trigger("pointerup", { pointerId: 1 });
+    expect(settings.needsYouWorkspacesHeight).toBe(84);
+    await resizer.trigger("pointerdown", { clientY: 700, pointerId: 1 });
+    await resizer.trigger("pointermove", { clientY: 0, pointerId: 1 });
+    await resizer.trigger("pointerup", { pointerId: 1 });
+    expect(settings.needsYouWorkspacesHeight).toBe(820);
+  });
+
+  it("saves the height in the settings, and reads it back after a restart", async () => {
+    const { resizer } = await mountInSection(200);
+    await resizer.trigger("pointerdown", { clientY: 700, pointerId: 1 });
+    await resizer.trigger("pointermove", { clientY: 650, pointerId: 1 });
+    await resizer.trigger("pointerup", { pointerId: 1 });
+    // The settings are saved after the change, in a watcher.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    vi.resetModules();
+    const restarted = await import("../stores/settings");
+    expect(restarted.settings.needsYouWorkspacesHeight).toBe(250);
+  });
+
+  it("gives the cursor back when the list disappears during a drag", async () => {
+    const { session, wrapper, resizer } = await mountInSection(200);
+    await resizer.trigger("pointerdown", { clientY: 700, pointerId: 1 });
+    expect(document.body.style.cursor).toBe("row-resize");
+    session.state.snapshot = { ...session.state.snapshot!, workspaces: [] };
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find(".needs-you-workspaces").exists()).toBe(false);
+    expect(document.body.style.cursor).toBe("");
+  });
+
+  it("goes back to the default height after a double click on the line", async () => {
+    const { wrapper, settings, resizer } = await mountInSection(200);
+    settings.needsYouWorkspacesHeight = 400;
+    await resizer.trigger("dblclick");
+    expect(settings.needsYouWorkspacesHeight).toBe(0);
+    expect(wrapper.get(".needs-you-workspaces").attributes("style") ?? "").not.toContain("height");
+  });
+
+  it("changes the height with the up and down arrow keys, by 10 pixels, and by 40 pixels with Shift", async () => {
+    const { settings, resizer } = await mountInSection(200);
+    await resizer.trigger("keydown", { key: "ArrowUp" });
+    expect(settings.needsYouWorkspacesHeight).toBe(210);
+    await resizer.trigger("keydown", { key: "ArrowDown", shiftKey: true });
+    expect(settings.needsYouWorkspacesHeight).toBe(160);
+  });
+
+  it("keeps the last 80 pixels for the cards also when the window gets smaller after the drag", async () => {
+    const { wrapper, settings } = await mountInSection(200);
+    settings.needsYouWorkspacesHeight = 400;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".needs-you-workspaces").attributes("style")).toContain("max-height: calc(100% - 80px)");
+  });
+
+  it("scrolls only the rows when they do not fit, so that the title stays", () => {
+    const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "NeedsYouWorkspaces.vue"), "utf8");
+    expect(sourceText).toMatch(/\.workspace-rows \{[^}]*min-height: 0;[^}]*overflow-y: auto;/);
+    expect(sourceText).toMatch(/\.title \{[^}]*flex-shrink: 0;/);
+    expect(sourceText).not.toMatch(/\.needs-you-workspaces \{[^}]*overflow-y: auto;/);
+  });
+
+  it("keeps the smallest height only for a chosen height, so that the default height stays the height of the rows", async () => {
+    const { wrapper, settings } = await mountInSection(200);
+    expect(wrapper.get(".needs-you-workspaces").attributes("style") ?? "").not.toContain("min-height");
+    settings.needsYouWorkspacesHeight = 300;
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".needs-you-workspaces").attributes("style")).toContain("min-height: 84px");
+  });
+});
