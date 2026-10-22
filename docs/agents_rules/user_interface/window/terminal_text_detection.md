@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: terminal text detection](../../glossary/terminal_text_detection.md), [The references](terminal_text_detection_references.md), [The other families](terminal_text_detection_other_families.md), [Settings window: text detection](settings_text_detection.md)
-- Related issue: [issue 793](https://github.com/heidrun-org/heidrun/issues/793), [issue 638](https://github.com/heidrun-org/heidrun/issues/638)
+- Related issue: [issue 793](https://github.com/heidrun-org/heidrun/issues/793), [issue 638](https://github.com/heidrun-org/heidrun/issues/638), [issue 574](https://github.com/heidrun-org/heidrun/issues/574)
 
 This file is a part of the rules of the user interface of Heidrun. It gives the rules of the detection in the text of the terminals: the list of the detection families, the precedence, the hover buttons, and the switches. The words are defined in [terminal_text_detection.md](../../glossary/terminal_text_detection.md).
 
@@ -28,7 +28,7 @@ The order is the order of the Settings window. The forms and the examples are in
 | Tickets | `tickets` | A ticket address in `.heidrun/config.json`. |
 | Commits | `commits` | A Git remote, for the destination. |
 | File paths | `filePaths` | Nothing. |
-| Shell commands | `shellCommands` | A pane that runs a coding agent. The block of several lines needs Claude Code. |
+| Shell commands | `shellCommands` | A pane that runs a coding agent (Claude Code or Codex), also for the block of several lines. |
 | Slash commands | `slashCommands` | A pane that runs Claude Code. |
 | Numbered steps | `numberedSteps` | A pane that runs a coding agent. |
 | Agent list and input box | `agentList` | A pane that runs Claude Code. |
@@ -37,7 +37,7 @@ The order is the order of the Settings window. The forms and the examples are in
 ## The precedence
 
 - The code is `TerminalDetection.detectLine` in `lib/terminal_detection.ts`. The terminal and the sample field call the same function, so the sample shows what a terminal does.
-- The rules that claim the whole line come first, and only for Claude Code: the input box when a row of the agent list has the selection, then a row of the agent list, then the block of a shell command. A winner takes every other piece of its line.
+- The rules that claim the whole line come first: for Claude Code, the input box when a row of the agent list has the selection, then a row of the agent list; for every coding agent, the block of a shell command, which needs a space after the `!` (`!34` is a merge request). A winner takes every other piece of its line.
 - Then a shell command inside a sentence, the references, the file paths, the slash commands, and the numbered step. The first rule that finds a piece of text keeps it. Inside the references the order is: the address with its host, the address without its host, the words and a number ("PR #12"), another repository ("group/app#12"), "!34", "#12", the tickets, the commit identifiers.
 - The numbered step does not take a piece. Its hover area stops before the first other piece that starts after the marker, and the step has no hover buttons when another piece covers the marker.
 - The precedence does not depend on the switches. A family that is off keeps its text: "PR #12" is not read as the issue "#12" when the pull requests are off, and a file name is not read again as a path when the commit identifier in it is off. The switch only removes the colors, the hover buttons, and the actions of its own family.

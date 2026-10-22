@@ -1,5 +1,6 @@
 import type { DetectionFamilyId } from './detection_families';
 import { DetectionPatterns } from './detection_patterns';
+import { WrappedLines } from './wrapped_lines';
 import {
 	agentListState,
 	findAgentRow,
@@ -141,6 +142,12 @@ export type DetectionInput = {
 	rows: number;
 	/** The number of columns of the screen. */
 	columns: number;
+	/**
+	 * True when the last line is the end of the text, as in the sample field of the Settings window. Missing or false for the
+	 * screen of a terminal, whose text may go on below the bottom: a command that reaches the bottom is not proposed, rather
+	 * than cut (issue #574).
+	 */
+	textEndsAtLastLine?: boolean;
 	/** The repository of the pane, and the project settings of the references. */
 	context: RefContext;
 	/** The slash commands that Claude Code knows in the folder of the pane. */
@@ -393,6 +400,7 @@ export class TerminalDetection {
 				row,
 				rows: textLines.length,
 				columns,
+				textEndsAtLastLine: true,
 			});
 			const webAddresses = TerminalDetection.findPlainWebAddresses(textLines[row], result.items, options.enabledFamilies);
 			lines.push({
@@ -442,9 +450,10 @@ export class TerminalDetection {
 			items.find((placed) => candidate.start < placed.end && candidate.end > placed.start);
 		const isOn = (familyId: DetectionFamilyId): boolean => input.enabledFamilies.has(familyId);
 
-		// "lance ! scripts/x.sh." inside a sentence: run it like a "!" block.
+		// "lance ! scripts/x.sh." inside a sentence: run it like a "!" block. The sentence is read on all the screen lines
+		// that the agent wrapped, so that a long command is never cut at the end of a screen line (issue #574).
 		if (input.agent !== null) {
-			for (const inline of findInlineShell(text)) {
+			for (const inline of TerminalDetection._inlineShellsOfRow(input)) {
 				items.push({
 					family: 'shellCommands',
 					rule: 'inlineShell',
@@ -455,7 +464,7 @@ export class TerminalDetection {
 					primary: TerminalDetection._runCommandButton(inline.command),
 					secondary: null,
 					commandClick: { type: 'sendPrompt', text: `! ${inline.command}` },
-					destination: null,
+					destination: `! ${inline.command}`,
 					repository: null,
 					isUnderlined: true,
 					isAfterText: false,
@@ -571,15 +580,19 @@ export class TerminalDetection {
 
 	/**
 	 * Reads the rules that claim the whole line: the way back to the input, a row of the agent list, and a shell command.
-	 * They exist for Claude Code only.
+	 * The input box and the agent list exist for Claude Code only; the shell command is read in every pane of a coding agent.
 	 *
 	 * @param text - The text of the line.
 	 * @param input - The line, the screen around it, and the context of the pane.
 	 * @returns The item that claims the whole line, or null.
 	 */
 	private static _detectWholeLine(text: string, input: DetectionInput): DetectedItem | null {
-		if ((input.agent ?? '').includes('claude') === false) {
+		if (input.agent === null) {
 			return null;
+		}
+		// Codex also suggests "! command" on several lines; the agent list and the input box are of Claude Code only.
+		if (input.agent.includes('claude') === false) {
+			return TerminalDetection._shellBlockItem(text, input);
 		}
 		const isOn = (familyId: DetectionFamilyId): boolean => input.enabledFamilies.has(familyId);
 
@@ -637,8 +650,20 @@ export class TerminalDetection {
 			};
 		}
 
-		// "! command" suggested by Claude: the whole command, joined on one line, is sent to the prompt and run.
-		const block = findShellBlock(input.lineAt, input.row, input.columns);
+		return TerminalDetection._shellBlockItem(text, input);
+	}
+
+	/**
+	 * Reads a "! command" at the start of a screen line, possibly on several lines, in a pane of a coding agent.
+	 *
+	 * @param text - The text of the line.
+	 * @param input - The line, the screen around it, and the context of the pane.
+	 * @returns The item of the command, which claims the line, or null.
+	 */
+	private static _shellBlockItem(text: string, input: DetectionInput): DetectedItem | null {
+		const isOn = (familyId: DetectionFamilyId): boolean => input.enabledFamilies.has(familyId);
+		// "! command" suggested by the agent: the whole command, joined on one line, is sent to the prompt and run.
+		const block = findShellBlock(input.lineAt, input.row, input.columns, input.textEndsAtLastLine === true);
 		if (block !== null) {
 			const start = input.row === block.first ? block.start : text.length - text.trimStart().length;
 			const end = text.trimEnd().length;
@@ -653,7 +678,7 @@ export class TerminalDetection {
 					primary: TerminalDetection._runCommandButton(block.command),
 					secondary: null,
 					commandClick: { type: 'sendPrompt', text: `! ${block.command}` },
-					destination: null,
+					destination: `! ${block.command}`,
 					repository: null,
 					isUnderlined: true,
 					isAfterText: false,
@@ -662,6 +687,38 @@ export class TerminalDetection {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Finds the "! command" inside a sentence that cover a screen line. The sentence is the logical line of the screen line:
+	 * the screen lines that the agent wrapped into one line.
+	 *
+	 * @param input - The line, the screen around it, and the context of the pane.
+	 * @returns The commands, with the part of the screen line that each covers.
+	 */
+	private static _inlineShellsOfRow(input: DetectionInput): { start: number; end: number; command: string }[] {
+		const logical = WrappedLines.logicalLine(input.lineAt, input.row, input.columns);
+		// Too long to read whole: no command, rather than a cut one.
+		if (logical === null) {
+			return [];
+		}
+		const segment = logical.segments.find((candidate) => candidate.row === input.row);
+		if (segment === undefined) {
+			return [];
+		}
+		const found: { start: number; end: number; command: string }[] = [];
+		for (const inline of findInlineShell(logical.text)) {
+			// The command runs to the end of the text, at the bottom of the screen: it may go on out of sight.
+			if (logical.isCutAtBottom === true && input.textEndsAtLastLine !== true && inline.end >= logical.text.trimEnd().length) {
+				continue;
+			}
+			const from = Math.max(inline.start, segment.offset);
+			const to = Math.min(inline.end, segment.offset + segment.length);
+			if (from < to) {
+				found.push({ start: segment.column + from - segment.offset, end: segment.column + to - segment.offset, command: inline.command });
+			}
+		}
+		return found;
 	}
 
 	/**
