@@ -1,11 +1,11 @@
 # Window rules index
 
 - Created: 13 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 707](https://github.com/heidrun-org/heidrun/issues/707), [issue 683](https://github.com/heidrun-org/heidrun/issues/683)
+- Related issue: [issue 337](https://github.com/heidrun-org/heidrun/issues/337), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 486](https://github.com/heidrun-org/heidrun/issues/486), [issue #499](https://github.com/heidrun-org/heidrun/issues/499), [issue 498](https://github.com/heidrun-org/heidrun/issues/498), [issue 523](https://github.com/heidrun-org/heidrun/issues/523), [issue 559](https://github.com/heidrun-org/heidrun/issues/559), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 608](https://github.com/heidrun-org/heidrun/issues/608), [issue 609](https://github.com/heidrun-org/heidrun/issues/609), [issue 616](https://github.com/heidrun-org/heidrun/issues/616), [issue 622](https://github.com/heidrun-org/heidrun/issues/622), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 707](https://github.com/heidrun-org/heidrun/issues/707), [issue 683](https://github.com/heidrun-org/heidrun/issues/683), [issue 638](https://github.com/heidrun-org/heidrun/issues/638), [issue 793](https://github.com/heidrun-org/heidrun/issues/793)
 
 This file lists the files and the subfolders of this folder, for agents and tools.
 
@@ -33,6 +33,10 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [settings_information_cards.md](settings_information_cards.md): the rule that every option of the Settings window has a circled question mark and an information card, the layout of the card, the component `SettingsOptionHelp.vue`, the rows of a list, and the tests.
 - [find_new_skills_window.md](find_new_skills_window.md): the window "Find new skills": its four lines, the three sources (skills.sh, Local folder, Code hosting), the information cards, and the rows of the result.
 - [settings_voice_input.md](settings_voice_input.md): the Voice input section of the Settings window, the download of a Whisper model, the push-to-talk button, the microphone permission, and the tests.
+- [terminal_text_detection.md](terminal_text_detection.md): the detection in the text of the terminals: the 11 detection families, the fixed precedence, the hover buttons, the switches, and the tests.
+- [terminal_text_detection_references.md](terminal_text_detection_references.md): the forms of issues, requests, tickets, and commits that the detection accepts and refuses, and their destination.
+- [terminal_text_detection_other_families.md](terminal_text_detection_other_families.md): the forms, the refused examples, the context, and the visible result of the web addresses, file paths, shell commands, slash commands, numbered steps, agent list, and questions and choices.
+- [settings_text_detection.md](settings_text_detection.md): the section "Text detection" of the Settings window: the switches, the data of the project, the patterns and the examples of each rule, and the Try a text field.
 - [status_bar.md](status_bar.md): the status bar and the menu of the status item.
 - [status_bar_git.md](status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
 - [window_state_and_start.md](window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, the notice of the missing programs Herdr and ngrok, and the goat sounds.

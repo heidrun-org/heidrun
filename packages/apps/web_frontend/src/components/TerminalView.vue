@@ -2,24 +2,13 @@
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { Terminal, type IBufferLine, type IDecoration, type IMarker } from "@xterm/xterm";
+import { Terminal, type IBufferLine, type IDecoration, type IDisposable, type ILink, type IMarker } from "@xterm/xterm";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import {
-  EMPTY_CONTEXT,
-  REF_COLORS,
-  claudeCommands,
-  agentListState,
-  findAgentRow,
-  promptBoxAt,
-  findCommands,
-  findRefs,
-  findShellBlock,
-  findInlineShell,
-  findFileRefs,
-  findStep,
-  refContext,
-  type RefContext,
-} from "../lib/refs";
+import { EMPTY_CONTEXT, REF_COLORS, claudeCommands, agentListState, refContext, type RefContext } from "../lib/refs";
+import { DetectionFamilies } from "../lib/detection_families";
+import { DetectionPatterns } from "../lib/detection_patterns";
+import { HoverButtonsPlacement } from "../lib/hover_buttons_placement";
+import { TerminalDetection, type DetectedItem, type DetectionAction } from "../lib/terminal_detection";
 import { sendPrompt, toast } from "../stores/session";
 import { openIssue } from "../stores/issues";
 import { openFileRef } from "../stores/files";
@@ -164,177 +153,9 @@ onMounted(async () => {
   }
   fit = new FitAddon();
   term.loadAddon(fit);
-  // URLs and references open with ⌘-click, like in iTerm (a plain click stays a click).
-  term.loadAddon(
-    new WebLinksAddon((e, uri) => {
-      if (e.metaKey) openUrl(uri).catch(() => {});
-    }),
-  );
-  // References, slash commands and numbered steps: hovering shows a small action
-  // chip (open, run, ask the agent); ⌘-click does the same directly.
-  term.registerLinkProvider({
-    provideLinks(y, callback) {
-      const line = term?.buffer.active.getLine(y - 1);
-      if (!line) return callback(undefined);
-      const { text, col, width } = lineText(line);
-      const range = (s: number, e: number) => ({
-        start: { x: col[s] + 1, y },
-        end: { x: col[e - 1] + width[e - 1], y },
-      });
-      const items: { s: number; e: number; label: string; run: () => void; underline: boolean; alt?: ChipAction; meta?: () => void; after?: boolean; detail?: string }[] = [];
-      // "! command" suggested by Claude (its shell mode): the whole command, joined on
-      // one line even when it spans several, is sent to the prompt and run.
-      if (isClaude()) {
-        const buf = term!.buffer.active;
-        const at = (i: number) => {
-          const l = i >= 0 && i < term!.rows ? buf.getLine(buf.viewportY + i) : undefined;
-          return l ? lineText(l).text : null;
-        };
-        // Selection in the agent list: a click in the prompt box gives the focus back
-        // to the text input (↑ until past the first row), to type again.
-        const row0 = y - 1 - buf.viewportY;
-        if (promptBoxAt(at, row0)) {
-          const list = agentListState(at, term!.rows);
-          if (list && list.selected !== null) {
-            const steps = list.selected + 1;
-            return callback([
-              {
-                text,
-                range: { start: { x: 1, y }, end: { x: term!.cols, y } },
-                decorations: { underline: false, pointerCursor: true },
-                activate: () => {
-                  hideChip(true);
-                  backToPrompt(steps);
-                },
-                hover: () => {
-                  overLink = true;
-                  showChip({ start: { x: 1, y }, end: { x: Math.max(2, text.trimEnd().length), y } }, t("terminalView.backToPrompt"), () => backToPrompt(steps), undefined, true);
-                },
-                leave: () => {
-                  overLink = false;
-                  hideChip();
-                },
-              },
-            ]);
-          }
-        }
-        // Agent list under the prompt: a click switches to that agent (↓ to reach the
-        // list, ↓ to the row, Enter), instead of walking there with the arrow keys.
-        const agentRow = findAgentRow(at, y - 1 - buf.viewportY, term!.rows);
-        if (agentRow) {
-          // Stop at the end of the description: the elapsed time is pushed to the
-          // right edge after a wide gap ("…availability          29m 5s · ↓").
-          const gap = /\s{4,}\S/.exec(text.slice(agentRow.start));
-          const e0 = gap ? agentRow.start + gap.index : text.trimEnd().length;
-          const link = {
-            s: agentRow.start,
-            e: e0,
-            label: agentRow.current ? t("terminalView.agentShown", { name: agentRow.name }) : t("terminalView.showAgent", { name: agentRow.name }),
-            run: () => switchToAgent(agentRow.name),
-            underline: true,
-            after: true,
-          };
-          return callback([toLink(link)]);
-        }
-        const block = findShellBlock(at, y - 1 - buf.viewportY, term!.cols);
-        if (block) {
-          const row = y - 1 - buf.viewportY;
-          const s0 = row === block.first ? block.start : text.length - text.trimStart().length;
-          const e0 = text.trimEnd().length;
-          if (e0 > s0) {
-            const short = block.command.length > 48 ? `${block.command.slice(0, 48)}…` : block.command;
-            const link = {
-              s: s0,
-              e: e0,
-              label: t("terminalView.runCommand", { command: short }),
-              run: () => sendPrompt(props.paneId, `! ${block.command}`),
-              underline: true,
-            };
-            return callback([toLink(link)]);
-          }
-        }
-      }
-      // "lance ! scripts/x.sh." inside a sentence: run it like a "!" block.
-      const inline = props.agent ? findInlineShell(text) : [];
-      for (const c of inline) {
-        const short = c.command.length > 48 ? `${c.command.slice(0, 48)}…` : c.command;
-        items.push({ s: c.start, e: c.end, label: t("terminalView.runCommand", { command: short }), run: () => sendPrompt(props.paneId, `! ${c.command}`), underline: true });
-      }
-      const inCommand = (s: number, e: number) => inline.some((c) => s < c.end && e > c.start);
-      for (const r of findRefs(text, refCtx)) {
-        if (!r.url || inCommand(r.start, r.end)) continue;
-        const what = text.slice(r.start, r.end);
-        const target = r.target;
-        const preview = target ? () => openIssue(props.cwd, target, r.url) : undefined;
-        items.push({
-          s: r.start,
-          e: r.end,
-          label: t("terminalView.openLink", { name: what }),
-          run: () => openUrl(r.url!).catch(() => {}),
-          underline: true,
-          // Issues and MR: also previewed in the app; ⌘-click goes straight there.
-          alt: preview ? { label: t("terminalView.preview"), run: preview } : undefined,
-          meta: preview,
-          detail: r.url,
-        });
-      }
-      // "src/app.ts:42" cited by the agent (or a compiler): opened in the file explorer.
-      for (const f of findFileRefs(text)) {
-        if (items.some((i) => f.start < i.e && f.end > i.s)) continue;
-        const name = f.path.split("/").pop() + (f.line ? `:${f.line}` : "");
-        const open = () => openFileRef(props.cwd, f.path, f.line);
-        items.push({ s: f.start, e: f.end, label: t("terminalView.openFile", { name }), run: open, underline: true, meta: open });
-      }
-      if (isClaude()) {
-        for (const c of findCommands(text, commands)) {
-          if (items.some((i) => c.start < i.e && c.end > i.s)) continue;
-          items.push({ s: c.start, e: c.end, label: t("terminalView.launchCommand", { command: c.command }), run: () => sendPrompt(props.paneId, c.command), underline: true });
-        }
-      }
-      if (props.agent) {
-        const step = findStep(text);
-        if (step) {
-          // The step's hover zone stops before any other link on the line.
-          const firstOther = Math.min(step.end, ...items.filter((i) => i.s > step.start).map((i) => i.s));
-          const end = text.slice(0, firstOther).trimEnd().length;
-          if (end > step.start && !items.some((i) => i.s <= step.start && i.e > step.start)) {
-            const snippet = step.text.length > 90 ? `${step.text.slice(0, 90)}…` : step.text;
-            items.push({
-              s: step.start,
-              e: end,
-              label: t("terminalView.doStep", { number: step.number }),
-              run: () => sendPrompt(props.paneId, `Vas-y pour le point ${step.number} : « ${snippet} »`),
-              underline: false,
-            });
-          }
-        }
-      }
-      const links = items.map(toLink);
-      callback(links.length ? links : undefined);
-
-      function toLink(i: (typeof items)[number]) {
-        return {
-          text: text.slice(i.s, i.e),
-          range: range(i.s, i.e),
-          decorations: { underline: i.underline, pointerCursor: i.underline },
-          activate: (e: MouseEvent) => {
-            if (e.metaKey) {
-              hideChip(true);
-              (i.meta ?? i.run)();
-            }
-          },
-          hover: () => {
-            overLink = true;
-            showChip(range(i.s, i.e), i.label, i.run, i.alt, i.after, i.detail);
-          },
-          leave: () => {
-            overLink = false;
-            hideChip();
-          },
-        };
-      }
-    },
-  });
+  // Web addresses and references open with ⌘-click, like in iTerm (a plain click stays a click). The link providers
+  // are built by `buildLinkProviders`, and built again when a switch of the detection changes.
+  buildLinkProviders();
   term.loadAddon(new ClipboardAddon(osc52Provider));
 
   // Mouse reporting: Herdr's attach client asks for it, which turns every drag into
@@ -468,52 +289,248 @@ watch(
   { immediate: true },
 );
 
-// ---- Hover chip -------------------------------------------------------------
+// A switch of the detection applies at once to the text already on the screen: the link providers are built again, the
+// hover buttons close, and the colors of every line are computed again.
+watch(
+  () => [settings.terminalTextDetection, settings.disabledDetectionFamilies.join(",")] as const,
+  () => {
+    hideChip(true);
+    buildLinkProviders();
+    for (const y of [...rows.keys()]) clearRow(y);
+    scheduleRefs();
+  },
+);
+
+// ---- Link providers: web addresses, then the detection families ------------
+
+let webLinks: WebLinksAddon | null = null;
+let detectionProvider: IDisposable | null = null;
+
+/** The detection families that are on now. The switches are read each time, so a change applies at once. */
+function enabledFamilies() {
+  return DetectionFamilies.listEnabled(settings);
+}
+
+/**
+ * Registers the link providers of the terminal, in their order of precedence: the web-link add-on first, then the link provider of
+ * the detection. xterm keeps the link of the provider that came first when two links overlap, so a web address is a link of the
+ * add-on. The add-on asks the detection whether the address is an issue, a pull request, a merge request, or a commit.
+ */
+function buildLinkProviders() {
+  if (term === null) {
+    return;
+  }
+  webLinks?.dispose();
+  webLinks = null;
+  detectionProvider?.dispose();
+  detectionProvider = null;
+  if (DetectionFamilies.isEnabled(settings, "webAddresses")) {
+    webLinks = new WebLinksAddon(
+      (event, address) => {
+        if (event.metaKey === false) {
+          return;
+        }
+        const reference = TerminalDetection.findAddressReference(address, refCtx, enabledFamilies());
+        hideChip(true);
+        if (reference?.commandClick) {
+          runAction(reference.commandClick);
+        } else {
+          openUrl(address).catch(() => {});
+        }
+      },
+      {
+        urlRegex: DetectionPatterns.WEB_ADDRESS,
+        hover: (_event, address, range) => {
+          overLink = true;
+          const reference = TerminalDetection.findAddressReference(address, refCtx, enabledFamilies());
+          if (reference !== null) {
+            showHoverButtons(range, reference);
+          }
+        },
+        leave: () => {
+          overLink = false;
+          hideChip();
+        },
+      },
+    );
+    term.loadAddon(webLinks);
+  }
+  detectionProvider = term.registerLinkProvider({ provideLinks: provideDetectionLinks });
+}
+
+/**
+ * The links of one line: references, file paths, slash commands, numbered steps, shell commands, and the rows of the agent list.
+ * Hovering shows hover buttons (open, run, ask the agent); ⌘-click does the main action directly.
+ */
+function provideDetectionLinks(y: number, callback: (links: ILink[] | undefined) => void) {
+  const line = term?.buffer.active.getLine(y - 1);
+  if (!term || !line) {
+    return callback(undefined);
+  }
+  const { text, col, width } = lineText(line);
+  const range = (s: number, e: number) => ({
+    start: { x: col[s] + 1, y },
+    end: { x: col[e - 1] + width[e - 1], y },
+  });
+  const { items } = TerminalDetection.detectLine({
+    lineAt: screenLine,
+    row: y - 1 - term.buffer.active.viewportY,
+    rows: term.rows,
+    columns: term.cols,
+    context: refCtx,
+    knownCommands: commands,
+    agent: props.agent || null,
+    enabledFamilies: enabledFamilies(),
+  });
+  const links = items
+    .filter((item) => item.isEnabled && item.commandClick !== null)
+    .map((item) => ({
+      text: text.slice(item.start, item.end),
+      range: range(item.start, item.end),
+      decorations: { underline: item.isUnderlined, pointerCursor: item.isUnderlined || item.rule === "promptBox" },
+      activate: (e: MouseEvent) => {
+        if (e.metaKey && item.commandClick !== null) {
+          hideChip(true);
+          runAction(item.commandClick);
+        }
+      },
+      hover: () => {
+        overLink = true;
+        showHoverButtons(range(item.start, item.end), item);
+      },
+      leave: () => {
+        overLink = false;
+        hideChip();
+      },
+    }));
+  callback(links.length ? links : undefined);
+}
+
+/** Does what a detected piece of text proposes. The sample field of the Settings window never calls this function. */
+function runAction(action: DetectionAction) {
+  switch (action.type) {
+    case "openAddress":
+      openUrl(action.url).catch(() => {});
+      break;
+    case "previewIssue":
+      openIssue(props.cwd, action.target, action.url);
+      break;
+    case "openFile":
+      openFileRef(props.cwd, action.path, action.line);
+      break;
+    case "sendPrompt":
+      sendPrompt(props.paneId, action.text);
+      break;
+    case "backToPrompt":
+      backToPrompt(action.steps);
+      break;
+    case "switchAgent":
+      switchToAgent(action.name);
+      break;
+  }
+}
+
+// ---- Hover buttons ----------------------------------------------------------
 
 const wrapEl = ref<HTMLDivElement>();
 interface ChipAction {
   label: string;
   run: () => void;
 }
-const chip = ref<{ left: number | null; right: number | null; top: number; label: string; run: () => void; alt?: ChipAction; detail?: string } | null>(null);
+const chip = ref<{ left: number; top: number; label: string; title: string; run: () => void; alt?: ChipAction; detail?: string } | null>(null);
 let chipTimer = 0;
-// Mouse on the chip: the chip is frozen. Claude redraws the screen all the time, and
+// Mouse on the hover buttons: they are frozen. Claude redraws the screen all the time, and
 // xterm then re-reads the link under the last pointer position, which may be another
-// issue by now: without this, the chip would switch target or vanish under the mouse.
+// issue by now: without this, the hover buttons would switch target or vanish under the mouse.
 let onChip = false;
+/** Height of the hover buttons, in pixels. */
 const CHIP_H = 26;
+/** Height of the hover buttons with the line of the destination under them, in pixels. */
+const CHIP_DETAIL_H = 42;
+/** Width of one hover button before the label, in pixels: the padding on both sides. */
+const CHIP_PADDING_W = 16;
+/** Width of one character of a label, in pixels. Over-estimated, so that the buttons never reach the text next to them. */
+const CHIP_CHARACTER_W = 8;
+/** Longest width of one hover button, in pixels: the label is cut after it. */
+const CHIP_MAX_W = 360;
+/** Space around and between the hover buttons, in pixels. */
+const CHIP_GAP_W = 12;
 
 /**
- * The chip sits just above the hovered text, touching it: the pointer goes straight
- * up into it without crossing anything, and the rest of the line (other #12, !34…)
- * stays visible and reachable. On the first row, it goes just below instead.
+ * Tells whether a cell of the screen holds no character, no color, and not the cursor. The hover buttons only go over such cells,
+ * so they hide no text and no part of the interface of the coding agent.
  */
-function showChip(
+function isBlankCell(row: number, column: number): boolean {
+  if (term === null) {
+    return false;
+  }
+  const buffer = term.buffer.active;
+  if (row === buffer.cursorY && column === buffer.cursorX) {
+    return false;
+  }
+  const cell = buffer.getLine(buffer.viewportY + row)?.getCell(column);
+  if (cell === undefined) {
+    return false;
+  }
+  const chars = cell.getChars();
+  return cell.getWidth() === 1 && (chars === "" || chars === " ") && cell.isBgDefault() && cell.isInverse() === 0;
+}
+
+/**
+ * Shows the hover buttons of a detected piece of text. They sit on blank cells of the screen near the text (on its line, or on
+ * the line above or below), so they cover no character. When no blank place is near, they do not show, and a ⌘-click on the text
+ * runs the main action.
+ */
+function showHoverButtons(
   r: { start: { x: number; y: number }; end: { x: number; y: number } },
-  label: string,
-  run: () => void,
-  alt?: ChipAction,
-  /** On the line itself, after the text (agent list rows: one link per line). */
-  after = false,
-  detail?: string,
+  item: DetectedItem,
 ) {
   if (onChip) return;
   window.clearTimeout(chipTimer);
   const screen = el.value?.querySelector(".xterm-screen") as HTMLElement | null;
-  if (!term || !screen || !wrapEl.value) return;
+  if (!term || !screen || !wrapEl.value || item.primary === null) return;
   const s = screen.getBoundingClientRect();
   const w = wrapEl.value.getBoundingClientRect();
   const cellW = s.width / term.cols;
   const cellH = s.height / term.rows;
   const row = r.start.y - 1 - term.buffer.active.viewportY;
-  const rowTop = s.top - w.top + row * cellH;
-  // 2 px of overlap with the text: no gap where the pointer would leave the link.
-  const height = detail === undefined ? CHIP_H : 42;
-  const top = after ? rowTop + (cellH - height) / 2 : row > 0 ? rowTop - height + 2 : rowTop + cellH - 2;
-  const left = after ? s.left - w.left + r.end.x * cellW : s.left - w.left + (r.start.x - 1) * cellW - 2;
-  const width = detail !== undefined ? 360 : alt ? 230 : 180;
-  const roomy = left + width < w.width;
-  chip.value = { left: roomy ? Math.max(0, left) : null, right: roomy ? null : 10, top, label, run, alt, detail };
+  const labels = [item.primary, item.secondary].filter((button) => button !== null).map((button) => t(button.labelKey, button.labelParams));
+  const buttonsWidth =
+    labels.reduce((sum, label) => sum + Math.min(CHIP_MAX_W, CHIP_PADDING_W + label.length * CHIP_CHARACTER_W), 0) +
+    CHIP_GAP_W * (labels.length + 1);
+  const detailWidth = item.destination === null ? 0 : Math.min(CHIP_MAX_W, CHIP_PADDING_W + item.destination.length * 6);
+  const request = {
+    row,
+    startColumn: r.start.x - 1,
+    endColumn: r.end.y === r.start.y ? r.end.x : term.cols,
+  };
+  // With the line of the destination first, then without it when the first does not fit.
+  const withDetail = item.destination === null ? [false] : [true, false];
+  for (const hasDetail of withDetail) {
+    const height = hasDetail ? CHIP_DETAIL_H : CHIP_H;
+    const rowsCount = Math.max(1, Math.round(height / cellH));
+    const width = Math.max(buttonsWidth, hasDetail ? detailWidth + CHIP_GAP_W : 0);
+    const place = HoverButtonsPlacement.find(
+      { columns: term.cols, rows: term.rows, isBlank: isBlankCell },
+      { ...request, widthCells: Math.ceil(width / cellW) + 1, heightRows: rowsCount },
+    );
+    if (place === null) {
+      continue;
+    }
+    const primary = item.primary;
+    const secondary = item.secondary;
+    chip.value = {
+      left: s.left - w.left + place.column * cellW,
+      top: s.top - w.top + place.row * cellH + (rowsCount * cellH - height) / 2,
+      label: labels[0],
+      title: item.destination ?? "",
+      run: () => runAction(primary.action),
+      alt: secondary === null ? undefined : { label: labels[1], run: () => runAction(secondary.action) },
+      detail: hasDetail && item.destination !== null ? item.destination : undefined,
+    };
+    return;
+  }
+  chip.value = null;
 }
 
 function hideChip(now = false) {
@@ -606,6 +623,17 @@ function runChip(alt = false) {
   term?.focus();
 }
 
+/** The tooltip of the first hover button: the destination when the line of the destination is not shown, and the ⌘-click hint. */
+function firstButtonTitle(): string {
+  const c = chip.value;
+  if (c === null) {
+    return "";
+  }
+  const destination = c.detail === undefined ? c.title : "";
+  const hint = c.alt ? "" : t("terminalView.chipSameAsClick");
+  return [destination, hint].filter((part) => part !== "").join("\n");
+}
+
 /** The text of a buffer line, with the cell column of each character (wide chars, emoji). */
 function lineText(line: IBufferLine): { text: string; col: number[]; width: number[] } {
   let text = "";
@@ -665,7 +693,7 @@ function paintRefs() {
     const prev = rows.get(y);
     if (prev && prev.text === text && (!prev.marker || (!prev.marker.isDisposed && prev.marker.line === buf.baseY + y))) continue;
     clearRow(y);
-    const refs = findRefs(text, refCtx);
+    const refs = TerminalDetection.findColoredReferences(text, refCtx, enabledFamilies());
     if (!refs.length) {
       rows.set(y, { text, marker: null, decorations: [] });
       continue;
@@ -910,6 +938,8 @@ function pinSelection() {
 onBeforeUnmount(() => {
   window.clearTimeout(refsTimer);
   window.clearTimeout(chipTimer);
+  webLinks?.dispose();
+  detectionProvider?.dispose();
   for (const y of [...rows.keys()]) clearRow(y);
   el.value?.removeEventListener("wheel", onWheel, { capture: true });
   el.value?.removeEventListener("copy", onCopy, true);
@@ -932,17 +962,13 @@ onBeforeUnmount(() => {
     <div
       v-if="chip"
       class="chips"
-      :style="{
-        top: `${chip.top}px`,
-        left: chip.left != null ? `${chip.left}px` : 'auto',
-        right: chip.right != null ? `${chip.right}px` : 'auto',
-      }"
+      :style="{ top: `${chip.top}px`, left: `${chip.left}px` }"
       @mouseenter="enterChip()"
       @mouseleave="leaveChip()"
       @mousedown.stop.prevent
     >
       <div class="chip-actions">
-        <button class="btn small chip" type="button" :title="chip.alt ? '' : t('terminalView.chipSameAsClick')" @click="runChip(false)">{{ chip.label }}</button>
+        <button class="btn small chip" type="button" :title="firstButtonTitle()" @click="runChip(false)">{{ chip.label }}</button>
         <button v-if="chip.alt" class="btn small chip" type="button" :title="t('terminalView.previewInApp')" @click="runChip(true)">{{ chip.alt.label }}</button>
       </div>
       <div v-if="chip.detail" class="chip-detail" :title="chip.detail">{{ chip.detail }}</div>

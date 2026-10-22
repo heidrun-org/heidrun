@@ -1,11 +1,11 @@
 # Glossary of Heidrun: workspaces, tabs, and panes
 
 - Created: 14 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 786](https://github.com/heidrun-org/heidrun/issues/786)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -71,7 +71,7 @@ The column at the right edge of the viewport. It holds the pinned panes, one abo
 
 ### Usage wheel
 
-The small circle in the header of a pane that shows how much of the context window the coding agent used. The circle fills like a ring, with the colors normal, warning, and critical. It has no word and no number beside it. A click on the usage wheel opens its information card, which gives the percent used, the number of tokens used, and the size of the context window.
+The small circle in the header of a pane that shows how much of the context window the coding agent used. The circle fills like a ring, with the colors normal, warning, and critical. It has no word and no number beside it. It appears only while the pointer is over the pane, as the buttons of the pane header do. A click on the usage wheel opens its information card, which gives the percent used, the number of tokens used, and the size of the context window.
 
 ### Composition bar
 
