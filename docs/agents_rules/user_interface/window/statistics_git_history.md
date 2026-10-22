@@ -1,7 +1,7 @@
 # User interface of Heidrun: Statistics window, tab "Work of one person", source "Git history"
 
 - Created: 16 October 2026
-- Last updated: 17 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: work of one person](../../glossary/person_work.md), [Tab "Work of one person"](statistics_person_work.md), [Source "AI cost"](statistics_ai_cost.md), [Totals](statistics_totals.md)
@@ -19,8 +19,8 @@ This file is a part of the rules of the tab "Work of one person". It holds what 
 ## The metric of the bar chart
 
 - A radio button group chooses the metric: "Commits and pull requests", chosen at first, or "Lines added and deleted". The choice changes the bar chart only. It does not change the person, the time range, the slot length, the workspaces, or the totals, and it reads nothing again. A change of the source keeps the metric.
-- With the metric "Commits and pull requests", the bar of a slot has the number of commits below, in the color `--primary-bg`, and the number of pull requests above, in the color `--success-bg`.
-- With the metric "Lines added and deleted", the bar of a slot has the lines added by the commits of the person in this slot below, in the color `--success-bg`, and the lines deleted above, in the color `--danger-bg`. The lines count for the commits that count, and not for the pull requests. A binary file counts 0. The lines of all the bars add up to the fourth and the fifth totals.
+- With the metric "Commits and pull requests", the bar of a slot has the number of commits below, and the number of pull requests above. The colors are in [statistics_and_settings_appearance.md](../../web_styling/statistics_and_settings_appearance.md).
+- With the metric "Lines added and deleted", the bar of a slot has the lines added by the commits of the person in this slot below, and the lines deleted above. The colors are in [statistics_and_settings_appearance.md](../../web_styling/statistics_and_settings_appearance.md). The lines count for the commits that count, and not for the pull requests. A binary file counts 0. The lines of all the bars add up to the fourth and the fifth totals.
 - The class `PersonWork` gives `insertionCount` and `deletionCount` for each slot, with the same loop that gives the totals. The chart information card writes each number with the separator of the language of the interface.
 
 ## Where the data comes from

@@ -11,9 +11,6 @@ This file lists the files and the subfolders of this folder, for agents and tool
 
 - [README.md](README.md): the overview of this folder, for people.
 - [abbreviated_times.md](abbreviated_times.md): the circled question mark after each abbreviated time, and its title with the exact time.
-- [shared_design_inventory.md](shared_design_inventory.md): the scope of the design inventory and justified exceptions for specialized rendering.
-- [shared_design.md](shared_design.md): the authoritative shared palette, button states, contrast requirements, exceptions, and development checks.
-- [colors_and_scroll_bars.md](colors_and_scroll_bars.md): the colors and the scroll bars.
 - [layout.md](layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
 - [statistics_window.md](statistics_window.md): the item "Statistics" of the More menu, the Statistics window, the buttons of its tabs in the title bar, and where the data of the tab "User activity" comes from.
 - [statistics_charts.md](statistics_charts.md): the rules that every chart of the Statistics window follows: the chart legend, the chart information card with its arrow, the shared code, and the tests that a new chart adds.

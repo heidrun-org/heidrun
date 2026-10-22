@@ -1,11 +1,11 @@
-# User interface of Heidrun: shared design rules
+# Web styling of Heidrun: shared design rules
 
 - Created: 21 October 2026
 - Last updated: 22 October 2026
 - Status: Maintained shared design rules for agents and tools
-- Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Colors and scroll bars](colors_and_scroll_bars.md), [Status dot](../../../architecture/status_dot.md)
-- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 796](https://github.com/heidrun-org/heidrun/issues/796)
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Colors and scroll bars](colors_and_scroll_bars.md), [Status dot](../../architecture/status_dot.md)
+- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 796](https://github.com/heidrun-org/heidrun/issues/796), [issue 799](https://github.com/heidrun-org/heidrun/issues/799)
 
 These rules govern desktop colors, buttons, contrast, and status displays. Keep the existing layout and font selections. The public website and experiments have their own visual identities. Heidrun Mobile retains its existing mobile layout and shared status colors.
 
@@ -53,7 +53,7 @@ The normal height is 30 pixels, with 12 pixels of horizontal padding, a 7 pixel 
 
 ## Status displays
 
-The [status dot architecture](../../../architecture/status_dot.md) remains authoritative for Blocked, Working, Finished, Idle, and Unknown, including their meaning, priority, labels, colors, and animation. Issue 749 preserves the completed status dots from issue 739. Do not recreate `.dot` or `.t-working` and related status classes in a component. A dot has adjacent status text or an accessible name/title that gives the status. Working is the only rotating status. Reduced motion disables animation; a text label or accessible name still communicates Working.
+The [status dot architecture](../../architecture/status_dot.md) remains authoritative for Blocked, Working, Finished, Idle, and Unknown, including their meaning, priority, labels, colors, and animation. Issue 749 preserves the completed status dots from issue 739. Do not recreate `.dot` or `.t-working` and related status classes in a component. A dot has adjacent status text or an accessible name/title that gives the status. Working is the only rotating status. Reduced motion disables animation; a text label or accessible name still communicates Working.
 
 A connection indicator, a code hosting state, and a selection indicator do not mean a coding agent status. The Mosaic window uses a separate `selection-mark` class. Never reuse a coding agent status color to invent the meaning of a selection.
 
