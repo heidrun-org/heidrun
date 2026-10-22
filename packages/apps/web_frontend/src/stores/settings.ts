@@ -527,21 +527,26 @@ function load(): typeof defaults {
 
 export const settings = reactive(load());
 
+async function switchOnInstalledCodingAgents(): Promise<void> {
+  try {
+    const availableAgentIds = await invoke<string[]>("coding_agents_available");
+    if (
+      Array.isArray(availableAgentIds) === false ||
+      settings.ownedAgentsConfigured === true ||
+      settings.ownedAgents.length > 0
+    ) {
+      return;
+    }
+    const availableAgents = new Set(availableAgentIds);
+    settings.ownedAgents = AGENTS.filter((agent) => availableAgents.has(agent.id)).map((agent) => agent.id);
+    settings.ownedAgentsConfigured = true;
+  } catch {
+    /* the choice stays empty until the developer makes it */
+  }
+}
+
 if (settings.ownedAgentsConfigured === false && settings.ownedAgents.length === 0) {
-  void invoke<string[]>("coding_agents_available")
-    .then((availableAgentIds) => {
-      if (
-        Array.isArray(availableAgentIds) === false ||
-        settings.ownedAgentsConfigured === true ||
-        settings.ownedAgents.length > 0
-      ) {
-        return;
-      }
-      const availableAgents = new Set(availableAgentIds);
-      settings.ownedAgents = AGENTS.filter((agent) => availableAgents.has(agent.id)).map((agent) => agent.id);
-      settings.ownedAgentsConfigured = true;
-    })
-    .catch(() => {});
+  void switchOnInstalledCodingAgents();
 }
 
 watch(

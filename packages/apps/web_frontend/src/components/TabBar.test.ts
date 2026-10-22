@@ -529,8 +529,8 @@ describe("TabBar without the workspace selector", () => {
 describe("TabBar place in the window", () => {
   it("sits on top of the viewport: the file App.vue shows the tab bar before the viewport", () => {
     const sourceText = Fs.readFileSync(Path.resolve(import.meta.dirname, "../App.vue"), "utf8");
-    const tabBarIndex = sourceText.indexOf("<TabBar />");
+    const tabBarIndex = sourceText.indexOf("<TabBar ");
     expect(tabBarIndex).toBeGreaterThan(-1);
-    expect(tabBarIndex).toBeLessThan(sourceText.indexOf('<div class="stage">'));
+    expect(tabBarIndex).toBeLessThan(sourceText.indexOf('<div class="stage"'));
   });
 });

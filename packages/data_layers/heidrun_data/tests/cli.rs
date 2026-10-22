@@ -887,7 +887,8 @@ fn the_skill_names_no_command_no_kind_no_source_and_no_option_that_the_help_does
             }
             assert!(["sources", "update", "initialize", "schema", "query", "usage", "read", "operations"].contains(&command.as_str()), "{command}: {line}");
         }
-        for word in words(line).into_iter().filter(|word| word.starts_with("--") && word.trim_matches('-').len() > 0) {
+        let line_without_pnpm_option = line.replace("pnpm --silent ", "pnpm ");
+        for word in words(&line_without_pnpm_option).into_iter().filter(|word| word.starts_with("--") && word.trim_matches('-').len() > 0) {
             assert!(help_words.contains(&word), "The help has no option {word}");
         }
     }

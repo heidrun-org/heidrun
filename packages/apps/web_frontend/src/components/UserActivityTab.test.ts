@@ -18,12 +18,6 @@ vi.mock("plotly.js-basic-dist-min", () => ({ default: plotly }));
 /** The chart reads each color from the theme: the test reads the name of the CSS variable of each color instead. */
 vi.mock("../lib/chart_theme", () => ({ ChartTheme: { readColor: (token: string) => token } }));
 
-/** The workspace that runs the active period is the selected workspace: the test selects the folder of a workspace. */
-vi.mock("../stores/user_activity", async (importOriginal) => {
-  const { ref } = await import("vue");
-  return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
-});
-
 /** One trace of Plotly.js: one part of each stacked bar. */
 type Trace = { type: string; name: string; x: number[]; y: number[]; hoverinfo: string; marker: { color: string } };
 
@@ -163,9 +157,18 @@ async function chooseSlotLength(wrapper: VueWrapper, slotLengthId: string, drawi
   await waitForDrawings(drawingCount);
 }
 
+/**
+ * The workspace that runs the active period is the selected workspace: the test selects the folder of a workspace. A mock
+ * that `vi.mock` builds once stays tied to the session store of the first test after `vi.resetModules`, so its list of the
+ * open workspaces never changes. Each test registers the mock again, and gets a list tied to its own session store.
+ */
 beforeEach(() => {
   localStorage.clear();
   vi.resetModules();
+  vi.doMock("../stores/user_activity", async (importOriginal) => {
+    const { ref } = await import("vue");
+    return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
+  });
   vi.useRealTimers();
   vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener: () => {} }));
   resizeCallbacks.length = 0;
@@ -559,7 +562,7 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("draws one part with the user activity time of the only workspace", async () => {
-    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
+    await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)], null, [OPEN_WORKSPACES[0]]);
     await waitForDrawings(1);
     const { traces } = lastDrawing();
     expect(traces).toHaveLength(1);
@@ -568,7 +571,7 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("draws one part of height 0 for each slot when there is no workspace", async () => {
-    await mountUserActivityTab([]);
+    await mountUserActivityTab([], null, []);
     await waitForDrawings(1);
     const { traces } = lastDrawing();
     expect(traces).toHaveLength(1);
@@ -587,7 +590,7 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("gives no legend when there is no workspace", async () => {
-    await mountUserActivityTab([]);
+    await mountUserActivityTab([], null, []);
     await waitForDrawings(1);
     expect(lastDrawing().layout.showlegend).toBe(false);
   });
@@ -606,7 +609,7 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("shows the title and the total in the tooltip of a slot of the only workspace, and no row", async () => {
-    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)]);
+    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90)], null, [OPEN_WORKSPACES[0]]);
     await waitForDrawings(1);
     await hoverSlot(22);
     const tooltip = tooltipOf(wrapper);
@@ -666,7 +669,12 @@ describe("UserActivityTab: the stacked bars", () => {
   });
 
   it("writes the name of a workspace as text, so a sign '<' of a folder does not make markup, in the tooltip and in the legend", async () => {
-    const { wrapper } = await mountUserActivityTab([recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot("/work/a<b>&c", 180, 30)]);
+    const markupWorkspace = { workspace_id: "w3", number: 3, label: "a<b>&c", workspace_folder: "/work/a<b>&c" };
+    const { wrapper } = await mountUserActivityTab(
+      [recordInPreviousSlot(OPEN_FOLDER, 60, 90), recordInPreviousSlot("/work/a<b>&c", 180, 30)],
+      null,
+      [OPEN_WORKSPACES[0], markupWorkspace],
+    );
     await waitForDrawings(1);
     await hoverSlot(22);
     expect(tooltipOf(wrapper)?.rows[0][0]).toBe("a<b>&c");
@@ -715,18 +723,6 @@ describe("UserActivityTab: the stacked bars", () => {
 });
 
 describe("UserActivityTab: the memory of the choices (issue 707)", () => {
-  /**
-   * The mock of the store `user_activity` at the top of this file is built once, and `vi.resetModules` does not build it again,
-   * so its list of the open workspaces stays tied to the session store of the first test. These tests change the open
-   * workspaces, so each test registers the mock again, and gets a new list of the open workspaces.
-   */
-  beforeEach(() => {
-    vi.doMock("../stores/user_activity", async (importOriginal) => {
-      const { ref } = await import("vue");
-      return { ...(await importOriginal<typeof import("../stores/user_activity")>()), selectedWorkspaceFolder: ref("/work/heidrun") };
-    });
-  });
-
   /** The settings of the run, as the tab and the settings store share them. */
   async function currentSettings() {
     return (await import("../stores/settings")).settings;
