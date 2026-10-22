@@ -1,7 +1,7 @@
 # User interface of Heidrun: Statistics window, tab "User activity", the stacked bars
 
 - Created: 15 October 2026
-- Last updated: 16 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Charts of the Statistics window](statistics_charts.md), [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [Tab "User activity"](statistics_user_activity.md), [Statistics window](statistics_window.md)
@@ -12,7 +12,7 @@ This file is a part of the rules of the tab "User activity". It gives the rules 
 ## The parts and the colors
 
 - Each bar is stacked: it has one part for each chosen workspace, from the bottom to the top in the order of the buttons, and the height of a part is the user activity time of this workspace in the slot. The height of the bar is the user activity time of all the chosen workspaces. A slot with no workspace has a bar of height 0.
-- Each workspace has one color, taken from its place in the list of buttons, which is sorted by name: the color 500 of the scales blue, orange, green, purple, red, teal, yellow, and pink of Bootstrap, then the list starts again. The color of a workspace never changes with the time range, the slot length, or the choice of the workspaces.
+- The color of each workspace is in [statistics_and_settings_appearance.md](../../web_styling/statistics_and_settings_appearance.md).
 - The buttons of the workspaces have no dot of color, because the chart legend gives the colors. The dot stays in the rows of the chart information card.
 
 ## The chart legend and the chart information card

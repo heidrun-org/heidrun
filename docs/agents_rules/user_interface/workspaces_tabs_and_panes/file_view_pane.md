@@ -42,7 +42,7 @@ A click on a file in the File explorer sidebar section opens the file in a file 
 The front matter is the block at the start of a Markdown file, between two lines that each hold three dashes ([issue 784](https://github.com/heidrun-org/heidrun/issues/784)).
 
 - In Preview, a Markdown file that starts with a front matter block shows the block in a card above the rendered text. The rest of the file is rendered as Markdown. The two lines of dashes are not shown, neither in the card nor as horizontal rules.
-- The card has rounded corners and a background that differs from the background of the rendered text. It shows the text of the block unchanged, in a monospace font, with the line breaks and the indentation of the file. A long line wraps.
+- The card shows the text of the block unchanged, in a monospace font, with the line breaks and the indentation of the file. A long line wraps. The corners and the background of the card are in [panes_appearance.md](../../web_styling/panes_appearance.md).
 - Heidrun does not parse the block, so a block with an error still shows.
 - A file with no block, with an empty block, or with a first line of dashes that has no closing line of dashes shows no card, and Heidrun renders the file as before.
 - In Raw, the pane shows the whole file as it is, with no card.

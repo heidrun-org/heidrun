@@ -1,10 +1,10 @@
 # User interface of Heidrun: drop of image files on a composition bar
 
 - Created: 21 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../../glossary/index.md), [User interface of Heidrun: composition bar](composition_bar.md), [Shared design rules](../window/shared_design.md)
+- Related rules: [Glossary of Heidrun](../../glossary/index.md), [User interface of Heidrun: composition bar](composition_bar.md), [Shared design rules](../../web_styling/shared_design.md)
 - Related issue: [issue 785](https://github.com/heidrun-org/heidrun/issues/785)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
@@ -21,7 +21,7 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 ## What the window shows during a drag
 
-- A layer covers the whole composition bar under the pointer: a solid border of 3 pixels in the color `--accent` (orange) and a background of the same color at 12 percent strength, with no text, so that the composition bar stays visible under it.
+- A layer covers the whole composition bar under the pointer. How the layer looks is in [panes_appearance.md](../../web_styling/panes_appearance.md).
 - The layer goes away when the drag leaves the window or the files drop.
 - The page draws nothing at the pointer: the system draws the dragged picture above the page, so a mark drawn by the page stays hidden behind it. The cursor is the job of the system, as the next section says.
 

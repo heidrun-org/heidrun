@@ -1,7 +1,7 @@
 # User interface of Heidrun: Statistics window, tab "User activity"
 
 - Created: 15 October 2026
-- Last updated: 19 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun: user activity](../../glossary/user_activity.md), [Statistics window](statistics_window.md), [User activity sidebar section](../sidebars/user_activity.md), [layout.md](layout.md), [Stacked bars](statistics_user_activity_stacked_bars.md)
@@ -18,7 +18,7 @@ This file is a part of the rules of the Statistics window. The words are defined
   - Last week: 1 hour, 6 hours, 1 day (chosen).
   - Last month: 6 hours, 1 day (chosen).
 - Each change of the time range goes back to the slot length that this time range starts with. A change of the slot length never changes the time range.
-- The workspaces: after the label "Workspaces", two groups of small Bootstrap buttons (`btn-group btn-group-sm`, with `btn-check btn-outline theme-secondary` labels), the same as the workspace selector of the tab "Work of one person" ([statistics_person_work_workspace.md](statistics_person_work_workspace.md)). The first group is a radio button group with two buttons, "All" and "None". "All" checks every workspace, and "None" unchecks them all. "All" is shown as chosen when every workspace is checked, and "None" when no workspace is checked; when only some are checked, neither is shown as chosen. The second group has one checkbox button for each workspace, sorted by name, all checked when the window opens, and a click on one shows or hides this workspace. The second group wraps on a narrow window. The button of a workspace starts with a small dot of its color ([statistics_user_activity_stacked_bars.md](statistics_user_activity_stacked_bars.md)).
+- The workspaces: after the label "Workspaces", two groups of small Bootstrap buttons (`btn-group btn-group-sm`, with `btn-check btn-outline theme-secondary` labels), the same as the workspace selector of the tab "Work of one person" ([statistics_person_work_workspace.md](statistics_person_work_workspace.md)). The first group is a radio button group with two buttons, "All" and "None". "All" checks every workspace, and "None" unchecks them all. "All" is shown as chosen when every workspace is checked, and "None" when no workspace is checked; when only some are checked, neither is shown as chosen. The second group has one checkbox button for each workspace, sorted by name, all checked when the window opens, and a click on one shows or hides this workspace. The second group wraps on a narrow window.
 - The workspace choices show only workspaces currently open in Heidrun, including workspaces with no user activity record in the longest time range. A button has the label of the workspace in the left sidebar. When two workspaces have the same name, the folder follows the name in parentheses. The title of each button is the folder of the workspace. Opening or closing a workspace updates the choices and the histogram while the Statistics window stays open.
 - A workspace that has activity records but is closed is not listed, and its records do not contribute to the histogram. When no workspace is open, the tab shows no workspace button and still shows the histogram. When the developer unchecks every workspace, the tab shows the text "No workspace is chosen…" in place of the histogram.
 - The choice of the workspaces stays when the time range or the slot length changes.

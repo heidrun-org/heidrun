@@ -108,13 +108,22 @@ The folder `docs/agents_rules` holds all the rules that every agent follows. Rea
 - [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
 - [docs/agents_rules/data_layer_access.md](docs/agents_rules/data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers`, with the table of the synchronize commands and the read commands, the exceptions, the audit of the bypasses, and the check of the package `data_layer_boundary_checker`. Read this file each time that you change the Past chats sidebar section, the Statistics window, or a package of the data layer, and never read a chat session file, start `git`, `gh`, or `glab`, make a network request, or run SQL for this data in the desktop application or in the web page.
 
-The rules of the user interface: where each part goes, and how each part works. Each file starts with the part that it covers.
+The rules of the appearance of the web page, in the folder `docs/agents_rules/web_styling`: colors, buttons and their states, hover, contrast, icons, spacing, scroll bars, and the allowed utility classes. Before a change to the colors, the buttons, the hover, the spacing, or the icons of the web page, read `docs/agents_rules/web_styling/index.md`. It names, for each rule, the test that enforces the rule.
+
+- [index.md](docs/agents_rules/web_styling/index.md): the list of the files of the folder `web_styling`, and the test of each rule.
+- [shared_design.md](docs/agents_rules/web_styling/shared_design.md): the shared colors, button states, contrast requirements, status displays, and enforcement. Read it before changing an application color, button appearance, or status display.
+- [shared_design_inventory.md](docs/agents_rules/web_styling/shared_design_inventory.md): the design inventory and justified exceptions for specialized content rendering.
+- [colors_and_scroll_bars.md](docs/agents_rules/web_styling/colors_and_scroll_bars.md): the colors and the scroll bars.
+- [panes_appearance.md](docs/agents_rules/web_styling/panes_appearance.md): the frames of the window, the borders and the corners of the panes, the pane header, the composition bar, and the file view pane.
+- [sidebars_appearance.md](docs/agents_rules/web_styling/sidebars_appearance.md): the titles of the sidebar sections, the sidebar icon bar, and the Past chats, Code hosting, File explorer, and Needs you sidebar sections.
+- [status_bar_appearance.md](docs/agents_rules/web_styling/status_bar_appearance.md): the status bar sections and the Git branch section with its branch picker.
+- [statistics_and_settings_appearance.md](docs/agents_rules/web_styling/statistics_and_settings_appearance.md): the colors of the charts of the Statistics window, the size of its inputs, and the padding of the information card of an option of the Settings window.
+- [bootstrap_utility_classes.md](docs/agents_rules/web_styling/bootstrap_utility_classes.md): the Bootstrap components, the utility classes, and the place of the list of the allowed utility classes.
+
+The rules of the user interface: where each part goes, and what each part contains and does. The appearance of each part is in the folder `web_styling`. Each file starts with the part that it covers.
 
 - The window, in the folder `docs/agents_rules/user_interface/window`:
   - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
-  - [shared_design_inventory.md](docs/agents_rules/user_interface/window/shared_design_inventory.md): the design inventory and justified exceptions for specialized content rendering.
-  - [shared_design.md](docs/agents_rules/user_interface/window/shared_design.md): the shared colors, button states, contrast requirements, status displays, explicit exceptions, and enforcement. Read it before changing an application color, button appearance, or status display.
-  - [colors_and_scroll_bars.md](docs/agents_rules/user_interface/window/colors_and_scroll_bars.md): the colors and the scroll bars.
   - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
   - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
   - [statistics_charts.md](docs/agents_rules/user_interface/window/statistics_charts.md): the rules that every chart of the Statistics window follows: a chart legend, and a chart information card in HTML with an arrow that points to the bar under the pointer. Read it each time that you add or change a chart of the Statistics window, and add the same legend, the same card, and the same tests to a new chart.

@@ -1,11 +1,11 @@
-# User interface of Heidrun: design inventory and exceptions
+# Web styling of Heidrun: design inventory and exceptions
 
 - Created: 21 October 2026
 - Last updated: 22 October 2026
 - Status: Maintained shared design rules for agents and tools
-- Related framing: [Project instructions](../../../../AGENTS.md)
-- Related rules: [Shared design rules](shared_design.md), [Status dot](../../../architecture/status_dot.md)
-- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749)
+- Related framing: [Project instructions](../../../AGENTS.md)
+- Related rules: [Shared design rules](shared_design.md), [Status dot](../../architecture/status_dot.md)
+- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 799](https://github.com/heidrun-org/heidrun/issues/799)
 
 ## Inventory and explicit exceptions
 

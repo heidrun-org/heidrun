@@ -1,7 +1,7 @@
 # Workspaces, tabs, and panes rules index
 
 - Created: 13 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -14,7 +14,7 @@ This file lists the files and the subfolders of this folder, for agents and tool
 - [composition_bar_drop.md](composition_bar_drop.md): the drop of image files on an open composition bar: where a drop goes, how Heidrun finds the composition bar under the pointer, and the layer during a drag.
 - [file_view_pane.md](file_view_pane.md): the file view pane: a pane that shows one file, read only, how a click on a file in the File explorer sidebar section opens it, its header, its controls, and how Heidrun keeps it in Herdr.
 - [pane_focus_history.md](pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
-- [pane_headers.md](pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
+- [pane_headers.md](pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, and the usage wheel.
 - [panes.md](panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
 - [tabs.md](tabs.md): the tabs.
 - [workspace.md](workspace.md): the workspace.

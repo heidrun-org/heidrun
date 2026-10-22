@@ -1,7 +1,7 @@
 # User interface of Heidrun: the information card of every option of the Settings window
 
 - Created: 17 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md), [Abbreviated times](abbreviated_times.md), [Guards section](settings_guards.md)
@@ -19,7 +19,7 @@ This file is a part of the rules of the user interface of Heidrun. It gives the 
 ## The layout
 
 - The component is `SettingsOptionHelp.vue` in the folder `components/settings`. It wraps the component `InformationCard.vue` with the placement "bottom-center": the card opens below the circled question mark, the middle of the card is under the middle of the circled question mark, and the arrow of the card points to the middle of the circled question mark. The card stays inside the window: when the centered card does not fit, it moves sideways only as far as it needs to, and the arrow still points to the circled question mark. The heading and the blocks are drawn by the component `InformationCardContent.vue`, which the tab buttons of the Statistics window also use for their card ([statistics_window.md](statistics_window.md)).
-- The card has a heading with the circled question mark and the name of the option, then one block for each subject. A block has a title in a medium weight, and its text below. The card has no padding of its own besides the Bootstrap list group.
+- The card has a heading with the circled question mark and the name of the option, then one block for each subject. A block has a title in a medium weight, and its text below. The padding of the card is in [statistics_and_settings_appearance.md](../../web_styling/statistics_and_settings_appearance.md).
 - The usual blocks are "What it is", "How it works", "When the option is on", and "When the option is off". A switch has "What it is", "When the option is on", and "When the option is off". A choice or a field has "What it is" and "How it works". A choice with a different effect for each button adds one block for each button, titled with the label of the button. Another block is allowed when the option needs it, for example "Keyboard shortcuts".
 - The circled question mark sits after the name of the option: after the heading, after the label, or after the label of the switch. The font size has no name, so the circled question mark is after its last button. The button "Rebuild the clusters" has it on its right.
 - The texts are in the locale files `settingsHelp.json`, in English and in French. A text that already existed in another locale file stays there, and the block uses its key.
