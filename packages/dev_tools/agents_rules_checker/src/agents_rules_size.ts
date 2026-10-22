@@ -13,8 +13,11 @@ import type { TooLargeFile } from './agents_rules_checker_types.ts';
  * the file `AGENTS.md`, and this class reads it from there, so the number exists in one place only.
  */
 export class AgentsRulesSize {
-	/** The sentence of the file `AGENTS.md` that gives the maximum size of a file of the agent rules. */
-	static readonly maximumSizePattern = /The maximum size of a file[^.]*?\bis (\d+) bytes\./;
+	/**
+	 * The line of the section "Docs folder agents rules system values" of the file `AGENTS.md` that gives the maximum
+	 * size of a file of the agent rules.
+	 */
+	static readonly maximumSizePattern = /^- Maximum size of a file: (\d+) bytes\./m;
 
 	/**
 	 * Reads the maximum size of a file of the agent rules in the file `AGENTS.md`.

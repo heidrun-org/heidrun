@@ -80,155 +80,27 @@ This file is read by Claude Code (through `CLAUDE.md`) and by Codex.
 - The branch `dev_eric` is the personal development branch of Eric. Eric's work goes on `dev_eric`.
 - Each developer works on the personal development branch of that developer only. Never put the work of Jérôme on `dev_eric`, and never put the work of Eric on `dev_jerome`.
 
+## Docs folder
+
+The folder `docs` belongs to the coding agents: the coding agents write its files, and the coding agents read them. Every file and every folder in the folder `docs` follows the skill [docs_folder_system](.agents/skills/docs_folder_system/SKILL.md). Read the skill before you add, change, rename, move, or delete a file or a folder in the folder `docs` ([issue 811](https://github.com/heidrun-org/heidrun/issues/811)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Docs folder system values" below.
+
+### Docs folder system values
+
+- Documentation folder: `docs`
+- Files with no metadata header: `docs/release_notes/prefix.md`. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
+
 ## Agent rules
 
-The folder `docs/agents_rules` holds all the rules that every agent follows. Read the glossary before you change the code, and keep the glossary up to date when a word changes. The rules of the user interface are split by topic into many small files: read only the files that match the part that you change, and keep them up to date when a rule changes.
+The folder `docs/agents_rules` holds all the rules that every coding agent obeys. Before you change the code, read the glossary and the rule files that match the part that you change, as the skill [docs_folder_agents_rules_system](.agents/skills/docs_folder_agents_rules_system/SKILL.md) says. This skill needs the skill [docs_folder_system](.agents/skills/docs_folder_system/SKILL.md). Start at [docs/agents_rules/index.md](docs/agents_rules/index.md): each file `index.md` says what each rule file holds and when to read it ([issue 811](https://github.com/heidrun-org/heidrun/issues/811)).
+The skill names no detail of this repository: it reads the values of this repository in the section "Docs folder agents rules system values" below.
 
-- The glossary, in the folder `docs/agents_rules/glossary`: the definition of each word that the project uses for one of its parts, and the official name "coding agent" for Claude Code, Codex, and Antigravity. Use these words, and no other word, in the code, in the documents, and in the conversations. Read the files that match the part that you change:
-  - [index.md](docs/agents_rules/glossary/index.md): the list of the files of the glossary.
-  - [workspaces_tabs_and_panes.md](docs/agents_rules/glossary/workspaces_tabs_and_panes.md): the workspace, the tab, the pane, the file view pane, the front matter, the front matter card, the coding agent, the tab bar, the viewport, the pinned pane, the column of pinned panes, and the usage wheel.
-  - [sidebars.md](docs/agents_rules/glossary/sidebars.md): the left sidebar, the right sidebar, the sidebar section, the Clipboard, Launchers, Source control, Code hosting, and File explorer sidebar sections, the launcher, the sidebar icon bar, the Files window, the large Git window, and the Left sidebar enable disable button.
-  - [chats.md](docs/agents_rules/glossary/chats.md): the chat, the chat session, the Past chats sidebar section, and the Chats sort dropdown menu.
-  - [coding_agent_configuration.md](docs/agents_rules/glossary/coding_agent_configuration.md): the coding agent configuration, the memory file, the subagent, the skill, and the removed configuration item. Read it when you change the tables `memory_files`, `subagents`, or `skills` of the package `data_layer_coding_agents`.
-  - [dynamic_topics.md](docs/agents_rules/glossary/dynamic_topics.md): the definition of each word of the dynamic topics of the Past chats sidebar section: the dynamic topic, the raw dynamic topic, the clustered dynamic topic, the translation table, the dynamic topic source information, the dynamic topic extraction, and the dynamic topic bar. Read it when you change the Past chats sidebar section or the dynamic topics.
-  - [code_hosting.md](docs/agents_rules/glossary/code_hosting.md): the definition of each word of the search in the Code hosting sidebar section: the search line, the search field, and the saved search. Read it when you change the Code hosting sidebar section.
-  - [status_bar.md](docs/agents_rules/glossary/status_bar.md): the status bar, the status bar section, the information card, and the Workspace status bar section.
-  - [guards.md](docs/agents_rules/glossary/guards.md): the definition of each word of the guards: the guard, the built-in guard, the project guard, the action, the line, the guard window, the confirmation window, and the Guards section of the Settings window. Read it when you change the guards, the guard window, the confirmation window, or the Guards section.
-  - [pane_focus_history.md](docs/agents_rules/glossary/pane_focus_history.md): the definition of each word of the navigation through the panes that had the focus: the top bar, the pane focus history, the Back button, and the Forward button. Read it when you change the top bar or the focus of the panes.
-  - [heidrun_mobile.md](docs/agents_rules/glossary/heidrun_mobile.md): the definition of each word of Heidrun Mobile: Heidrun Mobile, the mobile website, the mobile server, the pairing key, the bottom bar, the plain terminal on the phone, the macro button, and the microphone button. Read it when you change the packages `mobile_website` or `mobile_server`.
-  - [person_work.md](docs/agents_rules/glossary/person_work.md): the definition of each word of the statistic of the work of one person: the Work of one person tab, its source, the Git history, the AI cost, the workspace selector, the unit of the AI cost, the person, the person chooser, the time range, the day, the totals, the average per day, and the bar chart. Read it when you change the tab "Work of one person" of the Statistics window.
-  - [statistics_charts.md](docs/agents_rules/glossary/statistics_charts.md): the definition of the chart legend and of the chart information card, which every chart of the Statistics window has. Read it when you add or change a chart of the Statistics window.
-  - [macros.md](docs/agents_rules/glossary/macros.md): the definition of each word of the macros: the macro, the hard-coded macro, the personal macro, the personal macro file, the project macro, and the command line `heidrun_ctrl`. Read it when you change the macros or the command line `heidrun_ctrl`.
-  - [user_activity.md](docs/agents_rules/glossary/user_activity.md): the definition of each word of the activity of the developer in front of Heidrun: the user activity time, the action, the cool down, the active period, the user activity record, the User activity sidebar section, the Statistics window, the User activity tab, the histogram of the user activity time, and the slot. Read it when you change the detection of the activity of the developer, its sidebar section, or the Statistics window.
-  - [issue_fix_workflow.md](docs/agents_rules/glossary/issue_fix_workflow.md): the definition of each word of the Issue Fix Workflow: the Issue Fix Workflow, the Issue Fix Setup, the Issue Fix Implementation, the Issue Fix Review, the Issue Fix Completion, the added request, the related added request, and the unrelated added request. Read it when you change the skill [issue_fix_workflow](.agents/skills/issue_fix_workflow/SKILL.md) or the section "Issue Fix Workflow" of this file.
-  - [voice_input.md](docs/agents_rules/glossary/voice_input.md): the definition of each word of the voice input: the voice input, the push-to-talk button, the level bars, the Whisper model, and the Voice input section of the Settings window. Read it when you change the voice input or the package `voice_input`.
-  - [terminal_text_detection.md](docs/agents_rules/glossary/terminal_text_detection.md): the definition of each word of the detection in the text of the terminals: the text detection, the detection family, the rule of the text detection, the precedence, the hover buttons, and the Try a text field. Read it when you change the detection of the web addresses, references, file paths, and suggestions of a coding agent in the terminals, or the Text detection part of the Settings window.
-  - [data_layer_operation_log.md](docs/agents_rules/glossary/data_layer_operation_log.md): the definition of each word of the operation log of the data layer: the operation, the operation log, the start event and the completion event, the caller, the kind, the workload, the nested operation, the pattern, the unfinished operation, the replay, the snapshot, and the isolated database. Read it when you change the operation log or the command `heidrun_data operations`.
-- [docs/agents_rules/data_layer_operation_log.md](docs/agents_rules/data_layer_operation_log.md): the rule that every public function of the four data layer packages and of `heidrun_data` is recorded in the operation log with the package `data_layer_operation_log`, what the log never does (change a result, hide an error, hold a secret), the measure, and the replay. Read this file each time that you add or change an operation of a data layer package or of `heidrun_data`.
-- [docs/agents_rules/github_and_gitlab_support.md](docs/agents_rules/github_and_gitlab_support.md): the rule that every support added for GitHub is also added for GitLab, the words "pull request" and "merge request", and the matching `gh` and `glab` commands. Read this file each time that you add or change a support for GitHub, or a `gh` command in a document.
-- [docs/agents_rules/data_layer_access.md](docs/agents_rules/data_layer_access.md): the rule that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers`, with the table of the synchronize commands and the read commands, the exceptions, the audit of the bypasses, and the check of the package `data_layer_boundary_checker`. Read this file each time that you change the Past chats sidebar section, the Statistics window, or a package of the data layer, and never read a chat session file, start `git`, `gh`, or `glab`, make a network request, or run SQL for this data in the desktop application or in the web page.
+### Docs folder agents rules system values
 
-The rules of the appearance of the web page, in the folder `docs/agents_rules/web_styling`: colors, buttons and their states, hover, contrast, icons, spacing, scroll bars, and the allowed utility classes. Before a change to the colors, the buttons, the hover, the spacing, or the icons of the web page, read `docs/agents_rules/web_styling/index.md`. It names, for each rule, the test that enforces the rule.
-
-- [index.md](docs/agents_rules/web_styling/index.md): the list of the files of the folder `web_styling`, and the test of each rule.
-- [shared_design.md](docs/agents_rules/web_styling/shared_design.md): the shared colors, button states, contrast requirements, status displays, and enforcement. Read it before changing an application color, button appearance, or status display.
-- [shared_design_inventory.md](docs/agents_rules/web_styling/shared_design_inventory.md): the design inventory and justified exceptions for specialized content rendering.
-- [colors_and_scroll_bars.md](docs/agents_rules/web_styling/colors_and_scroll_bars.md): the colors and the scroll bars.
-- [panes_appearance.md](docs/agents_rules/web_styling/panes_appearance.md): the frames of the window, the borders and the corners of the panes, the pane header, the composition bar, and the file view pane.
-- [sidebars_appearance.md](docs/agents_rules/web_styling/sidebars_appearance.md): the titles of the sidebar sections, the sidebar icon bar, and the Past chats, Code hosting, File explorer, and Needs you sidebar sections.
-- [status_bar_appearance.md](docs/agents_rules/web_styling/status_bar_appearance.md): the status bar sections and the Git branch section with its branch picker.
-- [statistics_and_settings_appearance.md](docs/agents_rules/web_styling/statistics_and_settings_appearance.md): the colors of the charts of the Statistics window, the size of its inputs, and the padding of the information card of an option of the Settings window.
-- [bootstrap_utility_classes.md](docs/agents_rules/web_styling/bootstrap_utility_classes.md): the Bootstrap components, the utility classes, and the place of the list of the allowed utility classes.
-
-The rules of the user interface: where each part goes, and what each part contains and does. The appearance of each part is in the folder `web_styling`. Each file starts with the part that it covers.
-
-- The window, in the folder `docs/agents_rules/user_interface/window`:
-  - [layout.md](docs/agents_rules/user_interface/window/layout.md): the layout of the window, the rules of the layout, the text that must stay on one line, and the files.
-  - [abbreviated_times.md](docs/agents_rules/user_interface/window/abbreviated_times.md): the circled question mark after each abbreviated time, such as "Just now", and its title with the exact time.
-  - [statistics_window.md](docs/agents_rules/user_interface/window/statistics_window.md): the item "Statistics" of the More menu, the Statistics window, its tab list, and where the data of the tab "User activity" comes from.
-  - [statistics_charts.md](docs/agents_rules/user_interface/window/statistics_charts.md): the rules that every chart of the Statistics window follows: a chart legend, and a chart information card in HTML with an arrow that points to the bar under the pointer. Read it each time that you add or change a chart of the Statistics window, and add the same legend, the same card, and the same tests to a new chart.
-  - [statistics_user_activity.md](docs/agents_rules/user_interface/window/statistics_user_activity.md): the tab "User activity" of the Statistics window: the time range, the slot length, the workspaces, the histogram of the user activity time, and its tests.
-  - [statistics_user_activity_stacked_bars.md](docs/agents_rules/user_interface/window/statistics_user_activity_stacked_bars.md): the stacked bars of the histogram of the tab "User activity": the parts, the colors of the workspaces, the legend, the chart information card, and its tests.
-  - [statistics_user_activity_vertical_axis.md](docs/agents_rules/user_interface/window/statistics_user_activity_vertical_axis.md): the vertical axis of the histogram of the tab "User activity": the top that fits the highest bar, the units, the round tops, the title with the length of the slot, and its tests.
-  - [statistics_person_work.md](docs/agents_rules/user_interface/window/statistics_person_work.md): the tab "Work of one person" of the Statistics window: the source (Git history or AI cost), the unit, the person chooser, the time range, the totals, the bar chart of each day, and its tests.
-  - [statistics_person_work_inputs.md](docs/agents_rules/user_interface/window/statistics_person_work_inputs.md): the inputs of the tab "Work of one person": the two columns, the labels, the small buttons, the source, the metric, the person chooser, and the time range.
-  - [statistics_person_work_legend_filter.md](docs/agents_rules/user_interface/window/statistics_person_work_legend_filter.md): the filter of the chart legend of the tab "Work of one person": a click on a name, one filter for each chart, and the memory of the filter between two runs.
-  - [statistics_remembered_selections.md](docs/agents_rules/user_interface/window/statistics_remembered_selections.md): the selections of the tabs "User activity" and "Work of one person" that Heidrun saves as soon as they change and restores when the window opens, the options that save them, and the selections that a source hides.
-  - [statistics_person_work_workspace.md](docs/agents_rules/user_interface/window/statistics_person_work_workspace.md): the workspace selector of the tab "Work of one person": the buttons with a checkbox, the first choice, the sums of several workspaces, what a change reads, and its tests.
-  - [statistics_person_work_slots.md](docs/agents_rules/user_interface/window/statistics_person_work_slots.md): the slot length of the tab "Work of one person": the buttons of each time range, the slots (hours, days of 23 and 25 hours), the labels and the titles of the bar chart, and its tests.
-  - [statistics_git_history.md](docs/agents_rules/user_interface/window/statistics_git_history.md): the source "Git history" of the tab "Work of one person": what counts, and where its data comes from.
-  - [statistics_ai_cost.md](docs/agents_rules/user_interface/window/statistics_ai_cost.md): the source "AI cost" of the tab "Work of one person": what counts, the unit (US dollars or tokens), the cost of each hour of a chat, the chats with no known price, where its data comes from, and its tests.
-  - [statistics_totals.md](docs/agents_rules/user_interface/window/statistics_totals.md): the lines added and deleted, and the average per day under each total, of the tab "Work of one person": what they are, how the value is written, where the calculation is, and the tests.
-  - [settings_guards.md](docs/agents_rules/user_interface/window/settings_guards.md): the Guards section of the Settings window: the list of the project guards and the built-in guards, the guard window with its field "Try a command", and the button "Change this guard" of the confirmation window.
-  - [settings_information_cards.md](docs/agents_rules/user_interface/window/settings_information_cards.md): the rule that every option of the Settings window has a circled question mark and an information card, the layout of the card, the rows of a list, and the tests. Read it each time that you add or change an option of the Settings window.
-  - [find_new_skills_window.md](docs/agents_rules/user_interface/window/find_new_skills_window.md): the window "Find new skills": its four lines, the three sources (skills.sh, Local folder, Code hosting), the information cards, and the rows of the result.
-  - [settings_voice_input.md](docs/agents_rules/user_interface/window/settings_voice_input.md): the Voice input section of the Settings window, the download of a Whisper model, the push-to-talk button (a long press and a click), the level bars, the microphone permission, and the tests. Read it each time that you change the voice input.
-  - [terminal_text_detection.md](docs/agents_rules/user_interface/window/terminal_text_detection.md): the detection in the text of the terminals: the 11 detection families, the fixed precedence, the hover buttons that never cover a character, the switches and their persistence, and the tests. Read it each time that you add or change a detection in the text of a terminal.
-  - [terminal_text_detection_references.md](docs/agents_rules/user_interface/window/terminal_text_detection_references.md): the forms of issues, pull requests, merge requests, tickets, and commits that the detection accepts and refuses, and where each goes. Read it each time that you change the file `lib/refs.ts`.
-  - [terminal_text_detection_other_families.md](docs/agents_rules/user_interface/window/terminal_text_detection_other_families.md): the forms, the refused examples, the context, and the visible result of the web addresses, file paths, shell commands, slash commands, numbered steps, agent list, and questions and choices.
-  - [settings_text_detection.md](docs/agents_rules/user_interface/window/settings_text_detection.md): the section "Text detection" of the Settings window: the switches, the data of the project, the real patterns and the examples of each rule, and the Try a text field. Read it each time that you change the Text detection section of the Settings window, `lib/detection_patterns.ts`, or `lib/detection_catalog.ts`.
-  - [status_bar.md](docs/agents_rules/user_interface/window/status_bar.md): the status bar and the menu of the status item.
-  - [status_bar_git.md](docs/agents_rules/user_interface/window/status_bar_git.md): the Git branch section of the status bar: the branch picker, the synchronization with the upstream branch, the fetch in the background, and the counts.
-  - [window_state_and_start.md](docs/agents_rules/user_interface/window/window_state_and_start.md): the position and size of the window, the last state of each option, the splash screen, the notice of the missing programs Herdr and ngrok, and the goat sounds.
-- Heidrun Mobile, in the folder `docs/agents_rules/user_interface/heidrun_mobile`:
-  - [screens.md](docs/agents_rules/user_interface/heidrun_mobile/screens.md): the screens of the mobile website (the welcome page, the Dashboard, Needs you, Panes, the screen of one pane with the macro button and the microphone button, and Launchers), the screen of a plain terminal (read-only), and the guards of the phone.
-- The workspaces, the tabs, and the panes, in the folder `docs/agents_rules/user_interface/workspaces_tabs_and_panes`:
-  - [workspace.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace.md): the workspace.
-  - [workspace_commands.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/workspace_commands.md): the workspace commands, creation folders, focus events, and refreshes through Herdr.
-  - [tabs.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/tabs.md): the tabs.
-  - [file_view_pane.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/file_view_pane.md): the file view pane, a pane that shows one file read only: how a click on a file of the File explorer sidebar section opens it, its header, its controls, and how Heidrun keeps it in Herdr.
-  - [pane_headers.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_headers.md): the pane header buttons, their visibility under the pointer, Zen Mode, the header colors, and the usage wheel.
-  - [panes.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/panes.md): the panes, the colors of Codex in a pane, and the state "Needs you".
-  - [composition_bar.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/composition_bar.md): the composition bar under the focused pane: the drop of images, the toggle button of the header, the plus button, the text input, the button "Send", the push-to-talk button, the paste in the focused pane, and the big view of the images.
-  - [composition_bar_drop.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/composition_bar_drop.md): the drop of image files on an open composition bar: where a drop goes, how Heidrun finds the composition bar under the pointer, and the layer during a drag. Read it each time that you change the drop of images.
-  - [pane_focus_history.md](docs/agents_rules/user_interface/workspaces_tabs_and_panes/pane_focus_history.md): the pane focus history, and the Back button and the Forward button of the top bar.
-- The sidebars, in the folder `docs/agents_rules/user_interface/sidebars`:
-  - [sidebars.md](docs/agents_rules/user_interface/sidebars/sidebars.md): the sidebars and the clipboard.
-  - [source_control.md](docs/agents_rules/user_interface/sidebars/source_control.md): the Source control sidebar section.
-  - [code_hosting.md](docs/agents_rules/user_interface/sidebars/code_hosting.md): the Code hosting sidebar section: the header buttons, the icon, the two lists, the rows, the information card, and the cache.
-  - [code_hosting_search.md](docs/agents_rules/user_interface/sidebars/code_hosting_search.md): the search line of each list of the Code hosting sidebar section, the saved searches, and the windows "Save this search" and "Edit the saved search".
-  - [files.md](docs/agents_rules/user_interface/sidebars/files.md): the File explorer sidebar section.
-  - [needs_you_workspaces.md](docs/agents_rules/user_interface/sidebars/needs_you_workspaces.md): the list of workspaces at the bottom of the Needs you sidebar section, and the heading "Needs you" of the section "Sidebars" of the Settings window.
-  - [user_activity.md](docs/agents_rules/user_interface/sidebars/user_activity.md): the User activity sidebar section, the detection of the activity of the developer, and the user activity records.
-- The Past chats sidebar section, in the folder `docs/agents_rules/user_interface/sidebars/chats`:
-  - [chats_list.md](docs/agents_rules/user_interface/sidebars/chats/chats_list.md): the list of chats, the buttons "Show more" and "Show less", and the refresh of the list.
-  - [chats_header_and_sort.md](docs/agents_rules/user_interface/sidebars/chats/chats_header_and_sort.md): the two button groups at the top, the views, and the Chats sort dropdown menu.
-  - [chat_summary.md](docs/agents_rules/user_interface/sidebars/chats/chat_summary.md): the three lines of the summary of a chat, how the program reads the summary, the tokens, and the estimated cost, its cache, and the width of an information card.
-  - [past_chats_settings_section.md](docs/agents_rules/user_interface/sidebars/chats/past_chats_settings_section.md): the heading "Past chats" of the section "Sidebars" of the Settings window, with the delay between two reads of the chats.
-  - The information cards of a chat, in the folder `docs/agents_rules/user_interface/sidebars/chats/information_cards`:
-    - [files_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/files_line.md): the files line and its information card.
-    - [references_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/references_line.md): the references line and its information card.
-    - [dates_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/dates_line.md): the dates line and its information card, with the tokens and the estimated cost of the chat.
-    - [worktrees_line.md](docs/agents_rules/user_interface/sidebars/chats/information_cards/worktrees_line.md): the worktrees line and its information card.
-  - The dynamic topics, in the folder `docs/agents_rules/user_interface/sidebars/chats/dynamic_topics`:
-    - [settings_section.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/settings_section.md): the section "Dynamic topics" of the Settings window.
-    - [clusters.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/clusters.md): the clustered dynamic topics, the translation table, and the button "Rebuild the clusters".
-    - [display.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/display.md): the dynamic topics on the row of each chat, and the dynamic topic bar.
-    - [extraction_methods.md](docs/agents_rules/user_interface/sidebars/chats/dynamic_topics/extraction_methods.md): the methods "Keyword" and "Language model", and their caches.
-
-The maximum size of a file in the folder `docs/agents_rules`, and in all its subfolders, is 10000 bytes. When a file is larger, split it by topic into smaller files, and list the new files here. The test of the package `agents_rules_checker` fails when a file is larger.
-
-## Documentation metadata
-
-Every documentation file in the folder `docs`, and in all its subfolders, has a metadata header immediately after its title.
-
-- The header has these lines, in this order:
-  - `Created`: the date on which the file was created.
-  - `Last updated`: the date of the last change of the file.
-  - `Status`: one short phrase that says what the file is, for example "Maintained index for agents and tools".
-  - `Related framing`: a link to the document that sets the frame of this file, for example the project instructions.
-  - `Related rules`: a link to each rule file that applies to this file. Add this line only when a rule file applies.
-  - `Related issue`: a link to the GitHub issue that this file comes from. Add this line only when an issue exists.
-- Write each date as day, month name, and year, for example `13 October 2026`.
-- Update `Last updated` in every change of the file, and keep the date accurate.
-- Write each link as a relative link that works from the folder of the file.
-- The file `docs/release_notes/prefix.md` has no header. The release script copies this file into the text of every GitHub release, so a header would appear in every release.
-
-Example, for the file `docs/team_collaboration_process/index.md`:
-
-```markdown
-# Team collaboration process index
-
-- Created: 4 October 2026
-- Last updated: 8 October 2026
-- Status: Maintained index for agents and tools
-- Related framing: [Project instructions](../../AGENTS.md)
-- Related rules: [Glossary of Heidrun](../agents_rules/glossary/index.md)
-
-This file lists the files and the subfolders of this folder, for agents and tools.
-
-- [README.md](README.md): the overview of this folder, for people.
-- [team_workflow.md](team_workflow.md): the way several developers work on one repository.
-```
-
-## Documentation folders
-
-Every folder in the folder `docs`, at every depth, has two files that describe the folder. The folder `docs` itself has them too.
-
-- `README.md` is for people. It says in plain words what the folder is for, and how to read the files of the folder. It has the metadata header, and its `Status` is "Maintained overview for people".
-- `index.md` is for agents and tools. It has the metadata header, and its `Status` is "Maintained index for agents and tools". After the header, it has one introduction sentence, then one bullet for each file and each subfolder of the folder, in this form: a relative link, a colon, and one sentence that says what the file or the subfolder holds. The bullet for a subfolder links to the file `index.md` of that subfolder. The bullet for `README.md` is included. The file does not repeat the content of the files that it lists.
-- When you add, rename, move, or delete a file or a subfolder of the folder `docs`, update the file `index.md` of its folder in the same change.
-- When you create a new folder in the folder `docs`, create its two files in the same change, and add a bullet for the new folder in the file `index.md` of its parent folder.
+- Agent rules folder: `docs/agents_rules`
+- Glossary folder: `docs/agents_rules/glossary`. The glossary also gives the official name "coding agent" for Claude Code, Codex, and Antigravity.
+- Maximum size of a file: 10000 bytes.
+- Size test command: `pnpm --filter agents_rules_checker test`
 
 ## Issue Fix Workflow
 
@@ -331,7 +203,7 @@ The file `.env.example` at the root of the repository lists and explains every e
 - `pnpm --filter worktree_tools test` runs the Vitest tests of the package `packages/dev_tools/worktree_tools`: the creation of a worktree with the clone of the compiled Rust files, the cleaning of the old target folders, and the two command lines. The test files sit in the folder `tests`.
 - `pnpm --filter video_recorder test` runs the Vitest tests of the package `packages/dev_tools/video_recorder`: the calculation of the cut and of `clicks.json`, the command line `video:cut` with a real `ffmpeg`, and the click logger script. The test files sit in the folder `tests`.
 - `pnpm --filter install_script_tests test` runs the Vitest tests of the package `packages/dev_tools/install_script_tests`: the script `scripts/install.sh`, run with a fake `curl`, a fake `hdiutil`, a fake `ditto`, a fake `uname`, and a fake `pgrep`, in a temporary folder in place of `/Applications`. It checks the copy, the eject, the deletion of the temporary folder, and the message of each stop. The test files sit in the folder `tests`.
-- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Agent rules" gives it, and the skill `issue_fix_workflow` (it names no detail of this repository, it names every value, it has the four parts, its link in the folder `.claude/skills` works, and the section "Issue Fix Workflow values" of this file gives every value), and the skill `context_md_system` (it names no detail of this repository, it has its rules and its template, this file points to it, and its link in the folder `.claude/skills` works). The test files sit in the folder `tests`.
+- `pnpm --filter agents_rules_checker test` runs the Vitest tests of the package `packages/dev_tools/agents_rules_checker`: the maximum size of a file in the folder `docs/agents_rules` and in all its subfolders, as the section "Docs folder agents rules system values" gives it, and the skill `issue_fix_workflow` (it names no detail of this repository, it names every value, it has the four parts, its link in the folder `.claude/skills` works, and the section "Issue Fix Workflow values" of this file gives every value), the skill `context_md_system` (it names no detail of this repository, it has its rules and its template, this file points to it, and its link in the folder `.claude/skills` works), and the skills `docs_folder_system` and `docs_folder_agents_rules_system` (each names no detail of this repository, names every value, has its rules and its template, this file points to it and gives every value, and its link in the folder `.claude/skills` works, and the second skill names the first skill). The test files sit in the folder `tests`.
 - `pnpm --filter data_layer_boundary_checker test` runs the Vitest tests of the package `packages/dev_tools/data_layer_boundary_checker`: the check that the Past chats sidebar section and the Statistics window get all their data through the packages of the folder `packages/data_layers` (the Rust files of the folders `past_chats` and `statistics` of the desktop application, the files outside these folders that name a package of the data layer, the manifest `Cargo.toml`, and the web page files of the two parts), run on the real repository, and the bypass tests that add each kind of forbidden code to a copy of the files and prove that the check fails. The test files sit in the folder `tests`.
 - `pnpm --filter multi_layer_graph test` runs the Vitest tests of the package `packages/experiments/multi_layer_graph`: the reading of a temporary SQLite file with the tables of the data layer packages, the finding of `#N` and `Fixes #N` in a text, the building of the multi-layer graph, the command line, and the degree, the neighbors, the search, and the markup of the panels of the page. The test files sit in the folder `tests`.
 - `pnpm --filter parallax_dino_runner test` runs the Vitest tests of the package `packages/experiments/parallax_dino_runner`: the lane change and the jump of the dinosaur, the touch between the dinosaur and the things, the shots and the size change of the rocks, the ammunition and the crates, the size and the lane of the thing of each commit, the generator of the commits and the crates, the end of a run at the newest commit, the file `commits.json` and the fake commits, the script that reads the Git history of a real Git repository in a temporary folder and gives the lanes, the static build with relative addresses and no network address, the speed and the score, the parallax layers, the random numbers with a seed, the world of the game with its commands and its runs, and the shape of the pixel pictures. The test files sit in the folder `tests`.
