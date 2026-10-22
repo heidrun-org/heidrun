@@ -16,7 +16,7 @@ import { fold, search } from "../stores/search";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
-import { copy, osc52Provider } from "../lib/clipboard";
+import { osc52Provider, writeToClipboard } from "../lib/clipboard";
 import { TerminalSelection } from "../lib/terminal_selection";
 import { trailingDebounce, type TrailingDebounce } from "../lib/trailing_debounce";
 import { createRefitHold, type RefitHold } from "../lib/refit_hold";
@@ -911,10 +911,14 @@ async function copySelection() {
   if (term === null || term.hasSelection() === false) {
     return;
   }
+  const position = JSON.stringify(term.getSelectionPosition());
   try {
-    const text = await terminalSelection.read(term, props.paneId);
-    await copy(text);
-    term.clearSelection();
+    const text = await terminalSelection.readForCopy(term, props.paneId);
+    await writeToClipboard(text);
+    // A new selection made while Herdr answered stays: only the copied selection is cleared (issue #803).
+    if (JSON.stringify(term.getSelectionPosition()) === position) {
+      term.clearSelection();
+    }
   } catch {
     toast(t("terminalView.copyFailed"));
   }
