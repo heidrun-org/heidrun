@@ -23,7 +23,10 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 // the developer looks at it. When the function takes more than 0.3 second, a small spinning wheel shows at the right end
 // of the part until the card opens. A second click on the part, the key Escape, a press outside, or the loss of the
 // keyboard focus cancels the opening.
+// A card below its part, inside the element that has the attribute `data-information-card-boundary` (the viewport), stays
+// between the left and the right edges of that element, and not only inside the window, so that no sidebar hides it.
 // - issue #607
+// - issue #586
 
 const props = withDefaults(
   defineProps<{
@@ -61,6 +64,12 @@ const MAX_WIDTH = 560;
 /** The height of the arrow of the card, in pixels: the half of the width, as Bootstrap draws it. */
 const ARROW_HALF_WIDTH = 8;
 
+/**
+ * The attribute of the element that a card below its part must stay inside: the viewport. The right sidebar, or its sidebar
+ * icon bar, is drawn above the panes, so a card that goes past the viewport is cut (issue #586).
+ */
+const BOUNDARY_ATTRIBUTE = "data-information-card-boundary";
+
 const root = ref<HTMLElement | null>(null);
 const card = ref<HTMLElement | null>(null);
 const isOpen = ref(false);
@@ -74,6 +83,19 @@ let preparation = 0;
 let busyTimer: ReturnType<typeof setTimeout> | null = null;
 const cardStyle = ref<Record<string, string>>({});
 const arrowStyle = ref<Record<string, string>>({});
+/**
+ * The left and right limits of a card below the part, in pixels. A part inside the viewport keeps its card inside the
+ * viewport, so that the card never goes under a sidebar. Any other part keeps its card inside the window.
+ */
+function horizontalBounds(): { left: number; right: number } {
+  const boundary = root.value?.closest(`[${BOUNDARY_ATTRIBUTE}]`) ?? null;
+  if (boundary === null) {
+    return { left: 0, right: window.innerWidth };
+  }
+  const rect = boundary.getBoundingClientRect();
+  return { left: Math.max(0, rect.left), right: Math.min(window.innerWidth, rect.right) };
+}
+
 /** Puts the card at the left of the part, as high as the part, or below the part, and inside the window. */
 function place() {
   if (root.value === null || card.value === null) {
@@ -82,14 +104,15 @@ function place() {
   const part = root.value.getBoundingClientRect();
   const { height, width } = card.value.getBoundingClientRect();
   if (props.placement === "bottom" || props.placement === "bottom-center") {
+    const { left: minLeft, right: maxRight } = horizontalBounds();
     const bottomTop = Math.max(GAP, Math.min(part.bottom + GAP, window.innerHeight - height - GAP));
     const wantedLeft = props.placement === "bottom-center" ? part.left + part.width / 2 - width / 2 : part.left;
-    const bottomLeft = Math.max(GAP, Math.min(wantedLeft, window.innerWidth - width - GAP));
+    const bottomLeft = Math.max(minLeft + GAP, Math.min(wantedLeft, maxRight - width - GAP));
     const arrowLeft = Math.max(GAP, part.left + part.width / 2 - bottomLeft - ARROW_HALF_WIDTH);
     cardStyle.value = {
       top: `${bottomTop}px`,
       left: `${bottomLeft}px`,
-      "--popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, window.innerWidth - 2 * GAP))}px`,
+      "--popover-max-width": `${Math.max(0, Math.min(MAX_WIDTH, maxRight - minLeft - 2 * GAP))}px`,
     };
     arrowStyle.value = { left: `${arrowLeft}px` };
     return;
