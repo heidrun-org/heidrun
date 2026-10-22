@@ -1,12 +1,12 @@
 import "./dev/install_tauri_mock";
-import "./lib/legacy_storage";
-import { createApp } from "vue";
-import "@xterm/xterm/css/xterm.css";
-import "bootstrap-icons/font/bootstrap-icons.css";
-import "./bootstrap_parts.scss";
-import "./styles.css";
-import App from "./App.vue";
-import "./stores/theme";
-import "./i18n/index";
+import { DurableStorage } from "./lib/durable_storage";
 
-createApp(App).mount("#app");
+// The stores read their saved state when their file is imported, so the restore of `localStorage` comes first (issue 772).
+async function start(): Promise<void> {
+  await DurableStorage.restore();
+  await import("./lib/legacy_storage");
+  await import("./start_application");
+  DurableStorage.startMirroring();
+}
+
+void start();

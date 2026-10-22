@@ -4,9 +4,11 @@ mod antigravity;
 mod claude;
 mod clipboard;
 mod coding_agent_models;
+mod durable_storage;
 mod environment_file;
 mod files;
 mod forge_cache;
+mod former_web_view_storage;
 mod git;
 mod git_source_control;
 mod history;
@@ -337,6 +339,9 @@ pub fn run() {
             pty::pty_resize,
             pty::pty_kill,
             clipboard::clipboard_set_image,
+            durable_storage::durable_storage_read,
+            durable_storage::durable_storage_write,
+            former_web_view_storage::former_web_view_storage_read,
             image_preview::image_preview,
             voice_commands::voice_options,
             voice_commands::voice_download_model,
