@@ -5,7 +5,7 @@
 - Status: Maintained glossary for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](index.md), [User interface of Heidrun: workspaces, tabs, and panes](../user_interface/workspaces_tabs_and_panes/index.md)
-- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 786](https://github.com/heidrun-org/heidrun/issues/786)
+- Related issue: [issue 403](https://github.com/heidrun-org/heidrun/issues/403), [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 637](https://github.com/heidrun-org/heidrun/issues/637), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 685](https://github.com/heidrun-org/heidrun/issues/685), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 726](https://github.com/heidrun-org/heidrun/issues/726), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 786](https://github.com/heidrun-org/heidrun/issues/786), [issue 784](https://github.com/heidrun-org/heidrun/issues/784)
 
 This document gives one short definition for each word of the workspaces, the tabs, the panes, the coding agents that run in a pane, and the parts of the window that hold the panes. The other words of Heidrun are in [index.md](index.md).
 
@@ -42,6 +42,14 @@ One terminal inside a tab. The terminal runs a shell or a coding agent, for exam
 ### File view pane
 
 A pane that shows one file, read only, in place of its terminal. The developer cannot change the file there. A click on a file in the File explorer sidebar section opens it. The label of the pane holds the absolute path of the file, and the terminal of the pane only waits. The rules are in [file_view_pane.md](../user_interface/workspaces_tabs_and_panes/file_view_pane.md).
+
+### Front matter
+
+The block at the start of a Markdown file, between two lines that each hold three dashes. Heidrun shows it as written and does not parse it.
+
+### Front matter card
+
+The card that a file view pane shows above the rendered text of a Markdown file in Preview, with the text of the front matter inside. The rules are in [file_view_pane.md](../user_interface/workspaces_tabs_and_panes/file_view_pane.md).
 
 ## The programs that run in a pane
 

@@ -1,4 +1,13 @@
 {
   "search": "Search",
-  "searchTitle": "Search in the file (⌘F)"
+  "searchTitle": "Search in the file (⌘F)",
+  "raw": "Raw",
+  "previewTitle": "Preview: show the rendered text, with the front matter in a card",
+  "rawTitle": "Raw: show the file as it is",
+  "frontMatterLabel": "Front matter",
+  "menuLabel": "More actions",
+  "menuTitle": "More actions on the file",
+  "copyPath": "Copy path",
+  "showInFinder": "Show in Finder",
+  "openInVisualStudioCode": "Open in VS Code"
 }

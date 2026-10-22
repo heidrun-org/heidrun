@@ -52,6 +52,8 @@ function onDown() {
   }
 }
 const paneElement = ref<HTMLElement | null>(null);
+// The header of a file view pane holds the controls of the file, which the file view draws there.
+const fileViewControlsHost = ref<HTMLElement | null>(null);
 // After the composition bar sends its images and its text, the keyboard goes back to the terminal, so that the developer can speak or type, then send.
 function focusTerminal() {
   paneElement.value?.querySelector<HTMLTextAreaElement>("textarea.xterm-helper-textarea")?.focus();
@@ -98,7 +100,8 @@ const subtitle = computed(() => {
       />
       <span v-else-if="fileViewPath !== null" class="name" :title="fileViewPath">{{ displayName }}</span>
       <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
-      <span class="sub">{{ subtitle }}</span>
+      <span class="sub" :class="{ 'file-view-path': fileViewPath !== null }">{{ subtitle }}</span>
+      <span v-if="fileViewPath !== null" ref="fileViewControlsHost" class="file-view-controls"></span>
       <span class="spacer"></span>
       <span class="tools">
         <UsageWheel v-if="ctx" :usage="ctx" />
@@ -175,7 +178,7 @@ const subtitle = computed(() => {
         />
       </span>
     </header>
-    <FileView v-if="fileViewPath !== null" :pane="pane" />
+    <FileView v-if="fileViewPath !== null" :pane="pane" :controls-host="fileViewControlsHost" />
     <TerminalView
       v-else
       :key="pane.terminal_id"
@@ -232,6 +235,9 @@ const subtitle = computed(() => {
 .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 600; white-space: nowrap; cursor: default; }
 .pane-rename { width: 180px; height: 24px; }
 .sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* In a file view pane, a narrow header shortens the short path first, then the name. The controls of the file stay visible. */
+.sub.file-view-path { min-width: 0; flex-shrink: 10000; }
+.file-view-controls { flex-shrink: 0; display: flex; align-items: center; gap: 8px; margin-left: 4px; }
 .spacer { flex: 1; }
 /* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
    that come after it. Without this, the next pane hides the part of the card that goes over it. */
