@@ -185,6 +185,32 @@ describe('the macro menu', () => {
 		expect(MacroMenuTest.row(menu, 'Project macro').querySelectorAll('button')).toHaveLength(3);
 	});
 
+	it('is wide, and puts small Edit and Delete buttons without borders on the title line of the row', async () => {
+		const menu = await MacroMenuTest.openMenu();
+		expect(menu.style.width).toContain('420px');
+		for (const label of ['Own macro', 'Project macro']) {
+			const row = MacroMenuTest.row(menu, label);
+			const actionList = row.querySelector<HTMLElement>('.position-absolute')!;
+			expect(actionList.classList.contains('top-0')).toBe(true);
+			expect(actionList.classList.contains('end-0')).toBe(true);
+			const actionButtonList = [...actionList.querySelectorAll('button')];
+			expect(actionButtonList).toHaveLength(2);
+			for (const actionButton of actionButtonList) {
+				expect(actionButton.classList.contains('icon')).toBe(true);
+				expect(actionButton.classList.contains('small')).toBe(true);
+				expect(actionButton.classList.contains('btn-sm')).toBe(false);
+			}
+			expect(row.querySelector('.fw-medium')!.classList.contains('pe-5')).toBe(true);
+		}
+	});
+
+	it('gives a hard-coded macro no action buttons and no space for them', async () => {
+		const menu = await MacroMenuTest.openMenu();
+		const row = MacroMenuTest.row(menu, 'Fixed macro');
+		expect(row.querySelector('.position-absolute')).toBeNull();
+		expect(row.querySelector('.fw-medium')!.classList.contains('pe-5')).toBe(false);
+	});
+
 	it('hides group titles when only hard-coded macros exist and keeps Create last', async () => {
 		macros.personal = [];
 		(projectMacros as unknown as Ref<Macro[]>).value = [];

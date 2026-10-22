@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { CUSTOM_LAUNCHER_CODING_AGENT_IDS } from "../lib/coding_agents";
 import { AGENTS } from "../lib/agents";
+import { DetectionFamilies } from "../lib/detection_families";
 import { PERSON_WORK_PERIODS, type PersonWorkPeriodId, type PersonWorkSlotHours } from "../lib/person_work";
 import {
   USER_ACTIVITY_RANGE_IDS,
@@ -102,6 +103,16 @@ const defaults = {
    * "app": mouse goes to Herdr / the program in the pane (scroll, clicks); ⌥ + drag still selects.
    */
   mouseMode: "select" as "select" | "app",
+  /**
+   * Settings window, section Terminal: the automatic detection in the text of the terminals is on (issue #638). Off: Heidrun
+   * colors nothing, adds no hover button, and gives no action to the text of any terminal.
+   */
+  terminalTextDetection: true,
+  /**
+   * Settings window, section Terminal: the identifiers of the detection families that the developer turned off (issue #638).
+   * A family that is not in the list is on. The list is read only while `terminalTextDetection` is on.
+   */
+  disabledDetectionFamilies: [] as string[],
   /** Sidebar section that the left sidebar shows. */
   leftSidebarSection: "launchers" as LeftSidebarSection,
   /** Sidebar section that the right sidebar shows. */
@@ -519,6 +530,7 @@ function load(): typeof defaults {
     saved.statisticsLegendFilters = keepLegendFilters(saved.statisticsLegendFilters);
     saved.statisticsUserActivityWorkspaces = keepUserActivityWorkspaces(saved.statisticsUserActivityWorkspaces);
     saved.statisticsPersonWorkWorkspaces = keepPersonWorkWorkspaces(saved.statisticsPersonWorkWorkspaces);
+    saved.disabledDetectionFamilies = DetectionFamilies.keepKnownIds(saved.disabledDetectionFamilies);
     return saved;
   } catch {
     return { ...defaults };
@@ -606,6 +618,7 @@ export type SettingsSection =
   | "general"
   | "designReview"
   | "terminal"
+  | "textDetection"
   | "agents"
   | "confirmations"
   | "guards"

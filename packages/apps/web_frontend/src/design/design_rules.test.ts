@@ -127,6 +127,12 @@ describe('shared design rules (issue 749)', () => {
 			}
 		});
 
+		it(`shows the hover of an icon button on a menu in the ${theme} theme`, () => {
+			expect(DesignRules.contrast(palette['line-strong'], palette['raised']), `${theme}: line-strong on raised`)
+				.toBeGreaterThanOrEqual(1.15);
+			expect(styles).toMatch(/\.menu \.btn\.icon:not\(:active\) \{ --btn-hover-bg: var\(--line-strong\); \}/);
+		});
+
 		it(`keeps action labels and control boundaries visible in the ${theme} theme`, () => {
 			for (const background of ['action-bg', 'action-hover', 'action-pressed']) {
 				expect(DesignRules.contrast(palette['action-text'], palette[background]), background)

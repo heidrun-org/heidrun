@@ -5,7 +5,7 @@
 - Status: Maintained shared design rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Colors and scroll bars](colors_and_scroll_bars.md), [Status dot](../../../architecture/status_dot.md)
-- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749)
+- Related issue: [issue 749](https://github.com/heidrun-org/heidrun/issues/749), [issue 796](https://github.com/heidrun-org/heidrun/issues/796)
 
 These rules govern desktop colors, buttons, contrast, and status displays. Keep the existing layout and font selections. The public website and experiments have their own visual identities. Heidrun Mobile retains its existing mobile layout and shared status colors.
 
@@ -40,7 +40,7 @@ The normal tests calculate these ratios from the actual stylesheet using relativ
 
 Use a secondary `.btn` for ordinary actions, `.btn.primary` for the main action, and `.btn.danger` for deletion or another destructive action. The label says the action: for example, “Add item” or “Delete item”. Color alone never identifies a destructive action. The label stays visible when an icon is present. A button that contains only an icon has an accessible name and a title, and uses `.btn.icon`: it has no border and no background at rest, and its background shows only under the pointer or with the keyboard focus.
 
-The normal height is 30 pixels, with 12 pixels of horizontal padding, a 7 pixel corner radius, and a 6 pixel gap between icon and text. `.small` is 24 pixels high with 8 pixels of horizontal padding; `.lg` is 40 pixels high with a 10 pixel corner radius. The icon precedes the text. Related actions use a button group or an 8–12 pixel layout gap. Local layout may change width, alignment, and available space; local layout cannot replace a variant's colors or interaction states.
+The normal height is 30 pixels, with 12 pixels of horizontal padding, a 7 pixel corner radius, and a 6 pixel gap between icon and text. `.small` is 24 pixels high with 8 pixels of horizontal padding; `.lg` is 40 pixels high with a 10 pixel corner radius. The icon precedes the text. On a menu, which is a raised surface where `--hover` is almost the same color as `--raised`, the hover background of `.btn.icon` is `--line-strong`, the same color as the selected button of the sidebar icon bar; `--line-strong` must differ from `--raised` by a contrast ratio of at least 1.15 in every theme. Related actions use a button group or an 8–12 pixel layout gap. Local layout may change width, alignment, and available space; local layout cannot replace a variant's colors or interaction states.
 
 | State | Shared appearance and behavior |
 | --- | --- |

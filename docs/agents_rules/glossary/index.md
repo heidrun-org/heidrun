@@ -1,10 +1,10 @@
 # Glossary of Heidrun index
 
 - Created: 14 October 2026
-- Last updated: 21 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained index for agents and tools
 - Related framing: [Project instructions](../../../AGENTS.md)
-- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 694](https://github.com/heidrun-org/heidrun/issues/694), [issue 714](https://github.com/heidrun-org/heidrun/issues/714)
+- Related issue: [issue 405](https://github.com/heidrun-org/heidrun/issues/405), [issue 435](https://github.com/heidrun-org/heidrun/issues/435), [issue 440](https://github.com/heidrun-org/heidrun/issues/440), [issue 473](https://github.com/heidrun-org/heidrun/issues/473), [issue 482](https://github.com/heidrun-org/heidrun/issues/482), [issue 569](https://github.com/heidrun-org/heidrun/issues/569), [issue 581](https://github.com/heidrun-org/heidrun/issues/581), [issue 596](https://github.com/heidrun-org/heidrun/issues/596), [issue 602](https://github.com/heidrun-org/heidrun/issues/602), [issue 610](https://github.com/heidrun-org/heidrun/issues/610), [issue 618](https://github.com/heidrun-org/heidrun/issues/618), [issue 662](https://github.com/heidrun-org/heidrun/issues/662), [issue 694](https://github.com/heidrun-org/heidrun/issues/694), [issue 714](https://github.com/heidrun-org/heidrun/issues/714), [issue 638](https://github.com/heidrun-org/heidrun/issues/638), [issue 793](https://github.com/heidrun-org/heidrun/issues/793)
 
 This file lists the files of this folder, for agents and tools.
 
@@ -26,3 +26,4 @@ This file lists the files of this folder, for agents and tools.
 - [macros.md](macros.md): the macro, the hard-coded macro, the personal macro, the personal macro file, the project macro, and the command line heidrun_ctrl.
 - [data_layer_operation_log.md](data_layer_operation_log.md): the operation, the operation log, the start event and the completion event, the caller, the kind, the workload, the nested operation, the pattern, the unfinished operation, the replay, the snapshot, and the isolated database.
 - [voice_input.md](voice_input.md): the voice input, the push-to-talk button, the level bars, the Whisper model, and the Voice input section of the Settings window.
+- [terminal_text_detection.md](terminal_text_detection.md): the text detection, the detection family, the rule of the text detection, the precedence, the hover buttons, and the Try a text field.

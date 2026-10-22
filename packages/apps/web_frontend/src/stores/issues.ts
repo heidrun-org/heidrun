@@ -1,7 +1,7 @@
 // In-app preview of an issue / MR / PR (description and comments, rendered).
 import { reactive } from "vue";
 import { invoke } from "@tauri-apps/api/core";
-import { refContext, type Forge } from "../lib/refs";
+import { refContext, type Forge, type RefTarget } from "../lib/refs";
 import { t } from "../i18n/index";
 
 export interface IssueComment {
@@ -136,14 +136,17 @@ async function github(cwd: string, type: "issue" | "mr", n: number, project?: st
 }
 
 let seq = 0;
-/** Opens the preview window and loads the issue / MR from the forge of `cwd`'s repo. */
-export async function openIssue(cwd: string | null | undefined, target: { type: "issue" | "mr"; number: number; project?: string }, url: string | null) {
+/**
+ * Opens the preview window and loads the issue / MR. The repository and the forge are the ones the text names (`target.project`,
+ * `target.forge`), else the ones of the repo of `cwd`.
+ */
+export async function openIssue(cwd: string | null | undefined, target: RefTarget, url: string | null) {
   Object.assign(issueView, { open: true, loading: true, error: "", url, data: null });
   const my = ++seq;
   try {
     if (!cwd) throw new Error(t("issuesStore.unknownFolder"));
     const ctx = await refContext(cwd);
-    const forge: Forge = ctx.forge ?? "gitlab";
+    const forge: Forge = target.forge ?? ctx.forge ?? "gitlab";
     const data = forge === "github" ? await github(cwd, target.type, target.number, target.project) : await gitlab(cwd, target.type, target.number, target.project);
     if (my === seq) issueView.data = data;
   } catch (e) {

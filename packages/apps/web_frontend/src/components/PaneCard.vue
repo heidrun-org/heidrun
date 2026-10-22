@@ -100,8 +100,8 @@ const subtitle = computed(() => {
       <span v-else class="name" :title="t('paneCard.nameTitle', { name: displayName })" @dblclick="startRename('pane', pane.pane_id)">{{ displayName }}</span>
       <span class="sub">{{ subtitle }}</span>
       <span class="spacer"></span>
-      <UsageWheel v-if="ctx" :usage="ctx" />
       <span class="tools">
+        <UsageWheel v-if="ctx" :usage="ctx" />
         <button
           v-if="fileViewPath === null"
           class="btn icon small tool"
@@ -236,8 +236,9 @@ const subtitle = computed(() => {
 /* The information card of the usage wheel is inside the pane, so the pane that holds the open card goes above the panes
    that come after it. Without this, the next pane hides the part of the card that goes over it. */
 .pane:has(.information-card-part.is-open) { z-index: 3; }
+/* The usage wheel is the first item of the tools, so it appears and disappears with the buttons, and it is 2 pixels from the first button. */
 .tools {
-  flex-shrink: 0; display: flex; align-items: center; gap: 2px; margin-left: 16px;
+  flex-shrink: 0; display: flex; align-items: center; gap: 2px;
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity 0.15s ease, visibility 0s linear 0.15s;
 }
