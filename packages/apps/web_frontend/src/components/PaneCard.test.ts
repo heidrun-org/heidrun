@@ -10,7 +10,7 @@ vi.mock("@tauri-apps/api/webview", () => ({ getCurrentWebview: () => ({ setZoom:
 // The terminal needs a real browser (xterm, the colour scheme query): the pane header is the subject of these tests.
 vi.mock("./TerminalView.vue", () => ({ default: { template: "<div></div>" } }));
 // The file view reads a file through the backend: the tests of the file view are in FileView.test.ts.
-vi.mock("./FileView.vue", () => ({ default: { template: '<div class="file-view-stub"></div>' } }));
+vi.mock("./FileView.vue", () => ({ default: { props: ["pane", "controlsHost"], template: '<div class="file-view-stub"></div>' } }));
 vi.mock("../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -450,6 +450,25 @@ describe("PaneCard file view pane (issue #714)", () => {
     expect(wrapper.find('[aria-pressed][aria-label="Composition bar"]').exists()).toBe(false);
     expect(wrapper.find(".tools").exists()).toBe(true);
     expect(wrapper.html()).toContain("Close the pane");
+  });
+
+  it("gives the file view an element of the header to put its controls in, after the short path", async () => {
+    const wrapper = await mountPaneCard({ label: FILE_LABEL });
+    await flushPromises();
+    const host = wrapper.get("header .file-view-controls").element;
+    expect(wrapper.getComponent({ name: "FileView" }).props("controlsHost")).toBe(host);
+    expect(wrapper.get("header .sub").element.nextElementSibling).toBe(host);
+  });
+
+  it("has no element for the controls of a file in the header of a terminal", async () => {
+    const wrapper = await mountPaneCard({ label: "build" });
+    expect(wrapper.find(".file-view-controls").exists()).toBe(false);
+  });
+
+  it("shortens the short path before the name when the header is narrow, and never shrinks the controls", async () => {
+    expect(styleRule(".sub.file-view-path")).toContain("flex-shrink: 10000");
+    expect(styleRule(".sub.file-view-path")).toContain("min-width: 0");
+    expect(styleRule(".file-view-controls")).toContain("flex-shrink: 0");
   });
 
   it("shows the terminal, and not the file view, for a pane whose label is only a name", async () => {

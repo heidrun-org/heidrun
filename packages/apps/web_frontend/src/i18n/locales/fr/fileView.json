@@ -1,4 +1,13 @@
 {
   "search": "Rechercher",
-  "searchTitle": "Rechercher dans le fichier (⌘F)"
+  "searchTitle": "Rechercher dans le fichier (⌘F)",
+  "raw": "Brut",
+  "previewTitle": "Aperçu : montrer le texte mis en forme, avec le front matter dans une carte",
+  "rawTitle": "Brut : montrer le fichier tel quel",
+  "frontMatterLabel": "Front matter",
+  "menuLabel": "Autres actions",
+  "menuTitle": "Autres actions sur le fichier",
+  "copyPath": "Copier le chemin",
+  "showInFinder": "Voir dans le Finder",
+  "openInVisualStudioCode": "Ouvrir dans VS Code"
 }
