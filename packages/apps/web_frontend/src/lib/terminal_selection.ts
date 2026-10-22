@@ -13,10 +13,22 @@ import { request } from './api';
  */
 class OriginalTextUnavailableError extends Error {}
 
+/**
+ * Removes every space and line break, to compare the original text of Herdr with the displayed selection, which has a line
+ * break at each visual wrap and may have trailing spaces.
+ * @param text - the text to compare
+ * @returns the text without spaces and line breaks
+ */
+function withoutSpaces(text: string): string {
+	return text.replace(/\s+/g, '');
+}
+
 /** Reads selections only while the displayed terminal content remains unchanged. */
 export class TerminalSelection {
 	/** Changes whenever output, scrolling, or resizing can change the displayed cells. */
 	private _revision = 0;
+	/** The number of the last copy. A copy that is not the last one does not replace the clipboard any more. */
+	private _copies = 0;
 
 	/** Marks previously captured selection coordinates as outdated. */
 	invalidate(): void {
@@ -35,6 +47,7 @@ export class TerminalSelection {
 			return '';
 		}
 		const revision = this._revision;
+		const displayed = terminal.getSelection();
 		const columns = terminal.cols;
 		const rows = terminal.rows;
 		const viewport = terminal.buffer.active.viewportY;
@@ -95,6 +108,11 @@ export class TerminalSelection {
 			|| JSON.stringify(terminal.getSelectionPosition()) !== JSON.stringify(position)) {
 			throw new OriginalTextUnavailableError('Terminal changed while copying');
 		}
+		// Herdr may read the cells at the same coordinates in another state of the pane, for example its history: the
+		// text must be the selected text, apart from the joined wraps and the trailing spaces (issue #805).
+		if (withoutSpaces(result.text) !== withoutSpaces(displayed)) {
+			throw new Error(`Herdr returned another text than the selection: ${JSON.stringify(result.text)} instead of ${JSON.stringify(displayed)}`);
+		}
 		return result.text;
 	}
 
@@ -131,5 +149,32 @@ export class TerminalSelection {
 		if (revision !== this._revision) {
 			throw new OriginalTextUnavailableError('Terminal changed while copying');
 		}
+	}
+
+	/**
+	 * Copies the selection in two steps. The displayed selection goes to the clipboard at once, so that a paste right after
+	 * the copy already gets it. Then, when Herdr gives the original text and it is the selected text, the original text
+	 * replaces it, with the visual wraps joined (issue #805).
+	 * @param terminal - the terminal displaying Herdr's current viewport
+	 * @param paneId - the pane whose text is selected
+	 * @param write - writes a text to the clipboard, and rejects when it cannot
+	 * @returns nothing; rejects when the selection has no text or when the first write fails
+	 */
+	async copy(terminal: Terminal, paneId: string, write: (text: string) => Promise<void>): Promise<void> {
+		const displayed = terminal.getSelection();
+		if (displayed === '') {
+			throw new Error('The selection has no text to copy');
+		}
+		this._copies++;
+		const copy = this._copies;
+		await write(displayed);
+		const original = await this.readForCopy(terminal, paneId);
+		// A newer copy already wrote its own text: the original text of this one must not replace it.
+		if (original === displayed || copy !== this._copies) {
+			return;
+		}
+		await write(original).catch((error: unknown) => {
+			console.warn('The original text could not replace the displayed selection in the clipboard:', error);
+		});
 	}
 }

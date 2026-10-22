@@ -142,6 +142,9 @@ onMounted(async () => {
     macOptionIsMeta: true,
     // In "app" mouse mode, ⌥ + drag still forces a local selection.
     macOptionClickForcesSelection: true,
+    // A right click keeps the selection, so that the item Copy of the context menu copies it. On macOS, xterm selects the
+    // word under the pointer by default, which replaced the selection of the developer (issue #805).
+    rightClickSelectsWord: false,
     scrollback: 0, // Herdr owns the scrollback; the attach client redraws the screen.
     allowProposedApi: true,
     theme: TERMINAL_THEMES[resolvedTheme.value],
@@ -913,8 +916,7 @@ async function copySelection() {
   }
   const position = JSON.stringify(term.getSelectionPosition());
   try {
-    const text = await terminalSelection.readForCopy(term, props.paneId);
-    await writeToClipboard(text);
+    await terminalSelection.copy(term, props.paneId, writeToClipboard);
     // A new selection made while Herdr answered stays: only the copied selection is cleared (issue #803).
     if (JSON.stringify(term.getSelectionPosition()) === position) {
       term.clearSelection();
@@ -928,6 +930,9 @@ function onCopy(event: ClipboardEvent) {
   if (term === null || term.hasSelection() === false) {
     return;
   }
+  // The item Copy of the context menu of the system: the event puts the displayed selection in the clipboard at once, and
+  // the copy then replaces it with the original text of Herdr when it can (issue #805).
+  event.clipboardData?.setData("text/plain", term.getSelection());
   event.preventDefault();
   event.stopPropagation();
   void copySelection();

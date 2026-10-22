@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 803](https://github.com/heidrun-org/heidrun/issues/803), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
+- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 803](https://github.com/heidrun-org/heidrun/issues/803), [issue 805](https://github.com/heidrun-org/heidrun/issues/805), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -31,6 +31,10 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
 
 - Command+C and the Copy button read the selected cells through Herdr's `pane.selection.read` operation. Visual wraps
   are joined, and intentional line breaks stay. Copying does not infer line boundaries from the length of a line.
+- The text of Herdr must be the selected text: without the spaces and the line breaks, it is the same as the displayed
+  selection. Otherwise the copy keeps the displayed selection and writes the two texts in the console. The displayed
+  selection goes to the clipboard at once, so a fast paste gets it; Herdr's text replaces it only when confirmed. A right
+  click keeps the selection, for the item Copy of the context menu ([issue 805](https://github.com/heidrun-org/heidrun/issues/805)).
 - The selection belongs to the current viewport, including when Herdr has scrolled into older output. The displayed
   selected rows must match Herdr's visible rows, and Herdr validates the content revision before returning the text.
 - When output, scrolling, resizing, or the selection changes during copying, when the selection goes past the visible
