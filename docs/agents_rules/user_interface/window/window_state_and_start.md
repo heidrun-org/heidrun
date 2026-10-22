@@ -1,7 +1,7 @@
 # User interface of Heidrun: state of the window, splash screen, missing programs, and goat sounds
 
 - Created: 13 October 2026
-- Last updated: 17 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
@@ -25,6 +25,9 @@ This file is a part of the rules of the user interface of Heidrun. The words are
 
 - Every option keeps its last state between two runs of Heidrun. An option is a toggle, a choice between a few values, a sidebar section that is shown, a panel that is open or closed, or a size.
 - The last state of each option is saved in the `localStorage` of the web frontend, in the store `packages/apps/web_frontend/src/stores/settings.ts`, under the key `heidrun.settings`. A new option is a new line in `defaults` of this store, and not a new key.
+- The web view keeps the `localStorage` in a folder named after the application identifier, so a change of the identifier shows an empty `localStorage` and every option returns to its default value ([issue 772](https://github.com/heidrun-org/heidrun/issues/772)). The data folder of Heidrun does not depend on the identifier, so the web frontend keeps a copy of every `localStorage` entry whose key starts with `heidrun.` in the file `local_storage.json` of the data folder (`packages/apps/web_frontend/src/lib/durable_storage.ts` and `packages/apps/desktop_tauri/src/durable_storage.rs`). Installed Heidrun and Heidrun Development have separate data folders, so they have separate copies.
+- `src/main.ts` restores before any store is imported, because a store reads its saved state when its file is imported: it adds each entry of the copy that the `localStorage` lacks, and never replaces an entry that the `localStorage` holds. Then it migrates the former key names, loads the application, and starts the copy, which writes the file again after each change, at most once every 300 milliseconds.
+- When the file `local_storage.json` does not exist yet, installed Heidrun reads the entries from the web view storage of the former identifier `dev.edefiez.herdrdesk` (Heidrun 0.2.7 and older), in the folder `~/Library/WebKit/dev.edefiez.herdrdesk`, with the program `/usr/bin/sqlite3` on a copy of the files (`packages/apps/desktop_tauri/src/former_web_view_storage.rs`). Heidrun Development never reads it. To reset every option, delete the file `local_storage.json` as well as the web view storage.
 - At the start, each option reads its saved state. An option with no saved state, or with a corrupted saved value (the wrong type, or a value that is not in the list of its values), uses its default value.
 - A text that the user types, a search text for example, is not an option and is not saved. A mode that edits data, for example the edit mode of the budgets in the window History, is not an option and is not saved.
 

@@ -1,11 +1,11 @@
 # Installed Heidrun and Heidrun Development
 
 - Created: 17 October 2026
-- Last updated: 19 October 2026
+- Last updated: 22 October 2026
 - Status: Maintained installation and development guide
 - Related framing: [Project instructions](../../AGENTS.md)
 - Related rules: [Window startup](../agents_rules/user_interface/window/window_state_and_start.md), [Data layer access](../agents_rules/data_layer_access.md)
-- Related issue: [issue 640](https://github.com/heidrun-org/heidrun/issues/640)
+- Related issue: [issue 640](https://github.com/heidrun-org/heidrun/issues/640), [issue 772](https://github.com/heidrun-org/heidrun/issues/772)
 
 Use installed Heidrun for daily work, and Heidrun Development to test source changes. The applications can open the same repository. A development reload or restart affects Heidrun Development only.
 
@@ -17,6 +17,7 @@ Use installed Heidrun for daily work, and Heidrun Development to test source cha
 | Default Herdr session in the main checkout | `heidrun` | `heidrun_development` |
 | Herdr session from a temporary worktree | `heidrun` | `heidrun_` followed by the existing cleaned worktree name |
 | Settings and saved window position | Installed application storage | Separate development application storage |
+| Copy of the saved options (`local_storage.json`) | `~/.config/heidrun` | `~/.config/heidrun-development` |
 | New mobile access configuration | Off, default port 47823 | Off, default port 47824 |
 | Source changes | Applied through an explicit build and installation | Frontend reload or application restart |
 
