@@ -129,6 +129,100 @@ describe("findRefs", () => {
   });
 });
 
+describe("findRefs, the equivalent forms of one reference (issue #638)", () => {
+  it("reads #569, the issue address with its host, and the issue address without its host as the same issue", () => {
+    const forms = ["#569", "https://github.com/org/app/issues/569", "/issues/569", "org/app/issues/569"];
+    for (const form of forms) {
+      const [match] = findRefs(`see ${form} now`, GITHUB);
+      expect(match, form).toMatchObject({ kind: "issue", url: expect.stringContaining("/issues/569"), target: { type: "issue", number: 569 } });
+      expect(match.url, form).toMatch(/^https:\/\/github\.com\/org\/app\/issues\/569/);
+    }
+  });
+
+  it("reads !34, the merge request address with its host, and the one without its host as the same merge request", () => {
+    const forms = ["!34", "https://gitlab.com/group/app/-/merge_requests/34", "/-/merge_requests/34", "group/app/-/merge_requests/34"];
+    for (const form of forms) {
+      const [match] = findRefs(`see ${form} now`, GITLAB);
+      expect(match, form).toMatchObject({ kind: "mr", target: { type: "mr", number: 34 } });
+      expect(match.url, form).toBe("https://gitlab.com/group/app/-/merge_requests/34");
+    }
+  });
+
+  it("reads a pull request on GitHub in its short, explicit, address, and path forms", () => {
+    const forms = ["PR #5", "https://github.com/org/app/pull/5", "/pull/5", "org/app/pull/5", "pull request 5"];
+    for (const form of forms) {
+      const [match] = findRefs(`merged ${form} today`, GITHUB);
+      expect(match, form).toMatchObject({ kind: "mr", url: "https://github.com/org/app/pull/5" });
+    }
+  });
+
+  it("names the repository of an address of another repository, and not the repository of the pane", () => {
+    const [match] = findRefs("see https://github.com/other/lib/issues/7", GITHUB);
+    expect(match.target).toEqual({ type: "issue", number: 7, project: "other/lib", forge: "github" });
+    const [pathMatch] = findRefs("see other/lib/issues/7", GITHUB);
+    expect(pathMatch.url).toBe("https://github.com/other/lib/issues/7");
+    expect(pathMatch.target).toMatchObject({ project: "other/lib", number: 7 });
+  });
+
+  it("names the forge of a GitHub address when the pane is on GitLab, so that the preview asks the right forge", () => {
+    const [match] = findRefs("see https://github.com/org/app/issues/12", GITLAB);
+    expect(match.target).toMatchObject({ forge: "github", project: "org/app" });
+  });
+
+  it("reads a nested group and a self-hosted GitLab address", () => {
+    const selfHosted: RefContext = { ...GITLAB, base: "https://git.acme.io/a/b/app", origin: "https://git.acme.io" };
+    const [match] = findRefs("see https://git.acme.io/a/b/c/app/-/issues/9", selfHosted);
+    expect(match.target).toEqual({ type: "issue", number: 9, project: "a/b/c/app", forge: "gitlab" });
+    const [pathMatch] = findRefs("see a/b/c/app/-/issues/9", selfHosted);
+    expect(pathMatch.url).toBe("https://git.acme.io/a/b/c/app/-/issues/9");
+  });
+
+  it("keeps the query string and the fragment of an address, and drops the punctuation after it", () => {
+    const [withFragment] = findRefs("see https://github.com/org/app/issues/12#issuecomment-5.", GITHUB);
+    expect(withFragment.url).toBe("https://github.com/org/app/issues/12#issuecomment-5");
+    const [withQuery] = findRefs("see https://github.com/org/app/pull/12?diff=split, then", GITHUB);
+    expect(withQuery.url).toBe("https://github.com/org/app/pull/12?diff=split");
+    expect(withQuery.kind).toBe("mr");
+  });
+
+  it("reads the address inside a Markdown link as the reference", () => {
+    const matches = findRefs("[the issue](https://github.com/org/app/issues/12) is open", GITHUB);
+    expect(matches.map((match) => match.url)).toEqual(["https://github.com/org/app/issues/12"]);
+  });
+
+  it("does not read the address of another site as an issue, even when the pane is on GitHub", () => {
+    expect(findRefs("see https://example.com/issues/12", GITHUB)).toEqual([]);
+    expect(findRefs("see https://bugs.acme.io/org/app/issues/12", GITHUB)).toEqual([]);
+  });
+
+  it("reads an address of a self-hosted GitHub when the pane is on that host", () => {
+    const enterprise: RefContext = { ...GITHUB, base: "https://ghe.acme.io/org/app", origin: "https://ghe.acme.io" };
+    expect(findRefs("see https://ghe.acme.io/org/app/issues/12", enterprise)[0]).toMatchObject({ kind: "issue" });
+  });
+
+  it("does not read a folder path as an address without its host", () => {
+    expect(findRefs("open src/app/issues/12/index.ts", GITHUB)).toEqual([]);
+    expect(findRefs("open ~/issues/12", GITHUB)).toEqual([]);
+  });
+
+  it("reads the address of a commit, with its host, on GitHub and on GitLab", () => {
+    expect(findRefs("at https://github.com/org/app/commit/26d63ea", GITHUB)[0]).toMatchObject({ kind: "commit", rule: "commitAddress" });
+    expect(findRefs("at https://gitlab.com/group/app/-/commit/26d63ea", GITLAB)[0]).toMatchObject({ kind: "commit", rule: "commitAddress" });
+  });
+
+  it("gives no destination to an address without its host when no repository is known", () => {
+    expect(findRefs("see /issues/12", EMPTY_CONTEXT)[0].url).toBeNull();
+  });
+
+  it("names the rule that found each reference", () => {
+    expect(findRefs("a #1 b", GITHUB)[0].rule).toBe("hash");
+    expect(findRefs("a PR #1 b", GITHUB)[0].rule).toBe("explicit");
+    expect(findRefs("a org/lib#1 b", GITHUB)[0].rule).toBe("crossRepository");
+    expect(findRefs("a !1 b", GITLAB)[0].rule).toBe("bang");
+    expect(findRefs("a 26d63ea b", GITHUB)[0].rule).toBe("commitHash");
+  });
+});
+
 describe("findCommands", () => {
   const known = new Set(["compact", "fin-tache"]);
 
@@ -215,6 +309,34 @@ describe("findFileRefs", () => {
     expect(findFileRefs("https://x.io/a.js")).toEqual([]);
     expect(findFileRefs("version 1.2.3")).toEqual([]);
     expect(findFileRefs("db.example.com:5432")).toEqual([]);
+  });
+
+  it("keeps a path whose last piece is longer than ten characters (issue #793)", () => {
+    const text = "~/Library/WebKit/dev.heidrun-org.heidrun.development";
+    expect(findFileRefs(text)).toEqual([{ start: 0, end: text.length, path: text, line: null }]);
+  });
+
+  it("finds both paths of the screenshot of issue #793, each as one whole path", () => {
+    const first = "~/.config/heidrun-development/local_storage.json";
+    const second = "~/Library/WebKit/dev.heidrun-org.heidrun.development";
+    expect(findFileRefs(`- ${first}`).map((hit) => hit.path)).toEqual([first]);
+    expect(findFileRefs(`- ${second}`).map((hit) => hit.path)).toEqual([second]);
+  });
+
+  it("never ends a path at a dot that a letter follows", () => {
+    expect(findFileRefs("see src/a.b.c.d here").map((hit) => hit.path)).toEqual(["src/a.b.c.d"]);
+    expect(findFileRefs("see src/app.ts.bak here").map((hit) => hit.path)).toEqual(["src/app.ts.bak"]);
+  });
+
+  it("ends a path at a full stop, a comma, a bracket, and a quote", () => {
+    expect(findFileRefs("edit src/app.ts.")[0].path).toBe("src/app.ts");
+    expect(findFileRefs("edit src/app.ts, then run")[0].path).toBe("src/app.ts");
+    expect(findFileRefs("(src/app.ts)")[0].path).toBe("src/app.ts");
+    expect(findFileRefs('"src/app.ts"')[0].path).toBe("src/app.ts");
+  });
+
+  it("does not report a path from a piece with a dot and no extension of letters", () => {
+    expect(findFileRefs("a/b.1")).toEqual([]);
   });
 });
 

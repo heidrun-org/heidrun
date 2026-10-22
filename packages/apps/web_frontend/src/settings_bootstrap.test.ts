@@ -30,6 +30,9 @@ class SettingsBootstrapTestHelper {
 		'settings/SettingsSidebarsSection.vue',
 		'settings/SettingsSwitchRow.vue',
 		'settings/SettingsTerminalSection.vue',
+		'settings/SettingsTextDetectionFamily.vue',
+		'settings/SettingsTextDetectionSample.vue',
+		'settings/SettingsTextDetectionSection.vue',
 		'settings/SettingsVoiceInputSection.vue',
 	];
 

@@ -13,7 +13,9 @@ import SettingsMobileAccessSection from './SettingsMobileAccessSection.vue';
 import SettingsNotificationsSection from './SettingsNotificationsSection.vue';
 import SettingsSidebarsSection from './SettingsSidebarsSection.vue';
 import SettingsTerminalSection from './SettingsTerminalSection.vue';
+import SettingsTextDetectionSection from './SettingsTextDetectionSection.vue';
 import SettingsVoiceInputSection from './SettingsVoiceInputSection.vue';
+import { DETECTION_FAMILY_IDS } from '../../lib/detection_families';
 import { DEFAULT_GUARDS } from '../../lib/guards';
 import { parseProjectConfig } from '../../lib/project_config';
 import { project } from '../../stores/project';
@@ -52,7 +54,7 @@ class SettingsInformationCardsTestHelper {
 	static readonly WORKSPACE_ID = 'w1';
 
 	/**
-	 * The ten sections of the Settings window, with their options. A new option goes in this list, and the test then
+	 * The eleven sections of the Settings window, with their options. A new option goes in this list, and the test then
 	 * fails until the option has an information card.
 	 */
 	static readonly SECTION_LIST: SectionCase[] = [
@@ -70,6 +72,11 @@ class SettingsInformationCardsTestHelper {
 			name: 'Terminal',
 			component: SettingsTerminalSection,
 			optionList: ['font', 'fontSize', 'mouseMode'],
+		},
+		{
+			name: 'Text detection',
+			component: SettingsTextDetectionSection,
+			optionList: ['textDetection', 'textDetectionSample', ...DETECTION_FAMILY_IDS.map(() => 'detectionFamily')],
 		},
 		{
 			name: 'Coding agents',

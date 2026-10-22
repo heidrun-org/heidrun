@@ -12,6 +12,7 @@ import SettingsMobileAccessSection from "./settings/SettingsMobileAccessSection.
 import SettingsNotificationsSection from "./settings/SettingsNotificationsSection.vue";
 import SettingsSidebarsSection from "./settings/SettingsSidebarsSection.vue";
 import SettingsTerminalSection from "./settings/SettingsTerminalSection.vue";
+import SettingsTextDetectionSection from "./settings/SettingsTextDetectionSection.vue";
 import SettingsVoiceInputSection from "./settings/SettingsVoiceInputSection.vue";
 import { guardWindow } from "../stores/guard_window";
 import { settingsModal, type SettingsSection } from "../stores/settings";
@@ -21,6 +22,7 @@ const SECTIONS: { id: SettingsSection; icon: string; labelKey: string }[] = [
   { id: "general", icon: "sliders", labelKey: "settingsModal.general" },
   { id: "designReview", icon: "palette", labelKey: "settingsModal.designReview" },
   { id: "terminal", icon: "terminal", labelKey: "settingsModal.terminal" },
+  { id: "textDetection", icon: "regex", labelKey: "settingsModal.textDetection" },
   { id: "agents", icon: "robot", labelKey: "settingsModal.agents" },
   { id: "confirmations", icon: "shield-check", labelKey: "settingsModal.confirmations" },
   { id: "guards", icon: "shield-exclamation", labelKey: "settingsModal.guards" },
@@ -80,6 +82,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKey, true));
           <SettingsGeneralSection v-if="settingsModal.section === 'general'" />
           <SettingsDesignSection v-else-if="settingsModal.section === 'designReview'" />
           <SettingsTerminalSection v-else-if="settingsModal.section === 'terminal'" />
+          <SettingsTextDetectionSection v-else-if="settingsModal.section === 'textDetection'" />
           <SettingsAgentsSection v-else-if="settingsModal.section === 'agents'" />
           <SettingsConfirmationsSection v-else-if="settingsModal.section === 'confirmations'" />
           <SettingsGuardsSection v-else-if="settingsModal.section === 'guards'" />
