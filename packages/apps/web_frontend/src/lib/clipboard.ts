@@ -2,11 +2,24 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import type { IClipboardProvider } from "@xterm/addon-clipboard";
 
 export async function copy(text: string) {
-  if (!text) return;
+  await writeToClipboard(text).catch(() => {});
+}
+
+/**
+ * Writes the text to the macOS clipboard, through Tauri, or through the browser when Tauri fails. Unlike `copy`, it
+ * rejects when no text was written, so that the caller can tell the developer (issue #803).
+ */
+export async function writeToClipboard(text: string): Promise<void> {
+  if (!text) {
+    throw new Error("Nothing to copy");
+  }
   try {
     await writeText(text);
-  } catch {
-    await navigator.clipboard?.writeText(text).catch(() => {});
+  } catch (error) {
+    if (navigator.clipboard === undefined) {
+      throw error;
+    }
+    await navigator.clipboard.writeText(text);
   }
 }
 

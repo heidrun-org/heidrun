@@ -28,11 +28,14 @@ class SelectionFixture {
 			y: 1,
 		},
 	};
+	/** The selection as the terminal displays it: a visual wrap becomes a line break. */
+	displayedSelection = 'command --long-\noption';
 	/** The terminal test surface. */
 	terminal = {
 		cols: 15,
 		rows: 4,
 		getSelectionPosition: () => this.position,
+		getSelection: () => this.displayedSelection,
 		buffer: {
 			active: {
 				viewportY: 0,
@@ -163,5 +166,87 @@ describe('TerminalSelection', () => {
 			},
 		}).mockRejectedValueOnce(new Error('stale_content'));
 		await expect(new TerminalSelection().read(fixture.terminal, 'w1:p1')).rejects.toThrow('stale_content');
+	});
+});
+
+describe('TerminalSelection.readForCopy (issue #803)', () => {
+	beforeEach(() => {
+		vi.resetAllMocks();
+		// A failure of Herdr is expected in some tests: keep their warnings out of the output.
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+	});
+
+	it('copies the original text from Herdr when the terminal does not change', async () => {
+		const fixture = new SelectionFixture();
+		fixture.respond('command --long-option');
+		await expect(new TerminalSelection().readForCopy(fixture.terminal, 'w1:p1'))
+			.resolves.toBe('command --long-option');
+	});
+
+	it('copies the displayed selection when the terminal receives output during the copy', async () => {
+		const fixture = new SelectionFixture();
+		fixture.respond('command --long-option');
+		const selection = new TerminalSelection();
+		const pending = selection.readForCopy(fixture.terminal, 'w1:p1');
+		selection.invalidate();
+		await expect(pending).resolves.toBe('command --long-\noption');
+	});
+
+	it('copies the displayed selection when the selection is outside the visible rows', async () => {
+		const fixture = new SelectionFixture();
+		fixture.position = {
+			start: {
+				x: 0,
+				y: 0,
+			},
+			end: {
+				x: 3,
+				y: 6,
+			},
+		};
+		fixture.displayedSelection = 'older output\nFIRST';
+		await expect(new TerminalSelection().readForCopy(fixture.terminal, 'w1:p1'))
+			.resolves.toBe('older output\nFIRST');
+		expect(request).not.toHaveBeenCalled();
+	});
+
+	it('copies the selection that was displayed when the copy started, even if it is cleared during the copy', async () => {
+		const fixture = new SelectionFixture();
+		vi.mocked(request).mockRejectedValueOnce(new Error('Herdr is not reachable'));
+		const pending = new TerminalSelection().readForCopy(fixture.terminal, 'w1:p1');
+		fixture.displayedSelection = '';
+		await expect(pending).resolves.toBe('command --long-\noption');
+	});
+
+	it('rejects when the selection shows no text and Herdr cannot give the original text, so the copy is not taken for a success', async () => {
+		const fixture = new SelectionFixture();
+		fixture.displayedSelection = '';
+		vi.mocked(request).mockRejectedValueOnce(new Error('Herdr is not reachable'));
+		await expect(new TerminalSelection().readForCopy(fixture.terminal, 'w1:p1')).rejects.toThrow('no text');
+	});
+
+	it('warns in the console when Herdr fails, but not when the terminal only changed', async () => {
+		const warn = vi.mocked(console.warn);
+		const fixture = new SelectionFixture();
+		const selection = new TerminalSelection();
+		fixture.respond('command --long-option');
+		const pending = selection.readForCopy(fixture.terminal, 'w1:p1');
+		selection.invalidate();
+		await pending;
+		expect(warn).not.toHaveBeenCalled();
+
+		vi.mocked(request).mockReset().mockRejectedValueOnce(new Error('unknown method'));
+		await selection.readForCopy(fixture.terminal, 'w1:p1');
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops asking Herdr as soon as the terminal changed', async () => {
+		const fixture = new SelectionFixture();
+		fixture.respond('command --long-option');
+		const selection = new TerminalSelection();
+		const pending = selection.readForCopy(fixture.terminal, 'w1:p1');
+		selection.invalidate();
+		await pending;
+		expect(request).toHaveBeenCalledTimes(1);
 	});
 });

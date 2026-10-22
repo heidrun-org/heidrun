@@ -5,7 +5,7 @@
 - Status: Maintained rules for agents and tools
 - Related framing: [Project instructions](../../../../AGENTS.md)
 - Related rules: [Glossary of Heidrun](../../glossary/index.md)
-- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
+- Related issue: [issue 698](https://github.com/heidrun-org/heidrun/issues/698), [issue 803](https://github.com/heidrun-org/heidrun/issues/803), [issue 326](https://github.com/heidrun-org/heidrun/issues/326), [issue 428](https://github.com/heidrun-org/heidrun/issues/428), [issue 465](https://github.com/heidrun-org/heidrun/issues/465), [issue 475](https://github.com/heidrun-org/heidrun/issues/475), [issue 636](https://github.com/heidrun-org/heidrun/issues/636), [issue 688](https://github.com/heidrun-org/heidrun/issues/688), [issue 690](https://github.com/heidrun-org/heidrun/issues/690), [issue 712](https://github.com/heidrun-org/heidrun/issues/712), [issue 767](https://github.com/heidrun-org/heidrun/issues/767), [issue 791](https://github.com/heidrun-org/heidrun/issues/791)
 
 This file is a part of the rules of the user interface of Heidrun. The words are defined in [glossary/index.md](../../glossary/index.md).
 
@@ -33,8 +33,12 @@ The rules of the pane header are in [pane_headers.md](pane_headers.md).
   are joined, and intentional line breaks stay. Copying does not infer line boundaries from the length of a line.
 - The selection belongs to the current viewport, including when Herdr has scrolled into older output. The displayed
   selected rows must match Herdr's visible rows, and Herdr validates the content revision before returning the text.
-- When output, scrolling, resizing, or the selection changes during copying, or Herdr cannot read the selection,
-  copying shows a message asking the developer to select the text again and retry. The selection stays available.
+- When output, scrolling, resizing, or the selection changes during copying, when the selection goes past the visible
+  rows, or when Herdr cannot read the selection, the copy uses the selection that the terminal showed when the copy
+  started. Copying never leaves the clipboard unchanged: a coding agent that works redraws its pane many times each
+  second, so a copy that waits for an unchanged terminal would fail ([issue 803](https://github.com/heidrun-org/heidrun/issues/803)).
+- A message asks the developer to select the text again and retry only when writing to the clipboard fails, or when the
+  selection has no text. After the copy, only the copied selection is cleared: a selection made during the copy stays.
 - The tests are in `terminal_selection.test.ts`.
 
 ## Command that starts Codex
