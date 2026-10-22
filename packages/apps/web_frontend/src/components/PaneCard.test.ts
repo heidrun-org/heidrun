@@ -342,6 +342,22 @@ describe("PaneCard usage wheel", () => {
     expect(wrapper.get(".head").text()).not.toContain("%");
   });
 
+  it("puts the usage wheel first in the group of the header buttons, so it follows the same hover rule and fade", async () => {
+    const wrapper = await mountPaneCard(WITH_CONTEXT);
+    expect(wrapper.find(".head > .usage-wheel").exists()).toBe(false);
+    expect(wrapper.find(".head > .information-card-part").exists()).toBe(false);
+    const firstItem = wrapper.get(".head .tools").element.firstElementChild;
+    expect(firstItem?.classList.contains("information-card-part")).toBe(true);
+    expect(firstItem?.querySelector(".usage-wheel")).not.toBeNull();
+    expect(wrapper.findAll(".head .tools > button").length).toBeGreaterThan(0);
+  });
+
+  it("keeps the gap before the first header button at the gap between two buttons, with no extra margin", () => {
+    const rule = styleRule(".tools");
+    expect(rule).toContain("gap: 2px");
+    expect(rule).not.toContain("margin-left");
+  });
+
   it("shows no usage wheel when the program does not know the context window", async () => {
     const wrapper = await mountPaneCard();
     expect(wrapper.find(".usage-wheel").exists()).toBe(false);
